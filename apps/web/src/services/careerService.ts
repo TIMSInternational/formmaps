@@ -25,7 +25,6 @@ export async function listCareers(query?: {
     );
     return res.data;
   } catch {
-    // Fallback: return empty list if backend unavailable
     return { careers: [] as CareerRole[], meta: { total: 0, page: 1, pageSize: 20 } };
   }
 }
@@ -48,7 +47,6 @@ export async function getCareerFamilies() {
   }
 }
 
-// Admin operations
 export async function adminListCareers() {
   const res = await apiRequest<{ data: CareerRole[] }>("/api/v1/careers/admin");
   return res.data;
@@ -92,7 +90,6 @@ export async function recommendCareers(payload: {
   }
 }
 
-// Favorites (stored server-side)
 export async function getFavoritesForUser(userId: string) {
   try {
     const res = await apiRequest<{ data: { favorites: string[] } }>(
