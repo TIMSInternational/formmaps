@@ -8,6 +8,7 @@ export interface LoginResponse {
     name: string;
     email: string;
     roleId: string;
+    schoolId?: string;
     profilePicture?: string;
     avatarUrl?: string;
     avatar?: string;
