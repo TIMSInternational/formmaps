@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSchoolAdminStats, useStudents } from "@/hooks/useSchoolAdmin";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function SchoolAdminDashboard() {
   const { t } = useTranslation();
@@ -58,6 +59,7 @@ export default function SchoolAdminDashboard() {
   ];
 
   return (
+    <ErrorBoundary>
     <div className="space-y-8">
       {/* Header */}
       <div className="max-w-7xl mx-auto">
@@ -235,5 +237,6 @@ export default function SchoolAdminDashboard() {
         </div>
       </div>
     </div>
+    </ErrorBoundary>
   );
 }

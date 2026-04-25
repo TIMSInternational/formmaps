@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParentProfile, useParentPendingEvaluations } from "@/hooks/useParentPortalQueries";
 import type { ParentChildLink, ParentProfile } from "@/types/parentPortal";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function ParentDashboard() {
   const { t } = useTranslation();
@@ -44,6 +45,7 @@ export default function ParentDashboard() {
   const children: ParentChildLink[] = profile?.children || [];
 
   return (
+    <ErrorBoundary>
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Welcome Header */}
       <motion.div
@@ -230,5 +232,6 @@ export default function ParentDashboard() {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

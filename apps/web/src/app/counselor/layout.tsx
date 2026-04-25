@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCounselorAccess } from "@/hooks/useCounselorAccess";
 import { CounselorLayout } from "./_components/CounselorLayout";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -30,5 +31,5 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <CounselorLayout>{children}</CounselorLayout>;
+  return <ErrorBoundary><CounselorLayout>{children}</CounselorLayout></ErrorBoundary>;
 }
