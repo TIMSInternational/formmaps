@@ -78,7 +78,6 @@ export default function CoachSessionsPage() {
 
       cached.set(SESSION_CACHE_KEY, { ts: Date.now(), data: normalized });
     } catch (error) {
-      console.error("Failed to fetch sessions:", error);
       toast.error(t("coaching.dashboard.failedToLoad"));
     } finally {
       setIsLoading(false);
@@ -137,7 +136,6 @@ export default function CoachSessionsPage() {
       setIsRescheduleOpen(false);
       fetchSessions(); // Refresh list
     } catch (error) {
-      console.error("Reschedule error:", error);
       toast.error(t("coaching.dashboard.rescheduleFailed"));
     }
   };
@@ -156,7 +154,6 @@ export default function CoachSessionsPage() {
       setIsCancelOpen(false);
       fetchSessions(); // Refresh list
     } catch (error) {
-      console.error("Cancel error:", error);
       toast.error(t("coaching.dashboard.cancelFailed"));
     }
   };

@@ -177,7 +177,6 @@ export default function CoursesPage() {
       toast.success(`✓ Imported ${success} course${success !== 1 ? "s" : ""} successfully`, { id: toastId });
     } else {
       toast.warning(`Imported ${success}, failed ${failed}. Check console for details.`, { id: toastId });
-      console.warn("CSV import errors:", errors);
     }
   };
 

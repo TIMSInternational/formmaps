@@ -43,8 +43,8 @@ export default function CoachProfilePage() {
         const data = await getCoachDetails(coachId);
         setCoach(data);
       } catch (error) {
-        console.error("Failed to fetch coach details:", error);
-      } finally {
+      // error handled silently
+    } finally {
         setIsLoading(false);
       }
     };

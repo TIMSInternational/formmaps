@@ -134,8 +134,8 @@ export default function MySessionsPage() {
               time = `${time} - ${format(endDate, "h:mm a")}`;
             }
           } catch (e) {
-            console.error("Error parsing date:", e);
-          }
+      // error handled silently
+    }
         }
 
         return {
@@ -151,7 +151,6 @@ export default function MySessionsPage() {
 
       setSessions(formattedSessions);
     } catch (error) {
-      console.error("Failed to fetch sessions:", error);
       toast.error(t("sessions.messages.failedToLoad"));
     } finally {
       setIsLoading(false);
@@ -198,7 +197,6 @@ export default function MySessionsPage() {
       setRescheduleCoach(coachData);
       setBookingModalOpen(true);
     } catch (error) {
-      console.error("Failed to fetch coach details:", error);
       toast.error("Failed to load coach information");
     }
   };
@@ -257,7 +255,6 @@ export default function MySessionsPage() {
       toast.success(t("sessions.messages.reviewSubmitted"));
       setReviewDialogOpen(false);
     } catch (error) {
-      console.error("Review error:", error);
       toast.error(t("sessions.messages.failedToSubmitReview"));
     } finally {
       setIsProcessing(false);

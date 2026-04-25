@@ -15,7 +15,6 @@ export default function MILTestButton() {
       alert(t('dev.mil.cleared'));
       window.location.reload();
     } catch (error) {
-      console.error("Error clearing MIL data:", error);
       alert(t('dev.mil.clearFailed'));
     } finally {
       setLoading(false);
@@ -29,7 +28,6 @@ export default function MILTestButton() {
       alert(t('dev.mil.populated'));
       window.location.reload();
     } catch (error) {
-      console.error("Error populating MIL data:", error);
       alert(t('dev.mil.populateFailed'));
     } finally {
       setLoading(false);

@@ -156,8 +156,8 @@ export function CoursesCatalog() {
 
         window.open(course.courseraUrl, "_blank");
       } catch (error) {
-        console.error("Failed to start course", error);
-      }
+      // error handled silently
+    }
     },
     [recommendedCourses]
   );
@@ -179,8 +179,8 @@ export function CoursesCatalog() {
           }));
         }
       } catch (error) {
-        console.error("Failed to mark course completed", error);
-      }
+      // error handled silently
+    }
     },
     [enrollments]
   );

@@ -135,7 +135,7 @@ export default function EvaluatorsPage() {
         }
       }
     } catch (error) {
-      console.error("Error loading evaluators:", error);
+      // error handled silently
     }
   };
 
@@ -291,7 +291,6 @@ export default function EvaluatorsPage() {
           }
         }
       } catch (error) {
-        console.error("Error checking duplicates:", error);
         // Continue without duplicate check from API if it fails
       }
     }
@@ -342,7 +341,6 @@ export default function EvaluatorsPage() {
 
         if (isEditing) {
           // TODO: Implement update evaluator API when available
-          console.log("Editing evaluator:", selectedEvaluator, newEvaluator);
           toast.success(
             "Evaluator details updated successfully! Note: API update functionality will be implemented soon."
           );
@@ -356,19 +354,12 @@ export default function EvaluatorsPage() {
             evaluatedUserId: user.id,
           });
 
-          console.log("API Evaluator created:", apiResult);
         }
 
         // Reload API evaluators
         await loadApiEvaluators();
       }
     } catch (error) {
-      console.error(
-        isEditing
-          ? "Error updating evaluator:"
-          : "Error creating evaluator via API:",
-        error
-      );
       setErrors({
         general: `Failed to ${
           isEditing ? "update" : "create"
@@ -459,7 +450,6 @@ export default function EvaluatorsPage() {
 
       toast.success("Evaluator removed successfully!");
     } catch (error) {
-      console.error("Error removing evaluator:", error);
       toast.error("Error removing evaluator. Please try again.");
     }
   };
@@ -472,7 +462,6 @@ export default function EvaluatorsPage() {
       // Reload API evaluators to update status
       await loadApiEvaluators();
     } catch (error) {
-      console.error("Error resending invitation link:", error);
       toast.error(t("evaluation.toast.resendError"));
     }
   };
@@ -509,7 +498,6 @@ export default function EvaluatorsPage() {
       // Reload API evaluators to update status
       await loadApiEvaluators();
     } catch (error) {
-      console.error("Error sending email invitation:", error);
       toast.error(t("evaluation.toast.emailFailed"));
     }
   };
@@ -535,7 +523,6 @@ export default function EvaluatorsPage() {
       // toast.success("SMS invitation sent successfully!");
       // await loadApiEvaluators();
     } catch (error) {
-      console.error("Error sending SMS invitation:", error);
       toast.error("Error sending SMS invitation. Please try again.");
     }
   };
@@ -576,7 +563,6 @@ export default function EvaluatorsPage() {
 
       await loadApiEvaluators();
     } catch (error) {
-      console.error("Error sending email invitations:", error);
       toast.error(t("evaluation.toast.emailFailed"));
     } finally {
       setLoading(false);
@@ -625,7 +611,6 @@ export default function EvaluatorsPage() {
           )})`
       );
     } catch (error) {
-      console.error("Error sending SMS invitations:", error);
       toast.error("Error sending SMS invitations. Please try again.");
     } finally {
       setLoading(false);

@@ -29,7 +29,6 @@ export default function MILInstructions({
   >("instructions");
   const [instructions, setInstructions] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  console.log(language);
   useEffect(() => {
     loadInstructions();
   }, [exam.id]);
@@ -40,7 +39,7 @@ export default function MILInstructions({
       const data = await getMILExamInstructions(exam.id as any, language);
       setInstructions(data);
     } catch (error) {
-      console.error("Failed to load instructions:", error);
+      // error handled silently
     } finally {
       setLoading(false);
     }

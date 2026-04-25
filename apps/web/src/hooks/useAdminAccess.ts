@@ -19,16 +19,12 @@ export function useAdminAccess(): AdminAccessResult {
         setLoading(true);
         setError(null);
 
-        console.log("🔍 useAdminAccess: Starting admin verification...");
         const result = await verifyAdminAccess();
-        console.log("🔍 useAdminAccess: Verification result:", result);
 
         const hasAdminAccess = result.isAdmin || result.isSuperAdmin;
-        console.log("🔍 useAdminAccess: Has admin access?", hasAdminAccess);
 
         setIsAdmin(hasAdminAccess);
       } catch (err) {
-        console.error("Admin access verification error:", err);
         setError(
           err instanceof Error ? err.message : "Failed to verify admin access"
         );

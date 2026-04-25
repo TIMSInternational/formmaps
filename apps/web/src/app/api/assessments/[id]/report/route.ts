@@ -203,7 +203,6 @@ export async function GET(
     return NextResponse.json(reportData);
 
   } catch (error) {
-    console.error("Error generating assessment report:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

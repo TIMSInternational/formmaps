@@ -85,7 +85,6 @@ export default function StudentOnboardingPage({
       try {
         setIsLoading(true);
         const result = await verifyStudentToken(token);
-        console.log("🔍 Page received verification result:", result);
 
         // Handle potential string/boolean mismatch from API
         const isValidToken = result.isValid === true || result.isValid === "true";

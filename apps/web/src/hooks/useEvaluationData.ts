@@ -75,8 +75,8 @@ export function useEvaluationData() {
             const user = JSON.parse(userStr);
             isCounselor = user?.roleName?.toLowerCase() === "counselor";
           } catch (e) {
-            console.error("Error parsing user from localStorage", e);
-          }
+      // error handled silently
+    }
         }
 
         const sessionMap = new Map<string, EvaluationSession>();
@@ -536,7 +536,6 @@ export function useEvaluationData() {
       } else {
         // In production, this would call the API
         // await submitEvaluationResponses(sessionId, evaluatorToken, responses);
-        console.log("Submitting responses to API:", { sessionId, responses });
       }
     } catch (err) {
       setError(

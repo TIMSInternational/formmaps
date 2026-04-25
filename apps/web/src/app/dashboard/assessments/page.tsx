@@ -65,7 +65,7 @@ export default function AssessmentsPage() {
     try {
       window.location.href = "/dashboard/assessments/evaluators";
     } catch (error) {
-      console.error("Error creating evaluation session:", error);
+      // error handled silently
     }
   };
 
@@ -98,7 +98,6 @@ export default function AssessmentsPage() {
         toast.error("Failed to create self evaluation. Please try again.");
       }
     } catch (error) {
-      console.error("Error starting 360 evaluation:", error);
       toast.error("Failed to start evaluation. Please try again.");
     } finally {
       setIsStartingEvaluation(false);

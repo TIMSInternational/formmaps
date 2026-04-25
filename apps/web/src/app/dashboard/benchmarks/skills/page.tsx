@@ -42,8 +42,8 @@ export default function SkillsPage() {
         setSkills(s);
         setCerts(c);
       } catch (error) {
-        console.error("Failed to fetch skills data", error);
-      } finally {
+      // error handled silently
+    } finally {
         setLoading(false);
       }
     };

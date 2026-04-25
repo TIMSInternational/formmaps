@@ -236,8 +236,8 @@ export default function CourseSequenceBuilderPage() {
             // Clean up to prevent re-triggering
             localStorage.removeItem("ai_sequence_blueprint");
           } catch (e) {
-            console.error("Failed to parse AI sequence view", e);
-          }
+      // error handled silently
+    }
         }
       }
       setInitialized(true);
@@ -352,7 +352,6 @@ export default function CourseSequenceBuilderPage() {
             courseId, 
             payload: { prerequisiteRules: [{ type: "AND", courseIds: requiredCourseIds }], corequisites: [] }
           }).catch(err => {
-            console.error("Prerequisite sync failed for course", courseId, err);
           });
           syncPromises.push(promise);
         }

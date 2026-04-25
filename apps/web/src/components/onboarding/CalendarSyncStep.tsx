@@ -25,28 +25,17 @@ export function CalendarSyncStep({
     try {
       const { getCalendarAuthUrl } = await import("@/services/coachService");
       const { url } = await getCalendarAuthUrl(provider, email, window.location.href);
-      console.log(`Calendar auth URL for ${provider}:`, url);
       // Parse and inspect redirect_uri param if present
       try {
         const parsed = new URL(url);
         const redirectUriEncoded = parsed.searchParams.get("redirect_uri");
         if (redirectUriEncoded) {
           const redirectUri = decodeURIComponent(redirectUriEncoded);
-          console.log(`OAuth redirect_uri decoded:`, redirectUri);
           try {
             const parsedRedirect = new URL(redirectUri);
-            console.log(
-              `OAuth redirect_uri host:`,
-              parsedRedirect.hostname,
-              `path:`,
-              parsedRedirect.pathname
-            );
             if (
               parsedRedirect.pathname.includes("/onboarding/coach/undefined")
             ) {
-              console.warn(
-                "Redirect URI contains onboarding/coach/undefined - likely backend missing coach id in state"
-              );
             }
           } catch (_e) {
             // ignore parse errors
@@ -71,21 +60,14 @@ export function CalendarSyncStep({
           hostname === currentHost ||
           url.includes("onboarding/coach/undefined")
         ) {
-          console.error(
-            `API returned internal redirect URL instead of OAuth URL:`,
-            url
-          );
           alert(
             t("onboarding.calendar.apiError", { url, defaultValue: `Calendar integration is not available yet. The API returned: ${url}` })
           );
           return;
         }
       } catch (err) {
-        console.warn(
-          "Failed to parse URL from API, continuing with validation (may be invalid):",
-          err
-        );
-      }
+      // error handled silently
+    }
 
       // Additional check for common OAuth providers
       const isOAuthUrl =
@@ -94,7 +76,6 @@ export function CalendarSyncStep({
         url.includes("accounts.google.com") ||
         url.includes("login.microsoftonline.com");
       if (!isOAuthUrl) {
-        console.warn(`URL doesn't appear to be an OAuth URL:`, url);
         alert(t("onboarding.calendar.unexpectedUrl", "Unexpected redirect URL received. Please contact support."));
         return;
       }
@@ -102,7 +83,6 @@ export function CalendarSyncStep({
       // Redirect to auth URL
       window.location.href = url;
     } catch (error) {
-      console.error(`Failed to get ${provider} auth URL:`, error);
       const message = (error && (error as any).message) || String(error);
       alert(t("onboarding.calendar.connectFailed", { message, defaultValue: `Failed to connect calendar: ${message}` }));
       // Fallback for demo/testing if API fails or is not implemented

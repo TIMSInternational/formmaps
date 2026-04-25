@@ -35,7 +35,6 @@ export function ProfileHeader() {
         if (data.avatarUrl) setAvatarUrl(data.avatarUrl);
         if (data.coverUrl) setCoverUrl(data.coverUrl);
       } catch (error) {
-        console.error("Failed to fetch profile:", error);
         // Fallback to global store data
       } finally {
         setIsLoading(false);

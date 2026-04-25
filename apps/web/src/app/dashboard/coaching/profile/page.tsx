@@ -62,7 +62,6 @@ export default function CoachProfilePage() {
           }));
         }
       } catch (error) {
-        console.error("Failed to fetch profile:", error);
         toast.error(t("coaching.profile.failedToLoad"));
       } finally {
         setIsLoading(false);
@@ -91,7 +90,6 @@ export default function CoachProfilePage() {
       toast.success(t("coaching.profile.updated"));
       setIsEditing(false);
     } catch (error) {
-      console.error("Update error:", error);
       toast.error(t("coaching.profile.failedToUpdate"));
     }
   };
@@ -118,7 +116,6 @@ export default function CoachProfilePage() {
 
       toast.success(t("coaching.profile.uploadSuccess"));
     } catch (error) {
-      console.error("Upload error:", error);
       toast.error(t("coaching.profile.uploadFailed"));
       // Revert preview on error if desired, but user might retry
       setAvatarPreview(null);

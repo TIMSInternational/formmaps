@@ -13,7 +13,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && !isCounselor) {
-      console.warn("Counselor access not verified - allowing access for development");
       // router.push("/login");
     }
   }, [isCounselor, loading, router]);

@@ -912,8 +912,8 @@ export default function ResumeBuilderPage() {
             }
           }
         } catch (error) {
-          console.warn("Unable to inspect persisted resume data", error);
-        }
+      // error handled silently
+    }
       }
 
       if (shouldResetToTemplate) {
@@ -981,7 +981,6 @@ export default function ResumeBuilderPage() {
         loadResume(storeData);
       })
       .catch((error) => {
-        console.error("Failed to load resume from API", error);
       })
       .finally(() => {
         if (isMounted) {
@@ -2262,7 +2261,6 @@ export default function ResumeBuilderPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading PDF:", error);
       alert("Failed to download PDF. Please try again.");
     }
   };

@@ -61,7 +61,6 @@ export default function MyResumesPage() {
         const data = await getAllResumes();
         setResumes(data);
       } catch (err) {
-        console.error("Error fetching resumes:", err);
         setError("Failed to load resumes. Please try again later.");
       } finally {
         setLoading(false);
@@ -95,7 +94,6 @@ export default function MyResumesPage() {
         setResumes(resumes.filter((r) => r._id !== resumeId));
         setShowMenu(null);
       } catch (err) {
-        console.error("Error deleting resume:", err);
         alert("Failed to delete resume. Please try again.");
       }
     }

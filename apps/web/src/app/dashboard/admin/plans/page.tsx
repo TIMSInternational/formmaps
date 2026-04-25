@@ -101,7 +101,6 @@ export default function AdminPlansPage() {
             // We want billingOptions
             setPlans(data.billingOptions || []);
         } catch (error) {
-            console.error("Failed to load plans", error);
             toast.error("Failed to load subscription plans");
         } finally {
             setLoading(false);
@@ -169,7 +168,6 @@ export default function AdminPlansPage() {
             setIsDialogOpen(false);
             loadPlans();
         } catch (error) {
-            console.error(error);
             toast.error(editingPlan ? "Failed to update plan" : "Failed to create plan");
         } finally {
             setIsSaving(false);
@@ -184,7 +182,6 @@ export default function AdminPlansPage() {
             toast.success("Plan deleted successfully");
             loadPlans();
         } catch (error) {
-            console.error(error);
             toast.error("Failed to delete plan");
         }
     };

@@ -116,7 +116,6 @@ export async function getSchoolStats(): Promise<SchoolStats> {
     const json = await response.json();
     return json.data || json;
   } catch (error) {
-    console.error("getSchoolStats API failed:", error);
     throw error;
   }
 }

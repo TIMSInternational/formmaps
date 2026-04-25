@@ -33,7 +33,6 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
         });
         setLoadingPDF(false);
       }).catch((error) => {
-        console.error('Failed to load PDF components:', error);
         setLoadingPDF(false);
       });
     }
@@ -633,7 +632,6 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
 
         return renderTemplateLayout();
       } catch (error) {
-        console.error('Error rendering PDF template:', error);
         return null;
       }
     }, [pdfComponents, data, templateId]);

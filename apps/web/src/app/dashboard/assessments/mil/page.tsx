@@ -74,7 +74,7 @@ export default function MILAssessmentPage() {
         );
       }
     } catch (error) {
-      console.warn("Could not extract user ID from token:", error);
+      // error handled silently
     }
     return "unknown";
   };
@@ -93,13 +93,8 @@ export default function MILAssessmentPage() {
       const evaluationGroups = await getUserEvaluationGroups(userId, language);
       setEvaluationProgress(evaluationGroups);
 
-      console.log("🔄 Progress Data Loaded:", {
-        liaResults: liaResults.length,
-        liaProgress: liaProgressSummary,
-        evaluationGroups: evaluationGroups.length,
-      });
     } catch (error) {
-      console.error("Failed to load progress data:", error);
+      // error handled silently
     } finally {
       setProgressLoading(false);
     }

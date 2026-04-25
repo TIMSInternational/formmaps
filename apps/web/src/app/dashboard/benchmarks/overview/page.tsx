@@ -96,8 +96,8 @@ export default function OverviewPage() {
           employability,
         });
       } catch (error) {
-        console.error("Failed to fetch overview data", error);
-      } finally {
+      // error handled silently
+    } finally {
         setLoading(false);
       }
     };

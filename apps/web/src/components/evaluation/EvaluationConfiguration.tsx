@@ -139,7 +139,7 @@ const EvaluationConfigurationComponent: React.FC<EvaluationConfigurationProps> =
     try {
       await onSave(config);
     } catch (error) {
-      console.error('Error saving configuration:', error);
+      // error handled silently
     } finally {
       setIsSaving(false);
     }

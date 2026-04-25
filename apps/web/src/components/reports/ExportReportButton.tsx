@@ -54,7 +54,6 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
       // Reset complete state after 2 seconds
       setTimeout(() => setIsComplete(false), 2000);
     } catch (error) {
-      console.error('Report generation failed:', error);
       onError?.(error as Error);
     } finally {
       setIsGenerating(false);

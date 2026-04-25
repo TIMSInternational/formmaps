@@ -20,7 +20,6 @@ class PDFErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("PDF Error:", error, errorInfo);
     this.props.onError?.();
   }
 
@@ -112,7 +111,6 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
           setLoadingPDF(false);
         })
         .catch((error) => {
-          console.error("Failed to load PDF components:", error);
           setPdfError("Failed to load PDF components. Please try again.");
           setLoadingPDF(false);
         });
@@ -163,7 +161,6 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
         setTemplateComponent(() => TemplateComponent);
         setLoadingPDF(false);
       } catch (error) {
-        console.error("Failed to load template:", error);
         setPdfError("Failed to load template. Please try again.");
         setLoadingPDF(false);
       }
@@ -182,7 +179,6 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
       // Use the debounced data to pass to the template
       return <TemplateComponent data={debouncedData} />;
     } catch (error) {
-      console.error("Error rendering PDF template:", error);
       return null;
     }
   }, [templateComponent, debouncedData]);

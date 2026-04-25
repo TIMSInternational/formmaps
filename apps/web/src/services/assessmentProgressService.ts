@@ -218,7 +218,6 @@ export async function getUserAssessmentProgress(
       pcaHasResults = pcaData.hasResults ?? false;
       pcaCod = pcaData.pcaCod;
     } catch (error) {
-      console.warn("PCA data not available:", error);
       // Keep default values
     }
 

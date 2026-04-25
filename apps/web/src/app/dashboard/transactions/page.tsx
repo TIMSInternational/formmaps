@@ -63,7 +63,6 @@ export default function TransactionsPage() {
       setTransactions(response.items);
       setTotal(response.total);
     } catch (error) {
-      console.error("Failed to fetch transactions:", error);
       toast.error(t("transactions.fetchFailed"));
     } finally {
       setIsLoading(false);

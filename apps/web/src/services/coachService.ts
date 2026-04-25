@@ -710,8 +710,8 @@ export async function testCoachAPIs(): Promise<void> {
       const details = await getCoachDetails(coachId);
     }
   } catch (error) {
-    console.error("❌ Coach API test failed:", error);
-  }
+      // error handled silently
+    }
 }
 
 export async function uploadProfileImage(file: File): Promise<any> {

@@ -82,7 +82,6 @@ export async function callOpenAI(
       model: config.model || DEFAULT_CONFIG.model!,
     };
   } catch (error) {
-    console.error("OpenAI API call failed:", error);
     throw error;
   }
 }
@@ -338,7 +337,6 @@ Return ONLY valid JSON, no markdown or explanations.`;
       missingKeywords: analysis.missingKeywords || [],
     };
   } catch (error) {
-    console.error("Failed to parse ATS score response:", error);
     throw new Error("Failed to calculate ATS score");
   }
 }

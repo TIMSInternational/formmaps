@@ -75,7 +75,6 @@ export default function PCAAssessmentPage() {
         alert(`Failed to create assessment: ${result.message}`);
       }
     } catch (error) {
-      console.error("Assessment creation error:", error);
       alert("Failed to create assessment. Please try again.");
     } finally {
       setIsCreating(false);
@@ -103,10 +102,6 @@ export default function PCAAssessmentPage() {
             <div className="flex items-center">
               <button
                 onClick={() => {
-                  console.log(
-                    "Going back to configuration, preserving language:",
-                    selectedLanguage
-                  );
                   setAssessmentUrl(null);
                 }}
                 className="flex items-center text-gray-600 hover:text-gray-900 transition-colors mr-4"
@@ -302,7 +297,6 @@ export default function PCAAssessmentPage() {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => {
-                    console.log("Setting language to Spanish");
                     setSelectedLanguage("spanish");
                   }}
                   className={`p-4 rounded-lg border-2 transition-all ${
@@ -321,7 +315,6 @@ export default function PCAAssessmentPage() {
                 </button>
                 <button
                   onClick={() => {
-                    console.log("Setting language to English");
                     setSelectedLanguage("english");
                   }}
                   className={`p-4 rounded-lg border-2 transition-all ${

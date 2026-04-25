@@ -633,9 +633,6 @@ export default function EvaluatorPage() {
       );
       const data: ApiResponse = await response.json();
 
-      console.log("API Response:", data); // Debug log to see response structure
-      console.log("Data object:", data.data); // Debug log to see what's inside data
-
       if (!response.ok) {
         setError(
           data.message || `Failed to load questions: ${response.status}`
@@ -679,18 +676,14 @@ export default function EvaluatorPage() {
       } else if (data.data && Array.isArray(data.data)) {
         questions = data.data as ApiQuestion[];
       } else {
-        console.error("Unexpected API response structure:", data);
+
         setError("Invalid response format from server");
         return;
       }
 
-      console.log("Extracted questions:", questions); // Debug log to see extracted questions
-      console.log("First question object:", questions[0]); // Debug log to see actual question structure
-      console.log("Evaluator data:", evaluatorData); // Debug log to see evaluator data
-
       // Map API question structure to component expected structure
       const mappedQuestions = questions.map((q: ApiQuestion, index: number) => {
-        console.log(`Question ${index}:`, q); // Debug each question
+
         const questionText =
           q.questionEnglishText || `Question ${q.questionNumber || index + 1}`;
 
@@ -723,16 +716,12 @@ export default function EvaluatorPage() {
       );
 
       if (!hasAnyRealQuestions && questions.length > 0) {
-        console.warn(
-          "API returned questions but without actual question text content"
-        );
+
         setError(
           "The evaluation questions are not properly configured. Please contact your administrator."
         );
         return;
       }
-
-      console.log("Mapped questions:", mappedQuestions); // Debug log to see mapped questions
 
       // Create evaluation group from API response data
       const mockEvaluationGroup: EvaluationGroup = {
@@ -805,7 +794,7 @@ export default function EvaluatorPage() {
         setAlreadySubmitted(true);
       }
     } catch (err: unknown) {
-      console.error("Fetch error:", err);
+
       setError("Failed to load evaluation questions");
     } finally {
       setIsValidating(false);
@@ -890,9 +879,6 @@ export default function EvaluatorPage() {
     setIsSubmitting(true);
     setError(null);
 
-    console.log("Debug - evaluationData.questions:", evaluationData.questions);
-    console.log("Debug - responses:", responses);
-
     try {
       const submitData: SubmitData = {
         evaluationGroupId: token || "", // Use token directly as group ID
@@ -903,10 +889,6 @@ export default function EvaluatorPage() {
           const question = evaluationData.questions.find(
             (q) => q.id === questionId
           );
-          console.log(
-            `Debug - questionId: ${questionId}, question found:`,
-            question
-          );
 
           // Use the English question text for submission (API expects English)
           let questionText = question?.questionText || "";
@@ -914,7 +896,6 @@ export default function EvaluatorPage() {
             questionText = `Question ${question?.order || questionId}`;
           }
 
-          console.log(`Debug - questionText for ${questionId}:`, questionText);
           return {
             questionNumber:
               question?.order || parseInt(questionId.replace("q", "")), // Use order field which maps to questionNumber
@@ -946,7 +927,7 @@ export default function EvaluatorPage() {
         setError(errorData.message || "Failed to submit evaluation");
       }
     } catch (err: unknown) {
-      console.error("Submission error:", err);
+
       setError("Failed to submit evaluation. Please try again.");
     } finally {
       setIsSubmitting(false);

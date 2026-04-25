@@ -67,7 +67,6 @@ export function BillingSettingsTab({
       }
 
     } catch (error) {
-      console.error("Failed to load billing data:", error);
       toast.error("Failed to load billing data");
     } finally {
       setIsLoading(false);
@@ -88,7 +87,6 @@ export function BillingSettingsTab({
       await downloadInvoice(billingId);
       toast.success("Invoice downloaded");
     } catch (error) {
-      console.error("Failed to download invoice:", error);
       toast.error("Failed to download invoice");
     }
   };

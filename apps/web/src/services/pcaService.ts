@@ -439,7 +439,6 @@ export async function checkPCAStatus(
       }
     } catch (error) {
       // No results yet, but evaluation exists
-      console.log("PCA evaluation exists but no results yet:", error);
     }
 
     return {

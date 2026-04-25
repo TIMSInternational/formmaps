@@ -56,7 +56,7 @@ export default function PCAResultsPanel({
       const data = await getPCAResult(pcaCod);
       setResults(data);
     } catch (error) {
-      console.error("Failed to load PCA results:", error);
+      // error handled silently
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ export default function PCAResultsPanel({
       const data = await getPCACompetences(pcaCod, "1"); // TIMS format
       setCompetences(data);
     } catch (error) {
-      console.error("Failed to load PCA competences:", error);
+      // error handled silently
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,7 @@ export default function PCAResultsPanel({
       const analysisData = await getPCAVsJCAAnalysis(pcaCod, selectedJCA, "g");
       setAnalysis(analysisData);
     } catch (error) {
-      console.error("Failed to load PCA analysis:", error);
+      // error handled silently
     } finally {
       setLoading(false);
     }

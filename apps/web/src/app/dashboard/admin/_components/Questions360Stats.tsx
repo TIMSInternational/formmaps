@@ -25,7 +25,6 @@ export function Questions360Stats() {
   const fetchStats = async () => {
     try {
       const data = await questions360Service.getAllQuestions();
-      console.log("📊 Received questions data for stats:", data);
 
       // Ensure data is an array
       const questions = Array.isArray(data) ? data : [];
@@ -49,7 +48,6 @@ export function Questions360Stats() {
         error: null,
       });
     } catch (error) {
-      console.error("❌ Error fetching questions stats:", error);
       setStats((prev) => ({
         ...prev,
         loading: false,

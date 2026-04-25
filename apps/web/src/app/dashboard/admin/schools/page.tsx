@@ -110,7 +110,7 @@ export default function SchoolsPage() {
       setSchools(schoolsData.data);
       setTotalPages(schoolsData.totalPages);
     } catch (error) {
-      console.error("Failed to fetch school data", error);
+      // error handled silently
     } finally {
       setIsLoading(false);
     }

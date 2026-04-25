@@ -208,7 +208,6 @@ const StripeElementsPayment: React.FC<StripeElementsPaymentProps> = ({
       }
 
       const data = await response.json();
-      console.log("Payment Intent response:", data);
 
       if (data.clientSecret) {
         setClientSecret(data.clientSecret);
@@ -217,7 +216,6 @@ const StripeElementsPayment: React.FC<StripeElementsPaymentProps> = ({
         throw new Error("No client secret received from server");
       }
     } catch (error) {
-      console.error("Failed to create payment intent:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to initialize payment";
       onError?.(errorMessage);
     } finally {

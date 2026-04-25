@@ -50,8 +50,8 @@ export default function CompensationPage() {
         setSalaryData(salary);
         setColData(col);
       } catch (error) {
-        console.error("Failed to fetch compensation data", error);
-      } finally {
+      // error handled silently
+    } finally {
         setLoading(false);
       }
     };

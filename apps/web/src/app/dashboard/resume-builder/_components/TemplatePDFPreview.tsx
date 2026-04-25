@@ -33,7 +33,6 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
         });
         setLoadingPDF(false);
       }).catch((error) => {
-        console.error('Failed to load PDF components:', error);
         setLoadingPDF(false);
       });
     }
@@ -268,7 +267,6 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
         </Document>
       );
     } catch (error) {
-      console.error('Error rendering PDF template:', error);
       return null;
     }
   }, [pdfComponents, data, templateId]);

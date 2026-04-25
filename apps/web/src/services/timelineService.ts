@@ -307,12 +307,12 @@ async function transformPCAToEvents(
           }
         }
       } catch (error) {
-        console.warn("Could not fetch PCA results for timeline:", error);
-      }
+      // error handled silently
+    }
     }
   } catch (error) {
-    console.warn("Error transforming PCA to timeline events:", error);
-  }
+      // error handled silently
+    }
 
   return events;
 }

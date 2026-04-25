@@ -47,8 +47,8 @@ export default function MarketPage() {
         setYouthEmployment(youth);
         setInsights(mkt);
       } catch (error) {
-        console.error("Failed to fetch market data", error);
-      } finally {
+      // error handled silently
+    } finally {
         setLoading(false);
       }
     };

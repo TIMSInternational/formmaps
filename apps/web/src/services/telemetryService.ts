@@ -434,7 +434,6 @@ class TelemetryService {
       });
     } catch (error) {
       // On failure, add events back to queue for retry
-      console.error("[Telemetry] Failed to send events:", error);
 
       // If 401/403 (unauthorized), stop trying and clear queue to prevent loops
       if (error instanceof Response && (error.status === 401 || error.status === 403)) {

@@ -40,8 +40,8 @@ export default function DemographicsPage() {
         setWorkMode(wm);
         setDiversity(div);
       } catch (error) {
-        console.error("Failed to fetch demographics data", error);
-      } finally {
+      // error handled silently
+    } finally {
         setLoading(false);
       }
     };

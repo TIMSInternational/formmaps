@@ -67,11 +67,9 @@ export function CoachesTable({ onEdit }: CoachesTableProps) {
         ) {
           setCoaches(anyResponse.data.data);
         } else {
-          console.error("Unexpected API response format:", response);
           setCoaches([]);
         }
       } catch (error) {
-        console.error("Failed to fetch coaches:", error);
         toast.error(t("admin.coaches.loadingFailed"));
       } finally {
         setIsLoading(false);

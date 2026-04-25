@@ -155,7 +155,7 @@ const EvaluationForm: React.FC<EvaluationFormProps> = ({
       const evaluationResponses = convertToEvaluationResponses();
       await onSave(evaluationResponses);
     } catch (error) {
-      console.error('Error saving responses:', error);
+      // error handled silently
     } finally {
       setIsSaving(false);
     }
@@ -194,7 +194,7 @@ const EvaluationForm: React.FC<EvaluationFormProps> = ({
       const duration = Date.now() - startTimeRef.current;
       telemetry.trackAssessment('complete', 'evaluation', Math.round(progress), duration);
     } catch (error) {
-      console.error('Error submitting evaluation:', error);
+      // error handled silently
     } finally {
       setIsSubmitting(false);
     }

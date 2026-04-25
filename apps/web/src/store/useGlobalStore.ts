@@ -224,7 +224,6 @@ export const useGlobalStore = create<GlobalState>()(
           isAuthenticated: false,
         },
         setUser: (userData) => {
-          console.log("userData", userData)
           set((state) => ({
             user: { ...state.user, ...userData, isAuthenticated: true },
           }))
@@ -267,7 +266,6 @@ export const useGlobalStore = create<GlobalState>()(
 
               if (tokenExpired === true) {
                 // Token is expired - clear it and reset state
-                console.log("[Auth] Token expired, clearing session");
                 localStorage.removeItem("token");
                 set({
                   user: {

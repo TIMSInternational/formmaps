@@ -52,8 +52,8 @@ export default function CoachSettingsPage() {
           [];
         setPayouts(Array.isArray(payoutItems) ? payoutItems : []);
       } catch (e) {
-        console.error("Failed to preload settings data:", e);
-      } finally {
+      // error handled silently
+    } finally {
         setIsLoading(false);
       }
     };

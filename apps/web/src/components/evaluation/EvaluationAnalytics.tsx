@@ -85,7 +85,7 @@ const EvaluationAnalytics: React.FC<EvaluationAnalyticsProps> = ({
         generateAnalytics(sessionData, responseData);
       }
     } catch (error) {
-      console.error('Error loading analytics data:', error);
+      // error handled silently
     } finally {
       setLoading(false);
     }

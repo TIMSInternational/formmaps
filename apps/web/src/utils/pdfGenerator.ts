@@ -187,8 +187,8 @@ export const generateAssessmentPDF = async (
     }
 
   } catch (error) {
-    console.error("Error generating PDF:", error);
-  } finally {
+      // error handled silently
+    } finally {
     // Cleanup
     root.unmount();
     document.body.removeChild(container);

@@ -16,7 +16,6 @@ export default function StripeTestButton({
     setResult(null);
 
     try {
-      console.log("🧪 Testing Stripe Checkout Session API...");
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/stripe/create-checkout-session`,
@@ -37,11 +36,9 @@ export default function StripeTestButton({
         }
       );
 
-      console.log("📡 Response status:", response.status);
 
       if (response.ok) {
         const data = await response.json();
-        console.log("✅ API Response:", data);
 
         if (data.sessionUrl) {
           setResult(`✅ SUCCESS! Session created: ${data.sessionId}`);
@@ -61,11 +58,9 @@ export default function StripeTestButton({
         }
       } else {
         const errorText = await response.text();
-        console.error("❌ API Error:", errorText);
         setResult(`❌ API Error (${response.status}): ${errorText}`);
       }
     } catch (error) {
-      console.error("💥 Test failed:", error);
       setResult(
         `💥 Test failed: ${
           error instanceof Error ? error.message : "Unknown error"
@@ -81,7 +76,6 @@ export default function StripeTestButton({
     setResult(null);
 
     try {
-      console.log("🧪 Testing existing create-payload API...");
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/stripe/create-payload`,
@@ -100,11 +94,9 @@ export default function StripeTestButton({
         }
       );
 
-      console.log("📡 Response status:", response.status);
 
       if (response.ok) {
         const data = await response.json();
-        console.log("✅ Existing API Response:", data);
         setResult(
           `✅ Existing API works! Payment Intent: ${
             data.paymentIntentId || data.clientSecret || "Created"
@@ -112,11 +104,9 @@ export default function StripeTestButton({
         );
       } else {
         const errorText = await response.text();
-        console.error("❌ Existing API Error:", errorText);
         setResult(`❌ Existing API Error (${response.status}): ${errorText}`);
       }
     } catch (error) {
-      console.error("💥 Existing API test failed:", error);
       setResult(
         `💥 Existing API test failed: ${
           error instanceof Error ? error.message : "Unknown error"

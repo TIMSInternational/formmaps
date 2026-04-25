@@ -80,8 +80,8 @@ export default function BookCounselorPage() {
           }
         }
       } catch (err) {
-        console.error("Failed to load counselors", err);
-      } finally {
+      // error handled silently
+    } finally {
         setLoadingCounselors(false);
       }
     }

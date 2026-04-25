@@ -43,7 +43,7 @@ export function useMILData() {
         );
       }
     } catch (error) {
-      console.warn("Could not extract user ID from token:", error);
+      // error handled silently
     }
     return "unknown";
   };
@@ -81,11 +81,8 @@ export function useMILData() {
 
           examStatuses = { completed, inProgress, notStarted };
         } catch (apiError) {
-          console.warn(
-            "Failed to load enhanced exam history, falling back to localStorage:",
-            apiError
-          );
-        }
+      // error handled silently
+    }
       }
 
       // Fallback to localStorage for backward compatibility

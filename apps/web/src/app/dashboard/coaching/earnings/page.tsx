@@ -76,7 +76,6 @@ export default function EarningsPage() {
       setEarningsHistory(historyData);
       setError(null);
     } catch (error) {
-      console.error("Failed to fetch earnings data:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load earnings data";
       setError(errorMessage);
@@ -164,7 +163,6 @@ export default function EarningsPage() {
       await exportCoachEarnings("csv");
       toast.success("Earnings report exported successfully");
     } catch (error) {
-      console.error("Export failed:", error);
       toast.error("Failed to export earnings report");
     } finally {
       setIsExporting(false);

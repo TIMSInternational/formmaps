@@ -378,7 +378,6 @@ export function clearAllMILTestData(): void {
       localStorage.removeItem(key);
     }
   });
-  console.log("Cleared all MIL test data");
 }
 
 /**
@@ -634,7 +633,6 @@ export function populateMILTestData(
     localStorage.setItem(`mil_session_${exam.id}`, JSON.stringify(session));
   });
 
-  console.log("Populated MIL test data");
 }
 
 // Make functions available globally in development

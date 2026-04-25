@@ -44,18 +44,13 @@ export default function MILPracticeExamples({
         new Array(customPracticeQuestions.length).fill(false)
       );
     } catch (error) {
-      console.error("Failed to load practice questions:", error);
+      // error handled silently
     } finally {
       setLoading(false);
     }
   };
 
   const createCustomPracticeQuestions = (examId: MILExamId): MILQuestion[] => {
-    console.log(
-      "🏗️ [LIA PRACTICE] Creating custom questions for examId:",
-      examId
-    );
-
     const baseQuestions = [
       // Pattern Recognition Practice Questions (similar to instruction examples)
       {
@@ -116,10 +111,8 @@ export default function MILPracticeExamples({
     ];
 
     // Return appropriate questions based on exam type
-    console.log("🎯 [LIA PRACTICE] Filtering questions for exam type:", examId);
 
     if (examId.includes("pattern-recognition")) {
-      console.log("📐 [LIA PRACTICE] Using Pattern Recognition questions");
       return [
         {
           questionNumber: 1,
@@ -171,7 +164,6 @@ export default function MILPracticeExamples({
         },
       ];
     } else if (examId.includes("verbal-reasoning")) {
-      console.log("💬 [LIA PRACTICE] Using Verbal Reasoning questions");
       return [
         {
           questionNumber: 1,
@@ -211,7 +203,6 @@ export default function MILPracticeExamples({
         },
       ];
     } else if (examId.includes("working-memory")) {
-      console.log("🧠 [LIA PRACTICE] Using Working Memory questions");
       return [
         {
           questionNumber: 1,
@@ -263,7 +254,6 @@ export default function MILPracticeExamples({
         },
       ];
     } else if (examId.includes("numeric-velocity")) {
-      console.log("🔢 [LIA PRACTICE] Using Numeric Velocity questions");
       return [
         {
           questionNumber: 1,
@@ -291,7 +281,6 @@ export default function MILPracticeExamples({
         },
       ];
     } else if (examId.includes("visual-rotation")) {
-      console.log("🔄 [LIA PRACTICE] Using Visual Rotation questions");
       return [
         {
           questionNumber: 1,
@@ -360,9 +349,7 @@ export default function MILPracticeExamples({
     }
 
     // Default: return first 2 questions for any other exam type
-    console.log("🔧 [LIA PRACTICE] Using default questions (first 2)");
     const defaultQuestions = baseQuestions.slice(0, 2);
-    console.log("🔧 [LIA PRACTICE] Default questions:", defaultQuestions);
     return defaultQuestions;
   };
 
@@ -374,15 +361,6 @@ export default function MILPracticeExamples({
     if (selectedAnswer === null) return;
 
     const question = practiceQuestions[currentQuestion];
-    console.log("🧪 [LIA PRACTICE] Validating answer:", {
-      questionType: question.type,
-      selectedAnswer,
-      hasOptions: question.data.options ? true : false,
-      hasLetterPairs: question.data.letterPairs ? true : false,
-      hasCorrectAnswer: question.correctAnswer !== undefined,
-      correctAnswer: question.correctAnswer,
-    });
-
     // Use custom validation for practice questions
     const correct = validatePracticeAnswer(question, selectedAnswer);
 
@@ -406,10 +384,6 @@ export default function MILPracticeExamples({
       question.data.letterSequence.outerLetters
     ) {
       const selectedLetter = question.data.letterSequence.outerLetters[answer];
-      console.log("🔤 [LIA PRACTICE] Letter sequence validation:", {
-        selectedLetter,
-        correctAnswer: question.correctAnswer,
-      });
       return selectedLetter === question.correctAnswer;
     }
 
@@ -419,28 +393,16 @@ export default function MILPracticeExamples({
       const sortedNumbers = [...numbers].sort((a, b) => a - b);
       const extremes = [sortedNumbers[0], sortedNumbers[2]]; // [lowest, highest]
       const selectedNumber = extremes[answer];
-      console.log("🔢 [LIA PRACTICE] Number sequence validation:", {
-        selectedNumber,
-        correctAnswer: question.correctAnswer,
-      });
       return selectedNumber === question.correctAnswer;
     }
 
     // Handle visual rotation questions
     if (question.data.visualRotationItems) {
-      console.log("🔄 [LIA PRACTICE] Visual rotation validation:", {
-        answer,
-        correctAnswer: question.correctAnswer,
-      });
       return answer === question.correctAnswer;
     }
 
     // Handle options-based questions (Verbal Reasoning, etc.)
     if (question.data.options && question.data.options.length > 0) {
-      console.log("🔤 [LIA PRACTICE] Options-based validation:", {
-        answerIndex: answer,
-        correctAnswer: question.correctAnswer,
-      });
       return answer === question.correctAnswer;
     }
 
@@ -449,21 +411,15 @@ export default function MILPracticeExamples({
       question.correctAnswer !== undefined &&
       typeof question.correctAnswer === "number"
     ) {
-      console.log("🔢 [LIA PRACTICE] Numeric validation:", {
-        answer,
-        correctAnswer: question.correctAnswer,
-      });
       return answer === question.correctAnswer;
     }
 
     // Fallback to pattern recognition calculation if it's a letter pairs question
     if (question.data.letterPairs) {
-      console.log("🔤 [LIA PRACTICE] Calculating from letter pairs");
       const correctAnswer = calculateMatchingPairs(question.data.letterPairs);
       return answer === correctAnswer;
     }
 
-    console.warn("⚠️ [LIA PRACTICE] No validation method available");
     return false;
   };
 
@@ -709,11 +665,6 @@ export default function MILPracticeExamples({
   const renderAnswerOptions = (question: MILQuestion) => {
     // Check if question has API-provided options (for Verbal Reasoning, etc.)
     if (question.data.options && question.data.options.length > 0) {
-      console.log(
-        "🔤 [LIA PRACTICE] Using API-provided options:",
-        question.data.options
-      );
-
       return question.data.options.map((option, index) => (
         <button
           key={index}
@@ -735,11 +686,6 @@ export default function MILPracticeExamples({
       question.data.letterSequence &&
       question.data.letterSequence.outerLetters
     ) {
-      console.log(
-        "🔤 [LIA PRACTICE] Using letter sequence options:",
-        question.data.letterSequence.outerLetters
-      );
-
       return question.data.letterSequence.outerLetters.map((letter, index) => (
         <button
           key={index}
@@ -764,11 +710,6 @@ export default function MILPracticeExamples({
       const highest = sortedNumbers[2];
       const extremes = [lowest, highest];
 
-      console.log(
-        "🔢 [LIA PRACTICE] Using numeric velocity options:",
-        extremes
-      );
-
       return extremes.map((number, index) => (
         <button
           key={index}
@@ -792,13 +733,6 @@ export default function MILPracticeExamples({
       const maxOptions = Math.min(numPairs, 4); // Cap at 4 for UI reasons
       const options = Array.from({ length: maxOptions + 1 }, (_, i) => i); // 0 to maxOptions
 
-      console.log("🔄 [LIA PRACTICE] Using visual rotation options:", {
-        totalItems: items.length,
-        numPairs,
-        maxOptions,
-        options,
-      });
-
       return options.map((option) => (
         <button
           key={option}
@@ -816,7 +750,6 @@ export default function MILPracticeExamples({
     }
 
     // Default numeric options (for Pattern Recognition, etc.)
-    console.log("🔢 [LIA PRACTICE] Using default numeric options (0-4)");
 
     return [0, 1, 2, 3, 4].map((option) => (
       <button
@@ -868,17 +801,6 @@ export default function MILPracticeExamples({
   const currentQ = practiceQuestions[currentQuestion];
 
   // Debug log to see the current question structure
-  console.log("🔍 [LIA PRACTICE] Current question:", {
-    questionNumber: currentQ?.questionNumber,
-    questionText: currentQ?.questionText,
-    type: currentQ?.type,
-    hasOptions: currentQ?.data?.options ? true : false,
-    options: currentQ?.data?.options,
-    hasLetterPairs: currentQ?.data?.letterPairs ? true : false,
-    correctAnswer: currentQ?.correctAnswer,
-    explanation: currentQ?.explanation,
-  });
-
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">

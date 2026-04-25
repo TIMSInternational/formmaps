@@ -63,8 +63,8 @@ export function PricingSettingsTab({
           }
         }
       } catch (error) {
-        console.error("Failed to fetch pricing:", error);
-      } finally {
+      // error handled silently
+    } finally {
         setIsLoading(false);
       }
     };
@@ -93,11 +93,9 @@ export function PricingSettingsTab({
         }
       } catch (e) {
         // swallow: best-effort refresh
-        console.warn("Failed to refresh coach details after save", e);
       }
       toast.success("Pricing updated successfully");
     } catch (error) {
-      console.error("Failed to update pricing:", error);
       toast.error("Failed to update pricing");
     } finally {
       setIsSaving(false);

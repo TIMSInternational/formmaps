@@ -137,16 +137,9 @@ export function PaymentSettingsTab({
       const earningsResult = earningsData.status === 'fulfilled' ? earningsData.value : null;
       const earningsHistoryResult = earningsHistoryData.status === 'fulfilled' ? earningsHistoryData.value : null;
 
-      // Log failed requests for debugging
-      if (bankData.status === 'rejected') console.warn('Bank account fetch failed:', bankData.reason);
-      if (payoutsData.status === 'rejected') console.warn('Payouts fetch failed:', payoutsData.reason);
-      if (payoutSettingsData.status === 'rejected') console.warn('Payout settings fetch failed:', payoutSettingsData.reason);
-      if (earningsData.status === 'rejected') console.warn('Earnings fetch failed:', earningsData.reason);
-      if (earningsHistoryData.status === 'rejected') console.warn('Earnings history fetch failed:', earningsHistoryData.reason);
 
       // Handle both {data: {...}} and direct response formats
       const account = (bankResult as any)?.data?.data ?? (bankResult as any)?.data ?? bankResult;
-      console.log('Parsed account data:', account);
       
       const payoutItems: Payout[] = Array.isArray(payoutsResult?.items)
         ? payoutsResult.items
@@ -178,7 +171,6 @@ export function PaymentSettingsTab({
         onboardingLink: account?.OnboardingLink || account?.onboardingLink,
         requiresOnboarding: Boolean(account?.RequiresOnboarding || account?.requiresOnboarding),
       };
-      console.log('Final account object:', accountObj);
 
       const computedTotalPages =
         (payoutsResult as any)?.totalPages ??
@@ -188,7 +180,6 @@ export function PaymentSettingsTab({
           : undefined);
 
       setStripeAccount(accountObj);
-      console.log('✅ Set stripeAccount:', accountObj);
       if (onBankAccountUpdated) onBankAccountUpdated(accountObj);
 
       setPayouts(payoutItems || []);
@@ -224,9 +215,7 @@ export function PaymentSettingsTab({
           accountType: (account.accountType || account.AccountType || "checking") as "checking" | "savings",
         };
         setBankAccountForm(formData);
-        console.log('✅ Set bankAccountForm:', formData);
       } else {
-        console.log('⚠️ NOT setting bankAccountForm - no account data');
       }
 
       setEarningsSummary((earningsResult as any)?.data || earningsResult || null);
@@ -234,7 +223,6 @@ export function PaymentSettingsTab({
         (earningsHistoryResult as any)?.data || (earningsHistoryResult as any) || [];
       setEarningsHistory(Array.isArray(earningsHistoryItems) ? earningsHistoryItems : []);
     } catch (error) {
-      console.error("Error in fetchStripeAccount:", error);
       toast.error("Failed to load payment settings");
     } finally {
       setIsLoading(false);
@@ -277,7 +265,6 @@ export function PaymentSettingsTab({
         routingNumber: bankAccountForm.routingNumber,
       });
 
-      console.log('Bank account save response:', response);
       toast.success(response.message || "Bank account linked successfully");
       
       // Mask sensitive info after successful save
@@ -289,7 +276,6 @@ export function PaymentSettingsTab({
     } catch (error: any) {
       // Revert optimistic update on error
       setStripeAccount(null);
-      console.error("Bank account save error:", error);
       toast.error(error?.message || "Failed to save bank account");
     } finally {
       setIsSavingBankAccount(false);
@@ -323,7 +309,6 @@ export function PaymentSettingsTab({
       toast.success(response.message || "Bank account linked successfully");
       fetchStripeAccount(); // Refresh account status
     } catch (error: any) {
-      console.error("Stripe connection error:", error);
       toast.error(error.message || "Failed to connect Stripe account");
     } finally {
       setIsConnecting(false);
@@ -406,14 +391,6 @@ export function PaymentSettingsTab({
   }
 
   // Debug: Log current state values
-  console.log('🔍 RENDER CHECK:', {
-    'stripeAccount?.connected': stripeAccount?.connected,
-    'bankAccountForm.bankName': bankAccountForm.bankName,
-    'showForm': !(stripeAccount?.connected && bankAccountForm.bankName),
-    'stripeAccount': stripeAccount,
-    'bankAccountForm': bankAccountForm
-  });
-
   return (
     <div className="p-6 sm:p-10 space-y-8">
       <div>

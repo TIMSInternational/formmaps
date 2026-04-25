@@ -23,15 +23,12 @@ export function useSchoolAdminAccess(): SchoolAdminAccessResult {
         setLoading(true);
         setError(null);
 
-        console.log("🔍 useSchoolAdminAccess: Starting verification...");
         const result = await verifySchoolAdminAccess();
-        console.log("🔍 useSchoolAdminAccess: Verification result:", result);
 
         setIsSchoolAdmin(result.isSchoolAdmin);
         setSchoolId(result.schoolId);
         setSchoolName(result.schoolName);
       } catch (err) {
-        console.error("School admin access verification error:", err);
         setError(
           err instanceof Error ? err.message : "Failed to verify school admin access"
         );

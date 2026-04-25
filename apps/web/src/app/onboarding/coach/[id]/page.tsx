@@ -63,8 +63,8 @@ export default function CoachOnboardingPage({
         const parsedData = JSON.parse(savedData);
         setData((prev) => ({ ...prev, ...parsedData }));
       } catch (e) {
-        console.error("Error parsing saved onboarding data", e);
-      }
+      // error handled silently
+    }
     }
 
     if (savedStep) {
@@ -100,12 +100,10 @@ export default function CoachOnboardingPage({
             setCurrentStep(5);
             toast.success(`${provider === 'google' ? 'Google' : 'Outlook'} Calendar connected successfully!`);
           } else {
-            console.error(`${provider} Calendar connection verification failed`, status);
             toast.error(`Failed to verify ${provider} Calendar connection. Please try again.`);
             setCurrentStep(4); // Ensure we are on the Calendar Sync step
           }
         } catch (error) {
-          console.error(`Error verifying ${provider} Calendar connection:`, error);
           toast.error(`An error occurred while connecting ${provider} Calendar.`);
           setCurrentStep(4);
         } finally {
@@ -154,7 +152,6 @@ export default function CoachOnboardingPage({
           return prev;
         });
       } catch (error) {
-        console.error("Failed to fetch onboarding status:", error);
         // toast.error("Failed to verify invitation.");
       } finally {
         setIsLoading(false);
@@ -202,7 +199,6 @@ export default function CoachOnboardingPage({
 
       const response = await submitOnboardingData(coachId, apiData);
 
-      console.log("Onboarding submitted:", response);
       toast.success("Onboarding completed successfully!");
 
       // Clear localStorage on successful submission
@@ -214,7 +210,6 @@ export default function CoachOnboardingPage({
       // Redirect to dashboard
       router.push(response.redirectUrl || `/dashboard`);
     } catch (error) {
-      console.error("Submission error:", error);
       toast.error("Failed to submit onboarding data. Please try again.");
     } finally {
       setIsLoading(false);

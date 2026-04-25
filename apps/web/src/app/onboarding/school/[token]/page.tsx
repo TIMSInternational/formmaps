@@ -52,8 +52,8 @@ export default function SchoolAdminOnboardingPage({
         const parsedData = JSON.parse(savedData);
         setData((prev) => ({ ...prev, ...parsedData }));
       } catch (e) {
-        console.error("Error parsing saved onboarding data", e);
-      }
+      // error handled silently
+    }
     }
 
     if (savedStep) {
@@ -113,7 +113,6 @@ export default function SchoolAdminOnboardingPage({
           }));
         }
       } catch (error) {
-        console.error("Failed to fetch onboarding status:", error);
         toast.error("Failed to verify invitation. Please try again.");
       } finally {
         setIsLoading(false);
@@ -158,7 +157,6 @@ export default function SchoolAdminOnboardingPage({
       // Redirect to school admin dashboard
       router.push(response.redirectUrl || "/school-admin");
     } catch (error) {
-      console.error("Submission error:", error);
       toast.error("Failed to submit onboarding data. Please try again.");
     } finally {
       setIsLoading(false);

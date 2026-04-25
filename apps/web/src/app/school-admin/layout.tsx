@@ -13,7 +13,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     if (!loading && !isSchoolAdmin) {
       // For development, allow access. In production, redirect to login
       // router.push("/login");
-      console.warn("School admin access not verified - allowing access for development");
     }
   }, [isSchoolAdmin, loading, router]);
 

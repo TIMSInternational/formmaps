@@ -10,12 +10,10 @@ export default function BenchmarksLayout({
 }) {
   const handleExportCSV = () => {
     // Implement export functionality
-    console.log("Exporting CSV...");
   };
 
   const handleExportImage = () => {
     // Implement export functionality
-    console.log("Exporting Image...");
   };
 
   return (

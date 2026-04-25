@@ -40,7 +40,6 @@ export function useCompleteAssessment() {
       });
     },
     onError: (error, { userId }) => {
-      console.error('Failed to complete assessment:', error);
       // Rollback optimistic update
       queryClient.invalidateQueries({ queryKey: assessmentKeys.dashboardSummary(userId) });
     },
@@ -75,7 +74,6 @@ export function useStartAssessment() {
       });
     },
     onError: (error, { userId }) => {
-      console.error('Failed to start assessment:', error);
       // Rollback optimistic update
       queryClient.invalidateQueries({ queryKey: assessmentKeys.dashboardSummary(userId) });
     },
@@ -103,7 +101,6 @@ export function useUpdateAssessmentProgress() {
       });
     },
     onError: (error) => {
-      console.error('Failed to update assessment progress:', error);
     },
   });
 }
@@ -121,7 +118,6 @@ export function useRefreshAssessmentData() {
       invalidateAll();
     },
     onError: (error) => {
-      console.error('Failed to refresh assessment data:', error);
     },
   });
 }

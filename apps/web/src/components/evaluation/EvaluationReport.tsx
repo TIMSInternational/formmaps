@@ -79,7 +79,7 @@ const EvaluationReport: React.FC<EvaluationReportProps> = ({
         generateReport(sessionData, responseData, evaluators);
       }
     } catch (error) {
-      console.error('Error loading report data:', error);
+      // error handled silently
     } finally {
       setLoading(false);
     }
@@ -255,7 +255,7 @@ const EvaluationReport: React.FC<EvaluationReportProps> = ({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      // error handled silently
     } finally {
       setGenerating(false);
     }
@@ -329,16 +329,16 @@ const EvaluationReport: React.FC<EvaluationReportProps> = ({
           url: window.location.href
         });
       } catch (error) {
-        console.error('Error sharing:', error);
-      }
+      // error handled silently
+    }
     } else {
       // Fallback: copy URL to clipboard
       try {
         await navigator.clipboard.writeText(window.location.href);
         // You could show a toast notification here
       } catch (error) {
-        console.error('Error copying to clipboard:', error);
-      }
+      // error handled silently
+    }
     }
   };
 

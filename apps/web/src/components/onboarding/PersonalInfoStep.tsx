@@ -68,8 +68,8 @@ export function PersonalInfoStep({ data, onNext }: PersonalInfoStepProps) {
         const { url } = await uploadProfileImage(file);
         setImagePreview(url);
       } catch (error) {
-        console.error("Failed to upload image:", error);
-      }
+      // error handled silently
+    }
     }
   };
 

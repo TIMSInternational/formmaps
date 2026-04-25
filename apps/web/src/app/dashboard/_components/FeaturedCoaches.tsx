@@ -27,8 +27,8 @@ export function FeaturedCoaches() {
         // @ts-expect-error - API response structure mismatch fix
         setCoaches(response.data.data || response.data);
       } catch (error) {
-        console.error("Failed to fetch featured coaches:", error);
-      } finally {
+      // error handled silently
+    } finally {
         setIsLoading(false);
       }
     };

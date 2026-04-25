@@ -131,7 +131,6 @@ export function BookingModal({
         );
         setSlotsData(data);
       } catch (error) {
-        console.error("Failed to fetch slots:", error);
         toast.error("Could not load available times");
       } finally {
         setIsLoadingSlots(false);
@@ -264,7 +263,6 @@ export function BookingModal({
           );
           // Redirecting...
         } catch (paymentError) {
-          console.error("Payment initialization failed:", paymentError);
           toast.error("Booking created but payment failed to initialize.");
           onClose();
         }
@@ -280,7 +278,6 @@ export function BookingModal({
         onClose();
       }
     } catch (error) {
-      console.error("Booking failed:", error);
       toast.error("Failed to book session. Please try again.");
     } finally {
       setIsBooking(false);

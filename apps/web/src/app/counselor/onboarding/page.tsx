@@ -125,7 +125,6 @@ function OnboardingContent() {
       const { url } = await getCalendarAuthUrl(provider, email, window.location.href);
       window.location.href = url;
     } catch (err) {
-      console.error("Calendar connect failed:", err);
       toast.error("Failed to start calendar connection. You can connect later in Settings.");
       setIsConnectingCalendar(false);
     }

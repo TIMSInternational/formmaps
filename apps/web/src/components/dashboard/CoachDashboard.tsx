@@ -121,8 +121,6 @@ export function CoachDashboard() {
             getCoachStudents(),
           ]);
 
-        console.log("📦 Raw API response - sessions:", sessionsData);
-        console.log("📦 Raw API response - availability:", availabilityData);
 
         // Handle different response structures
         const rawSessions = Array.isArray((sessionsData as any)?.data?.data)
@@ -156,8 +154,8 @@ export function CoachDashboard() {
                 time = `${time} - ${format(endDate, "h:mm a")}`;
               }
             } catch (e) {
-              console.error("Error parsing date:", e);
-            }
+      // error handled silently
+    }
           }
 
           return {
@@ -203,13 +201,7 @@ export function CoachDashboard() {
             INITIAL_AVAILABILITY,
         );
 
-        console.log("✅ Coach dashboard data loaded from API:", {
-          upcoming,
-          past,
-          availability: availabilityData,
-        });
       } catch (error: any) {
-        console.error("❌ Failed to fetch coach dashboard data:", error);
         setError(t("coaching.dashboard.failedToLoad"));
       } finally {
         setIsLoading(false);
@@ -256,7 +248,6 @@ export function CoachDashboard() {
         const response = await getCoachAvailableSlots(user.id, dateStr);
         setAvailableSlots(response.slots || []);
       } catch (error) {
-        console.error("Failed to fetch slots", error);
         toast.error(t("coaching.dashboard.failedToLoadSlots"));
       } finally {
         setIsLoadingSlots(false);

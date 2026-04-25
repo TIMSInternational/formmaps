@@ -43,8 +43,8 @@ export default function CounselorOnboardingPage({
         const parsedData = JSON.parse(savedData);
         setData((prev) => ({ ...prev, ...parsedData }));
       } catch (e) {
-        console.error("Error parsing saved onboarding data", e);
-      }
+      // error handled silently
+    }
     }
 
     if (savedStep) {
@@ -95,7 +95,6 @@ export default function CounselorOnboardingPage({
         setEmail(status.email);
 
       } catch (error: any) {
-        console.error("Failed to fetch onboarding status:", error);
         toast.error(error.message || "Failed to verify invitation. Please try again.");
         router.push("/login");
       } finally {
@@ -146,7 +145,6 @@ export default function CounselorOnboardingPage({
       // Redirect to counselor dashboard
       router.push("/counselor");
     } catch (error: any) {
-      console.error("Submission error:", error);
       toast.error(error.message || "Failed to submit onboarding data. Please try again.");
     } finally {
       setIsLoading(false);

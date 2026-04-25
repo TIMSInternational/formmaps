@@ -37,7 +37,6 @@ export default function PaymentSuccess() {
         })
         .catch((err) => {
           setStatus("error");
-          console.error("Payment verification error:", err);
         });
     } else {
       setStatus("error");

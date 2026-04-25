@@ -9,7 +9,6 @@ export function LanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
 
   // Debug logging
-  console.log("LanguageSwitcher rendered, current language:", i18n.language);
 
   const languages = [
     { code: "en", name: t("language.english"), flag: "🇺🇸" },

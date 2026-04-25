@@ -31,8 +31,8 @@ export function ProfileOverview() {
         setProfile(profileData);
         setActivities(activityData.slice(0, 5)); // Only show latest 5
       } catch (error) {
-        console.error("Failed to fetch profile overview:", error);
-      } finally {
+      // error handled silently
+    } finally {
         setIsLoading(false);
       }
     };

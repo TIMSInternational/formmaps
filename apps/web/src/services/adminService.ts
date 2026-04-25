@@ -119,8 +119,8 @@ async function verifyAdminViaRoles(
         const roleDetails = await getRoleById(roleId);
         roleName = roleDetails.name;
       } catch (error) {
-        console.warn("Failed to get role details from API:", error);
-      }
+      // error handled silently
+    }
     }
 
     // Check if the role name indicates admin access
@@ -158,7 +158,7 @@ function simulateAdminVerification(token: string): AdminVerificationResponse {
       const user = JSON.parse(userData);
       userRole = user.role || "user";
     } catch (e) {
-      console.warn("Failed to parse user data from localStorage");
+      // error handled silently
     }
   }
 

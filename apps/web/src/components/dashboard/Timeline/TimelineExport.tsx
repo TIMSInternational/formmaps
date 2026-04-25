@@ -52,8 +52,8 @@ export function TimelineExport({
         ).toBlob();
         saveAs(blob, `timeline-report-${new Date().toISOString().split("T")[0]}.pdf`);
       } catch (error) {
-        console.error("Error generating PDF:", error);
-      } finally {
+      // error handled silently
+    } finally {
         setIsGeneratingPDF(false);
       }
     }

@@ -38,8 +38,8 @@ export function AdminStats() {
           ],
         });
       } catch (error) {
-        console.error("Failed to fetch admin stats:", error);
-      } finally {
+      // error handled silently
+    } finally {
         setLoading(false);
       }
     };

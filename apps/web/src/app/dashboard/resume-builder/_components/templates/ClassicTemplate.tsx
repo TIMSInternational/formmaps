@@ -187,13 +187,6 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
   data,
 }) => {
   // Debug logging
-  console.log("=== CLASSIC TEMPLATE RENDERING ===");
-  console.log("Personal Info received:", data.personalInfo);
-  console.log("Professional Title:", data.personalInfo.professionalTitle);
-  console.log("GitHub:", data.personalInfo.github);
-  console.log("Twitter:", data.personalInfo.twitter);
-  console.log("Nationality:", data.personalInfo.nationality);
-  console.log("Date of Birth:", data.personalInfo.dateOfBirth);
 
   // Group skills by category
   const skillsByCategory = data.skills.reduce((acc, skill) => {

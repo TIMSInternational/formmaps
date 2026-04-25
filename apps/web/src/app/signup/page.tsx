@@ -148,7 +148,6 @@ export default function SignupPage() {
           userRoleId = studentRole.id;
         } catch {
           // Use fallback roleId if both fail
-          console.warn("Could not fetch default role, using fallback");
         }
       }
 

@@ -49,8 +49,8 @@ export function CalendarIntegrationPanel() {
           });
         }
       } catch (e) {
-        console.warn("Failed to check calendar status", e);
-      } finally {
+      // error handled silently
+    } finally {
         setIsLoading(false);
       }
     };
@@ -70,7 +70,6 @@ export function CalendarIntegrationPanel() {
       );
       window.location.href = url;
     } catch (error) {
-      console.error("Failed to initiate calendar connection:", error);
       toast.error(`Failed to connect to ${provider}`);
       setIsConnectingCalendar(false);
     }
@@ -86,7 +85,6 @@ export function CalendarIntegrationPanel() {
       setCalendarConnection({ connected: false, provider: null });
       toast.success("Calendar disconnected successfully");
     } catch (error) {
-      console.error("Failed to disconnect calendar:", error);
       toast.error("Failed to disconnect calendar");
     } finally {
       setIsConnectingCalendar(false);

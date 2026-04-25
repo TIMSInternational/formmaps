@@ -113,7 +113,6 @@ const EvaluationInvitations: React.FC<EvaluationInvitationsProps> = ({
   useEffect(() => {
     loadInvitationData();
   }, [sessionId]);
-  console.log(evaluators);
   const loadInvitationData = async () => {
     try {
       setLoading(true);
@@ -142,7 +141,7 @@ const EvaluationInvitations: React.FC<EvaluationInvitationsProps> = ({
         setInvitationStatuses(statuses);
       }
     } catch (error) {
-      console.error("Error loading invitation data:", error);
+      // error handled silently
     } finally {
       setLoading(false);
     }
@@ -204,7 +203,6 @@ const EvaluationInvitations: React.FC<EvaluationInvitationsProps> = ({
       for (const evaluatorId of selectedEvaluators) {
         const evaluator = evaluators.find((e) => e.id === evaluatorId);
         if (evaluator) {
-          console.log(evaluator);
           try {
             // Use resend email invitation for individual evaluators
             await resendInvitationLink(evaluator.groupId || evaluator.id);
@@ -218,17 +216,14 @@ const EvaluationInvitations: React.FC<EvaluationInvitationsProps> = ({
               ),
             );
           } catch (error) {
-            console.error(
-              `Failed to send invitation to ${evaluator.name}:`,
-              error,
-            );
-          }
+      // error handled silently
+    }
         }
       }
 
       setSelectedEvaluators([]);
     } catch (error) {
-      console.error("Error sending invitations:", error);
+      // error handled silently
     } finally {
       setSending(false);
     }
@@ -278,10 +273,9 @@ const EvaluationInvitations: React.FC<EvaluationInvitationsProps> = ({
           }),
         );
       } else {
-        console.error("Failed to send bulk invitations:", result.message);
       }
     } catch (error) {
-      console.error("Error sending bulk invitations:", error);
+      // error handled silently
     } finally {
       setSendingBulk(false);
     }
@@ -290,7 +284,6 @@ const EvaluationInvitations: React.FC<EvaluationInvitationsProps> = ({
   const handleResendEmail = async (invitationToken: string) => {
     try {
       setResendingEmails((prev) => new Set(prev).add(invitationToken));
-      console.log(invitationToken);
 
       // Find evaluator by invitationToken to get the groupId
       const evaluator = evaluators.find(
@@ -298,7 +291,6 @@ const EvaluationInvitations: React.FC<EvaluationInvitationsProps> = ({
       );
 
       if (!evaluator) {
-        console.error("Evaluator not found for token:", invitationToken);
         return;
       }
 
@@ -314,9 +306,8 @@ const EvaluationInvitations: React.FC<EvaluationInvitationsProps> = ({
       );
 
       // Show success message or update UI as needed
-      console.log("Email resent successfully");
     } catch (error) {
-      console.error("Error resending email:", error);
+      // error handled silently
     } finally {
       setResendingEmails((prev) => {
         const newSet = new Set(prev);
@@ -363,7 +354,7 @@ const EvaluationInvitations: React.FC<EvaluationInvitationsProps> = ({
 
       setSelectedEvaluators([]);
     } catch (error) {
-      console.error("Error sending reminders:", error);
+      // error handled silently
     } finally {
       setSending(false);
     }
@@ -375,7 +366,7 @@ const EvaluationInvitations: React.FC<EvaluationInvitationsProps> = ({
       await navigator.clipboard.writeText(link);
       // You could add a toast notification here
     } catch (error) {
-      console.error("Failed to copy link:", error);
+      // error handled silently
     }
   };
 

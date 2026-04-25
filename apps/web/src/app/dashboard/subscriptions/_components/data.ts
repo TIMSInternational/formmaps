@@ -172,6 +172,4 @@ export type { SubscriptionPlan as BillingOption, FeatureComparison, Subscription
 export { fetchSubscriptionPlans } from '@/services/subscriptionService';
 
 export async function createSubscription(billingOptionId: string) {
-  console.log('Legacy createSubscription called:', { billingOptionId });
-  console.warn('This function is deprecated. Use subscriptionService.createSubscription instead.');
 }

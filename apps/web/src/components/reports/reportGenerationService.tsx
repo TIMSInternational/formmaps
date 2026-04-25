@@ -28,7 +28,6 @@ export const generateLIAReport = async (data?: LIAReportData): Promise<void> => 
     const blob = await pdf(<LIAReportPDF data={reportData} />).toBlob();
     downloadBlob(blob, fileName);
   } catch (error) {
-    console.error('Error generating LIA report:', error);
     throw error;
   }
 };
@@ -42,7 +41,6 @@ export const generatePCAReport = async (data?: PCAReportData): Promise<void> => 
     const blob = await pdf(<PCAReportPDF data={reportData} />).toBlob();
     downloadBlob(blob, fileName);
   } catch (error) {
-    console.error('Error generating PCA report:', error);
     throw error;
   }
 };
@@ -76,19 +74,15 @@ export const generateReport = async (
       return generatePCAReport(options?.pcaData);
     case 'evaluation':
       // TODO: Implement
-      console.log('Evaluation report not yet implemented');
       return;
     case 'timeline':
       // TODO: Implement
-      console.log('Timeline report not yet implemented');
       return;
     case 'coaching':
       // TODO: Implement
-      console.log('Coaching report not yet implemented');
       return;
     case 'benchmark':
       // TODO: Implement
-      console.log('Benchmark report not yet implemented');
       return;
     default:
       throw new Error(`Unknown report type: ${type}`);

@@ -22,7 +22,6 @@ class PDFErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('PDF Error:', error, errorInfo);
     this.props.onError?.();
   }
 
@@ -107,7 +106,6 @@ export function LivePreview() {
         });
         setLoadingPDF(false);
       }).catch((error) => {
-        console.error('Failed to load PDF components:', error);
         setPdfError('Failed to load PDF components. Please try again.');
         setLoadingPDF(false);
       });
@@ -343,7 +341,6 @@ export function LivePreview() {
       </Document>
     );
     } catch (error) {
-      console.error('Error rendering LivePreview PDF template:', error);
       return null;
     }
   }, [pdfComponents, personalInfo, experience, education, skills]); // Dependencies for memoization

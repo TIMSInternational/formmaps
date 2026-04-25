@@ -106,8 +106,8 @@ export function AvailabilitySettingsTab({
           }
         }
       } catch (error) {
-        console.error("Failed to fetch availability:", error);
-      } finally {
+      // error handled silently
+    } finally {
         setIsLoading(false);
       }
     };
@@ -144,8 +144,8 @@ export function AvailabilitySettingsTab({
           });
         }
       } catch (e) {
-        console.warn("Failed to check calendar status", e);
-      }
+      // error handled silently
+    }
     };
 
     if (user?.id) {
@@ -165,7 +165,6 @@ export function AvailabilitySettingsTab({
       );
       window.location.href = url;
     } catch (error) {
-      console.error("Failed to initiate calendar connection:", error);
       toast.error(`Failed to connect to ${provider}`);
       setIsConnectingCalendar(false);
     }
@@ -182,7 +181,6 @@ export function AvailabilitySettingsTab({
       setCalendarConnection({ connected: false, provider: null });
       toast.success("Calendar disconnected successfully");
     } catch (error) {
-      console.error("Failed to disconnect calendar:", error);
       toast.error("Failed to disconnect calendar");
     } finally {
       setIsConnectingCalendar(false);
@@ -231,7 +229,6 @@ export function AvailabilitySettingsTab({
       if (onUpdated) onUpdated({ timezone, weeklySchedule: schedule });
       toast.success("Availability updated successfully");
     } catch (error) {
-      console.error("Failed to update availability:", error);
       toast.error("Failed to update availability");
     } finally {
       setIsSaving(false);

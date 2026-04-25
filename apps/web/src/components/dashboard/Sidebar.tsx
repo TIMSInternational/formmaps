@@ -138,7 +138,7 @@ export function Sidebar() {
         </Link>
         <button 
           className="w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-gray-800 transition-colors"
-          onClick={() => console.log('Logout')}
+          onClick={() => {}}
         >
           <FiLogOut className="mr-3 text-lg" aria-hidden="true" />
           <span>{t("nav.logout", "Logout")}</span>

@@ -62,8 +62,8 @@ export default function CoachesPage() {
         const data = await getCoachStats();
         setStats(data);
       } catch (error) {
-        console.error("Failed to fetch coach stats:", error);
-      } finally {
+      // error handled silently
+    } finally {
         setIsLoadingStats(false);
       }
     };

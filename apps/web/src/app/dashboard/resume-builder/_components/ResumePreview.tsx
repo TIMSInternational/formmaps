@@ -75,7 +75,6 @@ export function ResumePreview() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading PDF:", error);
       // Fallback to preview modal
       setShowPreview(true);
     }

@@ -102,7 +102,7 @@ export default function MILExamRunner({
 
       setQuestionStartTime(Date.now());
     } catch (error) {
-      console.error("Failed to initialize exam:", error);
+      // error handled silently
     } finally {
       setLoading(false);
     }
@@ -159,16 +159,8 @@ export default function MILExamRunner({
   };
 
   const handleTimeUp = useCallback(async () => {
-    console.log("⏰ [MIL RUNNER] Time expired! Handling automatic completion");
 
     if (session && !session.isCompleted) {
-      console.log("⏰ [MIL RUNNER] Session details at time expiry:", {
-        examId: session.examId,
-        answersCompleted: session.answers.length,
-        currentQuestion: session.currentQuestion,
-        userId: user?.id,
-      });
-
       try {
         setIsSubmitting(true);
 
@@ -179,48 +171,20 @@ export default function MILExamRunner({
         saveMILSession(updatedSession);
 
         if (user?.id && !hasSubmitted) {
-          console.log("📡 [MIL RUNNER] Submitting time-expired exam to API...");
           setHasSubmitted(true);
           const submitResult = await submitMILExam(updatedSession, user.id);
-          console.log(
-            "✅ [MIL RUNNER] Time-expired exam submitted successfully:",
-            submitResult
-          );
         } else if (hasSubmitted) {
-          console.log(
-            "⚠️ [MIL RUNNER] Time-expired exam already submitted, skipping"
-          );
         } else {
-          console.warn(
-            "⚠️ [MIL RUNNER] No user ID for time-expired submission"
-          );
         }
 
-        console.log("✅ [MIL RUNNER] Time-expired exam processed successfully");
       } catch (error) {
-        console.error(
-          "❌ [MIL RUNNER] Failed to submit time-expired exam:",
-          error
-        );
-        console.error("❌ [MIL RUNNER] Time-expired error context:", {
-          examId: session.examId,
-          userId: user?.id,
-          answersCount: session.answers.length,
-          errorMessage: error instanceof Error ? error.message : String(error),
-        });
-      } finally {
+      // error handled silently
+    } finally {
         setIsSubmitting(false);
-        console.log(
-          "🔄 [MIL RUNNER] Time-expired submission process completed"
-        );
       }
     } else {
-      console.log(
-        "ℹ️ [MIL RUNNER] No active session or already completed, skipping time-expired submission"
-      );
     }
 
-    console.log("🎯 [MIL RUNNER] Time expired - calling onComplete()");
     onComplete();
   }, [session, user.id, onComplete]);
 
@@ -245,17 +209,6 @@ export default function MILExamRunner({
       optionText = `Count: ${answer}`;
     }
 
-    console.log("✅ [LIA RUNNER] Answer selected:", {
-      answerIndex: answer,
-      questionType: currentQuestion?.type,
-      hasOptions: currentQuestion?.data.options ? true : false,
-      hasLetterSequence: currentQuestion?.data.letterSequence ? true : false,
-      hasNumbers: currentQuestion?.data.numbers ? true : false,
-      hasVisualRotationItems: currentQuestion?.data.visualRotationItems
-        ? true
-        : false,
-      optionText,
-    });
     setSelectedAnswer(answer);
   };
 
@@ -285,62 +238,24 @@ export default function MILExamRunner({
 
     // If this is the last question, submit the exam
     if (currentQuestionIndex + 1 >= exam.questions.length) {
-      console.log(
-        "🏁 [MIL RUNNER] Last question completed, preparing to submit exam"
-      );
-      console.log("🏁 [MIL RUNNER] Exam details:", {
-        examName: exam.name,
-        examId: exam.id,
-        totalQuestions: exam.questions.length,
-        answeredQuestions: updatedSession.answers.length,
-        userId: user?.id,
-        timeLimitMinutes: exam.timeLimitMinutes,
-      });
-
       if (user?.id && !hasSubmitted && !isSubmitting) {
         try {
           setIsSubmitting(true);
           setHasSubmitted(true);
-          console.log("📡 [MIL RUNNER] Calling submitMILExam API...");
 
           const submitResult = await submitMILExam(updatedSession, user.id);
 
-          console.log("✅ [MIL RUNNER] Exam submitted successfully!");
-          console.log("✅ [MIL RUNNER] Submit result:", submitResult);
         } catch (error) {
-          console.error("❌ [MIL RUNNER] Failed to submit exam:", error);
-          console.error("❌ [MIL RUNNER] Error context:", {
-            examId: exam.id,
-            userId: user.id,
-            sessionAnswers: updatedSession.answers.length,
-            errorMessage:
-              error instanceof Error ? error.message : String(error),
-          });
           // Reset hasSubmitted on error to allow retry
           setHasSubmitted(false);
         } finally {
           setIsSubmitting(false);
-          console.log(
-            "🔄 [MIL RUNNER] Submit process completed, proceeding to completion screen"
-          );
         }
       } else if (hasSubmitted) {
-        console.log(
-          "⚠️ [MIL RUNNER] Exam already submitted, skipping duplicate submission"
-        );
       } else if (isSubmitting) {
-        console.log(
-          "⚠️ [MIL RUNNER] Submission already in progress, skipping duplicate"
-        );
       } else {
-        console.warn(
-          "⚠️ [MIL RUNNER] No user ID available, skipping API submission"
-        );
       }
 
-      console.log(
-        "🎯 [MIL RUNNER] Calling onComplete() to show completion screen"
-      );
       onComplete();
     } else {
       // Move to next question
@@ -672,11 +587,6 @@ export default function MILExamRunner({
   const renderAnswerOptions = (question: MILQuestion) => {
     // Check if question has API-provided options (for Verbal Reasoning, etc.)
     if (question.data.options && question.data.options.length > 0) {
-      console.log(
-        "🔤 [LIA RUNNER] Using API-provided options:",
-        question.data.options
-      );
-
       return question.data.options.map((option, index) => (
         <button
           key={index}
@@ -698,11 +608,6 @@ export default function MILExamRunner({
       question.data.letterSequence &&
       question.data.letterSequence.outerLetters
     ) {
-      console.log(
-        "🔤 [LIA RUNNER] Using letter sequence options:",
-        question.data.letterSequence.outerLetters
-      );
-
       return question.data.letterSequence.outerLetters.map((letter, index) => (
         <button
           key={index}
@@ -727,7 +632,6 @@ export default function MILExamRunner({
       const highest = sortedNumbers[2];
       const extremes = [lowest, highest];
 
-      console.log("🔢 [LIA RUNNER] Using numeric velocity options:", extremes);
 
       return extremes.map((number, index) => (
         <button
@@ -752,13 +656,6 @@ export default function MILExamRunner({
       const maxOptions = Math.min(numPairs, 4); // Cap at 4 for UI reasons
       const options = Array.from({ length: maxOptions + 1 }, (_, i) => i); // 0 to maxOptions
 
-      console.log("🔄 [LIA RUNNER] Using visual rotation options:", {
-        totalItems: items.length,
-        numPairs,
-        maxOptions,
-        options,
-      });
-
       return options.map((option) => (
         <button
           key={option}
@@ -776,7 +673,6 @@ export default function MILExamRunner({
     }
 
     // Default numeric options (for Pattern Recognition, etc.)
-    console.log("🔢 [LIA RUNNER] Using default numeric options (0-4)");
 
     return [0, 1, 2, 3, 4].map((option) => (
       <button

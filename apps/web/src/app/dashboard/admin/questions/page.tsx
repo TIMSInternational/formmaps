@@ -113,7 +113,6 @@ export default function AdminQuestionsPage() {
                 toast.error("Received invalid data format");
             }
         } catch (error) {
-            console.error("Failed to load questions", error);
             toast.error("Failed to load questions");
         } finally {
             setLoading(false);
@@ -186,7 +185,6 @@ export default function AdminQuestionsPage() {
             setIsDialogOpen(false);
             loadQuestions();
         } catch (error) {
-            console.error(error);
             toast.error(editingQuestion ? "Failed to update question" : "Failed to create question");
         } finally {
             setIsSaving(false);
@@ -201,7 +199,6 @@ export default function AdminQuestionsPage() {
             toast.success("Question deleted successfully");
             loadQuestions();
         } catch (error) {
-            console.error(error);
             toast.error("Failed to delete question");
         }
     };
@@ -218,7 +215,6 @@ export default function AdminQuestionsPage() {
             // Optimistic update locally or reload
             setQuestions(questions.map(q => q.id === question.id ? { ...q, isActive: !q.isActive } : q));
         } catch (error) {
-            console.error(error);
             toast.error("Failed to update status");
         }
     };

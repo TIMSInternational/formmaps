@@ -36,7 +36,6 @@ export default function SubscriptionsPage() {
           }
         })
         .catch((err) => {
-          console.error("Payment verification error:", err);
           // Still show success message as user was redirected from Stripe
           setShowSuccessMessage(true);
           setTimeout(() => setShowSuccessMessage(false), 8000);

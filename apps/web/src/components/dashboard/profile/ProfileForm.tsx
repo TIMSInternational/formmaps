@@ -103,7 +103,6 @@ export function ProfileForm() {
           competencies: []
         });
       } catch (error) {
-        console.error("Failed to fetch profile:", error);
         // Fallback to global store data
         reset({
           fullName: user.name || "",
@@ -165,7 +164,6 @@ export function ProfileForm() {
       telemetry.trackForm("complete", "profile_form", "/dashboard/profile", Date.now() - startTime);
       toast.success("Profile updated successfully");
     } catch (error: any) {
-      console.error("Failed to update profile:", error);
       toast.error(error.message || "Failed to update profile");
     }
   };

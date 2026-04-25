@@ -253,12 +253,11 @@ export async function logGenerationEvent(
   metadata: Record<string, any> = {}
 ): Promise<void> {
   // Log to analytics/database
-  console.log(`[Analytics] ${userId} - ${eventType}`, metadata);
 
   // In production, send to analytics service
   try {
     // Could send to Mixpanel, Segment, etc.
   } catch (error) {
-    console.error("Failed to log generation event:", error);
-  }
+      // error handled silently
+    }
 }

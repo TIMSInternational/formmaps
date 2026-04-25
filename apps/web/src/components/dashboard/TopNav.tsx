@@ -9,7 +9,6 @@ export function TopNav() {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const { t } = useTranslation();
 
-  console.log("TopNav rendered with translations");
 
   useEffect(() => {
     const loadNotifications = async () => {
@@ -19,8 +18,8 @@ export function TopNav() {
         const unread = notifications.filter((n: any) => !n.read).length;
         setUnreadCount(unread);
       } catch (error) {
-        console.warn("Failed to load notifications", error);
-      }
+      // error handled silently
+    }
     };
     loadNotifications();
   }, []);

@@ -158,7 +158,6 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
   const handleSaveSection = async (sectionId: string, data: any) => {
     // This will be connected to your actual store update logic
     await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API call
-    console.log("Saved section data:", sectionId, data);
   };
 
   /**

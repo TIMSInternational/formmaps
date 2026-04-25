@@ -84,8 +84,8 @@ export function CourseManager() {
         setCourses((prev) => prev.filter((c) => c.id !== courseId));
         await queryClient.invalidateQueries({ queryKey: courseKeys.list() });
       } catch (error) {
-        console.error("Failed to delete course", error);
-      }
+      // error handled silently
+    }
     }
   };
 
@@ -99,7 +99,7 @@ export function CourseManager() {
       await adminUpdateCourseApi(courseId, { isActive: nextStatus });
       await queryClient.invalidateQueries({ queryKey: courseKeys.list() });
     } catch (error) {
-      console.error("Failed to toggle course", error);
+      // error handled silently
     }
   };
 
@@ -109,7 +109,6 @@ export function CourseManager() {
         const created = await adminCreateCourse(course);
         setCourses((prev) => [...prev, created]);
       } catch (error) {
-        console.error("Failed to create course", error);
         return;
       }
     } else {
@@ -120,7 +119,6 @@ export function CourseManager() {
           prev.map((c) => (c.id === course.id ? course : c))
         );
       } catch (error) {
-        console.error("Failed to update course", error);
         return;
       }
     }
@@ -146,16 +144,10 @@ export function CourseManager() {
         const status = statusResp?.data?.status;
         if (status === "done") {
           // Optionally auto-accept or open a preview UI
-          console.log(
-            "Import job done",
-            jobId,
-            statusResp?.data?.result?.coursePreview
-          );
           // TODO: open preview modal for admin approval
           return;
         }
         if (status === "failed" || attempts >= maxAttempts) {
-          console.error("Import failed or timed out", jobId);
           return;
         }
         setTimeout(poll, interval);
@@ -163,7 +155,7 @@ export function CourseManager() {
 
       setTimeout(poll, interval);
     } catch (err) {
-      console.error("Import failed", err);
+      // error handled silently
     }
   };
 

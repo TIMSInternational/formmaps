@@ -576,8 +576,8 @@ export function saveMILSession(session: MILSession): void {
       JSON.stringify(session)
     );
   } catch (error) {
-    console.error("Save MIL Session Error:", error);
-  }
+      // error handled silently
+    }
 }
 
 /**
@@ -599,8 +599,8 @@ export function clearMILSession(examId: string): void {
   try {
     localStorage.removeItem(`mil_session_${examId}`);
   } catch (error) {
-    console.error("Clear MIL Session Error:", error);
-  }
+      // error handled silently
+    }
 }
 
 /**

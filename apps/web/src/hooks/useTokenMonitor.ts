@@ -23,7 +23,6 @@ export function useTokenMonitor(warningMinutes = 5) {
     try {
       const newTokens = await refreshAccessToken();
       if (newTokens) {
-        console.log("[TokenMonitor] Token refreshed successfully");
         warningShownRef.current = false; // Reset warning for next cycle
         return true;
       }
@@ -48,10 +47,8 @@ export function useTokenMonitor(warningMinutes = 5) {
 
       // Token expired - try to refresh, otherwise logout
       if (timeRemaining <= 0) {
-        console.log("[TokenMonitor] Token expired, attempting refresh");
         const refreshed = await attemptRefresh();
         if (!refreshed) {
-          console.log("[TokenMonitor] Refresh failed, forcing logout");
           clearTokens();
           forceLogout("Your session has expired. Please log in again.");
         }
@@ -60,7 +57,6 @@ export function useTokenMonitor(warningMinutes = 5) {
 
       // Token about to expire - try to refresh proactively
       if (shouldRefreshToken(5) && !isRefreshingRef.current) {
-        console.log("[TokenMonitor] Token expiring soon, refreshing proactively");
         await attemptRefresh();
         return;
       }
@@ -70,7 +66,6 @@ export function useTokenMonitor(warningMinutes = 5) {
         warningShownRef.current = true;
         const minutesLeft = Math.ceil(timeRemaining / 60000);
         
-        console.warn(`[TokenMonitor] Session expires in ${minutesLeft} minute(s)`);
         
         // Dispatch event for UI to handle (e.g., show modal)
         window.dispatchEvent(

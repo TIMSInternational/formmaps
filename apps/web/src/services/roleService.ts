@@ -111,14 +111,14 @@ export async function testRoleAPIs(): Promise<void> {
     try {
       const allRoles = await getAllRoles();
     } catch (error) {
-      console.log("❌ Get All Roles failed:", error);
+      // error handled silently
     }
 
     // Test get active roles
     try {
       const activeRoles = await getActiveRoles();
     } catch (error) {
-      console.log("❌ Get Active Roles failed:", error);
+      // error handled silently
     }
 
     // Test get role by name (try common role names)
@@ -127,10 +127,10 @@ export async function testRoleAPIs(): Promise<void> {
       try {
         const role = await getRoleByName(roleName);
       } catch (error) {
-        console.log(`❌ Role "${roleName}" not found:`, error);
-      }
+      // error handled silently
+    }
     }
   } catch (error) {
-    console.error("Role API testing failed:", error);
-  }
+      // error handled silently
+    }
 }

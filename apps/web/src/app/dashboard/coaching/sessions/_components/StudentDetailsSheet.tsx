@@ -42,7 +42,6 @@ export function StudentDetailsSheet({
         const data = await getCoachStudentDetails(studentId);
         setStudent(data);
       } catch (error) {
-        console.error("Failed to fetch student details:", error);
         toast.error("Failed to load student details");
         setStudent(null);
       } finally {

@@ -86,7 +86,6 @@ export default function EvaluatorManagement({
       });
       setShowAddForm(false);
     } catch (error) {
-      console.error('Error adding evaluator:', error);
       alert(t('evaluation.evaluatorManagement.failedAdd'));
     } finally {
       setLoading(false);

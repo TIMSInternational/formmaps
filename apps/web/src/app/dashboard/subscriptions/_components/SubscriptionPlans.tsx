@@ -53,7 +53,6 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
         const plans = await subscriptionService.fetchSubscriptionPlans();
         setSubscriptionData(plans);
       } catch (err) {
-        console.error("Failed to load subscription data:", err);
         setError(
           err instanceof Error
             ? err.message
@@ -258,7 +257,6 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                       window.location.reload();
                     }}
                     onError={(error: string) => {
-                      console.error("Payment failed:", error);
                       alert(`Payment failed: ${error}`);
                       setProcessingPayment(null);
                     }}

@@ -264,7 +264,6 @@ export async function generateAIContent(
       },
     };
   } catch (error) {
-    console.error("AI generation error:", error);
     return {
       success: false,
       message:

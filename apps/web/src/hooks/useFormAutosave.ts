@@ -98,7 +98,6 @@ export function useFormAutosave(
 
       return existingDraft;
     } catch (error) {
-      console.error("[Autosave] Failed to load draft:", error);
       return null;
     } finally {
       setIsLoading(false);
@@ -148,7 +147,6 @@ export function useFormAutosave(
 
         return null;
       } catch (error) {
-        console.error("[Autosave] Failed to save draft:", error);
         if (onSaveError) {
           onSaveError(error as Error);
         }
@@ -196,7 +194,6 @@ export function useFormAutosave(
       setLastSaved(null);
       return true;
     } catch (error) {
-      console.error("[Autosave] Failed to clear draft:", error);
       return false;
     }
   }, [draft?.draftId]);

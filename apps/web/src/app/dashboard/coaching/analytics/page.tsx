@@ -228,8 +228,8 @@ export default function AnalyticsPage() {
           }
         }
       } catch (error) {
-        console.error("Analytics error:", error);
-      } finally {
+      // error handled silently
+    } finally {
         setIsLoading(false);
       }
     };
@@ -297,7 +297,6 @@ export default function AnalyticsPage() {
 
       toast.success(t("coaching.dashboard.reportDownloaded"));
     } catch (error) {
-      console.error("Download error:", error);
       toast.error("Failed to download report");
     }
   };

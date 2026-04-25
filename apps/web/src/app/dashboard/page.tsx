@@ -59,24 +59,12 @@ export default function DashboardPage() {
         if (response.ok) {
           const resJson = await response.json();
           if (resJson.success) {
-            console.log(
-              "[Dashboard] milResults sample:",
-              JSON.stringify(
-                (
-                  resJson.data?.milResults ||
-                  resJson.data?.MilResults ||
-                  []
-                ).slice(0, 2),
-                null,
-                2,
-              ),
-            );
             setDashboardData(resJson.data);
           }
         }
       } catch (err) {
-        console.error("Failed to fetch dashboard data", err);
-      }
+      // error handled silently
+    }
     };
     fetchDashboard();
   }, [user]);

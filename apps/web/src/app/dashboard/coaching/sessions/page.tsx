@@ -163,8 +163,8 @@ export default function SessionsPage() {
                   }
                 }
               } catch (e) {
-                console.error("Error parsing date:", e);
-              }
+      // error handled silently
+    }
             }
 
             const student = session.student || session.user || {};
@@ -220,10 +220,8 @@ export default function SessionsPage() {
           })
           .filter(Boolean); // Remove nulls
 
-        console.log("Formatted sessions with status:", formattedSessions.map((s: any) => ({ id: s.id, status: s.status, startTime: s.startTime })));
         setSessions(formattedSessions);
       } catch (error) {
-        console.error("Failed to fetch sessions:", error);
         toast.error(t("coaching.dashboard.failedToLoad"));
       } finally {
         setIsLoading(false);
@@ -265,7 +263,6 @@ export default function SessionsPage() {
         const response = await getCoachAvailableSlots(user.id, dateStr);
         setAvailableSlots(response.slots || []);
       } catch (error) {
-        console.error("Failed to fetch slots", error);
         toast.error(t("coaching.dashboard.failedToLoadSlots"));
       } finally {
         setIsLoadingSlots(false);
@@ -330,7 +327,6 @@ export default function SessionsPage() {
       setRescheduleDate(undefined);
       setSelectedTime(null);
     } catch (error) {
-      console.error("Reschedule failed:", error);
       toast.error(t("coaching.dashboard.rescheduleFailed"));
     }
   };
@@ -976,7 +972,6 @@ export default function SessionsPage() {
                         "Cancelled by coach"
                       );
                     } catch (error) {
-                      console.error("Failed to cancel session:", error);
                       toast.error(t("coaching.dashboard.cancelFailed"));
                       // Revert optimistic update if needed, but for now we keep it simple
                       // as a failure toast is shown.Ideally we'd refetch or revert.

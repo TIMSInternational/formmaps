@@ -20,7 +20,7 @@ export default function VisualRotationReviewPage() {
       const examData = await startMILExam("spatial-orientation-001");
       setExam(examData);
     } catch (error) {
-      console.error("Failed to load visual rotation exam:", error);
+      // error handled silently
     } finally {
       setLoading(false);
     }

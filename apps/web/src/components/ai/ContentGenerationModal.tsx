@@ -372,7 +372,6 @@ Requirements:
           );
           setMissingKeywords(missing.slice(0, 12));
         } catch (err) {
-          console.error("Failed to compute missing keywords", err);
           setMissingKeywords([]);
         }
       } else {
@@ -388,7 +387,6 @@ Requirements:
         err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
       setStep("config");
-      console.error("Generation error:", err);
     } finally {
       setIsGenerating(false);
     }
@@ -441,7 +439,6 @@ Requirements:
       onApply(contentToApply!);
       toast.success(t("ai.modal.appliedSuccess", "Applied generated content"));
     } catch (err) {
-      console.error("Failed to apply generated content", err);
       toast.error(t("ai.modal.appliedError", "Failed to apply generated content"));
       return;
     }
@@ -472,8 +469,8 @@ Requirements:
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch (err) {
-        console.error("Failed to copy:", err);
-      }
+      // error handled silently
+    }
     }
   };
 

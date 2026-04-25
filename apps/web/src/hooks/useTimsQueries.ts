@@ -55,8 +55,8 @@ export function useTimsCareerScoring() {
           motivators = parsed.derivedMotivators || [];
         }
       } catch (e) {
-        console.warn("Failed to read stored TIMS profile", e);
-      }
+      // error handled silently
+    }
 
       const request: ScoreCareersRequest = {
         userId,
