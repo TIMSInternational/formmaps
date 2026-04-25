@@ -1,15 +1,12 @@
 "use client";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { UserProfileDropdown } from "@/components/ui/user-profile-dropdown";
 import { AccessibleLanguageSwitcher } from "@/components/accessibility/AccessibleLanguageSwitcher";
 import {
-  MagnifyingGlass as Search,
   Bell,
   List as Menu,
 } from "@phosphor-icons/react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 interface TopNavProps {
@@ -18,7 +15,6 @@ interface TopNavProps {
 }
 
 export function TopNav({ className, onMenuClick }: TopNavProps) {
-  const [searchQuery, setSearchQuery] = useState("");
   const { t } = useTranslation();
 
   const translatedNavItems = [
@@ -69,34 +65,6 @@ export function TopNav({ className, onMenuClick }: TopNavProps) {
 
           {/* Right Section */}
           <div className="flex items-center space-x-3 md:space-x-5">
-            {/* Search */}
-            <div className="relative hidden sm:block group">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search
-                  className="h-4 w-4 text-slate-400 group-focus-within:text-[#2563EB] transition-colors"
-                  aria-hidden="true"
-                />
-              </div>
-              <Input
-                type="search"
-                placeholder={t("common.search")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-48 md:w-72 h-9 pl-10 bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 rounded-full transition-all duration-200"
-                aria-label={t("common.search")}
-              />
-            </div>
-
-            {/* Mobile Search Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="sm:hidden text-slate-500 hover:text-slate-700"
-              aria-label={t("common.search")}
-            >
-              <Search className="h-5 w-5" aria-hidden="true" />
-            </Button>
-
             {/* Language Switcher */}
             <AccessibleLanguageSwitcher />
 

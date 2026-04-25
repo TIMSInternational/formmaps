@@ -13,6 +13,7 @@ export interface LoginResponse {
     avatarUrl?: string;
     avatar?: string;
     image?: string;
+    permissions?: string[];
     role?: {
       id: string;
       name: string;
@@ -28,6 +29,7 @@ export interface UserProfile {
   email: string;
   roleId: string;
   schoolId?: string;
+  permissions?: string[];
   role?: {
     id: string;
     name: string;
@@ -74,6 +76,17 @@ export async function getCurrentUser(): Promise<UserProfile> {
       const roleName = decoded.role || decoded[
         "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
       ] || "staff";
+
+      // Extract permissions from JWT (stored as JSON string)
+      let permissions: string[] = [];
+      try {
+        if (decoded.permissions) {
+          permissions = typeof decoded.permissions === "string"
+            ? JSON.parse(decoded.permissions)
+            : decoded.permissions;
+        }
+      } catch { /* ignore parse errors */ }
+
       return {
         id: decoded[
           "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
@@ -86,6 +99,7 @@ export async function getCurrentUser(): Promise<UserProfile> {
         ] || decoded.email || "user@example.com",
         roleId: decoded.roleId || "role-id",
         schoolId: decoded.schoolId || "",
+        permissions,
         role: {
           id: decoded.roleId || "role-id",
           name: roleName,
@@ -281,6 +295,7 @@ export async function login(
         roleId: result.data.user.roleId,
         profilePicture: result.data.user.profilePicture,
         avatarUrl: result.data.user.avatarUrl || result.data.user.avatar || result.data.user.profilePicture,
+        permissions: result.data.user.permissions || [],
         role: {
           id: result.data.user.roleId,
           name: result.data.user.roleName,
@@ -297,40 +312,17 @@ export async function login(
 
 // Check if user has admin role based on role name
 export function isAdminRole(roleName: string): boolean {
-  const adminRoleNames = [
-    "admin",
-    "Admin",
-    "ADMIN",
-    "super_admin",
-    "Super_Admin",
-    "Super Admin", // Added this for the JWT token format
-    "SUPER_ADMIN",
-    "SUPER ADMIN",
-    "superadmin",
-    "SuperAdmin",
-    "SUPERADMIN",
-    "administrator",
-    "Administrator",
-    "ADMINISTRATOR",
-  ];
-
-  return adminRoleNames.includes(roleName);
+  const lower = (roleName || "").trim().toLowerCase();
+  return (
+    lower === "super admin" || lower === "super_admin" || lower === "superadmin" ||
+    lower === "admin" || lower === "school_admin" || lower === "schooladmin"
+  );
 }
 
 // Check if user has super admin role
 export function isSuperAdminRole(roleName: string): boolean {
-  const superAdminRoleNames = [
-    "super_admin",
-    "Super_Admin",
-    "Super Admin", // This is what we get from the JWT
-    "SUPER_ADMIN",
-    "SUPER ADMIN",
-    "superadmin",
-    "SuperAdmin",
-    "SUPERADMIN",
-  ];
-
-  return superAdminRoleNames.includes(roleName);
+  const lower = (roleName || "").trim().toLowerCase();
+  return lower === "super admin" || lower === "super_admin" || lower === "superadmin";
 }
 
 // Sign up function for user registration

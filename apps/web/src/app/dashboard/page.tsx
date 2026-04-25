@@ -14,7 +14,8 @@ import { LiveStatus } from "./_components/LiveStatus";
 import { ActiveCoursePlan } from "./_components/ActiveCoursePlan";
 import { AssessmentProgressCard } from "@/components/dashboard/AssessmentProgressCard";
 import { motion } from "framer-motion";
-
+import { normalizeRole } from "@/lib/roleUtils";
+import { Roles } from "@/lib/permissions";
 
 const fade = (delay = 0): any => ({
   hidden: { opacity: 0, y: 28, filter: "blur(8px)" },
@@ -42,8 +43,10 @@ export default function DashboardPage() {
   const { user } = useGlobalStore();
   const [dashboardData, setDashboardData] = useState<any>(null);
 
+  const userRole = normalizeRole(user.role);
+
   useEffect(() => {
-    if (!user || user.role?.toLowerCase() === "coach") return;
+    if (!user || userRole === Roles.COACH) return;
     const fetchDashboard = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -78,8 +81,7 @@ export default function DashboardPage() {
     fetchDashboard();
   }, [user]);
 
-  const isCoach = user.role && user.role.toLowerCase() === "coach";
-  if (isCoach) {
+  if (userRole === Roles.COACH) {
     const CoachDashboard = dynamic(
       () => import("@/components/dashboard/CoachDashboard"),
       { ssr: false },

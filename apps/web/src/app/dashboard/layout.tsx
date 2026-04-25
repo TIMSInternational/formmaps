@@ -9,6 +9,7 @@ import { Sidebar as DashboardSidebar } from "./_components/Sidebar";
 import { TopNav } from "./_components/TopNav";
 import { Button } from "@/components/ui/button";
 import { usePageViewTracking } from "@/hooks/usePageViewTracking";
+import { usePermission } from "@/hooks/usePermission";
 import { Bell, List as Menu, User } from "@phosphor-icons/react";
 import {
   DropdownMenu,
@@ -32,13 +33,12 @@ export default function DashboardLayout({
 
   // Track page views across dashboard routes
   usePageViewTracking();
-
-  // Check if user is a coach (case-insensitive)
-  const isCoach = user.role && user.role.toLowerCase() === "coach";
+  const { isCoach, isSuperAdmin } = usePermission();
 
   // Check if current path is resume builder
   const pathname = usePathname();
   const isResumeBuilder = pathname?.startsWith("/dashboard/resume-builder");
+  const isAdminRoute = pathname?.startsWith("/dashboard/admin");
 
   if (isResumeBuilder) {
     return <>{children}</>;
@@ -162,7 +162,7 @@ export default function DashboardLayout({
         />
 
         <div className="flex-1 flex flex-col overflow-hidden lg:ml-0 transition-all duration-300 relative h-full">
-          <TopNav onMenuClick={() => setSidebarOpen(true)} />
+          {!isAdminRoute && <TopNav onMenuClick={() => setSidebarOpen(true)} />}
 
           <main
             id="main-content"

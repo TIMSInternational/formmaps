@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { sidebarData, coachSidebarData, adminSidebarData } from "./data";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { usePermission } from "@/hooks/usePermission";
 import { useTranslation } from "react-i18next";
 import {
   SquaresFour as LayoutDashboard,
@@ -70,16 +71,15 @@ export function Sidebar({ className, isOpen = true, onClose }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { t, i18n } = useTranslation();
+  const { isSuperAdmin, isCoach } = usePermission();
 
   // Select sidebar data based on current path, then role
-  const role = user.role?.toLowerCase();
   const isAdminRoute = pathname?.includes("/dashboard/admin");
 
   let currentSidebarData = sidebarData;
-  // Admin routes take priority - show admin sidebar only on /dashboard/admin/* pages
-  if (isAdminRoute) {
+  if (isAdminRoute && isSuperAdmin) {
     currentSidebarData = adminSidebarData;
-  } else if (role === "coach") {
+  } else if (isCoach) {
     currentSidebarData = coachSidebarData;
   }
 

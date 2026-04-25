@@ -302,7 +302,7 @@ export const coachSidebarData = {
       id: "dashboard",
       name: "nav.dashboard",
       icon: "dashboard",
-      path: "/dashboard",
+      path: "/dashboard/coaching",
     },
     {
       id: "sessions",

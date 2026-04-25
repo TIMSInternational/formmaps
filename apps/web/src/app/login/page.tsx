@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { normalizeRole, roleHomeMap } from "@/lib/roleUtils";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login as loginApi } from "@/services/authService";
@@ -73,20 +74,15 @@ export default function LoginPage() {
         role: roleName,
         schoolId: response.user?.schoolId || null,
         avatar: response.user?.avatarUrl || response.user?.profilePicture || response.user?.avatar || response.user?.image || null,
+        permissions: response.user?.permissions || [],
         isAuthenticated: true,
       });
 
-      // Role-based redirect: Different roles go to their respective dashboards
-      const normalizedRole = (roleName || "").toLowerCase();
-      let redirectTo = defaultRedirect;
-
-      if (normalizedRole.includes("super") || normalizedRole === "superadmin" || normalizedRole === "super_admin" || normalizedRole === "admin") {
-        // Super admin - redirect to admin dashboard
-        redirectTo = "/dashboard/admin";
-      } else if (normalizedRole.includes("school") || normalizedRole === "schooladmin" || normalizedRole === "school_admin") {
-        // School admin - redirect to school admin dashboard
-        redirectTo = "/school-admin";
-      }
+      // Role-based redirect
+      const normalized = normalizeRole(roleName);
+      const redirectTo = defaultRedirect === "/dashboard"
+        ? roleHomeMap[normalized]
+        : defaultRedirect;
 
       router.push(redirectTo);
     } catch (err: any) {

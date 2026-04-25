@@ -56,7 +56,7 @@ export default function AdminPage() {
       title: "Course Management",
       description: "Create and update learning courses.",
       icon: GraduationCap,
-      href: "/dashboard/learning/courses", // Assuming this is the path, or admin specific
+      href: "/dashboard/admin/courses",
       color: "text-purple-600",
       bg: "bg-purple-50",
     },

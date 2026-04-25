@@ -118,9 +118,11 @@ interface GlobalState {
     avatar?: string | null;
     contractEnd?: string | null;
     subscriptionStatus?: "active" | "past_due" | "canceled" | "none" | null;
+    permissions?: string[];
     isAuthenticated: boolean;
   };
   setUser: (user: Partial<GlobalState["user"]>) => void;
+  setPermissions: (permissions: string[]) => void;
   logout: () => void;
   initializeAuth: () => Promise<void>;
 
@@ -218,6 +220,7 @@ export const useGlobalStore = create<GlobalState>()(
           role: null,
           image: null,
           avatar: null,
+          permissions: [],
           isAuthenticated: false,
         },
         setUser: (userData) => {
@@ -226,6 +229,10 @@ export const useGlobalStore = create<GlobalState>()(
             user: { ...state.user, ...userData, isAuthenticated: true },
           }))
         },
+        setPermissions: (permissions) =>
+          set((state) => ({
+            user: { ...state.user, permissions },
+          })),
         logout: () => {
           // Track logout event
           telemetry.trackAuth("logout");
@@ -242,6 +249,7 @@ export const useGlobalStore = create<GlobalState>()(
               role: null,
               image: null,
               avatar: null,
+              permissions: [],
               isAuthenticated: false,
             },
           });
