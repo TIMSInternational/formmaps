@@ -188,7 +188,6 @@ export async function getAllUserExamResults(
 
     return await response.json();
   } catch (error) {
-    console.error("Get User Exam Results Error:", error);
     throw error;
   }
 }
@@ -218,7 +217,6 @@ export async function getUserExamHistory(
 
     return await response.json();
   } catch (error) {
-    console.error("Get User Exam History Error:", error);
     throw error;
   }
 }
@@ -316,10 +314,8 @@ export async function getAllMILExams(
       throw new Error(`Failed to fetch MIL exams: ${response.status}`);
     }
     const data = await response.json();
-    console.log(data);
     return data;
   } catch (error) {
-    console.error("Get MIL Exams Error:", error);
 
     throw error;
   }
@@ -350,7 +346,6 @@ export async function getMILExamById(
 
     return await response.json();
   } catch (error) {
-    console.error("Get MIL Exam Error:", error);
     throw error;
   }
 }
@@ -380,7 +375,6 @@ export async function startMILExam(
 
     return await response.json();
   } catch (error) {
-    console.error("Start MIL Exam Error:", error);
 
     throw error;
   }
@@ -411,7 +405,6 @@ export async function getMILExamInstructions(
 
     return await response.json();
   } catch (error) {
-    console.error("Get MIL Instructions Error:", error);
 
     // Fallback to local instructions for pattern recognition and numeric velocity
     if (examId === MIL_EXAMS.FEATURE_DETECTION) {
@@ -465,14 +458,6 @@ export async function submitMILExam(
   language: "english" | "spanish" = "english"
 ): Promise<any> {
   try {
-    console.log("🚀 [LIA SUBMIT] Starting LIA exam submission...");
-    console.log("📋 [LIA SUBMIT] Session data:", {
-      examId: session.examId,
-      userId: userId,
-      startTime: session.startTime,
-      answersCount: session.answers.length,
-      isCompleted: session.isCompleted,
-    });
 
     const examAnswers = session.answers.map((answer) => ({
       questionNumber: answer.questionNumber,
@@ -490,22 +475,6 @@ export async function submitMILExam(
       answers: examAnswers,
     };
 
-    console.log(
-      "📤 [LIA SUBMIT] API Endpoint:",
-      `${API_BASE_URL}/api/PCAExam/submit`
-    );
-    console.log(
-      "📤 [LIA SUBMIT] Payload being sent:",
-      JSON.stringify(submissionData, null, 2)
-    );
-    console.log("📊 [LIA SUBMIT] Payload summary:", {
-      examId: submissionData.examId,
-      userId: submissionData.userId,
-      totalAnswers: submissionData.answers.length,
-      timeSpent: `${submissionData.startTime} → ${submissionData.endTime}`,
-      sampleAnswers: submissionData.answers.slice(0, 3), // First 3 answers for preview
-    });
-
     const startTime = Date.now();
     const langParam = language === "spanish" ? "sp" : "en";
     const response = await fetch(
@@ -520,47 +489,18 @@ export async function submitMILExam(
     );
 
     const responseTime = Date.now() - startTime;
-    console.log(`⏱️ [LIA SUBMIT] API Response time: ${responseTime}ms`);
-    console.log(
-      "📥 [LIA SUBMIT] Response status:",
-      response.status,
-      response.statusText
-    );
-    console.log(
-      "📥 [LIA SUBMIT] Response headers:",
-      Object.fromEntries(response.headers.entries())
-    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("❌ [LIA SUBMIT] API Error Response:", errorText);
       throw new Error(
         `Failed to submit LIA exam: ${response.status} - ${errorText}`
       );
     }
 
     const responseData = await response.json();
-    console.log(
-      "✅ [LIA SUBMIT] Success! Response data:",
-      JSON.stringify(responseData, null, 2)
-    );
-    console.log("📊 [LIA SUBMIT] Response summary:", {
-      success: true,
-      responseTime: `${responseTime}ms`,
-      dataKeys: Object.keys(responseData),
-      hasScore: "score" in responseData,
-      hasResults: "results" in responseData,
-    });
 
     return responseData;
   } catch (error) {
-    console.error("❌ [LIA SUBMIT] Submit LIA Exam Error:", error);
-    console.error("❌ [LIA SUBMIT] Error details:", {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      examId: session.examId,
-      userId: userId,
-    });
     throw error;
   }
 }
@@ -609,7 +549,6 @@ export async function completeMILExam(
 
     return await response.json();
   } catch (error) {
-    console.error("Complete MIL Exam Error:", error);
     throw error;
   }
 }
@@ -649,7 +588,6 @@ export function loadMILSession(examId: string): MILSession | null {
     const sessionData = localStorage.getItem(`mil_session_${examId}`);
     return sessionData ? JSON.parse(sessionData) : null;
   } catch (error) {
-    console.error("Load MIL Session Error:", error);
     return null;
   }
 }
@@ -694,23 +632,15 @@ export function validatePatternRecognitionAnswer(
 export function validateAnswer(question: MILQuestion, answer: number): boolean {
   // If API provides correctAnswer, use it
   if (question.correctAnswer !== undefined) {
-    console.log(
-      "🎯 [LIA VALIDATION] Using API-provided correct answer:",
-      question.correctAnswer
-    );
     return answer === question.correctAnswer;
   }
 
   // For Pattern Recognition, calculate from letter pairs
   if (question.data.letterPairs) {
-    console.log("🔤 [LIA VALIDATION] Calculating Pattern Recognition answer");
     return validatePatternRecognitionAnswer(question, answer);
   }
 
   // For other types without correctAnswer, we can't validate in practice
-  console.warn(
-    "⚠️ [LIA VALIDATION] No validation method available for this question type"
-  );
   return true; // Allow to proceed
 }
 
@@ -758,21 +688,12 @@ export function setupTabFocusMonitoring(
       const isWindowFocused = document.hasFocus();
       const isNowActive = isDocumentVisible && isWindowFocused;
 
-      console.log(`Tab state check (${eventType}):`, {
-        isDocumentVisible,
-        isWindowFocused,
-        isNowActive,
-        wasActive: isCurrentlyActive,
-      });
-
       if (isCurrentlyActive && !isNowActive) {
         // Tab became inactive
-        console.log(`Tab became inactive via ${eventType}`);
         isCurrentlyActive = false;
         onTabLeave();
       } else if (!isCurrentlyActive && isNowActive) {
         // Tab became active
-        console.log(`Tab became active via ${eventType}`);
         isCurrentlyActive = true;
         onTabReturn();
       }

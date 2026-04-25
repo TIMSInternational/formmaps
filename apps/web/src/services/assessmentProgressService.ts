@@ -110,10 +110,6 @@ export async function getUserAssessmentProgress(
           throw new Error("No enhanced data available");
         }
       } catch (enhancedError) {
-        console.warn(
-          "Enhanced LIA data not available, falling back to legacy:",
-          enhancedError
-        );
 
         // Fallback to legacy MIL data
         const milResults = await getAllUserExamResults(language);
@@ -133,7 +129,6 @@ export async function getUserAssessmentProgress(
         }
       }
     } catch (error) {
-      console.warn("LIA assessment data not available:", error);
       milProgress = {
         totalAttempts: 0,
         completedExams: 0,
@@ -189,7 +184,6 @@ export async function getUserAssessmentProgress(
         evaluationLastActivity = latestGroup?.createdAt;
       }
     } catch (error) {
-      console.warn("360° Evaluation data not available:", error);
       evaluationProgress = {
         totalGroups: 0,
         completedEvaluations: 0,
@@ -269,7 +263,6 @@ export async function getUserAssessmentProgress(
       },
     };
   } catch (error) {
-    console.error("Error fetching user assessment progress:", error);
     throw error;
   }
 }
@@ -356,7 +349,6 @@ export async function getDashboardAssessmentSummary(
         .slice(0, 3),
     };
   } catch (error) {
-    console.error("Error getting dashboard assessment summary:", error);
     throw error;
   }
 }
@@ -384,14 +376,12 @@ export async function getAssessmentReportData(
     );
 
     if (!response.ok) {
-      console.warn(`Assessment report API returned ${response.status}`);
       return null;
     }
 
     const json = await response.json();
     return json.data || json;
   } catch (error) {
-    console.error("Error fetching assessment report data:", error);
     return null;
   }
 }

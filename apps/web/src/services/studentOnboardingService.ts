@@ -30,7 +30,6 @@ const getHeaders = () => {
  */
 export async function verifyStudentToken(token: string): Promise<VerifyTokenResponse> {
 
-
   if (token === "invalid") {
     return { isValid: false, message: "Invalid or expired token" };
   }
@@ -48,7 +47,6 @@ export async function verifyStudentToken(token: string): Promise<VerifyTokenResp
     }
 
     const result = await response.json();
-    console.log("🔍 verifyStudentToken RAW API RESPONSE:", JSON.stringify(result, null, 2));
 
     // API returns { data: { isValid: boolean, ... }, success: boolean, ... }
     // We need to map it to VerifyTokenResponse interface
@@ -63,11 +61,8 @@ export async function verifyStudentToken(token: string): Promise<VerifyTokenResp
       message: result.message
     };
 
-    console.log("🔍 verifyStudentToken MAPPED RESPONSE:", JSON.stringify(mappedResponse, null, 2));
-
     return mappedResponse;
   } catch (error) {
-    console.warn("verifyStudentToken API failed", error);
     return { isValid: false, message: "Network error verifying token" };
   }
 }

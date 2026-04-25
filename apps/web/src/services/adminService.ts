@@ -85,14 +85,11 @@ async function verifyAdminViaRoles(
   token: string
 ): Promise<AdminVerificationResponse> {
   try {
-    console.log("🔍 verifyAdminViaRoles: Starting role-based verification...");
 
     // First, try to decode the JWT token to get role information
     const decodedToken = decodeJWTToken(token);
     let roleId = null;
     let roleName = null;
-
-    console.log("🔍 verifyAdminViaRoles: Decoded token:", decodedToken);
 
     if (decodedToken) {
       // Check for standard role fields
@@ -114,11 +111,6 @@ async function verifyAdminViaRoles(
         roleId = decodedToken[nameIdKey];
       }
 
-      console.log("🔍 verifyAdminViaRoles: Found role info in token:", {
-        roleId,
-        roleName,
-        fullToken: decodedToken,
-      });
     }
 
     // If we have roleId, get role details from API
@@ -126,10 +118,6 @@ async function verifyAdminViaRoles(
       try {
         const roleDetails = await getRoleById(roleId);
         roleName = roleDetails.name;
-        console.log(
-          "🔍 verifyAdminViaRoles: Got role details from API:",
-          roleDetails
-        );
       } catch (error) {
         console.warn("Failed to get role details from API:", error);
       }
@@ -139,17 +127,8 @@ async function verifyAdminViaRoles(
     const isAdmin = roleName ? isAdminRole(roleName) : false;
     const isSuperAdmin = roleName ? isSuperAdminRole(roleName) : false;
 
-    console.log("🔍 verifyAdminViaRoles: Role analysis:", {
-      roleName,
-      isAdmin,
-      isSuperAdmin,
-    });
-
     // If no role found in token, fall back to simulation
     if (!roleName) {
-      console.log(
-        "🔍 verifyAdminViaRoles: No role found in token, using simulation"
-      );
       return simulateAdminVerification(token);
     }
 
@@ -160,33 +139,24 @@ async function verifyAdminViaRoles(
       permissions: isAdmin ? ["read", "write", "delete"] : ["read"],
     };
   } catch (error) {
-    console.warn("Role-based verification failed, using fallback:", error);
     return simulateAdminVerification(token);
   }
 }
 
 // Simulate admin verification for development/testing
 function simulateAdminVerification(token: string): AdminVerificationResponse {
-  console.log("🔧 simulateAdminVerification: Starting simulation...");
 
   // Simple simulation: check if token contains admin indicators
   const isTestAdmin = token.includes("admin") || token.includes("super");
-  console.log(
-    "🔧 simulateAdminVerification: Token contains admin?",
-    isTestAdmin
-  );
 
   // You can also check localStorage for user data
   const userData = localStorage.getItem("user");
   let userRole = "user";
 
-  console.log("🔧 simulateAdminVerification: Raw user data:", userData);
-
   if (userData) {
     try {
       const user = JSON.parse(userData);
       userRole = user.role || "user";
-      console.log("🔧 simulateAdminVerification: Parsed user role:", userRole);
     } catch (e) {
       console.warn("Failed to parse user data from localStorage");
     }
@@ -196,41 +166,12 @@ function simulateAdminVerification(token: string): AdminVerificationResponse {
     userRole === "admin" || userRole === "super_admin" || isTestAdmin;
   const isSuperAdmin = userRole === "super_admin" || token.includes("super");
 
-  console.log("🔧 simulateAdminVerification: Final result:", {
-    isAdmin,
-    isSuperAdmin,
-    role: userRole,
-    userRole,
-    isTestAdmin,
-  });
-
   return {
     isAdmin,
     isSuperAdmin,
     role: userRole,
     permissions: isAdmin ? ["read", "write", "delete"] : ["read"],
   };
-}
-
-// For testing purposes, you can manually set admin role
-export function setTestAdminRole(role: "user" | "admin" | "super_admin") {
-  const userData = { role };
-  localStorage.setItem("user", JSON.stringify(userData));
-
-  // Also update the token to include admin indicator
-  const currentToken = localStorage.getItem("token") || "test-token";
-  const adminToken =
-    role === "admin"
-      ? `${currentToken}-admin`
-      : role === "super_admin"
-        ? `${currentToken}-super-admin`
-        : currentToken.replace(/-admin|-super-admin/g, "");
-
-  localStorage.setItem("token", adminToken);
-
-  console.log(`Test role set to: ${role}`);
-  console.log(`Token updated to: ${adminToken}`);
-  console.log(`User data: ${JSON.stringify(userData)}`);
 }
 
 // --- Admin Payout APIs ---
@@ -452,168 +393,4 @@ export async function getAdminAnalytics(
 
   const json = await response.json();
   return json.data || json;
-}
-
-function getMockAdminAnalytics(): AdminAnalytics {
-  return {
-    stats: {
-      totalUsers: 1234,
-      totalRevenue: 45231.89,
-      activeCourses: 12,
-      growthRate: 12.5,
-      monthlyGrowth: {
-        users: 20.1,
-        revenue: 15,
-        courses: 16.7,
-      },
-    },
-    revenueData: [
-      { month: "Jan", revenue: 2400, transactions: 24 },
-      { month: "Feb", revenue: 1398, transactions: 18 },
-      { month: "Mar", revenue: 9800, transactions: 52 },
-      { month: "Apr", revenue: 3908, transactions: 31 },
-      { month: "May", revenue: 4800, transactions: 38 },
-      { month: "Jun", revenue: 3800, transactions: 29 },
-    ],
-    userGrowthData: [
-      { month: "Jan", users: 400, newUsers: 45 },
-      { month: "Feb", users: 300, newUsers: 38 },
-      { month: "Mar", users: 200, newUsers: 52 },
-      { month: "Apr", users: 278, newUsers: 41 },
-      { month: "May", users: 189, newUsers: 35 },
-      { month: "Jun", users: 239, newUsers: 48 },
-    ],
-    topCoaches: [
-      {
-        id: "1",
-        name: "Dr. Sarah Johnson",
-        earnings: 12500,
-        sessions: 48,
-        rating: 4.9,
-      },
-      {
-        id: "2",
-        name: "Prof. Michael Chen",
-        earnings: 10800,
-        sessions: 42,
-        rating: 4.8,
-      },
-      {
-        id: "3",
-        name: "Dr. Emily Rodriguez",
-        earnings: 9600,
-        sessions: 38,
-        rating: 4.9,
-      },
-      {
-        id: "4",
-        name: "Prof. David Kim",
-        earnings: 8400,
-        sessions: 35,
-        rating: 4.7,
-      },
-      {
-        id: "5",
-        name: "Dr. Lisa Anderson",
-        earnings: 7800,
-        sessions: 32,
-        rating: 4.8,
-      },
-    ],
-    topCourses: [
-      {
-        id: "1",
-        title: "Advanced Web Development",
-        enrollments: 245,
-        revenue: 12250,
-        rating: 4.8,
-      },
-      {
-        id: "2",
-        title: "Data Science Fundamentals",
-        enrollments: 198,
-        revenue: 9900,
-        rating: 4.7,
-      },
-      {
-        id: "3",
-        title: "Machine Learning",
-        enrollments: 156,
-        revenue: 7800,
-        rating: 4.9,
-      },
-      {
-        id: "4",
-        title: "Cloud Architecture",
-        enrollments: 142,
-        revenue: 7100,
-        rating: 4.6,
-      },
-      {
-        id: "5",
-        title: "UX Design Principles",
-        enrollments: 128,
-        revenue: 6400,
-        rating: 4.8,
-      },
-    ],
-    recentActivity: [
-      {
-        type: "user",
-        message: "New user registered: John Doe",
-        timestamp: new Date(Date.now() - 5 * 60000).toISOString(),
-      },
-      {
-        type: "transaction",
-        message: "Payment completed: $299.99",
-        timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
-      },
-      {
-        type: "course",
-        message: "New course published: React Mastery",
-        timestamp: new Date(Date.now() - 30 * 60000).toISOString(),
-      },
-      {
-        type: "session",
-        message: "Coaching session completed",
-        timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
-      },
-      {
-        type: "user",
-        message: "User upgraded to premium",
-        timestamp: new Date(Date.now() - 60 * 60000).toISOString(),
-      },
-    ],
-  };
-}
-
-// Debug function to check current admin status
-export function debugAdminStatus() {
-  const token = localStorage.getItem("token");
-  const userData = localStorage.getItem("user");
-
-  console.log("=== Admin Status Debug ===");
-  console.log("Token:", token);
-  console.log("User data:", userData);
-
-  if (userData) {
-    try {
-      const user = JSON.parse(userData);
-      console.log("Parsed user role:", user.role);
-    } catch (e) {
-      console.log("Failed to parse user data");
-    }
-  }
-
-  // Test the verification
-  verifyAdminAccess()
-    .then((result) => {
-      console.log("Admin verification result:", result);
-      console.log("Is Admin?", result.isAdmin);
-      console.log("Is Super Admin?", result.isSuperAdmin);
-      console.log("Role:", result.role);
-    })
-    .catch((error) => {
-      console.log("Admin verification error:", error);
-    });
 }

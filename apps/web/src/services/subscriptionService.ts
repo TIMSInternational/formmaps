@@ -285,31 +285,22 @@ export async function createCheckoutSession(
  */
 export async function fetchSubscriptionPlans(): Promise<SubscriptionData> {
   try {
-    console.log("🔍 Fetching subscription plans from API...");
 
     // Use the actual API endpoint from the Postman collection
     const response = await apiRequest("/api/subscriptionplan", {
       method: "GET",
     });
 
-    console.log("📥 Raw API response:", response);
-
     // Handle the API response format: {data: [...], message: "...", success: true}
     const plans = response?.data || response;
-
-    console.log("📥 Extracted plans:", plans);
-    console.log("📥 Is array?", Array.isArray(plans));
-    console.log("📥 Length:", plans?.length);
 
     // Transform API response to match our interface
     if (plans && Array.isArray(plans)) {
       if (plans.length > 0) {
-        console.log("✅ Processing", plans.length, "real plans from API");
 
         const transformedData: SubscriptionData = {
           subscription: defaultSubscriptionData.subscription,
           billingOptions: plans.map((plan: any) => {
-            console.log("🔄 Transforming plan:", plan);
 
             // Enhance plan data with UI-specific fields based on interval
             const enhancedPlan = enhancePlanWithUIFields(plan);
@@ -333,10 +324,8 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionData> {
           features: defaultSubscriptionData.features,
         };
 
-        console.log("✅ Returning real API data:", transformedData);
         return transformedData;
       } else {
-        console.warn("API returned empty plans array");
         return {
           subscription: defaultSubscriptionData.subscription,
           billingOptions: [],
@@ -345,14 +334,12 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionData> {
       }
     }
 
-    console.warn("API response is not an array, returning empty billing options");
     return {
       subscription: defaultSubscriptionData.subscription,
       billingOptions: [],
       features: defaultSubscriptionData.features,
     };
   } catch (error) {
-    console.error("Failed to fetch subscription plans from API:", error);
     throw error;
   }
 }

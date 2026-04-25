@@ -417,14 +417,12 @@ export async function getTimelineEvents(
         userId,
         language === "sp" ? "spanish" : "english"
       ).catch((err) => {
-        console.warn("Failed to fetch MIL data:", err);
         return null;
       }),
       getUserEvaluationGroups(
         userId,
         language === "sp" ? "spanish" : "english"
       ).catch((err) => {
-        console.warn("Failed to fetch evaluation data:", err);
         return [];
       }),
       transformPCAToEvents(userId, language),
@@ -472,7 +470,6 @@ export async function getTimelineEvents(
       },
     };
   } catch (error) {
-    console.error("Error fetching timeline events:", error);
     throw error;
   }
 }
@@ -582,7 +579,6 @@ export async function getTimelineStats(
       },
     };
   } catch (error) {
-    console.error("Error getting timeline stats:", error);
     throw error;
   }
 }
@@ -674,9 +670,6 @@ export async function exportTimeline(
   } else if (config.format === "pdf") {
     // For PDF, we'll need a backend route or client-side PDF generation
     // For now, trigger CSV download with a note
-    console.warn(
-      "PDF export requires backend implementation. Falling back to CSV."
-    );
     const csvContent = prepareCSVExport(events, language);
     const filename = `assessment_timeline_${
       new Date().toISOString().split("T")[0]

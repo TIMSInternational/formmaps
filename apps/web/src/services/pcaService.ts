@@ -77,7 +77,6 @@ export async function authenticateNexaAPI(): Promise<any> {
 
     return await response.json();
   } catch (error) {
-    console.error("Nexa API Authentication Error:", error);
     throw error;
   }
 }
@@ -112,7 +111,6 @@ export async function addPCAAssessmentSpanish(
       pcaCod: data.PcaCod,
     };
   } catch (error) {
-    console.error("Add PCA Assessment Error:", error);
     return {
       success: false,
       message:
@@ -151,7 +149,6 @@ export async function addPCAAssessmentEnglish(
       pcaCod: data.PcaCod,
     };
   } catch (error) {
-    console.error("Add PCA Assessment Error:", error);
     return {
       success: false,
       message:
@@ -182,7 +179,6 @@ export async function getPCAResult(pcaCod: string): Promise<any> {
 
     return await response.json();
   } catch (error) {
-    console.error("Get PCA Result Error:", error);
     throw error;
   }
 }
@@ -216,7 +212,6 @@ export async function getPCACompetences(
 
     return await response.json();
   } catch (error) {
-    console.error("Get PCA Competences Error:", error);
     throw error;
   }
 }
@@ -249,7 +244,6 @@ export async function getPCAVsJCAAnalysis(
 
     return await response.json();
   } catch (error) {
-    console.error("Get PCA vs JCA Analysis Error:", error);
     throw error;
   }
 }
@@ -284,7 +278,6 @@ export async function getPCAResultByUserId(
 
     return await response.json();
   } catch (error) {
-    console.error("Get PCA Result by UserId Error:", error);
     throw error;
   }
 }
@@ -319,7 +312,6 @@ export async function getPCACompetencesByUserId(
 
     return await response.json();
   } catch (error) {
-    console.error("Get PCA Competences by UserId Error:", error);
     throw error;
   }
 }
@@ -375,7 +367,6 @@ export async function addPCAEvaluation(
       };
     }
   } catch (error) {
-    console.error("Add PCA Evaluation Error:", error);
     return {
       success: false,
       message:
@@ -408,7 +399,6 @@ export async function getAllPCAEvaluations(
 
     return await response.json();
   } catch (error) {
-    console.error("Get All PCA Evaluations Error:", error);
     throw error;
   }
 }
@@ -428,12 +418,9 @@ export async function checkPCAStatus(
   try {
     // First, check if user has any PCA evaluations
     const allEvaluations = await getAllPCAEvaluations(language);
-    console.log("All PCA Evaluations:", allEvaluations);
-    console.log("User ID:", userId);
     const userEvaluation = allEvaluations.data.find(
       (evaluation: any) => evaluation.userId === userId
     );
-    console.log("User Evaluation:", userEvaluation);
 
     if (!userEvaluation) {
       return { status: "not_started" };
@@ -462,7 +449,6 @@ export async function checkPCAStatus(
       lastActivity: userEvaluation.createdAt || new Date().toISOString(),
     };
   } catch (error) {
-    console.error("Check PCA Status Error:", error);
     return { status: "not_started" };
   }
 }

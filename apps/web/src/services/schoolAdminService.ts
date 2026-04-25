@@ -72,7 +72,6 @@ export async function getSchoolAdminStats(): Promise<SchoolAdminDashboardStats> 
     const json = await response.json();
     return json.data || json;
   } catch (error) {
-    console.error("getSchoolAdminStats API failed:", error);
     throw error;
   }
 }
@@ -104,7 +103,6 @@ export async function getStudents(params: {
     if (!response.ok) throw new Error("Failed to fetch students");
     return response.json();
   } catch (error) {
-    console.warn("getStudents API failed, returning empty data");
     return {
       data: [],
       total: 0,
@@ -257,7 +255,6 @@ export async function getAnalyticsOverview(
       timeSpent: { ...defaultData.timeSpent, ...(data.timeSpent || {}) },
     };
   } catch (error) {
-    console.error("getAnalyticsOverview API failed:", error);
     throw error;
   }
 }
@@ -285,7 +282,6 @@ export async function getPerformanceTrends(
       datasets: data.datasets || defaultData.datasets,
     };
   } catch (error) {
-    console.error("getPerformanceTrends API failed:", error);
     throw error;
   }
 }
@@ -301,7 +297,6 @@ export async function getTopPerformers(
     if (!response.ok) throw new Error("Failed to fetch top performers");
     return response.json();
   } catch (error) {
-    console.warn("getTopPerformers API failed, returning empty data");
     return { data: [] };
   }
 }
@@ -333,7 +328,6 @@ export async function getStudentResults(params: {
     if (!response.ok) throw new Error("Failed to fetch results");
     return response.json();
   } catch (error) {
-    console.warn("getStudentResults API failed, returning empty data");
     return {
       data: [],
       total: 0,
@@ -355,7 +349,6 @@ export async function getStudentDetailResult(
     if (!response.ok) throw new Error("Failed to fetch student detail");
     return response.json();
   } catch (error) {
-    console.warn("getStudentDetailResult API failed");
     return null;
   }
 }
@@ -396,7 +389,6 @@ export async function getSchoolSettings(): Promise<SchoolSettings | null> {
     if (!response.ok) throw new Error("Failed to fetch settings");
     return response.json();
   } catch (error) {
-    console.warn("getSchoolSettings API failed");
     return null;
   }
 }
@@ -480,7 +472,6 @@ export async function verifySchoolAdminAccess(): Promise<{
 
     return { isSchoolAdmin: false };
   } catch (error) {
-    console.error("verifySchoolAdminAccess failed:", error);
     return { isSchoolAdmin: false };
   }
 }

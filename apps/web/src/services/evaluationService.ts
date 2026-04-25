@@ -573,7 +573,6 @@ export async function getUserEvaluationGroups(
     const result = await response.json();
     return result.data || [];
   } catch (error) {
-    console.error("Error fetching user evaluation groups:", error);
     throw error;
   }
 }
@@ -601,7 +600,6 @@ export async function getCounselorEvaluations(): Promise<CounselorEvaluationGrou
     const result = await response.json();
     return result.data || [];
   } catch (error) {
-    console.error("Error fetching counselor evaluations:", error);
     throw error;
   }
 }
@@ -631,12 +629,10 @@ export async function createEvaluationGroup(groupData: {
     }
 
     const responseData = await response.json();
-    console.log("Create evaluation group response:", responseData);
 
     // Handle different response structures
     return responseData.data || responseData;
   } catch (error) {
-    console.error("Error creating evaluation group:", error);
     throw error;
   }
 }
@@ -670,7 +666,6 @@ export async function updateEvaluationGroup(
 
     return await response.json();
   } catch (error) {
-    console.error("Error updating evaluation group:", error);
     throw error;
   }
 }
@@ -700,7 +695,6 @@ export async function deleteEvaluationGroup(groupId: string): Promise<{
 
     return await response.json();
   } catch (error) {
-    console.error("Error deleting evaluation group:", error);
     throw error;
   }
 }
@@ -725,7 +719,6 @@ export async function resendInvitationLink(groupId: string): Promise<void> {
       throw new Error("Failed to resend invitation link");
     }
   } catch (error) {
-    console.error("Error resending invitation link:", error);
     throw error;
   }
 }
@@ -756,7 +749,6 @@ export async function sendBulkEmailInvitations(userId: string): Promise<{
 
     return await response.json();
   } catch (error) {
-    console.error("Error sending bulk email invitations:", error);
     throw error;
   }
 }
@@ -787,7 +779,6 @@ export async function sendSelectedEmailInvitations(
 
     return await response.json();
   } catch (error) {
-    console.error("Error sending selected email invitations:", error);
     throw error;
   }
 }
@@ -818,7 +809,6 @@ export async function sendSingleEmailInvitation(
 
     return await response.json();
   } catch (error) {
-    console.error("Error sending email invitation:", error);
     throw error;
   }
 }
@@ -851,7 +841,6 @@ export async function resendEmailInvitation(
 
     return await response.json();
   } catch (error) {
-    console.error("Error resending email invitation:", error);
     throw error;
   }
 }
@@ -1066,7 +1055,6 @@ export async function checkDuplicateEvaluator(
 
     return await response.json();
   } catch (error) {
-    console.error("Error checking duplicate evaluator:", error);
     throw error;
   }
 }
@@ -1122,7 +1110,6 @@ export async function validateEvaluationToken(
       isEvaluationCompleted: result.isEvaluationCompleted,
     };
   } catch (error) {
-    console.error("Error validating evaluation token:", error);
     return {
       isValid: false,
       error: "Failed to validate token",
@@ -1197,7 +1184,6 @@ export async function createEvaluationSession(
 
     return await response.json();
   } catch (error) {
-    console.error("Error creating evaluation session:", error);
     throw error;
   }
 }
@@ -1227,7 +1213,6 @@ export async function getUserEvaluationGroupsForSessions(
 
     return await response.json();
   } catch (error) {
-    console.error("Error fetching evaluation groups:", error);
     throw error;
   }
 }
@@ -1267,7 +1252,6 @@ export async function getEvaluationSession(
 
     return await response.json();
   } catch (error) {
-    console.error("Error fetching evaluation session:", error);
     throw error;
   }
 }
@@ -1300,7 +1284,6 @@ export async function addEvaluators(
 
     return await response.json();
   } catch (error) {
-    console.error("Error adding evaluators:", error);
     throw error;
   }
 }
@@ -1333,7 +1316,6 @@ export async function sendEvaluationInvitations(
 
     return await response.json();
   } catch (error) {
-    console.error("Error sending invitations:", error);
     throw error;
   }
 }
@@ -1365,7 +1347,6 @@ export async function submitEvaluationResponses(
       throw new Error("Failed to submit evaluation responses");
     }
   } catch (error) {
-    console.error("Error submitting evaluation responses:", error);
     throw error;
   }
 }
@@ -1394,7 +1375,6 @@ export async function getEvaluationReport(
 
     return await response.json();
   } catch (error) {
-    console.error("Error fetching evaluation report:", error);
     throw error;
   }
 }

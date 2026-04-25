@@ -86,8 +86,6 @@ export async function redirectToStripeCheckout(
     const successUrl = `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}/payment-cancelled`;
 
-    console.log("🔗 Payment service URLs:", { successUrl, cancelUrl, baseUrl });
-
     const request: CreateCheckoutSessionRequest = {
       userId,
       amount,
@@ -106,7 +104,6 @@ export async function redirectToStripeCheckout(
       throw new Error("No session URL received from server");
     }
   } catch (error) {
-    console.error("Failed to create checkout session:", error);
     throw error;
   }
 }

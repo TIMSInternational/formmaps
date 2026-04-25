@@ -77,23 +77,15 @@ export async function getCalendarAuthUrl(
   const requestUrl = `${API_BASE_URL}/api/v1/auth/${provider}/url${query.toString() ? `?${query.toString()}` : ""
     }`;
 
-  console.log(`[getCalendarAuthUrl] Requesting: ${requestUrl}`);
-
   const response = await fetch(requestUrl, {
     headers: getHeaders(),
   });
-
-  console.log(`[getCalendarAuthUrl] Response status: ${response.status}`);
 
   if (!response.ok) throw new Error(`Failed to get ${provider} auth URL`);
   const data = await response.json();
   // Handle both 'url' and 'callbackurl' response formats and nested response payloads
   // Some APIs return { data: { url: '...' } } while others return { url: '...' }
 
-  console.log(
-    `[getCalendarAuthUrl] Response data:`,
-    JSON.stringify(data, null, 2),
-  );
   debugger;
   const nested = data && typeof data === "object" ? data.data || data : data;
   const url =
@@ -429,7 +421,6 @@ export async function getCoachAvailableSlots(
   if (!response.ok) {
     // If endpoint returns 404 or other error, return a safe empty object matching the interface
     // so the UI can handle it gracefully (e.g. show "no availability")
-    console.warn("Coach slots endpoint not available or returned error");
     return {
       date,
       timezone: timezone || "UTC",
@@ -710,18 +701,13 @@ export async function signupCoachBulk(
 // --- Test Function ---
 
 export async function testCoachAPIs(): Promise<void> {
-  console.log("🔍 Testing Coach APIs...");
   try {
     // Test get coaches
-    console.log("Testing getCoaches...");
     const coaches = await getCoaches({ limit: 5 });
-    console.log("✅ Coaches:", coaches);
 
     if (coaches.data.length > 0) {
       const coachId = coaches.data[0].id;
-      console.log(`Testing getCoachDetails for ${coachId}...`);
       const details = await getCoachDetails(coachId);
-      console.log("✅ Coach Details:", details);
     }
   } catch (error) {
     console.error("❌ Coach API test failed:", error);

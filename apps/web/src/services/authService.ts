@@ -118,7 +118,6 @@ export function decodeJWTToken(token: string): any {
   try {
     // Skip decoding for test tokens
     if (token.startsWith("test-token")) {
-      console.log("Skipping JWT decode for test token");
       return null;
     }
 
@@ -138,74 +137,7 @@ export function decodeJWTToken(token: string): any {
 
     return JSON.parse(decodedPayload);
   } catch (error) {
-    console.warn(
-      "Failed to decode JWT token (this is normal for test tokens):",
-      error instanceof Error ? error.message : String(error)
-    );
     return null;
-  }
-}
-
-// Test function to explore auth APIs and token content
-export async function testAuthAPIs(): Promise<void> {
-  try {
-    console.log("🔍 Testing Auth APIs...");
-
-    const token = localStorage.getItem("token");
-    if (token) {
-      console.log("📝 Current token:", token);
-
-      // Try to decode the JWT token
-      const decodedToken = decodeJWTToken(token);
-      if (decodedToken) {
-        console.log("🔓 Decoded JWT payload:", decodedToken);
-
-        // Look for role information in the token
-        if (decodedToken.role || decodedToken.roleId || decodedToken.roleName) {
-          console.log("🎭 Role info in token:", {
-            role: decodedToken.role,
-            roleId: decodedToken.roleId,
-            roleName: decodedToken.roleName,
-          });
-        }
-      }
-    }
-
-    // Test get current user
-    try {
-      const currentUser = await getCurrentUser();
-      console.log("✅ Current User:", currentUser);
-
-      if (currentUser.roleId) {
-        console.log("🎭 User Role ID:", currentUser.roleId);
-
-        // Try to get role details
-        try {
-          const { getRoleById } = await import("./roleService");
-          const roleDetails = await getRoleById(currentUser.roleId);
-          console.log("✅ Role Details:", roleDetails);
-        } catch (roleError) {
-          console.log("❌ Failed to get role details:", roleError);
-        }
-      }
-    } catch (error) {
-      console.log("❌ Get Current User failed:", error);
-    }
-
-    // Test the test API endpoint
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/authapi/test`
-      );
-      if (response.ok) {
-        const testResult = await response.text();
-        console.log("✅ Auth Test API:", testResult);
-      }
-    } catch (error) {
-      console.log("❌ Auth Test API failed:", error);
-    }
-  } catch (error) {
-    console.error("Auth API testing failed:", error);
   }
 }
 
@@ -214,18 +146,11 @@ export async function login(
   email: string,
   password: string
 ): Promise<LoginResponse> {
-  console.log("🔐 Attempting login with:", { email, password: "***" });
 
   const requestBody = {
     email: email,
     password: password,
   };
-
-  console.log("📤 Request body:", requestBody);
-  console.log(
-    "📤 API URL:",
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/authapi/login`
-  );
 
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/authapi/login`,
@@ -238,15 +163,8 @@ export async function login(
     }
   );
 
-  console.log("📥 Response status:", response.status);
-  console.log(
-    "📥 Response headers:",
-    Object.fromEntries(response.headers.entries())
-  );
-
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("❌ Login error response:", errorText);
 
     // Try to parse error as JSON for better error messages
     try {
@@ -282,7 +200,6 @@ export async function login(
   }
 
   const result = await response.json();
-  console.log("✅ Login successful:", result);
 
   // Handle your API response format where token is inside 'data'
   if (result.data && result.data.token) {
@@ -332,12 +249,6 @@ export async function signUp(
   password: string,
   roleId?: string
 ): Promise<LoginResponse> {
-  console.log("📝 Attempting signup with:", {
-    name,
-    email,
-    password: "***",
-    roleId,
-  });
 
   const requestBody = {
     name: name,
@@ -345,12 +256,6 @@ export async function signUp(
     password: password,
     // roleId: roleId || "default-role-id", // You may need to get a default role ID
   };
-
-  console.log("📤 Signup request body:", requestBody);
-  console.log(
-    "📤 API URL:",
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/authapi/signup`
-  );
 
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/authapi/signup`,
@@ -363,15 +268,8 @@ export async function signUp(
     }
   );
 
-  console.log("📥 Signup response status:", response.status);
-  console.log(
-    "📥 Signup response headers:",
-    Object.fromEntries(response.headers.entries())
-  );
-
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("❌ Signup error response:", errorText);
 
     // Try to parse error as JSON for better error messages
     try {
@@ -388,7 +286,6 @@ export async function signUp(
   }
 
   const result = await response.json();
-  console.log("✅ Signup successful:", result);
 
   // Handle your API response format where token is inside 'data'
   if (result.data && result.data.token) {

@@ -43,7 +43,6 @@ export function getTokenInfo(token: string): TokenInfo {
 // Set a real token (from login)
 export function setRealToken(token: string): void {
   localStorage.setItem("token", token);
-  console.log("✅ Real token set:", token.substring(0, 20) + "...");
 
   // Also clear any test admin role data since we now have a real token
   localStorage.removeItem("user");
@@ -53,7 +52,6 @@ export function setRealToken(token: string): void {
 export function clearTokens(): void {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
-  console.log("🗑️ All tokens cleared");
 }
 
 // Get authorization header for API calls
@@ -61,14 +59,12 @@ export function getAuthHeader(): { Authorization: string } | object {
   const token = getCurrentToken();
 
   if (!token) {
-    console.warn("⚠️ No token found for API call");
     return {};
   }
 
   const tokenInfo = getTokenInfo(token);
 
   if (tokenInfo.isTestToken) {
-    console.warn("⚠️ Using test token for API call - this may fail");
   }
 
   return {

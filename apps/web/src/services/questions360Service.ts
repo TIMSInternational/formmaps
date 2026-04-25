@@ -41,20 +41,17 @@ export const questions360Service = {
       const response = await apiRequest<any>("/api/Question360/all", {
         method: "GET",
       });
-      console.log("🔍 API Response for getAllQuestions:", response);
 
       // Extract data from response object
       const data = response?.data;
 
       // Ensure data is an array
       if (!Array.isArray(data)) {
-        console.warn("⚠️ API returned non-array data:", typeof data, data);
         return [];
       }
 
       return data;
     } catch (error) {
-      console.error("❌ Error in getAllQuestions service:", error);
       throw error;
     }
   },

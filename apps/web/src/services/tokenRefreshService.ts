@@ -66,7 +66,6 @@ export async function refreshAccessToken(): Promise<TokenPair | null> {
   const refreshToken = getRefreshToken();
   
   if (!refreshToken) {
-    console.log("[TokenRefresh] No refresh token available");
     return null;
   }
 
@@ -80,7 +79,6 @@ export async function refreshAccessToken(): Promise<TokenPair | null> {
     });
 
     if (!response.ok) {
-      console.error("[TokenRefresh] Refresh failed:", response.status);
       // Clear tokens if refresh fails (refresh token is also expired)
       if (response.status === 401 || response.status === 403) {
         clearTokens();
@@ -92,13 +90,11 @@ export async function refreshAccessToken(): Promise<TokenPair | null> {
     
     if (result.success && result.data) {
       storeTokens(result.data);
-      console.log("[TokenRefresh] Token refreshed successfully");
       return result.data;
     }
 
     return null;
   } catch (error) {
-    console.error("[TokenRefresh] Error refreshing token:", error);
     return null;
   }
 }
