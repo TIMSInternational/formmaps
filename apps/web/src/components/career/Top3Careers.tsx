@@ -46,7 +46,7 @@ export function Top3Careers({ topCareersProp }: { topCareersProp?: string[] }) {
             en: sc.programTitle,
             es: sc.programTitle,
           },
-          iconUrl: sc.iconUrl || "",
+          iconUrl: "",
       }));
     }
     return [];
