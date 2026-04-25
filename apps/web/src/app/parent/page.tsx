@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
@@ -11,7 +10,6 @@ import {
   AlertTriangle,
   GraduationCap,
   ChevronRight,
-  FlaskConical,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,35 +18,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useParentProfile, useParentPendingEvaluations } from "@/hooks/useParentPortalQueries";
 import type { ParentChildLink, ParentProfile } from "@/types/parentPortal";
 
-const IS_DEV = process.env.NODE_ENV === "development";
-
-const MOCK_PROFILE: ParentProfile = {
-  id: "mock_parent_001",
-  name: "Ana Gomez (Mock)",
-  email: "ana@example.com",
-  phone: "+1-555-000-1234",
-  children: [
-    { studentId: "mock_s1", studentName: "Sofia Gomez", gradeLevel: 10, relationship: "mother" },
-    { studentId: "mock_s2", studentName: "Marco Gomez", gradeLevel: 8, relationship: "mother" },
-  ],
-};
-
-const MOCK_EVALS = [
-  { evaluationId: "eval_m1", studentName: "Sofia Gomez", deadline: new Date(Date.now() + 5 * 86400000).toISOString(), token: "mock_token_1" },
-  { evaluationId: "eval_m2", studentName: "Marco Gomez", deadline: new Date(Date.now() + 1 * 86400000).toISOString(), token: "mock_token_2" },
-];
-
 export default function ParentDashboard() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [useMock, setUseMock] = useState(false);
 
-  const { data: profileData, isLoading: loadingProfile } = useParentProfile();
-  const { data: pendingEvalsData, isLoading: loadingEvals } = useParentPendingEvaluations();
+  const { data: profile, isLoading: loadingProfile } = useParentProfile();
+  const { data: pendingEvals, isLoading: loadingEvals } = useParentPendingEvaluations();
 
-  const profile = useMock ? MOCK_PROFILE : profileData;
-  const pendingEvals = useMock ? MOCK_EVALS : pendingEvalsData;
-  const isLoading = useMock ? false : loadingProfile;
+  const isLoading = loadingProfile;
 
   if (isLoading) {
     return (
@@ -84,22 +61,6 @@ export default function ParentDashboard() {
           </p>
         </div>
 
-        {/* Dev-only mock data toggle */}
-        {IS_DEV && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setUseMock((v) => !v)}
-            className={`shrink-0 border-dashed gap-2 text-xs ${
-              useMock
-                ? "border-amber-400 text-amber-700 bg-amber-50 hover:bg-amber-100"
-                : "border-gray-300 text-gray-500 hover:bg-gray-50"
-            }`}
-          >
-            <FlaskConical className="h-3.5 w-3.5" />
-            {useMock ? "Clear Mock Data" : "Load Mock Data"}
-          </Button>
-        )}
       </motion.div>
 
       {/* Quick Stats */}
@@ -131,7 +92,7 @@ export default function ParentDashboard() {
                   {t("parent.pendingEvaluations", "Pending Evaluations")}
                 </p>
                 <p className="text-2xl font-bold">
-                  {!useMock && loadingEvals ? "..." : pendingEvals?.length || 0}
+                  {loadingEvals ? "..." : pendingEvals?.length || 0}
                 </p>
               </div>
             </div>

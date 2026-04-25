@@ -69,9 +69,11 @@ export default function AIStrategyCard({ gaps, activeGapIds }: AIStrategyCardPro
           <h4 className={`font-semibold text-lg mb-1 ${strategy.color}`}>
              AI Advisor: {strategy.title}
           </h4>
-          <p className="text-slate-600 text-sm leading-relaxed" 
-             dangerouslySetInnerHTML={{ __html: strategy.message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} 
-          />
+          <p className="text-slate-600 text-sm leading-relaxed">
+            {strategy.message.split(/\*\*(.*?)\*\*/).map((part, i) =>
+              i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+            )}
+          </p>
         </div>
       </CardContent>
     </Card>
