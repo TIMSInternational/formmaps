@@ -27,6 +27,7 @@ export interface UserProfile {
   name: string;
   email: string;
   roleId: string;
+  schoolId?: string;
   role?: {
     id: string;
     name: string;
