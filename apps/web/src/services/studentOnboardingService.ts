@@ -29,12 +29,6 @@ const getHeaders = () => {
  * Verify if the onboarding token is valid and get student details
  */
 export async function verifyStudentToken(token: string): Promise<VerifyTokenResponse> {
-
-  if (token === "invalid") {
-    return { isValid: false, message: "Invalid or expired token" };
-  }
-  // END MOCK
-
   try {
     const response = await fetch(
       `${API_BASE_URL}/api/v1/student/onboarding/verify/${token}`,
@@ -76,28 +70,6 @@ export async function completeStudentOnboarding(
   confirmPassword: string,
   userId: string
 ): Promise<CompleteOnboardingResponse> {
-  // MOCK IMPLEMENTATION
-  if (token.startsWith("test")) {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return {
-      success: true,
-      token: "mock-jwt-token",
-      user: {
-        id: "student-123",
-        name: "Alex Johnson",
-        email: "alex.student@example.com",
-        roleId: "student-role-id",
-        role: {
-          id: "student-role-id",
-          name: "Student",
-          description: "Student Role",
-          isActive: true
-        }
-      }
-    };
-  }
-  // END MOCK
-
   const response = await fetch(
     `${API_BASE_URL}/api/v1/student/onboarding/complete`,
     {
