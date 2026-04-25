@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import { getSafeStripeUrls, debugStripeUrls } from "@/utils/debugStripeUrls";
 import { createCheckoutSession } from "@/services/subscriptionService";
 
 interface StripeCheckoutProps {
@@ -37,13 +36,9 @@ export default function StripeCheckout({
     onStart?.();
 
     try {
-      // Debug URL configuration
-      debugStripeUrls();
-
-      // Use the safe URL utility
-      const { successUrl, cancelUrl, baseUrl } = getSafeStripeUrls();
-
-      console.log("🔗 Final Stripe URLs:", { baseUrl, successUrl, cancelUrl });
+      const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+      const successUrl = `${baseUrl}/payment-success`;
+      const cancelUrl = `${baseUrl}/payment-cancelled`;
 
       // Create checkout session via subscription service
       const data = await createCheckoutSession({
@@ -56,8 +51,6 @@ export default function StripeCheckout({
         cancelUrl,
       });
 
-      console.log("Checkout session created:", data);
-
       if (data.sessionUrl) {
         // Redirect to Stripe Checkout
         window.location.href = data.sessionUrl;
@@ -65,7 +58,6 @@ export default function StripeCheckout({
         throw new Error("No session URL received from server");
       }
     } catch (error) {
-      console.error("Failed to create checkout session:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to initialize payment";
       onError?.(errorMessage);

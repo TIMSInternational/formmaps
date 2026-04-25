@@ -71,16 +71,10 @@ export default function LoginPage() {
         email: data.email,
         name: response.user?.name || data.email.split("@")[0],
         role: roleName,
+        schoolId: response.user?.schoolId || null,
         avatar: response.user?.avatarUrl || response.user?.profilePicture || response.user?.avatar || response.user?.image || null,
         isAuthenticated: true,
       });
-
-      // Test JWT decoding after successful login
-      if (typeof window !== "undefined") {
-        import("@/utils/testJWTDecoding").then(({ testJWTDecoding }) => {
-          testJWTDecoding();
-        });
-      }
 
       // Role-based redirect: Different roles go to their respective dashboards
       const normalizedRole = (roleName || "").toLowerCase();

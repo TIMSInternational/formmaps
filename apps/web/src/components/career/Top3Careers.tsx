@@ -8,7 +8,6 @@ import { usePrefetchCareers } from "@/hooks/useCareerQueries";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useTimsCareerScoring } from "@/hooks/useTimsQueries";
-import { careers } from "@/services/careerService";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -36,24 +35,19 @@ export function Top3Careers({ topCareersProp }: { topCareersProp?: string[] }) {
       }));
     }
     if (timsCareerList) {
-      return timsCareerList.map((sc) => {
-        const staticCareer = careers.find(
-          (c) => c.id === sc.programId || c.slug === sc.programId,
-        );
-        return {
+      return timsCareerList.map((sc) => ({
           careerId: sc.programId,
           matchScore: sc.totalScore,
           explanation: {
             en: sc.bridgingReasons?.[0] || "Based on your profile match",
             es: sc.bridgingReasons?.[0] || "Basado en tu perfil",
           },
-          title: staticCareer?.title || {
+          title: {
             en: sc.programTitle,
             es: sc.programTitle,
           },
-          iconUrl: staticCareer?.iconUrl,
-        };
-      });
+          iconUrl: sc.iconUrl || "",
+      }));
     }
     return [];
   }, [timsCareerList]);

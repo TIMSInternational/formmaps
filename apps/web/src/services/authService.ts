@@ -69,14 +69,24 @@ export async function getCurrentUser(): Promise<UserProfile> {
     const decoded = decodeJWTToken(token);
 
     if (decoded) {
+      const roleName = decoded.role || decoded[
+        "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+      ] || "staff";
       return {
-        id: decoded.id || decoded.sub || "fallback-id",
-        name: decoded.name || "User",
-        email: decoded.email || "user@example.com",
+        id: decoded[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ] || decoded.sub || decoded.id || "fallback-id",
+        name: decoded[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+        ] || decoded.name || "User",
+        email: decoded[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+        ] || decoded.email || "user@example.com",
         roleId: decoded.roleId || "role-id",
+        schoolId: decoded.schoolId || "",
         role: {
           id: decoded.roleId || "role-id",
-          name: decoded.role?.name || decoded.roleName || decoded.role || "staff",
+          name: roleName,
           description: "Role extracted from token",
           isActive: true
         }

@@ -113,6 +113,7 @@ interface GlobalState {
     email: string | null;
     name: string | null;
     role: string | null;
+    schoolId?: string | null;
     image?: string | null;
     avatar?: string | null;
     contractEnd?: string | null;

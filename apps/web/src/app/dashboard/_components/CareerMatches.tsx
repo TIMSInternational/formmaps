@@ -3,7 +3,6 @@ import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useTimsCareerScoring } from "@/hooks/useTimsQueries";
-import { careers } from "@/services/careerService";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
@@ -25,21 +24,12 @@ export function CareerMatches({ className }: CareerMatchesProps) {
 
   const timsCareerList = timsData?.data?.careers || [];
 
-  const matches = timsCareerList.slice(0, 5).map((sc) => {
-    const staticCareer = careers.find(
-      (c) => c.id === sc.programId || c.slug === sc.programId,
-    );
-    return {
+  const matches = timsCareerList.slice(0, 5).map((sc) => ({
       id: sc.programId,
-      title:
-        staticCareer?.title?.[language === "spanish" ? "es" : "en"] ||
-        sc.programTitle ||
-        sc.programId,
-      industry:
-        (staticCareer?.industries || [])[0] || t("career.general", "General"),
+      title: sc.programTitle || sc.programId,
+      industry: t("career.general", "General"),
       progress: Math.round(sc.totalScore),
-    };
-  });
+  }));
 
   const showAssessmentPrompt = !hasAssessments;
 

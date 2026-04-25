@@ -81,11 +81,11 @@ export function middleware(request: NextRequest) {
               const sub = user.subscriptionStatus;
               const hasActiveSub = sub && sub !== "none" && sub !== "canceled" && sub !== "past_due";
 
-              // if (isStudent && !hasActiveSub) {
-              //   const url = request.nextUrl.clone();
-              //   url.pathname = "/subscribe";
-              //   return NextResponse.redirect(url);
-              // }
+              if (isStudent && !hasActiveSub) {
+                const url = request.nextUrl.clone();
+                url.pathname = "/subscribe";
+                return NextResponse.redirect(url);
+              }
 
               return NextResponse.next();
             })

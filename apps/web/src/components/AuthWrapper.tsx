@@ -155,16 +155,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       const missingOrInactive = !subscriptionStatus?.hasActiveSubscription;
 
       if (missingOrInactive) {
-        // New users and users without active subscriptions must subscribe
-        console.log(
-          "🔒 Subscription required or expired. Redirecting to subscription page...",
-          {
-            subscriptionStatus,
-            role: user.role,
-            pathname,
-          }
-        );
-        // router.push("/subscribe");
+        router.push("/subscribe");
         return;
       }
     }
