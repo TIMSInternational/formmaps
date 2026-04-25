@@ -11,13 +11,12 @@ import {
   CourseEnrollment,
 } from "@/types/course";
 import {
-  mockCourses,
-  mockCategories,
-  mockLanguages,
-  mockCountries,
-  mockDifficulties,
-  mockRegions,
-} from "@/data/mockCourses";
+  courseCategories,
+  courseLanguages,
+  courseCountries,
+  courseDifficulties,
+  courseRegions,
+} from "@/data/courseConstants";
 import { useCourseList } from "@/hooks/useCourseQueries";
 import { useTranslation } from "react-i18next";
 import {
@@ -45,7 +44,7 @@ export function CoursesCatalog() {
 
   // Filter and sort courses
   const filteredAndSortedCourses = useMemo(() => {
-    const filtered = courses.filter((course) => {
+    const filtered = courses.filter((course: Course) => {
       // Search filter
       if (filters.search) {
         const searchTerm = filters.search.toLowerCase();
@@ -86,7 +85,7 @@ export function CoursesCatalog() {
     });
 
     // Sort courses
-    filtered.sort((a, b) => {
+    filtered.sort((a: Course, b: Course) => {
       switch (sortBy) {
         case "recommended":
           return b.recommendedScore - a.recommendedScore;
@@ -120,7 +119,7 @@ export function CoursesCatalog() {
   // Featured Course (highest rated or newest)
   const featuredCourse = useMemo(() => {
     if (courses.length === 0) return null;
-    return courses.reduce((prev, current) =>
+    return courses.reduce((prev: Course, current: Course) =>
       (prev.rating > current.rating) ? prev : current
     );
   }, [courses]);
@@ -200,11 +199,11 @@ export function CoursesCatalog() {
   };
 
   const availableFilters = {
-    categories: mockCategories,
-    languages: mockLanguages,
-    difficulties: [...mockDifficulties],
-    countries: mockCountries,
-    regions: mockRegions,
+    categories: courseCategories,
+    languages: courseLanguages,
+    difficulties: [...courseDifficulties],
+    countries: courseCountries,
+    regions: courseRegions,
   };
 
   return (
@@ -299,7 +298,7 @@ export function CoursesCatalog() {
         >
           {t("courses.allTopics")}
         </Button>
-        {mockCategories.slice(0, 6).map(category => (
+        {courseCategories.slice(0, 6).map(category => (
           <Button
             key={category}
             variant={filters.category?.includes(category) ? "default" : "outline"}
@@ -424,7 +423,7 @@ export function CoursesCatalog() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-            {filteredAndSortedCourses.map((course, index) => (
+            {filteredAndSortedCourses.map((course: Course, index: number) => (
               <motion.div
                 key={course.id}
                 initial={{ opacity: 0, y: 20 }}

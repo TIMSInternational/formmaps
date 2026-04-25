@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
-import { getAllAdminCourses, seedFromMock } from "@/lib/adminCoursesStore";
-import { mockCourses } from "@/data/mockCourses";
+import { getAllAdminCourses } from "@/lib/adminCoursesStore";
 
-// For now we seed admin store from mock once
-// Only seed and enable the local in-app admin API if explicitly enabled
 const USE_LOCAL_API = process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
-if (USE_LOCAL_API) {
-  seedFromMock(mockCourses);
-}
 
 export async function GET(req: Request) {
   if (!USE_LOCAL_API) {

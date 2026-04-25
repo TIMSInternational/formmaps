@@ -336,17 +336,24 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionData> {
         console.log("✅ Returning real API data:", transformedData);
         return transformedData;
       } else {
-        console.warn("⚠️ API returned empty array, using mock data");
-        return defaultSubscriptionData;
+        console.warn("API returned empty plans array");
+        return {
+          subscription: defaultSubscriptionData.subscription,
+          billingOptions: [],
+          features: defaultSubscriptionData.features,
+        };
       }
     }
 
-    console.warn("⚠️ API response is not an array, using mock data");
-    return defaultSubscriptionData;
+    console.warn("API response is not an array, returning empty billing options");
+    return {
+      subscription: defaultSubscriptionData.subscription,
+      billingOptions: [],
+      features: defaultSubscriptionData.features,
+    };
   } catch (error) {
-    console.error("❌ Failed to fetch subscription plans from API:", error);
-    console.warn("⚠️ Using mock data as fallback");
-    return defaultSubscriptionData;
+    console.error("Failed to fetch subscription plans from API:", error);
+    throw error;
   }
 }
 

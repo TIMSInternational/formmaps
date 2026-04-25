@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockCourses } from "@/data/mockCourses";
 import {
   adminCreateCourse,
   adminDeleteCourseApi,
@@ -34,7 +33,7 @@ import { toast } from "sonner";
 import { motion } from "motion/react";
 
 export function CourseManager() {
-  const [courses, setCourses] = useState<Course[]>(mockCourses);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);

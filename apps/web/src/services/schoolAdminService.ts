@@ -72,15 +72,8 @@ export async function getSchoolAdminStats(): Promise<SchoolAdminDashboardStats> 
     const json = await response.json();
     return json.data || json;
   } catch (error) {
-    console.warn("getSchoolAdminStats API failed, returning mock data");
-    return {
-      totalStudents: 0,
-      pendingInvites: 0,
-      acceptedStudents: 0,
-      activeStudents: 0,
-      completedAssessments: 0,
-      averageScore: 0,
-    };
+    console.error("getSchoolAdminStats API failed:", error);
+    throw error;
   }
 }
 
@@ -264,8 +257,8 @@ export async function getAnalyticsOverview(
       timeSpent: { ...defaultData.timeSpent, ...(data.timeSpent || {}) },
     };
   } catch (error) {
-    console.warn("getAnalyticsOverview API failed, returning mock data");
-    return defaultData;
+    console.error("getAnalyticsOverview API failed:", error);
+    throw error;
   }
 }
 
@@ -292,8 +285,8 @@ export async function getPerformanceTrends(
       datasets: data.datasets || defaultData.datasets,
     };
   } catch (error) {
-    console.warn("getPerformanceTrends API failed, returning mock data");
-    return defaultData;
+    console.error("getPerformanceTrends API failed:", error);
+    throw error;
   }
 }
 
@@ -487,12 +480,7 @@ export async function verifySchoolAdminAccess(): Promise<{
 
     return { isSchoolAdmin: false };
   } catch (error) {
-    // If all else fails, allow access in development
-    console.warn("verifySchoolAdminAccess failed, falling back to development defaults:", error);
-    return {
-      isSchoolAdmin: true,
-      schoolId: "dev-school",
-      schoolName: "Development School"
-    };
+    console.error("verifySchoolAdminAccess failed:", error);
+    return { isSchoolAdmin: false };
   }
 }

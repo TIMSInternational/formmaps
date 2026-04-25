@@ -447,8 +447,7 @@ export async function getAdminAnalytics(
   );
 
   if (!response.ok) {
-    // Return mock data if endpoint doesn't exist yet
-    return getMockAdminAnalytics();
+    throw new Error("Failed to fetch admin analytics");
   }
 
   const json = await response.json();

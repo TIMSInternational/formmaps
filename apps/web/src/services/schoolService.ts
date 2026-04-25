@@ -38,31 +38,17 @@ export async function getSchools(
   if (params.limit) query.append("limit", params.limit.toString());
   if (params.search) query.append("search", params.search);
 
-  // Fallback to empty response if API is not ready/mocking
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/v1/admin/schools?${query.toString()}`,
-      {
-        headers: getHeaders(),
-      },
-    );
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/admin/schools?${query.toString()}`,
+    {
+      headers: getHeaders(),
+    },
+  );
 
-    if (!response.ok) {
-      console.warn("getSchools API not found or error, returning mock data");
-      throw new Error("Failed to fetch schools");
-    }
-    return response.json();
-  } catch (e) {
-    // Mock Data for development demonstration
-    console.log("Using Mock Data for Schools");
-    return {
-      data: [],
-      total: 0,
-      page: 1,
-      limit: 10,
-      totalPages: 0,
-    };
+  if (!response.ok) {
+    throw new Error("Failed to fetch schools");
   }
+  return response.json();
 }
 
 export async function inviteSchool(
@@ -130,13 +116,8 @@ export async function getSchoolStats(): Promise<SchoolStats> {
     const json = await response.json();
     return json.data || json;
   } catch (error) {
-    console.warn("getSchoolStats API failed, returning zeros");
-    return {
-      totalSchools: 0,
-      activeSchools: 0,
-      pendingInvites: 0,
-      totalStudents: 0,
-    };
+    console.error("getSchoolStats API failed:", error);
+    throw error;
   }
 }
 
