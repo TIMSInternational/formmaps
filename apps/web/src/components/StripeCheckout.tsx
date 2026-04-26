@@ -37,7 +37,7 @@ export default function StripeCheckout({
 
     try {
       const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-      const successUrl = `${baseUrl}/payment-success`;
+      const successUrl = `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = `${baseUrl}/payment-cancelled`;
 
       // Create checkout session via subscription service
