@@ -1,129 +1,266 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { SubscriptionPlans } from "@/app/dashboard/subscriptions/_components/SubscriptionPlans";
-import { Button } from "@/components/ui/button";
-
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { CheckCircle2, X } from "lucide-react";
+import { Check, CheckCircle2, X, Sparkles, Zap, Crown, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
+import { useGlobalStore } from "@/store/useGlobalStore";
+import StripeCheckout from "@/components/StripeCheckout";
+import { useSubscriptionStatus } from "@/hooks/useSubscription";
+
+interface PlanFeature {
+  text: string;
+  highlighted?: boolean;
+}
+
+interface Plan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  period: string;
+  icon: typeof Zap;
+  features: PlanFeature[];
+  popular?: boolean;
+  ctaText: string;
+  gradient: string;
+  badge?: string;
+}
 
 export default function SubscribePage() {
   const { t } = useTranslation();
+  const { user } = useGlobalStore();
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+  const { data: subStatus } = useSubscriptionStatus();
 
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const userId = user.id || "";
 
-  // Check for success/cancelled parameters from Stripe redirect
   useEffect(() => {
     const success = searchParams.get("success");
-    const cancelled = searchParams.get("cancelled");
     const sessionId = searchParams.get("session_id");
 
     if (success === "true" && sessionId) {
-      // Verify payment with backend
-      fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/stripe/status/${sessionId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status === "succeeded" || data.paymentStatus === "paid") {
-            setShowSuccessMessage(true);
-            // Hide success message after 8 seconds
-            setTimeout(() => setShowSuccessMessage(false), 8000);
-          }
-        })
-        .catch((err) => {
-          // Still show success message as user was redirected from Stripe
-          setShowSuccessMessage(true);
-          setTimeout(() => setShowSuccessMessage(false), 8000);
-        });
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        router.push("/dashboard");
+      }, 3000);
 
-      // Clear URL parameters after showing message
       const url = new URL(window.location.href);
       url.searchParams.delete("success");
-      url.searchParams.delete("payment_intent");
       url.searchParams.delete("session_id");
       window.history.replaceState({}, "", url.toString());
-    } else if (cancelled === "true") {
-      // Clear URL parameters
-      const url = new URL(window.location.href);
-      url.searchParams.delete("cancelled");
-      window.history.replaceState({}, "", url.toString());
-
-      // Show cancelled message briefly
-      setTimeout(() => {
-        alert(t("payments.cancelledText"));
-      }, 500);
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
+
+  const plans: Plan[] = [
+    {
+      id: "starter",
+      name: "Starter",
+      description: "Begin your career journey",
+      price: 9.99,
+      period: "month",
+      icon: Zap,
+      gradient: "from-slate-600 to-slate-800",
+      ctaText: "Get Started",
+      features: [
+        { text: "PCA & MIL Assessments" },
+        { text: "Career matching (top 10)" },
+        { text: "Basic resume builder" },
+        { text: "Course catalog access" },
+        { text: "Email support" },
+      ],
+    },
+    {
+      id: "pro",
+      name: "Pro",
+      description: "Full platform access",
+      price: 29.99,
+      period: "month",
+      icon: Sparkles,
+      popular: true,
+      badge: "Most Popular",
+      gradient: "from-blue-600 to-indigo-600",
+      ctaText: "Start Pro",
+      features: [
+        { text: "Everything in Starter" },
+        { text: "360° Evaluation system", highlighted: true },
+        { text: "Full career matching (370+ careers)", highlighted: true },
+        { text: "AI-powered resume builder" },
+        { text: "University recommendations" },
+        { text: "Course plan builder" },
+        { text: "Portfolio builder" },
+        { text: "1 coaching session / month" },
+        { text: "Priority support" },
+      ],
+    },
+    {
+      id: "premium",
+      name: "Premium",
+      description: "Everything unlimited",
+      price: 49.99,
+      period: "month",
+      icon: Crown,
+      gradient: "from-purple-600 to-pink-600",
+      ctaText: "Go Premium",
+      features: [
+        { text: "Everything in Pro" },
+        { text: "Unlimited coaching sessions", highlighted: true },
+        { text: "AI career narrative reports", highlighted: true },
+        { text: "Counselor session booking" },
+        { text: "Community service tracking" },
+        { text: "Senior project support" },
+        { text: "Certification tracking" },
+        { text: "Dedicated support" },
+      ],
+    },
+  ];
 
   return (
-    <div className="h-[100dvh] overflow-y-auto w-full bg-gradient-to-br from-indigo-50 via-white to-purple-50 relative">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-purple-200/20 blur-3xl animate-pulse" />
-        <div className="absolute top-[40%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-200/20 blur-3xl animate-pulse delay-1000" />
-      </div>
+    <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 via-white to-blue-50/30">
+      {/* Success toast */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-50"
+          >
+            <div className="bg-white shadow-2xl rounded-2xl px-6 py-4 border border-green-100 flex items-center gap-3">
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+              <div>
+                <p className="font-semibold text-gray-900">Payment successful!</p>
+                <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className="relative z-10 container mx-auto py-8 px-4 md:py-12">
-        {/* Success Message Float */}
-        <AnimatePresence>
-          {showSuccessMessage && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: -20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4"
-            >
-              <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-4 border border-green-100 flex items-start gap-4 ring-1 ring-black/5">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+      <div className="max-w-6xl mx-auto px-4 py-16 md:py-24">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16"
+        >
+          <Badge className="mb-4 bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100 px-4 py-1.5">
+            Choose Your Plan
+          </Badge>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-4">
+            Invest in Your Future
+          </h1>
+          <p className="text-lg text-gray-500 max-w-xl mx-auto">
+            Unlock AI-powered career tools, assessments, and personalized guidance to accelerate your professional journey.
+          </p>
+        </motion.div>
+
+        {/* Plans */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-start">
+          {plans.map((plan, i) => {
+            const Icon = plan.icon;
+            return (
+              <motion.div
+                key={plan.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className={`relative rounded-2xl border bg-white transition-all duration-300 hover:shadow-xl ${
+                  plan.popular
+                    ? "border-blue-200 shadow-lg shadow-blue-100/50 scale-[1.02]"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                {plan.badge && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                    <Badge className={`bg-gradient-to-r ${plan.gradient} text-white border-0 px-4 py-1 shadow-lg`}>
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      {plan.badge}
+                    </Badge>
+                  </div>
+                )}
+
+                <div className="p-8">
+                  {/* Icon + Name */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${plan.gradient} flex items-center justify-center`}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+                      <p className="text-sm text-gray-500">{plan.description}</p>
+                    </div>
+                  </div>
+
+                  {/* Price */}
+                  <div className="flex items-baseline gap-1 mb-8">
+                    <span className="text-4xl font-bold text-gray-900">${plan.price}</span>
+                    <span className="text-gray-400 font-medium">/{plan.period}</span>
+                  </div>
+
+                  {/* CTA */}
+                  <StripeCheckout
+                    amount={plan.price * 100}
+                    userId={userId}
+                    planId={plan.id}
+                    productName={`${plan.name} Plan`}
+                    onStart={() => setProcessingPlan(plan.id)}
+                    onSuccess={() => window.location.reload()}
+                    onError={(error: string) => {
+                      alert(`Payment failed: ${error}`);
+                      setProcessingPlan(null);
+                    }}
+                    disabled={processingPlan !== null}
+                    className="w-full mb-8"
+                  >
+                    <Button
+                      className={`w-full h-12 rounded-xl font-semibold text-base transition-all ${
+                        plan.popular
+                          ? `bg-gradient-to-r ${plan.gradient} text-white shadow-md hover:shadow-lg hover:opacity-95`
+                          : "bg-gray-900 text-white hover:bg-gray-800"
+                      }`}
+                      disabled={processingPlan !== null}
+                    >
+                      {processingPlan === plan.id ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+                      ) : (
+                        plan.ctaText
+                      )}
+                    </Button>
+                  </StripeCheckout>
+
+                  {/* Features */}
+                  <div className="space-y-3">
+                    {plan.features.map((feature, j) => (
+                      <div key={j} className="flex items-start gap-3">
+                        <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${feature.highlighted ? "text-blue-600" : "text-gray-400"}`} />
+                        <span className={`text-sm ${feature.highlighted ? "text-gray-900 font-medium" : "text-gray-600"}`}>
+                          {feature.text}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="flex-1 pt-1">
-                  <h3 className="font-semibold text-gray-900">
-                    {t("subscribe.paymentSuccessful")}
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {t("subscribe.subscriptionActive")}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowSuccessMessage(false)}
-                  className="flex-shrink-0 text-gray-400 hover:text-gray-600 p-1"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Content */}
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-10 text-center"
-          >
-            <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 mb-4 tracking-tight">
-              {t("subscribe.upgradeTitle")}
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              {t("subscribe.upgradeSubtitle")}
-            </p>
-          </motion.div>
-
-          <SubscriptionPlans className="!mt-0" />
+              </motion.div>
+            );
+          })}
         </div>
+
+        {/* Bottom note */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-center text-sm text-gray-400 mt-12"
+        >
+          All plans include a 7-day free trial. Cancel anytime. Secure payments via Stripe.
+        </motion.p>
       </div>
     </div>
   );
