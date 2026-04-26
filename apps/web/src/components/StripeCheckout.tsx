@@ -40,7 +40,6 @@ export default function StripeCheckout({
       const successUrl = `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = `${baseUrl}/payment-cancelled`;
 
-      // Create checkout session via subscription service
       const data = await createCheckoutSession({
         planId,
         userId,
@@ -52,7 +51,6 @@ export default function StripeCheckout({
       });
 
       if (data.sessionUrl) {
-        // Redirect to Stripe Checkout
         window.location.href = data.sessionUrl;
       } else {
         throw new Error("No session URL received from server");
@@ -63,23 +61,25 @@ export default function StripeCheckout({
       onError?.(errorMessage);
       setLoading(false);
     }
-    // Note: We don't set loading to false on success because we're redirecting
   };
 
   return (
-    <button
+    <div
       onClick={handleCheckout}
-      disabled={disabled || loading}
-      className={className}
+      role="button"
+      tabIndex={disabled || loading ? -1 : 0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleCheckout(); }}
+      className={`${className} ${disabled || loading ? "pointer-events-none opacity-60" : "cursor-pointer"}`}
+      aria-disabled={disabled || loading}
     >
       {loading ? (
-        <div className="flex items-center justify-center space-x-2" role="status">
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-          <span>Redirecting to Stripe...</span>
+        <div className="flex items-center justify-center space-x-2 py-3" role="status">
+          <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+          <span className="text-sm text-gray-600">Redirecting to Stripe...</span>
         </div>
       ) : (
         children || "Pay with Stripe"
       )}
-    </button>
+    </div>
   );
 }
