@@ -398,7 +398,9 @@ export async function markNotificationRead(
 }
 
 export async function getCoachDetails(coachId: string): Promise<Coach> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/coach/${coachId}`);
+  const response = await fetch(`${API_BASE_URL}/api/v1/coach/${coachId}`, {
+    headers: getHeaders(),
+  });
   if (!response.ok) throw new Error("Failed to fetch coach details");
   const json = await response.json();
   return json.data;
