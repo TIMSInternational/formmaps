@@ -263,18 +263,28 @@ export async function checkPCAStatus(
       return { status: "not_started" };
     }
 
-    try {
-      const result = await getPCAResultByUserId(userId, language);
-      if (result && Object.keys(result).length > 0) {
-        return {
-          status: "completed",
-          pcaCod: userEvaluation.pcaCod,
-          hasResults: true,
-          lastActivity: userEvaluation.createdAt || new Date().toISOString(),
-        };
+    // Check if we've recently tried and failed to get results (avoid 400 spam)
+    const cacheKey = `pca_result_checked_${userId}`;
+    const lastCheck = typeof window !== "undefined" ? sessionStorage.getItem(cacheKey) : null;
+    const now = Date.now();
+
+    // Only try fetching results if we haven't checked in the last 30 seconds
+    if (!lastCheck || now - parseInt(lastCheck) > 30000) {
+      try {
+        const result = await getPCAResultByUserId(userId, language);
+        if (result?.data && (result.data.pcaCod || result.data.pcaD1 != null)) {
+          if (typeof window !== "undefined") sessionStorage.removeItem(cacheKey);
+          return {
+            status: "completed",
+            pcaCod: userEvaluation.pcaCod,
+            hasResults: true,
+            lastActivity: userEvaluation.createdAt || new Date().toISOString(),
+          };
+        }
+      } catch {
+        // No results yet — cache the failed attempt
       }
-    } catch {
-      // No results yet, but evaluation exists
+      if (typeof window !== "undefined") sessionStorage.setItem(cacheKey, String(now));
     }
 
     return {
