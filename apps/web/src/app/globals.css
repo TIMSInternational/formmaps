@@ -162,144 +162,167 @@
   }
 }
 
-/* Twenty-style admin overrides */
+/* Twenty-style admin overrides — dark theme */
 .admin-twenty {
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-family: Inter, -apple-system, system-ui, sans-serif;
   font-size: 13px;
-  color: #141414;
+  color: #e4e4e7;
+  background: #1a1a1a;
 }
 
-.admin-twenty .admin-card {
-  background: #fff;
-  border: 1px solid #e4e4e7;
-  border-radius: 8px;
-  overflow: hidden;
+/* Override shadcn components in admin context */
+.admin-twenty [data-slot="card"],
+.admin-twenty .border {
+  border-color: #2a2a2a !important;
+}
+.admin-twenty [data-slot="card"] {
+  background: #1e1e1e !important;
+  color: #e4e4e7 !important;
+}
+.admin-twenty [data-slot="card-header"] {
+  border-color: #2a2a2a !important;
+}
+.admin-twenty [data-slot="card-title"] {
+  color: #fff !important;
+}
+.admin-twenty [data-slot="card-description"] {
+  color: #666 !important;
 }
 
-.admin-twenty .admin-table {
+/* Tables */
+.admin-twenty table {
   font-size: 13px;
+  color: #ccc;
 }
-.admin-twenty .admin-table th {
-  font-size: 11px;
-  font-weight: 600;
+.admin-twenty thead th,
+.admin-twenty [data-slot="table-head"] {
+  font-size: 11px !important;
+  font-weight: 600 !important;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #8a8a8e;
-  padding: 8px 12px;
-  border-bottom: 1px solid #e4e4e7;
-  background: #fafafa;
+  letter-spacing: 0.04em;
+  color: #666 !important;
+  background: #1a1a1a !important;
+  border-color: #2a2a2a !important;
+  padding: 8px 12px !important;
 }
-.admin-twenty .admin-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #f0f0f0;
-  color: #141414;
+.admin-twenty tbody td,
+.admin-twenty [data-slot="table-cell"] {
+  border-color: #222 !important;
+  color: #ccc !important;
+  padding: 10px 12px !important;
 }
-.admin-twenty .admin-table tr:hover td {
-  background: #fafafa;
-}
-.admin-twenty .admin-table tr:last-child td {
-  border-bottom: none;
-}
-
-.admin-twenty .admin-badge {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 4px;
-  display: inline-flex;
-  align-items: center;
-}
-.admin-twenty .admin-badge-green {
-  background: #ecfdf5;
-  color: #059669;
-}
-.admin-twenty .admin-badge-yellow {
-  background: #fef9c3;
-  color: #ca8a04;
-}
-.admin-twenty .admin-badge-red {
-  background: #fef2f2;
-  color: #dc2626;
-}
-.admin-twenty .admin-badge-blue {
-  background: #eff6ff;
-  color: #2563eb;
-}
-.admin-twenty .admin-badge-gray {
-  background: #f4f4f5;
-  color: #71717a;
+.admin-twenty tbody tr:hover td,
+.admin-twenty [data-slot="table-row"]:hover [data-slot="table-cell"] {
+  background: #222 !important;
 }
 
-.admin-twenty .admin-btn {
+/* Buttons */
+.admin-twenty button,
+.admin-twenty [data-slot="button"] {
   font-size: 13px;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.15s;
-  cursor: pointer;
-  border: 1px solid #e4e4e7;
-  background: white;
-  color: #141414;
-}
-.admin-twenty .admin-btn:hover {
-  background: #fafafa;
-  border-color: #d0d0d3;
-}
-.admin-twenty .admin-btn-primary {
-  background: #141414;
-  color: white;
-  border-color: #141414;
-}
-.admin-twenty .admin-btn-primary:hover {
-  background: #333;
 }
 
-.admin-twenty .admin-input {
+/* Inputs */
+.admin-twenty input,
+.admin-twenty select,
+.admin-twenty textarea,
+.admin-twenty [data-slot="input"] {
+  background: #1e1e1e !important;
+  border-color: #2a2a2a !important;
+  color: #e4e4e7 !important;
   font-size: 13px;
-  padding: 7px 10px;
-  border: 1px solid #e4e4e7;
-  border-radius: 6px;
+}
+.admin-twenty input::placeholder {
+  color: #555 !important;
+}
+.admin-twenty input:focus,
+.admin-twenty [data-slot="input"]:focus {
+  border-color: #555 !important;
   outline: none;
-  background: white;
-  color: #141414;
-  width: 100%;
-}
-.admin-twenty .admin-input:focus {
-  border-color: #141414;
-  box-shadow: 0 0 0 1px #141414;
-}
-.admin-twenty .admin-input::placeholder {
-  color: #8a8a8e;
+  box-shadow: 0 0 0 1px #555;
 }
 
-.admin-twenty .admin-stat {
-  padding: 16px;
-  border: 1px solid #e4e4e7;
-  border-radius: 8px;
-  background: white;
-}
-.admin-twenty .admin-stat-label {
+/* Badges */
+.admin-twenty [data-slot="badge"] {
   font-size: 11px;
   font-weight: 500;
-  color: #8a8a8e;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.admin-twenty .admin-stat-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #141414;
-  margin-top: 4px;
 }
 
-.admin-twenty .admin-section-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #8a8a8e;
-  margin-bottom: 8px;
+/* Dialogs */
+.admin-twenty [data-slot="dialog-content"] {
+  background: #1e1e1e !important;
+  border-color: #2a2a2a !important;
+  color: #e4e4e7 !important;
+}
+.admin-twenty [data-slot="dialog-title"] {
+  color: #fff !important;
+}
+.admin-twenty [data-slot="dialog-description"] {
+  color: #666 !important;
+}
+
+/* Labels */
+.admin-twenty label,
+.admin-twenty [data-slot="label"] {
+  color: #999 !important;
+  font-size: 12px;
+}
+
+/* Select dropdowns */
+.admin-twenty [data-slot="select-trigger"] {
+  background: #1e1e1e !important;
+  border-color: #2a2a2a !important;
+  color: #ccc !important;
+}
+.admin-twenty [data-slot="select-content"] {
+  background: #1e1e1e !important;
+  border-color: #2a2a2a !important;
+}
+.admin-twenty [data-slot="select-item"] {
+  color: #ccc !important;
+}
+.admin-twenty [data-slot="select-item"]:hover,
+.admin-twenty [data-slot="select-item"][data-highlighted] {
+  background: #2a2a2a !important;
+}
+
+/* Tabs */
+.admin-twenty [data-slot="tabs-list"] {
+  background: #1a1a1a !important;
+  border-color: #2a2a2a !important;
+}
+.admin-twenty [data-slot="tabs-trigger"] {
+  color: #666 !important;
+}
+.admin-twenty [data-slot="tabs-trigger"][data-state="active"] {
+  color: #fff !important;
+  background: #2a2a2a !important;
+}
+
+/* Separator */
+.admin-twenty [data-slot="separator"],
+.admin-twenty hr {
+  background: #2a2a2a !important;
+  border-color: #2a2a2a !important;
+}
+
+/* Text overrides */
+.admin-twenty h1, .admin-twenty h2, .admin-twenty h3, .admin-twenty h4 {
+  color: #fff;
+}
+.admin-twenty p {
+  color: #999;
+}
+
+/* Skeleton */
+.admin-twenty .animate-pulse {
+  background: #222 !important;
+}
+
+/* Switch */
+.admin-twenty [data-slot="switch"] {
+  background: #333 !important;
+}
+.admin-twenty [data-slot="switch"][data-state="checked"] {
+  background: #3b82f6 !important;
 }

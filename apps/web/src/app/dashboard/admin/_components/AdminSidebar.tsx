@@ -18,49 +18,33 @@ import {
   BarChart3,
   Settings,
   School,
+  ChevronDown,
   ChevronLeft,
   LogOut,
+  Home,
+  MessageSquare,
   Search,
+  FileText,
+  Workflow,
 } from "lucide-react";
 
-const NAV_GROUPS = [
-  {
-    label: "Overview",
-    items: [
-      { label: "Dashboard", href: "/dashboard/admin", icon: LayoutDashboard },
-      { label: "Analytics", href: "/dashboard/admin/analytics", icon: BarChart3 },
-    ],
-  },
-  {
-    label: "People",
-    items: [
-      { label: "Users", href: "/dashboard/admin/users", icon: Users },
-      { label: "Schools", href: "/dashboard/admin/schools", icon: School },
-      { label: "Coaches", href: "/dashboard/admin/coaches", icon: GraduationCap },
-    ],
-  },
-  {
-    label: "Content",
-    items: [
-      { label: "Courses", href: "/dashboard/admin/courses", icon: BookOpen },
-      { label: "Careers", href: "/dashboard/admin/careers", icon: Briefcase },
-      { label: "360° Questions", href: "/dashboard/admin/questions", icon: HelpCircle },
-    ],
-  },
-  {
-    label: "Finance",
-    items: [
-      { label: "Plans", href: "/dashboard/admin/plans", icon: CreditCard },
-      { label: "Transactions", href: "/dashboard/admin/transactions", icon: Receipt },
-      { label: "Payouts", href: "/dashboard/admin/payouts", icon: Wallet },
-    ],
-  },
-  {
-    label: "System",
-    items: [
-      { label: "Settings", href: "/dashboard/admin/settings", icon: Settings },
-    ],
-  },
+const WORKSPACE_ITEMS = [
+  { label: "Dashboard", href: "/dashboard/admin", icon: LayoutDashboard },
+  { label: "Users", href: "/dashboard/admin/users", icon: Users },
+  { label: "Schools", href: "/dashboard/admin/schools", icon: School },
+  { label: "Coaches", href: "/dashboard/admin/coaches", icon: GraduationCap },
+  { label: "Courses", href: "/dashboard/admin/courses", icon: BookOpen },
+  { label: "Careers", href: "/dashboard/admin/careers", icon: Briefcase },
+  { label: "360° Questions", href: "/dashboard/admin/questions", icon: HelpCircle },
+  { label: "Transactions", href: "/dashboard/admin/transactions", icon: Receipt },
+  { label: "Payouts", href: "/dashboard/admin/payouts", icon: Wallet },
+  { label: "Plans", href: "/dashboard/admin/plans", icon: CreditCard },
+  { label: "Analytics", href: "/dashboard/admin/analytics", icon: BarChart3 },
+];
+
+const OTHER_ITEMS = [
+  { label: "Settings", href: "/dashboard/admin/settings", icon: Settings },
+  { label: "Student View", href: "/dashboard", icon: ChevronLeft },
 ];
 
 export function AdminSidebar() {
@@ -74,88 +58,136 @@ export function AdminSidebar() {
   };
 
   return (
-    <aside className="w-[220px] h-screen bg-[#fafafa] dark:bg-[#1a1a1a] border-r border-[#e4e4e7] dark:border-[#2a2a2a] flex flex-col shrink-0 select-none"
-      style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px" }}>
-
-      {/* Logo / Header */}
-      <div className="px-3 pt-4 pb-2">
-        <div className="flex items-center gap-2 px-2 py-1.5">
-          <div className="w-6 h-6 bg-black dark:bg-white rounded flex items-center justify-center text-[10px] font-bold text-white dark:text-black">
+    <aside
+      className="w-[200px] h-screen flex flex-col shrink-0 select-none border-r"
+      style={{
+        fontFamily: "Inter, -apple-system, system-ui, sans-serif",
+        fontSize: "13px",
+        background: "#141414",
+        borderColor: "#2a2a2a",
+        color: "#b3b3b3",
+      }}
+    >
+      {/* Workspace selector */}
+      <div className="px-2 pt-3 pb-1">
+        <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#222] transition-colors">
+          <div
+            className="w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold shrink-0"
+            style={{ background: "#333", color: "#fff" }}
+          >
             N
           </div>
-          <span className="text-[13px] font-semibold text-[#141414] dark:text-white tracking-tight">
-            Nexa Admin
-          </span>
-        </div>
+          <span className="text-[13px] font-medium text-white truncate">NexaDev</span>
+          <ChevronDown className="w-3.5 h-3.5 ml-auto text-[#666] shrink-0" />
+        </button>
       </div>
 
-      {/* Search */}
-      <div className="px-3 pb-2">
-        <button className="w-full flex items-center gap-2 px-2.5 py-[7px] text-[12px] text-[#8a8a8e] bg-[#f0f0f0] dark:bg-[#2a2a2a] rounded-md hover:bg-[#e8e8e8] dark:hover:bg-[#333] transition-colors">
-          <Search className="w-3.5 h-3.5" />
-          <span>Search</span>
-          <span className="ml-auto text-[10px] opacity-50">⌘K</span>
-        </button>
+      {/* Icon buttons row */}
+      <div className="px-2 py-1 flex items-center gap-0.5">
+        {[
+          { icon: Home, href: "/dashboard/admin", label: "Home" },
+          { icon: Search, href: "#", label: "Search" },
+          { icon: MessageSquare, href: "#", label: "Chat" },
+          { icon: Settings, href: "/dashboard/admin/settings", label: "Settings" },
+        ].map((btn) => (
+          <Link
+            key={btn.label}
+            href={btn.href}
+            className="flex items-center justify-center w-8 h-8 rounded hover:bg-[#222] transition-colors"
+            title={btn.label}
+          >
+            <btn.icon className="w-4 h-4 text-[#666]" />
+          </Link>
+        ))}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-2 py-1 space-y-4">
-        {NAV_GROUPS.map((group) => (
-          <div key={group.label}>
-            <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a8a8e]">
-              {group.label}
-            </div>
-            <div className="space-y-[1px]">
-              {group.items.map((item) => {
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
+      <nav className="flex-1 overflow-y-auto px-2 pt-2 pb-2">
+        {/* Workspace section */}
+        <div className="mb-3">
+          <div
+            className="px-2 pb-1.5 pt-1"
+            style={{
+              fontSize: "10px",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              color: "#555",
+            }}
+          >
+            Workspace
+          </div>
+          <div className="space-y-px">
+            {WORKSPACE_ITEMS.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-[6px] rounded transition-colors",
+                    active
+                      ? "bg-[#222] text-white"
+                      : "text-[#999] hover:bg-[#1e1e1e] hover:text-[#ccc]"
+                  )}
+                >
+                  <item.icon
                     className={cn(
-                      "flex items-center gap-2.5 px-2.5 py-[7px] rounded-md text-[13px] transition-colors",
-                      active
-                        ? "bg-[#e8e8eb] dark:bg-[#333] text-[#141414] dark:text-white font-medium"
-                        : "text-[#666] dark:text-[#999] hover:bg-[#efefef] dark:hover:bg-[#2a2a2a] hover:text-[#141414] dark:hover:text-white"
+                      "w-4 h-4 shrink-0",
+                      active ? "text-white" : "text-[#666]"
                     )}
-                  >
-                    <item.icon className={cn("w-4 h-4 shrink-0", active ? "text-[#141414] dark:text-white" : "text-[#8a8a8e]")} />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </nav>
-
-      {/* Footer */}
-      <div className="px-2 py-3 border-t border-[#e4e4e7] dark:border-[#2a2a2a] space-y-[1px]">
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-md text-[13px] text-[#666] dark:text-[#999] hover:bg-[#efefef] dark:hover:bg-[#2a2a2a] hover:text-[#141414] dark:hover:text-white transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4 text-[#8a8a8e]" />
-          <span>Student View</span>
-        </button>
-        <button
-          onClick={() => { logout(); router.push("/login"); }}
-          className="w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-md text-[13px] text-[#666] dark:text-[#999] hover:bg-[#efefef] dark:hover:bg-[#2a2a2a] hover:text-[#141414] dark:hover:text-white transition-colors"
-        >
-          <LogOut className="w-4 h-4 text-[#8a8a8e]" />
-          <span>Sign Out</span>
-        </button>
-        {/* User */}
-        <div className="flex items-center gap-2.5 px-2.5 py-2 mt-1">
-          <div className="w-6 h-6 rounded-full bg-[#e4e4e7] dark:bg-[#333] flex items-center justify-center text-[10px] font-semibold text-[#666] dark:text-[#999]">
-            {user?.name?.charAt(0) || "A"}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[12px] font-medium text-[#141414] dark:text-white truncate">{user?.name || "Admin"}</div>
-            <div className="text-[10px] text-[#8a8a8e] truncate">{user?.email || ""}</div>
+                  />
+                  <span className="truncate" style={{ fontSize: "13px" }}>
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </div>
-      </div>
+
+        {/* Other section */}
+        <div>
+          <div
+            className="px-2 pb-1.5 pt-1"
+            style={{
+              fontSize: "10px",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              color: "#555",
+            }}
+          >
+            Other
+          </div>
+          <div className="space-y-px">
+            {OTHER_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-2 px-2 py-[6px] rounded text-[#999] hover:bg-[#1e1e1e] hover:text-[#ccc] transition-colors"
+              >
+                <item.icon className="w-4 h-4 shrink-0 text-[#666]" />
+                <span className="truncate" style={{ fontSize: "13px" }}>
+                  {item.label}
+                </span>
+              </Link>
+            ))}
+            <button
+              onClick={() => {
+                logout();
+                router.push("/login");
+              }}
+              className="w-full flex items-center gap-2 px-2 py-[6px] rounded text-[#999] hover:bg-[#1e1e1e] hover:text-[#ccc] transition-colors"
+            >
+              <LogOut className="w-4 h-4 shrink-0 text-[#666]" />
+              <span className="truncate" style={{ fontSize: "13px" }}>
+                Sign Out
+              </span>
+            </button>
+          </div>
+        </div>
+      </nav>
     </aside>
   );
 }
