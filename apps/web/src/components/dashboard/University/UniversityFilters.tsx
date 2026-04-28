@@ -151,9 +151,9 @@ export function UniversityFilters({
           <span>{t("Location", "Ubicación")}</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {filterOptions?.countries.slice(0, 6).map((c) => (
+          {filterOptions?.countries.slice(0, 6).map((c, i) => (
             <Chip
-              key={c.code}
+              key={`${c.code}-${i}`}
               label={c.code}
               active={filters.countries?.includes(c.code) ?? false}
               onClick={() => {

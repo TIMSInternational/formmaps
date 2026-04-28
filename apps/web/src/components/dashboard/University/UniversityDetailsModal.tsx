@@ -48,10 +48,11 @@ export function UniversityDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
+      <DialogContent
         className="max-w-5xl p-0 overflow-hidden gap-0 border-none shadow-2xl"
         aria-describedby={undefined}
       >
+        <DialogTitle className="sr-only">{university.name}</DialogTitle>
         {/* Header Section */}
         <div className="relative h-64 w-full bg-slate-900">
           {university.coverImage ? (
