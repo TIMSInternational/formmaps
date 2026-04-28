@@ -69,6 +69,7 @@ export function useUniversityRecommendations(userId: string | null) {
         : Promise.reject(new Error("No user")),
     enabled: !!userId,
     staleTime: 10 * 60 * 1000,
+    retry: false,
   });
 }
 
@@ -81,6 +82,7 @@ export function useUniversityStats(userId: string | null) {
         : Promise.reject(new Error("No user")),
     enabled: !!userId,
     staleTime: 10 * 60 * 1000,
+    retry: false,
   });
 }
 

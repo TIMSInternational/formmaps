@@ -160,14 +160,14 @@ export function UniversityCard({
               {university.type}
             </span>
           )}
-          {university.programs.slice(0, 2).map((p, i) => (
+          {(university.programs || []).slice(0, 2).map((p, i) => (
             <span key={i} className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-[10px] font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
               {p.degree}
             </span>
           ))}
-          {university.programs.length > 2 && (
+          {(university.programs || []).length > 2 && (
             <span className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-[10px] font-medium text-gray-500">
-              +{university.programs.length - 2}
+              +{(university.programs || []).length - 2}
             </span>
           )}
         </div>

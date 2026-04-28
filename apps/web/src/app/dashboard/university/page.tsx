@@ -111,7 +111,7 @@ export default function UniversityPage() {
 
         <UniversityStats
           stats={statsQuery.data}
-          isLoading={statsQuery.isLoading}
+          isLoading={statsQuery.isLoading && !statsQuery.error}
         />
       </motion.div>
 
@@ -200,30 +200,8 @@ export default function UniversityPage() {
 
         <Tabs value={activeTab} className="space-y-6">
           <TabsContent value="recommended" className="space-y-6 mt-0">
-            {recoQuery.isLoading && (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton
-                    key={i}
-                    className="h-[340px] w-full rounded-xl"
-                  />
-                ))}
-              </div>
-            )}
-
-            {recoQuery.error && (
-              <div className="dash-card p-6 text-center">
-                <p className="text-red-600 font-medium text-sm">
-                  {t(
-                    "Unable to load recommendations.",
-                    "No se pudieron cargar las recomendaciones."
-                  )}
-                </p>
-              </div>
-            )}
-
-            {!recoQuery.isLoading &&
-              (!universities || universities.length === 0) && !recoQuery.error && (
+            {/* Show empty state when no recommendations (not loading, or errored, or empty data) */}
+            {(!recoQuery.data?.recommendations?.length) && (!recoQuery.isLoading || recoQuery.error) && (
                 <div className="dash-card p-8 text-center">
                   <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
                     <GraduationCap className="w-6 h-6 text-muted-foreground" />
@@ -247,6 +225,14 @@ export default function UniversityPage() {
                   </div>
                 </div>
               )}
+
+            {recoQuery.isLoading && (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-[340px] w-full rounded-xl" />
+                ))}
+              </div>
+            )}
 
             {!recoQuery.isLoading &&
               universities &&
