@@ -38,6 +38,11 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith("/dashboard/admin");
 
+  // Admin routes have their own layout with Twenty-style sidebar
+  if (isAdminRoute) {
+    return <>{children}</>;
+  }
+
   if (isCoach) {
     return (
       <div className="flex min-h-[100dvh] bg-[#eff6ff]">
