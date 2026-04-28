@@ -102,7 +102,7 @@ export function UniversityCard({
         {/* Logo (Floating) */}
         <div className="absolute -top-8 left-5 h-16 w-16 overflow-hidden rounded-xl border-4 border-white bg-white shadow-sm">
           {university.logo ? (
-            // eslint-disable-next-line @next/next/no-img-element
+             
             <img
               src={university.logo}
               alt={university.name}

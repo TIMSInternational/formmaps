@@ -69,7 +69,7 @@ export default function NewDraftPage() {
 
     // Job application without pre-generated result: run AI tailoring
     runTailoring(parsed);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   async function createBlankResume(ctx: ResumeNewContext) {

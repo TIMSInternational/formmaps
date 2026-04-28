@@ -69,7 +69,7 @@ export function UniversityDetailsModal({
               <div className="flex items-end gap-6">
                 <div className="h-24 w-24 rounded-2xl bg-white shadow-xl flex items-center justify-center overflow-hidden border-4 border-white/10 backdrop-blur-sm">
                   {university.logo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                     
                     <img
                       src={university.logo}
                       alt={university.name}
