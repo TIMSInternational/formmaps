@@ -52,23 +52,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               flexDirection: "column",
               width: "100%",
               height: "100%",
-              padding: 3,
-              paddingLeft: 0,
+              padding: 8,
+              paddingLeft: 4,
             }}
           >
             {/* PagePanel — bg: primary, border, radius */}
             <main
               style={{
                 background: "#171717",
-                border: "1px solid #222",
-                borderRadius: 8,
+                border: "1px solid #282828",
+                borderRadius: 12,
                 display: "flex",
                 flexDirection: "column",
                 flex: 1,
                 overflow: "hidden",
               }}
             >
-              <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+              <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px" }}>
                 {children}
               </div>
             </main>
