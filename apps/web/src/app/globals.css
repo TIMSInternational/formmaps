@@ -162,58 +162,74 @@
   }
 }
 
-/* Twenty-style admin overrides — dark theme */
+/* Twenty CRM exact dark theme — colors from twenty-ui/theme-dark.css */
 .admin-twenty {
   font-family: Inter, -apple-system, system-ui, sans-serif;
   font-size: 13px;
-  color: #e4e4e7;
-  background: #1a1a1a;
+  color: #ebebeb;
+  background: #1d1d1d;
+  --twenty-bg-primary: #171717;
+  --twenty-bg-secondary: #1b1b1b;
+  --twenty-bg-tertiary: #1d1d1d;
+  --twenty-border: #222;
+  --twenty-font-primary: #ebebeb;
+  --twenty-font-secondary: #b3b3b3;
+  --twenty-font-tertiary: #818181;
+  --twenty-font-light: #666;
+  --twenty-hover: rgba(255,255,255,0.06);
+  --twenty-active: rgba(255,255,255,0.10);
+  --twenty-radius-sm: 4px;
+  --twenty-radius-md: 8px;
 }
 
-/* Override shadcn components in admin context */
+/* Override shadcn components with Twenty's exact dark theme */
 .admin-twenty [data-slot="card"],
 .admin-twenty .border {
-  border-color: #2a2a2a !important;
+  border-color: var(--twenty-border) !important;
 }
 .admin-twenty [data-slot="card"] {
-  background: #1e1e1e !important;
-  color: #e4e4e7 !important;
+  background: var(--twenty-bg-secondary) !important;
+  color: var(--twenty-font-primary) !important;
+  border-radius: var(--twenty-radius-md) !important;
 }
 .admin-twenty [data-slot="card-header"] {
-  border-color: #2a2a2a !important;
+  border-color: var(--twenty-border) !important;
 }
 .admin-twenty [data-slot="card-title"] {
-  color: #fff !important;
+  color: var(--twenty-font-primary) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
 }
 .admin-twenty [data-slot="card-description"] {
-  color: #666 !important;
+  color: var(--twenty-font-tertiary) !important;
+  font-size: 12px !important;
 }
 
-/* Tables */
+/* Tables — Twenty uses 8px cell padding, no uppercase headers */
 .admin-twenty table {
   font-size: 13px;
-  color: #ccc;
+  color: var(--twenty-font-secondary);
 }
 .admin-twenty thead th,
 .admin-twenty [data-slot="table-head"] {
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #666 !important;
-  background: #1a1a1a !important;
-  border-color: #2a2a2a !important;
-  padding: 8px 12px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--twenty-font-tertiary) !important;
+  background: var(--twenty-bg-primary) !important;
+  border-color: var(--twenty-border) !important;
+  padding: 8px 8px !important;
+  height: 32px !important;
 }
 .admin-twenty tbody td,
 .admin-twenty [data-slot="table-cell"] {
-  border-color: #222 !important;
-  color: #ccc !important;
-  padding: 10px 12px !important;
+  border-color: var(--twenty-border) !important;
+  color: var(--twenty-font-secondary) !important;
+  padding: 8px 8px !important;
+  height: 36px !important;
 }
 .admin-twenty tbody tr:hover td,
 .admin-twenty [data-slot="table-row"]:hover [data-slot="table-cell"] {
-  background: #222 !important;
+  background: var(--twenty-hover) !important;
 }
 
 /* Buttons */
@@ -227,19 +243,21 @@
 .admin-twenty select,
 .admin-twenty textarea,
 .admin-twenty [data-slot="input"] {
-  background: #1e1e1e !important;
-  border-color: #2a2a2a !important;
-  color: #e4e4e7 !important;
+  background: var(--twenty-bg-secondary) !important;
+  border-color: var(--twenty-border) !important;
+  color: var(--twenty-font-primary) !important;
   font-size: 13px;
+  border-radius: var(--twenty-radius-sm) !important;
+  height: 32px !important;
 }
 .admin-twenty input::placeholder {
-  color: #555 !important;
+  color: var(--twenty-font-light) !important;
 }
 .admin-twenty input:focus,
 .admin-twenty [data-slot="input"]:focus {
-  border-color: #555 !important;
+  border-color: var(--twenty-font-tertiary) !important;
   outline: none;
-  box-shadow: 0 0 0 1px #555;
+  box-shadow: none !important;
 }
 
 /* Badges */
@@ -250,73 +268,86 @@
 
 /* Dialogs */
 .admin-twenty [data-slot="dialog-content"] {
-  background: #1e1e1e !important;
-  border-color: #2a2a2a !important;
-  color: #e4e4e7 !important;
+  background: var(--twenty-bg-secondary) !important;
+  border-color: var(--twenty-border) !important;
+  color: var(--twenty-font-primary) !important;
+  border-radius: var(--twenty-radius-md) !important;
 }
 .admin-twenty [data-slot="dialog-title"] {
-  color: #fff !important;
+  color: var(--twenty-font-primary) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
 }
 .admin-twenty [data-slot="dialog-description"] {
-  color: #666 !important;
+  color: var(--twenty-font-tertiary) !important;
+  font-size: 12px !important;
 }
 
 /* Labels */
 .admin-twenty label,
 .admin-twenty [data-slot="label"] {
-  color: #999 !important;
+  color: var(--twenty-font-secondary) !important;
   font-size: 12px;
+  font-weight: 500;
 }
 
 /* Select dropdowns */
 .admin-twenty [data-slot="select-trigger"] {
-  background: #1e1e1e !important;
-  border-color: #2a2a2a !important;
-  color: #ccc !important;
+  background: var(--twenty-bg-secondary) !important;
+  border-color: var(--twenty-border) !important;
+  color: var(--twenty-font-secondary) !important;
+  height: 32px !important;
+  border-radius: var(--twenty-radius-sm) !important;
 }
 .admin-twenty [data-slot="select-content"] {
-  background: #1e1e1e !important;
-  border-color: #2a2a2a !important;
+  background: var(--twenty-bg-secondary) !important;
+  border-color: var(--twenty-border) !important;
+  border-radius: var(--twenty-radius-sm) !important;
 }
 .admin-twenty [data-slot="select-item"] {
-  color: #ccc !important;
+  color: var(--twenty-font-secondary) !important;
+  font-size: 13px !important;
 }
 .admin-twenty [data-slot="select-item"]:hover,
 .admin-twenty [data-slot="select-item"][data-highlighted] {
-  background: #2a2a2a !important;
+  background: var(--twenty-hover) !important;
 }
 
 /* Tabs */
 .admin-twenty [data-slot="tabs-list"] {
-  background: #1a1a1a !important;
-  border-color: #2a2a2a !important;
+  background: var(--twenty-bg-primary) !important;
+  border-color: var(--twenty-border) !important;
+  border-radius: var(--twenty-radius-sm) !important;
+  height: 32px !important;
 }
 .admin-twenty [data-slot="tabs-trigger"] {
-  color: #666 !important;
+  color: var(--twenty-font-tertiary) !important;
+  font-size: 13px !important;
+  border-radius: var(--twenty-radius-sm) !important;
 }
 .admin-twenty [data-slot="tabs-trigger"][data-state="active"] {
-  color: #fff !important;
-  background: #2a2a2a !important;
+  color: var(--twenty-font-primary) !important;
+  background: var(--twenty-active) !important;
 }
 
 /* Separator */
 .admin-twenty [data-slot="separator"],
 .admin-twenty hr {
-  background: #2a2a2a !important;
-  border-color: #2a2a2a !important;
+  background: var(--twenty-border) !important;
+  border-color: var(--twenty-border) !important;
 }
 
 /* Text overrides */
 .admin-twenty h1, .admin-twenty h2, .admin-twenty h3, .admin-twenty h4 {
-  color: #fff;
+  color: var(--twenty-font-primary);
 }
 .admin-twenty p {
-  color: #999;
+  color: var(--twenty-font-secondary);
 }
 
 /* Skeleton */
 .admin-twenty .animate-pulse {
-  background: #222 !important;
+  background: var(--twenty-border) !important;
 }
 
 /* Switch */
@@ -325,4 +356,36 @@
 }
 .admin-twenty [data-slot="switch"][data-state="checked"] {
   background: #3b82f6 !important;
+}
+
+/* Buttons in admin */
+.admin-twenty [data-slot="button"] {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  border-radius: var(--twenty-radius-sm) !important;
+  height: 32px !important;
+}
+
+/* Badge */
+.admin-twenty [data-slot="badge"] {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border-radius: var(--twenty-radius-sm) !important;
+  padding: 2px 6px !important;
+}
+
+/* Scrollbar — Twenty style */
+.admin-twenty ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.admin-twenty ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-twenty ::-webkit-scrollbar-thumb {
+  background: var(--twenty-border);
+  border-radius: 3px;
+}
+.admin-twenty ::-webkit-scrollbar-thumb:hover {
+  background: #333;
 }
