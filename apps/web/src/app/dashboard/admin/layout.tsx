@@ -52,8 +52,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               flexDirection: "column",
               width: "100%",
               height: "100%",
-              padding: 8,
-              paddingLeft: 4,
+              padding: 12,
+              paddingLeft: 6,
             }}
           >
             {/* PagePanel — bg: primary, border, radius */}
