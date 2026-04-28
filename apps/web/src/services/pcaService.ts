@@ -171,6 +171,9 @@ export async function addPCAEvaluation(
   try {
     const langParam = language === "spanish" ? "sp" : "en";
 
+    // CoKey determines the assessment language: NXDAPS=Spanish, NXDAPI=English
+    const coKey = language === "spanish" ? "NXDAPS" : "NXDAPI";
+
     const response = await fetch(
       `${API_BASE_URL}/api/pcaapi/add-evaluation?lang=${langParam}`,
       {
@@ -178,7 +181,8 @@ export async function addPCAEvaluation(
         headers: getBackendHeaders(),
         body: JSON.stringify({
           UserId: userId,
-          Language: language,
+          CoKey: coKey,
+          Permail: userData.permail || userData.UserMail || "",
           ...userData,
         }),
       }
