@@ -48,6 +48,7 @@ export function useUniversityList(
     queryFn: () => fetchUniversities(filters, page, limit),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    retry: 1,
   });
 }
 
