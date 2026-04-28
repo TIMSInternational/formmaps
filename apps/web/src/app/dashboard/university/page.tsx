@@ -223,6 +223,32 @@ export default function UniversityPage() {
             )}
 
             {!recoQuery.isLoading &&
+              (!universities || universities.length === 0) && !recoQuery.error && (
+                <div className="dash-card p-8 text-center">
+                  <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+                    <GraduationCap className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-base font-bold text-foreground mb-1">
+                    {t("Complete your assessments first", "Completa tus evaluaciones primero")}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+                    {t(
+                      "Take the PCA and MIL assessments to get personalized university recommendations based on your profile.",
+                      "Completa las evaluaciones PCA y MIL para obtener recomendaciones personalizadas."
+                    )}
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    <a href="/dashboard/assessments" className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background rounded-xl text-sm font-medium hover:bg-foreground/90 transition-colors">
+                      Start Assessments
+                    </a>
+                    <button onClick={() => setActiveTab("all")} className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-foreground rounded-xl text-sm font-medium border border-border hover:bg-border transition-colors">
+                      Browse All Universities
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            {!recoQuery.isLoading &&
               universities &&
               universities.length > 0 && (
                 <div
