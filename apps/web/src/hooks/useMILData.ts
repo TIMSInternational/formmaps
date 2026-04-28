@@ -208,41 +208,8 @@ export function useMILData() {
   // Enhanced function to get subtest scores
   const getSubtestScores = () => {
     if (!progress?.enhancedData?.examStatus) {
-      // Fallback to mock data for display purposes based on completed exams
-      const mockScores = [
-        {
-          name: "Pattern Recognition",
-          score: 85,
-          color: "#8B5CF6",
-          examId: "pattern-recognition-001",
-        },
-        {
-          name: "Verbal Reasoning",
-          score: 78,
-          color: "#06B6D4",
-          examId: "verbal-reasoning-001",
-        },
-        {
-          name: "Working Memory",
-          score: 72,
-          color: "#10B981",
-          examId: "working-memory-001",
-        },
-        {
-          name: "Numeric Velocity",
-          score: 68,
-          color: "#F59E0B",
-          examId: "numeric-velocity-001",
-        },
-        {
-          name: "Visual Rotation",
-          score: 75,
-          color: "#EF4444",
-          examId: "visual-rotation-001",
-        },
-      ];
-
-      return mockScores.slice(0, progress?.completedExams.length || 0);
+      // No API data available — return empty array (no mock data)
+      return [];
     }
 
     // Use real API data - map exam names to colors

@@ -3,9 +3,6 @@ import { ScoreCareersRequest, ScoreCareersResponse } from "@/types/tims";
 
 /**
  * Scores and ranks careers based on the user's assessment profile.
- * 
- * @param request The user's assessment scores (DISC, MIL) and derived interests/motivators
- * @returns A ranked list of careers with detailed fit breakdowns and bridging info
  */
 export async function scoreCareers(request: ScoreCareersRequest): Promise<ScoreCareersResponse> {
   return apiRequest<ScoreCareersResponse>("api/v1/careers/score", {
@@ -14,9 +11,28 @@ export async function scoreCareers(request: ScoreCareersRequest): Promise<ScoreC
   });
 }
 
-// Placeholder for future deriveProfile implementation
-/*
-export async function deriveProfile(request: DeriveProfileRequest) {
-  // TODO: Implement when backend logic is ready or user enables this flow
+/**
+ * Derive interests and motivators from 360 assessment answers.
+ * Calls POST /api/v1/assessment/derive-profile.
+ */
+export async function deriveProfile(
+  userId: string,
+  answers: Record<string, number>
+): Promise<{
+  derivedInterests: string[];
+  derivedMotivators: string[];
+  interestScores: Record<string, number>;
+  motivatorScores: Record<string, number>;
+}> {
+  const response = await apiRequest<any>("api/v1/assessment/derive-profile", {
+    method: "POST",
+    data: { userId, answers },
+  });
+  const data = response.data || response;
+  return {
+    derivedInterests: data.derivedInterests || [],
+    derivedMotivators: data.derivedMotivators || [],
+    interestScores: data.interestScores || {},
+    motivatorScores: data.motivatorScores || {},
+  };
 }
-*/

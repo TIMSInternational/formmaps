@@ -1,7 +1,10 @@
 import { CareerRole } from "@/types/career";
 import { apiRequest } from "@/lib/api/apiClient";
 
-// --- API-backed career operations ---
+// --- Career list/detail operations ---
+// Career data is served from the TIMS scoring engine.
+// The "list" endpoint returns the full catalog with scores via POST /api/v1/careers/score.
+// Individual career detail can be extracted from the scored results.
 
 export async function listCareers(query?: {
   search?: string;
@@ -11,20 +14,36 @@ export async function listCareers(query?: {
   location?: string;
   sort?: "recommended" | "match" | "title" | "demand";
 }) {
-  // TODO: Backend GET /api/v1/careers endpoint not implemented yet.
-  // Career data comes from the scoring engine (POST /api/v1/careers/score) via useTimsCareerScoring.
-  return { careers: [] as CareerRole[], meta: { total: 0, page: 1, pageSize: 20 } };
+  // Career listing is handled by the scoring engine — use useTimsCareerScoring hook
+  // which calls POST /api/v1/careers/score and returns the full ranked list.
+  // This function is kept for backward compatibility but callers should prefer the hook.
+  try {
+    const res = await apiRequest<any>("api/v1/careers/catalog", { method: "GET" });
+    return { careers: (res.data?.careers || []) as CareerRole[], meta: { total: 0, page: 1, pageSize: 20 } };
+  } catch {
+    return { careers: [] as CareerRole[], meta: { total: 0, page: 1, pageSize: 20 } };
+  }
 }
 
 export async function getCareerById(id: string): Promise<CareerRole | null> {
-  // TODO: Backend GET /api/v1/careers/:id endpoint not implemented yet
-  return null;
+  try {
+    const res = await apiRequest<any>(`api/v1/careers/${id}`, { method: "GET" });
+    return (res.data?.career || res.data || null) as CareerRole | null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getCareerFamilies() {
-  // TODO: Backend endpoint not implemented yet
-  return [];
+  try {
+    const res = await apiRequest<any>("api/v1/careers/clusters", { method: "GET" });
+    return res.data?.clusters || res.data || [];
+  } catch {
+    return [];
+  }
 }
+
+// --- Admin career operations ---
 
 export async function adminListCareers() {
   const res = await apiRequest<{ data: CareerRole[] }>("/api/v1/careers/admin");
@@ -69,17 +88,31 @@ export async function recommendCareers(payload: {
   }
 }
 
+// --- Favorites ---
+
 export async function getFavoritesForUser(userId: string) {
-  // TODO: Backend endpoint not implemented yet
-  return { favorites: [] as string[] };
+  try {
+    const res = await apiRequest<any>(`/api/v1/careers/favorites`, { method: "GET" });
+    return { favorites: (res.data?.favorites || []) as string[] };
+  } catch {
+    return { favorites: [] as string[] };
+  }
 }
 
 export async function addFavorite(userId: string, careerId: string) {
-  // TODO: Backend endpoint not implemented yet
-  return { success: false, favorites: [] as string[] };
+  try {
+    const res = await apiRequest<any>(`/api/v1/careers/favorites/${careerId}`, { method: "POST" });
+    return { success: true, favorites: (res.data?.favorites || []) as string[] };
+  } catch {
+    return { success: false, favorites: [] as string[] };
+  }
 }
 
 export async function removeFavorite(userId: string, careerId: string) {
-  // TODO: Backend endpoint not implemented yet
-  return { success: false, favorites: [] as string[] };
+  try {
+    const res = await apiRequest<any>(`/api/v1/careers/favorites/${careerId}`, { method: "DELETE" });
+    return { success: true, favorites: (res.data?.favorites || []) as string[] };
+  } catch {
+    return { success: false, favorites: [] as string[] };
+  }
 }
