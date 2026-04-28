@@ -34,11 +34,11 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
           pcaCod: pcaDataProp[0].pcaCod || pcaDataProp[0].PcaCod,
           results: {
             data: {
-              // mock some scores based on pcaCod if needed, or simply render
-              pcaD1: 80,
-              pcaI1: 70,
-              pcaS1: 60,
-              pcaC1: 50,
+              // Use real DISC scores from API data if available
+              pcaD1: pcaDataProp[0].pcaD1 ?? pcaDataProp[0].PcaD1 ?? null,
+              pcaI1: pcaDataProp[0].pcaI1 ?? pcaDataProp[0].PcaI1 ?? null,
+              pcaS1: pcaDataProp[0].pcaS1 ?? pcaDataProp[0].PcaS1 ?? null,
+              pcaC1: pcaDataProp[0].pcaC1 ?? pcaDataProp[0].PcaC1 ?? null,
             },
           },
         }
@@ -49,6 +49,10 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
   const isCompleted =
     (pcaDataProp && pcaDataProp.length > 0) || customHookParams.isCompleted;
   const refreshPCAData = customHookParams.refreshPCAData;
+
+  // Check if we have real DISC scores or just a pending assessment
+  const hasRealScores = pcaData?.results?.data &&
+    (pcaData.results.data.pcaD1 != null || pcaData.results.data.pcaI1 != null);
 
   const { t } = useTranslation();
 
@@ -298,15 +302,17 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
               <h3 className="text-xl font-sans font-semibold text-slate-900">
                 {t("dashboard.pcaAssessment")}
               </h3>
-              <p className="text-sm text-slate-500 mt-1">Analysis Complete</p>
+              <p className="text-sm text-slate-500 mt-1">
+                {hasRealScores ? "Analysis Complete" : "Results Pending"}
+              </p>
             </div>
           </div>
           <div className="text-right">
             <div className="text-3xl font-sans font-bold text-indigo-600">
-              {overallScore}%
+              {hasRealScores ? `${overallScore}%` : "—"}
             </div>
             <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-1">
-              {t("dashboard.overallScore")}
+              {hasRealScores ? t("dashboard.overallScore") : "Awaiting TIMS"}
             </div>
           </div>
         </div>
