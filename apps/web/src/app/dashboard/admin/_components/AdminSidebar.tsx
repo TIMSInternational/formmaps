@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useGlobalStore } from "@/store/useGlobalStore";
@@ -24,6 +25,8 @@ import {
   FileText,
   LogOut,
   ChevronLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 
 /*
@@ -77,18 +80,20 @@ const OTHER_NAV = [
   { label: "Student View", href: "/dashboard", icon: ChevronLeft },
 ];
 
-function NavItem({ href, icon: Icon, label, active }: {
-  href: string; icon: any; label: string; active: boolean;
+function NavItem({ href, icon: Icon, label, active, collapsed }: {
+  href: string; icon: any; label: string; active: boolean; collapsed?: boolean;
 }) {
   return (
     <Link
       href={href}
+      title={collapsed ? label : undefined}
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 8,
+        justifyContent: collapsed ? "center" : "flex-start",
+        gap: collapsed ? 0 : 8,
         height: 28,
-        padding: "0 8px",
+        padding: collapsed ? "0 4px" : "0 8px",
         borderRadius: 4,
         fontSize: 13,
         color: active ? C.fontPrimary : C.fontSecondary,
@@ -105,7 +110,7 @@ function NavItem({ href, icon: Icon, label, active }: {
       }}
     >
       <Icon style={{ width: 16, height: 16, color: active ? C.fontPrimary : C.fontTertiary, flexShrink: 0 }} />
-      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+      {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>}
     </Link>
   );
 }
@@ -114,68 +119,84 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useGlobalStore();
+  const [collapsed, setCollapsed] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/dashboard/admin") return pathname === href;
     return pathname?.startsWith(href) ?? false;
   };
 
+  const COLLAPSED_W = 52;
+  const EXPANDED_W = 220;
+
   return (
     <aside style={{
-      width: 220,
+      width: collapsed ? COLLAPSED_W : EXPANDED_W,
       height: "100%",
       display: "flex",
       flexDirection: "column",
       flexShrink: 0,
-      // Twenty's drawer has NO border-right — it sits on the same bg as the outer shell
-      // The PagePanel's border + border-radius creates the visual separation
       background: "transparent",
       fontFamily: "Inter, -apple-system, system-ui, sans-serif",
       fontSize: 13,
       userSelect: "none",
       overflow: "hidden",
+      transition: "width 0.2s ease",
     }}>
 
       {/* Header — workspace selector */}
-      <div style={{ padding: "12px 8px 0 8px" }}>
-        <button style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          width: "100%",
-          padding: "6px 8px",
-          borderRadius: 4,
-          border: "none",
-          background: "transparent",
-          cursor: "pointer",
-          color: C.fontPrimary,
-          fontSize: 13,
-          fontWeight: 500,
-          fontFamily: "inherit",
-          transition: "background 0.1s",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+      <div style={{ padding: collapsed ? "12px 6px 0 6px" : "12px 8px 0 8px" }}>
+        <button
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            width: "100%",
+            padding: collapsed ? "6px 0" : "6px 8px",
+            justifyContent: collapsed ? "center" : "flex-start",
+            borderRadius: 4,
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            color: C.fontPrimary,
+            fontSize: 13,
+            fontWeight: 500,
+            fontFamily: "inherit",
+            transition: "background 0.1s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          onClick={() => collapsed && setCollapsed(false)}
+          title={collapsed ? "Expand sidebar" : "NexaDev"}
         >
           <div style={{
-            width: 20, height: 20, borderRadius: 4,
+            width: 24, height: 24, borderRadius: 4,
             background: "#333", color: "#fff",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 10, fontWeight: 700, flexShrink: 0,
+            fontSize: 11, fontWeight: 700, flexShrink: 0,
           }}>N</div>
-          <span>NexaDev</span>
-          <ChevronDown style={{ width: 14, height: 14, marginLeft: "auto", color: C.fontLight }} />
+          {!collapsed && <span>NexaDev</span>}
+          {!collapsed && <ChevronDown style={{ width: 14, height: 14, marginLeft: "auto", color: C.fontLight }} />}
         </button>
       </div>
 
       {/* Icon button row */}
-      <div style={{ display: "flex", alignItems: "center", gap: 2, padding: "8px 8px 4px 8px" }}>
-        {[
-          { icon: Home, href: "/dashboard/admin" },
-          { icon: SearchIcon, href: "#" },
-          { icon: MessageSquare, href: "#" },
-          { icon: Settings, href: "/dashboard/admin/settings" },
-        ].map((btn, i) => (
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        padding: collapsed ? "8px 6px 4px 6px" : "8px 8px 4px 8px",
+        justifyContent: collapsed ? "center" : "flex-start",
+        flexWrap: collapsed ? "wrap" : "nowrap",
+      }}>
+        {(collapsed
+          ? [{ icon: SearchIcon, href: "#" }]
+          : [
+              { icon: Home, href: "/dashboard/admin" },
+              { icon: SearchIcon, href: "#" },
+              { icon: MessageSquare, href: "#" },
+            ]
+        ).map((btn, i) => (
           <Link key={i} href={btn.href} style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: 28, height: 28, borderRadius: 4,
@@ -188,44 +209,64 @@ export function AdminSidebar() {
             <btn.icon style={{ width: 16, height: 16 }} />
           </Link>
         ))}
+        {/* Collapse/expand toggle */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 28, height: 28, borderRadius: 4,
+            color: C.fontTertiary,
+            transition: "background 0.1s",
+            border: "none", background: "transparent", cursor: "pointer",
+            marginLeft: collapsed ? 0 : "auto",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <PanelLeftOpen style={{ width: 16, height: 16 }} /> : <PanelLeftClose style={{ width: 16, height: 16 }} />}
+        </button>
       </div>
 
       {/* Navigation sections */}
-      <nav style={{ flex: 1, overflowY: "auto", padding: "4px 8px 8px 8px" }}>
+      <nav style={{ flex: 1, overflowY: "auto", padding: collapsed ? "4px 6px 8px 6px" : "4px 8px 8px 8px" }}>
         {/* Workspace */}
         <div style={{ marginBottom: 12 }}>
-          <div style={{
+          {!collapsed && <div style={{
             padding: "8px 8px 6px 8px",
             fontSize: 10, fontWeight: 600,
             textTransform: "uppercase",
             letterSpacing: "0.06em",
             color: C.fontLight,
-          }}>Workspace</div>
+          }}>Workspace</div>}
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {WORKSPACE_NAV.map((item) => (
-              <NavItem key={item.href} {...item} active={isActive(item.href)} />
+              <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} />
             ))}
           </div>
         </div>
 
         {/* Other */}
         <div>
-          <div style={{
+          {!collapsed && <div style={{
             padding: "8px 8px 6px 8px",
             fontSize: 10, fontWeight: 600,
             textTransform: "uppercase",
             letterSpacing: "0.06em",
             color: C.fontLight,
-          }}>Other</div>
+          }}>Other</div>}
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {OTHER_NAV.map((item) => (
-              <NavItem key={item.href} {...item} active={isActive(item.href)} />
+              <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} />
             ))}
             <button
               onClick={() => { logout(); router.push("/login"); }}
+              title={collapsed ? "Sign Out" : undefined}
               style={{
-                display: "flex", alignItems: "center", gap: 8,
-                height: 28, padding: "0 8px", borderRadius: 4,
+                display: "flex", alignItems: "center",
+                justifyContent: collapsed ? "center" : "flex-start",
+                gap: collapsed ? 0 : 8,
+                height: 28, padding: collapsed ? "0 4px" : "0 8px", borderRadius: 4,
                 fontSize: 13, color: C.fontSecondary,
                 background: "transparent", border: "none",
                 cursor: "pointer", fontFamily: "inherit",
@@ -236,7 +277,7 @@ export function AdminSidebar() {
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
             >
               <LogOut style={{ width: 16, height: 16, color: C.fontTertiary, flexShrink: 0 }} />
-              <span>Sign Out</span>
+              {!collapsed && <span>Sign Out</span>}
             </button>
           </div>
         </div>
