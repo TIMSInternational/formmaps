@@ -2,28 +2,78 @@
 
 import { AdminSidebar } from "./_components/AdminSidebar";
 
+/**
+ * Admin layout replicating Twenty CRM's exact structure from DefaultLayout.tsx:
+ *
+ * StyledLayout (background: noisy, height: 100dvh, flex column)
+ *   └─ StyledPageContainer (flex row, flex: 1 1 auto)
+ *        ├─ NavigationDrawer (flex-shrink: 0) → AdminSidebar
+ *        └─ StyledMainContainer (flex: 0 1 100%, overflow: hidden)
+ *             └─ PageBody
+ *                  └─ PagePanel (bg: primary, border: 1px solid medium, radius: 8px)
+ *
+ * Colors from twenty-ui/theme-dark.css:
+ *   background-primary:  #171717  (panel bg)
+ *   background-secondary: #1b1b1b
+ *   background-tertiary: #1d1d1d  (body bg behind panel)
+ *   border-color-medium: #222
+ *   border-radius-md: 8px
+ */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="admin-twenty flex h-[100dvh] overflow-hidden" style={{
-      background: "#171717",
-      fontFamily: "Inter, -apple-system, system-ui, sans-serif",
-      fontSize: 13,
-    }}>
-      <AdminSidebar />
-      {/* Main content — rounded rectangle inset panel (Twenty's signature layout) */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "3px 3px 3px 0", overflow: "hidden" }}>
-        <main style={{
-          flex: 1,
-          background: "#1d1d1d",
-          borderRadius: 8,
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-        }}>
-          <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px", maxWidth: 1400 }}>
-            {children}
+    <div
+      className="admin-twenty"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100dvh",
+        width: "100%",
+        position: "relative",
+        fontFamily: "Inter, -apple-system, system-ui, sans-serif",
+        fontSize: 13,
+        // Twenty uses background.tertiary (#1d1d1d) as the outer bg
+        // with a subtle noise texture overlay
+        background: "#1d1d1d",
+      }}
+    >
+      {/* StyledPageContainer — flex row */}
+      <div style={{ display: "flex", flex: "1 1 auto", minHeight: 0 }}>
+        {/* NavigationDrawer — flex-shrink: 0 */}
+        <div style={{ flexShrink: 0 }}>
+          <AdminSidebar />
+        </div>
+
+        {/* StyledMainContainer — flex: 0 1 100%, overflow: hidden */}
+        <div style={{ display: "flex", flex: "0 1 100%", overflow: "hidden" }}>
+          {/* PageBody + PagePanel — the rounded content panel */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
+              height: "100%",
+              padding: 3,
+              paddingLeft: 0,
+            }}
+          >
+            {/* PagePanel — bg: primary, border, radius */}
+            <main
+              style={{
+                background: "#171717",
+                border: "1px solid #222",
+                borderRadius: 8,
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+                overflow: "hidden",
+              }}
+            >
+              <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+                {children}
+              </div>
+            </main>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );

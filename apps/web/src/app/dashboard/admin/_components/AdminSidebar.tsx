@@ -123,12 +123,13 @@ export function AdminSidebar() {
   return (
     <aside style={{
       width: 220,
-      height: "100dvh",
+      height: "100%",
       display: "flex",
       flexDirection: "column",
       flexShrink: 0,
-      background: C.bgPrimary,
-      borderRight: `1px solid ${C.borderMedium}`,
+      // Twenty's drawer has NO border-right — it sits on the same bg as the outer shell
+      // The PagePanel's border + border-radius creates the visual separation
+      background: "transparent",
       fontFamily: "Inter, -apple-system, system-ui, sans-serif",
       fontSize: 13,
       userSelect: "none",
