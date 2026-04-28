@@ -24,31 +24,39 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-// Mock Data
-const certifications = [
-    {
-        id: 1,
-        provider: "AWS",
-        title: "Certified Cloud Practitioner",
-        level: "Foundational",
-        status: "completed",
-        date: "Dec 12, 2024",
-        score: "920/1000",
-        color: "from-orange-400 to-orange-500",
-        bg: "bg-orange-50",
-        border: "border-orange-100",
-        text: "text-orange-600",
-        skills: ["Cloud Concepts", "AWS Services", "Security", "Billing"],
-        duration: "4-6 weeks",
-        validFor: "3 years"
-    },
+import { useEffect, useState } from "react";
+import { getAllResumes, type Resume } from "@/services/resumeService";
+
+interface CertCard {
+    id: number;
+    provider: string;
+    title: string;
+    level: string;
+    status: string;
+    color: string;
+    bg: string;
+    border: string;
+    text: string;
+    skills: string[];
+    duration: string;
+    date?: string;
+    score?: string;
+    examCost?: string;
+    popularity?: string;
+    validFor?: string;
+    progress?: number;
+    nextStep?: string;
+    prerequisite?: string;
+}
+
+// Recommended certifications (curated content — can be extended via admin)
+const recommendedCertifications: CertCard[] = [
     {
         id: 2,
         provider: "Google Cloud",
         title: "Associate Cloud Engineer",
         level: "Associate",
-        status: "in_progress",
-        progress: 65,
+        status: "recommended",
         examCost: "$125",
         color: "from-blue-400 to-blue-500",
         bg: "bg-blue-50",
@@ -56,7 +64,7 @@ const certifications = [
         text: "text-blue-600",
         skills: ["GCP Console", "Compute Engine", "Kubernetes", "IAM"],
         duration: "8-10 weeks",
-        nextStep: "Complete Practice Exam"
+        popularity: "Most Popular"
     },
     {
         id: 3,
@@ -71,15 +79,14 @@ const certifications = [
         text: "text-sky-600",
         skills: ["Azure Portal", "Virtual Machines", "Storage", "Networking"],
         duration: "3-4 weeks",
-        popularity: "Most Popular"
     },
     {
         id: 4,
         provider: "Meta",
         title: "Front-End Developer Professional",
         level: "Professional",
-        status: "locked",
-        prerequisite: "React Basics",
+        status: "recommended",
+        examCost: "$149",
         color: "from-slate-400 to-slate-500",
         bg: "bg-slate-50",
         border: "border-slate-100",
@@ -87,12 +94,6 @@ const certifications = [
         skills: ["React", "JavaScript", "UI/UX", "Testing"],
         duration: "12-16 weeks"
     }
-];
-
-const stats = [
-    { label: "Earned", value: "1", icon: Trophy, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
-    { label: "In Progress", value: "1", icon: Zap, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
-    { label: "Study Hours", value: "42h", icon: Clock, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
 ];
 
 const studyResources = [
@@ -103,6 +104,53 @@ const studyResources = [
 
 export default function CertificationRoadmapPage() {
     const { scrollYProgress } = useScroll();
+    const [earnedCerts, setEarnedCerts] = useState<string[]>([]);
+    const [loadingCerts, setLoadingCerts] = useState(true);
+
+    // Load user's earned certifications from their resume data
+    useEffect(() => {
+        getAllResumes()
+            .then((resumes) => {
+                const certs: string[] = [];
+                for (const r of resumes) {
+                    // Extract from skills that look like certifications
+                    const allSkills = Object.values(r.skills?.skills || {}).flat();
+                    for (const skill of allSkills) {
+                        if (/certificate|certified|certification/i.test(skill)) {
+                            certs.push(skill);
+                        }
+                    }
+                }
+                setEarnedCerts([...new Set(certs)]);
+            })
+            .catch(() => {})
+            .finally(() => setLoadingCerts(false));
+    }, []);
+
+    // Build earned certifications as roadmap cards
+    const earnedCertCards: CertCard[] = earnedCerts.map((cert, i) => ({
+        id: 100 + i,
+        provider: cert.split(" ")[0] || "Cert",
+        title: cert,
+        level: "Professional",
+        status: "completed",
+        date: "Earned",
+        color: "from-emerald-400 to-emerald-500",
+        bg: "bg-emerald-50",
+        border: "border-emerald-100",
+        text: "text-emerald-600",
+        skills: [],
+        duration: "",
+    }));
+
+    // Combine earned + recommended
+    const certifications = [...earnedCertCards, ...recommendedCertifications];
+
+    const stats = [
+        { label: "Earned", value: String(earnedCerts.length), icon: Trophy, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
+        { label: "Recommended", value: String(recommendedCertifications.length), icon: Zap, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
+        { label: "Total Available", value: String(certifications.length), icon: Clock, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
+    ];
 
     return (
         <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
