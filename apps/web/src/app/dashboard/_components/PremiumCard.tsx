@@ -26,9 +26,9 @@ export const PremiumCard = React.forwardRef<HTMLDivElement, PremiumCardProps>(
         onMouseMove={handleMouseMove}
         className={cn(
           "relative flex flex-col overflow-hidden group/card p-6 lg:p-8",
-          themeMode === "solid" 
-            ? "bg-white border border-slate-200 shadow-sm rounded-[1.5rem]"
-            : "bg-white/30 backdrop-blur-[40px] border border-white/50 rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)]",
+          themeMode === "solid"
+            ? "bg-white border border-border rounded-2xl"
+            : "bg-white border border-border rounded-2xl",
           className,
           innerClassName
         )}

@@ -51,7 +51,7 @@ export function ActiveCoursePlan({ courseData }: ActiveCoursePlanProps) {
               <BookOpen weight="duotone" className="w-8 h-8 text-slate-300" />
             </div>
             <div>
-              <h3 className="font-serif text-xl font-bold text-slate-900 tracking-tight mb-1">
+              <h3 className="font-sans text-xl font-bold text-slate-900 tracking-tight mb-1">
                 {t("dashboard.noCourseEnrolled")}
               </h3>
               <p className="text-sm text-slate-500 leading-relaxed max-w-[28ch]">
@@ -86,7 +86,7 @@ export function ActiveCoursePlan({ courseData }: ActiveCoursePlanProps) {
             </Link>
           </div>
 
-          <h3 className="font-serif text-2xl font-bold text-slate-900 tracking-tight leading-tight">
+          <h3 className="font-sans text-2xl font-bold text-slate-900 tracking-tight leading-tight">
             {courseData.title}
           </h3>
           <div className="flex items-center gap-3 mt-4">

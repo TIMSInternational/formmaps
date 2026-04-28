@@ -171,7 +171,7 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
               <Brain className="w-6 h-6 text-indigo-600" />
             </div>
             <div>
-              <h3 className="text-xl font-serif font-semibold text-slate-900">
+              <h3 className="text-xl font-sans font-semibold text-slate-900">
                 {t("dashboard.pcaAssessment")}
               </h3>
               <p className="text-sm text-slate-500">
@@ -217,7 +217,7 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
                 <Brain className="w-6 h-6 text-amber-600" />
               </div>
               <div>
-                <h3 className="text-xl font-serif font-semibold text-slate-900">
+                <h3 className="text-xl font-sans font-semibold text-slate-900">
                   {t("dashboard.pcaInProgress")}
                 </h3>
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 mt-1">
@@ -295,14 +295,14 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
               <Brain className="w-6 h-6 text-indigo-600" />
             </div>
             <div>
-              <h3 className="text-xl font-serif font-semibold text-slate-900">
+              <h3 className="text-xl font-sans font-semibold text-slate-900">
                 {t("dashboard.pcaAssessment")}
               </h3>
               <p className="text-sm text-slate-500 mt-1">Analysis Complete</p>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-serif font-bold text-indigo-600">
+            <div className="text-3xl font-sans font-bold text-indigo-600">
               {overallScore}%
             </div>
             <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-1">

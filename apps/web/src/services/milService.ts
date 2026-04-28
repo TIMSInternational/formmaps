@@ -164,6 +164,15 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "https://careerproject-eucbddf3h4h0ekfx.canadacentral-01.azurewebsites.net";
 
+// Helper to get auth headers
+const getHeaders = () => {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  return {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+};
+
 /**
  * Get all user exam results and progress
  */
@@ -176,9 +185,7 @@ export async function getAllUserExamResults(
       `${API_BASE_URL}/api/PCAExam/all-results?lang=${langParam}`,
       {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getHeaders(),
       }
     );
 
@@ -205,9 +212,7 @@ export async function getUserExamHistory(
       `${API_BASE_URL}/api/PCAExam/history/${userId}?lang=${langParam}`,
       {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getHeaders(),
       }
     );
 
@@ -304,9 +309,7 @@ export async function getAllMILExams(
       `${API_BASE_URL}/api/PCAExam/exams?lang=${langParam}`,
       {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getHeaders(),
       }
     );
 
@@ -334,9 +337,7 @@ export async function getMILExamById(
       `${API_BASE_URL}/api/PCAExam/exams/${examId}?lang=${langParam}`,
       {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getHeaders(),
       }
     );
 
@@ -363,9 +364,7 @@ export async function startMILExam(
       `${API_BASE_URL}/api/PCAExam/exams/${examId}/start?lang=${langParam}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getHeaders(),
       }
     );
 
@@ -393,9 +392,7 @@ export async function getMILExamInstructions(
       `${API_BASE_URL}/api/PCAExam/exams/${examId}/instructions?lang=${langParam}`,
       {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getHeaders(),
       }
     );
 
@@ -481,9 +478,7 @@ export async function submitMILExam(
       `${API_BASE_URL}/api/PCAExam/submit?lang=${langParam}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getHeaders(),
         body: JSON.stringify(submissionData),
       }
     );
@@ -536,9 +531,7 @@ export async function completeMILExam(
       `${API_BASE_URL}/api/PCAExam/complete?lang=${langParam}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getHeaders(),
         body: JSON.stringify(completionData),
       }
     );

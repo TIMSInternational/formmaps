@@ -42,6 +42,7 @@ export async function getOnboardingStatus(
 ): Promise<OnboardingStatus> {
   const response = await fetch(
     `${API_BASE_URL}/api/v1/coach/${coachId}/onboarding-status`,
+    { headers: getHeaders() },
   );
   if (!response.ok) throw new Error("Failed to get onboarding status");
   const json = await response.json();
@@ -86,7 +87,6 @@ export async function getCalendarAuthUrl(
   // Handle both 'url' and 'callbackurl' response formats and nested response payloads
   // Some APIs return { data: { url: '...' } } while others return { url: '...' }
 
-  debugger;
   const nested = data && typeof data === "object" ? data.data || data : data;
   const url =
     nested?.url || nested?.callbackurl || data?.url || data?.callbackurl;
@@ -189,6 +189,7 @@ export async function getCoaches(
 
   const response = await fetch(
     `${API_BASE_URL}/api/v1/coach?${query.toString()}`,
+    { headers: getHeaders() },
   );
   if (!response.ok) throw new Error("Failed to fetch coaches");
   return response.json();
@@ -418,6 +419,7 @@ export async function getCoachAvailableSlots(
 
   const response = await fetch(
     `${API_BASE_URL}/api/v1/coach/${coachId}/slots?${query.toString()}`,
+    { headers: getHeaders() },
   );
 
   if (!response.ok) {

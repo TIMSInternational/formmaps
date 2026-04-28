@@ -38,6 +38,20 @@ import {
 import { useExportTransactions } from "@/hooks/useTransactionDashboard";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 120, damping: 18 } },
+};
 
 export default function TransactionsPage() {
   const { t } = useTranslation();
@@ -111,54 +125,48 @@ export default function TransactionsPage() {
   const activeMethod =
     transactions.length > 0 ? transactions[0].method : "No active method";
 
-     const statsCards = [
+  const statsCards = [
     {
       label: t("transactions.totalSpent"),
       value: `$${totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
       icon: ArrowUpRight,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      border: "border-emerald-100",
-      blobColor: "bg-emerald-500",
+      accentColor: "text-emerald-600",
+      accentBg: "bg-emerald-500/10",
     },
     {
       label: t("transactions.invoices"),
       value: invoiceCount.toString(),
       icon: Receipt,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      border: "border-blue-100",
-      blobColor: "bg-blue-500",
+      accentColor: "text-blue-600",
+      accentBg: "bg-blue-500/10",
     },
     {
       label: t("transactions.lastUsedMethod"),
       value: activeMethod || "N/A",
       icon: CreditCard,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      border: "border-amber-100",
-      blobColor: "bg-amber-500",
+      accentColor: "text-amber-600",
+      accentBg: "bg-amber-500/10",
     },
   ];
 
-
   return (
-    <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 font-sans text-gray-900">
-      <div className="max-w-7xl mx-auto space-y-8">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
-            {t("transactions.title")}
-          </h1>
-          <p className="text-lg text-gray-500 font-medium">
-            {t("transactions.subtitle")}
-          </p>
-        </div>
-        <div>
+    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
+              Billing
+            </p>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+              {t("transactions.title")}
+            </h1>
+            <p className="text-muted-foreground">
+              {t("transactions.subtitle")}
+            </p>
+          </div>
           <Button
-            variant="outline"
-            className="h-10 gap-2 rounded-xl bg-white border-gray-200 shadow-sm"
+            className="bg-foreground text-background hover:bg-foreground/90 rounded-xl h-10 gap-2"
             onClick={handleExportCSV}
             disabled={isExporting}
           >
@@ -166,114 +174,113 @@ export default function TransactionsPage() {
             {isExporting ? "Exporting..." : t("transactions.exportCSV")}
           </Button>
         </div>
-      </div>
 
-       {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {statsCards.map((stat, index) => (
-            <div
-                key={index}
-                className={`group relative overflow-hidden rounded-2xl border ${stat.border} bg-white p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
-            >
-                <div
-                className={`absolute right-0 top-0 h-24 w-24 translate-x-8 translate-y--8 rounded-full ${stat.blobColor} opacity-5 blur-2xl transition-transform duration-500 group-hover:scale-150`}
-                />
-                
-                <div className="relative flex items-start justify-between">
-                <div>
-                    <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                    <h3 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
-                    {stat.value}
+        {/* Stats Row */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
+          {statsCards.map((stat, index) => (
+            <motion.div key={index} variants={itemVariants}>
+              <div className="dash-card p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                    <h3 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
+                      {stat.value}
                     </h3>
+                  </div>
+                  <div className={cn("rounded-xl p-3", stat.accentBg, stat.accentColor)}>
+                    <stat.icon className="h-5 w-5" />
+                  </div>
                 </div>
-                <div className={`rounded-xl ${stat.bg} p-3 ${stat.color} bg-opacity-50`}>
-                    <stat.icon className="h-6 w-6" />
-                </div>
-                </div>
-            </div>
-            ))}
-        </div>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
 
-      {/* Filters and Table */}
-      <div className="space-y-4">
-        <Tabs defaultValue="all" value={statusFilter} onValueChange={setStatusFilter} className="w-full">
-            <TabsList className="bg-white border border-gray-200 p-1 h-12 rounded-xl w-full md:w-auto justify-start overflow-x-auto">
-                <TabsTrigger value="all" className="rounded-lg px-4 h-9 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900">
-                    All
-                </TabsTrigger>
-                <TabsTrigger value="completed" className="rounded-lg px-4 h-9 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700">
-                    Completed
-                </TabsTrigger>
-                <TabsTrigger value="pending" className="rounded-lg px-4 h-9 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700">
-                    Pending
-                </TabsTrigger>
-                    <TabsTrigger value="failed" className="rounded-lg px-4 h-9 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">
-                    Failed
-                </TabsTrigger>
-                <TabsTrigger value="refunded" className="rounded-lg px-4 h-9 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-700">
-                    Refunded
-                </TabsTrigger>
+        {/* Filters */}
+        <div className="space-y-4">
+          <Tabs defaultValue="all" value={statusFilter} onValueChange={setStatusFilter} className="w-full">
+            <TabsList className="bg-card border border-border p-1 h-12 rounded-xl w-full md:w-auto justify-start overflow-x-auto">
+              <TabsTrigger value="all" className="rounded-lg px-4 h-9 data-[state=active]:bg-secondary data-[state=active]:text-foreground">
+                All
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="rounded-lg px-4 h-9 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600">
+                Completed
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="rounded-lg px-4 h-9 data-[state=active]:bg-amber-500/10 data-[state=active]:text-amber-600">
+                Pending
+              </TabsTrigger>
+              <TabsTrigger value="failed" className="rounded-lg px-4 h-9 data-[state=active]:bg-red-500/10 data-[state=active]:text-red-600">
+                Failed
+              </TabsTrigger>
+              <TabsTrigger value="refunded" className="rounded-lg px-4 h-9 data-[state=active]:bg-secondary data-[state=active]:text-muted-foreground">
+                Refunded
+              </TabsTrigger>
             </TabsList>
-        </Tabs>
-      
-        <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          </Tabs>
+
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-            placeholder={t("transactions.searchPlaceholder")}
-            className="pl-9 h-11 bg-white border-gray-200 rounded-xl shadow-sm focus:ring-gray-900 focus:border-gray-900 transition-shadow"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={t("transactions.searchPlaceholder")}
+              className="pl-9 h-11 bg-card border-border rounded-xl"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-        </div>
-      
-        {/* Table Card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
-          <Table>
-            <TableHeader className="bg-gray-50/50">
-              <TableRow className="border-gray-50 hover:bg-gray-50/50">
-                <TableHead className="py-4 font-semibold text-gray-600 pl-6">Transaction ID</TableHead>
-                <TableHead className="py-4 font-semibold text-gray-600">Description</TableHead>
-                <TableHead className="py-4 font-semibold text-gray-600">Date</TableHead>
-                <TableHead className="py-4 font-semibold text-gray-600">Method</TableHead>
-                <TableHead className="py-4 font-semibold text-gray-600">Status</TableHead>
-                <TableHead className="py-4 font-semibold text-gray-600 text-right pr-6">Amount</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTransactions.length === 0 ? (
-                 <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="h-48 text-center text-gray-500"
-                  >
-                     <div className="flex flex-col items-center justify-center gap-2">
-                        <Receipt className="h-8 w-8 text-gray-300" />
-                        <p>{t("transactions.noTransactions")}</p>
-                    </div>
-                  </TableCell>
+          </div>
+
+          {/* Table */}
+          <div className="dash-card p-0 overflow-hidden">
+            <Table>
+              <TableHeader className="bg-secondary">
+                <TableRow className="border-border hover:bg-secondary">
+                  <TableHead className="py-4 font-semibold text-muted-foreground pl-6">Transaction ID</TableHead>
+                  <TableHead className="py-4 font-semibold text-muted-foreground">Description</TableHead>
+                  <TableHead className="py-4 font-semibold text-muted-foreground">Date</TableHead>
+                  <TableHead className="py-4 font-semibold text-muted-foreground">Method</TableHead>
+                  <TableHead className="py-4 font-semibold text-muted-foreground">Status</TableHead>
+                  <TableHead className="py-4 font-semibold text-muted-foreground text-right pr-6">Amount</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
-              ) : (
-              filteredTransactions.map((trx) => (
-                <TableRow
-                  key={trx.id}
-                  className="group hover:bg-gray-50/50 border-gray-50 transition-colors"
-                >
-                  <TableCell className="font-medium pl-6 text-gray-900 py-4">
-                    {trx.id}
-                  </TableCell>
-                  <TableCell className="text-gray-600 font-medium py-4">
-                    {trx.description}
-                  </TableCell>
-                  <TableCell className="text-gray-500 py-4">
-                    {new Date(trx.date).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </TableCell>
-                  <TableCell className="text-gray-500 py-4">
-                    <div className="flex items-center gap-2">
+              </TableHeader>
+              <TableBody>
+                {filteredTransactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="h-48 text-center text-muted-foreground"
+                    >
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Receipt className="h-8 w-8 text-muted-foreground" />
+                        <p>{t("transactions.noTransactions")}</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                filteredTransactions.map((trx) => (
+                  <TableRow
+                    key={trx.id}
+                    className="group hover:bg-secondary border-border transition-colors"
+                  >
+                    <TableCell className="font-medium pl-6 text-foreground py-4">
+                      {trx.id}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground font-medium py-4">
+                      {trx.description}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground py-4">
+                      {new Date(trx.date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground py-4">
+                      <div className="flex items-center gap-2">
                         {trx.method &&
                         (trx.method.includes("Visa") ||
                         trx.method.includes("Mastercard")) ? (
@@ -282,84 +289,83 @@ export default function TransactionsPage() {
                         <Receipt className="w-3.5 h-3.5" />
                         )}
                         {trx.method || "N/A"}
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4">
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        "font-medium shadow-none border-0",
-                        trx.status === "completed" &&
-                          "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
-                        trx.status === "pending" &&
-                          "bg-amber-50 text-amber-700 hover:bg-amber-100",
-                        trx.status === "failed" &&
-                          "bg-red-50 text-red-700 hover:bg-red-100"
-                      )}
-                    >
-                      {trx.status.charAt(0).toUpperCase() + trx.status.slice(1)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-bold text-gray-900 pr-6 py-4">
-                    {trx.currency === "USD" ? "$" : trx.currency}
-                    {trx.amount.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="py-4">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="rounded-xl">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Download Invoice</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
-                          Report Issue
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              )))}
-            </TableBody>
-          </Table>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "font-medium border-0",
+                          trx.status === "completed" &&
+                            "bg-emerald-500/10 text-emerald-600",
+                          trx.status === "pending" &&
+                            "bg-amber-500/10 text-amber-600",
+                          trx.status === "failed" &&
+                            "bg-red-500/10 text-red-600"
+                        )}
+                      >
+                        {trx.status.charAt(0).toUpperCase() + trx.status.slice(1)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-foreground pr-6 py-4">
+                      {trx.currency === "USD" ? "$" : trx.currency}
+                      {trx.amount.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="rounded-xl">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem>View Details</DropdownMenuItem>
+                          <DropdownMenuItem>Download Invoice</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-red-600">
+                            Report Issue
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )))}
+              </TableBody>
+            </Table>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/30">
-            <p className="text-sm text-gray-500">
-                Showing page <span className="font-semibold text-gray-900">{page}</span> of <span className="font-semibold text-gray-900">{totalPages || 1}</span>
-            </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between border-t border-border p-4 bg-secondary">
+              <p className="text-sm text-muted-foreground">
+                Showing page <span className="font-semibold text-foreground">{page}</span> of <span className="font-semibold text-foreground">{totalPages || 1}</span>
+              </p>
+              <div className="flex items-center gap-2">
                 <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1 || isLoading}
-                    className="rounded-lg border-gray-200 hover:bg-white hover:text-gray-900 text-gray-500 h-8"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1 || isLoading}
+                  className="rounded-lg border-border h-8 text-muted-foreground"
                 >
-                    {t("common.previous") || "Previous"}
+                  {t("common.previous") || "Previous"}
                 </Button>
                 <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages || isLoading}
-                    className="rounded-lg border-gray-200 hover:bg-white hover:text-gray-900 text-gray-500 h-8"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages || isLoading}
+                  className="rounded-lg border-border h-8 text-muted-foreground"
                 >
-                    {t("common.next") || "Next"}
+                  {t("common.next") || "Next"}
                 </Button>
+              </div>
             </div>
-            </div>
+          </div>
         </div>
-      </div>
-    
       </div>
     </div>
   );

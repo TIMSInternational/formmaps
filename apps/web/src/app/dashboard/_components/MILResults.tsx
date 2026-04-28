@@ -97,7 +97,7 @@ export function MILResults({ className, milDataProp }: MILResultsProps) {
               <Target className="w-6 h-6 text-indigo-600" />
             </div>
             <div>
-              <h3 className="text-xl font-serif font-semibold text-slate-900">
+              <h3 className="text-xl font-sans font-semibold text-slate-900">
                 {t("dashboard.takeLIAAssessment")}
               </h3>
               <p className="text-sm text-slate-500">
@@ -159,7 +159,7 @@ export function MILResults({ className, milDataProp }: MILResultsProps) {
               <Target className="w-6 h-6 text-indigo-600" />
             </div>
             <div>
-              <h3 className="text-xl font-serif font-semibold text-slate-900">
+              <h3 className="text-xl font-sans font-semibold text-slate-900">
                 {t("dashboard.liaResults")}
               </h3>
               <p className="text-sm text-slate-500 mt-1">
@@ -168,7 +168,7 @@ export function MILResults({ className, milDataProp }: MILResultsProps) {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-serif font-bold text-slate-900">
+            <div className="text-3xl font-sans font-bold text-slate-900">
               {hasEnhancedData
                 ? `${completionStats.completed}/${completionStats.total}`
                 : `${progress?.completedExams.length || 0}/${

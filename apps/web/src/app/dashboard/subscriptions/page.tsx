@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Check, Sparkles, Zap, Crown, Loader2, CheckCircle2 } from "lucide-react";
+import { Check, Sparkles, Zap, Crown, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useSubscriptionStatus } from "@/hooks/useSubscription";
 import StripeCheckout from "@/components/StripeCheckout";
+import Link from "next/link";
 
 interface PlanFeature {
   text: string;
@@ -93,124 +93,145 @@ export default function SubscriptionsPage() {
   const hasActive = subStatus?.hasActiveSubscription;
 
   return (
-    <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-8">
+    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Subscriptions</h1>
-        <p className="text-gray-500 mt-1">Manage your plan and billing</p>
-      </div>
+      <motion.header
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-8"
+      >
+        <Link
+          href="/dashboard"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-3 transition-colors"
+        >
+          <ArrowLeft className="w-3 h-3" />
+          Dashboard
+        </Link>
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
+          Subscriptions
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-[52ch]">
+          Manage your plan and billing
+        </p>
+      </motion.header>
 
-      {/* Active subscription banner */}
-      {hasActive && (
-        <Card className="bg-emerald-50/50 border-emerald-200">
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-emerald-900">Active Subscription</p>
-              <p className="text-sm text-emerald-700">
-                You have full access to the platform.
-                {subStatus?.expiryDate && (
-                  <span> Renews {new Date(subStatus.expiryDate).toLocaleDateString()}</span>
-                )}
-              </p>
-            </div>
-            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Active</Badge>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Plans */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-        {plans.map((plan, i) => {
-          const Icon = plan.icon;
-          return (
-            <motion.div
-              key={plan.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
-              className={`relative rounded-2xl border bg-white transition-all hover:shadow-lg ${
-                plan.popular
-                  ? "border-blue-200 shadow-md"
-                  : "border-gray-200"
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className={`bg-gradient-to-r ${plan.gradient} text-white border-0 px-3 py-0.5 shadow`}>
-                    <Sparkles className="w-3 h-3 mr-1" /> Most Popular
-                  </Badge>
-                </div>
-              )}
-
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${plan.gradient} flex items-center justify-center`}>
-                    <Icon className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">{plan.name}</h3>
-                    <p className="text-xs text-gray-500">{plan.description}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
-                  <span className="text-gray-400 text-sm">/{plan.period}</span>
-                </div>
-
-                {hasActive ? (
-                  <Button variant="outline" disabled className="w-full mb-6 rounded-xl h-10">
-                    Current Plan
-                  </Button>
-                ) : (
-                  <StripeCheckout
-                    amount={plan.price * 100}
-                    userId={userId}
-                    planId={plan.id}
-                    productName={`${plan.name} Plan`}
-                    onStart={() => setProcessingPlan(plan.id)}
-                    onSuccess={() => window.location.reload()}
-                    onError={(error: string) => {
-                      alert(`Payment failed: ${error}`);
-                      setProcessingPlan(null);
-                    }}
-                    disabled={processingPlan !== null}
-                    className="w-full mb-6"
-                  >
-                    <Button
-                      className={`w-full h-10 rounded-xl font-semibold ${
-                        plan.popular
-                          ? `bg-gradient-to-r ${plan.gradient} text-white`
-                          : "bg-gray-900 text-white hover:bg-gray-800"
-                      }`}
-                      disabled={processingPlan !== null}
-                    >
-                      {processingPlan === plan.id ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
-                      ) : (
-                        `Get ${plan.name}`
-                      )}
-                    </Button>
-                  </StripeCheckout>
-                )}
-
-                <div className="space-y-2.5">
-                  {plan.features.map((f, j) => (
-                    <div key={j} className="flex items-start gap-2.5">
-                      <Check className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${f.highlighted ? "text-blue-600" : "text-gray-400"}`} />
-                      <span className={`text-sm ${f.highlighted ? "text-gray-900 font-medium" : "text-gray-600"}`}>
-                        {f.text}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+      <div className="space-y-5 max-w-5xl">
+        {/* Active subscription banner */}
+        {hasActive && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="dash-card p-5"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
               </div>
-            </motion.div>
-          );
-        })}
+              <div className="flex-1">
+                <p className="font-semibold text-foreground">Active Subscription</p>
+                <p className="text-sm text-muted-foreground">
+                  You have full access to the platform.
+                  {subStatus?.expiryDate && (
+                    <span> Renews {new Date(subStatus.expiryDate).toLocaleDateString()}</span>
+                  )}
+                </p>
+              </div>
+              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Active</Badge>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Plans */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+          {plans.map((plan, i) => {
+            const Icon = plan.icon;
+            return (
+              <motion.div
+                key={plan.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + i * 0.08 }}
+                className={`relative dash-card transition-colors ${
+                  plan.popular ? "border-blue-200" : ""
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className={`bg-gradient-to-r ${plan.gradient} text-white border-0 px-3 py-0.5`}>
+                      <Sparkles className="w-3 h-3 mr-1" /> Most Popular
+                    </Badge>
+                  </div>
+                )}
+
+                <div className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${plan.gradient} flex items-center justify-center`}>
+                      <Icon className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">{plan.name}</h3>
+                      <p className="text-xs text-muted-foreground">{plan.description}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-baseline gap-1 mb-6">
+                    <span className="text-3xl font-bold text-foreground">${plan.price}</span>
+                    <span className="text-muted-foreground text-sm">/{plan.period}</span>
+                  </div>
+
+                  {hasActive ? (
+                    <Button variant="outline" disabled className="w-full mb-6 rounded-xl h-10">
+                      Current Plan
+                    </Button>
+                  ) : (
+                    <StripeCheckout
+                      amount={plan.price * 100}
+                      userId={userId}
+                      planId={plan.id}
+                      productName={`${plan.name} Plan`}
+                      onStart={() => setProcessingPlan(plan.id)}
+                      onSuccess={() => window.location.reload()}
+                      onError={(error: string) => {
+                        alert(`Payment failed: ${error}`);
+                        setProcessingPlan(null);
+                      }}
+                      disabled={processingPlan !== null}
+                      className="w-full mb-6"
+                    >
+                      <Button
+                        className={`w-full h-10 rounded-xl font-semibold ${
+                          plan.popular
+                            ? `bg-gradient-to-r ${plan.gradient} text-white`
+                            : "bg-foreground text-background hover:bg-foreground/90"
+                        }`}
+                        disabled={processingPlan !== null}
+                      >
+                        {processingPlan === plan.id ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+                        ) : (
+                          `Get ${plan.name}`
+                        )}
+                      </Button>
+                    </StripeCheckout>
+                  )}
+
+                  <div className="space-y-2.5">
+                    {plan.features.map((f, j) => (
+                      <div key={j} className="flex items-start gap-2.5">
+                        <Check className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${f.highlighted ? "text-blue-600" : "text-muted-foreground"}`} />
+                        <span className={`text-sm ${f.highlighted ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                          {f.text}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

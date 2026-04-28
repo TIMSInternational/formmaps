@@ -34,7 +34,7 @@ export function useCareerList(params?: {
     queryKey: careerKeys.list(params),
     queryFn: () => listCareers(params),
     staleTime: 2 * 60 * 1000,
-    retry: 1,
+    retry: false,
   });
 }
 

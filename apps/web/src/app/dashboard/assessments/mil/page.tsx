@@ -28,6 +28,17 @@ import {
   EvaluationResponse,
   EvaluatorGroup,
 } from "@/services/evaluationService";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  Lightbulb,
+  Users,
+  CheckCircle2,
+  Clock,
+  HelpCircle,
+} from "lucide-react";
 
 type AssessmentType = "mil" | "360-evaluation";
 type AssessmentStep =
@@ -177,10 +188,10 @@ export default function MILAssessmentPage() {
 
   if (loading && assessmentType === "mil") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading LIA Assessment...</p>
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">Loading LIA Assessment...</p>
         </div>
       </div>
     );
@@ -188,30 +199,18 @@ export default function MILAssessmentPage() {
 
   if (error && assessmentType === "mil") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh] flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-6 h-6 text-red-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <AlertCircle className="w-6 h-6 text-red-600" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-medium text-foreground mb-2">
             Failed to Load Assessment
           </h3>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-muted-foreground mb-4">{error}</p>
           <button
             onClick={loadExams}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-foreground text-background hover:bg-foreground/90 rounded-xl px-4 py-2 text-sm font-medium transition-colors"
           >
             Try Again
           </button>
@@ -223,202 +222,182 @@ export default function MILAssessmentPage() {
   // MIL Assessment Overview Screen
   if (currentStep === "overview") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-lg shadow-sm border p-8 text-center"
+      <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
+        {/* Header */}
+        <motion.header
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <Link
+            href="/dashboard/assessments"
+            className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-3 transition-colors"
           >
-            {/* Header */}
-            <div className="mb-8">
-              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg
-                  className="w-10 h-10 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                  />
-                </svg>
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                {t("dashboard.liaTitle")}
-              </h1>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                {t("dashboard.liaAssessmentDescription")}
-              </p>
-            </div>
+            <ArrowLeft className="w-3 h-3" />
+            {t("dashboard.assessments", "Assessments")}
+          </Link>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
+            {t("dashboard.liaTitle")}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-[52ch]">
+            {t("dashboard.liaAssessmentDescription")}
+          </p>
+        </motion.header>
 
-            {/* Progress Overview Section */}
-            {!progressLoading &&
-              (liaProgress || evaluationProgress.length > 0) && (
-                <div className="mb-8 p-6 bg-gray-50 rounded-lg">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4 text-left">
-                    {t("dashboard.assessmentProgressOverview")}
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* LIA Progress */}
-                    {liaProgress && (
-                      <div className="bg-white p-4 rounded-lg border">
-                        <div className="flex items-center mb-3">
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                            <svg
-                              className="w-4 h-4 text-blue-600"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                              />
-                            </svg>
-                          </div>
-                          <h3 className="font-semibold text-gray-900">
-                            {t("dashboard.liaProgress")}
-                          </h3>
-                        </div>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">
-                              {t("dashboard.totalSubAssessments")}:
-                            </span>
-                            <span className="font-medium">
-                              {liaProgress.totalAttempts}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">
-                              {t("dashboard.completed")}:
-                            </span>
-                            <span className="font-medium">
-                              {liaProgress.completedExams}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">
-                              {t("dashboard.bestScore")}:
-                            </span>
-                            <span className="font-medium">
-                              {liaProgress.bestScore.toFixed(1)}%
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">
-                              {t("dashboard.averageScore")}:
-                            </span>
-                            <span className="font-medium">
-                              {liaProgress.averageScore.toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 360° Evaluation Progress */}
-                    <div className="bg-white p-4 rounded-lg border">
+        <div className="space-y-5 max-w-4xl">
+          {/* Progress Overview Section */}
+          {!progressLoading &&
+            (liaProgress || evaluationProgress.length > 0) && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="dash-card p-5"
+              >
+                <h2 className="text-base font-semibold text-foreground mb-4">
+                  {t("dashboard.assessmentProgressOverview")}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* LIA Progress */}
+                  {liaProgress && (
+                    <div className="p-4 rounded-xl bg-secondary border border-border">
                       <div className="flex items-center mb-3">
-                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                          <svg
-                            className="w-4 h-4 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                            />
-                          </svg>
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                          <Lightbulb className="w-4 h-4 text-blue-600" />
                         </div>
-                        <h3 className="font-semibold text-gray-900">
-                          {t("dashboard.360Evaluations")}
+                        <h3 className="font-semibold text-foreground">
+                          {t("dashboard.liaProgress")}
                         </h3>
                       </div>
                       <div className="space-y-2 text-sm">
-                        {evaluationProgress.length > 0 ? (
-                          <>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">
-                                {t("dashboard.totalGroups")}:
-                              </span>
-                              <span className="font-medium">
-                                {evaluationProgress.length}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">
-                                {t("dashboard.completed")}:
-                              </span>
-                              <span className="font-medium">
-                                {
-                                  evaluationProgress.filter(
-                                    (g) => g.isEvaluationCompleted
-                                  ).length
-                                }
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">
-                                {t("dashboard.pending")}:
-                              </span>
-                              <span className="font-medium">
-                                {
-                                  evaluationProgress.filter(
-                                    (g) =>
-                                      !g.isEvaluationCompleted &&
-                                      new Date(g.tokenExpiryDate) > new Date()
-                                  ).length
-                                }
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Expired:</span>
-                              <span className="font-medium">
-                                {
-                                  evaluationProgress.filter(
-                                    (g) =>
-                                      !g.isEvaluationCompleted &&
-                                      new Date(g.tokenExpiryDate) <= new Date()
-                                  ).length
-                                }
-                              </span>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="text-gray-500 italic">
-                            No evaluation groups created yet
-                          </p>
-                        )}
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            {t("dashboard.totalSubAssessments")}:
+                          </span>
+                          <span className="font-medium text-foreground">
+                            {liaProgress.totalAttempts}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            {t("dashboard.completed")}:
+                          </span>
+                          <span className="font-medium text-foreground">
+                            {liaProgress.completedExams}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            {t("dashboard.bestScore")}:
+                          </span>
+                          <span className="font-medium text-foreground">
+                            {liaProgress.bestScore.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            {t("dashboard.averageScore")}:
+                          </span>
+                          <span className="font-medium text-foreground">
+                            {liaProgress.averageScore.toFixed(1)}%
+                          </span>
+                        </div>
                       </div>
+                    </div>
+                  )}
+
+                  {/* 360 Evaluation Progress */}
+                  <div className="p-4 rounded-xl bg-secondary border border-border">
+                    <div className="flex items-center mb-3">
+                      <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                        <Users className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <h3 className="font-semibold text-foreground">
+                        {t("dashboard.360Evaluations")}
+                      </h3>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      {evaluationProgress.length > 0 ? (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              {t("dashboard.totalGroups")}:
+                            </span>
+                            <span className="font-medium text-foreground">
+                              {evaluationProgress.length}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              {t("dashboard.completed")}:
+                            </span>
+                            <span className="font-medium text-foreground">
+                              {
+                                evaluationProgress.filter(
+                                  (g) => g.isEvaluationCompleted
+                                ).length
+                              }
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              {t("dashboard.pending")}:
+                            </span>
+                            <span className="font-medium text-foreground">
+                              {
+                                evaluationProgress.filter(
+                                  (g) =>
+                                    !g.isEvaluationCompleted &&
+                                    new Date(g.tokenExpiryDate) > new Date()
+                                ).length
+                              }
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Expired:</span>
+                            <span className="font-medium text-foreground">
+                              {
+                                evaluationProgress.filter(
+                                  (g) =>
+                                    !g.isEvaluationCompleted &&
+                                    new Date(g.tokenExpiryDate) <= new Date()
+                                ).length
+                              }
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-muted-foreground italic">
+                          No evaluation groups created yet
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
-              )}
-
-            {progressLoading && (
-              <div className="mb-8 p-6 bg-gray-50 rounded-lg">
-                <div className="flex items-center justify-center">
-                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
-                  <span className="text-gray-600">
-                    Loading progress data...
-                  </span>
-                </div>
-              </div>
+              </motion.div>
             )}
 
-            {/* Subtests Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {progressLoading && (
+            <div className="dash-card p-5">
+              <div className="flex items-center justify-center">
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground mr-2" />
+                <span className="text-muted-foreground text-sm">
+                  Loading progress data...
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Subtests Overview */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="dash-card p-5"
+          >
+            <h2 className="text-base font-semibold text-foreground mb-4">Subtests</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {exams.map((exam, index) => {
                 const isCompleted = completedExams.includes(exam.id);
                 const isNext = index === completedExams.length;
@@ -426,99 +405,100 @@ export default function MILAssessmentPage() {
                 return (
                   <div
                     key={exam.id}
-                    className={`p-4 rounded-lg border-2 transition-all ${
+                    className={`p-4 rounded-xl border-2 transition-all ${
                       isCompleted
-                        ? "border-green-200 bg-green-50"
+                        ? "border-emerald-200 bg-emerald-50/50"
                         : isNext
-                        ? "border-blue-200 bg-blue-50"
-                        : "border-gray-200 bg-gray-50"
+                        ? "border-blue-200 bg-blue-50/50"
+                        : "border-border bg-secondary"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-gray-900">{exam.name}</h3>
+                      <h3 className="font-medium text-foreground">{exam.name}</h3>
                       {isCompleted && (
-                        <svg
-                          className="w-5 h-5 text-green-600"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">
+                    <p className="text-sm text-muted-foreground mb-3">
                       {exam.description}
                     </p>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>{exam.timeLimitMinutes} min</span>
-                      <span>{exam.totalQuestions} questions</span>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {exam.timeLimitMinutes} min
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <HelpCircle className="w-3 h-3" />
+                        {exam.totalQuestions} questions
+                      </span>
                     </div>
                   </div>
                 );
               })}
             </div>
+          </motion.div>
 
-            {/* Progress */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
-                  Progress
-                </span>
-                <span className="text-sm text-gray-600">
-                  {completedExams.length}/{exams.length} subtests completed
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-100"
-                  style={{
-                    width: `${(completedExams.length / exams.length) * 100}%`,
-                  }}
-                />
-              </div>
+          {/* Progress Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="dash-card p-5"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-foreground">
+                Progress
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {completedExams.length}/{exams.length} subtests completed
+              </span>
             </div>
+            <div className="w-full bg-secondary rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-100"
+                style={{
+                  width: `${(completedExams.length / exams.length) * 100}%`,
+                }}
+              />
+            </div>
+          </motion.div>
 
-            {/* Action Button */}
+          {/* Action Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
             {completedExams.length < exams.length ? (
               <button
                 onClick={() => handleStartExam(completedExams.length)}
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg"
+                className="bg-foreground text-background hover:bg-foreground/90 rounded-xl px-8 py-3 font-medium text-base transition-colors"
               >
                 {completedExams.length === 0
                   ? t("dashboard.startAssessment")
                   : t("dashboard.continueAssessment")}
               </button>
             ) : (
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg
-                    className="w-8 h-8 text-green-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
+              <div className="dash-card p-5">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-base font-semibold text-foreground">
+                      Assessment Complete!
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      You have completed all MIL subtests.
+                    </p>
+                  </div>
+                  <a
+                    href="/dashboard"
+                    className="bg-foreground text-background hover:bg-foreground/90 rounded-xl px-5 py-2 text-sm font-medium transition-colors"
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                    Return to Dashboard
+                  </a>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Assessment Complete!
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  You have completed all MIL subtests.
-                </p>
-                <a
-                  href="/dashboard"
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Return to Dashboard
-                </a>
               </div>
             )}
           </motion.div>

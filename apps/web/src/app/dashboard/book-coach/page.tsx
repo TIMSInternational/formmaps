@@ -16,6 +16,20 @@ import Link from "next/link";
 import { CoachesResponse } from "@/types/coach";
 import { useTranslation } from "react-i18next";
 import { CoachCardSkeleton } from "@/components/skeletons/CoachCardSkeleton";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 120, damping: 18 } },
+};
 
 export default function BookCoachPage() {
   const { t } = useTranslation();
@@ -59,103 +73,123 @@ export default function BookCoachPage() {
   }, [search]);
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {t("coaching.find.title")}
-          </h1>
-          <p className="text-gray-500 mt-1">{t("coaching.find.subtitle")}</p>
-        </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <div className="relative flex-1 md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder={t("coaching.find.searchPlaceholder")}
-              className="pl-9"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
+              Coaching
+            </p>
+            <h1 className="text-3xl font-bold text-foreground">
+              {t("coaching.find.title")}
+            </h1>
+            <p className="text-muted-foreground">
+              {t("coaching.find.subtitle")}
+            </p>
           </div>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2 w-full md:w-auto">
+            <div className="relative flex-1 md:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t("coaching.find.searchPlaceholder")}
+                className="pl-9 rounded-xl border-border bg-card"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <Button variant="outline" size="icon" className="rounded-xl border-border">
+              <Filter className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <CoachCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : coaches.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {coaches.map((coach) => (
-            <Card
-              key={coach.id}
-              className="overflow-hidden hover:shadow-lg transition-shadow flex py-0 flex-col"
-            >
-              <div className="h-24 bg-gradient-to-r from-blue-500 to-indigo-600 relative">
-                <Avatar className="absolute -bottom-10 left-6 h-20 w-20 border-4 border-white shadow-md">
-                  <AvatarImage src={coach.image} />
-                  <AvatarFallback>{coach.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-              </div>
-              <CardContent className="pt-12 pb-4 flex-1">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-bold text-lg text-gray-900">
-                      {coach.name}
-                    </h3>
-                    <p className="text-sm text-gray-600">{coach.title}</p>
-                  </div>
-                  <div className="flex items-center bg-yellow-50 px-2 py-1 rounded text-xs font-medium text-yellow-700">
-                    <Star className="h-3 w-3 fill-yellow-500 text-yellow-500 mr-1" />
-                    {coach.rating || t("coaching.find.new")}
-                  </div>
-                </div>
+        {/* Coach Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <CoachCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : coaches.length > 0 ? (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {coaches.map((coach) => (
+              <motion.div key={coach.id} variants={itemVariants}>
+                <div className="dash-card p-0 overflow-hidden flex flex-col">
+                  {/* Colored strip for avatar area */}
+                  <div className="h-3 bg-secondary" />
+                  <div className="p-5 flex-1 flex flex-col">
+                    <div className="flex items-start gap-4 mb-4">
+                      <Avatar className="h-14 w-14 border-2 border-border">
+                        <AvatarImage src={coach.image} />
+                        <AvatarFallback className="bg-secondary text-foreground font-bold">
+                          {coach.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-bold text-foreground truncate">
+                              {coach.name}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">{coach.title}</p>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs font-medium text-amber-600">
+                            <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                            {coach.rating || t("coaching.find.new")}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                <div className="space-y-3 mt-4">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    {coach.location || t("coaching.find.remote")}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {coach.specialization && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+                    <div className="space-y-3 flex-1">
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4 mr-2 shrink-0" />
+                        {coach.location || t("coaching.find.remote")}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {coach.specialization && (
+                          <Badge variant="secondary" className="text-xs">
+                            {coach.specialization}
+                          </Badge>
+                        )}
+                        {coach.tags?.slice(0, 2).map((tag: string) => (
+                          <Badge key={tag} variant="outline" className="text-xs border-border">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-border">
+                      <Button
+                        className="w-full bg-foreground text-background hover:bg-foreground/90 rounded-xl"
+                        asChild
                       >
-                        {coach.specialization}
-                      </Badge>
-                    )}
-                    {coach.tags?.slice(0, 2).map((tag: string) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
+                        <Link href={`/dashboard/book-coach/${coach.id}`}>
+                          {t("coaching.find.viewProfileBook")}
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-              <CardFooter className="border-t bg-gray-50/50 p-4">
-                <Button className="w-full" asChild>
-                  <Link href={`/dashboard/book-coach/${coach.id}`}>
-                    {t("coaching.find.viewProfileBook")}
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12 bg-white rounded-lg border border-dashed">
-          <h3 className="text-lg font-medium text-gray-900">
-            {t("coaching.find.noCoachesFound")}
-          </h3>
-          <p className="text-gray-500">{t("coaching.find.tryAdjusting")}</p>
-        </div>
-      )}
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="dash-card p-5 text-center py-12 border-dashed">
+            <h3 className="text-lg font-medium text-foreground">
+              {t("coaching.find.noCoachesFound")}
+            </h3>
+            <p className="text-muted-foreground mt-1">{t("coaching.find.tryAdjusting")}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

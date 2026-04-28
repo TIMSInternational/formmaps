@@ -92,7 +92,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
           <p className="text-lg font-semibold">
             Failed to load subscription plans
           </p>
-          <p className="text-sm text-gray-600 mt-2">{error}</p>
+          <p className="text-sm text-muted-foreground mt-2">{error}</p>
         </div>
         <Button onClick={() => window.location.reload()}>Try Again</Button>
       </div>
@@ -162,10 +162,10 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
         <Badge variant="secondary" className="px-4 py-1.5 text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100">
           Upgrade Your Experience
         </Badge>
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
+        <h2 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
           {subscription.name}
         </h2>
-        <p className="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           {subscription.description}
         </p>
       </motion.div>
@@ -182,10 +182,10 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
           >
             <Card
               className={cn(
-                "flex flex-col w-full relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1",
+                "flex flex-col w-full relative transition-all duration-300 hover:border-foreground/20",
                 option.popular
-                  ? "border-blue-500 shadow-md scale-105 z-10"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-blue-500 scale-105 z-10"
+                  : "border-border"
               )}
             >
               {option.popular && (
@@ -198,7 +198,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
               )}
 
               <CardHeader className="text-center pb-8 pt-8">
-                <CardTitle className="text-2xl font-bold text-gray-900">
+                <CardTitle className="text-2xl font-bold text-foreground">
                   {option.name}
                 </CardTitle>
                 <CardDescription className="text-base mt-2">
@@ -208,15 +208,15 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
 
               <CardContent className="flex-1 flex flex-col items-center">
                 <div className="mb-8 flex items-baseline justify-center">
-                  <span className="text-5xl font-bold tracking-tight text-gray-900">
+                  <span className="text-5xl font-bold tracking-tight text-foreground">
                     ${option.price}
                   </span>
-                  <span className="text-gray-500 ml-2 font-medium">/{option.period}</span>
+                  <span className="text-muted-foreground ml-2 font-medium">/{option.period}</span>
                 </div>
 
                 {option.originalPrice && (
                   <div className="mb-6 -mt-4 text-center">
-                    <span className="text-sm text-gray-400 line-through mr-2">
+                    <span className="text-sm text-muted-foreground line-through mr-2">
                       ${option.originalPrice}
                     </span>
                     {option.discount && (
@@ -233,7 +233,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                       <div className="mt-1 bg-blue-50 rounded-full p-1">
                         <Check className="w-3.5 h-3.5 text-blue-600" />
                       </div>
-                      <span className="text-gray-600 text-sm leading-relaxed">
+                      <span className="text-muted-foreground text-sm leading-relaxed">
                         {feature}
                       </span>
                     </div>
@@ -265,10 +265,10 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                   >
                     <Button
                       className={cn(
-                        "w-full h-12 text-base rounded-xl font-medium shadow-sm transition-all",
+                        "w-full h-12 text-base rounded-xl font-medium transition-all",
                         option.popular
-                          ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200"
-                          : "bg-gray-900 hover:bg-gray-800 text-white"
+                          ? "bg-blue-600 hover:bg-blue-700 text-white"
+                          : "bg-foreground hover:bg-foreground/90 text-white"
                       )}
                       disabled={processingPayment !== null}
                     >

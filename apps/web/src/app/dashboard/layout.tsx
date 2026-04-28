@@ -35,14 +35,8 @@ export default function DashboardLayout({
   usePageViewTracking();
   const { isCoach, isSuperAdmin } = usePermission();
 
-  // Check if current path is resume builder
   const pathname = usePathname();
-  const isResumeBuilder = pathname?.startsWith("/dashboard/resume-builder");
   const isAdminRoute = pathname?.startsWith("/dashboard/admin");
-
-  if (isResumeBuilder) {
-    return <>{children}</>;
-  }
 
   if (isCoach) {
     return (
@@ -162,8 +156,6 @@ export default function DashboardLayout({
         />
 
         <div className="flex-1 flex flex-col overflow-hidden lg:ml-0 transition-all duration-300 relative h-full">
-          {!isAdminRoute && <TopNav onMenuClick={() => setSidebarOpen(true)} />}
-
           <main
             id="main-content"
             tabIndex={-1}

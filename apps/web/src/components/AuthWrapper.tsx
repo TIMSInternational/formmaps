@@ -46,8 +46,9 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   const shouldCheckSubscription =
     user.isAuthenticated && isProtectedRoute && isStudent && !isSubscriptionPage && !isOnboardingPage;
 
-  const { data: subscriptionStatus, isLoading: statusLoading } = useSubscriptionStatus({
+  const { data: subscriptionStatus, isLoading: statusLoading, isError: statusError } = useSubscriptionStatus({
     enabled: !!shouldCheckSubscription,
+    retry: 2,
   });
 
   useEffect(() => {
@@ -82,8 +83,9 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     }
 
     // Subscription enforcement for students
-    if (shouldCheckSubscription && !statusLoading) {
-      if (!subscriptionStatus?.hasActiveSubscription) {
+    // Only redirect if we got a definitive "no subscription" response, not on API errors
+    if (shouldCheckSubscription && !statusLoading && !statusError) {
+      if (subscriptionStatus && !subscriptionStatus.hasActiveSubscription) {
         return "/subscribe";
       }
     }
@@ -114,6 +116,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     isProtectedRoute,
     shouldCheckSubscription,
     statusLoading,
+    statusError,
     subscriptionStatus,
   ]);
 

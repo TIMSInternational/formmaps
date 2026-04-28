@@ -11,40 +11,19 @@ export async function listCareers(query?: {
   location?: string;
   sort?: "recommended" | "match" | "title" | "demand";
 }) {
-  try {
-    const params = new URLSearchParams();
-    if (query?.search) params.set("search", query.search);
-    if (query?.industry) params.set("industry", query.industry);
-    if (query?.education) params.set("education", query.education);
-    if (query?.location) params.set("location", query.location);
-    if (query?.sort) params.set("sort", query.sort);
-
-    const qs = params.toString();
-    const res = await apiRequest<{ data: { careers: CareerRole[]; meta: any } }>(
-      `/api/v1/careers${qs ? `?${qs}` : ""}`
-    );
-    return res.data;
-  } catch {
-    return { careers: [] as CareerRole[], meta: { total: 0, page: 1, pageSize: 20 } };
-  }
+  // TODO: Backend GET /api/v1/careers endpoint not implemented yet.
+  // Career data comes from the scoring engine (POST /api/v1/careers/score) via useTimsCareerScoring.
+  return { careers: [] as CareerRole[], meta: { total: 0, page: 1, pageSize: 20 } };
 }
 
 export async function getCareerById(id: string): Promise<CareerRole | null> {
-  try {
-    const res = await apiRequest<{ data: CareerRole }>(`/api/v1/careers/${id}`);
-    return res.data ?? null;
-  } catch {
-    return null;
-  }
+  // TODO: Backend GET /api/v1/careers/:id endpoint not implemented yet
+  return null;
 }
 
 export async function getCareerFamilies() {
-  try {
-    const res = await apiRequest<{ data: any[] }>("/api/v1/careers/families");
-    return res.data;
-  } catch {
-    return [];
-  }
+  // TODO: Backend endpoint not implemented yet
+  return [];
 }
 
 export async function adminListCareers() {
@@ -91,36 +70,16 @@ export async function recommendCareers(payload: {
 }
 
 export async function getFavoritesForUser(userId: string) {
-  try {
-    const res = await apiRequest<{ data: { favorites: string[] } }>(
-      `/api/v1/careers/favorites/${userId}`
-    );
-    return res.data;
-  } catch {
-    return { favorites: [] as string[] };
-  }
+  // TODO: Backend endpoint not implemented yet
+  return { favorites: [] as string[] };
 }
 
 export async function addFavorite(userId: string, careerId: string) {
-  try {
-    const res = await apiRequest<{ data: { success: boolean; favorites: string[] } }>(
-      `/api/v1/careers/favorites/${userId}/${careerId}`,
-      { method: "POST" }
-    );
-    return res.data;
-  } catch {
-    return { success: false, favorites: [] as string[] };
-  }
+  // TODO: Backend endpoint not implemented yet
+  return { success: false, favorites: [] as string[] };
 }
 
 export async function removeFavorite(userId: string, careerId: string) {
-  try {
-    const res = await apiRequest<{ data: { success: boolean; favorites: string[] } }>(
-      `/api/v1/careers/favorites/${userId}/${careerId}`,
-      { method: "DELETE" }
-    );
-    return res.data;
-  } catch {
-    return { success: false, favorites: [] as string[] };
-  }
+  // TODO: Backend endpoint not implemented yet
+  return { success: false, favorites: [] as string[] };
 }

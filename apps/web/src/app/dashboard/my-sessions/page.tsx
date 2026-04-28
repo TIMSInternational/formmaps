@@ -267,31 +267,31 @@ export default function MySessionsPage() {
     switch (status) {
       case "confirmed":
         return (
-          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">
-            <CheckCircle2 className="h-3 w-3 mr-1" />
+          <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-emerald-200 bg-emerald-50 text-emerald-700 inline-flex items-center gap-1">
+            <CheckCircle2 className="h-3 w-3" />
             {t("sessions.status.confirmed")}
-          </Badge>
+          </span>
         );
       case "completed":
         return (
-          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0">
-            <CheckCircle2 className="h-3 w-3 mr-1" />
+          <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-blue-200 bg-blue-50 text-blue-700 inline-flex items-center gap-1">
+            <CheckCircle2 className="h-3 w-3" />
             {t("sessions.status.completed")}
-          </Badge>
+          </span>
         );
       case "cancelled":
         return (
-          <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-0">
-            <XCircle className="h-3 w-3 mr-1" />
+          <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-red-200 bg-red-50 text-red-700 inline-flex items-center gap-1">
+            <XCircle className="h-3 w-3" />
             {t("sessions.status.cancelled")}
-          </Badge>
+          </span>
         );
       case "rescheduled":
         return (
-          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0">
-            <Clock className="h-3 w-3 mr-1" />
+          <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-amber-200 bg-amber-50 text-amber-700 inline-flex items-center gap-1">
+            <Clock className="h-3 w-3" />
             {t("sessions.status.rescheduled")}
-          </Badge>
+          </span>
         );
       default:
         return <Badge variant="secondary">{status}</Badge>;
@@ -312,40 +312,36 @@ export default function MySessionsPage() {
   const filteredCounselorSessions = counselorSubTab === "upcoming" ? upcomingCounselorSessions : pastCounselorSessions;
 
   const getCounselorStatusBadge = (status: string) => {
-    if (status === "confirmed") return <Badge className="bg-emerald-100 text-emerald-700 border-0"><CheckCircle2 className="h-3 w-3 mr-1" />Upcoming</Badge>;
-    if (status === "completed") return <Badge className="bg-blue-100 text-blue-700 border-0"><CheckCircle2 className="h-3 w-3 mr-1" />Completed</Badge>;
-    if (status === "cancelled") return <Badge className="bg-red-100 text-red-700 border-0"><XCircle className="h-3 w-3 mr-1" />Cancelled</Badge>;
+    if (status === "confirmed") return <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-emerald-200 bg-emerald-50 text-emerald-700 inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Upcoming</span>;
+    if (status === "completed") return <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-blue-200 bg-blue-50 text-blue-700 inline-flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />Completed</span>;
+    if (status === "cancelled") return <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-red-200 bg-red-50 text-red-700 inline-flex items-center gap-1"><XCircle className="h-3 w-3" />Cancelled</span>;
     return <Badge variant="secondary">{status}</Badge>;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 space-y-8">
-        {/* Header Section */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-          <div className="flex items-center gap-5">
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur opacity-25"></div>
-              <Avatar className="h-16 w-16 border-4 border-white shadow-xl relative">
-                <AvatarImage src={user?.avatar || user?.image || undefined} />
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xl font-bold">
-                  {user?.name?.charAt(0).toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                {t("sessions.title")}
-              </h1>
-              <p className="text-gray-500 mt-1">{t("sessions.subtitle")}</p>
-            </div>
+    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6"
+        >
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              Appointments
+            </p>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+              {t("sessions.title")}
+            </h1>
+            <p className="text-muted-foreground mt-1">{t("sessions.subtitle")}</p>
           </div>
 
           <div className="flex gap-3">
             <Button
               asChild
               variant="outline"
-              className="h-11 px-5 rounded-xl border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+              className="h-10 px-5 rounded-xl border-border text-foreground hover:bg-secondary"
             >
               <Link href="/dashboard/book-counselor">
                 <User className="h-4 w-4 mr-2" />
@@ -354,7 +350,7 @@ export default function MySessionsPage() {
             </Button>
             <Button
               asChild
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25 h-11 px-6 rounded-xl"
+              className="bg-foreground text-background hover:bg-foreground/90 h-10 px-6 rounded-xl"
             >
               <Link href="/dashboard/book-coach">
                 <Users className="h-4 w-4 mr-2" />
@@ -362,16 +358,16 @@ export default function MySessionsPage() {
               </Link>
             </Button>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Main Tabs — Coaching vs Counselor */}
+        {/* Main Tabs -- Coaching vs Counselor */}
         <div className="flex gap-3">
           <button
             onClick={() => setMainTab("coaching")}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all ${
               mainTab === "coaching"
-                ? "bg-blue-600 text-white shadow-md"
-                : "bg-white border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-700"
+                ? "bg-foreground text-background"
+                : "bg-secondary border border-border text-muted-foreground hover:text-foreground"
             }`}
           >
             <Users className="h-4 w-4 inline mr-1.5" />
@@ -379,19 +375,19 @@ export default function MySessionsPage() {
           </button>
           <button
             onClick={() => setMainTab("counselor")}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all ${
               mainTab === "counselor"
-                ? "bg-indigo-600 text-white shadow-md"
-                : "bg-white border border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-700"
+                ? "bg-foreground text-background"
+                : "bg-secondary border border-border text-muted-foreground hover:text-foreground"
             }`}
           >
             <User className="h-4 w-4 inline mr-1.5" />
             Counselor Sessions
-            <Badge className="ml-1.5 bg-green-100 text-green-700 border-0 text-[10px] px-1.5">FREE</Badge>
+            <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-emerald-200 bg-emerald-50 text-emerald-700 ml-1.5">FREE</span>
           </button>
         </div>
 
-        {/* Stats Cards — Coaching */}
+        {/* Stats Cards -- Coaching */}
         {mainTab === "coaching" && (<>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
@@ -399,29 +395,25 @@ export default function MySessionsPage() {
               label: "Total Sessions",
               value: sessions.length,
               icon: CalendarDays,
-              color: "text-slate-600",
-              bg: "from-slate-100 to-slate-200",
+              color: "text-muted-foreground",
             },
             {
               label: "Upcoming",
               value: upcomingSessions.length,
               icon: Clock,
               color: "text-emerald-600",
-              bg: "from-emerald-100 to-emerald-200",
             },
             {
               label: "Completed",
               value: sessions.filter((s) => s.status === "completed").length,
               icon: CheckCircle2,
               color: "text-blue-600",
-              bg: "from-blue-100 to-blue-200",
             },
             {
               label: "Cancelled",
               value: sessions.filter((s) => s.status === "cancelled").length,
               icon: XCircle,
               color: "text-red-500",
-              bg: "from-red-100 to-red-200",
             },
           ].map((stat, i) => (
             <motion.div
@@ -430,127 +422,121 @@ export default function MySessionsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: i * 0.1 }}
             >
-              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`p-2.5 bg-gradient-to-br ${stat.bg} rounded-xl`}
-                    >
-                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-900">
-                        {stat.value}
-                      </p>
-                      <p className="text-xs text-gray-500 font-medium">
-                        {stat.label}
-                      </p>
-                    </div>
+              <div className="dash-card p-5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-secondary rounded-xl">
+                    <stat.icon className={`h-5 w-5 ${stat.color}`} />
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">
+                      {stat.value}
+                    </p>
+                    <p className="text-xs text-muted-foreground font-medium">
+                      {stat.label}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>
 
         </>)}
 
-        {/* Stats Cards — Counselor */}
+        {/* Stats Cards -- Counselor */}
         {mainTab === "counselor" && (
           <>
             <div className="grid grid-cols-3 gap-4">
               {[
-                { label: "Total", value: counselorSessions.length, icon: CalendarDays, color: "text-slate-600", bg: "from-slate-100 to-slate-200" },
-                { label: "Upcoming", value: upcomingCounselorSessions.length, icon: Clock, color: "text-emerald-600", bg: "from-emerald-100 to-emerald-200" },
-                { label: "Completed", value: counselorSessions.filter(s => s.status === "completed").length, icon: CheckCircle2, color: "text-blue-600", bg: "from-blue-100 to-blue-200" },
+                { label: "Total", value: counselorSessions.length, icon: CalendarDays, color: "text-muted-foreground" },
+                { label: "Upcoming", value: upcomingCounselorSessions.length, icon: Clock, color: "text-emerald-600" },
+                { label: "Completed", value: counselorSessions.filter(s => s.status === "completed").length, icon: CheckCircle2, color: "text-blue-600" },
               ].map((stat, i) => (
                 <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.1 }}>
-                  <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-                    <CardContent className="p-5">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2.5 bg-gradient-to-br ${stat.bg} rounded-xl`}>
-                          <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                          <p className="text-xs text-gray-500 font-medium">{stat.label}</p>
-                        </div>
+                  <div className="dash-card p-5">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-secondary rounded-xl">
+                        <stat.icon className={`h-5 w-5 ${stat.color}`} />
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div>
+                        <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                        <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
               ))}
             </div>
 
             {/* Counselor Session List */}
-            <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-              <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+            <div className="dash-card overflow-hidden">
+              <div className="border-b border-border px-6 py-5">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <CardTitle className="text-xl font-bold text-gray-900">Counselor Sessions</CardTitle>
+                  <h2 className="text-xl font-bold text-foreground">Counselor Sessions</h2>
                   <div className="flex items-center gap-3">
-                    <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl">
+                    <Button asChild size="sm" className="bg-foreground text-background hover:bg-foreground/90 rounded-xl">
                       <Link href="/dashboard/book-counselor">
                         <User className="h-4 w-4 mr-1.5" />
                         Book New
                       </Link>
                     </Button>
                     <Tabs value={counselorSubTab} onValueChange={setCounselorSubTab}>
-                      <TabsList className="bg-gray-100/80 p-1 rounded-xl">
-                        <TabsTrigger value="upcoming" className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">Upcoming ({upcomingCounselorSessions.length})</TabsTrigger>
-                        <TabsTrigger value="past" className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">Past ({pastCounselorSessions.length})</TabsTrigger>
+                      <TabsList className="bg-secondary p-1 rounded-xl">
+                        <TabsTrigger value="upcoming" className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-card">Upcoming ({upcomingCounselorSessions.length})</TabsTrigger>
+                        <TabsTrigger value="past" className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-card">Past ({pastCounselorSessions.length})</TabsTrigger>
                       </TabsList>
                     </Tabs>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="p-0">
+              </div>
+              <div>
                 {isCounselorLoading ? (
-                  <div className="flex flex-col items-center justify-center py-16"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600" /></div>
+                  <div className="flex flex-col items-center justify-center py-16"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-foreground" /></div>
                 ) : filteredCounselorSessions.length > 0 ? (
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-border">
                     {filteredCounselorSessions.map((session, index) => {
                       let date = "TBD", time = "TBD";
                       try {
                         const s = new Date(session.startTime), e = new Date(session.endTime);
                         date = format(s, "EEE, MMM d, yyyy");
-                        time = `${format(s, "h:mm a")} – ${format(e, "h:mm a")}`;
+                        time = `${format(s, "h:mm a")} - ${format(e, "h:mm a")}`;
                       } catch {}
                       return (
-                        <motion.div key={session.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }} className="p-5 hover:bg-slate-50/50 transition-colors">
+                        <motion.div key={session.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }} className="p-5 hover:bg-secondary/50 transition-colors">
                           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-5">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
-                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-slate-700 text-white flex items-center justify-center font-bold text-xl flex-shrink-0">
+                              <div className="w-14 h-14 rounded-full bg-secondary text-foreground flex items-center justify-center font-bold text-xl flex-shrink-0 border border-border">
                                 {session.counselorName?.charAt(0) || "C"}
                               </div>
                               <div className="min-w-0">
-                                <h3 className="font-semibold text-gray-900 text-lg truncate">{session.counselorName || "Counselor"}</h3>
-                                <p className="text-sm text-gray-500 truncate">{session.counselorEmail}</p>
+                                <h3 className="font-semibold text-foreground text-lg truncate">{session.counselorName || "Counselor"}</h3>
+                                <p className="text-sm text-muted-foreground truncate">{session.counselorEmail}</p>
                                 <div className="flex items-center gap-2 mt-1.5">
-                                  <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 text-xs">{session.topic}</Badge>
-                                  <Badge className="bg-green-100 text-green-700 border-0 text-xs">FREE</Badge>
+                                  <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-indigo-200 bg-indigo-50 text-indigo-700">{session.topic}</span>
+                                  <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-emerald-200 bg-emerald-50 text-emerald-700">FREE</span>
                                   {getCounselorStatusBadge(session.status)}
                                 </div>
                               </div>
                             </div>
                             <div className="flex flex-wrap items-center gap-3 text-sm">
-                              <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-lg"><Calendar className="h-4 w-4 text-slate-500" /><span className="font-medium text-slate-700">{date}</span></div>
-                              <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-lg"><Clock className="h-4 w-4 text-slate-500" /><span className="font-medium text-slate-700">{time}</span></div>
+                              <div className="flex items-center gap-2 bg-secondary px-3 py-2 rounded-lg"><Calendar className="h-4 w-4 text-muted-foreground" /><span className="font-medium text-foreground">{date}</span></div>
+                              <div className="flex items-center gap-2 bg-secondary px-3 py-2 rounded-lg"><Clock className="h-4 w-4 text-muted-foreground" /><span className="font-medium text-foreground">{time}</span></div>
                             </div>
                             <div className="flex items-center gap-2">
                               {session.status === "confirmed" && (
                                 <>
                                   {session.meetingLink && (
-                                    <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-9 px-4 rounded-lg" asChild>
+                                    <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90 h-9 px-4 rounded-lg" asChild>
                                       <a href={session.meetingLink} target="_blank" rel="noopener noreferrer"><Video className="h-4 w-4 mr-1.5" />Join</a>
                                     </Button>
                                   )}
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-slate-100">
-                                        <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                                      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-secondary">
+                                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-slate-100 p-1">
+                                    <DropdownMenuContent align="end" className="rounded-xl border-border p-1">
                                       <DropdownMenuItem className="text-red-600 focus:text-red-700 focus:bg-red-50 rounded-lg cursor-pointer"
                                         onClick={() => { setSelectedCounselorSession(session); setCounselorCancelReason(""); setCancelCounselorOpen(true); }}>
                                         <X className="h-4 w-4 mr-2" />Cancel Session
@@ -563,8 +549,8 @@ export default function MySessionsPage() {
                           </div>
                           {(session.notes || session.counselorNotes) && (
                             <div className="mt-4 ml-[4.5rem] space-y-1.5">
-                              {session.notes && <div className="pl-4 border-l-2 border-slate-200"><p className="text-sm text-gray-600"><span className="font-medium text-gray-700">Your notes: </span>{session.notes}</p></div>}
-                              {session.counselorNotes && <div className="pl-4 border-l-2 border-indigo-200"><p className="text-sm text-gray-600"><span className="font-medium text-indigo-600">Counselor notes: </span>{session.counselorNotes}</p></div>}
+                              {session.notes && <div className="pl-4 border-l-2 border-border"><p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">Your notes: </span>{session.notes}</p></div>}
+                              {session.counselorNotes && <div className="pl-4 border-l-2 border-indigo-200"><p className="text-sm text-muted-foreground"><span className="font-medium text-indigo-600">Counselor notes: </span>{session.counselorNotes}</p></div>}
                             </div>
                           )}
                         </motion.div>
@@ -573,59 +559,61 @@ export default function MySessionsPage() {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-16 px-4">
-                    <div className="h-20 w-20 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center mb-5">
-                      <User className="h-10 w-10 text-indigo-400" />
+                    <div className="h-20 w-20 bg-secondary rounded-xl flex items-center justify-center mb-5 border border-border">
+                      <User className="h-10 w-10 text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No {counselorSubTab} counselor sessions</h3>
-                    <p className="text-gray-500 text-center max-w-sm mb-5 text-sm">Book a FREE session with your assigned school counselor for guidance and support.</p>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">No {counselorSubTab} counselor sessions</h3>
+                    <p className="text-muted-foreground text-center max-w-sm mb-5 text-sm">Book a FREE session with your assigned school counselor for guidance and support.</p>
                     {counselorSubTab === "upcoming" && (
-                      <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white h-11 px-6 rounded-xl">
+                      <Button asChild className="bg-foreground text-background hover:bg-foreground/90 h-11 px-6 rounded-xl">
                         <Link href="/dashboard/book-counselor"><User className="h-4 w-4 mr-2" />Book a Counselor Session</Link>
                       </Button>
                     )}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </>
         )}
-        <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+
+        {/* Coaching Sessions List */}
+        <div className="dash-card overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <CardTitle className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-foreground">
                 {t("sessions.yourSessions")}
-              </CardTitle>
+              </h2>
               <Tabs
                 value={activeTab}
                 onValueChange={setActiveTab}
                 className="w-full sm:w-auto"
               >
-                <TabsList className="bg-gray-100/80 p-1 rounded-xl">
+                <TabsList className="bg-secondary p-1 rounded-xl">
                   <TabsTrigger
                     value="upcoming"
-                    className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                    className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-card transition-all"
                   >
                     {t("sessions.tabs.upcoming")} ({upcomingSessions.length})
                   </TabsTrigger>
                   <TabsTrigger
                     value="past"
-                    className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                    className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-card transition-all"
                   >
                     {t("sessions.tabs.past")} ({pastSessions.length})
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
-          </CardHeader>
+          </div>
 
-          <CardContent className="p-0">
+          <div>
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-                <p className="text-gray-500 mt-4">Loading your sessions...</p>
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-foreground"></div>
+                <p className="text-muted-foreground mt-4">Loading your sessions...</p>
               </div>
             ) : filteredSessions.length > 0 ? (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-border">
                 <AnimatePresence>
                   {filteredSessions.map((session, index) => (
                     <motion.div
@@ -633,40 +621,37 @@ export default function MySessionsPage() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="p-5 hover:bg-slate-50/50 transition-colors"
+                      className="p-5 hover:bg-secondary/50 transition-colors"
                     >
                       <div className="flex flex-col lg:flex-row items-start lg:items-center gap-5">
                         {/* Coach Info */}
                         <div className="flex items-center gap-4 flex-1 min-w-0">
                           <div className="relative flex-shrink-0">
-                            <Avatar className="h-14 w-14 border-2 border-white shadow-lg ring-2 ring-blue-100">
+                            <Avatar className="h-14 w-14 border-2 border-border">
                               <AvatarImage src={session.coachImage} />
-                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold">
+                              <AvatarFallback className="bg-secondary text-foreground font-bold">
                                 {session.coachName?.charAt(0) || "C"}
                               </AvatarFallback>
                             </Avatar>
                             {["confirmed", "rescheduled"].includes(
                               session.status
                             ) && (
-                              <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 bg-emerald-500 rounded-full border-2 border-white"></div>
+                              <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 bg-emerald-500 rounded-full border-2 border-card"></div>
                             )}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="font-semibold text-gray-900 text-lg truncate">
+                            <h3 className="font-semibold text-foreground text-lg truncate">
                               {session.coachName}
                             </h3>
                             {session.coachTitle && (
-                              <p className="text-sm text-gray-500 truncate">
+                              <p className="text-sm text-muted-foreground truncate">
                                 {session.coachTitle}
                               </p>
                             )}
                             <div className="flex items-center gap-2 mt-1.5">
-                              <Badge
-                                variant="secondary"
-                                className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium text-xs"
-                              >
+                              <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-blue-200 bg-blue-50 text-blue-700">
                                 {session.topic}
-                              </Badge>
+                              </span>
                               {getStatusBadge(session.status)}
                             </div>
                           </div>
@@ -674,15 +659,15 @@ export default function MySessionsPage() {
 
                         {/* Date & Time */}
                         <div className="flex flex-wrap items-center gap-3 text-sm">
-                          <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-lg">
-                            <Calendar className="h-4 w-4 text-slate-500" />
-                            <span className="font-medium text-slate-700">
+                          <div className="flex items-center gap-2 bg-secondary px-3 py-2 rounded-lg">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium text-foreground">
                               {session.date}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-lg">
-                            <Clock className="h-4 w-4 text-slate-500" />
-                            <span className="font-medium text-slate-700">
+                          <div className="flex items-center gap-2 bg-secondary px-3 py-2 rounded-lg">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium text-foreground">
                               {session.time}
                             </span>
                           </div>
@@ -697,7 +682,7 @@ export default function MySessionsPage() {
                               {session.meetingLink && (
                                 <Button
                                   size="sm"
-                                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md h-9 px-4 rounded-lg"
+                                  className="bg-foreground text-background hover:bg-foreground/90 h-9 px-4 rounded-lg"
                                   asChild
                                 >
                                   <a
@@ -714,7 +699,7 @@ export default function MySessionsPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleRescheduleClick(session)}
-                                className="h-9 px-4 rounded-lg border-slate-200 hover:bg-slate-50"
+                                className="h-9 px-4 rounded-lg border-border hover:bg-secondary"
                               >
                                 Reschedule
                               </Button>
@@ -723,14 +708,14 @@ export default function MySessionsPage() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-9 w-9 rounded-lg hover:bg-slate-100"
+                                    className="h-9 w-9 rounded-lg hover:bg-secondary"
                                   >
-                                    <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                                    <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
                                   align="end"
-                                  className="rounded-xl shadow-lg border-slate-100 p-1"
+                                  className="rounded-xl border-border p-1"
                                 >
                                   <DropdownMenuItem
                                     className="text-red-600 focus:text-red-700 focus:bg-red-50 rounded-lg cursor-pointer"
@@ -746,7 +731,7 @@ export default function MySessionsPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-9 px-4 rounded-lg border-slate-200 hover:bg-slate-50"
+                              className="h-9 px-4 rounded-lg border-border hover:bg-secondary"
                               onClick={() => handleReviewClick(session)}
                             >
                               <Star className="h-4 w-4 mr-1.5 text-yellow-500" />
@@ -757,13 +742,13 @@ export default function MySessionsPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-9 w-9 p-0 rounded-lg hover:bg-slate-100"
+                            className="h-9 w-9 p-0 rounded-lg hover:bg-secondary"
                             asChild
                           >
                             <Link
                               href={`/dashboard/book-coach/${session.coachId}`}
                             >
-                              <ArrowRight className="h-4 w-4 text-slate-400" />
+                              <ArrowRight className="h-4 w-4 text-muted-foreground" />
                             </Link>
                           </Button>
                         </div>
@@ -771,9 +756,9 @@ export default function MySessionsPage() {
 
                       {/* Notes Section */}
                       {session.notes && (
-                        <div className="mt-4 ml-[4.5rem] pl-4 border-l-2 border-blue-100">
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium text-gray-700">
+                        <div className="mt-4 ml-[4.5rem] pl-4 border-l-2 border-border">
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium text-foreground">
                               Notes:{" "}
                             </span>
                             {session.notes}
@@ -786,13 +771,13 @@ export default function MySessionsPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 px-4">
-                <div className="h-20 w-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mb-5">
-                  <Calendar className="h-10 w-10 text-slate-400" />
+                <div className="h-20 w-20 bg-secondary rounded-xl flex items-center justify-center mb-5 border border-border">
+                  <Calendar className="h-10 w-10 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   No {activeTab} sessions
                 </h3>
-                <p className="text-gray-500 text-center max-w-sm mb-5">
+                <p className="text-muted-foreground text-center max-w-sm mb-5">
                   {activeTab === "upcoming"
                     ? "You don't have any upcoming coaching sessions. Book a session with an expert coach to accelerate your career!"
                     : "You haven't completed any coaching sessions yet."}
@@ -800,7 +785,7 @@ export default function MySessionsPage() {
                 {activeTab === "upcoming" && (
                   <Button
                     asChild
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg h-11 px-6 rounded-xl"
+                    className="bg-foreground text-background hover:bg-foreground/90 h-11 px-6 rounded-xl"
                   >
                     <Link href="/dashboard/book-coach">
                       <Users className="h-4 w-4 mr-2" />
@@ -810,25 +795,25 @@ export default function MySessionsPage() {
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Cancel Dialog */}
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent className="sm:max-w-md rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-xl">Cancel Session</DialogTitle>
-            <DialogDescription className="text-gray-500">
+            <DialogDescription className="text-muted-foreground">
               Are you sure you want to cancel this session with{" "}
-              <span className="font-medium text-gray-700">
+              <span className="font-medium text-foreground">
                 {selectedSession?.coachName}
               </span>
               ?
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="text-sm font-medium text-foreground mb-2 block">
               Reason for cancellation
             </label>
             <Textarea
@@ -836,7 +821,7 @@ export default function MySessionsPage() {
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
               rows={3}
-              className="resize-none rounded-xl border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+              className="resize-none rounded-xl border-border"
             />
           </div>
           <DialogFooter className="gap-2">
@@ -873,12 +858,12 @@ export default function MySessionsPage() {
 
       {/* Review Dialog */}
       <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent className="sm:max-w-md rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-xl">Leave a Review</DialogTitle>
-            <DialogDescription className="text-gray-500">
+            <DialogDescription className="text-muted-foreground">
               How was your session with{" "}
-              <span className="font-medium text-gray-700">
+              <span className="font-medium text-foreground">
                 {selectedSession?.coachName}
               </span>
               ?
@@ -895,15 +880,15 @@ export default function MySessionsPage() {
                   <Star
                     className={`h-10 w-10 ${
                       star <= reviewRating
-                        ? "fill-yellow-400 text-yellow-400 drop-shadow-sm"
-                        : "text-slate-200"
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-muted-foreground"
                     }`}
                   />
                 </button>
               ))}
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
+              <Label className="text-sm font-medium text-foreground">
                 Comment
               </Label>
               <Textarea
@@ -911,7 +896,7 @@ export default function MySessionsPage() {
                 onChange={(e) => setReviewComment(e.target.value)}
                 placeholder="Share your experience..."
                 rows={4}
-                className="resize-none rounded-xl border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                className="resize-none rounded-xl border-border"
               />
             </div>
           </div>
@@ -926,7 +911,7 @@ export default function MySessionsPage() {
             <Button
               onClick={confirmReview}
               disabled={isProcessing}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg"
+              className="bg-foreground text-background hover:bg-foreground/90 rounded-lg"
             >
               {isProcessing ? "Submitting..." : "Submit Review"}
             </Button>
@@ -935,19 +920,19 @@ export default function MySessionsPage() {
       </Dialog>
       {/* Counselor Cancel Dialog */}
       <Dialog open={cancelCounselorOpen} onOpenChange={setCancelCounselorOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent className="sm:max-w-md rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-xl">Cancel Counselor Session</DialogTitle>
-            <DialogDescription className="text-gray-500">Are you sure you want to cancel your session with <span className="font-medium text-gray-700">{selectedCounselorSession?.counselorName}</span>?</DialogDescription>
+            <DialogDescription className="text-muted-foreground">Are you sure you want to cancel your session with <span className="font-medium text-foreground">{selectedCounselorSession?.counselorName}</span>?</DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <label className="text-sm font-medium text-gray-700 mb-2 block">Reason for cancellation</label>
+            <label className="text-sm font-medium text-foreground mb-2 block">Reason for cancellation</label>
             <Textarea
               placeholder="Please let your counselor know why you&apos;re cancelling..."
               value={counselorCancelReason}
               onChange={e => setCounselorCancelReason(e.target.value)}
               rows={3}
-              className="resize-none rounded-xl border-slate-200"
+              className="resize-none rounded-xl border-border"
             />
           </div>
           <DialogFooter className="gap-2">

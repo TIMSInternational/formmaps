@@ -18,10 +18,8 @@ import {
   Brain,
   Target,
   Users,
-  ChevronRight,
   CheckCircle2,
   Clock,
-  AlertCircle,
   ArrowRight,
   Sparkles,
   BookOpen,
@@ -29,28 +27,24 @@ import {
   Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function AssessmentsPage() {
   const { user, language } = useGlobalStore();
   const { t } = useTranslation();
   const { pcaData, hasPCA, isCompleted } = usePCAData();
   const { isLoading } = useEvaluationData();
-  const [showInviteModal, setShowInviteModal] = useState(false);
   const { invalidateSpecificAssessment } = useAssessmentCache();
   const [isStartingEvaluation, setIsStartingEvaluation] = useState(false);
-  
-  // Use React Query for assessment progress
+
   const {
     data: assessmentProgress,
     isLoading: loadingProgress,
-    error: progressError,
   } = useDashboardAssessmentSummary(user?.id || "");
 
-  // Fetch evaluation groups for evaluators
   const {
     data: evaluationGroups,
     isLoading: loadingGroups,
-    error: groupsError,
   } = useEvaluationGroups(user?.id || "");
 
   const getPCAStatus = () => {
@@ -62,11 +56,7 @@ export default function AssessmentsPage() {
   const pcaStatus = getPCAStatus();
 
   const handleInviteEvaluators = async () => {
-    try {
-      window.location.href = "/dashboard/assessments/evaluators";
-    } catch (error) {
-      // error handled silently
-    }
+    window.location.href = "/dashboard/assessments/evaluators";
   };
 
   const handleStart360Evaluation = async () => {
@@ -104,397 +94,254 @@ export default function AssessmentsPage() {
     }
   };
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
+  const liaAssessment = assessmentProgress?.assessments?.find((a: any) => a.type === "mil");
+  const evaluationAssessment = assessmentProgress?.assessments?.find((a: any) => a.type === "evaluation");
 
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
-  };
+  const completedCount = assessmentProgress?.assessments?.filter((a: any) => a.status === "completed").length ?? 0;
+  const totalCount = assessmentProgress?.assessments?.length ?? 3;
+
+  const getStatusBadge = (status: string) => (
+    <span className={cn(
+      "text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border",
+      status === "completed"
+        ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+        : status === "in_progress"
+        ? "bg-amber-100 text-amber-700 border-amber-200"
+        : "bg-secondary text-muted-foreground border-border"
+    )}>
+      {status === "completed" ? t("dashboard.statusCompleted") :
+       status === "in_progress" ? t("dashboard.statusInProgress") :
+       t("dashboard.statusNotStarted")}
+    </span>
+  );
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-50/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header Section */}
-        <div className="mb-10">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-          >
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                {t("dashboard.professionalAssessments")}
-              </h1>
-              <p className="mt-2 text-gray-600 max-w-2xl text-lg">
-                {t("dashboard.assessmentsDescription")}
-              </p>
-            </div>
-            
-            {!loadingProgress && assessmentProgress && (
-              <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4 min-w-[240px]">
-                <div className="relative w-16 h-16 flex items-center justify-center">
-                  <svg className="w-full h-full transform -rotate-90">
-                    <circle
-                      cx="32"
-                      cy="32"
-                      r="28"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                      className="text-gray-100"
-                    />
-                    <circle
-                      cx="32"
-                      cy="32"
-                      r="28"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                      strokeDasharray={175.93}
-                      strokeDashoffset={175.93 - (175.93 * assessmentProgress.overallCompletion) / 100}
-                      className="text-blue-600 transition-all duration-1000 ease-out"
-                    />
-                  </svg>
-                  <span className="absolute text-sm font-bold text-gray-900">
-                    {assessmentProgress.overallCompletion}%
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">{t("dashboard.overallProgress")}</p>
-                  <p className="text-lg font-bold text-gray-900">
-                    {assessmentProgress.completedAssessments}/{assessmentProgress.totalAssessments} {t("dashboard.completed")}
-                  </p>
-                </div>
-              </div>
-            )}
-          </motion.div>
+    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
+      {/* Header */}
+      <motion.header
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8"
+      >
+        <div>
+          <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground mb-2 block">
+            {t("dashboard.assessments", "Assessments")}
+          </span>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
+            {t("dashboard.professionalAssessments")}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-[52ch]">
+            {t("dashboard.assessmentsDescription")}
+          </p>
         </div>
 
+        {!loadingProgress && assessmentProgress && (
+          <div className="flex items-center gap-2.5 flex-wrap md:pb-0.5">
+            <div className="px-3.5 py-2 rounded-full bg-card border border-border flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-foreground shrink-0" />
+              <span className="text-[11px] font-semibold text-foreground tabular-nums">
+                {completedCount}/{totalCount} {t("dashboard.completed")}
+              </span>
+            </div>
+            <div className="px-3.5 py-2 rounded-full bg-card border border-border flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+              <span className="text-[11px] font-semibold text-foreground tabular-nums">
+                {assessmentProgress.overallCompletion}%
+              </span>
+            </div>
+          </div>
+        )}
+      </motion.header>
+
+      <div className="space-y-5">
+        {/* Assessment Cards — 3 columns */}
         <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.05 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-4"
         >
-          {/* 1. PCA Assessment Card */}
-          <motion.div variants={item} className="flex flex-col h-full">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col h-full group">
-              <div className="p-1 bg-gradient-to-r from-blue-500 to-cyan-500" />
-              <div className="p-6 flex-1 flex flex-col">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <Brain className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <span className={cn(
-                    "px-3 py-1 rounded-full text-xs font-medium border",
-                    pcaStatus === "completed" 
-                      ? "bg-green-50 text-green-700 border-green-100"
-                      : pcaStatus === "in_progress"
-                      ? "bg-yellow-50 text-yellow-700 border-yellow-100"
-                      : "bg-gray-50 text-gray-600 border-gray-100"
-                  )}>
-                    {pcaStatus === "completed" ? t("dashboard.statusCompleted") : 
-                     pcaStatus === "in_progress" ? t("dashboard.statusInProgress") : 
-                     t("dashboard.statusNotStarted")}
-                  </span>
-                </div>
+          {/* PCA Card */}
+          <Link
+            href={pcaStatus === "completed" ? "/dashboard/assessments/pca?showResults=true" : "/dashboard/assessments/pca"}
+            className="dash-card p-5 flex flex-col gap-4 hover:border-foreground/20 transition-colors group"
+          >
+            <div className="flex items-start justify-between">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                <Brain className="w-5 h-5 text-blue-600" />
+              </div>
+              {getStatusBadge(pcaStatus)}
+            </div>
 
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {t("dashboard.pcaTitle")}
-                </h3>
-                <p className="text-gray-600 mb-6 text-sm leading-relaxed flex-1">
-                  {t("dashboard.pcaDescription")}
-                </p>
+            <div>
+              <h3 className="font-semibold text-foreground text-sm leading-tight mb-1">
+                {t("dashboard.pcaTitle")}
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                {t("dashboard.pcaDescription")}
+              </p>
+            </div>
 
-                {pcaStatus === "completed" && pcaData?.results?.data ? (
-                  <div className="mb-6 bg-gray-50 rounded-xl p-4 border border-gray-100">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider">{t("dashboard.dominance")}</span>
-                        <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-red-500 rounded-full" style={{ width: `${pcaData.results.data.pcaD1 || 0}%` }} />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider">{t("dashboard.influence")}</span>
-                        <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-yellow-500 rounded-full" style={{ width: `${pcaData.results.data.pcaI1 || 0}%` }} />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider">{t("dashboard.steadiness")}</span>
-                        <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-green-500 rounded-full" style={{ width: `${pcaData.results.data.pcaS1 || 0}%` }} />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider">{t("dashboard.conscientiousness")}</span>
-                        <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-blue-500 rounded-full" style={{ width: `${pcaData.results.data.pcaC1 || 0}%` }} />
-                        </div>
-                      </div>
+            {pcaStatus === "completed" && pcaData?.results?.data && (
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "D", value: pcaData.results.data.pcaD1, color: "bg-red-500" },
+                  { label: "I", value: pcaData.results.data.pcaI1, color: "bg-yellow-500" },
+                  { label: "S", value: pcaData.results.data.pcaS1, color: "bg-green-500" },
+                  { label: "C", value: pcaData.results.data.pcaC1, color: "bg-blue-500" },
+                ].map((d) => (
+                  <div key={d.label} className="space-y-1">
+                    <span className="text-[10px] text-muted-foreground font-medium">{d.label}</span>
+                    <div className="h-1 w-full bg-secondary rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full", d.color)} style={{ width: `${d.value || 0}%` }} />
                     </div>
                   </div>
-                ) : null}
+                ))}
+              </div>
+            )}
 
-                <a
-                  href={pcaStatus === "completed" ? "/dashboard/assessments/pca?showResults=true" : "/dashboard/assessments/pca"}
-                  className={cn(
-                    "w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-all duration-200",
-                    pcaStatus === "completed"
-                      ? "bg-white border-2 border-gray-200 text-gray-700 hover:border-blue-600 hover:text-blue-600"
-                      : "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20"
-                  )}
+            <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground flex items-center gap-1 transition-colors mt-auto">
+              {pcaStatus === "completed" ? t("dashboard.viewResults") : pcaStatus === "in_progress" ? t("dashboard.continuePCA") : t("dashboard.startPCA")}
+              <ArrowRight className="w-3 h-3" />
+            </span>
+          </Link>
+
+          {/* LIA Card */}
+          <Link
+            href={(liaAssessment?.status === "completed") ? "/dashboard/assessments/mil/results" : "/dashboard/assessments/mil"}
+            className="dash-card p-5 flex flex-col gap-4 hover:border-foreground/20 transition-colors group"
+          >
+            <div className="flex items-start justify-between">
+              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                <Target className="w-5 h-5 text-purple-600" />
+              </div>
+              {getStatusBadge(liaAssessment?.status || "not_started")}
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-foreground text-sm leading-tight mb-1">
+                {t("dashboard.liaTitle")}
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                {t("dashboard.liaDescription")}
+              </p>
+            </div>
+
+            <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground flex items-center gap-1 transition-colors mt-auto">
+              {liaAssessment?.status === "completed" ? t("dashboard.viewResults") : liaAssessment?.status === "in_progress" ? t("dashboard.continueLIA") : t("dashboard.startLIA")}
+              <ArrowRight className="w-3 h-3" />
+            </span>
+          </Link>
+
+          {/* 360 Evaluation Card */}
+          <div className="dash-card p-5 flex flex-col gap-4">
+            <div className="flex items-start justify-between">
+              <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+                <Users className="w-5 h-5 text-orange-600" />
+              </div>
+              {getStatusBadge(evaluationAssessment?.status || "not_started")}
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-foreground text-sm leading-tight mb-1">
+                {t("dashboard.evaluationTitle")}
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                {t("dashboard.evaluationDescription")}
+              </p>
+            </div>
+
+            <div className="space-y-2 mt-auto">
+              {evaluationAssessment?.status === "completed" ? (
+                <Link
+                  href="/dashboard/assessments/evaluation/results"
+                  className="w-full py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold bg-secondary text-foreground hover:bg-border transition-colors border border-border"
                 >
-                  {pcaStatus === "completed" ? (
-                    <>
-                      <BookOpen className="w-4 h-4" />
-                      {t("dashboard.viewResults")}
-                    </>
-                  ) : (
-                    <>
-                      <ArrowRight className="w-4 h-4" />
-                      {pcaStatus === "in_progress" ? t("dashboard.continuePCA") : t("dashboard.startPCA")}
-                    </>
-                  )}
-                </a>
-              </div>
+                  <BookOpen className="w-3.5 h-3.5" />
+                  {t("dashboard.viewResults")}
+                </Link>
+              ) : (
+                <>
+                  <button
+                    onClick={handleInviteEvaluators}
+                    disabled={isLoading}
+                    className="w-full py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold bg-card border border-orange-200 text-orange-700 hover:bg-orange-50 transition-colors"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    {isLoading ? t("dashboard.loading") : t("dashboard.inviteEvaluators")}
+                  </button>
+                  <button
+                    disabled={
+                      evaluationAssessment?.status !== "in_progress" ||
+                      isStartingEvaluation ||
+                      loadingGroups
+                    }
+                    onClick={handleStart360Evaluation}
+                    className={cn(
+                      "w-full py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold transition-colors",
+                      evaluationAssessment?.status === "in_progress" && !isStartingEvaluation && !loadingGroups
+                        ? "bg-foreground text-background hover:bg-foreground/90"
+                        : "bg-secondary text-muted-foreground cursor-not-allowed"
+                    )}
+                  >
+                    <Activity className="w-3.5 h-3.5" />
+                    {isStartingEvaluation || loadingGroups
+                      ? t("dashboard.loading")
+                      : t("dashboard.start360Evaluation")}
+                  </button>
+                </>
+              )}
             </div>
-          </motion.div>
-
-          {/* 2. LIA Assessment Card */}
-          <motion.div variants={item} className="flex flex-col h-full">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col h-full group">
-              <div className="p-1 bg-gradient-to-r from-purple-500 to-pink-500" />
-              <div className="p-6 flex-1 flex flex-col">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <Target className="w-6 h-6 text-purple-600" />
-                  </div>
-                  {(() => {
-                    const liaAssessment = assessmentProgress?.assessments?.find((a: any) => a.type === "mil");
-                    const status = liaAssessment?.status || "not_started";
-                    return (
-                      <span className={cn(
-                        "px-3 py-1 rounded-full text-xs font-medium border",
-                        status === "completed" 
-                          ? "bg-green-50 text-green-700 border-green-100"
-                          : status === "in_progress"
-                          ? "bg-yellow-50 text-yellow-700 border-yellow-100"
-                          : "bg-gray-50 text-gray-600 border-gray-100"
-                      )}>
-                        {status === "completed" ? t("dashboard.statusCompleted") : 
-                         status === "in_progress" ? t("dashboard.statusInProgress") : 
-                         t("dashboard.statusNotStarted")}
-                      </span>
-                    );
-                  })()}
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {t("dashboard.liaTitle")}
-                </h3>
-                <p className="text-gray-600 mb-6 text-sm leading-relaxed flex-1">
-                  {t("dashboard.liaDescription")}
-                </p>
-
-                {(() => {
-                  const liaAssessment = assessmentProgress?.assessments?.find((a: any) => a.type === "mil");
-                  const isCompleted = liaAssessment?.status === "completed";
-
-                  return (
-                    <a
-                      href={isCompleted ? "/dashboard/assessments/mil/results" : "/dashboard/assessments/mil"}
-                      className={cn(
-                        "w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-all duration-200",
-                        isCompleted
-                          ? "bg-white border-2 border-gray-200 text-gray-700 hover:border-purple-600 hover:text-purple-600"
-                          : "bg-purple-600 text-white hover:bg-purple-700 shadow-lg shadow-purple-600/20"
-                      )}
-                    >
-                      {isCompleted ? (
-                        <>
-                          <BookOpen className="w-4 h-4" />
-                          {t("dashboard.viewResults")}
-                        </>
-                      ) : (
-                        <>
-                          <ArrowRight className="w-4 h-4" />
-                          {liaAssessment?.status === "in_progress" ? t("dashboard.continueLIA") : t("dashboard.startLIA")}
-                        </>
-                      )}
-                    </a>
-                  );
-                })()}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* 3. 360 Evaluation Card */}
-          <motion.div variants={item} className="flex flex-col h-full">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col h-full group">
-              <div className="p-1 bg-gradient-to-r from-orange-500 to-amber-500" />
-              <div className="p-6 flex-1 flex flex-col">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <Users className="w-6 h-6 text-orange-600" />
-                  </div>
-                  {(() => {
-                    const evaluationAssessment = assessmentProgress?.assessments?.find((a: any) => a.type === "evaluation");
-                    const status = evaluationAssessment?.status || "not_started";
-                    return (
-                      <span className={cn(
-                        "px-3 py-1 rounded-full text-xs font-medium border",
-                        status === "completed" 
-                          ? "bg-green-50 text-green-700 border-green-100"
-                          : status === "in_progress"
-                          ? "bg-yellow-50 text-yellow-700 border-yellow-100"
-                          : "bg-gray-50 text-gray-600 border-gray-100"
-                      )}>
-                        {status === "completed" ? t("dashboard.statusCompleted") : 
-                         status === "in_progress" ? t("dashboard.statusInProgress") : 
-                         t("dashboard.statusNotStarted")}
-                      </span>
-                    );
-                  })()}
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {t("dashboard.evaluationTitle")}
-                </h3>
-                <p className="text-gray-600 mb-6 text-sm leading-relaxed flex-1">
-                  {t("dashboard.evaluationDescription")}
-                </p>
-
-                {(() => {
-                  const evaluationAssessment = assessmentProgress?.assessments?.find((a: any) => a.type === "evaluation");
-                  const isCompleted = evaluationAssessment?.status === "completed";
-
-                  if (isCompleted) {
-                    return (
-                      <a
-                        href="/dashboard/assessments/evaluation/results"
-                        className="w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-medium bg-white border-2 border-gray-200 text-gray-700 hover:border-orange-600 hover:text-orange-600 transition-all duration-200"
-                      >
-                        <BookOpen className="w-4 h-4" />
-                        {t("dashboard.viewResults")}
-                      </a>
-                    );
-                  }
-
-                  return (
-                    <div className="space-y-3">
-                      <button
-                        onClick={handleInviteEvaluators}
-                        disabled={isLoading}
-                        className="w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-medium bg-white border-2 border-orange-100 text-orange-700 hover:bg-orange-50 transition-all duration-200"
-                      >
-                        <Users className="w-4 h-4" />
-                        {isLoading ? t("dashboard.loading") : t("dashboard.inviteEvaluators")}
-                      </button>
-                      <button
-                        disabled={
-                          evaluationAssessment?.status !== "in_progress" ||
-                          isStartingEvaluation ||
-                          loadingGroups
-                        }
-                        onClick={handleStart360Evaluation}
-                        className={cn(
-                          "w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-medium transition-all duration-200",
-                          evaluationAssessment?.status === "in_progress" && !isStartingEvaluation && !loadingGroups
-                            ? "bg-orange-600 text-white hover:bg-orange-700 shadow-lg shadow-orange-600/20"
-                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        )}
-                      >
-                        <Activity className="w-4 h-4" />
-                        {isStartingEvaluation || loadingGroups
-                          ? t("dashboard.loading")
-                          : t("dashboard.start360Evaluation")}
-                      </button>
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-          </motion.div>
+          </div>
         </motion.div>
 
-        {/* Guide Section */}
+        {/* Assessment Guide */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mt-12"
+          transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-indigo-50 rounded-lg">
-                <Sparkles className="w-5 h-5 text-indigo-600" />
+          <div className="dash-card p-5">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="p-1.5 bg-indigo-50 rounded-lg">
+                <Sparkles className="w-4 h-4 text-indigo-600" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">
+              <h3 className="text-sm font-semibold text-foreground">
                 {t("dashboard.assessmentGuide")}
               </h3>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="space-y-3">
-                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <Brain className="w-4 h-4 text-blue-500" />
-                  {t("dashboard.pcaAssessmentTitle")}
-                </h4>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-start gap-2">
-                    <Clock className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                    <span>{t("dashboard.pcaDuration")}</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                    <span>{t("dashboard.pcaEvaluates")}</span>
-                  </li>
-                </ul>
-              </div>
 
-              <div className="space-y-3">
-                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <Target className="w-4 h-4 text-purple-500" />
-                  {t("dashboard.liaAssessmentTitle")}
-                </h4>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-start gap-2">
-                    <Layout className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                    <span>{t("dashboard.liaSubtests")}</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Clock className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                    <span>{t("dashboard.liaDuration")}</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="space-y-3">
-                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-orange-500" />
-                  {t("dashboard.evaluationAssessmentTitle")}
-                </h4>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-start gap-2">
-                    <Users className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                    <span>{t("dashboard.evaluationFeedback")}</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Activity className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                    <span>{t("dashboard.evaluationSelfAssessment")}</span>
-                  </li>
-                </ul>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                { icon: Brain, color: "text-blue-500", title: t("dashboard.pcaAssessmentTitle"), items: [
+                  { icon: Clock, text: t("dashboard.pcaDuration") },
+                  { icon: CheckCircle2, text: t("dashboard.pcaEvaluates") },
+                ]},
+                { icon: Target, color: "text-purple-500", title: t("dashboard.liaAssessmentTitle"), items: [
+                  { icon: Layout, text: t("dashboard.liaSubtests") },
+                  { icon: Clock, text: t("dashboard.liaDuration") },
+                ]},
+                { icon: Users, color: "text-orange-500", title: t("dashboard.evaluationAssessmentTitle"), items: [
+                  { icon: Users, text: t("dashboard.evaluationFeedback") },
+                  { icon: Activity, text: t("dashboard.evaluationSelfAssessment") },
+                ]},
+              ].map((section, i) => (
+                <div key={i} className="space-y-2">
+                  <h4 className="font-semibold text-foreground text-xs flex items-center gap-1.5">
+                    <section.icon className={cn("w-3.5 h-3.5", section.color)} />
+                    {section.title}
+                  </h4>
+                  <ul className="space-y-1.5 text-xs text-muted-foreground">
+                    {section.items.map((item, j) => (
+                      <li key={j} className="flex items-start gap-1.5">
+                        <item.icon className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                        <span>{item.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
         </motion.div>

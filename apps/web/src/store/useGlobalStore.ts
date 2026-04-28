@@ -820,10 +820,10 @@ export const useGlobalStore = create<GlobalState>()(
           theme: state.theme,
           language: state.language,
           user: state.user,
-          resumeBuilder: {
-            data: state.resumeBuilder.data,
-            currentStep: state.resumeBuilder.currentStep,
-          },
+          // NOTE: Do NOT persist resumeBuilder.data — it's always loaded
+          // fresh from the API via getResumeById. Persisting it causes a
+          // race condition where rehydration overwrites API data.
+          currentResumeId: state.currentResumeId,
         }),
       }
     ),

@@ -1,7 +1,6 @@
-// PCA Assessment Service for Nexa Developments API
+// PCA Assessment Service — All calls go through backend proxy (no external API keys in frontend)
 
 export interface PCAAssessmentRequest {
-  CoKey: string;
   PerNom: string;
   PerApe: string;
   PerNumIde: string;
@@ -12,28 +11,6 @@ export interface PCAAssessmentRequest {
   UserMail: string;
 }
 
-export interface PCAAuthRequest {
-  CoKey: string;
-}
-
-export interface PCAResultRequest {
-  CoKey: string;
-  PcaCod: string;
-}
-
-export interface PCACompetencesRequest {
-  CoKey: string;
-  PcaCod: string;
-  CmpTims: string; // "1" for tims, "0" for Org
-}
-
-export interface PCAVsJCARequest {
-  CoKey: string;
-  PcaCod: string;
-  JcaCodExt: string;
-  AnlsTip: string;
-}
-
 export interface PCAAssessmentResponse {
   success: boolean;
   data?: any;
@@ -42,213 +19,97 @@ export interface PCAAssessmentResponse {
   pcaCod?: string;
 }
 
-export interface PCAAPIResponse {
-  PcaCod: string;
-  PcaLink: string;
-}
-
-// Nexa Developments API Configuration
-const NEXA_API_BASE_URL = "https://timshr.com/core/api";
-const NEXA_COKEY = "REDACTED_PCA_COKEY"; // Nexa Developments CoKey
-
 // Backend API Configuration
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "https://careerproject-eucbddf3h4h0ekfx.canadacentral-01.azurewebsites.net";
 
+// Helper to get auth headers for backend API calls
+const getBackendHeaders = () => {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  return {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+};
+
+// ===== All calls go through backend proxy at /api/pcaapi/* =====
+
 /**
- * Authenticate with Nexa Developments API
+ * Get PCA Result by userId (via backend proxy — backend resolves PcaCod internally)
  */
-export async function authenticateNexaAPI(): Promise<any> {
-  try {
-    const response = await fetch(`${NEXA_API_BASE_URL}/login/authenticate`, {
+export async function getPCAResult(userId: string): Promise<any> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/pcaapi/get-result`,
+    {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        CoKey: NEXA_COKEY,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Authentication failed: ${response.status}`);
+      headers: getBackendHeaders(),
+      body: JSON.stringify({ UserId: userId }),
     }
+  );
 
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to get PCA result: ${response.status}`);
   }
+
+  const json = await response.json();
+  return json.data || json;
 }
 
 /**
- * Add PCA Assessment (Spanish)
- */
-export async function addPCAAssessmentSpanish(
-  userData: Omit<PCAAssessmentRequest, "CoKey">
-): Promise<PCAAssessmentResponse> {
-  try {
-    const response = await fetch(`${NEXA_API_BASE_URL}/surveys/add`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        CoKey: "NXDAPS", // Spanish PCA format
-        ...userData,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to add PCA assessment: ${response.status}`);
-    }
-
-    const data: PCAAPIResponse = await response.json();
-    return {
-      success: true,
-      data,
-      assessmentUrl: data.PcaLink,
-      pcaCod: data.PcaCod,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error ? error.message : "Failed to add PCA assessment",
-    };
-  }
-}
-
-/**
- * Add PCA Assessment (English)
- */
-export async function addPCAAssessmentEnglish(
-  userData: Omit<PCAAssessmentRequest, "CoKey">
-): Promise<PCAAssessmentResponse> {
-  try {
-    const response = await fetch(`${NEXA_API_BASE_URL}/surveys/add`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        CoKey: "NXDAPI", // English PCA format
-        ...userData,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to add PCA assessment: ${response.status}`);
-    }
-
-    const data: PCAAPIResponse = await response.json();
-    return {
-      success: true,
-      data,
-      assessmentUrl: data.PcaLink,
-      pcaCod: data.PcaCod,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error ? error.message : "Failed to add PCA assessment",
-    };
-  }
-}
-
-/**
- * Get PCA Result
- */
-export async function getPCAResult(pcaCod: string): Promise<any> {
-  try {
-    const response = await fetch(`${NEXA_API_BASE_URL}/Pca/GetPcaResult`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        CoKey: NEXA_COKEY,
-        PcaCod: pcaCod,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to get PCA result: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    throw error;
-  }
-}
-
-/**
- * Get PCA Competences
+ * Get PCA Competences by userId (via backend proxy)
  */
 export async function getPCACompetences(
-  pcaCod: string,
+  userId: string,
   cmpTims: "1" | "0" = "1"
 ): Promise<any> {
-  try {
-    const response = await fetch(
-      `${NEXA_API_BASE_URL}/Pca/GetCompetencesResult`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          CoKey: NEXA_COKEY,
-          PcaCod: pcaCod,
-          CmpTims: cmpTims,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to get PCA competences: ${response.status}`);
+  const response = await fetch(
+    `${API_BASE_URL}/api/pcaapi/get-competences`,
+    {
+      method: "POST",
+      headers: getBackendHeaders(),
+      body: JSON.stringify({ UserId: userId, CmpTims: cmpTims }),
     }
+  );
 
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to get PCA competences: ${response.status}`);
   }
+
+  const json = await response.json();
+  return json.data || json;
 }
 
 /**
- * Get PCA vs JCA Analysis (Gap Analysis)
+ * Get PCA vs JCA Analysis / Gap Analysis (via backend proxy)
  */
 export async function getPCAVsJCAAnalysis(
-  pcaCod: string,
+  userId: string,
   jcaCodExt: string,
   anlsTip: string = "g"
 ): Promise<any> {
-  try {
-    const response = await fetch(`${NEXA_API_BASE_URL}/Pca/GetPcaVsJcaResult`, {
+  const response = await fetch(
+    `${API_BASE_URL}/api/pcaapi/get-pca-vs-jca`,
+    {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getBackendHeaders(),
       body: JSON.stringify({
-        CoKey: NEXA_COKEY,
-        PcaCod: pcaCod,
+        UserId: userId,
         JcaCodExt: jcaCodExt,
         AnlsTip: anlsTip,
       }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to get PCA vs JCA analysis: ${response.status}`);
     }
+  );
 
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to get PCA vs JCA analysis: ${response.status}`);
   }
+
+  const json = await response.json();
+  return json.data || json;
 }
 
-// ===== Backend API Functions =====
+// ===== Backend API Functions (already proxied) =====
 
 /**
  * Get PCA Result by UserId (Backend API)
@@ -257,29 +118,21 @@ export async function getPCAResultByUserId(
   userId: string,
   language: "english" | "spanish" = "english"
 ): Promise<any> {
-  try {
-    const langParam = language === "spanish" ? "sp" : "en";
-    const response = await fetch(
-      `${API_BASE_URL}/api/pcaapi/get-result?lang=${langParam}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          UserId: userId,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to get PCA result: ${response.status}`);
+  const langParam = language === "spanish" ? "sp" : "en";
+  const response = await fetch(
+    `${API_BASE_URL}/api/pcaapi/get-result?lang=${langParam}`,
+    {
+      method: "POST",
+      headers: getBackendHeaders(),
+      body: JSON.stringify({ UserId: userId }),
     }
+  );
 
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to get PCA result: ${response.status}`);
   }
+
+  return await response.json();
 }
 
 /**
@@ -290,30 +143,21 @@ export async function getPCACompetencesByUserId(
   cmpTims: "1" | "0" = "1",
   language: "english" | "spanish" = "english"
 ): Promise<any> {
-  try {
-    const langParam = language === "spanish" ? "sp" : "en";
-    const response = await fetch(
-      `${API_BASE_URL}/api/pcaapi/get-competences?lang=${langParam}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          UserId: userId,
-          CmpTims: cmpTims,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to get PCA competences: ${response.status}`);
+  const langParam = language === "spanish" ? "sp" : "en";
+  const response = await fetch(
+    `${API_BASE_URL}/api/pcaapi/get-competences?lang=${langParam}`,
+    {
+      method: "POST",
+      headers: getBackendHeaders(),
+      body: JSON.stringify({ UserId: userId, CmpTims: cmpTims }),
     }
+  );
 
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to get PCA competences: ${response.status}`);
   }
+
+  return await response.json();
 }
 
 /**
@@ -321,23 +165,20 @@ export async function getPCACompetencesByUserId(
  */
 export async function addPCAEvaluation(
   userId: string,
-  userData: Omit<PCAAssessmentRequest, "CoKey">,
+  userData: Omit<PCAAssessmentRequest, never>,
   language: "spanish" | "english" = "spanish"
 ): Promise<PCAAssessmentResponse> {
   try {
-    const coKey = language === "spanish" ? "NXDAPS" : "NXDAPI";
     const langParam = language === "spanish" ? "sp" : "en";
 
     const response = await fetch(
       `${API_BASE_URL}/api/pcaapi/add-evaluation?lang=${langParam}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getBackendHeaders(),
         body: JSON.stringify({
           UserId: userId,
-          CoKey: coKey,
+          Language: language,
           ...userData,
         }),
       }
@@ -350,7 +191,6 @@ export async function addPCAEvaluation(
     const result = await response.json();
 
     if (result.success && result.data) {
-      // Extract surveyLink from the response data
       const surveyLink = result.data.surveyLink?.trim().replace(/`/g, "") || "";
 
       return {
@@ -381,26 +221,20 @@ export async function addPCAEvaluation(
 export async function getAllPCAEvaluations(
   language: "english" | "spanish" = "english"
 ): Promise<any> {
-  try {
-    const langParam = language === "spanish" ? "sp" : "en";
-    const response = await fetch(
-      `${API_BASE_URL}/api/pcaapi/evaluations?lang=${langParam}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to get PCA evaluations: ${response.status}`);
+  const langParam = language === "spanish" ? "sp" : "en";
+  const response = await fetch(
+    `${API_BASE_URL}/api/pcaapi/evaluations?lang=${langParam}`,
+    {
+      method: "GET",
+      headers: getBackendHeaders(),
     }
+  );
 
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Failed to get PCA evaluations: ${response.status}`);
   }
+
+  return await response.json();
 }
 
 /**
@@ -416,7 +250,6 @@ export async function checkPCAStatus(
   lastActivity?: string;
 }> {
   try {
-    // First, check if user has any PCA evaluations
     const allEvaluations = await getAllPCAEvaluations(language);
     const userEvaluation = allEvaluations.data.find(
       (evaluation: any) => evaluation.userId === userId
@@ -426,7 +259,6 @@ export async function checkPCAStatus(
       return { status: "not_started" };
     }
 
-    // User has a PCA evaluation, check if they have results
     try {
       const result = await getPCAResultByUserId(userId, language);
       if (result && Object.keys(result).length > 0) {
@@ -437,7 +269,7 @@ export async function checkPCAStatus(
           lastActivity: userEvaluation.createdAt || new Date().toISOString(),
         };
       }
-    } catch (error) {
+    } catch {
       // No results yet, but evaluation exists
     }
 
@@ -447,7 +279,7 @@ export async function checkPCAStatus(
       hasResults: false,
       lastActivity: userEvaluation.createdAt || new Date().toISOString(),
     };
-  } catch (error) {
+  } catch {
     return { status: "not_started" };
   }
 }

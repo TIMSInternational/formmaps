@@ -1,48 +1,52 @@
 "use client";
 import { useTranslation } from "react-i18next";
 import { CoursesCatalog } from "../../../../components/dashboard/courses/CoursesCatalog";
-import { ArrowLeft, BookOpen, Zap } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { motion } from "motion/react";
 
 
 export default function CoursesPage() {
   const { t } = useTranslation();
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
-        
-        {/* Header Section */}
-        <div className="space-y-6">
-           <Link 
-             href="/dashboard/learning" 
-             className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors group"
-           >
-               <div className="p-1.5 rounded-lg bg-white border border-slate-200 mr-2 group-hover:border-indigo-200 transition-all">
-                  <ArrowLeft className="w-4 h-4" />
-               </div>
-               {t("nav.learning")}
-           </Link>
-           
-           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-               <div className="space-y-4 max-w-2xl">
-                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-bold uppercase tracking-wider">
-                      <Zap className="w-3.5 h-3.5 fill-blue-600" />
-                      Curated Catalog
-                   </div>
-                   <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-                      Explore <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Courses</span>
-                   </h1>
-                   <p className="text-slate-500 text-lg leading-relaxed">
-                      {t("courses.discoverCourses")}
-                   </p>
-               </div>
-           </div>
-        </div>
+    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
 
-        {/* Courses Catalog */}
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-5 mb-10"
+      >
+        <Link
+          href="/dashboard/learning"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          {t("nav.learning")}
+        </Link>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
+            Curated Catalog
+          </span>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
+            Explore Courses
+          </h1>
+          <p className="max-w-2xl text-base text-muted-foreground">
+            {t("courses.discoverCourses")}
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Courses Catalog */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
         <CoursesCatalog />
-      </div>
-    </main>
+      </motion.div>
+    </div>
   );
 }

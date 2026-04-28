@@ -78,14 +78,112 @@ export async function updateResume(
 
 export async function getAllResumes(): Promise<Resume[]> {
   const response = await apiRequest("/api/resume", { method: "GET" });
-  return response.data?.data || [];
+  const raw = response.data?.data || response.data || [];
+  // Map backend ID field to frontend _id
+  return raw.map((r: any) => ({
+    ...r,
+    _id: r.ID || r._id || r.id || "",
+    name: r.name || r.Name || "",
+    template: r.template || r.Template || "classic",
+    personal: {
+      fullName: r.personalInfo?.fullName || r.PersonalInfo?.FullName || "",
+      email: r.personalInfo?.email || r.PersonalInfo?.Email || "",
+      phone: r.personalInfo?.phone || r.PersonalInfo?.Phone || "",
+      location: r.personalInfo?.location || r.PersonalInfo?.Location || "",
+      linkedIn: r.personalInfo?.linkedIn || r.PersonalInfo?.LinkedIn || "",
+      website: r.personalInfo?.website || r.PersonalInfo?.Website || "",
+    },
+    summary: r.personalInfo?.summary || r.PersonalInfo?.Summary || r.summary || "",
+    experience: (r.experience || r.Experience || []).map((exp: any) => ({
+      company: exp.company || exp.Company || "",
+      location: exp.location || exp.Location || "",
+      title: exp.position || exp.Position || exp.title || exp.Title || "",
+      startDate: exp.startDate || exp.StartDate || "",
+      endDate: exp.endDate || exp.EndDate || "",
+      descriptions: exp.description
+        ? (typeof exp.description === "string" ? exp.description.split("\n").filter(Boolean) : exp.description)
+        : exp.descriptions || [],
+    })),
+    education: (r.education || r.Education || []).map((edu: any) => ({
+      degree: edu.degree || edu.Degree || "",
+      institution: edu.school || edu.School || edu.institution || "",
+      location: edu.location || edu.Location || "",
+      startDate: edu.startDate || edu.StartDate || "",
+      endDate: edu.endDate || edu.EndDate || "",
+    })),
+    skills: {
+      skills: groupSkillsFromFlat(r.skills || r.Skills || []),
+    },
+    createdAt: r.createdDate || r.CreatedDate || r.createdAt || "",
+    updatedAt: r.updatedAt || r.UpdatedAt || "",
+  }));
 }
 
 export async function getResumeById(resumeId: string): Promise<Resume> {
   const response = await apiRequest(`/api/resume/${resumeId}`, {
     method: "GET",
   });
-  return response.data || response;
+  const raw = response.data || response;
+
+  // Map backend entity (PascalCase / flat) to frontend Resume shape
+  // The backend stores: personalInfo.summary, experience[].position, experience[].description (string), skills[] (flat array)
+  // The frontend builder expects: personal, summary (top-level), experience[].title, experience[].descriptions (array), skills.skills (grouped object)
+  const mapped: Resume = {
+    _id: raw.ID || raw._id || raw.id || resumeId,
+    name: raw.name || raw.Name || "",
+    template: raw.template || raw.Template || "classic",
+    createdAt: raw.createdDate || raw.CreatedDate || raw.createdAt,
+    updatedAt: raw.updatedAt || raw.UpdatedAt,
+    personal: {
+      fullName: raw.personalInfo?.fullName || raw.PersonalInfo?.FullName || "",
+      email: raw.personalInfo?.email || raw.PersonalInfo?.Email || "",
+      phone: raw.personalInfo?.phone || raw.PersonalInfo?.Phone || "",
+      location: raw.personalInfo?.location || raw.PersonalInfo?.Location || "",
+      linkedIn: raw.personalInfo?.linkedIn || raw.PersonalInfo?.LinkedIn || "",
+      website: raw.personalInfo?.website || raw.PersonalInfo?.Website || "",
+    },
+    summary: raw.personalInfo?.summary || raw.PersonalInfo?.Summary || raw.summary || "",
+    experience: (raw.experience || raw.Experience || []).map((exp: any) => ({
+      company: exp.company || exp.Company || "",
+      location: exp.location || exp.Location || "",
+      title: exp.position || exp.Position || exp.title || exp.Title || "",
+      startDate: exp.startDate || exp.StartDate || "",
+      endDate: exp.endDate || exp.EndDate || "",
+      descriptions: exp.description
+        ? (typeof exp.description === "string" ? exp.description.split("\n").filter(Boolean) : exp.description)
+        : exp.descriptions || [],
+    })),
+    education: (raw.education || raw.Education || []).map((edu: any) => ({
+      degree: edu.degree || edu.Degree || "",
+      institution: edu.school || edu.School || edu.institution || edu.Institution || "",
+      location: edu.location || edu.Location || "",
+      startDate: edu.startDate || edu.StartDate || "",
+      endDate: edu.endDate || edu.EndDate || "",
+    })),
+    skills: {
+      skills: groupSkillsFromFlat(raw.skills || raw.Skills || []),
+    },
+  };
+
+  return mapped;
+}
+
+function groupSkillsFromFlat(skills: any[]): ResumeSkillGroups {
+  if (!Array.isArray(skills) || skills.length === 0) return {};
+  // If already grouped object format, return as-is
+  if (skills.length > 0 && typeof skills[0] === "string") {
+    return { "Skills": skills };
+  }
+  // Flat SkillItem[] → grouped by category or "Key Skills"
+  const grouped: ResumeSkillGroups = {};
+  for (const skill of skills) {
+    const name = skill.name || skill.Name || "";
+    if (!name) continue;
+    const category = "Key Skills";
+    if (!grouped[category]) grouped[category] = [];
+    grouped[category].push(name);
+  }
+  return grouped;
 }
 
 export async function deleteResume(resumeId: string): Promise<void> {
@@ -277,5 +375,40 @@ export async function generateAIContent(
 
 export async function getDefaultResume(): Promise<Resume> {
   const response = await apiRequest("/api/resume/default", { method: "GET" });
+  return response.data || response;
+}
+
+// --- AI Resume Tailoring Functions ---
+
+import type {
+  ExtractedJobData,
+  TailorResumePayload,
+  TailoredResume,
+} from "@/types/resume";
+
+/**
+ * Send a job posting text to the backend for AI extraction of key requirements.
+ */
+export async function extractJobPosting(
+  jobPostingText: string,
+  purpose: string
+): Promise<ExtractedJobData> {
+  const response = await apiRequest("/api/resume/extract-job-posting", {
+    method: "POST",
+    data: { jobPostingText, purpose },
+  });
+  return response.data || response;
+}
+
+/**
+ * Tailor an existing resume to match extracted job requirements.
+ */
+export async function tailorResume(
+  payload: TailorResumePayload
+): Promise<TailoredResume> {
+  const response = await apiRequest("/api/resume/tailor", {
+    method: "POST",
+    data: payload,
+  });
   return response.data || response;
 }

@@ -5,7 +5,7 @@ import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 10000,
+  timeout: 30000,
 });
 
 // Response interceptor to handle errors uniformly
@@ -22,11 +22,6 @@ apiClient.interceptors.response.use(
 
       switch (status) {
         case 401:
-          // Unauthorized - clear token and redirect to login
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-          }
           message = 'Your session has expired. Please log in again.';
           break;
         case 403:
@@ -86,9 +81,9 @@ export async function apiRequest<T = any>(
     } catch (error) {
       lastError = error as Error;
 
-      // Don't retry on authentication errors or client errors (4xx)
+      // Don't retry on client errors (4xx) except 429 (rate limited)
       const status = (error as any)?.status;
-      if (status && status >= 400 && status < 500) {
+      if (status && status >= 400 && status < 500 && status !== 429) {
         throw error;
       }
 

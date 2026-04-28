@@ -19,11 +19,13 @@ import { ModalSkeleton } from "@/components/ui/skeletons";
 
 interface PCAResultsPanelProps {
   pcaCod: string;
+  userId: string;
   onClose: () => void;
 }
 
 export default function PCAResultsPanel({
   pcaCod,
+  userId,
   onClose,
 }: PCAResultsPanelProps) {
   const { t } = useTranslation();
@@ -53,7 +55,7 @@ export default function PCAResultsPanel({
   const loadResults = async () => {
     setLoading(true);
     try {
-      const data = await getPCAResult(pcaCod);
+      const data = await getPCAResult(userId);
       setResults(data);
     } catch (error) {
       // error handled silently
@@ -65,7 +67,7 @@ export default function PCAResultsPanel({
   const loadCompetences = async () => {
     setLoading(true);
     try {
-      const data = await getPCACompetences(pcaCod, "1"); // TIMS format
+      const data = await getPCACompetences(userId, "1"); // TIMS format
       setCompetences(data);
     } catch (error) {
       // error handled silently
@@ -77,7 +79,7 @@ export default function PCAResultsPanel({
   const loadAnalysis = async () => {
     setLoading(true);
     try {
-      const analysisData = await getPCAVsJCAAnalysis(pcaCod, selectedJCA, "g");
+      const analysisData = await getPCAVsJCAAnalysis(userId, selectedJCA, "g");
       setAnalysis(analysisData);
     } catch (error) {
       // error handled silently

@@ -75,7 +75,7 @@ export function FeaturedCoaches() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-[280px] rounded-[2rem] bg-white border border-slate-200/50 animate-pulse"
+              className="h-[280px] rounded-2xl bg-white border border-border animate-pulse"
             />
           ))}
         </div>
@@ -94,7 +94,7 @@ export function FeaturedCoaches() {
                 delay: index * 0.1,
               }}
               whileHover={{ y: -6 }}
-              className="group relative flex flex-col h-full bg-white rounded-[2rem] border border-slate-200/50 p-8 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] transition-all duration-300"
+              className="group relative flex flex-col h-full bg-white rounded-2xl border border-border p-8 hover:border-foreground/20 transition-all duration-300"
             >
               {/* Top: Avatar + Rating */}
               <div className="flex items-start justify-between mb-6">
@@ -191,7 +191,7 @@ export function FeaturedCoaches() {
               {/* CTA */}
               <Link
                 href={`/dashboard/book-coach/${coach.id}`}
-                className="flex items-center justify-between w-full px-5 py-3.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 active:scale-[0.98] transition-all duration-200 group/btn"
+                className="flex items-center justify-between w-full px-5 py-3.5 rounded-xl bg-foreground text-white text-sm font-semibold hover:bg-foreground/90 active:scale-[0.98] transition-all duration-200 group/btn"
               >
                 <span>{t("coaching.bookSession")}</span>
                 <ArrowUpRight

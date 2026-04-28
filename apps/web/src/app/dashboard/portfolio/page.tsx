@@ -162,7 +162,7 @@ export default function PortfolioPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto p-6 space-y-6">
+      <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh] max-w-5xl mx-auto space-y-6">
         <Skeleton className="h-10 w-64" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
@@ -175,24 +175,21 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
+    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh] max-w-5xl mx-auto space-y-8">
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-gray-100/50 relative"
+        className="flex flex-col md:flex-row md:items-end justify-between gap-6"
       >
-        <div className="absolute -top-32 -left-32 w-64 h-64 bg-indigo-300/20 rounded-full blur-3xl" />
-        <div className="absolute -top-32 right-0 w-64 h-64 bg-purple-300/20 rounded-full blur-3xl" />
-
-        <div className="relative z-10">
-          <Badge variant="outline" className="mb-3 border-indigo-200 text-indigo-700 bg-indigo-50/50">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
             {t("portfolio.badge", "Student Portfolio")}
-          </Badge>
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 mb-2">
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mb-1">
             {t("portfolio.title", "My Achievement Portfolio")}
           </h1>
-          <p className="text-lg text-gray-500 max-w-xl">
+          <p className="text-sm text-muted-foreground">
             {t(
               "portfolio.subtitle",
               "Curate your extracurriculars, projects, and experiences in one beautiful space."
@@ -200,122 +197,88 @@ export default function PortfolioPage() {
           </p>
         </div>
 
-        <div className="relative z-10 flex-shrink-0">
-          <Button onClick={openCreateForm} size="lg" className="rounded-full shadow-lg shadow-indigo-200 hover:shadow-xl transition-all font-medium px-6">
-            <Plus className="h-5 w-5 mr-2" />
+        <div className="flex-shrink-0">
+          <Button onClick={openCreateForm} className="bg-foreground text-background hover:bg-foreground/90">
+            <Plus className="h-4 w-4 mr-2" />
             {t("portfolio.addItem", "Add New Experience")}
           </Button>
         </div>
       </motion.div>
 
-      {/* Summary Stats - Bento Grid */}
+      {/* Summary Stats */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
-            className="col-span-2 md:col-span-1"
-          >
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl p-6 text-white h-full shadow-lg shadow-indigo-200/50 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-20 transform group-hover:scale-110 transition-transform duration-500">
-                <FolderOpen className="w-16 h-16" />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3"
+        >
+          <div className="dash-card p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                <FolderOpen className="w-4 h-4 text-indigo-600" />
               </div>
-              <div className="relative z-10 flex flex-col h-full justify-between">
-                <div>
-                  <p className="text-white/80 font-medium text-sm uppercase tracking-wider">
-                    {t("portfolio.totalItems", "Total Portfolio Items")}
-                  </p>
-                </div>
-                <div className="mt-4">
-                  <p className="text-5xl font-bold tracking-tight">
-                    {summary.totalItems}
-                  </p>
-                </div>
-              </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                {t("portfolio.totalItems", "Total Items")}
+              </p>
             </div>
-          </motion.div>
+            <p className="text-2xl font-bold text-foreground">
+              {summary.totalItems}
+            </p>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-            className="col-span-1"
-          >
-            <div className="bg-white rounded-3xl p-6 h-full border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-              <div className="flex flex-col h-full justify-between">
-                <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center mb-4">
-                  <Heart className="w-5 h-5 text-rose-600" />
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-gray-900 mb-1">
-                    {summary.totalVolunteerHours || 0}
-                    <span className="text-lg text-gray-500 font-medium ml-1">hrs</span>
-                  </p>
-                  <p className="text-sm text-gray-500 font-medium">
-                    {t("portfolio.totalHours", "Volunteer Hours")}
-                  </p>
-                </div>
+          <div className="dash-card p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center">
+                <Heart className="w-4 h-4 text-rose-600" />
               </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                {t("portfolio.totalHours", "Volunteer Hours")}
+              </p>
             </div>
-          </motion.div>
+            <p className="text-2xl font-bold text-foreground">
+              {summary.totalVolunteerHours || 0}
+              <span className="text-sm text-muted-foreground font-medium ml-1">hrs</span>
+            </p>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-            className="col-span-1"
-          >
-            <div className="bg-white rounded-3xl p-6 h-full border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex flex-col h-full justify-between">
-                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center mb-4">
-                  <Trophy className="w-5 h-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-gray-900 mb-1">
-                    {summary.byType?.award || 0}
-                  </p>
-                  <p className="text-sm text-gray-500 font-medium">
-                    {t("portfolio.awards", "Awards Won")}
-                  </p>
-                </div>
+          <div className="dash-card p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                <Trophy className="w-4 h-4 text-amber-600" />
               </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                {t("portfolio.awards", "Awards Won")}
+              </p>
             </div>
-          </motion.div>
+            <p className="text-2xl font-bold text-foreground">
+              {summary.byType?.award || 0}
+            </p>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.4 }}
-            className="col-span-2 md:col-span-1"
-          >
-            <div className="bg-gray-900 rounded-3xl p-6 h-full shadow-xl relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 opacity-90" />
-              <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-colors" />
-              <div className="relative z-10 flex flex-col h-full justify-between">
-                <div>
-                  <p className="text-gray-400 font-medium text-sm">
-                    {t("portfolio.categories", "Categories Explored")}
-                  </p>
-                </div>
-                <div className="mt-4 flex items-end justify-between">
-                  <p className="text-4xl font-bold text-white tracking-tight">
-                    {summary.byType ? Object.keys(summary.byType).length : 0}
-                  </p>
-                  <div className="flex gap-1 mb-1">
-                    {Object.keys(typeConfig).slice(0, 3).map((k, i) => (
-                      <div key={k} className="w-2.5 h-2.5 rounded-full opacity-50" style={{ backgroundColor: typeConfig[k as PortfolioItemType].bg.replace('bg-', '') }} />
-                    ))}
-                  </div>
-                </div>
+          <div className="dash-card p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                <Star className="w-4 h-4 text-purple-600" />
               </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                {t("portfolio.categories", "Categories")}
+              </p>
             </div>
-          </motion.div>
-        </div>
+            <p className="text-2xl font-bold text-foreground">
+              {summary.byType ? Object.keys(summary.byType).length : 0}
+            </p>
+          </div>
+        </motion.div>
       )}
 
-      {/* Animated Filter Bar */}
-      <div className="flex flex-wrap gap-2 items-center p-1 bg-gray-100/50 rounded-2xl w-fit">
+      {/* Filter Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="flex flex-wrap gap-2 items-center p-1 bg-secondary rounded-xl w-fit"
+      >
         {["all", ...(Object.keys(typeConfig) as PortfolioItemType[])].map((type) => {
           const isActive = activeType === type;
           const label = type === "all" ? "All" : typeConfig[type as PortfolioItemType].label;
@@ -326,13 +289,13 @@ export default function PortfolioPage() {
               onClick={() => setActiveType(type as "all" | PortfolioItemType)}
               className={cn(
                 "relative px-4 py-2 text-sm font-medium rounded-xl transition-colors duration-200 outline-none",
-                isActive ? "text-blue-700" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
               {isActive && (
                 <motion.div
                   layoutId="activeFilterBg"
-                  className="absolute inset-0 bg-white rounded-xl shadow-sm border border-gray-200/50"
+                  className="absolute inset-0 bg-card rounded-xl border border-border"
                   initial={false}
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
@@ -341,36 +304,33 @@ export default function PortfolioPage() {
             </button>
           );
         })}
-      </div>
+      </motion.div>
 
       {/* Items Grid */}
       {items.length === 0 ? (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative rounded-3xl border border-dashed border-gray-300 bg-gray-50/50 backdrop-blur-sm p-16 text-center overflow-hidden group"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="dash-card p-12 text-center"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-transparent to-blue-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-          <div className="relative z-10">
-            <div className="w-20 h-20 mx-auto mb-6 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center transform group-hover:-translate-y-2 transition-transform duration-500">
-              <FolderOpen className="h-10 w-10 text-indigo-400" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              {t("portfolio.noItemsTitle", "Build Your Portfolio")}
-            </h3>
-            <p className="text-gray-500 max-w-md mx-auto mb-8">
-              {t("portfolio.noItems", "Showcase your achievements, projects, and experiences to stand out. Start adding items to build your professional profile.")}
-            </p>
-            <Button onClick={openCreateForm} size="lg" className="rounded-full px-8 shadow-md hover:shadow-lg transition-all">
-              <Plus className="h-5 w-5 mr-2" />
-              {t("portfolio.addFirst", "Add Your First Item")}
-            </Button>
+          <div className="w-14 h-14 mx-auto mb-4 bg-secondary rounded-xl border border-border flex items-center justify-center">
+            <FolderOpen className="h-7 w-7 text-muted-foreground" />
           </div>
+          <h3 className="text-sm font-bold text-foreground mb-1">
+            {t("portfolio.noItemsTitle", "Build Your Portfolio")}
+          </h3>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto mb-6">
+            {t("portfolio.noItems", "Showcase your achievements, projects, and experiences to stand out. Start adding items to build your professional profile.")}
+          </p>
+          <Button onClick={openCreateForm} className="bg-foreground text-background hover:bg-foreground/90">
+            <Plus className="h-4 w-4 mr-2" />
+            {t("portfolio.addFirst", "Add Your First Item")}
+          </Button>
         </motion.div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <AnimatePresence mode="popLayout">
-            {items.map((item: PortfolioItem) => {
+            {items.map((item: PortfolioItem, index: number) => {
               const cfg = typeConfig[item.type] || typeConfig.extracurricular;
               const Icon = cfg.icon;
 
@@ -378,89 +338,89 @@ export default function PortfolioPage() {
                 <motion.div
                   key={item.id}
                   layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 16 }}
+                  transition={{ delay: index * 0.03 }}
                 >
-                  <div className="bg-white rounded-[24px] p-6 border border-gray-100/80 shadow-sm hover:shadow-xl hover:shadow-indigo-100/40 transition-all duration-300 group relative">
-                    <div className="absolute top-0 left-0 w-2 h-full rounded-l-[24px] opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: cfg.color.replace('text-', '') }} />
-                    <div className="space-y-4">
+                  <div className="dash-card p-5 hover:border-foreground/20 transition-all duration-300 group">
+                    <div className="space-y-3">
                       <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-4">
-                          <div className={`p-3 rounded-2xl ${cfg.bg} flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
-                            <Icon className={`h-6 w-6 ${cfg.color}`} />
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg ${cfg.bg} flex-shrink-0`}>
+                            <Icon className={`h-4 w-4 ${cfg.color}`} />
                           </div>
                           <div>
-                            <h3 className="font-bold text-gray-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors">
+                            <h3 className="font-semibold text-foreground text-sm leading-tight">
                               {item.title}
                             </h3>
                             {item.organization && (
-                              <p className="text-sm text-gray-500 mt-1 font-medium">
+                              <p className="text-xs text-muted-foreground mt-0.5">
                                 {item.organization}
                               </p>
                             )}
                           </div>
                         </div>
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button
                             size="icon"
-                            variant="secondary"
-                            className="h-8 w-8 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-600"
+                            variant="ghost"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
                             onClick={() => openEditForm(item)}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             size="icon"
-                            variant="secondary"
-                            className="h-8 w-8 rounded-full bg-red-50 hover:bg-red-100 text-red-500"
+                            variant="ghost"
+                            className="h-7 w-7 text-muted-foreground hover:text-rose-600"
                             onClick={() => deleteItem.mutate(item.id)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
 
                       {item.role && (
-                        <div className="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-50 border border-gray-100 text-xs font-semibold text-gray-600">
+                        <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-secondary border border-border text-xs font-medium text-muted-foreground">
                           {item.role}
                         </div>
                       )}
 
                       {item.description && (
-                        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+                        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
                           {item.description}
                         </p>
                       )}
 
-                      <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-gray-500 pt-2 border-t border-gray-50">
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground pt-2 border-t border-border">
                         {item.startDate && (
-                          <span className="flex items-center gap-1.5">
-                            <Calendar className="h-4 w-4 text-gray-400" />
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
                             {item.startDate}
-                            {item.endDate ? ` – ${item.endDate}` : " – Present"}
+                            {item.endDate ? ` - ${item.endDate}` : " - Present"}
                           </span>
                         )}
                         {item.totalHours && (
-                          <span className="flex items-center gap-1.5">
-                            <Clock className="h-4 w-4 text-gray-400" />
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
                             {item.totalHours} hrs
                           </span>
                         )}
                       </div>
 
                       {item.achievements && item.achievements.length > 0 && (
-                        <div className="flex gap-2 flex-wrap pt-1">
+                        <div className="flex gap-1.5 flex-wrap pt-1">
                           {item.achievements.slice(0, 3).map((a) => (
                             <span
                               key={a}
-                              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100/50"
+                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700"
                             >
                               {a}
                             </span>
                           ))}
                           {item.achievements.length > 3 && (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground">
                               +{item.achievements.length - 3} more
                             </span>
                           )}
@@ -477,18 +437,18 @@ export default function PortfolioPage() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-xl p-0 overflow-hidden bg-white/95 backdrop-blur-xl border-gray-100 rounded-3xl">
-          <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-6 border-b border-indigo-100/50">
+        <DialogContent className="max-w-xl p-0 overflow-hidden bg-card border-border rounded-xl">
+          <div className="p-5 border-b border-border">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <DialogTitle className="text-sm font-bold text-foreground flex items-center gap-2">
                 {editingItem ? (
                   <>
-                    <Edit className="w-5 h-5 text-indigo-500" />
+                    <Edit className="w-4 h-4 text-muted-foreground" />
                     {t("portfolio.editItem", "Edit Experience")}
                   </>
                 ) : (
                   <>
-                    <Plus className="w-5 h-5 text-indigo-500" />
+                    <Plus className="w-4 h-4 text-muted-foreground" />
                     {t("portfolio.addItem", "Add New Experience")}
                   </>
                 )}
@@ -496,16 +456,16 @@ export default function PortfolioPage() {
             </DialogHeader>
           </div>
 
-          <div className="p-6 space-y-5">
+          <div className="p-5 space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Type of Experience</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type of Experience</label>
               <Select
                 value={formData.type}
                 onValueChange={(v) =>
                   setFormData({ ...formData, type: v as PortfolioItemType })
                 }
               >
-                <SelectTrigger className="h-12 bg-gray-50/50 border-gray-200 focus:ring-indigo-500">
+                <SelectTrigger className="h-10 bg-secondary border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -513,7 +473,6 @@ export default function PortfolioPage() {
                     (type) => (
                       <SelectItem key={type} value={type} className="cursor-pointer">
                         <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${typeConfig[type].bg.replace('bg-', 'bg-')}`} style={{ backgroundColor: typeConfig[type].color.replace('text-', '') }} />
                           {typeConfig[type].label}
                         </div>
                       </SelectItem>
@@ -524,10 +483,10 @@ export default function PortfolioPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Title *</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Title *</label>
               <Input
                 placeholder="E.g., Varsity Team Captain, Software Engineer Intern..."
-                className="h-12 bg-gray-50/50 border-gray-200 focus:ring-indigo-500"
+                className="h-10 bg-secondary border-border"
                 value={formData.title}
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
@@ -537,10 +496,10 @@ export default function PortfolioPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Organization / School</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Organization / School</label>
                 <Input
                   placeholder="Where did this happen?"
-                  className="h-12 bg-gray-50/50 border-gray-200 focus:ring-indigo-500"
+                  className="h-10 bg-secondary border-border"
                   value={formData.organization}
                   onChange={(e) =>
                     setFormData({ ...formData, organization: e.target.value })
@@ -549,10 +508,10 @@ export default function PortfolioPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Role / Position</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role / Position</label>
                 <Input
                   placeholder="What was your title?"
-                  className="h-12 bg-gray-50/50 border-gray-200 focus:ring-indigo-500"
+                  className="h-10 bg-secondary border-border"
                   value={formData.role}
                   onChange={(e) =>
                     setFormData({ ...formData, role: e.target.value })
@@ -562,10 +521,10 @@ export default function PortfolioPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</label>
               <Textarea
                 placeholder="Describe your responsibilities and what you learned..."
-                className="resize-none bg-gray-50/50 border-gray-200 focus:ring-indigo-500 min-h-[100px]"
+                className="resize-none bg-secondary border-border min-h-[80px]"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -576,12 +535,12 @@ export default function PortfolioPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   {t("portfolio.startDate", "Start Date")}
                 </label>
                 <Input
                   type="date"
-                  className="h-12 bg-gray-50/50 border-gray-200 focus:ring-indigo-500"
+                  className="h-10 bg-secondary border-border"
                   value={formData.startDate}
                   onChange={(e) =>
                     setFormData({ ...formData, startDate: e.target.value })
@@ -589,12 +548,12 @@ export default function PortfolioPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   {t("portfolio.endDate", "End Date")}
                 </label>
                 <Input
                   type="date"
-                  className="h-12 bg-gray-50/50 border-gray-200 focus:ring-indigo-500"
+                  className="h-10 bg-secondary border-border"
                   value={formData.endDate || ""}
                   onChange={(e) =>
                     setFormData({
@@ -605,13 +564,13 @@ export default function PortfolioPage() {
                 />
               </div>
               <div className="space-y-1 col-span-2 md:col-span-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   {t("portfolio.totalHours", "Total Hours")}
                 </label>
                 <Input
                   type="number"
                   placeholder="0"
-                  className="h-12 bg-gray-50/50 border-gray-200 focus:ring-indigo-500"
+                  className="h-10 bg-secondary border-border"
                   value={formData.totalHours || ""}
                   onChange={(e) =>
                     setFormData({
@@ -624,12 +583,12 @@ export default function PortfolioPage() {
             </div>
           </div>
 
-          <div className="p-6 bg-gray-50/80 border-t border-gray-100 flex items-center justify-end gap-3 rounded-b-3xl">
-            <Button variant="ghost" className="hover:bg-gray-200/50" onClick={() => setShowForm(false)}>
+          <div className="p-5 bg-secondary border-t border-border flex items-center justify-end gap-3">
+            <Button variant="ghost" onClick={() => setShowForm(false)}>
               {t("common.cancel", "Cancel")}
             </Button>
             <Button
-              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 px-8"
+              className="bg-foreground text-background hover:bg-foreground/90 px-6"
               onClick={handleSubmit}
               disabled={
                 !formData.title.trim() ||

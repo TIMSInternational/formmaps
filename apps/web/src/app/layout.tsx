@@ -63,7 +63,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans bg-slate-50 text-slate-800 antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans bg-background text-foreground antialiased`}
       >
         <SkipToMain mainId="main-content" />
         <ErrorBoundary>

@@ -40,6 +40,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Users,
+  Plus,
+  Mail,
+  Phone,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Send,
+  ChevronDown,
+  Loader2,
+  UserPlus,
+} from "lucide-react";
 
 export default function EvaluatorsPage() {
   const { user, language } = useGlobalStore();
@@ -181,13 +196,13 @@ export default function EvaluatorsPage() {
 
         if (!existsInGroup) {
           const newEvaluator: Evaluator = {
-            id: apiEvaluator.id, // Use the actual group ID from API
+            id: apiEvaluator.id,
             name: apiEvaluator.evaluatorName,
             email: apiEvaluator.evaluatorEmail,
-            phone: "Not provided", // API doesn't return phone number
+            phone: "Not provided",
             relationship: apiEvaluator.relation || "",
             groupType: targetGroup.type,
-            groupId: apiEvaluator.id, // Set groupId to the same as id since each evaluator is a group
+            groupId: apiEvaluator.id,
             invitationToken: apiEvaluator.invitationToken || "",
             invitationSent: apiEvaluator.isEmailSent || false,
             responseReceived: apiEvaluator.isEvaluationCompleted || false,
@@ -222,7 +237,6 @@ export default function EvaluatorsPage() {
 
     // Phone is now optional
     if (newEvaluator.phone.trim()) {
-      // Validate phone number format with country code if provided
       const phoneValidation = validatePhoneNumber(newEvaluator.phone);
       if (!phoneValidation.isValid) {
         newErrors.phone =
@@ -272,7 +286,7 @@ export default function EvaluatorsPage() {
       try {
         const duplicateCheck = await checkDuplicateEvaluator(
           newEvaluator.email,
-          newEvaluator.phone || "" // Pass empty string if no phone provided
+          newEvaluator.phone || ""
         );
         if (duplicateCheck.isDuplicate && duplicateCheck.existingEvaluator) {
           const existing = duplicateCheck.existingEvaluator;
@@ -340,7 +354,6 @@ export default function EvaluatorsPage() {
             : newEvaluator.relationship;
 
         if (isEditing) {
-          // TODO: Implement update evaluator API when available
           toast.success(
             "Evaluator details updated successfully! Note: API update functionality will be implemented soon."
           );
@@ -404,7 +417,7 @@ export default function EvaluatorsPage() {
         groupType: selectedGroupType,
         groupId: selectedGroup,
         invitationToken: "",
-        invitationSent: false, // Invitation not sent yet
+        invitationSent: false,
         responseReceived: false,
         isActive: true,
       };
@@ -431,10 +444,6 @@ export default function EvaluatorsPage() {
     evaluatorId: string
   ) => {
     try {
-      // TODO: Implement delete evaluator API endpoint
-      // await deleteEvaluator(evaluatorId);
-
-      // For now, just update the UI locally
       const updatedGroups = evaluatorGroups.map((g) =>
         g.id === groupId
           ? {
@@ -467,7 +476,6 @@ export default function EvaluatorsPage() {
   };
 
   const handleEditEvaluator = (evaluator: Evaluator) => {
-    // Set the evaluator data for editing
     setNewEvaluator({
       name: evaluator.name,
       email: evaluator.email,
@@ -475,7 +483,6 @@ export default function EvaluatorsPage() {
       relationship: evaluator.relationship,
     });
 
-    // Find and set the group
     const group = evaluatorGroups.find((g) =>
       g.evaluators.some((e) => e.id === evaluator.id)
     );
@@ -483,10 +490,7 @@ export default function EvaluatorsPage() {
       setSelectedGroup(group.id);
     }
 
-    // Store the evaluator being edited
     setSelectedEvaluator(evaluator.id);
-
-    // Open the modal
     setShowAddModal(true);
   };
 
@@ -495,7 +499,6 @@ export default function EvaluatorsPage() {
       await resendInvitationLink(evaluatorId);
       toast.success(t("evaluation.toast.emailSent"));
 
-      // Reload API evaluators to update status
       await loadApiEvaluators();
     } catch (error) {
       toast.error(t("evaluation.toast.emailFailed"));
@@ -512,16 +515,9 @@ export default function EvaluatorsPage() {
     }
 
     try {
-      // TODO: Implement SMS invitation API when available
-      // For now, show a placeholder message
       toast.info(
         `SMS invitation would be sent to ${phoneNumber}. SMS functionality coming soon!`
       );
-
-      // When SMS API is available, uncomment and implement:
-      // await sendSMSInvitation(evaluatorId, phoneNumber);
-      // toast.success("SMS invitation sent successfully!");
-      // await loadApiEvaluators();
     } catch (error) {
       toast.error("Error sending SMS invitation. Please try again.");
     }
@@ -544,10 +540,8 @@ export default function EvaluatorsPage() {
 
       let result;
       if (emailSendMode === "all") {
-        // Use the bulk email invitation API - let the API decide what needs to be sent
         result = await sendBulkEmailInvitations(user?.id || "");
       } else {
-        // Send to selected evaluators
         const selectedIds =
           selectedEvaluatorsForEmail.length > 0
             ? selectedEvaluatorsForEmail
@@ -587,7 +581,6 @@ export default function EvaluatorsPage() {
           (e) => e.phone && e.phone !== "Not provided"
         );
       } else {
-        // Filter selected evaluators that have phone numbers
         const selectedGroups = evaluatorGroups.filter((group) =>
           selectedEvaluatorsForSMS.includes(group.id)
         );
@@ -603,7 +596,6 @@ export default function EvaluatorsPage() {
         return;
       }
 
-      // TODO: Implement SMS invitation API when available
       toast.info(
         t("evaluation.toast.smsComingSoon") +
           ` (${evaluatorsWithPhone.length} ${t(
@@ -666,146 +658,60 @@ export default function EvaluatorsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="flex mb-6" aria-label="Breadcrumb">
-          <ol className="inline-flex items-center space-x-1 md:space-x-3">
-            <li className="inline-flex items-center">
-              <a
-                href="/dashboard"
-                className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
-              >
-                Dashboard
-              </a>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <svg
-                  className="w-6 h-6 text-gray-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <a
-                  href="/dashboard/assessments"
-                  className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2"
-                >
-                  Assessments
-                </a>
-              </div>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <svg
-                  className="w-6 h-6 text-gray-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2">
-                  Invite Evaluators
-                </span>
-              </div>
-            </li>
-          </ol>
-        </nav>
+    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
+      {/* Header */}
+      <motion.header
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-8"
+      >
+        <Link
+          href="/dashboard/assessments"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-3 transition-colors"
+        >
+          <ArrowLeft className="w-3 h-3" />
+          Assessments
+        </Link>
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
+          Invite Evaluators
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-[52ch]">
+          Add evaluators from different groups to get comprehensive feedback
+          for your 360-degree evaluation.
+        </p>
+      </motion.header>
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-4"
-          >
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <svg
-                className="w-8 h-8 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-            </div>
-          </motion.div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            Invite Evaluators
-          </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Add evaluators from different groups to get comprehensive feedback
-            for your 360-degree evaluation.
-          </p>
-        </div>
-
+      <div className="space-y-5 max-w-6xl">
         {/* Summary Card */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 mb-8"
+          className="dash-card p-5"
         >
           <div className="flex items-center flex-col md:flex-row gap-4 justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+              <h3 className="text-base font-semibold text-foreground mb-1">
                 Evaluation Progress
               </h3>
-              <p className="text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {getTotalEvaluators()} evaluators added across{" "}
                 {evaluatorGroups.length} groups
               </p>
             </div>
-            <div className="flex flex-col md:flex-row gap-4 space-x-3">
+            <div className="flex flex-col md:flex-row gap-3">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     disabled={
                       getTotalEvaluators() === 0 || !areAllGroupsComplete()
                     }
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:shadow-none flex items-center space-x-2"
+                    className="bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                      />
-                    </svg>
+                    <Mail className="w-4 h-4" />
                     <span>Send Email Invitations</span>
-                    <svg
-                      className="w-4 h-4 ml-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
+                    <ChevronDown className="w-3.5 h-3.5" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -834,35 +740,11 @@ export default function EvaluatorsPage() {
                     disabled={
                       getTotalEvaluators() === 0 || !areAllGroupsComplete()
                     }
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:shadow-none flex items-center space-x-2"
+                    className="border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      />
-                    </svg>
+                    <Phone className="w-4 h-4" />
                     <span>Send SMS Invitations</span>
-                    <svg
-                      className="w-4 h-4 ml-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
+                    <ChevronDown className="w-3.5 h-3.5" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -889,61 +771,47 @@ export default function EvaluatorsPage() {
         </motion.div>
 
         {/* Evaluator Groups */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {evaluatorGroups.map((group, index) => (
             <motion.div
               key={group.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 + index * 0.1 }}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all duration-300"
+              transition={{ delay: 0.15 + index * 0.08 }}
+              className="dash-card p-5"
             >
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900">
+                  <h3 className="text-base font-semibold text-foreground">
                     {group.name}
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {group.evaluators.length} of {group.maxAllowed} evaluators
                     added
                     {group.minRequired > 0 &&
-                      ` (minimum ${group.minRequired} required)`}
+                      ` (min ${group.minRequired} required)`}
                   </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium shadow-sm ${
-                      group.evaluators.length >= group.minRequired
-                        ? "bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-200"
-                        : "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 border border-amber-200"
-                    }`}
-                  >
-                    {group.evaluators.length >= group.minRequired
-                      ? "Complete"
-                      : "Incomplete"}
-                  </span>
-                </div>
+                <span
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                    group.evaluators.length >= group.minRequired
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {group.evaluators.length >= group.minRequired
+                    ? "Complete"
+                    : "Incomplete"}
+                </span>
               </div>
 
               <div className="mb-4">
                 <button
                   onClick={() => openAddModal(group.id)}
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl disabled:shadow-none"
+                  className="w-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
                   disabled={group.evaluators.length >= group.maxAllowed}
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
+                  <Plus className="w-4 h-4" />
                   <span>Add {group.name}</span>
                 </button>
               </div>
@@ -957,99 +825,47 @@ export default function EvaluatorsPage() {
                     .map((evaluator) => (
                       <div
                         key={evaluator.id}
-                        className="relative p-4 bg-gradient-to-r from-gray-50 to-blue-50/30 rounded-xl border border-gray-100 hover:shadow-md transition-all duration-200"
+                        className="relative p-3.5 rounded-xl bg-secondary border border-border"
                       >
                         <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1">
-                                <h4 className="font-medium text-gray-900 text-lg mb-1">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-foreground text-sm mb-0.5 truncate">
                                   {evaluator.name}
                                 </h4>
-                                <p className="text-sm text-gray-600 mb-1">
-                                  <span className="inline-flex items-center">
-                                    <svg
-                                      className="w-4 h-4 mr-1"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                                      />
-                                    </svg>
-                                    {evaluator.email ||
-                                      (user?.email &&
-                                      evaluator.relationship === "Self"
-                                        ? user.email
-                                        : "No email provided")}
-                                  </span>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+                                  <Mail className="w-3 h-3 flex-shrink-0" />
+                                  {evaluator.email ||
+                                    (user?.email &&
+                                    evaluator.relationship === "Self"
+                                      ? user.email
+                                      : "No email provided")}
                                 </p>
-                                <p className="text-sm text-gray-600">
-                                  <span className="inline-flex items-center">
-                                    <svg
-                                      className="w-4 h-4 mr-1"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                                      />
-                                    </svg>
-                                    {evaluator.phone}
-                                  </span>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                  <Phone className="w-3 h-3 flex-shrink-0" />
+                                  {evaluator.phone}
                                 </p>
                               </div>
-                              <div className="relative dropdown-container">
+                              <div className="relative dropdown-container ml-2">
                                 <button
                                   onClick={() => toggleDropdown(evaluator.id)}
-                                  className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                                  className="text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-card transition-colors"
                                 >
-                                  <svg
-                                    className="w-5 h-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                                    />
-                                  </svg>
+                                  <MoreVertical className="w-4 h-4" />
                                 </button>
 
                                 {showDropdown === evaluator.id && (
-                                  <div className="absolute right-0 mt-1 w-52 bg-white rounded-lg shadow-lg border z-50">
+                                  <div className="absolute right-0 mt-1 w-48 bg-card rounded-xl border border-border z-50">
                                     <div className="py-1">
                                       <button
                                         onClick={() => {
                                           handleEditEvaluator(evaluator);
                                           setShowDropdown(null);
                                         }}
-                                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                                        className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-secondary w-full text-left gap-2"
                                       >
-                                        <svg
-                                          className="w-4 h-4 mr-2"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                          />
-                                        </svg>
+                                        <Pencil className="w-3.5 h-3.5" />
                                         Edit
                                       </button>
                                       <button
@@ -1057,21 +873,9 @@ export default function EvaluatorsPage() {
                                           handleResendEmailLink(evaluator.id);
                                           setShowDropdown(null);
                                         }}
-                                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                                        className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-secondary w-full text-left gap-2"
                                       >
-                                        <svg
-                                          className="w-4 h-4 mr-2"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                                          />
-                                        </svg>
+                                        <Mail className="w-3.5 h-3.5" />
                                         Resend via Email
                                       </button>
                                       <button
@@ -1082,37 +886,25 @@ export default function EvaluatorsPage() {
                                           );
                                           setShowDropdown(null);
                                         }}
-                                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                                        className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-secondary w-full text-left gap-2 disabled:opacity-50"
                                         disabled={
                                           !evaluator.phone ||
                                           evaluator.phone === "Not provided"
                                         }
                                       >
-                                        <svg
-                                          className="w-4 h-4 mr-2"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                                          />
-                                        </svg>
+                                        <Phone className="w-3.5 h-3.5" />
                                         <span
                                           className={
                                             !evaluator.phone ||
                                             evaluator.phone === "Not provided"
-                                              ? "text-gray-400"
+                                              ? "opacity-50"
                                               : ""
                                           }
                                         >
                                           Resend via Phone
                                         </span>
                                       </button>
-                                      <div className="border-t border-gray-100 my-1"></div>
+                                      <div className="border-t border-border my-1"></div>
                                       <button
                                         onClick={() => {
                                           handleRemoveEvaluator(
@@ -1121,21 +913,9 @@ export default function EvaluatorsPage() {
                                           );
                                           setShowDropdown(null);
                                         }}
-                                        className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+                                        className="flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left gap-2"
                                       >
-                                        <svg
-                                          className="w-4 h-4 mr-2"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                          />
-                                        </svg>
+                                        <Trash2 className="w-3.5 h-3.5" />
                                         Delete
                                       </button>
                                     </div>
@@ -1145,15 +925,15 @@ export default function EvaluatorsPage() {
                             </div>
 
                             {/* Relationship and Status in one row */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-4">
+                            <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center gap-2">
                                 {evaluator.relationship && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-700">
                                     {evaluator.relationship}
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center">
                                 {(() => {
                                   const apiEvaluator = apiEvaluators.find(
                                     (e) => e.id === evaluator.id
@@ -1161,31 +941,30 @@ export default function EvaluatorsPage() {
                                   if (apiEvaluator) {
                                     if (apiEvaluator.isEvaluationCompleted) {
                                       return (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-700">
                                           Completed
                                         </span>
                                       );
                                     } else if (apiEvaluator.isEmailSent) {
                                       return (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100 text-blue-700">
                                           Sent
                                         </span>
                                       );
                                     } else {
                                       return (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-secondary text-muted-foreground border border-border">
                                           Not Sent
                                         </span>
                                       );
                                     }
                                   } else {
-                                    // Fallback to old logic
                                     return evaluator.invitationSent ? (
                                       <span
-                                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${
                                           evaluator.responseReceived
-                                            ? "bg-green-100 text-green-800"
-                                            : "bg-yellow-100 text-yellow-800"
+                                            ? "bg-emerald-100 text-emerald-700"
+                                            : "bg-amber-100 text-amber-700"
                                         }`}
                                       >
                                         {evaluator.responseReceived
@@ -1193,7 +972,7 @@ export default function EvaluatorsPage() {
                                           : "Pending Response"}
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-secondary text-muted-foreground border border-border">
                                         Not Sent
                                       </span>
                                     );
@@ -1208,26 +987,14 @@ export default function EvaluatorsPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg
-                      className="w-8 h-8 text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
+                  <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <UserPlus className="w-6 h-6 text-muted-foreground" />
                   </div>
-                  <p className="text-gray-600 font-medium">
+                  <p className="text-sm font-medium text-foreground">
                     No evaluators added yet
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Click "Add {group.name}" to get started
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Click &quot;Add {group.name}&quot; to get started
                   </p>
                 </div>
               )}
@@ -1246,14 +1013,14 @@ export default function EvaluatorsPage() {
 
             <div className="space-y-4">
               {errors.general && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
                   <p className="text-red-600 text-sm">{errors.general}</p>
                 </div>
               )}
 
               {!selectedGroup && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Evaluator Group *
                   </label>
                   <Select
@@ -1285,7 +1052,7 @@ export default function EvaluatorsPage() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Full Name *
                 </label>
                 <input
@@ -1294,8 +1061,8 @@ export default function EvaluatorsPage() {
                   onChange={(e) =>
                     setNewEvaluator({ ...newEvaluator, name: e.target.value })
                   }
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.name ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-3 py-2 border rounded-xl bg-card text-foreground focus:ring-2 focus:ring-foreground/20 focus:border-foreground ${
+                    errors.name ? "border-red-500" : "border-border"
                   }`}
                   placeholder="Enter evaluator's full name"
                 />
@@ -1305,7 +1072,7 @@ export default function EvaluatorsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Email Address *
                 </label>
                 <input
@@ -1314,8 +1081,8 @@ export default function EvaluatorsPage() {
                   onChange={(e) =>
                     setNewEvaluator({ ...newEvaluator, email: e.target.value })
                   }
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.email ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-3 py-2 border rounded-xl bg-card text-foreground focus:ring-2 focus:ring-foreground/20 focus:border-foreground ${
+                    errors.email ? "border-red-500" : "border-border"
                   }`}
                   placeholder="Enter evaluator's email"
                 />
@@ -1325,7 +1092,7 @@ export default function EvaluatorsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Phone Number with Country Code
                 </label>
                 <input
@@ -1334,15 +1101,15 @@ export default function EvaluatorsPage() {
                   onChange={(e) =>
                     setNewEvaluator({ ...newEvaluator, phone: e.target.value })
                   }
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.phone ? "border-red-500" : "border-gray-300"
+                  className={`w-full px-3 py-2 border rounded-xl bg-card text-foreground focus:ring-2 focus:ring-foreground/20 focus:border-foreground ${
+                    errors.phone ? "border-red-500" : "border-border"
                   }`}
                   placeholder="e.g., +1234567890 (optional)"
                 />
                 {errors.phone && (
                   <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
                 )}
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Optional: Include country code (e.g., +1 for US, +44 for UK)
                 </p>
               </div>
@@ -1353,7 +1120,7 @@ export default function EvaluatorsPage() {
                     ""
                 ) && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-foreground mb-1">
                       Relationship *
                     </label>
                     <Select
@@ -1390,7 +1157,7 @@ export default function EvaluatorsPage() {
                 )}
             </div>
 
-            <div className="flex space-x-3 mt-6">
+            <div className="flex gap-3 mt-6">
               <button
                 onClick={() => {
                   setShowAddModal(false);
@@ -1402,39 +1169,20 @@ export default function EvaluatorsPage() {
                     relationship: "",
                   });
                   setSelectedGroup("");
-                  setSelectedEvaluator(null); // Reset selected evaluator
+                  setSelectedEvaluator(null);
                 }}
-                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium transition-all duration-200 hover:shadow-md"
+                className="flex-1 px-4 py-2.5 border border-border text-foreground rounded-xl hover:bg-secondary font-medium text-sm transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddEvaluator}
                 disabled={loading}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:shadow-none flex items-center justify-center"
+                className="flex-1 px-4 py-2.5 bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 rounded-xl font-medium text-sm transition-colors flex items-center justify-center"
               >
                 {loading ? (
                   <>
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     {selectedEvaluator ? "Updating..." : "Adding..."}
                   </>
                 ) : selectedEvaluator ? (
@@ -1454,7 +1202,7 @@ export default function EvaluatorsPage() {
               <DialogTitle>Select Evaluators for Email</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Choose which evaluators to send email invitations to:
               </p>
               <div className="max-h-60 overflow-y-auto space-y-2">
@@ -1476,21 +1224,21 @@ export default function EvaluatorsPage() {
                           );
                         }
                       }}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 bg-card border-border rounded focus:ring-blue-500"
                     />
                     <label
                       htmlFor={`email-${group.id}`}
-                      className="text-sm font-medium leading-none"
+                      className="text-sm font-medium text-foreground leading-none"
                     >
                       {group.evaluatorName} ({group.relation})
                     </label>
                   </div>
                 ))}
               </div>
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setShowEmailSelector(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+                  className="px-4 py-2 text-sm font-medium text-foreground border border-border rounded-xl hover:bg-secondary transition-colors"
                 >
                   Cancel
                 </button>
@@ -1500,7 +1248,7 @@ export default function EvaluatorsPage() {
                     handleSendEmailInvitations();
                   }}
                   disabled={selectedEvaluatorsForEmail.length === 0}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+                  className="px-4 py-2 text-sm font-medium bg-foreground text-background hover:bg-foreground/90 rounded-xl disabled:opacity-50 transition-colors"
                 >
                   Send Emails ({selectedEvaluatorsForEmail.length})
                 </button>
@@ -1516,7 +1264,7 @@ export default function EvaluatorsPage() {
               <DialogTitle>Select Evaluators for SMS</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Choose which evaluators to send SMS invitations to:
               </p>
               <div className="max-h-60 overflow-y-auto space-y-2">
@@ -1538,21 +1286,21 @@ export default function EvaluatorsPage() {
                           );
                         }
                       }}
-                      className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
+                      className="w-4 h-4 text-emerald-600 bg-card border-border rounded focus:ring-emerald-500"
                     />
                     <label
                       htmlFor={`sms-${group.id}`}
-                      className="text-sm font-medium leading-none"
+                      className="text-sm font-medium text-foreground leading-none"
                     >
                       {group.evaluatorName} ({group.relation})
                     </label>
                   </div>
                 ))}
               </div>
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setShowSMSSelector(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+                  className="px-4 py-2 text-sm font-medium text-foreground border border-border rounded-xl hover:bg-secondary transition-colors"
                 >
                   Cancel
                 </button>
@@ -1562,7 +1310,7 @@ export default function EvaluatorsPage() {
                     handleSendSMSInvitations();
                   }}
                   disabled={selectedEvaluatorsForSMS.length === 0}
-                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 disabled:bg-gray-400"
+                  className="px-4 py-2 text-sm font-medium bg-foreground text-background hover:bg-foreground/90 rounded-xl disabled:opacity-50 transition-colors"
                 >
                   Send SMS ({selectedEvaluatorsForSMS.length})
                 </button>

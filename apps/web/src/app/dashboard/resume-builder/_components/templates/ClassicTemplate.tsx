@@ -1,7 +1,7 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
-// Define styles for the Classic template
+// Define styles for the Classic template - Jobright-style
 const classicStyles = StyleSheet.create({
   page: {
     flexDirection: "column",
@@ -11,103 +11,81 @@ const classicStyles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: 18,
-    paddingBottom: 8,
+    marginBottom: 10,
+    paddingBottom: 0,
   },
   name: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontFamily: "Times-Bold",
     color: "#000000",
     marginBottom: 4,
     textAlign: "center",
-  },
-  contactSection: {
-    alignItems: "center",
+    paddingBottom: 4,
+    borderBottomWidth: 0.75,
+    borderBottomColor: "#000000",
     width: "100%",
-    marginBottom: 6,
   },
   contactRow: {
-    fontSize: 10,
+    fontSize: 9,
     color: "#000000",
-    marginBottom: 2,
+    marginTop: 4,
     textAlign: "center",
-  },
-  professionalTitle: {
-    fontSize: 12,
-    fontStyle: "italic",
-    color: "#000000",
-    marginBottom: 6,
-  },
-  summary: {
-    fontSize: 11,
-    lineHeight: 1.4,
-    color: "#000000",
-    textAlign: "center",
-    marginTop: 6,
-    fontStyle: "italic",
   },
   section: {
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: "bold",
-    color: "#000000",
-    paddingBottom: 3,
-    marginBottom: 6,
-    textAlign: "left",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    borderBottomWidth: 1,
-    borderBottomColor: "#000000",
-  },
-  experienceItem: {
     marginBottom: 8,
   },
-  jobHeader: {
+  sectionTitle: {
+    fontSize: 12,
+    fontFamily: "Times-Bold",
+    color: "#000000",
+    paddingBottom: 2,
+    marginBottom: 4,
+    textAlign: "left",
+    textTransform: "uppercase",
+    borderBottomWidth: 0.75,
+    borderBottomColor: "#000000",
+  },
+  entryItem: {
+    marginBottom: 4,
+  },
+  entryHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 2,
+    alignItems: "flex-start",
   },
-  jobTitle: {
-    fontSize: 12,
-    fontWeight: "bold",
+  entryBoldLeft: {
+    fontSize: 10,
+    fontFamily: "Times-Bold",
     color: "#000000",
   },
-  company: {
-    fontSize: 11,
-    color: "#000000",
-    fontStyle: "italic",
-    marginBottom: 2,
-  },
-  dateLocation: {
+  entryDateRight: {
     fontSize: 10,
     color: "#000000",
     textAlign: "right",
   },
-  description: {
+  entryItalicLeft: {
     fontSize: 10,
-    lineHeight: 1.3,
+    fontStyle: "italic",
     color: "#000000",
-    marginTop: 2,
-    marginLeft: 6,
   },
-  skillsContainer: {
-    flexDirection: "column",
-  },
-  skillCategory: {
-    marginBottom: 5,
-  },
-  skillCategoryTitle: {
-    fontSize: 11,
-    fontWeight: "bold",
-    color: "#000000",
-    marginBottom: 3,
-  },
-  skillsList: {
+  entryItalicRight: {
     fontSize: 10,
+    fontStyle: "italic",
     color: "#000000",
-    lineHeight: 1.2,
+    textAlign: "right",
+  },
+  bulletText: {
+    fontSize: 9.5,
+    lineHeight: 1.35,
+    color: "#000000",
+    marginLeft: 12,
+    marginTop: 1,
+  },
+  skillLine: {
+    fontSize: 9.5,
+    lineHeight: 1.35,
+    color: "#000000",
+    marginBottom: 1,
   },
 });
 
@@ -186,8 +164,6 @@ interface ClassicTemplatePDFProps {
 export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
   data,
 }) => {
-  // Debug logging
-
   // Group skills by category
   const skillsByCategory = data.skills.reduce((acc, skill) => {
     if (!acc[skill.category]) {
@@ -197,70 +173,24 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
     return acc;
   }, {} as Record<string, string[]>);
 
-  // Flatten all skills into a single list
-  const allSkills = data.skills.map((skill) => skill.name);
-
   const { personalInfo, customFields } = data;
 
-  const baseContactItems = [
-    personalInfo.phone,
-    personalInfo.email,
-    personalInfo.location,
-  ].filter(Boolean) as string[];
+  // Build single contact line: phone | email | LinkedIn | GitHub | etc.
+  const contactItems: string[] = [];
+  if (personalInfo.phone) contactItems.push(personalInfo.phone);
+  if (personalInfo.email) contactItems.push(personalInfo.email);
+  if (personalInfo.linkedin) contactItems.push(personalInfo.linkedin);
+  if (personalInfo.github) contactItems.push(personalInfo.github);
+  if (personalInfo.website) contactItems.push(personalInfo.website);
+  if (personalInfo.portfolio) contactItems.push(personalInfo.portfolio);
+  if (personalInfo.twitter) contactItems.push(personalInfo.twitter);
+  if (personalInfo.location) contactItems.push(personalInfo.location);
 
-  const linkItems: string[] = [];
-
-  if (personalInfo.linkedin) {
-    linkItems.push(personalInfo.linkedin);
-  }
-
-  if (personalInfo.website) {
-    linkItems.push(personalInfo.website);
-  }
-
-  if (personalInfo.portfolio) {
-    linkItems.push(personalInfo.portfolio);
-  }
-
-  if (personalInfo.github) {
-    linkItems.push(personalInfo.github);
-  }
-
-  if (personalInfo.twitter) {
-    linkItems.push(personalInfo.twitter);
-  }
-
+  // Add custom contact fields
   const customContactItems = (customFields ?? [])
     .filter((field) => field.enabled && field.value)
     .map((field) => `${field.name}: ${field.value}`);
-
-  const contactRows: string[][] = [];
-
-  if (baseContactItems.length > 0) {
-    const firstRow = [...baseContactItems];
-    if (linkItems.length > 0) {
-      firstRow.push(linkItems.shift() as string);
-    }
-    contactRows.push(firstRow);
-  }
-
-  while (linkItems.length > 0) {
-    contactRows.push(linkItems.splice(0, 3));
-  }
-
-  if (customContactItems.length > 0) {
-    for (let i = 0; i < customContactItems.length; i += 3) {
-      contactRows.push(customContactItems.slice(i, i + 3));
-    }
-  }
-
-  const additionalInfo: string[] = [];
-  if (personalInfo.nationality) {
-    additionalInfo.push(`Nationality: ${personalInfo.nationality}`);
-  }
-  if (personalInfo.dateOfBirth) {
-    additionalInfo.push(`DOB: ${personalInfo.dateOfBirth}`);
-  }
+  contactItems.push(...customContactItems);
 
   return (
     <Document>
@@ -268,29 +198,10 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
         {/* Header */}
         <View style={classicStyles.header}>
           <Text style={classicStyles.name}>{personalInfo.fullName}</Text>
-          {personalInfo.professionalTitle && (
-            <Text style={classicStyles.professionalTitle}>
-              {personalInfo.professionalTitle}
-            </Text>
-          )}
-          {contactRows.length > 0 && (
-            <View style={classicStyles.contactSection}>
-              {contactRows.map((row, index) => (
-                <Text key={index} style={classicStyles.contactRow}>
-                  {row.join(" | ")}
-                </Text>
-              ))}
-            </View>
-          )}
-
-          {additionalInfo.length > 0 && (
+          {contactItems.length > 0 && (
             <Text style={classicStyles.contactRow}>
-              {additionalInfo.join(" | ")}
+              {contactItems.join(" | ")}
             </Text>
-          )}
-
-          {personalInfo.summary && (
-            <Text style={classicStyles.summary}>{personalInfo.summary}</Text>
           )}
         </View>
 
@@ -298,42 +209,19 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
         {personalInfo.careerObjective && (
           <View style={classicStyles.section}>
             <Text style={classicStyles.sectionTitle}>Career Objective</Text>
-            <Text style={classicStyles.description}>
+            <Text style={classicStyles.bulletText}>
               {personalInfo.careerObjective}
             </Text>
           </View>
         )}
 
-        {/* Custom fields are merged into contact items for Classic template */}
-
-        {/* Experience */}
-        {data.experience.length > 0 && (
+        {/* Summary */}
+        {personalInfo.summary && (
           <View style={classicStyles.section}>
-            <Text style={classicStyles.sectionTitle}>
-              Professional Experience
+            <Text style={classicStyles.sectionTitle}>Summary</Text>
+            <Text style={classicStyles.bulletText}>
+              {personalInfo.summary}
             </Text>
-            {data.experience.map((exp) => (
-              <View key={exp.id} style={classicStyles.experienceItem}>
-                <View style={classicStyles.jobHeader}>
-                  <View>
-                    <Text style={classicStyles.jobTitle}>{exp.jobTitle}</Text>
-                    <Text style={classicStyles.company}>
-                      {exp.company}, {exp.location}
-                    </Text>
-                  </View>
-                  <View>
-                    <Text style={classicStyles.dateLocation}>
-                      {exp.startDate} - {exp.current ? "Present" : exp.endDate}
-                    </Text>
-                  </View>
-                </View>
-                {exp.description.map((desc, index) => (
-                  <Text key={index} style={classicStyles.description}>
-                    • {desc}
-                  </Text>
-                ))}
-              </View>
-            ))}
           </View>
         )}
 
@@ -342,39 +230,68 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
           <View style={classicStyles.section}>
             <Text style={classicStyles.sectionTitle}>Education</Text>
             {data.education.map((edu) => (
-              <View key={edu.id} style={classicStyles.experienceItem}>
-                <View style={classicStyles.jobHeader}>
-                  <View>
-                    <Text style={classicStyles.jobTitle}>{edu.degree}</Text>
-                    <Text style={classicStyles.company}>
-                      {edu.institution}, {edu.location}
+              <View key={edu.id} style={classicStyles.entryItem}>
+                <View style={classicStyles.entryHeaderRow}>
+                  <Text style={classicStyles.entryBoldLeft}>
+                    {edu.institution}
+                  </Text>
+                  <Text style={classicStyles.entryDateRight}>
+                    {edu.graduationDate}
+                  </Text>
+                </View>
+                <View style={classicStyles.entryHeaderRow}>
+                  <Text style={classicStyles.entryItalicLeft}>
+                    {edu.degree}
+                  </Text>
+                  {edu.location && (
+                    <Text style={classicStyles.entryItalicRight}>
+                      {edu.location}
                     </Text>
-                  </View>
-                  <View>
-                    <Text style={classicStyles.dateLocation}>
-                      {edu.graduationDate}
-                    </Text>
-                  </View>
+                  )}
                 </View>
                 {edu.gpa && (
-                  <Text style={classicStyles.description}>GPA: {edu.gpa}</Text>
+                  <Text style={classicStyles.bulletText}>
+                    {"•"} GPA: {edu.gpa}
+                  </Text>
                 )}
               </View>
             ))}
           </View>
         )}
 
-        {/* Skills */}
-        {data.skills.length > 0 && (
+        {/* Experience */}
+        {data.experience.length > 0 && (
           <View style={classicStyles.section}>
             <Text style={classicStyles.sectionTitle}>
-              Skills & Competencies
+              Relevant Experience
             </Text>
-            <View style={classicStyles.skillsContainer}>
-              <Text style={classicStyles.skillsList}>
-                {allSkills.join(", ")}
-              </Text>
-            </View>
+            {data.experience.map((exp) => (
+              <View key={exp.id} style={classicStyles.entryItem}>
+                <View style={classicStyles.entryHeaderRow}>
+                  <Text style={classicStyles.entryBoldLeft}>
+                    {exp.company}
+                  </Text>
+                  <Text style={classicStyles.entryDateRight}>
+                    {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                  </Text>
+                </View>
+                <View style={classicStyles.entryHeaderRow}>
+                  <Text style={classicStyles.entryItalicLeft}>
+                    {exp.jobTitle}
+                  </Text>
+                  {exp.location && (
+                    <Text style={classicStyles.entryItalicRight}>
+                      {exp.location}
+                    </Text>
+                  )}
+                </View>
+                {exp.description.map((desc, index) => (
+                  <Text key={index} style={classicStyles.bulletText}>
+                    {"•"} {desc}
+                  </Text>
+                ))}
+              </View>
+            ))}
           </View>
         )}
 
@@ -392,9 +309,9 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                 <Text style={classicStyles.sectionTitle}>{section.title}</Text>
                 {/* Custom sections render directly without entries */}
                 {section.type === "custom" ? (
-                  <View style={classicStyles.experienceItem}>
+                  <View style={classicStyles.entryItem}>
                     {customSection.description && (
-                      <Text style={classicStyles.description}>
+                      <Text style={classicStyles.bulletText}>
                         {customSection.description}
                       </Text>
                     )}
@@ -405,178 +322,192 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                           .filter((line: string) => line.trim());
 
                         return lines.map((line: string, index: number) => (
-                          <Text key={index} style={classicStyles.description}>
-                            • {line.trim()}
+                          <Text key={index} style={classicStyles.bulletText}>
+                            {"•"} {line.trim()}
                           </Text>
                         ));
                       })()}
                   </View>
                 ) : (
                   section.entries.map((entry) => (
-                    <View key={entry.id} style={classicStyles.experienceItem}>
-                      {/* Render based on section type */}
+                    <View key={entry.id} style={classicStyles.entryItem}>
+                      {/* Projects */}
                       {section.type === "projects" && (
                         <>
-                          <View style={classicStyles.jobHeader}>
-                            <Text style={classicStyles.jobTitle}>
+                          <View style={classicStyles.entryHeaderRow}>
+                            <Text style={classicStyles.entryBoldLeft}>
                               {entry.title || entry.name}
                             </Text>
                             {entry.date && (
-                              <Text style={classicStyles.dateLocation}>
+                              <Text style={classicStyles.entryDateRight}>
                                 {entry.date}
                               </Text>
                             )}
                           </View>
                           {entry.technologies && (
-                            <Text style={classicStyles.company}>
+                            <Text style={classicStyles.entryItalicLeft}>
                               Technologies: {entry.technologies}
                             </Text>
                           )}
-                          {entry.description && (
-                            <Text style={classicStyles.description}>
-                              {entry.description}
-                            </Text>
-                          )}
+                          {entry.description &&
+                            (typeof entry.description === "string"
+                              ? entry.description
+                                  .split("\n")
+                                  .filter((l: string) => l.trim())
+                              : Array.isArray(entry.description)
+                              ? entry.description
+                              : [entry.description]
+                            ).map((line: string, i: number) => (
+                              <Text key={i} style={classicStyles.bulletText}>
+                                {"•"} {typeof line === "string" ? line.trim() : line}
+                              </Text>
+                            ))}
                           {entry.link && (
-                            <Text style={classicStyles.description}>
+                            <Text style={classicStyles.bulletText}>
                               Link: {entry.link}
                             </Text>
                           )}
                         </>
                       )}
+                      {/* Certificates */}
                       {section.type === "certificates" && (
                         <>
-                          <View style={classicStyles.jobHeader}>
-                            <Text style={classicStyles.jobTitle}>
+                          <View style={classicStyles.entryHeaderRow}>
+                            <Text style={classicStyles.entryBoldLeft}>
                               {entry.name || entry.title}
                             </Text>
                             {entry.date && (
-                              <Text style={classicStyles.dateLocation}>
+                              <Text style={classicStyles.entryDateRight}>
                                 {entry.date}
                               </Text>
                             )}
                           </View>
                           {entry.issuer && (
-                            <Text style={classicStyles.company}>
+                            <Text style={classicStyles.entryItalicLeft}>
                               {entry.issuer}
                             </Text>
                           )}
                           {entry.description && (
-                            <Text style={classicStyles.description}>
+                            <Text style={classicStyles.bulletText}>
                               {entry.description}
                             </Text>
                           )}
                         </>
                       )}
+                      {/* Languages */}
                       {section.type === "languages" && (
                         <>
-                          <Text style={classicStyles.jobTitle}>
+                          <Text style={classicStyles.entryBoldLeft}>
                             {entry.language || entry.name}
                           </Text>
                           {entry.proficiency && (
-                            <Text style={classicStyles.company}>
+                            <Text style={classicStyles.entryItalicLeft}>
                               Proficiency: {entry.proficiency}
                             </Text>
                           )}
                         </>
                       )}
+                      {/* Publications */}
                       {section.type === "publications" && (
                         <>
-                          <View style={classicStyles.jobHeader}>
-                            <Text style={classicStyles.jobTitle}>
+                          <View style={classicStyles.entryHeaderRow}>
+                            <Text style={classicStyles.entryBoldLeft}>
                               {entry.title || entry.name}
                             </Text>
                             {entry.date && (
-                              <Text style={classicStyles.dateLocation}>
+                              <Text style={classicStyles.entryDateRight}>
                                 {entry.date}
                               </Text>
                             )}
                           </View>
                           {entry.authors && (
-                            <Text style={classicStyles.company}>
+                            <Text style={classicStyles.entryItalicLeft}>
                               Authors: {entry.authors}
                             </Text>
                           )}
                           {entry.publisher && (
-                            <Text style={classicStyles.company}>
+                            <Text style={classicStyles.entryItalicLeft}>
                               Publisher: {entry.publisher}
                             </Text>
                           )}
                           {entry.description && (
-                            <Text style={classicStyles.description}>
+                            <Text style={classicStyles.bulletText}>
                               {entry.description}
                             </Text>
                           )}
                           {entry.link && (
-                            <Text style={classicStyles.description}>
+                            <Text style={classicStyles.bulletText}>
                               Link: {entry.link}
                             </Text>
                           )}
                         </>
                       )}
+                      {/* Courses */}
                       {section.type === "courses" && (
                         <>
-                          <View style={classicStyles.jobHeader}>
-                            <Text style={classicStyles.jobTitle}>
+                          <View style={classicStyles.entryHeaderRow}>
+                            <Text style={classicStyles.entryBoldLeft}>
                               {entry.name || entry.title}
                             </Text>
                             {entry.date && (
-                              <Text style={classicStyles.dateLocation}>
+                              <Text style={classicStyles.entryDateRight}>
                                 {entry.date}
                               </Text>
                             )}
                           </View>
                           {entry.institution && (
-                            <Text style={classicStyles.company}>
+                            <Text style={classicStyles.entryItalicLeft}>
                               {entry.institution}
                             </Text>
                           )}
                           {entry.description && (
-                            <Text style={classicStyles.description}>
+                            <Text style={classicStyles.bulletText}>
                               {entry.description}
                             </Text>
                           )}
                         </>
                       )}
+                      {/* Awards */}
                       {section.type === "awards" && (
                         <>
-                          <View style={classicStyles.jobHeader}>
-                            <Text style={classicStyles.jobTitle}>
+                          <View style={classicStyles.entryHeaderRow}>
+                            <Text style={classicStyles.entryBoldLeft}>
                               {entry.title || entry.name}
                             </Text>
                             {entry.date && (
-                              <Text style={classicStyles.dateLocation}>
+                              <Text style={classicStyles.entryDateRight}>
                                 {entry.date}
                               </Text>
                             )}
                           </View>
                           {entry.issuer && (
-                            <Text style={classicStyles.company}>
+                            <Text style={classicStyles.entryItalicLeft}>
                               {entry.issuer}
                             </Text>
                           )}
                           {entry.description && (
-                            <Text style={classicStyles.description}>
+                            <Text style={classicStyles.bulletText}>
                               {entry.description}
                             </Text>
                           )}
                         </>
                       )}
+                      {/* Organisations */}
                       {section.type === "organisations" && (
                         <>
-                          <View style={classicStyles.jobHeader}>
+                          <View style={classicStyles.entryHeaderRow}>
                             <View>
-                              <Text style={classicStyles.jobTitle}>
+                              <Text style={classicStyles.entryBoldLeft}>
                                 {entry.name || entry.title}
                               </Text>
                               {entry.role && (
-                                <Text style={classicStyles.company}>
+                                <Text style={classicStyles.entryItalicLeft}>
                                   {entry.role}
                                 </Text>
                               )}
                             </View>
                             {(entry.startDate || entry.endDate) && (
-                              <Text style={classicStyles.dateLocation}>
+                              <Text style={classicStyles.entryDateRight}>
                                 {entry.startDate}
                                 {entry.startDate && entry.endDate && " - "}
                                 {entry.endDate}
@@ -584,63 +515,66 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                             )}
                           </View>
                           {entry.description && (
-                            <Text style={classicStyles.description}>
+                            <Text style={classicStyles.bulletText}>
                               {entry.description}
                             </Text>
                           )}
                         </>
                       )}
+                      {/* Interests */}
                       {section.type === "interests" && (
                         <>
-                          <Text style={classicStyles.jobTitle}>
+                          <Text style={classicStyles.entryBoldLeft}>
                             {entry.interest || entry.name || entry.title}
                           </Text>
                           {entry.description && (
-                            <Text style={classicStyles.description}>
+                            <Text style={classicStyles.bulletText}>
                               {entry.description}
                             </Text>
                           )}
                         </>
                       )}
+                      {/* References */}
                       {section.type === "references" && (
                         <>
-                          <Text style={classicStyles.jobTitle}>
+                          <Text style={classicStyles.entryBoldLeft}>
                             {entry.name || entry.title}
                           </Text>
                           {entry.position && (
-                            <Text style={classicStyles.company}>
+                            <Text style={classicStyles.entryItalicLeft}>
                               {entry.position}
                               {entry.company && `, ${entry.company}`}
                             </Text>
                           )}
                           {!entry.position && entry.company && (
-                            <Text style={classicStyles.company}>
+                            <Text style={classicStyles.entryItalicLeft}>
                               {entry.company}
                             </Text>
                           )}
                           {entry.email && (
-                            <Text style={classicStyles.description}>
+                            <Text style={classicStyles.bulletText}>
                               Email: {entry.email}
                             </Text>
                           )}
                           {entry.phone && (
-                            <Text style={classicStyles.description}>
+                            <Text style={classicStyles.bulletText}>
                               Phone: {entry.phone}
                             </Text>
                           )}
                         </>
                       )}
+                      {/* Declaration */}
                       {section.type === "declaration" && (
                         <>
                           {entry.text && (
-                            <Text style={classicStyles.description}>
+                            <Text style={classicStyles.bulletText}>
                               {entry.text}
                             </Text>
                           )}
                           {(entry.place || entry.date) && (
                             <Text
                               style={[
-                                classicStyles.description,
+                                classicStyles.bulletText,
                                 { marginTop: 4, fontStyle: "italic" },
                               ]}
                             >
@@ -665,26 +599,26 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                         section.type !== "declaration" &&
                         section.type !== "custom" && (
                           <>
-                            <Text style={classicStyles.jobTitle}>
+                            <Text style={classicStyles.entryBoldLeft}>
                               {entry.title || entry.name}
                             </Text>
                             {entry.subtitle && (
-                              <Text style={classicStyles.company}>
+                              <Text style={classicStyles.entryItalicLeft}>
                                 {entry.subtitle}
                               </Text>
                             )}
                             {entry.date && (
-                              <Text style={classicStyles.dateLocation}>
+                              <Text style={classicStyles.entryDateRight}>
                                 {entry.date}
                               </Text>
                             )}
                             {entry.description && (
-                              <Text style={classicStyles.description}>
+                              <Text style={classicStyles.bulletText}>
                                 {entry.description}
                               </Text>
                             )}
                             {entry.content && (
-                              <Text style={classicStyles.description}>
+                              <Text style={classicStyles.bulletText}>
                                 {entry.content}
                               </Text>
                             )}
@@ -696,6 +630,23 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
               </View>
             );
           })}
+
+        {/* Technical Skills - categorized with bullet labels */}
+        {data.skills.length > 0 && (
+          <View style={classicStyles.section}>
+            <Text style={classicStyles.sectionTitle}>Technical Skills</Text>
+            {Object.entries(skillsByCategory).map(
+              ([category, skills], index) => (
+                <Text key={index} style={classicStyles.skillLine}>
+                  {"•"}{" "}
+                  <Text style={{ fontFamily: "Times-Bold" }}>{category}</Text>
+                  {": "}
+                  {skills.join(", ")}
+                </Text>
+              )
+            )}
+          </View>
+        )}
       </Page>
     </Document>
   );
@@ -712,98 +663,45 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
     return acc;
   }, {} as Record<string, string[]>);
 
-  // Flatten all skills into a single list
-  const allSkills = data.skills.map((skill) => skill.name);
-
   const { personalInfo, customFields } = data;
 
-  const baseContactItems = [
-    personalInfo.phone,
-    personalInfo.email,
-    personalInfo.location,
-  ].filter(Boolean) as string[];
-
-  const linkItems: string[] = [];
-
-  if (personalInfo.linkedin) {
-    linkItems.push(personalInfo.linkedin);
-  }
-
-  if (personalInfo.website) {
-    linkItems.push(personalInfo.website);
-  }
-
-  if (personalInfo.portfolio) {
-    linkItems.push(personalInfo.portfolio);
-  }
-
-  if (personalInfo.github) {
-    linkItems.push(personalInfo.github);
-  }
-
-  if (personalInfo.twitter) {
-    linkItems.push(personalInfo.twitter);
-  }
+  // Build single contact line
+  const contactItems: string[] = [];
+  if (personalInfo.phone) contactItems.push(personalInfo.phone);
+  if (personalInfo.email) contactItems.push(personalInfo.email);
+  if (personalInfo.linkedin) contactItems.push(personalInfo.linkedin);
+  if (personalInfo.github) contactItems.push(personalInfo.github);
+  if (personalInfo.website) contactItems.push(personalInfo.website);
+  if (personalInfo.portfolio) contactItems.push(personalInfo.portfolio);
+  if (personalInfo.twitter) contactItems.push(personalInfo.twitter);
+  if (personalInfo.location) contactItems.push(personalInfo.location);
 
   const customContactItems = (customFields ?? [])
     .filter((field) => field.enabled && field.value)
     .map((field) => `${field.name}: ${field.value}`);
-
-  const contactRows: string[][] = [];
-
-  if (baseContactItems.length > 0) {
-    const firstRow = [...baseContactItems];
-    if (linkItems.length > 0) {
-      firstRow.push(linkItems.shift() as string);
-    }
-    contactRows.push(firstRow);
-  }
-
-  while (linkItems.length > 0) {
-    contactRows.push(linkItems.splice(0, 3));
-  }
-
-  if (customContactItems.length > 0) {
-    for (let i = 0; i < customContactItems.length; i += 3) {
-      contactRows.push(customContactItems.slice(i, i + 3));
-    }
-  }
-
-  const additionalInfo: string[] = [];
-  if (personalInfo.nationality) {
-    additionalInfo.push(`Nationality: ${personalInfo.nationality}`);
-  }
-  if (personalInfo.dateOfBirth) {
-    additionalInfo.push(`DOB: ${personalInfo.dateOfBirth}`);
-  }
+  contactItems.push(...customContactItems);
 
   return (
-    <div className="w-full h-full bg-white p-6 text-xs overflow-hidden">
+    <div className="w-full h-full bg-white p-6 text-xs overflow-hidden font-serif">
       {/* Header */}
       <div className="text-center mb-2">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
+        <h1 className="text-xl font-bold text-black mb-1 pb-1 border-b border-black">
           {personalInfo.fullName}
         </h1>
-        {personalInfo.professionalTitle && (
-          <p className="text-gray-600 text-sm italic mb-1">
-            {personalInfo.professionalTitle}
+        {contactItems.length > 0 && (
+          <p className="text-black text-[8px] mt-1">
+            {contactItems.join(" | ")}
           </p>
         )}
-        <div className="text-gray-600 text-xs space-y-1">
-          {contactRows.map((row, index) => (
-            <p key={index}>{row.join(" | ")}</p>
-          ))}
-          {additionalInfo.length > 0 && <p>{additionalInfo.join(" | ")}</p>}
-        </div>
       </div>
 
       {/* Summary */}
       {personalInfo.summary && (
         <div className="mb-2">
-          <h2 className="text-sm font-bold text-gray-900 mb-1 pb-1 border-b border-black tracking-widest text-left">
-            PROFESSIONAL SUMMARY
+          <h2 className="text-xs font-bold text-black mb-1 pb-0.5 border-b border-black uppercase">
+            Summary
           </h2>
-          <p className="text-gray-700 text-xs leading-relaxed">
+          <p className="text-black text-[8px] leading-relaxed ml-2">
             {personalInfo.summary.substring(0, 200)}...
           </p>
         </div>
@@ -812,40 +710,81 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
       {/* Career Objective */}
       {personalInfo.careerObjective && (
         <div className="mb-2">
-          <h2 className="text-sm font-bold text-gray-900 mb-1 pb-1 border-b border-black tracking-widest text-left">
-            CAREER OBJECTIVE
+          <h2 className="text-xs font-bold text-black mb-1 pb-0.5 border-b border-black uppercase">
+            Career Objective
           </h2>
-          <p className="text-gray-700 text-xs leading-relaxed">
+          <p className="text-black text-[8px] leading-relaxed ml-2">
             {personalInfo.careerObjective.substring(0, 150)}...
           </p>
+        </div>
+      )}
+
+      {/* Education */}
+      {data.education.length > 0 && (
+        <div className="mb-2">
+          <h2 className="text-xs font-bold text-black mb-1 pb-0.5 border-b border-black uppercase">
+            Education
+          </h2>
+          {data.education.slice(0, 2).map((edu) => (
+            <div key={edu.id} className="mb-1">
+              <div className="flex justify-between">
+                <span className="font-bold text-black text-[9px]">
+                  {edu.institution}
+                </span>
+                <span className="text-black text-[9px]">
+                  {edu.graduationDate}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="italic text-black text-[9px]">
+                  {edu.degree}
+                </span>
+                {edu.location && (
+                  <span className="italic text-black text-[9px]">
+                    {edu.location}
+                  </span>
+                )}
+              </div>
+              {edu.gpa && (
+                <p className="text-black text-[8px] ml-3">
+                  {"•"} GPA: {edu.gpa}
+                </p>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
       {/* Experience */}
       {data.experience.length > 0 && (
         <div className="mb-2">
-          <h2 className="text-sm font-bold text-gray-900 mb-1 pb-1 border-b border-black tracking-widest text-left">
-            PROFESSIONAL EXPERIENCE
+          <h2 className="text-xs font-bold text-black mb-1 pb-0.5 border-b border-black uppercase">
+            Relevant Experience
           </h2>
           {data.experience.slice(0, 2).map((exp) => (
-            <div key={exp.id} className="mb-2">
-              <div className="flex justify-between items-start mb-1">
-                <div>
-                  <h3 className="font-bold text-gray-900 text-xs">
-                    {exp.jobTitle}
-                  </h3>
-                  <p className="text-gray-700 text-xs">
-                    {exp.company}, {exp.location}
-                  </p>
-                </div>
-                <span className="text-gray-600 text-xs">
+            <div key={exp.id} className="mb-1">
+              <div className="flex justify-between">
+                <span className="font-bold text-black text-[9px]">
+                  {exp.company}
+                </span>
+                <span className="text-black text-[9px]">
                   {exp.startDate} - {exp.current ? "Present" : exp.endDate}
                 </span>
               </div>
-              <div className="text-xs text-gray-700">
+              <div className="flex justify-between">
+                <span className="italic text-black text-[9px]">
+                  {exp.jobTitle}
+                </span>
+                {exp.location && (
+                  <span className="italic text-black text-[9px]">
+                    {exp.location}
+                  </span>
+                )}
+              </div>
+              <div className="text-[8px] text-black ml-3">
                 {exp.description.slice(0, 2).map((desc, index) => (
-                  <p key={index} className="mb-1">
-                    • {desc.substring(0, 80)}...
+                  <p key={index} className="mb-0.5">
+                    {"•"} {desc.substring(0, 80)}...
                   </p>
                 ))}
               </div>
@@ -854,49 +793,9 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        {/* Education */}
-        {data.education.length > 0 && (
-          <div>
-            <h2 className="text-sm font-bold text-gray-900 mb-1 pb-1 border-b border-black tracking-widest text-left">
-              EDUCATION
-            </h2>
-            {data.education.slice(0, 1).map((edu) => (
-              <div key={edu.id} className="mb-2">
-                <h3 className="font-bold text-gray-900 text-xs">
-                  {edu.degree}
-                </h3>
-                <p className="text-gray-700 text-xs">
-                  {edu.institution}, {edu.location}
-                </p>
-                <p className="text-gray-600 text-xs">{edu.graduationDate}</p>
-                {edu.gpa && (
-                  <p className="text-gray-600 text-xs">GPA: {edu.gpa}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Skills */}
-        {data.skills.length > 0 && (
-          <div>
-            <h2 className="text-sm font-bold text-gray-900 mb-1 pb-1 border-b border-black tracking-widest text-left">
-              SKILLS & COMPETENCIES
-            </h2>
-            <div className="space-y-2">
-              <p className="text-gray-700 text-xs">
-                {allSkills.slice(0, 8).join(", ")}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Dynamic Sections */}
       {data.dynamicSections &&
         data.dynamicSections.slice(0, 2).map((section) => {
-          // Type assertion for custom sections
           const customSection = section as typeof section & {
             description?: string;
             bullets?: string;
@@ -904,14 +803,13 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
 
           return (
             <div key={section.id} className="mb-2">
-              <h2 className="text-sm font-bold text-gray-900 mb-1 pb-1 border-b border-black tracking-widest text-left">
-                {section.title.toUpperCase()}
+              <h2 className="text-xs font-bold text-black mb-1 pb-0.5 border-b border-black uppercase">
+                {section.title}
               </h2>
-              {/* Custom sections render directly without entries */}
               {section.type === "custom" ? (
-                <div className="mb-2">
+                <div className="mb-1">
                   {customSection.description && (
-                    <p className="text-gray-700 text-xs mb-1">
+                    <p className="text-black text-[8px] mb-1 ml-2">
                       {customSection.description.substring(0, 150)}
                       {customSection.description.length > 150 ? "..." : ""}
                     </p>
@@ -923,68 +821,72 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                         .filter((line: string) => line.trim());
 
                       return (
-                        <ul className="list-disc list-inside text-gray-700 text-xs space-y-0.5">
+                        <div className="text-black text-[8px] ml-3">
                           {lines
                             .slice(0, 3)
                             .map((line: string, index: number) => (
-                              <li key={index}>
-                                {line.trim().substring(0, 60)}
+                              <p key={index} className="mb-0.5">
+                                {"•"} {line.trim().substring(0, 60)}
                                 {line.trim().length > 60 ? "..." : ""}
-                              </li>
+                              </p>
                             ))}
                           {lines.length > 3 && (
-                            <li className="text-gray-500">...</li>
+                            <p className="text-gray-500">...</p>
                           )}
-                        </ul>
+                        </div>
                       );
                     })()}
                 </div>
               ) : (
                 section.entries.slice(0, 1).map((entry) => (
-                  <div key={entry.id} className="mb-2">
+                  <div key={entry.id} className="mb-1">
                     {section.type === "projects" && (
                       <>
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-bold text-gray-900 text-xs">
+                        <div className="flex justify-between">
+                          <span className="font-bold text-black text-[9px]">
                             {entry.title || entry.name}
-                          </h3>
+                          </span>
                           {entry.date && (
-                            <span className="text-gray-600 text-xs">
+                            <span className="text-black text-[9px]">
                               {entry.date}
                             </span>
                           )}
                         </div>
                         {entry.technologies && (
-                          <p className="text-gray-700 text-xs italic">
+                          <p className="text-black text-[8px] italic">
                             Technologies: {entry.technologies}
                           </p>
                         )}
                         {entry.description && (
-                          <p className="text-gray-700 text-xs">
-                            {entry.description.substring(0, 80)}...
+                          <p className="text-black text-[8px] ml-3">
+                            {"•"}{" "}
+                            {typeof entry.description === "string"
+                              ? entry.description.substring(0, 80)
+                              : ""}
+                            ...
                           </p>
                         )}
                       </>
                     )}
                     {section.type === "certificates" && (
                       <>
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-bold text-gray-900 text-xs">
+                        <div className="flex justify-between">
+                          <span className="font-bold text-black text-[9px]">
                             {entry.name || entry.title}
-                          </h3>
+                          </span>
                           {entry.date && (
-                            <span className="text-gray-600 text-xs">
+                            <span className="text-black text-[9px]">
                               {entry.date}
                             </span>
                           )}
                         </div>
                         {entry.issuer && (
-                          <p className="text-gray-700 text-xs italic">
+                          <p className="text-black text-[8px] italic">
                             {entry.issuer}
                           </p>
                         )}
                         {entry.description && (
-                          <p className="text-gray-700 text-xs">
+                          <p className="text-black text-[8px] ml-3">
                             {entry.description.substring(0, 80)}...
                           </p>
                         )}
@@ -992,11 +894,11 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                     )}
                     {section.type === "languages" && (
                       <>
-                        <h3 className="font-bold text-gray-900 text-xs">
+                        <span className="font-bold text-black text-[9px]">
                           {entry.language || entry.name}
-                        </h3>
+                        </span>
                         {entry.proficiency && (
-                          <p className="text-gray-700 text-xs italic">
+                          <p className="text-black text-[8px] italic">
                             Proficiency: {entry.proficiency}
                           </p>
                         )}
@@ -1004,28 +906,28 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                     )}
                     {section.type === "publications" && (
                       <>
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-bold text-gray-900 text-xs">
+                        <div className="flex justify-between">
+                          <span className="font-bold text-black text-[9px]">
                             {entry.title || entry.name}
-                          </h3>
+                          </span>
                           {entry.date && (
-                            <span className="text-gray-600 text-xs">
+                            <span className="text-black text-[9px]">
                               {entry.date}
                             </span>
                           )}
                         </div>
                         {entry.authors && (
-                          <p className="text-gray-700 text-xs italic">
+                          <p className="text-black text-[8px] italic">
                             Authors: {entry.authors}
                           </p>
                         )}
                         {entry.publisher && (
-                          <p className="text-gray-700 text-xs italic">
+                          <p className="text-black text-[8px] italic">
                             Publisher: {entry.publisher}
                           </p>
                         )}
                         {entry.description && (
-                          <p className="text-gray-700 text-xs">
+                          <p className="text-black text-[8px] ml-3">
                             {entry.description.substring(0, 80)}...
                           </p>
                         )}
@@ -1033,23 +935,23 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                     )}
                     {section.type === "courses" && (
                       <>
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-bold text-gray-900 text-xs">
+                        <div className="flex justify-between">
+                          <span className="font-bold text-black text-[9px]">
                             {entry.name || entry.title}
-                          </h3>
+                          </span>
                           {entry.date && (
-                            <span className="text-gray-600 text-xs">
+                            <span className="text-black text-[9px]">
                               {entry.date}
                             </span>
                           )}
                         </div>
                         {entry.institution && (
-                          <p className="text-gray-700 text-xs italic">
+                          <p className="text-black text-[8px] italic">
                             {entry.institution}
                           </p>
                         )}
                         {entry.description && (
-                          <p className="text-gray-700 text-xs">
+                          <p className="text-black text-[8px] ml-3">
                             {entry.description.substring(0, 80)}...
                           </p>
                         )}
@@ -1057,23 +959,23 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                     )}
                     {section.type === "awards" && (
                       <>
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-bold text-gray-900 text-xs">
+                        <div className="flex justify-between">
+                          <span className="font-bold text-black text-[9px]">
                             {entry.title || entry.name}
-                          </h3>
+                          </span>
                           {entry.date && (
-                            <span className="text-gray-600 text-xs">
+                            <span className="text-black text-[9px]">
                               {entry.date}
                             </span>
                           )}
                         </div>
                         {entry.issuer && (
-                          <p className="text-gray-700 text-xs italic">
+                          <p className="text-black text-[8px] italic">
                             {entry.issuer}
                           </p>
                         )}
                         {entry.description && (
-                          <p className="text-gray-700 text-xs">
+                          <p className="text-black text-[8px] ml-3">
                             {entry.description.substring(0, 80)}...
                           </p>
                         )}
@@ -1081,19 +983,19 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                     )}
                     {section.type === "organisations" && (
                       <>
-                        <div className="flex justify-between items-start">
+                        <div className="flex justify-between">
                           <div>
-                            <h3 className="font-bold text-gray-900 text-xs">
+                            <span className="font-bold text-black text-[9px]">
                               {entry.name || entry.title}
-                            </h3>
+                            </span>
                             {entry.role && (
-                              <p className="text-gray-700 text-xs italic">
+                              <p className="text-black text-[8px] italic">
                                 {entry.role}
                               </p>
                             )}
                           </div>
                           {(entry.startDate || entry.endDate) && (
-                            <span className="text-gray-600 text-xs">
+                            <span className="text-black text-[9px]">
                               {entry.startDate}
                               {entry.startDate && entry.endDate && " - "}
                               {entry.endDate}
@@ -1101,7 +1003,7 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                           )}
                         </div>
                         {entry.description && (
-                          <p className="text-gray-700 text-xs">
+                          <p className="text-black text-[8px] ml-3">
                             {entry.description.substring(0, 80)}...
                           </p>
                         )}
@@ -1109,11 +1011,11 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                     )}
                     {section.type === "interests" && (
                       <>
-                        <h3 className="font-bold text-gray-900 text-xs">
+                        <span className="font-bold text-black text-[9px]">
                           {entry.interest || entry.name || entry.title}
-                        </h3>
+                        </span>
                         {entry.description && (
-                          <p className="text-gray-700 text-xs">
+                          <p className="text-black text-[8px] ml-3">
                             {entry.description.substring(0, 80)}...
                           </p>
                         )}
@@ -1121,27 +1023,27 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                     )}
                     {section.type === "references" && (
                       <>
-                        <h3 className="font-bold text-gray-900 text-xs">
+                        <span className="font-bold text-black text-[9px]">
                           {entry.name || entry.title}
-                        </h3>
+                        </span>
                         {entry.position && (
-                          <p className="text-gray-700 text-xs italic">
+                          <p className="text-black text-[8px] italic">
                             {entry.position}
                             {entry.company && `, ${entry.company}`}
                           </p>
                         )}
                         {!entry.position && entry.company && (
-                          <p className="text-gray-700 text-xs italic">
+                          <p className="text-black text-[8px] italic">
                             {entry.company}
                           </p>
                         )}
                         {entry.email && (
-                          <p className="text-gray-700 text-xs">
+                          <p className="text-black text-[8px] ml-3">
                             Email: {entry.email}
                           </p>
                         )}
                         {entry.phone && (
-                          <p className="text-gray-700 text-xs">
+                          <p className="text-black text-[8px] ml-3">
                             Phone: {entry.phone}
                           </p>
                         )}
@@ -1150,12 +1052,12 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                     {section.type === "declaration" && (
                       <>
                         {entry.text && (
-                          <p className="text-gray-700 text-xs">
+                          <p className="text-black text-[8px] ml-2">
                             {entry.text.substring(0, 100)}...
                           </p>
                         )}
                         {(entry.place || entry.date) && (
-                          <p className="text-gray-700 text-xs italic mt-1">
+                          <p className="text-black text-[8px] italic mt-1 ml-2">
                             {entry.place && `Place: ${entry.place}`}
                             {entry.place && entry.date && " | "}
                             {entry.date && `Date: ${entry.date}`}
@@ -1164,7 +1066,7 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                       </>
                     )}
 
-                    {/* Generic fallback for any other section types */}
+                    {/* Generic fallback */}
                     {section.type !== "projects" &&
                       section.type !== "certificates" &&
                       section.type !== "languages" &&
@@ -1177,16 +1079,16 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                       section.type !== "declaration" &&
                       section.type !== "custom" && (
                         <>
-                          <h3 className="font-bold text-gray-900 text-xs">
+                          <span className="font-bold text-black text-[9px]">
                             {entry.title || entry.name}
-                          </h3>
+                          </span>
                           {entry.subtitle && (
-                            <p className="text-gray-700 text-xs">
+                            <p className="text-black text-[8px]">
                               {entry.subtitle}
                             </p>
                           )}
                           {entry.description && (
-                            <p className="text-gray-700 text-xs">
+                            <p className="text-black text-[8px] ml-3">
                               {entry.description.substring(0, 80)}...
                             </p>
                           )}
@@ -1198,6 +1100,25 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
             </div>
           );
         })}
+
+      {/* Technical Skills */}
+      {data.skills.length > 0 && (
+        <div className="mb-2">
+          <h2 className="text-xs font-bold text-black mb-1 pb-0.5 border-b border-black uppercase">
+            Technical Skills
+          </h2>
+          <div className="text-[8px] text-black">
+            {Object.entries(skillsByCategory).map(
+              ([category, skills], index) => (
+                <p key={index} className="mb-0.5">
+                  {"•"} <span className="font-bold">{category}</span>:{" "}
+                  {skills.join(", ")}
+                </p>
+              )
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
