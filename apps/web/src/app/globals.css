@@ -161,3 +161,145 @@
     border-radius: var(--radius-xl);
   }
 }
+
+/* Twenty-style admin overrides */
+.admin-twenty {
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  color: #141414;
+}
+
+.admin-twenty .admin-card {
+  background: #fff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-twenty .admin-table {
+  font-size: 13px;
+}
+.admin-twenty .admin-table th {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8a8a8e;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e4e4e7;
+  background: #fafafa;
+}
+.admin-twenty .admin-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #141414;
+}
+.admin-twenty .admin-table tr:hover td {
+  background: #fafafa;
+}
+.admin-twenty .admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-twenty .admin-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+.admin-twenty .admin-badge-green {
+  background: #ecfdf5;
+  color: #059669;
+}
+.admin-twenty .admin-badge-yellow {
+  background: #fef9c3;
+  color: #ca8a04;
+}
+.admin-twenty .admin-badge-red {
+  background: #fef2f2;
+  color: #dc2626;
+}
+.admin-twenty .admin-badge-blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.admin-twenty .admin-badge-gray {
+  background: #f4f4f5;
+  color: #71717a;
+}
+
+.admin-twenty .admin-btn {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+  cursor: pointer;
+  border: 1px solid #e4e4e7;
+  background: white;
+  color: #141414;
+}
+.admin-twenty .admin-btn:hover {
+  background: #fafafa;
+  border-color: #d0d0d3;
+}
+.admin-twenty .admin-btn-primary {
+  background: #141414;
+  color: white;
+  border-color: #141414;
+}
+.admin-twenty .admin-btn-primary:hover {
+  background: #333;
+}
+
+.admin-twenty .admin-input {
+  font-size: 13px;
+  padding: 7px 10px;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  outline: none;
+  background: white;
+  color: #141414;
+  width: 100%;
+}
+.admin-twenty .admin-input:focus {
+  border-color: #141414;
+  box-shadow: 0 0 0 1px #141414;
+}
+.admin-twenty .admin-input::placeholder {
+  color: #8a8a8e;
+}
+
+.admin-twenty .admin-stat {
+  padding: 16px;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  background: white;
+}
+.admin-twenty .admin-stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #8a8a8e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.admin-twenty .admin-stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #141414;
+  margin-top: 4px;
+}
+
+.admin-twenty .admin-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a8a8e;
+  margin-bottom: 8px;
+}
