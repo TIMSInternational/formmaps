@@ -232,34 +232,6 @@ export function AdminSidebar() {
               boxShadow: "2px 4px 16px 0px rgba(0,0,0,0.16), 0px 2px 4px 0px rgba(0,0,0,0.08)",
               overflow: "hidden",
             }}>
-              {/* DropdownMenuHeader — workspace row */}
-              <div style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "8px 8px 8px 12px",
-              }}>
-                <div style={{
-                  width: 24, height: 24, borderRadius: 6,
-                  background: "linear-gradient(135deg, #8b5a6b, #4a3040)",
-                  color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11, fontWeight: 700, flexShrink: 0,
-                }}>N</div>
-                <span style={{ color: C.fontPrimary, fontSize: 13, fontWeight: 500, flex: 1 }}>NexaDev</span>
-                <button style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: 24, height: 24, borderRadius: 4,
-                  border: "none", background: "transparent", cursor: "pointer",
-                  color: C.fontTertiary, padding: 0,
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                    <circle cx="8" cy="3" r="1.5" />
-                    <circle cx="8" cy="8" r="1.5" />
-                    <circle cx="8" cy="13" r="1.5" />
-                  </svg>
-                </button>
-              </div>
 
               {/* DropdownMenuItemsContainer */}
               <div style={{ padding: "4px 4px" }}>
