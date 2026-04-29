@@ -162,16 +162,15 @@
   }
 }
 
-/* Twenty CRM exact dark theme — colors from twenty-ui/theme-dark.css */
+/* Twenty CRM dark theme — override ALL elements inside admin */
 .admin-twenty {
   font-family: Inter, -apple-system, system-ui, sans-serif;
   font-size: 13px;
   color: #ebebeb;
-  background: #1d1d1d;
-  --twenty-bg-primary: #171717;
+  --twenty-bg-primary: var(--admin-bg-panel, #171717);
   --twenty-bg-secondary: #1b1b1b;
-  --twenty-bg-tertiary: #1d1d1d;
-  --twenty-border: #222;
+  --twenty-bg-tertiary: var(--admin-bg-outer, #1d1d1d);
+  --twenty-border: var(--admin-border-panel, #282828);
   --twenty-font-primary: #ebebeb;
   --twenty-font-secondary: #b3b3b3;
   --twenty-font-tertiary: #818181;
@@ -180,6 +179,25 @@
   --twenty-active: rgba(255,255,255,0.10);
   --twenty-radius-sm: 4px;
   --twenty-radius-md: 8px;
+  /* Override shadcn CSS variables for dark theme */
+  --background: var(--admin-bg-panel, #171717);
+  --foreground: #ebebeb;
+  --card: var(--admin-bg-panel, #171717);
+  --card-foreground: #ebebeb;
+  --popover: #1b1b1b;
+  --popover-foreground: #ebebeb;
+  --primary: #ebebeb;
+  --primary-foreground: #171717;
+  --secondary: #222;
+  --secondary-foreground: #b3b3b3;
+  --muted: #222;
+  --muted-foreground: #818181;
+  --accent: rgba(255,255,255,0.06);
+  --accent-foreground: #ebebeb;
+  --destructive: #ef4444;
+  --border: var(--admin-border-panel, #282828);
+  --input: #282828;
+  --ring: #555;
 }
 
 /* Override shadcn components with Twenty's exact dark theme */
