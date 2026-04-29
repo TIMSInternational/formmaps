@@ -142,113 +142,131 @@ export function AdminSidebar() {
       position: "relative",
     }}>
 
-      {/* Header — workspace selector with dropdown */}
-      <div style={{ padding: collapsed ? "12px 6px 4px 6px" : "12px 8px 4px 8px" }}>
+      {/* Top bar: [N NexaDev ˅]  [🔍] [📋] */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        padding: collapsed ? "10px 6px 6px 6px" : "10px 8px 6px 12px",
+        gap: 4,
+        position: "relative",
+      }}>
+        {/* Workspace selector */}
         <button
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            width: "100%",
-            padding: collapsed ? "6px 0" : "6px 8px",
-            justifyContent: collapsed ? "center" : "flex-start",
-            borderRadius: 4,
-            border: "none",
-            background: dropdownOpen ? C.hoverBg : "transparent",
-            cursor: "pointer",
-            color: C.fontPrimary,
-            fontSize: 13,
-            fontWeight: 500,
-            fontFamily: "inherit",
-            transition: "background 0.1s",
-          }}
-          onMouseEnter={(e) => { if (!dropdownOpen) e.currentTarget.style.background = C.hoverBg; }}
-          onMouseLeave={(e) => { if (!dropdownOpen) e.currentTarget.style.background = "transparent"; }}
           onClick={() => {
             if (collapsed) { setCollapsed(false); return; }
             setDropdownOpen(!dropdownOpen);
+          }}
+          style={{
+            display: "flex", alignItems: "center",
+            gap: 8, flex: collapsed ? "none" : 1,
+            padding: 0, border: "none", background: "transparent",
+            cursor: "pointer", color: C.fontPrimary,
+            fontSize: 13, fontWeight: 500, fontFamily: "inherit",
           }}
         >
           <div style={{
             width: 24, height: 24, borderRadius: 6,
             background: "linear-gradient(135deg, #8b5a6b, #4a3040)",
-            color: "#fff",
-            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 11, fontWeight: 700, flexShrink: 0,
           }}>N</div>
-          {!collapsed && <span style={{ flex: 1, textAlign: "left" }}>NexaDev</span>}
-          {!collapsed && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen); }}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                width: 20, height: 20, borderRadius: 4,
-                border: "none", background: "transparent", cursor: "pointer",
-                color: C.fontLight, padding: 0,
-              }}
-            >
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                <circle cx="8" cy="3" r="1.5" />
-                <circle cx="8" cy="8" r="1.5" />
-                <circle cx="8" cy="13" r="1.5" />
-              </svg>
-            </button>
-          )}
+          {!collapsed && <>
+            <span>NexaDev</span>
+            <ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} />
+          </>}
         </button>
+
+        {/* Right icons: Search + Collapse */}
+        {!collapsed && (
+          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            {[
+              { icon: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>, action: () => {}, title: "Search" },
+              { icon: () => <PanelLeftClose style={{ width: 16, height: 16 }} />, action: () => setCollapsed(true), title: "Collapse sidebar" },
+            ].map((btn, i) => (
+              <button key={i} onClick={btn.action} title={btn.title} style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 28, height: 28, borderRadius: 4,
+                color: C.fontTertiary, border: "none", background: "transparent",
+                cursor: "pointer", transition: "background 0.1s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              >
+                <btn.icon />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Collapsed: just show expand button */}
+        {collapsed && (
+          <button onClick={() => setCollapsed(false)} title="Expand sidebar" style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 28, height: 28, borderRadius: 4, marginTop: 4,
+            color: C.fontTertiary, border: "none", background: "transparent",
+            cursor: "pointer", transition: "background 0.1s", position: "absolute",
+            bottom: -32, left: "50%", transform: "translateX(-50%)",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          >
+            <PanelLeftOpen style={{ width: 16, height: 16 }} />
+          </button>
+        )}
 
         {/* Dropdown menu */}
         {dropdownOpen && !collapsed && (
           <>
-            <div
-              style={{ position: "fixed", inset: 0, zIndex: 99 }}
-              onClick={() => setDropdownOpen(false)}
-            />
+            <div style={{ position: "fixed", inset: 0, zIndex: 99 }}
+              onClick={() => setDropdownOpen(false)} />
             <div style={{
-              position: "absolute",
-              top: 48,
-              left: 8,
-              width: 200,
-              background: "#1b1b1b",
-              border: "1px solid #2a2a2a",
-              borderRadius: 8,
-              padding: 4,
-              zIndex: 100,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+              position: "absolute", top: 44, left: 8, width: 210,
+              background: "#222", border: "1px solid #333",
+              borderRadius: 8, padding: 4, zIndex: 100,
+              boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
             }}>
-              {/* Workspace header in dropdown */}
+              {/* Workspace header */}
               <div style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "8px 8px", borderBottom: "1px solid #2a2a2a", marginBottom: 4,
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "10px 10px 10px 10px", marginBottom: 2,
               }}>
                 <div style={{
-                  width: 24, height: 24, borderRadius: 6,
+                  width: 28, height: 28, borderRadius: 6,
                   background: "linear-gradient(135deg, #8b5a6b, #4a3040)",
                   color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11, fontWeight: 700,
+                  fontSize: 12, fontWeight: 700, flexShrink: 0,
                 }}>N</div>
-                <span style={{ color: C.fontPrimary, fontSize: 13, fontWeight: 500 }}>NexaDev</span>
+                <span style={{ color: "#fff", fontSize: 14, fontWeight: 500, flex: 1 }}>NexaDev</span>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="#666">
+                  <circle cx="8" cy="3" r="1.5" />
+                  <circle cx="8" cy="8" r="1.5" />
+                  <circle cx="8" cy="13" r="1.5" />
+                </svg>
               </div>
 
+              <div style={{ height: 1, background: "#333", margin: "0 4px 4px 4px" }} />
+
+              {/* Menu items with lucide-style icons */}
               {[
-                { icon: "🌙", label: "Theme · Dark", href: "#", hasChevron: true },
-                { icon: "👥", label: "Invite user", href: "#" },
-                { icon: "⚙️", label: "Settings", href: "/dashboard/admin/settings" },
+                { label: "Theme · Dark", href: "#", hasChevron: true,
+                  iconSvg: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg> },
+                { label: "Invite user", href: "#",
+                  iconSvg: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg> },
+                { label: "Settings", href: "/dashboard/admin/settings",
+                  iconSvg: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> },
               ].map((item, i) => (
-                <Link
-                  key={i}
-                  href={item.href}
+                <Link key={i} href={item.href}
                   onClick={() => setDropdownOpen(false)}
                   style={{
-                    display: "flex", alignItems: "center", gap: 10,
-                    padding: "7px 8px", borderRadius: 4,
+                    display: "flex", alignItems: "center", gap: 12,
+                    padding: "8px 10px", borderRadius: 4,
                     color: C.fontSecondary, fontSize: 13,
-                    textDecoration: "none",
-                    transition: "background 0.1s",
+                    textDecoration: "none", transition: "background 0.1s",
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 >
-                  <span style={{ width: 20, textAlign: "center", fontSize: 14 }}>{item.icon}</span>
+                  <span style={{ color: C.fontTertiary, flexShrink: 0 }}>{item.iconSvg}</span>
                   <span style={{ flex: 1 }}>{item.label}</span>
                   {item.hasChevron && <ChevronDown style={{ width: 12, height: 12, color: C.fontLight, transform: "rotate(-90deg)" }} />}
                 </Link>
@@ -256,30 +274,6 @@ export function AdminSidebar() {
             </div>
           </>
         )}
-      </div>
-
-      {/* Collapse toggle — replaces icon button row */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: collapsed ? "center" : "flex-end",
-        padding: collapsed ? "4px 6px" : "4px 8px",
-      }}>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: 28, height: 28, borderRadius: 4,
-            color: C.fontTertiary,
-            transition: "background 0.1s",
-            border: "none", background: "transparent", cursor: "pointer",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? <PanelLeftOpen style={{ width: 16, height: 16 }} /> : <PanelLeftClose style={{ width: 16, height: 16 }} />}
-        </button>
       </div>
 
       {/* Navigation sections */}
