@@ -220,36 +220,49 @@ export function AdminSidebar() {
             <div style={{ position: "fixed", inset: 0, zIndex: 99 }}
               onClick={() => setDropdownOpen(false)} />
             <div style={{
-              position: "absolute", top: 44, left: 8, width: 210,
-              background: "rgba(30, 30, 30, 0.80)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 8, padding: 4, zIndex: 100,
-              boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
+              position: "absolute", top: 44, left: 8, width: 200,
+              /* Twenty OverlayContainer exact values from theme-dark.css */
+              background: "rgba(0, 0, 0, 0.5)",
+              backdropFilter: "blur(12px) saturate(200%) contrast(100%) brightness(130%)",
+              WebkitBackdropFilter: "blur(12px) saturate(200%) contrast(100%) brightness(130%)",
+              border: "1px solid #222",
+              borderRadius: 8,
+              padding: 0,
+              zIndex: 100,
+              boxShadow: "2px 4px 16px 0px rgba(0,0,0,0.16), 0px 2px 4px 0px rgba(0,0,0,0.08)",
+              overflow: "hidden",
             }}>
-              {/* Workspace header */}
+              {/* DropdownMenuHeader — workspace row */}
               <div style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "8px 10px", marginBottom: 2,
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "8px 8px 8px 12px",
               }}>
                 <div style={{
-                  width: 26, height: 26, borderRadius: 6,
+                  width: 24, height: 24, borderRadius: 6,
                   background: "linear-gradient(135deg, #8b5a6b, #4a3040)",
                   color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 11, fontWeight: 700, flexShrink: 0,
                 }}>N</div>
-                <span style={{ color: "#fff", fontSize: 13, fontWeight: 500, flex: 1 }}>NexaDev</span>
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="#666">
-                  <circle cx="8" cy="3" r="1.5" />
-                  <circle cx="8" cy="8" r="1.5" />
-                  <circle cx="8" cy="13" r="1.5" />
-                </svg>
+                <span style={{ color: C.fontPrimary, fontSize: 13, fontWeight: 500, flex: 1 }}>NexaDev</span>
+                <button style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 24, height: 24, borderRadius: 4,
+                  border: "none", background: "transparent", cursor: "pointer",
+                  color: C.fontTertiary, padding: 0,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                    <circle cx="8" cy="3" r="1.5" />
+                    <circle cx="8" cy="8" r="1.5" />
+                    <circle cx="8" cy="13" r="1.5" />
+                  </svg>
+                </button>
               </div>
 
-              <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "0 4px 4px 4px" }} />
-
-              {/* Menu items with lucide-style icons */}
+              {/* DropdownMenuItemsContainer */}
+              <div style={{ padding: "4px 4px" }}>
               {[
                 { label: "Theme · Dark", href: "#", hasChevron: true,
                   iconSvg: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg> },
@@ -274,6 +287,7 @@ export function AdminSidebar() {
                   {item.hasChevron && <ChevronDown style={{ width: 12, height: 12, color: C.fontLight, transform: "rotate(-90deg)" }} />}
                 </Link>
               ))}
+              </div>
             </div>
           </>
         )}
