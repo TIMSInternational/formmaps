@@ -428,7 +428,19 @@
 .admin-twenty .border-purple-100 { border-color: rgba(139,92,246,0.15) !important; }
 .admin-twenty .border-orange-100 { border-color: rgba(249,115,22,0.15) !important; }
 .admin-twenty .border-red-100 { border-color: rgba(239,68,68,0.15) !important; }
-.admin-twenty .min-h-screen { min-height: auto !important; }
+.admin-twenty .min-h-screen { min-height: auto !important; background: transparent !important; }
+.admin-twenty .p-6.md\:p-8 { padding: 0 !important; }
+.admin-twenty .p-6 { padding: 0 !important; }
+.admin-twenty .space-y-10 > * + * { margin-top: 24px !important; }
+.admin-twenty .mb-8 { margin-bottom: 16px !important; }
+.admin-twenty .mb-10 { margin-bottom: 20px !important; }
+.admin-twenty .text-4xl { font-size: 20px !important; font-weight: 600 !important; }
+.admin-twenty .text-3xl { font-size: 24px !important; }
+.admin-twenty .text-xl { font-size: 16px !important; }
+.admin-twenty .text-lg { font-size: 14px !important; }
+/* Fix page headers — prevent text from wrapping weirdly */
+.admin-twenty .space-y-1 { gap: 2px; }
+.admin-twenty .max-w-7xl { max-width: 100% !important; }
 .admin-twenty .rounded-2xl { border-radius: 8px !important; }
 .admin-twenty .hover\:-translate-y-1:hover { transform: none !important; }
 .admin-twenty .focus\:ring-gray-900:focus { --tw-ring-color: #555 !important; }
