@@ -1,0 +1,162 @@
+/*
+ * NEXA Admin Theme — Twenty CRM Dark Style
+ * ==========================================
+ * Colors extracted from twenty-ui/theme-dark.css
+ * Layout from twenty-front DefaultLayout + PagePanel
+ *
+ * Apply: wrap admin pages in .admin-twenty class
+ * Theme switching: set CSS vars --admin-bg-outer, --admin-bg-panel, --admin-border-panel
+ */
+
+/* ── Theme Variables ── */
+.admin-twenty {
+  font-family: Inter, -apple-system, system-ui, sans-serif;
+  font-size: 13px;
+  color: #ebebeb;
+
+  /* Override shadcn CSS vars for dark theme */
+  --background: var(--admin-bg-panel, #171717);
+  --foreground: #ebebeb;
+  --card: var(--admin-bg-panel, #171717);
+  --card-foreground: #ebebeb;
+  --popover: #1b1b1b;
+  --popover-foreground: #ebebeb;
+  --primary: #ebebeb;
+  --primary-foreground: #171717;
+  --secondary: #222;
+  --secondary-foreground: #b3b3b3;
+  --muted: #222;
+  --muted-foreground: #818181;
+  --accent: rgba(255,255,255,0.06);
+  --accent-foreground: #ebebeb;
+  --destructive: #ef4444;
+  --border: var(--admin-border-panel, #282828);
+  --input: #282828;
+  --ring: #555;
+}
+
+/* ── Hardcoded Tailwind Color Overrides ── */
+
+/* Backgrounds */
+.admin-twenty .bg-white { background: var(--card) !important; }
+.admin-twenty .bg-gray-50\/50,
+.admin-twenty .bg-gray-50 { background: var(--secondary) !important; }
+.admin-twenty .bg-gray-100 { background: var(--secondary) !important; }
+
+/* Text */
+.admin-twenty .text-gray-900,
+.admin-twenty .text-gray-800,
+.admin-twenty .text-gray-700 { color: var(--foreground) !important; }
+.admin-twenty .text-gray-600,
+.admin-twenty .text-gray-500,
+.admin-twenty .text-gray-400 { color: var(--muted-foreground) !important; }
+
+/* Borders */
+.admin-twenty .border-gray-100,
+.admin-twenty .border-gray-200 { border-color: var(--border) !important; }
+
+/* Shadows — remove for clean Twenty look */
+.admin-twenty .shadow-sm,
+.admin-twenty .shadow-lg,
+.admin-twenty .hover\:shadow-lg:hover,
+.admin-twenty .hover\:shadow-md:hover { box-shadow: none !important; }
+.admin-twenty .shadow-2xl { box-shadow: 2px 4px 16px rgba(0,0,0,0.16) !important; }
+
+/* Colored backgrounds — low opacity for dark theme */
+.admin-twenty .bg-red-50 { background: rgba(239,68,68,0.1) !important; }
+.admin-twenty .bg-green-50 { background: rgba(16,185,129,0.1) !important; }
+.admin-twenty .bg-blue-50 { background: rgba(59,130,246,0.1) !important; }
+.admin-twenty .bg-blue-50\/50 { background: rgba(59,130,246,0.05) !important; }
+.admin-twenty .bg-green-50\/50 { background: rgba(16,185,129,0.05) !important; }
+.admin-twenty .bg-purple-50\/50 { background: rgba(139,92,246,0.05) !important; }
+.admin-twenty .bg-orange-50\/50 { background: rgba(249,115,22,0.05) !important; }
+.admin-twenty .bg-emerald-50 { background: rgba(16,185,129,0.1) !important; }
+.admin-twenty .bg-violet-50 { background: rgba(139,92,246,0.1) !important; }
+.admin-twenty .bg-amber-50 { background: rgba(245,158,11,0.1) !important; }
+
+/* Colored borders */
+.admin-twenty .border-blue-100 { border-color: rgba(59,130,246,0.15) !important; }
+.admin-twenty .border-green-100 { border-color: rgba(16,185,129,0.15) !important; }
+.admin-twenty .border-purple-100 { border-color: rgba(139,92,246,0.15) !important; }
+.admin-twenty .border-orange-100 { border-color: rgba(249,115,22,0.15) !important; }
+.admin-twenty .border-red-100 { border-color: rgba(239,68,68,0.15) !important; }
+.admin-twenty .border-emerald-100 { border-color: rgba(16,185,129,0.15) !important; }
+.admin-twenty .border-violet-100 { border-color: rgba(139,92,246,0.15) !important; }
+.admin-twenty .border-amber-100 { border-color: rgba(245,158,11,0.15) !important; }
+
+/* ── Layout Fixes ── */
+.admin-twenty .min-h-screen { min-height: auto !important; background: transparent !important; }
+.admin-twenty .p-6.md\:p-8 { padding: 0 !important; }
+.admin-twenty .max-w-7xl { max-width: 100% !important; }
+.admin-twenty .rounded-2xl,
+.admin-twenty .rounded-xl { border-radius: 8px !important; }
+.admin-twenty .hover\:-translate-y-1:hover { transform: none !important; }
+
+/* ── Typography Normalization ── */
+.admin-twenty .text-4xl { font-size: 20px !important; font-weight: 600 !important; }
+.admin-twenty .text-3xl { font-size: 24px !important; }
+.admin-twenty .text-xl { font-size: 16px !important; }
+.admin-twenty .text-lg { font-size: 14px !important; }
+.admin-twenty h1, .admin-twenty h2, .admin-twenty h3, .admin-twenty h4 { color: var(--foreground); }
+.admin-twenty p { color: var(--muted-foreground); }
+.admin-twenty .mb-8 { margin-bottom: 16px !important; }
+.admin-twenty .mb-10 { margin-bottom: 20px !important; }
+
+/* ── Table ── */
+.admin-twenty table { font-size: 13px; color: #b3b3b3; }
+.admin-twenty thead th { font-size: 12px !important; font-weight: 500 !important; color: #818181 !important; background: transparent !important; border-color: #2a2a2a !important; padding: 8px 12px !important; }
+.admin-twenty tbody td { border-color: #2a2a2a !important; color: #b3b3b3 !important; padding: 10px 12px !important; }
+.admin-twenty tbody tr:hover td { background: rgba(255,255,255,0.06) !important; }
+
+/* ── Inputs ── */
+.admin-twenty input,
+.admin-twenty select,
+.admin-twenty textarea { background: #1e1e1e !important; border-color: #2a2a2a !important; color: #ebebeb !important; font-size: 13px; border-radius: 4px !important; height: 32px !important; }
+.admin-twenty input::placeholder { color: #555 !important; }
+.admin-twenty input:focus { border-color: #555 !important; outline: none; box-shadow: none !important; }
+
+/* ── Buttons ── */
+.admin-twenty button { font-size: 13px; }
+
+/* ── Badges ── */
+.admin-twenty [data-slot="badge"] { font-size: 11px !important; font-weight: 500 !important; border-radius: 4px !important; padding: 2px 6px !important; }
+
+/* ── Dialogs ── */
+.admin-twenty [data-slot="dialog-content"] { background: #1e1e1e !important; border-color: #2a2a2a !important; color: #ebebeb !important; border-radius: 8px !important; }
+.admin-twenty [data-slot="dialog-title"] { color: #ebebeb !important; font-size: 14px !important; font-weight: 500 !important; }
+.admin-twenty [data-slot="dialog-description"] { color: #818181 !important; font-size: 12px !important; }
+
+/* ── Labels ── */
+.admin-twenty label { color: #b3b3b3 !important; font-size: 12px; font-weight: 500; }
+
+/* ── Select ── */
+.admin-twenty [data-slot="select-trigger"] { background: #1e1e1e !important; border-color: #2a2a2a !important; color: #b3b3b3 !important; height: 32px !important; border-radius: 4px !important; }
+.admin-twenty [data-slot="select-content"] { background: #1e1e1e !important; border-color: #2a2a2a !important; border-radius: 4px !important; }
+.admin-twenty [data-slot="select-item"] { color: #b3b3b3 !important; font-size: 13px !important; }
+.admin-twenty [data-slot="select-item"]:hover { background: rgba(255,255,255,0.06) !important; }
+
+/* ── Tabs ── */
+.admin-twenty [data-slot="tabs-list"] { background: transparent !important; border-color: #2a2a2a !important; border-radius: 4px !important; }
+.admin-twenty [data-slot="tabs-trigger"] { color: #818181 !important; font-size: 13px !important; border-radius: 4px !important; }
+.admin-twenty [data-slot="tabs-trigger"][data-state="active"] { color: #ebebeb !important; background: rgba(255,255,255,0.10) !important; }
+
+/* ── Separator ── */
+.admin-twenty [data-slot="separator"],
+.admin-twenty hr { background: #2a2a2a !important; border-color: #2a2a2a !important; }
+
+/* ── Skeleton ── */
+.admin-twenty .animate-pulse { background: #222 !important; }
+
+/* ── Switch ── */
+.admin-twenty [data-slot="switch"] { background: #333 !important; }
+.admin-twenty [data-slot="switch"][data-state="checked"] { background: #3b82f6 !important; }
+
+/* ── Scrollbar ── */
+.admin-twenty ::-webkit-scrollbar { width: 6px; height: 6px; }
+.admin-twenty ::-webkit-scrollbar-track { background: transparent; }
+.admin-twenty ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+.admin-twenty ::-webkit-scrollbar-thumb:hover { background: #333; }
+
+/* ── Focus ── */
+.admin-twenty .focus\:ring-gray-900:focus { --tw-ring-color: #555 !important; }
+.admin-twenty .focus\:border-gray-900:focus { border-color: #555 !important; }
