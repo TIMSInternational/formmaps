@@ -10,9 +10,9 @@ export function DashboardStats() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-32 rounded-2xl" />
+          <Skeleton key={i} className="h-28 rounded-lg" />
         ))}
       </div>
     );
@@ -20,10 +20,9 @@ export function DashboardStats() {
 
   if (error || !analytics) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="col-span-full bg-red-50 border border-red-100 rounded-2xl p-6 text-center">
-          <p className="text-red-600 font-medium">Failed to load analytics data</p>
-          <p className="text-red-400 text-sm mt-1">Please try refreshing the page</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div className="col-span-full rounded-lg border border-border bg-card p-5 text-center">
+          <p className="text-destructive text-sm font-medium">Failed to load analytics</p>
         </div>
       </div>
     );
@@ -35,88 +34,62 @@ export function DashboardStats() {
     {
       label: "Total Users",
       value: stats.totalUsers.toLocaleString(),
-      subValue: `${stats.monthlyGrowth.users >= 0 ? "+" : ""}${stats.monthlyGrowth.users.toFixed(1)}% from last month`,
       icon: Users,
-      color: "text-blue-600",
-      bg: "bg-blue-50/50",
-      border: "border-blue-100",
-      trend: stats.monthlyGrowth.users >= 0 ? "up" : "down",
-      trendValue: stats.monthlyGrowth.users,
+      trend: stats.monthlyGrowth.users,
+      sub: "from last month",
     },
     {
       label: "Total Revenue",
       value: `$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      subValue: `${stats.monthlyGrowth.revenue >= 0 ? "+" : ""}${stats.monthlyGrowth.revenue.toFixed(1)}% from last month`,
       icon: CreditCard,
-      color: "text-green-600",
-      bg: "bg-green-50/50",
-      border: "border-green-100",
-      trend: stats.monthlyGrowth.revenue >= 0 ? "up" : "down",
-      trendValue: stats.monthlyGrowth.revenue,
+      trend: stats.monthlyGrowth.revenue,
+      sub: "from last month",
     },
     {
       label: "Active Courses",
       value: stats.activeCourses.toLocaleString(),
-      subValue: `${stats.monthlyGrowth.courses >= 0 ? "+" : ""}${stats.monthlyGrowth.courses.toFixed(1)}% from last month`,
       icon: GraduationCap,
-      color: "text-purple-600",
-      bg: "bg-purple-50/50",
-      border: "border-purple-100",
-      trend: stats.monthlyGrowth.courses >= 0 ? "up" : "down",
-      trendValue: stats.monthlyGrowth.courses,
+      trend: stats.monthlyGrowth.courses,
+      sub: "from last month",
     },
     {
       label: "Growth Rate",
       value: `${stats.growthRate.toFixed(1)}%`,
-      subValue: "Overall platform growth",
       icon: Activity,
-      color: "text-orange-600",
-      bg: "bg-orange-50/50",
-      border: "border-orange-100",
-      trend: stats.growthRate >= 0 ? "up" : "down",
-      trendValue: stats.growthRate,
+      trend: stats.growthRate,
+      sub: "Overall platform growth",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
       {statItems.map((item, index) => (
         <motion.div
           key={item.label}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
-          className={`group relative overflow-hidden rounded-2xl border ${item.border} bg-white p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
+          transition={{ delay: index * 0.05 }}
+          className="rounded-lg border border-border bg-card p-4 transition-colors hover:border-muted-foreground/20"
         >
-          <div className={`absolute right-0 top-0 h-24 w-24 translate-x-8 translate-y--8 rounded-full ${item.bg} opacity-20 blur-2xl transition-transform duration-500 group-hover:scale-150`} />
-
-          <div className="relative flex flex-col justify-between h-full">
-            <div className="flex justify-between items-start mb-4">
-              <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center`}>
-                <item.icon className={`h-5 w-5 ${item.color}`} />
-              </div>
-              {item.trend === "up" ? (
-                <div className="flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  +{Math.abs(item.trendValue).toFixed(1)}%
-                </div>
-              ) : (
-                <div className="flex items-center text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
-                  <TrendingDown className="h-3 w-3 mr-1" />
-                  -{Math.abs(item.trendValue).toFixed(1)}%
-                </div>
-              )}
+          <div className="flex justify-between items-start mb-3">
+            <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center">
+              <item.icon className="h-4 w-4 text-muted-foreground" />
             </div>
-
-            <div>
-              <h3 className="text-3xl font-bold text-gray-900 tracking-tight">{item.value}</h3>
-              <p className="text-sm font-medium text-gray-500 mt-1">{item.label}</p>
-              <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                {item.trend === "up" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                {item.subValue}
-              </p>
+            <div className={`flex items-center text-[11px] font-medium px-1.5 py-0.5 rounded ${
+              item.trend >= 0
+                ? "text-emerald-500"
+                : "text-red-500"
+            }`}>
+              {item.trend >= 0 ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
+              {item.trend >= 0 ? "+" : ""}{Math.abs(item.trend).toFixed(1)}%
             </div>
           </div>
+          <h3 className="text-2xl font-semibold text-foreground tracking-tight">{item.value}</h3>
+          <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
+          <p className="text-[11px] text-muted-foreground/60 mt-1 flex items-center gap-0.5">
+            {item.trend >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+            {item.sub}
+          </p>
         </motion.div>
       ))}
     </div>
