@@ -162,7 +162,7 @@ export default function PortfolioPage() {
 
   if (isLoading) {
     return (
-      <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh] max-w-5xl mx-auto space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-10 w-64" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
@@ -175,7 +175,7 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh] max-w-5xl mx-auto space-y-8">
+    <div className="space-y-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}

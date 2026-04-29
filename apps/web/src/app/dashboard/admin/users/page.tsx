@@ -205,8 +205,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 font-sans text-gray-900">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8">
 
         {/* Header & Actions */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -369,29 +368,29 @@ export default function AdminUsersPage() {
             <div
               key={index}
               style={{
-                borderRadius: 8,
-                border: "1px solid #2a2a2a",
-                background: "#1e1e1e",
+                borderRadius: "var(--admin-radius-lg, 8px)",
+                border: "1px solid var(--admin-border-default, #2a2a2a)",
+                background: "var(--admin-bg-card, #1e1e1e)",
                 padding: 16,
                 transition: "border-color 0.15s",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#333"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#2a2a2a"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-hover, #333)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default, #2a2a2a)"; }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 6, background: "#2a2a2a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <stat.icon style={{ width: 16, height: 16, color: "#818181" }} />
+                <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--admin-bg-icon-box, #2a2a2a)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <stat.icon style={{ width: 16, height: 16, color: "var(--admin-font-tertiary, #818181)" }} />
                 </div>
                 {stat.growth !== null && stat.growth !== undefined && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 500, color: Number(stat.growth) >= 0 ? "#10b981" : "#ef4444" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 500, color: Number(stat.growth) >= 0 ? "var(--admin-accent-green, #10b981)" : "var(--admin-accent-red, #ef4444)" }}>
                     {Number(stat.growth) >= 0 ? "+" : ""}{Math.abs(Number(stat.growth)).toFixed(1)}%
                   </div>
                 )}
               </div>
-              <div style={{ fontSize: 24, fontWeight: 600, color: "#ebebeb", letterSpacing: "-0.02em" }}>{stat.value}</div>
-              <div style={{ fontSize: 12, color: "#818181", marginTop: 4 }}>{stat.label}</div>
+              <div style={{ fontSize: 24, fontWeight: 600, color: "var(--admin-font-primary, #ebebeb)", letterSpacing: "-0.02em" }}>{stat.value}</div>
+              <div style={{ fontSize: 12, color: "var(--admin-font-tertiary, #818181)", marginTop: 4 }}>{stat.label}</div>
               {stat.growth !== null && (
-                <div style={{ fontSize: 11, color: "#555", marginTop: 4 }}>from last month</div>
+                <div style={{ fontSize: 11, color: "var(--admin-font-light, #555)", marginTop: 4 }}>from last month</div>
               )}
             </div>
           ))}
@@ -538,7 +537,6 @@ export default function AdminUsersPage() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

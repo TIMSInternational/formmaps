@@ -1,25 +1,11 @@
 "use client";
 
 import { AdminSidebar } from "./_components/AdminSidebar";
+import { AdminThemeProvider, useAdminTheme } from "@/contexts/AdminThemeContext";
 
-/**
- * Admin layout replicating Twenty CRM's exact structure from DefaultLayout.tsx:
- *
- * StyledLayout (background: noisy, height: 100dvh, flex column)
- *   └─ StyledPageContainer (flex row, flex: 1 1 auto)
- *        ├─ NavigationDrawer (flex-shrink: 0) → AdminSidebar
- *        └─ StyledMainContainer (flex: 0 1 100%, overflow: hidden)
- *             └─ PageBody
- *                  └─ PagePanel (bg: primary, border: 1px solid medium, radius: 8px)
- *
- * Colors from twenty-ui/theme-dark.css:
- *   background-primary:  #171717  (panel bg)
- *   background-secondary: #1b1b1b
- *   background-tertiary: #1d1d1d  (body bg behind panel)
- *   border-color-medium: #222
- *   border-radius-md: 8px
- */
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+function AdminShell({ children }: { children: React.ReactNode }) {
+  const { colors } = useAdminTheme();
+
   return (
     <div
       className="admin-twenty"
@@ -29,21 +15,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         height: "100dvh",
         width: "100%",
         position: "relative",
-        fontFamily: "Inter, -apple-system, system-ui, sans-serif",
+        fontFamily: "var(--admin-font-family, Inter, -apple-system, system-ui, sans-serif)",
         fontSize: 13,
-        background: "var(--admin-bg-outer, #1d1d1d)",
+        background: "var(--admin-bg-outer)",
       }}
     >
-      {/* StyledPageContainer — flex row */}
       <div style={{ display: "flex", flex: "1 1 auto", minHeight: 0 }}>
-        {/* NavigationDrawer — flex-shrink: 0 */}
         <div style={{ flexShrink: 0 }}>
           <AdminSidebar />
         </div>
 
-        {/* StyledMainContainer — flex: 0 1 100%, overflow: hidden */}
         <div style={{ display: "flex", flex: "0 1 100%", overflow: "hidden" }}>
-          {/* PageBody + PagePanel — the rounded content panel */}
           <div
             style={{
               display: "flex",
@@ -54,11 +36,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               paddingLeft: 6,
             }}
           >
-            {/* PagePanel — bg: primary, border, radius */}
             <main
               style={{
-                background: "var(--admin-bg-panel, #171717)",
-                border: "1px solid var(--admin-border-panel, #282828)",
+                background: "var(--admin-bg-panel)",
+                border: "1px solid var(--admin-border-panel)",
                 borderRadius: 12,
                 display: "flex",
                 flexDirection: "column",
@@ -74,5 +55,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AdminThemeProvider>
+      <AdminShell>{children}</AdminShell>
+    </AdminThemeProvider>
   );
 }

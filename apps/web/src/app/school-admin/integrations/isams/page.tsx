@@ -55,7 +55,7 @@ export default function ISAMSIntegrationPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6">
       <div className="bg-white border rounded p-4">
         <h3 className="text-lg font-semibold">{t("schoolAdmin.integrations.isams.title", "iSAMS Integration")}</h3>
         <p className="text-sm text-gray-500">{t("schoolAdmin.integrations.isams.desc", "Configure SIS connection for roster & grades sync")}</p>

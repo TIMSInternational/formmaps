@@ -4,8 +4,6 @@ import React from "react";
 import { useCareersStore } from "@/store/useCareersStore";
 import { useCareerList } from "@/hooks/useCareerQueries";
 import { useTimsCareerScoring } from "@/hooks/useTimsQueries";
-import { Sidebar } from "@/app/dashboard/_components/Sidebar";
-import { TopNav } from "@/app/dashboard/_components/TopNav";
 import { useTranslation } from "react-i18next";
 
 export default function ComparePage() {
@@ -20,17 +18,13 @@ export default function ComparePage() {
 
     return compareList
       .map((id) => {
-        // 1. Try to find in TIMS
         const timsMatch = timsCareers.find(
           (c) => c.programId === id || c.programId === id
         );
-
-        // 2. Try to find in Static
         const staticMatch = staticCareers.find(
           (c) => c.id === id || c.slug === id
         );
 
-        // 3. Merge
         if (staticMatch) {
           return {
             ...staticMatch,
@@ -39,14 +33,13 @@ export default function ComparePage() {
         }
 
         if (timsMatch) {
-          // TIMS-only career (no static data found)
           return {
             id: timsMatch.programId,
             title: { en: timsMatch.programTitle, es: timsMatch.programTitle },
             matchScore: timsMatch.totalScore,
-            educationLevel: "--", // Not provided by TIMS API
-            salaryRange: undefined, // Not provided by TIMS API
-            skills: [], // Not provided by TIMS API
+            educationLevel: "--",
+            salaryRange: undefined,
+            skills: [],
           };
         }
 
@@ -55,7 +48,6 @@ export default function ComparePage() {
       .filter((c): c is NonNullable<typeof c> => c !== null);
   }, [compareList, careersData, timsData]);
 
-  // Check if any selected career has data for specific fields to conditionally render rows
   const rows = [
     {
       label: t("career.compare.table.match"),
@@ -92,60 +84,52 @@ export default function ComparePage() {
   );
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar isOpen={false} onClose={() => { }} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <TopNav onMenuClick={() => { }} />
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <h2 className="text-xl font-bold">{t("career.compare.title")}</h2>
-            <p className="text-sm text-gray-500 mt-2">
-              {t("career.compare.description")}
-            </p>
-            <div className="mt-6">
-              {selected.length === 0 && (
-                <div className="text-sm text-gray-500">
-                  {t("career.compare.noSelected")}
-                </div>
-              )}
-              {selected.length > 0 && (
-                <div className="overflow-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr>
-                        <th className="p-2">
-                          {t("career.compare.table.attribute")}
-                        </th>
-                        {selected.map((s) => (
-                          <th key={s.id} className="p-2 min-w-[150px]">
-                            {s.title.en}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visibleRows.map((row, idx) => (
-                        <tr key={idx}>
-                          <td className="p-2 font-semibold bg-gray-50">
-                            {row.label}
-                          </td>
-                          {selected.map((s) => (
-                            <td key={s.id} className="p-2">
-                              {row.render(s)}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+    <div className="space-y-6">
+      <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <h2 className="text-xl font-bold">{t("career.compare.title")}</h2>
+        <p className="text-sm text-gray-500 mt-2">
+          {t("career.compare.description")}
+        </p>
+        <div className="mt-6">
+          {selected.length === 0 && (
+            <div className="text-sm text-gray-500">
+              {t("career.compare.noSelected")}
             </div>
-          </div>
-        </main>
+          )}
+          {selected.length > 0 && (
+            <div className="overflow-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr>
+                    <th className="p-2">
+                      {t("career.compare.table.attribute")}
+                    </th>
+                    {selected.map((s) => (
+                      <th key={s.id} className="p-2 min-w-[150px]">
+                        {s.title.en}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleRows.map((row, idx) => (
+                    <tr key={idx}>
+                      <td className="p-2 font-semibold bg-gray-50">
+                        {row.label}
+                      </td>
+                      {selected.map((s) => (
+                        <td key={s.id} className="p-2">
+                          {row.render(s)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
-
 }
-

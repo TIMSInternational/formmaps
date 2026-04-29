@@ -36,7 +36,7 @@ export default function ParentChildrenPage() {
   const children: ParentChildLink[] = profile?.children || [];
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="space-y-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">

@@ -31,7 +31,7 @@ export default function CoursePlanPage() {
   const pendingRequests = changeRequestsData?.data ?? [];
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
+    <div className="space-y-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}

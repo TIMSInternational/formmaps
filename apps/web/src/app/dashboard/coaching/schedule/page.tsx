@@ -244,8 +244,7 @@ export default function CoachSessionsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50/30">
-      <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+    <div className="space-y-8">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Sessions</h1>
@@ -424,7 +423,6 @@ export default function CoachSessionsPage() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
     </div>
   );
 }

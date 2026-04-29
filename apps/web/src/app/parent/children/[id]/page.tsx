@@ -32,7 +32,7 @@ export default function ChildProgressPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-8 w-32" />
         <Skeleton className="h-10 w-64" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -47,7 +47,7 @@ export default function ChildProgressPage() {
 
   if (!progress) {
     return (
-      <div className="max-w-5xl mx-auto text-center py-16 space-y-4">
+      <div className="text-center py-16 space-y-4">
         <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto" />
         <h2 className="text-2xl font-bold text-gray-900">
           {t("parent.childNotFound", "Child not found")}
@@ -64,7 +64,7 @@ export default function ChildProgressPage() {
     : 0;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="space-y-8">
       <motion.div
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}

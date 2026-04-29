@@ -91,8 +91,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 space-y-10 font-sans">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -342,7 +341,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </motion.div>
-      </div>
     </div>
   );
 }

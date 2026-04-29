@@ -136,7 +136,7 @@ export default function EarningsPage() {
 
   if (error || !earningsStats) {
     return (
-      <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900">
             Error loading earnings data
@@ -170,8 +170,7 @@ export default function EarningsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 font-sans text-gray-900">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8">
 
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -345,15 +344,13 @@ export default function EarningsPage() {
             )}
           </div>
         </div>
-      </div>
     </div>
   );
 }
 
 function LoadingState() {
   return (
-    <div className="min-h-screen bg-gray-50/50 p-6 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8">
         <Skeleton className="h-10 w-1/3 rounded-xl" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
@@ -361,7 +358,6 @@ function LoadingState() {
           ))}
         </div>
         <Skeleton className="h-96 rounded-3xl" />
-      </div>
     </div>
   );
 }

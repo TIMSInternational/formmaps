@@ -76,10 +76,7 @@ export default function AcademicGapsPage() {
   }
 
   return (
-    <div className="space-y-8 pb-12 relative min-h-screen">
-      {/* Ambient background glow */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-teal-300/10 rounded-full blur-[120px] -z-10 pointer-events-none" />
-      <div className="absolute top-40 right-1/4 w-[400px] h-[400px] bg-blue-300/10 rounded-full blur-[100px] -z-10 pointer-events-none" />
+    <div className="space-y-8">
 
       {/* Page Header */}
       <motion.div

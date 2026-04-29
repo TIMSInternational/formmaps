@@ -150,8 +150,7 @@ export default function TransactionsPage() {
   ];
 
   return (
-    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
-      <div className="space-y-8">
+    <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-2">
@@ -366,7 +365,6 @@ export default function TransactionsPage() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

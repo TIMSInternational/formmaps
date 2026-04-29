@@ -151,7 +151,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-8">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="space-y-1">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
           {t("schoolAdmin.users.title", "User Management")}

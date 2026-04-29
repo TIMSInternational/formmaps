@@ -85,10 +85,12 @@ export default function AdminQuestionsPage() {
     const [editingQuestion, setEditingQuestion] = useState<Question360 | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Filters
+    // Filters & Pagination
     const [searchQuery, setSearchQuery] = useState("");
     const [filterRelation, setFilterRelation] = useState("all");
     const [filterCategory, setFilterCategory] = useState("all");
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 10;
 
     // Form State
     const [formData, setFormData] = useState<CreateQuestionData>({
@@ -229,14 +231,18 @@ export default function AdminQuestionsPage() {
         return matchesSearch && matchesRelation && matchesCategory;
     }).sort((a, b) => a.questionNumber - b.questionNumber);
 
+    const totalPages = Math.max(1, Math.ceil(filteredQuestions.length / PAGE_SIZE));
+    const pagedQuestions = filteredQuestions.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+    // Reset page when filters change
+    useEffect(() => { setPage(1); }, [searchQuery, filterRelation, filterCategory]);
 
     if (authLoading || loading) {
         return <DashboardSkeleton />;
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 font-sans text-gray-900">
-            <div className="max-w-7xl mx-auto space-y-8">
+        <div className="space-y-8">
 
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -313,7 +319,7 @@ export default function AdminQuestionsPage() {
                                 </p>
                             </div>
                         ) : (
-                            filteredQuestions.map((question) => (
+                            pagedQuestions.map((question) => (
                                 <motion.div
                                     key={question.id}
                                     initial={{ opacity: 0, y: 10 }}
@@ -426,6 +432,36 @@ export default function AdminQuestionsPage() {
                         )}
                     </AnimatePresence>
                 </div>
+
+                {/* Pagination */}
+                {filteredQuestions.length > 0 && (
+                    <div className="flex items-center justify-between border border-gray-100 rounded-xl p-4 bg-white">
+                        <p className="text-sm text-gray-500">
+                            Showing page <span className="font-semibold text-gray-900">{page}</span> of <span className="font-semibold text-gray-900">{totalPages}</span>
+                            {" "}({filteredQuestions.length} total)
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="rounded-lg border-gray-200 text-gray-500 h-8"
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                                disabled={page >= totalPages}
+                                className="rounded-lg border-gray-200 text-gray-500 h-8"
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Create/Edit Dialog */}
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -574,7 +610,6 @@ export default function AdminQuestionsPage() {
                     </DialogContent>
                 </Dialog>
 
-            </div>
         </div>
     );
 }

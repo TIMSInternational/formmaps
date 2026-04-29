@@ -75,8 +75,8 @@ export default function AnalyticsPage() {
 
   if (error || !analytics) {
     return (
-      <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 flex flex-col items-center justify-center">
-        <div className="bg-white p-8 rounded-2xl  text-center max-w-md w-full border border-red-100">
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="p-8 rounded-2xl text-center max-w-md w-full" style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)" }}>
           <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
             <Activity className="h-8 w-8 text-red-500" />
           </div>
@@ -132,8 +132,7 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 font-sans text-gray-900">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
@@ -194,31 +193,39 @@ export default function AnalyticsPage() {
               {statsCards.map((stat, index) => (
                 <div
                   key={index}
-                  className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                  style={{
+                    borderRadius: "var(--admin-radius-lg, 8px)",
+                    border: "1px solid var(--admin-border-default, #2a2a2a)",
+                    background: "var(--admin-bg-card, #1e1e1e)",
+                    padding: 16,
+                    transition: "border-color 0.15s",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-hover, #333)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default, #2a2a2a)"; }}
                 >
-                  <div
-                    className={`absolute right-0 top-0 h-24 w-24 translate-x-8 translate-y--8 rounded-full ${stat.blobColor} opacity-5 blur-2xl transition-transform duration-500 group-hover:scale-150`}
-                  />
-                  <div className="relative flex flex-col gap-4">
-                    <div className="flex justify-between items-start">
-                      <div
-                        className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center`}
-                      >
-                        <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: 6,
+                      background: "var(--admin-bg-icon-box, #2a2a2a)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      <stat.icon style={{ width: 16, height: 16, color: "var(--admin-font-tertiary, #818181)" }} />
+                    </div>
+                    {stat.growth !== null && stat.growth !== undefined && (
+                      <div style={{
+                        display: "flex", alignItems: "center", gap: 2,
+                        fontSize: 11, fontWeight: 500,
+                        color: Number(stat.growth) >= 0 ? "var(--admin-accent-green, #10b981)" : "var(--admin-accent-red, #ef4444)",
+                      }}>
+                        {Number(stat.growth) >= 0 ? "+" : ""}{Math.abs(Number(stat.growth)).toFixed(1)}%
                       </div>
-                      <Badge variant="outline" className={`${stat.growth >= 0 ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'} font-medium`}>
-                        {stat.growth >= 0 ? '+' : ''}{stat.growth}%
-                      </Badge>
-                    </div>
-
-                    <div>
-                      <p className="text-3xl font-bold text-gray-900 tracking-tight">
-                        {stat.value}
-                      </p>
-                      <p className="text-sm font-medium text-gray-500 mt-1">
-                        {stat.label}
-                      </p>
-                    </div>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 24, fontWeight: 600, color: "var(--admin-font-primary, #ebebeb)", letterSpacing: "-0.02em" }}>
+                    {stat.value}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--admin-font-tertiary, #818181)", marginTop: 4 }}>
+                    {stat.label}
                   </div>
                 </div>
               ))}
@@ -350,7 +357,6 @@ export default function AnalyticsPage() {
             <TelemetryDashboard period={period} />
           </TabsContent>
         </Tabs>
-      </div>
     </div>
   );
 }

@@ -92,7 +92,7 @@ export default function CommunityServicePage() {
   const remaining = Math.max(0, totalRequired - totalVerified);
 
   return (
-    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh] max-w-5xl mx-auto space-y-8">
+    <div className="space-y-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}

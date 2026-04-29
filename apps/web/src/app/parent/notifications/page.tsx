@@ -43,11 +43,11 @@ export default function ParentNotificationsPage() {
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
 
-  const list = notifications ?? [];
-  const unreadCount = list.filter((n) => !n.isRead).length;
+  const list = Array.isArray(notifications) ? notifications : [];
+  const unreadCount = list.filter((n: any) => !n.isRead).length;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}

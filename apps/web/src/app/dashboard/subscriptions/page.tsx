@@ -93,7 +93,7 @@ export default function SubscriptionsPage() {
   const hasActive = subStatus?.hasActiveSubscription;
 
   return (
-    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
+    <div className="space-y-8">
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: 20 }}
@@ -116,7 +116,7 @@ export default function SubscriptionsPage() {
         </p>
       </motion.header>
 
-      <div className="space-y-5 max-w-5xl">
+      <div className="space-y-5">
         {/* Active subscription banner */}
         {hasActive && (
           <motion.div

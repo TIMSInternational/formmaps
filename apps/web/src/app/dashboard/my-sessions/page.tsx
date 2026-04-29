@@ -319,8 +319,7 @@ export default function MySessionsPage() {
   };
 
   return (
-    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -797,7 +796,6 @@ export default function MySessionsPage() {
             )}
           </div>
         </div>
-      </div>
 
       {/* Cancel Dialog */}
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>

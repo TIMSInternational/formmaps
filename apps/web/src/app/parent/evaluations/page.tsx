@@ -23,7 +23,7 @@ export default function ParentEvaluationsPage() {
   const router = useRouter();
   const { data: evaluations, isLoading } = useParentPendingEvaluations();
 
-  const list = evaluations ?? [];
+  const list = Array.isArray(evaluations) ? evaluations : [];
   const overdue = list.filter((e) => isPast(new Date(e.deadline)));
   const upcoming = list.filter((e) => !isPast(new Date(e.deadline)));
 
@@ -43,7 +43,7 @@ export default function ParentEvaluationsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="space-y-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">

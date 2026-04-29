@@ -315,14 +315,7 @@ export function CoachDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      {/* Background Decor */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10 space-y-8 sm:space-y-12">
+    <div className="space-y-8">
         {/* Header Section */}
         {error && (
           <div
@@ -838,7 +831,6 @@ export function CoachDashboard() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
     </div>
   );
 }

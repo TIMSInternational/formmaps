@@ -87,8 +87,7 @@ export default function ProgressMilestonesPage() {
   const isLoading = timelineLoading;
 
   return (
-    <main className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
-      <div className="space-y-5">
+    <div className="space-y-6">
 
         <Link
           href="/dashboard"
@@ -290,7 +289,6 @@ export default function ProgressMilestonesPage() {
             </div>
           </div>
         </motion.div>
-      </div>
-    </main>
+    </div>
   );
 }

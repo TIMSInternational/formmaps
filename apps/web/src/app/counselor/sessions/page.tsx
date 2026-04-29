@@ -131,8 +131,7 @@ export default function CounselorSessionsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 space-y-8">
+    <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
@@ -307,7 +306,6 @@ export default function CounselorSessionsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
 
       {/* Complete Session Dialog */}
       <Dialog open={completeOpen} onOpenChange={setCompleteOpen}>

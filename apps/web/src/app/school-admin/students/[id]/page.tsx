@@ -104,7 +104,7 @@ export default function StudentDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-10 w-32 rounded-xl" />
         <Skeleton className="h-48 rounded-3xl" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -119,7 +119,7 @@ export default function StudentDetailsPage() {
 
   if (error || !student) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-20 space-y-6">
+      <div className="text-center py-20 space-y-6">
         <div className="inline-flex items-center justify-center p-6 bg-red-50 rounded-full border border-red-100 shadow-sm">
           <AlertCircle className="h-12 w-12 text-red-500" />
         </div>
@@ -172,7 +172,7 @@ export default function StudentDetailsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-12">
+    <div className="space-y-8">
       {/* Back button */}
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
         <Button

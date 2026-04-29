@@ -1,59 +1,62 @@
 /*
- * NEXA Admin Theme — Twenty CRM Dark Style
- * ==========================================
- * Colors extracted from twenty-ui/theme-dark.css
- * Layout from twenty-front DefaultLayout + PagePanel
+ * NEXA Admin Theme — Twenty CRM Style
+ * =====================================
+ * Token-driven theme using CSS custom properties from AdminThemeProvider.
+ * All --admin-* vars are set dynamically by the TS token system.
  *
  * Apply: wrap admin pages in .admin-twenty class
- * Theme switching: set CSS vars --admin-bg-outer, --admin-bg-panel, --admin-border-panel
  */
 
-/* ── Theme Variables ── */
+/* ── Theme Scope ── */
 .admin-twenty {
   font-family: Inter, -apple-system, system-ui, sans-serif;
   font-size: 13px;
-  color: #ebebeb;
+  color: var(--admin-font-primary);
 
-  /* Override shadcn CSS vars for dark theme */
-  --background: var(--admin-bg-panel, #171717);
-  --foreground: #ebebeb;
-  --card: var(--admin-bg-panel, #171717);
-  --card-foreground: #ebebeb;
-  --popover: #1b1b1b;
-  --popover-foreground: #ebebeb;
-  --primary: #ebebeb;
-  --primary-foreground: #171717;
-  --secondary: #222;
-  --secondary-foreground: #b3b3b3;
-  --muted: #222;
-  --muted-foreground: #818181;
-  --accent: rgba(255,255,255,0.06);
-  --accent-foreground: #ebebeb;
-  --destructive: #ef4444;
-  --border: var(--admin-border-panel, #282828);
-  --input: #282828;
-  --ring: #555;
+  /* Override shadcn CSS vars within admin scope */
+  --background: var(--admin-bg-panel);
+  --foreground: var(--admin-font-primary);
+  --card: var(--admin-bg-panel);
+  --card-foreground: var(--admin-font-primary);
+  --popover: var(--admin-bg-card);
+  --popover-foreground: var(--admin-font-primary);
+  --primary: var(--admin-font-primary);
+  --primary-foreground: var(--admin-bg-panel);
+  --secondary: var(--admin-bg-card-hover);
+  --secondary-foreground: var(--admin-font-secondary);
+  --muted: var(--admin-bg-card-hover);
+  --muted-foreground: var(--admin-font-tertiary);
+  --accent: var(--admin-bg-hover);
+  --accent-foreground: var(--admin-font-primary);
+  --destructive: var(--admin-accent-red);
+  --border: var(--admin-border-panel);
+  --input: var(--admin-border-panel);
+  --ring: var(--admin-font-light);
 }
 
-/* ── Hardcoded Tailwind Color Overrides ── */
+/* ── Tailwind Color Overrides ── */
 
 /* Backgrounds */
-.admin-twenty .bg-white { background: var(--card) !important; }
+.admin-twenty .bg-white { background: var(--admin-bg-card) !important; }
 .admin-twenty .bg-gray-50\/50,
-.admin-twenty .bg-gray-50 { background: var(--secondary) !important; }
-.admin-twenty .bg-gray-100 { background: var(--secondary) !important; }
+.admin-twenty .bg-gray-50 { background: var(--admin-bg-card-hover) !important; }
+.admin-twenty .bg-gray-100,
+.admin-twenty .bg-gray-100\/50 { background: var(--admin-bg-card-hover) !important; }
 
 /* Text */
 .admin-twenty .text-gray-900,
 .admin-twenty .text-gray-800,
-.admin-twenty .text-gray-700 { color: var(--foreground) !important; }
+.admin-twenty .text-gray-700 { color: var(--admin-font-primary) !important; }
 .admin-twenty .text-gray-600,
-.admin-twenty .text-gray-500,
-.admin-twenty .text-gray-400 { color: var(--muted-foreground) !important; }
+.admin-twenty .text-gray-500 { color: var(--admin-font-secondary) !important; }
+.admin-twenty .text-gray-400,
+.admin-twenty .text-gray-300 { color: var(--admin-font-tertiary) !important; }
+.admin-twenty .text-white { color: var(--admin-font-primary) !important; }
 
 /* Borders */
+.admin-twenty .border-gray-50,
 .admin-twenty .border-gray-100,
-.admin-twenty .border-gray-200 { border-color: var(--border) !important; }
+.admin-twenty .border-gray-200 { border-color: var(--admin-border-default) !important; }
 
 /* Shadows — remove for clean Twenty look */
 .admin-twenty .shadow-sm,
@@ -62,34 +65,36 @@
 .admin-twenty .hover\:shadow-md:hover { box-shadow: none !important; }
 .admin-twenty .shadow-2xl { box-shadow: 2px 4px 16px rgba(0,0,0,0.16) !important; }
 
-/* Colored backgrounds — low opacity for dark theme */
-.admin-twenty .bg-red-50 { background: rgba(239,68,68,0.1) !important; }
-.admin-twenty .bg-green-50 { background: rgba(16,185,129,0.1) !important; }
-.admin-twenty .bg-blue-50 { background: rgba(59,130,246,0.1) !important; }
-.admin-twenty .bg-blue-50\/50 { background: rgba(59,130,246,0.05) !important; }
-.admin-twenty .bg-green-50\/50 { background: rgba(16,185,129,0.05) !important; }
-.admin-twenty .bg-purple-50\/50 { background: rgba(139,92,246,0.05) !important; }
-.admin-twenty .bg-orange-50\/50 { background: rgba(249,115,22,0.05) !important; }
-.admin-twenty .bg-emerald-50 { background: rgba(16,185,129,0.1) !important; }
-.admin-twenty .bg-violet-50 { background: rgba(139,92,246,0.1) !important; }
-.admin-twenty .bg-amber-50 { background: rgba(245,158,11,0.1) !important; }
+/* Colored backgrounds — low opacity via tokens */
+.admin-twenty .bg-red-50,
+.admin-twenty .bg-red-50\/50 { background: var(--admin-accent-bg-red, rgba(239,68,68,0.1)) !important; }
+.admin-twenty .bg-green-50,
+.admin-twenty .bg-green-50\/50 { background: var(--admin-accent-bg-green, rgba(16,185,129,0.1)) !important; }
+.admin-twenty .bg-blue-50,
+.admin-twenty .bg-blue-50\/50 { background: var(--admin-accent-bg-blue, rgba(59,130,246,0.1)) !important; }
+.admin-twenty .bg-purple-50\/50 { background: var(--admin-accent-bg-purple, rgba(139,92,246,0.1)) !important; }
+.admin-twenty .bg-orange-50\/50 { background: var(--admin-accent-bg-orange, rgba(249,115,22,0.1)) !important; }
+.admin-twenty .bg-emerald-50 { background: var(--admin-accent-bg-green, rgba(16,185,129,0.1)) !important; }
+.admin-twenty .bg-violet-50 { background: var(--admin-accent-bg-purple, rgba(139,92,246,0.1)) !important; }
+.admin-twenty .bg-amber-50 { background: var(--admin-accent-bg-amber, rgba(245,158,11,0.1)) !important; }
 
 /* Colored borders */
-.admin-twenty .border-blue-100 { border-color: rgba(59,130,246,0.15) !important; }
-.admin-twenty .border-green-100 { border-color: rgba(16,185,129,0.15) !important; }
-.admin-twenty .border-purple-100 { border-color: rgba(139,92,246,0.15) !important; }
-.admin-twenty .border-orange-100 { border-color: rgba(249,115,22,0.15) !important; }
-.admin-twenty .border-red-100 { border-color: rgba(239,68,68,0.15) !important; }
-.admin-twenty .border-emerald-100 { border-color: rgba(16,185,129,0.15) !important; }
-.admin-twenty .border-violet-100 { border-color: rgba(139,92,246,0.15) !important; }
-.admin-twenty .border-amber-100 { border-color: rgba(245,158,11,0.15) !important; }
+.admin-twenty .border-blue-100,
+.admin-twenty .border-blue-200 { border-color: var(--admin-accent-border-blue, rgba(59,130,246,0.15)) !important; }
+.admin-twenty .border-green-100 { border-color: var(--admin-accent-border-green, rgba(16,185,129,0.15)) !important; }
+.admin-twenty .border-purple-100 { border-color: var(--admin-accent-border-purple, rgba(139,92,246,0.15)) !important; }
+.admin-twenty .border-orange-100 { border-color: var(--admin-accent-border-orange, rgba(249,115,22,0.15)) !important; }
+.admin-twenty .border-red-100 { border-color: var(--admin-accent-border-red, rgba(239,68,68,0.15)) !important; }
+.admin-twenty .border-emerald-100 { border-color: var(--admin-accent-border-green, rgba(16,185,129,0.15)) !important; }
+.admin-twenty .border-violet-100 { border-color: var(--admin-accent-border-purple, rgba(139,92,246,0.15)) !important; }
+.admin-twenty .border-amber-100 { border-color: var(--admin-accent-border-amber, rgba(245,158,11,0.15)) !important; }
 
 /* ── Layout Fixes ── */
 .admin-twenty .min-h-screen { min-height: auto !important; background: transparent !important; }
 .admin-twenty .p-6.md\:p-8 { padding: 0 !important; }
 .admin-twenty .max-w-7xl { max-width: 100% !important; }
 .admin-twenty .rounded-2xl,
-.admin-twenty .rounded-xl { border-radius: 8px !important; }
+.admin-twenty .rounded-xl { border-radius: var(--admin-radius-lg, 8px) !important; }
 .admin-twenty .hover\:-translate-y-1:hover { transform: none !important; }
 
 /* ── Typography Normalization ── */
@@ -97,66 +102,255 @@
 .admin-twenty .text-3xl { font-size: 24px !important; }
 .admin-twenty .text-xl { font-size: 16px !important; }
 .admin-twenty .text-lg { font-size: 14px !important; }
-.admin-twenty h1, .admin-twenty h2, .admin-twenty h3, .admin-twenty h4 { color: var(--foreground); }
-.admin-twenty p { color: var(--muted-foreground); }
+.admin-twenty h1, .admin-twenty h2, .admin-twenty h3, .admin-twenty h4 { color: var(--admin-font-primary); }
+.admin-twenty p { color: var(--admin-font-secondary); }
 .admin-twenty .mb-8 { margin-bottom: 16px !important; }
 .admin-twenty .mb-10 { margin-bottom: 20px !important; }
 
 /* ── Table ── */
-.admin-twenty table { font-size: 13px; color: #b3b3b3; }
-.admin-twenty thead th { font-size: 12px !important; font-weight: 500 !important; color: #818181 !important; background: transparent !important; border-color: #2a2a2a !important; padding: 8px 12px !important; }
-.admin-twenty tbody td { border-color: #2a2a2a !important; color: #b3b3b3 !important; padding: 10px 12px !important; }
-.admin-twenty tbody tr:hover td { background: rgba(255,255,255,0.06) !important; }
+.admin-twenty table { font-size: 13px; color: var(--admin-font-secondary); }
+.admin-twenty thead th {
+  font-size: 12px !important; font-weight: 500 !important;
+  color: var(--admin-font-tertiary) !important;
+  background: transparent !important;
+  border-color: var(--admin-border-default) !important;
+  padding: 8px 12px !important;
+}
+.admin-twenty tbody td {
+  border-color: var(--admin-border-default) !important;
+  color: var(--admin-font-secondary) !important;
+  padding: 10px 12px !important;
+}
+.admin-twenty tbody tr:hover td { background: var(--admin-bg-hover) !important; }
 
 /* ── Inputs ── */
 .admin-twenty input,
 .admin-twenty select,
-.admin-twenty textarea { background: #1e1e1e !important; border-color: #2a2a2a !important; color: #ebebeb !important; font-size: 13px; border-radius: 4px !important; height: 32px !important; }
-.admin-twenty input::placeholder { color: #555 !important; }
-.admin-twenty input:focus { border-color: #555 !important; outline: none; box-shadow: none !important; }
+.admin-twenty textarea {
+  background: var(--admin-bg-input) !important;
+  border-color: var(--admin-border-default) !important;
+  color: var(--admin-font-primary) !important;
+  font-size: 13px;
+  border-radius: 4px !important;
+  height: 32px !important;
+}
+.admin-twenty input::placeholder { color: var(--admin-font-light) !important; }
+.admin-twenty input:focus {
+  border-color: var(--admin-border-hover) !important;
+  outline: none; box-shadow: none !important;
+}
 
 /* ── Buttons ── */
 .admin-twenty button { font-size: 13px; }
+.admin-twenty .bg-gray-900 {
+  background: var(--admin-font-primary) !important;
+  color: var(--admin-bg-panel) !important;
+}
+.admin-twenty .hover\:bg-gray-800:hover,
+.admin-twenty .hover\:bg-black:hover {
+  background: var(--admin-font-secondary) !important;
+}
 
 /* ── Badges ── */
-.admin-twenty [data-slot="badge"] { font-size: 11px !important; font-weight: 500 !important; border-radius: 4px !important; padding: 2px 6px !important; }
+.admin-twenty [data-slot="badge"] {
+  font-size: 11px !important; font-weight: 500 !important;
+  border-radius: 4px !important; padding: 2px 6px !important;
+}
 
 /* ── Dialogs ── */
-.admin-twenty [data-slot="dialog-content"] { background: #1e1e1e !important; border-color: #2a2a2a !important; color: #ebebeb !important; border-radius: 8px !important; }
-.admin-twenty [data-slot="dialog-title"] { color: #ebebeb !important; font-size: 14px !important; font-weight: 500 !important; }
-.admin-twenty [data-slot="dialog-description"] { color: #818181 !important; font-size: 12px !important; }
+.admin-twenty [data-slot="dialog-content"] {
+  background: var(--admin-bg-card) !important;
+  border-color: var(--admin-border-default) !important;
+  color: var(--admin-font-primary) !important;
+  border-radius: 8px !important;
+}
+.admin-twenty [data-slot="dialog-title"] {
+  color: var(--admin-font-primary) !important;
+  font-size: 14px !important; font-weight: 500 !important;
+}
+.admin-twenty [data-slot="dialog-description"] {
+  color: var(--admin-font-tertiary) !important;
+  font-size: 12px !important;
+}
 
 /* ── Labels ── */
-.admin-twenty label { color: #b3b3b3 !important; font-size: 12px; font-weight: 500; }
+.admin-twenty label {
+  color: var(--admin-font-secondary) !important;
+  font-size: 12px; font-weight: 500;
+}
 
 /* ── Select ── */
-.admin-twenty [data-slot="select-trigger"] { background: #1e1e1e !important; border-color: #2a2a2a !important; color: #b3b3b3 !important; height: 32px !important; border-radius: 4px !important; }
-.admin-twenty [data-slot="select-content"] { background: #1e1e1e !important; border-color: #2a2a2a !important; border-radius: 4px !important; }
-.admin-twenty [data-slot="select-item"] { color: #b3b3b3 !important; font-size: 13px !important; }
-.admin-twenty [data-slot="select-item"]:hover { background: rgba(255,255,255,0.06) !important; }
+.admin-twenty [data-slot="select-trigger"] {
+  background: var(--admin-bg-input) !important;
+  border-color: var(--admin-border-default) !important;
+  color: var(--admin-font-secondary) !important;
+  height: 32px !important; border-radius: 4px !important;
+}
+.admin-twenty [data-slot="select-content"] {
+  background: var(--admin-bg-input) !important;
+  border-color: var(--admin-border-default) !important;
+  border-radius: 4px !important;
+}
+.admin-twenty [data-slot="select-item"] { color: var(--admin-font-secondary) !important; font-size: 13px !important; }
+.admin-twenty [data-slot="select-item"]:hover { background: var(--admin-bg-hover) !important; }
 
 /* ── Tabs ── */
-.admin-twenty [data-slot="tabs-list"] { background: transparent !important; border-color: #2a2a2a !important; border-radius: 4px !important; }
-.admin-twenty [data-slot="tabs-trigger"] { color: #818181 !important; font-size: 13px !important; border-radius: 4px !important; }
-.admin-twenty [data-slot="tabs-trigger"][data-state="active"] { color: #ebebeb !important; background: rgba(255,255,255,0.10) !important; }
+.admin-twenty [data-slot="tabs-list"] {
+  background: transparent !important;
+  border-color: var(--admin-border-default) !important;
+  border-radius: 4px !important;
+}
+.admin-twenty [data-slot="tabs-trigger"] {
+  color: var(--admin-font-tertiary) !important;
+  font-size: 13px !important; border-radius: 4px !important;
+}
+.admin-twenty [data-slot="tabs-trigger"][data-state="active"] {
+  color: var(--admin-font-primary) !important;
+  background: var(--admin-bg-active) !important;
+}
 
 /* ── Separator ── */
 .admin-twenty [data-slot="separator"],
-.admin-twenty hr { background: #2a2a2a !important; border-color: #2a2a2a !important; }
+.admin-twenty hr {
+  background: var(--admin-border-default) !important;
+  border-color: var(--admin-border-default) !important;
+}
 
 /* ── Skeleton ── */
-.admin-twenty .animate-pulse { background: #222 !important; }
+.admin-twenty .animate-pulse { background: var(--admin-bg-card-hover) !important; }
 
 /* ── Switch ── */
-.admin-twenty [data-slot="switch"] { background: #333 !important; }
-.admin-twenty [data-slot="switch"][data-state="checked"] { background: #3b82f6 !important; }
+.admin-twenty [data-slot="switch"] { background: var(--admin-border-hover) !important; }
+.admin-twenty [data-slot="switch"][data-state="checked"] { background: var(--admin-accent-blue) !important; }
 
 /* ── Scrollbar ── */
 .admin-twenty ::-webkit-scrollbar { width: 6px; height: 6px; }
 .admin-twenty ::-webkit-scrollbar-track { background: transparent; }
-.admin-twenty ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
-.admin-twenty ::-webkit-scrollbar-thumb:hover { background: #333; }
+.admin-twenty ::-webkit-scrollbar-thumb { background: var(--admin-border-default); border-radius: 3px; }
+.admin-twenty ::-webkit-scrollbar-thumb:hover { background: var(--admin-border-hover); }
 
 /* ── Focus ── */
-.admin-twenty .focus\:ring-gray-900:focus { --tw-ring-color: #555 !important; }
-.admin-twenty .focus\:border-gray-900:focus { border-color: #555 !important; }
+.admin-twenty .focus\:ring-gray-900:focus { --tw-ring-color: var(--admin-font-light) !important; }
+.admin-twenty .focus\:border-gray-900:focus { border-color: var(--admin-font-light) !important; }
+
+/* ── Dropdown Menus ── */
+.admin-twenty [data-slot="dropdown-menu-content"] {
+  background: var(--admin-bg-card) !important;
+  border-color: var(--admin-border-default) !important;
+  border-radius: 8px !important;
+}
+.admin-twenty [data-slot="dropdown-menu-item"] {
+  color: var(--admin-font-secondary) !important;
+  font-size: 13px !important;
+}
+.admin-twenty [data-slot="dropdown-menu-item"]:hover,
+.admin-twenty [data-slot="dropdown-menu-item"]:focus {
+  background: var(--admin-bg-hover) !important;
+}
+.admin-twenty [data-slot="dropdown-menu-separator"] {
+  background: var(--admin-border-default) !important;
+}
+
+/* ── Badge color overrides for status badges ── */
+.admin-twenty .bg-emerald-50.text-emerald-700 {
+  background: var(--admin-accent-bg-green, rgba(16,185,129,0.1)) !important;
+  color: var(--admin-accent-green) !important;
+}
+.admin-twenty .bg-gray-100.text-gray-600 {
+  background: var(--admin-bg-card-hover) !important;
+  color: var(--admin-font-tertiary) !important;
+}
+
+/* ── Glass / Backdrop Effects ── */
+.admin-twenty .bg-white\/60,
+.admin-twenty .bg-white\/80,
+.admin-twenty .bg-white\/50 {
+  background: var(--admin-bg-card) !important;
+  backdrop-filter: none !important;
+}
+.admin-twenty .backdrop-blur-xl,
+.admin-twenty .backdrop-blur-2xl {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ── Gradients — flatten to theme colors ── */
+.admin-twenty [class*="bg-gradient-to"] {
+  background-image: none !important;
+}
+
+/* ── Border White — dark theme fix ── */
+.admin-twenty .border-white,
+.admin-twenty .border-white\/50 { border-color: var(--admin-border-default) !important; }
+
+/* ── Additional Shadow Resets ── */
+.admin-twenty .shadow-xl,
+.admin-twenty .shadow-lg,
+.admin-twenty .shadow-md,
+.admin-twenty .shadow-sm,
+.admin-twenty [class*="shadow-gray"],
+.admin-twenty [class*="shadow-blue"],
+.admin-twenty [class*="shadow-indigo"] { box-shadow: none !important; }
+.admin-twenty .hover\:shadow-xl:hover { box-shadow: none !important; }
+
+/* ── Hover Transforms — disable lift effects ── */
+.admin-twenty .hover\:-translate-y-0\.5:hover,
+.admin-twenty .hover\:-translate-y-1:hover,
+.admin-twenty .hover\:scale-105:hover { transform: none !important; }
+
+/* ── Card Component Overrides ── */
+.admin-twenty [data-slot="card"] {
+  background: var(--admin-bg-card) !important;
+  border-color: var(--admin-border-default) !important;
+  color: var(--admin-font-primary) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+.admin-twenty [data-slot="card"]:hover {
+  border-color: var(--admin-border-hover) !important;
+}
+.admin-twenty [data-slot="card-header"] {
+  background: transparent !important;
+  border-color: var(--admin-border-default) !important;
+}
+.admin-twenty [data-slot="card-title"] {
+  color: var(--admin-font-primary) !important;
+}
+.admin-twenty [data-slot="card-description"] {
+  color: var(--admin-font-tertiary) !important;
+}
+
+/* ── Rounded overrides ── */
+.admin-twenty .rounded-3xl,
+.admin-twenty .rounded-\[2rem\] { border-radius: 8px !important; }
+
+/* ── Additional text overrides ── */
+.admin-twenty .text-transparent { color: var(--admin-font-primary) !important; background-image: none !important; -webkit-background-clip: unset !important; }
+.admin-twenty .text-black { color: var(--admin-font-primary) !important; }
+.admin-twenty .text-gray-200 { color: var(--admin-font-light) !important; }
+
+/* ── Background fixes for specific patterns ── */
+.admin-twenty .bg-black { background: var(--admin-font-primary) !important; }
+.admin-twenty .hover\:bg-black:hover { background: var(--admin-font-secondary) !important; }
+.admin-twenty .bg-white\/5,
+.admin-twenty .bg-white\/10,
+.admin-twenty .bg-white\/15 { background: var(--admin-bg-hover) !important; }
+
+/* ── Avatar borders ── */
+.admin-twenty .border-\[3px\].border-white { border-color: var(--admin-bg-card) !important; }
+
+/* ── Ring overrides ── */
+.admin-twenty .ring-white,
+.admin-twenty .ring-4.ring-white { --tw-ring-color: var(--admin-bg-card) !important; }
+
+/* ── Blur decorations — hide ambient blobs ── */
+.admin-twenty .blur-2xl,
+.admin-twenty .blur-3xl { display: none !important; }
+
+/* ── Grayscale on avatars — remove ── */
+.admin-twenty .grayscale { filter: none !important; }
+
+/* ── Status dot colors — keep visible ── */
+.admin-twenty .bg-green-500 { background: var(--admin-accent-green) !important; }
+.admin-twenty .bg-red-500 { background: var(--admin-accent-red) !important; }
+.admin-twenty .bg-blue-500 { background: var(--admin-accent-blue) !important; }

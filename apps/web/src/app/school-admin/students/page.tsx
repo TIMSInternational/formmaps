@@ -170,8 +170,7 @@ export default function StudentsPage() {
   ];
 
   return (
-    <div className="min-h-screen space-y-8 max-w-7xl mx-auto pb-12">
-      <div className="space-y-8">
+    <div className="space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -528,7 +527,6 @@ export default function StudentsPage() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
     </div>
   );
 }

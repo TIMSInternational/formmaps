@@ -12,9 +12,5 @@ export default function AdminCareersPage() {
   if (loading) return <div>{t("admin.careers.loading")}</div>;
   if (!isAdmin) return <div>{t("admin.accessDenied")}</div>;
 
-  return (
-    <div className="p-6">
-      <CareerManager />
-    </div>
-  );
+  return <CareerManager />;
 }

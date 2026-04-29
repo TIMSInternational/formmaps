@@ -146,8 +146,7 @@ export default function SeniorProjectPage() {
   const isMutating = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
-      <div className="max-w-5xl mx-auto space-y-10">
+    <div className="space-y-8">
 
         {/* Header */}
         <div className="space-y-6">
@@ -457,7 +456,6 @@ export default function SeniorProjectPage() {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

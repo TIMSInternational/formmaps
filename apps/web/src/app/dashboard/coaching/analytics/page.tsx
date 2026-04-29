@@ -371,21 +371,14 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 flex justify-center items-center h-screen bg-[#F8FAFC]">
+      <div className="flex justify-center items-center py-20">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-4 sm:p-8 relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
-      </div>
-
-      <div className="max-w-7xl mx-auto relative z-10 space-y-8">
+    <div className="space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
           <div>
             <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
@@ -770,7 +763,6 @@ export default function AnalyticsPage() {
             </Card>
           </div>
         </div>
-      </div>
     </div>
   );
 }

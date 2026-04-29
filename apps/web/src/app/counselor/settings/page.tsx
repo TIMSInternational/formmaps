@@ -92,8 +92,7 @@ export default function CounselorSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 p-4 relative overflow-hidden">
-      <div className="max-w-4xl mx-auto space-y-4 relative z-10">
+    <div className="space-y-4">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -248,7 +247,6 @@ export default function CounselorSettingsPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
     </div>
   );
 }

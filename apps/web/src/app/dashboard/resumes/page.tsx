@@ -317,8 +317,7 @@ export default function MyResumesPage() {
   );
 
   return (
-    <main className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
-      <div className="space-y-5">
+    <div className="space-y-6">
 
         {/* Header */}
         <motion.header
@@ -449,8 +448,6 @@ export default function MyResumesPage() {
           )}
         </motion.div>
 
-      </div>
-
       {/* Hidden file input for PDF upload */}
       <input
         ref={fileInputRef}
@@ -489,6 +486,6 @@ export default function MyResumesPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </main>
+    </div>
   );
 }

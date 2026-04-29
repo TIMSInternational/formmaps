@@ -62,8 +62,7 @@ export default function CoachSettingsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 font-sans text-gray-900">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -149,7 +148,6 @@ export default function CoachSettingsPage() {
               />
             </TabsContent>
         </Tabs>
-      </div>
     </div>
   );
 }

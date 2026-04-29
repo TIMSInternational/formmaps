@@ -144,15 +144,7 @@ export default function CoachProfilePage() {
   }, [profileData]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] relative overflow-hidden selection:bg-blue-100 selection:text-blue-900">
-      {/* Background Decor */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-100/40 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 mix-blend-multiply" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-purple-100/40 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2 mix-blend-multiply" />
-        <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] bg-white/40 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-      </div>
-
-      <div className="container max-w-6xl mx-auto py-12 px-4 sm:px-6 relative z-10">
+    <div className="space-y-8">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="space-y-2">
@@ -536,7 +528,6 @@ export default function CoachProfilePage() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

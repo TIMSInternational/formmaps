@@ -95,7 +95,6 @@ export default function ResultsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -284,7 +283,6 @@ export default function ResultsPage() {
             </div>
           )}
         </motion.div>
-      </div>
 
       {/* Student Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>

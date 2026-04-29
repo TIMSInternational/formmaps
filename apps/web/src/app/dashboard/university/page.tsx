@@ -84,7 +84,7 @@ export default function UniversityPage() {
     (filters.hasHousing ? 1 : 0);
 
   return (
-    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
+    <div className="space-y-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}

@@ -137,16 +137,16 @@ export default function BookCounselorPage() {
 
   if (loadingCounselors) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-slate-50 flex items-center justify-center p-6">
-        <Loader2 className="h-10 w-10 text-indigo-500 animate-spin" />
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
       </div>
     );
   }
 
   if (counselors.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-slate-50 flex items-center justify-center p-6">
-        <Card className="max-w-md w-full border-0 shadow-xl text-center">
+      <div className="flex items-center justify-center py-24">
+        <Card className="max-w-md w-full text-center">
           <CardContent className="pt-10 pb-8">
             <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <User className="h-8 w-8 text-indigo-500" />
@@ -164,9 +164,9 @@ export default function BookCounselorPage() {
 
   if (booked) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-slate-50 flex items-center justify-center p-6">
+      <div className="flex items-center justify-center py-24">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-          <Card className="max-w-md w-full border-0 shadow-xl text-center">
+          <Card className="max-w-md w-full text-center">
             <CardContent className="pt-10 pb-8">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.15 }}>
                 <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
@@ -199,8 +199,7 @@ export default function BookCounselorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-slate-50">
-      <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 space-y-8">
+    <div className="space-y-8">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-xl">
@@ -405,7 +404,6 @@ export default function BookCounselorPage() {
             </Card>
           </div>
         </div>
-      </div>
     </div>
   );
 }

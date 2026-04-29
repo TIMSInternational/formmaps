@@ -197,8 +197,7 @@ export default function EvaluationsPage() {
 
   // Main list view
   return (
-    <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 space-y-10 font-sans">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -440,7 +439,6 @@ export default function EvaluationsPage() {
             </CardContent>
           </Card>
         </motion.div>
-      </div>
     </div>
   );
 }

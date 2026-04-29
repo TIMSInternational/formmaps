@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useRouter } from "next/navigation";
+import { useAdminTheme } from "@/contexts/AdminThemeContext";
 import {
   LayoutDashboard,
   Users,
@@ -28,26 +29,6 @@ import {
   Monitor,
 } from "lucide-react";
 
-// Twenty dark theme colors from theme-dark.css
-const DARK = {
-  fontPrimary: "#ebebeb",
-  fontSecondary: "#b3b3b3",
-  fontTertiary: "#818181",
-  fontLight: "#666",
-  hoverBg: "rgba(255,255,255,0.06)",
-  activeBg: "rgba(255,255,255,0.10)",
-};
-
-// Twenty light theme colors from theme-light.css
-const LIGHT = {
-  fontPrimary: "#141414",
-  fontSecondary: "#474747",
-  fontTertiary: "#818181",
-  fontLight: "#999",
-  hoverBg: "rgba(0,0,0,0.04)",
-  activeBg: "rgba(0,0,0,0.08)",
-};
-
 type ThemeMode = "dark" | "light" | "system";
 
 const WORKSPACE_NAV = [
@@ -57,15 +38,16 @@ const WORKSPACE_NAV = [
   { label: "Coaches", href: "/dashboard/admin/coaches", icon: GraduationCap },
   { label: "Courses", href: "/dashboard/admin/courses", icon: BookOpen },
   { label: "Careers", href: "/dashboard/admin/careers", icon: Briefcase },
-  { label: "360° Questions", href: "/dashboard/admin/questions", icon: HelpCircle },
+  { label: "360 Questions", href: "/dashboard/admin/questions", icon: HelpCircle },
   { label: "Transactions", href: "/dashboard/admin/transactions", icon: Receipt },
   { label: "Payouts", href: "/dashboard/admin/payouts", icon: Wallet },
   { label: "Plans", href: "/dashboard/admin/plans", icon: CreditCard },
   { label: "Analytics", href: "/dashboard/admin/analytics", icon: BarChart3 },
 ];
 
-function NavItem({ href, icon: Icon, label, active, collapsed, C }: {
-  href: string; icon: any; label: string; active: boolean; collapsed?: boolean; C: typeof DARK;
+function NavItem({ href, icon: Icon, label, active, collapsed, colors }: {
+  href: string; icon: React.ElementType; label: string; active: boolean; collapsed?: boolean;
+  colors: { fontPrimary: string; fontSecondary: string; fontTertiary: string; hoverBg: string; activeBg: string };
 }) {
   return (
     <Link href={href} title={collapsed ? label : undefined}
@@ -74,14 +56,14 @@ function NavItem({ href, icon: Icon, label, active, collapsed, C }: {
         justifyContent: collapsed ? "center" : "flex-start",
         gap: collapsed ? 0 : 8, height: 28,
         padding: collapsed ? "0 4px" : "0 8px", borderRadius: 4,
-        fontSize: 13, color: active ? C.fontPrimary : C.fontSecondary,
-        background: active ? C.activeBg : "transparent",
+        fontSize: 13, color: active ? colors.fontPrimary : colors.fontSecondary,
+        background: active ? colors.activeBg : "transparent",
         textDecoration: "none", transition: "background 0.1s ease", cursor: "pointer",
       }}
-      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = C.hoverBg; }}
+      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = colors.hoverBg; }}
       onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
     >
-      <Icon style={{ width: 16, height: 16, color: active ? C.fontPrimary : C.fontTertiary, flexShrink: 0 }} />
+      <Icon style={{ width: 16, height: 16, color: active ? colors.fontPrimary : colors.fontTertiary, flexShrink: 0 }} />
       {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>}
     </Link>
   );
@@ -91,28 +73,29 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useGlobalStore();
+  const { mode, isDark, setMode, colors: themeColors } = useAdminTheme();
+
   const [collapsed, setCollapsed] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [themeSubmenu, setThemeSubmenu] = useState(false);
-  const [theme, setTheme] = useState<ThemeMode>("dark");
 
-  // Load saved theme
-  useEffect(() => {
-    const saved = localStorage.getItem("admin-theme") as ThemeMode | null;
-    if (saved) setTheme(saved);
-  }, []);
+  // Derive sidebar color shortcuts from theme tokens
+  const C = {
+    fontPrimary: themeColors.font.primary,
+    fontSecondary: themeColors.font.secondary,
+    fontTertiary: themeColors.font.tertiary,
+    fontLight: themeColors.font.sectionLabel,
+    hoverBg: themeColors.bg.hover,
+    activeBg: themeColors.bg.active,
+  };
 
-  const isDark = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  const C = isDark ? DARK : LIGHT;
-
-  const changeTheme = (mode: ThemeMode) => {
-    setTheme(mode);
-    localStorage.setItem("admin-theme", mode);
+  const changeTheme = (newMode: ThemeMode) => {
+    setMode(newMode);
     setThemeSubmenu(false);
     setDropdownOpen(false);
   };
 
-  const themeLabel = theme === "dark" ? "Dark" : theme === "light" ? "Light" : "System";
+  const themeLabel = mode === "dark" ? "Dark" : mode === "light" ? "Light" : "System";
 
   const isActive = (href: string) => {
     if (href === "/dashboard/admin") return pathname === href;
@@ -121,19 +104,6 @@ export function AdminSidebar() {
 
   const COLLAPSED_W = 52;
   const EXPANDED_W = 220;
-
-  // Compute layout colors based on theme
-  const bgOuter = isDark ? "#1d1d1d" : "#f0f0f0";
-  const bgPanel = isDark ? "#171717" : "#ffffff";
-  const borderPanel = isDark ? "#222" : "#e0e0e0";
-
-  // Pass theme to layout via CSS custom properties
-  useEffect(() => {
-    const root = document.documentElement;
-    root.style.setProperty("--admin-bg-outer", bgOuter);
-    root.style.setProperty("--admin-bg-panel", bgPanel);
-    root.style.setProperty("--admin-border-panel", borderPanel);
-  }, [bgOuter, bgPanel, borderPanel]);
 
   return (
     <aside style={{
@@ -223,10 +193,10 @@ export function AdminSidebar() {
               onClick={() => { setDropdownOpen(false); setThemeSubmenu(false); }} />
             <div style={{
               position: "absolute", top: 44, left: 8, width: 200,
-              background: isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.8)",
+              background: themeColors.bg.overlay,
               backdropFilter: "blur(12px) saturate(200%) contrast(100%) brightness(130%)",
               WebkitBackdropFilter: "blur(12px) saturate(200%) contrast(100%) brightness(130%)",
-              border: `1px solid ${isDark ? "#222" : "#ddd"}`,
+              border: `1px solid ${themeColors.border.light}`,
               borderRadius: 8, padding: 0, zIndex: 100,
               boxShadow: "2px 4px 16px 0px rgba(0,0,0,0.16), 0px 2px 4px 0px rgba(0,0,0,0.08)",
               overflow: "hidden",
@@ -286,7 +256,7 @@ export function AdminSidebar() {
                       <ChevronDown style={{ width: 12, height: 12, transform: "rotate(90deg)", color: C.fontLight }} />
                       <span>Theme</span>
                     </button>
-                    <div style={{ height: 1, background: isDark ? "#333" : "#e0e0e0", margin: "2px 6px" }} />
+                    <div style={{ height: 1, background: themeColors.border.hover, margin: "2px 6px" }} />
                     {([
                       { mode: "light" as ThemeMode, label: "Light", icon: Sun },
                       { mode: "dark" as ThemeMode, label: "Dark", icon: Moon },
@@ -295,15 +265,15 @@ export function AdminSidebar() {
                       <button key={t.mode} onClick={() => changeTheme(t.mode)} style={{
                         display: "flex", alignItems: "center", gap: 12, width: "100%",
                         padding: "8px 10px", borderRadius: 4, border: "none", background: "transparent",
-                        color: theme === t.mode ? C.fontPrimary : C.fontSecondary,
+                        color: mode === t.mode ? C.fontPrimary : C.fontSecondary,
                         fontSize: 13, cursor: "pointer", fontFamily: "inherit",
                         transition: "background 0.1s", textAlign: "left",
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                        <t.icon style={{ width: 16, height: 16, color: theme === t.mode ? C.fontPrimary : C.fontTertiary, flexShrink: 0 }} />
+                        <t.icon style={{ width: 16, height: 16, color: mode === t.mode ? C.fontPrimary : C.fontTertiary, flexShrink: 0 }} />
                         <span style={{ flex: 1 }}>{t.label}</span>
-                        {theme === t.mode && <span style={{ color: C.fontTertiary, fontSize: 14 }}>✓</span>}
+                        {mode === t.mode && <span style={{ color: C.fontTertiary, fontSize: 14 }}>✓</span>}
                       </button>
                     ))}
                   </>
@@ -323,11 +293,34 @@ export function AdminSidebar() {
           }}>Workspace</div>}
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {WORKSPACE_NAV.map((item) => (
-              <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} C={C} />
+              <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} colors={C} />
             ))}
           </div>
         </div>
       </nav>
+
+      {/* Sign Out — bottom */}
+      <div style={{ padding: collapsed ? "8px 6px" : "8px 8px", borderTop: `1px solid ${themeColors.border.light}` }}>
+        <button
+          onClick={() => { logout(); router.push("/login"); }}
+          title={collapsed ? "Sign Out" : undefined}
+          style={{
+            display: "flex", alignItems: "center",
+            justifyContent: collapsed ? "center" : "flex-start",
+            gap: collapsed ? 0 : 8, height: 28, width: "100%",
+            padding: collapsed ? "0 4px" : "0 8px", borderRadius: 4,
+            fontSize: 13, color: C.fontSecondary,
+            background: "transparent", border: "none",
+            cursor: "pointer", fontFamily: "inherit",
+            transition: "background 0.1s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+        >
+          <LogOut style={{ width: 16, height: 16, color: C.fontTertiary, flexShrink: 0 }} />
+          {!collapsed && <span>Sign Out</span>}
+        </button>
+      </div>
     </aside>
   );
 }
