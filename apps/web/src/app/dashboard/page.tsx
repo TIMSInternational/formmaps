@@ -15,6 +15,8 @@ import { MILResults } from "./_components/MILResults";
 import { LiveStatus } from "./_components/LiveStatus";
 import { motion } from "framer-motion";
 import { normalizeRole } from "@/lib/roleUtils";
+import { AdminTimeline } from "@/components/ui/admin-timeline";
+import { BookOpen, Target, FileText, GraduationCap } from "lucide-react";
 import { Roles } from "@/lib/permissions";
 
 export default function DashboardPage() {
@@ -129,7 +131,48 @@ export default function DashboardPage() {
           />
         </motion.div>
 
-        {/* ROW 4: Bottom trio (4 + 4 + 4) */}
+        {/* ROW 4: Your Journey Timeline */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <AdminTimeline
+            title="Your Journey"
+            items={[
+              {
+                id: "1",
+                title: "Complete Assessments",
+                description: "Take PCA and MIL evaluations to discover your strengths",
+                status: dashboardData?.pcaResults ? "completed" : "active",
+                icon: <FileText style={{ width: 12, height: 12 }} />,
+              },
+              {
+                id: "2",
+                title: "Explore Career Paths",
+                description: "Browse careers matched to your profile and interests",
+                status: dashboardData?.aiSummary ? "completed" : "pending",
+                icon: <Target style={{ width: 12, height: 12 }} />,
+              },
+              {
+                id: "3",
+                title: "Start Learning",
+                description: "Enroll in courses to build skills for your target career",
+                status: "pending",
+                icon: <BookOpen style={{ width: 12, height: 12 }} />,
+              },
+              {
+                id: "4",
+                title: "Build Your Portfolio",
+                description: "Create your resume and showcase your achievements",
+                status: "pending",
+                icon: <GraduationCap style={{ width: 12, height: 12 }} />,
+              },
+            ]}
+          />
+        </motion.div>
+
+        {/* ROW 5: Bottom trio (4 + 4 + 4) */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
-import { Clock } from "lucide-react";
+import { LiveFeed, type FeedItem } from "@/components/ui/live-feed";
 
 function generateArcDots(count: number, radius: number, cx: number, cy: number) {
   const dots = [];
@@ -23,6 +23,15 @@ function formatTimeAgo(timestamp: string) {
   if (minutes < 60) return `${minutes}m ago`;
   if (hours < 24) return `${hours}h ago`;
   return `${Math.floor(hours / 24)}d ago`;
+}
+
+function mapActivityToFeed(activities: any[]): FeedItem[] {
+  return activities.map((a, i) => ({
+    id: `activity-${i}`,
+    type: a.type || "system",
+    message: a.message,
+    time: formatTimeAgo(a.date || a.timestamp || new Date().toISOString()),
+  }));
 }
 
 export function RevenueOverviewCard() {
@@ -107,48 +116,13 @@ export function RevenueOverviewCard() {
         </div>
       </div>
 
-      {/* Right — Recent Activity */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {/* Recent Activity */}
-        <div
-          style={{
-            borderRadius: 8,
-            border: "1px solid var(--admin-border-default, #2a2a2a)",
-            background: "var(--admin-bg-card, #1e1e1e)",
-            padding: "16px 20px",
-            flex: 1,
-          }}
-        >
-          <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--admin-font-light, #555)", marginBottom: 12 }}>
-            Recent Activity
-          </div>
-          {recentActivity.length === 0 ? (
-            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>No recent activity</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {recentActivity.map((activity: any, i: number) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                  <div style={{
-                    width: 6, height: 6, borderRadius: 3, marginTop: 5, flexShrink: 0,
-                    background: activity.type === "transaction" ? "var(--admin-accent-green)"
-                      : activity.type === "user" ? "var(--admin-accent-blue)"
-                      : "var(--admin-font-tertiary)",
-                  }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, color: "var(--admin-font-secondary)", lineHeight: 1.4 }}>
-                      {activity.message}
-                    </div>
-                    <div style={{ fontSize: 10, color: "var(--admin-font-light)", marginTop: 2, display: "flex", alignItems: "center", gap: 3 }}>
-                      <Clock style={{ width: 9, height: 9 }} />
-                      {formatTimeAgo(activity.date || activity.timestamp || new Date().toISOString())}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Right — Live Feed */}
+      <LiveFeed
+        items={mapActivityToFeed(recentActivity)}
+        title="Recent Activity"
+        autoScroll={recentActivity.length > 5}
+        maxVisible={5}
+      />
     </div>
   );
 }

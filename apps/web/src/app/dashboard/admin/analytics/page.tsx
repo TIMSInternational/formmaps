@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { AdminAreaChart } from "@/components/ui/admin-area-chart";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -232,28 +233,31 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Charts Section */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-              {/* Revenue Chart */}
-              <Card className="col-span-4 rounded-2xl border-gray-100  shadow-none overflow-hidden hover:shadow-md transition-shadow">
-                <CardHeader className="border-b border-gray-50 bg-gray-50/30 py-5">
-                  <CardTitle className="text-lg font-semibold text-gray-800">Revenue Analysis</CardTitle>
-                  <CardDescription>Monthly revenue vs transaction volume</CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <DynamicRevenueChart data={analytics.revenueData} />
-                </CardContent>
-              </Card>
-
-              {/* User Growth */}
-              <Card className="col-span-3 rounded-2xl border-gray-100 shadow-none overflow-hidden hover:shadow-md transition-shadow">
-                <CardHeader className="border-b border-gray-50 bg-gray-50/30 py-5">
-                  <CardTitle className="text-lg font-bold text-gray-900">User GrowthTrend</CardTitle>
-                  <CardDescription>New user acquisition over time</CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <DynamicUserGrowthChart data={analytics.userGrowthData} />
-                </CardContent>
-              </Card>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <AdminAreaChart
+                title="Revenue Analysis"
+                subtitle="Monthly revenue vs transaction volume"
+                data={analytics.revenueData.map((d: any) => ({
+                  label: d.month,
+                  revenue: d.revenue,
+                  transactions: d.transactions,
+                }))}
+                series={[
+                  { key: "revenue", name: "Revenue ($)", color: "#3b82f6" },
+                  { key: "transactions", name: "Transactions", color: "#10b981" },
+                ]}
+              />
+              <AdminAreaChart
+                title="User Growth"
+                subtitle="New user acquisition over time"
+                data={analytics.userGrowthData.map((d: any) => ({
+                  label: d.month,
+                  users: d.users,
+                }))}
+                series={[
+                  { key: "users", name: "Users", color: "#8b5cf6" },
+                ]}
+              />
             </div>
 
             {/* Bottom Grid */}
