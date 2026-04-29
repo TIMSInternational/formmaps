@@ -19,12 +19,8 @@ import {
   Settings,
   School,
   ChevronDown,
-  Home,
-  MessageSquare,
-  Search as SearchIcon,
-  FileText,
-  LogOut,
   ChevronLeft,
+  LogOut,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -120,6 +116,7 @@ export function AdminSidebar() {
   const router = useRouter();
   const { user, logout } = useGlobalStore();
   const [collapsed, setCollapsed] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/dashboard/admin") return pathname === href;
@@ -142,10 +139,11 @@ export function AdminSidebar() {
       userSelect: "none",
       overflow: "hidden",
       transition: "width 0.2s ease",
+      position: "relative",
     }}>
 
-      {/* Header — workspace selector */}
-      <div style={{ padding: collapsed ? "12px 6px 0 6px" : "12px 8px 0 8px" }}>
+      {/* Header — workspace selector with dropdown */}
+      <div style={{ padding: collapsed ? "12px 6px 4px 6px" : "12px 8px 4px 8px" }}>
         <button
           style={{
             display: "flex",
@@ -156,7 +154,7 @@ export function AdminSidebar() {
             justifyContent: collapsed ? "center" : "flex-start",
             borderRadius: 4,
             border: "none",
-            background: "transparent",
+            background: dropdownOpen ? C.hoverBg : "transparent",
             cursor: "pointer",
             color: C.fontPrimary,
             fontSize: 13,
@@ -164,52 +162,109 @@ export function AdminSidebar() {
             fontFamily: "inherit",
             transition: "background 0.1s",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          onClick={() => collapsed && setCollapsed(false)}
-          title={collapsed ? "Expand sidebar" : "NexaDev"}
+          onMouseEnter={(e) => { if (!dropdownOpen) e.currentTarget.style.background = C.hoverBg; }}
+          onMouseLeave={(e) => { if (!dropdownOpen) e.currentTarget.style.background = "transparent"; }}
+          onClick={() => {
+            if (collapsed) { setCollapsed(false); return; }
+            setDropdownOpen(!dropdownOpen);
+          }}
         >
           <div style={{
-            width: 24, height: 24, borderRadius: 4,
-            background: "#333", color: "#fff",
+            width: 24, height: 24, borderRadius: 6,
+            background: "linear-gradient(135deg, #8b5a6b, #4a3040)",
+            color: "#fff",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 11, fontWeight: 700, flexShrink: 0,
           }}>N</div>
-          {!collapsed && <span>NexaDev</span>}
-          {!collapsed && <ChevronDown style={{ width: 14, height: 14, marginLeft: "auto", color: C.fontLight }} />}
+          {!collapsed && <span style={{ flex: 1, textAlign: "left" }}>NexaDev</span>}
+          {!collapsed && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen); }}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 20, height: 20, borderRadius: 4,
+                border: "none", background: "transparent", cursor: "pointer",
+                color: C.fontLight, padding: 0,
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                <circle cx="8" cy="3" r="1.5" />
+                <circle cx="8" cy="8" r="1.5" />
+                <circle cx="8" cy="13" r="1.5" />
+              </svg>
+            </button>
+          )}
         </button>
+
+        {/* Dropdown menu */}
+        {dropdownOpen && !collapsed && (
+          <>
+            <div
+              style={{ position: "fixed", inset: 0, zIndex: 99 }}
+              onClick={() => setDropdownOpen(false)}
+            />
+            <div style={{
+              position: "absolute",
+              top: 48,
+              left: 8,
+              width: 200,
+              background: "#1b1b1b",
+              border: "1px solid #2a2a2a",
+              borderRadius: 8,
+              padding: 4,
+              zIndex: 100,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+            }}>
+              {/* Workspace header in dropdown */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "8px 8px", borderBottom: "1px solid #2a2a2a", marginBottom: 4,
+              }}>
+                <div style={{
+                  width: 24, height: 24, borderRadius: 6,
+                  background: "linear-gradient(135deg, #8b5a6b, #4a3040)",
+                  color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 11, fontWeight: 700,
+                }}>N</div>
+                <span style={{ color: C.fontPrimary, fontSize: 13, fontWeight: 500 }}>NexaDev</span>
+              </div>
+
+              {[
+                { icon: "🌙", label: "Theme · Dark", href: "#", hasChevron: true },
+                { icon: "👥", label: "Invite user", href: "#" },
+                { icon: "⚙️", label: "Settings", href: "/dashboard/admin/settings" },
+              ].map((item, i) => (
+                <Link
+                  key={i}
+                  href={item.href}
+                  onClick={() => setDropdownOpen(false)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "7px 8px", borderRadius: 4,
+                    color: C.fontSecondary, fontSize: 13,
+                    textDecoration: "none",
+                    transition: "background 0.1s",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  <span style={{ width: 20, textAlign: "center", fontSize: 14 }}>{item.icon}</span>
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                  {item.hasChevron && <ChevronDown style={{ width: 12, height: 12, color: C.fontLight, transform: "rotate(-90deg)" }} />}
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Icon button row */}
+      {/* Collapse toggle — replaces icon button row */}
       <div style={{
         display: "flex",
         alignItems: "center",
-        gap: 2,
-        padding: collapsed ? "8px 6px 4px 6px" : "8px 8px 4px 8px",
-        justifyContent: collapsed ? "center" : "flex-start",
-        flexWrap: collapsed ? "wrap" : "nowrap",
+        justifyContent: collapsed ? "center" : "flex-end",
+        padding: collapsed ? "4px 6px" : "4px 8px",
       }}>
-        {(collapsed
-          ? [{ icon: SearchIcon, href: "#" }]
-          : [
-              { icon: Home, href: "/dashboard/admin" },
-              { icon: SearchIcon, href: "#" },
-              { icon: MessageSquare, href: "#" },
-            ]
-        ).map((btn, i) => (
-          <Link key={i} href={btn.href} style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: 28, height: 28, borderRadius: 4,
-            color: C.fontTertiary,
-            transition: "background 0.1s",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >
-            <btn.icon style={{ width: 16, height: 16 }} />
-          </Link>
-        ))}
-        {/* Collapse/expand toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
           style={{
@@ -218,7 +273,6 @@ export function AdminSidebar() {
             color: C.fontTertiary,
             transition: "background 0.1s",
             border: "none", background: "transparent", cursor: "pointer",
-            marginLeft: collapsed ? 0 : "auto",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
