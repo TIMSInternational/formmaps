@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useGlobalStore } from "@/store/useGlobalStore";
@@ -19,36 +19,17 @@ import {
   Settings,
   School,
   ChevronDown,
-  ChevronLeft,
+  ChevronRight,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  Moon,
+  Sun,
+  Monitor,
 } from "lucide-react";
 
-/*
- * Colors extracted from Twenty's theme-dark.css:
- * --t-background-primary:    #171717
- * --t-background-secondary:  #1b1b1b
- * --t-background-tertiary:   #1d1d1d
- * --t-border-color-medium:   #222222
- * --t-font-color-primary:    #ebebeb
- * --t-font-color-secondary:  #b3b3b3
- * --t-font-color-tertiary:   #818181
- * --t-font-color-light:      #666666
- * --t-background-transparent-light: rgba(255,255,255,0.06)
- * --t-background-transparent-medium: rgba(255,255,255,0.10)
- * --t-spacing: 4px increments
- * --t-border-radius-sm: 4px
- * --t-font-size-md: 13px (1rem at 13px base)
- * Nav item height: 28px (spacing[7])
- */
-
-const C = {
-  bgPrimary: "#171717",
-  bgSecondary: "#1b1b1b",
-  bgTertiary: "#1d1d1d",
-  borderMedium: "#222",
-  borderLight: "#1d1d1d",
+// Twenty dark theme colors from theme-dark.css
+const DARK = {
   fontPrimary: "#ebebeb",
   fontSecondary: "#b3b3b3",
   fontTertiary: "#818181",
@@ -56,6 +37,18 @@ const C = {
   hoverBg: "rgba(255,255,255,0.06)",
   activeBg: "rgba(255,255,255,0.10)",
 };
+
+// Twenty light theme colors from theme-light.css
+const LIGHT = {
+  fontPrimary: "#141414",
+  fontSecondary: "#474747",
+  fontTertiary: "#818181",
+  fontLight: "#999",
+  hoverBg: "rgba(0,0,0,0.04)",
+  activeBg: "rgba(0,0,0,0.08)",
+};
+
+type ThemeMode = "dark" | "light" | "system";
 
 const WORKSPACE_NAV = [
   { label: "Dashboard", href: "/dashboard/admin", icon: LayoutDashboard },
@@ -71,39 +64,22 @@ const WORKSPACE_NAV = [
   { label: "Analytics", href: "/dashboard/admin/analytics", icon: BarChart3 },
 ];
 
-const OTHER_NAV = [
-  { label: "Settings", href: "/dashboard/admin/settings", icon: Settings },
-  { label: "Student View", href: "/dashboard", icon: ChevronLeft },
-];
-
-function NavItem({ href, icon: Icon, label, active, collapsed }: {
-  href: string; icon: any; label: string; active: boolean; collapsed?: boolean;
+function NavItem({ href, icon: Icon, label, active, collapsed, C }: {
+  href: string; icon: any; label: string; active: boolean; collapsed?: boolean; C: typeof DARK;
 }) {
   return (
-    <Link
-      href={href}
-      title={collapsed ? label : undefined}
+    <Link href={href} title={collapsed ? label : undefined}
       style={{
-        display: "flex",
-        alignItems: "center",
+        display: "flex", alignItems: "center",
         justifyContent: collapsed ? "center" : "flex-start",
-        gap: collapsed ? 0 : 8,
-        height: 28,
-        padding: collapsed ? "0 4px" : "0 8px",
-        borderRadius: 4,
-        fontSize: 13,
-        color: active ? C.fontPrimary : C.fontSecondary,
+        gap: collapsed ? 0 : 8, height: 28,
+        padding: collapsed ? "0 4px" : "0 8px", borderRadius: 4,
+        fontSize: 13, color: active ? C.fontPrimary : C.fontSecondary,
         background: active ? C.activeBg : "transparent",
-        textDecoration: "none",
-        transition: "background 0.1s ease",
-        cursor: "pointer",
+        textDecoration: "none", transition: "background 0.1s ease", cursor: "pointer",
       }}
-      onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.background = C.hoverBg;
-      }}
-      onMouseLeave={(e) => {
-        if (!active) e.currentTarget.style.background = "transparent";
-      }}
+      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = C.hoverBg; }}
+      onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
     >
       <Icon style={{ width: 16, height: 16, color: active ? C.fontPrimary : C.fontTertiary, flexShrink: 0 }} />
       {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>}
@@ -117,6 +93,26 @@ export function AdminSidebar() {
   const { user, logout } = useGlobalStore();
   const [collapsed, setCollapsed] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [themeSubmenu, setThemeSubmenu] = useState(false);
+  const [theme, setTheme] = useState<ThemeMode>("dark");
+
+  // Load saved theme
+  useEffect(() => {
+    const saved = localStorage.getItem("admin-theme") as ThemeMode | null;
+    if (saved) setTheme(saved);
+  }, []);
+
+  const isDark = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const C = isDark ? DARK : LIGHT;
+
+  const changeTheme = (mode: ThemeMode) => {
+    setTheme(mode);
+    localStorage.setItem("admin-theme", mode);
+    setThemeSubmenu(false);
+    setDropdownOpen(false);
+  };
+
+  const themeLabel = theme === "dark" ? "Dark" : theme === "light" ? "Light" : "System";
 
   const isActive = (href: string) => {
     if (href === "/dashboard/admin") return pathname === href;
@@ -126,34 +122,39 @@ export function AdminSidebar() {
   const COLLAPSED_W = 52;
   const EXPANDED_W = 220;
 
+  // Compute layout colors based on theme
+  const bgOuter = isDark ? "#1d1d1d" : "#f0f0f0";
+  const bgPanel = isDark ? "#171717" : "#ffffff";
+  const borderPanel = isDark ? "#222" : "#e0e0e0";
+
+  // Pass theme to layout via CSS custom properties
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--admin-bg-outer", bgOuter);
+    root.style.setProperty("--admin-bg-panel", bgPanel);
+    root.style.setProperty("--admin-border-panel", borderPanel);
+  }, [bgOuter, bgPanel, borderPanel]);
+
   return (
     <aside style={{
       width: collapsed ? COLLAPSED_W : EXPANDED_W,
-      height: "100%",
-      display: "flex",
-      flexDirection: "column",
-      flexShrink: 0,
+      height: "100%", display: "flex", flexDirection: "column", flexShrink: 0,
       background: "transparent",
       fontFamily: "Inter, -apple-system, system-ui, sans-serif",
-      fontSize: 13,
-      userSelect: "none",
-      overflow: "hidden",
-      transition: "width 0.2s ease",
-      position: "relative",
+      fontSize: 13, userSelect: "none", overflow: "hidden",
+      transition: "width 0.2s ease", position: "relative",
     }}>
 
-      {/* Top bar: [N NexaDev ˅]  [🔍] [📋] */}
+      {/* Top bar */}
       <div style={{
-        display: "flex",
-        alignItems: "center",
+        display: "flex", alignItems: "center",
         padding: collapsed ? "10px 6px 6px 6px" : "10px 8px 6px 12px",
-        gap: 4,
-        position: "relative",
+        gap: 4, position: "relative",
       }}>
-        {/* Workspace selector */}
         <button
           onClick={() => {
             if (collapsed) { setCollapsed(false); return; }
+            setThemeSubmenu(false);
             setDropdownOpen(!dropdownOpen);
           }}
           style={{
@@ -176,29 +177,31 @@ export function AdminSidebar() {
           </>}
         </button>
 
-        {/* Right icons: Search + Collapse */}
         {!collapsed && (
           <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-            {[
-              { icon: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>, action: () => {}, title: "Search" },
-              { icon: () => <PanelLeftClose style={{ width: 16, height: 16 }} />, action: () => setCollapsed(true), title: "Collapse sidebar" },
-            ].map((btn, i) => (
-              <button key={i} onClick={btn.action} title={btn.title} style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                width: 28, height: 28, borderRadius: 4,
-                color: C.fontTertiary, border: "none", background: "transparent",
-                cursor: "pointer", transition: "background 0.1s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-              >
-                <btn.icon />
-              </button>
-            ))}
+            <button onClick={() => {}} title="Search" style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 28, height: 28, borderRadius: 4,
+              color: C.fontTertiary, border: "none", background: "transparent",
+              cursor: "pointer", transition: "background 0.1s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </button>
+            <button onClick={() => setCollapsed(true)} title="Collapse sidebar" style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 28, height: 28, borderRadius: 4,
+              color: C.fontTertiary, border: "none", background: "transparent",
+              cursor: "pointer", transition: "background 0.1s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+              <PanelLeftClose style={{ width: 16, height: 16 }} />
+            </button>
           </div>
         )}
 
-        {/* Collapsed: just show expand button */}
         {collapsed && (
           <button onClick={() => setCollapsed(false)} title="Expand sidebar" style={{
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -208,114 +211,120 @@ export function AdminSidebar() {
             bottom: -32, left: "50%", transform: "translateX(-50%)",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
             <PanelLeftOpen style={{ width: 16, height: 16 }} />
           </button>
         )}
 
-        {/* Dropdown menu */}
+        {/* Dropdown */}
         {dropdownOpen && !collapsed && (
           <>
             <div style={{ position: "fixed", inset: 0, zIndex: 99 }}
-              onClick={() => setDropdownOpen(false)} />
+              onClick={() => { setDropdownOpen(false); setThemeSubmenu(false); }} />
             <div style={{
               position: "absolute", top: 44, left: 8, width: 200,
-              /* Twenty OverlayContainer exact values from theme-dark.css */
-              background: "rgba(0, 0, 0, 0.5)",
+              background: isDark ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.8)",
               backdropFilter: "blur(12px) saturate(200%) contrast(100%) brightness(130%)",
               WebkitBackdropFilter: "blur(12px) saturate(200%) contrast(100%) brightness(130%)",
-              border: "1px solid #222",
-              borderRadius: 8,
-              padding: 0,
-              zIndex: 100,
+              border: `1px solid ${isDark ? "#222" : "#ddd"}`,
+              borderRadius: 8, padding: 0, zIndex: 100,
               boxShadow: "2px 4px 16px 0px rgba(0,0,0,0.16), 0px 2px 4px 0px rgba(0,0,0,0.08)",
               overflow: "hidden",
             }}>
-
-              {/* DropdownMenuItemsContainer */}
               <div style={{ padding: "4px 4px" }}>
-              {[
-                { label: "Theme · Dark", href: "#", hasChevron: true,
-                  iconSvg: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg> },
-                { label: "Invite user", href: "#",
-                  iconSvg: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg> },
-                { label: "Settings", href: "/dashboard/admin/settings",
-                  iconSvg: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> },
-              ].map((item, i) => (
-                <Link key={i} href={item.href}
-                  onClick={() => setDropdownOpen(false)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 12,
-                    padding: "8px 10px", borderRadius: 4,
-                    color: C.fontSecondary, fontSize: 13,
-                    textDecoration: "none", transition: "background 0.1s",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                >
-                  <span style={{ color: C.fontTertiary, flexShrink: 0 }}>{item.iconSvg}</span>
-                  <span style={{ flex: 1 }}>{item.label}</span>
-                  {item.hasChevron && <ChevronDown style={{ width: 12, height: 12, color: C.fontLight, transform: "rotate(-90deg)" }} />}
-                </Link>
-              ))}
+                {!themeSubmenu ? (
+                  <>
+                    {/* Theme */}
+                    <button onClick={() => setThemeSubmenu(true)} style={{
+                      display: "flex", alignItems: "center", gap: 12, width: "100%",
+                      padding: "8px 10px", borderRadius: 4, border: "none", background: "transparent",
+                      color: C.fontSecondary, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+                      transition: "background 0.1s", textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+                      <Moon style={{ width: 16, height: 16, color: C.fontTertiary, flexShrink: 0 }} />
+                      <span style={{ flex: 1 }}>Theme · {themeLabel}</span>
+                      <ChevronRight style={{ width: 12, height: 12, color: C.fontLight }} />
+                    </button>
+                    {/* Settings */}
+                    <Link href="/dashboard/admin/settings" onClick={() => setDropdownOpen(false)} style={{
+                      display: "flex", alignItems: "center", gap: 12,
+                      padding: "8px 10px", borderRadius: 4,
+                      color: C.fontSecondary, fontSize: 13,
+                      textDecoration: "none", transition: "background 0.1s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+                      <Settings style={{ width: 16, height: 16, color: C.fontTertiary, flexShrink: 0 }} />
+                      <span>Settings</span>
+                    </Link>
+                    {/* Sign Out */}
+                    <button onClick={() => { logout(); router.push("/login"); setDropdownOpen(false); }} style={{
+                      display: "flex", alignItems: "center", gap: 12, width: "100%",
+                      padding: "8px 10px", borderRadius: 4, border: "none", background: "transparent",
+                      color: C.fontSecondary, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+                      transition: "background 0.1s", textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+                      <LogOut style={{ width: 16, height: 16, color: C.fontTertiary, flexShrink: 0 }} />
+                      <span>Sign Out</span>
+                    </button>
+                  </>
+                ) : (
+                  /* Theme submenu */
+                  <>
+                    <button onClick={() => setThemeSubmenu(false)} style={{
+                      display: "flex", alignItems: "center", gap: 8, width: "100%",
+                      padding: "8px 10px", borderRadius: 4, border: "none", background: "transparent",
+                      color: C.fontSecondary, fontSize: 12, cursor: "pointer", fontFamily: "inherit",
+                      transition: "background 0.1s", textAlign: "left", fontWeight: 500,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+                      <ChevronDown style={{ width: 12, height: 12, transform: "rotate(90deg)", color: C.fontLight }} />
+                      <span>Theme</span>
+                    </button>
+                    <div style={{ height: 1, background: isDark ? "#333" : "#e0e0e0", margin: "2px 6px" }} />
+                    {([
+                      { mode: "light" as ThemeMode, label: "Light", icon: Sun },
+                      { mode: "dark" as ThemeMode, label: "Dark", icon: Moon },
+                      { mode: "system" as ThemeMode, label: "System", icon: Monitor },
+                    ]).map((t) => (
+                      <button key={t.mode} onClick={() => changeTheme(t.mode)} style={{
+                        display: "flex", alignItems: "center", gap: 12, width: "100%",
+                        padding: "8px 10px", borderRadius: 4, border: "none", background: "transparent",
+                        color: theme === t.mode ? C.fontPrimary : C.fontSecondary,
+                        fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+                        transition: "background 0.1s", textAlign: "left",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+                        <t.icon style={{ width: 16, height: 16, color: theme === t.mode ? C.fontPrimary : C.fontTertiary, flexShrink: 0 }} />
+                        <span style={{ flex: 1 }}>{t.label}</span>
+                        {theme === t.mode && <span style={{ color: C.fontTertiary, fontSize: 14 }}>✓</span>}
+                      </button>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           </>
         )}
       </div>
 
-      {/* Navigation sections */}
+      {/* Navigation */}
       <nav style={{ flex: 1, overflowY: "auto", padding: collapsed ? "4px 6px 8px 6px" : "4px 8px 8px 8px" }}>
-        {/* Workspace */}
-        <div style={{ marginBottom: 12 }}>
+        <div>
           {!collapsed && <div style={{
-            padding: "8px 8px 6px 8px",
-            fontSize: 10, fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            color: C.fontLight,
+            padding: "8px 8px 6px 8px", fontSize: 10, fontWeight: 600,
+            textTransform: "uppercase", letterSpacing: "0.06em", color: C.fontLight,
           }}>Workspace</div>}
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {WORKSPACE_NAV.map((item) => (
-              <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} />
+              <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} C={C} />
             ))}
-          </div>
-        </div>
-
-        {/* Other */}
-        <div>
-          {!collapsed && <div style={{
-            padding: "8px 8px 6px 8px",
-            fontSize: 10, fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            color: C.fontLight,
-          }}>Other</div>}
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {OTHER_NAV.map((item) => (
-              <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} />
-            ))}
-            <button
-              onClick={() => { logout(); router.push("/login"); }}
-              title={collapsed ? "Sign Out" : undefined}
-              style={{
-                display: "flex", alignItems: "center",
-                justifyContent: collapsed ? "center" : "flex-start",
-                gap: collapsed ? 0 : 8,
-                height: 28, padding: collapsed ? "0 4px" : "0 8px", borderRadius: 4,
-                fontSize: 13, color: C.fontSecondary,
-                background: "transparent", border: "none",
-                cursor: "pointer", fontFamily: "inherit",
-                transition: "background 0.1s",
-                width: "100%", textAlign: "left",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-            >
-              <LogOut style={{ width: 16, height: 16, color: C.fontTertiary, flexShrink: 0 }} />
-              {!collapsed && <span>Sign Out</span>}
-            </button>
           </div>
         </div>
       </nav>

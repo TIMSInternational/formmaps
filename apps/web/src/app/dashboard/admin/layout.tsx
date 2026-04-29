@@ -31,9 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         position: "relative",
         fontFamily: "Inter, -apple-system, system-ui, sans-serif",
         fontSize: 13,
-        // Twenty uses background.tertiary (#1d1d1d) as the outer bg
-        // with a subtle noise texture overlay
-        background: "#1d1d1d",
+        background: "var(--admin-bg-outer, #1d1d1d)",
       }}
     >
       {/* StyledPageContainer — flex row */}
@@ -59,8 +57,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* PagePanel — bg: primary, border, radius */}
             <main
               style={{
-                background: "#171717",
-                border: "1px solid #282828",
+                background: "var(--admin-bg-panel, #171717)",
+                border: "1px solid var(--admin-border-panel, #282828)",
                 borderRadius: 12,
                 display: "flex",
                 flexDirection: "column",
