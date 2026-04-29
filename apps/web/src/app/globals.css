@@ -392,6 +392,12 @@
   padding: 2px 6px !important;
 }
 
+/* Admin card standard — all cards should match this */
+.admin-twenty .rounded-2xl,
+.admin-twenty .rounded-xl {
+  border-radius: 8px !important;
+}
+
 /* Force hardcoded Tailwind colors to use theme in admin */
 .admin-twenty .bg-white { background: var(--card) !important; }
 .admin-twenty .bg-gray-50\/50,
