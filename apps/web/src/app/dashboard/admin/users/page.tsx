@@ -363,40 +363,35 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Stats Grid — matching dashboard card design */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {statsCards.map((stat, index) => (
             <div
               key={index}
-              className={`group relative overflow-hidden rounded-2xl border ${stat.border} bg-white p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
+              style={{
+                borderRadius: 8,
+                border: "1px solid #2a2a2a",
+                background: "#1e1e1e",
+                padding: 16,
+                transition: "border-color 0.15s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#333"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#2a2a2a"; }}
             >
-              <div
-                className={`absolute right-0 top-0 h-24 w-24 translate-x-8 translate-y--8 rounded-full ${stat.blobColor} opacity-5 blur-2xl transition-transform duration-500 group-hover:scale-150`}
-              />
-
-              <div className="relative flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                  <h3 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
-                    {stat.value}
-                  </h3>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 6, background: "#2a2a2a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <stat.icon style={{ width: 16, height: 16, color: "#818181" }} />
                 </div>
-                <div className={`rounded-xl ${stat.bg} p-3 ${stat.color} bg-opacity-50`}>
-                  <stat.icon className="h-6 w-6" />
-                </div>
+                {stat.growth !== null && stat.growth !== undefined && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 500, color: Number(stat.growth) >= 0 ? "#10b981" : "#ef4444" }}>
+                    {Number(stat.growth) >= 0 ? "+" : ""}{Math.abs(Number(stat.growth)).toFixed(1)}%
+                  </div>
+                )}
               </div>
-
+              <div style={{ fontSize: 24, fontWeight: 600, color: "#ebebeb", letterSpacing: "-0.02em" }}>{stat.value}</div>
+              <div style={{ fontSize: 12, color: "#818181", marginTop: 4 }}>{stat.label}</div>
               {stat.growth !== null && (
-                <div className="mt-4 flex items-center gap-2">
-                  <span
-                    className={`flex items-center text-sm font-medium ${Number(stat.growth) >= 0 ? "text-emerald-600" : "text-red-600"
-                      }`}
-                  >
-                    {Number(stat.growth) >= 0 ? "+" : ""}
-                    {Number(stat.growth).toFixed(1)}%
-                  </span>
-                  <span className="text-sm text-gray-400">from last month</span>
-                </div>
+                <div style={{ fontSize: 11, color: "#555", marginTop: 4 }}>from last month</div>
               )}
             </div>
           ))}

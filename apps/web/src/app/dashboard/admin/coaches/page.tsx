@@ -190,31 +190,17 @@ export default function CoachesPage() {
           </Dialog>
         </div>
 
-        {/* Bento Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Stats Grid — dashboard card style */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {statsData.map((stat, index) => (
-            <div
-              key={index}
-              className={`group relative overflow-hidden rounded-2xl border ${stat.border} bg-white p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
-            >
-              <div
-                className={`absolute right-0 top-0 h-24 w-24 translate-x-8 translate-y--8 rounded-full ${stat.bg} opacity-20 blur-2xl transition-transform duration-500 group-hover:scale-150`}
-              />
-              <div className="relative flex flex-col gap-4">
-                <div
-                  className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center`}
-                >
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-gray-900 tracking-tight">
-                    {stat.value}
-                  </p>
-                  <p className="text-sm font-medium text-gray-500 mt-1">
-                    {t(stat.labelKey)}
-                  </p>
-                </div>
+            <div key={index} style={{ borderRadius: 8, border: "1px solid #2a2a2a", background: "#1e1e1e", padding: 16, transition: "border-color 0.15s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#333"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#2a2a2a"; }}>
+              <div style={{ width: 32, height: 32, borderRadius: 6, background: "#2a2a2a", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                <stat.icon style={{ width: 16, height: 16, color: "#818181" }} />
               </div>
+              <div style={{ fontSize: 24, fontWeight: 600, color: "#ebebeb", letterSpacing: "-0.02em" }}>{stat.value}</div>
+              <div style={{ fontSize: 12, color: "#818181", marginTop: 4 }}>{t(stat.labelKey)}</div>
             </div>
           ))}
         </div>
