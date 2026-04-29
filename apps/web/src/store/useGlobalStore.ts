@@ -4,6 +4,7 @@ import { generateDummyContent } from "@/app/dashboard/resume-builder/_components
 import { updateResume, getResumeById } from "@/services/resumeService";
 import { telemetry } from "@/services/telemetryService";
 import { isTokenExpired } from "@/utils/tokenUtils";
+import { cognitoLogout } from "@/lib/cognito";
 
 // Resume Builder Types
 interface PersonalInfo {
@@ -235,7 +236,8 @@ export const useGlobalStore = create<GlobalState>()(
         logout: () => {
           // Track logout event
           telemetry.trackAuth("logout");
-          // Clear localStorage token
+          // Sign out of Cognito + clear localStorage
+          cognitoLogout();
           if (typeof window !== "undefined") {
             localStorage.removeItem("token");
           }
