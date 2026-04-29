@@ -221,30 +221,33 @@ export function AdminSidebar() {
               onClick={() => setDropdownOpen(false)} />
             <div style={{
               position: "absolute", top: 44, left: 8, width: 210,
-              background: "#222", border: "1px solid #333",
+              background: "rgba(30, 30, 30, 0.80)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: 8, padding: 4, zIndex: 100,
               boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
             }}>
               {/* Workspace header */}
               <div style={{
                 display: "flex", alignItems: "center", gap: 10,
-                padding: "10px 10px 10px 10px", marginBottom: 2,
+                padding: "8px 10px", marginBottom: 2,
               }}>
                 <div style={{
-                  width: 28, height: 28, borderRadius: 6,
+                  width: 26, height: 26, borderRadius: 6,
                   background: "linear-gradient(135deg, #8b5a6b, #4a3040)",
                   color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 12, fontWeight: 700, flexShrink: 0,
+                  fontSize: 11, fontWeight: 700, flexShrink: 0,
                 }}>N</div>
-                <span style={{ color: "#fff", fontSize: 14, fontWeight: 500, flex: 1 }}>NexaDev</span>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="#666">
+                <span style={{ color: "#fff", fontSize: 13, fontWeight: 500, flex: 1 }}>NexaDev</span>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="#666">
                   <circle cx="8" cy="3" r="1.5" />
                   <circle cx="8" cy="8" r="1.5" />
                   <circle cx="8" cy="13" r="1.5" />
                 </svg>
               </div>
 
-              <div style={{ height: 1, background: "#333", margin: "0 4px 4px 4px" }} />
+              <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "0 4px 4px 4px" }} />
 
               {/* Menu items with lucide-style icons */}
               {[
