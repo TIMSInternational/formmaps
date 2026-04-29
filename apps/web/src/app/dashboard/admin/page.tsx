@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { DashboardStats } from "./_components/DashboardStats";
 import { RevenueOverviewCard } from "./_components/RevenueOverviewCard";
+import { MiniChart } from "@/components/ui/mini-chart";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import {
   Users,
@@ -63,8 +64,13 @@ export default function AdminPage() {
       {/* Stats */}
       <DashboardStats />
 
-      {/* Revenue Overview */}
-      <RevenueOverviewCard />
+      {/* Revenue + Weekly Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div className="lg:col-span-2">
+          <RevenueOverviewCard />
+        </div>
+        <MiniChart title="Weekly Activity" unit="%" />
+      </div>
 
       {/* Modules Grid */}
       <div>

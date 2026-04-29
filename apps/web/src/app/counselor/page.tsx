@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ActivityFeed, type ActivityItem } from "@/components/ui/activity-feed";
 import { motion } from "motion/react";
 import {
   Card,

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AdminAreaChart } from "@/components/ui/admin-area-chart";
+import { AnimatedCard, CardBody, CardTitle as AnimCardTitle, CardDescription as AnimCardDesc, CardVisual, Visual3 } from "@/components/ui/animated-card-chart";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -230,6 +231,31 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Visual Cards */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <AnimatedCard>
+                <CardVisual><Visual3 mainColor="#3b82f6" secondaryColor="#10b981" /></CardVisual>
+                <CardBody>
+                  <AnimCardTitle>Revenue Trends</AnimCardTitle>
+                  <AnimCardDesc>Monthly revenue and transaction patterns</AnimCardDesc>
+                </CardBody>
+              </AnimatedCard>
+              <AnimatedCard>
+                <CardVisual><Visual3 mainColor="#8b5cf6" secondaryColor="#f59e0b" /></CardVisual>
+                <CardBody>
+                  <AnimCardTitle>User Acquisition</AnimCardTitle>
+                  <AnimCardDesc>Growth and onboarding metrics</AnimCardDesc>
+                </CardBody>
+              </AnimatedCard>
+              <AnimatedCard>
+                <CardVisual><Visual3 mainColor="#10b981" secondaryColor="#3b82f6" /></CardVisual>
+                <CardBody>
+                  <AnimCardTitle>Course Performance</AnimCardTitle>
+                  <AnimCardDesc>Enrollment and completion rates</AnimCardDesc>
+                </CardBody>
+              </AnimatedCard>
             </div>
 
             {/* Charts Section */}
