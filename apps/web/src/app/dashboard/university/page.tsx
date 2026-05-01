@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "motion/react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import {
   useUniversityList,
@@ -14,7 +15,8 @@ import {
 import { University, UniversityFilters } from "@/types/university";
 import UniversityCard from "@/components/dashboard/University/UniversityCard";
 import UniversityFiltersPanel from "@/components/dashboard/University/UniversityFilters";
-import UniversityDetailsModal from "@/components/dashboard/University/UniversityDetailsModal";
+import { useSidePanel } from "@/components/side-panel/SidePanel";
+import { UniversityDetailPanel } from "@/components/side-panel/UniversityDetailPanel";
 import UniversityStats from "@/components/dashboard/University/UniversityStats";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,6 +29,9 @@ import {
   GraduationCap,
   Filter,
 } from "lucide-react";
+import { EmptyState } from "@/components/empty-state/EmptyState";
+import { ActiveFilterPills, type FilterPill } from "@/components/filters/ActiveFilterPills";
+import { CompareBar } from "@/components/compare/CompareBar";
 import {
   Sheet,
   SheetContent,
@@ -38,11 +43,38 @@ import {
 export default function UniversityPage() {
   const { user, language } = useGlobalStore();
   const userId = user?.id ?? "mock-user";
-  const [filters, setFilters] = React.useState<UniversityFilters>({});
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Initialize filters from URL params
+  const [filters, setFiltersState] = React.useState<UniversityFilters>(() => {
+    const initial: UniversityFilters = {};
+    const search = searchParams.get("search");
+    const countries = searchParams.get("countries");
+    const degrees = searchParams.get("degrees");
+    const fields = searchParams.get("fields");
+    if (search) initial.search = search;
+    if (countries) initial.countries = countries.split(",");
+    if (degrees) initial.degrees = degrees.split(",") as any;
+    if (fields) initial.fields = fields.split(",") as any;
+    return initial;
+  });
+
+  // Sync filters to URL
+  const setFilters = useCallback((next: UniversityFilters) => {
+    setFiltersState(next);
+    const params = new URLSearchParams();
+    if (next.search) params.set("search", next.search);
+    if (next.countries?.length) params.set("countries", next.countries.join(","));
+    if (next.degrees?.length) params.set("degrees", next.degrees.join(","));
+    if (next.fields?.length) params.set("fields", next.fields.join(","));
+    const qs = params.toString();
+    router.replace(qs ? `?${qs}` : "/dashboard/university", { scroll: false });
+  }, [router]);
+
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
-  const [selectedUniversity, setSelectedUniversity] =
-    React.useState<University | null>(null);
   const [activeTab, setActiveTab] = React.useState("recommended");
+  const { openPanel } = useSidePanel();
 
   const listQuery = useUniversityList(filters, 1, 20);
   const recoQuery = useUniversityRecommendations(userId);
@@ -75,6 +107,25 @@ export default function UniversityPage() {
     recoQuery.data?.recommendations.map((r) => [r.university.id, r]) ?? []
   );
 
+  const handleViewDetails = React.useCallback(
+    (university: University) => {
+      const rec = recommendationMap.get(university.id);
+      openPanel({
+        title: university.name,
+        content: (
+          <UniversityDetailPanel
+            university={university}
+            matchScore={rec?.matchScore}
+            matchBreakdown={rec?.matchBreakdown}
+            matchReasons={rec?.matchReasonsArray?.[language === "spanish" ? "es" : "en"]}
+            recommendedPrograms={rec?.recommendedPrograms}
+          />
+        ),
+      });
+    },
+    [openPanel, recommendationMap, language],
+  );
+
   const activeFilterCount =
     (filters.countries?.length || 0) +
     (filters.degrees?.length || 0) +
@@ -84,18 +135,18 @@ export default function UniversityPage() {
     (filters.hasHousing ? 1 : 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-8 mb-10"
+        className="space-y-5 sm:space-y-8 mb-6 sm:mb-10"
       >
         <div className="flex flex-col gap-2">
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
             {t("University Finder", "Buscador de Universidades")}
           </span>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
             {t(
               "Find Your Perfect Match",
               "Encuentra tu Universidad Ideal"
@@ -122,7 +173,7 @@ export default function UniversityPage() {
         transition={{ delay: 0.1 }}
         className="space-y-6"
       >
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Tabs
               value={activeTab}
@@ -198,36 +249,45 @@ export default function UniversityPage() {
           </div>
         </div>
 
+        {/* Active filter pills */}
+        {(() => {
+          const pills: FilterPill[] = [];
+          if (filters.search) pills.push({ key: "search", label: "Search", value: filters.search });
+          if (filters.countries?.length) pills.push({ key: "countries", label: "Countries", value: filters.countries.join(", ") });
+          if (filters.degrees?.length) pills.push({ key: "degrees", label: "Degrees", value: filters.degrees.join(", ") });
+          if (filters.fields?.length) pills.push({ key: "fields", label: "Fields", value: filters.fields.join(", ") });
+          if (filters.hasFinancialAid) pills.push({ key: "hasFinancialAid", label: "Financial Aid", value: "Yes" });
+          if (filters.hasHousing) pills.push({ key: "hasHousing", label: "Housing", value: "Yes" });
+          return (
+            <ActiveFilterPills
+              pills={pills}
+              onRemove={(key) => setFilters({ ...filters, [key]: undefined })}
+              onClearAll={() => setFilters({})}
+            />
+          );
+        })()}
+
         <Tabs value={activeTab} className="space-y-6">
           <TabsContent value="recommended" className="space-y-6 mt-0">
             {/* Show empty state when no recommendations (not loading, or errored, or empty data) */}
             {(!recoQuery.data?.recommendations?.length) && (!recoQuery.isLoading || recoQuery.error) && (
-                <div className="dash-card p-8 text-center">
-                  <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-                    <GraduationCap className="w-6 h-6 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-base font-bold text-foreground mb-1">
-                    {t("Complete your assessments first", "Completa tus evaluaciones primero")}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
-                    {t(
-                      "Take the PCA and MIL assessments to get personalized university recommendations based on your profile.",
-                      "Completa las evaluaciones PCA y MIL para obtener recomendaciones personalizadas."
-                    )}
-                  </p>
-                  <div className="flex gap-3 justify-center">
-                    <a href="/dashboard/assessments" className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background rounded-xl text-sm font-medium hover:bg-foreground/90 transition-colors">
-                      Start Assessments
-                    </a>
-                    <button onClick={() => setActiveTab("all")} className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-foreground rounded-xl text-sm font-medium border border-border hover:bg-border transition-colors">
-                      Browse All Universities
-                    </button>
-                  </div>
-                </div>
-              )}
+              <EmptyState
+                type="not_started"
+                title={t("Complete your assessments first", "Completa tus evaluaciones primero")}
+                description={t(
+                  "Take the PCA and MIL assessments to get personalized university recommendations based on your profile.",
+                  "Completa las evaluaciones PCA y MIL para obtener recomendaciones personalizadas."
+                )}
+                icon={GraduationCap}
+                actionLabel="Start Assessments"
+                actionHref="/dashboard/assessments"
+                secondaryLabel="Browse All Universities"
+                onSecondary={() => setActiveTab("all")}
+              />
+            )}
 
             {recoQuery.isLoading && (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="h-[340px] w-full rounded-xl" />
                 ))}
@@ -240,7 +300,7 @@ export default function UniversityPage() {
                 <div
                   className={
                     viewMode === "grid"
-                      ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                      ? "grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
                       : "space-y-4"
                   }
                 >
@@ -256,7 +316,7 @@ export default function UniversityPage() {
                           language === "spanish" ? "es" : "en"
                           ]
                         }
-                        onViewDetails={setSelectedUniversity}
+                        onViewDetails={handleViewDetails}
                         variant="featured"
                         isFavorite={favoritesSet.has(u.id)}
                         onFavoriteToggle={handleFavoriteToggle}
@@ -269,7 +329,7 @@ export default function UniversityPage() {
 
           <TabsContent value="all" className="space-y-6 mt-0">
             {listQuery.isLoading && (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
@@ -280,30 +340,24 @@ export default function UniversityPage() {
             )}
             {!listQuery.isLoading &&
               !listQuery.data?.universities.length && (
-                <div className="dash-card p-12 text-center">
-                  <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-                    <GraduationCap className="w-6 h-6 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-base font-bold text-foreground mb-1">
-                    {t(
-                      "No universities found",
-                      "No se encontraron universidades"
-                    )}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {t(
-                      "Try adjusting your filters to see more results.",
-                      "Intenta ajustar tus filtros para ver más resultados."
-                    )}
-                  </p>
-                </div>
+                <EmptyState
+                  type="no_results"
+                  title={t("No universities found", "No se encontraron universidades")}
+                  description={t(
+                    "Try adjusting your filters to see more results.",
+                    "Intenta ajustar tus filtros para ver más resultados."
+                  )}
+                  icon={GraduationCap}
+                  actionLabel="Clear Filters"
+                  onAction={() => setFilters({})}
+                />
               )}
             {!listQuery.isLoading &&
               listQuery.data?.universities.length && (
                 <div
                   className={
                     viewMode === "grid"
-                      ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                      ? "grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
                       : "space-y-4"
                   }
                 >
@@ -311,7 +365,7 @@ export default function UniversityPage() {
                     <UniversityCard
                       key={u.id}
                       university={u}
-                      onViewDetails={setSelectedUniversity}
+                      onViewDetails={handleViewDetails}
                       isFavorite={favoritesSet.has(u.id)}
                       onFavoriteToggle={handleFavoriteToggle}
                     />
@@ -322,34 +376,15 @@ export default function UniversityPage() {
         </Tabs>
       </motion.section>
 
-      <UniversityDetailsModal
-        university={selectedUniversity}
-        isOpen={!!selectedUniversity}
-        onClose={() => setSelectedUniversity(null)}
-        matchScore={
-          selectedUniversity
-            ? recommendationMap.get(selectedUniversity.id)?.matchScore
-            : undefined
-        }
-        matchBreakdown={
-          selectedUniversity
-            ? recommendationMap.get(selectedUniversity.id)?.matchBreakdown
-            : undefined
-        }
-        matchReasons={
-          selectedUniversity
-            ? recommendationMap.get(selectedUniversity.id)
-              ?.matchReasonsArray?.[
-            language === "spanish" ? "es" : "en"
-            ]
-            : undefined
-        }
-        recommendedPrograms={
-          selectedUniversity
-            ? recommendationMap.get(selectedUniversity.id)
-              ?.recommendedPrograms
-            : undefined
-        }
+      <CompareBar
+        getUniversity={(id) => {
+          const all = [
+            ...(recoQuery.data?.recommendations.map((r) => r.university) ?? []),
+            ...(listQuery.data?.universities ?? []),
+          ];
+          return all.find((u) => u.id === id);
+        }}
+        getRecommendation={(id) => recommendationMap.get(id)}
       />
     </div>
   );

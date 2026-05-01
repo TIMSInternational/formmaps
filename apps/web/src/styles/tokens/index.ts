@@ -7,3 +7,4 @@ export {
   getShadcnOverrides,
   generateColorVars,
 } from "./generateCssVars";
+export { theme } from "./theme";

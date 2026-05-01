@@ -7,6 +7,8 @@ import {
   getPCACompetencesByUserId,
 } from "@/services/pcaService";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { normalizeRole } from "@/lib/roleUtils";
+import { Roles } from "@/lib/permissions";
 
 export interface PCAData {
   pcaCod: string;
@@ -140,7 +142,7 @@ export function usePCAData() {
   };
 
   useEffect(() => {
-    if (!user?.id) {
+    if (!user?.id || normalizeRole(user.role) !== Roles.STUDENT) {
       setLoading(false);
       return;
     }

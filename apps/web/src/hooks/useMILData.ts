@@ -8,6 +8,8 @@ import {
   ExamStatus,
 } from "@/services/milService";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { normalizeRole } from "@/lib/roleUtils";
+import { Roles } from "@/lib/permissions";
 
 export interface MILProgress {
   completedExams: string[];
@@ -24,7 +26,7 @@ export interface MILProgress {
 }
 
 export function useMILData() {
-  const { language } = useGlobalStore();
+  const { language, user: storeUser } = useGlobalStore();
   const [exams, setExams] = useState<MILExamMetadata[]>([]);
   const [progress, setProgress] = useState<MILProgress | null>(null);
   const [loading, setLoading] = useState(true);
@@ -235,9 +237,12 @@ export function useMILData() {
       });
   };
 
+  const userRole = normalizeRole(storeUser.role);
+
   useEffect(() => {
+    if (userRole !== Roles.STUDENT) return;
     loadMILData();
-  }, []);
+  }, [userRole]);
 
   return {
     exams,

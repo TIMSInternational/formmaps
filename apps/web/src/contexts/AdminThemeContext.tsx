@@ -53,6 +53,7 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
     root.style.setProperty("--admin-bg-active", colors.bg.active);
     root.style.setProperty("--admin-bg-icon-box", colors.bg.iconBox);
     root.style.setProperty("--admin-bg-overlay", colors.bg.overlay);
+    root.style.setProperty("--admin-bg-noisy", isDark ? "url(/noise-dark.jpg)" : "url(/noise-light.png)");
 
     root.style.setProperty("--admin-border-default", colors.border.default);
     root.style.setProperty("--admin-border-hover", colors.border.hover);

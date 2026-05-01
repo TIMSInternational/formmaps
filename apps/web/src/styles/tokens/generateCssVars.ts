@@ -63,6 +63,9 @@ export function getThemeVars(mode: "dark" | "light"): Record<string, string> {
     ...generateColorVars(colors),
     ...generateSpacingVars(),
     ...generateTypographyVars(),
+    "--admin-bg-noisy": mode === "dark"
+      ? "url(/noise-dark.jpg)"
+      : "url(/noise-light.png)",
   };
 }
 

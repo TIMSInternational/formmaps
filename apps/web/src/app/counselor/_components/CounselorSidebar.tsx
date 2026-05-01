@@ -5,6 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useAdminTheme } from "@/contexts/AdminThemeContext";
+import { useChat } from "@/components/ai-chat/ChatContext";
+import { useSidePanel } from "@/components/side-panel/SidePanel";
+import { AIChatSidePanel } from "@/components/ai-chat/AIChatPanel";
+import { groupThreadsByDate, formatThreadTime } from "@/components/ai-chat/useChatThreads";
 import {
   LayoutDashboard,
   Users,
@@ -21,6 +25,9 @@ import {
   Moon,
   Sun,
   Monitor,
+  Home,
+  MessageCircle,
+  MessageCirclePlus,
 } from "lucide-react";
 
 type ThemeMode = "dark" | "light" | "system";
@@ -79,6 +86,27 @@ function NavItem({ href, icon: Icon, label, active, collapsed, colors }: {
   );
 }
 
+type SidebarTab = "home" | "chat";
+
+function TabBtn({ icon: Icon, active, onClick, title }: {
+  icon: React.ElementType; active: boolean; onClick: () => void; title: string;
+}) {
+  return (
+    <button onClick={onClick} title={title} style={{
+      display: "flex", alignItems: "center", justifyContent: "center",
+      width: 28, height: 28, borderRadius: 4, border: "none", cursor: "pointer",
+      background: active ? "var(--admin-bg-active)" : "transparent",
+      color: active ? "var(--admin-font-primary)" : "var(--admin-font-tertiary)",
+      transition: "background 0.1s",
+    }}
+    onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
+    onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}
+    >
+      <Icon style={{ width: 16, height: 16 }} />
+    </button>
+  );
+}
+
 export function CounselorSidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -88,6 +116,23 @@ export function CounselorSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [themeSubmenu, setThemeSubmenu] = useState(false);
+  const [activeTab, setActiveTab] = useState<SidebarTab>("home");
+
+  const { threads, currentThreadId, createThread, selectThread } = useChat();
+  const { openPanel } = useSidePanel();
+
+  const openChatInPanel = (threadId?: string) => {
+    if (threadId) selectThread(threadId);
+    openPanel({ title: "Ask AI", content: <AIChatSidePanel /> });
+  };
+
+  const handleNewChat = () => {
+    const thread = createThread();
+    setActiveTab("chat");
+    openChatInPanel(thread.id);
+  };
+
+  const chatGroups = groupThreadsByDate(threads);
 
   const C = {
     fontPrimary: themeColors.font.primary,
@@ -277,7 +322,31 @@ export function CounselorSidebar() {
         )}
       </div>
 
-      {/* Navigation */}
+      {/* Tab Row */}
+      {!collapsed && (
+        <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 4px", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 2, padding: 2, borderRadius: 6, background: "var(--admin-bg-card-hover)" }}>
+            <TabBtn icon={Home} active={activeTab === "home"} onClick={() => setActiveTab("home")} title="Navigation" />
+            <TabBtn icon={MessageCircle} active={activeTab === "chat"} onClick={() => setActiveTab("chat")} title="Chat history" />
+          </div>
+          <button onClick={handleNewChat} style={{
+            display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 10px 0 8px",
+            borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 500,
+            fontFamily: "inherit", marginLeft: "auto",
+            background: "var(--admin-bg-card-hover)", color: "var(--admin-font-secondary)",
+            transition: "background 0.1s",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-card-hover)"; }}
+          >
+            <MessageCirclePlus style={{ width: 14, height: 14 }} />
+            <span>New chat</span>
+          </button>
+        </div>
+      )}
+
+      {/* Navigation / Chat */}
+      {activeTab === "home" ? (
       <nav style={{ flex: 1, overflowY: "auto", padding: collapsed ? "4px 6px 8px 6px" : "4px 8px 8px 8px" }}>
         {NAV_SECTIONS.map((section) => (
           <div key={section.label} style={{ marginBottom: 8 }}>
@@ -293,6 +362,57 @@ export function CounselorSidebar() {
           </div>
         ))}
       </nav>
+      ) : (
+      <div style={{ flex: 1, overflowY: "auto", paddingTop: 4, paddingLeft: 4, paddingRight: 8, paddingBottom: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+        {chatGroups.length === 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: 8, padding: 24 }}>
+            <MessageCircle style={{ width: 24, height: 24, color: "var(--admin-font-light)" }} />
+            <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>No chats yet</span>
+            <button onClick={handleNewChat} style={{
+              display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 12px",
+              borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 500,
+              fontFamily: "inherit", marginTop: 4, background: "var(--admin-accent-blue)", color: "#fff",
+            }}>
+              <MessageCirclePlus style={{ width: 14, height: 14 }} />
+              Start a chat
+            </button>
+          </div>
+        ) : (
+          chatGroups.map((group) => (
+            <div key={group.label}>
+              <div style={{ height: 20, display: "flex", alignItems: "center", padding: "4px 4px", fontSize: 11, fontWeight: 600, color: "var(--admin-font-light)" }}>
+                {group.label}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                {group.threads.map((thread) => {
+                  const isCurrent = thread.id === currentThreadId;
+                  return (
+                    <div key={thread.id} style={{
+                      display: "flex", alignItems: "center", gap: 8, height: 28, padding: "0 4px",
+                      borderRadius: 4, cursor: "pointer",
+                      background: isCurrent ? "var(--admin-bg-active)" : "transparent",
+                      transition: "background 0.1s",
+                    }}
+                    onClick={() => openChatInPanel(thread.id)}
+                    onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
+                    onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <MessageCircle style={{ width: 14, height: 14, flexShrink: 0, color: isCurrent ? "var(--admin-font-primary)" : "var(--admin-font-tertiary)" }} />
+                      <span style={{ flex: 1, fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: isCurrent ? "var(--admin-font-primary)" : "var(--admin-font-secondary)" }}>
+                        {thread.title}
+                      </span>
+                      <span style={{ fontSize: 11, color: "var(--admin-font-light)", flexShrink: 0 }}>
+                        {formatThreadTime(thread.updatedAt)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+      )}
 
       {/* Sign Out */}
       <div style={{ padding: collapsed ? "8px 6px" : "8px 8px", borderTop: `1px solid ${themeColors.border.light}` }}>

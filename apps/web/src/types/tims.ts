@@ -34,16 +34,18 @@ export interface ScoredCareer {
   programTitle: string;        // e.g. "Sociology"
   cluster: string;             // e.g. "Social_and_Behavioral_Sciences"
   totalScore: number;          // 0-100
+  confidence: "high" | "good" | "moderate" | "low";
   breakdown: CareerFitBreakdown;
   needsBridging: boolean;
   bridgingReasons: string[];   // e.g. ["Reasoning(0%<50%)"]
   bridgingPaths: string;       // semicolon-separated, e.g. "Research methods; Statistics"
+  aiInsight?: string;          // AI-generated personalized match explanation
 }
 
-/** API returns { data: { careers: [...] } } — apiRequest strips the outer axios wrapper */
+/** API returns { data: { careers: [...], profileSummary: "..." } } */
 export interface ScoreCareersResponse {
   data: {
     careers: ScoredCareer[];
+    profileSummary?: string;
   };
 }
-

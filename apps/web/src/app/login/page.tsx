@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { normalizeRole, roleHomeMap } from "@/lib/roleUtils";
+import { Roles } from "@/lib/permissions";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login as loginApi } from "@/services/authService";
@@ -75,11 +76,15 @@ export default function LoginPage() {
       });
 
       const normalized = normalizeRole(roleName);
-      const redirectTo = defaultRedirect === "/dashboard"
-        ? roleHomeMap[normalized]
-        : defaultRedirect;
+      // ALWAYS use roleHomeMap for the user's role — ignore redirect param
+      // for non-students to prevent sending admins to student pages
+      const roleHome = roleHomeMap[normalized];
+      const redirectTo = normalized === Roles.STUDENT
+        ? (defaultRedirect !== "/dashboard" ? defaultRedirect : roleHome)
+        : roleHome;
 
-      router.push(redirectTo);
+      // Hard navigation to avoid race conditions with AuthWrapper's router.replace
+      window.location.href = redirectTo;
     } catch (err: any) {
       const message =
         err.response?.data?.message ||

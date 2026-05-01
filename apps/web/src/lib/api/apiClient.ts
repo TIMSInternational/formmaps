@@ -1,5 +1,5 @@
-
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { toast } from '@/hooks/useToast';
 
 // Create an Axios instance with base URL and default headers
 const apiClient: AxiosInstance = axios.create({
@@ -12,9 +12,7 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.response.use(
   response => response,
   error => {
-    // Handle different types of errors
     if (error.response) {
-      // Server responded with error status
       const status = error.response.status;
       const data = error.response.data;
 
@@ -37,15 +35,22 @@ apiClient.interceptors.response.use(
           message = data?.message || `Request failed with status ${status}`;
       }
 
+      // Only toast for auth errors — these are never retried
+      if (status === 401) {
+        toast.error('Session expired', { description: 'Please log in again.' });
+      } else if (status === 403) {
+        toast.warning('Access denied', { description: message });
+      }
+      // 5xx and network errors: callers decide whether to toast
+      // (React Query has its own retry, so toasting here causes false alarms)
+
       const enhancedError = new Error(message);
       (enhancedError as any).status = status;
       (enhancedError as any).data = data;
       return Promise.reject(enhancedError);
     } else if (error.request) {
-      // Network error
       return Promise.reject(new Error('Network error. Please check your connection and try again.'));
     } else {
-      // Something else happened
       return Promise.reject(new Error(error.message || 'An unexpected error occurred.'));
     }
   }
@@ -68,9 +73,13 @@ apiClient.interceptors.request.use(
 // Generic API request function with retry logic
 export async function apiRequest<T = any>(
   path: string,
-  config?: AxiosRequestConfig & { retries?: number }
+  config?: AxiosRequestConfig & { retries?: number; showErrorToast?: boolean }
 ): Promise<T> {
-  const { retries = 2, ...axiosConfig } = config || {};
+  const { retries = 2, showErrorToast, ...axiosConfig } = config || {};
+
+  // Default: toast for mutations (POST/PUT/DELETE/PATCH), not for GET
+  // GET requests are typically managed by React Query which has its own retry
+  const shouldToast = showErrorToast ?? (axiosConfig.method && axiosConfig.method !== 'GET');
 
   let lastError: Error;
 
@@ -89,6 +98,13 @@ export async function apiRequest<T = any>(
 
       // Don't retry on the last attempt
       if (attempt === retries) {
+        if (shouldToast) {
+          if (status && status >= 500) {
+            toast.error('Server error', { description: 'Something went wrong. Please try again.' });
+          } else if (!status) {
+            toast.error('Connection lost', { description: 'Please check your internet connection.' });
+          }
+        }
         throw error;
       }
 

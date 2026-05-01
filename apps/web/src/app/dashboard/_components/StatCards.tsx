@@ -110,7 +110,7 @@ export function StatCards({ courseData }: StatCardsProps) {
   const totalCount = assessmentData?.assessments?.length ?? 3;
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       <StatCard
         icon={<Brain className="w-4 h-4" />}
         label={t("dashboard.assessments", "Assessments")}

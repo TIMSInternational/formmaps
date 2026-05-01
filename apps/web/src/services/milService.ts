@@ -190,6 +190,7 @@ export async function getAllUserExamResults(
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return [];
       throw new Error(`Failed to fetch user exam results: ${response.status}`);
     }
 
@@ -217,6 +218,7 @@ export async function getUserExamHistory(
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return { exams: [], totalExams: 0, completedExams: 0 } as any;
       throw new Error(`Failed to fetch user exam history: ${response.status}`);
     }
 
@@ -314,6 +316,7 @@ export async function getAllMILExams(
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return [];
       throw new Error(`Failed to fetch MIL exams: ${response.status}`);
     }
     const data = await response.json();
@@ -342,6 +345,7 @@ export async function getMILExamById(
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return null as any;
       throw new Error(`Failed to fetch MIL exam: ${response.status}`);
     }
 
@@ -369,6 +373,7 @@ export async function startMILExam(
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return null as any;
       throw new Error(`Failed to start MIL exam: ${response.status}`);
     }
 
@@ -397,6 +402,7 @@ export async function getMILExamInstructions(
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return null;
       throw new Error(`Failed to fetch exam instructions: ${response.status}`);
     }
 
@@ -537,6 +543,7 @@ export async function completeMILExam(
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return null;
       throw new Error(`Failed to complete MIL exam: ${response.status}`);
     }
 

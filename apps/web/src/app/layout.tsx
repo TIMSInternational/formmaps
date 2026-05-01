@@ -77,7 +77,20 @@ export default function RootLayout({
             </AssessmentCacheProvider>
           </QueryProvider>
         </ErrorBoundary>
-        <Toaster richColors closeButton position="top-right" />
+        <Toaster
+          richColors
+          closeButton
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: "var(--admin-bg-card, #1e1e1e)",
+              border: "1px solid var(--admin-border-default, #2a2a2a)",
+              color: "var(--admin-font-primary, #ebebeb)",
+              fontSize: "13px",
+              backdropFilter: "blur(12px)",
+            },
+          }}
+        />
       </body>
     </html>
   );

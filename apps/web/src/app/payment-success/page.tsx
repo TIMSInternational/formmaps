@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function PaymentSuccess() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState<
     "loading" | "success" | "failed" | "error"
   >("loading");
@@ -31,6 +33,17 @@ export default function PaymentSuccess() {
           if (data.status === "succeeded" || data.paymentStatus === "paid") {
             setStatus("success");
             setPaymentDetails(data);
+            // Force subscription cache to show active — invalidation alone won't work
+            // because the AuthWrapper's subscription observer is disabled on this page
+            // (isProtectedRoute = false), so invalidation can't trigger a refetch.
+            // Setting the data directly ensures the cache has the right value when
+            // the observer re-enables on /dashboard.
+            queryClient.setQueryData(["subscriptionStatus"], {
+              hasActiveSubscription: true,
+              planId: data.planId || "paid",
+              status: "active",
+              expiryDate: null,
+            });
           } else {
             setStatus("failed");
           }
@@ -56,7 +69,7 @@ export default function PaymentSuccess() {
       return;
     }
 
-    router.push("/dashboard/subscriptions");
+    router.push("/dashboard");
   };
 
   return (

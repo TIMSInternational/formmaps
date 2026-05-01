@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/empty-state/EmptyState";
 
 export default function AssessmentsPage() {
   const { user, language } = useGlobalStore();
@@ -155,7 +157,17 @@ export default function AssessmentsPage() {
       </motion.header>
 
       <div className="space-y-5">
+        {/* Loading state */}
+        {(loadingProgress || isLoading) && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-[200px] rounded-xl" />
+            ))}
+          </div>
+        )}
+
         {/* Assessment Cards — 3 columns */}
+        {!loadingProgress && !isLoading && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -295,6 +307,7 @@ export default function AssessmentsPage() {
             </div>
           </div>
         </motion.div>
+        )}
 
         {/* Assessment Guide */}
         <motion.div

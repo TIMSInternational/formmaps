@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   getFavoritesForUser,
   addFavorite,
@@ -8,47 +8,67 @@ import {
 } from "@/services/careerService";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { telemetry } from "@/services/telemetryService";
+import { toast } from "@/hooks/useToast";
+
+const FAVORITES_KEY = "nexa_career_favorites";
+
+function loadLocalFavorites(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalFavorites(favs: string[]) {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs));
+}
 
 export function useFavorites() {
   const { user } = useGlobalStore();
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<string[]>(loadLocalFavorites);
 
   useEffect(() => {
-    if (user.id) {
-      getFavoritesForUser(user.id).then((r) => setFavorites(r.favorites || []));
-    }
+    if (!user.id) return;
+    let cancelled = false;
+    getFavoritesForUser(user.id).then((r) => {
+      if (cancelled) return;
+      const serverFavs = r.favorites || [];
+      if (serverFavs.length > 0) {
+        setFavorites(serverFavs);
+        saveLocalFavorites(serverFavs);
+      }
+    });
+    return () => { cancelled = true; };
   }, [user.id]);
 
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const custom = e as CustomEvent;
-      if (!custom?.detail?.userId || custom.detail.userId !== user.id) return;
-      // reload favorites
-      getFavoritesForUser(user.id!).then((r) =>
-        setFavorites(r.favorites || [])
-      );
-    };
-
-    window.addEventListener("favorites_updated", handler as EventListener);
-    return () =>
-      window.removeEventListener("favorites_updated", handler as EventListener);
-  }, [user.id]);
-
-  const toggleFavorite = async (careerId: string) => {
+  const toggleFavorite = useCallback(async (careerId: string) => {
     if (!user.id) return false;
     if (favorites.includes(careerId)) {
-      await removeFavorite(user.id, careerId);
-      setFavorites((s) => s.filter((x) => x !== careerId));
-      // Track favorite removal
+      setFavorites((s) => {
+        const next = s.filter((x) => x !== careerId);
+        saveLocalFavorites(next);
+        return next;
+      });
+      removeFavorite(user.id, careerId).catch(() => {
+        toast.error("Failed to remove favorite");
+      });
+      toast.success("Removed from favorites");
       telemetry.trackFavorite("remove", careerId, "career");
       return false;
     }
-    await addFavorite(user.id, careerId);
-    setFavorites((s) => [...s, careerId]);
-    // Track favorite addition
+    setFavorites((s) => {
+      const next = [...s, careerId];
+      saveLocalFavorites(next);
+      return next;
+    });
+    addFavorite(user.id, careerId).catch(() => {
+      toast.error("Failed to save favorite");
+    });
+    toast.success("Added to favorites");
     telemetry.trackFavorite("add", careerId, "career");
     return true;
-  };
+  }, [user.id, favorites]);
 
   return { favorites, toggleFavorite };
 }

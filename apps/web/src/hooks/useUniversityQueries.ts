@@ -21,6 +21,7 @@ import {
   fetchUniversityFilterOptions,
   toggleUniversityFavorite,
 } from "@/services/universityService";
+import { toast } from "@/hooks/useToast";
 
 
 export const universityKeys = {
@@ -124,11 +125,14 @@ export function useUniversityFavoriteMutation() {
       universityId: string;
       action: "save" | "unsave";
     }) => toggleUniversityFavorite(universityId, action),
-    onSuccess: (_, { universityId }) => {
-      // Invalidate all favorites queries
+    onSuccess: (_, { action }) => {
+      toast.success(action === "save" ? "University saved" : "University removed");
       queryClient.invalidateQueries({
         queryKey: universityKeys.all,
       });
+    },
+    onError: () => {
+      toast.error("Failed to update favorite");
     },
   });
 }

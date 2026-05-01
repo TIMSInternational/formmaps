@@ -4,13 +4,19 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import CareerCard from "./CareerCard";
 import SkeletonCareerCard from "./SkeletonCareerCard";
-import CareerCompareBar from "./CareerCompareBar";
 import { CareerFilters } from "./CareerFilters";
 import { useCareerList } from "@/hooks/useCareerQueries";
 import { useTimsCareerScoring } from "@/hooks/useTimsQueries";
+import { useFavorites } from "@/hooks/useFavorites";
 import { motion } from "motion/react";
-import { Compass, SearchX } from "lucide-react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { Compass, SearchX, Sparkles } from "lucide-react";
+import { EmptyState } from "@/components/empty-state/EmptyState";
+import { ActiveFilterPills, type FilterPill } from "@/components/filters/ActiveFilterPills";
+import { useSidePanel } from "@/components/side-panel/SidePanel";
+import { CareerDetailPanel } from "@/components/side-panel/CareerDetailPanel";
+import type { CareerRole } from "@/types/career";
+
+const MAX_CAREERS = 10;
 
 export default function CareerExplorer() {
   const { t } = useTranslation();
@@ -29,46 +35,64 @@ export default function CareerExplorer() {
     sort: filters.sort as any,
   });
 
-  // Loading should be true if EITHER is loading, to prevent showing fallback data while waiting for API
+  const { favorites, toggleFavorite } = useFavorites();
+  const { openPanel } = useSidePanel();
+
+  const handleViewCareer = React.useCallback((career: CareerRole) => {
+    const title = career.title["en"] || "";
+    openPanel({
+      title,
+      content: (
+        <CareerDetailPanel
+          career={career}
+          matchScore={career.matchScore}
+          confidence={(career as any).confidence}
+          aiInsight={(career as any).aiInsight}
+          bridgingReasons={(career as any).bridgingReasons}
+        />
+      ),
+    });
+  }, [openPanel]);
+
   const isLoading = timsLoading || listLoading;
 
   const timsCareerList = timsData?.data?.careers;
+  const profileSummary = timsData?.data?.profileSummary;
 
   const displayCareers = React.useMemo(() => {
-    // If TIMS data is available, use it as the PRIMARY career list.
-    // Enrich each career with local static data (icons, descriptions) if available.
     if (timsCareerList && timsCareerList.length > 0) {
       const staticCareers = listData?.careers || [];
 
       const list = timsCareerList.map((sc) => {
-        // Try to find a matching static career for richer metadata
         const local = staticCareers.find(
           (c) => c.id === sc.programId || c.slug === sc.programId
         );
 
         if (local) {
-          // Enrich existing static career with live scores
           return {
             ...local,
             matchScore: sc.totalScore,
+            confidence: sc.confidence,
             needsBridging: sc.needsBridging,
             bridgingReasons: sc.bridgingReasons,
+            aiInsight: sc.aiInsight,
           };
         }
 
-        // No local match — build a career object from API data
         return {
           id: sc.programId,
           familyId: sc.cluster || "unknown",
           slug: sc.programId.toLowerCase().replace(/\s+/g, "-"),
           title: { en: sc.programTitle, es: sc.programTitle },
           shortDescription: {
-            en: "Recommended career based on your profile analysis.",
-            es: "Carrera recomendada basada en tu análisis de perfil.",
+            en: sc.aiInsight || "Recommended career based on your profile analysis.",
+            es: sc.aiInsight || "Carrera recomendada basada en tu análisis de perfil.",
           },
           matchScore: sc.totalScore,
+          confidence: sc.confidence,
           needsBridging: sc.needsBridging,
           bridgingReasons: sc.bridgingReasons,
+          aiInsight: sc.aiInsight,
           published: true,
           industries: [] as string[],
           skills: [] as any[],
@@ -77,76 +101,66 @@ export default function CareerExplorer() {
         };
       });
 
-      // Apply sort
       const sort = filters.sort || "recommended";
       if (sort === "recommended" || sort === "match") {
         list.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
       }
 
-      return list;
+      return list.slice(0, MAX_CAREERS);
     }
 
-    // Fallback: TIMS data not available yet (or failed), use static list
     if (!isLoading && listData?.careers) {
-      return [...listData.careers];
+      return [...listData.careers].slice(0, MAX_CAREERS);
     }
 
     return [];
   }, [listData, timsCareerList, filters.sort, isLoading]);
 
-  // Virtual List Logic
-  const parentRef = React.useRef<HTMLDivElement>(null);
-  const [columnCount, setColumnCount] = React.useState(3);
-
-  React.useEffect(() => {
-    const handleResize = () => {
-      // Matches tailwind breakpoints: md: 768px, lg: 1024px
-      if (window.innerWidth < 768) setColumnCount(1);
-      else if (window.innerWidth < 1024) setColumnCount(2);
-      else setColumnCount(3);
-    };
-    handleResize(); // Initial check
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const rows = React.useMemo(() => {
-    const result = [];
-    for (let i = 0; i < displayCareers.length; i += columnCount) {
-      result.push(displayCareers.slice(i, i + columnCount));
-    }
-    return result;
-  }, [displayCareers, columnCount]);
-
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 400, // Approximate height of a card row + gap
-    overscan: 5,
-  });
-
   return (
     <div className="space-y-4 max-w-7xl mx-auto h-full flex flex-col">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative shrink-0">
-        <div className="space-y-2 max-w-2xl">
-          <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-200" aria-hidden="true">
-              <Compass className="h-6 w-6 text-white" aria-hidden="true" />
+      <div className="flex flex-col gap-3 relative shrink-0">
+        <div className="space-y-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-3">
+            <div className="p-2 sm:p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-200/20 shrink-0" aria-hidden="true">
+              <Compass className="h-5 w-5 sm:h-6 sm:w-6 text-white" aria-hidden="true" />
             </div>
             {t("career.explorer.title", "Career Explorer")}
           </h2>
-          <p className="text-gray-500 text-lg ml-[3.75rem] leading-relaxed">
-            {t("career.explorer.subtitle", "Explore career paths tailored to your unique profile. Filter by industry, education, and demand to find your perfect match.")}
+          <p className="text-muted-foreground text-sm sm:text-base ml-0 sm:ml-[3.25rem] leading-relaxed">
+            {t("career.explorer.subtitle", "Your top 10 career matches based on cognitive abilities, personality, and interests.")}
           </p>
         </div>
       </div>
+
+      {profileSummary && (
+        <div className="flex items-start gap-3 bg-indigo-50 border border-indigo-100 rounded-2xl p-4 shrink-0">
+          <Sparkles className="h-5 w-5 text-indigo-500 mt-0.5 shrink-0" />
+          <p className="text-sm text-indigo-700">{profileSummary}</p>
+        </div>
+      )}
 
       <div className="shrink-0">
         <CareerFilters filters={filters} onChange={setFilters} />
       </div>
 
+      {/* Active filter pills */}
+      {(() => {
+        const pills: FilterPill[] = [];
+        if (filters.search) pills.push({ key: "search", label: "Search", value: filters.search });
+        if (filters.industry) pills.push({ key: "industry", label: "Industry", value: filters.industry });
+        if (filters.education) pills.push({ key: "education", label: "Education", value: filters.education });
+        if (filters.sort && filters.sort !== "recommended") pills.push({ key: "sort", label: "Sort", value: filters.sort });
+        return (
+          <ActiveFilterPills
+            pills={pills}
+            onRemove={(key) => setFilters({ ...filters, [key]: undefined })}
+            onClearAll={() => setFilters({})}
+          />
+        );
+      })()}
+
       {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonCareerCard key={i} />
           ))}
@@ -154,63 +168,46 @@ export default function CareerExplorer() {
       )}
 
       {!isLoading && displayCareers.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-3xl border border-dashed border-gray-200" role="alert">
-          <div className="h-20 w-20 bg-gray-50 rounded-full flex items-center justify-center mb-4" aria-hidden="true">
-            <SearchX className="h-10 w-10 text-gray-400" aria-hidden="true" />
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">{t("career.explorer.noResults", "No careers found")}</h3>
-          <p className="text-gray-500 max-w-sm">
-            {t("career.explorer.noResultsDesc", "We couldn't find any careers matching your current filters. Try adjusting your search criteria.")}
-          </p>
-        </div>
+        filters.search || filters.industry || filters.education ? (
+          <EmptyState
+            type="no_results"
+            title={t("career.explorer.noResults", "No careers match your filters")}
+            description={t("career.explorer.noResultsFilterDesc", "Try adjusting your search or filter criteria to see more results.")}
+            actionLabel="Clear Filters"
+            onAction={() => setFilters({})}
+          />
+        ) : (
+          <EmptyState
+            type="not_started"
+            title={t("career.explorer.noResults", "No careers found")}
+            description={t("career.explorer.noResultsDesc", "Complete your PCA and MIL assessments to receive personalized career recommendations.")}
+            actionLabel="Start Assessments"
+            actionHref="/dashboard/assessments"
+          />
+        )
       )}
 
       {!isLoading && displayCareers.length > 0 && (
-        <div
-          ref={parentRef}
-          className="w-full overflow-y-auto"
-          style={{ height: "calc(100vh - 300px)" }} // Adjust based on header/filter height
-        >
-          <div
-            style={{
-              height: `${rowVirtualizer.getTotalSize()}px`,
-              width: "100%",
-              position: "relative",
-            }}
-          >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const rowCareers = rows[virtualRow.index];
-              return (
-                <div
-                  key={virtualRow.index}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: `${virtualRow.size}px`,
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6"
-                >
-                  {rowCareers.map((career) => (
-                    <motion.div
-                      key={career.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="h-full"
-                    >
-                      <CareerCard career={career} />
-                    </motion.div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 pb-6">
+          {displayCareers.map((career, idx) => (
+            <motion.div
+              key={career.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: idx * 0.05 }}
+              className="h-full"
+            >
+              <CareerCard
+                career={career}
+                rank={idx + 1}
+                isFavorite={favorites.includes(career.id)}
+                onToggleFavorite={() => toggleFavorite(career.id)}
+                onViewDetails={handleViewCareer}
+              />
+            </motion.div>
+          ))}
         </div>
       )}
     </div>
   );
 }
-

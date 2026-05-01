@@ -6,206 +6,194 @@ import {
   Star,
   MapPin,
   Heart,
-  HeartOff,
   GraduationCap,
-  ArrowRight,
-  TrendingUp,
-  Eye,
+  ArrowUpRight,
+  DollarSign,
+  Users,
+  Sparkles,
+  GitCompareArrows,
 } from "lucide-react";
 import { UniversityCardProps } from "@/types/university";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { useGlobalStore } from "@/store/useGlobalStore";
-import { Badge } from "@/components/ui/badge";
+import { useCompare } from "@/components/compare/CompareContext";
 
-export function UniversityCard({
+function UniversityCardInner({
   university,
   matchScore,
   matchReasons,
   isFavorite,
   onFavoriteToggle,
   onViewDetails,
-  onCompare,
-  isCompareSelected,
   variant = "default",
 }: UniversityCardProps) {
   const { language } = useGlobalStore();
+  const { isComparing, addToCompare, removeFromCompare, isFull } = useCompare();
   const t = (en: string, es: string) => (language === "spanish" ? es : en);
-  
+  const compared = isComparing(university.id);
+
   const tuition =
-    university.tuition.international ??
-    university.tuition.outOfState ??
-    university.tuition.inState ??
+    university.tuition?.international ??
+    university.tuition?.outOfState ??
+    university.tuition?.inState ??
     0;
+
+  const globalRank = university.ranking?.global;
+  const acceptRate = university.acceptanceRate;
+  const programCount = university.programCount ?? (university as any).programs?.length ?? 0;
+  const setting = university.setting;
+
+  const confColor =
+    matchScore && matchScore >= 85
+      ? "text-emerald-400 bg-emerald-500/15 border-emerald-500/20"
+      : matchScore && matchScore >= 70
+      ? "text-blue-400 bg-blue-500/15 border-blue-500/20"
+      : "text-amber-400 bg-amber-500/15 border-amber-500/20";
+
+  const confLabel =
+    matchScore && matchScore >= 85
+      ? t("Excellent", "Excelente")
+      : matchScore && matchScore >= 70
+      ? t("Strong", "Fuerte")
+      : t("Good", "Buena");
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "group relative flex flex-col rounded-2xl border bg-white transition-all duration-300",
-        "hover:shadow-lg hover:border-gray-200 hover:-translate-y-1",
-        variant === "featured" ? "border-blue-100 ring-1 ring-blue-50" : "border-gray-100"
+        "group relative flex flex-col rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden",
+        "bg-[var(--admin-bg-card)] border-[var(--admin-border-default)]",
+        "hover:border-[var(--admin-border-hover)] hover:bg-[var(--admin-bg-card-hover)]"
       )}
-      aria-labelledby={`university-${university.id}-name`}
+      onClick={() => onViewDetails?.(university)}
+      aria-labelledby={`uni-${university.id}-name`}
     >
-      {/* Header Image Area */}
-      <div className="relative h-40 w-full overflow-hidden rounded-t-2xl bg-gray-50">
-        {university.coverImage ? (
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-            style={{ backgroundImage: `url(${university.coverImage})` }}
-          />
+      {/* Top section: match score + rank */}
+      <div className="flex items-center justify-between px-5 pt-4 pb-2">
+        {typeof matchScore === "number" ? (
+          <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold", confColor)}>
+            <Sparkles className="h-3 w-3" />
+            {matchScore.toFixed(0)}% {confLabel}
+          </div>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100" />
+          <div />
         )}
-        
-        {/* Featured Badge */}
-        {variant === "featured" && (
-          <div className="absolute top-3 left-3">
-            <Badge className="bg-blue-600/90 hover:bg-blue-600 text-white border-none shadow-sm backdrop-blur-sm">
-              {t("Recommended", "Recomendado")}
-            </Badge>
+        {globalRank && (
+          <div className="flex items-center gap-1 text-xs text-[var(--admin-font-tertiary)]">
+            <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+            <span className="font-semibold text-[var(--admin-font-secondary)]">#{globalRank}</span>
           </div>
         )}
+      </div>
 
-        {/* Match Score Badge */}
-        {typeof matchScore === "number" && (
-          <div 
-            className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold text-emerald-600 shadow-sm backdrop-blur-sm"
-            role="img"
-            aria-label={`${matchScore}% match score`}
-          >
-            <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" />
-            <span aria-hidden="true">{matchScore}%</span>
+      {/* University name + location */}
+      <div className="px-5 pb-3">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-xl bg-[var(--admin-bg-icon-box)] flex items-center justify-center text-[var(--admin-font-secondary)] text-sm font-bold shrink-0">
+            {university.shortName?.slice(0, 2) || university.name.charAt(0)}
           </div>
-        )}
-
-        {/* Quick View Button (Visible on Hover) */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Button
-            size="sm"
-            variant="secondary"
-            className="bg-white/90 hover:bg-white text-gray-900 shadow-sm backdrop-blur-sm gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300"
-            onClick={() => onViewDetails?.(university)}
-            aria-label={`Quick view ${university.name}`}
-          >
-            <Eye className="h-4 w-4" aria-hidden="true" />
-            {t("Quick View", "Vista Rápida")}
-          </Button>
+          <div className="min-w-0">
+            <h3
+              id={`uni-${university.id}-name`}
+              className="text-sm font-bold text-[var(--admin-font-primary)] line-clamp-1 group-hover:text-[var(--admin-accent-blue)] transition-colors"
+            >
+              {university.name}
+            </h3>
+            <div className="flex items-center gap-1.5 text-xs text-[var(--admin-font-tertiary)] mt-0.5">
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="line-clamp-1">{university.city}, {university.country}</span>
+              {setting && (
+                <>
+                  <span className="text-[var(--admin-border-default)]">·</span>
+                  <span className="capitalize">{setting}</span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Logo & Main Info */}
-      <div className="relative px-5 pt-12 pb-5 flex-1 flex flex-col">
-        {/* Logo (Floating) */}
-        <div className="absolute -top-8 left-5 h-16 w-16 overflow-hidden rounded-xl border-4 border-white bg-white shadow-sm">
-          {university.logo ? (
-             
-            <img
-              src={university.logo}
-              alt={university.name}
-              className="h-full w-full object-contain p-2"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gray-50 text-xs font-bold text-gray-400">
-              {university.shortName || university.name.slice(0, 2)}
-            </div>
-          )}
+      {/* AI Insight */}
+      {matchReasons && matchReasons.length > 0 && (
+        <div className="mx-5 mb-3 px-3 py-2 rounded-lg bg-[var(--admin-bg-hover)] border border-[var(--admin-border-light)]">
+          <p className="text-[11px] text-[var(--admin-font-tertiary)] leading-relaxed line-clamp-2">
+            {matchReasons[0]}
+          </p>
+        </div>
+      )}
+
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-px mx-5 mb-4 rounded-lg overflow-hidden border border-[var(--admin-border-light)]">
+        <div className="flex flex-col items-center py-2.5 bg-[var(--admin-bg-hover)]">
+          <DollarSign className="h-3 w-3 text-[var(--admin-font-tertiary)] mb-1" />
+          <span className="text-xs font-bold text-[var(--admin-font-primary)]">
+            {tuition > 0 ? `$${(tuition / 1000).toFixed(0)}k` : "—"}
+          </span>
+          <span className="text-[9px] text-[var(--admin-font-tertiary)]">/yr</span>
+        </div>
+        <div className="flex flex-col items-center py-2.5 bg-[var(--admin-bg-hover)]">
+          <Users className="h-3 w-3 text-[var(--admin-font-tertiary)] mb-1" />
+          <span className="text-xs font-bold text-[var(--admin-font-primary)]">
+            {acceptRate ? `${acceptRate}%` : "—"}
+          </span>
+          <span className="text-[9px] text-[var(--admin-font-tertiary)]">{t("Accept", "Acepta")}</span>
+        </div>
+        <div className="flex flex-col items-center py-2.5 bg-[var(--admin-bg-hover)]">
+          <GraduationCap className="h-3 w-3 text-[var(--admin-font-tertiary)] mb-1" />
+          <span className="text-xs font-bold text-[var(--admin-font-primary)]">
+            {programCount || "—"}
+          </span>
+          <span className="text-[9px] text-[var(--admin-font-tertiary)]">{t("Programs", "Programas")}</span>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--admin-border-light)]">
+        <div className="flex items-center gap-1.5 text-[11px] text-[var(--admin-font-tertiary)]">
+          <span className={cn(
+            "px-1.5 py-0.5 rounded text-[10px] font-medium capitalize",
+            university.type === "private"
+              ? "bg-purple-500/10 text-purple-400"
+              : "bg-blue-500/10 text-blue-400"
+          )}>
+            {university.type}
+          </span>
         </div>
 
-        <div className="mb-4">
-          <h3 id={`university-${university.id}-name`} className="text-lg font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
-            {university.name}
-          </h3>
-          <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-            <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="line-clamp-1">
-              {university.city}, {university.country}
-            </span>
-          </div>
-        </div>
-
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="flex flex-col gap-0.5 p-2.5 rounded-lg bg-gray-50/80 border border-gray-100/50">
-            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wide">
-              {t("Rank", "Ranking")}
-            </span>
-            <div className="flex items-center gap-1.5 text-sm font-bold text-gray-700">
-              <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" aria-hidden="true" />
-              #{university.ranking.global || "-"}
-            </div>
-          </div>
-          <div className="flex flex-col gap-0.5 p-2.5 rounded-lg bg-gray-50/80 border border-gray-100/50">
-            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wide">
-              {t("Tuition", "Matrícula")}
-            </span>
-            <div className="flex items-center gap-1.5 text-sm font-bold text-gray-700">
-              <span className="truncate">
-                {tuition > 0 
-                  ? `$${(tuition / 1000).toFixed(1)}k` 
-                  : "-"}
-              </span>
-              <span className="text-[10px] font-normal text-gray-400">/yr</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1.5 mb-5 mt-auto">
-          {university.type && (
-            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-              {university.type}
-            </span>
-          )}
-          {(university.programs || []).slice(0, 2).map((p, i) => (
-            <span key={i} className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-[10px] font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
-              {p.degree}
-            </span>
-          ))}
-          {(university.programs || []).length > 2 && (
-            <span className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-[10px] font-medium text-gray-500">
-              +{(university.programs || []).length - 2}
-            </span>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex-1 justify-between text-xs font-semibold hover:bg-blue-50 hover:text-blue-600 group/btn"
-            onClick={() => onViewDetails?.(university)}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (compared) removeFromCompare(university.id);
+              else addToCompare(university.id);
+            }}
+            disabled={!compared && isFull}
+            className={cn(
+              "h-7 w-7 rounded-full flex items-center justify-center transition-colors",
+              compared
+                ? "text-blue-400 bg-blue-500/10 hover:bg-blue-500/20"
+                : "text-[var(--admin-font-tertiary)] hover:text-blue-400 hover:bg-blue-500/10 disabled:opacity-30"
+            )}
+            aria-label={compared ? "Remove from compare" : "Add to compare"}
           >
-            {t("View Details", "Ver Detalles")}
-            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-0.5" aria-hidden="true" />
-          </Button>
-          
-          <div className="flex items-center gap-1 border-l border-gray-100 pl-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "h-8 w-8 rounded-full transition-all duration-200",
-                isFavorite 
-                  ? "text-rose-500 bg-rose-50 hover:bg-rose-100" 
-                  : "text-gray-400 hover:text-rose-500 hover:bg-rose-50"
-              )}
-              onClick={(e) => {
-                e.stopPropagation();
-                onFavoriteToggle?.(university.id);
-              }}
-              aria-label={isFavorite ? `Remove ${university.name} from favorites` : `Add ${university.name} to favorites`}
-            >
-              {isFavorite ? (
-                <Heart className="h-4 w-4 fill-current" aria-hidden="true" />
-              ) : (
-                <Heart className="h-4 w-4" aria-hidden="true" />
-              )}
-            </Button>
+            <GitCompareArrows className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onFavoriteToggle?.(university.id); }}
+            className={cn(
+              "h-7 w-7 rounded-full flex items-center justify-center transition-colors",
+              isFavorite
+                ? "text-rose-400 bg-rose-500/10 hover:bg-rose-500/20"
+                : "text-[var(--admin-font-tertiary)] hover:text-rose-400 hover:bg-rose-500/10"
+            )}
+            aria-label={isFavorite ? "Remove favorite" : "Add favorite"}
+          >
+            <Heart className={cn("h-3.5 w-3.5", isFavorite && "fill-current")} />
+          </button>
+          <div className="h-7 w-7 rounded-full flex items-center justify-center text-[var(--admin-font-tertiary)] group-hover:text-[var(--admin-accent-blue)] transition-colors">
+            <ArrowUpRight className="h-3.5 w-3.5" />
           </div>
         </div>
       </div>
@@ -213,4 +201,5 @@ export function UniversityCard({
   );
 }
 
+export const UniversityCard = React.memo(UniversityCardInner);
 export default UniversityCard;

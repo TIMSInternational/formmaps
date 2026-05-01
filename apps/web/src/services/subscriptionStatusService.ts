@@ -7,6 +7,15 @@ export interface SubscriptionStatus {
   expiryDate: string | null;
 }
 
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  interval: string;
+  features: string[];
+  isActive: boolean | null;
+}
+
 export interface CreateSubscriptionRequest {
   planId: string;
   paymentMethodId?: string;
@@ -28,6 +37,18 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
     method: "GET",
   });
   return response.data || response;
+}
+
+/**
+ * Fetch all available subscription plans from backend
+ */
+export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+  const response = await apiRequest("/api/subscriptionplan", {
+    method: "GET",
+  });
+  const plans = response.data || response;
+  // Only return active plans
+  return Array.isArray(plans) ? plans.filter((p: SubscriptionPlan) => p.isActive !== false) : [];
 }
 
 /**

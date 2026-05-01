@@ -1,19 +1,14 @@
 "use client";
 
 import React from "react";
-import { motion } from "motion/react";
 import { UniversityDetailsModalProps } from "@/types/university";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   MapPin,
-  Globe2,
   ExternalLink,
   GraduationCap,
   TrendingUp,
@@ -22,11 +17,15 @@ import {
   Award,
   DollarSign,
   CheckCircle2,
+  Sparkles,
+  Globe,
+  BookOpen,
+  ArrowUpRight,
+  Star,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/useGlobalStore";
-
-import { useTranslation } from "react-i18next";
 
 export function UniversityDetailsModal({
   university,
@@ -37,233 +36,245 @@ export function UniversityDetailsModal({
   matchReasons,
   recommendedPrograms,
 }: UniversityDetailsModalProps) {
-  const { t } = useTranslation();
+  const { language } = useGlobalStore();
+  const t = (en: string, es: string) => (language === "spanish" ? es : en);
+
   if (!university) return null;
 
   const tuition =
-    university.tuition.international ??
-    university.tuition.outOfState ??
-    university.tuition.inState ??
+    university.tuition?.international ??
+    university.tuition?.outOfState ??
+    university.tuition?.inState ??
     0;
+
+  const globalRank = university.ranking?.global;
+  const nationalRank = university.ranking?.national;
+  const acceptRate = university.acceptanceRate;
+  const setting = university.setting;
+  const campusSize = university.campusSize;
+
+  const confColor =
+    matchScore && matchScore >= 85 ? "text-emerald-400" :
+    matchScore && matchScore >= 70 ? "text-blue-400" : "text-amber-400";
+  const confBg =
+    matchScore && matchScore >= 85 ? "bg-emerald-500/10 border-emerald-500/20" :
+    matchScore && matchScore >= 70 ? "bg-blue-500/10 border-blue-500/20" : "bg-amber-500/10 border-amber-500/20";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-w-5xl p-0 overflow-hidden gap-0 border-none shadow-2xl"
+        className="max-w-2xl w-[95vw] sm:w-full p-0 overflow-hidden gap-0 border-[var(--admin-border-default)] bg-[var(--admin-bg-panel)] shadow-2xl rounded-2xl max-h-[90vh]"
         aria-describedby={undefined}
       >
         <DialogTitle className="sr-only">{university.name}</DialogTitle>
-        {/* Header Section */}
-        <div className="relative h-64 w-full bg-slate-900">
-          {university.coverImage ? (
-            <div
-              className="absolute inset-0 bg-cover bg-center opacity-60"
-              style={{ backgroundImage: `url(${university.coverImage})` }}
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
-          
-          <div className="absolute bottom-0 left-0 right-0 p-8">
-            <div className="flex items-end justify-between gap-6">
-              <div className="flex items-end gap-6">
-                <div className="h-24 w-24 rounded-2xl bg-white shadow-xl flex items-center justify-center overflow-hidden border-4 border-white/10 backdrop-blur-sm">
-                  {university.logo ? (
-                     
-                    <img
-                      src={university.logo}
-                      alt={university.name}
-                      className="h-full w-full object-contain p-3"
-                    />
-                  ) : (
-                    <span className="text-xl font-bold text-gray-400">
-                      {university.shortName || university.name.slice(0, 2)}
-                    </span>
+
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4 border-b border-[var(--admin-border-light)]">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-4 min-w-0">
+              <div className="h-14 w-14 rounded-xl bg-[var(--admin-bg-icon-box)] flex items-center justify-center text-[var(--admin-font-secondary)] text-lg font-bold shrink-0 border border-[var(--admin-border-light)]">
+                {university.shortName?.slice(0, 3) || university.name.charAt(0)}
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-xl font-bold text-[var(--admin-font-primary)] leading-tight">
+                  {university.name}
+                </h2>
+                <div className="flex items-center gap-3 mt-1.5 text-sm text-[var(--admin-font-tertiary)]">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {university.city}, {university.country}
+                  </span>
+                  <span className="text-[var(--admin-border-default)]">·</span>
+                  <span className="flex items-center gap-1">
+                    <Building2 className="h-3.5 w-3.5" />
+                    <span className="capitalize">{university.type}</span>
+                  </span>
+                  {setting && (
+                    <>
+                      <span className="text-[var(--admin-border-default)]">·</span>
+                      <span className="capitalize">{setting}</span>
+                    </>
                   )}
                 </div>
-                <div className="mb-2">
-                  <h2 className="text-3xl font-bold text-white mb-2 drop-shadow-sm">
-                    {university.name}
-                  </h2>
-                  <div className="flex items-center gap-4 text-slate-200">
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="h-4 w-4 text-blue-400" aria-hidden="true" />
-                      <span className="font-medium">{university.city}, {university.country}</span>
-                    </div>
-                    <div className="w-1 h-1 rounded-full bg-slate-500" aria-hidden="true" />
-                    <div className="flex items-center gap-1.5">
-                      <Building2 className="h-4 w-4 text-blue-400" aria-hidden="true" />
-                      <span className="font-medium">{university.type}</span>
-                    </div>
-                  </div>
-                </div>
               </div>
-
-              {typeof matchScore === "number" && (
-                <div className="flex flex-col items-end mb-2">
-                  <div className="flex items-center gap-2 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 px-4 py-2 rounded-xl" role="status" aria-label={`${t("university.matchScore", "Match score")}: ${matchScore}%`}>
-                    <TrendingUp className="h-5 w-5 text-emerald-400" aria-hidden="true" />
-                    <span className="text-3xl font-bold text-emerald-400" aria-hidden="true">{matchScore}%</span>
-                    <span className="text-xs font-medium text-emerald-200 uppercase tracking-wide ml-1" aria-hidden="true">
-                      {t("university.match", "Match")}
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
+
+            {typeof matchScore === "number" && (
+              <div className={cn("flex items-center gap-2 px-4 py-2 rounded-xl border shrink-0", confBg)}>
+                <TrendingUp className={cn("h-4 w-4", confColor)} />
+                <span className={cn("text-2xl font-bold", confColor)}>{matchScore.toFixed(0)}%</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Content Section */}
-        <div className="flex flex-col lg:flex-row h-[600px]">
-          {/* Main Content (Left) */}
-          <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-white">
-            {/* Description */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-blue-600" aria-hidden="true" />
-                {t("university.about", "About")}
-              </h3>
-              <p className="text-gray-600 leading-relaxed text-base">
-                {university.description}
-              </p>
+        {/* Scrollable content */}
+        <div className="max-h-[65vh] overflow-y-auto">
+          {/* Match breakdown */}
+          {matchBreakdown && (
+            <div className="px-6 py-4 border-b border-[var(--admin-border-light)]">
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { label: t("Cognitive", "Cognitivo"), value: matchBreakdown.academicMatch, icon: BarChart3 },
+                  { label: t("Career", "Carrera"), value: matchBreakdown.careerAlignment, icon: TrendingUp },
+                  { label: t("Personality", "Personalidad"), value: matchBreakdown.personalityMatch, icon: Star },
+                  { label: t("Preferences", "Preferencias"), value: matchBreakdown.preferencesMatch, icon: CheckCircle2 },
+                ].map((item) => (
+                  <div key={item.label} className="text-center">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <item.icon className="h-3 w-3 text-[var(--admin-font-tertiary)]" />
+                      <span className="text-[10px] text-[var(--admin-font-tertiary)] uppercase tracking-wider font-medium">{item.label}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-[var(--admin-bg-hover)] overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-full transition-all", (item.value ?? 0) >= 80 ? "bg-emerald-500" : (item.value ?? 0) >= 60 ? "bg-blue-500" : "bg-amber-500")}
+                        style={{ width: `${Math.min(item.value ?? 0, 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-bold text-[var(--admin-font-secondary)] mt-1 inline-block">{(item.value ?? 0).toFixed(0)}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
+          )}
 
-            {/* Match Analysis */}
-            {matchReasons && matchReasons.length > 0 && (
-              <div className="bg-emerald-50/50 rounded-2xl p-6 border border-emerald-100">
-                <h3 className="text-lg font-bold text-emerald-900 mb-4 flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-hidden="true" />
-                  {t("university.whyFit", "Why it's a great fit")}
-                </h3>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {matchReasons.map((r, idx) => (
-                    <div key={idx} className="flex items-start gap-3">
-                      <div className="mt-1.5 h-2 w-2 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
-                      <span className="text-sm text-emerald-900 font-medium">{r}</span>
-                    </div>
-                  ))}
-                </div>
+          {/* AI insights */}
+          {matchReasons && matchReasons.length > 0 && (
+            <div className="px-6 py-4 border-b border-[var(--admin-border-light)]">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-[var(--admin-accent-blue)]" />
+                <span className="text-xs font-bold text-[var(--admin-font-secondary)] uppercase tracking-wider">{t("Why it's a great fit", "Por qué es ideal")}</span>
               </div>
-            )}
+              <div className="space-y-2">
+                {matchReasons.map((r, idx) => (
+                  <div key={idx} className="flex items-start gap-2.5">
+                    <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[var(--admin-accent-blue)] shrink-0" />
+                    <span className="text-sm text-[var(--admin-font-secondary)] leading-relaxed">{r}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-            {/* Recommended Programs */}
-            {recommendedPrograms && recommendedPrograms.length > 0 && (
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5 text-blue-600" aria-hidden="true" />
-                  {t("university.recommendedPrograms", "Recommended Programs")}
-                </h3>
-                <div className="grid gap-3">
-                  {recommendedPrograms.map((p) => (
-                    <div
-                      key={p.id}
-                      className="group flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-blue-200 hover:shadow-sm transition-all"
-                    >
-                      <div className="space-y-1">
-                        <h4 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                          {p.name}
-                        </h4>
-                        <div className="flex items-center gap-3 text-xs text-gray-500">
-                          <span className="font-medium px-2 py-0.5 rounded-md bg-white border border-gray-200">
-                            {p.degree}
-                          </span>
-                          <span>{p.field}</span>
-                          {p.duration && <span>• {p.duration} {t("university.years", "years")}</span>}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-emerald-600">
-                          {p.matchScore.toFixed(0)}% {t("university.match", "Match")}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          {/* Stats grid */}
+          <div className="px-6 py-4 border-b border-[var(--admin-border-light)]">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+              <StatBox icon={Award} label={t("Rank", "Ranking")} value={globalRank ? `#${globalRank}` : "—"} accent="text-amber-400" />
+              <StatBox icon={Users} label={t("Accept", "Acepta")} value={acceptRate ? `${acceptRate}%` : "—"} accent="text-blue-400" />
+              <StatBox icon={DollarSign} label={t("Tuition", "Matrícula")} value={tuition > 0 ? `$${(tuition / 1000).toFixed(0)}k` : "—"} accent="text-emerald-400" />
+              <StatBox icon={GraduationCap} label={t("Programs", "Programas")} value={String(recommendedPrograms?.length || university.programCount || "—")} accent="text-purple-400" />
+            </div>
           </div>
 
-          {/* Sidebar (Right) */}
-          <div className="w-full lg:w-80 bg-gray-50 border-l border-gray-100 p-6 overflow-y-auto space-y-6">
-            {/* Quick Stats */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                {t("university.keyStats", "Key Statistics")}
-              </h4>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                  <div className="text-xs text-gray-500 mb-1">{t("university.globalRank", "Global Rank")}</div>
-                  <div className="text-lg font-bold text-gray-900 flex items-center gap-1">
-                    <Award className="h-4 w-4 text-amber-500" aria-hidden="true" />
-                    #{university.ranking.global || "-"}
-                  </div>
-                </div>
-                <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                  <div className="text-xs text-gray-500 mb-1">{t("university.acceptance", "Acceptance")}</div>
-                  <div className="text-lg font-bold text-gray-900 flex items-center gap-1">
-                    <Users className="h-4 w-4 text-blue-500" aria-hidden="true" />
-                    {university.acceptanceRate}%
-                  </div>
-                </div>
+          {/* Description */}
+          {university.description && (
+            <div className="px-6 py-4 border-b border-[var(--admin-border-light)]">
+              <div className="flex items-center gap-2 mb-2">
+                <BookOpen className="h-4 w-4 text-[var(--admin-font-tertiary)]" />
+                <span className="text-xs font-bold text-[var(--admin-font-secondary)] uppercase tracking-wider">{t("About", "Acerca de")}</span>
               </div>
+              <p className="text-sm text-[var(--admin-font-tertiary)] leading-relaxed">{university.description}</p>
+            </div>
+          )}
 
-              <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="h-4 w-4 text-green-600" aria-hidden="true" />
-                  <span className="text-sm font-bold text-gray-900">{t("university.tuition", "Tuition")}</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900">
-                  ${(tuition).toLocaleString()}
-                  <span className="text-sm font-normal text-gray-500 ml-1">
-                    {university.tuition.currency}
+          {/* Highlights */}
+          {university.highlights && university.highlights.length > 0 && (
+            <div className="px-6 py-4 border-b border-[var(--admin-border-light)]">
+              <div className="flex items-center gap-2 mb-3">
+                <Star className="h-4 w-4 text-[var(--admin-font-tertiary)]" />
+                <span className="text-xs font-bold text-[var(--admin-font-secondary)] uppercase tracking-wider">{t("Highlights", "Destacados")}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {university.highlights.map((h, idx) => (
+                  <span key={idx} className="text-xs px-2.5 py-1 rounded-lg bg-[var(--admin-bg-hover)] text-[var(--admin-font-secondary)] border border-[var(--admin-border-light)]">
+                    {h}
                   </span>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {t("university.estimatedPerYear", "Estimated per year")}
-                </p>
+                ))}
               </div>
             </div>
+          )}
 
-            {/* Highlights */}
-            {university.highlights && university.highlights.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  {t("university.highlights", "Highlights")}
-                </h4>
-                <ul className="space-y-2">
-                  {university.highlights.map((h, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-sm text-gray-600">
-                      <CheckCircle2 className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
-                      <span>{h}</span>
-                    </li>
-                  ))}
-                </ul>
+          {/* Programs */}
+          {recommendedPrograms && recommendedPrograms.length > 0 && (
+            <div className="px-6 py-4 border-b border-[var(--admin-border-light)]">
+              <div className="flex items-center gap-2 mb-3">
+                <GraduationCap className="h-4 w-4 text-[var(--admin-font-tertiary)]" />
+                <span className="text-xs font-bold text-[var(--admin-font-secondary)] uppercase tracking-wider">{t("Programs", "Programas")}</span>
               </div>
-            )}
-
-            {/* Links */}
-            <div className="space-y-3 pt-4 border-t border-gray-200">
-              <Button className="w-full justify-between" asChild>
-                <a href={university.website} target="_blank" rel="noreferrer">
-                  {t("university.visitWebsite", "Visit Website")}
-                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                </a>
-              </Button>
-              {university.admissionsUrl && (
-                <Button variant="outline" className="w-full justify-between" asChild>
-                  <a href={university.admissionsUrl} target="_blank" rel="noreferrer">
-                    {t("university.admissions", "Admissions")}
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  </a>
-                </Button>
-              )}
+              <div className="grid gap-2">
+                {recommendedPrograms.map((p, idx) => (
+                  <div
+                    key={p.id || `prog-${idx}`}
+                    className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-[var(--admin-bg-hover)] border border-[var(--admin-border-light)] hover:border-[var(--admin-border-hover)] transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-7 w-7 rounded-md bg-[var(--admin-bg-icon-box)] flex items-center justify-center shrink-0">
+                        <GraduationCap className="h-3.5 w-3.5 text-[var(--admin-font-tertiary)]" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-sm font-medium text-[var(--admin-font-primary)] line-clamp-1">{p.name}</span>
+                        <div className="flex items-center gap-2 text-[10px] text-[var(--admin-font-tertiary)]">
+                          <span>{p.degree}</span>
+                          {p.field && <><span>·</span><span>{p.field}</span></>}
+                          {p.duration && <><span>·</span><span>{p.duration}yr</span></>}
+                        </div>
+                      </div>
+                    </div>
+                    {p.academicRigor && (
+                      <span className={cn(
+                        "text-[10px] px-2 py-0.5 rounded font-medium capitalize shrink-0",
+                        p.academicRigor === "high" ? "bg-red-500/10 text-red-400" :
+                        p.academicRigor === "competitive" ? "bg-amber-500/10 text-amber-400" :
+                        "bg-emerald-500/10 text-emerald-400"
+                      )}>
+                        {p.academicRigor}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 flex items-center gap-3 border-t border-[var(--admin-border-light)]">
+          {university.website && (
+            <a
+              href={university.website.startsWith("http") ? university.website : `https://${university.website}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--admin-accent-blue)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              <Globe className="h-4 w-4" />
+              {t("Visit Website", "Visitar Sitio")}
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </a>
+          )}
+          {university.admissionsUrl && (
+            <a
+              href={university.admissionsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--admin-border-default)] text-[var(--admin-font-secondary)] text-sm font-medium hover:bg-[var(--admin-bg-hover)] transition-colors"
+            >
+              {t("Admissions", "Admisiones")}
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function StatBox({ icon: Icon, label, value, accent }: { icon: React.ElementType; label: string; value: string; accent: string }) {
+  return (
+    <div className="flex flex-col items-center p-3 rounded-xl bg-[var(--admin-bg-hover)] border border-[var(--admin-border-light)]">
+      <Icon className={cn("h-4 w-4 mb-1", accent)} />
+      <span className="text-sm font-bold text-[var(--admin-font-primary)]">{value}</span>
+      <span className="text-[10px] text-[var(--admin-font-tertiary)] mt-0.5">{label}</span>
+    </div>
   );
 }
 

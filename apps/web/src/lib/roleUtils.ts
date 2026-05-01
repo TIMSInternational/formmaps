@@ -42,7 +42,7 @@ export function normalizeRole(raw: string | null | undefined): RoleName {
 
 /** Map each role to its default home route after login */
 export const roleHomeMap: Record<RoleName, string> = {
-  [Roles.SUPER_ADMIN]: "/dashboard/admin",
+  [Roles.SUPER_ADMIN]: "/admin",
   [Roles.SCHOOL_ADMIN]: "/school-admin",
   [Roles.COUNSELOR]: "/counselor",
   [Roles.STUDENT]: "/dashboard",

@@ -1,3 +1,6 @@
+/* Safe area for iOS bottom nav */
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
 /*
  * NEXA Admin Theme — Twenty CRM Style
  * =====================================
@@ -223,11 +226,17 @@
 .admin-twenty [data-slot="switch"] { background: var(--admin-border-hover) !important; }
 .admin-twenty [data-slot="switch"][data-state="checked"] { background: var(--admin-accent-blue) !important; }
 
-/* ── Scrollbar ── */
-.admin-twenty ::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ── Scrollbar — hidden by default, thin on hover ── */
+.admin-twenty { scrollbar-width: none; }
+.admin-twenty *:hover { scrollbar-width: thin; }
+.admin-twenty * { scrollbar-width: none; scrollbar-color: transparent transparent; }
+.admin-twenty *:hover { scrollbar-color: var(--admin-border-default) transparent; }
+.admin-twenty ::-webkit-scrollbar { width: 0; height: 0; }
+.admin-twenty *:hover::-webkit-scrollbar { width: 4px; height: 4px; }
 .admin-twenty ::-webkit-scrollbar-track { background: transparent; }
-.admin-twenty ::-webkit-scrollbar-thumb { background: var(--admin-border-default); border-radius: 3px; }
-.admin-twenty ::-webkit-scrollbar-thumb:hover { background: var(--admin-border-hover); }
+.admin-twenty ::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+.admin-twenty *:hover::-webkit-scrollbar-thumb { background: var(--admin-border-default); }
+.admin-twenty *:hover::-webkit-scrollbar-thumb:hover { background: var(--admin-border-hover); }
 
 /* ── Focus ── */
 .admin-twenty .focus\:ring-gray-900:focus { --tw-ring-color: var(--admin-font-light) !important; }

@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ArrowRight, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { EmptyState } from "@/components/empty-state/EmptyState";
 
 function formatCluster(cluster: string): string {
   return cluster.replace(/_/g, " ").replace(/And/g, "&");
@@ -61,25 +62,18 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
     );
   }
 
-  // No assessments state
-  if (!hasAssessments || topCareers.length === 0) {
+  // No data state — show empty only if we truly have no career results
+  if (topCareers.length === 0) {
     return (
-      <Card className="p-6 rounded-2xl border-border flex flex-col justify-center items-center text-center">
-        <div className="w-12 h-12 rounded-xl bg-secondary border border-border flex items-center justify-center mb-4">
-          <Sparkles className="w-6 h-6 text-muted-foreground" />
-        </div>
-        <h2 className="text-lg font-semibold text-foreground mb-1.5">
-          Your Career Matches
-        </h2>
-        <p className="text-sm text-muted-foreground mb-5 max-w-[28ch]">
-          Complete your assessments to discover personalized career matches
-        </p>
-        <Link
-          href="/dashboard/assessments"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-foreground text-background hover:bg-foreground/90 transition-colors"
-        >
-          Start assessments <ArrowRight className="w-4 h-4" />
-        </Link>
+      <Card className="p-0 rounded-2xl border-border overflow-hidden">
+        <EmptyState
+          type="not_started"
+          title="Your Career Matches"
+          description="Complete your assessments to discover personalized career matches"
+          icon={Sparkles}
+          actionLabel="Start Assessments"
+          actionHref="/dashboard/assessments"
+        />
       </Card>
     );
   }
@@ -107,14 +101,14 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
         </div>
 
         {/* Career Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
           {topCareers.map((career) => (
             <button
               key={career.programId}
               onClick={() => setSelectedCareer(career)}
               className={cn(
                 "group relative flex flex-col items-center gap-2 rounded-xl border p-4 text-center",
-                "bg-white hover:bg-secondary border-border hover:border-primary/20",
+                "bg-card hover:bg-secondary border-border hover:border-primary/20",
                 "transition-all duration-200 cursor-pointer",
               )}
             >
@@ -126,7 +120,7 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
                     cy="28"
                     r="24"
                     fill="none"
-                    stroke="#e2e8f0"
+                    className="stroke-border"
                     strokeWidth="4"
                   />
                   <circle
@@ -140,12 +134,12 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
                     strokeDasharray={`${(career.totalScore / 100) * 150.8} 150.8`}
                   />
                 </svg>
-                <span className="absolute text-sm font-bold text-slate-800">
+                <span className="absolute text-sm font-bold text-foreground">
                   {Math.round(career.totalScore)}%
                 </span>
               </div>
 
-              <span className="text-sm font-semibold text-slate-800 leading-tight line-clamp-2">
+              <span className="text-sm font-semibold text-foreground leading-tight line-clamp-2">
                 {career.programTitle}
               </span>
 
@@ -154,8 +148,8 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
                 className={cn(
                   "text-[10px] px-2 py-0",
                   career.needsBridging
-                    ? "border-amber-300 bg-amber-50 text-amber-700"
-                    : "border-emerald-300 bg-emerald-50 text-emerald-700",
+                    ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
+                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
                 )}
               >
                 {career.needsBridging ? "Needs Bridging" : "Ready"}
@@ -166,7 +160,7 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
           {remaining > 0 && (
             <Link
               href="/dashboard/career-paths"
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 p-4 text-slate-400 hover:text-slate-600 hover:border-slate-400 transition-colors"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border p-4 text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
             >
               <span className="text-2xl font-semibold">+{remaining}</span>
               <span className="text-xs">more</span>
@@ -176,23 +170,23 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
 
         {/* AI Insight */}
         {aiSummary && (
-          <div className="mt-5 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-4">
+          <div className="mt-5 rounded-lg bg-blue-500/5 border border-blue-500/15 p-4">
             <button
               onClick={() => setAiExpanded(!aiExpanded)}
               className="flex items-center gap-2 w-full text-left"
             >
-              <Sparkles className="w-4 h-4 text-blue-500 shrink-0" />
-              <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">
+              <Sparkles className="w-4 h-4 text-blue-400 shrink-0" />
+              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wide">
                 AI Insight
               </span>
               {aiExpanded ? (
-                <ChevronUp className="w-3.5 h-3.5 text-blue-400 ml-auto" />
+                <ChevronUp className="w-3.5 h-3.5 text-blue-400/60 ml-auto" />
               ) : (
-                <ChevronDown className="w-3.5 h-3.5 text-blue-400 ml-auto" />
+                <ChevronDown className="w-3.5 h-3.5 text-blue-400/60 ml-auto" />
               )}
             </button>
             {aiExpanded && (
-              <p className="text-sm text-slate-700 mt-2 leading-relaxed">
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
                 {aiSummary}
               </p>
             )}
@@ -220,17 +214,17 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
               <div className="space-y-6">
                 {/* Overall Score */}
                 <div className="text-center py-4">
-                  <div className="text-4xl font-bold text-slate-900">
+                  <div className="text-4xl font-bold text-foreground">
                     {Math.round(selectedCareer.totalScore)}%
                   </div>
-                  <p className="text-sm text-slate-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Overall Match Score
                   </p>
                 </div>
 
                 {/* Score Breakdown */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-slate-700">
+                  <h3 className="text-sm font-semibold text-muted-foreground">
                     Score Breakdown
                   </h3>
                   {[
@@ -253,8 +247,8 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
                   ].map((item) => (
                     <div key={item.label} className="space-y-1">
                       <div className="flex justify-between text-xs">
-                        <span className="text-slate-600">{item.label}</span>
-                        <span className="font-medium text-slate-800">
+                        <span className="text-muted-foreground">{item.label}</span>
+                        <span className="font-medium text-foreground">
                           {Math.round(item.value)}%
                         </span>
                       </div>
@@ -267,7 +261,7 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
                 {selectedCareer.needsBridging &&
                   selectedCareer.bridgingReasons.length > 0 && (
                     <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-amber-700">
+                      <h3 className="text-sm font-semibold text-amber-300">
                         Skill Gaps
                       </h3>
                       {selectedCareer.bridgingReasons.map((reason, i) => {
@@ -275,17 +269,17 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
                         return (
                           <div
                             key={i}
-                            className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3"
+                            className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3"
                           >
-                            <span className="text-amber-500 text-sm mt-0.5">
+                            <span className="text-amber-400 text-sm mt-0.5">
                               !
                             </span>
                             <div>
-                              <span className="text-sm font-medium text-amber-800">
+                              <span className="text-sm font-medium text-amber-300">
                                 {parsed.skill}
                               </span>
                               {parsed.detail && (
-                                <span className="text-xs text-amber-600 ml-1">
+                                <span className="text-xs text-amber-400/70 ml-1">
                                   ({parsed.detail})
                                 </span>
                               )}
@@ -299,7 +293,7 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
                 {/* Bridging Paths */}
                 {selectedCareer.bridgingPaths && (
                   <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-slate-700">
+                    <h3 className="text-sm font-semibold text-muted-foreground">
                       Recommended Skills/Courses
                     </h3>
                     <div className="flex flex-wrap gap-2">
@@ -322,7 +316,7 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
 
                 <Link
                   href="/dashboard/career-paths"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 mt-4"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-blue-400 hover:text-blue-300 mt-4"
                 >
                   View in Career Explorer <ArrowRight className="w-4 h-4" />
                 </Link>

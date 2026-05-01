@@ -2,8 +2,10 @@
 import { useCallback, useMemo, useState } from "react";
 import { CourseCard } from "./CourseCard";
 import { CourseFilters } from "./CourseFilters";
-import { CourseDetailsModal } from "./CourseDetailsModal";
 import { SkeletonCourseCard } from "./SkeletonCourseCard";
+import { useSidePanel } from "@/components/side-panel/SidePanel";
+import { CourseDetailPanel } from "@/components/side-panel/CourseDetailPanel";
+import { ActiveFilterPills, type FilterPill } from "@/components/filters/ActiveFilterPills";
 import {
   Course,
   CourseFilter,
@@ -36,8 +38,7 @@ export function CoursesCatalog() {
   const courses = data?.courses || [];
   const [filters, setFilters] = useState<CourseFilter>({});
   const [sortBy, setSortBy] = useState<CourseSortOption>("recommended");
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { openPanel } = useSidePanel();
   const [enrollments, setEnrollments] = useState<
     Record<string, CourseEnrollment>
   >({});
@@ -124,11 +125,6 @@ export function CoursesCatalog() {
     );
   }, [courses]);
 
-  const handleViewDetails = useCallback((course: Course) => {
-    setSelectedCourse(course);
-    setIsModalOpen(true);
-  }, []);
-
   const handleStartCourse = useCallback(
     async (course: Course) => {
       try {
@@ -184,6 +180,20 @@ export function CoursesCatalog() {
     },
     [enrollments]
   );
+
+  const handleViewDetails = useCallback((course: Course) => {
+    openPanel({
+      title: course.title,
+      content: (
+        <CourseDetailPanel
+          course={course}
+          enrollment={enrollments[course.id]}
+          onStartCourse={handleStartCourse}
+          onMarkCompleted={handleMarkCompleted}
+        />
+      ),
+    });
+  }, [openPanel, enrollments, handleStartCourse, handleMarkCompleted]);
 
   const handleClearFilters = () => {
     setFilters({});
@@ -309,6 +319,27 @@ export function CoursesCatalog() {
           </Button>
         ))}
       </div>
+
+      {/* Active Filter Pills */}
+      {(() => {
+        const pills: FilterPill[] = [];
+        if (filters.search) pills.push({ key: "search", label: "Search", value: filters.search });
+        if (filters.category?.length) pills.push({ key: "category", label: "Category", value: filters.category.join(", ") });
+        if (filters.language?.length) pills.push({ key: "language", label: "Language", value: filters.language.join(", ") });
+        if (filters.difficulty?.length) pills.push({ key: "difficulty", label: "Level", value: filters.difficulty.join(", ") });
+        if (filters.country?.length) pills.push({ key: "country", label: "Country", value: filters.country.join(", ") });
+        if (sortBy !== "recommended") pills.push({ key: "sortBy", label: "Sort", value: sortBy });
+        return (
+          <ActiveFilterPills
+            pills={pills}
+            onRemove={(key) => {
+              if (key === "sortBy") { setSortBy("recommended"); return; }
+              setFilters({ ...filters, [key]: undefined });
+            }}
+            onClearAll={() => { setFilters({}); setSortBy("recommended"); }}
+          />
+        );
+      })()}
 
       {/* Search & Filter Section */}
       <div className=" rounded-2xl py-0">
@@ -459,15 +490,6 @@ export function CoursesCatalog() {
         )}
       </div>
 
-      {/* Course Details Modal */}
-      <CourseDetailsModal
-        course={selectedCourse}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onStartCourse={handleStartCourse}
-        enrollment={selectedCourse ? enrollments[selectedCourse.id] : undefined}
-        onMarkCompleted={handleMarkCompleted}
-      />
     </div>
   );
 }

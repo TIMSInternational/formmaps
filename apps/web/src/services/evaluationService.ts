@@ -567,6 +567,7 @@ export async function getUserEvaluationGroups(
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return [];
       throw new Error("Failed to fetch user evaluation groups");
     }
 
@@ -594,6 +595,7 @@ export async function getCounselorEvaluations(): Promise<CounselorEvaluationGrou
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return [];
       throw new Error("Failed to fetch counselor evaluations");
     }
 
@@ -1208,6 +1210,7 @@ export async function getUserEvaluationGroupsForSessions(
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return [];
       throw new Error("Failed to fetch evaluation groups");
     }
 
@@ -1247,6 +1250,7 @@ export async function getEvaluationSession(
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return null as any;
       throw new Error("Failed to fetch evaluation session");
     }
 
@@ -1370,6 +1374,7 @@ export async function getEvaluationReport(
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return null as any;
       throw new Error("Failed to fetch evaluation report");
     }
 

@@ -33,6 +33,15 @@ const getBackendHeaders = () => {
   };
 };
 
+// Return null on auth errors (403/401) instead of crashing the app
+function safeFetch(response: Response): Response {
+  if (response.status === 401 || response.status === 403) {
+    console.warn(`[PCA] Auth error ${response.status} on ${response.url}`);
+    return response;
+  }
+  return response;
+}
+
 // ===== All calls go through backend proxy at /api/pcaapi/* =====
 
 /**
@@ -49,6 +58,7 @@ export async function getPCAResult(userId: string): Promise<any> {
   );
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) return null;
     throw new Error(`Failed to get PCA result: ${response.status}`);
   }
 
@@ -73,6 +83,7 @@ export async function getPCACompetences(
   );
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) return null;
     throw new Error(`Failed to get PCA competences: ${response.status}`);
   }
 
@@ -102,6 +113,7 @@ export async function getPCAVsJCAAnalysis(
   );
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) return null;
     throw new Error(`Failed to get PCA vs JCA analysis: ${response.status}`);
   }
 
@@ -129,6 +141,7 @@ export async function getPCAResultByUserId(
   );
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) return null;
     throw new Error(`Failed to get PCA result: ${response.status}`);
   }
 
@@ -154,6 +167,7 @@ export async function getPCACompetencesByUserId(
   );
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) return null;
     throw new Error(`Failed to get PCA competences: ${response.status}`);
   }
 
@@ -189,6 +203,7 @@ export async function addPCAEvaluation(
     );
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) return null as any;
       throw new Error(`Failed to add PCA evaluation: ${response.status}`);
     }
 
@@ -235,6 +250,7 @@ export async function getAllPCAEvaluations(
   );
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) return null;
     throw new Error(`Failed to get PCA evaluations: ${response.status}`);
   }
 
@@ -268,8 +284,8 @@ export async function checkPCAStatus(
     const lastCheck = typeof window !== "undefined" ? sessionStorage.getItem(cacheKey) : null;
     const now = Date.now();
 
-    // Only try fetching results if we haven't checked in the last 30 seconds
-    if (!lastCheck || now - parseInt(lastCheck) > 30000) {
+    // Only try fetching results if we haven't checked in the last 5 minutes
+    if (!lastCheck || now - parseInt(lastCheck) > 300000) {
       try {
         const result = await getPCAResultByUserId(userId, language);
         if (result?.data && (result.data.pcaCod || result.data.pcaD1 != null)) {

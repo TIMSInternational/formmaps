@@ -138,7 +138,7 @@ export function UserProfileDropdown() {
         </DropdownMenuItem>
         {user.role && ["admin", "super_admin"].includes(user.role) && (
           <DropdownMenuItem
-            onClick={() => router.push("/dashboard/admin")}
+            onClick={() => router.push("/admin")}
             className="cursor-pointer"
           >
             <Shield className="mr-2 h-4 w-4" />

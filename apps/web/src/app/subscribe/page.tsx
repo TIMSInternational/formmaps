@@ -36,15 +36,26 @@ export default function SubscribePage() {
   const searchParams = useSearchParams();
   const [showSuccess, setShowSuccess] = useState(false);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
-  const { data: subStatus } = useSubscriptionStatus();
+  const { data: subStatus, refetch: refetchSub } = useSubscriptionStatus({
+    staleTime: 0, // Always refetch on the subscribe page — never trust cached "no subscription"
+  });
 
   const userId = user.id || "";
+
+  // If user already has an active subscription, redirect to dashboard
+  useEffect(() => {
+    if (subStatus?.hasActiveSubscription) {
+      router.push("/dashboard");
+    }
+  }, [subStatus, router]);
 
   useEffect(() => {
     const success = searchParams.get("success");
     const sessionId = searchParams.get("session_id");
 
     if (success === "true" && sessionId) {
+      // Invalidate stale subscription cache immediately
+      refetchSub();
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
@@ -56,7 +67,7 @@ export default function SubscribePage() {
       url.searchParams.delete("session_id");
       window.history.replaceState({}, "", url.toString());
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, refetchSub]);
 
   const plans: Plan[] = [
     {

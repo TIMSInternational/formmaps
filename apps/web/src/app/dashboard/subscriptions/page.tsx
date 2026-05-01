@@ -1,237 +1,327 @@
 "use client";
 import { useState } from "react";
-import { motion } from "motion/react";
-import { Check, Sparkles, Zap, Crown, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Check, Sparkles, Zap, Crown, Loader2, CheckCircle2, ArrowLeft, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useGlobalStore } from "@/store/useGlobalStore";
-import { useSubscriptionStatus } from "@/hooks/useSubscription";
+import { useSubscriptionStatus, useSubscriptionPlans } from "@/hooks/useSubscription";
 import StripeCheckout from "@/components/StripeCheckout";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { SubscriptionPlan } from "@/services/subscriptionStatusService";
 
-interface PlanFeature {
-  text: string;
-  highlighted?: boolean;
-}
-
-interface Plan {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  period: string;
-  icon: typeof Zap;
-  features: PlanFeature[];
-  popular?: boolean;
-  gradient: string;
-}
-
-const plans: Plan[] = [
+// Fallback plans used only if backend returns nothing
+const FALLBACK_PLANS = [
   {
     id: "starter",
     name: "Starter",
-    description: "Begin your career journey",
     price: 9.99,
-    period: "month",
-    icon: Zap,
-    gradient: "from-slate-600 to-slate-800",
+    interval: "monthly",
     features: [
-      { text: "PCA & MIL Assessments" },
-      { text: "Career matching (top 10)" },
-      { text: "Basic resume builder" },
-      { text: "Course catalog access" },
-      { text: "Email support" },
+      "PCA & MIL Assessments",
+      "Career matching (top 10)",
+      "Basic resume builder",
+      "Course catalog access",
+      "Email support",
     ],
+    isActive: true,
   },
   {
     id: "pro",
     name: "Pro",
-    description: "Full platform access",
     price: 29.99,
-    period: "month",
-    icon: Sparkles,
-    popular: true,
-    gradient: "from-blue-600 to-indigo-600",
+    interval: "monthly",
     features: [
-      { text: "Everything in Starter" },
-      { text: "360° Evaluation system", highlighted: true },
-      { text: "Full career matching (370+ careers)", highlighted: true },
-      { text: "AI-powered resume builder" },
-      { text: "University recommendations" },
-      { text: "Course plan builder" },
-      { text: "Portfolio builder" },
-      { text: "1 coaching session / month" },
-      { text: "Priority support" },
+      "Everything in Starter",
+      "360° Evaluation system",
+      "Full career matching (370+ careers)",
+      "AI-powered resume builder",
+      "University recommendations",
+      "Course plan builder",
+      "Portfolio builder",
+      "1 coaching session / month",
+      "Priority support",
     ],
+    isActive: true,
   },
   {
     id: "premium",
     name: "Premium",
-    description: "Everything unlimited",
     price: 49.99,
-    period: "month",
-    icon: Crown,
-    gradient: "from-purple-600 to-pink-600",
+    interval: "monthly",
     features: [
-      { text: "Everything in Pro" },
-      { text: "Unlimited coaching sessions", highlighted: true },
-      { text: "AI career narrative reports", highlighted: true },
-      { text: "Counselor session booking" },
-      { text: "Community service tracking" },
-      { text: "Senior project support" },
-      { text: "Certification tracking" },
-      { text: "Dedicated support" },
+      "Everything in Pro",
+      "Unlimited coaching sessions",
+      "AI career narrative reports",
+      "Counselor session booking",
+      "Community service tracking",
+      "Senior project support",
+      "Certification tracking",
+      "Dedicated support",
     ],
+    isActive: true,
   },
 ];
 
+const PLAN_STYLES: Record<string, { icon: typeof Zap; gradient: string; popular?: boolean }> = {
+  starter: { icon: Zap, gradient: "from-slate-600 to-slate-800" },
+  pro: { icon: Sparkles, gradient: "from-blue-600 to-indigo-600", popular: true },
+  premium: { icon: Crown, gradient: "from-purple-600 to-pink-600" },
+};
+
+const DEFAULT_STYLE = { icon: Zap, gradient: "from-slate-600 to-slate-800" };
+
+function getPlanStyle(planId: string) {
+  return PLAN_STYLES[planId.toLowerCase()] || DEFAULT_STYLE;
+}
+
 export default function SubscriptionsPage() {
   const { user } = useGlobalStore();
-  const { data: subStatus } = useSubscriptionStatus();
+  const router = useRouter();
+  const { data: subStatus, isLoading: statusLoading } = useSubscriptionStatus();
+  const { data: backendPlans, isLoading: plansLoading } = useSubscriptionPlans();
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
   const userId = user.id || "";
+
+  // Redirect school students away from this page
+  if (subStatus?.planId === "school") {
+    router.replace("/dashboard");
+    return null;
+  }
+
+  const isLoading = statusLoading || plansLoading;
+  const plans: SubscriptionPlan[] = backendPlans?.length ? backendPlans : FALLBACK_PLANS;
   const hasActive = subStatus?.hasActiveSubscription;
+  const currentPlanId = subStatus?.planId;
+  const interval = plans[0]?.interval === "yearly" ? "year" : "month";
+
+  if (isLoading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "50vh", gap: 8 }}>
+        <Loader2 style={{ width: 20, height: 20, animation: "spin 1s linear infinite", color: "var(--admin-font-tertiary)" }} />
+        <span style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>Loading plans...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
+    <div style={{ maxWidth: 960, margin: "0 auto" }}>
       {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8"
-      >
+      <div style={{ marginBottom: 24 }}>
         <Link
           href="/dashboard"
-          className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-3 transition-colors"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            fontSize: 12, fontWeight: 500, color: "var(--admin-font-tertiary)",
+            textDecoration: "none", marginBottom: 8,
+          }}
         >
-          <ArrowLeft className="w-3 h-3" />
+          <ArrowLeft style={{ width: 12, height: 12 }} />
           Dashboard
         </Link>
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", marginTop: 4 }}>
           Subscriptions
         </h1>
-        <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-[52ch]">
+        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
           Manage your plan and billing
         </p>
-      </motion.header>
+      </div>
 
-      <div className="space-y-5">
-        {/* Active subscription banner */}
-        {hasActive && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="dash-card p-5"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-foreground">Active Subscription</p>
-                <p className="text-sm text-muted-foreground">
-                  You have full access to the platform.
-                  {subStatus?.expiryDate && (
-                    <span> Renews {new Date(subStatus.expiryDate).toLocaleDateString()}</span>
-                  )}
-                </p>
-              </div>
-              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Active</Badge>
+      {/* Active subscription banner */}
+      {hasActive && currentPlanId && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "14px 16px", borderRadius: 8, marginBottom: 20,
+          background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: "50%",
+            background: "var(--admin-accent-bg-green)", border: "1px solid var(--admin-accent-border-green)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            <CheckCircle2 style={{ width: 18, height: 18, color: "var(--admin-accent-green)" }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+              Active Subscription
             </div>
-          </motion.div>
-        )}
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
+              You&apos;re on the <strong style={{ color: "var(--admin-font-primary)" }}>
+                {plans.find(p => p.id === currentPlanId)?.name || currentPlanId}
+              </strong> plan.
+              {subStatus?.expiryDate && (
+                <> Renews {new Date(subStatus.expiryDate).toLocaleDateString()}</>
+              )}
+            </div>
+          </div>
+          <Badge style={{
+            background: "var(--admin-accent-bg-green)",
+            color: "var(--admin-accent-green)",
+            border: "1px solid var(--admin-accent-border-green)",
+            fontSize: 11, fontWeight: 600,
+          }}>
+            Active
+          </Badge>
+        </div>
+      )}
 
-        {/* Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
-          {plans.map((plan, i) => {
-            const Icon = plan.icon;
-            return (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + i * 0.08 }}
-                className={`relative dash-card transition-colors ${
-                  plan.popular ? "border-blue-200" : ""
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className={`bg-gradient-to-r ${plan.gradient} text-white border-0 px-3 py-0.5`}>
-                      <Sparkles className="w-3 h-3 mr-1" /> Most Popular
-                    </Badge>
+      {/* No subscription warning */}
+      {!hasActive && subStatus && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "14px 16px", borderRadius: 8, marginBottom: 20,
+          background: "var(--admin-accent-bg-amber)", border: "1px solid var(--admin-accent-border-amber)",
+        }}>
+          <AlertCircle style={{ width: 18, height: 18, color: "var(--admin-accent-amber)", flexShrink: 0 }} />
+          <div style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
+            You don&apos;t have an active subscription. Choose a plan below to get started.
+          </div>
+        </div>
+      )}
+
+      {/* Plans Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
+        {plans.map((plan) => {
+          const style = getPlanStyle(plan.id || plan.name);
+          const Icon = style.icon;
+          const isCurrentPlan = currentPlanId === plan.id;
+
+          return (
+            <div
+              key={plan.id}
+              style={{
+                position: "relative",
+                background: "var(--admin-bg-card)",
+                border: `1px solid ${isCurrentPlan ? "var(--admin-accent-green)" : style.popular ? "var(--admin-accent-blue)" : "var(--admin-border-default)"}`,
+                borderRadius: 8,
+                overflow: "hidden",
+              }}
+            >
+              {/* Popular badge */}
+              {style.popular && !isCurrentPlan && (
+                <div style={{
+                  position: "absolute", top: -1, left: "50%", transform: "translateX(-50%)",
+                  padding: "3px 12px", borderRadius: "0 0 6px 6px",
+                  background: "var(--admin-accent-blue)", color: "#fff",
+                  fontSize: 10, fontWeight: 600, letterSpacing: "0.03em",
+                }}>
+                  Most Popular
+                </div>
+              )}
+
+              {/* Current plan badge */}
+              {isCurrentPlan && (
+                <div style={{
+                  position: "absolute", top: -1, left: "50%", transform: "translateX(-50%)",
+                  padding: "3px 12px", borderRadius: "0 0 6px 6px",
+                  background: "var(--admin-accent-green)", color: "#fff",
+                  fontSize: 10, fontWeight: 600, letterSpacing: "0.03em",
+                }}>
+                  Current Plan
+                </div>
+              )}
+
+              <div style={{ padding: 20 }}>
+                {/* Plan header */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, marginTop: style.popular || isCurrentPlan ? 8 : 0 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 6,
+                    background: `linear-gradient(135deg, var(--admin-accent-blue), var(--admin-accent-purple, #8b5cf6))`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Icon style={{ width: 16, height: 16, color: "#fff" }} />
                   </div>
-                )}
-
-                <div className="p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${plan.gradient} flex items-center justify-center`}>
-                      <Icon className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-foreground">{plan.name}</h3>
-                      <p className="text-xs text-muted-foreground">{plan.description}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-baseline gap-1 mb-6">
-                    <span className="text-3xl font-bold text-foreground">${plan.price}</span>
-                    <span className="text-muted-foreground text-sm">/{plan.period}</span>
-                  </div>
-
-                  {hasActive ? (
-                    <Button variant="outline" disabled className="w-full mb-6 rounded-xl h-10">
-                      Current Plan
-                    </Button>
-                  ) : (
-                    <StripeCheckout
-                      amount={plan.price * 100}
-                      userId={userId}
-                      planId={plan.id}
-                      productName={`${plan.name} Plan`}
-                      onStart={() => setProcessingPlan(plan.id)}
-                      onSuccess={() => window.location.reload()}
-                      onError={(error: string) => {
-                        alert(`Payment failed: ${error}`);
-                        setProcessingPlan(null);
-                      }}
-                      disabled={processingPlan !== null}
-                      className="w-full mb-6"
-                    >
-                      <Button
-                        className={`w-full h-10 rounded-xl font-semibold ${
-                          plan.popular
-                            ? `bg-gradient-to-r ${plan.gradient} text-white`
-                            : "bg-foreground text-background hover:bg-foreground/90"
-                        }`}
-                        disabled={processingPlan !== null}
-                      >
-                        {processingPlan === plan.id ? (
-                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
-                        ) : (
-                          `Get ${plan.name}`
-                        )}
-                      </Button>
-                    </StripeCheckout>
-                  )}
-
-                  <div className="space-y-2.5">
-                    {plan.features.map((f, j) => (
-                      <div key={j} className="flex items-start gap-2.5">
-                        <Check className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${f.highlighted ? "text-blue-600" : "text-muted-foreground"}`} />
-                        <span className={`text-sm ${f.highlighted ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                          {f.text}
-                        </span>
-                      </div>
-                    ))}
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: "var(--admin-font-primary)" }}>{plan.name}</div>
                   </div>
                 </div>
-              </motion.div>
-            );
-          })}
-        </div>
+
+                {/* Price */}
+                <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 16 }}>
+                  <span style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)" }}>
+                    ${plan.price}
+                  </span>
+                  <span style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>
+                    /{plan.interval === "yearly" ? "year" : "month"}
+                  </span>
+                </div>
+
+                {/* CTA button */}
+                {isCurrentPlan ? (
+                  <div style={{
+                    width: "100%", height: 36, borderRadius: 6, marginBottom: 16,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    background: "var(--admin-bg-card-hover)", color: "var(--admin-font-tertiary)",
+                    fontSize: 13, fontWeight: 500, border: "1px solid var(--admin-border-default)",
+                  }}>
+                    <CheckCircle2 style={{ width: 14, height: 14, marginRight: 6, color: "var(--admin-accent-green)" }} />
+                    Current Plan
+                  </div>
+                ) : hasActive ? (
+                  <button
+                    style={{
+                      width: "100%", height: 36, borderRadius: 6, marginBottom: 16,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      background: "transparent", color: "var(--admin-font-secondary)",
+                      fontSize: 13, fontWeight: 500, border: "1px solid var(--admin-border-default)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Switch Plan
+                  </button>
+                ) : (
+                  <StripeCheckout
+                    amount={plan.price * 100}
+                    userId={userId}
+                    planId={plan.id}
+                    productName={`${plan.name} Plan`}
+                    onStart={() => setProcessingPlan(plan.id)}
+                    onSuccess={() => window.location.reload()}
+                    onError={(error: string) => {
+                      alert(`Payment failed: ${error}`);
+                      setProcessingPlan(null);
+                    }}
+                    disabled={processingPlan !== null}
+                    className="w-full"
+                  >
+                    <button
+                      disabled={processingPlan !== null}
+                      style={{
+                        width: "100%", height: 36, borderRadius: 6, marginBottom: 16,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        background: style.popular ? "var(--admin-accent-blue)" : "var(--admin-font-primary)",
+                        color: "#fff", fontSize: 13, fontWeight: 600,
+                        border: "none", cursor: processingPlan ? "not-allowed" : "pointer",
+                        opacity: processingPlan !== null ? 0.5 : 1,
+                      }}
+                    >
+                      {processingPlan === plan.id ? (
+                        <><Loader2 style={{ width: 14, height: 14, marginRight: 6, animation: "spin 1s linear infinite" }} /> Processing...</>
+                      ) : (
+                        `Get ${plan.name}`
+                      )}
+                    </button>
+                  </StripeCheckout>
+                )}
+
+                {/* Features */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {plan.features.map((feature, j) => (
+                    <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                      <Check style={{
+                        width: 14, height: 14, marginTop: 1, flexShrink: 0,
+                        color: "var(--admin-accent-green)",
+                      }} />
+                      <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
+                        {feature}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

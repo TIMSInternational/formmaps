@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { LoadingSpinner } from "./LoadingSpinner";
@@ -15,7 +15,7 @@ interface AuthWrapperProps {
   children: React.ReactNode;
 }
 
-const protectedRoutes = ["/dashboard", "/subscribe", "/school-admin", "/parent", "/counselor"];
+const protectedRoutes = ["/dashboard", "/admin", "/subscribe", "/school-admin", "/parent", "/counselor"];
 const publicOnboardingRoutes = ["/parent/onboarding", "/counselor/onboarding"];
 const authRoutes = ["/login", "/signup"];
 
@@ -25,6 +25,17 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   const pathname = usePathname();
   const [isInitializing, setIsInitializing] = useState(true);
   const { role, isStudent } = usePermission();
+
+  // Wait for zustand persist hydration before making routing decisions
+  const [hasHydrated, setHasHydrated] = useState(false);
+  useEffect(() => {
+    // zustand persist stores data synchronously in onRehydrateStorage,
+    // but the state update is async. Check if the store has a persisted user.
+    const unsub = useGlobalStore.persist.onFinishHydration(() => setHasHydrated(true));
+    // If already hydrated (hot reload), set immediately
+    if (useGlobalStore.persist.hasHydrated()) setHasHydrated(true);
+    return unsub;
+  }, []);
 
   // Monitor token expiry in background
   useTokenMonitor(5);
@@ -37,18 +48,21 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   const isPublicOnboarding = publicOnboardingRoutes.some((p) => pathname.startsWith(p));
   const isSubscriptionPage =
     pathname.startsWith("/dashboard/subscriptions") ||
-    pathname.startsWith("/dashboard/admin/plans") ||
+    pathname.startsWith("/admin/plans") ||
     pathname.startsWith("/payment-success") ||
     pathname.startsWith("/payment-cancelled") ||
     pathname.startsWith("/subscribe");
   const isOnboardingPage = pathname.startsWith("/onboarding");
 
+  // School students don't need subscriptions — their school pays
+  const isSchoolStudent = isStudent && !!user.schoolId;
   const shouldCheckSubscription =
-    user.isAuthenticated && isProtectedRoute && isStudent && !isSubscriptionPage && !isOnboardingPage;
+    user.isAuthenticated && isProtectedRoute && isStudent && !isSchoolStudent && !isSubscriptionPage && !isOnboardingPage;
 
-  const { data: subscriptionStatus, isLoading: statusLoading, isError: statusError } = useSubscriptionStatus({
+  const { data: subscriptionStatus, isLoading: statusLoading, isError: statusError, isFetching: statusFetching } = useSubscriptionStatus({
     enabled: !!shouldCheckSubscription,
     retry: 2,
+    staleTime: 30 * 1000, // 30s — short enough to catch post-payment changes quickly
   });
 
   useEffect(() => {
@@ -61,7 +75,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
   // Compute redirect target synchronously — if non-null, we show spinner instead of children
   const redirectTarget = useMemo(() => {
-    if (isInitializing) return null;
+    if (isInitializing || !hasHydrated) return null;
     if (isPublicOnboarding) return null;
 
     const isAuthRoute = authRoutes.includes(pathname);
@@ -83,9 +97,14 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     }
 
     // Subscription enforcement for students
-    // Only redirect if we got a definitive "no subscription" response, not on API errors
-    if (shouldCheckSubscription && !statusLoading && !statusError) {
-      if (subscriptionStatus && !subscriptionStatus.hasActiveSubscription) {
+    if (
+      shouldCheckSubscription &&
+      !statusLoading &&
+      !statusFetching &&
+      !statusError &&
+      subscriptionStatus !== undefined
+    ) {
+      if (!subscriptionStatus.hasActiveSubscription) {
         return "/subscribe";
       }
     }
@@ -100,14 +119,16 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       }
     }
 
-    // Authenticated on auth routes
+    // Authenticated on auth routes — redirect to their portal.
     if (user.isAuthenticated && isAuthRoute) {
-      return roleHomeMap[role] || "/dashboard";
+      const home = roleHomeMap[role];
+      if (home) return home;
     }
 
     return null;
   }, [
     isInitializing,
+    hasHydrated,
     isPublicOnboarding,
     user.isAuthenticated,
     user.contractEnd,
@@ -116,21 +137,29 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     isProtectedRoute,
     shouldCheckSubscription,
     statusLoading,
+    statusFetching,
     statusError,
     subscriptionStatus,
   ]);
 
-  // Perform the redirect in an effect
+  // Perform the redirect in an effect — track last target to prevent loops
+  const lastRedirectRef = useRef<string | null>(null);
   useEffect(() => {
     if (redirectTarget) {
-      router.push(redirectTarget);
+      // Prevent infinite loop: don't re-push if we already redirected to this target
+      // or if the target is a child of the current path (navigation in progress)
+      if (lastRedirectRef.current === redirectTarget) return;
+      lastRedirectRef.current = redirectTarget;
+      router.replace(redirectTarget);
+    } else {
+      lastRedirectRef.current = null;
     }
   }, [redirectTarget, router]);
 
   // Show spinner while initializing OR while waiting for a redirect
   // Use overlay approach instead of replacing children to avoid DOM reconciliation errors
   // with cookie banners and browser extensions that inject nodes
-  if (isInitializing) {
+  if (isInitializing || !hasHydrated) {
     return <LoadingSpinner />;
   }
 
