@@ -49,7 +49,7 @@ export function RevenueOverviewCard() {
 
   const dotVariants = {
     hidden: { opacity: 0, scale: 0 },
-    visible: { opacity: 0.7, scale: 1, transition: { duration: 0.35, ease: "easeOut" } },
+    visible: { opacity: 0.7, scale: 1, transition: { duration: 0.35, ease: "easeOut" as const } },
   };
 
   return (

@@ -23,8 +23,8 @@ interface ActivityFeedProps {
 export function ActivityFeed({ activities, title = "Recent Activity", className }: ActivityFeedProps) {
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
-    exit: { opacity: 0, x: -20, transition: { duration: 0.2, ease: "easeIn" } },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" as const } },
+    exit: { opacity: 0, x: -20, transition: { duration: 0.2, ease: "easeIn" as const } },
   };
 
   return (

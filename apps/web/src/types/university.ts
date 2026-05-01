@@ -107,6 +107,7 @@ export interface UniversityProgram {
   matchingPersonalityTraits?: ("D" | "I" | "S" | "C")[];
   academicRigorLevel?: number; // 1-10 scale
   isPopular?: boolean;
+  academicRigor?: string;
 }
 
 /**
@@ -167,6 +168,7 @@ export interface University {
   highlights?: string[];
   highlightsEs?: string[];
   tags?: string[];
+  programCount?: number;
   isActive: boolean;
   isFeatured?: boolean;
   createdAt: string;

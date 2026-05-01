@@ -328,7 +328,7 @@ function Section({ icon, title, children }: { icon: React.ReactElement; title: s
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-6">
       <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-        {React.cloneElement(icon, { className: "w-5 h-5 text-indigo-500" })}
+        {React.cloneElement(icon as React.ReactElement<any>, { className: "w-5 h-5 text-indigo-500" })}
         {title}
       </h2>
       {children}
