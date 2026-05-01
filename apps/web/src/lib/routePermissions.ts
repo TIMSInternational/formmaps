@@ -2,7 +2,7 @@ import { Roles, type RoleName } from "./permissions";
 import { roleHomeMap } from "./roleUtils";
 
 export interface RouteRule {
-  /** Path prefix to match (e.g. "/dashboard/admin") */
+  /** Path prefix to match (e.g. "/admin") */
   path: string;
   /** Roles allowed to access this path */
   allowed: RoleName[];
@@ -17,7 +17,7 @@ export interface RouteRule {
 export const routeRules: RouteRule[] = [
   // Super Admin panel — only super admins
   {
-    path: "/dashboard/admin",
+    path: "/admin",
     allowed: [Roles.SUPER_ADMIN],
     redirect: "home",
   },
@@ -51,11 +51,13 @@ export const routeRules: RouteRule[] = [
     allowed: [Roles.STUDENT],
     redirect: "home",
   },
-  // Student dashboard (catch-all for /dashboard/*) — students only
-  // Super admin, school admin, counselor, coach, parent all have their own portals
+  // Dashboard — allow all authenticated roles. Non-students see nothing
+  // (page.tsx returns null). Specific sub-route rules above still enforce
+  // access for /dashboard/coaching etc. This prevents redirect loops when
+  // Next.js briefly renders /dashboard during client-side navigation.
   {
     path: "/dashboard",
-    allowed: [Roles.STUDENT],
+    allowed: [Roles.STUDENT, Roles.SUPER_ADMIN, Roles.COACH, Roles.SCHOOL_ADMIN, Roles.COUNSELOR, Roles.PARENT],
     redirect: "home",
   },
 ];
@@ -74,7 +76,7 @@ export function findRouteRule(pathname: string): RouteRule | null {
  */
 export function resolveRedirect(rule: RouteRule, role: RoleName): string {
   if (rule.redirect === "home") {
-    return roleHomeMap[role] || "/dashboard";
+    return roleHomeMap[role] || "/login";
   }
   return rule.redirect;
 }

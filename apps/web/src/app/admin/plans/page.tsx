@@ -111,7 +111,7 @@ export default function AdminPlansPage() {
         if (!authLoading && isAdmin) {
             loadPlans();
         } else if (!authLoading && !isAdmin) {
-            router.push("/dashboard");
+            router.push("/login");
         }
     }, [authLoading, isAdmin, router]);
 

@@ -110,7 +110,7 @@ export default function AdminTransactionsPage() {
     if (!authLoading) {
       if (!isAdmin) {
         toast.error(t("admin.accessDenied"));
-        router.push("/dashboard");
+        router.push("/login");
       }
     }
   }, [isAdmin, authLoading, router]);

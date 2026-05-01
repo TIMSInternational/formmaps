@@ -83,7 +83,7 @@ export default function AdminSettingsPage() {
   // Handle access
   useEffect(() => {
     if (!authLoading && !isAdmin) {
-      router.push("/dashboard");
+      router.push("/login");
     }
   }, [isAdmin, authLoading, router]);
 

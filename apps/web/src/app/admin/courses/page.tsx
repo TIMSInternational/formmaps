@@ -122,7 +122,7 @@ export default function CoursesPage() {
     useEffect(() => {
         if (!authLoading && !isAdmin) {
             toast.error(t("admin.accessDenied"));
-            router.push("/dashboard");
+            router.push("/login");
         }
     }, [isAdmin, authLoading, router]);
 

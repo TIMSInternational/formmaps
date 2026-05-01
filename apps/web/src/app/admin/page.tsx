@@ -24,17 +24,17 @@ import {
 import Link from "next/link";
 
 const quickActions = [
-  { label: "Users", description: "Manage all platform users", icon: Users, href: "/dashboard/admin/users" },
-  { label: "Schools", description: "School management", icon: School, href: "/dashboard/admin/schools" },
-  { label: "Coaches", description: "Coach profiles & invites", icon: GraduationCap, href: "/dashboard/admin/coaches" },
-  { label: "Courses", description: "Learning content", icon: BookOpen, href: "/dashboard/admin/courses" },
-  { label: "Careers", description: "Career database", icon: Briefcase, href: "/dashboard/admin/careers" },
-  { label: "360 Questions", description: "Assessment questions", icon: HelpCircle, href: "/dashboard/admin/questions" },
-  { label: "Plans", description: "Subscription tiers", icon: CreditCard, href: "/dashboard/admin/plans" },
-  { label: "Transactions", description: "Payment history", icon: Receipt, href: "/dashboard/admin/transactions" },
-  { label: "Payouts", description: "Coach payouts", icon: Wallet, href: "/dashboard/admin/payouts" },
-  { label: "Analytics", description: "Platform metrics", icon: BarChart3, href: "/dashboard/admin/analytics" },
-  { label: "Settings", description: "System configuration", icon: Settings, href: "/dashboard/admin/settings" },
+  { label: "Users", description: "Manage all platform users", icon: Users, href: "/admin/users" },
+  { label: "Schools", description: "School management", icon: School, href: "/admin/schools" },
+  { label: "Coaches", description: "Coach profiles & invites", icon: GraduationCap, href: "/admin/coaches" },
+  { label: "Courses", description: "Learning content", icon: BookOpen, href: "/admin/courses" },
+  { label: "Careers", description: "Career database", icon: Briefcase, href: "/admin/careers" },
+  { label: "360 Questions", description: "Assessment questions", icon: HelpCircle, href: "/admin/questions" },
+  { label: "Plans", description: "Subscription tiers", icon: CreditCard, href: "/admin/plans" },
+  { label: "Transactions", description: "Payment history", icon: Receipt, href: "/admin/transactions" },
+  { label: "Payouts", description: "Coach payouts", icon: Wallet, href: "/admin/payouts" },
+  { label: "Analytics", description: "Platform metrics", icon: BarChart3, href: "/admin/analytics" },
+  { label: "Settings", description: "System configuration", icon: Settings, href: "/admin/settings" },
 ];
 
 export default function AdminPage() {
@@ -43,7 +43,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!loading && !isAdmin) {
-      router.push("/dashboard");
+      router.push("/login");
     }
   }, [isAdmin, loading, router]);
 

@@ -127,13 +127,13 @@ export function CareerManager() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
+              <TableRow key="loading">
                 <TableCell colSpan={4} className="h-48 text-center text-gray-500">
                   Loading careers...
                 </TableCell>
               </TableRow>
             ) : paged.length === 0 ? (
-              <TableRow>
+              <TableRow key="empty">
                 <TableCell colSpan={4} className="h-48 text-center text-gray-500">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <Briefcase className="h-8 w-8 text-gray-300" />

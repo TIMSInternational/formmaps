@@ -95,7 +95,7 @@ async function verifyAdminViaRoles(
       // Check for standard role fields
       roleId = decodedToken.roleId || decodedToken.role_id;
       roleName =
-        decodedToken.roleName || decodedToken.role_name || decodedToken.role;
+        decodedToken["custom:role"] || decodedToken.roleName || decodedToken.role_name || decodedToken.role;
 
       // Check for Microsoft identity claims format
       const roleClaimKey =

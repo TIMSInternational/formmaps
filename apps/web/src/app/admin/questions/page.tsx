@@ -125,7 +125,7 @@ export default function AdminQuestionsPage() {
         if (!authLoading && isAdmin) {
             loadQuestions();
         } else if (!authLoading && !isAdmin) {
-            router.push("/dashboard");
+            router.push("/login");
         }
     }, [authLoading, isAdmin, router]);
 
