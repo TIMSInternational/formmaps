@@ -107,7 +107,13 @@ export async function markCourseCompleted(
 
 // --- Course listing & admin ---
 export async function listCourses() {
-  const response = await apiRequest("/api/admin/courses", { method: "GET" });
+  const response = await apiRequest("/api/course", { method: "GET" });
+  const data = response?.data ?? response;
+  return data;
+}
+
+export async function getRecommendedCourses() {
+  const response = await apiRequest("/api/course/recommended", { method: "GET" });
   const data = response?.data ?? response;
   return data;
 }
