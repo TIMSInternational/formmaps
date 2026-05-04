@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import { captureError } from "@/lib/sentry";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -24,6 +25,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    captureError(error, { componentStack: errorInfo.componentStack ?? undefined });
   }
 
   resetError = () => {

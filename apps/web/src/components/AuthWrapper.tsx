@@ -10,6 +10,7 @@ import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { Roles } from "@/lib/permissions";
 import { roleHomeMap } from "@/lib/roleUtils";
 import { findRouteRule, resolveRedirect } from "@/lib/routePermissions";
+import { initSentry } from "@/lib/sentry";
 
 interface AuthWrapperProps {
   children: React.ReactNode;
@@ -25,6 +26,9 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   const pathname = usePathname();
   const [isInitializing, setIsInitializing] = useState(true);
   const { role, isStudent } = usePermission();
+
+  // Initialize Sentry error tracking (no-op if NEXT_PUBLIC_SENTRY_DSN is not set)
+  useEffect(() => { initSentry(); }, []);
 
   // Wait for zustand persist hydration before making routing decisions
   const [hasHydrated, setHasHydrated] = useState(false);

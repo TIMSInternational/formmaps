@@ -3,7 +3,7 @@ import { apiRequest } from "@/lib/api/apiClient";
 export interface SubscriptionStatus {
   hasActiveSubscription: boolean;
   planId: string | null;
-  status: "active" | "past_due" | "canceled" | "cancelled" | "none";
+  status: "active" | "trialing" | "past_due" | "canceled" | "cancelled" | "none";
   expiryDate: string | null;
 }
 

@@ -170,6 +170,9 @@ export default function SubscribePage() {
           <p className="text-lg text-gray-500 max-w-xl mx-auto">
             Unlock AI-powered career tools, assessments, and personalized guidance to accelerate your professional journey.
           </p>
+          <p className="text-sm font-medium text-blue-600 mt-3">
+            Start with a 7-day free trial. No charge until your trial ends.
+          </p>
         </motion.div>
 
         {/* Plans */}
