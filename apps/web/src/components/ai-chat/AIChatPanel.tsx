@@ -3,20 +3,23 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Sparkles, User, Lightbulb } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { apiRequest } from "@/lib/api/apiClient";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { usePermission } from "@/hooks/usePermission";
 import { useChat } from "./ChatContext";
-import { getSystemPrompt, getChatSuggestions } from "./aiPrompts";
+import { getChatSuggestions } from "./aiPrompts";
 import type { ChatMessage } from "./useChatThreads";
 import { AnimatedAIInput } from "@/components/ui/animated-ai-input";
 import { ShiningText } from "@/components/ui/shining-text";
+
+const AI_SERVICE_URL =
+  process.env.NEXT_PUBLIC_AI_SERVICE_URL || "http://localhost:8000";
 
 /** Side-panel chat UI — works with ChatContext threads */
 export function AIChatSidePanel() {
   const { currentThread, currentThreadId, addMessage, createThread } = useChat();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [toolStatus, setToolStatus] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user } = useGlobalStore();
   const { role } = usePermission();
@@ -32,7 +35,6 @@ export function AIChatSidePanel() {
     async (text: string) => {
       if (!text.trim() || loading) return;
 
-      // Ensure we have a thread
       let threadId = currentThreadId;
       if (!threadId) {
         const t = createThread();
@@ -48,39 +50,81 @@ export function AIChatSidePanel() {
       addMessage(threadId, userMsg);
       setInput("");
       setLoading(true);
+      setToolStatus(null);
 
       try {
-        const systemContext = getSystemPrompt(role, user?.name || "the user");
-        const prompt = `${systemContext}\n\nUser message: ${text.trim()}`;
+        const token = localStorage.getItem("token") || "";
 
-        const response = await apiRequest("/api/v1/aichat/ask", {
+        // Build history from current thread (last 10 messages)
+        const history = messages.slice(-10).map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
+
+        const response = await fetch(`${AI_SERVICE_URL}/chat/stream`, {
           method: "POST",
-          data: { Prompt: prompt },
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: user?.id || "",
+            token,
+            message: text.trim(),
+            role: role || "STUDENT",
+            conversation_id: threadId,
+            history,
+          }),
         });
 
-        let content = "";
-        if (typeof response === "string") {
-          content = response;
-        } else if (response?.data?.generated_content) {
-          content = Array.isArray(response.data.generated_content)
-            ? response.data.generated_content.join("\n")
-            : response.data.generated_content;
-        } else if (response?.generated_content) {
-          content = Array.isArray(response.generated_content)
-            ? response.generated_content.join("\n")
-            : response.generated_content;
-        } else if (response?.data && typeof response.data === "string") {
-          content = response.data;
-        } else if (response?.message) {
-          content = response.message;
-        } else {
-          content = "I'm sorry, I couldn't generate a response. Please try rephrasing your question.";
+        if (!response.ok) {
+          throw new Error(`AI service error: ${response.status}`);
+        }
+
+        // Parse SSE stream
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error("No response body");
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let fullText = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.startsWith("data:")) {
+              const jsonStr = line.slice(5).trim();
+              if (!jsonStr) continue;
+              try {
+                const event = JSON.parse(jsonStr);
+                if (event.text) {
+                  fullText += event.text;
+                } else if (event.name && event.status) {
+                  // Tool call event
+                  const label = event.name.replace(/_/g, " ").replace("get ", "");
+                  setToolStatus(
+                    event.status === "running"
+                      ? `Looking up ${label}...`
+                      : null,
+                  );
+                } else if (event.message) {
+                  // Error event
+                  fullText = event.message;
+                }
+              } catch {
+                // Skip malformed events
+              }
+            }
+          }
         }
 
         addMessage(threadId, {
           id: `a-${Date.now()}`,
           role: "assistant",
-          content,
+          content: fullText || "I couldn't generate a response. Please try again.",
           timestamp: Date.now(),
         });
       } catch {
@@ -92,9 +136,10 @@ export function AIChatSidePanel() {
         });
       } finally {
         setLoading(false);
+        setToolStatus(null);
       }
     },
-    [loading, user?.name, currentThreadId, addMessage, createThread],
+    [loading, user?.id, role, currentThreadId, addMessage, createThread, messages],
   );
 
   return (
@@ -200,7 +245,7 @@ export function AIChatSidePanel() {
                 display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 10,
                 background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
               }}>
-                <ShiningText text="NEXA AI is thinking..." />
+                <ShiningText text={toolStatus || "NEXA AI is thinking..."} />
               </div>
             </div>
           )}
