@@ -19,7 +19,7 @@ import {
   courseDifficulties,
   courseRegions,
 } from "@/data/courseConstants";
-import { useCourseList } from "@/hooks/useCourseQueries";
+import { useCourseList, useRecommendedCourses } from "@/hooks/useCourseQueries";
 import { useTranslation } from "react-i18next";
 import {
   enrollInCourse,
@@ -36,7 +36,9 @@ import Image from "next/image";
 export function CoursesCatalog() {
   const { t } = useTranslation();
   const { data, isLoading } = useCourseList();
-  const courses = data?.courses || [];
+  const { data: recData } = useRecommendedCourses();
+  const courses = data?.courses || data?.Courses || [];
+  const aiRecommendedCourses = recData?.courses || [];
   const [filters, setFilters] = useState<CourseFilter>({});
   const [sortBy, setSortBy] = useState<CourseSortOption>("recommended");
   const { openPanel } = useSidePanel();
@@ -111,12 +113,14 @@ export function CoursesCatalog() {
     return filtered;
   }, [courses, filters, sortBy]);
 
-  // Get recommended courses (top 3 by score)
+  // Use AI-recommended courses from /api/course/recommended
   const recommendedCourses = useMemo(() => {
+    if (aiRecommendedCourses.length > 0) return aiRecommendedCourses.slice(0, 5);
+    // Fallback: sort by recommendedScore if API hasn't returned yet
     return [...courses]
-      .sort((a, b) => b.recommendedScore - a.recommendedScore)
+      .sort((a: any, b: any) => (b.recommendedScore || 0) - (a.recommendedScore || 0))
       .slice(0, 3);
-  }, [courses]);
+  }, [aiRecommendedCourses, courses]);
 
   // Featured Course (highest rated or newest)
   const featuredCourse = useMemo(() => {
@@ -131,7 +135,7 @@ export function CoursesCatalog() {
       try {
         const enrollment = await enrollInCourse({
           course,
-          enrollmentSource: recommendedCourses.some((c) => c.id === course.id)
+          enrollmentSource: recommendedCourses.some((c: any) => c.id === course.id || c.courseId === course.id)
             ? "recommended"
             : "catalog",
         });
@@ -391,7 +395,7 @@ export function CoursesCatalog() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
-            {recommendedCourses.map((course, index) => (
+            {recommendedCourses.map((course: any, index: number) => (
               <motion.div
                 key={course.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -470,7 +474,7 @@ export function CoursesCatalog() {
                   onViewDetails={handleViewDetails}
                   onStartCourse={handleStartCourse}
                   isRecommended={recommendedCourses.some(
-                    (rc) => rc.id === course.id
+                    (rc: any) => rc.id === course.id || rc.courseId === course.id
                   )}
                   isEnrolled={Boolean(enrollments[course.id])}
                   enrollmentStatus={enrollments[course.id]?.status}
