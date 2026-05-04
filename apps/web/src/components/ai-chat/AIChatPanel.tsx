@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Sparkles, User, Lightbulb } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { usePermission } from "@/hooks/usePermission";
 import { useChat } from "./ChatContext";
@@ -267,6 +268,7 @@ export function AIChatSidePanel() {
               }}>
                 {msg.role === "assistant" ? (
                   <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
                     components={{
                       p: ({ children }) => <p style={{ marginBottom: 6 }}>{children}</p>,
                       ul: ({ children }) => <ul style={{ paddingLeft: 16, marginBottom: 6 }}>{children}</ul>,
@@ -276,6 +278,18 @@ export function AIChatSidePanel() {
                         <code style={{ padding: "1px 4px", borderRadius: 3, fontSize: 11, background: "var(--admin-bg-hover)", color: "var(--admin-accent-blue)" }}>
                           {children}
                         </code>
+                      ),
+                      table: ({ children }) => (
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, marginBottom: 8 }}>{children}</table>
+                      ),
+                      thead: ({ children }) => (
+                        <thead style={{ borderBottom: "2px solid var(--admin-border-default)" }}>{children}</thead>
+                      ),
+                      th: ({ children }) => (
+                        <th style={{ padding: "4px 8px", textAlign: "left", fontWeight: 600, color: "var(--admin-font-primary)", fontSize: 11 }}>{children}</th>
+                      ),
+                      td: ({ children }) => (
+                        <td style={{ padding: "4px 8px", borderBottom: "1px solid var(--admin-border-light)" }}>{children}</td>
                       ),
                     }}
                   >
