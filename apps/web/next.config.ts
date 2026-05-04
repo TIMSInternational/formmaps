@@ -14,6 +14,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "grainy-gradients.vercel.app",
       },
+      {
+        protocol: "https",
+        hostname: "d3njjcbhbojbot.cloudfront.net",
+      },
+      {
+        protocol: "https",
+        hostname: "coursera-course-photos.s3.amazonaws.com",
+      },
     ],
   },
 
