@@ -70,7 +70,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && !isSchoolAdmin) {
-      // router.push("/login");
+      router.push("/login");
     }
   }, [isSchoolAdmin, loading, router]);
 

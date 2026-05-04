@@ -37,6 +37,7 @@ const NAV_SECTIONS = [
       { label: "My Children", href: "/parent/children", icon: Users },
       { label: "Evaluations", href: "/parent/evaluations", icon: FileCheck },
       { label: "Notifications", href: "/parent/notifications", icon: Bell },
+      { label: "Settings", href: "/parent/settings", icon: Settings },
     ],
   },
 ];
