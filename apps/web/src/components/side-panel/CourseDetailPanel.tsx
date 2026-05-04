@@ -143,7 +143,7 @@ export function CourseDetailPanel({
           </button>
         ) : enrollment.status === "completed" ? (
           <button
-            onClick={() => window.open(course.courseraUrl, "_blank")}
+            onClick={() => { if (course.courseraUrl) window.open(course.courseraUrl, "_blank"); }}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors"
             style={{ border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)" }}
           >
@@ -153,7 +153,7 @@ export function CourseDetailPanel({
         ) : (
           <div className="flex gap-2 w-full">
             <button
-              onClick={() => window.open(course.courseraUrl, "_blank")}
+              onClick={() => { if (course.courseraUrl) window.open(course.courseraUrl, "_blank"); }}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
               style={{ background: "var(--admin-accent-blue)" }}
             >

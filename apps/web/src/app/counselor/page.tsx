@@ -43,6 +43,7 @@ import {
   Send,
   Loader2,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useCounselorDashboard, useCounselorPendingChangeRequests } from "@/hooks/useCounselorDashboard";
 import { useMyCounselorStudents } from "@/hooks/useSchoolProfileQueries";
 import { useReviewChangeRequest } from "@/hooks/useCoursePlanQueries";
@@ -50,6 +51,7 @@ import { getMyCounselorSessions } from "@/services/counselorSessionService";
 import type { CounselorSession } from "@/services/counselorSessionService";
 
 export default function CounselorDashboardPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [rightTab, setRightTab] = useState<"followups" | "requests">("followups");
   const [upcomingSessions, setUpcomingSessions] = useState<CounselorSession[]>([]);
@@ -91,10 +93,10 @@ export default function CounselorDashboardPage() {
       {/* Page Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-4xl font-bold tracking-tight text-gray-900">
-          Counselor Overview
+          {t("counselor.dashboard.title", "Counselor Overview")}
         </h1>
         <p className="text-lg text-gray-500 font-medium mt-1">
-          Your caseload summary and upcoming actions.
+          {t("counselor.dashboard.summary", "Your caseload summary and upcoming actions.")}
         </p>
       </motion.div>
 
@@ -111,12 +113,12 @@ export default function CounselorDashboardPage() {
               <div className="p-2.5 rounded-xl bg-indigo-50">
                 <Users className="h-5 w-5 text-indigo-600" />
               </div>
-              <Badge variant="secondary" className="text-xs">Caseload</Badge>
+              <Badge variant="secondary" className="text-xs">{t("counselor.dashboard.caseload", "Caseload")}</Badge>
             </div>
             {isLoading ? <Skeleton className="h-8 w-16" /> : (
               <p className="text-3xl font-bold text-gray-900">{totalStudents}</p>
             )}
-            <p className="text-sm text-gray-500 mt-1">Assigned Students</p>
+            <p className="text-sm text-gray-500 mt-1">{t("counselor.dashboard.assignedStudents", "Assigned Students")}</p>
           </CardContent>
         </Card>
 
@@ -126,12 +128,12 @@ export default function CounselorDashboardPage() {
               <div className="p-2.5 rounded-xl bg-yellow-50">
                 <CalendarClock className="h-5 w-5 text-yellow-600" />
               </div>
-              <Badge variant="secondary" className="text-xs">Due</Badge>
+              <Badge variant="secondary" className="text-xs">{t("common.due", "Due")}</Badge>
             </div>
             {dashLoading ? <Skeleton className="h-8 w-16" /> : (
               <p className="text-3xl font-bold text-yellow-600">{pendingFollowUps}</p>
             )}
-            <p className="text-sm text-gray-500 mt-1">Pending Follow-ups</p>
+            <p className="text-sm text-gray-500 mt-1">{t("counselor.dashboard.pendingFollowups", "Pending Follow-ups")}</p>
           </CardContent>
         </Card>
 
@@ -146,7 +148,7 @@ export default function CounselorDashboardPage() {
             {dashLoading ? <Skeleton className="h-8 w-16" /> : (
               <p className="text-3xl font-bold text-red-600">{overdueFollowUps}</p>
             )}
-            <p className="text-sm text-gray-500 mt-1">Overdue Follow-ups</p>
+            <p className="text-sm text-gray-500 mt-1">{t("counselor.dashboard.overdueFollowups", "Overdue Follow-ups")}</p>
           </CardContent>
         </Card>
 
@@ -161,14 +163,14 @@ export default function CounselorDashboardPage() {
               </div>
               {pendingCRCount > 0 && (
                 <Badge className="bg-orange-100 text-orange-700 border-0 text-xs animate-pulse">
-                  {pendingCRCount} pending
+                  {pendingCRCount} {t("common.pending", "pending")}
                 </Badge>
               )}
             </div>
             {crLoading ? <Skeleton className="h-8 w-16" /> : (
               <p className="text-3xl font-bold text-orange-600">{pendingCRCount}</p>
             )}
-            <p className="text-sm text-gray-500 mt-1">Change Requests</p>
+            <p className="text-sm text-gray-500 mt-1">{t("counselor.dashboard.changeRequests", "Change Requests")}</p>
           </CardContent>
         </Card>
       </motion.div>
@@ -181,10 +183,10 @@ export default function CounselorDashboardPage() {
         className="grid grid-cols-2 md:grid-cols-4 gap-3"
       >
         {[
-          { label: "My Students", href: "/counselor/students", icon: Users, color: "text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100" },
-          { label: "Academic Gaps", href: "/counselor/academic-gaps", icon: TrendingDown, color: "text-orange-600 bg-orange-50 hover:bg-orange-100 border-orange-100" },
-          { label: "360° Evaluations", href: "/counselor/evaluations", icon: Radar, color: "text-purple-600 bg-purple-50 hover:bg-purple-100 border-purple-100" },
-          { label: "Alerts", href: "/counselor/alerts", icon: Bell, color: "text-red-600 bg-red-50 hover:bg-red-100 border-red-100" },
+          { label: t("counselor.dashboard.myStudents", "My Students"), href: "/counselor/students", icon: Users, color: "text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100" },
+          { label: t("counselor.dashboard.academicGaps", "Academic Gaps"), href: "/counselor/academic-gaps", icon: TrendingDown, color: "text-orange-600 bg-orange-50 hover:bg-orange-100 border-orange-100" },
+          { label: t("counselor.dashboard.evaluations360", "360° Evaluations"), href: "/counselor/evaluations", icon: Radar, color: "text-purple-600 bg-purple-50 hover:bg-purple-100 border-purple-100" },
+          { label: t("counselor.dashboard.alerts", "Alerts"), href: "/counselor/alerts", icon: Bell, color: "text-red-600 bg-red-50 hover:bg-red-100 border-red-100" },
         ].map((item) => (
           <Link key={item.href} href={item.href}>
             <Card className={`border cursor-pointer transition-all hover:shadow-md ${item.color}`}>
@@ -209,11 +211,11 @@ export default function CounselorDashboardPage() {
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-base">
                 <CalendarClock className="h-4 w-4 text-blue-600" />
-                Upcoming Counseling Sessions
+                {t("counselor.dashboard.upcomingSessions", "Upcoming Counseling Sessions")}
               </CardTitle>
               <Link href="/counselor/sessions">
                 <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:bg-blue-50">
-                  Manage Sessions →
+                  {t("counselor.dashboard.manageSessions", "Manage Sessions")} →
                 </Button>
               </Link>
             </CardHeader>
@@ -275,18 +277,18 @@ export default function CounselorDashboardPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Users className="h-4 w-4 text-indigo-600" />
-                  Assigned Students
+                  {t("counselor.dashboard.assignedStudents", "Assigned Students")}
                 </CardTitle>
                 <Link href="/counselor/students">
                   <Button variant="ghost" size="sm" className="text-xs text-indigo-600 hover:bg-indigo-50">
-                    View All →
+                    {t("common.viewAll", "View All")} →
                   </Button>
                 </Link>
               </div>
               <div className="relative mt-2">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                 <Input
-                  placeholder="Search students..."
+                  placeholder={t("counselor.dashboard.searchStudents", "Search students...")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-8 h-8 text-sm"
@@ -304,17 +306,17 @@ export default function CounselorDashboardPage() {
                 <div className="text-center py-12">
                   <Users className="h-10 w-10 text-gray-200 mx-auto mb-2" />
                   <p className="text-gray-400 text-sm">
-                    {search ? "No students match your search." : "No students assigned yet."}
+                    {search ? t("counselor.dashboard.noStudentsMatch", "No students match your search.") : t("counselor.dashboard.noStudentsAssigned", "No students assigned yet.")}
                   </p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
-                      <TableHead className="pl-6">Student</TableHead>
-                      <TableHead>Grade</TableHead>
-                      <TableHead>Assessment</TableHead>
-                      <TableHead className="pr-6">Progress</TableHead>
+                      <TableHead className="pl-6">{t("counselor.dashboard.student", "Student")}</TableHead>
+                      <TableHead>{t("counselor.dashboard.grade", "Grade")}</TableHead>
+                      <TableHead>{t("counselor.dashboard.assessment", "Assessment")}</TableHead>
+                      <TableHead className="pr-6">{t("counselor.dashboard.progress", "Progress")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -363,7 +365,7 @@ export default function CounselorDashboardPage() {
                             </div>
                           ) : (
                             <Badge className="text-xs border-0 bg-gray-100 text-gray-600">
-                              Not started
+                              {t("counselor.dashboard.notStarted", "Not started")}
                             </Badge>
                           )}
                         </TableCell>
@@ -399,7 +401,7 @@ export default function CounselorDashboardPage() {
                   }`}
                 >
                   <Clock className="h-3.5 w-3.5" />
-                  Follow-ups
+                  {t("counselor.dashboard.followUps", "Follow-ups")}
                   {pendingFollowUps > 0 && (
                     <span className="bg-yellow-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                       {pendingFollowUps}
@@ -415,7 +417,7 @@ export default function CounselorDashboardPage() {
                   }`}
                 >
                   <Send className="h-3.5 w-3.5" />
-                  Requests
+                  {t("counselor.dashboard.requests", "Requests")}
                   {pendingCRCount > 0 && (
                     <span className="bg-orange-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                       {pendingCRCount > 9 ? "9+" : pendingCRCount}
@@ -458,9 +460,9 @@ export default function CounselorDashboardPage() {
                 ) : (
                   <div className="text-center py-8">
                     <CalendarClock className="h-9 w-9 text-gray-200 mx-auto mb-2" />
-                    <p className="text-sm text-gray-400">No upcoming follow-ups</p>
+                    <p className="text-sm text-gray-400">{t("counselor.dashboard.noFollowUps", "No upcoming follow-ups")}</p>
                     <p className="text-xs text-gray-300 mt-1">
-                      Set a follow-up date on a counselor note to see it here
+                      {t("counselor.dashboard.followUpHint", "Set a follow-up date on a counselor note to see it here")}
                     </p>
                   </div>
                 )
@@ -483,9 +485,9 @@ export default function CounselorDashboardPage() {
                 ) : (
                   <div className="text-center py-8">
                     <Send className="h-9 w-9 text-gray-200 mx-auto mb-2" />
-                    <p className="text-sm text-gray-400">No pending requests</p>
+                    <p className="text-sm text-gray-400">{t("counselor.dashboard.noRequests", "No pending requests")}</p>
                     <p className="text-xs text-gray-300 mt-1">
-                      Student course change requests will appear here
+                      {t("counselor.dashboard.requestsHint", "Student course change requests will appear here")}
                     </p>
                   </div>
                 )
@@ -506,7 +508,7 @@ export default function CounselorDashboardPage() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <FileText className="h-4 w-4 text-teal-600" />
-                Recent Notes
+                {t("counselor.dashboard.recentNotes", "Recent Notes")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -547,6 +549,7 @@ export default function CounselorDashboardPage() {
 // ── Inline change request card with approve / reject ─────────────────────────
 
 function ChangeRequestCard({ req }: { req: any }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const review = useReviewChangeRequest(req.studentId);
 
@@ -598,7 +601,7 @@ function ChangeRequestCard({ req }: { req: any }) {
           ) : (
             <CheckCircle2 className="h-3 w-3" />
           )}
-          Approve
+          {t("common.approve", "Approve")}
         </Button>
         <Button
           size="sm"
@@ -608,7 +611,7 @@ function ChangeRequestCard({ req }: { req: any }) {
           onClick={() => handleReview("rejected")}
         >
           <XCircle className="h-3 w-3" />
-          Reject
+          {t("common.reject", "Reject")}
         </Button>
         <Button
           size="sm"
@@ -616,7 +619,7 @@ function ChangeRequestCard({ req }: { req: any }) {
           className="h-7 text-xs text-gray-500 hover:text-indigo-600 px-2"
           onClick={() => router.push(`/counselor/students/${req.studentId}`)}
         >
-          View
+          {t("common.view", "View")}
         </Button>
       </div>
     </div>

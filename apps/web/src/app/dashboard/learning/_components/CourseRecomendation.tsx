@@ -95,7 +95,7 @@ export default function CourseRecommendations({ skills }: CourseRecommendationsP
                         size="sm" 
                         variant="ghost" 
                         className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-2 font-bold group/btn" 
-                        onClick={() => window.open(course.courseraUrl, '_blank')}
+                        onClick={() => { if (course.courseraUrl) window.open(course.courseraUrl, '_blank'); }}
                     >
                         Enroll <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover/btn:translate-x-1" />
                     </Button>
