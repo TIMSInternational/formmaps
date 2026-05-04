@@ -55,13 +55,22 @@ export function MILResults({ className, milDataProp }: MILResultsProps) {
   const {
     progress,
     error,
-    isCompleted,
     getOverallScore,
     getSubtestScores,
     getCompletionStats,
     hasEnhancedData,
     completionStats,
   } = hookData;
+
+  // Derive completion from milDataProp when hook progress is empty
+  const milPropCount = milDataProp?.length ?? 0;
+  const effectiveCompleted = hasEnhancedData
+    ? completionStats.completed
+    : progress?.completedExams?.length ?? milPropCount;
+  const effectiveTotal = hasEnhancedData
+    ? completionStats.total
+    : progress?.totalExams ?? 5;
+  const isCompleted = milPropCount >= 5 || hookData.isCompleted;
   const { t } = useTranslation();
 
   if (loading) {
@@ -126,9 +135,7 @@ export function MILResults({ className, milDataProp }: MILResultsProps) {
   }
 
   const overallScore = milDataProp ? overallScoreProp : getOverallScore();
-  const completionPercentage = progress
-    ? (progress.completedExams.length / progress.totalExams) * 100
-    : 0;
+  const completionPercentage = (effectiveCompleted / effectiveTotal) * 100;
 
   // Use enhanced API data for subtest scores
   const subtestScores = getSubtestScores();
@@ -169,11 +176,7 @@ export function MILResults({ className, milDataProp }: MILResultsProps) {
           </div>
           <div className="text-right">
             <div className="text-3xl font-sans font-bold text-slate-900">
-              {hasEnhancedData
-                ? `${completionStats.completed}/${completionStats.total}`
-                : `${progress?.completedExams.length || 0}/${
-                    progress?.totalExams || 5
-                  }`}
+              {`${effectiveCompleted}/${effectiveTotal}`}
             </div>
             <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-1">
               {isCompleted
@@ -313,7 +316,7 @@ export function MILResults({ className, milDataProp }: MILResultsProps) {
           <span className="uppercase">
             {isCompleted
               ? t("dashboard.allAssessmentsComplete")
-              : `${progress?.completedExams.length || 0}/${progress?.totalExams || 5} COMPLETED`}
+              : `${effectiveCompleted}/${effectiveTotal} COMPLETED`}
           </span>
           <div className="flex items-center gap-2">
             <span>
