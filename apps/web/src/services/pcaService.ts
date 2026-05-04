@@ -21,8 +21,7 @@ export interface PCAAssessmentResponse {
 
 // Backend API Configuration
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://careerproject-eucbddf3h4h0ekfx.canadacentral-01.azurewebsites.net";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 // Helper to get auth headers for backend API calls
 const getBackendHeaders = () => {

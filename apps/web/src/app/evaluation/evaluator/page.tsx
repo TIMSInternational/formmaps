@@ -629,7 +629,7 @@ export default function EvaluatorPage() {
       // Use the correct API endpoint from Postman collection - no authorization needed
       const langParam = language === "spanish" ? "sp" : "en";
       const response = await fetch(
-        `https://careerproject-eucbddf3h4h0ekfx.canadacentral-01.azurewebsites.net/evaluation/360evolutor/${groupId}?lang=${langParam}`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/evaluation/360evolutor/${groupId}?lang=${langParam}`
       );
       const data: ApiResponse = await response.json();
 
@@ -910,7 +910,7 @@ export default function EvaluatorPage() {
       // Submit to the correct feedback endpoint from Postman collection
       const langParam = language === "spanish" ? "sp" : "en";
       const response = await fetch(
-        `https://careerproject-eucbddf3h4h0ekfx.canadacentral-01.azurewebsites.net/evaluation/submit-feedback?lang=${langParam}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/evaluation/submit-feedback?lang=${langParam}`,
         {
           method: "POST",
           headers: {

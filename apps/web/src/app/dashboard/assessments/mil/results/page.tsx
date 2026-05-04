@@ -139,41 +139,18 @@ export default function MILResultsPage() {
   // Calculate actual total questions from exams API data
   const totalQuestions = exams.reduce((acc, exam) => acc + exam.totalQuestions, 0);
 
-  // Mock detailed results
-  const subtestResults = [
-    {
-      name: language === "spanish" ? "Reconocimiento de Patrones" : "Pattern Recognition",
-      score: 85,
-      percentile: 78,
-      time: "2:45",
+  // Build subtest results from real API data (enhanced exam history)
+  const subtestResults = (progress?.enhancedData?.examStatus || [])
+    .filter((exam) => exam.status === "completed")
+    .map((exam) => ({
+      name: exam.examName,
+      score: Math.round(exam.scorePercentage),
+      percentile: Math.round(exam.accuracyPercentage),
+      time: exam.totalTimeSpent
+        ? exam.totalTimeSpent.replace(/^00:/, "").replace(/^0/, "")
+        : "--:--",
       fullMark: 100,
-    },
-    {
-      name: language === "spanish" ? "Razonamiento Verbal" : "Verbal Reasoning",
-      score: 78,
-      percentile: 65,
-      time: "3:12",
-      fullMark: 100,
-    },
-    {
-      name: language === "spanish" ? "Memoria de Trabajo" : "Working Memory",
-      score: 72,
-      percentile: 58,
-      time: "2:58", fullMark: 100,
-    },
-    {
-      name: language === "spanish" ? "Velocidad Numérica" : "Numeric Velocity",
-      score: 68,
-      percentile: 52,
-      time: "2:33", fullMark: 100,
-    },
-    {
-      name: language === "spanish" ? "Rotación Visual" : "Visual Rotation",
-      score: 75,
-      percentile: 61,
-      time: "3:05", fullMark: 100,
-    },
-  ].slice(0, completedCount > 0 ? completedCount : 5); 
+    }));
 
   // Radar Chart Data
   const radarData = subtestResults.map(t => ({

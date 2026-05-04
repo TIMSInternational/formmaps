@@ -172,9 +172,8 @@ export default function MILExamRunner({
 
         if (user?.id && !hasSubmitted) {
           setHasSubmitted(true);
-          const submitResult = await submitMILExam(updatedSession, user.id);
-        } else if (hasSubmitted) {
-        } else {
+          // Use completeMILExam for time-expired submissions (sends isTimeExpired: true)
+          await completeMILExam(updatedSession, user.id, language);
         }
 
       } catch (error) {
@@ -182,11 +181,10 @@ export default function MILExamRunner({
     } finally {
         setIsSubmitting(false);
       }
-    } else {
     }
 
     onComplete();
-  }, [session, user.id, onComplete]);
+  }, [session, user.id, language, onComplete]);
 
   const handleAnswerSelect = (answer: number) => {
     const currentQuestion = exam?.questions[currentQuestionIndex];

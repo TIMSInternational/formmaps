@@ -361,7 +361,7 @@ export async function getAssessmentReportData(
 ): Promise<import("@/types/assessmentReport").AssessmentReportData | null> {
   try {
     const token = localStorage.getItem("token");
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://careerproject-eucbddf3h4h0ekfx.canadacentral-01.azurewebsites.net";
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
     const response = await fetch(
       `/api/assessments/${assessmentId}/report`,
