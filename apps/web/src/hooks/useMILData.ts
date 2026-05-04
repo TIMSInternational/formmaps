@@ -87,26 +87,49 @@ export function useMILData() {
         }
       }
 
+      // Fallback: try /api/v1/mil/results/{userId} which has actual scores
+      let milApiCompleted = 0;
+      let milApiTotal = 5;
+      let milApiResults: any = null;
+      if (userId !== "unknown" && (!enhancedData || enhancedData.completedExams === 0)) {
+        try {
+          const token = localStorage.getItem("token");
+          const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+          const resp = await fetch(`${API_BASE}/api/v1/mil/results/${userId}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (resp.ok) {
+            milApiResults = (await resp.json())?.data;
+            milApiCompleted = milApiResults?.completedExams ?? 0;
+            milApiTotal = milApiResults?.totalExams ?? 5;
+          }
+        } catch { /* fallback silently */ }
+      }
+
       // Fallback to localStorage for backward compatibility
       const localCompletedExams = JSON.parse(
         localStorage.getItem("mil_completed_exams") || "[]"
       );
 
-      // Use API data if available, otherwise use localStorage
-      const completedExams = enhancedData?.examStatus
-        ? enhancedData.examStatus
-            .filter((exam) => exam.status === "completed")
-            .map((exam) => exam.examId)
-        : localCompletedExams;
+      // Use best available data source
+      const apiCompleted = enhancedData?.examStatus
+        ? enhancedData.examStatus.filter((exam) => exam.status === "completed").map((exam) => exam.examId)
+        : [];
+      const completedExams = apiCompleted.length > 0
+        ? apiCompleted
+        : milApiCompleted > 0
+          ? Array.from({ length: milApiCompleted }, (_, i) => `exam-${i}`)
+          : localCompletedExams;
+      const totalExams = enhancedData?.totalExams || milApiTotal || examData.length;
 
       const progressData: MILProgress = {
         completedExams,
-        totalExams: enhancedData?.totalExams || examData.length,
+        totalExams,
         isCompleted: enhancedData
           ? enhancedData.completionPercentage === 100
-          : completedExams.length === examData.length,
+          : milApiCompleted >= milApiTotal || completedExams.length >= totalExams,
         lastUpdated: new Date().toISOString(),
-        enhancedData,
+        enhancedData: enhancedData || milApiResults,
         examStatuses,
       };
 
