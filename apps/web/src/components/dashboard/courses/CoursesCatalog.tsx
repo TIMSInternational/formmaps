@@ -150,7 +150,7 @@ export function CoursesCatalog() {
           setEnrollments((prev) => ({ ...prev, [course.id]: progress }));
         }
 
-        window.open(course.courseraUrl, "_blank");
+        if (course.courseraUrl) window.open(course.courseraUrl, "_blank");
       } catch (error) {
       // error handled silently
     }

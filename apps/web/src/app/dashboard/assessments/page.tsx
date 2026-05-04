@@ -28,12 +28,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state/EmptyState";
 
 export default function AssessmentsPage() {
   const { user, language } = useGlobalStore();
   const { t } = useTranslation();
+  const router = useRouter();
   const { pcaData, hasPCA, isCompleted } = usePCAData();
   const { isLoading } = useEvaluationData();
   const { invalidateSpecificAssessment } = useAssessmentCache();
@@ -58,7 +60,7 @@ export default function AssessmentsPage() {
   const pcaStatus = getPCAStatus();
 
   const handleInviteEvaluators = async () => {
-    window.location.href = "/dashboard/assessments/evaluators";
+    router.push("/dashboard/assessments/evaluators");
   };
 
   const handleStart360Evaluation = async () => {
@@ -85,7 +87,7 @@ export default function AssessmentsPage() {
 
       if (selfGroup && selfGroup.id) {
         invalidateSpecificAssessment(user?.id || "", "evaluation");
-        window.location.href = `/evaluation/evaluator?t=${selfGroup.id}`;
+        router.push(`/evaluation/evaluator?t=${selfGroup.id}`);
       } else {
         toast.error("Failed to create self evaluation. Please try again.");
       }

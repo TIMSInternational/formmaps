@@ -259,6 +259,7 @@ export default function SubscriptionsPage() {
                   </div>
                 ) : hasActive ? (
                   <button
+                    onClick={() => router.push("/subscribe")}
                     style={{
                       width: "100%", height: 36, borderRadius: 6, marginBottom: 16,
                       display: "flex", alignItems: "center", justifyContent: "center",

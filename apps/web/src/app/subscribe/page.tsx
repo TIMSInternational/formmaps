@@ -270,7 +270,7 @@ export default function SubscribePage() {
           transition={{ delay: 0.5 }}
           className="text-center text-sm text-gray-400 mt-12"
         >
-          All plans include a 7-day free trial. Cancel anytime. Secure payments via Stripe.
+          Cancel anytime. Secure payments via Stripe.
         </motion.p>
       </div>
     </div>
