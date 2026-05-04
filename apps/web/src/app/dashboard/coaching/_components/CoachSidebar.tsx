@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useAdminTheme } from "@/contexts/AdminThemeContext";
 import { useChat } from "@/components/ai-chat/ChatContext";
@@ -32,27 +33,27 @@ import {
 
 type ThemeMode = "dark" | "light" | "system";
 
-const NAV_SECTIONS = [
+const getNavSections = (t: (key: string, fallback: string) => string) => [
   {
-    label: "Main",
+    label: t("nav.main", "Main"),
     items: [
-      { label: "Dashboard", href: "/dashboard/coaching", icon: LayoutDashboard },
+      { label: t("coach.nav.dashboard", "Dashboard"), href: "/dashboard/coaching", icon: LayoutDashboard },
     ],
   },
   {
-    label: "Coaching",
+    label: t("coach.nav.coaching", "Coaching"),
     items: [
-      { label: "Sessions", href: "/dashboard/coaching/sessions", icon: Video },
-      { label: "Schedule", href: "/dashboard/coaching/schedule", icon: CalendarDays },
-      { label: "Earnings", href: "/dashboard/coaching/earnings", icon: DollarSign },
-      { label: "Analytics", href: "/dashboard/coaching/analytics", icon: BarChart3 },
+      { label: t("coach.nav.sessions", "Sessions"), href: "/dashboard/coaching/sessions", icon: Video },
+      { label: t("coach.nav.schedule", "Schedule"), href: "/dashboard/coaching/schedule", icon: CalendarDays },
+      { label: t("coach.nav.earnings", "Earnings"), href: "/dashboard/coaching/earnings", icon: DollarSign },
+      { label: t("coach.nav.analytics", "Analytics"), href: "/dashboard/coaching/analytics", icon: BarChart3 },
     ],
   },
   {
-    label: "Account",
+    label: t("coach.nav.account", "Account"),
     items: [
-      { label: "Profile", href: "/dashboard/coaching/profile", icon: User },
-      { label: "Settings", href: "/dashboard/coaching/settings", icon: Settings },
+      { label: t("coach.nav.profile", "Profile"), href: "/dashboard/coaching/profile", icon: User },
+      { label: t("coach.nav.settings", "Settings"), href: "/dashboard/coaching/settings", icon: Settings },
     ],
   },
 ];
@@ -103,6 +104,7 @@ function TabBtn({ icon: Icon, active, onClick, title }: {
 }
 
 export function CoachSidebar() {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useGlobalStore();
@@ -127,6 +129,7 @@ export function CoachSidebar() {
     openChatInPanel(thread.id);
   };
 
+  const NAV_SECTIONS = getNavSections(t);
   const chatGroups = groupThreadsByDate(threads);
 
   const C = {

@@ -28,10 +28,10 @@ export default function CoursesPage() {
 
         <div className="flex flex-col gap-2">
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-            Curated Catalog
+            {t("courses.curatedCatalog", "Curated Catalog")}
           </span>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
-            Explore Courses
+            {t("courses.exploreCourses", "Explore Courses")}
           </h1>
           <p className="max-w-2xl text-base text-muted-foreground">
             {t("courses.discoverCourses")}

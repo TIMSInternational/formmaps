@@ -36,10 +36,13 @@ export default function BookCoachPage() {
   const [coaches, setCoaches] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const fetchCoaches = async () => {
       try {
+        setFetchError(null);
         const { getCoaches } = await import("@/services/coachService");
         const response: any = await getCoaches({ search });
 
@@ -58,8 +61,9 @@ export default function BookCoachPage() {
 
         setCoaches(coachesData);
       } catch (error) {
-      // error handled silently
-    } finally {
+        console.error("Failed to fetch coaches:", error);
+        setFetchError(t("coaching.find.fetchError", "Failed to load coaches. Please try again."));
+      } finally {
         setIsLoading(false);
       }
     };
@@ -70,7 +74,7 @@ export default function BookCoachPage() {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [search]);
+  }, [search, retryCount]);
 
   return (
     <div className="space-y-8">
@@ -109,6 +113,19 @@ export default function BookCoachPage() {
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <CoachCardSkeleton key={i} />
             ))}
+          </div>
+        ) : fetchError ? (
+          <div className="dash-card p-5 text-center py-12 border-dashed border-destructive/30">
+            <h3 className="text-lg font-medium text-destructive">
+              {fetchError}
+            </h3>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => { setFetchError(null); setIsLoading(true); setRetryCount(c => c + 1); }}
+            >
+              {t("coaching.find.retry", "Retry")}
+            </Button>
           </div>
         ) : coaches.length > 0 ? (
           <motion.div

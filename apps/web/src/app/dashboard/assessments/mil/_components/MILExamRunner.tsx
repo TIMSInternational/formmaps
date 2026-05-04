@@ -174,6 +174,7 @@ export default function MILExamRunner({
           setHasSubmitted(true);
           // Use completeMILExam for time-expired submissions (sends isTimeExpired: true)
           await completeMILExam(updatedSession, user.id, language);
+          clearMILSession(updatedSession.examId);
         }
 
       } catch (error) {
@@ -242,7 +243,7 @@ export default function MILExamRunner({
           setHasSubmitted(true);
 
           const submitResult = await submitMILExam(updatedSession, user.id);
-
+          clearMILSession(updatedSession.examId);
         } catch (error) {
           // Reset hasSubmitted on error to allow retry
           setHasSubmitted(false);

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useAdminTheme } from "@/contexts/AdminThemeContext";
 import { useChat } from "@/components/ai-chat/ChatContext";
@@ -29,15 +30,15 @@ import {
 
 type ThemeMode = "dark" | "light" | "system";
 
-const NAV_SECTIONS = [
+const getNavSections = (t: (key: string, fallback: string) => string) => [
   {
-    label: "Main",
+    label: t("nav.main", "Main"),
     items: [
-      { label: "Dashboard", href: "/parent", icon: Home },
-      { label: "My Children", href: "/parent/children", icon: Users },
-      { label: "Evaluations", href: "/parent/evaluations", icon: FileCheck },
-      { label: "Notifications", href: "/parent/notifications", icon: Bell },
-      { label: "Settings", href: "/parent/settings", icon: Settings },
+      { label: t("parent.nav.dashboard", "Dashboard"), href: "/parent", icon: Home },
+      { label: t("parent.nav.myChildren", "My Children"), href: "/parent/children", icon: Users },
+      { label: t("parent.nav.evaluations", "Evaluations"), href: "/parent/evaluations", icon: FileCheck },
+      { label: t("parent.nav.notifications", "Notifications"), href: "/parent/notifications", icon: Bell },
+      { label: t("parent.nav.settings", "Settings"), href: "/parent/settings", icon: Settings },
     ],
   },
 ];
@@ -88,6 +89,7 @@ function TabBtn({ icon: Icon, active, onClick, title }: {
 }
 
 export function ParentSidebar() {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useGlobalStore();
@@ -112,6 +114,7 @@ export function ParentSidebar() {
     openChatInPanel(thread.id);
   };
 
+  const NAV_SECTIONS = getNavSections(t);
   const chatGroups = groupThreadsByDate(threads);
 
   const C = {

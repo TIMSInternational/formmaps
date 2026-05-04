@@ -12,6 +12,7 @@ import {
   getUserProgressSummary,
   UserExamResult,
   UserProgressSummary,
+  retryPendingSubmissions,
 } from "@/services/milService";
 import {
   getUserEvaluationGroups,
@@ -110,6 +111,10 @@ export default function MILAssessmentPage() {
       setProgressLoading(false);
     }
   };
+
+  useEffect(() => {
+    retryPendingSubmissions().catch(() => {});
+  }, []);
 
   useEffect(() => {
     loadExams();

@@ -26,6 +26,7 @@ import {
   trackCourseProgress,
   markCourseCompleted,
 } from "../../../services/courseService";
+import { toast } from "@/hooks/useToast";
 import { Star, BookOpen, Search, PlayCircle, TrendingUp, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
@@ -152,8 +153,9 @@ export function CoursesCatalog() {
 
         if (course.courseraUrl) window.open(course.courseraUrl, "_blank");
       } catch (error) {
-      // error handled silently
-    }
+        console.error("Failed to enroll in course:", error);
+        toast.error(t("courses.enrollError", "Failed to start course. Please try again."));
+      }
     },
     [recommendedCourses]
   );
@@ -175,8 +177,9 @@ export function CoursesCatalog() {
           }));
         }
       } catch (error) {
-      // error handled silently
-    }
+        console.error("Failed to mark course completed:", error);
+        toast.error(t("courses.completeError", "Failed to mark course as completed. Please try again."));
+      }
     },
     [enrollments]
   );

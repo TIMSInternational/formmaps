@@ -242,7 +242,51 @@ export default function PCAResultsPanel({
                         </div>
                       </div>
                     </div>
+
+                    {/* Graph 3: Self-Image */}
+                    <div className="mt-6">
+                      <h4 className="font-medium text-gray-700 mb-4 border-b pb-2">
+                        Self-Image
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                        {[
+                          { label: "Dominance 3 (D3)", val: getPercentage(results, "pcaD3"), color: "bg-red-500/70", text: "text-red-500" },
+                          { label: "Influence 3 (I3)", val: getPercentage(results, "pcaI3"), color: "bg-yellow-500/70", text: "text-yellow-500" },
+                          { label: "Steadiness 3 (S3)", val: getPercentage(results, "pcaS3"), color: "bg-green-500/70", text: "text-green-500" },
+                          { label: "Conscientiousness 3 (C3)", val: getPercentage(results, "pcaC3"), color: "bg-blue-500/70", text: "text-blue-500" }
+                        ].map((item, idx) => (
+                          <div key={idx} className="space-y-1">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className={`font-medium ${item.text}`}>{item.label}</span>
+                              <span className="font-bold">{item.val}%</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                              <div
+                                className={`h-2.5 rounded-full transition-all duration-1000 ease-out ${item.color}`}
+                                style={{ width: `${item.val}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
+
+                  {/* PCA Report Image */}
+                  {getVal(results, "pcaImg") && (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        DISC Profile Graph
+                      </h3>
+                      <div style={{ textAlign: "center" }}>
+                        <img
+                          src={getVal(results, "pcaImg")}
+                          alt="DISC Profile Graph"
+                          style={{ maxWidth: "100%", borderRadius: 8, border: "1px solid #e5e7eb" }}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {/* Assessment Details */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">

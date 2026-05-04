@@ -58,8 +58,8 @@ export function usePCAData() {
             getPCACompetencesByUserId(user.id, "1", language).catch(() => null),
           ]);
         } catch (err) {
-      // error handled silently
-    }
+          console.error("Failed to fetch PCA results/competences:", err);
+        }
       }
 
       const data: PCAData = {

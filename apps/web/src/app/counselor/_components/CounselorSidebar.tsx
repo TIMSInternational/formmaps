@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useAdminTheme } from "@/contexts/AdminThemeContext";
 import { useChat } from "@/components/ai-chat/ChatContext";
@@ -32,32 +33,32 @@ import {
 
 type ThemeMode = "dark" | "light" | "system";
 
-const NAV_SECTIONS = [
+const getNavSections = (t: (key: string, fallback: string) => string) => [
   {
-    label: "Main",
+    label: t("nav.main", "Main"),
     items: [
-      { label: "Overview", href: "/counselor", icon: LayoutDashboard },
+      { label: t("counselor.nav.overview", "Overview"), href: "/counselor", icon: LayoutDashboard },
     ],
   },
   {
-    label: "Caseload",
+    label: t("counselor.nav.caseload", "Caseload"),
     items: [
-      { label: "My Students", href: "/counselor/students", icon: Users },
-      { label: "Academic Gaps", href: "/counselor/academic-gaps", icon: TrendingDown },
-      { label: "360° Evaluations", href: "/counselor/evaluations", icon: Radar },
-      { label: "Alerts", href: "/counselor/alerts", icon: Bell },
+      { label: t("counselor.nav.myStudents", "My Students"), href: "/counselor/students", icon: Users },
+      { label: t("counselor.nav.academicGaps", "Academic Gaps"), href: "/counselor/academic-gaps", icon: TrendingDown },
+      { label: t("counselor.nav.evaluations", "360° Evaluations"), href: "/counselor/evaluations", icon: Radar },
+      { label: t("counselor.nav.alerts", "Alerts"), href: "/counselor/alerts", icon: Bell },
     ],
   },
   {
-    label: "Scheduling",
+    label: t("counselor.nav.scheduling", "Scheduling"),
     items: [
-      { label: "Sessions", href: "/counselor/sessions", icon: CalendarDays },
+      { label: t("counselor.nav.sessions", "Sessions"), href: "/counselor/sessions", icon: CalendarDays },
     ],
   },
   {
-    label: "Preferences",
+    label: t("counselor.nav.preferences", "Preferences"),
     items: [
-      { label: "Settings", href: "/counselor/settings", icon: Settings },
+      { label: t("counselor.nav.settings", "Settings"), href: "/counselor/settings", icon: Settings },
     ],
   },
 ];
@@ -108,6 +109,7 @@ function TabBtn({ icon: Icon, active, onClick, title }: {
 }
 
 export function CounselorSidebar() {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useGlobalStore();
@@ -132,6 +134,7 @@ export function CounselorSidebar() {
     openChatInPanel(thread.id);
   };
 
+  const NAV_SECTIONS = getNavSections(t);
   const chatGroups = groupThreadsByDate(threads);
 
   const C = {

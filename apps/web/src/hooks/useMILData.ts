@@ -45,7 +45,7 @@ export function useMILData() {
         );
       }
     } catch (error) {
-      // error handled silently
+      console.error("Failed to parse user token:", error);
     }
     return "unknown";
   };
@@ -83,8 +83,8 @@ export function useMILData() {
 
           examStatuses = { completed, inProgress, notStarted };
         } catch (apiError) {
-      // error handled silently
-    }
+          console.error("Failed to fetch MIL exam history:", apiError);
+        }
       }
 
       // Fallback to localStorage for backward compatibility

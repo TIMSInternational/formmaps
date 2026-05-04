@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useAdminTheme } from "@/contexts/AdminThemeContext";
 import { useChat } from "@/components/ai-chat/ChatContext";
@@ -41,51 +42,51 @@ import {
 
 type ThemeMode = "dark" | "light" | "system";
 
-const NAV_SECTIONS = [
+const getNavSections = (t: (key: string, fallback: string) => string) => [
   {
-    label: "Main",
+    label: t("nav.main", "Main"),
     items: [
-      { label: "Dashboard", href: "/school-admin", icon: LayoutDashboard },
-      { label: "Students", href: "/school-admin/students", icon: Users },
-      { label: "Analytics", href: "/school-admin/analytics", icon: BarChart3 },
-      { label: "Results", href: "/school-admin/results", icon: FileText },
+      { label: t("schoolAdmin.nav.dashboard", "Dashboard"), href: "/school-admin", icon: LayoutDashboard },
+      { label: t("schoolAdmin.nav.students", "Students"), href: "/school-admin/students", icon: Users },
+      { label: t("schoolAdmin.nav.analytics", "Analytics"), href: "/school-admin/analytics", icon: BarChart3 },
+      { label: t("schoolAdmin.nav.results", "Results"), href: "/school-admin/results", icon: FileText },
     ],
   },
   {
-    label: "School Setup",
+    label: t("schoolAdmin.nav.schoolSetup", "School Setup"),
     items: [
-      { label: "School Profile", href: "/school-admin/profile", icon: Building2 },
-      { label: "Users & Roles", href: "/school-admin/users", icon: UserCog },
-      { label: "Calendar", href: "/school-admin/calendar", icon: CalendarDays },
+      { label: t("schoolAdmin.nav.schoolProfile", "School Profile"), href: "/school-admin/profile", icon: Building2 },
+      { label: t("schoolAdmin.nav.usersAndRoles", "Users & Roles"), href: "/school-admin/users", icon: UserCog },
+      { label: t("schoolAdmin.nav.calendar", "Calendar"), href: "/school-admin/calendar", icon: CalendarDays },
     ],
   },
   {
-    label: "Academics",
+    label: t("schoolAdmin.nav.academics", "Academics"),
     items: [
-      { label: "Curriculum", href: "/school-admin/curriculum", icon: BookOpen },
-      { label: "Courses", href: "/school-admin/courses", icon: Library },
-      { label: "Sequences", href: "/school-admin/course-sequences", icon: GitBranch },
+      { label: t("schoolAdmin.nav.curriculum", "Curriculum"), href: "/school-admin/curriculum", icon: BookOpen },
+      { label: t("schoolAdmin.nav.courses", "Courses"), href: "/school-admin/courses", icon: Library },
+      { label: t("schoolAdmin.nav.sequences", "Sequences"), href: "/school-admin/course-sequences", icon: GitBranch },
     ],
   },
   {
-    label: "Data & Assessment",
+    label: t("schoolAdmin.nav.dataAndAssessment", "Data & Assessment"),
     items: [
-      { label: "Assessments", href: "/school-admin/assessments", icon: ClipboardCheck },
-      { label: "Integrations", href: "/school-admin/integrations", icon: Plug },
+      { label: t("schoolAdmin.nav.assessments", "Assessments"), href: "/school-admin/assessments", icon: ClipboardCheck },
+      { label: t("schoolAdmin.nav.integrations", "Integrations"), href: "/school-admin/integrations", icon: Plug },
     ],
   },
   {
-    label: "Counselor",
+    label: t("schoolAdmin.nav.counselor", "Counselor"),
     items: [
-      { label: "Academic Gaps", href: "/school-admin/academic-gaps", icon: TrendingDown },
-      { label: "360° Evaluations", href: "/school-admin/evaluations", icon: Radar },
-      { label: "Alerts", href: "/school-admin/alerts", icon: Bell },
+      { label: t("schoolAdmin.nav.academicGaps", "Academic Gaps"), href: "/school-admin/academic-gaps", icon: TrendingDown },
+      { label: t("schoolAdmin.nav.evaluations", "360° Evaluations"), href: "/school-admin/evaluations", icon: Radar },
+      { label: t("schoolAdmin.nav.alerts", "Alerts"), href: "/school-admin/alerts", icon: Bell },
     ],
   },
   {
-    label: "System",
+    label: t("schoolAdmin.nav.system", "System"),
     items: [
-      { label: "Settings", href: "/school-admin/settings", icon: Settings },
+      { label: t("schoolAdmin.nav.settings", "Settings"), href: "/school-admin/settings", icon: Settings },
     ],
   },
 ];
@@ -136,6 +137,7 @@ function TabBtn({ icon: Icon, active, onClick, title }: {
 }
 
 export function SchoolAdminSidebar() {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useGlobalStore();
@@ -160,6 +162,7 @@ export function SchoolAdminSidebar() {
     openChatInPanel(thread.id);
   };
 
+  const NAV_SECTIONS = getNavSections(t);
   const chatGroups = groupThreadsByDate(threads);
 
   const C = {

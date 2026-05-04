@@ -8,8 +8,9 @@ import { useEvaluationData } from "@/hooks/useEvaluationData";
 import { useDashboardAssessmentSummary } from "@/hooks/useAssessmentQueries";
 import { useEvaluationGroups } from "@/hooks/useAssessmentQueries";
 import { useAssessmentCache } from "@/contexts/AssessmentCacheContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { retryPendingSubmissions } from "@/services/milService";
 import {
   getUserEvaluationGroups,
   createEvaluationGroup,
@@ -40,6 +41,10 @@ export default function AssessmentsPage() {
   const { isLoading } = useEvaluationData();
   const { invalidateSpecificAssessment } = useAssessmentCache();
   const [isStartingEvaluation, setIsStartingEvaluation] = useState(false);
+
+  useEffect(() => {
+    retryPendingSubmissions().catch(() => {});
+  }, []);
 
   const {
     data: assessmentProgress,
