@@ -14,6 +14,21 @@ import { ShiningText } from "@/components/ui/shining-text";
 const AI_SERVICE_URL =
   process.env.NEXT_PUBLIC_AI_SERVICE_URL || "http://localhost:8000";
 
+const REQUEST_TIMEOUT_MS = 45_000;
+
+/** Parse SSE events from a line buffer, handling CRLF and partial chunks. */
+function parseSSELine(line: string): { text?: string; name?: string; status?: string; message?: string } | null {
+  const trimmed = line.replace(/\r$/, "");
+  if (!trimmed.startsWith("data:")) return null;
+  const jsonStr = trimmed.slice(5).trim();
+  if (!jsonStr) return null;
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    return null;
+  }
+}
+
 /** Side-panel chat UI — works with ChatContext threads */
 export function AIChatSidePanel() {
   const { currentThread, currentThreadId, addMessage, createThread } = useChat();
@@ -21,6 +36,7 @@ export function AIChatSidePanel() {
   const [loading, setLoading] = useState(false);
   const [toolStatus, setToolStatus] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const { user } = useGlobalStore();
   const { role } = usePermission();
   const suggestions = getChatSuggestions(role);
@@ -31,9 +47,30 @@ export function AIChatSidePanel() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
   const sendMessage = useCallback(
     async (text: string) => {
       if (!text.trim() || loading) return;
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        // No token — user needs to re-login
+        return;
+      }
+
+      // Cancel any in-flight request
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      // Timeout
+      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
       let threadId = currentThreadId;
       if (!threadId) {
@@ -53,9 +90,6 @@ export function AIChatSidePanel() {
       setToolStatus(null);
 
       try {
-        const token = localStorage.getItem("token") || "";
-
-        // Build history from current thread (last 10 messages)
         const history = messages.slice(-10).map((m) => ({
           role: m.role,
           content: m.content,
@@ -63,22 +97,34 @@ export function AIChatSidePanel() {
 
         const response = await fetch(`${AI_SERVICE_URL}/chat/stream`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
           body: JSON.stringify({
             user_id: user?.id || "",
-            token,
             message: text.trim(),
             role: role || "STUDENT",
             conversation_id: threadId,
             history,
           }),
+          signal: controller.signal,
         });
+
+        if (response.status === 401) {
+          addMessage(threadId, {
+            id: `e-${Date.now()}`,
+            role: "assistant",
+            content: "Your session has expired. Please log in again.",
+            timestamp: Date.now(),
+          });
+          return;
+        }
 
         if (!response.ok) {
           throw new Error(`AI service error: ${response.status}`);
         }
 
-        // Parse SSE stream
         const reader = response.body?.getReader();
         if (!reader) throw new Error("No response body");
 
@@ -95,30 +141,27 @@ export function AIChatSidePanel() {
           buffer = lines.pop() || "";
 
           for (const line of lines) {
-            if (line.startsWith("data:")) {
-              const jsonStr = line.slice(5).trim();
-              if (!jsonStr) continue;
-              try {
-                const event = JSON.parse(jsonStr);
-                if (event.text) {
-                  fullText += event.text;
-                } else if (event.name && event.status) {
-                  // Tool call event
-                  const label = event.name.replace(/_/g, " ").replace("get ", "");
-                  setToolStatus(
-                    event.status === "running"
-                      ? `Looking up ${label}...`
-                      : null,
-                  );
-                } else if (event.message) {
-                  // Error event
-                  fullText = event.message;
-                }
-              } catch {
-                // Skip malformed events
-              }
+            const event = parseSSELine(line);
+            if (!event) continue;
+
+            if (event.text) {
+              fullText += event.text;
+            } else if (event.name && event.status) {
+              const label = event.name.replace(/_/g, " ").replace("get ", "");
+              setToolStatus(
+                event.status === "running" ? `Looking up ${label}...` : null,
+              );
+            } else if (event.message) {
+              fullText = event.message;
             }
           }
+        }
+
+        // Process remaining buffer
+        if (buffer.trim()) {
+          const event = parseSSELine(buffer);
+          if (event?.text) fullText += event.text;
+          else if (event?.message) fullText = event.message;
         }
 
         addMessage(threadId, {
@@ -127,16 +170,27 @@ export function AIChatSidePanel() {
           content: fullText || "I couldn't generate a response. Please try again.",
           timestamp: Date.now(),
         });
-      } catch {
-        addMessage(threadId, {
-          id: `e-${Date.now()}`,
-          role: "assistant",
-          content: "Sorry, I couldn't connect to the AI service right now. Please try again in a moment.",
-          timestamp: Date.now(),
-        });
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          addMessage(threadId, {
+            id: `e-${Date.now()}`,
+            role: "assistant",
+            content: "The request timed out. Please try a simpler question.",
+            timestamp: Date.now(),
+          });
+        } else {
+          addMessage(threadId, {
+            id: `e-${Date.now()}`,
+            role: "assistant",
+            content: "Sorry, I couldn't connect to the AI service right now. Please try again in a moment.",
+            timestamp: Date.now(),
+          });
+        }
       } finally {
+        clearTimeout(timeout);
         setLoading(false);
         setToolStatus(null);
+        abortRef.current = null;
       }
     },
     [loading, user?.id, role, currentThreadId, addMessage, createThread, messages],
