@@ -1,6 +1,6 @@
 /**
  * Environment variable validation.
- * Call validateEnv() at app startup to fail fast if required vars are missing.
+ * Warns at startup if required vars are missing.
  */
 
 const requiredEnvVars = [
@@ -10,8 +10,9 @@ const requiredEnvVars = [
 ] as const;
 
 export function validateEnv(): void {
-  const missing: string[] = [];
+  if (typeof window !== "undefined") return; // Only validate on server/build
 
+  const missing: string[] = [];
   for (const key of requiredEnvVars) {
     if (!process.env[key]) {
       missing.push(key);
@@ -19,8 +20,8 @@ export function validateEnv(): void {
   }
 
   if (missing.length > 0) {
-    throw new Error(
-      `Missing required environment variables:\n${missing.map((v) => `  - ${v}`).join("\n")}\n\nCheck your .env.local file.`
+    console.warn(
+      `[nexa] Missing environment variables: ${missing.join(", ")}. Some features may not work.`
     );
   }
 }
