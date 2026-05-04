@@ -25,16 +25,17 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
   const loading = !pcaDataProp && customHookParams.loading;
   const error = customHookParams.error;
 
-  // if pcaDataProp is received, map it to match pcaData format.
-  // We expect pcaDataProp to have { pcaCod, date } arrays.
+  // Dashboard API only returns { pcaCod, date } — no DISC scores.
+  // Check if pcaDataProp actually has scores; if not, use the hook data
+  // which fetches from /api/pcaapi/get-result (has real DISC scores).
+  const propHasScores = pcaDataProp?.[0]?.pcaD1 != null || pcaDataProp?.[0]?.PcaD1 != null;
   const mappedData =
-    pcaDataProp && pcaDataProp.length > 0
+    pcaDataProp && pcaDataProp.length > 0 && propHasScores
       ? {
           status: "completed",
           pcaCod: pcaDataProp[0].pcaCod || pcaDataProp[0].PcaCod,
           results: {
             data: {
-              // Use real DISC scores from API data if available
               pcaD1: pcaDataProp[0].pcaD1 ?? pcaDataProp[0].PcaD1 ?? null,
               pcaI1: pcaDataProp[0].pcaI1 ?? pcaDataProp[0].PcaI1 ?? null,
               pcaS1: pcaDataProp[0].pcaS1 ?? pcaDataProp[0].PcaS1 ?? null,
