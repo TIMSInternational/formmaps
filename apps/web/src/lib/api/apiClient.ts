@@ -1,5 +1,6 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { toast } from '@/hooks/useToast';
+import { refreshAccessToken, clearTokens } from '@/services/tokenRefreshService';
 
 // Create an Axios instance with base URL and default headers
 const apiClient: AxiosInstance = axios.create({
@@ -8,13 +9,78 @@ const apiClient: AxiosInstance = axios.create({
   timeout: 30000,
 });
 
-// Response interceptor to handle errors uniformly
+// Flag to prevent infinite refresh loops
+let isRefreshing = false;
+// Queue of requests waiting for token refresh
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: Error) => void;
+}> = [];
+
+function processQueue(error: Error | null, token: string | null = null) {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token!);
+    }
+  });
+  failedQueue = [];
+}
+
+// Response interceptor to handle errors uniformly and auto-refresh on 401
 apiClient.interceptors.response.use(
   response => response,
-  error => {
+  async error => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
     if (error.response) {
       const status = error.response.status;
       const data = error.response.data;
+
+      // Attempt token refresh on 401, but only once per request
+      if (status === 401 && !originalRequest._retry) {
+        if (isRefreshing) {
+          // Another refresh is in progress — queue this request
+          return new Promise<string>((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          }).then(token => {
+            originalRequest.headers['Authorization'] = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const newTokens = await refreshAccessToken();
+          if (newTokens) {
+            originalRequest.headers['Authorization'] = `Bearer ${newTokens.accessToken}`;
+            processQueue(null, newTokens.accessToken);
+            return apiClient(originalRequest);
+          } else {
+            // Refresh failed — redirect to login
+            processQueue(new Error('Token refresh failed'));
+            clearTokens();
+            toast.error('Session expired', { description: 'Please log in again.' });
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login';
+            }
+            return Promise.reject(new Error('Session expired. Please log in again.'));
+          }
+        } catch (refreshError) {
+          processQueue(refreshError as Error);
+          clearTokens();
+          toast.error('Session expired', { description: 'Please log in again.' });
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      }
 
       let message = data?.message || error.message;
 
@@ -35,10 +101,7 @@ apiClient.interceptors.response.use(
           message = data?.message || `Request failed with status ${status}`;
       }
 
-      // Only toast for auth errors — these are never retried
-      if (status === 401) {
-        toast.error('Session expired', { description: 'Please log in again.' });
-      } else if (status === 403) {
+      if (status === 403) {
         toast.warning('Access denied', { description: message });
       }
       // 5xx and network errors: callers decide whether to toast

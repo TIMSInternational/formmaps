@@ -9,6 +9,9 @@ import { I18nProvider } from "@/components/I18nProvider";
 import { TelemetryProvider } from "@/components/TelemetryProvider";
 import { SkipToMain } from "@/components/ui/accessibility";
 import { Toaster } from "sonner";
+import { validateEnv } from "@/lib/env";
+
+validateEnv();
 
 export const metadata: Metadata = {
   title: {

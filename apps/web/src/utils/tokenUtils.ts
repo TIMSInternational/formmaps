@@ -9,7 +9,7 @@
  */
 export function decodeToken(token: string): { exp?: number; iat?: number; [key: string]: unknown } | null {
   try {
-    if (!token || token.startsWith("test-token")) {
+    if (!token) {
       return null;
     }
 

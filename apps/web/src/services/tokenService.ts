@@ -3,7 +3,6 @@
 export interface TokenInfo {
   token: string;
   isValid: boolean;
-  isTestToken: boolean;
   expiresAt?: Date;
 }
 
@@ -12,17 +11,8 @@ export function getCurrentToken(): string | null {
   return localStorage.getItem("token");
 }
 
-// Check if token is a test token
-export function isTestToken(token: string): boolean {
-  return token.startsWith("test-token");
-}
-
 // Validate token format (basic validation)
 export function validateTokenFormat(token: string): boolean {
-  if (isTestToken(token)) {
-    return true; // Test tokens are always valid for testing
-  }
-
   // JWT tokens should have 3 parts separated by dots
   const parts = token.split(".");
   return parts.length === 3;
@@ -30,13 +20,11 @@ export function validateTokenFormat(token: string): boolean {
 
 // Get token info
 export function getTokenInfo(token: string): TokenInfo {
-  const isTest = isTestToken(token);
   const isValid = validateTokenFormat(token);
 
   return {
     token,
     isValid,
-    isTestToken: isTest,
   };
 }
 
@@ -44,7 +32,7 @@ export function getTokenInfo(token: string): TokenInfo {
 export function setRealToken(token: string): void {
   localStorage.setItem("token", token);
 
-  // Also clear any test admin role data since we now have a real token
+  // Also clear any stale user data
   localStorage.removeItem("user");
 }
 
@@ -62,11 +50,6 @@ export function getAuthHeader(): { Authorization: string } | object {
     return {};
   }
 
-  const tokenInfo = getTokenInfo(token);
-
-  if (tokenInfo.isTestToken) {
-  }
-
   return {
     Authorization: `Bearer ${token}`,
   };
@@ -81,15 +64,12 @@ export function hasValidTokenForAPI(): boolean {
   }
 
   const tokenInfo = getTokenInfo(token);
-
-  // For API calls, we need a real token, not a test token
-  return tokenInfo.isValid && !tokenInfo.isTestToken;
+  return tokenInfo.isValid;
 }
 
 // Get token status for debugging
 export function getTokenStatus(): {
   hasToken: boolean;
-  isTestToken: boolean;
   isValidForAPI: boolean;
   tokenPreview: string;
 } {
@@ -98,17 +78,13 @@ export function getTokenStatus(): {
   if (!token) {
     return {
       hasToken: false,
-      isTestToken: false,
       isValidForAPI: false,
       tokenPreview: "No token",
     };
   }
 
-  const tokenInfo = getTokenInfo(token);
-
   return {
     hasToken: true,
-    isTestToken: tokenInfo.isTestToken,
     isValidForAPI: hasValidTokenForAPI(),
     tokenPreview: token.substring(0, 20) + "...",
   };

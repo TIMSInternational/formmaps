@@ -107,8 +107,6 @@ export function getCurrentUser(): Promise<UserProfile> {
 
 export function decodeJWTToken(token: string): any {
   try {
-    if (token.startsWith("test-token")) return null;
-
     const parts = token.split(".");
     if (parts.length !== 3) return null;
 
