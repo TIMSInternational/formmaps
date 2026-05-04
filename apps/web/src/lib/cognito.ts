@@ -131,7 +131,7 @@ export function cognitoForgotPassword(email: string): Promise<void> {
       onSuccess: () => resolve(),
       onFailure: (err) => {
         // Don't reveal whether the email exists
-        if (err.code === "UserNotFoundException") {
+        if ((err as any).code === "UserNotFoundException") {
           resolve();
           return;
         }
@@ -157,9 +157,9 @@ export function cognitoConfirmPassword(
       onSuccess: () => resolve(),
       onFailure: (err) => {
         let message = "Failed to reset password.";
-        if (err.code === "ExpiredCodeException") {
+        if ((err as any).code === "ExpiredCodeException") {
           message = "Reset code has expired. Please request a new one.";
-        } else if (err.code === "CodeMismatchException") {
+        } else if ((err as any).code === "CodeMismatchException") {
           message = "Invalid reset code. Please check and try again.";
         } else if (err.message?.includes("password")) {
           message = "Password must be at least 8 characters with uppercase, lowercase, number, and symbol.";
