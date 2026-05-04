@@ -4,7 +4,7 @@ import { Check, Sparkles, Zap, Crown, Loader2, CheckCircle2, ArrowLeft, AlertCir
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useGlobalStore } from "@/store/useGlobalStore";
-import { useSubscriptionStatus, useSubscriptionPlans } from "@/hooks/useSubscription";
+import { useSubscriptionStatus, useSubscriptionPlans, useCancelSubscription } from "@/hooks/useSubscription";
 import StripeCheckout from "@/components/StripeCheckout";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -81,6 +81,8 @@ export default function SubscriptionsPage() {
   const { data: subStatus, isLoading: statusLoading } = useSubscriptionStatus();
   const { data: backendPlans, isLoading: plansLoading } = useSubscriptionPlans();
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const cancelMutation = useCancelSubscription();
   const userId = user.id || "";
 
   // Redirect school students away from this page
@@ -154,6 +156,17 @@ export default function SubscriptionsPage() {
               )}
             </div>
           </div>
+          <button
+            onClick={() => setShowCancelConfirm(true)}
+            style={{
+              padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 500,
+              background: "transparent", color: "var(--admin-font-tertiary)",
+              border: "1px solid var(--admin-border-default)", cursor: "pointer",
+              marginRight: 8,
+            }}
+          >
+            Cancel Plan
+          </button>
           <Badge style={{
             background: "var(--admin-accent-bg-green)",
             color: "var(--admin-accent-green)",
@@ -162,6 +175,62 @@ export default function SubscriptionsPage() {
           }}>
             Active
           </Badge>
+        </div>
+      )}
+
+      {/* Cancel confirmation dialog */}
+      {showCancelConfirm && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 50,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(0,0,0,0.4)",
+        }}>
+          <div style={{
+            background: "var(--admin-bg-card)", borderRadius: 10, padding: 24,
+            maxWidth: 400, width: "90%", border: "1px solid var(--admin-border-default)",
+          }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 8 }}>
+              Cancel Subscription?
+            </h3>
+            <p style={{ fontSize: 13, color: "var(--admin-font-secondary)", marginBottom: 20, lineHeight: 1.5 }}>
+              Your subscription will be cancelled at the end of the current billing period.
+              You will retain access until then.
+            </p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                disabled={cancelMutation.isPending}
+                style={{
+                  padding: "8px 16px", borderRadius: 6, fontSize: 13, fontWeight: 500,
+                  background: "transparent", color: "var(--admin-font-secondary)",
+                  border: "1px solid var(--admin-border-default)", cursor: "pointer",
+                }}
+              >
+                Keep Plan
+              </button>
+              <button
+                onClick={() => {
+                  cancelMutation.mutate(undefined, {
+                    onSuccess: () => {
+                      setShowCancelConfirm(false);
+                    },
+                    onError: (error) => {
+                      alert(`Failed to cancel: ${error.message}`);
+                    },
+                  });
+                }}
+                disabled={cancelMutation.isPending}
+                style={{
+                  padding: "8px 16px", borderRadius: 6, fontSize: 13, fontWeight: 600,
+                  background: "#dc2626", color: "#fff", border: "none",
+                  cursor: cancelMutation.isPending ? "not-allowed" : "pointer",
+                  opacity: cancelMutation.isPending ? 0.6 : 1,
+                }}
+              >
+                {cancelMutation.isPending ? "Cancelling..." : "Yes, Cancel"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

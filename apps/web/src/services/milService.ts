@@ -1,5 +1,95 @@
 // MIL Assessment Service - Integrated with PCA API
 
+// --- Retry helper with exponential backoff ---
+async function submitWithRetry(
+  url: string,
+  body: any,
+  headers: Record<string, string>,
+  maxRetries = 3
+): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
+      if (response.ok) return response;
+      if (attempt < maxRetries)
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+    } catch (err) {
+      if (attempt === maxRetries) throw err;
+      await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+    }
+  }
+  throw new Error("Failed after retries");
+}
+
+// --- Pending submission persistence for offline recovery ---
+const PENDING_KEY = "nexa_pending_mil_submissions";
+
+interface PendingSubmission {
+  key: string;
+  url: string;
+  body: any;
+  timestamp: string;
+}
+
+function savePendingSubmission(key: string, url: string, data: any): void {
+  try {
+    const existing: PendingSubmission[] = JSON.parse(
+      localStorage.getItem(PENDING_KEY) || "[]"
+    );
+    // Replace any existing entry with the same key
+    const filtered = existing.filter((s) => s.key !== key);
+    filtered.push({ key, url, body: data, timestamp: new Date().toISOString() });
+    localStorage.setItem(PENDING_KEY, JSON.stringify(filtered));
+  } catch {
+    // localStorage unavailable
+  }
+}
+
+function removePendingSubmission(key: string): void {
+  try {
+    const existing: PendingSubmission[] = JSON.parse(
+      localStorage.getItem(PENDING_KEY) || "[]"
+    );
+    localStorage.setItem(
+      PENDING_KEY,
+      JSON.stringify(existing.filter((s) => s.key !== key))
+    );
+  } catch {
+    // localStorage unavailable
+  }
+}
+
+export function getPendingSubmissions(): PendingSubmission[] {
+  try {
+    return JSON.parse(localStorage.getItem(PENDING_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+export async function retryPendingSubmissions(): Promise<void> {
+  const pending = getPendingSubmissions();
+  for (const submission of pending) {
+    try {
+      const response = await submitWithRetry(
+        submission.url,
+        submission.body,
+        getHeaders() as Record<string, string>,
+        2
+      );
+      if (response.ok) {
+        removePendingSubmission(submission.key);
+      }
+    } catch {
+      // Will be retried on next page load
+    }
+  }
+}
+
 export interface MILQuestion {
   questionNumber: number;
   questionText: string;
@@ -477,29 +567,27 @@ export async function submitMILExam(
       answers: examAnswers,
     };
 
-    const startTime = Date.now();
     const langParam = language === "spanish" ? "sp" : "en";
-    const response = await fetch(
-      `${API_BASE_URL}/api/PCAExam/submit?lang=${langParam}`,
-      {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify(submissionData),
-      }
-    );
+    const url = `${API_BASE_URL}/api/PCAExam/submit?lang=${langParam}`;
+    const submissionKey = `submit_${session.examId}_${userId}`;
 
-    const responseTime = Date.now() - startTime;
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Failed to submit LIA exam: ${response.status} - ${errorText}`
+    try {
+      const response = await submitWithRetry(
+        url,
+        submissionData,
+        getHeaders() as Record<string, string>
       );
+
+      // Success — remove any pending submission for this exam
+      removePendingSubmission(submissionKey);
+
+      const responseData = await response.json();
+      return responseData;
+    } catch (retryError) {
+      // All retries failed — persist for later
+      savePendingSubmission(submissionKey, url, submissionData);
+      throw retryError;
     }
-
-    const responseData = await response.json();
-
-    return responseData;
   } catch (error) {
     throw error;
   }
@@ -532,21 +620,25 @@ export async function completeMILExam(
     };
 
     const langParam = language === "spanish" ? "sp" : "en";
-    const response = await fetch(
-      `${API_BASE_URL}/api/PCAExam/complete?lang=${langParam}`,
-      {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify(completionData),
-      }
-    );
+    const url = `${API_BASE_URL}/api/PCAExam/complete?lang=${langParam}`;
+    const completionKey = `complete_${session.examId}_${userId}`;
 
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) return null;
-      throw new Error(`Failed to complete MIL exam: ${response.status}`);
+    try {
+      const response = await submitWithRetry(
+        url,
+        completionData,
+        getHeaders() as Record<string, string>
+      );
+
+      // Success — remove any pending submission for this exam
+      removePendingSubmission(completionKey);
+
+      return await response.json();
+    } catch (retryError) {
+      // All retries failed — persist for later
+      savePendingSubmission(completionKey, url, completionData);
+      throw retryError;
     }
-
-    return await response.json();
   } catch (error) {
     throw error;
   }

@@ -3,6 +3,7 @@ import {
   getSubscriptionStatus,
   getSubscriptionPlans,
   createSubscription,
+  cancelSubscription,
   type SubscriptionStatus,
   type SubscriptionPlan,
   type CreateSubscriptionRequest,
@@ -49,6 +50,20 @@ export function useCreateSubscription() {
     CreateSubscriptionRequest
   >({
     mutationFn: createSubscription,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subscriptionStatus"] });
+    },
+  });
+}
+
+/**
+ * Hook to cancel the user's active subscription
+ */
+export function useCancelSubscription() {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ success: boolean; message: string }, Error, void>({
+    mutationFn: cancelSubscription,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscriptionStatus"] });
     },

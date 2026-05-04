@@ -52,6 +52,16 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
 }
 
 /**
+ * Cancel the user's active subscription
+ */
+export async function cancelSubscription(): Promise<{ success: boolean; message: string }> {
+  const response = await apiRequest("/api/stripe/cancel-subscription", {
+    method: "POST",
+  });
+  return response.data || response;
+}
+
+/**
  * Create a new subscription
  */
 export async function createSubscription(
