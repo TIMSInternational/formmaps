@@ -34,7 +34,7 @@ export function CourseCard({
   };
 
   const formatRating = (rating: number) => {
-    return rating.toFixed(1);
+    return (rating ?? 0).toFixed(1);
   };
 
   const getDifficultyColor = (difficulty: string) => {
