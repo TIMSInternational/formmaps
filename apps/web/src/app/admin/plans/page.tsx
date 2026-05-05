@@ -270,10 +270,10 @@ export default function AdminPlansPage() {
                                             <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                                             <div className="flex items-baseline gap-1">
                                                 <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
-                                                    ${plan.price}
+                                                    ${(plan.price ?? 0).toFixed(2)}
                                                 </span>
                                                 <span className="text-gray-500 font-medium">
-                                                    /{plan.period === 'one-time' ? 'once' : plan.period}
+                                                    /{plan.period === 'one-time' ? 'once' : plan.period === 'month' ? 'mo' : plan.period === 'year' ? 'yr' : plan.period}
                                                 </span>
                                             </div>
                                             {plan.description && (

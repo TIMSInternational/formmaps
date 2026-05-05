@@ -314,7 +314,7 @@ export default function SchoolsPage() {
                           <div
                             className="bg-blue-600 h-2 rounded-full"
                             style={{
-                              width: `${Math.min(((school.studentCount || 0) / school.maxStudents) * 100, 100)}%`,
+                              width: `${school.maxStudents > 0 ? Math.min(((school.studentCount || 0) / school.maxStudents) * 100, 100) : 0}%`,
                             }}
                           />
                         </div>

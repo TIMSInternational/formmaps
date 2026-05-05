@@ -86,6 +86,10 @@ export default function CalendarPage() {
       toast.error("Please fill out all fields");
       return;
     }
+    if (new Date(yearForm.endDate) <= new Date(yearForm.startDate)) {
+      toast.error("End date must be after start date");
+      return;
+    }
 
     const payload = {
       ...yearForm,

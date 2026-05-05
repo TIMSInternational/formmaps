@@ -80,6 +80,16 @@ export default function SchoolProfilePage() {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("File too large. Maximum size is 2MB.");
+      e.target.value = "";
+      return;
+    }
+    if (!["image/png", "image/jpeg", "image/jpg", "image/webp"].includes(file.type)) {
+      toast.error("Invalid file type. Please upload PNG, JPG, or WebP.");
+      e.target.value = "";
+      return;
+    }
     uploadLogo.mutate(file, {
       onSuccess: () => toast.success(t("schoolAdmin.profile.logoUploaded", "Logo uploaded")),
       onError: () => toast.error(t("schoolAdmin.profile.logoError", "Failed to upload logo")),

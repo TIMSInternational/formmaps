@@ -173,7 +173,7 @@ export default function GraduationPage() {
           <div className="space-y-6">
             <div className="space-y-2">
               <Label>{t("schoolAdmin.graduation.totalCredits", "Total Credits Required")}</Label>
-              <Input type="number" value={totalCredits} onChange={(e) => setTotalCredits(Number(e.target.value))} />
+              <Input type="number" min="1" value={totalCredits} onChange={(e) => setTotalCredits(Math.max(1, Number(e.target.value)))} />
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
