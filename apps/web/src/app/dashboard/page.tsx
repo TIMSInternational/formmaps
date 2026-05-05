@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiRequest } from "@/lib/api/apiClient";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useTranslation } from "react-i18next";
 import { StatCards } from "./_components/StatCards";
@@ -28,28 +29,18 @@ export default function DashboardPage() {
   const userRole = normalizeRole(user?.role || "");
 
   useEffect(() => {
-    if (!user || userRole === Roles.COACH) return;
+    if (!user?.id || userRole === Roles.COACH) return;
     const fetchDashboard = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1";
-        const url = `${API_BASE_URL.replace("/api/v1", "")}/api/v1/Dashboard/student/${user.id}`;
-        const response = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (response.ok) {
-          const resJson = await response.json();
-          if (resJson.success) {
-            setDashboardData(resJson.data);
-          }
-        }
+        const res = await apiRequest(`/api/v1/Dashboard/student/${user.id}`, { method: "GET" });
+        const data = res?.data ?? res;
+        if (data) setDashboardData(data);
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
       }
     };
     fetchDashboard();
-  }, [user]);
+  }, [user?.id]);
 
   if (userRole === Roles.COACH) {
     const CoachDashboard = dynamic(
