@@ -51,7 +51,7 @@ export function MiniChart({ data = defaultData, title = "Activity", unit = "%", 
       onMouseEnter={handleContainerEnter}
       onMouseLeave={handleContainerLeave}
       className={cn(
-        "group relative w-full p-5 rounded-xl bg-foreground/[0.02] border border-foreground/[0.06] transition-all duration-500 hover:bg-foreground/[0.04] hover:border-foreground/[0.1] flex flex-col gap-3",
+        "group relative w-full h-full p-5 rounded-xl bg-foreground/[0.02] border border-foreground/[0.06] transition-all duration-500 hover:bg-foreground/[0.04] hover:border-foreground/[0.1] flex flex-col gap-3",
         className
       )}
     >
@@ -77,9 +77,9 @@ export function MiniChart({ data = defaultData, title = "Activity", unit = "%", 
       </div>
 
       {/* Chart */}
-      <div className="flex items-end gap-1.5 h-20">
+      <div className="flex items-end gap-1.5 flex-1 min-h-[80px]">
         {data.map((item, index) => {
-          const heightPx = (item.value / maxValue) * 80;
+          const heightPct = (item.value / maxValue) * 100;
           const isHovered = hoveredIndex === index;
           const isAnyHovered = hoveredIndex !== null;
           const isNeighbor = hoveredIndex !== null && (index === hoveredIndex - 1 || index === hoveredIndex + 1);
@@ -92,7 +92,7 @@ export function MiniChart({ data = defaultData, title = "Activity", unit = "%", 
                   isHovered ? "bg-foreground" : isNeighbor ? "bg-foreground/30" : isAnyHovered ? "bg-foreground/10" : "bg-foreground/20 group-hover:bg-foreground/25"
                 )}
                 style={{
-                  height: `${heightPx}px`,
+                  height: `${heightPct}%`,
                   transform: isHovered ? "scaleX(1.15) scaleY(1.02)" : isNeighbor ? "scaleX(1.05)" : "scaleX(1)",
                 }}
               />
