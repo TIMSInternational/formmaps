@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { DashboardStats } from "./_components/DashboardStats";
 import { RevenueOverviewCard } from "./_components/RevenueOverviewCard";
-import { MiniChart } from "@/components/ui/mini-chart";
+import { QuickStatsCard } from "./_components/QuickStatsCard";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import {
   Users,
@@ -69,7 +69,7 @@ export default function AdminPage() {
         <div className="lg:col-span-2">
           <RevenueOverviewCard />
         </div>
-        <MiniChart title="Platform Activity" unit="users" />
+        <QuickStatsCard />
       </div>
 
       {/* Modules Grid */}
