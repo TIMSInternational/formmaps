@@ -3,10 +3,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import {
-    Briefcase, Search, TrendingUp, Globe, GraduationCap,
-    BarChart3, DollarSign, Layers, ExternalLink, MapPin,
+    Briefcase, Search, TrendingUp,
+    BarChart3, Layers,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { listCareers } from "@/services/careerService";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,7 +33,8 @@ function getTitle(c: RawCareer): string {
 }
 
 function getCategory(c: RawCareer): string {
-    return c.cluster || c.industries?.[0] || "General";
+    const raw = c.cluster || c.industries?.[0] || "General";
+    return raw.replace(/_/g, " ");
 }
 
 export function CareerManager() {
@@ -62,35 +62,11 @@ export function CareerManager() {
         return [...map.entries()].sort((a, b) => b[1] - a[1]);
     }, [careers]);
 
-    const educationLevels = useMemo(() => {
-        const map = new Map<string, number>();
-        careers.forEach(c => { if (c.educationLevel) map.set(c.educationLevel, (map.get(c.educationLevel) || 0) + 1); });
-        return [...map.entries()].sort((a, b) => b[1] - a[1]);
-    }, [careers]);
+    // Average careers per cluster
+    const avgPerCluster = clusters.length > 0 ? Math.round(careers.length / clusters.length) : 0;
 
-    const remoteCount = useMemo(() => careers.filter(c => c.remoteEligible).length, [careers]);
-
-    const topSkills = useMemo(() => {
-        const map = new Map<string, number>();
-        careers.forEach(c => c.skills?.forEach(s => {
-            const name = typeof s.name === "string" ? s.name : (s.name as any)?.en || "";
-            if (name) map.set(name, (map.get(name) || 0) + 1);
-        }));
-        return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15);
-    }, [careers]);
-
-    const salaryBands = useMemo(() => {
-        const bands = { "< $40k": 0, "$40k–$70k": 0, "$70k–$100k": 0, "$100k+": 0 };
-        careers.forEach(c => {
-            const m = c.salaryRange?.median;
-            if (!m) return;
-            if (m < 40000) bands["< $40k"]++;
-            else if (m < 70000) bands["$40k–$70k"]++;
-            else if (m < 100000) bands["$70k–$100k"]++;
-            else bands["$100k+"]++;
-        });
-        return Object.entries(bands).filter(([, v]) => v > 0);
-    }, [careers]);
+    // Largest cluster
+    const largestCluster = clusters.length > 0 ? clusters[0] : null;
 
     const searchResults = useMemo(() => {
         if (!search.trim()) return [];
@@ -124,13 +100,12 @@ export function CareerManager() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
                     { label: "Total Careers", value: loading ? "..." : careers.length.toLocaleString(), icon: Briefcase },
                     { label: "Career Clusters", value: clusters.length.toLocaleString(), icon: Layers },
-                    { label: "Remote Eligible", value: remoteCount.toLocaleString(), icon: Globe },
-                    { label: "Education Levels", value: educationLevels.length.toLocaleString(), icon: GraduationCap },
-                    { label: "Skills Tracked", value: topSkills.length > 0 ? `${topSkills.length}+` : "—", icon: TrendingUp },
+                    { label: "Avg per Cluster", value: avgPerCluster.toLocaleString(), icon: BarChart3 },
+                    { label: "Largest Cluster", value: largestCluster ? largestCluster[0].replace(/_/g, " ") : "—", icon: TrendingUp },
                 ].map((stat, i) => (
                     <div key={i} style={{ ...s, padding: 16 }}>
                         <stat.icon style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)", marginBottom: 8 }} />
@@ -170,7 +145,7 @@ export function CareerManager() {
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Industries Breakdown */}
+                {/* Cluster Breakdown */}
                 <div style={{ ...s, padding: 20 }}>
                     <h3 style={hdr}><BarChart3 style={{ width: 14, height: 14, color: "#3b82f6" }} /> By Career Cluster</h3>
                     {loading ? (
@@ -195,67 +170,22 @@ export function CareerManager() {
                     )}
                 </div>
 
-                {/* Top Skills */}
+                {/* Careers per Cluster — top 5 */}
                 <div style={{ ...s, padding: 20 }}>
-                    <h3 style={hdr}><TrendingUp style={{ width: 14, height: 14, color: "#8b5cf6" }} /> Most In-Demand Skills</h3>
+                    <h3 style={hdr}><Briefcase style={{ width: 14, height: 14, color: "#8b5cf6" }} /> Largest Clusters</h3>
                     {loading ? (
-                        <div className="space-y-2">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-8 rounded-lg" />)}</div>
-                    ) : topSkills.length === 0 ? (
-                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No skills data</p>
+                        <div className="space-y-2">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-12 rounded-lg" />)}</div>
                     ) : (
-                        <div className="flex flex-wrap gap-2">
-                            {topSkills.map(([skill, count]) => (
-                                <div key={skill} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={row}>
-                                    <span className="text-xs font-medium" style={{ color: "var(--admin-font-primary)" }}>{skill}</span>
-                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "var(--admin-bg-card)", color: "var(--admin-font-tertiary)" }}>{count}</span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Education & Salary */}
-                <div style={{ ...s, padding: 20 }}>
-                    <h3 style={hdr}><GraduationCap style={{ width: 14, height: 14, color: "#10b981" }} /> Education Requirements</h3>
-                    {loading ? (
-                        <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10 rounded-lg" />)}</div>
-                    ) : educationLevels.length === 0 ? (
-                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No education data</p>
-                    ) : (
-                        <div className="space-y-1.5">
-                            {educationLevels.map(([level, count]) => (
-                                <div key={level} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={row}>
-                                    <span className="text-xs font-medium" style={{ color: "var(--admin-font-primary)" }}>{level}</span>
-                                    <span className="text-xs font-semibold" style={{ color: "var(--admin-font-tertiary)" }}>{count} careers</span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* Salary Distribution */}
-                <div style={{ ...s, padding: 20 }}>
-                    <h3 style={hdr}><DollarSign style={{ width: 14, height: 14, color: "#f59e0b" }} /> Salary Distribution</h3>
-                    {loading ? (
-                        <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10 rounded-lg" />)}</div>
-                    ) : salaryBands.length === 0 ? (
-                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No salary data available</p>
-                    ) : (
-                        <div className="space-y-1.5">
-                            {salaryBands.map(([band, count]) => {
-                                const pct = Math.round((count / careers.length) * 100);
-                                return (
-                                    <div key={band} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={row}>
-                                        <p className="flex-1 text-xs font-medium" style={{ color: "var(--admin-font-primary)" }}>{band}</p>
-                                        <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--admin-border-default)" }}>
-                                            <div className="h-full rounded-full bg-amber-500" style={{ width: `${pct}%` }} />
-                                        </div>
-                                        <span className="text-[11px] font-semibold w-8 text-right" style={{ color: "var(--admin-font-tertiary)" }}>{count}</span>
+                        <div className="space-y-2">
+                            {clusters.slice(0, 5).map(([name, count], i) => (
+                                <div key={name} className="flex items-center gap-3 p-3 rounded-lg" style={row}>
+                                    <span className="text-sm font-bold w-5 text-center" style={{ color: i < 3 ? "#8b5cf6" : "var(--admin-font-tertiary)" }}>#{i + 1}</span>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-semibold" style={{ color: "var(--admin-font-primary)" }}>{name.replace(/_/g, " ")}</p>
                                     </div>
-                                );
-                            })}
+                                    <span className="text-sm font-semibold" style={{ color: "var(--admin-font-tertiary)" }}>{count} careers</span>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
