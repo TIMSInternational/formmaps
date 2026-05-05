@@ -12,7 +12,7 @@ interface StatRow {
 
 export function QuickStatsCard() {
   const { data: analytics } = useAdminAnalyticsSummary("month");
-  const stats = analytics?.stats;
+  const stats = analytics?.stats ?? (analytics as any)?.Stats;
 
   const s = stats as any;
   const rows: StatRow[] = [

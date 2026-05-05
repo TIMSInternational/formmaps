@@ -7,7 +7,7 @@ import { AdminStatCard } from "./AdminStatCard";
 export function DashboardStats() {
   const { data: analytics, isLoading, error } = useAdminAnalyticsSummary("month");
 
-  const stats = analytics?.stats;
+  const stats = analytics?.stats ?? (analytics as any)?.Stats;
 
   // Always render cards — show "—" while loading, real data when ready
   const statItems = [
