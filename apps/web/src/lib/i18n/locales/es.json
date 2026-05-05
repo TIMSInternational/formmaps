@@ -77,7 +77,9 @@
     "to": "a",
     "completed": "COMPLETADO",
     "inProgress": "EN PROGRESO",
-    "notStarted": "NO INICIADO"
+    "notStarted": "NO INICIADO",
+    "male": "Masculino",
+    "female": "Femenino"
   },
   "error": {
     "somethingWentWrong": "Algo salió mal",
@@ -2092,9 +2094,5 @@
     "rescheduleSession": "Reprogramar Sesión",
     "bookAndPay": "Reservar y Pagar",
     "scheduleEvent": "Programar Sesión"
-  },
-  "common": {
-    "male": "Masculino",
-    "female": "Femenino"
   }
 }

@@ -76,7 +76,9 @@
     "today": "Today",
     "completed": "COMPLETED",
     "inProgress": "IN PROGRESS",
-    "notStarted": "NOT STARTED"
+    "notStarted": "NOT STARTED",
+    "male": "Male",
+    "female": "Female"
   },
   "error": {
     "somethingWentWrong": "Something went wrong",
@@ -1935,9 +1937,5 @@
     "rescheduleSession": "Reschedule Session",
     "bookAndPay": "Book & Pay",
     "scheduleEvent": "Schedule Session"
-  },
-  "common": {
-    "male": "Male",
-    "female": "Female"
   }
 }
