@@ -4,26 +4,15 @@
 // Re-uses the same hooks from useAcademicGapQueries.
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, TrendingDown, BookOpen, Lightbulb, AlertTriangle, Target, BarChart3, ChevronRight, GraduationCap, MapPin, Share2, Sparkles, Filter, CheckCircle } from "lucide-react";
 import {
   useAcademicGapSummary,
@@ -38,7 +27,7 @@ export default function SchoolAdminAcademicGapsPage() {
   const [tab, setTab] = useState("overview");
   const [search, setSearch] = useState("");
 
-  const { data: summary, isLoading: summaryLoading } = useAcademicGapSummary({ limit: 100 });
+  const { data: summary, isLoading: summaryLoading, isError: summaryError } = useAcademicGapSummary({ limit: 100 });
   const { data: gaps, isLoading: gapsLoading } = useStudentAcademicGaps(selectedStudentId);
   const { data: recs, isLoading: recsLoading } = useStudentCourseRecommendations(selectedStudentId);
 
@@ -46,10 +35,10 @@ export default function SchoolAdminAcademicGapsPage() {
     !search || s.studentName?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const priorityColor = (level: string) => {
-    if (level === "behind") return { text: "text-red-700", bg: "bg-red-50", border: "border-red-200", icon: "text-red-500", shadow: "shadow-red-900/5" };
-    if (level === "at_risk") return { text: "text-orange-700", bg: "bg-orange-50", border: "border-orange-200", icon: "text-orange-500", shadow: "shadow-orange-900/5" };
-    return { text: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", icon: "text-emerald-500", shadow: "shadow-emerald-900/5" };
+  const priorityBadge = (level: string) => {
+    if (level === "behind") return { bg: "rgba(239,68,68,0.1)", color: "#ef4444" };
+    if (level === "at_risk") return { bg: "rgba(245,158,11,0.1)", color: "#f59e0b" };
+    return { bg: "rgba(16,185,129,0.1)", color: "#10b981" };
   };
 
   const getInitials = (name: string) => {
@@ -61,361 +50,350 @@ export default function SchoolAdminAcademicGapsPage() {
 
   if (summaryLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-24 w-full rounded-3xl" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 rounded-3xl" />)}
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" style={{ background: "var(--admin-bg-hover)" }} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-24" style={{ background: "var(--admin-bg-hover)" }} />)}
         </div>
-        <Skeleton className="h-[500px] w-full rounded-3xl" />
+        <Skeleton className="h-[400px]" style={{ background: "var(--admin-bg-hover)" }} />
       </div>
     );
   }
 
+  // Handle API error / no data gracefully
+  const hasData = !summaryError && summary?.data && summary.data.length > 0;
+
   return (
-    <div className="space-y-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="space-y-1">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
           {t("schoolAdmin.gaps.title", "Academic Gap Analysis")}
         </h1>
-        <p className="text-lg text-gray-500 font-medium max-w-2xl">
+        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
           {t("schoolAdmin.gaps.subtitle", "School-wide view of academic trajectories, credit deficits, and AI-powered intervention recommendations.")}
         </p>
-      </motion.div>
+      </div>
 
       {/* Summary Stats */}
       {summary && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-            <Card className="border-0 shadow-lg bg-white/60 backdrop-blur-xl rounded-3xl overflow-hidden group hover:shadow-xl transition-all duration-300">
-              <CardContent className="p-6 relative">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500" />
-                <div className="relative z-10">
-                  <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-blue-100 flex items-center justify-center mb-4">
-                    <BarChart3 className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <p className="text-4xl font-black text-gray-900 tracking-tight">{summary.summary?.totalStudents ?? 0}</p>
-                  <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mt-1">Total Monitored</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-red-500 to-rose-600 rounded-3xl overflow-hidden text-white group hover:shadow-xl transition-all duration-300">
-              <CardContent className="p-6 relative">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500" />
-                <div className="relative z-10">
-                  <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl shadow-inner border border-white/20 flex items-center justify-center mb-4">
-                    <AlertTriangle className="h-6 w-6 text-white" />
-                  </div>
-                  <p className="text-4xl font-black tracking-tight">{summary.summary?.behind ?? 0}</p>
-                  <p className="text-sm font-bold text-red-100 uppercase tracking-wider mt-1">Behind Track</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-400 to-amber-500 rounded-3xl overflow-hidden text-white group hover:shadow-xl transition-all duration-300">
-              <CardContent className="p-6 relative">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500" />
-                <div className="relative z-10">
-                  <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl shadow-inner border border-white/20 flex items-center justify-center mb-4">
-                    <Target className="h-6 w-6 text-white" />
-                  </div>
-                  <p className="text-4xl font-black tracking-tight">{summary.summary?.atRisk ?? 0}</p>
-                  <p className="text-sm font-bold text-orange-100 uppercase tracking-wider mt-1">At Risk</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-400 to-teal-500 rounded-3xl overflow-hidden text-white group hover:shadow-xl transition-all duration-300">
-              <CardContent className="p-6 relative">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500" />
-                <div className="relative z-10">
-                  <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl shadow-inner border border-white/20 flex items-center justify-center mb-4">
-                    <BookOpen className="h-6 w-6 text-white" />
-                  </div>
-                  <p className="text-4xl font-black tracking-tight">{summary.summary?.onTrack ?? 0}</p>
-                  <p className="text-sm font-bold text-emerald-100 uppercase tracking-wider mt-1">On Track</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </motion.div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: "Total Monitored", value: summary.summary?.totalStudents ?? 0, icon: BarChart3, color: "#3b82f6" },
+            { label: "Behind Track", value: summary.summary?.behind ?? 0, icon: AlertTriangle, color: "#ef4444" },
+            { label: "At Risk", value: summary.summary?.atRisk ?? 0, icon: Target, color: "#f59e0b" },
+            { label: "On Track", value: summary.summary?.onTrack ?? 0, icon: BookOpen, color: "#10b981" },
+          ].map((stat) => (
+            <div key={stat.label} style={{
+              borderRadius: 8, border: "1px solid var(--admin-border-default)",
+              background: "var(--admin-bg-card)", padding: "16px",
+            }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 8,
+                background: `${stat.color}15`,
+                display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10,
+              }}>
+                <stat.icon style={{ width: 16, height: 16, color: stat.color }} />
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)", letterSpacing: "-0.02em" }}>
+                {stat.value}
+              </div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-        <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="bg-white/60 backdrop-blur-xl border border-gray-200/50 p-1.5 rounded-2xl shadow-sm mb-6 inline-flex">
-            <TabsTrigger
-              value="overview"
-              className="rounded-xl px-6 py-2.5 text-sm font-bold data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all shadow-none data-[state=active]:shadow-md"
-            >
-              Master Roster
-            </TabsTrigger>
-            <TabsTrigger
-              value="detail"
-              disabled={!selectedStudentId}
-              className="rounded-xl px-6 py-2.5 text-sm font-bold data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all shadow-none data-[state=active]:shadow-md data-[disabled]:opacity-40"
-            >
-              {selectedStudent ? `${selectedStudent.studentName.split(' ')[0]}'s Profile` : 'Student Profile'}
-            </TabsTrigger>
-          </TabsList>
+      {/* Tabs */}
+      <Tabs value={tab} onValueChange={setTab} className="w-full">
+        <TabsList style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", borderRadius: 8, padding: 2 }} className="inline-flex mb-4">
+          <TabsTrigger value="overview" style={{ borderRadius: 6, fontSize: 12, fontWeight: 600 }}>
+            Master Roster
+          </TabsTrigger>
+          <TabsTrigger value="detail" disabled={!selectedStudentId} style={{ borderRadius: 6, fontSize: 12, fontWeight: 600 }}>
+            {selectedStudent ? `${selectedStudent.studentName.split(' ')[0]}'s Profile` : 'Student Profile'}
+          </TabsTrigger>
+        </TabsList>
 
-          <AnimatePresence mode="wait">
-            {tab === "overview" && (
-              <motion.div
-                key="overview"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                <Card className="border-0 shadow-xl rounded-3xl bg-white/80 backdrop-blur-xl overflow-hidden">
-                  <CardHeader className="bg-gradient-to-r from-gray-50/80 to-white py-5 px-6 border-b border-gray-100 sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                        <div className="p-2 bg-indigo-50 rounded-xl">
-                          <GraduationCap className="h-5 w-5 text-indigo-600" />
-                        </div>
-                        Student Trajectories
-                      </CardTitle>
-                      <CardDescription className="text-sm mt-1">
-                        Identify students needing intervention across the entire institution.
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <div className="relative flex-1 sm:w-72">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          placeholder="Search students..."
-                          value={search}
-                          onChange={(e) => setSearch(e.target.value)}
-                          className="pl-11 rounded-full bg-white border-gray-200 focus:bg-white focus:border-indigo-400 shadow-sm transition-all h-10"
-                        />
-                      </div>
-                      <Button variant="outline" size="icon" className="rounded-full shrink-0 h-10 w-10 border-gray-200 bg-white">
-                        <Filter className="h-4 w-4 text-gray-500" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="divide-y divide-gray-100/50">
-                      {filteredStudents.length === 0 ? (
-                        <div className="text-center py-24 bg-gray-50/30">
-                          <TrendingDown className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                          <h3 className="text-xl font-bold text-gray-900 mb-2">No Students Found</h3>
-                          <p className="text-gray-500 max-w-sm mx-auto">
-                            {search ? "Try fundamentally adjusting your search criteria." : "There is no academic trajectory data available yet."}
-                          </p>
-                        </div>
-                      ) : (
-                        filteredStudents.map((s: AcademicGapSummaryItem) => {
-                          const colors = priorityColor(s.overallStatus);
-                          return (
-                            <div
-                              key={s.studentId}
-                              className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 hover:bg-gradient-to-r hover:from-indigo-50/40 hover:to-transparent cursor-pointer transition-all duration-300"
-                              onClick={() => { setSelectedStudentId(s.studentId); setTab("detail"); }}
-                            >
-                              <div className="flex items-center gap-4 min-w-0 flex-1">
-                                <Avatar className="h-12 w-12 ring-2 ring-white shadow-sm shrink-0">
-                                  <AvatarFallback className="bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700 font-bold border border-indigo-200">
-                                    {getInitials(s.studentName)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="font-bold text-lg text-gray-900 truncate group-hover:text-indigo-700 transition-colors">
-                                      {s.studentName}
-                                    </h4>
-                                    <Badge className={`${colors.bg} ${colors.text} ${colors.border} shadow-none rounded-md px-2 py-0.5 text-xs font-bold border capitalize shrink-0`}>
-                                      {s.overallStatus?.replace("_", " ")}
-                                    </Badge>
-                                  </div>
-                                  <div className="flex items-center gap-3 text-sm text-gray-500 font-medium">
-                                    <span className="flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 text-red-400" /> {s.missingRequiredCourses} required missing</span>
-                                    <span className="w-1 h-1 rounded-full bg-gray-300" />
-                                    <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-orange-400" /> {s.creditDeficit} credit deficit</span>
-                                  </div>
-                                </div>
-                              </div>
+        {tab === "overview" && (
+          <TabsContent value="overview">
+            <div style={{
+              borderRadius: 8, border: "1px solid var(--admin-border-default)",
+              background: "var(--admin-bg-card)", overflow: "hidden",
+            }}>
+              {/* Header with search */}
+              <div style={{
+                padding: "12px 16px",
+                borderBottom: "1px solid var(--admin-border-default)",
+                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                background: "var(--admin-bg-hover)",
+                flexWrap: "wrap",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <GraduationCap style={{ width: 16, height: 16, color: "var(--admin-accent-blue, #3b82f6)" }} />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Student Trajectories</div>
+                    <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Identify students needing intervention across the entire institution.</div>
+                  </div>
+                </div>
+                <div className="relative" style={{ width: 260 }}>
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: "var(--admin-font-tertiary)" }} />
+                  <Input
+                    placeholder="Search students..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 h-8 text-xs"
+                    style={{ borderRadius: 6, background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)" }}
+                  />
+                </div>
+              </div>
 
-                              <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-1/3 shrink-0">
-                                <div className="hidden md:block text-right">
-                                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Primary Gap</p>
-                                  <p className="text-sm font-semibold text-gray-700 truncate max-w-[200px]">{s.topGap || "None detected"}</p>
-                                </div>
-                                <Button
-                                  size="sm"
-                                  className="bg-white border-2 border-indigo-100 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 shadow-sm rounded-xl font-bold group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all ml-auto"
-                                >
-                                  Examine <ChevronRight className="h-4 w-4 ml-1 opacity-50 group-hover:opacity-100" />
-                                </Button>
-                              </div>
+              {/* Student List */}
+              <div>
+                {filteredStudents.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "48px 16px" }}>
+                    <TrendingDown style={{ width: 32, height: 32, color: "var(--admin-font-tertiary)", margin: "0 auto 12px", opacity: 0.4 }} />
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 4 }}>No Students Found</div>
+                    <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", maxWidth: 300, margin: "0 auto" }}>
+                      {search ? "Try adjusting your search criteria." : "There is no academic trajectory data available yet."}
+                    </div>
+                  </div>
+                ) : (
+                  filteredStudents.map((s: AcademicGapSummaryItem) => {
+                    const badge = priorityBadge(s.overallStatus);
+                    return (
+                      <div
+                        key={s.studentId}
+                        onClick={() => { setSelectedStudentId(s.studentId); setTab("detail"); }}
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                          padding: "12px 16px", cursor: "pointer",
+                          borderBottom: "1px solid var(--admin-border-default)",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: "50%",
+                            background: "var(--admin-bg-hover)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 11, fontWeight: 600, color: "var(--admin-font-primary)", flexShrink: 0,
+                          }}>
+                            {getInitials(s.studentName)}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{s.studentName}</span>
+                              <span style={{
+                                fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                                background: badge.bg, color: badge.color, textTransform: "capitalize",
+                              }}>
+                                {s.overallStatus?.replace("_", " ")}
+                              </span>
                             </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
+                              <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)", display: "flex", alignItems: "center", gap: 3 }}>
+                                <AlertTriangle style={{ width: 11, height: 11, color: "#ef4444" }} /> {s.missingRequiredCourses} required missing
+                              </span>
+                              <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)", display: "flex", alignItems: "center", gap: 3 }}>
+                                <MapPin style={{ width: 11, height: 11, color: "#f59e0b" }} /> {s.creditDeficit} credit deficit
+                              </span>
+                            </div>
+                          </div>
+                        </div>
 
-            {tab === "detail" && (
-              <motion.div
-                key="detail"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                {/* Header Strip for Student Detail */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/60 backdrop-blur-xl p-4 md:px-6 rounded-3xl border border-gray-200/60 shadow-sm">
-                  <div className="flex items-center gap-4">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full bg-white shadow-sm border border-gray-100 hover:bg-gray-50 text-gray-500"
-                      onClick={() => { setTab("overview"); setSelectedStudentId(""); }}
-                    >
-                      <ChevronRight className="h-5 w-5 rotate-180" />
-                    </Button>
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                        {selectedStudent?.studentName}
-                      </h2>
-                      {selectedStudent && (
-                        <p className="text-sm font-medium text-gray-500 mt-0.5">
-                          Currently marked as <span className="font-bold text-gray-700 capitalize">{selectedStudent.overallStatus?.replace("_", " ")}</span>
-                        </p>
-                      )}
-                    </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                          <div className="hidden md:block" style={{ textAlign: "right" }}>
+                            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Primary Gap</div>
+                            <div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.topGap || "None detected"}</div>
+                          </div>
+                          <button style={{
+                            height: 30, borderRadius: 6, padding: "0 10px",
+                            fontSize: 11, fontWeight: 600,
+                            display: "flex", alignItems: "center", gap: 4,
+                            background: "transparent",
+                            color: "var(--admin-accent-blue, #3b82f6)",
+                            border: "1px solid var(--admin-border-default)",
+                            cursor: "pointer",
+                          }}>
+                            Examine <ChevronRight style={{ width: 12, height: 12 }} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        )}
+
+        {tab === "detail" && (
+          <TabsContent value="detail" className="space-y-4">
+            {/* Header Strip */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+              padding: "12px 16px", borderRadius: 8,
+              border: "1px solid var(--admin-border-default)",
+              background: "var(--admin-bg-card)",
+              flexWrap: "wrap",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button
+                  onClick={() => { setTab("overview"); setSelectedStudentId(""); }}
+                  style={{
+                    width: 32, height: 32, borderRadius: 6,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
+                    cursor: "pointer", color: "var(--admin-font-tertiary)",
+                  }}
+                >
+                  <ChevronRight style={{ width: 16, height: 16, transform: "rotate(180deg)" }} />
+                </button>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+                    {selectedStudent?.studentName}
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" className="rounded-xl border-gray-200 bg-white">
-                      <Share2 className="h-4 w-4 mr-2 text-gray-500" /> Share Report
-                    </Button>
+                  {selectedStudent && (
+                    <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 1 }}>
+                      Currently marked as <span style={{ fontWeight: 600, color: "var(--admin-font-primary)", textTransform: "capitalize" }}>{selectedStudent.overallStatus?.replace("_", " ")}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <button style={{
+                height: 32, borderRadius: 6, padding: "0 12px",
+                fontSize: 11, fontWeight: 600,
+                display: "flex", alignItems: "center", gap: 4,
+                background: "transparent",
+                color: "var(--admin-font-primary)",
+                border: "1px solid var(--admin-border-default)",
+                cursor: "pointer",
+              }}>
+                <Share2 style={{ width: 12, height: 12 }} /> Share Report
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Gaps Column */}
+              <div style={{
+                borderRadius: 8, border: "1px solid var(--admin-border-default)",
+                background: "var(--admin-bg-card)", overflow: "hidden", display: "flex", flexDirection: "column",
+              }}>
+                <div style={{
+                  padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+                  display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
+                }}>
+                  <TrendingDown style={{ width: 14, height: 14, color: "#ef4444" }} />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Identified Academic Gaps</div>
+                    <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Credit deficiencies and missing core requirements.</div>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Gaps Column */}
-                  <Card className="border-0 shadow-xl rounded-3xl bg-white/80 backdrop-blur-xl overflow-hidden flex flex-col">
-                    <CardHeader className="bg-gradient-to-r from-red-50/80 to-rose-50/80 border-b border-gray-100/50 pb-5">
-                      <CardTitle className="flex items-center gap-2 text-xl font-bold text-red-900">
-                        <div className="p-2 bg-white rounded-xl shadow-sm border border-red-100">
-                          <TrendingDown className="h-5 w-5 text-red-600" />
-                        </div>
-                        Identified Academic Gaps
-                      </CardTitle>
-                      <CardDescription className="text-sm font-medium text-red-700/70 mt-1">
-                        Credit deficiencies and missing core requirements.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6 flex-1 bg-white/40">
-                      {gapsLoading ? (
-                        <div className="space-y-4">
-                          <Skeleton className="h-24 w-full rounded-2xl" />
-                          <Skeleton className="h-24 w-full rounded-2xl" />
-                        </div>
-                      ) : gaps?.creditGaps?.length ? (
-                        <div className="space-y-4">
-                          {gaps.creditGaps.map((g: any, i: number) => (
-                            <motion.div
-                              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                              key={i}
-                              className="relative flex items-start gap-4 p-5 bg-white rounded-2xl border border-red-100 shadow-sm shadow-red-900/5 overflow-hidden group"
-                            >
-                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-400 group-hover:bg-red-500 transition-colors" />
-                              <div className="p-2 bg-red-50 rounded-xl shrink-0 border border-red-100/50">
-                                <AlertTriangle className="h-5 w-5 text-red-500" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex justify-between items-start mb-1">
-                                  <p className="text-base font-bold text-gray-900">{g.category}</p>
-                                  <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 font-bold whitespace-nowrap">
-                                    -{g.deficit} credits
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-gray-600 font-medium bg-red-50/30 p-2 rounded-lg mt-2 border border-red-50">
-                                  <span className="font-bold text-red-800 mr-1">Fix:</span>
-                                  {g.recommendation}
-                                </p>
-                              </div>
-                            </motion.div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col justify-center items-center h-full min-h-[300px] text-center">
-                          <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-4 text-emerald-500">
-                            <BookOpen className="h-8 w-8" />
+                <div style={{ padding: 16, flex: 1 }}>
+                  {gapsLoading ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-20 w-full" style={{ background: "var(--admin-bg-hover)" }} />
+                      <Skeleton className="h-20 w-full" style={{ background: "var(--admin-bg-hover)" }} />
+                    </div>
+                  ) : gaps?.creditGaps?.length ? (
+                    <div className="space-y-3">
+                      {gaps.creditGaps.map((g: any, i: number) => (
+                        <div key={i} style={{
+                          padding: "12px 14px", borderRadius: 6,
+                          border: "1px solid var(--admin-border-default)",
+                          background: "var(--admin-bg-card)",
+                          borderLeft: "3px solid #ef4444",
+                        }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 6 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{g.category}</span>
+                            <span style={{
+                              fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                              background: "rgba(239,68,68,0.1)", color: "#ef4444",
+                            }}>
+                              -{g.deficit} credits
+                            </span>
                           </div>
-                          <p className="text-lg font-bold text-gray-900">No Deficiencies</p>
-                          <p className="text-sm text-gray-500 mt-1 max-w-xs">This student is completely on track with their current academic framework.</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* AI Recommendations Column */}
-                  <Card className="border-0 shadow-xl rounded-3xl bg-white/80 backdrop-blur-xl overflow-hidden flex flex-col">
-                    <CardHeader className="bg-gradient-to-r from-amber-50/80 to-yellow-50/80 border-b border-gray-100/50 pb-5">
-                      <CardTitle className="flex items-center gap-2 text-xl font-bold text-amber-900">
-                        <div className="p-2 bg-white rounded-xl shadow-sm border border-amber-100">
-                          <Lightbulb className="h-5 w-5 text-amber-500" />
-                        </div>
-                        AI Recommendations
-                      </CardTitle>
-                      <CardDescription className="text-sm font-medium text-amber-900/60 mt-1">
-                        Intelligent course targeting to repair trajectories.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6 flex-1 bg-white/40">
-                      {recsLoading ? (
-                        <div className="space-y-4">
-                          <Skeleton className="h-24 w-full rounded-2xl" />
-                          <Skeleton className="h-24 w-full rounded-2xl" />
-                        </div>
-                      ) : recs?.nextSemester?.length || recs?.longTerm?.length ? (
-                        <div className="space-y-4">
-                          {[...(recs.nextSemester ?? []), ...(recs.longTerm ?? [])].map((r: any, i: number) => (
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.15 }}
-                              key={i}
-                              className="group flex flex-col gap-3 p-5 bg-white rounded-2xl border border-amber-200/60 shadow-sm shadow-amber-900/5 hover:border-amber-400 transition-colors"
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className="p-1.5 bg-amber-50 rounded-lg shrink-0">
-                                    <Sparkles className="h-4 w-4 text-amber-500" />
-                                  </div>
-                                  <p className="text-base font-bold text-gray-900 leading-tight">{r.courseName}</p>
-                                </div>
-                                <Badge variant="secondary" className="bg-amber-100/50 text-amber-800 hover:bg-amber-100 font-bold border-none shrink-0">
-                                  Recommend
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-gray-600 font-medium pl-10 border-l-2 border-amber-100 py-1 ml-2">
-                                {r.reason}
-                              </p>
-                            </motion.div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col justify-center items-center h-full min-h-[300px] text-center">
-                          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                            <CheckCircle className="h-8 w-8 text-gray-400" />
+                          <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", padding: "6px 8px", borderRadius: 4, background: "var(--admin-bg-hover)" }}>
+                            <span style={{ fontWeight: 600, color: "#ef4444", marginRight: 4 }}>Fix:</span>
+                            {g.recommendation}
                           </div>
-                          <p className="text-lg font-bold text-gray-900">No Recs Needed</p>
-                          <p className="text-sm text-gray-500 mt-1 max-w-xs">No specific remedial interventions are prescribed at this time.</p>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: "center", padding: "40px 16px" }}>
+                      <BookOpen style={{ width: 28, height: 28, color: "#10b981", margin: "0 auto 10px", opacity: 0.5 }} />
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>No Deficiencies</div>
+                      <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 4, maxWidth: 220, margin: "4px auto 0" }}>This student is completely on track.</div>
+                    </div>
+                  )}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Tabs>
-      </motion.div>
+              </div>
+
+              {/* AI Recommendations Column */}
+              <div style={{
+                borderRadius: 8, border: "1px solid var(--admin-border-default)",
+                background: "var(--admin-bg-card)", overflow: "hidden", display: "flex", flexDirection: "column",
+              }}>
+                <div style={{
+                  padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+                  display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
+                }}>
+                  <Lightbulb style={{ width: 14, height: 14, color: "#f59e0b" }} />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>AI Recommendations</div>
+                    <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Intelligent course targeting to repair trajectories.</div>
+                  </div>
+                </div>
+                <div style={{ padding: 16, flex: 1 }}>
+                  {recsLoading ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-20 w-full" style={{ background: "var(--admin-bg-hover)" }} />
+                      <Skeleton className="h-20 w-full" style={{ background: "var(--admin-bg-hover)" }} />
+                    </div>
+                  ) : recs?.nextSemester?.length || recs?.longTerm?.length ? (
+                    <div className="space-y-3">
+                      {[...(recs.nextSemester ?? []), ...(recs.longTerm ?? [])].map((r: any, i: number) => (
+                        <div key={i} style={{
+                          padding: "12px 14px", borderRadius: 6,
+                          border: "1px solid var(--admin-border-default)",
+                          background: "var(--admin-bg-card)",
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <Sparkles style={{ width: 12, height: 12, color: "#f59e0b" }} />
+                              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{r.courseName}</span>
+                            </div>
+                            <span style={{
+                              fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                              background: "rgba(245,158,11,0.1)", color: "#f59e0b",
+                            }}>
+                              Recommend
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", paddingLeft: 20, borderLeft: "2px solid var(--admin-border-default)", marginLeft: 6 }}>
+                            {r.reason}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: "center", padding: "40px 16px" }}>
+                      <CheckCircle style={{ width: 28, height: 28, color: "var(--admin-font-tertiary)", margin: "0 auto 10px", opacity: 0.4 }} />
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>No Recs Needed</div>
+                      <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 4, maxWidth: 220, margin: "4px auto 0" }}>No specific remedial interventions are prescribed at this time.</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 }

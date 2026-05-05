@@ -35,7 +35,8 @@ const buildUrl = (endpoint: string, params?: Record<string, string | number | un
 const handleResponse = async <T>(res: Response): Promise<T> => {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.error?.message || err.message || "Request failed");
+    const msg = err.error?.message || err.message || "Request failed";
+    throw new Error(`${res.status}: ${msg}`);
   }
   const json = await res.json();
   return json.data ?? json;

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "motion/react";
 import {
   Settings,
   Users,
@@ -18,59 +17,34 @@ import {
   Search,
   Beaker,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useEvaluationData } from "@/hooks/useEvaluationData";
 import dynamic from "next/dynamic";
 import type { EvaluationSession } from "@/services/evaluationService";
 
-// Dynamically import heavy evaluation components
-const EvaluationConfiguration = dynamic(
-  () => import("@/components/evaluation/EvaluationConfiguration"),
-  { ssr: false }
-);
-const EvaluatorManagement = dynamic(
-  () => import("@/components/evaluation/EvaluatorManagement"),
-  { ssr: false }
-);
-const EvaluationReport = dynamic(
-  () => import("@/components/evaluation/EvaluationReport"),
-  { ssr: false }
-);
-const EvaluationAnalytics = dynamic(
-  () => import("@/components/evaluation/EvaluationAnalytics"),
-  { ssr: false }
-);
-const EvaluationInvitations = dynamic(
-  () => import("@/components/evaluation/EvaluationInvitations"),
-  { ssr: false }
-);
+const EvaluationConfiguration = dynamic(() => import("@/components/evaluation/EvaluationConfiguration"), { ssr: false });
+const EvaluatorManagement = dynamic(() => import("@/components/evaluation/EvaluatorManagement"), { ssr: false });
+const EvaluationReport = dynamic(() => import("@/components/evaluation/EvaluationReport"), { ssr: false });
+const EvaluationAnalytics = dynamic(() => import("@/components/evaluation/EvaluationAnalytics"), { ssr: false });
+const EvaluationInvitations = dynamic(() => import("@/components/evaluation/EvaluationInvitations"), { ssr: false });
 
-type ViewMode =
-  | "list"
-  | "configure"
-  | "manage-evaluators"
-  | "invitations"
-  | "report"
-  | "analytics";
+type ViewMode = "list" | "configure" | "manage-evaluators" | "invitations" | "report" | "analytics";
+
+const statusMeta: Record<string, { icon: any; color: string; label: string }> = {
+  completed: { icon: CheckCircle2, color: "var(--admin-accent-green, #10b981)", label: "Completed" },
+  active: { icon: Clock, color: "var(--admin-accent-blue, #3b82f6)", label: "Active" },
+  draft: { icon: AlertTriangle, color: "var(--admin-font-tertiary)", label: "Draft" },
+  pending: { icon: Clock, color: "var(--admin-accent-amber, #f59e0b)", label: "Pending" },
+};
 
 export default function EvaluationsPage() {
   const { t } = useTranslation();
-  const {
-    sessions,
-    currentSession,
-    progress,
-    loading,
-    loadSession,
-  } = useEvaluationData();
+  const { sessions, currentSession, progress, loading, loadSession } = useEvaluationData();
 
-  // Helper to select a session by ID
   const selectSession = (id: string) => {
     const session = sessions.find((s: EvaluationSession) => s.id === id);
     if (session) loadSession(id);
@@ -80,365 +54,238 @@ export default function EvaluationsPage() {
   const [search, setSearch] = useState("");
   const [useMockData, setUseMockData] = useState(false);
 
-  // Filter sessions by search
   const filteredSessions = (sessions || []).filter(
     (s: EvaluationSession) =>
-      !search ||
-      (s.evaluatedPersonName || s.title || "").toLowerCase().includes(search.toLowerCase())
+      !search || (s.evaluatedPersonName || s.title || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  // Stats
   const totalSessions = sessions?.length || 0;
-  const activeSessions = sessions?.filter(
-    (s: EvaluationSession) => s.status === "active"
-  ).length || 0;
-  const completedSessions = sessions?.filter(
-    (s: EvaluationSession) => s.status === "completed"
-  ).length || 0;
+  const activeSessions = sessions?.filter((s: EvaluationSession) => s.status === "active").length || 0;
+  const completedSessions = sessions?.filter((s: EvaluationSession) => s.status === "completed").length || 0;
   const responseRate = progress?.responseRate || 0;
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
-      case "active":
-        return <Clock className="h-4 w-4 text-blue-500" />;
-      default:
-        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-    }
-  };
+  // Sub-views with back button
+  const backButton = (
+    <button
+      onClick={() => setViewMode("list")}
+      style={{
+        height: 32, borderRadius: 6, padding: "0 12px",
+        fontSize: 12, fontWeight: 600,
+        display: "flex", alignItems: "center", gap: 4,
+        background: "transparent", color: "var(--admin-font-primary)",
+        border: "1px solid var(--admin-border-default)", cursor: "pointer",
+      }}
+    >
+      <ChevronRight style={{ width: 14, height: 14, transform: "rotate(180deg)" }} />
+      Back
+    </button>
+  );
 
-  const getStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      completed: "bg-emerald-100 text-emerald-700",
-      active: "bg-blue-100 text-blue-700",
-      draft: "bg-gray-100 text-gray-700",
-      pending: "bg-amber-100 text-amber-700",
-    };
-    return (
-      <Badge variant="secondary" className={styles[status] || styles.draft}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
-  };
-
-  // If we're viewing a sub-component
   if (viewMode === "configure") {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" onClick={() => setViewMode("list")}>
-          ← {t("common.back", "Back")}
-        </Button>
-        <EvaluationConfiguration
-          onSave={async () => setViewMode("list")}
-          onCancel={() => setViewMode("list")}
-        />
-      </div>
-    );
+    return <div className="space-y-4">{backButton}<EvaluationConfiguration onSave={async () => setViewMode("list")} onCancel={() => setViewMode("list")} /></div>;
   }
-
   if (viewMode === "manage-evaluators" && currentSession) {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" onClick={() => setViewMode("list")}>
-          ← {t("common.back", "Back")}
-        </Button>
-        <EvaluatorManagement
-          sessionId={currentSession.id}
-          evaluators={currentSession.evaluators || []}
-          onEvaluatorsUpdated={() => { }}
-          onSendInvitations={() => setViewMode("invitations")}
-        />
-      </div>
-    );
+    return <div className="space-y-4">{backButton}<EvaluatorManagement sessionId={currentSession.id} evaluators={currentSession.evaluators || []} onEvaluatorsUpdated={() => {}} onSendInvitations={() => setViewMode("invitations")} /></div>;
   }
-
   if (viewMode === "invitations" && currentSession) {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" onClick={() => setViewMode("list")}>
-          ← {t("common.back", "Back")}
-        </Button>
-        <EvaluationInvitations
-          sessionId={currentSession.id}
-          onBack={() => setViewMode("list")}
-        />
-      </div>
-    );
+    return <div className="space-y-4">{backButton}<EvaluationInvitations sessionId={currentSession.id} onBack={() => setViewMode("list")} /></div>;
   }
-
   if (viewMode === "report" && currentSession) {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" onClick={() => setViewMode("list")}>
-          ← {t("common.back", "Back")}
-        </Button>
-        <EvaluationReport
-          sessionId={currentSession.id}
-          onBack={() => setViewMode("list")}
-        />
-      </div>
-    );
+    return <div className="space-y-4">{backButton}<EvaluationReport sessionId={currentSession.id} onBack={() => setViewMode("list")} /></div>;
   }
-
   if (viewMode === "analytics" && currentSession) {
+    return <div className="space-y-4">{backButton}<EvaluationAnalytics sessionId={currentSession.id} onBack={() => setViewMode("list")} /></div>;
+  }
+
+  if (loading) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" onClick={() => setViewMode("list")}>
-          ← {t("common.back", "Back")}
-        </Button>
-        <EvaluationAnalytics
-          sessionId={currentSession.id}
-          onBack={() => setViewMode("list")}
-        />
+        <Skeleton className="h-8 w-48" style={{ background: "var(--admin-bg-hover)" }} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-24" style={{ background: "var(--admin-bg-hover)" }} />)}
+        </div>
+        <Skeleton className="h-[400px]" style={{ background: "var(--admin-bg-hover)" }} />
       </div>
     );
   }
 
-  // Main list view
   return (
-    <div className="space-y-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row md:items-start justify-between gap-4"
-        >
-          <div className="space-y-2">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
-              {t("schoolAdmin.evaluations.title", "360° Evaluations")}
-            </h1>
-            <p className="text-lg text-gray-500 font-medium max-w-2xl leading-relaxed">
-              {t(
-                "schoolAdmin.evaluations.subtitle",
-                "Manage student evaluation sessions, invitations, and reports"
-              )}
-            </p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
+            360° Evaluations
+          </h1>
+          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
+            Manage student evaluation sessions, invitations, and reports
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {process.env.NODE_ENV === "development" && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "6px 12px", borderRadius: 6,
+              border: "1px solid var(--admin-border-default)",
+              background: "var(--admin-bg-card)",
+            }}>
+              <Beaker style={{ width: 14, height: 14, color: useMockData ? "#f59e0b" : "var(--admin-font-tertiary)" }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-secondary)" }}>
+                {useMockData ? "Preview" : "Live"}
+              </span>
+              <Switch checked={useMockData} onCheckedChange={setUseMockData} />
+            </div>
+          )}
+          <button
+            onClick={() => setViewMode("configure")}
+            style={{
+              height: 36, borderRadius: 6, padding: "0 14px",
+              fontSize: 12, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 6,
+              background: "var(--admin-accent-blue, #3b82f6)", color: "#fff",
+              border: "none", cursor: "pointer",
+            }}
+          >
+            <Plus style={{ width: 14, height: 14 }} /> New Session
+          </button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Total Sessions", value: totalSessions, icon: FileText, color: "#6366f1" },
+          { label: "Active", value: activeSessions, icon: Clock, color: "#3b82f6" },
+          { label: "Completed", value: completedSessions, icon: CheckCircle2, color: "#10b981" },
+          { label: "Response Rate", value: `${responseRate}%`, icon: BarChart3, color: "#8b5cf6" },
+        ].map((stat) => (
+          <div key={stat.label} style={{
+            borderRadius: 8, border: "1px solid var(--admin-border-default)",
+            background: "var(--admin-bg-card)", padding: 16,
+          }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: `${stat.color}15`,
+              display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10,
+            }}>
+              <stat.icon style={{ width: 16, height: 16, color: stat.color }} />
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)", letterSpacing: "-0.02em" }}>
+              {stat.value}
+            </div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>
+              {stat.label}
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            {process.env.NODE_ENV === "development" && (
-              <div className="flex items-center gap-3 bg-white/60 backdrop-blur-md pl-4 pr-5 py-3 rounded-full border border-gray-200 shadow-sm shrink-0 hover:shadow-md transition-all duration-300">
-                <div className={cn(
-                  "flex items-center justify-center p-2 rounded-full transition-colors duration-300",
-                  useMockData ? "bg-amber-100 text-amber-600" : "bg-teal-100 text-teal-600"
-                )}>
-                  <Beaker className="w-4 h-4" />
-                </div>
-                <div className="flex flex-col justify-center">
-                  <Label htmlFor="mock-data-toggle" className="font-bold text-[11px] uppercase tracking-wider text-gray-800 cursor-pointer">
-                    {useMockData ? "Preview Mode" : "Live Mode"}
-                  </Label>
-                  <span className="text-[10px] text-gray-500 font-medium leading-none mt-0.5">
-                    {useMockData ? "Using mock data" : "Using real data"}
-                  </span>
-                </div>
-                <div className="ml-2 pl-3 border-l h-6 flex items-center">
-                  <Switch
-                    id="mock-data-toggle"
-                    checked={useMockData}
-                    onCheckedChange={setUseMockData}
-                    className="data-[state=checked]:bg-amber-500"
-                  />
-                </div>
-              </div>
-            )}
-            <Button
-              onClick={() => setViewMode("configure")}
-              className="bg-teal-600 hover:bg-teal-700 shadow-sm transition-all duration-300"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {t("schoolAdmin.evaluations.newSession", "New Evaluation Session")}
-            </Button>
+        ))}
+      </div>
+
+      {/* Sessions List */}
+      <div style={{
+        borderRadius: 8, border: "1px solid var(--admin-border-default)",
+        background: "var(--admin-bg-card)", overflow: "hidden",
+      }}>
+        {/* Card Header */}
+        <div style={{
+          padding: "12px 16px",
+          borderBottom: "1px solid var(--admin-border-default)",
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+          background: "var(--admin-bg-hover)",
+          flexWrap: "wrap",
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+            Evaluation Sessions
           </div>
-        </motion.div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <FileText className="h-5 w-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">
-                      {t("schoolAdmin.evaluations.totalSessions", "Total Sessions")}
-                    </p>
-                    <p className="text-2xl font-bold">{totalSessions}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Clock className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">
-                      {t("schoolAdmin.evaluations.active", "Active")}
-                    </p>
-                    <p className="text-2xl font-bold">{activeSessions}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-100 rounded-lg">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">
-                      {t("schoolAdmin.evaluations.completed", "Completed")}
-                    </p>
-                    <p className="text-2xl font-bold">{completedSessions}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <BarChart3 className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">
-                      {t("schoolAdmin.evaluations.responseRate", "Response Rate")}
-                    </p>
-                    <p className="text-2xl font-bold">{responseRate}%</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <div className="relative" style={{ width: 260 }}>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: "var(--admin-font-tertiary)" }} />
+            <Input
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-8 text-xs"
+              style={{ borderRadius: 6, background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)" }}
+            />
+          </div>
         </div>
 
-        {/* Sessions List */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card className="border-0 shadow-md overflow-hidden">
-            <CardHeader>
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <CardTitle>
-                  {t("schoolAdmin.evaluations.sessions", "Evaluation Sessions")}
-                </CardTitle>
-                <div className="relative w-full md:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder={t("common.search", "Search...")}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
+        {/* Session Rows */}
+        <div>
+          {filteredSessions.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "48px 16px" }}>
+              <FileText style={{ width: 32, height: 32, color: "var(--admin-font-tertiary)", margin: "0 auto 12px", opacity: 0.4 }} />
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 4 }}>No Sessions Found</div>
+              <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", maxWidth: 300, margin: "0 auto" }}>
+                {search ? "Try adjusting your search." : "Create a new evaluation session to get started."}
               </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-12 text-gray-500">
-                  {t("common.loading", "Loading...")}
-                </div>
-              ) : filteredSessions.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  {t(
-                    "schoolAdmin.evaluations.noSessions",
-                    "No evaluation sessions found. Create one to get started."
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredSessions.map((session: EvaluationSession) => (
-                    <div
-                      key={session.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {getStatusIcon(session.status)}
-                        <div className="min-w-0">
-                          <p className="font-medium text-gray-900 truncate">
-                            {session.evaluatedPersonName || session.title ||
-                              t("schoolAdmin.evaluations.unnamed", "Unnamed Session")}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {t("schoolAdmin.evaluations.evaluators", "Evaluators")}:{" "}
-                            {session.evaluators?.length || 0} •{" "}
-                            {session.createdAt
-                              ? new Date(session.createdAt).toLocaleDateString()
-                              : ""}
-                          </p>
-                        </div>
+            </div>
+          ) : (
+            filteredSessions.map((session: EvaluationSession) => {
+              const meta = statusMeta[session.status] || statusMeta.draft;
+              const StatusIcon = meta.icon;
+              return (
+                <div
+                  key={session.id}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                    padding: "12px 16px",
+                    borderBottom: "1px solid var(--admin-border-default)",
+                    transition: "background 0.1s",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                    <StatusIcon style={{ width: 16, height: 16, color: meta.color, flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {session.evaluatedPersonName || session.title || "Unnamed Session"}
+                        </span>
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                          background: `${meta.color}15`, color: meta.color,
+                        }}>
+                          {meta.label}
+                        </span>
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        {getStatusBadge(session.status)}
-
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            title={t("schoolAdmin.evaluations.manageEvaluators", "Manage Evaluators")}
-                            onClick={() => {
-                              selectSession(session.id);
-                              setViewMode("manage-evaluators");
-                            }}
-                          >
-                            <Users className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            title={t("schoolAdmin.evaluations.sendInvitations", "Send Invitations")}
-                            onClick={() => {
-                              selectSession(session.id);
-                              setViewMode("invitations");
-                            }}
-                          >
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            title={t("schoolAdmin.evaluations.viewReport", "View Report")}
-                            onClick={() => {
-                              selectSession(session.id);
-                              setViewMode("report");
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            title={t("schoolAdmin.evaluations.analytics", "Analytics")}
-                            onClick={() => {
-                              selectSession(session.id);
-                              setViewMode("analytics");
-                            }}
-                          >
-                            <BarChart3 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
+                        {session.evaluators?.length || 0} evaluators
+                        {session.createdAt ? ` · ${new Date(session.createdAt).toLocaleDateString()}` : ""}
                       </div>
                     </div>
-                  ))}
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+                    {[
+                      { icon: Users, title: "Manage Evaluators", view: "manage-evaluators" as ViewMode },
+                      { icon: Mail, title: "Send Invitations", view: "invitations" as ViewMode },
+                      { icon: Eye, title: "View Report", view: "report" as ViewMode },
+                      { icon: BarChart3, title: "Analytics", view: "analytics" as ViewMode },
+                    ].map(({ icon: Icon, title, view }) => (
+                      <button
+                        key={view}
+                        title={title}
+                        onClick={() => { selectSession(session.id); setViewMode(view); }}
+                        style={{
+                          width: 30, height: 30, borderRadius: 4,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          background: "transparent", border: "none",
+                          color: "var(--admin-font-tertiary)", cursor: "pointer",
+                          transition: "color 0.1s",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "var(--admin-font-primary)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "var(--admin-font-tertiary)"; }}
+                      >
+                        <Icon style={{ width: 14, height: 14 }} />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+              );
+            })
+          )}
+        </div>
+      </div>
     </div>
   );
 }

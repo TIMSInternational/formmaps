@@ -1,55 +1,37 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Network, Plus, Loader2, Trash2, Users, PenSquare, Sparkles, Upload } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import { Network, Plus, Loader2, Trash2, PenSquare, Sparkles, Upload, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import {
-  useCourseSequences,
-  useCreateCourseSequence,
-  useDeleteCourseSequence,
-  useGenerateCourseSequenceAI,
-} from "@/hooks/useCourseSequenceQueries";
+import { useCourseSequences, useCreateCourseSequence, useDeleteCourseSequence, useGenerateCourseSequenceAI } from "@/hooks/useCourseSequenceQueries";
+import { AdminStatCard } from "@/app/admin/_components/AdminStatCard";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const inputStyle: React.CSSProperties = {
+  background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
+  borderRadius: 6, color: "var(--admin-font-primary)", height: 36, fontSize: 13,
+};
 
 export default function CourseSequencesPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
-
-  // Manual Creation State
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-
-  // AI Generation State
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiFile, setAiFile] = useState<File | null>(null);
 
@@ -58,205 +40,164 @@ export default function CourseSequencesPage() {
   const remove = useDeleteCourseSequence();
   const generateAI = useGenerateCourseSequenceAI();
 
+  const sequences = data?.data || [];
+
   const handleCreate = () => {
-    if (!name) { toast.error("Name is required"); return; }
-    create.mutate(
-      { name, description, nodes: [], edges: [], columns: [] },
-      {
-        onSuccess: (data) => { 
-          toast.success("Sequence created"); 
-          setAddOpen(false); 
-          setName(""); 
-          setDescription("");
-          router.push(`/school-admin/course-sequences/${data.id}/builder`);
-        },
-        onError: () => toast.error("Failed to create sequence"),
-      }
-    );
+    if (!name) { toast.error("Name required"); return; }
+    setAddOpen(false);
+    router.push(`/school-admin/course-sequences/new/builder?name=${encodeURIComponent(name)}&desc=${encodeURIComponent(description)}`);
+    setName(""); setDescription("");
   };
 
   const handleGenerateAI = () => {
-    if (!aiPrompt && !aiFile) {
-      toast.error("Please provide either instructions or upload a syllabus file.");
-      return;
-    }
-
-    const payload: { file?: File; prompt?: string } = {};
-    if (aiFile) payload.file = aiFile;
-    if (aiPrompt) payload.prompt = aiPrompt;
-
-    generateAI.mutate(payload, {
-      onSuccess: (generatedData) => {
-        toast.success("AI Sequence Blueprint Generated!");
-        setAiOpen(false);
-        setAiPrompt("");
-        setAiFile(null);
-        
-        // Save the blueprint to localStorage for the builder to pick up
-        localStorage.setItem("ai_sequence_blueprint", JSON.stringify(generatedData));
-        router.push("/school-admin/course-sequences/new/builder?source=ai");
-      },
-      onError: (err) => {
-        toast.error(err instanceof Error ? err.message : "AI generation failed");
-      }
+    if (!aiPrompt && !aiFile) { toast.error("Provide instructions or upload a file"); return; }
+    generateAI.mutate({ file: aiFile || undefined, prompt: aiPrompt || undefined }, {
+      onSuccess: (gen: any) => { toast.success("AI Blueprint Generated!"); setAiOpen(false); localStorage.setItem("ai_sequence_blueprint", JSON.stringify(gen)); router.push("/school-admin/course-sequences/new/builder?source=ai"); },
+      onError: (e: any) => toast.error(e?.message || "AI generation failed"),
     });
   };
 
-  if (isLoading) {
-    return (<div className="space-y-6"><Skeleton className="h-10 w-64" /><Skeleton className="h-[400px] w-full" /></div>);
-  }
+  if (isLoading) return <div className="space-y-4"><Skeleton className="h-8 w-48" style={{ background: "var(--admin-bg-hover)" }} /><Skeleton className="h-[400px]" style={{ background: "var(--admin-bg-hover)" }} /></div>;
 
   return (
-    <div className="space-y-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="space-y-1">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900">
-          {t("schoolAdmin.sequences.title", "Course Sequences")}
-        </h1>
-        <p className="text-lg text-gray-500 font-medium">
-          {t("schoolAdmin.sequences.subtitle", "Build multi-year course plans and assign them to students.")}
-        </p>
-      </motion.div>
-
-      {/* Toolbar */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex flex-wrap gap-4 items-center">
-        <Input placeholder="Search sequences..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="max-w-sm" />
-        
-        <div className="ml-auto flex items-center gap-3">
-          {/* AI Generator Button */}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>Course Sequences</h1>
+          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>Build multi-year course pathways and assign them to students</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* AI Generate */}
           <Dialog open={aiOpen} onOpenChange={setAiOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800">
-                <Sparkles className="h-4 w-4 mr-2" />
-                AI Auto-Generate
-              </Button>
+              <button style={{ height: 36, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "rgba(139,92,246,0.1)", color: "#8b5cf6", border: "1px solid rgba(139,92,246,0.2)", cursor: "pointer" }}>
+                <Sparkles style={{ width: 14, height: 14 }} /> AI Generate
+              </button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-purple-600" />
-                  Generate Sequence Blueprint
-                </DialogTitle>
-                <DialogDescription>
-                  Upload a curriculum syllabus or provide text instructions. Our AI will automatically map it to your school's catalog and build a recommended sequence network.
-                </DialogDescription>
+                <DialogTitle style={{ color: "var(--admin-font-primary)", display: "flex", alignItems: "center", gap: 8 }}><Sparkles style={{ width: 18, height: 18, color: "#8b5cf6" }} /> Generate Sequence Blueprint</DialogTitle>
+                <DialogDescription style={{ color: "var(--admin-font-tertiary)" }}>Upload a syllabus or provide instructions for AI to build a sequence</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Instructions / Context</Label>
-                  <Textarea 
-                    value={aiPrompt} 
-                    onChange={(e) => setAiPrompt(e.target.value)} 
-                    placeholder="e.g. Build an advanced STEM pathway prioritizing AP Physics and AP Calculus for grade 11 and 12..." 
-                    className="min-h-[100px]"
-                  />
+                <div className="space-y-2"><Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Instructions</Label>
+                  <Textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder="e.g. Build an advanced STEM pathway for grade 11-12..." style={{ ...inputStyle, height: "auto", minHeight: 80 }} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Optional Syllabus Upload (CSV/JSON/TXT)</Label>
-                  <div className="flex items-center gap-4">
-                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                      <Upload className="h-4 w-4 mr-2" /> Choose File
-                    </Button>
-                    <span className="text-sm text-gray-500">
-                      {aiFile ? aiFile.name : "No file chosen"}
-                    </span>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      className="hidden"
-                      onChange={(e) => setAiFile(e.target.files?.[0] || null)}
-                      accept=".csv,.txt,.json"
-                    />
+                <div className="space-y-2"><Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Syllabus Upload (optional)</Label>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => fileInputRef.current?.click()} style={{ ...inputStyle, padding: "0 12px", display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}><Upload style={{ width: 14, height: 14 }} /> Choose File</button>
+                    <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{aiFile ? aiFile.name : "No file"}</span>
+                    <input ref={fileInputRef} type="file" className="hidden" onChange={(e) => setAiFile(e.target.files?.[0] || null)} accept=".csv,.txt,.json" />
                   </div>
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => { setAiOpen(false); setAiPrompt(""); setAiFile(null); }}>Cancel</Button>
-                <Button onClick={handleGenerateAI} disabled={generateAI.isPending} className="bg-purple-600 hover:bg-purple-700 text-white">
-                  {generateAI.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                  Generate Blueprint
-                </Button>
+                <Button variant="outline" onClick={() => { setAiOpen(false); setAiPrompt(""); setAiFile(null); }} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>Cancel</Button>
+                <button onClick={handleGenerateAI} disabled={generateAI.isPending} style={{ height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600, background: "#8b5cf6", color: "#fff", border: "none", cursor: "pointer" }}>
+                  {generateAI.isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Sparkles style={{ width: 14, height: 14 }} />}
+                  <span style={{ marginLeft: 6 }}>Generate</span>
+                </button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
 
-          {/* Manual Create Button */}
+          {/* Create */}
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white">
-                <Plus className="h-4 w-4 mr-1" />New Sequence
-              </Button>
+              <button style={{ height: 36, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "#10b981", color: "#fff", border: "none", cursor: "pointer" }}>
+                <Plus style={{ width: 14, height: 14 }} /> New Sequence
+              </button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Course Sequence</DialogTitle>
-                <DialogDescription>Define a multi-year course plan pathway manually.</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2"><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="STEM Track" /></div>
-                <div className="space-y-2"><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Course sequence for STEM-focused students" /></div>
+            <DialogContent style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}>
+              <DialogHeader><DialogTitle style={{ color: "var(--admin-font-primary)" }}>Create Course Sequence</DialogTitle><DialogDescription style={{ color: "var(--admin-font-tertiary)" }}>Define a multi-year course pathway</DialogDescription></DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2"><Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Name</Label><Input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="STEM Track" /></div>
+                <div className="space-y-2"><Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Description</Label><Textarea style={{ ...inputStyle, height: "auto", minHeight: 60 }} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Course sequence for STEM students" /></div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreate} disabled={create.isPending} className="bg-teal-600 text-white">
-                  {create.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Create
-                </Button>
+                <Button variant="outline" onClick={() => setAddOpen(false)} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>Cancel</Button>
+                <button onClick={handleCreate} disabled={create.isPending} style={{ height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600, background: "#10b981", color: "#fff", border: "none", cursor: "pointer" }}>
+                  {create.isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : "Create"}
+                </button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Sequences Grid */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data?.data?.map((seq) => (
-            <Card key={seq.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Network className="h-5 w-5 text-teal-600" />
-                    {seq.name}
-                  </CardTitle>
-                  <Button variant="ghost" size="icon" onClick={() => remove.mutate(seq.id, { onSuccess: () => toast.success("Deleted") })}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <AdminStatCard label="Sequences" value={String(sequences.length)} icon={Network} sub="course pathways" trend={0} />
+        <AdminStatCard label="Page" value={`${page}`} icon={Network} sub={`of ${data?.totalPages || 1}`} trend={0} />
+        <AdminStatCard label="Total" value={String(data?.total || sequences.length)} icon={Network} sub="across all pages" trend={0} />
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Input placeholder="Search sequences..." className="h-9 rounded-lg text-sm" style={inputStyle}
+          value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {sequences.map((seq: any) => (
+          <div key={seq.id} style={{
+            borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)",
+            padding: 16, transition: "all 0.15s", cursor: "pointer",
+          }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-hover, #3a3a3a)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default, #2a2a2a)"; }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(20,184,166,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Network style={{ width: 16, height: 16, color: "#14b8a6" }} />
                 </div>
-                {seq.description && <CardDescription>{seq.description}</CardDescription>}
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span className="flex items-center gap-1"><Users className="h-4 w-4" />{seq.studentCount} students</span>
-                  <span>by {seq.createdByName}</span>
-                </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  Modified {new Date(seq.lastModified).toLocaleDateString()}
-                </p>
-                <div className="mt-4 flex gap-2">
-                  <Button
-                    size="sm"
-                    className="flex-1 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white"
-                    onClick={() => router.push(`/school-admin/course-sequences/${seq.id}/builder`)}
-                  >
-                    <PenSquare className="h-3 w-3 mr-1" />Open Builder
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {(!data?.data || data.data.length === 0) && (
-            <div className="col-span-full text-center py-16">
-              <Network className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-400">No course sequences yet. Create one to get started.</p>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{seq.name}</div>
+              </div>
+              <button onClick={(e) => { e.stopPropagation(); remove.mutate(seq.id, { onSuccess: () => toast.success("Deleted") }); }}
+                style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-light)", cursor: "pointer" }}>
+                <Trash2 style={{ width: 12, height: 12 }} />
+              </button>
             </div>
-          )}
-        </div>
-      </motion.div>
 
+            {seq.description && <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginBottom: 10, lineHeight: 1.4 }}>{seq.description}</div>}
+
+            <div style={{ display: "flex", gap: 8, fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 12 }}>
+              {seq.nodeCount !== undefined && <span>{seq.nodeCount} courses</span>}
+              {seq.gradeRange && <span>· Grades {seq.gradeRange}</span>}
+            </div>
+
+            <button onClick={() => router.push(`/school-admin/course-sequences/${seq.id}/builder`)}
+              style={{
+                width: "100%", height: 32, borderRadius: 6, fontSize: 12, fontWeight: 600,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                background: "rgba(20,184,166,0.08)", color: "#14b8a6",
+                border: "1px solid rgba(20,184,166,0.2)", cursor: "pointer", transition: "all 0.15s",
+              }}>
+              <PenSquare style={{ width: 12, height: 12 }} /> Open Builder
+            </button>
+          </div>
+        ))}
+
+        {sequences.length === 0 && (
+          <div className="col-span-full" style={{ padding: 48, textAlign: "center", color: "var(--admin-font-tertiary)", borderRadius: 8, border: "1px dashed var(--admin-border-default)" }}>
+            <Network style={{ width: 32, height: 32, margin: "0 auto 12px", opacity: 0.3 }} />
+            <div style={{ fontSize: 14, fontWeight: 500, color: "var(--admin-font-primary)", marginBottom: 4 }}>No sequences yet</div>
+            <div style={{ fontSize: 12 }}>Create one to start building course pathways</div>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
       {data && data.totalPages > 1 && (
         <div className="flex justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-          <span className="text-sm text-gray-500 self-center">{page} / {data.totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}
+            style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>Previous</Button>
+          <span className="self-center text-xs" style={{ color: "var(--admin-font-tertiary)" }}>{page} / {data.totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= data.totalPages} onClick={() => setPage(p => p + 1)}
+            style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>Next</Button>
         </div>
       )}
     </div>

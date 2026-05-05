@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   Mail,
@@ -28,15 +27,7 @@ import {
   Users,
   Activity
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -71,7 +62,6 @@ import {
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { StudentStatus } from "@/types/student";
-import { cn } from "@/lib/utils";
 import type { NoteType, CounselorNote } from "@/types/counselorNotes";
 import type { CommunityServiceStatus } from "@/types/communityService";
 
@@ -104,60 +94,64 @@ export default function StudentDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-32 rounded-xl" />
-        <Skeleton className="h-48 rounded-3xl" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-32 rounded-3xl" />
-          ))}
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-32" style={{ background: "var(--admin-bg-hover)" }} />
+        <Skeleton className="h-40" style={{ background: "var(--admin-bg-hover)" }} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24" style={{ background: "var(--admin-bg-hover)" }} />)}
         </div>
-        <Skeleton className="h-[600px] rounded-3xl" />
+        <Skeleton className="h-[400px]" style={{ background: "var(--admin-bg-hover)" }} />
       </div>
     );
   }
 
   if (error || !student) {
     return (
-      <div className="text-center py-20 space-y-6">
-        <div className="inline-flex items-center justify-center p-6 bg-red-50 rounded-full border border-red-100 shadow-sm">
-          <AlertCircle className="h-12 w-12 text-red-500" />
-        </div>
-        <h2 className="text-3xl font-bold text-gray-900">
+      <div style={{ textAlign: "center", padding: "60px 16px" }}>
+        <AlertCircle style={{ width: 36, height: 36, color: "#ef4444", margin: "0 auto 12px" }} />
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--admin-font-primary)", marginBottom: 6 }}>
           {t("schoolAdmin.students.error.title", "Student Profile Not Found")}
         </h2>
-        <p className="text-gray-500 max-w-md mx-auto">
-          {t(
-            "schoolAdmin.students.error.description",
-            "The student record you are trying to access does not exist or may have been removed."
-          )}
+        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", maxWidth: 350, margin: "0 auto 16px" }}>
+          {t("schoolAdmin.students.error.description", "The student record you are trying to access does not exist or may have been removed.")}
         </p>
-        <Button onClick={() => router.push("/school-admin/students")} className="bg-gray-900 hover:bg-black rounded-xl h-11 px-8 text-white shadow-md">
-          <ArrowLeft className="mr-2 h-4 w-4" />
+        <button
+          onClick={() => router.push("/school-admin/students")}
+          style={{
+            height: 36, borderRadius: 6, padding: "0 16px",
+            fontSize: 12, fontWeight: 600,
+            display: "inline-flex", alignItems: "center", gap: 6,
+            background: "var(--admin-accent-blue, #3b82f6)", color: "#fff",
+            border: "none", cursor: "pointer",
+          }}
+        >
+          <ArrowLeft style={{ width: 14, height: 14 }} />
           {t("schoolAdmin.students.backToList", "Return to Students Roster")}
-        </Button>
+        </button>
       </div>
     );
   }
 
-  const getStatusBadge = (status: StudentStatus) => {
-    const styles = {
-      active: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-      pending: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
-      accepted: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
-      inactive: { bg: "bg-gray-50", text: "text-gray-700", border: "border-gray-200" },
+  const statusBadge = (status: StudentStatus) => {
+    const styles: Record<string, { bg: string; color: string }> = {
+      active: { bg: "rgba(16,185,129,0.1)", color: "#10b981" },
+      pending: { bg: "rgba(245,158,11,0.1)", color: "#f59e0b" },
+      accepted: { bg: "rgba(59,130,246,0.1)", color: "#3b82f6" },
+      inactive: { bg: "rgba(107,114,128,0.1)", color: "#6b7280" },
     };
-    const style = styles[status] || styles.inactive;
+    const s = styles[status] || styles.inactive;
     return (
-      <Badge className={`${style.bg} ${style.text} ${style.border} border shadow-none font-bold uppercase tracking-wider px-2.5 py-1 text-[10px]`}>
+      <span style={{
+        fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+        background: s.bg, color: s.color, textTransform: "uppercase", letterSpacing: "0.04em",
+      }}>
         {t(`schoolAdmin.students.status.${student.status}`, student.status.charAt(0).toUpperCase() + student.status.slice(1))}
-      </Badge>
+      </span>
     );
   };
 
   const plan = coursePlan?.plan;
   const notes = notesData?.data || [];
-
   const pendingRequests = changeRequestsData?.data ?? [];
 
   const handleAddNote = () => {
@@ -172,640 +166,667 @@ export default function StudentDetailsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Back button */}
-      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-        <Button
-          variant="ghost"
-          className="mb-2 hover:bg-white/60 bg-white/40 backdrop-blur-sm border border-gray-200/50 rounded-xl px-4 py-2 font-semibold text-gray-700 shadow-sm"
-          onClick={() => router.push("/school-admin/students")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4 text-indigo-500" />
-          {t("schoolAdmin.students.backToList", "Back to Student Roster")}
-        </Button>
-      </motion.div>
+      <button
+        onClick={() => router.push("/school-admin/students")}
+        style={{
+          height: 32, borderRadius: 6, padding: "0 12px",
+          fontSize: 12, fontWeight: 600,
+          display: "inline-flex", alignItems: "center", gap: 6,
+          background: "transparent",
+          color: "var(--admin-font-primary)",
+          border: "1px solid var(--admin-border-default)",
+          cursor: "pointer",
+        }}
+      >
+        <ArrowLeft style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #3b82f6)" }} />
+        {t("schoolAdmin.students.backToList", "Back to Student Roster")}
+      </button>
 
-      {/* Hero Profile Banner */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <div className="relative overflow-hidden bg-white/80 backdrop-blur-xl rounded-[2rem] border border-gray-200/50 shadow-xl shadow-gray-200/20">
-          {/* Background Gradients */}
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-indigo-200/40 via-purple-200/30 to-rose-200/20 rounded-full blur-3xl opacity-70 -translate-y-1/2 translate-x-1/3" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-cyan-200/40 to-emerald-200/20 rounded-full blur-3xl opacity-60 translate-y-1/3 -translate-x-1/4" />
+      {/* Profile Banner */}
+      <div style={{
+        borderRadius: 8, border: "1px solid var(--admin-border-default)",
+        background: "var(--admin-bg-card)", padding: "20px 24px",
+        display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap",
+      }}>
+        <Avatar className="h-16 w-16" style={{ borderRadius: 12, border: "2px solid var(--admin-border-default)" }}>
+          <AvatarImage src={student.avatar || ""} className="object-cover" />
+          <AvatarFallback style={{
+            borderRadius: 12,
+            background: "var(--admin-accent-blue, #3b82f6)",
+            color: "#fff", fontSize: 18, fontWeight: 700,
+          }}>
+            {getInitials(student.name)}
+          </AvatarFallback>
+        </Avatar>
 
-          <div className="relative p-8 md:p-10 flex flex-col md:flex-row items-center md:items-start gap-8 z-10">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-500" />
-              <Avatar className="relative h-32 w-32 border-4 border-white shadow-xl rounded-[2rem]">
-                <AvatarImage src={student.avatar || ""} className="object-cover" />
-                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-4xl font-black rounded-[2rem]">
-                  {getInitials(student.name)}
-                </AvatarFallback>
-              </Avatar>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
+              {student.name}
+            </h1>
+            {statusBadge(student.status)}
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--admin-font-tertiary)" }}>
+              <Mail style={{ width: 12, height: 12 }} />
+              <span>{student.email}</span>
             </div>
-
-            <div className="flex-1 text-center md:text-left space-y-4">
-              <div className="flex flex-col md:flex-row items-center gap-4">
-                <h1 className="text-4xl font-black text-gray-900 tracking-tight">
-                  {student.name}
-                </h1>
-                {getStatusBadge(student.status)}
+            {(student.createdAt || student.joinedAt) && (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--admin-font-tertiary)" }}>
+                <Calendar style={{ width: 12, height: 12 }} />
+                <span>{t("schoolAdmin.students.joined", "Joined")} {format(new Date(student.createdAt || student.joinedAt!), "MMM d, yyyy")}</span>
               </div>
+            )}
+            {student.id && (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--admin-font-tertiary)" }}>
+                <ShieldCheck style={{ width: 12, height: 12 }} />
+                <span style={{ fontFamily: "monospace", fontSize: 10 }}>ID: {student.id.substring(0, 8).toUpperCase()}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
-              <div className="flex flex-wrap justify-center md:justify-start gap-3 text-sm font-medium">
-                <div className="flex items-center gap-2 bg-white/60 px-3 py-1.5 rounded-xl border border-gray-100 shadow-sm">
-                  <Mail className="h-4 w-4 text-indigo-500" />
-                  <span className="text-gray-700">{student.email}</span>
-                </div>
-                {(student.createdAt || student.joinedAt) && (
-                  <div className="flex items-center gap-2 bg-white/60 px-3 py-1.5 rounded-xl border border-gray-100 shadow-sm">
-                    <Calendar className="h-4 w-4 text-purple-500" />
-                    <span className="text-gray-700">
-                      {t("schoolAdmin.students.joined", "Joined")} {format(new Date(student.createdAt || student.joinedAt!), "MMM d, yyyy")}
-                    </span>
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: t("schoolAdmin.students.progress", "Course Progress"), value: `${student.progress}%`, icon: BookOpen, color: "#14b8a6" },
+          { label: t("schoolAdmin.students.avgScore", "Average Score"), value: `${student.averageScore?.toFixed(1) ?? "\u2014"}%`, icon: Award, color: "#f59e0b" },
+          { label: t("schoolAdmin.students.credits", "Earned Credits"), value: `${plan?.graduationProgress?.totalCreditsEarned ?? "0"} / ${plan?.graduationProgress?.totalCreditsRequired ?? "0"}`, icon: GraduationCap, color: "#6366f1" },
+          { label: t("schoolAdmin.students.lastActive", "Last Seen"), value: student.lastActive ? format(new Date(student.lastActive), "MMM do") : "Never", icon: Activity, color: "#3b82f6" },
+        ].map((stat) => (
+          <div key={stat.label} style={{
+            borderRadius: 8, border: "1px solid var(--admin-border-default)",
+            background: "var(--admin-bg-card)", padding: "14px 16px",
+          }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: `${stat.color}15`,
+              display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8,
+            }}>
+              <stat.icon style={{ width: 16, height: 16, color: stat.color }} />
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--admin-font-primary)", letterSpacing: "-0.02em" }}>{stat.value}</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>{stat.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList style={{
+          background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
+          borderRadius: 8, padding: 2, height: "auto",
+        }} className="flex flex-wrap">
+          {[
+            { value: "overview", icon: User, label: "Snapshot" },
+            { value: "courses", icon: BookOpen, label: "Enrollments" },
+            { value: "assessments", icon: FileText, label: "Testing" },
+            { value: "notes", icon: MessageSquare, label: "Records" },
+            { value: "graduation", icon: Award, label: "Extracurriculars" },
+            { value: "parents", icon: Users, label: "Guardians" },
+          ].map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value} style={{ borderRadius: 6, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+              <tab.icon style={{ width: 14, height: 14 }} /> {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Graduation Progress */}
+            <div style={{
+              borderRadius: 8, border: "1px solid var(--admin-border-default)",
+              background: "var(--admin-bg-card)", overflow: "hidden",
+            }}>
+              <div style={{
+                padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+                display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
+              }}>
+                <GraduationCap style={{ width: 14, height: 14, color: "#6366f1" }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+                  {t("schoolAdmin.students.graduationProgress", "Graduation Pathway")}
+                </span>
+              </div>
+              <div style={{ padding: 16 }}>
+                {plan?.graduationProgress ? (
+                  <div className="space-y-4">
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end" }}>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Credits Acquired</div>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 2 }}>
+                          {plan.graduationProgress.totalCreditsEarned} <span style={{ fontSize: 14, color: "var(--admin-font-tertiary)", fontWeight: 400 }}>/ {plan.graduationProgress.totalCreditsRequired} req.</span>
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 3,
+                        background: plan.graduationProgress.isOnTrack ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+                        color: plan.graduationProgress.isOnTrack ? "#10b981" : "#ef4444",
+                      }}>
+                        {plan.graduationProgress.isOnTrack
+                          ? t("schoolAdmin.students.onTrack", "On Track")
+                          : t("schoolAdmin.students.atRisk", "At Risk")}
+                      </span>
+                    </div>
+                    <Progress
+                      value={plan.graduationProgress.totalCreditsRequired ? (plan.graduationProgress.totalCreditsEarned / plan.graduationProgress.totalCreditsRequired) * 100 : 0}
+                      className="h-2"
+                    />
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "20px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
+                    Graduation data is not fully calculated yet.
                   </div>
                 )}
-                {student.id && (
-                  <div className="flex items-center gap-2 bg-white/60 px-3 py-1.5 rounded-xl border border-gray-100 shadow-sm">
-                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                    <span className="text-gray-700 font-mono text-xs">ID: {student.id.substring(0, 8).toUpperCase()}</span>
+              </div>
+            </div>
+
+            {/* Career Path */}
+            <div style={{
+              borderRadius: 8, border: "1px solid var(--admin-border-default)",
+              background: "var(--admin-bg-card)", overflow: "hidden",
+            }}>
+              <div style={{
+                padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+                display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
+              }}>
+                <Target style={{ width: 14, height: 14, color: "#8b5cf6" }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+                  {t("schoolAdmin.students.careerPath", "Career Affinities")}
+                </span>
+              </div>
+              <div style={{ padding: 16, textAlign: "center" }}>
+                <Target style={{ width: 24, height: 24, color: "var(--admin-font-tertiary)", margin: "16px auto 8px", opacity: 0.4 }} />
+                <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", maxWidth: 220, margin: "0 auto" }}>
+                  {t("schoolAdmin.students.careerPathDesc", "No career assessment data available from the external integration yet.")}
+                </p>
+              </div>
+            </div>
+
+            {/* 360 Evaluation */}
+            <div className="md:col-span-2" style={{
+              borderRadius: 8, border: "1px solid var(--admin-border-default)",
+              background: "var(--admin-bg-card)", overflow: "hidden",
+            }}>
+              <div style={{
+                padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+                display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
+              }}>
+                <TrendingUp style={{ width: 14, height: 14, color: "#14b8a6" }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+                  {t("schoolAdmin.students.evaluationStatus", "360 Diagnostics")}
+                </span>
+              </div>
+              <div style={{ padding: 16, textAlign: "center" }}>
+                <TrendingUp style={{ width: 28, height: 28, color: "var(--admin-font-tertiary)", margin: "16px auto 8px", opacity: 0.3 }} />
+                <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", maxWidth: 300, margin: "0 auto 12px" }}>
+                  {t("schoolAdmin.students.evaluationStatusDesc", "Comprehensive behavioral and academic 360-degree reviews will populate here when completed.")}
+                </p>
+                <button
+                  onClick={() => router.push("/school-admin/evaluations")}
+                  style={{
+                    height: 32, borderRadius: 6, padding: "0 12px",
+                    fontSize: 11, fontWeight: 600,
+                    background: "transparent", color: "var(--admin-font-primary)",
+                    border: "1px solid var(--admin-border-default)", cursor: "pointer",
+                  }}
+                >
+                  {t("schoolAdmin.students.viewEvaluations", "Go to Evaluations Hub")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Courses Tab */}
+        <TabsContent value="courses" className="mt-4 space-y-4">
+          {/* Pending change requests */}
+          {pendingRequests.length > 0 && (
+            <div style={{
+              borderRadius: 8, border: "1px solid rgba(245,158,11,0.3)",
+              background: "rgba(245,158,11,0.05)", overflow: "hidden",
+            }}>
+              <div style={{
+                padding: "12px 16px", borderBottom: "1px solid rgba(245,158,11,0.2)",
+                display: "flex", alignItems: "center", gap: 8,
+              }}>
+                <AlertCircle style={{ width: 16, height: 16, color: "#f59e0b" }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+                  {t("schoolAdmin.students.pendingRequests", "Action Required: Course Requests")}
+                </span>
+                <span style={{
+                  fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                  background: "rgba(245,158,11,0.15)", color: "#f59e0b", marginLeft: 4,
+                }}>
+                  {pendingRequests.length} pending
+                </span>
+              </div>
+              <div style={{ padding: 16 }} className="space-y-3">
+                {pendingRequests.map((req: any) => (
+                  <div key={req.id} style={{
+                    display: "flex", alignItems: "start", justifyContent: "space-between", gap: 12,
+                    padding: "12px 14px", borderRadius: 6,
+                    background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
+                    flexWrap: "wrap",
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                          background: req.action === 'add' ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+                          color: req.action === 'add' ? "#10b981" : "#ef4444",
+                        }}>
+                          {req.action === "add" ? "Enrollment Request" : "Drop Request"}
+                        </span>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{req.courseName}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                        <span style={{ fontSize: 10, padding: "1px 4px", borderRadius: 3, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>{req.courseCode}</span>
+                        <span style={{ fontSize: 10, padding: "1px 4px", borderRadius: 3, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>Grade {req.gradeLevel}</span>
+                        <span style={{ fontSize: 10, padding: "1px 4px", borderRadius: 3, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>{req.semester}</span>
+                      </div>
+                      {req.studentNote && (
+                        <div style={{ marginTop: 8, fontSize: 12, color: "var(--admin-font-tertiary)", fontStyle: "italic", display: "flex", alignItems: "start", gap: 6 }}>
+                          <MessageSquare style={{ width: 12, height: 12, flexShrink: 0, marginTop: 2 }} />
+                          &quot;{req.studentNote}&quot;
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                      <button
+                        disabled={reviewRequest.isPending}
+                        onClick={() => reviewRequest.mutate({ requestId: req.id, payload: { status: "approved" } })}
+                        style={{
+                          height: 30, borderRadius: 6, padding: "0 10px",
+                          fontSize: 11, fontWeight: 600,
+                          display: "flex", alignItems: "center", gap: 4,
+                          background: "#10b981", color: "#fff",
+                          border: "none", cursor: "pointer",
+                          opacity: reviewRequest.isPending ? 0.6 : 1,
+                        }}
+                      >
+                        <CheckCircle2 style={{ width: 12, height: 12 }} />
+                        {t("common.approve", "Approve")}
+                      </button>
+                      <button
+                        disabled={reviewRequest.isPending}
+                        onClick={() => reviewRequest.mutate({ requestId: req.id, payload: { status: "rejected" } })}
+                        style={{
+                          height: 30, borderRadius: 6, padding: "0 10px",
+                          fontSize: 11, fontWeight: 600,
+                          display: "flex", alignItems: "center", gap: 4,
+                          background: "transparent", color: "#ef4444",
+                          border: "1px solid rgba(239,68,68,0.3)", cursor: "pointer",
+                          opacity: reviewRequest.isPending ? 0.6 : 1,
+                        }}
+                      >
+                        <XCircle style={{ width: 12, height: 12 }} />
+                        {t("common.reject", "Deny")}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sequence Builder */}
+          <div style={{
+            borderRadius: 8, border: "1px solid var(--admin-border-default)",
+            background: "var(--admin-bg-card)", overflow: "hidden",
+          }}>
+            <SequenceBuilder
+              planData={coursePlan}
+              isLoading={false}
+              mode="counselor"
+              onCounselorAdd={(payload) => adminAdd.mutate(payload)}
+              onCounselorRemove={(enrollmentId) => adminRemove.mutate(enrollmentId)}
+              isCounselorAddPending={adminAdd.isPending}
+              isCounselorRemovePending={adminRemove.isPending}
+            />
+          </div>
+        </TabsContent>
+
+        {/* Assessments Tab */}
+        <TabsContent value="assessments" className="mt-4">
+          <div style={{
+            borderRadius: 8, border: "1px solid var(--admin-border-default)",
+            background: "var(--admin-bg-card)", overflow: "hidden",
+          }}>
+            <div style={{
+              padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+              display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
+            }}>
+              <FileText style={{ width: 14, height: 14, color: "#6366f1" }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+                {t("schoolAdmin.students.assessmentResults", "Academic Testing Portfolio")}
+              </span>
+            </div>
+            <div style={{ padding: 16 }}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3" style={{ marginBottom: 16 }}>
+                {[
+                  { label: "LIA Benchmark", color: "#6366f1" },
+                  { label: "PCA Diagnostics", color: "#8b5cf6" },
+                  { label: "MIL Assessment", color: "#14b8a6" },
+                ].map((item) => (
+                  <div key={item.label} style={{
+                    padding: "14px 16px", borderRadius: 6, textAlign: "center",
+                    border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)",
+                  }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: item.color, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>{item.label}</div>
+                    <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)" }}>{"\u2014"}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{
+                textAlign: "center", padding: "16px", borderRadius: 6,
+                border: "1px dashed var(--admin-border-default)", color: "var(--admin-font-tertiary)", fontSize: 12,
+              }}>
+                {t("schoolAdmin.students.assessmentDesc", "Awaiting secure sync from district assessment repositories.")}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Notes Tab */}
+        <TabsContent value="notes" className="mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Add Note Form */}
+            <div style={{
+              borderRadius: 8, border: "1px solid var(--admin-border-default)",
+              background: "var(--admin-bg-card)", overflow: "hidden",
+            }} className="h-fit">
+              <div style={{
+                padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+                display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
+              }}>
+                <Plus style={{ width: 14, height: 14, color: "#10b981" }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+                  {t("schoolAdmin.students.addNote", "New Entry")}
+                </span>
+              </div>
+              <div style={{ padding: 16 }} className="space-y-3">
+                <div className="space-y-1">
+                  <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Category</label>
+                  <Select value={noteType} onValueChange={(v) => setNoteType(v as NoteType)}>
+                    <SelectTrigger className="h-9 text-xs" style={{ borderRadius: 6 }}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General Observation</SelectItem>
+                      <SelectItem value="meeting">Meeting Summary</SelectItem>
+                      <SelectItem value="follow_up">Action items / Follow-up</SelectItem>
+                      <SelectItem value="academic">Academic Intervention</SelectItem>
+                      <SelectItem value="career">Career Guidance</SelectItem>
+                      <SelectItem value="personal">Personal / Social</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Notes</label>
+                  <Textarea
+                    placeholder={t("schoolAdmin.students.notePlaceholder", "Document interaction details here...")}
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    rows={5}
+                    className="text-xs resize-none"
+                    style={{ borderRadius: 6 }}
+                  />
+                </div>
+
+                <button
+                  onClick={handleAddNote}
+                  disabled={!newNote.trim() || createNote.isPending}
+                  style={{
+                    width: "100%", height: 36, borderRadius: 6,
+                    fontSize: 12, fontWeight: 600,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    background: "var(--admin-accent-blue, #3b82f6)", color: "#fff",
+                    border: "none", cursor: "pointer",
+                    opacity: (!newNote.trim() || createNote.isPending) ? 0.6 : 1,
+                  }}
+                >
+                  <Send style={{ width: 12, height: 12 }} />
+                  {t("schoolAdmin.students.saveNote", "Publish to File")}
+                </button>
+              </div>
+            </div>
+
+            {/* Notes List */}
+            <div className="lg:col-span-2" style={{
+              borderRadius: 8, border: "1px solid var(--admin-border-default)",
+              background: "var(--admin-bg-card)", overflow: "hidden",
+            }}>
+              <div style={{
+                padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                background: "var(--admin-bg-hover)",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <FileText style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+                    {t("schoolAdmin.students.noteHistory", "Counselor File Ledger")}
+                  </span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                    background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
+                    border: "1px solid var(--admin-border-default)",
+                  }}>
+                    {notes.length} entries
+                  </span>
+                </div>
+              </div>
+              <div style={{ padding: 16 }}>
+                {notes.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "40px 16px" }}>
+                    <MessageSquare style={{ width: 24, height: 24, color: "var(--admin-font-tertiary)", margin: "0 auto 8px", opacity: 0.4 }} />
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>No file entries found</div>
+                    <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
+                      {t("schoolAdmin.students.noNotes", "There are currently no notes or documentation on file for this student.")}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {notes.map((note: CounselorNote) => (
+                      <div key={note.id} className="group" style={{
+                        padding: "12px 14px", borderRadius: 6,
+                        border: "1px solid var(--admin-border-default)",
+                        background: "var(--admin-bg-card)",
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 8 }}>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <span style={{
+                              fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                              background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
+                              textTransform: "uppercase", letterSpacing: "0.03em",
+                            }}>
+                              {note.type.replace('_', ' ')}
+                            </span>
+                            {note.isPrivate && (
+                              <span style={{
+                                fontSize: 9, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                                background: "rgba(245,158,11,0.1)", color: "#f59e0b",
+                                textTransform: "uppercase", letterSpacing: "0.03em",
+                              }}>
+                                Confidential
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>
+                              {note.createdAt && format(new Date(note.createdAt), "MMM d, yyyy")}
+                            </span>
+                            <button
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => deleteNote.mutate({ noteId: note.id, studentId })}
+                              title="Delete entry"
+                              style={{ width: 22, height: 22, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer" }}
+                            >
+                              <Trash2 style={{ width: 12, height: 12, color: "#ef4444" }} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div style={{ fontSize: 12, color: "var(--admin-font-primary)", whiteSpace: "pre-wrap", lineHeight: 1.5, padding: "8px 10px", borderRadius: 4, background: "var(--admin-bg-hover)" }}>
+                          {note.content}
+                        </div>
+
+                        {note.followUpDate && (
+                          <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 4, background: "rgba(245,158,11,0.08)", width: "fit-content" }}>
+                            <Clock style={{ width: 11, height: 11, color: "#f59e0b" }} />
+                            <span style={{ fontSize: 10, fontWeight: 600, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                              Follow-up: {format(new Date(note.followUpDate), "MMM d, yyyy")}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             </div>
           </div>
-        </div>
-      </motion.div>
+        </TabsContent>
 
-      {/* Overview Stats Carousel */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-        <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6 relative">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-teal-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500" />
-            <div className="relative z-10">
-              <div className="w-12 h-12 bg-teal-100 rounded-2xl flex items-center justify-center mb-4 border border-teal-200/50 shadow-inner">
-                <BookOpen className="h-6 w-6 text-teal-600" />
-              </div>
-              <p className="text-4xl font-black text-gray-900 tracking-tight">{student.progress}%</p>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mt-1">{t("schoolAdmin.students.progress", "Course Progress")}</p>
+        {/* Extracurriculars / Community Service Tab */}
+        <TabsContent value="graduation" className="mt-4">
+          <div style={{
+            borderRadius: 8, border: "1px solid var(--admin-border-default)",
+            background: "var(--admin-bg-card)", overflow: "hidden",
+          }}>
+            <div style={{
+              padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+              display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
+            }}>
+              <Heart style={{ width: 14, height: 14, color: "#ec4899" }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Community Service Log</span>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6 relative">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-amber-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500" />
-            <div className="relative z-10">
-              <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center mb-4 border border-amber-200/50 shadow-inner">
-                <Award className="h-6 w-6 text-amber-600" />
-              </div>
-              <p className="text-4xl font-black text-gray-900 tracking-tight">{student.averageScore?.toFixed(1) ?? "—"}%</p>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mt-1">{t("schoolAdmin.students.avgScore", "Average Score")}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-500 to-violet-600 rounded-3xl overflow-hidden text-white group hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6 relative">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500" />
-            <div className="relative z-10">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-white/20 shadow-inner">
-                <GraduationCap className="h-6 w-6 text-white" />
-              </div>
-              <div className="flex items-baseline gap-1">
-                <p className="text-4xl font-black tracking-tight">{plan?.graduationProgress?.totalCreditsEarned ?? "0"}</p>
-                <p className="text-xl font-medium text-indigo-100">/ {plan?.graduationProgress?.totalCreditsRequired ?? "0"}</p>
-              </div>
-              <p className="text-sm font-bold text-indigo-100 uppercase tracking-wider mt-1">{t("schoolAdmin.students.credits", "Earned Credits")}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6 relative">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500" />
-            <div className="relative z-10">
-              <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mb-4 border border-blue-200/50 shadow-inner">
-                <Activity className="h-6 w-6 text-blue-600" />
-              </div>
-              <p className="text-3xl font-black text-gray-900 tracking-tight mt-1">
-                {student.lastActive ? format(new Date(student.lastActive), "MMM do") : <span className="text-2xl text-gray-400">Never</span>}
-              </p>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mt-2.5">{t("schoolAdmin.students.lastActive", "Last Seen")}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Main Content Tabs */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="bg-white/60 backdrop-blur-xl border border-gray-200/50 p-1.5 rounded-2xl h-auto flex flex-wrap shadow-sm">
-            <TabsTrigger value="overview" className="rounded-xl px-5 py-2.5 font-bold data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-md transition-all text-gray-600">
-              <User className="w-4 h-4 mr-2" /> Snapshot
-            </TabsTrigger>
-            <TabsTrigger value="courses" className="rounded-xl px-5 py-2.5 font-bold data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-md transition-all text-gray-600">
-              <BookOpen className="w-4 h-4 mr-2" /> Enrollments
-            </TabsTrigger>
-            <TabsTrigger value="assessments" className="rounded-xl px-5 py-2.5 font-bold data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-md transition-all text-gray-600">
-              <FileText className="w-4 h-4 mr-2" /> Testing
-            </TabsTrigger>
-            <TabsTrigger value="notes" className="rounded-xl px-5 py-2.5 font-bold data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-md transition-all text-gray-600">
-              <MessageSquare className="w-4 h-4 mr-2" /> Records
-            </TabsTrigger>
-            <TabsTrigger value="graduation" className="rounded-xl px-5 py-2.5 font-bold data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-md transition-all text-gray-600">
-              <Award className="w-4 h-4 mr-2" /> Extracurriculars
-            </TabsTrigger>
-            <TabsTrigger value="parents" className="rounded-xl px-5 py-2.5 font-bold data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-md transition-all text-gray-600">
-              <Users className="w-4 h-4 mr-2" /> Guardians
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Graduation Progress */}
-              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-6">
-                  <CardTitle className="flex items-center gap-3 text-xl">
-                    <div className="p-2.5 bg-indigo-100 rounded-xl">
-                      <GraduationCap className="h-5 w-5 text-indigo-600" />
+            <div style={{ padding: 16 }}>
+              {/* Progress */}
+              <div style={{
+                padding: "14px 16px", borderRadius: 6,
+                border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)",
+                marginBottom: 16,
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", marginBottom: 10 }}>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Service Requirement</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 2 }}>
+                      {csData?.totalHoursVerified ?? 0} <span style={{ fontSize: 14, color: "var(--admin-font-tertiary)", fontWeight: 400 }}>/ {csData?.totalHoursRequired ?? 40} hrs</span>
                     </div>
-                    {t("schoolAdmin.students.graduationProgress", "Graduation Pathway")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6">
-                  {plan?.graduationProgress ? (
-                    <>
-                      <div className="flex justify-between items-end">
-                        <div>
-                          <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">{t("schoolAdmin.students.creditsProgress", "Credits Acquired")}</p>
-                          <p className="text-3xl font-black text-gray-900 mt-1">
-                            {plan.graduationProgress.totalCreditsEarned} <span className="text-lg text-gray-400 font-medium">/ {plan.graduationProgress.totalCreditsRequired} req.</span>
-                          </p>
-                        </div>
-                        <Badge
-                          variant="secondary"
-                          className={cn(
-                            "px-3 py-1 text-sm font-bold border",
-                            plan.graduationProgress.isOnTrack
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-red-50 text-red-700 border-red-200"
-                          )}
-                        >
-                          {plan.graduationProgress.isOnTrack
-                            ? t("schoolAdmin.students.onTrack", "On Track")
-                            : t("schoolAdmin.students.atRisk", "At Risk")}
-                        </Badge>
-                      </div>
-                      <div className="space-y-2">
-                        <Progress
-                          value={plan.graduationProgress.totalCreditsRequired ? (plan.graduationProgress.totalCreditsEarned / plan.graduationProgress.totalCreditsRequired) * 100 : 0}
-                          className="h-3 rounded-full bg-gray-100"
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-center py-6">
-                      <p className="text-gray-500 font-medium">Graduation data is not fully calculated yet.</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Career Path */}
-              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-6">
-                  <CardTitle className="flex items-center gap-3 text-xl">
-                    <div className="p-2.5 bg-purple-100 rounded-xl">
-                      <Target className="h-5 w-5 text-purple-600" />
-                    </div>
-                    {t("schoolAdmin.students.careerPath", "Career Affinities")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex flex-col items-center justify-center py-8 text-center space-y-4">
-                    <div className="p-4 bg-gray-50 rounded-full">
-                      <Target className="h-8 w-8 text-gray-300" />
-                    </div>
-                    <p className="text-gray-500 font-medium max-w-[250px]">
-                      {t("schoolAdmin.students.careerPathDesc", "No career assessment data available from the external integration yet.")}
-                    </p>
                   </div>
-                </CardContent>
-              </Card>
+                  <Heart style={{ width: 20, height: 20, color: "#ec4899", opacity: 0.5 }} />
+                </div>
+                <Progress
+                  value={((csData?.totalHoursVerified ?? 0) / (csData?.totalHoursRequired ?? 40)) * 100}
+                  className="h-2"
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                  <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>0 hrs</span>
+                  <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>Goal: {csData?.totalHoursRequired ?? 40} hrs</span>
+                </div>
+              </div>
 
-              {/* 360 Evaluation Status */}
-              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden md:col-span-2">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-6">
-                  <CardTitle className="flex items-center gap-3 text-xl">
-                    <div className="p-2.5 bg-teal-100 rounded-xl">
-                      <TrendingUp className="h-5 w-5 text-teal-600" />
-                    </div>
-                    {t("schoolAdmin.students.evaluationStatus", "360° Diagnostics")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 flex flex-col items-center justify-center py-10">
-                  <div className="p-4 bg-gray-50 rounded-full mb-4">
-                    <TrendingUp className="h-10 w-10 text-gray-300" />
-                  </div>
-                  <p className="text-gray-500 font-medium text-center max-w-sm mb-6">
-                    {t("schoolAdmin.students.evaluationStatusDesc", "Comprehensive behavioral and academic 360-degree reviews will populate here when completed.")}
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="rounded-xl border-gray-200 font-bold hover:bg-gray-50"
-                    onClick={() => router.push("/school-admin/evaluations")}
-                  >
-                    {t("schoolAdmin.students.viewEvaluations", "Go to Evaluations Hub")}
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Courses Tab */}
-          <TabsContent value="courses" className="mt-6 space-y-6">
-            {/* Pending change requests */}
-            <AnimatePresence>
-              {pendingRequests.length > 0 && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-                  <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl overflow-hidden">
-                    <CardHeader className="border-b border-amber-100/50 py-5">
-                      <CardTitle className="flex items-center gap-2 text-xl text-amber-800">
-                        <AlertCircle className="h-6 w-6" />
-                        {t("schoolAdmin.students.pendingRequests", "Action Required: Course Requests")} <span className="bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full text-sm ml-2">{pendingRequests.length} pending</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-4">
-                      {pendingRequests.map((req: any) => (
-                        <div key={req.id} className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white rounded-2xl p-5 shadow-sm border border-amber-100 gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3">
-                              <Badge className={req.action === 'add' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100 shadow-none' : 'bg-red-100 text-red-700 hover:bg-red-100 shadow-none'}>
-                                {req.action === "add" ? "Enrollment Request" : "Drop Request"}
-                              </Badge>
-                              <p className="font-bold text-gray-900 text-lg truncate">
-                                {req.courseName}
-                              </p>
-                            </div>
-                            <p className="text-sm font-medium text-gray-500 mt-2 flex items-center gap-2">
-                              <span className="bg-gray-100 px-2 py-1 rounded-md">{req.courseCode}</span>
-                              <span className="bg-gray-100 px-2 py-1 rounded-md">Grade {req.gradeLevel}</span>
-                              <span className="bg-gray-100 px-2 py-1 rounded-md">{req.semester}</span>
-                            </p>
-                            {req.studentNote && (
-                              <div className="mt-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                <p className="text-sm text-gray-700 italic flex items-start gap-2">
-                                  <MessageSquare className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                                  "{req.studentNote}"
-                                </p>
-                              </div>
+              {/* Entries */}
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid var(--admin-border-default)" }}>Activity Ledger</div>
+              {csData?.entries && csData.entries.length > 0 ? (
+                <div className="space-y-3">
+                  {csData.entries.map((entry) => {
+                    const isPending = entry.status === "pending";
+                    return (
+                      <div key={entry.id} style={{
+                        padding: "12px 14px", borderRadius: 6,
+                        border: "1px solid var(--admin-border-default)",
+                        background: isPending ? "rgba(245,158,11,0.03)" : "var(--admin-bg-card)",
+                        display: "flex", alignItems: "start", justifyContent: "space-between", gap: 12,
+                        flexWrap: "wrap",
+                      }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{entry.organization}</span>
+                            {entry.status === "verified" && (
+                              <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(16,185,129,0.1)", color: "#10b981" }}>Verified</span>
+                            )}
+                            {entry.status === "rejected" && (
+                              <span style={{ fontSize: 9, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(107,114,128,0.1)", color: "#6b7280" }}>Rejected</span>
                             )}
                           </div>
-                          <div className="flex gap-2 w-full md:w-auto shrink-0 mt-2 md:mt-0">
-                            <Button
-                              className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm font-bold"
-                              disabled={reviewRequest.isPending}
-                              onClick={() => reviewRequest.mutate({ requestId: req.id, payload: { status: "approved" } })}
-                            >
-                              <CheckCircle2 className="w-4 h-4 mr-2" />
-                              {t("common.approve", "Approve")}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              className="flex-1 md:flex-none border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-xl font-bold bg-white shadow-sm"
-                              disabled={reviewRequest.isPending}
-                              onClick={() => reviewRequest.mutate({ requestId: req.id, payload: { status: "rejected" } })}
-                            >
-                              <XCircle className="w-4 h-4 mr-2" />
-                              {t("common.reject", "Deny")}
-                            </Button>
+                          <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)", display: "flex", alignItems: "center", gap: 3 }}>
+                              <Clock style={{ width: 10, height: 10 }} /> {entry.hours} hours
+                            </span>
+                            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)", display: "flex", alignItems: "center", gap: 3 }}>
+                              <Calendar style={{ width: 10, height: 10 }} /> {format(new Date(entry.date), "MMM d, yyyy")}
+                            </span>
                           </div>
+                          {entry.description && (
+                            <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 6, lineHeight: 1.4 }}>{entry.description}</p>
+                          )}
                         </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                </motion.div>
+
+                        {isPending && (
+                          <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                            <button
+                              disabled={verifyEntry.isPending}
+                              onClick={() => verifyEntry.mutate({ entryId: entry.id, payload: { status: "verified" } })}
+                              style={{
+                                height: 28, borderRadius: 5, padding: "0 8px",
+                                fontSize: 10, fontWeight: 600,
+                                display: "flex", alignItems: "center", gap: 3,
+                                background: "rgba(16,185,129,0.1)", color: "#10b981",
+                                border: "1px solid rgba(16,185,129,0.2)", cursor: "pointer",
+                              }}
+                            >
+                              <CheckCircle2 style={{ width: 11, height: 11 }} /> Approve
+                            </button>
+                            <button
+                              disabled={verifyEntry.isPending}
+                              onClick={() => verifyEntry.mutate({ entryId: entry.id, payload: { status: "rejected" } })}
+                              style={{
+                                height: 28, borderRadius: 5, padding: "0 8px",
+                                fontSize: 10, fontWeight: 600,
+                                display: "flex", alignItems: "center", gap: 3,
+                                background: "rgba(239,68,68,0.05)", color: "#ef4444",
+                                border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer",
+                              }}
+                            >
+                              <XCircle style={{ width: 11, height: 11 }} /> Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "32px 16px" }}>
+                  <Heart style={{ width: 20, height: 20, color: "var(--admin-font-tertiary)", margin: "0 auto 6px", opacity: 0.4 }} />
+                  <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>No community service entries logged yet.</div>
+                </div>
               )}
-            </AnimatePresence>
-
-            {/* Sequence Builder */}
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden">
-              <CardContent className="p-0">
-                <SequenceBuilder
-                  planData={coursePlan}
-                  isLoading={false}
-                  mode="counselor"
-                  onCounselorAdd={(payload) => adminAdd.mutate(payload)}
-                  onCounselorRemove={(enrollmentId) => adminRemove.mutate(enrollmentId)}
-                  isCounselorAddPending={adminAdd.isPending}
-                  isCounselorRemovePending={adminRemove.isPending}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Assessments Tab */}
-          <TabsContent value="assessments" className="mt-6">
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden">
-              <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-6">
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="p-2.5 bg-indigo-100 rounded-xl">
-                    <FileText className="h-5 w-5 text-indigo-600" />
-                  </div>
-                  {t("schoolAdmin.students.assessmentResults", "Academic Testing Portfolio")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="p-6 bg-gradient-to-br from-indigo-50 to-white rounded-2xl border border-indigo-100 shadow-sm text-center relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-100 rounded-bl-full opacity-50 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm text-indigo-600 font-bold uppercase tracking-wider mb-2">LIA Benchmark</p>
-                    <p className="text-4xl font-black text-indigo-900">—</p>
-                  </div>
-                  <div className="p-6 bg-gradient-to-br from-purple-50 to-white rounded-2xl border border-purple-100 shadow-sm text-center relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-purple-100 rounded-bl-full opacity-50 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm text-purple-600 font-bold uppercase tracking-wider mb-2">PCA Diagnostics</p>
-                    <p className="text-4xl font-black text-purple-900">—</p>
-                  </div>
-                  <div className="p-6 bg-gradient-to-br from-teal-50 to-white rounded-2xl border border-teal-100 shadow-sm text-center relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-teal-100 rounded-bl-full opacity-50 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm text-teal-600 font-bold uppercase tracking-wider mb-2">MIL Assessment</p>
-                    <p className="text-4xl font-black text-teal-900">—</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center justify-center py-6 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-                  <p className="text-gray-500 font-medium text-center">
-                    {t("schoolAdmin.students.assessmentDesc", "Awaiting secure sync from district assessment repositories.")}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Counselor Notes Tab */}
-          <TabsContent value="notes" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Add Note Form */}
-              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden lg:col-span-1 h-fit sticky top-6">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-5">
-                  <CardTitle className="flex items-center gap-3 text-lg">
-                    <div className="p-2 bg-emerald-100 rounded-lg">
-                      <Plus className="h-4 w-4 text-emerald-600" />
-                    </div>
-                    {t("schoolAdmin.students.addNote", "New Entry")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-5 space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Category</label>
-                    <Select value={noteType} onValueChange={(v) => setNoteType(v as NoteType)}>
-                      <SelectTrigger className="w-full bg-gray-50 border-gray-200 rounded-xl h-11 focus:ring-emerald-500">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-gray-200 shadow-xl">
-                        <SelectItem value="general" className="rounded-lg my-1">General Observation</SelectItem>
-                        <SelectItem value="meeting" className="rounded-lg my-1">Meeting Summary</SelectItem>
-                        <SelectItem value="follow_up" className="rounded-lg my-1">Action items / Follow-up</SelectItem>
-                        <SelectItem value="academic" className="rounded-lg my-1">Academic Intervention</SelectItem>
-                        <SelectItem value="career" className="rounded-lg my-1">Career Guidance</SelectItem>
-                        <SelectItem value="personal" className="rounded-lg my-1">Personal / Social</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Notes</label>
-                    <Textarea
-                      placeholder={t("schoolAdmin.students.notePlaceholder", "Document interaction details here...")}
-                      value={newNote}
-                      onChange={(e) => setNewNote(e.target.value)}
-                      rows={5}
-                      className="bg-gray-50 border-gray-200 rounded-xl resize-none focus-visible:ring-emerald-500"
-                    />
-                  </div>
-
-                  <Button
-                    onClick={handleAddNote}
-                    disabled={!newNote.trim() || createNote.isPending}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-11 shadow-md font-bold"
-                  >
-                    <Send className="mr-2 h-4 w-4" />
-                    {t("schoolAdmin.students.saveNote", "Publish to File")}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Notes List */}
-              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden lg:col-span-2">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 py-5 flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-gray-400" />
-                    {t("schoolAdmin.students.noteHistory", "Counselor File Ledger")}
-                    <span className="bg-gray-200 text-gray-700 text-xs py-0.5 px-2 rounded-full ml-2">{notes.length} entries</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {notes.length === 0 ? (
-                    <div className="text-center py-16 px-4 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100">
-                        <MessageSquare className="w-8 h-8 text-gray-300" />
-                      </div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-1">No file entries found</h3>
-                      <p className="text-gray-500">
-                        {t("schoolAdmin.students.noNotes", "There are currently no notes or documentation on file for this student.")}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {notes.map((note: CounselorNote) => (
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={note.id} className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow group relative">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs bg-gray-50 text-gray-600 border-gray-200 uppercase tracking-wide font-bold px-2 py-0.5 shadow-none">
-                                {note.type.replace('_', ' ')}
-                              </Badge>
-                              {note.isPrivate && (
-                                <Badge variant="secondary" className="bg-amber-100 text-amber-700 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 shadow-none border border-amber-200 cursor-help" title="Visible only to counselors">
-                                  Confidential
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3 text-xs font-semibold text-gray-400">
-                              {note.createdAt && format(new Date(note.createdAt), "MMM d, yyyy · h:mm a")}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 text-gray-300 hover:bg-red-50 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
-                                onClick={() => deleteNote.mutate({ noteId: note.id, studentId })}
-                                title="Delete entry"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100/50">
-                            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                              {note.content}
-                            </p>
-                          </div>
-
-                          {note.followUpDate && (
-                            <div className="mt-4 flex items-center gap-1.5 p-2 bg-amber-50 rounded-lg w-fit border border-amber-100/50">
-                              <Clock className="h-4 w-4 text-amber-600" />
-                              <p className="text-xs font-bold text-amber-800 uppercase tracking-wide">
-                                Follow-up: {format(new Date(note.followUpDate), "MMM d, yyyy")}
-                              </p>
-                            </div>
-                          )}
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
             </div>
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          {/* Graduation Tab */}
-          <TabsContent value="graduation" className="mt-6">
-            {/* Community Service */}
-            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-pink-50 to-rose-50 border-b border-pink-100 py-6">
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="p-2.5 bg-pink-100 rounded-xl shadow-inner">
-                    <Heart className="h-5 w-5 text-pink-600 fill-pink-600/20" />
-                  </div>
-                  Community Service Log
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8">
-                {/* Progress */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mb-8">
-                  <div className="flex items-end justify-between mb-4">
-                    <div>
-                      <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Service Requirement</p>
-                      <p className="text-3xl font-black text-gray-900 mt-1">
-                        {csData?.totalHoursVerified ?? 0} <span className="text-lg text-gray-400 font-medium">/ {csData?.totalHoursRequired ?? 40} hrs</span>
-                      </p>
-                    </div>
-                    <div className="p-3 bg-pink-50 rounded-full border border-pink-100">
-                      <Heart className="w-6 h-6 text-pink-500" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Progress
-                      value={((csData?.totalHoursVerified ?? 0) / (csData?.totalHoursRequired ?? 40)) * 100}
-                      className="h-4 rounded-full bg-gray-100 [&>div]:bg-pink-500"
-                    />
-                    <div className="flex justify-between text-xs font-bold text-gray-400 uppercase">
-                      <span>0 hrs</span>
-                      <span>Goal: {csData?.totalHoursRequired ?? 40} hrs</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Entries */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-2">Activity Ledger</h3>
-                  {csData?.entries && csData.entries.length > 0 ? (
-                    <div className="space-y-3">
-                      {csData.entries.map((entry) => {
-                        const isPending = entry.status === "pending";
-                        return (
-                          <div
-                            key={entry.id}
-                            className={cn(
-                              "p-5 rounded-2xl border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all hover:shadow-md",
-                              entry.status === "verified" && "bg-white border-emerald-100",
-                              entry.status === "pending" && "bg-amber-50/50 border-amber-200 shadow-amber-100/20",
-                              entry.status === "rejected" && "bg-gray-50 border-gray-200 opacity-75"
-                            )}
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-3 mb-1">
-                                <p className="font-bold text-gray-900 text-lg">{entry.organization}</p>
-                                {entry.status === "verified" && <Badge className="bg-emerald-100 text-emerald-800 border-0 shadow-none hover:bg-emerald-100">Verified</Badge>}
-                                {entry.status === "rejected" && <Badge className="bg-gray-200 text-gray-600 border-0 shadow-none hover:bg-gray-200">Rejected</Badge>}
-                              </div>
-
-                              <div className="flex items-center gap-4 text-sm font-medium text-gray-500 mt-2">
-                                <span className="flex items-center gap-1.5 bg-white border border-gray-200 px-2 py-1 rounded-lg">
-                                  <Clock className="w-3.5 h-3.5 text-indigo-500" />
-                                  {entry.hours} hours
-                                </span>
-                                <span className="flex items-center gap-1.5 bg-white border border-gray-200 px-2 py-1 rounded-lg">
-                                  <Calendar className="w-3.5 h-3.5 text-purple-500" />
-                                  {format(new Date(entry.date), "MMM d, yyyy")}
-                                </span>
-                              </div>
-
-                              {entry.description && (
-                                <p className="text-sm text-gray-600 mt-3 bg-white p-3 rounded-xl border border-gray-100/50 leading-relaxed max-w-3xl">
-                                  {entry.description}
-                                </p>
-                              )}
-                            </div>
-
-                            {isPending && (
-                              <div className="flex sm:flex-col gap-2 shrink-0 bg-white p-2 rounded-xl border border-amber-100 shadow-sm">
-                                <p className="hidden sm:block text-[10px] font-bold text-amber-600 uppercase tracking-widest text-center px-2 py-1 bg-amber-50 rounded-lg">Pending Review</p>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-9 px-4 text-sm font-bold border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-300 rounded-lg"
-                                  disabled={verifyEntry.isPending}
-                                  onClick={() => verifyEntry.mutate({ entryId: entry.id, payload: { status: "verified" } })}
-                                >
-                                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                                  Approve
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-9 px-4 text-sm font-bold border-red-200 text-red-700 bg-red-50 hover:bg-red-100 hover:border-red-300 rounded-lg"
-                                  disabled={verifyEntry.isPending}
-                                  onClick={() => verifyEntry.mutate({ entryId: entry.id, payload: { status: "rejected" } })}
-                                >
-                                  <XCircle className="h-4 w-4 mr-2" />
-                                  Reject
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                      <Heart className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500 font-medium text-sm">No community service entries logged yet.</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Parents & Guardians Tab */}
-          <TabsContent value="parents" className="mt-6">
-            <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 border border-gray-200/50 shadow-lg relative overflow-hidden">
-              {/* Decorative background elements matching the panel design */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-50 rounded-full blur-3xl opacity-50 translate-y-1/2 -translate-x-1/2 pointer-events-none" />
-
-              <div className="relative z-10">
-                <InviteParentPanel
-                  studentId={studentId}
-                  studentName={student.name}
-                />
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </motion.div>
+        {/* Parents & Guardians Tab */}
+        <TabsContent value="parents" className="mt-4">
+          <div style={{
+            borderRadius: 8, border: "1px solid var(--admin-border-default)",
+            background: "var(--admin-bg-card)", padding: "20px 24px",
+          }}>
+            <InviteParentPanel
+              studentId={studentId}
+              studentName={student.name}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

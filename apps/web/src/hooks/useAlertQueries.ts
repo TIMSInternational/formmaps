@@ -28,6 +28,7 @@ export function useAlerts(params?: AlertsQueryParams) {
     queryKey: alertKeys.list(params),
     queryFn: () => getAlerts(params),
     staleTime: 1000 * 60 * 2,
+    retry: false,
   });
 }
 
@@ -36,6 +37,7 @@ export function useAlertSummary() {
     queryKey: alertKeys.summary(),
     queryFn: getAlertSummary,
     staleTime: 1000 * 60 * 2,
+    retry: false,
   });
 }
 

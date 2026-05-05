@@ -27,6 +27,7 @@ export function useAssessmentConfig() {
     queryKey: assessmentConfigKeys.config(),
     queryFn: getAssessmentConfig,
     staleTime: 1000 * 60 * 30,
+    retry: false,
   });
 }
 
@@ -46,5 +47,6 @@ export function useAssessmentStatus() {
     queryKey: assessmentConfigKeys.status(),
     queryFn: getAssessmentStatus,
     staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 }

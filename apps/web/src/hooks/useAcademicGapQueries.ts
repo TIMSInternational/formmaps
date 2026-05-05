@@ -7,23 +7,12 @@ import {
   getStudentCourseRecommendations,
 } from "@/services/academicGapService";
 
-// ============================================
-// Query Keys
-// ============================================
-
 export const academicGapKeys = {
   all: ["academic-gaps"] as const,
-  studentGaps: (studentId: string) =>
-    [...academicGapKeys.all, "student", studentId] as const,
-  summary: (params?: object) =>
-    [...academicGapKeys.all, "summary", params] as const,
-  recommendations: (studentId: string) =>
-    [...academicGapKeys.all, "recommendations", studentId] as const,
+  studentGaps: (studentId: string) => [...academicGapKeys.all, "student", studentId] as const,
+  summary: (params?: object) => [...academicGapKeys.all, "summary", params] as const,
+  recommendations: (studentId: string) => [...academicGapKeys.all, "recommendations", studentId] as const,
 };
-
-// ============================================
-// Academic Gap Hooks (SCRUM-139/140)
-// ============================================
 
 export function useStudentAcademicGaps(studentId: string) {
   return useQuery({
@@ -31,6 +20,7 @@ export function useStudentAcademicGaps(studentId: string) {
     queryFn: () => getStudentAcademicGaps(studentId),
     enabled: !!studentId,
     staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 }
 
@@ -43,6 +33,7 @@ export function useAcademicGapSummary(params?: {
     queryKey: academicGapKeys.summary(params),
     queryFn: () => getAcademicGapSummary(params),
     staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 }
 
@@ -52,5 +43,6 @@ export function useStudentCourseRecommendations(studentId: string) {
     queryFn: () => getStudentCourseRecommendations(studentId),
     enabled: !!studentId,
     staleTime: 1000 * 60 * 10,
+    retry: false,
   });
 }

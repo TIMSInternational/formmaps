@@ -37,7 +37,7 @@ export function useCourseSequences(params?: {
   return useQuery({
     queryKey: courseSequenceKeys.list(params),
     queryFn: () => getCourseSequences(params),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
   });
 }
 
@@ -51,23 +51,15 @@ export function useCourseSequenceDetail(id: string) {
 }
 
 export function useCreateCourseSequence() {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CourseSequencePayload) => createCourseSequence(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: courseSequenceKeys.all });
-    },
   });
 }
 
 export function useUpdateCourseSequence() {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Partial<CourseSequencePayload> }) =>
       updateCourseSequence(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: courseSequenceKeys.all });
-    },
   });
 }
 
