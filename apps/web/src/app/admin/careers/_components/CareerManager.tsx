@@ -9,12 +9,37 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { listCareers } from "@/services/careerService";
-import { CareerRole } from "@/types/career";
 import { Skeleton } from "@/components/ui/skeleton";
+
+// Raw career shape from the API (different from the typed CareerRole)
+interface RawCareer {
+    programId?: string;
+    programTitle?: string;
+    cluster?: string;
+    title?: { en?: string; es?: string } | string;
+    industries?: string[];
+    educationLevel?: string;
+    salaryRange?: { median?: number };
+    remoteEligible?: boolean;
+    skills?: any[];
+    [key: string]: any;
+}
+
+function getTitle(c: RawCareer): string {
+    if (c.programTitle) return c.programTitle;
+    if (typeof c.title === "string") return c.title;
+    if (c.title?.en) return c.title.en;
+    if (c.title?.es) return c.title.es;
+    return "Untitled";
+}
+
+function getCategory(c: RawCareer): string {
+    return c.cluster || c.industries?.[0] || "General";
+}
 
 export function CareerManager() {
     const { t } = useTranslation();
-    const [careers, setCareers] = useState<CareerRole[]>([]);
+    const [careers, setCareers] = useState<RawCareer[]>([]);
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
 
@@ -28,9 +53,12 @@ export function CareerManager() {
     }, []);
 
     // Derived insights
-    const industries = useMemo(() => {
+    const clusters = useMemo(() => {
         const map = new Map<string, number>();
-        careers.forEach(c => c.industries?.forEach(ind => map.set(ind, (map.get(ind) || 0) + 1)));
+        careers.forEach(c => {
+            const cat = getCategory(c);
+            if (cat && cat !== "General") map.set(cat, (map.get(cat) || 0) + 1);
+        });
         return [...map.entries()].sort((a, b) => b[1] - a[1]);
     }, [careers]);
 
@@ -68,9 +96,8 @@ export function CareerManager() {
         if (!search.trim()) return [];
         const q = search.toLowerCase();
         return careers.filter(c =>
-            (c.title?.en || "").toLowerCase().includes(q) ||
-            (c.title?.es || "").toLowerCase().includes(q) ||
-            c.industries?.some(i => i.toLowerCase().includes(q))
+            getTitle(c).toLowerCase().includes(q) ||
+            getCategory(c).toLowerCase().includes(q)
         ).slice(0, 10);
     }, [careers, search]);
 
@@ -100,7 +127,7 @@ export function CareerManager() {
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
                 {[
                     { label: "Total Careers", value: loading ? "..." : careers.length.toLocaleString(), icon: Briefcase },
-                    { label: "Industries", value: industries.length.toLocaleString(), icon: Layers },
+                    { label: "Career Clusters", value: clusters.length.toLocaleString(), icon: Layers },
                     { label: "Remote Eligible", value: remoteCount.toLocaleString(), icon: Globe },
                     { label: "Education Levels", value: educationLevels.length.toLocaleString(), icon: GraduationCap },
                     { label: "Skills Tracked", value: topSkills.length > 0 ? `${topSkills.length}+` : "—", icon: TrendingUp },
@@ -125,9 +152,9 @@ export function CareerManager() {
                                 <div key={c.id || i} className="flex items-center gap-3 p-3 rounded-lg" style={row}>
                                     <Briefcase className="h-4 w-4 shrink-0" style={{ color: "var(--admin-font-tertiary)" }} />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold truncate" style={{ color: "var(--admin-font-primary)" }}>{c.title?.en || c.title?.es || "Untitled"}</p>
+                                        <p className="text-sm font-semibold truncate" style={{ color: "var(--admin-font-primary)" }}>{getTitle(c)}</p>
                                         <p className="text-[11px]" style={{ color: "var(--admin-font-tertiary)" }}>
-                                            {c.industries?.slice(0, 2).join(", ") || "General"} {c.educationLevel ? `· ${c.educationLevel}` : ""} {c.remoteEligible ? "· Remote" : ""}
+                                            {getCategory(c)} {c.educationLevel ? `· ${c.educationLevel}` : ""} {c.remoteEligible ? "· Remote" : ""}
                                         </p>
                                     </div>
                                     {c.salaryRange?.median && (
@@ -145,14 +172,14 @@ export function CareerManager() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Industries Breakdown */}
                 <div style={{ ...s, padding: 20 }}>
-                    <h3 style={hdr}><BarChart3 style={{ width: 14, height: 14, color: "#3b82f6" }} /> By Industry</h3>
+                    <h3 style={hdr}><BarChart3 style={{ width: 14, height: 14, color: "#3b82f6" }} /> By Career Cluster</h3>
                     {loading ? (
                         <div className="space-y-2">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-10 rounded-lg" />)}</div>
-                    ) : industries.length === 0 ? (
-                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No industry data</p>
+                    ) : clusters.length === 0 ? (
+                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No cluster data</p>
                     ) : (
                         <div className="space-y-1.5">
-                            {industries.slice(0, 10).map(([name, count]) => {
+                            {clusters.slice(0, 10).map(([name, count]) => {
                                 const pct = Math.round((count / careers.length) * 100);
                                 return (
                                     <div key={name} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={row}>
@@ -245,9 +272,9 @@ export function CareerManager() {
                         <div key={c.id || i} className="flex items-start gap-3 p-3 rounded-lg" style={row}>
                             <Briefcase className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "var(--admin-font-tertiary)" }} />
                             <div className="min-w-0">
-                                <p className="text-xs font-semibold line-clamp-2" style={{ color: "var(--admin-font-primary)" }}>{c.title?.en || c.title?.es}</p>
+                                <p className="text-xs font-semibold line-clamp-2" style={{ color: "var(--admin-font-primary)" }}>{getTitle(c)}</p>
                                 <p className="text-[10px] mt-0.5" style={{ color: "var(--admin-font-tertiary)" }}>
-                                    {c.industries?.slice(0, 2).join(", ") || "General"}
+                                    {getCategory(c)}
                                     {c.remoteEligible ? " · Remote" : ""}
                                 </p>
                             </div>
