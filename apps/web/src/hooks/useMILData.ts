@@ -3,7 +3,8 @@ import {
   getAllMILExams,
   MILExamMetadata,
   loadMILSession,
-  getUserExamHistory,
+  getMILResults,
+  MILResultsData,
   EnhancedUserExamHistory,
   ExamStatus,
 } from "@/services/milService";
@@ -16,13 +17,48 @@ export interface MILProgress {
   totalExams: number;
   isCompleted: boolean;
   lastUpdated: string;
-  // Enhanced progress data from API
   enhancedData?: EnhancedUserExamHistory;
   examStatuses?: {
     completed: ExamStatus[];
     inProgress: ExamStatus[];
     notStarted: ExamStatus[];
   };
+}
+
+/**
+ * Normalize MILResultsData (from /api/v1/mil/results/{userId})
+ * into EnhancedUserExamHistory shape used throughout the UI.
+ */
+function toEnhancedData(data: MILResultsData): EnhancedUserExamHistory {
+  const completed = data.examResults.filter((e) => e.status === "completed");
+  const inProgress = data.examResults.filter((e) => e.status === "in_progress");
+  const notStarted = data.examResults.filter((e) => e.status === "not_started");
+
+  return {
+    userId: data.userId,
+    username: "",
+    totalExams: data.totalExams,
+    completedExams: data.completedExams,
+    inProgressExams: inProgress.length,
+    notStartedExams: notStarted.length,
+    completionPercentage:
+      data.totalExams > 0 ? (data.completedExams / data.totalExams) * 100 : 0,
+    examStatus: data.examResults.map((exam) => ({
+      examId: exam.examId,
+      examName: exam.examName,
+      examType: 0,
+      status: exam.status as "completed" | "in_progress" | "not_started",
+      scorePercentage: exam.scorePercentage ?? 0,
+      accuracyPercentage: exam.scorePercentage ?? 0,
+      totalQuestions: exam.totalQuestions,
+      correctAnswers: exam.correctAnswers ?? 0,
+      incorrectAnswers: exam.incorrectAnswers ?? 0,
+      totalTimeSpent: exam.timeSpent || "0:00",
+      isTimeExpired: exam.isTimeExpired ?? false,
+      timeLimitMinutes: exam.timeLimitMinutes,
+      completionDate: exam.completedAt || undefined,
+    })) as ExamStatus[],
+  } as EnhancedUserExamHistory;
 }
 
 export function useMILData() {
@@ -32,8 +68,9 @@ export function useMILData() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper function to get current user ID
   const getCurrentUserId = (): string => {
+    // Prefer the store user ID
+    if (storeUser?.id) return storeUser.id;
     try {
       const token = localStorage.getItem("token");
       if (token) {
@@ -44,8 +81,8 @@ export function useMILData() {
           ] || "unknown"
         );
       }
-    } catch (error) {
-      console.error("Failed to parse user token:", error);
+    } catch {
+      // token parse failed
     }
     return "unknown";
   };
@@ -55,85 +92,62 @@ export function useMILData() {
       setLoading(true);
       setError(null);
 
-      // Load available exams
+      // Load available exam metadata (for names, descriptions, question counts)
       const examData = await getAllMILExams(language);
       setExams(examData);
 
-      // Get current user ID
       const userId = getCurrentUserId();
-
-      // Load enhanced exam history from API
-      let enhancedData: EnhancedUserExamHistory | undefined;
-      let examStatuses: MILProgress["examStatuses"];
-
-      if (userId !== "unknown") {
-        try {
-          enhancedData = await getUserExamHistory(userId, language);
-
-          // Categorize exam results by status
-          const completed = enhancedData.examStatus.filter(
-            (exam) => exam.status === "completed"
-          );
-          const inProgress = enhancedData.examStatus.filter(
-            (exam) => exam.status === "in_progress"
-          );
-          const notStarted = enhancedData.examStatus.filter(
-            (exam) => exam.status === "not_started"
-          );
-
-          examStatuses = { completed, inProgress, notStarted };
-        } catch (apiError) {
-          console.error("Failed to fetch MIL exam history:", apiError);
-        }
+      if (userId === "unknown") {
+        setProgress(null);
+        return;
       }
 
-      // Fallback: try /api/v1/mil/results/{userId} which has actual scores
-      let milApiCompleted = 0;
-      let milApiTotal = 5;
-      let milApiResults: any = null;
-      if (userId !== "unknown" && (!enhancedData || enhancedData.completedExams === 0)) {
-        try {
-          const token = localStorage.getItem("token");
-          const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-          const resp = await fetch(`${API_BASE}/api/v1/mil/results/${userId}`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
-          if (resp.ok) {
-            milApiResults = (await resp.json())?.data;
-            milApiCompleted = milApiResults?.completedExams ?? 0;
-            milApiTotal = milApiResults?.totalExams ?? 5;
-          }
-        } catch { /* fallback silently */ }
+      // PRIMARY: Call /api/v1/mil/results/{userId} — single source of truth
+      const milResults = await getMILResults(userId);
+
+      if (milResults && milResults.examResults?.length > 0) {
+        const enhancedData = toEnhancedData(milResults);
+        const completedIds = milResults.examResults
+          .filter((e) => e.status === "completed")
+          .map((e) => e.examId);
+        const completedExamStatuses = enhancedData.examStatus.filter(
+          (e) => e.status === "completed"
+        );
+        const inProgressExamStatuses = enhancedData.examStatus.filter(
+          (e) => e.status === "in_progress"
+        );
+        const notStartedExamStatuses = enhancedData.examStatus.filter(
+          (e) => e.status === "not_started"
+        );
+
+        // Sync localStorage so the MIL overview page stays in sync
+        localStorage.setItem(
+          "mil_completed_exams",
+          JSON.stringify(completedIds)
+        );
+
+        setProgress({
+          completedExams: completedIds,
+          totalExams: milResults.totalExams,
+          isCompleted: milResults.completedExams >= milResults.totalExams,
+          lastUpdated: new Date().toISOString(),
+          enhancedData,
+          examStatuses: {
+            completed: completedExamStatuses,
+            inProgress: inProgressExamStatuses,
+            notStarted: notStartedExamStatuses,
+          },
+        });
+        return;
       }
 
-      // Fallback to localStorage for backward compatibility
-      const localCompletedExams = JSON.parse(
-        localStorage.getItem("mil_completed_exams") || "[]"
-      );
-
-      // Use best available data source
-      const apiCompleted = enhancedData?.examStatus
-        ? enhancedData.examStatus.filter((exam) => exam.status === "completed").map((exam) => exam.examId)
-        : [];
-      const completedExams = apiCompleted.length > 0
-        ? apiCompleted
-        : milApiCompleted > 0
-          ? Array.from({ length: milApiCompleted }, (_, i) => `exam-${i}`)
-          : localCompletedExams;
-      const totalExams = enhancedData?.totalExams || milApiTotal || examData.length;
-
-      const progressData: MILProgress = {
-        completedExams,
-        totalExams,
-        isCompleted: enhancedData
-          ? enhancedData.completionPercentage === 100
-          : milApiCompleted >= milApiTotal || completedExams.length >= totalExams,
+      // No API data — user hasn't taken any exams yet
+      setProgress({
+        completedExams: [],
+        totalExams: examData.length || 5,
+        isCompleted: false,
         lastUpdated: new Date().toISOString(),
-        enhancedData: enhancedData || milApiResults,
-        examStatuses,
-      };
-
-      setProgress(progressData);
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load MIL data");
     } finally {
@@ -161,7 +175,6 @@ export function useMILData() {
 
   const clearMILProgress = () => {
     localStorage.removeItem("mil_completed_exams");
-    // Clear all exam sessions
     exams.forEach((exam) => {
       localStorage.removeItem(`mil_session_${exam.id}`);
     });
@@ -189,28 +202,25 @@ export function useMILData() {
       const completedExams = progress.enhancedData.examStatus.filter(
         (exam) => exam.status === "completed"
       );
-
       if (completedExams.length > 0) {
-        const totalScore = completedExams.reduce((sum, exam) => {
-          return sum + exam.scorePercentage;
-        }, 0);
+        const totalScore = completedExams.reduce(
+          (sum, exam) => sum + exam.scorePercentage,
+          0
+        );
         return Math.round(totalScore / completedExams.length);
       }
     }
 
-    // Final fallback to simple completion percentage
-    if (!progress || progress.completedExams.length === 0) return 0;
+    if (!progress || progress.completedExams.length === 0 || progress.totalExams === 0) return 0;
     return Math.round(
       (progress.completedExams.length / progress.totalExams) * 100
     );
   };
 
-  // Enhanced function to get detailed exam results
   const getExamResults = () => {
     return progress?.enhancedData?.examStatus || [];
   };
 
-  // Enhanced function to get completion statistics
   const getCompletionStats = () => {
     if (!progress?.examStatuses) {
       return {
@@ -230,14 +240,9 @@ export function useMILData() {
     };
   };
 
-  // Enhanced function to get subtest scores
   const getSubtestScores = () => {
-    if (!progress?.enhancedData?.examStatus) {
-      // No API data available — return empty array (no mock data)
-      return [];
-    }
+    if (!progress?.enhancedData?.examStatus) return [];
 
-    // Use real API data - map exam names to colors
     const examColorMap: { [key: string]: string } = {
       "Pattern Recognition": "#8B5CF6",
       "Verbal Reasoning": "#06B6D4",
@@ -248,16 +253,14 @@ export function useMILData() {
 
     return progress.enhancedData.examStatus
       .filter((exam) => exam.status === "completed")
-      .map((exam) => {
-        return {
-          name: exam.examName,
-          score: Math.round(exam.scorePercentage),
-          color: examColorMap[exam.examName] || "#6B7280",
-          examId: exam.examId,
-          accuracy: Math.round(exam.accuracyPercentage),
-          timeSpent: exam.totalTimeSpent,
-        };
-      });
+      .map((exam) => ({
+        name: exam.examName,
+        score: Math.round(exam.scorePercentage),
+        color: examColorMap[exam.examName] || "#6B7280",
+        examId: exam.examId,
+        accuracy: Math.round(exam.accuracyPercentage),
+        timeSpent: exam.totalTimeSpent,
+      }));
   };
 
   const userRole = normalizeRole(storeUser.role);
@@ -282,7 +285,6 @@ export function useMILData() {
     getSubtestScores,
     hasMIL: !!progress && progress.completedExams.length > 0,
     isCompleted: progress?.isCompleted || false,
-    // Enhanced properties for better dashboard display
     hasEnhancedData:
       !!progress?.enhancedData && progress.enhancedData.examStatus.length > 0,
     completionStats: getCompletionStats(),
