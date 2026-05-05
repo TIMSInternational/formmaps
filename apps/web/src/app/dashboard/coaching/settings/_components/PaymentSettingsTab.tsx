@@ -320,11 +320,13 @@ export function PaymentSettingsTab({
       return;
 
     try {
+      const { updateCoachProfile } = await import("@/services/coachService");
+      await updateCoachProfile({ bankAccount: null } as any);
       setStripeAccount({ connected: false });
       if (onBankAccountUpdated) onBankAccountUpdated(null);
       toast.success("Stripe account disconnected");
-    } catch (error) {
-      toast.error("Failed to disconnect Stripe account");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to disconnect Stripe account");
     }
   };
 

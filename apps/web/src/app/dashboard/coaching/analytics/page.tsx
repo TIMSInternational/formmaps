@@ -359,8 +359,6 @@ export default function AnalyticsPage() {
             title="Total Earnings"
             value={`$${stats.totalEarnings.toLocaleString()}`}
             icon={Wallet}
-            trend="up"
-            trendValue="12.5%"
             gradient="from-blue-500 to-blue-600"
             shadow="shadow-blue-500/20"
           />
@@ -368,8 +366,6 @@ export default function AnalyticsPage() {
             title="Total Sessions"
             value={stats.totalSessions}
             icon={Clock}
-            trend="up"
-            trendValue="8.2%"
             gradient="from-violet-500 to-purple-600"
             shadow="shadow-purple-500/20"
           />
@@ -377,8 +373,6 @@ export default function AnalyticsPage() {
             title="Average Rating"
             value={stats.averageRating}
             icon={Star}
-            trend="up"
-            trendValue="0.1"
             gradient="from-amber-400 to-orange-500"
             shadow="shadow-orange-500/20"
           />
@@ -386,8 +380,6 @@ export default function AnalyticsPage() {
             title="Active Students"
             value={stats.activeStudents}
             icon={Users}
-            trend="up"
-            trendValue="4 new"
             gradient="from-emerald-400 to-green-500"
             shadow="shadow-green-500/20"
           />

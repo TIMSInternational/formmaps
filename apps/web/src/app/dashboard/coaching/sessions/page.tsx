@@ -295,8 +295,14 @@ export default function SessionsPage() {
       const startObj = new Date(rescheduleDate);
       startObj.setHours(hours, minutes, 0, 0);
 
+      // Use original session duration, fallback to 60 min
+      const originalStart = new Date(selectedSession.startTime || selectedSession.slot?.start || 0);
+      const originalEnd = new Date(selectedSession.endTime || selectedSession.slot?.end || 0);
+      const durationMs = originalEnd.getTime() - originalStart.getTime();
+      const durationMinutes = durationMs > 0 ? Math.round(durationMs / 60000) : 60;
+
       const endObj = new Date(startObj);
-      endObj.setMinutes(startObj.getMinutes() + 60); // Default 60 min
+      endObj.setMinutes(startObj.getMinutes() + durationMinutes);
 
       const start = startObj.toISOString();
       const end = endObj.toISOString();
