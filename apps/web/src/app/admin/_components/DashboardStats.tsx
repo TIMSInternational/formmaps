@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, GraduationCap, TrendingUp } from "lucide-react";
+import { Users, DollarSign, TrendingUp } from "lucide-react";
 import { useAdminAnalyticsSummary } from "@/hooks/useAdminAnalytics";
 import { AdminStatCard } from "./AdminStatCard";
 
@@ -19,10 +19,10 @@ export function DashboardStats() {
       sub: "vs last month",
     },
     {
-      label: "Active Courses",
-      value: stats ? stats.activeCourses.toLocaleString() : "—",
-      icon: GraduationCap,
-      trend: stats?.monthlyGrowth?.courses ?? 0,
+      label: "Total Revenue",
+      value: stats ? `$${stats.totalRevenue.toLocaleString()}` : "—",
+      icon: DollarSign,
+      trend: stats?.monthlyGrowth?.revenue ?? 0,
       sub: "vs last month",
     },
     {
