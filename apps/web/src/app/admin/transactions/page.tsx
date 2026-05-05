@@ -107,7 +107,7 @@ export default function AdminTransactionsPage() {
     }
     const headers = ["ID", "Date", "Amount", "Currency", "Status", "Description"];
     const rows = transactions.map((t: any) => [
-      t.id, t.date || t.createdDate, t.amount, t.currency || "USD", t.status, t.description || ""
+      t.id, t.date || t.createdDate, (t.amount / 100).toFixed(2), t.currency || "USD", t.status, t.description || ""
     ]);
     const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -274,8 +274,8 @@ export default function AdminTransactionsPage() {
               ) : (
                 transactions.map((trx) => (
                   <TableRow key={trx.id} className="border-gray-50 hover:bg-gray-50/50 transition-colors">
-                    <TableCell className="font-medium text-xs text-gray-500 pl-6 py-4">
-                      {trx.id}
+                    <TableCell className="font-medium text-xs text-gray-500 pl-6 py-4 font-mono">
+                      {trx.id.length > 12 ? `${trx.id.substring(0, 12)}...` : trx.id}
                     </TableCell>
                     <TableCell className="py-4">
                       <div className="flex flex-col">
@@ -287,7 +287,7 @@ export default function AdminTransactionsPage() {
                     </TableCell>
                     <TableCell className="text-gray-600 py-4">{trx.description}</TableCell>
                     <TableCell className="font-bold text-gray-900 py-4">
-                      {trx.currency} {trx.amount.toFixed(2)}
+                      ${(trx.amount / 100).toFixed(2)}
                     </TableCell>
                     <TableCell className="py-4">
                       <Badge
