@@ -10,7 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
-import { useCourseList, useRecommendedCourses } from "@/hooks/useCourseQueries";
+import { useRecommendedCourses } from "@/hooks/useCourseQueries";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/api/apiClient";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Course } from "@/types/course";
@@ -20,7 +22,11 @@ export default function CoursesPage() {
     const { isAdmin, loading: authLoading } = useAdminAccess();
     const { t } = useTranslation();
 
-    const { data: catalogData, isLoading: catalogLoading } = useCourseList();
+    const { data: catalogData, isLoading: catalogLoading } = useQuery({
+        queryKey: ["courses", "admin-full-catalog"],
+        queryFn: () => apiRequest("/api/course?limit=1000", { method: "GET" }).then((r: any) => r?.data ?? r),
+        staleTime: 10 * 60 * 1000,
+    });
     const { data: recommendedData } = useRecommendedCourses();
     const { data: analyticsData } = useAdminAnalytics("month");
 
