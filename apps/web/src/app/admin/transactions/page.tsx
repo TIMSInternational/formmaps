@@ -79,9 +79,9 @@ export default function AdminTransactionsPage() {
       blobColor: "bg-blue-500"
     },
     {
-      label: "Pending Processing",
-      value: String(transactions.filter((t: any) => t.status === "pending").length),
-      growth: null,
+      label: "Active Users",
+      value: analyticsData?.stats.totalUsers?.toLocaleString() || "0",
+      growth: analyticsData?.stats.monthlyGrowth.users || 0,
       icon: Clock,
       color: "text-amber-600",
       bg: "bg-amber-50",
@@ -89,14 +89,14 @@ export default function AdminTransactionsPage() {
       blobColor: "bg-amber-500"
     },
     {
-      label: "Failed / Refunded",
-      value: String(transactions.filter((t: any) => t.status === "failed" || t.status === "refunded").length),
+      label: "Active Coaches",
+      value: (analyticsData?.stats as any)?.activeCoaches?.toLocaleString() || "0",
       growth: null,
       icon: AlertCircle,
-      color: "text-red-600",
-      bg: "bg-red-50",
-      border: "border-red-100",
-      blobColor: "bg-red-500"
+      color: "text-violet-600",
+      bg: "bg-violet-50",
+      border: "border-violet-100",
+      blobColor: "bg-violet-500"
     }
   ];
 

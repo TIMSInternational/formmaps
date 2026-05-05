@@ -163,10 +163,14 @@ export default function StudentsPage() {
     return pages.filter((item, index) => item !== "..." || pages[index - 1] !== "...");
   };
 
+  // Use separate queries for accurate status counts (not page-filtered)
+  const { data: pendingData } = useStudents({ page: 1, limit: 1, status: "pending" });
+  const { data: activeData } = useStudents({ page: 1, limit: 1, status: "active" });
+
   const stats = [
     { label: t("schoolAdmin.stats.totalStudents", "Total Students"), value: students?.total || 0, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50", gradient: "from-indigo-500 to-violet-600" },
-    { label: t("schoolAdmin.students.status.pending", "Pending Invites"), value: students?.data?.filter((s: any) => s.status === 'pending').length || 0, icon: Clock, color: "text-amber-600", bg: "bg-amber-50", gradient: "from-amber-400 to-orange-500" },
-    { label: t("schoolAdmin.students.status.active", "Active Students"), value: students?.data?.filter((s: any) => s.status === 'active').length || 0, icon: UserCheck, color: "text-emerald-600", bg: "bg-emerald-50", gradient: "from-emerald-400 to-teal-500" },
+    { label: t("schoolAdmin.students.status.pending", "Pending Invites"), value: pendingData?.total || 0, icon: Clock, color: "text-amber-600", bg: "bg-amber-50", gradient: "from-amber-400 to-orange-500" },
+    { label: t("schoolAdmin.students.status.active", "Active Students"), value: activeData?.total || 0, icon: UserCheck, color: "text-emerald-600", bg: "bg-emerald-50", gradient: "from-emerald-400 to-teal-500" },
   ];
 
   return (

@@ -169,8 +169,8 @@ export default function AdminPayoutsPage() {
       blobColor: "bg-blue-500"
     },
     {
-      label: "Requests Pending",
-      value: payoutsData?.total && statusFilter === 'pending' ? payoutsData.total : "—", // Approximate if filtered
+      label: "Avg Commission",
+      value: (statsData as any)?.averageCommission ? formatCurrency((statsData as any).averageCommission) : formatCurrency((statsData?.totalCommission || 0) / Math.max(statsData?.totalPayouts || 1, 1)),
       icon: Clock,
       color: "text-amber-600",
       bg: "bg-amber-50",
@@ -178,13 +178,13 @@ export default function AdminPayoutsPage() {
       blobColor: "bg-amber-500"
     },
     {
-      label: "Failed Requests",
-      value: "—", // Placeholder as detailed breakdown might need separate stats endpoint
+      label: "Commission Rate",
+      value: (statsData as any)?.commissionRate ? `${(statsData as any).commissionRate}%` : "15%",
       icon: XCircle,
-      color: "text-red-600",
-      bg: "bg-red-50",
-      border: "border-red-100",
-      blobColor: "bg-red-500"
+      color: "text-violet-600",
+      bg: "bg-violet-50",
+      border: "border-violet-100",
+      blobColor: "bg-violet-500"
     }
   ];
 
