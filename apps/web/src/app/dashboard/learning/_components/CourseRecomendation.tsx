@@ -58,9 +58,10 @@ export default function CourseRecommendations({ skills }: CourseRecommendationsP
         >
             <div className="relative h-40 w-full overflow-hidden bg-slate-100">
                  {course.thumbnailUrl ? (
-                    <img 
-                      src={course.thumbnailUrl} 
+                    <img
+                      src={course.thumbnailUrl}
                       alt={course.title}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                  ) : (

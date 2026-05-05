@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import { generateDummyContent } from "@/app/dashboard/resume-builder/_components/dummyContentGenerator";
+import { generateDummyContent } from "@/lib/dummyContentGenerator";
 import { updateResume, getResumeById } from "@/services/resumeService";
 import { telemetry } from "@/services/telemetryService";
 import { isTokenExpired } from "@/utils/tokenUtils";

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { isUpcoming, isPast } from "@/lib/normalizeSessions";
 import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -91,12 +92,10 @@ export default function CoachSessionsPage() {
   const now = Date.now();
 
   const upcomingSessions = useMemo(() => {
-    const { isUpcoming } = require("@/lib/normalizeSessions");
     return sessions.filter((s: any) => isUpcoming(s, now));
   }, [sessions]);
 
   const pastSessions = useMemo(() => {
-    const { isPast } = require("@/lib/normalizeSessions");
     return sessions.filter((s: any) => isPast(s, now));
   }, [sessions]);
 

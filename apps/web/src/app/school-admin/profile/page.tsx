@@ -152,7 +152,7 @@ export default function SchoolProfilePage() {
           </CardHeader>
           <CardContent className="flex items-center gap-6">
             {profile?.logo && (
-              <img src={profile.logo} alt="School logo" className="h-20 w-20 rounded-lg object-cover border" />
+              <img src={profile.logo} alt="School logo" loading="lazy" className="h-20 w-20 rounded-lg object-cover border" />
             )}
             <div>
               <Input type="file" accept="image/*" onChange={handleLogoUpload} className="max-w-xs" />

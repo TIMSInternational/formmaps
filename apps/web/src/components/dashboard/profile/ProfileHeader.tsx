@@ -143,7 +143,7 @@ export function ProfileHeader() {
       {/* Cover Image with Mesh Gradient */}
       <div className="h-48 md:h-80 w-full relative group overflow-hidden rounded-b-[3rem] shadow-xl">
         {coverUrl ? (
-          <img src={coverUrl} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+          <img src={coverUrl} alt="Cover" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-blue-900" />
         )}

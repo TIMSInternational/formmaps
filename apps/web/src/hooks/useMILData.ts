@@ -71,6 +71,7 @@ export function useMILData() {
   const getCurrentUserId = (): string => {
     // Prefer the store user ID
     if (storeUser?.id) return storeUser.id;
+    if (typeof window === "undefined") return "unknown";
     try {
       const token = localStorage.getItem("token");
       if (token) {
@@ -121,10 +122,12 @@ export function useMILData() {
         );
 
         // Sync localStorage so the MIL overview page stays in sync
-        localStorage.setItem(
-          "mil_completed_exams",
-          JSON.stringify(completedIds)
-        );
+        if (typeof window !== "undefined") {
+          localStorage.setItem(
+            "mil_completed_exams",
+            JSON.stringify(completedIds)
+          );
+        }
 
         setProgress({
           completedExams: completedIds,
@@ -167,13 +170,16 @@ export function useMILData() {
     };
 
     setProgress(updatedProgress);
-    localStorage.setItem(
-      "mil_completed_exams",
-      JSON.stringify(updatedCompleted)
-    );
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "mil_completed_exams",
+        JSON.stringify(updatedCompleted)
+      );
+    }
   };
 
   const clearMILProgress = () => {
+    if (typeof window === "undefined") return;
     localStorage.removeItem("mil_completed_exams");
     exams.forEach((exam) => {
       localStorage.removeItem(`mil_session_${exam.id}`);

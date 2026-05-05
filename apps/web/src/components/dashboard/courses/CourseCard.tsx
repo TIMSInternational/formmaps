@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +19,7 @@ interface CourseCardProps {
   onMarkCompleted?: (course: Course) => void | Promise<void>;
 }
 
-export function CourseCard({
+export const CourseCard = React.memo(function CourseCard({
   course,
   onViewDetails,
   onStartCourse,
@@ -175,4 +176,4 @@ export function CourseCard({
       </article>
     </motion.div>
   );
-}
+});
