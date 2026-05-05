@@ -20,10 +20,10 @@ export function useAdminAnalytics(period: "week" | "month" | "year" = "month") {
  */
 export function useAdminAnalyticsSummary(period: "week" | "month" | "year" = "month") {
   return useQuery<AnalyticsData>({
-    queryKey: ["adminAnalyticsSummary", period],
+    queryKey: ["adminAnalyticsSummary", period, "v2"],
     queryFn: () => getAnalyticsSummary(period),
-    staleTime: 30 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 min for summary (lightweight)
+    gcTime: 30 * 60 * 1000,
     placeholderData: keepPreviousData,
   });
 }
