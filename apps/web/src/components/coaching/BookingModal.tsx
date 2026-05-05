@@ -351,7 +351,7 @@ export function BookingModal({
                 {/* Column 2: Calendar */}
                 <div className="flex-1 p-6 border-r border-gray-100 flex flex-col">
                   <h2 className="text-lg font-semibold mb-4 text-gray-900">
-                    Select a Date & Time
+                    {t('booking.selectDateTime')}
                   </h2>
 
                   {/* Custom Calendar Header */}
@@ -439,13 +439,13 @@ export function BookingModal({
                     <div className="flex items-center gap-2">
                       <Globe className="h-4 w-4" aria-hidden="true" />
                       <span>
-                        Times shown in {slotsData?.timezone || timezone}
+                        {t('booking.timesShownIn', { timezone: slotsData?.timezone || timezone })}
                       </span>
                     </div>
                     {/* Timezone Helper Text */}
                     {slotsData?.timezone && slotsData.timezone !== timezone && (
                       <p className="text-xs text-blue-600">
-                        Converted to your local time ({timezone})
+                        {t('booking.convertedToLocal', { timezone })}
                       </p>
                     )}
                   </div>
@@ -455,18 +455,18 @@ export function BookingModal({
                 <div className="w-full md:w-[260px] p-5 bg-gray-50/50 flex flex-col h-[550px]">
                   <div className="mb-4">
                     <h4 className="text-base font-semibold text-gray-900">
-                      {date ? format(date, "EEEE, MMM d") : "Select a date"}
+                      {date ? format(date, "EEEE, MMM d") : t('booking.selectDate')}
                     </h4>
                     {isLoadingSlots ? (
                       <div className="flex items-center text-sm text-gray-500 mt-1" role="status">
                         <Loader2 className="h-3 w-3 animate-spin mr-2" aria-hidden="true" />
-                        Checking availability...
+                        {t('booking.checkingAvailability')}
                       </div>
                     ) : (
                       date &&
                       availableTimeSlots.length > 0 && (
                         <p className="text-sm text-gray-500 mt-1">
-                          {availableTimeSlots.length} slots available
+                          {t('booking.slotsAvailable', { count: availableTimeSlots.length })}
                         </p>
                       )
                     )}
@@ -476,7 +476,7 @@ export function BookingModal({
                     {!date ? (
                       <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm">
                         <CalendarDays className="h-12 w-12 mb-3 opacity-30" />
-                        <p>Select a date to see available times</p>
+                        <p>{t('booking.selectDateToSee')}</p>
                       </div>
                     ) : isLoadingSlots ? (
                       <div className="grid grid-cols-2 gap-2" role="status">
@@ -488,10 +488,10 @@ export function BookingModal({
                       <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm text-center px-4">
                         <Clock className="h-12 w-12 mb-3 opacity-30" />
                         <p className="font-medium text-gray-600">
-                          No availability
+                          {t('booking.noAvailability')}
                         </p>
                         <p className="mt-1 mb-4">
-                          Coach is not available on this day.
+                          {t('booking.coachNotAvailable')}
                         </p>
 
                         {slotsData?.nextAvailableDate && (
@@ -549,7 +549,7 @@ export function BookingModal({
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white h-11 font-medium"
                         onClick={() => setStep("details")}
                       >
-                        Continue
+                        {t('booking.continue')}
                       </Button>
                     </div>
                   )}

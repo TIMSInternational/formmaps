@@ -2064,6 +2064,35 @@
     "joinSession": "Unirse a Sesión",
     "leaveReview": "Dejar Reseña"
   },
+  "booking": {
+    "selectDateTime": "Seleccionar Fecha y Hora",
+    "timesShownIn": "Horarios en {{timezone}}",
+    "convertedToLocal": "Convertido a tu hora local ({{timezone}})",
+    "selectDate": "Selecciona una fecha",
+    "checkingAvailability": "Verificando disponibilidad...",
+    "slotsAvailable": "{{count}} horarios disponibles",
+    "selectDateToSee": "Selecciona una fecha para ver horarios",
+    "noAvailability": "Sin disponibilidad",
+    "coachNotAvailable": "El coach no está disponible este día.",
+    "jumpTo": "Ir a {{date}}",
+    "continue": "Continuar",
+    "back": "Volver",
+    "enterDetailsTitle": "Detalles de la Sesión",
+    "topicLabel": "Tema",
+    "selectTopic": "Selecciona un tema",
+    "topics": {
+      "careerGuidance": "Orientación Profesional",
+      "interviewPrep": "Preparación de Entrevista",
+      "resumeReview": "Revisión de CV",
+      "skillDevelopment": "Desarrollo de Habilidades"
+    },
+    "notesLabel": "Notas (opcional)",
+    "prepNotesPlaceholder": "¿Algo que te gustaría preparar o discutir?",
+    "processing": "Procesando...",
+    "rescheduleSession": "Reprogramar Sesión",
+    "bookAndPay": "Reservar y Pagar",
+    "scheduleEvent": "Programar Sesión"
+  },
   "common": {
     "male": "Masculino",
     "female": "Femenino"

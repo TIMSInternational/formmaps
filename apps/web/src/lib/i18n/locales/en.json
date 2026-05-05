@@ -1907,6 +1907,35 @@
     "joinSession": "Join Session",
     "leaveReview": "Leave Review"
   },
+  "booking": {
+    "selectDateTime": "Select a Date & Time",
+    "timesShownIn": "Times shown in {{timezone}}",
+    "convertedToLocal": "Converted to your local time ({{timezone}})",
+    "selectDate": "Select a date",
+    "checkingAvailability": "Checking availability...",
+    "slotsAvailable": "{{count}} slots available",
+    "selectDateToSee": "Select a date to see available times",
+    "noAvailability": "No availability",
+    "coachNotAvailable": "Coach is not available on this day.",
+    "jumpTo": "Jump to {{date}}",
+    "continue": "Continue",
+    "back": "Back",
+    "enterDetailsTitle": "Enter Session Details",
+    "topicLabel": "Topic",
+    "selectTopic": "Select a topic",
+    "topics": {
+      "careerGuidance": "Career Guidance",
+      "interviewPrep": "Interview Prep",
+      "resumeReview": "Resume Review",
+      "skillDevelopment": "Skill Development"
+    },
+    "notesLabel": "Notes (optional)",
+    "prepNotesPlaceholder": "Anything you'd like to prepare or discuss?",
+    "processing": "Processing...",
+    "rescheduleSession": "Reschedule Session",
+    "bookAndPay": "Book & Pay",
+    "scheduleEvent": "Schedule Session"
+  },
   "common": {
     "male": "Male",
     "female": "Female"
