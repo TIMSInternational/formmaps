@@ -1,10 +1,14 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AdminSidebar } from "./_components/AdminSidebar";
 import { AdminThemeProvider, useAdminTheme } from "@/contexts/AdminThemeContext";
 import { PageTopBar } from "@/components/layout/PageTopBar";
 import { ChatProvider } from "@/components/ai-chat/ChatContext";
 import { SidePanelContextProvider, SidePanelRenderer } from "@/components/side-panel/SidePanel";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 
 function AdminShell({ children }: { children: React.ReactNode }) {
   const { colors } = useAdminTheme();
@@ -64,6 +68,19 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const { isAdmin, loading } = useAdminAccess();
+
+  useEffect(() => {
+    if (!loading && !isAdmin) {
+      router.push("/login");
+    }
+  }, [isAdmin, loading, router]);
+
+  if (loading || !isAdmin) {
+    return <DashboardSkeleton />;
+  }
+
   return (
     <AdminThemeProvider>
       <ChatProvider>
