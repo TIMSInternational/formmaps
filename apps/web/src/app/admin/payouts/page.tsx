@@ -47,6 +47,14 @@ import {
 } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/utils";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function AdminPayoutsPage() {
   const router = useRouter();
@@ -97,19 +105,30 @@ export default function AdminPayoutsPage() {
     }
   };
 
-  const handleReject = async (id: string) => {
-    const reason = prompt(t("admin.payouts.prompt.reason", { defaultValue: "Enter a reason for rejection" }));
-    if (!reason) return;
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectId, setRejectId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
-    setActioningId(id);
+  const openRejectDialog = (id: string) => {
+    setRejectId(id);
+    setRejectReason("");
+    setRejectDialogOpen(true);
+  };
+
+  const handleReject = async () => {
+    if (!rejectId || !rejectReason.trim()) return;
+
+    setRejectDialogOpen(false);
+    setActioningId(rejectId);
     try {
-      await rejectAdminPayout(id, reason);
+      await rejectAdminPayout(rejectId, rejectReason.trim());
       toast.success(t("admin.payouts.toast.rejected", { defaultValue: "Payout rejected" }));
       refetch();
     } catch (error: any) {
       toast.error(error?.message || "Failed to reject payout");
     } finally {
       setActioningId(null);
+      setRejectId(null);
     }
   };
 
@@ -328,7 +347,7 @@ export default function AdminPayoutsPage() {
                                 variant="ghost"
                                 className="h-8 w-8 p-0 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50"
                                 disabled={!payoutId || actioningId === payoutId}
-                                onClick={() => payoutId && handleReject(payoutId)}
+                                onClick={() => payoutId && openRejectDialog(payoutId)}
                                 title="Reject"
                               >
                                 {actioningId === payoutId ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
@@ -382,6 +401,35 @@ export default function AdminPayoutsPage() {
           </div>
 
         </div>
+
+      {/* Rejection Reason Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reject Payout</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Textarea
+              placeholder="Enter a reason for rejection..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!rejectReason.trim()}
+              onClick={handleReject}
+            >
+              Reject Payout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
