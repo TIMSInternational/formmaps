@@ -2,281 +2,207 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import {
-    Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-    Plus, Search, Edit, Trash2, BookOpen, Loader2, MoreHorizontal,
-    GraduationCap, Users, Eye, FileText, CheckCircle, Star, TrendingUp, ExternalLink,
+    BookOpen, Star, TrendingUp, GraduationCap, Users, ExternalLink,
+    BarChart3, Clock, Award, Loader2,
 } from "lucide-react";
-import {
-    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
 import { useCourseList, useRecommendedCourses } from "@/hooks/useCourseQueries";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
-import { useConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Course } from "@/types/course";
 
 export default function CoursesPage() {
     const router = useRouter();
     const { isAdmin, loading: authLoading } = useAdminAccess();
     const { t } = useTranslation();
-    const { confirm, ConfirmDialog } = useConfirmDialog();
 
-    const [searchTerm, setSearchTerm] = useState("");
-    const [page, setPage] = useState(1);
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [isCreating, setIsCreating] = useState(false);
-    const [newCourse, setNewCourse] = useState({ title: "", description: "", instructor: "" });
-    const ITEMS_PER_PAGE = 15;
-
-    // Fetch the actual course catalog (Coursera + admin-created)
-    const { data: catalogData, isLoading: catalogLoading, refetch } = useCourseList();
+    const { data: catalogData, isLoading: catalogLoading } = useCourseList();
     const { data: recommendedData } = useRecommendedCourses();
     const { data: analyticsData } = useAdminAnalytics("month");
 
     const allCourses: Course[] = catalogData?.courses || catalogData?.Courses || [];
     const recommendedCourses: Course[] = recommendedData?.courses || [];
 
-    // Filter & paginate
-    const filteredCourses = useMemo(() => {
-        if (!searchTerm.trim()) return allCourses;
-        const q = searchTerm.toLowerCase();
-        return allCourses.filter((c) =>
-            c.title?.toLowerCase().includes(q) ||
-            c.provider?.toLowerCase().includes(q) ||
-            c.difficulty?.toLowerCase().includes(q)
-        );
-    }, [allCourses, searchTerm]);
-
-    const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
-    const paginatedCourses = filteredCourses.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
-
-    // Compute real stats
+    // Derived insights
     const topRated = useMemo(() =>
-        [...allCourses].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 5),
+        [...allCourses].filter(c => c.rating).sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 6),
         [allCourses]
     );
+    const mostPopular = useMemo(() =>
+        [...allCourses].filter(c => c.reviewCount).sort((a, b) => (b.reviewCount ?? 0) - (a.reviewCount ?? 0)).slice(0, 6),
+        [allCourses]
+    );
+    const providers = useMemo(() => {
+        const map = new Map<string, number>();
+        allCourses.forEach(c => { if (c.provider) map.set(c.provider, (map.get(c.provider) || 0) + 1); });
+        return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+    }, [allCourses]);
+    const difficulties = useMemo(() => {
+        const map = new Map<string, number>();
+        allCourses.forEach(c => { if (c.difficulty) map.set(c.difficulty, (map.get(c.difficulty) || 0) + 1); });
+        return Object.fromEntries(map);
+    }, [allCourses]);
     const avgRating = allCourses.length > 0
-        ? (allCourses.reduce((sum, c) => sum + (c.rating ?? 0), 0) / allCourses.length).toFixed(1)
+        ? (allCourses.reduce((s, c) => s + (c.rating ?? 0), 0) / allCourses.filter(c => c.rating).length).toFixed(1)
         : "—";
-
-    // Actions
-    const handleAddCourse = async () => {
-        setIsCreating(true);
-        try {
-            const { adminCreateCourse } = await import("@/services/courseService");
-            await adminCreateCourse(newCourse as any);
-            setIsAddDialogOpen(false);
-            setNewCourse({ title: "", description: "", instructor: "" });
-            toast.success("Course created");
-            refetch();
-        } catch {
-            toast.error("Failed to create course");
-        } finally {
-            setIsCreating(false);
-        }
-    };
-
-    const handleDeleteCourse = async (id: string) => {
-        const confirmed = await confirm({ title: "Delete Course", description: "This will permanently remove this course from the catalog.", confirmLabel: "Delete", variant: "destructive" });
-        if (!confirmed) return;
-        try {
-            const { adminDeleteCourse } = await import("@/services/courseService");
-            await adminDeleteCourse(id);
-            toast.success("Course deleted");
-            refetch();
-        } catch {
-            toast.error("Failed to delete course");
-        }
-    };
 
     useEffect(() => {
         if (!authLoading && !isAdmin) router.push("/login");
     }, [isAdmin, authLoading, router]);
 
-    useEffect(() => {
-        setPage(1);
-    }, [searchTerm]);
-
     if (authLoading) return <DashboardSkeleton />;
 
-    const statsCards = [
-        { label: "Total in Catalog", value: allCourses.length.toLocaleString(), icon: BookOpen },
-        { label: "Recommended", value: recommendedCourses.length.toLocaleString(), icon: TrendingUp },
-        { label: "Avg Rating", value: avgRating, icon: Star },
-        { label: "Providers", value: String(new Set(allCourses.map((c) => c.provider).filter(Boolean)).size), icon: GraduationCap },
-    ];
+    const cardStyle = {
+        borderRadius: "var(--admin-radius-lg, 8px)",
+        border: "1px solid var(--admin-border-default, #e5e5e5)",
+        background: "var(--admin-bg-card, #fff)",
+        padding: 20,
+    };
+    const labelStyle = { fontSize: 11, fontWeight: 500 as const, color: "var(--admin-font-tertiary, #818181)", textTransform: "uppercase" as const, letterSpacing: "0.04em" };
+    const valueStyle = { fontSize: 28, fontWeight: 700 as const, color: "var(--admin-font-primary, #111)", letterSpacing: "-0.02em" };
+    const sectionTitle = { fontSize: 13, fontWeight: 600 as const, color: "var(--admin-font-primary, #111)", marginBottom: 12, display: "flex" as const, alignItems: "center" as const, gap: 6 };
 
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">Course Catalog</h1>
-                    <p className="text-lg text-gray-500 font-medium">Platform courses sourced from Coursera and custom additions</p>
-                </div>
-                <div className="flex gap-3 w-full md:w-auto">
-                    <div className="relative w-full md:w-72">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                            placeholder="Search courses..."
-                            className="pl-9 h-10 bg-white border-gray-200 rounded-xl shadow-sm"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="h-10 rounded-xl bg-gray-900 text-white shadow-sm hover:bg-gray-800">
-                                <Plus className="mr-2 h-4 w-4" /> Add Course
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[525px] rounded-2xl">
-                            <DialogHeader>
-                                <DialogTitle>Add New Course</DialogTitle>
-                                <DialogDescription>Add a custom course to the platform catalog.</DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="title">Title</Label>
-                                    <Input id="title" value={newCourse.title} onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })} placeholder="e.g. Advanced React Patterns" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="desc">Description</Label>
-                                    <Textarea id="desc" value={newCourse.description} onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })} placeholder="Brief description..." />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="inst">Instructor</Label>
-                                    <Input id="inst" value={newCourse.instructor} onChange={(e) => setNewCourse({ ...newCourse, instructor: e.target.value })} placeholder="Instructor name" />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                                <Button onClick={handleAddCourse} disabled={isCreating || !newCourse.title.trim()}>
-                                    {isCreating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</> : <><Plus className="mr-2 h-4 w-4" /> Create</>}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </div>
+            <div>
+                <h1 className="text-4xl font-bold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>Course Insights</h1>
+                <p className="text-base mt-1" style={{ color: "var(--admin-font-tertiary)" }}>
+                    Platform course catalog overview — {allCourses.length} courses from Coursera
+                </p>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {statsCards.map((stat, i) => (
-                    <div key={i} style={{ borderRadius: "var(--admin-radius-lg, 8px)", border: "1px solid var(--admin-border-default, #e5e5e5)", background: "var(--admin-bg-card, #fff)", padding: 16 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                            <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--admin-bg-icon-box, #f5f5f5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <stat.icon style={{ width: 16, height: 16, color: "var(--admin-font-tertiary, #818181)" }} />
-                            </div>
-                        </div>
-                        <div style={{ fontSize: 24, fontWeight: 600, color: "var(--admin-font-primary, #111)", letterSpacing: "-0.02em" }}>{stat.value}</div>
-                        <div style={{ fontSize: 12, color: "var(--admin-font-tertiary, #818181)", marginTop: 2 }}>{stat.label}</div>
+            {/* Stats Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                {[
+                    { label: "Total Courses", value: catalogLoading ? "..." : allCourses.length.toLocaleString(), icon: BookOpen },
+                    { label: "Recommended", value: recommendedCourses.length.toLocaleString(), icon: TrendingUp },
+                    { label: "Avg Rating", value: avgRating, icon: Star },
+                    { label: "Providers", value: String(providers.length + (providers.length >= 5 ? "+" : "")), icon: GraduationCap },
+                    { label: "Difficulty Levels", value: String(Object.keys(difficulties).length), icon: BarChart3 },
+                ].map((s, i) => (
+                    <div key={i} style={cardStyle}>
+                        <s.icon style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)", marginBottom: 8 }} />
+                        <div style={valueStyle}>{s.value}</div>
+                        <div style={labelStyle}>{s.label}</div>
                     </div>
                 ))}
             </div>
 
-            {/* Top Rated Courses */}
-            {topRated.length > 0 && (
-                <div style={{ borderRadius: "var(--admin-radius-lg, 8px)", border: "1px solid var(--admin-border-default, #e5e5e5)", background: "var(--admin-bg-card, #fff)", padding: 16 }}>
-                    <h3 style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary, #111)", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                        <Star style={{ width: 14, height: 14, color: "#f59e0b" }} /> Top Rated Courses
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
-                        {topRated.map((c, i) => (
-                            <div key={c.id || i} className="flex items-center gap-3 p-2.5 rounded-lg" style={{ background: "var(--admin-bg-hover, #f9f9f9)" }}>
-                                <span className="text-xs font-bold text-amber-500 w-4">#{i + 1}</span>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-semibold truncate" style={{ color: "var(--admin-font-primary, #111)" }}>{c.title}</p>
-                                    <p className="text-[10px]" style={{ color: "var(--admin-font-tertiary, #818181)" }}>
-                                        {c.provider} &middot; {(c.rating ?? 0).toFixed(1)} &#9733;
-                                    </p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Top Rated */}
+                <div style={cardStyle}>
+                    <h3 style={sectionTitle}><Star style={{ width: 14, height: 14, color: "#f59e0b" }} /> Highest Rated</h3>
+                    {catalogLoading ? (
+                        <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-14 rounded-lg" />)}</div>
+                    ) : (
+                        <div className="space-y-2">
+                            {topRated.map((c, i) => (
+                                <div key={c.id || i} className="flex items-center gap-3 p-3 rounded-lg transition-colors" style={{ background: "var(--admin-bg-hover, #f9f9f9)" }}>
+                                    <span className="text-sm font-bold w-5 text-center" style={{ color: i < 3 ? "#f59e0b" : "var(--admin-font-tertiary)" }}>#{i + 1}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold truncate" style={{ color: "var(--admin-font-primary)" }}>{c.title}</p>
+                                        <p className="text-[11px]" style={{ color: "var(--admin-font-tertiary)" }}>{c.provider} &middot; {c.difficulty || "All levels"}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                                        <span className="text-sm font-semibold" style={{ color: "var(--admin-font-primary)" }}>{(c.rating ?? 0).toFixed(1)}</span>
+                                    </div>
+                                    {c.courseraUrl && (
+                                        <a href={c.courseraUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 p-1.5 rounded-md hover:bg-white transition-colors">
+                                            <ExternalLink className="h-3.5 w-3.5" style={{ color: "var(--admin-font-tertiary)" }} />
+                                        </a>
+                                    )}
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-            )}
 
-            {/* Course Table */}
-            <div style={{ borderRadius: "var(--admin-radius-lg, 8px)", border: "1px solid var(--admin-border-default, #e5e5e5)", background: "var(--admin-bg-card, #fff)", overflow: "hidden" }}>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="pl-4">Course</TableHead>
-                            <TableHead>Provider</TableHead>
-                            <TableHead>Difficulty</TableHead>
-                            <TableHead>Rating</TableHead>
-                            <TableHead>Duration</TableHead>
-                            <TableHead className="text-right pr-4">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {catalogLoading ? (
-                            <TableRow><TableCell colSpan={6} className="h-48 text-center"><Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto" /></TableCell></TableRow>
-                        ) : paginatedCourses.length === 0 ? (
-                            <TableRow><TableCell colSpan={6} className="h-48 text-center text-gray-500"><BookOpen className="h-8 w-8 text-gray-300 mx-auto mb-2" /><p>No courses match your search</p></TableCell></TableRow>
-                        ) : (
-                            paginatedCourses.map((course) => (
-                                <TableRow key={course.id}>
-                                    <TableCell className="pl-4 max-w-[280px]">
-                                        <p className="font-medium text-sm truncate" style={{ color: "var(--admin-font-primary)" }}>{course.title}</p>
-                                    </TableCell>
-                                    <TableCell className="text-sm" style={{ color: "var(--admin-font-secondary)" }}>{course.provider || "—"}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="secondary" className="text-[10px] font-medium">{course.difficulty || "—"}</Badge>
-                                    </TableCell>
-                                    <TableCell className="text-sm">
-                                        {course.rating ? <span className="flex items-center gap-1"><Star className="h-3 w-3 text-amber-400 fill-amber-400" />{course.rating.toFixed(1)}</span> : "—"}
-                                    </TableCell>
-                                    <TableCell className="text-sm" style={{ color: "var(--admin-font-tertiary)" }}>{course.duration ? `${course.duration}w` : "—"}</TableCell>
-                                    <TableCell className="text-right pr-4">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0 rounded-full"><MoreHorizontal className="h-4 w-4" /></Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-[160px]">
-                                                {course.courseraUrl && (
-                                                    <DropdownMenuItem onClick={() => window.open(course.courseraUrl, "_blank")} className="cursor-pointer">
-                                                        <ExternalLink className="mr-2 h-3.5 w-3.5 text-gray-400" /> View on Coursera
-                                                    </DropdownMenuItem>
-                                                )}
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={() => handleDeleteCourse(course.id)} className="text-red-600 cursor-pointer">
-                                                    <Trash2 className="mr-2 h-3.5 w-3.5" /> Remove
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-                <div className="flex items-center justify-between border-t p-3" style={{ borderColor: "var(--admin-border-default)" }}>
-                    <p className="text-xs" style={{ color: "var(--admin-font-tertiary)" }}>
-                        Showing {((page - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(page * ITEMS_PER_PAGE, filteredCourses.length)} of {filteredCourses.length} courses
-                    </p>
-                    <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="h-7 text-xs">{t("common.previous")}</Button>
-                        <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="h-7 text-xs">{t("common.next")}</Button>
-                    </div>
+                {/* Most Popular (by reviews) */}
+                <div style={cardStyle}>
+                    <h3 style={sectionTitle}><TrendingUp style={{ width: 14, height: 14, color: "#3b82f6" }} /> Most Popular</h3>
+                    {catalogLoading ? (
+                        <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-14 rounded-lg" />)}</div>
+                    ) : (
+                        <div className="space-y-2">
+                            {mostPopular.map((c, i) => (
+                                <div key={c.id || i} className="flex items-center gap-3 p-3 rounded-lg transition-colors" style={{ background: "var(--admin-bg-hover, #f9f9f9)" }}>
+                                    <span className="text-sm font-bold w-5 text-center" style={{ color: i < 3 ? "#3b82f6" : "var(--admin-font-tertiary)" }}>#{i + 1}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold truncate" style={{ color: "var(--admin-font-primary)" }}>{c.title}</p>
+                                        <p className="text-[11px]" style={{ color: "var(--admin-font-tertiary)" }}>{c.provider} &middot; {c.difficulty || "All levels"}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <Users className="h-3.5 w-3.5" style={{ color: "var(--admin-font-tertiary)" }} />
+                                        <span className="text-sm font-semibold" style={{ color: "var(--admin-font-primary)" }}>{(c.reviewCount ?? 0).toLocaleString()}</span>
+                                    </div>
+                                    {c.courseraUrl && (
+                                        <a href={c.courseraUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 p-1.5 rounded-md hover:bg-white transition-colors">
+                                            <ExternalLink className="h-3.5 w-3.5" style={{ color: "var(--admin-font-tertiary)" }} />
+                                        </a>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <ConfirmDialog />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Recommended for Students */}
+                <div style={cardStyle}>
+                    <h3 style={sectionTitle}><Award style={{ width: 14, height: 14, color: "#8b5cf6" }} /> AI-Recommended for Students</h3>
+                    {recommendedCourses.length === 0 ? (
+                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No recommendations generated yet</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {recommendedCourses.slice(0, 6).map((c, i) => (
+                                <div key={c.id || i} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: "var(--admin-bg-hover, #f9f9f9)" }}>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold truncate" style={{ color: "var(--admin-font-primary)" }}>{c.title}</p>
+                                        <p className="text-[11px]" style={{ color: "var(--admin-font-tertiary)" }}>{c.provider} &middot; {c.duration ? `${c.duration} weeks` : ""}</p>
+                                    </div>
+                                    {c.difficulty && <Badge variant="secondary" className="text-[10px] shrink-0">{c.difficulty}</Badge>}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Breakdown by Difficulty + Provider */}
+                <div style={cardStyle}>
+                    <h3 style={sectionTitle}><BarChart3 style={{ width: 14, height: 14, color: "#10b981" }} /> Catalog Breakdown</h3>
+                    <div className="space-y-4">
+                        <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--admin-font-tertiary)" }}>By Difficulty</p>
+                            <div className="flex flex-wrap gap-2">
+                                {Object.entries(difficulties).map(([level, count]) => (
+                                    <div key={level} className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: "var(--admin-bg-hover, #f9f9f9)" }}>
+                                        <span className="text-xs font-medium" style={{ color: "var(--admin-font-primary)" }}>{level}</span>
+                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "var(--admin-bg-card)", color: "var(--admin-font-tertiary)" }}>{count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--admin-font-tertiary)" }}>Top Providers</p>
+                            <div className="space-y-1.5">
+                                {providers.map(([name, count]) => (
+                                    <div key={name} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: "var(--admin-bg-hover, #f9f9f9)" }}>
+                                        <span className="text-xs font-medium" style={{ color: "var(--admin-font-primary)" }}>{name}</span>
+                                        <span className="text-xs font-semibold" style={{ color: "var(--admin-font-tertiary)" }}>{count} courses</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
