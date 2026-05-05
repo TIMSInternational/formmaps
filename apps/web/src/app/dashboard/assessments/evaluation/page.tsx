@@ -155,7 +155,10 @@ export default function EvaluatorsPage() {
   };
 
   const mergeApiDataIntoGroups = (apiData: EvaluationGroupWithId[]) => {
-    const updatedGroups = [...DEFAULT_EVALUATOR_GROUPS];
+    const updatedGroups = DEFAULT_EVALUATOR_GROUPS.map((g) => ({
+      ...g,
+      evaluators: [...g.evaluators],
+    }));
 
     apiData.forEach((apiEvaluator: EvaluationGroupWithId) => {
       const groupType = apiEvaluator.groupType?.toLowerCase();
@@ -658,56 +661,53 @@ export default function EvaluatorsPage() {
   };
 
   return (
-    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
-      {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8"
+    <div className="max-w-5xl mx-auto py-6">
+      {/* Back link */}
+      <Link
+        href="/dashboard/assessments"
+        className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4 transition-colors"
       >
-        <Link
-          href="/dashboard/assessments"
-          className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-3 transition-colors"
-        >
-          <ArrowLeft className="w-3 h-3" />
-          Assessments
-        </Link>
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
-          Invite Evaluators
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-[52ch]">
-          Add evaluators from different groups to get comprehensive feedback
-          for your 360-degree evaluation.
-        </p>
-      </motion.header>
+        <ArrowLeft className="w-3 h-3" />
+        Assessments
+      </Link>
 
-      <div className="space-y-5 max-w-6xl">
+      {/* Header row */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-6"
+      >
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">
+          360° Evaluation
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1 max-w-md">
+          Add evaluators from different groups to get comprehensive feedback.
+        </p>
+      </motion.div>
+
+      <div className="space-y-4">
         {/* Summary Card */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="dash-card p-5"
+          transition={{ delay: 0.05 }}
+          className="dash-card p-4"
         >
-          <div className="flex items-center flex-col md:flex-row gap-4 justify-between">
+          <div className="flex items-center flex-col sm:flex-row gap-3 justify-between">
             <div>
-              <h3 className="text-base font-semibold text-foreground mb-1">
-                Evaluation Progress
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {getTotalEvaluators()} evaluators added across{" "}
+              <p className="text-xs font-semibold text-foreground">
+                {getTotalEvaluators()} evaluators across{" "}
                 {evaluatorGroups.length} groups
               </p>
             </div>
-            <div className="flex flex-col md:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     disabled={
                       getTotalEvaluators() === 0 || !areAllGroupsComplete()
                     }
-                    className="bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
+                    className="bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5"
                   >
                     <Mail className="w-4 h-4" />
                     <span>Send Email Invitations</span>
@@ -740,7 +740,7 @@ export default function EvaluatorsPage() {
                     disabled={
                       getTotalEvaluators() === 0 || !areAllGroupsComplete()
                     }
-                    className="border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
+                    className="border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5"
                   >
                     <Phone className="w-4 h-4" />
                     <span>Send SMS Invitations</span>
@@ -771,25 +771,24 @@ export default function EvaluatorsPage() {
         </motion.div>
 
         {/* Evaluator Groups */}
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {evaluatorGroups.map((group, index) => (
             <motion.div
               key={group.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 + index * 0.08 }}
-              className="dash-card p-5"
+              transition={{ delay: 0.1 + index * 0.05 }}
+              className="dash-card p-4"
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="text-base font-semibold text-foreground">
+                  <h3 className="text-sm font-semibold text-foreground">
                     {group.name}
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {group.evaluators.length} of {group.maxAllowed} evaluators
-                    added
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {group.evaluators.length}/{group.maxAllowed} added
                     {group.minRequired > 0 &&
-                      ` (min ${group.minRequired} required)`}
+                      ` · min ${group.minRequired}`}
                   </p>
                 </div>
                 <span
@@ -805,13 +804,13 @@ export default function EvaluatorsPage() {
                 </span>
               </div>
 
-              <div className="mb-4">
+              <div className="mb-3">
                 <button
                   onClick={() => openAddModal(group.id)}
-                  className="w-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-2 rounded-xl text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
                   disabled={group.evaluators.length >= group.maxAllowed}
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                   <span>Add {group.name}</span>
                 </button>
               </div>
@@ -986,15 +985,10 @@ export default function EvaluatorsPage() {
                     ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <UserPlus className="w-6 h-6 text-muted-foreground" />
-                  </div>
-                  <p className="text-sm font-medium text-foreground">
-                    No evaluators added yet
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Click &quot;Add {group.name}&quot; to get started
+                <div className="text-center py-4">
+                  <UserPlus className="w-5 h-5 text-muted-foreground/40 mx-auto mb-1.5" />
+                  <p className="text-xs text-muted-foreground">
+                    No evaluators yet
                   </p>
                 </div>
               )}

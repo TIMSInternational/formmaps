@@ -7,35 +7,25 @@ import { useGlobalStore } from "@/store/useGlobalStore";
 import {
   getAllMILExams,
   MILExamMetadata,
-  getAllUserExamResults,
-  getUserExamHistory,
-  getUserProgressSummary,
-  UserExamResult,
+  getMILResults,
+  MILResultsData,
   UserProgressSummary,
   retryPendingSubmissions,
 } from "@/services/milService";
 import {
   getUserEvaluationGroups,
-  getUserEvaluationProgressSummary,
   EvaluationGroupProgress,
-  UserEvaluationProgress,
 } from "@/services/evaluationService";
 import MILInstructions from "./_components/MILInstructions";
 import MILExamRunner from "./_components/MILExamRunner";
 import MILCompletion from "./_components/MILCompletion";
 import MILSubtestCompletion from "./_components/MILSubtestCompletion";
-import {
-  EvaluationSession,
-  EvaluationResponse,
-  EvaluatorGroup,
-} from "@/services/evaluationService";
 import Link from "next/link";
 import {
   ArrowLeft,
+  ArrowRight,
   Loader2,
   AlertCircle,
-  Lightbulb,
-  Users,
   CheckCircle2,
   Clock,
   HelpCircle,
@@ -55,7 +45,7 @@ type AssessmentStep =
 
 export default function MILAssessmentPage() {
   const { t } = useTranslation();
-  const { language } = useGlobalStore();
+  const { user, language } = useGlobalStore();
   const [assessmentType, setAssessmentType] = useState<AssessmentType>("mil");
   const [currentStep, setCurrentStep] = useState<AssessmentStep>("overview");
   const [exams, setExams] = useState<MILExamMetadata[]>([]);
@@ -73,8 +63,9 @@ export default function MILAssessmentPage() {
   >([]);
   const [progressLoading, setProgressLoading] = useState(true);
 
-  // Get current user ID from localStorage or token
+  // Get current user ID from global store or token fallback
   const getCurrentUserId = (): string => {
+    if (user?.id) return user.id;
     try {
       const token = localStorage.getItem("token");
       if (token) {
@@ -85,8 +76,8 @@ export default function MILAssessmentPage() {
           ] || "unknown"
         );
       }
-    } catch (error) {
-      // error handled silently
+    } catch {
+      // fallback to unknown
     }
     return "unknown";
   };
@@ -96,15 +87,52 @@ export default function MILAssessmentPage() {
       setProgressLoading(true);
       const userId = getCurrentUserId();
 
-      // Load LIA progress
-      const liaResults = await getAllUserExamResults(language);
-      const liaProgressSummary = getUserProgressSummary(liaResults);
-      setLiaProgress(liaProgressSummary);
+      // Load LIA progress from /api/v1/mil/results/{userId} — single source of truth
+      const milResults = await getMILResults(userId);
+
+      if (milResults && milResults.examResults?.length > 0) {
+        const completed = milResults.examResults.filter(
+          (e) => e.status === "completed"
+        );
+
+        setLiaProgress({
+          totalAttempts: milResults.completedExams,
+          completedExams: completed.length,
+          averageScore: milResults.overallScore,
+          bestScore:
+            completed.length > 0
+              ? Math.max(...completed.map((e) => e.scorePercentage ?? 0))
+              : 0,
+          examResults: [],
+          examTypes: {},
+        });
+
+        // Sync completedExams state with API data so subtests cards show correctly
+        const completedIds = completed.map((e) => e.examId);
+        setCompletedExams((prev) => {
+          if (completedIds.length > prev.length) {
+            localStorage.setItem(
+              "mil_completed_exams",
+              JSON.stringify(completedIds)
+            );
+            return completedIds;
+          }
+          return prev;
+        });
+      } else {
+        setLiaProgress({
+          totalAttempts: 0,
+          completedExams: 0,
+          averageScore: 0,
+          bestScore: 0,
+          examResults: [],
+          examTypes: {},
+        });
+      }
 
       // Load 360° Evaluation progress
       const evaluationGroups = await getUserEvaluationGroups(userId, language);
       setEvaluationProgress(evaluationGroups);
-
     } catch (error) {
       // error handled silently
     } finally {
@@ -193,7 +221,7 @@ export default function MILAssessmentPage() {
 
   if (loading && assessmentType === "mil") {
     return (
-      <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh] flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">Loading LIA Assessment...</p>
@@ -204,7 +232,7 @@ export default function MILAssessmentPage() {
 
   if (error && assessmentType === "mil") {
     return (
-      <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh] flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="w-6 h-6 text-red-600" />
@@ -226,288 +254,135 @@ export default function MILAssessmentPage() {
 
   // MIL Assessment Overview Screen
   if (currentStep === "overview") {
+    const allComplete = completedExams.length >= exams.length && exams.length > 0;
+
     return (
-      <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
-        {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
+      <div className="max-w-4xl mx-auto py-6">
+        {/* Back link */}
+        <Link
+          href="/dashboard/assessments"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4 transition-colors"
         >
-          <Link
-            href="/dashboard/assessments"
-            className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-3 transition-colors"
-          >
-            <ArrowLeft className="w-3 h-3" />
-            {t("dashboard.assessments", "Assessments")}
-          </Link>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
-            {t("dashboard.liaTitle")}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-[52ch]">
-            {t("dashboard.liaAssessmentDescription")}
-          </p>
-        </motion.header>
+          <ArrowLeft className="w-3 h-3" />
+          {t("dashboard.assessments", "Assessments")}
+        </Link>
 
-        <div className="space-y-5 max-w-4xl">
-          {/* Progress Overview Section */}
-          {!progressLoading &&
-            (liaProgress || evaluationProgress.length > 0) && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="dash-card p-5"
-              >
-                <h2 className="text-base font-semibold text-foreground mb-4">
-                  {t("dashboard.assessmentProgressOverview")}
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* LIA Progress */}
-                  {liaProgress && (
-                    <div className="p-4 rounded-xl bg-secondary border border-border">
-                      <div className="flex items-center mb-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                          <Lightbulb className="w-4 h-4 text-blue-600" />
-                        </div>
-                        <h3 className="font-semibold text-foreground">
-                          {t("dashboard.liaProgress")}
-                        </h3>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            {t("dashboard.totalSubAssessments")}:
-                          </span>
-                          <span className="font-medium text-foreground">
-                            {liaProgress.totalAttempts}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            {t("dashboard.completed")}:
-                          </span>
-                          <span className="font-medium text-foreground">
-                            {liaProgress.completedExams}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            {t("dashboard.bestScore")}:
-                          </span>
-                          <span className="font-medium text-foreground">
-                            {liaProgress.bestScore.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            {t("dashboard.averageScore")}:
-                          </span>
-                          <span className="font-medium text-foreground">
-                            {liaProgress.averageScore.toFixed(1)}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 360 Evaluation Progress */}
-                  <div className="p-4 rounded-xl bg-secondary border border-border">
-                    <div className="flex items-center mb-3">
-                      <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
-                        <Users className="w-4 h-4 text-emerald-600" />
-                      </div>
-                      <h3 className="font-semibold text-foreground">
-                        {t("dashboard.360Evaluations")}
-                      </h3>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      {evaluationProgress.length > 0 ? (
-                        <>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              {t("dashboard.totalGroups")}:
-                            </span>
-                            <span className="font-medium text-foreground">
-                              {evaluationProgress.length}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              {t("dashboard.completed")}:
-                            </span>
-                            <span className="font-medium text-foreground">
-                              {
-                                evaluationProgress.filter(
-                                  (g) => g.isEvaluationCompleted
-                                ).length
-                              }
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              {t("dashboard.pending")}:
-                            </span>
-                            <span className="font-medium text-foreground">
-                              {
-                                evaluationProgress.filter(
-                                  (g) =>
-                                    !g.isEvaluationCompleted &&
-                                    new Date(g.tokenExpiryDate) > new Date()
-                                ).length
-                              }
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Expired:</span>
-                            <span className="font-medium text-foreground">
-                              {
-                                evaluationProgress.filter(
-                                  (g) =>
-                                    !g.isEvaluationCompleted &&
-                                    new Date(g.tokenExpiryDate) <= new Date()
-                                ).length
-                              }
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <p className="text-muted-foreground italic">
-                          No evaluation groups created yet
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-          {progressLoading && (
-            <div className="dash-card p-5">
-              <div className="flex items-center justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground mr-2" />
-                <span className="text-muted-foreground text-sm">
-                  Loading progress data...
-                </span>
-              </div>
+        {/* Header row */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start justify-between gap-4 mb-6"
+        >
+          <div>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">
+              {t("dashboard.liaTitle")}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1 max-w-md">
+              {t("dashboard.liaAssessmentDescription")}
+            </p>
+          </div>
+          {allComplete && (
+            <div className="px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 flex items-center gap-1.5 shrink-0">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-[11px] font-semibold text-emerald-700">
+                {t("dashboard.allComplete", "All Complete")}
+              </span>
             </div>
           )}
+        </motion.div>
 
-          {/* Subtests Overview */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="dash-card p-5"
-          >
-            <h2 className="text-base font-semibold text-foreground mb-4">Subtests</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {exams.map((exam, index) => {
-                const isCompleted = completedExams.includes(exam.id);
-                const isNext = index === completedExams.length;
-
-                return (
-                  <div
-                    key={exam.id}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      isCompleted
-                        ? "border-emerald-200 bg-emerald-50/50"
-                        : isNext
-                        ? "border-blue-200 bg-blue-50/50"
-                        : "border-border bg-secondary"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-foreground">{exam.name}</h3>
-                      {isCompleted && (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {exam.description}
-                    </p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {exam.timeLimitMinutes} min
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <HelpCircle className="w-3 h-3" />
-                        {exam.totalQuestions} questions
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-
-          {/* Progress Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="dash-card p-5"
-          >
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="space-y-4"
+        >
+          {/* Progress bar inline */}
+          <div className="dash-card p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-foreground">
-                Progress
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {completedExams.length}/{exams.length} subtests completed
+              <span className="text-xs font-semibold text-foreground">Progress</span>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {completedExams.length}/{exams.length} subtests
               </span>
             </div>
-            <div className="w-full bg-secondary rounded-full h-2">
+            <div className="w-full bg-secondary rounded-full h-1.5">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-100"
+                className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
                 style={{
-                  width: `${(completedExams.length / exams.length) * 100}%`,
+                  width: `${exams.length > 0 ? (completedExams.length / exams.length) * 100 : 0}%`,
                 }}
               />
             </div>
-          </motion.div>
+          </div>
 
-          {/* Action Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-          >
-            {completedExams.length < exams.length ? (
-              <button
-                onClick={() => handleStartExam(completedExams.length)}
-                className="bg-foreground text-background hover:bg-foreground/90 rounded-xl px-8 py-3 font-medium text-base transition-colors"
-              >
-                {completedExams.length === 0
-                  ? t("dashboard.startAssessment")
-                  : t("dashboard.continueAssessment")}
-              </button>
-            ) : (
-              <div className="dash-card p-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+          {/* Subtests — compact grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {exams.map((exam, index) => {
+              const isDone = completedExams.includes(exam.id) || index < completedExams.length;
+              const isNext = !isDone && index === completedExams.length;
+
+              return (
+                <div
+                  key={exam.id}
+                  className={`p-3.5 rounded-xl border-2 transition-all ${
+                    isDone
+                      ? "border-emerald-200 bg-emerald-50/50"
+                      : isNext
+                      ? "border-blue-200 bg-blue-50/50"
+                      : "border-border bg-secondary/50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-sm font-semibold text-foreground">{exam.name}</h3>
+                    {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-base font-semibold text-foreground">
-                      Assessment Complete!
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      You have completed all MIL subtests.
-                    </p>
+                  <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2 mb-2">
+                    {exam.description}
+                  </p>
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {exam.timeLimitMinutes} min
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <HelpCircle className="w-3 h-3" />
+                      {exam.totalQuestions} q
+                    </span>
                   </div>
-                  <a
-                    href="/dashboard"
-                    className="bg-foreground text-background hover:bg-foreground/90 rounded-xl px-5 py-2 text-sm font-medium transition-colors"
-                  >
-                    Return to Dashboard
-                  </a>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* Action */}
+          {allComplete ? (
+            <div className="dash-card p-4 flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
               </div>
-            )}
-          </motion.div>
-        </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-foreground">Assessment Complete!</h3>
+                <p className="text-xs text-muted-foreground">All 5 cognitive subtests completed.</p>
+              </div>
+              <Link
+                href="/dashboard/assessments/mil/results"
+                className="bg-foreground text-background hover:bg-foreground/90 rounded-xl px-4 py-2 text-xs font-semibold transition-colors shrink-0"
+              >
+                View Results
+              </Link>
+            </div>
+          ) : (
+            <button
+              onClick={() => handleStartExam(completedExams.length)}
+              className="w-full bg-foreground text-background hover:bg-foreground/90 rounded-xl px-6 py-2.5 font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+            >
+              {completedExams.length === 0
+                ? t("dashboard.startAssessment")
+                : t("dashboard.continueAssessment")}
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
+        </motion.div>
       </div>
     );
   }

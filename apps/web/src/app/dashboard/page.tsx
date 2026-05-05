@@ -10,21 +10,21 @@ import { CareerMatchHub } from "./_components/CareerMatchHub";
 import { UniversityMatches } from "./_components/UniversityMatches";
 import { SkillBridgingCard } from "./_components/SkillBridgingCard";
 import { PortfolioSnapshot } from "./_components/PortfolioSnapshot";
-import { PCAResults } from "./_components/PCAResults";
-import { MILResults } from "./_components/MILResults";
-import { LiveStatus } from "./_components/LiveStatus";
 import { motion } from "framer-motion";
 import { normalizeRole } from "@/lib/roleUtils";
 import { AdminTimeline } from "@/components/ui/admin-timeline";
-import { BookOpen, Target, FileText, GraduationCap } from "lucide-react";
+import { BookOpen, Target, FileText, GraduationCap, Lock } from "lucide-react";
 import { Roles } from "@/lib/permissions";
+import { useAssessmentProgress } from "@/hooks/useAssessmentQueries";
+import { Card } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const { t } = useTranslation();
   const { user } = useGlobalStore();
   const [dashboardData, setDashboardData] = useState<any>(null);
 
-  const userRole = normalizeRole(user.role);
+  const userRole = normalizeRole(user?.role || "");
 
   useEffect(() => {
     if (!user || userRole === Roles.COACH) return;
@@ -60,6 +60,10 @@ export default function DashboardPage() {
 
   const firstName =
     user.name?.split(" ")[0] || t("dashboard.defaultUserName", "there");
+
+  const { data: assessmentProgress } = useAssessmentProgress(user?.id || "");
+  const allAssessmentsComplete =
+    assessmentProgress?.overallCompletion?.completedAssessments === 3;
 
   return (
     <div className="space-y-8">
@@ -101,37 +105,42 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start"
+          className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch"
         >
           <div className="lg:col-span-8">
-            <CareerMatchHub
-              aiSummary={dashboardData?.aiSummary || dashboardData?.AiSummary}
-            />
+            {allAssessmentsComplete ? (
+              <CareerMatchHub
+                aiSummary={dashboardData?.aiSummary || dashboardData?.AiSummary}
+              />
+            ) : (
+              <Card className="p-6 rounded-2xl border-border h-full">
+                <div className="flex flex-col items-center justify-center py-8 text-center h-full">
+                  <Lock className="w-10 h-10 text-muted-foreground/50 mb-3" />
+                  <h3 className="text-lg font-semibold text-foreground mb-1">
+                    {t("dashboard.recommendationsLocked", "Recommendations Locked")}
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mb-4">
+                    {t(
+                      "dashboard.completeAllAssessments",
+                      "Complete all 3 assessments (PCA, LIA, and 360° Evaluation) to unlock your personalized career matches and recommendations."
+                    )}
+                  </p>
+                  <Link
+                    href="/dashboard/assessments"
+                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    {t("dashboard.goToAssessments", "Go to Assessments")}
+                  </Link>
+                </div>
+              </Card>
+            )}
           </div>
-          <div className="lg:col-span-4 flex flex-col gap-4">
-            <QuickActions />
-            <LiveStatus />
+          <div className="lg:col-span-4">
+            <QuickActions className="h-full" />
           </div>
         </motion.div>
 
-        {/* ROW 3: Cognitive Profile (6 + 6) */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-5"
-        >
-          <PCAResults
-            pcaDataProp={dashboardData?.pcaResults || dashboardData?.PcaResults}
-            className="h-full"
-          />
-          <MILResults
-            milDataProp={dashboardData?.milResults || dashboardData?.MilResults}
-            className="h-full"
-          />
-        </motion.div>
-
-        {/* ROW 4: Your Journey Timeline */}
+        {/* ROW 3: Your Journey Timeline */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -179,7 +188,16 @@ export default function DashboardPage() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-5 pb-16"
         >
-          <UniversityMatches />
+          {allAssessmentsComplete ? (
+            <UniversityMatches />
+          ) : (
+            <Card className="p-5 rounded-2xl border-border flex flex-col items-center justify-center text-center min-h-[180px]">
+              <Lock className="w-6 h-6 text-muted-foreground/40 mb-2" />
+              <p className="text-xs text-muted-foreground">
+                {t("dashboard.universityMatchesLocked", "Complete all assessments to see university matches")}
+              </p>
+            </Card>
+          )}
           <SkillBridgingCard className="h-full" />
           <PortfolioSnapshot className="h-full" />
         </motion.div>

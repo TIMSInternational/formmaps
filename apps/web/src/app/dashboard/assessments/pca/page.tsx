@@ -11,6 +11,7 @@ import {
 } from "@/services/pcaService";
 import PCAResultsPanel from "../_components/PCAResultsPanel";
 import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import {
   Brain,
   CheckCircle2,
@@ -36,6 +37,7 @@ export default function PCAAssessmentPage() {
     "spanish" | "english"
   >("spanish");
   const [selectedJCA, setSelectedJCA] = useState<JCACode>("GTCML");
+  const [selectedGender, setSelectedGender] = useState<"M" | "F">("M");
   const [isCreating, setIsCreating] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [assessmentUrl, setAssessmentUrl] = useState<string | null>(null);
@@ -48,7 +50,7 @@ export default function PCAAssessmentPage() {
 
   const handleStartAssessment = async () => {
     if (!user?.id || !user?.name || !user?.email) {
-      alert(t("dashboard.pcaUserInfoIncomplete"));
+      toast.error(t("dashboard.pcaUserInfoIncomplete"));
       return;
     }
 
@@ -58,7 +60,7 @@ export default function PCAAssessmentPage() {
         PerNom: user.name.split(" ")[0] || "User",
         PerApe: user.name.split(" ").slice(1).join(" ") || "Name",
         PerNumIde: user.id.slice(-8),
-        PerGen: "M" as const,
+        PerGen: selectedGender,
         permail: user.email,
         JcaCod: selectedJCA,
         BillingCenter: "",
@@ -77,10 +79,10 @@ export default function PCAAssessmentPage() {
           refreshPCAData();
         }, 2000);
       } else {
-        alert(`Failed to create assessment: ${result.message}`);
+        toast.error(result.message || t("dashboard.failedToCreateAssessment", "Failed to create assessment"));
       }
     } catch (error) {
-      alert("Failed to create assessment. Please try again.");
+      toast.error(t("dashboard.failedToCreateAssessment", "Failed to create assessment. Please try again."));
     } finally {
       setIsCreating(false);
     }
@@ -88,7 +90,7 @@ export default function PCAAssessmentPage() {
 
   if (loading) {
     return (
-      <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh] flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">Loading PCA data...</p>
@@ -135,182 +137,184 @@ export default function PCAAssessmentPage() {
   }
 
   return (
-    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
-      {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: 20 }}
+    <div className="max-w-4xl mx-auto py-6">
+      {/* Back link */}
+      <Link
+        href="/dashboard/assessments"
+        className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4 transition-colors"
+      >
+        <ArrowLeft className="w-3 h-3" />
+        {t("dashboard.assessments", "Assessments")}
+      </Link>
+
+      {/* Header row */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8"
+        className="flex items-start justify-between gap-4 mb-6"
       >
         <div>
-          <Link
-            href="/dashboard/assessments"
-            className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-3 transition-colors"
-          >
-            <ArrowLeft className="w-3 h-3" />
-            {t("dashboard.assessments", "Assessments")}
-          </Link>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
             {t("dashboard.pcaTitle")}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-[52ch]">
+          <p className="text-sm text-muted-foreground mt-1 max-w-md">
             {t("dashboard.pcaDescription")}
           </p>
         </div>
-
         {hasPCA && isCompleted && (
-          <div className="flex items-center gap-2.5">
-            <div className="px-3.5 py-2 rounded-full bg-emerald-50 border border-emerald-200 flex items-center gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-[11px] font-semibold text-emerald-700">
-                {t("dashboard.assessmentCompleted")}
-              </span>
-            </div>
+          <div className="px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 flex items-center gap-1.5 shrink-0">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="text-[11px] font-semibold text-emerald-700">
+              {t("dashboard.assessmentCompleted")}
+            </span>
           </div>
         )}
-      </motion.header>
+      </motion.div>
 
-      <div className="space-y-5 max-w-3xl">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="space-y-4"
+      >
         {/* Completed: View Results */}
         {hasPCA && isCompleted && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.05 }}
+          <button
+            onClick={() => setShowResults(true)}
+            className="w-full dash-card p-4 flex items-center justify-between hover:border-foreground/20 transition-colors group"
           >
-            <button
-              onClick={() => setShowResults(true)}
-              className="w-full dash-card p-5 flex items-center justify-between hover:border-foreground/20 transition-colors group"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                  <Brain className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-foreground text-sm">
-                    {t("dashboard.viewResults", "View Results")}
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    See your DISC personality profile and competency breakdown
-                  </p>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                <Brain className="w-4.5 h-4.5 text-blue-600" />
               </div>
-              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-            </button>
-          </motion.div>
+              <div className="text-left">
+                <h3 className="font-semibold text-foreground text-sm">
+                  {t("dashboard.viewResults", "View Results")}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  See your DISC personality profile and competency breakdown
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+          </button>
         )}
 
         {/* Not completed: Configuration */}
         {(!hasPCA || !isCompleted) && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.05 }}
-          >
-            <div className="dash-card p-5 space-y-5">
-              <div>
-                <h2 className="text-sm font-semibold text-foreground mb-1">
-                  {t("dashboard.assessmentConfiguration")}
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  {t("dashboard.selectAssessmentLanguage")}
-                  <span className="ml-1">
-                    ({t("dashboard.current")}:{" "}
-                    {selectedLanguage === "spanish" ? t("language.spanish") : t("language.english")})
-                  </span>
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { key: "spanish" as const, flag: "\u{1F1EA}\u{1F1F8}", label: t("language.spanish"), sub: t("dashboard.spanishAssessment") },
-                  { key: "english" as const, flag: "\u{1F1FA}\u{1F1F8}", label: t("language.english"), sub: t("dashboard.englishAssessment") },
-                ].map((lang) => (
-                  <button
-                    key={lang.key}
-                    onClick={() => setSelectedLanguage(lang.key)}
-                    className={cn(
-                      "p-4 rounded-xl border-2 transition-all text-center",
-                      selectedLanguage === lang.key
-                        ? "border-foreground bg-secondary"
-                        : "border-border hover:border-foreground/20"
-                    )}
-                  >
-                    <div className="text-2xl mb-1.5">{lang.flag}</div>
-                    <div className="text-sm font-semibold text-foreground">{lang.label}</div>
-                    <div className="text-[11px] text-muted-foreground">{lang.sub}</div>
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={handleStartAssessment}
-                disabled={isCreating}
-                className="w-full py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm transition-colors bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isCreating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {t("dashboard.creatingAssessment")}
-                  </>
-                ) : (
-                  <>
-                    {t("dashboard.startPCA")}
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
+          <div className="dash-card p-5 space-y-4">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground mb-0.5">
+                {t("dashboard.assessmentConfiguration")}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {t("dashboard.selectAssessmentLanguage")}
+              </p>
             </div>
-          </motion.div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { key: "spanish" as const, flag: "\u{1F1EA}\u{1F1F8}", label: t("language.spanish"), sub: t("dashboard.spanishAssessment") },
+                { key: "english" as const, flag: "\u{1F1FA}\u{1F1F8}", label: t("language.english"), sub: t("dashboard.englishAssessment") },
+              ].map((lang) => (
+                <button
+                  key={lang.key}
+                  onClick={() => setSelectedLanguage(lang.key)}
+                  className={cn(
+                    "p-3 rounded-xl border-2 transition-all text-center",
+                    selectedLanguage === lang.key
+                      ? "border-foreground bg-secondary"
+                      : "border-border hover:border-foreground/20"
+                  )}
+                >
+                  <div className="text-xl mb-1">{lang.flag}</div>
+                  <div className="text-sm font-semibold text-foreground">{lang.label}</div>
+                  <div className="text-[10px] text-muted-foreground">{lang.sub}</div>
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { key: "M" as const, label: t("common.male", "Male") },
+                { key: "F" as const, label: t("common.female", "Female") },
+              ].map((g) => (
+                <button
+                  key={g.key}
+                  onClick={() => setSelectedGender(g.key)}
+                  className={cn(
+                    "p-2.5 rounded-xl border-2 transition-all text-center text-sm font-semibold",
+                    selectedGender === g.key
+                      ? "border-foreground bg-secondary text-foreground"
+                      : "border-border text-muted-foreground hover:border-foreground/20"
+                  )}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={handleStartAssessment}
+              disabled={isCreating}
+              className="w-full py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm transition-colors bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCreating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t("dashboard.creatingAssessment")}
+                </>
+              ) : (
+                <>
+                  {t("dashboard.startPCA")}
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </div>
         )}
 
-        {/* Info Cards */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-        >
-          <div className="dash-card p-5">
-            <h3 className="text-sm font-semibold text-foreground mb-3">
+        {/* Info Cards — side by side, compact */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="dash-card p-4">
+            <h3 className="text-xs font-semibold text-foreground mb-2">
               {t("dashboard.whatIsPCA")}
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {[
                 t("dashboard.pcaEvaluates"),
                 t("dashboard.pcaStrengths"),
                 t("dashboard.pcaJobMatching"),
                 t("dashboard.pcaLanguages"),
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 mt-0.5 shrink-0" />
+                <li key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground leading-tight">
+                  <CheckCircle2 className="w-3 h-3 text-blue-500 mt-0.5 shrink-0" />
                   <span>{item}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="dash-card p-5">
-            <h3 className="text-sm font-semibold text-foreground mb-3">
+          <div className="dash-card p-4">
+            <h3 className="text-xs font-semibold text-foreground mb-2">
               {t("dashboard.assessmentDetails")}
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {[
                 { icon: Clock, text: t("dashboard.pcaDuration") },
                 { icon: Shield, text: t("dashboard.pcaFormat") },
                 { icon: CheckCircle2, text: t("dashboard.pcaImmediateResults") },
                 { icon: Globe, text: t("dashboard.pcaSecurePlatform") },
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                  <item.icon className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" />
+                <li key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground leading-tight">
+                  <item.icon className="w-3 h-3 text-emerald-500 mt-0.5 shrink-0" />
                   <span>{item.text}</span>
                 </li>
               ))}
             </ul>
           </div>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
 
       {/* Results Panel */}
       {showResults && pcaData?.pcaCod && (

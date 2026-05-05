@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -292,6 +292,7 @@ export function BookingModal({
         className="sm:max-w-[1000px] w-full p-0 overflow-hidden gap-0 bg-white text-gray-900 border-gray-200 shadow-2xl rounded-xl"
         aria-describedby={undefined}
       >
+        <DialogTitle className="sr-only">Book a Session</DialogTitle>
         <div className="flex flex-col md:flex-row min-h-[550px]">
           {/* Column 1: Coach Info (Sidebar) */}
           <div className="w-full md:w-[280px] p-6 border-r border-gray-100 flex flex-col bg-white">
@@ -311,9 +312,6 @@ export function BookingModal({
                 <AvatarFallback>{coach.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <p className="text-gray-500 text-sm font-medium mb-1">Coach</p>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">
-                {coach.name}
-              </h3>
               <h3 className="text-lg font-bold text-gray-900 mb-1">
                 {coach.name}
               </h3>
@@ -340,7 +338,7 @@ export function BookingModal({
                 </div>
                 <div className="flex items-center">
                   <Globe className="h-4 w-4 mr-3 text-gray-400" aria-hidden="true" />
-                  <span className="font-medium">Asia/Kolkata</span>
+                  <span className="font-medium">{slotsData?.timezone || timezone}</span>
                 </div>
               </div>
             </div>
