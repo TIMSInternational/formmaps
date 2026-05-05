@@ -76,7 +76,7 @@ export default function CoachesPage() {
     {
       labelKey: "admin.coaches.totalCoaches",
       label: "Total Coaches",
-      value: isLoadingStats ? "..." : stats.totalCoaches.toString(),
+      value: isLoadingStats ? "—" : stats.totalCoaches.toString(),
       icon: Users,
       color: "text-blue-600",
       bg: "bg-blue-50/50",
@@ -85,7 +85,7 @@ export default function CoachesPage() {
     {
       labelKey: "admin.coaches.activeNow",
       label: "Active Now",
-      value: isLoadingStats ? "..." : stats.activeNow.toString(),
+      value: isLoadingStats ? "—" : stats.activeNow.toString(),
       icon: UserCheck,
       color: "text-green-600",
       bg: "bg-green-50/50",
@@ -94,7 +94,7 @@ export default function CoachesPage() {
     {
       labelKey: "admin.coaches.pendingInvites",
       label: "Pending Invites",
-      value: isLoadingStats ? "..." : stats.pendingInvites.toString(),
+      value: isLoadingStats ? "—" : stats.pendingInvites.toString(),
       icon: UserPlus,
       color: "text-orange-600",
       bg: "bg-orange-50/50",
@@ -103,7 +103,7 @@ export default function CoachesPage() {
     {
       labelKey: "admin.coaches.expiringContracts",
       label: "Expiring Contracts",
-      value: isLoadingStats ? "..." : stats.expiringContracts.toString(),
+      value: isLoadingStats ? "—" : stats.expiringContracts.toString(),
       icon: Clock,
       color: "text-red-600",
       bg: "bg-red-50/50",

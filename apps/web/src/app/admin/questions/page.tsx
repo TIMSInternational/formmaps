@@ -592,7 +592,7 @@ export default function AdminQuestionsPage() {
                                         <SelectContent>
                                             {questions.filter(q => !q.isSubQuestion && q.id !== editingQuestion?.id).map(q => (
                                                 <SelectItem key={q.id} value={q.id}>
-                                                    #{q.questionNumber} - {q.questionEnglishText.substring(0, 40)}...
+                                                    #{q.questionNumber} - {q.questionEnglishText.length > 70 ? q.questionEnglishText.substring(0, 70) + "..." : q.questionEnglishText}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

@@ -71,7 +71,7 @@ export default function SchoolAdminDashboard() {
               {t("schoolAdmin.dashboard.title", "School Dashboard")}
             </h1>
             <p className="text-lg text-gray-500 font-medium">
-              {t("schoolAdmin.dashboard.subtitle", "Welcome back! Here's an overview of your school.")}
+              {t("schoolAdmin.dashboard.subtitle", "Your school at a glance — students, assessments, and activity")}
             </p>
           </div>
           <div className="flex items-center gap-3">

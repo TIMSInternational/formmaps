@@ -69,7 +69,7 @@ export default function AdminPage() {
         <div className="lg:col-span-2">
           <RevenueOverviewCard />
         </div>
-        <MiniChart title="Weekly Activity" unit="%" />
+        <MiniChart title="Platform Activity" unit="users" />
       </div>
 
       {/* Modules Grid */}

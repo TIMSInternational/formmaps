@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -198,7 +199,14 @@ export default function SchoolProfilePage() {
             </div>
             <div className="space-y-2">
               <Label>{t("schoolAdmin.profile.timezone", "Timezone")}</Label>
-              <Input value={form.timezone} onChange={(e) => update("timezone", e.target.value)} placeholder="America/Mexico_City" />
+              <Select value={form.timezone || ""} onValueChange={(v) => update("timezone", v)}>
+                <SelectTrigger><SelectValue placeholder="Select timezone" /></SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {["America/New_York","America/Chicago","America/Denver","America/Los_Angeles","America/Mexico_City","America/Bogota","America/Lima","America/Sao_Paulo","America/Buenos_Aires","America/Santiago","Europe/London","Europe/Paris","Europe/Berlin","Europe/Madrid","Europe/Rome","Asia/Dubai","Asia/Kolkata","Asia/Singapore","Asia/Tokyo","Asia/Shanghai","Australia/Sydney","Pacific/Auckland","UTC"].map((tz) => (
+                    <SelectItem key={tz} value={tz}>{tz.replace(/_/g, " ")}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

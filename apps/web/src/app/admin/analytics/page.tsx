@@ -234,7 +234,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Row 4: Top Courses */}
-          {analytics.topCourses && analytics.topCourses.length > 0 && (
+          {(
             <div style={{
               borderRadius: 8, border: "1px solid var(--admin-border-default)",
               background: "var(--admin-bg-card)", overflow: "hidden",
@@ -242,18 +242,24 @@ export default function AnalyticsPage() {
               <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--admin-border-default)" }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Top Courses</span>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 1, background: "var(--admin-border-default)" }}>
-                {analytics.topCourses.slice(0, 6).map((course: any, i: number) => (
-                  <div key={course.id || i} style={{ background: "var(--admin-bg-card)", padding: "14px 18px" }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)", marginBottom: 4 }}>
-                      {course.title || course.name}
+              {analytics.topCourses && analytics.topCourses.length > 0 ? (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 1, background: "var(--admin-border-default)" }}>
+                  {analytics.topCourses.slice(0, 6).map((course: any, i: number) => (
+                    <div key={course.id || i} style={{ background: "var(--admin-bg-card)", padding: "14px 18px" }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)", marginBottom: 4 }}>
+                        {course.title || course.name}
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
+                        {course.students || course.enrollments || 0} enrolled
+                      </div>
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-                      {course.students || course.enrollments || 0} enrolled
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: "32px 18px", textAlign: "center", color: "var(--admin-font-tertiary)", fontSize: 13 }}>
+                  No course enrollment data yet
+                </div>
+              )}
             </div>
           )}
         </TabsContent>
