@@ -14,28 +14,29 @@ export function QuickStatsCard() {
   const { data: analytics } = useAdminAnalyticsSummary("month");
   const stats = analytics?.stats;
 
+  const s = stats as any;
   const rows: StatRow[] = [
     {
       label: "Active Schools",
-      value: (stats as any)?.activeSchools?.toLocaleString() || "—",
+      value: (s?.activeSchools ?? s?.ActiveSchools)?.toLocaleString() || "—",
       icon: School,
       color: "#3b82f6",
     },
     {
       label: "Total Coaches",
-      value: (stats as any)?.activeCoaches?.toLocaleString() || "—",
+      value: (s?.activeCoaches ?? s?.ActiveCoaches)?.toLocaleString() || "—",
       icon: GraduationCap,
       color: "#8b5cf6",
     },
     {
       label: "Pending Invites",
-      value: (stats as any)?.pendingInvites?.toLocaleString() || "—",
+      value: (s?.pendingInvites ?? s?.PendingInvites)?.toLocaleString() || "—",
       icon: UserPlus,
       color: "#f59e0b",
     },
     {
       label: "Total Students",
-      value: stats?.totalUsers?.toLocaleString() || "—",
+      value: (s?.totalUsers ?? s?.TotalUsers)?.toLocaleString() || "—",
       icon: Users,
       color: "#10b981",
     },
