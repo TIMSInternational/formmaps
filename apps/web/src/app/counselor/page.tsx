@@ -60,7 +60,7 @@ export default function CounselorDashboardPage() {
   useEffect(() => {
     getMyCounselorSessions({ status: "confirmed", limit: 3 })
       .then(res => setUpcomingSessions(res.data))
-      .catch(() => {})
+      .catch((err) => console.error("Failed to load counselor sessions:", err))
       .finally(() => setLoadingSessions(false));
   }, []);
 

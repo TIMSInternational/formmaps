@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +29,7 @@ const PAGE_SIZE = 10;
 
 export function CareerManager() {
   const { t } = useTranslation();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [careers, setCareers] = useState<CareerRole[]>([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<CareerRole | null>(null);
@@ -68,7 +70,8 @@ export function CareerManager() {
     setIsOpen(true);
   };
   const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.careers.confirmDelete") || "Are you sure?")) return;
+    const confirmed = await confirm({ title: t("admin.careers.confirmDelete", "Delete Career"), description: "This career will be permanently removed.", confirmLabel: "Delete", variant: "destructive" });
+    if (!confirmed) return;
     await adminDeleteCareer(id);
     setCareers(careers.filter((x) => x.id !== id));
   };
@@ -143,7 +146,7 @@ export function CareerManager() {
               </TableRow>
             ) : (
               paged.map((c, idx) => (
-                <TableRow key={c.id} className="border-gray-50 hover:bg-gray-50/50 transition-colors">
+                <TableRow key={c.id || `career-${idx}`} className="border-gray-50 hover:bg-gray-50/50 transition-colors">
                   <TableCell className="pl-6 py-4 text-gray-400 text-sm font-medium">
                     {(page - 1) * PAGE_SIZE + idx + 1}
                   </TableCell>
@@ -204,6 +207,7 @@ export function CareerManager() {
         career={selected}
         onSave={handleSave}
       />
+      <ConfirmDialog />
     </div>
   );
 }

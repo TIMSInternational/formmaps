@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +34,7 @@ import { toast } from "sonner";
 import { motion } from "motion/react";
 
 export function CourseManager() {
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [courses, setCourses] = useState<Course[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -71,12 +73,8 @@ export function CourseManager() {
   };
 
   const handleDelete = async (courseId: string) => {
-    if (
-      confirm(
-        t("admin.courses.confirmDelete") ||
-          "Are you sure you want to delete this course?"
-      )
-    ) {
+    const confirmed = await confirm({ title: "Delete Course", description: t("admin.courses.confirmDelete") || "Are you sure you want to delete this course?", confirmLabel: "Delete", variant: "destructive" });
+    if (confirmed) {
       try {
         // prefer API-backed deletion
         await adminDeleteCourseApi(courseId);
@@ -326,6 +324,7 @@ export function CourseManager() {
         course={selectedCourse}
         isCreating={isCreating}
       />
+      <ConfirmDialog />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -74,6 +75,7 @@ export default function AdminPlansPage() {
     const { t } = useTranslation();
     const router = useRouter();
     const { isAdmin, loading: authLoading } = useAdminAccess();
+    const { confirm, ConfirmDialog } = useConfirmDialog();
 
     // State
     const [plans, setPlans] = useState<any[]>([]);
@@ -175,7 +177,8 @@ export default function AdminPlansPage() {
     };
 
     const handleDelete = async (planId: string) => {
-        if (!confirm("Are you sure you want to delete this plan? This cannot be undone.")) return;
+        const confirmed = await confirm({ title: "Delete Plan", description: "Are you sure you want to delete this plan? This cannot be undone.", confirmLabel: "Delete", variant: "destructive" });
+        if (!confirmed) return;
 
         try {
             await deleteSubscriptionPlan(planId);
@@ -427,6 +430,7 @@ export default function AdminPlansPage() {
                     </DialogContent>
                 </Dialog>
 
+        <ConfirmDialog />
         </div>
     );
 }

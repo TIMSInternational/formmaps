@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { apiRequest } from "@/lib/api/apiClient";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { createUser } from "@/services/adminUsersService";
 import { Button } from "@/components/ui/button";
@@ -177,9 +178,16 @@ export default function AdminUsersPage() {
   };
 
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const handleDeactivateUser = async (user: any) => {
-    if (!confirm(`Are you sure you want to deactivate ${user.name}?`)) return;
+    const confirmed = await confirm({
+      title: "Deactivate User",
+      description: `Are you sure you want to deactivate ${user.name}? They will no longer be able to access the platform.`,
+      confirmLabel: "Deactivate",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
     try {
       await apiRequest(`/api/v1/admin/users/${user.id}/status`, {
         method: "PATCH",
@@ -553,6 +561,7 @@ export default function AdminUsersPage() {
             </div>
           </div>
         </div>
+      <ConfirmDialog />
     </div>
   );
 }
