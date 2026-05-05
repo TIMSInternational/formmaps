@@ -571,7 +571,12 @@ export async function getUserEvaluationGroups(
     }
 
     const result = await response.json();
-    return result.data || [];
+    const groups = result.data || [];
+    // Map createdDate → createdAt for frontend consistency
+    return groups.map((g: any) => ({
+      ...g,
+      createdAt: g.createdAt || g.createdDate || g.CreatedDate || "",
+    }));
   } catch (error) {
     throw error;
   }
@@ -1160,6 +1165,7 @@ export function getUserEvaluationProgressSummary(
 
 /**
  * Create a new 360-degree evaluation session
+ * Maps to backend POST /evaluation/create-group
  */
 export async function createEvaluationSession(
   sessionData: Partial<EvaluationSession>,
@@ -1168,7 +1174,7 @@ export async function createEvaluationSession(
   try {
     const langParam = language === "spanish" ? "sp" : "en";
     const response = await fetch(
-      `${API_BASE_URL}/api/evaluation/sessions?lang=${langParam}`,
+      `${API_BASE_URL}/evaluation/create-group?lang=${langParam}`,
       {
         method: "POST",
         headers: {
@@ -1183,7 +1189,8 @@ export async function createEvaluationSession(
       throw new Error("Failed to create evaluation session");
     }
 
-    return await response.json();
+    const result = await response.json();
+    return result.data || result;
   } catch (error) {
     throw error;
   }
@@ -1231,7 +1238,8 @@ export async function getEvaluationSessions(): Promise<EvaluationSession[]> {
 }
 
 /**
- * Get a specific evaluation session by ID
+ * Get a specific evaluation session by ID (maps to user evaluation groups)
+ * Maps to backend GET /evaluation/user/{userId}
  */
 export async function getEvaluationSession(
   sessionId: string,
@@ -1240,7 +1248,7 @@ export async function getEvaluationSession(
   try {
     const langParam = language === "spanish" ? "sp" : "en";
     const response = await fetch(
-      `${API_BASE_URL}/api/evaluation/sessions/${sessionId}?lang=${langParam}`,
+      `${API_BASE_URL}/evaluation/user/${sessionId}?lang=${langParam}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -1253,7 +1261,8 @@ export async function getEvaluationSession(
       throw new Error("Failed to fetch evaluation session");
     }
 
-    return await response.json();
+    const result = await response.json();
+    return result.data || result;
   } catch (error) {
     throw error;
   }
@@ -1261,6 +1270,7 @@ export async function getEvaluationSession(
 
 /**
  * Add evaluators to an evaluation session
+ * Maps to backend POST /evaluation/create-group (one per evaluator)
  */
 export async function addEvaluators(
   sessionId: string,
@@ -1268,24 +1278,34 @@ export async function addEvaluators(
   language: "english" | "spanish" = "english"
 ): Promise<Evaluator[]> {
   try {
-    const langParam = language === "spanish" ? "sp" : "en";
-    const response = await fetch(
-      `${API_BASE_URL}/api/evaluation/sessions/${sessionId}/evaluators?lang=${langParam}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ evaluators }),
+    const results: Evaluator[] = [];
+    for (const evaluator of evaluators) {
+      const response = await fetch(
+        `${API_BASE_URL}/evaluation/create-group`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            evaluatorName: evaluator.name,
+            evaluatorEmail: evaluator.email,
+            relation: evaluator.relationship,
+            groupType: evaluator.groupType,
+            evaluatedUserId: sessionId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to add evaluator");
       }
-    );
 
-    if (!response.ok) {
-      throw new Error("Failed to add evaluators");
+      const result = await response.json();
+      results.push(result.data || result);
     }
-
-    return await response.json();
+    return results;
   } catch (error) {
     throw error;
   }
@@ -1293,6 +1313,7 @@ export async function addEvaluators(
 
 /**
  * Send invitations to evaluators
+ * Maps to backend POST /evaluation/send-invitations-selected
  */
 export async function sendEvaluationInvitations(
   sessionId: string,
@@ -1300,16 +1321,15 @@ export async function sendEvaluationInvitations(
   language: "english" | "spanish" = "english"
 ): Promise<EvaluationInvitation[]> {
   try {
-    const langParam = language === "spanish" ? "sp" : "en";
     const response = await fetch(
-      `${API_BASE_URL}/api/evaluation/sessions/${sessionId}/invitations?lang=${langParam}`,
+      `${API_BASE_URL}/evaluation/send-invitations-selected`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({ evaluatorIds }),
+        body: JSON.stringify({ evaluationGroupIds: evaluatorIds }),
       }
     );
 
@@ -1317,7 +1337,8 @@ export async function sendEvaluationInvitations(
       throw new Error("Failed to send invitations");
     }
 
-    return await response.json();
+    const result = await response.json();
+    return result.data || result.results || [];
   } catch (error) {
     throw error;
   }
@@ -1325,6 +1346,7 @@ export async function sendEvaluationInvitations(
 
 /**
  * Submit evaluation responses
+ * Maps to backend POST /evaluation/submit-feedback
  */
 export async function submitEvaluationResponses(
   sessionId: string,
@@ -1335,14 +1357,17 @@ export async function submitEvaluationResponses(
   try {
     const langParam = language === "spanish" ? "sp" : "en";
     const response = await fetch(
-      `${API_BASE_URL}/api/evaluation/sessions/${sessionId}/responses?lang=${langParam}`,
+      `${API_BASE_URL}/evaluation/submit-feedback?lang=${langParam}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${evaluatorToken}`,
         },
-        body: JSON.stringify({ responses }),
+        body: JSON.stringify({
+          evaluationGroupId: sessionId,
+          responses,
+        }),
       }
     );
 
@@ -1356,6 +1381,7 @@ export async function submitEvaluationResponses(
 
 /**
  * Get evaluation report
+ * Maps to backend GET /evaluation/progress/{userId}
  */
 export async function getEvaluationReport(
   sessionId: string,
@@ -1364,7 +1390,7 @@ export async function getEvaluationReport(
   try {
     const langParam = language === "spanish" ? "sp" : "en";
     const response = await fetch(
-      `${API_BASE_URL}/api/evaluation/sessions/${sessionId}/report?lang=${langParam}`,
+      `${API_BASE_URL}/evaluation/progress/${sessionId}?lang=${langParam}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -1377,7 +1403,8 @@ export async function getEvaluationReport(
       throw new Error("Failed to fetch evaluation report");
     }
 
-    return await response.json();
+    const result = await response.json();
+    return result.data || result;
   } catch (error) {
     throw error;
   }

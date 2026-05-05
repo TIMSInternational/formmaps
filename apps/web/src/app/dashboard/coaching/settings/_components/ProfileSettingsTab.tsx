@@ -40,10 +40,20 @@ export function ProfileSettingsTab() {
 
   const fetchProfile = async () => {
     try {
-      const { updateCoachProfile } = await import("@/services/coachService");
-      // TODO: Replace with actual GET endpoint
-      // const data = await getCoachProfile();
-      // setProfile(data);
+      const { getCoachProfile } = await import("@/services/coachService");
+      const data = await getCoachProfile();
+      if (data) {
+        setProfile({
+          name: data.name || "",
+          title: data.title || "",
+          bio: data.bio || "",
+          specialization: data.specialization || "",
+          location: data.location || "",
+          languages: data.languages || [],
+          tags: data.tags || [],
+          image: data.image || "",
+        });
+      }
       setIsLoading(false);
     } catch (error) {
       toast.error(t("coaching.profile.failedToLoad"));

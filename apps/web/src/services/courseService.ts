@@ -7,102 +7,54 @@ import {
 } from "@/types/course";
 import { apiRequest } from "@/lib/api/apiClient";
 
-const enrollmentStore = new Map<string, CourseEnrollment>();
-
-const simulateNetworkDelay = async <T>(value: T, delay = 200): Promise<T> => {
-  return new Promise((resolve) => setTimeout(() => resolve(value), delay));
-};
-
-const buildEnrollmentRecord = (
-  course: Course,
-  enrollmentId: string,
-  _source: "catalog" | "recommended" | "dashboard"
-): CourseEnrollment => {
-  const now = new Date().toISOString();
-
-  return {
-    enrollmentId,
-    courseId: course.id,
-    courseTitle: course.title,
-    courseThumbnail: course.thumbnailUrl,
-    courseraUrl: course.courseraUrl,
-    enrolledAt: now,
-    status: "in_progress",
-    progress: {
-      completedModules: 0,
-      totalModules: course.syllabus.length,
-      percentage: 0,
-      lastAccessedAt: now,
-    },
-  };
-};
-
 export async function enrollInCourse(
   payload: CourseEnrollmentPayload
 ): Promise<CourseEnrollment> {
   const { course, enrollmentSource } = payload;
-  const enrollmentId = `enrollment_${course.id}_${Date.now()}`;
-  const enrollment = buildEnrollmentRecord(
-    course,
-    enrollmentId,
-    enrollmentSource
-  );
-
-  enrollmentStore.set(enrollmentId, enrollment);
-
-  return simulateNetworkDelay(enrollment);
+  return apiRequest("/api/course/enroll", {
+    method: "POST",
+    data: {
+      courseId: course.id,
+      courseTitle: course.title,
+      courseThumbnail: course.thumbnailUrl,
+      courseraUrl: course.courseraUrl,
+      totalModules: course.syllabus?.length ?? 0,
+      enrollmentSource,
+    },
+  });
 }
 
 export async function trackCourseProgress(
   payload: CourseProgressPayload
 ): Promise<CourseEnrollment | null> {
-  const existing = enrollmentStore.get(payload.enrollmentId);
-
-  if (!existing) {
-    return simulateNetworkDelay(null);
-  }
-
-  const updated: CourseEnrollment = {
-    ...existing,
-    status: payload.status ?? existing.status,
-    progress: {
-      ...existing.progress,
-      completedModules:
-        payload.completedModules ?? existing.progress.completedModules,
-      totalModules: payload.totalModules ?? existing.progress.totalModules,
-      percentage: payload.percentage ?? existing.progress.percentage,
+  return apiRequest(`/api/course/progress/${payload.enrollmentId}`, {
+    method: "PUT",
+    data: {
+      status: payload.status,
+      completedModules: payload.completedModules,
+      totalModules: payload.totalModules,
+      percentage: payload.percentage,
       lastAccessedAt: payload.lastAccessedAt ?? new Date().toISOString(),
     },
-  };
-
-  enrollmentStore.set(payload.enrollmentId, updated);
-
-  return simulateNetworkDelay(updated);
+  });
 }
 
 export async function markCourseCompleted(
   payload: CourseCompletionPayload
 ): Promise<CourseEnrollment | null> {
-  const existing = enrollmentStore.get(payload.enrollmentId);
-
-  if (!existing) {
-    return simulateNetworkDelay(null);
-  }
-
-  const updated: CourseEnrollment = {
-    ...existing,
-    status: "completed",
-    progress: {
-      ...existing.progress,
-      completedModules: existing.progress.totalModules,
+  return apiRequest(`/api/course/progress/${payload.enrollmentId}`, {
+    method: "PUT",
+    data: {
+      status: "completed",
       percentage: 100,
       lastAccessedAt: payload.completedAt ?? new Date().toISOString(),
     },
-  };
+  });
+}
 
-  enrollmentStore.set(payload.enrollmentId, updated);
-
-  return simulateNetworkDelay(updated);
+export async function getUserEnrollments(): Promise<CourseEnrollment[]> {
+  const response = await apiRequest("/api/course/progress", { method: "GET" });
+  return response?.enrollments ?? response ?? [];
 }
 
 // --- Course listing & admin ---
@@ -204,19 +156,23 @@ export async function adminDeleteCourseApi(id: string) {
 }
 
 export async function getRecommendationsBySkills(skills: string[]): Promise<Course[]> {
+  try {
+    const response = await apiRequest("/api/course/recommended", {
+      method: "GET",
+      params: { skills: skills.join(",") },
+    });
+    const courses = response?.courses ?? response ?? [];
+    if (courses.length > 0) return courses.slice(0, 4);
+  } catch {
+    // Fallback to client-side filtering if endpoint doesn't support skills param
+  }
+
   const allCourses = await listCourses();
-  
-  // Simple mock matching logic: if course title contains skill
-  const recommended = (allCourses.courses || []).filter((course: Course) =>
-    skills.some(skill => 
+  const courseList = allCourses.courses || [];
+  const matched = courseList.filter((course: Course) =>
+    skills.some((skill) =>
       course.title.toLowerCase().includes(skill.toLowerCase())
     )
   );
-
-  // Fallback if no direct matches, just return top rated
-  if (recommended.length === 0) {
-    return (allCourses.courses || []).slice(0, 3);
-  }
-
-  return simulateNetworkDelay(recommended.slice(0, 4));
+  return (matched.length > 0 ? matched : courseList).slice(0, 4);
 }

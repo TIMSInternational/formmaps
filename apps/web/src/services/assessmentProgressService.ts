@@ -3,6 +3,7 @@ import {
   getAllUserExamResults,
   getUserProgressSummary,
   getUserExamHistory,
+  getMILResults,
   UserExamResult,
   UserProgressSummary,
 } from "./milService";
@@ -47,86 +48,64 @@ export async function getUserAssessmentProgress(
   language: "english" | "spanish" = "english"
 ): Promise<AssessmentOverallProgress> {
   try {
-    // Fetch LIA Assessment Progress
+    // Fetch LIA Assessment Progress — use /api/v1/mil/results/{userId} as single source of truth
     let milProgress: UserProgressSummary;
     let milStatus: "not_started" | "in_progress" | "completed" = "not_started";
     let milLastActivity: string | undefined;
     let enhancedMilData: any = null;
 
     try {
-      // Try to get enhanced API data first
-      try {
-        enhancedMilData = await getUserExamHistory(userId, language);
+      const milResults = await getMILResults(userId);
 
-        if (enhancedMilData && enhancedMilData.examStatus.length > 0) {
-          const completedExams = enhancedMilData.examStatus.filter(
-            (exam: any) => exam.status === "completed"
-          );
-          const inProgressExams = enhancedMilData.examStatus.filter(
-            (exam: any) => exam.status === "in_progress"
-          );
-
-          // Use enhanced data for status calculation
-          if (enhancedMilData.completionPercentage === 100) {
-            milStatus = "completed";
-          } else if (completedExams.length > 0 || inProgressExams.length > 0) {
-            milStatus = "in_progress";
-          }
-
-          // Get latest activity from enhanced data
-          const allExams = enhancedMilData.examStatus
-            .filter((exam: any) => exam.completionDate)
-            .sort(
-              (a: any, b: any) =>
-                new Date(b.completionDate).getTime() -
-                new Date(a.completionDate).getTime()
-            );
-
-          if (allExams.length > 0) {
-            milLastActivity = allExams[0].completionDate;
-          }
-
-          // Create progress summary from enhanced data
-          milProgress = {
-            totalAttempts: enhancedMilData.completedExams,
-            completedExams: completedExams.length,
-            averageScore:
-              completedExams.length > 0
-                ? completedExams.reduce(
-                  (sum: number, exam: any) => sum + exam.scorePercentage,
-                  0
-                ) / completedExams.length
-                : 0,
-            bestScore:
-              completedExams.length > 0
-                ? Math.max(
-                  ...completedExams.map((exam: any) => exam.scorePercentage)
-                )
-                : 0,
-            examResults: [],
-            examTypes: {},
-          };
-        } else {
-          throw new Error("No enhanced data available");
-        }
-      } catch (enhancedError) {
-
-        // Fallback to legacy MIL data
-        const milResults = await getAllUserExamResults(language);
-        const userMilResults = milResults.filter(
-          (r) => r.username === userId || r.sessionId.includes(userId)
+      if (milResults && milResults.examResults?.length > 0) {
+        const completedExams = milResults.examResults.filter(
+          (e) => e.status === "completed"
         );
-        milProgress = getUserProgressSummary(userMilResults);
+        const inProgressExams = milResults.examResults.filter(
+          (e) => e.status === "in_progress"
+        );
 
-        if (milProgress.totalAttempts > 0) {
-          milStatus =
-            milProgress.completedExams > 0 ? "completed" : "in_progress";
-          const latestResult = userMilResults.sort(
-            (a, b) =>
-              new Date(b.endDate).getTime() - new Date(a.endDate).getTime()
-          )[0];
-          milLastActivity = latestResult?.endDate;
+        if (milResults.completedExams >= milResults.totalExams) {
+          milStatus = "completed";
+        } else if (completedExams.length > 0 || inProgressExams.length > 0) {
+          milStatus = "in_progress";
         }
+
+        milLastActivity = milResults.lastCompletedAt || undefined;
+
+        milProgress = {
+          totalAttempts: milResults.completedExams,
+          completedExams: completedExams.length,
+          averageScore: milResults.overallScore,
+          bestScore:
+            completedExams.length > 0
+              ? Math.max(
+                  ...completedExams.map((e) => e.scorePercentage ?? 0)
+                )
+              : 0,
+          examResults: [],
+          examTypes: {},
+        };
+
+        // Store for downstream use
+        enhancedMilData = {
+          completedExams: milResults.completedExams,
+          totalExams: milResults.totalExams,
+          completionPercentage:
+            milResults.totalExams > 0
+              ? (milResults.completedExams / milResults.totalExams) * 100
+              : 0,
+          examStatus: milResults.examResults,
+        };
+      } else {
+        milProgress = {
+          totalAttempts: 0,
+          completedExams: 0,
+          averageScore: 0,
+          bestScore: 0,
+          examResults: [],
+          examTypes: {},
+        };
       }
     } catch (error) {
       milProgress = {
@@ -154,11 +133,17 @@ export async function getUserAssessmentProgress(
         // Check if 360° evaluation is complete:
         // - Self-evaluation must be completed
         // - At least one from each group type (Parent, Teacher, SiblingFriend) must be completed
+        // Self-evaluation has groupType "Parent" but relation "Self"
         const selfCompleted = evaluationGroups.some(
-          (group) => group.groupType === "Self" && group.isEvaluationCompleted
+          (group) =>
+            (group.groupType === "Self" || group.relation === "Self") &&
+            group.isEvaluationCompleted
         );
         const parentCompleted = evaluationGroups.some(
-          (group) => group.groupType === "Parent" && group.isEvaluationCompleted
+          (group) =>
+            group.groupType === "Parent" &&
+            group.relation !== "Self" &&
+            group.isEvaluationCompleted
         );
         const teacherCompleted = evaluationGroups.some(
           (group) =>
@@ -364,7 +349,7 @@ export async function getAssessmentReportData(
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
     const response = await fetch(
-      `/api/assessments/${assessmentId}/report`,
+      `${baseUrl}/api/v1/assessments/${assessmentId}/report`,
       {
         method: "GET",
         headers: {

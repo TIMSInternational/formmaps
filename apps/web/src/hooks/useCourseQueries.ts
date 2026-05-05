@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { listCourses, getCourseById, getRecommendedCourses } from "@/services/courseService";
+import { listCourses, getCourseById, getRecommendedCourses, getUserEnrollments } from "@/services/courseService";
 
 export const courseKeys = {
   all: ["courses"] as const,
@@ -37,5 +37,13 @@ export function useCourseDetail(id?: string) {
     queryFn: () => (id ? getCourseById(id) : Promise.resolve(null)),
     enabled: !!id,
     staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useUserEnrollments() {
+  return useQuery({
+    queryKey: [...courseKeys.all, "enrollments"],
+    queryFn: () => getUserEnrollments(),
+    staleTime: 2 * 60 * 1000,
   });
 }

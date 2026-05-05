@@ -42,7 +42,6 @@ export function Sidebar() {
       { name: t("nav.assessments", "Assessments"), path: "/dashboard/assessments" },
       { name: t("nav.assessmentTimeline", "Assessment Timeline"), path: "/dashboard/assessments/timeline" },
       { name: t("nav.progressTimeline", "Progress Timeline"), path: "/dashboard/timeline" },
-      { name: t("nav.milestones", "Progress Milestones"), path: "/dashboard/progress" },
       { name: t("nav.benchmarks", "Benchmark"), path: "/dashboard/benchmarks" },
     ],
     [t("nav.learning", "Learning & Tools")]: [

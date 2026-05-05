@@ -50,8 +50,9 @@ export async function exportTransactions(
   if (startDate) params.append("startDate", startDate);
   if (endDate) params.append("endDate", endDate);
 
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   const response = await fetch(
-    `/api/v1/transactions/export?${params.toString()}`,
+    `${baseUrl}/api/v1/transactions/export?${params.toString()}`,
     {
       method: "GET",
       headers: {

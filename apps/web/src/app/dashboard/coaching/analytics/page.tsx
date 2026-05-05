@@ -52,92 +52,17 @@ import {
 } from "@/services/coachService";
 import { toast } from "sonner";
 
-// Mock Data Sets
-const DATA_SETS: Record<string, any[]> = {
-  "7d": [
-    { name: "Mon", amount: 150 },
-    { name: "Tue", amount: 230 },
-    { name: "Wed", amount: 180 },
-    { name: "Thu", amount: 290 },
-    { name: "Fri", amount: 320 },
-    { name: "Sat", amount: 400 },
-    { name: "Sun", amount: 200 },
-  ],
-  "30d": [
-    { name: "Week 1", amount: 1200 },
-    { name: "Week 2", amount: 1900 },
-    { name: "Week 3", amount: 1500 },
-    { name: "Week 4", amount: 2100 },
-  ],
-  "3m": [
-    { name: "Month 1", amount: 5200 },
-    { name: "Month 2", amount: 6100 },
-    { name: "Month 3", amount: 5800 },
-  ],
-  ytd: [
-    { name: "Jan", amount: 4200 },
-    { name: "Feb", amount: 4900 },
-    { name: "Mar", amount: 5500 },
-    { name: "Apr", amount: 5100 },
-    { name: "May", amount: 6800 },
-    { name: "Jun", amount: 6400 },
-  ],
-};
-
-const MOCK_SESSION_DISTRIBUTION = [
-  { name: "Career Planning", value: 45, color: "#3B82F6" },
-  { name: "Resume Review", value: 30, color: "#10B981" },
-  { name: "Interview Prep", value: 25, color: "#8B5CF6" },
-];
-
-const RECENT_ACTIVITY = [
-  {
-    id: 1,
-    user: "Alice Johnson",
-    action: "Booked a session",
-    time: "2 hours ago",
-    amount: "+$75.00",
-    type: "booking",
-  },
-  {
-    id: 2,
-    user: "Bob Smith",
-    action: "Left a review",
-    time: "5 hours ago",
-    rating: 5,
-    type: "review",
-  },
-  {
-    id: 3,
-    user: "Charlie Brown",
-    action: "Completed session",
-    time: "1 day ago",
-    amount: "+$75.00",
-    type: "completion",
-  },
-  {
-    id: 4,
-    user: "Diana Prince",
-    action: "Rescheduled",
-    time: "2 days ago",
-    type: "reschedule",
-  },
-  {
-    id: 5,
-    user: "Evan Wright",
-    action: "Booked a session",
-    time: "3 days ago",
-    amount: "+$150.00",
-    type: "booking",
-  },
-];
+// Empty defaults — real data loaded from API
+const EMPTY_CHART_DATA: any[] = [];
+const EMPTY_SESSION_DISTRIBUTION: any[] = [];
+const EMPTY_RECENT_ACTIVITY: any[] = [];
 
 export default function AnalyticsPage() {
   const { t } = useTranslation();
   const { user } = useGlobalStore();
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState("30d");
-  const [chartData, setChartData] = useState<any[]>(DATA_SETS["30d"]);
+  const [chartData, setChartData] = useState<any[]>(EMPTY_CHART_DATA);
   const [stats, setStats] = useState({
     totalEarnings: 0,
     totalSessions: 0,
@@ -145,9 +70,9 @@ export default function AnalyticsPage() {
     activeStudents: 0,
   });
   const [sessionDistribution, setSessionDistribution] = useState<any[]>(
-    MOCK_SESSION_DISTRIBUTION
+    EMPTY_SESSION_DISTRIBUTION
   );
-  const [recentActivity, setRecentActivity] = useState<any[]>(RECENT_ACTIVITY);
+  const [recentActivity, setRecentActivity] = useState<any[]>(EMPTY_RECENT_ACTIVITY);
   const COLOR_PALETTE = [
     "#3B82F6",
     "#10B981",
@@ -239,13 +164,28 @@ export default function AnalyticsPage() {
     }
   }, [user?.id]);
 
-  // Update chart data when date range changes
+  // Re-fetch analytics when date range changes
   useEffect(() => {
-    // only replace with local mock if we don't have remote data
-    setChartData((prev) =>
-      prev && prev.length > 0 ? prev : DATA_SETS[dateRange] || DATA_SETS["30d"]
-    );
-  }, [dateRange]);
+    if (user?.id) {
+      const refetch = async () => {
+        try {
+          const res = await getCoachAnalytics(dateRange);
+          const analytics = res?.data;
+          if (analytics?.earningsHistory?.length > 0) {
+            setChartData(
+              analytics.earningsHistory.map((h: any) => ({
+                name: h.month || h.label,
+                amount: h.amount,
+              }))
+            );
+          }
+        } catch {
+          // keep existing data
+        }
+      };
+      refetch();
+    }
+  }, [dateRange, user?.id]);
 
   const handleDownloadReport = async () => {
     try {

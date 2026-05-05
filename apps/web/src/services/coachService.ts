@@ -196,8 +196,9 @@ export async function getCoaches(
 }
 
 // --- New Coach Dashboard APIs ---
-export async function getCoachAnalytics(): Promise<{ data: CoachAnalytics }> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/coach/me/analytics`, {
+export async function getCoachAnalytics(dateRange?: string): Promise<{ data: CoachAnalytics }> {
+  const query = dateRange ? `?range=${dateRange}` : "";
+  const response = await fetch(`${API_BASE_URL}/api/v1/coach/me/analytics${query}`, {
     headers: getHeaders(),
   });
   if (!response.ok) throw new Error("Failed to fetch coach analytics");
