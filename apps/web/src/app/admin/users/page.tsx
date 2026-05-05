@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { apiRequest } from "@/lib/api/apiClient";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { createUser } from "@/services/adminUsersService";
 import { Button } from "@/components/ui/button";
@@ -175,9 +176,24 @@ export default function AdminUsersPage() {
     }
   };
 
-  // Helper for unimplemented features
-  const handleAction = (action: string) => {
-    toast.info(`${action} - API endpoint required`);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+
+  const handleDeactivateUser = async (user: any) => {
+    if (!confirm(`Are you sure you want to deactivate ${user.name}?`)) return;
+    try {
+      await apiRequest(`/api/v1/admin/users/${user.id}/status`, {
+        method: "PATCH",
+        data: { isActive: false },
+      });
+      toast.success(`${user.name} has been deactivated`);
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to deactivate user");
+    }
+  };
+
+  const handleViewProfile = (user: any) => {
+    setSelectedUser(user);
   };
 
   // Handle admin access check
@@ -478,11 +494,11 @@ export default function AdminUsersPage() {
                           <DropdownMenuLabel className="text-xs text-gray-400 font-normal">
                             {t("admin.users.dropdown.actions")}
                           </DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleAction("View Profile")} className="text-sm font-medium text-gray-700 cursor-pointer">
+                          <DropdownMenuItem onClick={() => handleViewProfile(user)} className="text-sm font-medium text-gray-700 cursor-pointer">
                             <Eye className="mr-2 h-3.5 w-3.5 text-gray-400" />
                             {t("admin.users.dropdown.viewProfile")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction("Edit Details")} className="text-sm font-medium text-gray-700 cursor-pointer">
+                          <DropdownMenuItem onClick={() => handleViewProfile(user)} className="text-sm font-medium text-gray-700 cursor-pointer">
                             <Pencil className="mr-2 h-3.5 w-3.5 text-gray-400" />
                             {t("admin.users.dropdown.editDetails")}
                           </DropdownMenuItem>
@@ -497,7 +513,7 @@ export default function AdminUsersPage() {
                             <Mail className="mr-2 h-3.5 w-3.5 text-gray-400" />
                             {t("admin.users.dropdown.copyEmail")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction("Deactivate User")} className="text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer font-medium">
+                          <DropdownMenuItem onClick={() => handleDeactivateUser(user)} className="text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer font-medium">
                             <UserX className="mr-2 h-3.5 w-3.5" />
                             {t("admin.users.dropdown.deactivateUser")}
                           </DropdownMenuItem>

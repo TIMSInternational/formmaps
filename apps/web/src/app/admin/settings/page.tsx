@@ -28,8 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-
-// Mock Data Type - In real app, this comes from API
+import { apiRequest } from "@/lib/api/apiClient";
 interface AdminSettings {
   general: {
     siteName: string;
@@ -72,11 +71,20 @@ export default function AdminSettingsPage() {
     },
   });
 
-  // Mock Fetch
+  // Fetch settings from backend
   useEffect(() => {
     if (!authLoading && isAdmin) {
-      // Simulate API call
-      setTimeout(() => setLoading(false), 800);
+      (async () => {
+        try {
+          const data = await apiRequest("/api/v1/admin/settings", { method: "GET" });
+          const s = data?.data ?? data;
+          if (s) setSettings((prev) => ({ ...prev, ...s }));
+        } catch {
+          // Use defaults on first run (settings may not exist yet)
+        } finally {
+          setLoading(false);
+        }
+      })();
     }
   }, [authLoading, isAdmin]);
 
@@ -89,10 +97,17 @@ export default function AdminSettingsPage() {
 
   const handleSave = async () => {
     setSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    toast.success("Settings updated successfully");
-    setSaving(false);
+    try {
+      await apiRequest("/api/v1/admin/settings", {
+        method: "PUT",
+        data: settings,
+      });
+      toast.success("Settings updated successfully");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const updateSetting = (section: keyof AdminSettings, key: string, value: any) => {

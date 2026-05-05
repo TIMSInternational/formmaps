@@ -413,11 +413,11 @@ export default function CoursesPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-[160px] rounded-xl border-gray-100 shadow-lg">
-                                                    <DropdownMenuItem className="cursor-pointer">
+                                                    <DropdownMenuItem onClick={() => { setNewCourse({ title: course.title, description: (course as any).description || "", instructor: course.instructor || "" }); setIsAddDialogOpen(true); }} className="cursor-pointer">
                                                         <Eye className="mr-2 h-3.5 w-3.5 text-gray-400" />
                                                         View Details
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="cursor-pointer">
+                                                    <DropdownMenuItem onClick={() => { setNewCourse({ title: course.title, description: (course as any).description || "", instructor: course.instructor || "" }); setIsAddDialogOpen(true); }} className="cursor-pointer">
                                                         <Edit className="mr-2 h-3.5 w-3.5 text-gray-400" />
                                                         Edit Course
                                                     </DropdownMenuItem>
