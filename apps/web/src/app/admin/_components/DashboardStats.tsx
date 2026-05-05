@@ -1,11 +1,11 @@
 "use client";
 
 import { Users, GraduationCap, TrendingUp } from "lucide-react";
-import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
+import { useAdminAnalyticsSummary } from "@/hooks/useAdminAnalytics";
 import { AdminStatCard } from "./AdminStatCard";
 
 export function DashboardStats() {
-  const { data: analytics, isLoading, error } = useAdminAnalytics("month");
+  const { data: analytics, isLoading, error } = useAdminAnalyticsSummary("month");
 
   const stats = analytics?.stats;
 

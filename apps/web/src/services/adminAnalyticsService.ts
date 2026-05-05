@@ -60,13 +60,20 @@ export interface AnalyticsData {
  * Get comprehensive platform analytics (Admin only)
  */
 export async function getAnalytics(
-  period: "week" | "month" | "year" = "month"
+  period: "week" | "month" | "year" = "month",
+  summary: boolean = false
 ): Promise<AnalyticsData> {
   const response = await apiRequest(
-    `/api/v1/admin/analytics?period=${period}`,
+    `/api/v1/admin/analytics?period=${period}${summary ? "&summary=true" : ""}`,
     {
       method: "GET",
     }
   );
   return response.data || response;
+}
+
+export async function getAnalyticsSummary(
+  period: "week" | "month" | "year" = "month"
+): Promise<AnalyticsData> {
+  return getAnalytics(period, true);
 }

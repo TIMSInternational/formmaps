@@ -123,7 +123,7 @@ export function AdminStatCard({ label, value, icon: Icon, trend, sub }: AdminSta
       {/* Value + mini bar */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <div style={{ fontSize: 30, fontWeight: 700, color: "var(--admin-font-primary, #ebebeb)", letterSpacing: "-0.03em", lineHeight: 1 }}>
-          <AnimatedValue value={value} />
+          {value === "—" ? <span>—</span> : <AnimatedValue value={value} />}
         </div>
         {trend !== undefined && <MiniBar trend={trend} />}
       </div>
