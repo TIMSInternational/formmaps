@@ -1,37 +1,30 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Plus,
   X,
-  GripVertical,
   GraduationCap,
   MapPin,
   Calendar,
-  ExternalLink,
   MoreHorizontal,
   Trash2,
   ArrowRight,
   ArrowLeft,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const STORAGE_KEY = "nexa_application_tracker";
+import {
+  listApplications,
+  createApplication,
+  updateApplication,
+  deleteApplication,
+  TrackedApplication,
+} from "@/services/applicationService";
+import { toast } from "sonner";
 
 type ColumnId = "researching" | "shortlisted" | "applying" | "applied" | "accepted";
-
-interface TrackedApplication {
-  id: string;
-  name: string;
-  type: "university" | "career";
-  location?: string;
-  matchScore?: number;
-  deadline?: string;
-  notes?: string;
-  column: ColumnId;
-  createdAt: string;
-}
 
 interface Column {
   id: ColumnId;
@@ -48,63 +41,93 @@ const COLUMNS: Column[] = [
   { id: "accepted", label: "Accepted", color: "var(--admin-accent-green)", bgColor: "var(--admin-accent-bg-green, rgba(16,185,129,0.1))" },
 ];
 
-function loadApplications(): TrackedApplication[] {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function saveApplications(apps: TrackedApplication[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
-}
-
 export function ApplicationTracker() {
-  const [applications, setApplications] = useState<TrackedApplication[]>(loadApplications);
+  const [applications, setApplications] = useState<TrackedApplication[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [addingTo, setAddingTo] = useState<ColumnId | null>(null);
   const [newName, setNewName] = useState("");
   const [newLocation, setNewLocation] = useState("");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
 
-  const update = useCallback((apps: TrackedApplication[]) => {
-    setApplications(apps);
-    saveApplications(apps);
+  useEffect(() => {
+    loadData();
   }, []);
 
-  const addApplication = useCallback((column: ColumnId) => {
-    if (!newName.trim()) return;
-    const app: TrackedApplication = {
-      id: `app-${Date.now()}`,
-      name: newName.trim(),
-      type: "university",
-      location: newLocation.trim() || undefined,
-      column,
-      createdAt: new Date().toISOString(),
-    };
-    update([...applications, app]);
-    setNewName("");
-    setNewLocation("");
-    setAddingTo(null);
-  }, [newName, newLocation, applications, update]);
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      const data = await listApplications();
+      setApplications(data);
+    } catch {
+      toast.error("Failed to load applications");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const moveApplication = useCallback((id: string, direction: "left" | "right") => {
+  const addApplicationHandler = useCallback(async (column: ColumnId) => {
+    if (!newName.trim()) return;
+    try {
+      const app = await createApplication({
+        name: newName.trim(),
+        type: "university",
+        location: newLocation.trim() || undefined,
+        column,
+      });
+      setApplications((prev) => [app, ...prev]);
+      setNewName("");
+      setNewLocation("");
+      setAddingTo(null);
+    } catch {
+      toast.error("Failed to add application");
+    }
+  }, [newName, newLocation]);
+
+  const moveApplication = useCallback(async (id: string, direction: "left" | "right") => {
     const colIds = COLUMNS.map((c) => c.id);
-    update(
-      applications.map((a) => {
-        if (a.id !== id) return a;
-        const idx = colIds.indexOf(a.column);
-        const newIdx = direction === "right" ? Math.min(idx + 1, colIds.length - 1) : Math.max(idx - 1, 0);
-        return { ...a, column: colIds[newIdx] };
-      }),
+    const app = applications.find((a) => a.id === id);
+    if (!app) return;
+    const idx = colIds.indexOf(app.column);
+    const newIdx = direction === "right" ? Math.min(idx + 1, colIds.length - 1) : Math.max(idx - 1, 0);
+    const newColumn = colIds[newIdx];
+
+    // Optimistic update
+    setApplications((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, column: newColumn } : a))
     );
     setMenuOpen(null);
-  }, [applications, update]);
 
-  const removeApplication = useCallback((id: string) => {
-    update(applications.filter((a) => a.id !== id));
+    try {
+      await updateApplication(id, { column: newColumn });
+    } catch {
+      // Revert on failure
+      setApplications((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, column: app.column } : a))
+      );
+      toast.error("Failed to move application");
+    }
+  }, [applications]);
+
+  const removeApplication = useCallback(async (id: string) => {
+    const prev = applications;
+    setApplications((apps) => apps.filter((a) => a.id !== id));
     setMenuOpen(null);
-  }, [applications, update]);
+
+    try {
+      await deleteApplication(id);
+    } catch {
+      setApplications(prev);
+      toast.error("Failed to delete application");
+    }
+  }, [applications]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -287,7 +310,7 @@ export function ApplicationTracker() {
                       placeholder="University name..."
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && addApplication(col.id)}
+                      onKeyDown={(e) => e.key === "Enter" && addApplicationHandler(col.id)}
                       className="w-full px-2 py-1.5 rounded text-xs outline-none"
                       style={{
                         background: "var(--admin-bg-input)",
@@ -299,7 +322,7 @@ export function ApplicationTracker() {
                       placeholder="Location (optional)"
                       value={newLocation}
                       onChange={(e) => setNewLocation(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && addApplication(col.id)}
+                      onKeyDown={(e) => e.key === "Enter" && addApplicationHandler(col.id)}
                       className="w-full px-2 py-1.5 rounded text-xs outline-none"
                       style={{
                         background: "var(--admin-bg-input)",
@@ -309,7 +332,7 @@ export function ApplicationTracker() {
                     />
                     <div className="flex gap-1.5">
                       <button
-                        onClick={() => addApplication(col.id)}
+                        onClick={() => addApplicationHandler(col.id)}
                         disabled={!newName.trim()}
                         className="flex-1 px-2 py-1.5 rounded text-[11px] font-medium text-white disabled:opacity-40"
                         style={{ background: "var(--admin-accent-blue)" }}
