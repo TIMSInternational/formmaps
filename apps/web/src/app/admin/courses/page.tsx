@@ -101,21 +101,30 @@ export default function CoursesPage() {
 
     // Handle Actions
     const handleAddCourse = async () => {
-        // This would likely connect to a createCourse mutation
         setIsCreating(true);
-        setTimeout(() => {
-            setIsCreating(false);
+        try {
+            const { adminCreateCourse } = await import("@/services/courseService");
+            await adminCreateCourse(newCourse as any);
             setIsAddDialogOpen(false);
             setNewCourse({ title: "", description: "", instructor: "" });
             toast.success(t("admin.courses.courseCreated"));
             refetch();
-        }, 1000); // Mock delay
+        } catch (error) {
+            toast.error("Failed to create course");
+        } finally {
+            setIsCreating(false);
+        }
     };
 
-    const handleDeleteCourse = (id: string) => {
-        // Connect to delete mutation
-        toast.success(t("admin.courses.courseDeleted"));
-        refetch();
+    const handleDeleteCourse = async (id: string) => {
+        try {
+            const { adminDeleteCourse } = await import("@/services/courseService");
+            await adminDeleteCourse(id);
+            toast.success(t("admin.courses.courseDeleted"));
+            refetch();
+        } catch (error) {
+            toast.error("Failed to delete course");
+        }
     };
 
     // Handle admin access
@@ -158,8 +167,8 @@ export default function CoursesPage() {
         },
         {
             label: "Total Enrollments",
-            value: "1,240", // Placeholder until enrollment stat is available
-            growth: 12.5,
+            value: (analyticsData?.stats as any)?.totalEnrollments?.toLocaleString() || "—",
+            growth: null,
             icon: GraduationCap,
             color: "text-violet-600",
             bg: "bg-violet-50",
@@ -168,7 +177,7 @@ export default function CoursesPage() {
         },
         {
             label: "Draft Courses",
-            value: "4", // Placeholder
+            value: String(courses.filter((c: any) => c.status === "draft").length),
             growth: null,
             icon: FileText,
             color: "text-amber-600",

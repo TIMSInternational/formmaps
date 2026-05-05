@@ -47,10 +47,11 @@ export default function CoachesPage() {
     setIsEditOpen(true);
   };
 
+  const [refreshKey, setRefreshKey] = useState(0);
   const handleEditSuccess = () => {
     setIsEditOpen(false);
     setEditingCoach(undefined);
-    window.location.reload();
+    setRefreshKey((k) => k + 1);
   };
 
   // Fetch coach stats from API
@@ -203,7 +204,7 @@ export default function CoachesPage() {
           ))}
         </div>
       {/* Main Content Area */}
-      <CoachesTable onEdit={handleEdit} />
+      <CoachesTable key={refreshKey} onEdit={handleEdit} />
     </div>
   );
 }

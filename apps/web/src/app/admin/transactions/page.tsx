@@ -80,8 +80,8 @@ export default function AdminTransactionsPage() {
     },
     {
       label: "Pending Processing",
-      value: "12", // Mocked as specific count isn't in main stats
-      growth: -2.5,
+      value: String(transactions.filter((t: any) => t.status === "pending").length),
+      growth: null,
       icon: Clock,
       color: "text-amber-600",
       bg: "bg-amber-50",
@@ -90,8 +90,8 @@ export default function AdminTransactionsPage() {
     },
     {
       label: "Failed / Refunded",
-      value: "5", // Mocked
-      growth: -10,
+      value: String(transactions.filter((t: any) => t.status === "failed" || t.status === "refunded").length),
+      growth: null,
       icon: AlertCircle,
       color: "text-red-600",
       bg: "bg-red-50",
@@ -100,9 +100,24 @@ export default function AdminTransactionsPage() {
     }
   ];
 
-  // Helper for unimplemented features
   const handleExport = () => {
-    toast.info("Exporting Report... (API endpoint pending)");
+    if (!transactions.length) {
+      toast.error("No transactions to export");
+      return;
+    }
+    const headers = ["ID", "Date", "Amount", "Currency", "Status", "Description"];
+    const rows = transactions.map((t: any) => [
+      t.id, t.date || t.createdDate, t.amount, t.currency || "USD", t.status, t.description || ""
+    ]);
+    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transactions_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Transactions exported");
   };
 
   // Handle admin access check
