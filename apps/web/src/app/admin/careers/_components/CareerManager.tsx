@@ -1,213 +1,260 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useConfirmDialog } from "@/components/ui/confirm-dialog";
+import React, { useState, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Edit, Plus, Trash2, Search, Briefcase } from "lucide-react";
+    Briefcase, Search, TrendingUp, Globe, GraduationCap,
+    BarChart3, DollarSign, Layers, ExternalLink, MapPin,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
-import {
-  listCareers,
-  adminCreateCareer,
-  adminUpdateCareer,
-  adminDeleteCareer,
-} from "@/services/careerService";
-import { useQueryClient } from "@tanstack/react-query";
-import { careerKeys } from "@/hooks/useCareerQueries";
+import { listCareers } from "@/services/careerService";
 import { CareerRole } from "@/types/career";
-import { CareerFormDialog } from "./CareerFormDialog";
-
-const PAGE_SIZE = 10;
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function CareerManager() {
-  const { t } = useTranslation();
-  const { confirm, ConfirmDialog } = useConfirmDialog();
-  const [careers, setCareers] = useState<CareerRole[]>([]);
-  const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<CareerRole | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
+    const { t } = useTranslation();
+    const [careers, setCareers] = useState<CareerRole[]>([]);
+    const [search, setSearch] = useState("");
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      const res = await listCareers();
-      setCareers(res.careers || []);
-      setLoading(false);
-    }
-    load();
-  }, []);
+    useEffect(() => {
+        (async () => {
+            setLoading(true);
+            const res = await listCareers();
+            setCareers(res.careers || []);
+            setLoading(false);
+        })();
+    }, []);
 
-  const queryClient = useQueryClient();
+    // Derived insights
+    const industries = useMemo(() => {
+        const map = new Map<string, number>();
+        careers.forEach(c => c.industries?.forEach(ind => map.set(ind, (map.get(ind) || 0) + 1)));
+        return [...map.entries()].sort((a, b) => b[1] - a[1]);
+    }, [careers]);
 
-  const filtered = careers.filter((c) =>
-    (c.title?.en || c.title?.es || "")
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+    const educationLevels = useMemo(() => {
+        const map = new Map<string, number>();
+        careers.forEach(c => { if (c.educationLevel) map.set(c.educationLevel, (map.get(c.educationLevel) || 0) + 1); });
+        return [...map.entries()].sort((a, b) => b[1] - a[1]);
+    }, [careers]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const remoteCount = useMemo(() => careers.filter(c => c.remoteEligible).length, [careers]);
 
-  // Reset page when search changes
-  useEffect(() => { setPage(1); }, [search]);
+    const topSkills = useMemo(() => {
+        const map = new Map<string, number>();
+        careers.forEach(c => c.skills?.forEach(s => {
+            const name = typeof s.name === "string" ? s.name : (s.name as any)?.en || "";
+            if (name) map.set(name, (map.get(name) || 0) + 1);
+        }));
+        return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15);
+    }, [careers]);
 
-  const handleCreate = () => {
-    setSelected(null);
-    setIsOpen(true);
-  };
-  const handleEdit = (c: CareerRole) => {
-    setSelected(c);
-    setIsOpen(true);
-  };
-  const handleDelete = async (id: string) => {
-    const confirmed = await confirm({ title: t("admin.careers.confirmDelete", "Delete Career"), description: "This career will be permanently removed.", confirmLabel: "Delete", variant: "destructive" });
-    if (!confirmed) return;
-    await adminDeleteCareer(id);
-    setCareers(careers.filter((x) => x.id !== id));
-  };
+    const salaryBands = useMemo(() => {
+        const bands = { "< $40k": 0, "$40k–$70k": 0, "$70k–$100k": 0, "$100k+": 0 };
+        careers.forEach(c => {
+            const m = c.salaryRange?.median;
+            if (!m) return;
+            if (m < 40000) bands["< $40k"]++;
+            else if (m < 70000) bands["$40k–$70k"]++;
+            else if (m < 100000) bands["$70k–$100k"]++;
+            else bands["$100k+"]++;
+        });
+        return Object.entries(bands).filter(([, v]) => v > 0);
+    }, [careers]);
 
-  const handleSave = async (career: CareerRole) => {
-    if (career.id) {
-      const updated = await adminUpdateCareer(career.id, career);
-      setCareers(careers.map((c) => (c.id === career.id ? updated ?? c : c)));
-      queryClient.invalidateQueries({ queryKey: careerKeys.list() });
-    } else {
-      const created = await adminCreateCareer(career);
-      setCareers([...careers, created]);
-      queryClient.invalidateQueries({ queryKey: careerKeys.list() });
-    }
-    setIsOpen(false);
-  };
+    const searchResults = useMemo(() => {
+        if (!search.trim()) return [];
+        const q = search.toLowerCase();
+        return careers.filter(c =>
+            (c.title?.en || "").toLowerCase().includes(q) ||
+            (c.title?.es || "").toLowerCase().includes(q) ||
+            c.industries?.some(i => i.toLowerCase().includes(q))
+        ).slice(0, 10);
+    }, [careers, search]);
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">
-            {t("admin.careers.header.title") || "Careers"}
-          </h1>
-          <p className="text-lg text-gray-500 font-medium">
-            Manage career roles and descriptions
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search careers..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-10 rounded-xl border-gray-200"
-            />
-          </div>
-          <Button onClick={handleCreate} className="bg-gray-900 hover:bg-gray-800 text-white rounded-xl h-10 px-5">
-            <Plus className="mr-2 h-4 w-4" /> Create
-          </Button>
-        </div>
-      </div>
+    const s = { borderRadius: "var(--admin-radius-lg, 8px)", border: "1px solid var(--admin-border-default, #e5e5e5)", background: "var(--admin-bg-card, #fff)" } as const;
+    const lbl = { fontSize: 11, fontWeight: 500 as const, color: "var(--admin-font-tertiary)", textTransform: "uppercase" as const, letterSpacing: "0.04em" };
+    const val = { fontSize: 28, fontWeight: 700 as const, color: "var(--admin-font-primary)", letterSpacing: "-0.02em" };
+    const hdr = { fontSize: 13, fontWeight: 600 as const, color: "var(--admin-font-primary)", marginBottom: 12, display: "flex" as const, alignItems: "center" as const, gap: 6 };
+    const row = { background: "var(--admin-bg-hover, #f9f9f9)" };
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader className="bg-gray-50/50">
-            <TableRow className="border-gray-50">
-              <TableHead className="py-4 font-semibold text-gray-600 pl-6">#</TableHead>
-              <TableHead className="py-4 font-semibold text-gray-600">Title</TableHead>
-              <TableHead className="py-4 font-semibold text-gray-600">Description</TableHead>
-              <TableHead className="py-4 font-semibold text-gray-600 text-right pr-6">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow key="loading">
-                <TableCell colSpan={4} className="h-48 text-center text-gray-500">
-                  Loading careers...
-                </TableCell>
-              </TableRow>
-            ) : paged.length === 0 ? (
-              <TableRow key="empty">
-                <TableCell colSpan={4} className="h-48 text-center text-gray-500">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <Briefcase className="h-8 w-8 text-gray-300" />
-                    <p>No careers found</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              paged.map((c, idx) => (
-                <TableRow key={c.id || `career-${idx}`} className="border-gray-50 hover:bg-gray-50/50 transition-colors">
-                  <TableCell className="pl-6 py-4 text-gray-400 text-sm font-medium">
-                    {(page - 1) * PAGE_SIZE + idx + 1}
-                  </TableCell>
-                  <TableCell className="py-4 font-medium text-gray-900">
-                    {c.title?.en || c.title?.es || "Untitled"}
-                  </TableCell>
-                  <TableCell className="py-4 text-gray-500 text-sm max-w-md truncate">
-                    {c.shortDescription?.en || "—"}
-                  </TableCell>
-                  <TableCell className="py-4 text-right pr-6">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-gray-100" onClick={() => handleEdit(c)}>
-                        <Edit className="w-4 h-4 text-gray-400" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-gray-100" onClick={() => handleDelete(c.id)}>
-                        <Trash2 className="w-4 h-4 text-red-400" />
-                      </Button>
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-4xl font-bold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>Career Insights</h1>
+                    <p className="text-base mt-1" style={{ color: "var(--admin-font-tertiary)" }}>
+                        Career database used for AI-powered student career matching
+                    </p>
+                </div>
+                <div className="relative w-full md:w-72">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input placeholder="Search careers..." className="pl-9 h-10 rounded-xl" value={search} onChange={(e) => setSearch(e.target.value)} />
+                </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                {[
+                    { label: "Total Careers", value: loading ? "..." : careers.length.toLocaleString(), icon: Briefcase },
+                    { label: "Industries", value: industries.length.toLocaleString(), icon: Layers },
+                    { label: "Remote Eligible", value: remoteCount.toLocaleString(), icon: Globe },
+                    { label: "Education Levels", value: educationLevels.length.toLocaleString(), icon: GraduationCap },
+                    { label: "Skills Tracked", value: topSkills.length > 0 ? `${topSkills.length}+` : "—", icon: TrendingUp },
+                ].map((stat, i) => (
+                    <div key={i} style={{ ...s, padding: 16 }}>
+                        <stat.icon style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)", marginBottom: 8 }} />
+                        <div style={val}>{stat.value}</div>
+                        <div style={lbl}>{stat.label}</div>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                ))}
+            </div>
+
+            {/* Search Results */}
+            {search.trim() && (
+                <div style={{ ...s, padding: 20 }}>
+                    <h3 style={hdr}><Search style={{ width: 14, height: 14 }} /> Results for "{search}"</h3>
+                    {searchResults.length === 0 ? (
+                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No careers match</p>
+                    ) : (
+                        <div className="space-y-2">
+                            {searchResults.map((c, i) => (
+                                <div key={c.id || i} className="flex items-center gap-3 p-3 rounded-lg" style={row}>
+                                    <Briefcase className="h-4 w-4 shrink-0" style={{ color: "var(--admin-font-tertiary)" }} />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold truncate" style={{ color: "var(--admin-font-primary)" }}>{c.title?.en || c.title?.es || "Untitled"}</p>
+                                        <p className="text-[11px]" style={{ color: "var(--admin-font-tertiary)" }}>
+                                            {c.industries?.slice(0, 2).join(", ") || "General"} {c.educationLevel ? `· ${c.educationLevel}` : ""} {c.remoteEligible ? "· Remote" : ""}
+                                        </p>
+                                    </div>
+                                    {c.salaryRange?.median && (
+                                        <span className="text-xs font-semibold shrink-0" style={{ color: "var(--admin-font-tertiary)" }}>
+                                            ${Math.round(c.salaryRange.median / 1000)}k
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             )}
-          </TableBody>
-        </Table>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/30">
-          <p className="text-sm text-gray-500">
-            Showing page <span className="font-semibold text-gray-900">{page}</span> of <span className="font-semibold text-gray-900">{totalPages}</span>
-            {" "}({filtered.length} total)
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="rounded-lg border-gray-200 text-gray-500 h-8"
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="rounded-lg border-gray-200 text-gray-500 h-8"
-            >
-              Next
-            </Button>
-          </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Industries Breakdown */}
+                <div style={{ ...s, padding: 20 }}>
+                    <h3 style={hdr}><BarChart3 style={{ width: 14, height: 14, color: "#3b82f6" }} /> By Industry</h3>
+                    {loading ? (
+                        <div className="space-y-2">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-10 rounded-lg" />)}</div>
+                    ) : industries.length === 0 ? (
+                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No industry data</p>
+                    ) : (
+                        <div className="space-y-1.5">
+                            {industries.slice(0, 10).map(([name, count]) => {
+                                const pct = Math.round((count / careers.length) * 100);
+                                return (
+                                    <div key={name} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={row}>
+                                        <p className="flex-1 text-xs font-medium truncate" style={{ color: "var(--admin-font-primary)" }}>{name}</p>
+                                        <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--admin-border-default)" }}>
+                                            <div className="h-full rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
+                                        </div>
+                                        <span className="text-[11px] font-semibold w-8 text-right" style={{ color: "var(--admin-font-tertiary)" }}>{count}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* Top Skills */}
+                <div style={{ ...s, padding: 20 }}>
+                    <h3 style={hdr}><TrendingUp style={{ width: 14, height: 14, color: "#8b5cf6" }} /> Most In-Demand Skills</h3>
+                    {loading ? (
+                        <div className="space-y-2">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-8 rounded-lg" />)}</div>
+                    ) : topSkills.length === 0 ? (
+                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No skills data</p>
+                    ) : (
+                        <div className="flex flex-wrap gap-2">
+                            {topSkills.map(([skill, count]) => (
+                                <div key={skill} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={row}>
+                                    <span className="text-xs font-medium" style={{ color: "var(--admin-font-primary)" }}>{skill}</span>
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "var(--admin-bg-card)", color: "var(--admin-font-tertiary)" }}>{count}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Education & Salary */}
+                <div style={{ ...s, padding: 20 }}>
+                    <h3 style={hdr}><GraduationCap style={{ width: 14, height: 14, color: "#10b981" }} /> Education Requirements</h3>
+                    {loading ? (
+                        <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10 rounded-lg" />)}</div>
+                    ) : educationLevels.length === 0 ? (
+                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No education data</p>
+                    ) : (
+                        <div className="space-y-1.5">
+                            {educationLevels.map(([level, count]) => (
+                                <div key={level} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={row}>
+                                    <span className="text-xs font-medium" style={{ color: "var(--admin-font-primary)" }}>{level}</span>
+                                    <span className="text-xs font-semibold" style={{ color: "var(--admin-font-tertiary)" }}>{count} careers</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Salary Distribution */}
+                <div style={{ ...s, padding: 20 }}>
+                    <h3 style={hdr}><DollarSign style={{ width: 14, height: 14, color: "#f59e0b" }} /> Salary Distribution</h3>
+                    {loading ? (
+                        <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10 rounded-lg" />)}</div>
+                    ) : salaryBands.length === 0 ? (
+                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No salary data available</p>
+                    ) : (
+                        <div className="space-y-1.5">
+                            {salaryBands.map(([band, count]) => {
+                                const pct = Math.round((count / careers.length) * 100);
+                                return (
+                                    <div key={band} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={row}>
+                                        <p className="flex-1 text-xs font-medium" style={{ color: "var(--admin-font-primary)" }}>{band}</p>
+                                        <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--admin-border-default)" }}>
+                                            <div className="h-full rounded-full bg-amber-500" style={{ width: `${pct}%` }} />
+                                        </div>
+                                        <span className="text-[11px] font-semibold w-8 text-right" style={{ color: "var(--admin-font-tertiary)" }}>{count}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Sample Careers */}
+            <div style={{ ...s, padding: 20 }}>
+                <h3 style={hdr}><Briefcase style={{ width: 14, height: 14, color: "#3b82f6" }} /> Sample from Database</h3>
+                <p className="text-[11px] mb-3" style={{ color: "var(--admin-font-tertiary)" }}>
+                    All {careers.length} careers are analyzed by the AI to match students based on their assessment profiles
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {(loading ? [] : careers.slice(0, 9)).map((c, i) => (
+                        <div key={c.id || i} className="flex items-start gap-3 p-3 rounded-lg" style={row}>
+                            <Briefcase className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "var(--admin-font-tertiary)" }} />
+                            <div className="min-w-0">
+                                <p className="text-xs font-semibold line-clamp-2" style={{ color: "var(--admin-font-primary)" }}>{c.title?.en || c.title?.es}</p>
+                                <p className="text-[10px] mt-0.5" style={{ color: "var(--admin-font-tertiary)" }}>
+                                    {c.industries?.slice(0, 2).join(", ") || "General"}
+                                    {c.remoteEligible ? " · Remote" : ""}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </div>
-      </div>
-
-      <CareerFormDialog
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        career={selected}
-        onSave={handleSave}
-      />
-      <ConfirmDialog />
-    </div>
-  );
+    );
 }
