@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useTranslation } from "react-i18next";
 import { StatCards } from "./_components/StatCards";
@@ -44,7 +45,7 @@ export default function DashboardPage() {
           }
         }
       } catch (err) {
-        // error handled silently
+        console.error("Failed to load dashboard data:", err);
       }
     };
     fetchDashboard();

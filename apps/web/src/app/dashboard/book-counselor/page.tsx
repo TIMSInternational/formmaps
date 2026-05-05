@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import { format, addDays, isSameDay, startOfDay } from "date-fns";
 import {
@@ -47,6 +48,7 @@ const TOPICS = [
 
 export default function BookCounselorPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useGlobalStore();
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -151,7 +153,7 @@ export default function BookCounselorPage() {
             <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <User className="h-8 w-8 text-indigo-500" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">No Counselors Available</h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">No Counselors Available</h2>
             <p className="text-gray-500 text-sm mb-6">
               There are no counselors available at your school right now. Please contact your school administrator.
             </p>
@@ -172,7 +174,7 @@ export default function BookCounselorPage() {
                 <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
               </motion.div>
               <Badge className="bg-green-100 text-green-700 border-0 mb-4">FREE Session</Badge>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Session Booked!</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Session Booked!</h2>
               <p className="text-gray-500 text-sm mb-1 font-medium">
                 {selectedSlot && format(new Date(selectedSlot.start), "EEEE, MMMM d, yyyy")}
               </p>
@@ -185,7 +187,7 @@ export default function BookCounselorPage() {
                   View My Sessions
                 </Button>
                 <Button
-                  className="bg-gradient-to-r from-indigo-600 to-slate-700 text-white"
+                  className="bg-foreground text-background"
                   onClick={() => { setBooked(false); setSelectedSlot(null); fetchSlots(selectedDate); }}
                 >
                   Book Another
@@ -199,17 +201,17 @@ export default function BookCounselorPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-5xl mx-auto py-6 space-y-5">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-xl">
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Book a Counselor Session</h1>
-            <p className="text-gray-500 text-sm mt-0.5">Free sessions with school counselors</p>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">{t("counselorBooking.title")}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{t("counselorBooking.subtitle")}</p>
           </div>
-          <Badge className="ml-auto bg-green-100 text-green-700 border-0 text-sm px-3 py-1">FREE</Badge>
+          <Badge className="ml-auto bg-emerald-50 text-emerald-700 border-emerald-200 text-xs px-2.5 py-1">{t("counselorBooking.free")}</Badge>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -217,11 +219,11 @@ export default function BookCounselorPage() {
           <div className="lg:col-span-3 space-y-5">
             {/* Counselor Selector */}
             {counselors.length > 1 && (
-              <Card className="border-0 shadow-lg">
+              <Card className="dash-card border">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
                     <User className="h-4 w-4 text-indigo-500" />
-                    Select a Counselor
+                    {t("counselorBooking.selectCounselor")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -242,12 +244,12 @@ export default function BookCounselorPage() {
             )}
 
             {/* Week Picker */}
-            <Card className="border-0 shadow-lg">
+            <Card className="dash-card border">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
                     <CalendarDays className="h-4 w-4 text-indigo-500" />
-                    Select a Date
+                    {t("counselorBooking.selectDate")}
                   </CardTitle>
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg"
@@ -291,11 +293,11 @@ export default function BookCounselorPage() {
             </Card>
 
             {/* Slots */}
-            <Card className="border-0 shadow-lg">
+            <Card className="dash-card border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Clock className="h-4 w-4 text-indigo-500" />
-                  Available Times — {format(selectedDate, "EEEE, MMMM d")}
+                  {t("counselorBooking.availableTimes")} — {format(selectedDate, "EEEE, MMMM d")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -306,8 +308,8 @@ export default function BookCounselorPage() {
                 ) : slots.filter(s => s.available).length === 0 ? (
                   <div className="text-center py-10 text-gray-400">
                     <Calendar className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                    <p className="text-sm">No available slots on this day.</p>
-                    <p className="text-xs mt-1">Try selecting another date.</p>
+                    <p className="text-sm">{t("counselorBooking.noSlots")}</p>
+                    <p className="text-xs mt-1">{t("counselorBooking.tryAnotherDate")}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -339,10 +341,10 @@ export default function BookCounselorPage() {
 
           {/* Booking Form */}
           <div className="lg:col-span-2">
-            <Card className="border-0 shadow-lg sticky top-6">
+            <Card className="dash-card border sticky top-6">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold">Session Details</CardTitle>
-                <CardDescription>Fill in details for your counselor session</CardDescription>
+                <CardTitle className="text-base font-semibold">{t("counselorBooking.sessionDetails")}</CardTitle>
+                <CardDescription>{t("counselorBooking.fillDetails")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {selectedSlot && (
@@ -355,7 +357,7 @@ export default function BookCounselorPage() {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="topic">Topic</Label>
+                  <Label htmlFor="topic">{t("counselorBooking.topic")}</Label>
                   <select
                     id="topic"
                     value={topic}
@@ -369,11 +371,11 @@ export default function BookCounselorPage() {
                 <div className="space-y-2">
                   <Label htmlFor="notes" className="flex items-center gap-1.5">
                     <FileText className="h-3.5 w-3.5 text-gray-400" />
-                    Notes for Counselor (optional)
+                    {t("counselorBooking.notesLabel")}
                   </Label>
                   <Textarea
                     id="notes"
-                    placeholder="What would you like to discuss?"
+                    placeholder={t("counselorBooking.notesPlaceholder")}
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
                     rows={3}
@@ -383,20 +385,20 @@ export default function BookCounselorPage() {
 
                 <div className="pt-2 border-t space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Session Cost</span>
-                    <Badge className="bg-green-100 text-green-700 border-0">FREE</Badge>
+                    <span className="text-gray-500">{t("counselorBooking.topic")}</span>
+                    <Badge className="bg-green-100 text-green-700 border-0">{t("counselorBooking.free")}</Badge>
                   </div>
                   <Button
-                    className="w-full bg-gradient-to-r from-indigo-600 to-slate-700 hover:from-indigo-700 hover:to-slate-800 text-white h-11 rounded-xl"
+                    className="w-full bg-foreground text-background hover:bg-foreground/90 h-11 rounded-xl"
                     disabled={!selectedSlot || isBooking}
                     onClick={handleBook}
                   >
                     {isBooking ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Booking...</>
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t("counselorBooking.booking")}</>
                     ) : selectedSlot ? (
-                      <>Confirm Booking — {format(new Date(selectedSlot.start), "h:mm a")}</>
+                      <>{t("counselorBooking.bookSession")} — {format(new Date(selectedSlot.start), "h:mm a")}</>
                     ) : (
-                      "Select a Time Slot"
+                      t("counselorBooking.selectSlotFirst")
                     )}
                   </Button>
                 </div>
