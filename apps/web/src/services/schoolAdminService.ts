@@ -13,6 +13,20 @@ import {
 } from "@/types/student";
 import { decodeJWTToken, isAdminRole, getCurrentUser } from "./authService";
 
+// Convert PascalCase keys from .NET to camelCase
+function toCamel(obj: any): any {
+  if (Array.isArray(obj)) return obj.map(toCamel);
+  if (obj !== null && typeof obj === "object" && !(obj instanceof Date)) {
+    return Object.fromEntries(
+      Object.entries(obj).map(([k, v]) => [
+        k.charAt(0).toLowerCase() + k.slice(1),
+        toCamel(v),
+      ])
+    );
+  }
+  return obj;
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Helper to get token
@@ -70,7 +84,7 @@ export async function getSchoolAdminStats(): Promise<SchoolAdminDashboardStats> 
     );
     if (!response.ok) throw new Error("Failed to fetch stats");
     const json = await response.json();
-    return json.data || json;
+    return toCamel(json.data || json);
   } catch (error) {
     throw error;
   }
@@ -101,7 +115,8 @@ export async function getStudents(params: {
       { headers: getHeaders() }
     );
     if (!response.ok) throw new Error("Failed to fetch students");
-    return response.json();
+    const json = await response.json();
+    return toCamel(json);
   } catch (error) {
     return {
       data: [],
@@ -124,7 +139,7 @@ export async function getStudent(studentId: string): Promise<Student> {
   }
 
   const json = await response.json();
-  return json.data || json;
+  return toCamel(json.data || json);
 }
 
 export async function inviteStudent(
@@ -246,7 +261,7 @@ export async function getAnalyticsOverview(
     );
     if (!response.ok) throw new Error("Failed to fetch analytics");
     const json = await response.json();
-    const data = json.data || json;
+    const data = toCamel(json.data || json);
 
     return {
       studentEngagement: { ...defaultData.studentEngagement, ...(data.studentEngagement || {}) },
@@ -275,7 +290,7 @@ export async function getPerformanceTrends(
     );
     if (!response.ok) throw new Error("Failed to fetch trends");
     const json = await response.json();
-    const data = json.data || json;
+    const data = toCamel(json.data || json);
 
     return {
       labels: data.labels || defaultData.labels,
@@ -295,7 +310,8 @@ export async function getTopPerformers(
       { headers: getHeaders() }
     );
     if (!response.ok) throw new Error("Failed to fetch top performers");
-    return response.json();
+    const json = await response.json();
+    return toCamel(json);
   } catch (error) {
     return { data: [] };
   }
@@ -326,7 +342,8 @@ export async function getStudentResults(params: {
       { headers: getHeaders() }
     );
     if (!response.ok) throw new Error("Failed to fetch results");
-    return response.json();
+    const json = await response.json();
+    return toCamel(json);
   } catch (error) {
     return {
       data: [],
@@ -347,7 +364,8 @@ export async function getStudentDetailResult(
       { headers: getHeaders() }
     );
     if (!response.ok) throw new Error("Failed to fetch student detail");
-    return response.json();
+    const json = await response.json();
+    return toCamel(json);
   } catch (error) {
     return null;
   }
@@ -387,7 +405,8 @@ export async function getSchoolSettings(): Promise<SchoolSettings | null> {
       { headers: getHeaders() }
     );
     if (!response.ok) throw new Error("Failed to fetch settings");
-    return response.json();
+    const json = await response.json();
+    return toCamel(json);
   } catch (error) {
     return null;
   }

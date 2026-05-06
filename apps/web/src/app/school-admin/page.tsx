@@ -155,11 +155,11 @@ export default function SchoolAdminDashboard() {
       sub: "enrolled in school",
     },
     {
-      label: "Active Courses",
-      value: stats ? (stats.totalCourses?.toLocaleString() || "0") : "—",
+      label: "Assessments Done",
+      value: stats ? (stats.completedAssessments?.toLocaleString() || "0") : "—",
       icon: BookOpen,
       trend: 0,
-      sub: "in curriculum",
+      sub: "completed assessments",
     },
     {
       label: "Avg. Score",
