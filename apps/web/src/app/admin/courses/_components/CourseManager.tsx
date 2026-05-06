@@ -141,8 +141,7 @@ export function CourseManager() {
         const statusResp = await adminGetImportStatus(jobId);
         const status = statusResp?.data?.status;
         if (status === "done") {
-          // Optionally auto-accept or open a preview UI
-          // TODO: open preview modal for admin approval
+          toast.success(t("courses_import.completed", "Import completed successfully. Refresh to see new courses."));
           return;
         }
         if (status === "failed" || attempts >= maxAttempts) {
