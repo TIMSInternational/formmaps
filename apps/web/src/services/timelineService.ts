@@ -95,12 +95,8 @@ function transformMILToEvents(
             : `${examName} Completed`,
         description:
           language === "sp"
-            ? `Subtest completado con ${exam.scorePercentage.toFixed(
-                1
-              )}% de puntuación`
-            : `Subtest completed with ${exam.scorePercentage.toFixed(
-                1
-              )}% score`,
+            ? `Subtest completado exitosamente`
+            : `Subtest completed successfully`,
         timestamp: exam.completionDate,
         status: "completed",
         metadata: {
@@ -283,33 +279,7 @@ async function transformPCAToEvents(
       });
     }
 
-    // If completed, try to get results for additional metadata
-    if (pcaStatus.status === "completed" && pcaStatus.hasResults) {
-      try {
-        const results = await getPCAResultByUserId(
-          userId,
-          language === "sp" ? "spanish" : "english"
-        );
-        if (results?.data) {
-          // Update the event with score data
-          const existingEvent = events.find((e) => e.type === "pca");
-          if (existingEvent) {
-            existingEvent.metadata = {
-              ...existingEvent.metadata,
-              overallScore: results.data.overallScore,
-              scores: {
-                dominance: results.data.pcaD1,
-                influence: results.data.pcaI1,
-                steadiness: results.data.pcaS1,
-                conscientiousness: results.data.pcaC1,
-              },
-            };
-          }
-        }
-      } catch (error) {
-      // error handled silently
-    }
-    }
+    // Results data not injected into timeline — scores are only shown on dedicated results pages
   } catch (error) {
       // error handled silently
     }
@@ -513,20 +483,25 @@ export async function getTimelineStats(
         ? milScores.reduce((a, b) => a + b, 0) / milScores.length
         : undefined;
 
-    // Calculate overall completion
-    const pcaCompleted = pcaEvents.some((e) => e.status === "completed");
-    const milAllCompleted = completedMILEvents.length >= 5;
-    const evalCompleted = evalEvents.filter(
-      (e) => e.eventType === "response_received"
-    ).length;
-    const evalTotal = evalEvents.filter(
-      (e) => e.eventType === "group_created"
-    ).length;
+    // Use assessmentProgressService for accurate completion data
+    let assessmentProgress;
+    try {
+      const { getUserAssessmentProgress } = await import("./assessmentProgressService");
+      assessmentProgress = await getUserAssessmentProgress(userId, language === "sp" ? "spanish" : "english");
+    } catch {
+      // Fallback if import fails
+    }
+
+    const pcaStatus = assessmentProgress?.pcaAssessment?.status || (pcaEvents.some((e) => e.status === "completed") ? "completed" : pcaEvents.length > 0 ? "in_progress" : "not_started");
+    const milStatus = assessmentProgress?.milAssessment?.status || (completedMILEvents.length >= 5 ? "completed" : completedMILEvents.length > 0 ? "in_progress" : "not_started");
+    const evalStatus = assessmentProgress?.evaluationAssessment?.status || "not_started";
+    const evalCompletedCount = assessmentProgress?.evaluationAssessment?.progress?.completedEvaluations ?? 0;
+    const evalTotalCount = assessmentProgress?.evaluationAssessment?.progress?.totalGroups ?? 0;
 
     let completedAssessments = 0;
-    if (pcaCompleted) completedAssessments++;
-    if (milAllCompleted) completedAssessments++;
-    if (evalCompleted >= 4) completedAssessments++; // Assuming 4 evaluators needed
+    if (pcaStatus === "completed") completedAssessments++;
+    if (milStatus === "completed") completedAssessments++;
+    if (evalStatus === "completed") completedAssessments++;
 
     return {
       overallCompletion: {
@@ -541,34 +516,19 @@ export async function getTimelineStats(
       },
       assessmentBreakdown: {
         pca: {
-          status: pcaCompleted
-            ? "completed"
-            : pcaEvents.length > 0
-            ? "in_progress"
-            : "not_started",
-          completedAt: pcaEvents.find((e) => e.status === "completed")
-            ?.timestamp,
-          score: (pcaEvents[0]?.metadata as any)?.overallScore,
+          status: pcaStatus,
+          completedAt: pcaEvents.find((e) => e.status === "completed")?.timestamp,
         },
         mil: {
-          status: milAllCompleted
-            ? "completed"
-            : completedMILEvents.length > 0
-            ? "in_progress"
-            : "not_started",
-          completedSubtests: completedMILEvents.length,
+          status: milStatus,
+          completedSubtests: assessmentProgress?.milAssessment?.progress?.completedExams ?? completedMILEvents.length,
           totalSubtests: 5,
-          averageScore: avgMILScore,
+          averageScore: undefined,
         },
         evaluation: {
-          status:
-            evalCompleted >= 4
-              ? "completed"
-              : evalCompleted > 0
-              ? "in_progress"
-              : "not_started",
-          completedEvaluations: evalCompleted,
-          totalEvaluators: evalTotal,
+          status: evalStatus,
+          completedEvaluations: evalCompletedCount,
+          totalEvaluators: evalTotalCount,
         },
         courses: {
           enrolled: 0,

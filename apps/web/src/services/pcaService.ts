@@ -278,28 +278,37 @@ export async function checkPCAStatus(
       return { status: "not_started" };
     }
 
-    // Check if we've recently tried and failed to get results (avoid 400 spam)
-    const cacheKey = `pca_result_checked_${userId}`;
-    const lastCheck = typeof window !== "undefined" ? sessionStorage.getItem(cacheKey) : null;
-    const now = Date.now();
-
-    // Only try fetching results if we haven't checked in the last 5 minutes
-    if (!lastCheck || now - parseInt(lastCheck) > 300000) {
+    // Check localStorage cache first (maintained by usePCAData hook)
+    if (typeof window !== "undefined") {
       try {
-        const result = await getPCAResultByUserId(userId, language);
-        if (result?.data && (result.data.pcaCod || result.data.pcaD1 != null)) {
-          if (typeof window !== "undefined") sessionStorage.removeItem(cacheKey);
-          return {
-            status: "completed",
-            pcaCod: userEvaluation.pcaCod,
-            hasResults: true,
-            lastActivity: userEvaluation.createdAt || new Date().toISOString(),
-          };
+        const cached = localStorage.getItem(`pcaData_${userId}`);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.isCompleted) {
+            return {
+              status: "completed",
+              pcaCod: parsed.pcaCod || userEvaluation.pcaCod,
+              hasResults: true,
+              lastActivity: parsed.lastUpdated || userEvaluation.createdAt || new Date().toISOString(),
+            };
+          }
         }
-      } catch {
-        // No results yet — cache the failed attempt
+      } catch { /* ignore parse errors */ }
+    }
+
+    // Try fetching results from TIMS API
+    try {
+      const result = await getPCAResultByUserId(userId, language);
+      if (result?.data && (result.data.pcaCod || result.data.pcaD1 != null)) {
+        return {
+          status: "completed",
+          pcaCod: userEvaluation.pcaCod,
+          hasResults: true,
+          lastActivity: userEvaluation.createdAt || new Date().toISOString(),
+        };
       }
-      if (typeof window !== "undefined") sessionStorage.setItem(cacheKey, String(now));
+    } catch {
+      // TIMS API failed — fall through to in_progress
     }
 
     return {

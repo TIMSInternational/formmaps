@@ -114,6 +114,7 @@ export interface SchoolProfile {
   id: string;
   name: string;
   logo: string | null;
+  logoUrl?: string | null;
   address: SchoolAddress;
   phone: string;
   email: string;

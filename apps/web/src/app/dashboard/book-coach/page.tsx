@@ -77,17 +77,14 @@ export default function BookCoachPage() {
   }, [search, retryCount]);
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-5xl mx-auto py-6 space-y-5">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-              Coaching
-            </p>
-            <h1 className="text-3xl font-bold text-foreground">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">
               {t("coaching.find.title")}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-1">
               {t("coaching.find.subtitle")}
             </p>
           </div>

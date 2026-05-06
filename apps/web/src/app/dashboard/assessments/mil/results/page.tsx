@@ -274,17 +274,26 @@ export default function MILResultsPage() {
                 </ResponsiveContainer>
               </div>
               
+              {subtestResults.length > 0 && (
               <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-100">
                   <div className="flex gap-3">
                       <Zap className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                       <div>
-                          <h4 className="font-bold text-indigo-900 text-sm mb-1">AI Insight</h4>
+                          <h4 className="font-bold text-indigo-900 text-sm mb-1">{t("dashboard.aiInsight", "AI Insight")}</h4>
                           <p className="text-sm text-indigo-700 leading-relaxed">
-                              Your pattern recognition score is exceptional. Consider roles in Data Science or Strategic Planning.
+                              {(() => {
+                                const best = subtestResults.reduce((a, b) => a.score > b.score ? a : b, subtestResults[0]);
+                                return t("dashboard.aiInsightMIL", {
+                                  defaultValue: `Your strongest area is {{area}} ({{score}}%). This suggests strong aptitude for careers requiring this cognitive skill.`,
+                                  area: best.name,
+                                  score: best.score,
+                                });
+                              })()}
                           </p>
                       </div>
                   </div>
               </div>
+              )}
            </div>
         </div>
 

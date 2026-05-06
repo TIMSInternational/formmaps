@@ -168,30 +168,6 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
           )}
         </div>
 
-        {/* AI Insight */}
-        {aiSummary && (
-          <div className="mt-5 rounded-lg bg-blue-500/5 border border-blue-500/15 p-4">
-            <button
-              onClick={() => setAiExpanded(!aiExpanded)}
-              className="flex items-center gap-2 w-full text-left"
-            >
-              <Sparkles className="w-4 h-4 text-blue-400 shrink-0" />
-              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wide">
-                AI Insight
-              </span>
-              {aiExpanded ? (
-                <ChevronUp className="w-3.5 h-3.5 text-blue-400/60 ml-auto" />
-              ) : (
-                <ChevronDown className="w-3.5 h-3.5 text-blue-400/60 ml-auto" />
-              )}
-            </button>
-            {aiExpanded && (
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                {aiSummary}
-              </p>
-            )}
-          </div>
-        )}
       </Card>
 
       {/* Detail Sheet */}

@@ -39,7 +39,6 @@ import {
   University,
   BookMarked,
   Award,
-  TrendingUp,
   Calendar,
   UserCheck,
   Users,
@@ -90,7 +89,6 @@ const NAV_SECTIONS: NavSection[] = [
         sub: [
           { label: "dashboard.courses", href: "/dashboard/learning/courses", icon: BookMarked },
           { label: "dashboard.certifications", href: "/dashboard/learning/certifications", icon: Award },
-          { label: "dashboard.progress", href: "/dashboard/progress", icon: TrendingUp },
         ],
       },
     ],
@@ -240,6 +238,8 @@ export function StudentSidebar() {
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === href;
     if (href === "#") return false;
+    // Exact match for overview-type pages to avoid double-highlighting
+    if (href === "/dashboard/assessments") return pathname === href;
     return pathname?.startsWith(href) ?? false;
   };
   const isSubActive = (subs: NavSubItem[]) => subs.some(s => pathname?.startsWith(s.href));

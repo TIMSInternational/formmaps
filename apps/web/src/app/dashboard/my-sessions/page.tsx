@@ -319,21 +319,18 @@ export default function MySessionsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-5xl mx-auto py-6 space-y-5">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6"
+          className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4"
         >
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
-              Appointments
-            </p>
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">
               {t("sessions.title")}
             </h1>
-            <p className="text-muted-foreground mt-1">{t("sessions.subtitle")}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("sessions.subtitle")}</p>
           </div>
 
           <div className="flex gap-3">
@@ -576,7 +573,7 @@ export default function MySessionsPage() {
         )}
 
         {/* Coaching Sessions List */}
-        <div className="dash-card overflow-hidden">
+        {mainTab === "coaching" && <div className="dash-card overflow-hidden">
           <div className="border-b border-border px-6 py-5">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h2 className="text-xl font-bold text-foreground">
@@ -795,7 +792,7 @@ export default function MySessionsPage() {
               </div>
             )}
           </div>
-        </div>
+        </div>}
 
       {/* Cancel Dialog */}
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>

@@ -346,43 +346,23 @@ function EventMetadata({
 
   if (event.type === "mil") {
     return (
-      <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50/30 p-4 rounded-lg border border-gray-100/50">
-        {metadata.scorePercentage !== undefined && (
+      <div className="flex items-center gap-4 text-sm bg-gray-50/30 p-3 rounded-lg border border-gray-100/50">
+        {metadata.examName && (
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-1">
-              {language === "spanish" ? "Puntuación" : "Score"}
+            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-0.5">
+              {language === "spanish" ? "Subtest" : "Subtest"}
             </span>
-            <span className="font-bold text-gray-900 text-lg tracking-tight">
-              {metadata.scorePercentage.toFixed(1)}%
-            </span>
-          </div>
-        )}
-        {metadata.accuracyPercentage !== undefined && (
-          <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-1">
-              {language === "spanish" ? "Precisión" : "Accuracy"}
-            </span>
-            <span className="font-bold text-gray-900 text-lg tracking-tight">
-              {metadata.accuracyPercentage.toFixed(1)}%
-            </span>
-          </div>
-        )}
-        {metadata.correctAnswers !== undefined && (
-          <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-1">
-              {language === "spanish" ? "Correctas" : "Correct"}
-            </span>
-            <span className="font-semibold text-gray-900">
-              {metadata.correctAnswers} <span className="text-gray-400 font-normal">/ {metadata.totalQuestions}</span>
+            <span className="font-semibold text-gray-900 text-xs">
+              {metadata.examName}
             </span>
           </div>
         )}
         {metadata.timeSpent && (
           <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-1">
+            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-0.5">
               {language === "spanish" ? "Tiempo" : "Time"}
             </span>
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-gray-900 text-xs">
               {metadata.timeSpent}
             </span>
           </div>
@@ -433,39 +413,17 @@ function EventMetadata({
 
   if (event.type === "pca") {
     return (
-      <div className="space-y-4 bg-gray-50/30 p-4 rounded-lg border border-gray-100/50">
-        {metadata.overallScore !== undefined && (
-          <div className="flex items-center justify-between border-b border-gray-200/50 pb-3">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-              {language === "spanish" ? "Puntuación General" : "Overall Score"}
-            </span>
-            <span className="text-xl font-bold text-violet-600 tracking-tight">
-              {metadata.overallScore}%
-            </span>
-          </div>
-        )}
-        {metadata.scores && (
-          <div className="grid grid-cols-4 gap-2">
-            {Object.entries(metadata.scores).map(([key, value]: [string, any]) => (
-              <div key={key} className="flex flex-col items-center p-2 bg-white rounded-lg border border-gray-100 shadow-sm">
-                <span className="text-[10px] font-bold text-gray-400 uppercase mb-1">
-                  {key.charAt(0)}
-                </span>
-                <span className="font-bold text-gray-900">{value}</span>
-              </div>
-            ))}
-          </div>
-        )}
-        {metadata.pcaCod && (
-          <div className="flex items-center gap-2 text-xs text-gray-500 pt-1">
-            <span className="font-medium">
-              {language === "spanish" ? "Código" : "Code"}:
-            </span>
-            <code className="bg-white px-2 py-0.5 rounded text-gray-600 font-mono text-[10px] border border-gray-100">
-              {metadata.pcaCod}
-            </code>
-          </div>
-        )}
+      <div className="flex items-center gap-4 text-sm bg-gray-50/30 p-3 rounded-lg border border-gray-100/50">
+        <div className="flex flex-col">
+          <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-0.5">
+            {language === "spanish" ? "Estado" : "Status"}
+          </span>
+          <span className="font-semibold text-gray-900 text-xs">
+            {event.status === "completed"
+              ? language === "spanish" ? "Completado" : "Completed"
+              : language === "spanish" ? "En progreso" : "In Progress"}
+          </span>
+        </div>
       </div>
     );
   }

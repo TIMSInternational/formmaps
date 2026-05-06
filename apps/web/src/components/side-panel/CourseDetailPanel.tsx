@@ -80,9 +80,9 @@ export function CourseDetailPanel({
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-2">
-        <StatBox icon={Star} label="Rating" value={`${course.rating.toFixed(1)} (${course.reviewCount})`} accent="text-amber-400" />
-        <StatBox icon={Clock} label="Duration" value={`${course.duration} weeks`} accent="text-blue-400" />
-        <StatBox icon={Users} label="Students" value={course.enrollmentCount.toLocaleString()} accent="text-emerald-400" />
+        <StatBox icon={Star} label="Rating" value={`${(course.rating ?? 0).toFixed(1)} (${course.reviewCount ?? 0})`} accent="text-amber-400" />
+        <StatBox icon={Clock} label="Duration" value={`${course.duration ?? 0} weeks`} accent="text-blue-400" />
+        <StatBox icon={Users} label="Students" value={(course.enrollmentCount ?? 0).toLocaleString()} accent="text-emerald-400" />
         <StatBox icon={Globe} label="Language" value={course.language} accent="text-purple-400" />
       </div>
 

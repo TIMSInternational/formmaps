@@ -194,3 +194,16 @@ export async function cancelCounselorSession(
   });
   return handleResponse(res);
 }
+
+export async function rescheduleCounselorSession(
+  id: string,
+  newStartTime: string,
+  newEndTime?: string
+): Promise<{ id: string; status: string; startTime: string; endTime: string }> {
+  const res = await fetch(`${API_BASE}/api/v1/counselor/sessions/${id}/reschedule`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify({ newStartTime, newEndTime }),
+  });
+  return handleResponse(res);
+}

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { usePCAData } from "@/hooks/usePCAData";
 import { useMILData } from "@/hooks/useMILData";
-import { scoreCareers, deriveProfile } from "@/services/timsService";
+import { scoreCareers } from "@/services/timsService";
 import { ScoreCareersRequest } from "@/types/tims";
 
 export const timsKeys = {
@@ -24,42 +24,58 @@ export function useDerived360Profile() {
     queryFn: async () => {
       if (!userId) throw new Error("User not found");
 
-      // Try to load 360 answers from localStorage (saved after completing 360 assessment)
-      const storedAnswers = localStorage.getItem(`tims_360_answers_${userId}`);
+      // Call the backend to aggregate all 360° feedback and derive profile
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+        const resp = await fetch(`${API_BASE}/api/v1/assessment/derive-profile/${userId}`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        });
 
-      if (storedAnswers) {
-        try {
-          const answers = JSON.parse(storedAnswers) as Record<string, number>;
-          const result = await deriveProfile(userId, answers);
+        if (resp.ok) {
+          const json = await resp.json();
+          const data = json.data || json;
 
-          // Cache the derived profile in localStorage for offline use
-          localStorage.setItem(
-            `tims_profile_${userId}`,
-            JSON.stringify({
-              derivedInterests: result.derivedInterests,
-              derivedMotivators: result.derivedMotivators,
-              interestScores: result.interestScores,
-              motivatorScores: result.motivatorScores,
-              derivedAt: new Date().toISOString(),
-            })
-          );
+          if (data.derivedInterests?.length > 0 || data.derivedMotivators?.length > 0) {
+            // Cache for offline use
+            localStorage.setItem(
+              `tims_profile_${userId}`,
+              JSON.stringify({
+                derivedInterests: data.derivedInterests,
+                derivedMotivators: data.derivedMotivators,
+                interestScores: data.interestScores,
+                motivatorScores: data.motivatorScores,
+                derivedAt: new Date().toISOString(),
+              })
+            );
 
-          return result;
-        } catch {
-          // Fall through to localStorage cache
+            return {
+              derivedInterests: data.derivedInterests || [],
+              derivedMotivators: data.derivedMotivators || [],
+              interestScores: data.interestScores || {},
+              motivatorScores: data.motivatorScores || {},
+            };
+          }
         }
+      } catch {
+        // API failed, try cache
       }
 
-      // Fallback: try localStorage cache from previous derivation
+      // Fallback: localStorage cache from previous derivation
       const cached = localStorage.getItem(`tims_profile_${userId}`);
       if (cached) {
-        const parsed = JSON.parse(cached);
-        return {
-          derivedInterests: parsed.derivedInterests || [],
-          derivedMotivators: parsed.derivedMotivators || [],
-          interestScores: parsed.interestScores || {},
-          motivatorScores: parsed.motivatorScores || {},
-        };
+        try {
+          const parsed = JSON.parse(cached);
+          return {
+            derivedInterests: parsed.derivedInterests || [],
+            derivedMotivators: parsed.derivedMotivators || [],
+            interestScores: parsed.interestScores || {},
+            motivatorScores: parsed.motivatorScores || {},
+          };
+        } catch { /* ignore */ }
       }
 
       return {
@@ -70,7 +86,7 @@ export function useDerived360Profile() {
       };
     },
     enabled: !!userId,
-    staleTime: 30 * 60 * 1000, // 30 minutes — profile doesn't change often
+    staleTime: 30 * 60 * 1000,
     retry: 1,
   });
 }
@@ -86,19 +102,24 @@ export function useTimsCareerScoring() {
   const { data: profileData } = useDerived360Profile();
 
   const userId = user?.id;
-  const isEnabled = !!userId;
+  const isEnabled = !!userId && isPCACompleted && isMILCompleted;
 
   const query = useQuery({
     queryKey: timsKeys.scores(userId || ""),
     queryFn: async () => {
       if (!userId) throw new Error("User not found");
 
-      // 1. DISC scores from PCA (zeros if not yet completed)
+      // 1. DISC scores from PCA — backend expects "Active"/"Passive" strings
+      // Scores above 50 = Active (dominant in that trait)
+      const d = pcaData?.results?.data?.pcaD1 || 0;
+      const i = pcaData?.results?.data?.pcaI1 || 0;
+      const s = pcaData?.results?.data?.pcaS1 || 0;
+      const c = pcaData?.results?.data?.pcaC1 || 0;
       const discScores = {
-        d: pcaData?.results?.data?.pcaD1 || 0,
-        i: pcaData?.results?.data?.pcaI1 || 0,
-        s: pcaData?.results?.data?.pcaS1 || 0,
-        c: pcaData?.results?.data?.pcaC1 || 0,
+        d: d > 50 ? "Active" : "Passive",
+        i: i > 50 ? "Active" : "Passive",
+        s: s > 50 ? "Active" : "Passive",
+        c: c > 50 ? "Active" : "Passive",
       };
 
       // 2. MIL scores from completed exams (empty if none)
@@ -123,7 +144,8 @@ export function useTimsCareerScoring() {
       return scoreCareers(request);
     },
     enabled: isEnabled,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // 1 hour — backend caches permanently in UserCareerProfile
+    gcTime: 2 * 60 * 60 * 1000, // 2 hours
     retry: 1,
   });
 

@@ -4,7 +4,7 @@ import { generateDummyContent } from "@/lib/dummyContentGenerator";
 import { updateResume, getResumeById } from "@/services/resumeService";
 import { telemetry } from "@/services/telemetryService";
 import { isTokenExpired } from "@/utils/tokenUtils";
-import { cognitoLogout } from "@/lib/cognito";
+import { logout as apiLogout } from "@/services/authService";
 
 // Resume Builder Types
 interface PersonalInfo {
@@ -236,8 +236,8 @@ export const useGlobalStore = create<GlobalState>()(
         logout: () => {
           // Track logout event
           telemetry.trackAuth("logout");
-          // Sign out of Cognito + clear localStorage
-          cognitoLogout();
+          // Sign out + clear tokens
+          apiLogout().catch(() => {});
           if (typeof window !== "undefined") {
             localStorage.removeItem("token");
           }

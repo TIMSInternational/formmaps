@@ -1,10 +1,10 @@
 // ── Request Types ──────────────────────────────────────────
 
 export interface DISCScores {
-  d: number;
-  i: number;
-  s: number;
-  c: number;
+  d: string; // "Active" | "Passive"
+  i: string;
+  s: string;
+  c: string;
 }
 
 export interface MILScores {

@@ -34,7 +34,7 @@ function CareerCardInner({ career, rank, isFavorite = false, onToggleFavorite, o
   const { language } = useGlobalStore();
 
   const title =
-    career.title[language === "spanish" ? "es" : "en"] || career.title.en || "";
+    career.title?.[language === "spanish" ? "es" : "en"] || career.title?.en || (typeof career.title === "string" ? career.title : "");
 
   const { t } = useTranslation();
   const prefetch = usePrefetchCareers();

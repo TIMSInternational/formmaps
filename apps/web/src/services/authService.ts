@@ -1,14 +1,17 @@
-// Auth service — now powered by AWS Cognito
-import { cognitoLogin, cognitoSignUp, cognitoLogout, cognitoRefreshSession } from "@/lib/cognito";
-import { RolePermissionMap } from "@/lib/permissions";
+// Auth service — powered by Nexa API (Node.js + Prisma backend)
+import { storeTokens, clearTokens } from "@/services/tokenRefreshService";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 export interface LoginResponse {
   token: string;
+  refreshToken?: string;
   user: {
     id: string;
     name: string;
     email: string;
     roleId: string;
+    roleName?: string;
     schoolId?: string;
     profilePicture?: string;
     avatarUrl?: string;
@@ -42,23 +45,49 @@ export interface UserProfile {
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
-  const result = await cognitoLogin(email, password);
+  const response = await fetch(`${API_BASE}/authapi/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
 
-  const permissions = RolePermissionMap[result.user.role] || [];
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: "Login failed" }));
+    throw new Error(err.message || "Invalid email or password");
+  }
+
+  const result = await response.json();
+  if (!result.success || !result.data) {
+    throw new Error(result.message || "Login failed");
+  }
+
+  const { token, refreshToken, user } = result.data;
+
+  // Store tokens for auto-refresh
+  if (refreshToken) {
+    const decoded = decodeJWTToken(token);
+    const expiresIn = decoded?.exp ? decoded.exp - Math.floor(Date.now() / 1000) : 3600;
+    storeTokens({ accessToken: token, refreshToken, expiresIn });
+  }
+
+  const roleName = user.roleName || "student";
 
   return {
-    token: result.idToken,
+    token,
+    refreshToken,
     user: {
-      id: result.user.mongoId,
-      name: result.user.name,
-      email: result.user.email,
-      roleId: result.user.role,
-      schoolId: result.user.schoolId,
-      permissions,
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      roleId: user.roleId,
+      roleName,
+      schoolId: user.schoolId || undefined,
+      avatarUrl: user.avatarUrl || undefined,
+      permissions: user.permissions || [],
       role: {
-        id: result.user.role,
-        name: result.user.role,
-        description: `${result.user.role} role`,
+        id: user.roleId,
+        name: roleName,
+        description: `${roleName} role`,
         isActive: true,
       },
     },
@@ -71,30 +100,70 @@ export async function signUp(
   password: string,
   roleId?: string
 ): Promise<LoginResponse> {
-  const role = roleId || "student";
-  await cognitoSignUp(name, email, password, role);
+  const response = await fetch(`${API_BASE}/authapi/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password, roleId }),
+  });
 
-  // After signup, auto-login to get tokens
-  return login(email, password);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: "Signup failed" }));
+    throw new Error(err.message || "Signup failed");
+  }
+
+  const result = await response.json();
+  if (!result.success || !result.data) {
+    throw new Error(result.message || "Signup failed");
+  }
+
+  const { token, refreshToken, user } = result.data;
+
+  if (refreshToken) {
+    const decoded = decodeJWTToken(token);
+    const expiresIn = decoded?.exp ? decoded.exp - Math.floor(Date.now() / 1000) : 3600;
+    storeTokens({ accessToken: token, refreshToken, expiresIn });
+  }
+
+  const roleName = user.roleName || "student";
+
+  return {
+    token,
+    refreshToken,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      roleId: user.roleId,
+      roleName,
+      schoolId: user.schoolId || undefined,
+      permissions: user.permissions || [],
+      role: {
+        id: user.roleId,
+        name: roleName,
+        description: `${roleName} role`,
+        isActive: true,
+      },
+    },
+  };
 }
 
 export function getCurrentUser(): Promise<UserProfile> {
-  // Extract user profile from stored token (JWT decode)
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No token found");
 
   const decoded = decodeJWTToken(token);
   if (!decoded) throw new Error("Invalid token");
 
-  const role = decoded["custom:role"] || decoded.role || "student";
-  const permissions = RolePermissionMap[role] || [];
+  // Our JWT uses: sub, name, email, role, schoolId, permissions
+  const role = decoded.role || "student";
+  const permissions = decoded.permissions || [];
 
   return Promise.resolve({
-    id: decoded["custom:mongoId"] || decoded.sub || "unknown",
+    id: decoded.sub || "unknown",
     name: decoded.name || "User",
     email: decoded.email || "user@example.com",
     roleId: role,
-    schoolId: decoded["custom:schoolId"] || "",
+    schoolId: decoded.schoolId || "",
     permissions,
     role: {
       id: role,
@@ -132,4 +201,17 @@ export function isSuperAdminRole(roleName: string): boolean {
   return lower === "super admin" || lower === "super_admin" || lower === "superadmin";
 }
 
-export { cognitoLogout as logout, cognitoRefreshSession as refreshSession };
+export async function logout(): Promise<void> {
+  try {
+    const token = localStorage.getItem("token");
+    if (token) {
+      // Revoke all refresh tokens on the backend
+      await fetch(`${API_BASE}/authapi/refresh`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {}); // Best-effort
+    }
+  } finally {
+    clearTokens();
+  }
+}

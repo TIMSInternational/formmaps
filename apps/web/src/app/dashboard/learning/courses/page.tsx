@@ -5,45 +5,39 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { motion } from "motion/react";
 
-
 export default function CoursesPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="w-full px-4 sm:px-5 lg:px-8 py-10 lg:py-12 min-h-[100dvh]">
+    <div className="max-w-5xl mx-auto py-6">
+      {/* Back link */}
+      <Link
+        href="/dashboard/learning"
+        className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4 transition-colors"
+      >
+        <ArrowLeft className="w-3 h-3" />
+        {t("nav.learning")}
+      </Link>
 
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-5 mb-10"
+        className="mb-6"
       >
-        <Link
-          href="/dashboard/learning"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          {t("nav.learning")}
-        </Link>
-
-        <div className="flex flex-col gap-2">
-          <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-            {t("courses.curatedCatalog", "Curated Catalog")}
-          </span>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
-            {t("courses.exploreCourses", "Explore Courses")}
-          </h1>
-          <p className="max-w-2xl text-base text-muted-foreground">
-            {t("courses.discoverCourses")}
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">
+          {t("courses.exploreCourses", "Explore Courses")}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1 max-w-lg">
+          {t("courses.discoverCourses")}
+        </p>
       </motion.div>
 
       {/* Courses Catalog */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
+        transition={{ delay: 0.05 }}
       >
         <CoursesCatalog />
       </motion.div>

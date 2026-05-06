@@ -1,281 +1,250 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { AdminStatCard } from "@/app/admin/_components/AdminStatCard";
+import { AdminAreaChart } from "@/components/ui/admin-area-chart";
+import { MiniChart } from "@/components/ui/mini-chart";
 import {
   Users,
-  TrendingUp,
-  TrendingDown,
-  Clock,
   Target,
   BarChart3,
+  Clock,
   Award,
   Activity,
+  Download,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAnalyticsOverview, usePerformanceTrends, useTopPerformers } from "@/hooks/useSchoolAdmin";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useSchoolAdminStats, useAnalyticsOverview, usePerformanceTrends, useTopPerformers } from "@/hooks/useSchoolAdmin";
+import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 
 export default function AnalyticsPage() {
   const { t } = useTranslation();
   const [period, setPeriod] = useState<"week" | "month" | "quarter" | "year">("month");
-  const [metric, setMetric] = useState<"score" | "completion" | "time">("score");
 
+  const { data: stats, isLoading: statsLoading } = useSchoolAdminStats();
   const { data: overview, isLoading: overviewLoading } = useAnalyticsOverview(period);
-  const { data: trends } = usePerformanceTrends(period, metric);
+  const { data: trends } = usePerformanceTrends(period, "score");
   const { data: topPerformers } = useTopPerformers(5);
 
-  const statCards = overview ? [
-    {
-      title: t("schoolAdmin.analytics.engagement.title", "Student Engagement"),
-      value: overview.studentEngagement.active,
-      subtitle: `${overview.studentEngagement.inactive} ${t("schoolAdmin.analytics.engagement.inactive", "inactive")}`,
-      trend: overview.studentEngagement.trend,
-      icon: Users,
-      color: "text-teal-600",
-      bg: "bg-teal-50",
-    },
-    {
-      title: t("schoolAdmin.analytics.completion.rate", "Completion Rate"),
-      value: `${overview.assessmentCompletion.completionRate.toFixed(1)}%`,
-      subtitle: `${overview.assessmentCompletion.completed} ${t("schoolAdmin.analytics.completion.completed", "completed")}`,
-      trend: 0,
-      icon: Target,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-    },
-    {
-      title: t("schoolAdmin.analytics.performance.score", "Average Score"),
-      value: `${overview.averagePerformance.score.toFixed(1)}%`,
-      subtitle: t("schoolAdmin.analytics.allAssessments", "Across all assessments"),
-      trend: overview.averagePerformance.trend,
-      icon: BarChart3,
-      color: "text-violet-600",
-      bg: "bg-violet-50",
-    },
-    {
-      title: t("schoolAdmin.analytics.timeSpent.average", "Avg. Time Spent"),
-      value: `${overview.timeSpent.averageHours.toFixed(1)}h`,
-      subtitle: `${overview.timeSpent.totalHours} ${t("schoolAdmin.analytics.timeSpent.total", "total hours")}`,
-      trend: overview.timeSpent.trend,
-      icon: Clock,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-    },
-  ] : [];
+  if (statsLoading && overviewLoading) return <DashboardSkeleton />;
+
+  const s = stats as any;
+  const o = overview as any;
+
+  // Build chart data from trends
+  const chartData = trends?.labels?.map((label: string, i: number) => ({
+    label,
+    score: trends.datasets?.[0]?.data?.[i] || 0,
+  })) || [];
+
+  // Mini chart for assessment activity
+  const miniData = chartData.length > 0
+    ? chartData.map((d: any) => ({ label: d.label, value: d.score }))
+    : undefined;
 
   return (
-    <div className="space-y-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
-        >
-          <div className="space-y-1">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900">
-              {t("schoolAdmin.analytics.title", "Analytics")}
-            </h1>
-            <p className="text-lg text-gray-500 font-medium">
-              {t("schoolAdmin.analytics.subtitle", "Track student performance and engagement trends.")}
-            </p>
-          </div>
-
-          <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
-            <SelectTrigger className="w-48 bg-white">
-              <SelectValue placeholder={t("common.selectPeriod", "Select period")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="week">{t("schoolAdmin.analytics.period.week", "This Week")}</SelectItem>
-              <SelectItem value="month">{t("schoolAdmin.analytics.period.month", "This Month")}</SelectItem>
-              <SelectItem value="quarter">{t("schoolAdmin.analytics.period.quarter", "This Quarter")}</SelectItem>
-              <SelectItem value="year">{t("schoolAdmin.analytics.period.year", "This Year")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </motion.div>
-
-        {/* Stats Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-        >
-          {overviewLoading ? (
-            [...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-32 rounded-2xl border border-gray-100" />
-            ))
-          ) : (
-            statCards.map((stat, index) => (
-              <motion.div
-                key={stat.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * index }}
-                className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg transition-all duration-300"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", stat.bg)}>
-                    <stat.icon className={cn("w-6 h-6", stat.color)} />
-                  </div>
-                  {stat.trend !== 0 && (
-                    <div className={cn(
-                      "flex items-center text-xs font-medium px-2 py-1 rounded-full",
-                      stat.trend > 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-                    )}>
-                      {stat.trend > 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                      {Math.abs(stat.trend).toFixed(1)}%
-                    </div>
-                  )}
-                </div>
-                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-sm text-gray-500 mt-1">{stat.title}</p>
-                <p className="text-xs text-gray-400 mt-1">{stat.subtitle}</p>
-              </motion.div>
-            ))
-          )}
-        </motion.div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Performance Trend Chart */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-900">{t("schoolAdmin.analytics.trends.title", "Performance Trends")}</h3>
-              <Select value={metric} onValueChange={(v: any) => setMetric(v)}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder={t("common.selectMetric", "Select metric")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="score">{t("schoolAdmin.analytics.trends.metric.score", "Score")}</SelectItem>
-                  <SelectItem value="completion">{t("schoolAdmin.analytics.trends.metric.completion", "Completion")}</SelectItem>
-                  <SelectItem value="time">{t("schoolAdmin.analytics.trends.metric.time", "Time Spent")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Simple Chart Visualization */}
-            <div className="h-64 flex items-end justify-around gap-4 px-4">
-              {trends?.labels.map((label, index) => {
-                const value = trends.datasets[0]?.data[index] || 0;
-                const maxValue = Math.max(...(trends.datasets[0]?.data || [1]));
-                const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
-                return (
-                  <div key={label} className="flex flex-col items-center gap-2 flex-1">
-                    <div className="w-full bg-gray-100 rounded-t-lg relative" style={{ height: '200px' }}>
-                      <div
-                        className="absolute bottom-0 w-full bg-gradient-to-t from-teal-500 to-cyan-400 rounded-t-lg transition-all duration-500"
-                        style={{ height: `${height}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-gray-500">{label}</span>
-                    <span className="text-xs font-medium text-gray-700">{value.toFixed(0)}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-
-          {/* Top Performers */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white rounded-2xl border border-gray-100 p-6"
-          >
-            <div className="flex items-center gap-2 mb-6">
-              <Award className="w-5 h-5 text-amber-500" />
-              <h3 className="text-lg font-bold text-gray-900">{t("schoolAdmin.analytics.topPerformers.title", "Top Performers")}</h3>
-            </div>
-
-            <div className="space-y-4">
-              {topPerformers?.data && topPerformers.data.length > 0 ? (
-                topPerformers.data.map((student, index) => (
-                  <div key={student.id} className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                      index === 0 ? "bg-amber-100 text-amber-600" :
-                        index === 1 ? "bg-gray-200 text-gray-600" :
-                          index === 2 ? "bg-orange-100 text-orange-600" :
-                            "bg-gray-100 text-gray-500"
-                    )}>
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{student.name}</p>
-                      <p className="text-xs text-gray-500">{student.completedAssessments} {t("schoolAdmin.analytics.topPerformers.assessments", "assessments")}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-teal-600">{student.averageScore.toFixed(1)}%</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Activity className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p className="font-medium">{t("schoolAdmin.analytics.noData", "No data yet")}</p>
-                  <p className="text-sm">{t("schoolAdmin.analytics.dataWillAppear", "Performance data will appear here")}</p>
-                </div>
-              )}
-            </div>
-          </motion.div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
+            Analytics
+          </h1>
+          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
+            Student performance and engagement insights
+          </p>
         </div>
 
-        {/* Completion Status */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white rounded-2xl border border-gray-100 p-6"
-        >
-          <h3 className="text-lg font-bold text-gray-900 mb-6">{t("schoolAdmin.analytics.completion.title", "Assessment Completion Status")}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {overview && (
-              <>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
-                    <Target className="w-6 h-6 text-emerald-600" />
+        <div className="flex items-center gap-2">
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as any)}
+            style={{
+              background: "var(--admin-bg-icon-box)", border: "1px solid var(--admin-border-default)",
+              borderRadius: 6, padding: "6px 10px", fontSize: 12,
+              color: "var(--admin-font-secondary)", outline: "none",
+            }}
+          >
+            <option value="week">Last 7 Days</option>
+            <option value="month">Last 30 Days</option>
+            <option value="quarter">This Quarter</option>
+            <option value="year">This Year</option>
+          </select>
+          <button
+            title="Export"
+            style={{
+              width: 32, height: 32, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
+              background: "var(--admin-bg-icon-box)", border: "1px solid var(--admin-border-default)",
+              color: "var(--admin-font-tertiary)", cursor: "pointer",
+            }}
+          >
+            <Download style={{ width: 14, height: 14 }} />
+          </button>
+        </div>
+      </div>
+
+      {/* Row 1: Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <AdminStatCard
+          label="Total Students"
+          value={s?.totalStudents?.toLocaleString() || "0"}
+          icon={Users}
+          sub="enrolled in school"
+          trend={0}
+        />
+        <AdminStatCard
+          label="Completion Rate"
+          value={o?.assessmentCompletion ? `${o.assessmentCompletion.completionRate?.toFixed(1) || 0}%` : "0%"}
+          icon={Target}
+          sub={o?.assessmentCompletion ? `${o.assessmentCompletion.completed || 0} completed` : "across assessments"}
+          trend={0}
+        />
+        <AdminStatCard
+          label="Avg. Score"
+          value={o?.averagePerformance ? `${o.averagePerformance.score?.toFixed(1) || 0}%` : `${(s?.averageScore || 0).toFixed(1)}%`}
+          icon={BarChart3}
+          sub="across all assessments"
+          trend={o?.averagePerformance?.trend || 0}
+        />
+        <AdminStatCard
+          label="Avg. Time Spent"
+          value={o?.timeSpent ? `${o.timeSpent.averageHours?.toFixed(1) || 0}h` : "0h"}
+          icon={Clock}
+          sub={o?.timeSpent ? `${o.timeSpent.totalHours || 0} total hours` : "per student"}
+          trend={o?.timeSpent?.trend || 0}
+        />
+      </div>
+
+      {/* Row 2: Charts */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          {chartData.length > 0 ? (
+            <AdminAreaChart
+              title="Performance Trends"
+              subtitle="Score over time"
+              data={chartData}
+              series={[{ key: "score", name: "Avg Score", color: "#14b8a6" }]}
+            />
+          ) : (
+            <div style={{
+              borderRadius: 8, border: "1px solid var(--admin-border-default)",
+              background: "var(--admin-bg-card)", padding: 40, textAlign: "center",
+              minHeight: 280, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            }}>
+              <Activity style={{ width: 32, height: 32, color: "var(--admin-font-tertiary)", marginBottom: 12, opacity: 0.4 }} />
+              <div style={{ fontSize: 14, fontWeight: 500, color: "var(--admin-font-primary)", marginBottom: 4 }}>
+                No trend data yet
+              </div>
+              <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>
+                Performance trends will appear as students complete assessments
+              </div>
+            </div>
+          )}
+        </div>
+        <MiniChart
+          data={miniData}
+          title="Assessment Activity"
+          unit="%"
+        />
+      </div>
+
+      {/* Row 3: Top Performers + Completion Status */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Top Performers */}
+        <div className="lg:col-span-2" style={{
+          borderRadius: 8, border: "1px solid var(--admin-border-default)",
+          background: "var(--admin-bg-card)", overflow: "hidden",
+        }}>
+          <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--admin-border-default)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Award style={{ width: 14, height: 14, color: "#f59e0b" }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Top Performers</span>
+            </div>
+            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>By assessment scores</span>
+          </div>
+          <div>
+            {topPerformers?.data && topPerformers.data.length > 0 ? (
+              topPerformers.data.map((student: any, index: number) => (
+                <div key={student.id || index} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "12px 18px",
+                  borderBottom: index < (topPerformers.data?.length || 0) - 1 ? "1px solid var(--admin-border-default)" : "none",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 11, fontWeight: 700,
+                      background: index === 0 ? "rgba(245,158,11,0.12)" : "var(--admin-bg-icon-box)",
+                      color: index === 0 ? "#f59e0b" : "var(--admin-font-tertiary)",
+                    }}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{student.name}</div>
+                      <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
+                        {student.completedAssessments || 0} assessments
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{overview.assessmentCompletion.completed}</p>
-                    <p className="text-sm text-gray-500">{t("schoolAdmin.analytics.completion.completed", "Completed")}</p>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#14b8a6" }}>
+                      {(student.averageScore || 0).toFixed(1)}%
+                    </div>
+                    {student.gradeLevel && (
+                      <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Grade {student.gradeLevel}</div>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{overview.assessmentCompletion.inProgress}</p>
-                    <p className="text-sm text-gray-500">{t("schoolAdmin.analytics.completion.inProgress", "In Progress")}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
-                    <BarChart3 className="w-6 h-6 text-gray-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">{overview.assessmentCompletion.notStarted}</p>
-                    <p className="text-sm text-gray-500">{t("schoolAdmin.analytics.completion.notStarted", "Not Started")}</p>
-                  </div>
-                </div>
-              </>
+              ))
+            ) : (
+              <div style={{ padding: 32, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>
+                <Activity style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.4 }} />
+                No performance data yet
+              </div>
             )}
           </div>
-        </motion.div>
+        </div>
+
+        {/* Completion Breakdown */}
+        <div style={{
+          borderRadius: 8, border: "1px solid var(--admin-border-default)",
+          background: "var(--admin-bg-card)", padding: 20,
+          display: "flex", flexDirection: "column", height: "100%",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#14b8a6" }} />
+            <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--admin-font-tertiary)" }}>
+              Completion Status
+            </span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1, justifyContent: "space-between" }}>
+            {[
+              { label: "Completed", value: o?.assessmentCompletion?.completed || 0, color: "#10b981", icon: Target },
+              { label: "In Progress", value: o?.assessmentCompletion?.inProgress || 0, color: "#f59e0b", icon: Clock },
+              { label: "Not Started", value: o?.assessmentCompletion?.notStarted || 0, color: "#6b7280", icon: BarChart3 },
+              { label: "Total Students", value: s?.totalStudents || 0, color: "#3b82f6", icon: Users },
+            ].map((row) => (
+              <div key={row.label} style={{
+                display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8,
+                background: "var(--admin-bg-hover, #252525)",
+              }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8, background: `${row.color}15`,
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
+                  <row.icon style={{ width: 16, height: 16, color: row.color }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", fontWeight: 500 }}>{row.label}</div>
+                </div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "var(--admin-font-primary)", letterSpacing: "-0.02em" }}>
+                  {row.value}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

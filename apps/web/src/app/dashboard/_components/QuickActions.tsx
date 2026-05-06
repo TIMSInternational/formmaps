@@ -45,22 +45,22 @@ const actions = [
   },
 ];
 
-export function QuickActions() {
+export function QuickActions({ className }: { className?: string }) {
   const { t } = useTranslation();
 
   return (
-    <div className="dash-card p-4">
-      <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 px-1">
+    <div className={`dash-card p-4 flex flex-col ${className || ""}`}>
+      <h3 className="text-lg font-semibold text-foreground mb-3 px-1">
         {t("dashboard.quickActions", "Quick Actions")}
       </h3>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 flex-1">
         {actions.map((action) => {
           const Icon = action.icon;
           return (
             <Link
               key={action.key}
               href={action.href}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border hover:border-foreground/20 hover:bg-secondary transition-all group text-center"
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-border hover:border-foreground/20 hover:bg-secondary transition-all group text-center"
             >
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${action.color}`}>
                 <Icon className="w-4 h-4" />

@@ -225,8 +225,8 @@ export default function SchoolProfilePage() {
           {/* Logo */}
           <SectionCard icon={Upload} title="School Logo" subtitle="Brand identity" color="#8b5cf6">
             <div className="flex flex-col items-center gap-4">
-              {profile?.logoUrl ? (
-                <img src={profile.logo} alt="Logo" loading="lazy"
+              {(profile?.logoUrl || profile?.logo) ? (
+                <img src={profile.logoUrl || profile.logo || ""} alt="Logo" loading="lazy"
                   style={{ width: 80, height: 80, borderRadius: 12, objectFit: "cover", border: "1px solid var(--admin-border-default)" }} />
               ) : (
                 <div style={{

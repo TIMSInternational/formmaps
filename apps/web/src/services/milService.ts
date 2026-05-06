@@ -263,7 +263,64 @@ const getHeaders = () => {
 };
 
 /**
- * Get all user exam results and progress
+ * PRIMARY endpoint for MIL/LIA results — single source of truth.
+ * Calls /api/v1/mil/results/{userId} which returns complete data
+ * including scores, percentiles, and cognitive profile.
+ *
+ * Response is wrapped: { success, data: MILResultsResponse }
+ * where data.examResults[] has the same exam IDs used throughout
+ * (pattern-recognition-001, verbal-reasoning-001, etc.)
+ */
+export interface MILResultsData {
+  userId: string;
+  overallScore: number;
+  overallPercentile: number;
+  completedExams: number;
+  totalExams: number;
+  lastCompletedAt: string | null;
+  examResults: Array<{
+    examId: string;
+    examName: string;
+    status: "completed" | "in_progress" | "not_started";
+    scorePercentage: number | null;
+    percentile: number | null;
+    correctAnswers: number | null;
+    incorrectAnswers: number | null;
+    skippedAnswers: number | null;
+    totalQuestions: number;
+    timeSpent: string | null;
+    timeLimitMinutes: number;
+    isTimeExpired: boolean | null;
+    completedAt: string | null;
+    answeredQuestions: number | null;
+  }>;
+  cognitiveProfile: {
+    logicalReasoning: number;
+    verbalProcessing: number;
+    workingMemory: number;
+    processingSpeed: number;
+    spatialOrientation: number;
+  };
+}
+
+export async function getMILResults(userId: string): Promise<MILResultsData | null> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/mil/results/${userId}`,
+      { method: "GET", headers: getHeaders() }
+    );
+
+    if (!response.ok) return null;
+
+    const json = await response.json();
+    return json.data || json;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @deprecated Use getMILResults() instead. This returns ALL users' results.
  */
 export async function getAllUserExamResults(
   language: "english" | "spanish" = "english"
