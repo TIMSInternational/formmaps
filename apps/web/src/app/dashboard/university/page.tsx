@@ -357,7 +357,7 @@ export default function UniversityPage() {
                 />
               )}
             {!listQuery.isLoading &&
-              listQuery.data?.universities.length && (
+              listQuery.data?.universities?.length && (
                 <div
                   className={
                     viewMode === "grid"
