@@ -186,7 +186,7 @@ export async function fetchUniversityFavorites(
 
   if (!response.ok) throw new Error("Failed to fetch favorites");
   const json = await response.json();
-  return json.data.favorites;
+  return json.data?.favorites || json.data?.data || [];
 }
 
 export async function compareUniversities(

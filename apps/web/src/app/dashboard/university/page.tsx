@@ -97,14 +97,18 @@ export default function UniversityPage() {
 
   const t = (en: string, es: string) => (language === "spanish" ? es : en);
 
+  const recoUniversities = recoQuery.data?.recommendations?.map((r: any) => r.university || r)
+    || recoQuery.data?.universities
+    || [];
+
   const universities = (
     activeTab === "recommended" && recoQuery.data
-      ? recoQuery.data.recommendations.map((r) => r.university)
+      ? recoUniversities
       : listQuery.data?.universities
   ) as University[] | undefined;
 
   const recommendationMap = new Map(
-    recoQuery.data?.recommendations.map((r) => [r.university.id, r]) ?? []
+    (recoQuery.data?.recommendations || []).map((r: any) => [r.university?.id || r.id, r])
   );
 
   const handleViewDetails = React.useCallback(
