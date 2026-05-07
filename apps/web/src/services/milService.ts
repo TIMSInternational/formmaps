@@ -328,7 +328,7 @@ export async function getAllUserExamResults(
   try {
     const langParam = language === "spanish" ? "sp" : "en";
     const response = await fetch(
-      `${API_BASE_URL}/api/PCAExam/all-results?lang=${langParam}`,
+      `${API_BASE_URL}/api/pcaexam/all-results?lang=${langParam}`,
       {
         method: "GET",
         headers: getHeaders(),
@@ -356,7 +356,7 @@ export async function getUserExamHistory(
   try {
     const langParam = language === "spanish" ? "sp" : "en";
     const response = await fetch(
-      `${API_BASE_URL}/api/PCAExam/history/${userId}?lang=${langParam}`,
+      `${API_BASE_URL}/api/pcaexam/history/${userId}?lang=${langParam}`,
       {
         method: "GET",
         headers: getHeaders(),
@@ -454,7 +454,7 @@ export async function getAllMILExams(
   try {
     const langParam = language === "spanish" ? "sp" : "en";
     const response = await fetch(
-      `${API_BASE_URL}/api/PCAExam/exams?lang=${langParam}`,
+      `${API_BASE_URL}/api/pcaexam/exams?lang=${langParam}`,
       {
         method: "GET",
         headers: getHeaders(),
@@ -465,8 +465,8 @@ export async function getAllMILExams(
       if (response.status === 401 || response.status === 403) return [];
       throw new Error(`Failed to fetch MIL exams: ${response.status}`);
     }
-    const data = await response.json();
-    return data;
+    const json = await response.json();
+    return Array.isArray(json) ? json : json.data || [];
   } catch (error) {
 
     throw error;
@@ -483,7 +483,7 @@ export async function getMILExamById(
   try {
     const langParam = language === "spanish" ? "sp" : "en";
     const response = await fetch(
-      `${API_BASE_URL}/api/PCAExam/exams/${examId}?lang=${langParam}`,
+      `${API_BASE_URL}/api/pcaexam/exams/${examId}?lang=${langParam}`,
       {
         method: "GET",
         headers: getHeaders(),
@@ -511,7 +511,7 @@ export async function startMILExam(
   try {
     const langParam = language === "spanish" ? "sp" : "en";
     const response = await fetch(
-      `${API_BASE_URL}/api/PCAExam/exams/${examId}/start?lang=${langParam}`,
+      `${API_BASE_URL}/api/pcaexam/exams/${examId}/start?lang=${langParam}`,
       {
         method: "POST",
         headers: getHeaders(),
@@ -540,7 +540,7 @@ export async function getMILExamInstructions(
   try {
     const langParam = language === "spanish" ? "sp" : "en";
     const response = await fetch(
-      `${API_BASE_URL}/api/PCAExam/exams/${examId}/instructions?lang=${langParam}`,
+      `${API_BASE_URL}/api/pcaexam/exams/${examId}/instructions?lang=${langParam}`,
       {
         method: "GET",
         headers: getHeaders(),
@@ -625,7 +625,7 @@ export async function submitMILExam(
     };
 
     const langParam = language === "spanish" ? "sp" : "en";
-    const url = `${API_BASE_URL}/api/PCAExam/submit?lang=${langParam}`;
+    const url = `${API_BASE_URL}/api/pcaexam/submit?lang=${langParam}`;
     const submissionKey = `submit_${session.examId}_${userId}`;
 
     try {
@@ -677,7 +677,7 @@ export async function completeMILExam(
     };
 
     const langParam = language === "spanish" ? "sp" : "en";
-    const url = `${API_BASE_URL}/api/PCAExam/complete?lang=${langParam}`;
+    const url = `${API_BASE_URL}/api/pcaexam/complete?lang=${langParam}`;
     const completionKey = `complete_${session.examId}_${userId}`;
 
     try {

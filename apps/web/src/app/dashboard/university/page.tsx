@@ -339,7 +339,7 @@ export default function UniversityPage() {
               </div>
             )}
             {!listQuery.isLoading &&
-              !listQuery.data?.universities.length && (
+              !listQuery.data?.universities?.length && (
                 <EmptyState
                   type="no_results"
                   title={t("No universities found", "No se encontraron universidades")}
