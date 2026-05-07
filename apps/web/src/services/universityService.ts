@@ -73,7 +73,11 @@ export async function fetchUniversities(
 
   if (!response.ok) throw new Error("Failed to fetch universities");
   const json = await response.json();
-  return json.data;
+  const d = json.data || json;
+  return {
+    universities: d.universities || d.data || [],
+    pagination: { total: d.total || 0, page: d.page || 1, limit: d.limit || 20, totalPages: d.totalPages || 1 },
+  };
 }
 
 export async function fetchUniversityById(
