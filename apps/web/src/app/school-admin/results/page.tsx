@@ -139,7 +139,7 @@ export default function ResultsPage() {
           <TableBody>
             {isLoading ? (
               <TableRowsSkeleton columnCount={7} rowCount={5} />
-            ) : !results?.data || results.data.length === 0 ? (
+            ) : !(Array.isArray(results?.data) ? results.data : results?.data?.data)?.length ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
                   <FileText className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} />
@@ -148,7 +148,7 @@ export default function ResultsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              results.data.map((result: any) => {
+              (Array.isArray(results.data) ? results.data : results.data?.data || []).map((result: any) => {
                 const scoreStyle = getScoreStyle(result.score);
                 return (
                   <TableRow key={result.id} style={{ borderBottom: "1px solid var(--admin-border-default)" }}
@@ -234,7 +234,7 @@ export default function ResultsPage() {
                 Previous
               </Button>
               <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)}
-                disabled={page >= results.totalPages} className="h-7 rounded-md text-xs"
+                disabled={page >= (results?.totalPages || results?.data?.totalPages || 1)} className="h-7 rounded-md text-xs"
                 style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>
                 Next
               </Button>
