@@ -70,7 +70,7 @@ export default function BookCounselorPage() {
     async function fetchCounselors() {
       try {
         const raw = await getSchoolCounselors();
-        const data = Array.isArray(raw) ? raw : (raw as any)?.data || []
+        const data: { id: string; name: string; email: string; avatar?: string }[] = Array.isArray(raw) ? raw : (raw as any)?.data || [];
         setCounselors(data);
         if (data.length > 0) {
           // If the user happens to have an assigned counselor, prefer them. Otherwise pick the first.
