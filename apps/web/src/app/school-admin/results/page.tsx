@@ -126,7 +126,7 @@ export default function ResultsPage() {
         <Table>
           <TableHeader>
             <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
-              {["Student", "Assessment", "Type", "Score", "Duration", "Date", "Actions"].map((h) => (
+              {["Student", "Email", "Grade", "Assessments", "Avg Score", "PCA Status", "Actions"].map((h) => (
                 <TableHead key={h} className="py-3 px-4" style={{
                   fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
                   color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)",
@@ -149,9 +149,9 @@ export default function ResultsPage() {
               </TableRow>
             ) : (
               (Array.isArray(results?.data) ? results.data : (results?.data as any)?.data || []).map((result: any) => {
-                const scoreStyle = getScoreStyle(result.score);
+                const scoreStyle = getScoreStyle(result.averageScore || result.score || 0);
                 return (
-                  <TableRow key={result.id} style={{ borderBottom: "1px solid var(--admin-border-default)" }}
+                  <TableRow key={result.studentId || result.id} style={{ borderBottom: "1px solid var(--admin-border-default)" }}
                     className="transition-colors"
                     onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
@@ -164,44 +164,41 @@ export default function ResultsPage() {
                           display: "flex", alignItems: "center", justifyContent: "center",
                           color: "#fff", fontSize: 12, fontWeight: 600,
                         }}>
-                          {result.student?.name?.charAt(0).toUpperCase() || "?"}
+                          {(result.name || result.student?.name || "?").charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{result.student?.name}</div>
-                          <div style={{ fontSize: 11, color: "var(--admin-font-light)" }}>{result.student?.email}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>
+                          {result.name || result.student?.name || "—"}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="py-3 px-4" style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>
-                      {result.assessmentName}
+                    <TableCell className="py-3 px-4" style={{ fontSize: 12, color: "var(--admin-font-light)" }}>
+                      {result.email || result.student?.email || "—"}
                     </TableCell>
-                    <TableCell className="py-3 px-4">
-                      <Badge variant="outline" className="text-xs" style={{
-                        borderColor: "var(--admin-border-default)", color: "var(--admin-font-tertiary)",
-                        background: "var(--admin-bg-hover)",
-                      }}>
-                        {result.assessmentType}
-                      </Badge>
+                    <TableCell className="py-3 px-4" style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
+                      {result.gradeLevel || "—"}
+                    </TableCell>
+                    <TableCell className="py-3 px-4" style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+                      {result.completedAssessments ?? 0}
                     </TableCell>
                     <TableCell className="py-3 px-4">
                       <span style={{
                         fontSize: 13, fontWeight: 700, padding: "2px 10px", borderRadius: 4,
                         background: scoreStyle.bg, color: scoreStyle.color,
                       }}>
-                        {result.score}%
+                        {result.averageScore || result.score || 0}%
                       </span>
                     </TableCell>
                     <TableCell className="py-3 px-4">
-                      <div className="flex items-center gap-1" style={{ fontSize: 12, color: "var(--admin-font-light)" }}>
-                        <Clock style={{ width: 12, height: 12 }} />
-                        {result.duration} min
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3 px-4" style={{ fontSize: 12, color: "var(--admin-font-light)" }}>
-                      {new Date(result.completedAt).toLocaleDateString()}
+                      <Badge variant="outline" className="text-xs" style={{
+                        borderColor: result.pcaStatus === "completed" ? "#10b981" : "var(--admin-border-default)",
+                        color: result.pcaStatus === "completed" ? "#10b981" : "var(--admin-font-tertiary)",
+                        background: result.pcaStatus === "completed" ? "rgba(16,185,129,0.1)" : "var(--admin-bg-hover)",
+                      }}>
+                        {result.pcaStatus === "completed" ? "Completed" : "Not Started"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="py-3 px-4">
-                      <button onClick={() => { setSelectedStudentId(result.student?.id); setIsDetailOpen(true); }}
+                      <button onClick={() => { setSelectedStudentId(result.studentId || result.student?.id); setIsDetailOpen(true); }}
                         style={{
                           height: 28, borderRadius: 4, padding: "0 10px", fontSize: 11, fontWeight: 500,
                           display: "flex", alignItems: "center", gap: 4,
