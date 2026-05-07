@@ -148,7 +148,7 @@ export default function ResultsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              (Array.isArray(results.data) ? results.data : (results.data as any)?.data || []).map((result: any) => {
+              (Array.isArray(results?.data) ? results.data : (results?.data as any)?.data || []).map((result: any) => {
                 const scoreStyle = getScoreStyle(result.score);
                 return (
                   <TableRow key={result.id} style={{ borderBottom: "1px solid var(--admin-border-default)" }}
@@ -234,7 +234,7 @@ export default function ResultsPage() {
                 Previous
               </Button>
               <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)}
-                disabled={page >= (results?.totalPages || results?.data?.totalPages || 1)} className="h-7 rounded-md text-xs"
+                disabled={page >= ((results as any)?.totalPages || (results as any)?.data?.totalPages || 1)} className="h-7 rounded-md text-xs"
                 style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>
                 Next
               </Button>
