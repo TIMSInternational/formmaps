@@ -5,7 +5,7 @@ import { ScoreCareersRequest, ScoreCareersResponse } from "@/types/tims";
  * Scores and ranks careers based on the user's assessment profile.
  */
 export async function scoreCareers(request: ScoreCareersRequest): Promise<ScoreCareersResponse> {
-  return apiRequest<ScoreCareersResponse>("api/v1/careers/score", {
+  return apiRequest<ScoreCareersResponse>("/api/v1/careers/score", {
     method: "POST",
     data: request,
   });
