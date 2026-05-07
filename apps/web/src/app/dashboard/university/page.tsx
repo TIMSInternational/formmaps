@@ -84,7 +84,7 @@ export default function UniversityPage() {
   const favoriteMutation = useUniversityFavoriteMutation();
 
   const favoritesSet = new Set(
-    favoritesQuery.data?.map((f) => f.universityId) ?? []
+    (Array.isArray(favoritesQuery.data) ? favoritesQuery.data : []).map((f) => f.universityId)
   );
 
   const handleFavoriteToggle = (universityId: string) => {
@@ -97,6 +97,9 @@ export default function UniversityPage() {
 
   const t = (en: string, es: string) => (language === "spanish" ? es : en);
 
+  const hasRecommendations = !!(
+    recoQuery.data?.recommendations?.length || recoQuery.data?.universities?.length
+  );
   const recoUniversities = recoQuery.data?.recommendations?.map((r: any) => r.university || r)
     || recoQuery.data?.universities
     || [];
@@ -108,7 +111,7 @@ export default function UniversityPage() {
   ) as University[] | undefined;
 
   const recommendationMap = new Map(
-    (recoQuery.data?.recommendations || []).map((r: any) => [r.university?.id || r.id, r])
+    (recoQuery.data?.recommendations || recoQuery.data?.universities || []).map((r: any) => [r.university?.id || r.id, r])
   );
 
   const handleViewDetails = React.useCallback(
@@ -274,7 +277,7 @@ export default function UniversityPage() {
         <Tabs value={activeTab} className="space-y-6">
           <TabsContent value="recommended" className="space-y-6 mt-0">
             {/* Show empty state when no recommendations (not loading, or errored, or empty data) */}
-            {(!recoQuery.data?.recommendations?.length) && (!recoQuery.isLoading || recoQuery.error) && (
+            {!hasRecommendations && (!recoQuery.isLoading || recoQuery.error) && (
               <EmptyState
                 type="not_started"
                 title={t("Complete your assessments first", "Completa tus evaluaciones primero")}
@@ -314,11 +317,11 @@ export default function UniversityPage() {
                       <UniversityCard
                         key={u.id}
                         university={u}
-                        matchScore={rec?.matchScore}
+                        matchScore={rec?.matchScore || (u as any).matchScore}
                         matchReasons={
-                          rec?.matchReasonsArray?.[
-                          language === "spanish" ? "es" : "en"
-                          ]
+                          rec?.matchReasonsArray?.[language === "spanish" ? "es" : "en"]
+                          || rec?.matchReasons
+                          || (u as any).matchReasons
                         }
                         onViewDetails={handleViewDetails}
                         variant="featured"
@@ -383,10 +386,11 @@ export default function UniversityPage() {
       <CompareBar
         getUniversity={(id) => {
           const all = [
-            ...(recoQuery.data?.recommendations?.map((r) => r.university) ?? []),
+            ...(recoQuery.data?.recommendations?.map((r: any) => r.university || r) ?? []),
+            ...(recoQuery.data?.universities ?? []),
             ...(listQuery.data?.universities ?? []),
           ];
-          return all.find((u) => u.id === id);
+          return all.find((u) => u?.id === id);
         }}
         getRecommendation={(id) => recommendationMap.get(id)}
       />
