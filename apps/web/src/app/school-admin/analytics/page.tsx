@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { AdminStatCard } from "@/app/admin/_components/AdminStatCard";
 import { AdminAreaChart } from "@/components/ui/admin-area-chart";
 import { MiniChart } from "@/components/ui/mini-chart";
@@ -25,6 +26,34 @@ export default function AnalyticsPage() {
   const { data: overview, isLoading: overviewLoading } = useAnalyticsOverview(period);
   const { data: trends } = usePerformanceTrends(period, "score");
   const { data: topPerformers } = useTopPerformers(5);
+
+  const handleExport = useCallback(() => {
+    try {
+      const rows = [
+        ["Metric", "Value"],
+        ["Total Students", stats?.totalStudents ?? ""],
+        ["Assessments Completed", stats?.completedAssessments ?? ""],
+        ["Avg Score", stats?.averageScore ?? ""],
+        ["Period", period],
+      ];
+      const performers = topPerformers?.data || topPerformers;
+      if (Array.isArray(performers) && performers.length) {
+        rows.push([], ["Top Performers", ""]);
+        performers.forEach((p: any) => rows.push([p.studentName || p.name, p.avgScore ?? p.score ?? ""]));
+      }
+      const csv = rows.map(r => r.join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `analytics-${period}-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Analytics exported");
+    } catch {
+      toast.error("Failed to export analytics");
+    }
+  }, [stats, topPerformers, period]);
 
   if (statsLoading && overviewLoading) return <DashboardSkeleton />;
 
@@ -71,7 +100,8 @@ export default function AnalyticsPage() {
             <option value="year">This Year</option>
           </select>
           <button
-            title="Export"
+            title="Export CSV"
+            onClick={handleExport}
             style={{
               width: 32, height: 32, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
               background: "var(--admin-bg-icon-box)", border: "1px solid var(--admin-border-default)",

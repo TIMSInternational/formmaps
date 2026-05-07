@@ -97,21 +97,17 @@ function BuilderInner() {
     if (initialized) return;
     // Wait for detail query to finish before deciding
     if (currentId !== "new" && detailLoading) {
-      console.log("[INIT] Waiting for detail query...", { currentId, detailLoading });
       return;
     }
 
-    console.log("[INIT] Running init. currentId:", currentId, "detail:", !!detail, "detailLoading:", detailLoading);
 
     // 1. Try loading from backend detail
     if (detail) {
-      console.log("[INIT] Backend detail found. nodes:", detail.nodes?.length, "edges:", detail.edges?.length);
       setSequenceName(detail.name);
       setBackedById(currentId);
 
       // If backend has nodes, use them
       if (detail.nodes?.length) {
-        console.log("[INIT] Using backend nodes/edges");
         setNodes(detail.nodes.map((n: CourseSequenceNode) => ({
           id: n.id, type: "courseNode", position: n.position,
           data: { ...n.data, onDelete: handleDeleteNode },
@@ -127,17 +123,14 @@ function BuilderInner() {
       // Backend returned detail but with empty nodes — check localStorage cache
       const cacheKey = `sequence_cache_${currentId}`;
       const cached = localStorage.getItem(cacheKey);
-      console.log("[INIT] Backend has 0 nodes, checking cache:", cacheKey, "found:", !!cached);
       if (cached) {
         try {
           const data = JSON.parse(cached);
-          console.log("[INIT] Loaded from cache. nodes:", data.nodes?.length, "edges:", data.edges?.length);
           if (data.nodes?.length) setNodes(data.nodes.map((n: any) => ({
             ...n, data: { ...n.data, onDelete: handleDeleteNode },
           })));
           if (data.edges?.length) setEdges(data.edges);
         } catch (e) {
-          console.error("[INIT] Cache parse error:", e);
         }
       }
       setInitialized(true);
@@ -148,11 +141,9 @@ function BuilderInner() {
     if (currentId !== "new" && !detail) {
       const cacheKey = `sequence_cache_${currentId}`;
       const cached = localStorage.getItem(cacheKey);
-      console.log("[INIT] Detail missing for", currentId, "— cache key:", cacheKey, "found:", !!cached);
       if (cached) {
         try {
           const data = JSON.parse(cached);
-          console.log("[INIT] Loaded from cache. name:", data.name, "nodes:", data.nodes?.length, "edges:", data.edges?.length);
           setSequenceName(data.name || "");
           if (data.nodes?.length) setNodes(data.nodes.map((n: any) => ({
             ...n, data: { ...n.data, onDelete: handleDeleteNode },
@@ -161,7 +152,6 @@ function BuilderInner() {
           setInitialized(true);
           return;
         } catch (e) {
-          console.error("[INIT] Cache parse error:", e);
         }
       }
       setInitialized(true);

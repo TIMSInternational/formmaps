@@ -804,7 +804,8 @@ export const useGlobalStore = create<GlobalState>()(
         setPlatformFee: (fee) => set({ platformFee: fee }),
         fetchSettings: async () => {
           try {
-            const response = await fetch("/api/admin/settings");
+            const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+            const response = await fetch(`${baseUrl}/api/admin/settings`);
             if (response.ok) {
               const data = await response.json();
               if (typeof data.platformFee === "number") {

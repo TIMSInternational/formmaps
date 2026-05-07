@@ -8,8 +8,6 @@ import {
   ChevronRight,
   Users,
   TrendingUp,
-  BookOpen,
-  Award,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,22 +58,10 @@ export default function ParentChildrenPage() {
             color: "bg-indigo-50 text-indigo-600",
           },
           {
-            label: "On Track",
+            label: "Enrolled",
             value: isLoading ? "…" : children.length,
             icon: TrendingUp,
             color: "bg-emerald-50 text-emerald-600",
-          },
-          {
-            label: "Active Courses",
-            value: "—",
-            icon: BookOpen,
-            color: "bg-blue-50 text-blue-600",
-          },
-          {
-            label: "Avg GPA",
-            value: "—",
-            icon: Award,
-            color: "bg-amber-50 text-amber-600",
           },
         ].map((stat) => (
           <Card key={stat.label}>

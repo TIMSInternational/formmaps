@@ -108,7 +108,7 @@ export default function ParentDashboard() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">
-                  {t("parent.onTrack", "On Track")}
+                  {t("parent.enrolled", "Enrolled")}
                 </p>
                 <p className="text-2xl font-bold">
                   {children.length}
@@ -129,7 +129,7 @@ export default function ParentDashboard() {
                   {t("parent.needsAttention", "Needs Attention")}
                 </p>
                 <p className="text-2xl font-bold">
-                  0
+                  {pendingEvals?.length || 0}
                 </p>
               </div>
             </div>

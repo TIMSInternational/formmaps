@@ -1,5 +1,7 @@
 // PCA Assessment Service — All calls go through backend proxy (no external API keys in frontend)
 
+import { apiRequest } from "@/lib/api/apiClient";
+
 export interface PCAAssessmentRequest {
   PerNom: string;
   PerApe: string;
@@ -19,50 +21,22 @@ export interface PCAAssessmentResponse {
   pcaCod?: string;
 }
 
-// Backend API Configuration
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "";
-
-// Helper to get auth headers for backend API calls
-const getBackendHeaders = () => {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  return {
-    "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
-
-// Return null on auth errors (403/401) instead of crashing the app
-function safeFetch(response: Response): Response {
-  if (response.status === 401 || response.status === 403) {
-    console.warn(`[PCA] Auth error ${response.status} on ${response.url}`);
-    return response;
-  }
-  return response;
-}
-
 // ===== All calls go through backend proxy at /api/pcaapi/* =====
 
 /**
  * Get PCA Result by userId (via backend proxy — backend resolves PcaCod internally)
  */
 export async function getPCAResult(userId: string): Promise<any> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/pcaapi/get-result`,
-    {
+  try {
+    const res = await apiRequest("/api/pcaapi/get-result", {
       method: "POST",
-      headers: getBackendHeaders(),
-      body: JSON.stringify({ UserId: userId }),
-    }
-  );
-
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) return null;
-    throw new Error(`Failed to get PCA result: ${response.status}`);
+      data: { UserId: userId },
+    });
+    return res?.data || res;
+  } catch (err: any) {
+    if (err?.status === 401 || err?.status === 403) return null;
+    throw err;
   }
-
-  const json = await response.json();
-  return json.data || json;
 }
 
 /**
@@ -72,22 +46,16 @@ export async function getPCACompetences(
   userId: string,
   cmpTims: "1" | "0" = "1"
 ): Promise<any> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/pcaapi/get-competences`,
-    {
+  try {
+    const res = await apiRequest("/api/pcaapi/get-competences", {
       method: "POST",
-      headers: getBackendHeaders(),
-      body: JSON.stringify({ UserId: userId, CmpTims: cmpTims }),
-    }
-  );
-
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) return null;
-    throw new Error(`Failed to get PCA competences: ${response.status}`);
+      data: { UserId: userId, CmpTims: cmpTims },
+    });
+    return res?.data || res;
+  } catch (err: any) {
+    if (err?.status === 401 || err?.status === 403) return null;
+    throw err;
   }
-
-  const json = await response.json();
-  return json.data || json;
 }
 
 /**
@@ -98,29 +66,17 @@ export async function getPCAVsJCAAnalysis(
   jcaCodExt: string,
   anlsTip: string = "g"
 ): Promise<any> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/pcaapi/get-pca-vs-jca`,
-    {
+  try {
+    const res = await apiRequest("/api/pcaapi/get-pca-vs-jca", {
       method: "POST",
-      headers: getBackendHeaders(),
-      body: JSON.stringify({
-        UserId: userId,
-        JcaCodExt: jcaCodExt,
-        AnlsTip: anlsTip,
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) return null;
-    throw new Error(`Failed to get PCA vs JCA analysis: ${response.status}`);
+      data: { UserId: userId, JcaCodExt: jcaCodExt, AnlsTip: anlsTip },
+    });
+    return res?.data || res;
+  } catch (err: any) {
+    if (err?.status === 401 || err?.status === 403) return null;
+    throw err;
   }
-
-  const json = await response.json();
-  return json.data || json;
 }
-
-// ===== Backend API Functions (already proxied) =====
 
 /**
  * Get PCA Result by UserId (Backend API)
@@ -130,21 +86,15 @@ export async function getPCAResultByUserId(
   language: "english" | "spanish" = "english"
 ): Promise<any> {
   const langParam = language === "spanish" ? "sp" : "en";
-  const response = await fetch(
-    `${API_BASE_URL}/api/pcaapi/get-result?lang=${langParam}`,
-    {
+  try {
+    return await apiRequest(`/api/pcaapi/get-result?lang=${langParam}`, {
       method: "POST",
-      headers: getBackendHeaders(),
-      body: JSON.stringify({ UserId: userId }),
-    }
-  );
-
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) return null;
-    throw new Error(`Failed to get PCA result: ${response.status}`);
+      data: { UserId: userId },
+    });
+  } catch (err: any) {
+    if (err?.status === 401 || err?.status === 403) return null;
+    throw err;
   }
-
-  return await response.json();
 }
 
 /**
@@ -156,21 +106,15 @@ export async function getPCACompetencesByUserId(
   language: "english" | "spanish" = "english"
 ): Promise<any> {
   const langParam = language === "spanish" ? "sp" : "en";
-  const response = await fetch(
-    `${API_BASE_URL}/api/pcaapi/get-competences?lang=${langParam}`,
-    {
+  try {
+    return await apiRequest(`/api/pcaapi/get-competences?lang=${langParam}`, {
       method: "POST",
-      headers: getBackendHeaders(),
-      body: JSON.stringify({ UserId: userId, CmpTims: cmpTims }),
-    }
-  );
-
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) return null;
-    throw new Error(`Failed to get PCA competences: ${response.status}`);
+      data: { UserId: userId, CmpTims: cmpTims },
+    });
+  } catch (err: any) {
+    if (err?.status === 401 || err?.status === 403) return null;
+    throw err;
   }
-
-  return await response.json();
 }
 
 /**
@@ -183,34 +127,20 @@ export async function addPCAEvaluation(
 ): Promise<PCAAssessmentResponse> {
   try {
     const langParam = language === "spanish" ? "sp" : "en";
-
-    // CoKey determines the assessment language: NXDAPS=Spanish, NXDAPI=English
     const coKey = language === "spanish" ? "NXDAPS" : "NXDAPI";
 
-    const response = await fetch(
-      `${API_BASE_URL}/api/pcaapi/add-evaluation?lang=${langParam}`,
-      {
-        method: "POST",
-        headers: getBackendHeaders(),
-        body: JSON.stringify({
-          UserId: userId,
-          CoKey: coKey,
-          Permail: userData.permail || userData.UserMail || "",
-          ...userData,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) return null as any;
-      throw new Error(`Failed to add PCA evaluation: ${response.status}`);
-    }
-
-    const result = await response.json();
+    const result = await apiRequest(`/api/pcaapi/add-evaluation?lang=${langParam}`, {
+      method: "POST",
+      data: {
+        UserId: userId,
+        CoKey: coKey,
+        Permail: userData.permail || userData.UserMail || "",
+        ...userData,
+      },
+    });
 
     if (result.success && result.data) {
       const surveyLink = result.data.surveyLink?.trim().replace(/`/g, "") || "";
-
       return {
         success: true,
         data: result.data,
@@ -240,20 +170,14 @@ export async function getAllPCAEvaluations(
   language: "english" | "spanish" = "english"
 ): Promise<any> {
   const langParam = language === "spanish" ? "sp" : "en";
-  const response = await fetch(
-    `${API_BASE_URL}/api/pcaapi/evaluations?lang=${langParam}`,
-    {
+  try {
+    return await apiRequest(`/api/pcaapi/evaluations?lang=${langParam}`, {
       method: "GET",
-      headers: getBackendHeaders(),
-    }
-  );
-
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) return null;
-    throw new Error(`Failed to get PCA evaluations: ${response.status}`);
+    });
+  } catch (err: any) {
+    if (err?.status === 401 || err?.status === 403) return null;
+    throw err;
   }
-
-  return await response.json();
 }
 
 /**
@@ -270,7 +194,7 @@ export async function checkPCAStatus(
 }> {
   try {
     const allEvaluations = await getAllPCAEvaluations(language);
-    const userEvaluation = allEvaluations.data.find(
+    const userEvaluation = allEvaluations?.data?.find(
       (evaluation: any) => evaluation.userId === userId
     );
 

@@ -73,7 +73,7 @@ export default function CoachSessionsPage() {
       const normalize = (await import("@/lib/normalizeSessions")).default;
       const normalized = normalize(rawResponse);
 
-      console.debug("🔍 Fetched sessions (normalized):", normalized);
+
 
       setSessions(normalized);
 

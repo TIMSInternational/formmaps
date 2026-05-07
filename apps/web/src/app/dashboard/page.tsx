@@ -25,18 +25,21 @@ export default function DashboardPage() {
   const { t } = useTranslation();
   const { user } = useGlobalStore();
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const userRole = normalizeRole(user?.role || "");
 
   useEffect(() => {
-    if (!user?.id || userRole === Roles.COACH) return;
+    if (!user?.id || userRole === Roles.COACH) { setLoading(false); return; }
     const fetchDashboard = async () => {
       try {
         const res = await apiRequest(`/api/v1/Dashboard/student/${user.id}`, { method: "GET" });
         const data = res?.data ?? res;
         if (data) setDashboardData(data);
-      } catch (err) {
-        console.error("Failed to load dashboard data:", err);
+      } catch {
+        // Dashboard data is optional — gracefully degrade
+      } finally {
+        setLoading(false);
       }
     };
     fetchDashboard();
@@ -56,6 +59,19 @@ export default function DashboardPage() {
   const { data: assessmentProgress } = useAssessmentProgress(user?.id || "");
   const allAssessmentsComplete =
     assessmentProgress?.overallCompletion?.completedAssessments === 3;
+
+  if (loading) {
+    return (
+      <div className="space-y-8 animate-pulse">
+        <div className="h-8 bg-muted rounded w-1/3" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 bg-muted rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

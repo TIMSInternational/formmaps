@@ -16,14 +16,23 @@ const STORAGE_KEY = "isams_config_local";
 
 function loadLocalConfig() {
   try {
-    const s = localStorage.getItem(STORAGE_KEY);
-    if (s) return JSON.parse(s);
+    const s = sessionStorage.getItem(STORAGE_KEY);
+    if (s) {
+      const cfg = JSON.parse(s);
+      // Never persist API keys — only non-sensitive state
+      return { endpoint: cfg.endpoint || "", apiKey: "", lastSync: cfg.lastSync || null, connected: cfg.connected ?? false };
+    }
   } catch {}
   return { endpoint: "", apiKey: "", lastSync: null, connected: false };
 }
 
 function saveLocalConfig(cfg: any) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+  // Only persist non-sensitive fields in sessionStorage (cleared on tab close)
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+    endpoint: cfg.endpoint,
+    lastSync: cfg.lastSync,
+    connected: cfg.connected,
+  }));
 }
 
 export default function ISAMSIntegrationPage() {

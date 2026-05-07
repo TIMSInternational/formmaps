@@ -1754,14 +1754,7 @@ export default function ResumeBuilderPage() {
                           ? content
                           : content.join("\n");
                       setDynamicEntryForm((prev) => {
-                        const next = { ...prev, [field.name]: value };
-                        console.debug(
-                          "AI generated applied to dynamic form",
-                          field.name,
-                          value
-                        );
-
-                        // If we are editing a dynamic entry, update it in the global store
+                        const next = { ...prev, [field.name]: value };// If we are editing a dynamic entry, update it in the global store
                         // so the generated content is persisted and won't be overwritten
                         // by other updates. Do not close the edit panel — we only update
                         // the store value for the current entry.
@@ -1848,13 +1841,7 @@ export default function ResumeBuilderPage() {
                 setCustomSectionForms((prev) => ({
                   ...prev,
                   [section.id]: { ...form, description },
-                }));
-                console.debug(
-                  "AI generated applied to custom section",
-                  section.id,
-                  description
-                );
-                handleSaveCustomSection();
+                }));handleSaveCustomSection();
               }}
             />
           </div>
@@ -1892,13 +1879,7 @@ export default function ResumeBuilderPage() {
                 setCustomSectionForms((prev) => ({
                   ...prev,
                   [section.id]: { ...form, bullets },
-                }));
-                console.debug(
-                  "AI generated applied to custom section bullets",
-                  section.id,
-                  bullets
-                );
-                handleSaveCustomSection();
+                }));handleSaveCustomSection();
               }}
             />
           </div>
@@ -3112,12 +3093,7 @@ export default function ResumeBuilderPage() {
                                   };
 
                                   setPersonalInfoForm(nextForm);
-                                  persistPersonalInfoForm(nextForm);
-                                  console.debug(
-                                    "AI generated applied to personal summary",
-                                    summaryText
-                                  );
-                                }}
+                                  persistPersonalInfoForm(nextForm);}}
                               />
                             </div>
                             <textarea
@@ -3952,12 +3928,7 @@ export default function ResumeBuilderPage() {
                                           setExperienceForm((prev) => ({
                                             ...prev,
                                             description: bullets,
-                                          }));
-                                          console.debug(
-                                            "AI generated applied to experience bullets",
-                                            bullets
-                                          );
-                                        }}
+                                          }));}}
                                       />
                                     </div>
                                     <textarea
@@ -4191,12 +4162,7 @@ export default function ResumeBuilderPage() {
                                   setExperienceForm((prev) => ({
                                     ...prev,
                                     description: bullets,
-                                  }));
-                                  console.debug(
-                                    "AI generated applied to experience bullets",
-                                    bullets
-                                  );
-                                }}
+                                  }));}}
                               />
                             </div>
                             <textarea

@@ -89,7 +89,6 @@ function SchoolQuickStats() {
 function RecentStudentsCard() {
   const { data: recentStudents } = useStudents({ limit: 20, sortBy: "createdAt", sortOrder: "desc" });
   const allUsers = recentStudents?.data || [];
-  if (allUsers.length > 0) console.log("[DASHBOARD] User roles:", allUsers.map((u: any) => ({ name: u.name, role: u.role, roleName: u.roleName })));
   const students = allUsers.filter((s: any) => {
     const r = (s.role || s.roleName || "").toLowerCase();
     return r === "student" || r === "students";

@@ -1,5 +1,3 @@
-import jwt from "jsonwebtoken";
-
 export interface JWTPayload {
   userId: string;
   email: string;
@@ -11,16 +9,12 @@ export interface JWTPayload {
 
 export function verifyJWT(token: string): JWTPayload {
   try {
-    // For now, since we don't have the secret, we'll decode without verification
-    // In production, you should verify with the secret
-    const decoded = jwt.decode(token) as JWTPayload;
-
-    if (!decoded || !decoded.userId) {
-      throw new Error("Invalid token");
-    }
-
-    return decoded;
-  } catch (error) {
+    const parts = token.split(".");
+    if (parts.length !== 3) throw new Error("Invalid token");
+    const payload = JSON.parse(atob(parts[1])) as JWTPayload;
+    if (!payload || !payload.userId) throw new Error("Invalid token");
+    return payload;
+  } catch {
     throw new Error("Invalid token");
   }
 }
@@ -32,9 +26,7 @@ export function getUserIdFromRequest(request: Request): string {
     throw new Error("No authorization token provided");
   }
 
-  const token = authHeader.substring(7); // Remove 'Bearer '
-
+  const token = authHeader.substring(7);
   const payload = verifyJWT(token);
-
   return payload.userId;
 }
