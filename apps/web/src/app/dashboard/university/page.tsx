@@ -383,7 +383,7 @@ export default function UniversityPage() {
       <CompareBar
         getUniversity={(id) => {
           const all = [
-            ...(recoQuery.data?.recommendations.map((r) => r.university) ?? []),
+            ...(recoQuery.data?.recommendations?.map((r) => r.university) ?? []),
             ...(listQuery.data?.universities ?? []),
           ];
           return all.find((u) => u.id === id);

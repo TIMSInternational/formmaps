@@ -269,8 +269,10 @@ export interface UniversityListResponse {
  * Recommendations response
  */
 export interface UniversityRecommendationsResponse {
-  recommendations: UniversityRecommendation[];
-  meta: {
+  recommendations?: UniversityRecommendation[];
+  universities?: any[];
+  total?: number;
+  meta?: {
     totalMatches: number;
     generatedAt: string;
     basedOn: {
