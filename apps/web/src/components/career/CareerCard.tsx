@@ -68,7 +68,7 @@ function CareerCardInner({ career, rank, isFavorite = false, onToggleFavorite, o
           router.push(`/careers/${career.id}`);
         }
       }}
-      onMouseEnter={() => prefetch.prefetchCareer?.(career.id)}
+      onMouseEnter={() => career.id && prefetch.prefetchCareer?.(career.id)}
       aria-labelledby={`career-${career.id}-title`}
     >
       {/* Top accent bar */}

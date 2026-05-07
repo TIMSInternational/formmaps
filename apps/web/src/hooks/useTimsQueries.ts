@@ -146,7 +146,7 @@ export function useTimsCareerScoring() {
     enabled: isEnabled,
     staleTime: 60 * 60 * 1000, // 1 hour — backend caches permanently in UserCareerProfile
     gcTime: 2 * 60 * 60 * 1000, // 2 hours
-    retry: 1,
+    retry: false, // Don't retry — endpoint may not exist yet
   });
 
   return {
