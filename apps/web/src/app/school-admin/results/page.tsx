@@ -139,7 +139,7 @@ export default function ResultsPage() {
           <TableBody>
             {isLoading ? (
               <TableRowsSkeleton columnCount={7} rowCount={5} />
-            ) : !(Array.isArray(results?.data) ? results.data : results?.data?.data)?.length ? (
+            ) : !(Array.isArray(results?.data) ? results.data : (results?.data as any)?.data)?.length ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
                   <FileText className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} />
@@ -148,7 +148,7 @@ export default function ResultsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              (Array.isArray(results.data) ? results.data : results.data?.data || []).map((result: any) => {
+              (Array.isArray(results.data) ? results.data : (results.data as any)?.data || []).map((result: any) => {
                 const scoreStyle = getScoreStyle(result.score);
                 return (
                   <TableRow key={result.id} style={{ borderBottom: "1px solid var(--admin-border-default)" }}
