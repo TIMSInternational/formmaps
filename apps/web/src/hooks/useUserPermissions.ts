@@ -22,7 +22,7 @@ interface MeResponse {
  * Call this once on app init (e.g. in AuthWrapper) to keep permissions fresh.
  */
 export function useUserPermissions(options?: { enabled?: boolean }) {
-  const { setPermissions, user } = useGlobalStore();
+  const { setPermissions, setUser, user } = useGlobalStore();
 
   return useQuery({
     queryKey: ["user", "me", "permissions"],
@@ -30,6 +30,10 @@ export function useUserPermissions(options?: { enabled?: boolean }) {
       const res = await apiRequest<MeResponse>("/api/v1/user/me");
       const permissions = res.data?.permissions ?? [];
       setPermissions(permissions);
+      // Sync schoolId to store so AuthWrapper can skip subscription for school students
+      if (res.data?.schoolId !== undefined) {
+        setUser({ schoolId: res.data.schoolId });
+      }
       return permissions;
     },
     enabled: options?.enabled ?? user.isAuthenticated,
