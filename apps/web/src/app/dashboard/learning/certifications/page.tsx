@@ -25,7 +25,7 @@ export default function CertificationsPage() {
   const { data: recData } = useRecommendedCourses();
   const { language } = useGlobalStore();
 
-  const enrollments: CourseEnrollment[] = enrollmentData || [];
+  const enrollments: CourseEnrollment[] = Array.isArray(enrollmentData) ? enrollmentData : (enrollmentData as any)?.data || (enrollmentData as any)?.enrollments || [];
   const recommendedCourses = recData?.courses || [];
 
   const enrolledCourses = enrollments;
