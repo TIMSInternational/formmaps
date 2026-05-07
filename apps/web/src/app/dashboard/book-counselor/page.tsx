@@ -69,7 +69,8 @@ export default function BookCounselorPage() {
   useEffect(() => {
     async function fetchCounselors() {
       try {
-        const data = await getSchoolCounselors();
+        const raw = await getSchoolCounselors();
+        const data = Array.isArray(raw) ? raw : (raw as any)?.data || []
         setCounselors(data);
         if (data.length > 0) {
           // If the user happens to have an assigned counselor, prefer them. Otherwise pick the first.
@@ -107,7 +108,17 @@ export default function BookCounselorPage() {
       const utcDay = String(date.getUTCDate()).padStart(2, "0");
       const dateStr = `${utcYear}-${utcMonth}-${utcDay}`;
       const result = await getCounselorSlots(selectedCounselorId, dateStr);
-      setSlots(result.slots || []);
+      const rawSlots = result.slots || [];
+      // API may return string[] (ISO timestamps) or TimeSlot[] — normalize
+      const normalized = rawSlots.map((s: any) => {
+        if (typeof s === "string") {
+          const start = new Date(s);
+          const end = new Date(start.getTime() + 30 * 60 * 1000);
+          return { start: start.toISOString(), end: end.toISOString(), available: true };
+        }
+        return s;
+      });
+      setSlots(normalized);
     } catch {
       setSlots([]);
     } finally {

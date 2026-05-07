@@ -47,13 +47,14 @@ export default function BookCoachPage() {
         const response: any = await getCoaches({ search });
 
         // Handle different response structures
-        // API might return { data: Coach[] } or { data: { data: Coach[] } }
         let coachesData: any[] = [];
         if (Array.isArray(response)) {
           coachesData = response;
         } else if (response?.data) {
           if (Array.isArray(response.data)) {
             coachesData = response.data;
+          } else if (response.data?.coaches && Array.isArray(response.data.coaches)) {
+            coachesData = response.data.coaches;
           } else if (response.data?.data && Array.isArray(response.data.data)) {
             coachesData = response.data.data;
           }
@@ -139,9 +140,9 @@ export default function BookCoachPage() {
                   <div className="p-5 flex-1 flex flex-col">
                     <div className="flex items-start gap-4 mb-4">
                       <Avatar className="h-14 w-14 border-2 border-border">
-                        <AvatarImage src={coach.image} />
+                        <AvatarImage src={coach.image || coach.imageUrl} />
                         <AvatarFallback className="bg-secondary text-foreground font-bold">
-                          {coach.name.charAt(0)}
+                          {coach.name?.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
@@ -154,7 +155,7 @@ export default function BookCoachPage() {
                           </div>
                           <div className="flex items-center gap-1 text-xs font-medium text-amber-600">
                             <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-                            {coach.rating || t("coaching.find.new")}
+                            {coach.rating || coach.avgRating || t("coaching.find.new")}
                           </div>
                         </div>
                       </div>

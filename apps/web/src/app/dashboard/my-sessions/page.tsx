@@ -104,7 +104,9 @@ export default function MySessionsPage() {
       const { getUserSessions } = await import("@/services/coachService");
       const response = await getUserSessions("all");
 
-      const rawSessions = Array.isArray((response as any)?.data?.data)
+      const rawSessions = Array.isArray((response as any)?.data?.sessions)
+        ? (response as any).data.sessions
+        : Array.isArray((response as any)?.data?.data)
         ? (response as any).data.data
         : Array.isArray((response as any)?.data)
         ? (response as any).data
@@ -298,17 +300,27 @@ export default function MySessionsPage() {
     }
   };
 
+  const now = new Date();
+  const isSessionPast = (s: any) => {
+    const endTime = s.endTime || s.startTime;
+    return endTime ? new Date(endTime) < now : false;
+  };
+
   const upcomingSessions = sessions.filter((s) =>
-    ["confirmed", "rescheduled"].includes(s.status)
+    ["confirmed", "rescheduled", "pending"].includes(s.status) && !isSessionPast(s)
   );
   const pastSessions = sessions.filter((s) =>
-    ["completed", "cancelled"].includes(s.status)
+    ["completed", "cancelled"].includes(s.status) || isSessionPast(s)
   );
   const filteredSessions =
     activeTab === "upcoming" ? upcomingSessions : pastSessions;
 
-  const upcomingCounselorSessions = counselorSessions.filter(s => s.status === "confirmed");
-  const pastCounselorSessions = counselorSessions.filter(s => s.status === "completed" || s.status === "cancelled");
+  const upcomingCounselorSessions = counselorSessions.filter(s =>
+    ["confirmed", "upcoming"].includes(s.status) && !isSessionPast(s)
+  );
+  const pastCounselorSessions = counselorSessions.filter(s =>
+    ["completed", "cancelled"].includes(s.status) || isSessionPast(s)
+  );
   const filteredCounselorSessions = counselorSubTab === "upcoming" ? upcomingCounselorSessions : pastCounselorSessions;
 
   const getCounselorStatusBadge = (status: string) => {
@@ -330,7 +342,7 @@ export default function MySessionsPage() {
             <h1 className="text-2xl font-bold text-foreground tracking-tight">
               {t("sessions.title")}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">{t("sessions.subtitle")}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("sessions.subtitle", "Manage your coaching and counselor sessions")}</p>
           </div>
 
           <div className="flex gap-3">
@@ -577,7 +589,7 @@ export default function MySessionsPage() {
           <div className="border-b border-border px-6 py-5">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h2 className="text-xl font-bold text-foreground">
-                {t("sessions.yourSessions")}
+                {t("sessions.yourSessions", "Your Sessions")}
               </h2>
               <Tabs
                 value={activeTab}
@@ -589,13 +601,13 @@ export default function MySessionsPage() {
                     value="upcoming"
                     className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-card transition-all"
                   >
-                    {t("sessions.tabs.upcoming")} ({upcomingSessions.length})
+                    {t("sessions.tabs.upcoming", "Upcoming")} ({upcomingSessions.length})
                   </TabsTrigger>
                   <TabsTrigger
                     value="past"
                     className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-card transition-all"
                   >
-                    {t("sessions.tabs.past")} ({pastSessions.length})
+                    {t("sessions.tabs.past", "Past")} ({pastSessions.length})
                   </TabsTrigger>
                 </TabsList>
               </Tabs>

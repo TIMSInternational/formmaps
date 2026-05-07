@@ -35,7 +35,7 @@ export const CourseCard = React.memo(function CourseCard({
   };
 
   const formatRating = (rating: number) => {
-    return (rating ?? 0).toFixed(1);
+    return Number(rating ?? 0).toFixed(1);
   };
 
   const getDifficultyColor = (difficulty: string) => {
