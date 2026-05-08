@@ -64,11 +64,16 @@ export default function EarningsPage() {
       if (profileResponse?.platformCommission !== undefined) {
         setCommissionRate(profileResponse.platformCommission);
       }
-      const historyData = Array.isArray(historyResponse)
-        ? historyResponse
-        : Array.isArray((historyResponse as any)?.data)
-          ? (historyResponse as any).data
-          : [];
+      // API returns { history: [...] } (already unwrapped by service)
+      const historyData = Array.isArray((historyResponse as any)?.history)
+        ? (historyResponse as any).history
+        : Array.isArray(historyResponse)
+          ? historyResponse
+          : Array.isArray((historyResponse as any)?.data?.history)
+            ? (historyResponse as any).data.history
+            : Array.isArray((historyResponse as any)?.data)
+              ? (historyResponse as any).data
+              : [];
       setEarningsHistory(historyData);
       setError(null);
     } catch (error) {
@@ -92,28 +97,28 @@ export default function EarningsPage() {
   // Modern Stats Cards Data
   const statsCards = [
     {
-      label: "Total Earnings (Net)",
+      label: "Total Earnings",
       value: `$${earningsStats?.totalEarnings?.toLocaleString() || "0"}`,
       icon: TrendingUp,
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-500",
-      subtext: "+12% from last month",
+      subtext: `${(earningsStats as any)?.totalSessions || 0} completed sessions`,
     },
     {
-      label: "Pending Payout",
-      value: `$${earningsStats?.pendingPayout?.toLocaleString() || "0"}`,
+      label: "This Month",
+      value: `$${(earningsStats as any)?.monthlyEarnings?.toLocaleString() || "0"}`,
       icon: Clock,
       iconBg: "bg-amber-500/10",
       iconColor: "text-amber-500",
-      subtext: "Next payout: Apr 1st",
+      subtext: `Commission: ${commissionRate}%`,
     },
     {
-      label: "Last Payout",
-      value: `$${earningsStats?.lastPayoutAmount?.toLocaleString() || "0"}`,
+      label: "Sessions Completed",
+      value: (earningsStats as any)?.totalSessions?.toLocaleString() || "0",
       icon: DollarSign,
       iconBg: "bg-blue-500/10",
       iconColor: "text-blue-500",
-      subtext: `Paid on ${earningsStats?.lastPayoutDate || "N/A"}`,
+      subtext: `Currency: ${(earningsStats as any)?.currency || "USD"}`,
     },
   ];
 
@@ -215,13 +220,13 @@ export default function EarningsPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b border-[var(--border)] hover:bg-transparent">
-                    <TableHead className="py-4 font-semibold text-muted-foreground pl-6 w-[140px]">Date</TableHead>
-                    <TableHead className="py-4 font-semibold text-muted-foreground">Description</TableHead>
-                    <TableHead className="py-4 font-semibold text-muted-foreground text-right">Gross Amount</TableHead>
-                    <TableHead className="py-4 font-semibold text-muted-foreground text-right">Platform Fee</TableHead>
-                    <TableHead className="py-4 font-semibold text-emerald-600 text-right">Net Earning</TableHead>
-                    <TableHead className="py-4 font-semibold text-muted-foreground pr-6 w-[120px]">Status</TableHead>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-6">Date</TableHead>
+                    <TableHead>Student</TableHead>
+                    <TableHead className="text-right">Gross</TableHead>
+                    <TableHead className="text-right">Fee ({commissionRate}%)</TableHead>
+                    <TableHead className="text-right">Net</TableHead>
+                    <TableHead className="pr-6">Currency</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -232,47 +237,20 @@ export default function EarningsPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    paginatedHistory.map((item, index) => (
-                      <TableRow
-                        key={index}
-                        className="group hover:bg-muted/30 transition-colors"
-                      >
-                        <TableCell className="font-medium text-foreground pl-6 py-4">
-                          {item.date}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground font-medium py-4">
-                          {item.description}
-                        </TableCell>
-                        <TableCell className="text-right font-medium text-foreground py-4">
-                          ${item.amountGross?.toFixed(2) || "0.00"}
-                        </TableCell>
-                        <TableCell className="text-right text-red-500 font-medium py-4">
-                          -${calculateFee(item.amountGross || 0).toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right font-bold text-emerald-600 py-4">
-                          ${calculateNet(item.amountGross || 0).toFixed(2)}
-                        </TableCell>
-                        <TableCell className="pr-6 py-4">
-                          <Badge
-                            variant="secondary"
-                            className={cn(
-                              "font-medium shadow-none border-0",
-                              item.status === "completed"
-                                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                                : item.status === "pending"
-                                  ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
-                                  : "bg-red-50 text-red-700 hover:bg-red-100"
-                            )}
-                          >
-                            {item.status === "completed"
-                              ? "Paid"
-                              : item.status === "pending"
-                                ? "Pending"
-                                : "Cancelled"}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    )))}
+                    paginatedHistory.map((item: any, index) => {
+                      const gross = item.amountGross ?? item.amount ?? 0;
+                      const dateStr = item.date ? new Date(item.date).toLocaleDateString() : "—";
+                      return (
+                        <TableRow key={item.id || index} className="hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] transition-colors">
+                          <TableCell className="font-medium text-foreground pl-6">{dateStr}</TableCell>
+                          <TableCell className="text-muted-foreground">{item.studentName || item.description || "—"}</TableCell>
+                          <TableCell className="text-right font-medium text-foreground">${gross.toFixed(2)}</TableCell>
+                          <TableCell className="text-right text-red-500 font-medium">-${calculateFee(gross).toFixed(2)}</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">${calculateNet(gross).toFixed(2)}</TableCell>
+                          <TableCell className="pr-6 text-muted-foreground">{item.currency || "USD"}</TableCell>
+                        </TableRow>
+                      );
+                    }))}
                 </TableBody>
               </Table>
             </div>
