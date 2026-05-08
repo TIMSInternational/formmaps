@@ -154,7 +154,7 @@ export async function getCalendarAuthUrl(
   if (email) query.append("email", email);
   if (redirectUrl) query.append("redirectUrl", redirectUrl);
 
-  const requestUrl = `${API_BASE_URL}/api/v1/auth/${provider}/url${query.toString() ? `?${query.toString()}` : ""}`;
+  const requestUrl = `${API_BASE_URL}/api/v1/coach/auth/${provider}/url${query.toString() ? `?${query.toString()}` : ""}`;
 
   const response = await fetch(requestUrl, { headers: getHeaders() });
   if (!response.ok) throw new Error(`Failed to get ${provider} auth URL`);
@@ -186,7 +186,7 @@ export async function checkCalendarAuthStatus(
   };
 }> {
   const response = await fetch(
-    `${API_BASE_URL}/api/v1/auth/${provider}/status?email=${encodeURIComponent(email)}`,
+    `${API_BASE_URL}/api/v1/coach/auth/${provider}/status?email=${encodeURIComponent(email)}`,
     { headers: getHeaders() },
   );
   if (!response.ok) throw new Error(`Failed to check ${provider} auth status`);
@@ -199,7 +199,7 @@ export async function disconnectCalendar(
   email?: string,
 ): Promise<{ success: boolean; message: string }> {
   const response = await fetch(
-    `${API_BASE_URL}/api/v1/auth/${provider}/disconnect`,
+    `${API_BASE_URL}/api/v1/coach/auth/${provider}/disconnect`,
     {
       method: "DELETE",
       headers: getHeaders(),

@@ -159,7 +159,7 @@ export async function checkGoogleAuthStatus(email: string): Promise<{
   };
 }> {
   const response = await fetch(
-    `${API_BASE_URL}/api/v1/auth/google/status?email=${email}`,
+    `${API_BASE_URL}/api/v1/coach/auth/google/status?email=${email}`,
     {
       headers: getHeaders(),
     },
