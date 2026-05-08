@@ -406,7 +406,8 @@ export async function getSchoolSettings(): Promise<SchoolSettings | null> {
     );
     if (!response.ok) throw new Error("Failed to fetch settings");
     const json = await response.json();
-    return toCamel(json);
+    const camel = toCamel(json);
+    return camel?.data ?? camel;
   } catch (error) {
     return null;
   }
