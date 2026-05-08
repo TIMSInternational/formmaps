@@ -1,20 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-const getToken = () => (typeof window !== "undefined" ? localStorage.getItem("token") : null);
-
-const getHeaders = (): HeadersInit => ({
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${getToken()}`,
-});
-
-async function handleResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.error?.message || err.message || "Request failed");
-  }
-  const json = await res.json();
-  return (json.data ?? json) as T;
-}
+import { apiRequest } from "@/lib/api/apiClient";
 
 export interface CounselorSession {
   id: string;
@@ -65,8 +49,8 @@ export async function getSchoolCounselors(): Promise<{
   email: string;
   avatar?: string;
 }[]> {
-  const res = await fetch(`${API_BASE}/api/v1/counselor/school`, { headers: getHeaders() });
-  return handleResponse(res);
+  const res = await apiRequest(`/api/v1/counselor/school`);
+  return res.data ?? res;
 }
 
 // ============================================================
@@ -74,20 +58,19 @@ export async function getSchoolCounselors(): Promise<{
 // ============================================================
 
 export async function getCounselorAvailability(): Promise<CounselorAvailabilityResponse> {
-  const res = await fetch(`${API_BASE}/api/v1/counselor/me/availability`, { headers: getHeaders() });
-  return handleResponse<CounselorAvailabilityResponse>(res);
+  const res = await apiRequest(`/api/v1/counselor/me/availability`);
+  return res.data ?? res;
 }
 
 export async function updateCounselorAvailability(payload: {
   timezone?: string;
   weeklySchedule: CounselorAvailabilityResponse["weeklySchedule"];
 }): Promise<CounselorAvailabilityResponse> {
-  const res = await fetch(`${API_BASE}/api/v1/counselor/me/availability`, {
+  const res = await apiRequest(`/api/v1/counselor/me/availability`, {
     method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<CounselorAvailabilityResponse>(res);
+  return res.data ?? res;
 }
 
 // ============================================================
@@ -98,11 +81,10 @@ export async function getCounselorSlots(
   counselorId: string,
   date: string // yyyy-MM-dd
 ): Promise<{ slots: TimeSlot[]; counselorName: string }> {
-  const res = await fetch(
-    `${API_BASE}/api/v1/counselor/${counselorId}/slots?date=${date}`,
-    { headers: getHeaders() }
+  const res = await apiRequest(
+    `/api/v1/counselor/${counselorId}/slots?date=${date}`
   );
-  return handleResponse<{ slots: TimeSlot[]; counselorName: string }>(res);
+  return res.data ?? res;
 }
 
 // ============================================================
@@ -113,12 +95,11 @@ export async function bookCounselorSession(
   counselorId: string,
   payload: { startTime: string; endTime?: string; topic?: string; notes?: string; meetingLink?: string }
 ): Promise<CounselorSession> {
-  const res = await fetch(`${API_BASE}/api/v1/counselor/${counselorId}/sessions`, {
+  const res = await apiRequest(`/api/v1/counselor/${counselorId}/sessions`, {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<CounselorSession>(res);
+  return res.data ?? res;
 }
 
 // ============================================================
@@ -134,10 +115,8 @@ export async function getStudentCounselorSessions(params?: {
   if (params?.status) q.append("status", params.status);
   if (params?.page) q.append("page", params.page.toString());
   if (params?.limit) q.append("limit", params.limit.toString());
-  const res = await fetch(`${API_BASE}/api/v1/counselor/student/sessions?${q}`, {
-    headers: getHeaders(),
-  });
-  return handleResponse(res);
+  const res = await apiRequest(`/api/v1/counselor/student/sessions?${q}`);
+  return res.data ?? res;
 }
 
 // ============================================================
@@ -161,10 +140,8 @@ export async function getMyCounselorSessions(params?: {
   if (params?.status) q.append("status", params.status);
   if (params?.page) q.append("page", params.page.toString());
   if (params?.limit) q.append("limit", params.limit.toString());
-  const res = await fetch(`${API_BASE}/api/v1/counselor/me/sessions?${q}`, {
-    headers: getHeaders(),
-  });
-  return handleResponse(res);
+  const res = await apiRequest(`/api/v1/counselor/me/sessions?${q}`);
+  return res.data ?? res;
 }
 
 // ============================================================
@@ -175,24 +152,22 @@ export async function completeCounselorSession(
   id: string,
   counselorNotes?: string
 ): Promise<{ id: string; status: string }> {
-  const res = await fetch(`${API_BASE}/api/v1/counselor/me/sessions/${id}/complete`, {
-    method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify({ counselorNotes }),
-  });
-  return handleResponse(res);
+  const res = await apiRequest(
+    `/api/v1/counselor/me/sessions/${id}/complete`,
+    { method: "PUT", data: { counselorNotes } }
+  );
+  return res.data ?? res;
 }
 
 export async function cancelCounselorSession(
   id: string,
   reason?: string
 ): Promise<{ id: string; status: string }> {
-  const res = await fetch(`${API_BASE}/api/v1/counselor/sessions/${id}/cancel`, {
+  const res = await apiRequest(`/api/v1/counselor/sessions/${id}/cancel`, {
     method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify({ reason }),
+    data: { reason },
   });
-  return handleResponse(res);
+  return res.data ?? res;
 }
 
 export async function rescheduleCounselorSession(
@@ -200,10 +175,9 @@ export async function rescheduleCounselorSession(
   newStartTime: string,
   newEndTime?: string
 ): Promise<{ id: string; status: string; startTime: string; endTime: string }> {
-  const res = await fetch(`${API_BASE}/api/v1/counselor/sessions/${id}/reschedule`, {
-    method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify({ newStartTime, newEndTime }),
-  });
-  return handleResponse(res);
+  const res = await apiRequest(
+    `/api/v1/counselor/sessions/${id}/reschedule`,
+    { method: "PUT", data: { newStartTime, newEndTime } }
+  );
+  return res.data ?? res;
 }

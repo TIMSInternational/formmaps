@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/api/apiClient";
 import type {
   StudentCoursePlanResponse,
   RecommendedCourse,
@@ -7,55 +8,26 @@ import type {
   ChangeRequestReviewPayload,
 } from "@/types/coursePlan";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-
-const getToken = () => {
-  if (typeof window !== "undefined") return localStorage.getItem("token");
-  return null;
-};
-
-function getHeaders(): HeadersInit {
-  const token = getToken();
-  return {
-    "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : "",
-  };
-}
-
-async function handleResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Request failed: ${res.status}`);
-  }
-  const json = await res.json();
-  return (json.data ?? json) as T;
-}
-
 // Get student's own course plan (student-facing)
 export async function getMyCoursePlan(): Promise<StudentCoursePlanResponse> {
-  const res = await fetch(`${API_BASE}/api/v1/student/course-plan`, {
-    headers: getHeaders(),
-  });
-  return handleResponse<StudentCoursePlanResponse>(res);
+  const json = await apiRequest("/api/v1/student/course-plan");
+  return json.data ?? json;
 }
 
 // Get a specific student's course plan (counselor-facing)
 export async function getStudentCoursePlan(
   studentId: string
 ): Promise<StudentCoursePlanResponse> {
-  const res = await fetch(
-    `${API_BASE}/api/v1/school-admin/students/${studentId}/course-plan`,
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    `/api/v1/school-admin/students/${studentId}/course-plan`
   );
-  return handleResponse<StudentCoursePlanResponse>(res);
+  return json.data ?? json;
 }
 
 // Get course recommendations for student (student-facing)
 export async function getMyCourseRecommendations(): Promise<RecommendedCourse[]> {
-  const res = await fetch(`${API_BASE}/api/v1/student/course-plan/recommendations`, {
-    headers: getHeaders(),
-  });
-  return handleResponse<RecommendedCourse[]>(res);
+  const json = await apiRequest("/api/v1/student/course-plan/recommendations");
+  return json.data ?? json;
 }
 
 // Add course to plan
@@ -64,23 +36,19 @@ export async function addCourseToPlan(payload: {
   gradeLevel: number;
   semester: string;
 }): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/v1/student/course-plan/courses`, {
+  await apiRequest("/api/v1/student/course-plan/courses", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  if (!res.ok) throw new Error("Failed to add course to plan");
 }
 
 // Remove course from plan
 export async function removeCourseFromPlan(
   enrollmentId: string
 ): Promise<void> {
-  const res = await fetch(
-    `${API_BASE}/api/v1/student/course-plan/courses/${enrollmentId}`,
-    { method: "DELETE", headers: getHeaders() }
-  );
-  if (!res.ok) throw new Error("Failed to remove course from plan");
+  await apiRequest(`/api/v1/student/course-plan/courses/${enrollmentId}`, {
+    method: "DELETE",
+  });
 }
 
 // ─── Counselor: directly edit a student's course plan ───────────────────────
@@ -89,22 +57,20 @@ export async function counselorAddCourseToPlan(
   studentId: string,
   payload: { courseId: string; gradeLevel: number; semester: string }
 ): Promise<void> {
-  const res = await fetch(
-    `${API_BASE}/api/v1/counselor/me/students/${studentId}/course-plan/courses`,
-    { method: "POST", headers: getHeaders(), body: JSON.stringify(payload) }
+  await apiRequest(
+    `/api/v1/counselor/me/students/${studentId}/course-plan/courses`,
+    { method: "POST", data: payload }
   );
-  if (!res.ok) throw new Error("Failed to add course");
 }
 
 export async function counselorRemoveCourseFromPlan(
   studentId: string,
   enrollmentId: string
 ): Promise<void> {
-  const res = await fetch(
-    `${API_BASE}/api/v1/counselor/me/students/${studentId}/course-plan/courses/${enrollmentId}`,
-    { method: "DELETE", headers: getHeaders() }
+  await apiRequest(
+    `/api/v1/counselor/me/students/${studentId}/course-plan/courses/${enrollmentId}`,
+    { method: "DELETE" }
   );
-  if (!res.ok) throw new Error("Failed to remove course");
 }
 
 // ─── Student: submit / cancel change requests ───────────────────────────────
@@ -112,12 +78,11 @@ export async function counselorRemoveCourseFromPlan(
 export async function submitChangeRequest(
   payload: CourseChangeRequestPayload
 ): Promise<CourseChangeRequest> {
-  const res = await fetch(`${API_BASE}/api/v1/student/course-plan/change-requests`, {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
-  });
-  return handleResponse<CourseChangeRequest>(res);
+  const json = await apiRequest(
+    "/api/v1/student/course-plan/change-requests",
+    { method: "POST", data: payload }
+  );
+  return json.data ?? json;
 }
 
 export async function getMyChangeRequests(params?: {
@@ -129,19 +94,17 @@ export async function getMyChangeRequests(params?: {
   if (params?.status) qs.set("status", params.status);
   if (params?.page) qs.set("page", String(params.page));
   if (params?.limit) qs.set("limit", String(params.limit));
-  const res = await fetch(
-    `${API_BASE}/api/v1/student/course-plan/change-requests?${qs}`,
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    `/api/v1/student/course-plan/change-requests?${qs}`
   );
-  return handleResponse<CourseChangeRequestsResponse>(res);
+  return json.data ?? json;
 }
 
 export async function cancelChangeRequest(requestId: string): Promise<void> {
-  const res = await fetch(
-    `${API_BASE}/api/v1/student/course-plan/change-requests/${requestId}`,
-    { method: "DELETE", headers: getHeaders() }
+  await apiRequest(
+    `/api/v1/student/course-plan/change-requests/${requestId}`,
+    { method: "DELETE" }
   );
-  if (!res.ok) throw new Error("Failed to cancel request");
 }
 
 // ─── Counselor: view and review student change requests ──────────────────────
@@ -154,11 +117,10 @@ export async function getStudentChangeRequests(
   if (params?.status) qs.set("status", params.status);
   if (params?.page) qs.set("page", String(params.page));
   if (params?.limit) qs.set("limit", String(params.limit));
-  const res = await fetch(
-    `${API_BASE}/api/v1/counselor/me/students/${studentId}/course-plan/change-requests?${qs}`,
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    `/api/v1/counselor/me/students/${studentId}/course-plan/change-requests?${qs}`
   );
-  return handleResponse<CourseChangeRequestsResponse>(res);
+  return json.data ?? json;
 }
 
 export async function reviewChangeRequest(
@@ -166,11 +128,11 @@ export async function reviewChangeRequest(
   requestId: string,
   payload: ChangeRequestReviewPayload
 ): Promise<CourseChangeRequest> {
-  const res = await fetch(
-    `${API_BASE}/api/v1/counselor/me/students/${studentId}/course-plan/change-requests/${requestId}`,
-    { method: "PUT", headers: getHeaders(), body: JSON.stringify(payload) }
+  const json = await apiRequest(
+    `/api/v1/counselor/me/students/${studentId}/course-plan/change-requests/${requestId}`,
+    { method: "PUT", data: payload }
   );
-  return handleResponse<CourseChangeRequest>(res);
+  return json.data ?? json;
 }
 
 // ─── School Admin: directly edit a student's course plan ─────────────────────
@@ -179,22 +141,20 @@ export async function schoolAdminAddCourseToPlan(
   studentId: string,
   payload: { courseId: string; gradeLevel: number; semester: string }
 ): Promise<void> {
-  const res = await fetch(
-    `${API_BASE}/api/v1/school-admin/students/${studentId}/course-plan/courses`,
-    { method: "POST", headers: getHeaders(), body: JSON.stringify(payload) }
+  await apiRequest(
+    `/api/v1/school-admin/students/${studentId}/course-plan/courses`,
+    { method: "POST", data: payload }
   );
-  if (!res.ok) throw new Error("Failed to add course");
 }
 
 export async function schoolAdminRemoveCourseFromPlan(
   studentId: string,
   enrollmentId: string
 ): Promise<void> {
-  const res = await fetch(
-    `${API_BASE}/api/v1/school-admin/students/${studentId}/course-plan/courses/${enrollmentId}`,
-    { method: "DELETE", headers: getHeaders() }
+  await apiRequest(
+    `/api/v1/school-admin/students/${studentId}/course-plan/courses/${enrollmentId}`,
+    { method: "DELETE" }
   );
-  if (!res.ok) throw new Error("Failed to remove course");
 }
 
 // ─── School Admin: view and review student change requests ───────────────────
@@ -207,11 +167,10 @@ export async function getSchoolAdminStudentChangeRequests(
   if (params?.status) qs.set("status", params.status);
   if (params?.page) qs.set("page", String(params.page));
   if (params?.limit) qs.set("limit", String(params.limit));
-  const res = await fetch(
-    `${API_BASE}/api/v1/school-admin/students/${studentId}/course-plan/change-requests?${qs}`,
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    `/api/v1/school-admin/students/${studentId}/course-plan/change-requests?${qs}`
   );
-  return handleResponse<CourseChangeRequestsResponse>(res);
+  return json.data ?? json;
 }
 
 export async function reviewSchoolAdminStudentChangeRequest(
@@ -219,9 +178,9 @@ export async function reviewSchoolAdminStudentChangeRequest(
   requestId: string,
   payload: ChangeRequestReviewPayload
 ): Promise<CourseChangeRequest> {
-  const res = await fetch(
-    `${API_BASE}/api/v1/school-admin/students/${studentId}/course-plan/change-requests/${requestId}`,
-    { method: "PUT", headers: getHeaders(), body: JSON.stringify(payload) }
+  const json = await apiRequest(
+    `/api/v1/school-admin/students/${studentId}/course-plan/change-requests/${requestId}`,
+    { method: "PUT", data: payload }
   );
-  return handleResponse<CourseChangeRequest>(res);
+  return json.data ?? json;
 }

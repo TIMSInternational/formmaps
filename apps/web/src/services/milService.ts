@@ -1,5 +1,7 @@
 // MIL Assessment Service - Integrated with PCA API
 
+import { apiRequest } from "@/lib/api/apiClient";
+
 // --- Retry helper with exponential backoff ---
 async function submitWithRetry(
   url: string,
@@ -73,12 +75,19 @@ export function getPendingSubmissions(): PendingSubmission[] {
 
 export async function retryPendingSubmissions(): Promise<void> {
   const pending = getPendingSubmissions();
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
   for (const submission of pending) {
     try {
       const response = await submitWithRetry(
         submission.url,
         submission.body,
-        getHeaders() as Record<string, string>,
+        headers,
         2
       );
       if (response.ok) {
@@ -249,19 +258,6 @@ export interface UserProgressSummary {
   };
 }
 
-// API Base URL
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "";
-
-// Helper to get auth headers
-const getHeaders = () => {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  return {
-    "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
-
 /**
  * PRIMARY endpoint for MIL/LIA results — single source of truth.
  * Calls /api/v1/mil/results/{userId} which returns complete data
@@ -305,14 +301,7 @@ export interface MILResultsData {
 
 export async function getMILResults(userId: string): Promise<MILResultsData | null> {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/v1/mil/results/${userId}`,
-      { method: "GET", headers: getHeaders() }
-    );
-
-    if (!response.ok) return null;
-
-    const json = await response.json();
+    const json = await apiRequest(`/api/v1/mil/results/${userId}`);
     return json.data || json;
   } catch {
     return null;
@@ -327,21 +316,10 @@ export async function getAllUserExamResults(
 ): Promise<UserExamResult[]> {
   try {
     const langParam = language === "spanish" ? "sp" : "en";
-    const response = await fetch(
-      `${API_BASE_URL}/api/pcaexam/all-results?lang=${langParam}`,
-      {
-        method: "GET",
-        headers: getHeaders(),
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) return [];
-      throw new Error(`Failed to fetch user exam results: ${response.status}`);
-    }
-
-    return await response.json();
+    const json = await apiRequest(`/api/pcaexam/all-results?lang=${langParam}`);
+    return Array.isArray(json) ? json : json.data || [];
   } catch (error) {
+    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return [];
     throw error;
   }
 }
@@ -355,21 +333,10 @@ export async function getUserExamHistory(
 ): Promise<EnhancedUserExamHistory> {
   try {
     const langParam = language === "spanish" ? "sp" : "en";
-    const response = await fetch(
-      `${API_BASE_URL}/api/pcaexam/history/${userId}?lang=${langParam}`,
-      {
-        method: "GET",
-        headers: getHeaders(),
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) return { exams: [], totalExams: 0, completedExams: 0 } as any;
-      throw new Error(`Failed to fetch user exam history: ${response.status}`);
-    }
-
-    return await response.json();
+    return await apiRequest(`/api/pcaexam/history/${userId}?lang=${langParam}`);
   } catch (error) {
+    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403)
+      return { exams: [], totalExams: 0, completedExams: 0 } as any;
     throw error;
   }
 }
@@ -453,22 +420,10 @@ export async function getAllMILExams(
 ): Promise<MILExamMetadata[]> {
   try {
     const langParam = language === "spanish" ? "sp" : "en";
-    const response = await fetch(
-      `${API_BASE_URL}/api/pcaexam/exams?lang=${langParam}`,
-      {
-        method: "GET",
-        headers: getHeaders(),
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) return [];
-      throw new Error(`Failed to fetch MIL exams: ${response.status}`);
-    }
-    const json = await response.json();
+    const json = await apiRequest(`/api/pcaexam/exams?lang=${langParam}`);
     return Array.isArray(json) ? json : json.data || [];
   } catch (error) {
-
+    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return [];
     throw error;
   }
 }
@@ -482,21 +437,9 @@ export async function getMILExamById(
 ): Promise<MILExam> {
   try {
     const langParam = language === "spanish" ? "sp" : "en";
-    const response = await fetch(
-      `${API_BASE_URL}/api/pcaexam/exams/${examId}?lang=${langParam}`,
-      {
-        method: "GET",
-        headers: getHeaders(),
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) return null as any;
-      throw new Error(`Failed to fetch MIL exam: ${response.status}`);
-    }
-
-    return await response.json();
+    return await apiRequest(`/api/pcaexam/exams/${examId}?lang=${langParam}`);
   } catch (error) {
+    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return null as any;
     throw error;
   }
 }
@@ -510,22 +453,12 @@ export async function startMILExam(
 ): Promise<MILExam> {
   try {
     const langParam = language === "spanish" ? "sp" : "en";
-    const response = await fetch(
-      `${API_BASE_URL}/api/pcaexam/exams/${examId}/start?lang=${langParam}`,
-      {
-        method: "POST",
-        headers: getHeaders(),
-      }
+    return await apiRequest(
+      `/api/pcaexam/exams/${examId}/start?lang=${langParam}`,
+      { method: "POST" }
     );
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) return null as any;
-      throw new Error(`Failed to start MIL exam: ${response.status}`);
-    }
-
-    return await response.json();
   } catch (error) {
-
+    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return null as any;
     throw error;
   }
 }
@@ -539,21 +472,11 @@ export async function getMILExamInstructions(
 ): Promise<any> {
   try {
     const langParam = language === "spanish" ? "sp" : "en";
-    const response = await fetch(
-      `${API_BASE_URL}/api/pcaexam/exams/${examId}/instructions?lang=${langParam}`,
-      {
-        method: "GET",
-        headers: getHeaders(),
-      }
+    return await apiRequest(
+      `/api/pcaexam/exams/${examId}/instructions?lang=${langParam}`
     );
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) return null;
-      throw new Error(`Failed to fetch exam instructions: ${response.status}`);
-    }
-
-    return await response.json();
   } catch (error) {
+    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return null;
 
     // Fallback to local instructions for pattern recognition and numeric velocity
     if (examId === MIL_EXAMS.FEATURE_DETECTION) {
@@ -606,47 +529,42 @@ export async function submitMILExam(
   userId: string,
   language: "english" | "spanish" = "english"
 ): Promise<any> {
+  const examAnswers = session.answers.map((answer) => ({
+    questionNumber: answer.questionNumber,
+    selectedAnswer: answer.answer.toString(),
+    isAnswered: true,
+    timeSpent: formatTimeSpent(answer.timeSpent),
+  }));
+
+  const submissionData = {
+    examId: session.examId,
+    userId: userId,
+    startTime: session.startTime,
+    endTime: new Date().toISOString(),
+    isTimeExpired: false,
+    answers: examAnswers,
+  };
+
+  const langParam = language === "spanish" ? "sp" : "en";
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const url = `${baseUrl}/api/pcaexam/submit?lang=${langParam}`;
+  const submissionKey = `submit_${session.examId}_${userId}`;
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+
   try {
-
-    const examAnswers = session.answers.map((answer) => ({
-      questionNumber: answer.questionNumber,
-      selectedAnswer: answer.answer.toString(),
-      isAnswered: true,
-      timeSpent: formatTimeSpent(answer.timeSpent),
-    }));
-
-    const submissionData = {
-      examId: session.examId,
-      userId: userId,
-      startTime: session.startTime,
-      endTime: new Date().toISOString(),
-      isTimeExpired: false,
-      answers: examAnswers,
-    };
-
-    const langParam = language === "spanish" ? "sp" : "en";
-    const url = `${API_BASE_URL}/api/pcaexam/submit?lang=${langParam}`;
-    const submissionKey = `submit_${session.examId}_${userId}`;
-
-    try {
-      const response = await submitWithRetry(
-        url,
-        submissionData,
-        getHeaders() as Record<string, string>
-      );
-
-      // Success — remove any pending submission for this exam
-      removePendingSubmission(submissionKey);
-
-      const responseData = await response.json();
-      return responseData;
-    } catch (retryError) {
-      // All retries failed — persist for later
-      savePendingSubmission(submissionKey, url, submissionData);
-      throw retryError;
-    }
-  } catch (error) {
-    throw error;
+    const response = await submitWithRetry(url, submissionData, headers);
+    // Success — remove any pending submission for this exam
+    removePendingSubmission(submissionKey);
+    return await response.json();
+  } catch (retryError) {
+    // All retries failed — persist for later
+    savePendingSubmission(submissionKey, url, submissionData);
+    throw retryError;
   }
 }
 
@@ -658,46 +576,43 @@ export async function completeMILExam(
   userId: string,
   language: "english" | "spanish" = "english"
 ): Promise<any> {
+  const examAnswers = session.answers.map((answer) => ({
+    questionNumber: answer.questionNumber,
+    selectedAnswer: answer.answer.toString(),
+    isAnswered: true,
+    timeSpent: formatTimeSpent(answer.timeSpent),
+  }));
+
+  const completionData = {
+    examId: session.examId,
+    userId: userId,
+    startTime: session.startTime,
+    endTime: new Date().toISOString(),
+    isTimeExpired: true,
+    isCompleted: false,
+    answers: examAnswers,
+  };
+
+  const langParam = language === "spanish" ? "sp" : "en";
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const url = `${baseUrl}/api/pcaexam/complete?lang=${langParam}`;
+  const completionKey = `complete_${session.examId}_${userId}`;
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+
   try {
-    const examAnswers = session.answers.map((answer) => ({
-      questionNumber: answer.questionNumber,
-      selectedAnswer: answer.answer.toString(),
-      isAnswered: true,
-      timeSpent: formatTimeSpent(answer.timeSpent),
-    }));
-
-    const completionData = {
-      examId: session.examId,
-      userId: userId,
-      startTime: session.startTime,
-      endTime: new Date().toISOString(),
-      isTimeExpired: true,
-      isCompleted: false,
-      answers: examAnswers,
-    };
-
-    const langParam = language === "spanish" ? "sp" : "en";
-    const url = `${API_BASE_URL}/api/pcaexam/complete?lang=${langParam}`;
-    const completionKey = `complete_${session.examId}_${userId}`;
-
-    try {
-      const response = await submitWithRetry(
-        url,
-        completionData,
-        getHeaders() as Record<string, string>
-      );
-
-      // Success — remove any pending submission for this exam
-      removePendingSubmission(completionKey);
-
-      return await response.json();
-    } catch (retryError) {
-      // All retries failed — persist for later
-      savePendingSubmission(completionKey, url, completionData);
-      throw retryError;
-    }
-  } catch (error) {
-    throw error;
+    const response = await submitWithRetry(url, completionData, headers);
+    // Success — remove any pending submission for this exam
+    removePendingSubmission(completionKey);
+    return await response.json();
+  } catch (retryError) {
+    // All retries failed — persist for later
+    savePendingSubmission(completionKey, url, completionData);
+    throw retryError;
   }
 }
 
@@ -724,8 +639,8 @@ export function saveMILSession(session: MILSession): void {
       JSON.stringify(session)
     );
   } catch (error) {
-      // error handled silently
-    }
+    // error handled silently
+  }
 }
 
 /**
@@ -747,8 +662,8 @@ export function clearMILSession(examId: string): void {
   try {
     localStorage.removeItem(`mil_session_${examId}`);
   } catch (error) {
-      // error handled silently
-    }
+    // error handled silently
+  }
 }
 
 /**

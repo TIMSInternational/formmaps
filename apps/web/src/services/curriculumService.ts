@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/api/apiClient";
 import type {
   CurriculumFramework,
   FrameworkCourse,
@@ -15,54 +16,26 @@ import type {
   AIMappingAction,
 } from "@/types/curriculum";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-const getToken = () => {
-  if (typeof window !== "undefined") return localStorage.getItem("token");
-  return null;
+const buildPath = (endpoint: string, params?: Record<string, string | number | undefined>) => {
+  if (!params) return endpoint;
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      qs.append(key, String(value));
+    }
+  });
+  const queryString = qs.toString();
+  return queryString ? `${endpoint}?${queryString}` : endpoint;
 };
 
-const getHeaders = () => {
-  const token = getToken();
-  return {
-    "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : "",
-  };
-};
-
-const buildUrl = (endpoint: string, params?: Record<string, string | number | undefined>) => {
-  const url = new URL(`${API_BASE_URL}${endpoint}`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.append(key, String(value));
-      }
-    });
-  }
-  return url.toString();
-};
-
-const handleResponse = async <T>(res: Response): Promise<T> => {
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.error?.message || err.message || "Request failed");
-  }
-  const json = await res.json();
-
-  // The API sometimes returns deeply nested { data: { data: [...], total: 2, page: 1 } }
-  // If json.data exists and has its own inner 'data' array
+// Curriculum service uses a custom response unwrapper that preserves pagination shape
+const unwrap = <T>(json: any): T => {
   if (json.data && json.data.data !== undefined) {
-    // If the endpoint expects a paginated response (like SchoolCoursesResponse),
-    // it needs the full outer wrapper (the object containing total, page, etc)
-    // We check if 'total' exists on the inner json.data to see if it's paginated.
     if ("total" in json.data || "page" in json.data) {
       return json.data as T;
     }
-
-    // Otherwise, for simple array endpoints, extract the inner array directly.
     return json.data.data as T;
   }
-
   return (json.data ?? json) as T;
 };
 
@@ -71,30 +44,26 @@ const handleResponse = async <T>(res: Response): Promise<T> => {
 // ============================================
 
 export async function getFrameworks(): Promise<CurriculumFramework[]> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/curriculum/frameworks"), {
-    headers: getHeaders(),
-  });
-  return handleResponse<CurriculumFramework[]>(res);
+  const json = await apiRequest("/api/v1/school-admin/curriculum/frameworks");
+  return unwrap<CurriculumFramework[]>(json);
 }
 
 export async function updateFrameworks(payload: FrameworkTogglePayload): Promise<CurriculumFramework[]> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/curriculum/frameworks"), {
+  const json = await apiRequest("/api/v1/school-admin/curriculum/frameworks", {
     method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<CurriculumFramework[]>(res);
+  return unwrap<CurriculumFramework[]>(json);
 }
 
 export async function getFrameworkCourses(
   type: string,
   params?: { page?: number; limit?: number; search?: string }
 ): Promise<FrameworkCoursesResponse> {
-  const res = await fetch(
-    buildUrl(`/api/v1/school-admin/curriculum/frameworks/${type}/courses`, params as Record<string, string | number>),
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    buildPath(`/api/v1/school-admin/curriculum/frameworks/${type}/courses`, params as Record<string, string | number>)
   );
-  return handleResponse<FrameworkCoursesResponse>(res);
+  return unwrap<FrameworkCoursesResponse>(json);
 }
 
 export async function updateFrameworkCourse(
@@ -102,11 +71,11 @@ export async function updateFrameworkCourse(
   courseId: string,
   payload: FrameworkCourseOverride
 ): Promise<FrameworkCourse> {
-  const res = await fetch(
-    buildUrl(`/api/v1/school-admin/curriculum/frameworks/${type}/courses/${courseId}`),
-    { method: "PUT", headers: getHeaders(), body: JSON.stringify(payload) }
+  const json = await apiRequest(
+    `/api/v1/school-admin/curriculum/frameworks/${type}/courses/${courseId}`,
+    { method: "PUT", data: payload }
   );
-  return handleResponse<FrameworkCourse>(res);
+  return unwrap<FrameworkCourse>(json);
 }
 
 // ============================================
@@ -121,11 +90,10 @@ export async function getSchoolCourses(params?: {
   frameworkType?: string;
   gradeLevel?: number;
 }): Promise<SchoolCoursesResponse> {
-  const res = await fetch(
-    buildUrl("/api/v1/school-admin/courses", params as Record<string, string | number>),
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    buildPath("/api/v1/school-admin/courses", params as Record<string, string | number>)
   );
-  return handleResponse<SchoolCoursesResponse>(res);
+  return unwrap<SchoolCoursesResponse>(json);
 }
 
 /** Student/public-facing course listing (no school-admin role required) */
@@ -135,53 +103,43 @@ export async function getAvailableCourses(params?: {
   search?: string;
   department?: string;
 }): Promise<SchoolCoursesResponse> {
-  const res = await fetch(
-    buildUrl("/api/v1/courses", params as Record<string, string | number>),
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    buildPath("/api/v1/courses", params as Record<string, string | number>)
   );
-  return handleResponse<SchoolCoursesResponse>(res);
+  return unwrap<SchoolCoursesResponse>(json);
 }
 
 export async function createSchoolCourse(payload: SchoolCoursePayload): Promise<SchoolCourse> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/courses"), {
+  const json = await apiRequest("/api/v1/school-admin/courses", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<SchoolCourse>(res);
+  return unwrap<SchoolCourse>(json);
 }
 
 export async function updateSchoolCourse(courseId: string, payload: Partial<SchoolCoursePayload>): Promise<SchoolCourse> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/courses/${courseId}`), {
+  const json = await apiRequest(`/api/v1/school-admin/courses/${courseId}`, {
     method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<SchoolCourse>(res);
+  return unwrap<SchoolCourse>(json);
 }
 
 export async function deleteSchoolCourse(courseId: string): Promise<void> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/courses/${courseId}`), {
+  await apiRequest(`/api/v1/school-admin/courses/${courseId}`, {
     method: "DELETE",
-    headers: getHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to delete course");
 }
 
 export async function importSchoolCourses(file: File): Promise<CourseImportResult> {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
   const form = new FormData();
   form.append("file", file);
-
-  const res = await fetch(buildUrl("/api/v1/school-admin/courses/import"), {
+  const json = await apiRequest("/api/v1/school-admin/courses/import", {
     method: "POST",
-    headers,
-    body: form,
+    data: form,
+    headers: { "Content-Type": "multipart/form-data" },
   });
-  return handleResponse<CourseImportResult>(res);
+  return unwrap<CourseImportResult>(json);
 }
 
 // ============================================
@@ -189,28 +147,24 @@ export async function importSchoolCourses(file: File): Promise<CourseImportResul
 // ============================================
 
 export async function updatePrerequisites(courseId: string, payload: PrerequisitePayload): Promise<void> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/courses/${courseId}/prerequisites`), {
+  await apiRequest(`/api/v1/school-admin/courses/${courseId}/prerequisites`, {
     method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  if (!res.ok) throw new Error("Failed to update prerequisites");
 }
 
 export async function checkPrerequisites(courseId: string, studentId: string): Promise<PrerequisiteCheckResult> {
-  const res = await fetch(
-    buildUrl(`/api/v1/courses/${courseId}/prerequisite-check`, { studentId }),
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    buildPath(`/api/v1/courses/${courseId}/prerequisite-check`, { studentId })
   );
-  return handleResponse<PrerequisiteCheckResult>(res);
+  return unwrap<PrerequisiteCheckResult>(json);
 }
 
 export async function getPrerequisiteChain(courseId: string): Promise<PrerequisiteChain> {
-  const res = await fetch(
-    buildUrl(`/api/v1/school-admin/courses/${courseId}/prerequisite-chain`),
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    `/api/v1/school-admin/courses/${courseId}/prerequisite-chain`
   );
-  return handleResponse<PrerequisiteChain>(res);
+  return unwrap<PrerequisiteChain>(json);
 }
 
 // ============================================
@@ -218,30 +172,26 @@ export async function getPrerequisiteChain(courseId: string): Promise<Prerequisi
 // ============================================
 
 export async function recognizeCourses(courseIds: string[]): Promise<AIRecognitionResponse> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/courses/ai-recognize"), {
+  const json = await apiRequest("/api/v1/school-admin/courses/ai-recognize", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify({ courseIds }),
+    data: { courseIds },
   });
-  return handleResponse<AIRecognitionResponse>(res);
+  return unwrap<AIRecognitionResponse>(json);
 }
 
 export async function recognizeAllUnmapped(): Promise<AIRecognitionResponse> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/courses/ai-recognize"), {
+  const json = await apiRequest("/api/v1/school-admin/courses/ai-recognize", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify({ scope: "unmapped" }),
+    data: { scope: "unmapped" },
   });
-  return handleResponse<AIRecognitionResponse>(res);
+  return unwrap<AIRecognitionResponse>(json);
 }
 
 export async function applyAIMapping(courseId: string, payload: AIMappingAction): Promise<void> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/courses/${courseId}/ai-mapping`), {
+  await apiRequest(`/api/v1/school-admin/courses/${courseId}/ai-mapping`, {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  if (!res.ok) throw new Error("Failed to apply AI mapping");
 }
 
 // ============================================
@@ -259,16 +209,18 @@ export interface CourseImportStatus {
 }
 
 export async function getCourseImportStatus(jobId: string): Promise<CourseImportStatus> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/courses/import/${jobId}`), {
-    headers: getHeaders(),
-  });
-  return handleResponse<CourseImportStatus>(res);
+  const json = await apiRequest(`/api/v1/school-admin/courses/import/${jobId}`);
+  return unwrap<CourseImportStatus>(json);
 }
 
 export async function downloadCourseImportFailures(jobId: string): Promise<Blob> {
+  // Blob download requires raw fetch — apiRequest returns parsed JSON
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const res = await fetch(
-    buildUrl(`/api/v1/school-admin/courses/import/${jobId}/download-failures`),
-    { headers: getHeaders() }
+    `${baseUrl}/api/v1/school-admin/courses/import/${jobId}/download-failures`,
+    { headers: token ? { Authorization: `Bearer ${token}` } : {} }
   );
   if (!res.ok) throw new Error("Failed to download failure report");
   return res.blob();

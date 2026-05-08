@@ -19,16 +19,7 @@ export interface TransactionResponse {
   totalPages: number;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-// Helper to get token
-const getToken = () => localStorage.getItem("token");
-
-// Helper for headers
-const getHeaders = () => ({
-  Authorization: `Bearer ${getToken()}`,
-  "Content-Type": "application/json",
-});
+import { apiRequest } from "@/lib/api/apiClient";
 
 // Transaction APIs
 export async function getUserTransactions(params?: {
@@ -39,29 +30,14 @@ export async function getUserTransactions(params?: {
   if (params?.page) query.append("page", params.page.toString());
   if (params?.limit) query.append("limit", params.limit.toString());
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/transactions?${query.toString()}`,
-    {
-      headers: getHeaders(),
-    }
-  );
-
-  if (!response.ok) throw new Error("Failed to fetch transactions");
-  const json = await response.json();
-  return json.data || json;
+  const qs = query.toString();
+  const res = await apiRequest(`/api/v1/transactions${qs ? `?${qs}` : ""}`);
+  return res.data || res;
 }
 
 export async function getTransactionById(
   transactionId: string
 ): Promise<Transaction> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/transactions/${transactionId}`,
-    {
-      headers: getHeaders(),
-    }
-  );
-
-  if (!response.ok) throw new Error("Failed to fetch transaction");
-  const json = await response.json();
-  return json.data || json;
+  const res = await apiRequest(`/api/v1/transactions/${transactionId}`);
+  return res.data || res;
 }

@@ -1,44 +1,20 @@
 import { UserProfile, UserActivity, UserSettings } from "../types/user";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-// Helper to get token
-const getToken = () => localStorage.getItem("token");
-
-// Helper for headers
-const getHeaders = (isMultipart = false) => {
-  const headers: HeadersInit = {
-    Authorization: `Bearer ${getToken()}`,
-  };
-  if (!isMultipart) {
-    headers["Content-Type"] = "application/json";
-  }
-  return headers;
-};
+import { apiRequest } from "@/lib/api/apiClient";
 
 // User Profile APIs
 export async function getUserProfile(): Promise<UserProfile> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/user/profile`, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) throw new Error("Failed to fetch user profile");
-  const json = await response.json();
-  return json.data || json;
+  const res = await apiRequest("/api/v1/user/profile");
+  return res.data || res;
 }
 
 export async function updateUserProfile(
   profileData: Partial<UserProfile>
 ): Promise<UserProfile> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/user/profile`, {
+  const res = await apiRequest("/api/v1/user/profile", {
     method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify(profileData),
+    data: profileData,
   });
-
-  if (!response.ok) throw new Error("Failed to update user profile");
-  const json = await response.json();
-  return json.data || json;
+  return res.data || res;
 }
 
 export async function uploadProfileAvatar(
@@ -47,17 +23,12 @@ export async function uploadProfileAvatar(
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/user/profile/avatar`, {
+  const res = await apiRequest("/api/v1/user/profile/avatar", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: formData,
+    data: formData,
+    headers: { "Content-Type": "multipart/form-data" },
   });
-
-  if (!response.ok) throw new Error("Failed to upload avatar");
-  const json = await response.json();
-  return { avatarUrl: json.url || json.data?.url || json.avatarUrl || "" };
+  return { avatarUrl: res.url || res.data?.url || res.avatarUrl || "" };
 }
 
 export async function uploadProfileCover(
@@ -66,27 +37,17 @@ export async function uploadProfileCover(
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/user/profile/cover`, {
+  const res = await apiRequest("/api/v1/user/profile/cover", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: formData,
+    data: formData,
+    headers: { "Content-Type": "multipart/form-data" },
   });
-
-  if (!response.ok) throw new Error("Failed to upload cover");
-  const json = await response.json();
-  return { coverUrl: json.url || json.data?.url || json.coverUrl || "" };
+  return { coverUrl: res.url || res.data?.url || res.coverUrl || "" };
 }
 
 export async function getUserActivity(): Promise<UserActivity[]> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/user/activity`, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) throw new Error("Failed to fetch user activity");
-  const json = await response.json();
-  return json.data || json;
+  const res = await apiRequest("/api/v1/user/activity");
+  return res.data || res;
 }
 
 // Session Analytics Interface and API
@@ -106,25 +67,16 @@ export interface SessionAnalytics {
  * Includes total sessions, ratings, top coaches, and monthly trends.
  */
 export async function getSessionAnalytics(): Promise<SessionAnalytics> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/user/sessions/analytics`, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) throw new Error("Failed to fetch session analytics");
-  const json = await response.json();
-  return json.data || json;
+  const res = await apiRequest("/api/v1/user/sessions/analytics");
+  return res.data || res;
 }
 
 export async function updateUserSettings(
   settings: Partial<UserSettings>
 ): Promise<UserSettings> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/user/settings`, {
+  const res = await apiRequest("/api/v1/user/settings", {
     method: "PATCH",
-    headers: getHeaders(),
-    body: JSON.stringify(settings),
+    data: settings,
   });
-
-  if (!response.ok) throw new Error("Failed to update user settings");
-  const json = await response.json();
-  return json.data || json;
+  return res.data || res;
 }

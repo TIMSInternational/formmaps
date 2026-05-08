@@ -5,41 +5,18 @@ import type {
   AIMappingSuggestPayload,
   DataMappingsResponse,
 } from "@/types/dataMapping";
+import { apiRequest } from "@/lib/api/apiClient";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-const getToken = () => {
-  if (typeof window !== "undefined") return localStorage.getItem("token");
-  return null;
-};
-
-const getHeaders = () => {
-  const token = getToken();
-  return {
-    "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : "",
-  };
-};
-
-const buildUrl = (endpoint: string, params?: Record<string, string | number | undefined>) => {
-  const url = new URL(`${API_BASE_URL}${endpoint}`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.append(key, String(value));
-      }
-    });
-  }
-  return url.toString();
-};
-
-const handleResponse = async <T>(res: Response): Promise<T> => {
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.error?.message || err.message || "Request failed");
-  }
-  const json = await res.json();
-  return json.data ?? json;
+const buildQueryString = (params?: Record<string, string | number | undefined>): string => {
+  if (!params) return "";
+  const filtered: Record<string, string> = {};
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      filtered[key] = String(value);
+    }
+  });
+  const qs = new URLSearchParams(filtered).toString();
+  return qs ? `?${qs}` : "";
 };
 
 // ============================================
@@ -52,55 +29,48 @@ export async function getDataMappings(params?: {
   status?: string;
   search?: string;
 }): Promise<DataMappingsResponse> {
-  const res = await fetch(
-    buildUrl("/api/v1/school-admin/data-mappings", params as Record<string, string | number>),
-    { headers: getHeaders() }
+  const res = await apiRequest(
+    `/api/v1/school-admin/data-mappings${buildQueryString(params as Record<string, string | number | undefined>)}`
   );
-  return handleResponse<DataMappingsResponse>(res);
+  return res.data ?? res;
 }
 
 export async function createDataMapping(payload: DataMappingPayload): Promise<DataMapping> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/data-mappings"), {
+  const res = await apiRequest("/api/v1/school-admin/data-mappings", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<DataMapping>(res);
+  return res.data ?? res;
 }
 
 export async function updateDataMapping(id: string, payload: Partial<DataMappingPayload>): Promise<DataMapping> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/data-mappings/${id}`), {
+  const res = await apiRequest(`/api/v1/school-admin/data-mappings/${id}`, {
     method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<DataMapping>(res);
+  return res.data ?? res;
 }
 
 export async function deleteDataMapping(id: string): Promise<void> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/data-mappings/${id}`), {
+  await apiRequest(`/api/v1/school-admin/data-mappings/${id}`, {
     method: "DELETE",
-    headers: getHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to delete mapping");
 }
 
 export async function getAIMappingSuggestions(
   payload: AIMappingSuggestPayload
 ): Promise<{ suggestions: AIMappingSuggestion[] }> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/data-mappings/ai-suggest"), {
+  const res = await apiRequest("/api/v1/school-admin/data-mappings/ai-suggest", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<{ suggestions: AIMappingSuggestion[] }>(res);
+  return res.data ?? res;
 }
 
 export async function bulkApproveMappings(mappingIds: string[]): Promise<{ success: boolean; approved: number }> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/data-mappings/bulk-approve"), {
+  const res = await apiRequest("/api/v1/school-admin/data-mappings/bulk-approve", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify({ mappingIds }),
+    data: { mappingIds },
   });
-  return handleResponse<{ success: boolean; approved: number }>(res);
+  return res.data ?? res;
 }

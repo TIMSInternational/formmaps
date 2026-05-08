@@ -1,8 +1,7 @@
 // Admin service for handling admin-related API calls
 import { decodeJWTToken, isAdminRole, isSuperAdminRole } from "./authService";
 import { getRoleById } from "./roleService";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import { apiRequest } from "@/lib/api/apiClient";
 
 // Helper to get current language from localStorage
 const getCurrentLanguage = (): "en" | "sp" => {
@@ -13,34 +12,21 @@ const getCurrentLanguage = (): "en" | "sp" => {
   return "en";
 };
 
-// Helper to build URL with language parameter
-const buildUrl = (
-  endpoint: string,
+// Helper to build query params object with language
+const buildParams = (
   params?: Record<string, string | number | undefined>
-) => {
-  const url = new URL(`${API_BASE_URL}${endpoint}`);
+): Record<string, string | number> => {
   const language = getCurrentLanguage();
-  url.searchParams.append("language", language);
-
+  const result: Record<string, string | number> = { language };
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.append(key, String(value));
+        result[key] = value as string | number;
       }
     });
   }
-
-  return url.toString();
+  return result;
 };
-
-// Helper to get token
-const getToken = () => localStorage.getItem("token");
-
-// Helper for headers
-const getHeaders = () => ({
-  Authorization: `Bearer ${getToken()}`,
-  "Content-Type": "application/json",
-});
 
 interface AdminVerificationResponse {
   isAdmin: boolean;
@@ -179,59 +165,41 @@ function simulateAdminVerification(token: string): AdminVerificationResponse {
 export async function getAdminPayouts(
   status?: "pending" | "approved" | "rejected" | "paid"
 ): Promise<AdminPayoutItem[]> {
-  const url = buildUrl("/api/v1/admin/payouts", status ? { status } : undefined);
-
-  const response = await fetch(url, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) throw new Error("Failed to fetch payouts");
-  const json = await response.json();
-  return json.data || json;
+  const params = buildParams(status ? { status } : undefined);
+  const qs = new URLSearchParams(params as Record<string, string>).toString();
+  const res = await apiRequest(`/api/v1/admin/payouts?${qs}`);
+  return res.data || res;
 }
 
 export async function approvePayout(
   payoutId: string
 ): Promise<{ success: boolean; message: string }> {
-  const url = buildUrl(`/api/v1/admin/payouts/${payoutId}/approve`);
-  const response = await fetch(url, {
+  const params = buildParams();
+  const qs = new URLSearchParams(params as Record<string, string>).toString();
+  const res = await apiRequest(`/api/v1/admin/payouts/${payoutId}/approve?${qs}`, {
     method: "POST",
-    headers: getHeaders(),
-  }
-  );
-
-  if (!response.ok) throw new Error("Failed to approve payout");
-  const json = await response.json();
-  return json.data || json;
+  });
+  return res.data || res;
 }
 
 export async function rejectPayout(
   payoutId: string,
   reason?: string
 ): Promise<{ success: boolean; message: string }> {
-  const url = buildUrl(`/api/v1/admin/payouts/${payoutId}/reject`);
-  const response = await fetch(url, {
+  const params = buildParams();
+  const qs = new URLSearchParams(params as Record<string, string>).toString();
+  const res = await apiRequest(`/api/v1/admin/payouts/${payoutId}/reject?${qs}`, {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify({ reason }),
-  }
-  );
-
-  if (!response.ok) throw new Error("Failed to reject payout");
-  const json = await response.json();
-  return json.data || json;
+    data: { reason },
+  });
+  return res.data || res;
 }
 
 export async function getCommissionStats(): Promise<CommissionStats> {
-  const url = buildUrl("/api/v1/admin/commission-stats");
-  const response = await fetch(url, {
-    headers: getHeaders(),
-  }
-  );
-
-  if (!response.ok) throw new Error("Failed to fetch commission stats");
-  const json = await response.json();
-  return json.data || json;
+  const params = buildParams();
+  const qs = new URLSearchParams(params as Record<string, string>).toString();
+  const res = await apiRequest(`/api/v1/admin/commission-stats?${qs}`);
+  return res.data || res;
 }
 
 // --- User Management ---
@@ -260,23 +228,16 @@ export async function getAdminUsers(params: {
   role?: string;
   status?: string;
 }): Promise<AdminUsersResponse> {
-  const url = buildUrl("/api/v1/admin/users", {
+  const allParams = buildParams({
     page: params.page || 1,
     limit: params.limit || 20,
     search: params.search,
     role: params.role,
     status: params.status,
   });
-
-  const response = await fetch(url,
-    {
-      headers: getHeaders(),
-    }
-  );
-
-  if (!response.ok) throw new Error("Failed to fetch users");
-  const json = await response.json();
-  return json.data || json;
+  const qs = new URLSearchParams(allParams as Record<string, string>).toString();
+  const res = await apiRequest(`/api/v1/admin/users?${qs}`);
+  return res.data || res;
 }
 
 // --- Transaction Management ---
@@ -306,21 +267,15 @@ export async function getAdminTransactions(params: {
   search?: string;
   status?: string;
 }): Promise<AdminTransactionsResponse> {
-  const url = buildUrl("/api/v1/admin/transactions", {
+  const allParams = buildParams({
     page: params.page || 1,
     limit: params.limit || 20,
     search: params.search,
     status: params.status,
   });
-
-  const response = await fetch(url, {
-    headers: getHeaders(),
-  }
-  );
-
-  if (!response.ok) throw new Error("Failed to fetch transactions");
-  const json = await response.json();
-  return json.data || json;
+  const qs = new URLSearchParams(allParams as Record<string, string>).toString();
+  const res = await apiRequest(`/api/v1/admin/transactions?${qs}`);
+  return res.data || res;
 }
 
 // --- Admin Analytics ---
@@ -381,16 +336,8 @@ export interface AdminAnalytics {
 export async function getAdminAnalytics(
   period: "week" | "month" | "year" = "month"
 ): Promise<AdminAnalytics> {
-  const url = buildUrl("/api/admin/analytics", { period });
-  const response = await fetch(url, {
-    headers: getHeaders(),
-  }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch admin analytics");
-  }
-
-  const json = await response.json();
-  return json.data || json;
+  const allParams = buildParams({ period });
+  const qs = new URLSearchParams(allParams as Record<string, string>).toString();
+  const res = await apiRequest(`/api/admin/analytics?${qs}`);
+  return res.data || res;
 }

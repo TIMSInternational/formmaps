@@ -1,6 +1,5 @@
+import { apiRequest } from "@/lib/api/apiClient";
 import { LoginResponse } from "./authService";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export interface VerifyTokenResponse {
   isValid: boolean | string;
@@ -18,21 +17,15 @@ export interface CompleteOnboardingResponse extends LoginResponse {
   message?: string;
 }
 
-// Helper for headers
-const getHeaders = () => {
-  return {
-    "Content-Type": "application/json",
-  };
-};
-
 /**
  * Verify if the onboarding token is valid and get student details
+ * Public endpoint — no auth needed, so we use raw fetch to avoid sending a JWT.
  */
 export async function verifyStudentToken(token: string): Promise<VerifyTokenResponse> {
   try {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/student/onboarding/verify/${token}`,
-      { headers: getHeaders() }
+      `${baseUrl}/api/v1/student/onboarding/verify/${token}`
     );
 
     if (!response.ok) {
@@ -44,7 +37,6 @@ export async function verifyStudentToken(token: string): Promise<VerifyTokenResp
 
     // API returns { data: { isValid: boolean, ... }, success: boolean, ... }
     // We need to map it to VerifyTokenResponse interface
-
     const mappedResponse = {
       isValid: result.data?.isValid || false,
       student: result.data ? {
@@ -63,6 +55,7 @@ export async function verifyStudentToken(token: string): Promise<VerifyTokenResp
 
 /**
  * Complete onboarding by setting password
+ * Public endpoint — no auth needed, so we use raw fetch to avoid sending a JWT.
  */
 export async function completeStudentOnboarding(
   token: string,
@@ -70,11 +63,12 @@ export async function completeStudentOnboarding(
   confirmPassword: string,
   userId: string
 ): Promise<CompleteOnboardingResponse> {
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   const response = await fetch(
-    `${API_BASE_URL}/api/v1/student/onboarding/complete`,
+    `${baseUrl}/api/v1/student/onboarding/complete`,
     {
       method: "POST",
-      headers: getHeaders(),
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         Token: token,
         Password: password,

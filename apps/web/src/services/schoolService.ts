@@ -6,25 +6,7 @@ import {
   SchoolAdminOnboardingStatus,
   SchoolAdminOnboardingData,
 } from "@/types/school";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-// Helper to get token
-const getToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token");
-  }
-  return null;
-};
-
-// Helper for headers
-const getHeaders = () => {
-  const token = getToken();
-  return {
-    "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : "",
-  };
-};
+import { apiRequest } from "@/lib/api/apiClient";
 
 export async function getSchools(
   params: {
@@ -38,83 +20,41 @@ export async function getSchools(
   if (params.limit) query.append("limit", params.limit.toString());
   if (params.search) query.append("search", params.search);
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/admin/schools?${query.toString()}`,
-    {
-      headers: getHeaders(),
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch schools");
-  }
-  return response.json();
+  const qs = query.toString();
+  return apiRequest(`/api/v1/admin/schools${qs ? `?${qs}` : ""}`);
 }
 
 export async function inviteSchool(
   data: SchoolInvitePayload,
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/admin/schools/invite`, {
+  return apiRequest("/api/v1/admin/schools/invite", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(data),
+    data,
   });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to invite school");
-  }
-
-  return response.json();
 }
 
 export async function updateSchool(
   schoolId: string,
   data: Partial<SchoolInvitePayload>,
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/admin/schools/${schoolId}`,
-    {
-      method: "PUT",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    },
-  );
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to update school");
-  }
-
-  return response.json();
+  return apiRequest(`/api/v1/admin/schools/${schoolId}`, {
+    method: "PUT",
+    data,
+  });
 }
 
 export async function resendSchoolInvite(
   schoolId: string,
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/admin/schools/${schoolId}/invite`,
-    {
-      method: "POST",
-      headers: getHeaders(),
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to resend invitation");
-  }
-
-  return response.json();
+  return apiRequest(`/api/v1/admin/schools/${schoolId}/invite`, {
+    method: "POST",
+  });
 }
 
 export async function getSchoolStats(): Promise<SchoolStats> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/admin/schools/stats`, {
-      headers: getHeaders(),
-    });
-    if (!response.ok) throw new Error("Failed to fetch school stats");
-    const json = await response.json();
-    return json.data || json;
+    const res = await apiRequest("/api/v1/admin/schools/stats");
+    return res.data || res;
   } catch (error) {
     throw error;
   }
@@ -127,27 +67,16 @@ export async function getSchoolStats(): Promise<SchoolStats> {
 export async function getSchoolAdminOnboardingStatus(
   token: string,
 ): Promise<SchoolAdminOnboardingStatus> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/school-admin/${token}/onboarding-status`,
-  );
-  if (!response.ok) throw new Error("Failed to get onboarding status");
-  const json = await response.json();
-  return json.data;
+  const res = await apiRequest(`/api/v1/school-admin/${token}/onboarding-status`);
+  return res.data;
 }
 
 export async function submitSchoolAdminOnboarding(
   token: string,
   data: SchoolAdminOnboardingData,
 ): Promise<{ success: boolean; redirectUrl: string }> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/school-admin/${token}/onboarding`,
-    {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    },
-  );
-
-  if (!response.ok) throw new Error("Failed to submit onboarding data");
-  return response.json();
+  return apiRequest(`/api/v1/school-admin/${token}/onboarding`, {
+    method: "POST",
+    data,
+  });
 }

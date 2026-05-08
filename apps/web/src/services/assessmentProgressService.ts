@@ -1,4 +1,5 @@
 // Assessment Progress Service - Combines all assessment data
+import { apiRequest } from "@/lib/api/apiClient";
 import {
   getAllUserExamResults,
   getUserProgressSummary,
@@ -345,27 +346,9 @@ export async function getAssessmentReportData(
   assessmentId: string
 ): Promise<import("@/types/assessmentReport").AssessmentReportData | null> {
   try {
-    const token = localStorage.getItem("token");
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-
-    const response = await fetch(
-      `${baseUrl}/api/v1/assessments/${assessmentId}/report`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      }
-    );
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const json = await response.json();
+    const json = await apiRequest(`/api/v1/assessments/${assessmentId}/report`);
     return json.data || json;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

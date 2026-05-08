@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/api/apiClient";
 import type {
   CourseSequence,
   CourseSequenceDetail,
@@ -5,41 +6,16 @@ import type {
   CourseSequencesResponse,
 } from "@/types/curriculum";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-const getToken = () => {
-  if (typeof window !== "undefined") return localStorage.getItem("token");
-  return null;
-};
-
-const getHeaders = () => {
-  const token = getToken();
-  return {
-    "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : "",
-  };
-};
-
-const buildUrl = (endpoint: string, params?: Record<string, string | number | undefined>) => {
-  const url = new URL(`${API_BASE_URL}${endpoint}`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.append(key, String(value));
-      }
-    });
-  }
-  return url.toString();
-};
-
-const handleResponse = async <T>(res: Response): Promise<T> => {
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    const msg = err.error?.message || err.message || "Request failed";
-    throw new Error(`${res.status}: ${msg}`);
-  }
-  const json = await res.json();
-  return json.data ?? json;
+const buildPath = (endpoint: string, params?: Record<string, string | number | undefined>) => {
+  if (!params) return endpoint;
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      qs.append(key, String(value));
+    }
+  });
+  const queryString = qs.toString();
+  return queryString ? `${endpoint}?${queryString}` : endpoint;
 };
 
 export async function getCourseSequences(params?: {
@@ -47,66 +23,56 @@ export async function getCourseSequences(params?: {
   limit?: number;
   search?: string;
 }): Promise<CourseSequencesResponse> {
-  const res = await fetch(
-    buildUrl("/api/v1/school-admin/course-sequences", params as Record<string, string | number>),
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    buildPath("/api/v1/school-admin/course-sequences", params as Record<string, string | number>)
   );
-  return handleResponse<CourseSequencesResponse>(res);
+  return json.data ?? json;
 }
 
 export async function getCourseSequenceDetail(id: string): Promise<CourseSequenceDetail> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/course-sequences/${id}`), {
-    headers: getHeaders(),
-  });
-  return handleResponse<CourseSequenceDetail>(res);
+  const json = await apiRequest(`/api/v1/school-admin/course-sequences/${id}`);
+  return json.data ?? json;
 }
 
 export async function createCourseSequence(payload: CourseSequencePayload): Promise<CourseSequenceDetail> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/course-sequences"), {
+  const json = await apiRequest("/api/v1/school-admin/course-sequences", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<CourseSequenceDetail>(res);
+  return json.data ?? json;
 }
 
 export async function updateCourseSequence(
   id: string,
   payload: Partial<CourseSequencePayload>
 ): Promise<CourseSequenceDetail> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/course-sequences/${id}`), {
+  const json = await apiRequest(`/api/v1/school-admin/course-sequences/${id}`, {
     method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<CourseSequenceDetail>(res);
+  return json.data ?? json;
 }
 
 export async function deleteCourseSequence(id: string): Promise<void> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/course-sequences/${id}`), {
+  await apiRequest(`/api/v1/school-admin/course-sequences/${id}`, {
     method: "DELETE",
-    headers: getHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to delete sequence");
 }
 
 export async function assignSequenceToStudents(
   sequenceId: string,
   studentIds: string[]
 ): Promise<{ success: boolean; assigned: number }> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/course-sequences/${sequenceId}/assign`), {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify({ studentIds }),
-  });
-  return handleResponse<{ success: boolean; assigned: number }>(res);
+  const json = await apiRequest(
+    `/api/v1/school-admin/course-sequences/${sequenceId}/assign`,
+    { method: "POST", data: { studentIds } }
+  );
+  return json.data ?? json;
 }
 
 export async function getStudentCourseSequence(studentId: string): Promise<CourseSequenceDetail> {
-  const res = await fetch(buildUrl(`/api/v1/students/${studentId}/course-sequence`), {
-    headers: getHeaders(),
-  });
-  return handleResponse<CourseSequenceDetail>(res);
+  const json = await apiRequest(`/api/v1/students/${studentId}/course-sequence`);
+  return json.data ?? json;
 }
 
 export async function generateCourseSequenceAI(payload: { file?: File; prompt?: string }): Promise<CourseSequencePayload> {
@@ -114,12 +80,13 @@ export async function generateCourseSequenceAI(payload: { file?: File; prompt?: 
   if (payload.file) formData.append("file", payload.file);
   if (payload.prompt) formData.append("prompt", payload.prompt);
 
-  const res = await fetch(buildUrl("/api/v1/school-admin/course-sequences/import-ai"), {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: formData,
-  });
-  return handleResponse<CourseSequencePayload>(res);
+  const json = await apiRequest(
+    "/api/v1/school-admin/course-sequences/import-ai",
+    {
+      method: "POST",
+      data: formData,
+      headers: { "Content-Type": "multipart/form-data" },
+    }
+  );
+  return json.data ?? json;
 }

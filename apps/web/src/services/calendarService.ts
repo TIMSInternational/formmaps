@@ -6,37 +6,11 @@ import type {
   Holiday,
   HolidayPayload,
 } from "@/types/calendar";
+import { apiRequest } from "@/lib/api/apiClient";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-const getToken = () => {
-  if (typeof window !== "undefined") return localStorage.getItem("token");
-  return null;
-};
-
-const getHeaders = (isMultipart = false) => {
-  const token = getToken();
-  const headers: HeadersInit = {
-    Authorization: token ? `Bearer ${token}` : "",
-  };
-  if (!isMultipart) {
-    headers["Content-Type"] = "application/json";
-  }
-  return headers;
-};
-
-const buildUrl = (endpoint: string) => `${API_BASE_URL}${endpoint}`;
-
-const handleResponse = async <T>(res: Response): Promise<T> => {
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.error?.message || err.message || "Request failed");
-  }
-  const json = await res.json();
-  if (json.data && json.data.data !== undefined) {
-    return json.data.data as T;
-  }
-  return (json.data ?? json) as T;
+const unwrap = (res: any) => {
+  if (res?.data && res.data.data !== undefined) return res.data.data;
+  return res?.data ?? res;
 };
 
 // ============================================
@@ -44,36 +18,30 @@ const handleResponse = async <T>(res: Response): Promise<T> => {
 // ============================================
 
 export async function getAcademicYears(): Promise<AcademicYear[]> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/calendar/academic-years"), {
-    headers: getHeaders(),
-  });
-  return handleResponse<AcademicYear[]>(res);
+  const res = await apiRequest("/api/v1/school-admin/calendar/academic-years");
+  return unwrap(res) as AcademicYear[];
 }
 
 export async function createAcademicYear(payload: AcademicYearPayload): Promise<AcademicYear> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/calendar/academic-years"), {
+  const res = await apiRequest("/api/v1/school-admin/calendar/academic-years", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<AcademicYear>(res);
+  return unwrap(res) as AcademicYear;
 }
 
 export async function updateAcademicYear(id: string, payload: Partial<AcademicYearPayload>): Promise<AcademicYear> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/calendar/academic-years/${id}`), {
+  const res = await apiRequest(`/api/v1/school-admin/calendar/academic-years/${id}`, {
     method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<AcademicYear>(res);
+  return unwrap(res) as AcademicYear;
 }
 
 export async function deleteAcademicYear(id: string): Promise<void> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/calendar/academic-years/${id}`), {
+  await apiRequest(`/api/v1/school-admin/calendar/academic-years/${id}`, {
     method: "DELETE",
-    headers: getHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to delete academic year");
 }
 
 // ============================================
@@ -81,36 +49,30 @@ export async function deleteAcademicYear(id: string): Promise<void> {
 // ============================================
 
 export async function getAssessmentPeriods(): Promise<AssessmentPeriod[]> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/calendar/assessment-periods"), {
-    headers: getHeaders(),
-  });
-  return handleResponse<AssessmentPeriod[]>(res);
+  const res = await apiRequest("/api/v1/school-admin/calendar/assessment-periods");
+  return unwrap(res) as AssessmentPeriod[];
 }
 
 export async function createAssessmentPeriod(payload: AssessmentPeriodPayload): Promise<AssessmentPeriod> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/calendar/assessment-periods"), {
+  const res = await apiRequest("/api/v1/school-admin/calendar/assessment-periods", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<AssessmentPeriod>(res);
+  return unwrap(res) as AssessmentPeriod;
 }
 
 export async function updateAssessmentPeriod(id: string, payload: Partial<AssessmentPeriodPayload>): Promise<AssessmentPeriod> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/calendar/assessment-periods/${id}`), {
+  const res = await apiRequest(`/api/v1/school-admin/calendar/assessment-periods/${id}`, {
     method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<AssessmentPeriod>(res);
+  return unwrap(res) as AssessmentPeriod;
 }
 
 export async function deleteAssessmentPeriod(id: string): Promise<void> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/calendar/assessment-periods/${id}`), {
+  await apiRequest(`/api/v1/school-admin/calendar/assessment-periods/${id}`, {
     method: "DELETE",
-    headers: getHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to delete assessment period");
 }
 
 // ============================================
@@ -118,27 +80,22 @@ export async function deleteAssessmentPeriod(id: string): Promise<void> {
 // ============================================
 
 export async function getHolidays(): Promise<Holiday[]> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/calendar/holidays"), {
-    headers: getHeaders(),
-  });
-  return handleResponse<Holiday[]>(res);
+  const res = await apiRequest("/api/v1/school-admin/calendar/holidays");
+  return unwrap(res) as Holiday[];
 }
 
 export async function createHolidays(payload: HolidayPayload): Promise<Holiday[]> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/calendar/holidays"), {
+  const res = await apiRequest("/api/v1/school-admin/calendar/holidays", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<Holiday[]>(res);
+  return unwrap(res) as Holiday[];
 }
 
 export async function deleteHoliday(id: string): Promise<void> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/calendar/holidays/${id}`), {
+  await apiRequest(`/api/v1/school-admin/calendar/holidays/${id}`, {
     method: "DELETE",
-    headers: getHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to delete holiday");
 }
 
 // ============================================
@@ -154,16 +111,12 @@ export async function getCalendarAuthUrl(
   if (email) query.append("email", email);
   if (redirectUrl) query.append("redirectUrl", redirectUrl);
 
-  const requestUrl = `${API_BASE_URL}/api/v1/coach/auth/${provider}/url${query.toString() ? `?${query.toString()}` : ""}`;
-
-  const response = await fetch(requestUrl, { headers: getHeaders() });
-  if (!response.ok) throw new Error(`Failed to get ${provider} auth URL`);
-
-  const data = await response.json();
-  const nested = data && typeof data === "object" ? data.data || data : data;
-  const url = nested?.url || nested?.callbackurl || data?.url || data?.callbackurl;
+  const qs = query.toString();
+  const res = await apiRequest(`/api/v1/coach/auth/${provider}/url${qs ? `?${qs}` : ""}`);
+  const nested = res && typeof res === "object" ? res.data || res : res;
+  const url = nested?.url || nested?.callbackurl || res?.url || res?.callbackurl;
   if (!url) {
-    throw new Error(`API did not return a valid URL. Response: ${JSON.stringify(data)}`);
+    throw new Error(`API did not return a valid URL. Response: ${JSON.stringify(res)}`);
   }
   return { url };
 }
@@ -185,27 +138,18 @@ export async function checkCalendarAuthStatus(
     provider: string;
   };
 }> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/coach/auth/${provider}/status?email=${encodeURIComponent(email)}`,
-    { headers: getHeaders() },
+  const res = await apiRequest(
+    `/api/v1/coach/auth/${provider}/status?email=${encodeURIComponent(email)}`
   );
-  if (!response.ok) throw new Error(`Failed to check ${provider} auth status`);
-  const json = await response.json();
-  return json.data || json;
+  return res.data || res;
 }
 
 export async function disconnectCalendar(
   provider: "google" | "outlook",
   email?: string,
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/coach/auth/${provider}/disconnect`,
-    {
-      method: "DELETE",
-      headers: getHeaders(),
-      body: email ? JSON.stringify({ email }) : undefined,
-    },
-  );
-  if (!response.ok) throw new Error(`Failed to disconnect ${provider} calendar`);
-  return response.json();
+  return apiRequest(`/api/v1/coach/auth/${provider}/disconnect`, {
+    method: "DELETE",
+    ...(email ? { data: { email } } : {}),
+  });
 }

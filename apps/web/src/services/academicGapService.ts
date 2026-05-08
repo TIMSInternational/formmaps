@@ -1,34 +1,20 @@
+import { apiRequest } from "@/lib/api/apiClient";
 import type {
   StudentAcademicGaps,
   AcademicGapSummary,
   CourseRecommendationsResponse,
 } from "@/types/academicGap";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-const getToken = () => {
-  if (typeof window !== "undefined") return localStorage.getItem("token");
-  return null;
-};
-
-const getHeaders = () => {
-  const token = getToken();
-  return {
-    "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : "",
-  };
-};
-
-const buildUrl = (endpoint: string, params?: Record<string, string | number | undefined>) => {
-  const url = new URL(`${API_BASE_URL}${endpoint}`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.append(key, String(value));
-      }
-    });
-  }
-  return url.toString();
+const buildPath = (endpoint: string, params?: Record<string, string | number | undefined>) => {
+  if (!params) return endpoint;
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      qs.append(key, String(value));
+    }
+  });
+  const queryString = qs.toString();
+  return queryString ? `${endpoint}?${queryString}` : endpoint;
 };
 
 function toCamel(obj: any): any {
@@ -41,25 +27,15 @@ function toCamel(obj: any): any {
   return obj;
 }
 
-const handleResponse = async <T>(res: Response): Promise<T> => {
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.error?.message || err.message || "Request failed");
-  }
-  const json = await res.json();
-  return toCamel(json.data ?? json) as T;
-};
-
 // ============================================
 // Academic Gap Analysis (SCRUM-139)
 // ============================================
 
 export async function getStudentAcademicGaps(studentId: string): Promise<StudentAcademicGaps> {
-  const res = await fetch(
-    buildUrl(`/api/v1/students/${studentId}/academic-gaps`),
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    buildPath(`/api/v1/students/${studentId}/academic-gaps`)
   );
-  return handleResponse<StudentAcademicGaps>(res);
+  return toCamel(json.data ?? json) as StudentAcademicGaps;
 }
 
 export async function getAcademicGapSummary(params?: {
@@ -67,11 +43,10 @@ export async function getAcademicGapSummary(params?: {
   page?: number;
   limit?: number;
 }): Promise<AcademicGapSummary> {
-  const res = await fetch(
-    buildUrl("/api/v1/school-admin/academic-gaps/summary", params as Record<string, string | number>),
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    buildPath("/api/v1/school-admin/academic-gaps/summary", params as Record<string, string | number>)
   );
-  return handleResponse<AcademicGapSummary>(res);
+  return toCamel(json.data ?? json) as AcademicGapSummary;
 }
 
 // ============================================
@@ -81,9 +56,8 @@ export async function getAcademicGapSummary(params?: {
 export async function getStudentCourseRecommendations(
   studentId: string
 ): Promise<CourseRecommendationsResponse> {
-  const res = await fetch(
-    buildUrl(`/api/v1/students/${studentId}/course-recommendations`),
-    { headers: getHeaders() }
+  const json = await apiRequest(
+    buildPath(`/api/v1/students/${studentId}/course-recommendations`)
   );
-  return handleResponse<CourseRecommendationsResponse>(res);
+  return toCamel(json.data ?? json) as CourseRecommendationsResponse;
 }

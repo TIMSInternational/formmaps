@@ -12,6 +12,7 @@ import {
   SchoolSettings,
 } from "@/types/student";
 import { decodeJWTToken, isAdminRole, getCurrentUser } from "./authService";
+import { apiRequest } from "@/lib/api/apiClient";
 
 // Convert PascalCase keys from .NET to camelCase
 function toCamel(obj: any): any {
@@ -27,16 +28,6 @@ function toCamel(obj: any): any {
   return obj;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-// Helper to get token
-const getToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token");
-  }
-  return null;
-};
-
 // Helper to get current language from i18n
 export const getCurrentLanguage = (): "en" | "sp" => {
   if (typeof window !== "undefined") {
@@ -46,30 +37,24 @@ export const getCurrentLanguage = (): "en" | "sp" => {
   return "en";
 };
 
-// Helper for headers with optional language
-const getHeaders = () => {
-  const token = getToken();
-  return {
-    "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : "",
-  };
-};
-
-// Helper to build URL with language parameter
-const buildUrl = (endpoint: string, params?: Record<string, string | number | undefined>) => {
-  const url = new URL(`${API_BASE_URL}${endpoint}`);
+// Helper to build query string with language parameter
+const buildParams = (params?: Record<string, string | number | undefined>): Record<string, string> => {
   const language = getCurrentLanguage();
-  url.searchParams.append("language", language);
-
+  const result: Record<string, string> = { language };
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.append(key, String(value));
+        result[key] = String(value);
       }
     });
   }
+  return result;
+};
 
-  return url.toString();
+const buildQueryString = (params?: Record<string, string | number | undefined>): string => {
+  const p = buildParams(params);
+  const qs = new URLSearchParams(p).toString();
+  return qs ? `?${qs}` : "";
 };
 
 // ============================================
@@ -78,13 +63,8 @@ const buildUrl = (endpoint: string, params?: Record<string, string | number | un
 
 export async function getSchoolAdminStats(): Promise<SchoolAdminDashboardStats> {
   try {
-    const response = await fetch(
-      buildUrl("/api/v1/school-admin/dashboard/stats"),
-      { headers: getHeaders() }
-    );
-    if (!response.ok) throw new Error("Failed to fetch stats");
-    const json = await response.json();
-    return toCamel(json.data || json);
+    const res = await apiRequest(`/api/v1/school-admin/dashboard/stats${buildQueryString()}`);
+    return toCamel(res.data || res);
   } catch (error) {
     throw error;
   }
@@ -103,20 +83,8 @@ export async function getStudents(params: {
   sortOrder?: string;
 } = {}): Promise<StudentsResponse> {
   try {
-    const response = await fetch(
-      buildUrl("/api/v1/school-admin/students", {
-        page: params.page,
-        limit: params.limit,
-        search: params.search,
-        status: params.status,
-        sortBy: params.sortBy,
-        sortOrder: params.sortOrder,
-      }),
-      { headers: getHeaders() }
-    );
-    if (!response.ok) throw new Error("Failed to fetch students");
-    const json = await response.json();
-    return toCamel(json);
+    const res = await apiRequest(`/api/v1/school-admin/students${buildQueryString(params as Record<string, string | number | undefined>)}`);
+    return toCamel(res);
   } catch (error) {
     return {
       data: [],
@@ -129,38 +97,18 @@ export async function getStudents(params: {
 }
 
 export async function getStudent(studentId: string): Promise<Student> {
-  const response = await fetch(
-    buildUrl(`/api/v1/school-admin/students/${studentId}`),
-    { headers: getHeaders() }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch student");
-  }
-
-  const json = await response.json();
-  return toCamel(json.data || json);
+  const res = await apiRequest(`/api/v1/school-admin/students/${studentId}${buildQueryString()}`);
+  return toCamel(res.data || res);
 }
 
 export async function inviteStudent(
   data: StudentInvitePayload
 ): Promise<{ success: boolean; message: string; student?: any }> {
   const payload = { students: [data] };
-  const response = await fetch(
-    buildUrl("/api/v1/school-admin/students/invite"),
-    {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(payload),
-    }
-  );
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || errorData.error?.message || "Failed to invite student");
-  }
-
-  const result = await response.json();
+  const result = await apiRequest(`/api/v1/school-admin/students/invite${buildQueryString()}`, {
+    method: "POST",
+    data: payload,
+  });
   if (!result.success) {
     throw new Error(result.message || result.error?.message || "Failed to invite student");
   }
@@ -170,21 +118,10 @@ export async function inviteStudent(
 export async function bulkInviteStudents(
   data: BulkStudentInvitePayload
 ): Promise<{ success: boolean; invited: number; failed: number; results: any[] }> {
-  const response = await fetch(
-    buildUrl("/api/v1/school-admin/students/bulk-invite"),
-    {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    }
-  );
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || errorData.error?.message || "Failed to bulk invite students");
-  }
-
-  const result = await response.json();
+  const result = await apiRequest(`/api/v1/school-admin/students/bulk-invite${buildQueryString()}`, {
+    method: "POST",
+    data,
+  });
 
   if (!result.success && !result.results) {
     throw new Error(result.message || result.error?.message || "Failed to bulk invite students");
@@ -202,37 +139,17 @@ export async function bulkInviteStudents(
 export async function resendStudentInvite(
   studentId: string
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(
-    buildUrl(`/api/v1/school-admin/students/${studentId}/resend-invite`),
-    {
-      method: "POST",
-      headers: getHeaders(),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to resend invitation");
-  }
-
-  return response.json();
+  return apiRequest(`/api/v1/school-admin/students/${studentId}/resend-invite${buildQueryString()}`, {
+    method: "POST",
+  });
 }
 
 export async function removeStudent(
   studentId: string
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(
-    buildUrl(`/api/v1/school-admin/students/${studentId}`),
-    {
-      method: "DELETE",
-      headers: getHeaders(),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to remove student");
-  }
-
-  return response.json();
+  return apiRequest(`/api/v1/school-admin/students/${studentId}${buildQueryString()}`, {
+    method: "DELETE",
+  });
 }
 
 // ============================================
@@ -255,13 +172,8 @@ export async function getAnalyticsOverview(
   };
 
   try {
-    const response = await fetch(
-      buildUrl("/api/v1/school-admin/analytics/overview", { period }),
-      { headers: getHeaders() }
-    );
-    if (!response.ok) throw new Error("Failed to fetch analytics");
-    const json = await response.json();
-    const data = toCamel(json.data || json);
+    const res = await apiRequest(`/api/v1/school-admin/analytics/overview${buildQueryString({ period })}`);
+    const data = toCamel(res.data || res);
 
     return {
       studentEngagement: { ...defaultData.studentEngagement, ...(data.studentEngagement || {}) },
@@ -284,13 +196,8 @@ export async function getPerformanceTrends(
   };
 
   try {
-    const response = await fetch(
-      buildUrl("/api/v1/school-admin/analytics/performance-trends", { period, metric }),
-      { headers: getHeaders() }
-    );
-    if (!response.ok) throw new Error("Failed to fetch trends");
-    const json = await response.json();
-    const data = toCamel(json.data || json);
+    const res = await apiRequest(`/api/v1/school-admin/analytics/performance-trends${buildQueryString({ period, metric })}`);
+    const data = toCamel(res.data || res);
 
     return {
       labels: data.labels || defaultData.labels,
@@ -305,13 +212,8 @@ export async function getTopPerformers(
   limit: number = 10
 ): Promise<{ data: TopPerformer[] }> {
   try {
-    const response = await fetch(
-      buildUrl("/api/v1/school-admin/analytics/top-performers", { limit }),
-      { headers: getHeaders() }
-    );
-    if (!response.ok) throw new Error("Failed to fetch top performers");
-    const json = await response.json();
-    return toCamel(json);
+    const res = await apiRequest(`/api/v1/school-admin/analytics/top-performers${buildQueryString({ limit })}`);
+    return toCamel(res);
   } catch (error) {
     return { data: [] };
   }
@@ -330,20 +232,8 @@ export async function getStudentResults(params: {
   dateTo?: string;
 } = {}): Promise<StudentResultsResponse> {
   try {
-    const response = await fetch(
-      buildUrl("/api/v1/school-admin/results", {
-        page: params.page,
-        limit: params.limit,
-        studentId: params.studentId,
-        assessmentType: params.assessmentType,
-        dateFrom: params.dateFrom,
-        dateTo: params.dateTo,
-      }),
-      { headers: getHeaders() }
-    );
-    if (!response.ok) throw new Error("Failed to fetch results");
-    const json = await response.json();
-    return toCamel(json);
+    const res = await apiRequest(`/api/v1/school-admin/results${buildQueryString(params as Record<string, string | number | undefined>)}`);
+    return toCamel(res);
   } catch (error) {
     return {
       data: [],
@@ -359,13 +249,8 @@ export async function getStudentDetailResult(
   studentId: string
 ): Promise<StudentDetailResult | null> {
   try {
-    const response = await fetch(
-      buildUrl(`/api/v1/school-admin/results/${studentId}/detail`),
-      { headers: getHeaders() }
-    );
-    if (!response.ok) throw new Error("Failed to fetch student detail");
-    const json = await response.json();
-    return toCamel(json);
+    const res = await apiRequest(`/api/v1/school-admin/results/${studentId}/detail${buildQueryString()}`);
+    return toCamel(res);
   } catch (error) {
     return null;
   }
@@ -377,20 +262,19 @@ export async function exportResults(params: {
   dateFrom?: string;
   dateTo?: string;
 }): Promise<Blob> {
+  const qs = buildQueryString({
+    format: params.format,
+    studentId: params.studentId,
+    dateFrom: params.dateFrom,
+    dateTo: params.dateTo,
+  });
+  // Export returns a Blob — fall back to raw fetch for binary responses
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const response = await fetch(
-    buildUrl("/api/v1/school-admin/results/export", {
-      format: params.format,
-      studentId: params.studentId,
-      dateFrom: params.dateFrom,
-      dateTo: params.dateTo,
-    }),
-    { headers: getHeaders() }
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/school-admin/results/export${qs}`,
+    { headers: { Authorization: token ? `Bearer ${token}` : "" } }
   );
-
-  if (!response.ok) {
-    throw new Error("Failed to export results");
-  }
-
+  if (!response.ok) throw new Error("Failed to export results");
   return response.blob();
 }
 
@@ -400,13 +284,8 @@ export async function exportResults(params: {
 
 export async function getSchoolSettings(): Promise<SchoolSettings | null> {
   try {
-    const response = await fetch(
-      buildUrl("/api/v1/school-admin/settings"),
-      { headers: getHeaders() }
-    );
-    if (!response.ok) throw new Error("Failed to fetch settings");
-    const json = await response.json();
-    const camel = toCamel(json);
+    const res = await apiRequest(`/api/v1/school-admin/settings${buildQueryString()}`);
+    const camel = toCamel(res);
     return camel?.data ?? camel;
   } catch (error) {
     return null;
@@ -417,40 +296,20 @@ export async function updateAdminProfile(data: {
   name?: string;
   phone?: string;
 }): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(
-    buildUrl("/api/v1/school-admin/settings/profile"),
-    {
-      method: "PUT",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to update profile");
-  }
-
-  return response.json();
+  return apiRequest(`/api/v1/school-admin/settings/profile${buildQueryString()}`, {
+    method: "PUT",
+    data,
+  });
 }
 
 export async function changePassword(data: {
   currentPassword: string;
   newPassword: string;
 }): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(
-    buildUrl("/api/v1/school-admin/settings/password"),
-    {
-      method: "PUT",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to change password");
-  }
-
-  return response.json();
+  return apiRequest(`/api/v1/school-admin/settings/password${buildQueryString()}`, {
+    method: "PUT",
+    data,
+  });
 }
 
 // ============================================
@@ -463,7 +322,7 @@ export async function verifySchoolAdminAccess(): Promise<{
   schoolName?: string;
 }> {
   try {
-    const token = getToken();
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return { isSchoolAdmin: false };
 
     // Try decoding the token first for a fast check
@@ -485,7 +344,7 @@ export async function verifySchoolAdminAccess(): Promise<{
     if (isAdminRole(userRole)) {
       return {
         isSchoolAdmin: true,
-        schoolId: "school-1", // Update if backend provides this in user profile
+        schoolId: "school-1",
         schoolName: "Admin School",
       };
     }

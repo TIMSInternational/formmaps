@@ -9,33 +9,7 @@ import type {
   CounselorStudent,
   CounselorStudentsResponse,
 } from "@/types/assessmentConfig";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-const getToken = () => {
-  if (typeof window !== "undefined") return localStorage.getItem("token");
-  return null;
-};
-
-const getHeaders = () => {
-  const token = getToken();
-  return {
-    "Content-Type": "application/json",
-    Authorization: token ? `Bearer ${token}` : "",
-  };
-};
-
-const buildUrl = (endpoint: string, params?: Record<string, string | number | undefined>) => {
-  const url = new URL(`${API_BASE_URL}${endpoint}`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.append(key, String(value));
-      }
-    });
-  }
-  return url.toString();
-};
+import { apiRequest } from "@/lib/api/apiClient";
 
 // Convert PascalCase keys from .NET to camelCase
 function toCamel(obj: any): any {
@@ -51,14 +25,16 @@ function toCamel(obj: any): any {
   return obj;
 }
 
-const handleResponse = async <T>(res: Response): Promise<T> => {
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.error?.message || err.message || "Request failed");
-  }
-  const json = await res.json();
-  const data = json.data ?? json.Data ?? json;
-  return toCamel(data) as T;
+const buildQueryString = (params?: Record<string, string | number | undefined>): string => {
+  if (!params) return "";
+  const filtered: Record<string, string> = {};
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      filtered[key] = String(value);
+    }
+  });
+  const qs = new URLSearchParams(filtered).toString();
+  return qs ? `?${qs}` : "";
 };
 
 // ============================================
@@ -66,35 +42,30 @@ const handleResponse = async <T>(res: Response): Promise<T> => {
 // ============================================
 
 export async function getSchoolProfile(): Promise<SchoolProfile> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/school/profile"), {
-    headers: getHeaders(),
-  });
-  return handleResponse<SchoolProfile>(res);
+  const res = await apiRequest("/api/v1/school-admin/school/profile");
+  const data = res.data ?? res.Data ?? res;
+  return toCamel(data) as SchoolProfile;
 }
 
 export async function updateSchoolProfile(payload: SchoolProfilePayload): Promise<SchoolProfile> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/school/profile"), {
+  const res = await apiRequest("/api/v1/school-admin/school/profile", {
     method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<SchoolProfile>(res);
+  const data = res.data ?? res.Data ?? res;
+  return toCamel(data) as SchoolProfile;
 }
 
 export async function uploadSchoolLogo(file: File): Promise<{ logoUrl: string }> {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
   const form = new FormData();
   form.append("file", file);
-
-  const res = await fetch(buildUrl("/api/v1/school-admin/school/logo"), {
+  const res = await apiRequest("/api/v1/school-admin/school/logo", {
     method: "POST",
-    headers,
-    body: form,
+    data: form,
+    headers: { "Content-Type": "multipart/form-data" },
   });
-  return handleResponse<{ logoUrl: string }>(res);
+  const data = res.data ?? res.Data ?? res;
+  return toCamel(data) as { logoUrl: string };
 }
 
 // ============================================
@@ -108,20 +79,18 @@ export async function getSchoolUsers(params?: {
   page?: number;
   limit?: number;
 }): Promise<SchoolUsersResponse> {
-  const res = await fetch(
-    buildUrl("/api/v1/school-admin/users", params as Record<string, string | number>),
-    { headers: getHeaders() }
-  );
-  return handleResponse<SchoolUsersResponse>(res);
+  const res = await apiRequest(`/api/v1/school-admin/users${buildQueryString(params as Record<string, string | number | undefined>)}`);
+  const data = res.data ?? res.Data ?? res;
+  return toCamel(data) as SchoolUsersResponse;
 }
 
 export async function inviteStaff(payload: StaffInvitePayload): Promise<SchoolUser> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/staff/invite"), {
+  const res = await apiRequest("/api/v1/school-admin/staff/invite", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse<SchoolUser>(res);
+  const data = res.data ?? res.Data ?? res;
+  return toCamel(data) as SchoolUser;
 }
 
 export async function bulkInviteStaff(payload: BulkStaffInvitePayload): Promise<{
@@ -130,39 +99,33 @@ export async function bulkInviteStaff(payload: BulkStaffInvitePayload): Promise<
   failed: number;
   results: { email: string; status: string }[];
 }> {
-  const res = await fetch(buildUrl("/api/v1/school-admin/staff/bulk-invite"), {
+  const res = await apiRequest("/api/v1/school-admin/staff/bulk-invite", {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  return handleResponse(res);
+  const data = res.data ?? res.Data ?? res;
+  return toCamel(data);
 }
 
 export async function updateUserRole(userId: string, role: string): Promise<void> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/users/${userId}/role`), {
+  await apiRequest(`/api/v1/school-admin/users/${userId}/role`, {
     method: "PUT",
-    headers: getHeaders(),
-    body: JSON.stringify({ role }),
+    data: { role },
   });
-  if (!res.ok) throw new Error("Failed to update role");
 }
 
 export async function assignStudents(counselorId: string, payload: StudentAssignPayload): Promise<void> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/counselors/${counselorId}/assign-students`), {
+  await apiRequest(`/api/v1/school-admin/counselors/${counselorId}/assign-students`, {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  if (!res.ok) throw new Error("Failed to assign students");
 }
 
 export async function unassignStudents(counselorId: string, payload: StudentAssignPayload): Promise<void> {
-  const res = await fetch(buildUrl(`/api/v1/school-admin/counselors/${counselorId}/assign-students`), {
+  await apiRequest(`/api/v1/school-admin/counselors/${counselorId}/assign-students`, {
     method: "DELETE",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
+    data: payload,
   });
-  if (!res.ok) throw new Error("Failed to unassign students");
 }
 
 export async function getCounselorStudents(counselorId: string, params?: {
@@ -170,11 +133,11 @@ export async function getCounselorStudents(counselorId: string, params?: {
   limit?: number;
   search?: string;
 }): Promise<CounselorStudentsResponse> {
-  const res = await fetch(
-    buildUrl(`/api/v1/school-admin/counselors/${counselorId}/students`, params as Record<string, string | number>),
-    { headers: getHeaders() }
+  const res = await apiRequest(
+    `/api/v1/school-admin/counselors/${counselorId}/students${buildQueryString(params as Record<string, string | number | undefined>)}`
   );
-  return handleResponse<CounselorStudentsResponse>(res);
+  const data = res.data ?? res.Data ?? res;
+  return toCamel(data) as CounselorStudentsResponse;
 }
 
 // ============================================
@@ -190,21 +153,18 @@ export async function getMyCounselorStudents(params?: {
   sortOrder?: string;
 }): Promise<CounselorStudentsResponse> {
   // Backend path: /api/v1/counselor/me/students (confirmed from Postman)
-  const res = await fetch(
-    buildUrl("/api/v1/counselor/me/students", params as Record<string, string | number>),
-    { headers: getHeaders() }
+  const res = await apiRequest(
+    `/api/v1/counselor/me/students${buildQueryString(params as Record<string, string | number | undefined>)}`
   );
-  return handleResponse<CounselorStudentsResponse>(res);
+  const data = res.data ?? res.Data ?? res;
+  return toCamel(data) as CounselorStudentsResponse;
 }
 
 export async function getMyCounselorStudentDetail(
   studentId: string
 ): Promise<CounselorStudent> {
   // Backend path: /api/v1/counselor/me/students/:id (confirmed from Postman)
-  const res = await fetch(
-    `${API_BASE_URL}/api/v1/counselor/me/students/${studentId}`,
-    { headers: getHeaders() }
-  );
-  return handleResponse<CounselorStudent>(res);
+  const res = await apiRequest(`/api/v1/counselor/me/students/${studentId}`);
+  const data = res.data ?? res.Data ?? res;
+  return toCamel(data) as CounselorStudent;
 }
-

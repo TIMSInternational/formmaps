@@ -1,4 +1,5 @@
 // Role service for handling role-related API calls
+import { apiRequest } from "@/lib/api/apiClient";
 
 export interface Role {
   id: string;
@@ -21,86 +22,26 @@ export interface UserWithRole {
 
 // Get all roles
 export async function getAllRoles(): Promise<Role[]> {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/roleapi`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch roles: ${response.statusText}`);
-  }
-
-  return await response.json();
+  const res = await apiRequest("/api/roleapi");
+  return res.data ?? res;
 }
 
 // Get active roles only
 export async function getActiveRoles(): Promise<Role[]> {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/roleapi/active`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch active roles: ${response.statusText}`);
-  }
-
-  return await response.json();
+  const res = await apiRequest("/api/roleapi/active");
+  return res.data ?? res;
 }
 
 // Get role by ID
 export async function getRoleById(roleId: string): Promise<Role> {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/roleapi/${roleId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch role: ${response.statusText}`);
-  }
-
-  return await response.json();
+  const res = await apiRequest(`/api/roleapi/${roleId}`);
+  return res.data ?? res;
 }
 
 // Get role by name
 export async function getRoleByName(roleName: string): Promise<Role> {
-  const token = localStorage.getItem("token");
-
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/roleapi/name/${roleName}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch role by name: ${response.statusText}`);
-  }
-
-  return await response.json();
+  const res = await apiRequest(`/api/roleapi/name/${roleName}`);
+  return res.data ?? res;
 }
 
 // Test function to explore what the APIs return

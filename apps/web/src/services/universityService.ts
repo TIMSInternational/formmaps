@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib/api/apiClient";
 import {
   University,
   UniversityFilters,
@@ -8,27 +9,6 @@ import {
   UniversityComparison,
   UniversityFilterOptions,
 } from "@/types/university";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-// Helper to get token
-const getToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token");
-  }
-  return null;
-};
-
-// Helper for headers
-const getHeaders = (isMultipart = false) => {
-  const headers: HeadersInit = {
-    Authorization: `Bearer ${getToken()}`,
-  };
-  if (!isMultipart) {
-    headers["Content-Type"] = "application/json";
-  }
-  return headers;
-};
 
 export async function fetchUniversities(
   filters: UniversityFilters,
@@ -43,7 +23,6 @@ export async function fetchUniversities(
   if (filters.sort) query.append("sort", filters.sort);
   if (filters.lang) query.append("lang", filters.lang);
 
-  // Arrays need specific handling usually, but URLSearchParams handles multiple keys
   if (filters.countries)
     filters.countries.forEach((c) => query.append("country", c));
   if (filters.types) filters.types.forEach((t) => query.append("type", t));
@@ -64,15 +43,7 @@ export async function fetchUniversities(
   if (filters.acceptanceRateMin != null)
     query.append("acceptanceRateMin", filters.acceptanceRateMin.toString());
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/universities?${query.toString()}`,
-    {
-      headers: getHeaders(),
-    }
-  );
-
-  if (!response.ok) throw new Error("Failed to fetch universities");
-  const json = await response.json();
+  const json = await apiRequest(`/api/v1/universities?${query.toString()}`);
   const d = json.data || json;
   return {
     universities: d.universities || d.data || [],
@@ -89,19 +60,15 @@ export async function fetchUniversityById(
   if (params?.includePrograms !== undefined)
     query.append("includePrograms", params.includePrograms.toString());
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/universities/${id}?${query.toString()}`,
-    {
-      headers: getHeaders(),
-    }
-  );
-
-  if (!response.ok) {
-    if (response.status === 404) return null;
-    throw new Error("Failed to fetch university details");
+  try {
+    const json = await apiRequest(
+      `/api/v1/universities/${id}?${query.toString()}`
+    );
+    return json.data.university;
+  } catch (error) {
+    if ((error as any)?.response?.status === 404) return null;
+    throw error;
   }
-  const json = await response.json();
-  return json.data.university;
 }
 
 export async function fetchUniversityRecommendations(
@@ -125,15 +92,9 @@ export async function fetchUniversityRecommendations(
   if (params?.field) params.field.forEach((f) => query.append("field", f));
   if (params?.country) params.country.forEach((c) => query.append("country", c));
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/universities/recommendations?${query.toString()}`,
-    {
-      headers: getHeaders(),
-    }
+  const json = await apiRequest(
+    `/api/v1/universities/recommendations?${query.toString()}`
   );
-
-  if (!response.ok) throw new Error("Failed to fetch recommendations");
-  const json = await response.json();
   return json.data;
 }
 
@@ -144,15 +105,9 @@ export async function fetchUniversityRecommendationStats(
   const query = new URLSearchParams();
   if (lang) query.append("lang", lang);
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/universities/recommendations/stats?${query.toString()}`,
-    {
-      headers: getHeaders(),
-    }
+  const json = await apiRequest(
+    `/api/v1/universities/recommendations/stats?${query.toString()}`
   );
-
-  if (!response.ok) throw new Error("Failed to fetch recommendation stats");
-  const json = await response.json();
   return json.data;
 }
 
@@ -160,16 +115,10 @@ export async function toggleUniversityFavorite(
   universityId: string,
   action: "save" | "unsave"
 ): Promise<void> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/universities/${universityId}/favorite`,
-    {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify({ action }),
-    }
-  );
-
-  if (!response.ok) throw new Error("Failed to update favorite status");
+  await apiRequest(`/api/v1/universities/${universityId}/favorite`, {
+    method: "POST",
+    data: { action },
+  });
 }
 
 export async function fetchUniversityFavorites(
@@ -181,15 +130,9 @@ export async function fetchUniversityFavorites(
   if (params?.limit) query.append("limit", params.limit.toString());
   if (params?.lang) query.append("lang", params.lang);
 
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/universities/favorites?${query.toString()}`,
-    {
-      headers: getHeaders(),
-    }
+  const json = await apiRequest(
+    `/api/v1/universities/favorites?${query.toString()}`
   );
-
-  if (!response.ok) throw new Error("Failed to fetch favorites");
-  const json = await response.json();
   return json.data?.favorites || json.data?.data || [];
 }
 
@@ -197,23 +140,14 @@ export async function compareUniversities(
   ids: string[],
   lang?: string
 ): Promise<UniversityComparison> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/universities/compare`, {
+  const json = await apiRequest(`/api/v1/universities/compare`, {
     method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify({ universityIds: ids, lang }),
+    data: { universityIds: ids, lang },
   });
-
-  if (!response.ok) throw new Error("Failed to compare universities");
-  const json = await response.json();
   return json.data;
 }
 
 export async function fetchUniversityFilterOptions(): Promise<UniversityFilterOptions> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/universities/filters`, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) throw new Error("Failed to fetch filter options");
-  const json = await response.json();
+  const json = await apiRequest(`/api/v1/universities/filters`);
   return json.data;
 }
