@@ -172,9 +172,9 @@ export default function CounselorDashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.18 }}
         >
-          <Card className="border-0 shadow-lg">
+          <Card className="dash-card">
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-2 text-base text-foreground">
                 <CalendarClock className="h-4 w-4 text-blue-600" />
                 {t("counselor.dashboard.upcomingSessions", "Upcoming Counseling Sessions")}
               </CardTitle>
@@ -196,7 +196,7 @@ export default function CounselorDashboardPage() {
                   {upcomingSessions.map((session) => (
                     <div
                       key={session.id}
-                      className="flex flex-col p-3 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow transition-shadow relative overflow-hidden"
+                      className="flex flex-col p-3 dash-card relative overflow-hidden"
                     >
                       <div className="absolute top-0 right-0 p-3 opacity-10">
                         <Users className="w-12 h-12" />
@@ -237,10 +237,10 @@ export default function CounselorDashboardPage() {
       >
         {/* Assigned Students */}
         <div className="lg:col-span-2">
-          <Card className="border-0 shadow-lg h-full">
+          <Card className="dash-card h-full">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base">
+                <CardTitle className="flex items-center gap-2 text-base text-foreground">
                   <Users className="h-4 w-4 text-indigo-600" />
                   {t("counselor.dashboard.assignedStudents", "Assigned Students")}
                 </CardTitle>
@@ -353,7 +353,7 @@ export default function CounselorDashboardPage() {
 
         {/* Right Panel — Tabbed: Follow-ups | Change Requests */}
         <div>
-          <Card className="border-0 shadow-lg h-full">
+          <Card className="dash-card h-full">
             <CardHeader className="pb-0">
               {/* Tab switcher */}
               <div className="flex gap-1 bg-gray-100 rounded-lg p-1">

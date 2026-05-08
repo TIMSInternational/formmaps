@@ -14,10 +14,10 @@ export const colorsDark = {
     iconBox: "#2a2a2a",
   },
   border: {
-    default: "#2a2a2a",
-    hover: "#333",
-    light: "#222",
-    panel: "#282828",
+    default: "#333",
+    hover: "#444",
+    light: "#2a2a2a",
+    panel: "#333",
   },
   font: {
     primary: "#ebebeb",
