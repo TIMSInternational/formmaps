@@ -805,15 +805,20 @@ export const useGlobalStore = create<GlobalState>()(
         fetchSettings: async () => {
           try {
             const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-            const response = await fetch(`${baseUrl}/api/admin/settings`);
+            const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+            if (!token) return;
+            const response = await fetch(`${baseUrl}/api/v1/admin/settings`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
             if (response.ok) {
-              const data = await response.json();
+              const json = await response.json();
+              const data = json?.data ?? json;
               if (typeof data.platformFee === "number") {
                 set({ platformFee: data.platformFee });
               }
             }
-          } catch (error) {
-            console.error("Failed to fetch settings:", error);
+          } catch {
+            // Settings fetch is best-effort — non-admin roles won't have access
           }
         },
       }),
