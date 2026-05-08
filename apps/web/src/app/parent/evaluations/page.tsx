@@ -11,7 +11,6 @@ import {
   ExternalLink,
   Calendar,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -46,10 +45,11 @@ export default function ParentEvaluationsPage() {
     <div className="space-y-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Parent</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
           {t("parent.evaluations.title", "360° Evaluations")}
         </h1>
-        <p className="text-gray-500 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {t(
             "parent.evaluations.subtitle",
             "Complete evaluations requested by the school to support your child's development."
@@ -59,30 +59,24 @@ export default function ParentEvaluationsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-5 pb-4 text-center">
-            <p className="text-3xl font-bold text-gray-900">
-              {isLoading ? "…" : list.length}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">Pending</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5 pb-4 text-center">
-            <p className="text-3xl font-bold text-red-600">
-              {isLoading ? "…" : overdue.length}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">Overdue</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5 pb-4 text-center">
-            <p className="text-3xl font-bold text-emerald-600">
-              {isLoading ? "…" : upcoming.length}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">Upcoming</p>
-          </CardContent>
-        </Card>
+        <div className="dash-card p-5 text-center">
+          <p className="text-3xl font-bold text-foreground tracking-tight">
+            {isLoading ? "…" : list.length}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">Pending</p>
+        </div>
+        <div className="dash-card p-5 text-center">
+          <p className="text-3xl font-bold text-red-500 tracking-tight">
+            {isLoading ? "…" : overdue.length}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">Overdue</p>
+        </div>
+        <div className="dash-card p-5 text-center">
+          <p className="text-3xl font-bold text-emerald-500 tracking-tight">
+            {isLoading ? "…" : upcoming.length}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">Upcoming</p>
+        </div>
       </div>
 
       {/* List */}
@@ -93,10 +87,10 @@ export default function ParentEvaluationsPage() {
           ))}
         </div>
       ) : list.length === 0 ? (
-        <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
-          <CheckCircle2 className="h-14 w-14 text-emerald-400 mx-auto mb-4" />
-          <p className="text-lg font-semibold text-gray-700">All done!</p>
-          <p className="text-sm text-gray-400 mt-1">
+        <div className="text-center py-20 dash-card border-dashed">
+          <CheckCircle2 className="h-14 w-14 text-emerald-500 mx-auto mb-4" />
+          <p className="text-lg font-semibold text-foreground">All done!</p>
+          <p className="text-sm text-muted-foreground mt-1">
             You have no pending evaluations right now.
           </p>
         </div>
@@ -127,7 +121,7 @@ export default function ParentEvaluationsPage() {
 
           {upcoming.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 Upcoming ({upcoming.length})
               </h3>
@@ -172,42 +166,40 @@ function EvaluationCard({
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: idx * 0.06 }}
     >
-      <Card className="hover:shadow-md transition-shadow border border-gray-100">
-        <CardContent className="py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="p-2.5 bg-indigo-100 rounded-lg shrink-0">
-              <FileCheck className="h-5 w-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">
-                360° Evaluation for{" "}
-                <span className="text-indigo-600">{ev.studentName}</span>
-              </p>
-              <div className="flex items-center gap-2 mt-1">
-                <Calendar className="h-3.5 w-3.5 text-gray-400" />
-                <span className="text-sm text-gray-500">
-                  Due: {format(new Date(ev.deadline), "MMMM d, yyyy")}
-                </span>
-                <Badge
-                  variant="secondary"
-                  className={`text-xs px-2 py-0.5 ${urgencyColor(ev.deadline)}`}
-                >
-                  {urgencyLabel(ev.deadline)}
-                </Badge>
-              </div>
+      <div className="dash-card p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
+            <FileCheck className="h-4 w-4 text-indigo-500" strokeWidth={1.8} />
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">
+              360° Evaluation for{" "}
+              <span className="text-indigo-500">{ev.studentName}</span>
+            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Due: {format(new Date(ev.deadline), "MMMM d, yyyy")}
+              </span>
+              <Badge
+                variant="secondary"
+                className={`text-xs px-2 py-0.5 ${urgencyColor(ev.deadline)}`}
+              >
+                {urgencyLabel(ev.deadline)}
+              </Badge>
             </div>
           </div>
+        </div>
 
-          <Button
-            onClick={onComplete}
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700 shrink-0"
-            size="sm"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Complete Now
-          </Button>
-        </CardContent>
-      </Card>
+        <Button
+          onClick={onComplete}
+          className="gap-2 bg-indigo-600 hover:bg-indigo-700 shrink-0"
+          size="sm"
+        >
+          <ExternalLink className="h-4 w-4" />
+          Complete Now
+        </Button>
+      </div>
     </motion.div>
   );
 }

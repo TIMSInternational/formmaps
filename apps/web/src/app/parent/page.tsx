@@ -11,7 +11,6 @@ import {
   GraduationCap,
   ChevronRight,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,11 +52,12 @@ export default function ParentDashboard() {
         className="flex items-start justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Parent</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
             {t("parent.welcome", "Welcome back")},{" "}
-            <span className="text-indigo-600">{profile?.name || "Parent"}</span>
+            <span className="text-indigo-500">{profile?.name || "Parent"}</span>
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {t("parent.dashboardSubtitle", "Track your children's academic progress and upcoming tasks.")}
           </p>
         </div>
@@ -66,89 +66,69 @@ export default function ParentDashboard() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <Users className="h-5 w-5 text-indigo-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">
-                  {t("parent.children", "Children")}
-                </p>
-                <p className="text-2xl font-bold">{children.length}</p>
-              </div>
+        <div className="dash-card p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+              <Users className="h-4 w-4 text-indigo-500" strokeWidth={1.8} />
             </div>
-          </CardContent>
-        </Card>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {t("parent.children", "Children")}
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-foreground tracking-tight">{children.length}</p>
+        </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <FileCheck className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">
-                  {t("parent.pendingEvaluations", "Pending Evaluations")}
-                </p>
-                <p className="text-2xl font-bold">
-                  {loadingEvals ? "..." : pendingEvals?.length || 0}
-                </p>
-              </div>
+        <div className="dash-card p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <FileCheck className="h-4 w-4 text-amber-500" strokeWidth={1.8} />
             </div>
-          </CardContent>
-        </Card>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {t("parent.pendingEvaluations", "Pending Evaluations")}
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-foreground tracking-tight">
+            {loadingEvals ? "..." : pendingEvals?.length || 0}
+          </p>
+        </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">
-                  {t("parent.enrolled", "Enrolled")}
-                </p>
-                <p className="text-2xl font-bold">
-                  {children.length}
-                </p>
-              </div>
+        <div className="dash-card p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-emerald-500" strokeWidth={1.8} />
             </div>
-          </CardContent>
-        </Card>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {t("parent.enrolled", "Enrolled")}
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-foreground tracking-tight">{children.length}</p>
+        </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">
-                  {t("parent.needsAttention", "Needs Attention")}
-                </p>
-                <p className="text-2xl font-bold">
-                  {pendingEvals?.length || 0}
-                </p>
-              </div>
+        <div className="dash-card p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-9 w-9 rounded-lg bg-red-500/10 flex items-center justify-center">
+              <AlertTriangle className="h-4 w-4 text-red-500" strokeWidth={1.8} />
             </div>
-          </CardContent>
-        </Card>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {t("parent.needsAttention", "Needs Attention")}
+            </span>
+          </div>
+          <p className="text-2xl font-bold text-foreground tracking-tight">
+            {pendingEvals?.length || 0}
+          </p>
+        </div>
       </div>
 
       {/* Children Overview */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <h2 className="text-xl font-semibold text-foreground mb-4">
           {t("parent.childrenOverview", "Children Overview")}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {children.length === 0 ? (
-            <Card className="col-span-2">
-              <CardContent className="py-12 text-center text-gray-500">
-                {t("parent.noChildren", "No children linked to your account yet.")}
-              </CardContent>
-            </Card>
+            <div className="col-span-2 dash-card py-12 text-center text-muted-foreground">
+              {t("parent.noChildren", "No children linked to your account yet.")}
+            </div>
           ) : (
             children.map((child) => (
               <motion.div
@@ -156,36 +136,36 @@ export default function ParentDashboard() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <Card
-                  className="hover:shadow-md transition-shadow cursor-pointer"
+                <div
+                  className="dash-card cursor-pointer"
                   onClick={() => router.push(`/parent/children/${child.studentId}`)}
                 >
-                  <CardHeader className="pb-3">
+                  <div className="p-5 pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
+                      <p className="text-lg font-semibold text-foreground">
                         {child.studentName}
-                      </CardTitle>
-                      <Badge variant="secondary" className="bg-indigo-100 text-indigo-700">
+                      </p>
+                      <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-500">
                         {child.relationship}
                       </Badge>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
+                  </div>
+                  <div className="px-5 pb-5 space-y-3">
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <GraduationCap className="h-4 w-4 text-gray-400" />
-                        <span className="text-gray-600">
+                        <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">
                           {t("parent.grade", "Grade")} {child.gradeLevel || "-"}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center text-sm text-indigo-600 font-medium pt-1">
+                    <div className="flex items-center text-sm text-indigo-500 font-medium pt-1">
                       {t("parent.viewDetails", "View Details")}
                       <ChevronRight className="h-4 w-4 ml-1" />
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </motion.div>
             ))
           )}
@@ -195,36 +175,34 @@ export default function ParentDashboard() {
       {/* Pending Evaluations */}
       {pendingEvals && pendingEvals.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <h2 className="text-xl font-semibold text-foreground mb-4">
             {t("parent.pendingEvals", "Pending 360° Evaluations")}
           </h2>
           <div className="space-y-3">
             {pendingEvals.map(
               (evaluation: { evaluationId: string; studentName: string; deadline: string; token: string }) => (
-                <Card key={evaluation.evaluationId}>
-                  <CardContent className="py-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {t("parent.evaluationFor", "360° Evaluation for")}{" "}
-                        {evaluation.studentName}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {t("parent.dueBy", "Due by")}:{" "}
-                        {new Date(evaluation.deadline).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() =>
-                        router.push(
-                          `/evaluation/evaluator?token=${evaluation.token}`
-                        )
-                      }
-                      size="sm"
-                    >
-                      {t("parent.completeEvaluation", "Complete Evaluation")}
-                    </Button>
-                  </CardContent>
-                </Card>
+                <div key={evaluation.evaluationId} className="dash-card p-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {t("parent.evaluationFor", "360° Evaluation for")}{" "}
+                      {evaluation.studentName}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t("parent.dueBy", "Due by")}:{" "}
+                      {new Date(evaluation.deadline).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() =>
+                      router.push(
+                        `/evaluation/evaluator?token=${evaluation.token}`
+                      )
+                    }
+                    size="sm"
+                  >
+                    {t("parent.completeEvaluation", "Complete Evaluation")}
+                  </Button>
+                </div>
               )
             )}
           </div>

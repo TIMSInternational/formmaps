@@ -3,17 +3,14 @@
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import {
-  Bell,
   BellOff,
   CheckCheck,
   FileCheck,
   TrendingUp,
   AlertTriangle,
-  Users,
   Calendar,
   Info,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,10 +52,11 @@ export default function ParentNotificationsPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Parent</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
             {t("parent.notifications.title", "Notifications")}
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {unreadCount > 0
               ? `${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`
               : "All caught up!"}
@@ -87,10 +85,10 @@ export default function ParentNotificationsPage() {
           ))}
         </div>
       ) : list.length === 0 ? (
-        <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
-          <BellOff className="h-14 w-14 text-gray-300 mx-auto mb-4" />
-          <p className="text-lg font-semibold text-gray-700">No notifications yet</p>
-          <p className="text-sm text-gray-400 mt-1">
+        <div className="text-center py-20 dash-card border-dashed">
+          <BellOff className="h-14 w-14 text-muted-foreground mx-auto mb-4" />
+          <p className="text-lg font-semibold text-foreground">No notifications yet</p>
+          <p className="text-sm text-muted-foreground mt-1">
             You'll be notified about evaluations, grades, and important updates here.
           </p>
         </div>
@@ -107,59 +105,50 @@ export default function ParentNotificationsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.04 }}
               >
-                <Card
+                <div
                   className={cn(
-                    "border transition-colors",
-                    notif.isRead
-                      ? "border-gray-100 bg-white"
-                      : "border-indigo-100 bg-indigo-50/30"
+                    "dash-card p-4 flex items-start gap-4 transition-colors",
+                    !notif.isRead && "border-indigo-500/20 bg-indigo-500/5"
                   )}
                 >
-                  <CardContent className="py-4 flex items-start gap-4">
-                    {/* Type Icon */}
-                    <div className={cn("p-2.5 rounded-lg shrink-0 mt-0.5", cfg.bg)}>
-                      <Icon className={cn("h-4 w-4", cfg.color)} />
-                    </div>
+                  {/* Type Icon */}
+                  <div className={cn("p-2.5 rounded-lg shrink-0 mt-0.5", cfg.bg)}>
+                    <Icon className={cn("h-4 w-4", cfg.color)} />
+                  </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p
-                          className={cn(
-                            "text-sm font-semibold",
-                            notif.isRead ? "text-gray-700" : "text-gray-900"
-                          )}
-                        >
-                          {notif.title}
-                        </p>
-                        {!notif.isRead && (
-                          <span className="h-2 w-2 rounded-full bg-indigo-500 shrink-0 mt-1.5" />
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 mt-0.5 leading-snug">
-                        {notif.body}
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-semibold text-foreground">
+                        {notif.title}
                       </p>
-                      <p className="text-xs text-gray-400 mt-1.5">
-                        {formatDistanceToNow(new Date(notif.createdAt), {
-                          addSuffix: true,
-                        })}
-                      </p>
+                      {!notif.isRead && (
+                        <span className="h-2 w-2 rounded-full bg-indigo-500 shrink-0 mt-1.5" />
+                      )}
                     </div>
+                    <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
+                      {notif.body}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      {formatDistanceToNow(new Date(notif.createdAt), {
+                        addSuffix: true,
+                      })}
+                    </p>
+                  </div>
 
-                    {/* Actions */}
-                    {!notif.isRead && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 shrink-0 text-xs text-gray-400 hover:text-indigo-600"
-                        onClick={() => markRead.mutate(notif.id)}
-                        disabled={markRead.isPending}
-                      >
-                        Mark read
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
+                  {/* Actions */}
+                  {!notif.isRead && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 shrink-0 text-xs text-muted-foreground hover:text-indigo-500"
+                      onClick={() => markRead.mutate(notif.id)}
+                      disabled={markRead.isPending}
+                    >
+                      Mark read
+                    </Button>
+                  )}
+                </div>
               </motion.div>
             );
           })}

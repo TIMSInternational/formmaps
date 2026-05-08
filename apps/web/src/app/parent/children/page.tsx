@@ -9,7 +9,6 @@ import {
   Users,
   TrendingUp,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,10 +36,11 @@ export default function ParentChildrenPage() {
     <div className="space-y-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Parent</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
           {t("parent.children.title", "My Children")}
         </h1>
-        <p className="text-gray-500 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {t(
             "parent.children.subtitle",
             "View progress and academic details for each of your linked children."
@@ -50,34 +50,24 @@ export default function ParentChildrenPage() {
 
       {/* Summary Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          {
-            label: "Total Children",
-            value: isLoading ? "…" : children.length,
-            icon: Users,
-            color: "bg-indigo-50 text-indigo-600",
-          },
-          {
-            label: "Enrolled",
-            value: isLoading ? "…" : children.length,
-            icon: TrendingUp,
-            color: "bg-emerald-50 text-emerald-600",
-          },
-        ].map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center gap-3">
-                <div className={cn("p-2 rounded-lg", stat.color.split(" ")[0])}>
-                  <stat.icon className={cn("h-5 w-5", stat.color.split(" ")[1])} />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <div className="dash-card p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+              <Users className="h-4 w-4 text-indigo-500" strokeWidth={1.8} />
+            </div>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Children</span>
+          </div>
+          <p className="text-2xl font-bold text-foreground tracking-tight">{isLoading ? "…" : children.length}</p>
+        </div>
+        <div className="dash-card p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-emerald-500" strokeWidth={1.8} />
+            </div>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Enrolled</span>
+          </div>
+          <p className="text-2xl font-bold text-foreground tracking-tight">{isLoading ? "…" : children.length}</p>
+        </div>
       </div>
 
       {/* Children Grid */}
@@ -88,12 +78,12 @@ export default function ParentChildrenPage() {
           ))}
         </div>
       ) : children.length === 0 ? (
-        <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-2xl">
-          <Users className="h-14 w-14 text-gray-300 mx-auto mb-4" />
-          <p className="text-lg font-semibold text-gray-700">
+        <div className="text-center py-20 dash-card border-dashed">
+          <Users className="h-14 w-14 text-muted-foreground mx-auto mb-4" />
+          <p className="text-lg font-semibold text-foreground">
             {t("parent.children.none", "No children linked yet")}
           </p>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {t(
               "parent.children.noneDesc",
               "Your school counselor or admin will send you a portal invite."
@@ -117,39 +107,39 @@ export default function ParentChildrenPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.07 }}
               >
-                <Card className="hover:shadow-lg transition-all duration-200 group cursor-pointer border border-gray-100">
-                  <CardHeader className="pb-4">
+                <div className="dash-card group cursor-pointer">
+                  <div className="p-5 pb-4">
                     <div className="flex items-start gap-4">
-                      <Avatar className="h-14 w-14 border-2 border-white shadow">
+                      <Avatar className="h-14 w-14 border-2 border-[var(--border)] shadow">
                         <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-lg">
                           {initials}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg">{child.studentName}</CardTitle>
+                          <p className="text-lg font-semibold text-foreground">{child.studentName}</p>
                           <Badge
                             variant="secondary"
                             className={cn(
                               "capitalize text-xs",
-                              RELATIONSHIP_COLORS[child.relationship] || "bg-gray-100 text-gray-700"
+                              RELATIONSHIP_COLORS[child.relationship] || "bg-muted text-muted-foreground"
                             )}
                           >
                             {child.relationship}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-1 text-sm text-gray-500">
+                        <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
                           <GraduationCap className="h-3.5 w-3.5" />
                           <span>Grade {child.gradeLevel}</span>
                         </div>
                       </div>
                     </div>
-                  </CardHeader>
+                  </div>
 
-                  <CardContent className="space-y-4">
+                  <div className="px-5 pb-5 space-y-4">
                     {/* Placeholder progress until real data loads */}
                     <div>
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
                         <span>Graduation Progress</span>
                         <span>—</span>
                       </div>
@@ -157,7 +147,7 @@ export default function ParentChildrenPage() {
                     </div>
 
                     <Button
-                      className="w-full gap-2 group-hover:bg-indigo-600 group-hover:text-white transition-colors"
+                      className="w-full gap-2"
                       variant="outline"
                       onClick={() =>
                         router.push(`/parent/children/${child.studentId}`)
@@ -166,8 +156,8 @@ export default function ParentChildrenPage() {
                       View Academic Progress
                       <ChevronRight className="h-4 w-4" />
                     </Button>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </motion.div>
             );
           })}
