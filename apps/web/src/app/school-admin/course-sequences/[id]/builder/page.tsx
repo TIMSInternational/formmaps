@@ -243,43 +243,54 @@ function BuilderInner() {
     if (saving) return;
     setSaving(true);
 
+    // Build payload matching backend expectations
+    const nodePayload = nodes.map((n, i) => {
+      const d = n.data as any;
+      return {
+        courseId: d.courseId || d.id,
+        courseCode: d.courseCode || d.code || "",
+        courseName: d.courseName || d.name || d.label || "",
+        gradeLevel: d.gradeLevel || (d.gradeLevels?.[0]) || 0,
+        positionX: n.position.x,
+        positionY: n.position.y,
+      };
+    });
+
+    // Map node ReactFlow IDs to indices for edge references
+    const nodeIdToIndex = new Map(nodes.map((n, i) => [n.id, i]));
+    const edgePayload = edges.map((e) => ({
+      sourceIndex: nodeIdToIndex.get(e.source),
+      targetIndex: nodeIdToIndex.get(e.target),
+      label: (e as any).label || "",
+    })).filter(e => e.sourceIndex !== undefined && e.targetIndex !== undefined);
+
     const payload = {
-      name: sequenceName, description: detail?.description,
-      nodes: nodes.map((n) => {
-        const { onDelete, ...cleanData } = n.data as any;
-        return { id: n.id, type: n.type ?? "courseNode", data: cleanData, position: n.position };
-      }),
-      edges: edges.map((e) => ({
-        id: e.id, source: e.source, target: e.target,
-        type: e.type ?? "editable", animated: false,
-      })),
-      columns: detail?.columns ?? [],
+      name: sequenceName,
+      description: detail?.description || "",
+      nodes: nodePayload,
+      edges: edgePayload,
     };
 
     try {
       let savedId = currentId;
 
-      if (backedById) {
-        // Already saved before — just cache locally (PUT is broken on this backend)
-        savedId = backedById;
-      } else if (currentId !== "new") {
-        // Existing sequence opened from list — just cache locally
-        savedId = currentId;
+      if (backedById || (currentId !== "new")) {
+        // Update existing sequence
+        const id = backedById || currentId;
+        await updateSequence.mutateAsync({ id, payload } as any);
+        savedId = id;
       } else {
-        // Brand new — POST create once
+        // Brand new — POST create
         const result = await createSequence.mutateAsync(payload as any);
         savedId = (result as any).id;
       }
 
       setCurrentId(savedId);
       setBackedById(savedId);
-
-      // Always cache locally — this is the source of truth for nodes/edges
-      localStorage.setItem(`sequence_cache_${savedId}`, JSON.stringify(payload));
-
-      toast.success("Saved!");
-    } catch {
-      toast.error("Failed to save");
+      toast.success("Sequence saved!");
+    } catch (err) {
+      console.error("Save failed:", err);
+      toast.error("Failed to save sequence");
     } finally {
       setSaving(false);
     }
