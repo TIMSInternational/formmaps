@@ -42,7 +42,7 @@ export function SchoolAdminStats() {
   const statItems = [
     {
       label: t("schoolAdmin.stats.totalStudents", "Total Students"),
-      value: stats.totalStudents.toLocaleString(),
+      value: (stats.totalStudents ?? 0).toLocaleString(),
       icon: Users,
       color: "text-teal-600",
       bg: "bg-teal-50/50",
@@ -50,7 +50,7 @@ export function SchoolAdminStats() {
     },
     {
       label: t("schoolAdmin.stats.pending", "Pending Invites"),
-      value: stats.pendingInvites.toLocaleString(),
+      value: (stats.pendingInvites ?? 0).toLocaleString(),
       icon: Clock,
       color: "text-amber-600",
       bg: "bg-amber-50/50",
@@ -58,7 +58,7 @@ export function SchoolAdminStats() {
     },
     {
       label: t("schoolAdmin.stats.active", "Active Students"),
-      value: stats.activeStudents.toLocaleString(),
+      value: (stats.activeStudents ?? 0).toLocaleString(),
       icon: UserCheck,
       color: "text-emerald-600",
       bg: "bg-emerald-50/50",
@@ -66,7 +66,7 @@ export function SchoolAdminStats() {
     },
     {
       label: t("schoolAdmin.stats.avgScore", "Avg. Score"),
-      value: `${stats.averageScore.toFixed(1)}%`,
+      value: `${(stats.averageScore ?? 0).toFixed(1)}%`,
       icon: GraduationCap,
       color: "text-violet-600",
       bg: "bg-violet-50/50",
