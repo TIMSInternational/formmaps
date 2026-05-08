@@ -100,14 +100,16 @@ export default function SessionsPage() {
         // Fetch all sessions
         const sessionsData = await getCoachSessions("all");
 
-        // Robust data extraction
-        const rawSessions = Array.isArray((sessionsData as any)?.data?.data)
-          ? (sessionsData as any).data.data
-          : Array.isArray((sessionsData as any)?.data)
-            ? (sessionsData as any).data
-            : Array.isArray(sessionsData)
-              ? sessionsData
-              : [];
+        // Robust data extraction — API returns { data: { sessions: [...] } }
+        const rawSessions = Array.isArray((sessionsData as any)?.data?.sessions)
+          ? (sessionsData as any).data.sessions
+          : Array.isArray((sessionsData as any)?.data?.data)
+            ? (sessionsData as any).data.data
+            : Array.isArray((sessionsData as any)?.data)
+              ? (sessionsData as any).data
+              : Array.isArray(sessionsData)
+                ? sessionsData
+                : [];
 
         const resolveStartTs = (s: any): number | undefined => {
           const candidates = [

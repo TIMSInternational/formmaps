@@ -82,13 +82,15 @@ export function CoachDashboard() {
             getCoachStudents(),
           ]);
 
-        const rawSessions = Array.isArray((sessionsData as any)?.data?.data)
-          ? (sessionsData as any).data.data
-          : Array.isArray((sessionsData as any)?.data)
-            ? (sessionsData as any).data
-            : Array.isArray(sessionsData)
-              ? sessionsData
-              : [];
+        const rawSessions = Array.isArray((sessionsData as any)?.data?.sessions)
+          ? (sessionsData as any).data.sessions
+          : Array.isArray((sessionsData as any)?.data?.data)
+            ? (sessionsData as any).data.data
+            : Array.isArray((sessionsData as any)?.data)
+              ? (sessionsData as any).data
+              : Array.isArray(sessionsData)
+                ? sessionsData
+                : [];
 
         const sessions = rawSessions.map((session: any) => {
           const startTime = session.startTime || session.slot?.start;
@@ -129,11 +131,13 @@ export function CoachDashboard() {
         setPastSessions(past);
 
         const studentsResponse = studentsData as any;
-        const studentsList = Array.isArray(studentsResponse?.data?.data)
-          ? studentsResponse.data.data
-          : Array.isArray(studentsResponse?.data)
-            ? studentsResponse.data
-            : [];
+        const studentsList = Array.isArray(studentsResponse?.data?.students)
+          ? studentsResponse.data.students
+          : Array.isArray(studentsResponse?.data?.data)
+            ? studentsResponse.data.data
+            : Array.isArray(studentsResponse?.data)
+              ? studentsResponse.data
+              : [];
         setStudents(studentsList);
 
         setAvailability(
