@@ -8,7 +8,6 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  Users,
   CalendarDays,
   Loader2,
   Video,
@@ -18,7 +17,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -37,7 +35,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import Link from "next/link";
 import {
   getMyCounselorSessions,
   completeCounselorSession,
@@ -51,7 +48,6 @@ export default function CounselorSessionsPage() {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [stats, setStats] = useState({ total: 0, upcoming: 0, completed: 0, cancelled: 0 });
 
-  // Dialogs
   const [cancelOpen, setCancelOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [selected, setSelected] = useState<CounselorSession | null>(null);
@@ -132,191 +128,184 @@ export default function CounselorSessionsPage() {
 
   return (
     <div className="space-y-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">My Sessions</h1>
-            <p className="text-gray-500 mt-1">Manage counseling sessions with your students</p>
-          </div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Scheduling</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mt-1">My Sessions</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage counseling sessions with your students</p>
         </div>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: "Total", value: stats.total, icon: CalendarDays, color: "text-slate-600", bg: "from-slate-100 to-slate-200" },
-            { label: "Upcoming", value: stats.upcoming, icon: Clock, color: "text-emerald-600", bg: "from-emerald-100 to-emerald-200" },
-            { label: "Completed", value: stats.completed, icon: CheckCircle2, color: "text-blue-600", bg: "from-blue-100 to-blue-200" },
-            { label: "Cancelled", value: stats.cancelled, icon: XCircle, color: "text-red-500", bg: "from-red-100 to-red-200" },
-          ].map((stat, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
-              <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2.5 bg-gradient-to-br ${stat.bg} rounded-xl`}>
-                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                      <p className="text-xs text-gray-500 font-medium">{stat.label}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Sessions List */}
-        <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white px-6 py-5">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <CardTitle className="text-xl font-bold text-gray-900">Session List</CardTitle>
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="bg-gray-100/80 p-1 rounded-xl">
-                  {[["upcoming", `Upcoming (${upcoming.length})`], ["past", `Past (${past.length})`], ["all", `All (${sessions.length})`]].map(([val, label]) => (
-                    <TabsTrigger key={val} value={val} className="rounded-lg px-3 py-1.5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                      {label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Total", value: stats.total, icon: CalendarDays, iconColor: "text-slate-500", iconBg: "bg-slate-500/10" },
+          { label: "Upcoming", value: stats.upcoming, icon: Clock, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
+          { label: "Completed", value: stats.completed, icon: CheckCircle2, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
+          { label: "Cancelled", value: stats.cancelled, icon: XCircle, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className="dash-card p-5"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`h-9 w-9 rounded-lg ${stat.iconBg} flex items-center justify-center`}>
+                <stat.icon className={`h-4 w-4 ${stat.iconColor}`} strokeWidth={1.8} />
+              </div>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</span>
             </div>
-          </CardHeader>
+            <p className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</p>
+          </motion.div>
+        ))}
+      </div>
 
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-              </div>
-            ) : displayed.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 px-4">
-                <div className="h-20 w-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mb-5">
-                  <Calendar className="h-10 w-10 text-slate-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No {activeTab} sessions</h3>
-                <p className="text-gray-500 text-center max-w-sm text-sm">
-                  {activeTab === "upcoming" ? "No upcoming counseling sessions scheduled." : "No sessions in this category."}
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-100">
-                <AnimatePresence>
-                  {displayed.map((session, idx) => {
-                    const { date, time } = formatTime(session);
-                    return (
-                      <motion.div
-                        key={session.id}
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.04 }}
-                        className="p-5 hover:bg-slate-50/50 transition-colors"
-                      >
-                        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
-                          {/* Student Info */}
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-slate-700 text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
-                              {session.studentName?.charAt(0) || "S"}
-                            </div>
-                            <div className="min-w-0">
-                              <h3 className="font-semibold text-gray-900 truncate">{session.studentName || "Student"}</h3>
-                              <p className="text-xs text-gray-500 truncate">{session.studentEmail}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 text-xs">{session.topic}</Badge>
-                                <StatusBadge status={session.status} />
-                              </div>
-                            </div>
+      {/* Sessions List */}
+      <div className="dash-card overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--border)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <span className="text-sm font-semibold text-foreground">Session List</span>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="p-1 rounded-xl">
+              {[["upcoming", `Upcoming (${upcoming.length})`], ["past", `Past (${past.length})`], ["all", `All (${sessions.length})`]].map(([val, label]) => (
+                <TabsTrigger key={val} value={val} className="rounded-lg px-3 py-1.5 text-sm font-medium">
+                  {label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+
+        <div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+            </div>
+          ) : displayed.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <Calendar className="h-10 w-10 text-muted-foreground mb-4 opacity-40" />
+              <h3 className="text-base font-semibold text-foreground mb-1">No {activeTab} sessions</h3>
+              <p className="text-muted-foreground text-center max-w-sm text-sm">
+                {activeTab === "upcoming" ? "No upcoming counseling sessions scheduled." : "No sessions in this category."}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[var(--border)]">
+              <AnimatePresence>
+                {displayed.map((session, idx) => {
+                  const { date, time } = formatTime(session);
+                  return (
+                    <motion.div
+                      key={session.id}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.04 }}
+                      className="p-5 hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] transition-colors"
+                    >
+                      <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-slate-700 text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
+                            {session.studentName?.charAt(0) || "S"}
                           </div>
-
-                          {/* Date/Time */}
-                          <div className="flex flex-wrap items-center gap-2 text-sm">
-                            <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg">
-                              <Calendar className="h-3.5 w-3.5 text-slate-500" />
-                              <span className="font-medium text-slate-700 text-xs">{date}</span>
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-foreground truncate">{session.studentName || "Student"}</h3>
+                            <p className="text-xs text-muted-foreground truncate">{session.studentEmail}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="secondary" className="text-xs">{session.topic}</Badge>
+                              <StatusBadge status={session.status} />
                             </div>
-                            <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-lg">
-                              <Clock className="h-3.5 w-3.5 text-slate-500" />
-                              <span className="font-medium text-slate-700 text-xs">{time}</span>
-                            </div>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {session.status === "confirmed" && (
-                              <>
-                                {session.meetingLink && (
-                                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 px-3 text-xs rounded-lg" asChild>
-                                    <a href={session.meetingLink} target="_blank" rel="noopener noreferrer">
-                                      <Video className="h-3.5 w-3.5 mr-1" />Join
-                                    </a>
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-8 px-3 text-xs rounded-lg border-blue-200 text-blue-600 hover:bg-blue-50"
-                                  onClick={() => { setSelected(session); setCounselorNotes(""); setCompleteOpen(true); }}
-                                >
-                                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                                  Complete
-                                </Button>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
-                                      <MoreHorizontal className="h-4 w-4 text-slate-500" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="rounded-xl shadow-lg p-1">
-                                    <DropdownMenuItem
-                                      className="text-red-600 focus:bg-red-50 rounded-lg cursor-pointer text-sm"
-                                      onClick={() => { setSelected(session); setCancelReason(""); setCancelOpen(true); }}
-                                    >
-                                      <X className="h-3.5 w-3.5 mr-2" />Cancel Session
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </>
-                            )}
                           </div>
                         </div>
 
-                        {/* Notes */}
-                        {(session.notes || session.counselorNotes) && (
-                          <div className="mt-3 ml-[3.75rem] space-y-1.5">
-                            {session.notes && (
-                              <div className="pl-3 border-l-2 border-slate-200">
-                                <p className="text-xs text-gray-500">
-                                  <span className="font-medium text-gray-600">Student notes: </span>{session.notes}
-                                </p>
-                              </div>
-                            )}
-                            {session.counselorNotes && (
-                              <div className="pl-3 border-l-2 border-blue-200">
-                                <p className="text-xs text-gray-500">
-                                  <span className="font-medium text-blue-600">Your notes: </span>{session.counselorNotes}
-                                </p>
-                              </div>
-                            )}
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                          <div className="flex items-center gap-1.5 bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] px-3 py-1.5 rounded-lg">
+                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="font-medium text-foreground text-xs">{date}</span>
                           </div>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                          <div className="flex items-center gap-1.5 bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] px-3 py-1.5 rounded-lg">
+                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="font-medium text-foreground text-xs">{time}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {session.status === "confirmed" && (
+                            <>
+                              {session.meetingLink && (
+                                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 px-3 text-xs rounded-lg" asChild>
+                                  <a href={session.meetingLink} target="_blank" rel="noopener noreferrer">
+                                    <Video className="h-3.5 w-3.5 mr-1" />Join
+                                  </a>
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 px-3 text-xs rounded-lg"
+                                onClick={() => { setSelected(session); setCounselorNotes(""); setCompleteOpen(true); }}
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                                Complete
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
+                                    <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    className="text-red-600 focus:bg-red-50 cursor-pointer text-sm"
+                                    onClick={() => { setSelected(session); setCancelReason(""); setCancelOpen(true); }}
+                                  >
+                                    <X className="h-3.5 w-3.5 mr-2" />Cancel Session
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {(session.notes || session.counselorNotes) && (
+                        <div className="mt-3 ml-[3.75rem] space-y-1.5">
+                          {session.notes && (
+                            <div className="pl-3 border-l-2 border-[var(--border)]">
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-medium text-foreground">Student notes: </span>{session.notes}
+                              </p>
+                            </div>
+                          )}
+                          {session.counselorNotes && (
+                            <div className="pl-3 border-l-2 border-blue-300">
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-medium text-blue-600">Your notes: </span>{session.counselorNotes}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Complete Session Dialog */}
       <Dialog open={completeOpen} onOpenChange={setCompleteOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Mark Session as Completed</DialogTitle>
             <DialogDescription>Add any post-session notes for {selected?.studentName}.</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Label className="mb-2 block text-sm font-medium flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5 text-gray-400" />
+              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
               Counselor Notes (optional)
             </Label>
             <Textarea
@@ -324,12 +313,12 @@ export default function CounselorSessionsPage() {
               value={counselorNotes}
               onChange={e => setCounselorNotes(e.target.value)}
               rows={4}
-              className="resize-none rounded-xl text-sm"
+              className="resize-none text-sm"
             />
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setCompleteOpen(false)} className="rounded-lg">Cancel</Button>
-            <Button onClick={handleComplete} disabled={isProcessing} className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+            <Button variant="outline" onClick={() => setCompleteOpen(false)}>Cancel</Button>
+            <Button onClick={handleComplete} disabled={isProcessing} className="bg-blue-600 hover:bg-blue-700 text-white">
               {isProcessing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
               Mark Complete
             </Button>
@@ -339,7 +328,7 @@ export default function CounselorSessionsPage() {
 
       {/* Cancel Dialog */}
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Cancel Session</DialogTitle>
             <DialogDescription>Cancel session with <span className="font-medium">{selected?.studentName}</span>?</DialogDescription>
@@ -351,12 +340,12 @@ export default function CounselorSessionsPage() {
               value={cancelReason}
               onChange={e => setCancelReason(e.target.value)}
               rows={3}
-              className="resize-none rounded-xl text-sm"
+              className="resize-none text-sm"
             />
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setCancelOpen(false)} className="rounded-lg">Keep Session</Button>
-            <Button variant="destructive" onClick={handleCancel} disabled={isProcessing} className="rounded-lg">
+            <Button variant="outline" onClick={() => setCancelOpen(false)}>Keep Session</Button>
+            <Button variant="destructive" onClick={handleCancel} disabled={isProcessing}>
               {isProcessing ? "Cancelling..." : "Cancel Session"}
             </Button>
           </DialogFooter>
