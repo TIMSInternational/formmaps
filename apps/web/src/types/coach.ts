@@ -152,10 +152,12 @@ export interface CoachAnalytics {
   totalEarnings: number;
   totalSessions: number;
   averageRating: number;
-  activeStudents: number;
-  earningsHistory: EarningsHistoryItem[];
-  sessionDistribution: SessionDistributionItem[];
-  recentActivity: RecentActivityItem[];
+  activeStudents?: number;
+  clientCount?: number;
+  earningsHistory?: EarningsHistoryItem[];
+  monthlyData?: { month: string; earnings: number; sessions: number }[];
+  sessionDistribution?: SessionDistributionItem[];
+  recentActivity?: RecentActivityItem[];
 }
 
 export type PayoutStatus = "pending" | "processing" | "completed" | "failed";
