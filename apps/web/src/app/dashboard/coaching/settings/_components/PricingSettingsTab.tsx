@@ -54,9 +54,9 @@ export function PricingSettingsTab({
     const fetchPricing = async () => {
       try {
         setIsLoading(true);
-        const { getCoachDetails } = await import("@/services/coachService");
+        const { getCoachProfile } = await import("@/services/coachService");
         if (user?.id) {
-          const data = await getCoachDetails(user.id);
+          const data = await getCoachProfile();
           if (data) {
             setHourlyRate(data.hourlyRate || 0);
             if (onUpdated) onUpdated(data);
@@ -87,8 +87,8 @@ export function PricingSettingsTab({
         if (updatedResponse && typeof updatedResponse === "object") {
           if (onUpdated) onUpdated(updatedResponse?.data || updatedResponse);
         } else if (user?.id) {
-          const { getCoachDetails } = await import("@/services/coachService");
-          const reloaded = await getCoachDetails(user.id);
+          const { getCoachProfile } = await import("@/services/coachService");
+          const reloaded = await getCoachProfile();
           if (reloaded && onUpdated) onUpdated(reloaded);
         }
       } catch (e) {
