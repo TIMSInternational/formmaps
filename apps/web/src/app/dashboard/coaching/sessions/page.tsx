@@ -498,124 +498,53 @@ export default function SessionsPage() {
               Manage your coaching journey and session details
             </p>
           </div>
-          <Button className="w-full md:w-auto bg-gray-900 text-white hover:bg-black h-12 px-6 rounded-xl shadow-lg shadow-gray-900/10 gap-2 transition-all hover:scale-105 active:scale-95 border border-gray-800">
+          <Button variant="outline" className="gap-2">
             <CalendarIcon className="h-4 w-4" />
             Sync Calendar
           </Button>
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            {
-              label: "Total Sessions",
-              value: counts.all,
-              icon: CalendarIcon,
-              gradient: "from-blue-500 to-blue-600",
-              shadow: "shadow-blue-500/20",
-              textGradient: "text-blue-600",
-              bg: "bg-blue-50/50",
-            },
-            {
-              label: "Upcoming",
-              value: counts.upcoming,
-              icon: Clock,
-              gradient: "from-violet-500 to-purple-600",
-              shadow: "shadow-purple-500/20",
-              textGradient: "text-purple-600",
-              bg: "bg-purple-50/50",
-            },
-            {
-              label: "Completed",
-              value: counts.past,
-              icon: CheckCircle2,
-              gradient: "from-emerald-400 to-green-500",
-              shadow: "shadow-green-500/20",
-              textGradient: "text-green-600",
-              bg: "bg-green-50/50",
-            },
-            {
-              label: "Cancelled",
-              value: counts.cancelled,
-              icon: XCircle,
-              gradient: "from-red-500 to-rose-600",
-              shadow: "shadow-red-500/20",
-              textGradient: "text-red-600",
-              bg: "bg-red-50/50",
-            },
-          ].map((stat) => (
-            <div
+            { label: "Total Sessions", value: counts.all, icon: CalendarIcon, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
+            { label: "Upcoming", value: counts.upcoming, icon: Clock, iconColor: "text-purple-500", iconBg: "bg-purple-500/10" },
+            { label: "Completed", value: counts.past, icon: CheckCircle2, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
+            { label: "Cancelled", value: counts.cancelled, icon: XCircle, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
+          ].map((stat, i) => (
+            <motion.div
               key={stat.label}
-              className="group relative bg-white/80 backdrop-blur-2xl rounded-3xl p-6 border border-white/60 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + i * 0.05 }}
+              className="dash-card p-5"
             >
-              {/* Decorative Background Blob */}
-              <div
-                className={cn(
-                  "absolute -right-6 -top-6 h-32 w-32 rounded-full opacity-10 blur-2xl transition-transform group-hover:scale-150 bg-gradient-to-br",
-                  stat.gradient
-                )}
-              />
-
-              <div className="relative z-10 flex flex-col justify-between h-full gap-4">
-                <div className="flex justify-between items-start">
-                  <div
-                    className={cn(
-                      "h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg text-white bg-gradient-to-br",
-                      stat.gradient,
-                      stat.shadow
-                    )}
-                  >
-                    <stat.icon className="h-6 w-6" strokeWidth={2} />
-                  </div>
-                  {/* Optional Trend Badge (Visual only) */}
-                  <div
-                    className={cn(
-                      "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-white border shadow-sm",
-                      stat.textGradient
-                        .replace("text-", "text-")
-                        .replace("600", "700")
-                    )}
-                  >
-                    Details
-                  </div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`h-9 w-9 rounded-lg ${stat.iconBg} flex items-center justify-center`}>
+                  <stat.icon className={`h-4 w-4 ${stat.iconColor}`} strokeWidth={1.8} />
                 </div>
-
-                <div>
-                  <h3
-                    className={cn(
-                      "text-4xl font-extrabold tracking-tight mt-2 bg-clip-text text-transparent bg-gradient-to-br",
-                      stat.gradient
-                    )}
-                  >
-                    {stat.value}
-                  </h3>
-                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mt-1">
-                    {stat.label}
-                  </p>
-                </div>
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</span>
               </div>
-            </div>
+              <p className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</p>
+            </motion.div>
           ))}
         </div>
 
         {/* Filters and Search Bar */}
-        <div className="bg-white/60 backdrop-blur-2xl rounded-3xl shadow-xl shadow-gray-100/50 border border-white/50 p-4 sm:p-6 flex flex-col xl:flex-row gap-4 justify-between">
+        <div className="dash-card p-4 flex flex-col xl:flex-row gap-4 justify-between">
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full xl:w-auto overflow-x-auto no-scrollbar"
           >
-            <TabsList className="bg-gray-100/80 p-1.5 rounded-xl flex w-full xl:w-auto min-w-max h-auto">
+            <TabsList className="p-1 rounded-xl flex w-full xl:w-auto min-w-max h-auto">
               {["all", "upcoming", "past", "cancelled"].map((tab) => (
                 <TabsTrigger
                   key={tab}
                   value={tab}
-                  className="rounded-lg px-4 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all text-muted-foreground capitalize flex-1 xl:flex-none"
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition-all capitalize flex-1 xl:flex-none"
                 >
-                  {tab}
-                  <span className="ml-2 bg-gray-200/50 px-1.5 rounded-full text-xs text-muted-foreground group-data-[state=active]:bg-blue-50 group-data-[state=active]:text-blue-600">
-                    {(counts as any)[tab]}
-                  </span>
+                  {tab} ({(counts as any)[tab]})
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -626,7 +555,7 @@ export default function SessionsPage() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search student, topic..."
-                className="pl-10 h-11 bg-white/80 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
+                className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -637,7 +566,7 @@ export default function SessionsPage() {
                 value={statusFilter ?? "all"}
                 onValueChange={(v) => setStatusFilter(v === "all" ? null : v)}
               >
-                <SelectTrigger className="w-full sm:w-[160px] h-11 bg-white/80 border-gray-200 rounded-xl">
+                <SelectTrigger className="w-full sm:w-[160px]">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -650,7 +579,7 @@ export default function SessionsPage() {
               </Select>
 
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-[140px] h-11 bg-white/80 border-gray-200 rounded-xl">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Sort" />
                 </SelectTrigger>
                 <SelectContent>
@@ -706,10 +635,10 @@ export default function SessionsPage() {
                 ([dateKey, daySessions]: [string, any[]]) => (
                   <div key={dateKey} className="space-y-4">
                     <div className="flex items-center gap-4">
-                      <span className="text-sm font-bold text-foreground uppercase tracking-wider bg-white/50 px-3 py-1 rounded-full backdrop-blur-sm border border-black/5 shadow-sm">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {dateKey}
                       </span>
-                      <div className="h-px bg-gradient-to-r from-gray-200 to-transparent flex-1" />
+                      <div className="h-px bg-[var(--border)] flex-1" />
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
@@ -721,158 +650,73 @@ export default function SessionsPage() {
                           transition={{ duration: 0.2, delay: index * 0.05 }}
                           className="group"
                         >
-                          <div className="dash-card p-6 rounded-3xl overflow-hidden transition-all duration-300">
-                            {/* Left Accent Gradient */}
-                            <div
-                              className={cn(
-                                "absolute left-0 top-0 bottom-0 w-1 opacity-100",
-                                session.status === "cancelled"
-                                  ? "bg-gradient-to-b from-red-400 to-red-600"
-                                  : session.status === "completed"
-                                    ? "bg-gradient-to-b from-green-400 to-green-600"
-                                    : "bg-gradient-to-b from-blue-400 to-blue-600"
-                              )}
-                            />
-
-                            <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center pl-2">
-                              {/* Student Info */}
+                          <div className="dash-card p-5 transition-colors hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))]">
+                            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
                               <div
-                                className="flex items-center gap-5 flex-1 w-full lg:w-auto cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() =>
-                                  handleViewProfile(session.studentId)
-                                }
+                                className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                                onClick={() => handleViewProfile(session.studentId)}
                               >
-                                <div className="relative">
-                                  <div
-                                    className={cn(
-                                      "absolute inset-0 rounded-full blur-sm opacity-20",
-                                      session.status === "cancelled"
-                                        ? "bg-red-500"
-                                        : session.status === "completed"
-                                          ? "bg-green-500"
-                                          : "bg-blue-500"
-                                    )}
-                                  />
-                                  <Avatar className="h-16 w-16 border-4 border-white shadow-sm relative z-10">
-                                    <AvatarImage src={session.studentAvatar} />
-                                    <AvatarFallback className="text-xl bg-gradient-to-br from-gray-50 to-gray-200 text-muted-foreground font-bold">
-                                      {session.studentName?.charAt(0)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                </div>
-
-                                <div className="flex-1 min-w-0 space-y-1">
-                                  <div className="flex flex-wrap items-center gap-3">
-                                    <h3 className="font-bold text-foreground text-xl tracking-tight truncate">
-                                      {session.studentName}
-                                    </h3>
+                                <Avatar className="h-10 w-10 border border-[var(--border)]">
+                                  <AvatarImage src={session.studentAvatar} />
+                                  <AvatarFallback className="text-sm bg-blue-500/10 text-blue-600 font-semibold">
+                                    {session.studentName?.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0">
+                                  <h3 className="font-semibold text-foreground truncate">{session.studentName}</h3>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <Badge variant="secondary" className="text-xs">{session.topic?.replace(/-/g, " ")}</Badge>
                                     {getStatusBadge(session.status)}
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <Badge
-                                      variant="secondary"
-                                      className="bg-white/80 border text-muted-foreground font-medium px-2.5 py-0.5 shadow-sm"
-                                    >
-                                      {session.topic?.toUpperCase()}
-                                    </Badge>
-                                  </div>
                                 </div>
                               </div>
 
-                              {/* Divider Desktop */}
-                              <div className="hidden lg:block w-px h-16 bg-gradient-to-b from-transparent via-gray-200 to-transparent" />
-
-                              {/* Session Details */}
-                              <div className="flex flex-row lg:flex-col gap-6 lg:gap-1.5 w-full lg:w-56 justify-between lg:justify-center">
-                                <div className="flex items-center gap-2.5 text-foreground">
-                                  <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                                    <Clock className="w-4 h-4" />
-                                  </div>
-                                  <span className="font-bold text-lg">
-                                    {session.time}
-                                  </span>
+                              <div className="flex flex-wrap items-center gap-2 text-sm">
+                                <div className="flex items-center gap-1.5 bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] px-3 py-1.5 rounded-lg">
+                                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <span className="font-medium text-foreground text-xs">{session.time}</span>
                                 </div>
-                                <div className="flex items-center gap-2.5 text-muted-foreground text-sm font-medium pl-1">
-                                  <CalendarIcon className="w-4 h-4 opacity-50" />
-                                  {session.duration} session
+                                <div className="flex items-center gap-1.5 bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] px-3 py-1.5 rounded-lg">
+                                  <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <span className="font-medium text-foreground text-xs">{session.duration}</span>
                                 </div>
                               </div>
 
-                              {/* Actions Area */}
-                              <div className="flex items-center gap-3 w-full lg:w-auto justify-end mt-4 lg:mt-0 pt-5 lg:pt-0 border-t lg:border-t-0 border-gray-100/50">
-                                {(session.status === "confirmed" ||
-                                  session.status === "rescheduled") && (
-                                    <Button
-                                      className="flex-1 lg:flex-none bg-gray-900 text-white hover:bg-black h-11 px-6 rounded-2xl text-sm font-bold shadow-xl shadow-gray-900/10 transition-all hover:scale-105 active:scale-95"
-                                      asChild
-                                    >
-                                      <a
-                                        href={session.meetingLink}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                      >
-                                        <Video className="w-4 h-4 mr-2" /> Join
-                                      </a>
-                                    </Button>
-                                  )}
-
-                                <Button
-                                  variant="outline"
-                                  className="flex-1 lg:flex-none border-gray-200/60 bg-white/50 hover:bg-white text-gray-700 h-11 px-5 rounded-2xl font-semibold shadow-sm hover:shadow transition-all"
-                                  onClick={() => handleViewNotes(session)}
-                                >
-                                  <FileText className="w-4 h-4 mr-2 text-muted-foreground" />{" "}
-                                  Notes
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                {(session.status === "confirmed" || session.status === "rescheduled") && session.meetingLink && (
+                                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 px-3 text-xs rounded-lg" asChild>
+                                    <a href={session.meetingLink} target="_blank" rel="noreferrer">
+                                      <Video className="w-3.5 h-3.5 mr-1" /> Join
+                                    </a>
+                                  </Button>
+                                )}
+                                <Button variant="outline" size="sm" className="h-8 px-3 text-xs rounded-lg" onClick={() => handleViewNotes(session)}>
+                                  <FileText className="w-3.5 h-3.5 mr-1" /> Notes
                                 </Button>
-
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-11 w-11 rounded-2xl hover:bg-white hover:shadow-md text-muted-foreground hover:text-foreground transition-all"
-                                    >
-                                      <MoreVertical className="h-5 w-5" />
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground">
+                                      <MoreVertical className="h-4 w-4" />
                                     </Button>
                                   </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="end"
-                                    className="w-48 rounded-xl p-1.5 shadow-xl border-gray-100"
-                                  >
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        handleViewProfile(session.studentId)
-                                      }
-                                      className="rounded-lg p-2.5 font-medium cursor-pointer"
-                                    >
-                                      <User className="mr-2 h-4 w-4 text-muted-foreground" />{" "}
-                                      Profile
+                                  <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem onClick={() => handleViewProfile(session.studentId)} className="cursor-pointer">
+                                      <User className="mr-2 h-4 w-4 text-muted-foreground" /> Profile
                                     </DropdownMenuItem>
-                                    {(session.status === "confirmed" ||
-                                      session.status === "rescheduled") && (
-                                        <>
-                                          <DropdownMenuSeparator className="bg-gray-100 my-1" />
-                                          <DropdownMenuItem
-                                            onClick={() =>
-                                              handleRescheduleClick(session)
-                                            }
-                                            className="rounded-lg p-2.5 font-medium cursor-pointer focus:bg-orange-50 focus:text-orange-700 text-gray-700"
-                                          >
-                                            <CalendarDays className="mr-2 h-4 w-4 text-orange-400" />{" "}
-                                            Reschedule
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onClick={() => {
-                                              setSelectedSession(session);
-                                              setIsConfirmCancelOpen(true);
-                                            }}
-                                            className="rounded-lg p-2.5 font-medium cursor-pointer focus:bg-red-50 focus:text-red-700 text-red-600"
-                                          >
-                                            <XCircle className="mr-2 h-4 w-4 text-red-500" />{" "}
-                                            Cancel Session
-                                          </DropdownMenuItem>
-                                        </>
-                                      )}
+                                    {(session.status === "confirmed" || session.status === "rescheduled") && (
+                                      <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => handleRescheduleClick(session)} className="cursor-pointer">
+                                          <CalendarDays className="mr-2 h-4 w-4 text-orange-400" /> Reschedule
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() => { setSelectedSession(session); setIsConfirmCancelOpen(true); }}
+                                          className="cursor-pointer text-red-600 focus:text-red-600"
+                                        >
+                                          <XCircle className="mr-2 h-4 w-4" /> Cancel Session
+                                        </DropdownMenuItem>
+                                      </>
+                                    )}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </div>
@@ -890,7 +734,7 @@ export default function SessionsPage() {
 
         {/* Notes Dialog */}
         <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
-          <DialogContent className="max-w-2xl rounded-3xl p-0 overflow-hidden bg-white border-none shadow-2xl">
+          <DialogContent className="max-w-2xl p-0 overflow-hidden">
             <DialogHeader className="p-6 pb-2">
               <DialogTitle className="text-2xl font-bold flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
@@ -914,10 +758,10 @@ export default function SessionsPage() {
                 These notes are private and only visible to you.
               </p>
             </div>
-            <DialogFooter className="p-6 pt-2 bg-gray-50/50">
+            <DialogFooter className="p-6 pt-2">
               <Button
                 onClick={() => setIsNotesOpen(false)}
-                className="w-full sm:w-auto h-12 rounded-xl bg-gray-900 text-white font-semibold"
+                variant="outline"
               >
                 Close
               </Button>
@@ -930,7 +774,7 @@ export default function SessionsPage() {
           open={isConfirmCancelOpen}
           onOpenChange={setIsConfirmCancelOpen}
         >
-          <DialogContent className="max-w-md rounded-3xl p-0 overflow-hidden bg-white border-none shadow-2xl">
+          <DialogContent className="max-w-md p-0 overflow-hidden">
             <div className="p-8 text-center flex flex-col items-center">
               <div className="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center mb-6 animate-bounce-slow">
                 <AlertCircle className="h-8 w-8 text-red-500" />
@@ -948,7 +792,7 @@ export default function SessionsPage() {
 
               <div className="flex flex-col gap-3 w-full">
                 <Button
-                  className="w-full h-12 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 font-bold"
+                  variant="destructive" className="w-full"
                   onClick={async () => {
                     try {
                       if (!selectedSession) return;
@@ -995,10 +839,10 @@ export default function SessionsPage() {
 
         {/* Reschedule Dialog (Copied & Adapted) */}
         <Dialog open={isRescheduleOpen} onOpenChange={setIsRescheduleOpen}>
-          <DialogContent className="sm:max-w-[900px] w-full p-0 overflow-hidden gap-0 bg-white border-0 shadow-2xl rounded-3xl">
+          <DialogContent className="sm:max-w-[900px] w-full p-0 overflow-hidden gap-0">
             <div className="flex flex-col md:flex-row min-h-[500px] max-h-[85vh] overflow-y-auto md:overflow-hidden">
               {/* Column 1: Calendar */}
-              <div className="flex-1 p-6 sm:p-8 border-r border-gray-100 flex flex-col bg-white">
+              <div className="flex-1 p-6 sm:p-8 border-r border-[var(--border)] flex flex-col">
                 <div className="mb-6">
                   <h2 className="text-xl font-bold text-foreground mb-1">
                     Reschedule Session
@@ -1080,8 +924,8 @@ export default function SessionsPage() {
               </div>
 
               {/* Column 2: Time Slots */}
-              <div className="w-full md:w-[320px] bg-gray-50/50 flex flex-col border-t md:border-t-0">
-                <div className="p-6 border-b border-gray-200/50">
+              <div className="w-full md:w-[320px] flex flex-col border-t md:border-t-0">
+                <div className="p-6 border-b border-[var(--border)]">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
                       <AvatarImage
@@ -1090,7 +934,7 @@ export default function SessionsPage() {
                           selectedSession?.studentAvatar
                         }
                       />
-                      <AvatarFallback className="bg-gray-900 text-white text-xs">
+                      <AvatarFallback className="bg-blue-500/10 text-blue-600 text-xs font-semibold">
                         {selectedSession?.studentName?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
@@ -1158,7 +1002,7 @@ export default function SessionsPage() {
                   </div>
                 </div>
 
-                <div className="p-6 border-t border-gray-200/50 bg-white md:bg-transparent">
+                <div className="p-6 border-t border-[var(--border)]">
                   <div className="flex gap-3">
                     <Button
                       variant="outline"
@@ -1170,7 +1014,7 @@ export default function SessionsPage() {
                     <Button
                       onClick={confirmReschedule}
                       disabled={!selectedTime || isLoadingSlots}
-                      className="flex-1 bg-black text-white hover:bg-gray-800 h-11 rounded-xl font-semibold shadow-lg shadow-black/5 disabled:opacity-50"
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white h-11 rounded-xl font-semibold disabled:opacity-50"
                     >
                       Confirm
                     </Button>
