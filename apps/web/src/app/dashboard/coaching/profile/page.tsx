@@ -146,15 +146,13 @@ export default function CoachProfilePage() {
   return (
     <div className="space-y-8">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div className="space-y-2">
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">
-              Profile &{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                Identity
-              </span>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Coach</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+              Profile &amp; Identity
             </h1>
-            <p className="text-lg text-gray-500 font-medium max-w-xl">
+            <p className="text-sm text-muted-foreground max-w-xl">
               Manage your public presence. A complete profile helps students
               trust and connect with you.
             </p>
@@ -164,22 +162,19 @@ export default function CoachProfilePage() {
             {!isEditing ? (
               <Button
                 onClick={() => setIsEditing(true)}
-                className="bg-gray-900 text-white hover:bg-black rounded-2xl px-8 h-12 font-bold shadow-xl shadow-gray-900/10 hover:shadow-gray-900/20 transition-all hover:scale-105 active:scale-95"
               >
                 Edit Profile
               </Button>
             ) : (
-              <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
+              <div className="flex gap-2">
                 <Button
                   variant="ghost"
                   onClick={() => setIsEditing(false)}
-                  className="rounded-xl px-6 h-10 font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleSave}
-                  className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-6 h-10 font-semibold shadow-md shadow-blue-600/20"
                 >
                   Save Changes
                 </Button>
@@ -190,9 +185,9 @@ export default function CoachProfilePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Sidebar (Sticky) */}
-          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-8 animate-in fade-in slide-in-from-left-4 duration-700 delay-100">
+          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-8">
             {/* Profile Card */}
-            <div className="bg-white/80 backdrop-blur-2xl rounded-[2rem] border border-white/60 shadow-xl shadow-blue-900/5 flex flex-col items-center text-center relative overflow-hidden group">
+            <div className="dash-card flex flex-col items-center text-center relative overflow-hidden group">
               {/* Decorative Cover */}
               <div className="absolute top-0 left-0 w-full h-36 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 opacity-90 group-hover:opacity-100 transition-opacity duration-500">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
@@ -210,7 +205,7 @@ export default function CoachProfilePage() {
                       }
                       className="object-cover"
                     />
-                    <AvatarFallback className="bg-gray-100 text-gray-400 text-5xl font-bold">
+                    <AvatarFallback className="bg-[var(--admin-bg-hover)] text-muted-foreground text-5xl font-bold">
                       {user.name?.charAt(0).toUpperCase() || "C"}
                     </AvatarFallback>
                   </Avatar>
@@ -244,7 +239,7 @@ export default function CoachProfilePage() {
               </div>
 
               <div className="px-8 pb-8 w-full">
-                <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                <h2 className="text-2xl font-bold text-foreground mb-1">
                   {profileData.name || "Your Name"}
                 </h2>
                 <p className="text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full text-sm inline-block mb-6">
@@ -252,8 +247,8 @@ export default function CoachProfilePage() {
                 </p>
 
                 <div className="space-y-3 w-full">
-                  <div className="flex items-center gap-3 text-sm text-gray-600 bg-gray-50/80 p-3 rounded-2xl border border-gray-100 transition-colors hover:bg-blue-50/50 hover:border-blue-100 group/item">
-                    <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shadow-sm text-blue-500 group-hover/item:text-blue-600 group-hover/item:scale-110 transition-all">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] p-3 rounded-2xl border border-[var(--border)] transition-colors group/item">
+                    <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shadow-sm text-blue-500">
                       <Mail className="h-4 w-4" />
                     </div>
                     <span className="truncate font-medium">
@@ -261,8 +256,8 @@ export default function CoachProfilePage() {
                     </span>
                   </div>
                   {profileData.location && (
-                    <div className="flex items-center gap-3 text-sm text-gray-600 bg-gray-50/80 p-3 rounded-2xl border border-gray-100 transition-colors hover:bg-purple-50/50 hover:border-purple-100 group/item">
-                      <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shadow-sm text-purple-500 group-hover/item:text-purple-600 group-hover/item:scale-110 transition-all">
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] p-3 rounded-2xl border border-[var(--border)] transition-colors group/item">
+                      <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shadow-sm text-purple-500">
                         <MapPin className="h-4 w-4" />
                       </div>
                       <span className="truncate font-medium">
@@ -273,9 +268,9 @@ export default function CoachProfilePage() {
                 </div>
 
                 {/* Completion Widget */}
-                <div className="mt-8 pt-6 border-t border-gray-100">
+                <div className="mt-8 pt-6 border-t border-[var(--border)]">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Profile Strength
                     </span>
                     <span
@@ -288,7 +283,7 @@ export default function CoachProfilePage() {
                       {completionPercentage}%
                     </span>
                   </div>
-                  <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-[var(--admin-bg-hover)] rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-1000 ease-out ${
                         completionPercentage === 100
@@ -299,7 +294,7 @@ export default function CoachProfilePage() {
                     />
                   </div>
                   {completionPercentage < 100 && (
-                    <p className="text-xs text-gray-400 mt-2 font-medium">
+                    <p className="text-xs text-muted-foreground mt-2 font-medium">
                       Add more details to reach 100%
                     </p>
                   )}
@@ -309,18 +304,18 @@ export default function CoachProfilePage() {
           </div>
 
           {/* Right Column: Edit Form */}
-          <div className="lg:col-span-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+          <div className="lg:col-span-8 space-y-8">
             {/* Personal Details Card */}
-            <div className="bg-white/80 backdrop-blur-2xl rounded-[2rem] border border-white/60 shadow-xl shadow-blue-900/5 p-8 sm:p-10">
+            <div className="dash-card p-8">
               <div className="flex items-center gap-4 mb-8">
-                <div className="h-12 w-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-inner">
+                <div className="h-12 w-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
                   <div className="h-3 w-3 rounded-full bg-blue-600" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-xl font-bold text-foreground">
                     Personal Details
                   </h3>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Correct information helps verify your identity.
                   </p>
                 </div>
@@ -328,7 +323,7 @@ export default function CoachProfilePage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                 <div className="space-y-2">
-                  <Label className="text-sm font-bold text-gray-700 ml-1">
+                  <Label className="text-sm font-bold text-foreground ml-1">
                     Full Name
                   </Label>
                   <Input
@@ -337,11 +332,11 @@ export default function CoachProfilePage() {
                       setProfileData({ ...profileData, name: e.target.value })
                     }
                     disabled={!isEditing}
-                    className="h-12 rounded-xl bg-gray-50/50 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500 transition-all font-medium"
+                    className="h-12 rounded-xl font-medium"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-bold text-gray-700 ml-1">
+                  <Label className="text-sm font-bold text-foreground ml-1">
                     Professional Title
                   </Label>
                   <Input
@@ -351,12 +346,12 @@ export default function CoachProfilePage() {
                     }
                     disabled={!isEditing}
                     placeholder="e.g. Senior Product Designer"
-                    className="h-12 rounded-xl bg-gray-50/50 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500 transition-all font-medium"
+                    className="h-12 rounded-xl font-medium"
                   />
                 </div>
 
                 <div className="col-span-1 md:col-span-2 space-y-2">
-                  <Label className="text-sm font-bold text-gray-700 ml-1">
+                  <Label className="text-sm font-bold text-foreground ml-1">
                     About You
                   </Label>
                   <Textarea
@@ -367,34 +362,34 @@ export default function CoachProfilePage() {
                     disabled={!isEditing}
                     rows={4}
                     placeholder="Tell students about your experience, expertise, and what they can expect from your sessions..."
-                    className="min-h-[140px] rounded-2xl bg-gray-50/50 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500 resize-none p-4 transition-all"
+                    className="min-h-[140px] rounded-2xl resize-none p-4"
                   />
-                  <p className="text-right text-xs text-gray-400 font-medium">
+                  <p className="text-right text-xs text-muted-foreground font-medium">
                     {profileData.bio?.length || 0} / 500 characters
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-2xl p-6 col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 border border-gray-100">
+                <div className="bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] rounded-2xl p-6 col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 border border-[var(--border)]">
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
+                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">
                       Email (Private)
                     </Label>
                     <div className="relative group">
-                      <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                      <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
                         value={profileData.email}
                         disabled={true}
-                        className="pl-12 h-12 rounded-xl bg-white border-gray-200 text-gray-500 cursor-not-allowed font-medium shadow-sm"
+                        className="pl-12 h-12 rounded-xl cursor-not-allowed font-medium"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
+                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">
                       Phone (Private)
                     </Label>
                     <div className="relative group">
-                      <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                      <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
                         type="tel"
                         value={profileData.phone}
@@ -406,17 +401,17 @@ export default function CoachProfilePage() {
                         }
                         disabled={!isEditing}
                         placeholder="+1 (555) 000-0000"
-                        className="pl-12 h-12 rounded-xl bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500 font-medium shadow-sm"
+                        className="pl-12 h-12 rounded-xl font-medium"
                       />
                     </div>
                   </div>
 
                   <div className="col-span-1 md:col-span-2 space-y-2">
-                    <Label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
+                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">
                       Location
                     </Label>
                     <div className="relative group">
-                      <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+                      <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
                         value={profileData.location}
                         onChange={(e) =>
@@ -427,7 +422,7 @@ export default function CoachProfilePage() {
                         }
                         disabled={!isEditing}
                         placeholder="City, Country"
-                        className="pl-12 h-12 rounded-xl bg-white border-gray-200 focus:border-purple-500 focus:ring-purple-500 font-medium shadow-sm"
+                        className="pl-12 h-12 rounded-xl font-medium"
                       />
                     </div>
                   </div>
@@ -436,16 +431,16 @@ export default function CoachProfilePage() {
             </div>
 
             {/* Social Profiles */}
-            <div className="bg-white/80 backdrop-blur-2xl rounded-[2rem] border border-white/60 shadow-xl shadow-blue-900/5 p-8 sm:p-10">
+            <div className="dash-card p-8">
               <div className="flex items-center gap-4 mb-8">
-                <div className="h-12 w-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center shadow-inner">
+                <div className="h-12 w-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center">
                   <Globe className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">
+                  <h3 className="text-xl font-bold text-foreground">
                     Social Presence
                   </h3>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Where can students find more about you?
                   </p>
                 </div>
@@ -453,11 +448,11 @@ export default function CoachProfilePage() {
 
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <Label className="text-sm font-bold text-gray-700 ml-1">
+                  <Label className="text-sm font-bold text-foreground ml-1">
                     Personal Website
                   </Label>
                   <div className="relative group">
-                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 flex items-center justify-center">
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground flex items-center justify-center">
                       <Globe className="h-4 w-4" />
                     </div>
                     <Input
@@ -471,14 +466,14 @@ export default function CoachProfilePage() {
                       }
                       disabled={!isEditing}
                       placeholder="https://yourwebsite.com"
-                      className="pl-12 h-12 rounded-xl bg-gray-50/50 border-gray-200 focus:bg-white focus:border-pink-500 focus:ring-pink-500 transition-all font-medium"
+                      className="pl-12 h-12 rounded-xl font-medium"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-sm font-bold text-gray-700 ml-1">
+                    <Label className="text-sm font-bold text-foreground ml-1">
                       LinkedIn
                     </Label>
                     <div className="relative group">
@@ -496,16 +491,16 @@ export default function CoachProfilePage() {
                         }
                         disabled={!isEditing}
                         placeholder="linkedin.com/in/username"
-                        className="pl-12 h-12 rounded-xl bg-[#0A66C2]/5 border-gray-200 focus:bg-white focus:border-[#0A66C2] focus:ring-[#0A66C2] transition-all font-medium placeholder:text-gray-400"
+                        className="pl-12 h-12 rounded-xl font-medium"
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm font-bold text-gray-700 ml-1">
+                    <Label className="text-sm font-bold text-foreground ml-1">
                       Twitter / X
                     </Label>
                     <div className="relative group">
-                      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-black flex items-center justify-center">
+                      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-foreground flex items-center justify-center">
                         <Twitter className="h-4 w-4 fill-current" />
                       </div>
                       <Input
@@ -519,7 +514,7 @@ export default function CoachProfilePage() {
                         }
                         disabled={!isEditing}
                         placeholder="twitter.com/username"
-                        className="pl-12 h-12 rounded-xl bg-gray-100 border-gray-200 focus:bg-white focus:border-black focus:ring-black transition-all font-medium placeholder:text-gray-400"
+                        className="pl-12 h-12 rounded-xl font-medium"
                       />
                     </div>
                   </div>

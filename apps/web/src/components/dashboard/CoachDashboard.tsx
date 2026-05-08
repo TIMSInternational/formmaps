@@ -331,7 +331,7 @@ export function CoachDashboard() {
           <div className="flex items-center gap-5 sm:gap-6 w-full lg:w-auto">
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-500"></div>
-              <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-white shadow-xl relative">
+              <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-[var(--border)] shadow-xl relative">
                 <AvatarImage
                   src={user.avatar || user.image || undefined}
                   className="object-cover"
@@ -342,7 +342,8 @@ export function CoachDashboard() {
               </Avatar>
             </div>
             <div className="flex-1">
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight mb-1.5">
+              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Coach</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-1.5">
                 {new Date().getHours() < 12
                   ? t("coach.greeting.morning")
                   : new Date().getHours() < 18
@@ -353,7 +354,7 @@ export function CoachDashboard() {
                   {user.name?.split(" ")[0] || t("coach.defaultName")}
                 </span>
               </h1>
-              <p className="text-gray-500 font-medium text-base sm:text-lg flex items-center gap-2">
+              <p className="text-sm text-muted-foreground font-medium flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 {t("coach.upcomingSessions", {
                   count: upcomingSessions.length,
@@ -378,12 +379,12 @@ export function CoachDashboard() {
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl h-[85vh] sm:h-[80vh] flex flex-col p-0 gap-0 rounded-3xl overflow-hidden border-0">
-              <DialogHeader className="px-6 py-5 border-b bg-white input-border-color shrink-0">
-                <DialogTitle className="text-xl font-bold">
+              <DialogHeader className="px-6 py-5 border-b border-[var(--border)] bg-background shrink-0">
+                <DialogTitle className="text-xl font-bold text-foreground">
                   {t("coach.editAvailability")}
                 </DialogTitle>
               </DialogHeader>
-              <div className="flex-1 overflow-y-auto px-6 py-6 bg-gray-50/50">
+              <div className="flex-1 overflow-y-auto px-6 py-6">
                 <AvailabilityStep
                   data={INITIAL_AVAILABILITY}
                   onNext={handleSaveAvailability}
@@ -443,45 +444,40 @@ export function CoachDashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: i * 0.1 }}
             >
-              <Card className="border-0 shadow-lg shadow-gray-100 bg-white/60 backdrop-blur-xl relative overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full">
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
-                />
-                <CardContent className="p-6 sm:p-8 relative z-10 glass-card">
-                  <div className="flex justify-between items-start mb-6">
-                    <div
-                      className={`p-3.5 rounded-2xl ${stat.bg} ${stat.color} shadow-sm ring-1 ring-black/5`}
-                    >
-                      <stat.icon className="h-6 w-6" />
-                    </div>
-                    {i === 2 && upcomingSessions.length > 0 && (
-                      <span className="flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-purple-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
-                      </span>
-                    )}
+              <div className="dash-card p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full">
+                <div className="flex justify-between items-start mb-6">
+                  <div
+                    className={`p-3.5 rounded-2xl ${stat.bg} ${stat.color} shadow-sm`}
+                  >
+                    <stat.icon className="h-6 w-6" />
                   </div>
-                  <div>
-                    <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider block mb-1">
-                      {stat.label}
+                  {i === 2 && upcomingSessions.length > 0 && (
+                    <span className="flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-purple-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
                     </span>
-                    <div className="flex items-baseline gap-2">
-                      <h3 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
-                        {stat.value}
-                      </h3>
-                      <span className="text-xs sm:text-sm text-gray-500 font-medium truncate max-w-[100px]">
-                        {stat.sub}
-                      </span>
-                    </div>
+                  )}
+                </div>
+                <div>
+                  <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                    {stat.label}
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
+                      {stat.value}
+                    </h3>
+                    <span className="text-xs sm:text-sm text-muted-foreground font-medium truncate max-w-[100px]">
+                      {stat.sub}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>
 
         {/* Sessions Tabs */}
-        <div className="bg-white/60 backdrop-blur-2xl rounded-[2rem] shadow-xl shadow-gray-100/50 border border-white/50 p-6 sm:p-10">
+        <div className="dash-card p-6 sm:p-10">
           <Tabs
             defaultValue="upcoming"
             className="w-full"
@@ -489,23 +485,23 @@ export function CoachDashboard() {
           >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-10 gap-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                <h2 className="text-2xl font-bold text-foreground tracking-tight">
                   {t("coach.sessions.title")}
                 </h2>
-                <p className="text-gray-500 mt-1 font-medium">
+                <p className="text-muted-foreground mt-1 font-medium">
                   {t("coach.sessions.description")}
                 </p>
               </div>
-              <TabsList className="bg-gray-100/80 p-1.5 rounded-2xl self-start sm:self-auto w-full sm:w-auto grid grid-cols-2 sm:flex h-auto">
+              <TabsList className="bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] p-1.5 rounded-2xl self-start sm:self-auto w-full sm:w-auto grid grid-cols-2 sm:flex h-auto">
                 <TabsTrigger
                   value="upcoming"
-                  className="rounded-xl px-6 py-3 text-sm font-bold data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-600 data-[state=active]:scale-[1.02] transition-all text-gray-500"
+                  className="rounded-xl px-6 py-3 text-sm font-bold data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-blue-600 data-[state=active]:scale-[1.02] transition-all text-muted-foreground"
                 >
                   Upcoming
                 </TabsTrigger>
                 <TabsTrigger
                   value="past"
-                  className="rounded-xl px-6 py-3 text-sm font-bold data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-600 data-[state=active]:scale-[1.02] transition-all text-gray-500"
+                  className="rounded-xl px-6 py-3 text-sm font-bold data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-blue-600 data-[state=active]:scale-[1.02] transition-all text-muted-foreground"
                 >
                   Past
                 </TabsTrigger>
@@ -525,25 +521,25 @@ export function CoachDashboard() {
                     transition={{ delay: index * 0.05 }}
                     className="group"
                   >
-                    <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6 p-6 sm:p-8 rounded-3xl border border-gray-100 bg-white hover:border-blue-100 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 relative overflow-hidden">
+                    <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6 p-6 sm:p-8 rounded-3xl border border-[var(--border)] bg-background hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 relative overflow-hidden">
                       {/* Left Border Accent */}
                       <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity" />
 
                       <div className="flex items-center gap-5 sm:gap-6 flex-1 w-full">
                         <div className="relative shrink-0">
-                          <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-gray-50 shadow-inner">
+                          <Avatar className="h-16 w-16 sm:h-20 sm:w-20 border-4 border-[var(--border)] shadow-inner">
                             <AvatarImage src={session.studentImage} />
                             <AvatarFallback className="bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 font-bold text-xl">
                               {session.studentName?.charAt(0) || "S"}
                             </AvatarFallback>
                           </Avatar>
                           <div
-                            className="absolute -bottom-1 -right-1 bg-green-500 h-5 w-5 sm:h-6 sm:w-6 rounded-full border-[3px] border-white ring-1 ring-black/5"
+                            className="absolute -bottom-1 -right-1 bg-green-500 h-5 w-5 sm:h-6 sm:w-6 rounded-full border-[3px] border-background"
                             title={t("coach.sessions.confirmed")}
                           ></div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-gray-900 text-lg sm:text-xl mb-1.5 truncate">
+                          <h3 className="font-bold text-foreground text-lg sm:text-xl mb-1.5 truncate">
                             {session.studentName}
                           </h3>
                           <div className="flex flex-wrap items-center gap-3">
@@ -557,32 +553,32 @@ export function CoachDashboard() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row lg:flex-row gap-4 sm:gap-6 w-full lg:w-auto justify-end items-stretch sm:items-center border-t lg:border-t-0 pt-6 lg:pt-0 border-gray-50">
-                        <div className="flex flex-row sm:flex-col gap-2 sm:gap-1 text-right min-w-[120px] justify-between sm:justify-center bg-gray-50/50 lg:bg-transparent p-4 lg:p-0 rounded-2xl lg:rounded-none">
-                          <span className="text-sm font-medium text-gray-500">
+                      <div className="flex flex-col sm:flex-row lg:flex-row gap-4 sm:gap-6 w-full lg:w-auto justify-end items-stretch sm:items-center border-t lg:border-t-0 pt-6 lg:pt-0 border-[var(--border)]">
+                        <div className="flex flex-row sm:flex-col gap-2 sm:gap-1 text-right min-w-[120px] justify-between sm:justify-center bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] lg:bg-transparent p-4 lg:p-0 rounded-2xl lg:rounded-none">
+                          <span className="text-sm font-medium text-muted-foreground">
                             {t("coach.sessions.date")}
                           </span>
-                          <span className="font-bold text-gray-900 flex items-center gap-2 sm:justify-end">
+                          <span className="font-bold text-foreground flex items-center gap-2 sm:justify-end">
                             <CalendarIcon className="w-4 h-4 text-blue-500 sm:hidden" />
                             {session.date}
                           </span>
                         </div>
-                        <div className="hidden sm:block w-px h-10 bg-gray-100"></div>
-                        <div className="flex flex-row sm:flex-col gap-2 sm:gap-1 text-right min-w-[100px] justify-between sm:justify-center bg-gray-50/50 lg:bg-transparent p-4 lg:p-0 rounded-2xl lg:rounded-none">
-                          <span className="text-sm font-medium text-gray-500">
+                        <div className="hidden sm:block w-px h-10 bg-[var(--border)]"></div>
+                        <div className="flex flex-row sm:flex-col gap-2 sm:gap-1 text-right min-w-[100px] justify-between sm:justify-center bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] lg:bg-transparent p-4 lg:p-0 rounded-2xl lg:rounded-none">
+                          <span className="text-sm font-medium text-muted-foreground">
                             {t("coach.sessions.time")}
                           </span>
-                          <span className="font-bold text-gray-900 flex items-center gap-2 sm:justify-end">
+                          <span className="font-bold text-foreground flex items-center gap-2 sm:justify-end">
                             <Clock className="w-4 h-4 text-purple-500 sm:hidden" />
                             {session.duration || session.time}
                           </span>
                         </div>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto pt-2 lg:pt-0 sm:pl-6 lg:border-l border-gray-100">
+                      <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto pt-2 lg:pt-0 sm:pl-6 lg:border-l border-[var(--border)]">
                         <Button
                           variant="outline"
-                          className="flex-1 sm:flex-none border-gray-200 hover:bg-gray-50 hover:text-gray-900 h-12 sm:h-11 px-6 rounded-xl font-semibold bg-white"
+                          className="flex-1 sm:flex-none border-[var(--border)] hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] hover:text-foreground h-12 sm:h-11 px-6 rounded-xl font-semibold"
                           onClick={() => handleRescheduleClick(session)}
                         >
                           {t("coach.actions.reschedule")}
@@ -605,17 +601,17 @@ export function CoachDashboard() {
                   </motion.div>
                 ))
               ) : (
-                <div className="text-center py-20 sm:py-32 bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200/60 flex flex-col items-center justify-center">
-                  <div className="h-24 w-24 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-gray-100 p-6 transform rotate-3">
+                <div className="text-center py-20 sm:py-32 rounded-3xl border-2 border-dashed border-[var(--border)] flex flex-col items-center justify-center">
+                  <div className="h-24 w-24 bg-background rounded-3xl flex items-center justify-center mb-6 shadow-xl p-6 transform rotate-3">
                     <CalendarIcon
                       className="h-full w-full text-blue-500/80"
                       strokeWidth={1.5}
                     />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  <h3 className="text-2xl font-bold text-foreground mb-3">
                     {t("coach.sessions.noUpcomingTitle")}
                   </h3>
-                  <p className="text-gray-500 max-w-sm mx-auto text-lg leading-relaxed">
+                  <p className="text-muted-foreground max-w-sm mx-auto text-lg leading-relaxed">
                     {t("coach.sessions.noScheduled")}
                     <br />
                     <span className="text-blue-600 font-medium">
@@ -637,34 +633,34 @@ export function CoachDashboard() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="flex flex-col md:flex-row items-center gap-6 p-6 rounded-3xl border border-gray-100 bg-gray-50/30 hover:bg-white hover:shadow-lg transition-all"
+                    className="flex flex-col md:flex-row items-center gap-6 p-6 rounded-3xl border border-[var(--border)] bg-background hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] hover:shadow-lg transition-all"
                   >
                     <div className="flex items-center gap-5 flex-1 w-full">
-                      <Avatar className="h-16 w-16 border-2 border-white grayscale opacity-75">
+                      <Avatar className="h-16 w-16 border-2 border-[var(--border)] grayscale opacity-75">
                         <AvatarImage src={session.studentImage} />
                         <AvatarFallback>
                           {session.studentName?.charAt(0) || "S"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="font-bold text-gray-700 text-lg mb-1">
+                        <h3 className="font-bold text-foreground text-lg mb-1">
                           {session.studentName}
                         </h3>
                         <div className="flex items-center gap-3">
                           <Badge
                             variant="outline"
-                            className="font-medium text-gray-500 border-gray-200 px-3 py-1 rounded-lg"
+                            className="font-medium text-muted-foreground border-[var(--border)] px-3 py-1 rounded-lg"
                           >
                             {session.topic?.replace(/-/g, " ").toUpperCase()}
                           </Badge>
-                          <span className="text-gray-500 font-medium bg-gray-100 px-2.5 py-0.5 rounded-full text-xs">
+                          <span className="text-muted-foreground font-medium bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] px-2.5 py-0.5 rounded-full text-xs">
                             {session.status}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-row md:flex-col lg:flex-row gap-4 md:gap-6 text-sm text-gray-500 w-full md:w-auto justify-between md:justify-end uppercase font-medium tracking-wide">
+                    <div className="flex flex-row md:flex-col lg:flex-row gap-4 md:gap-6 text-sm text-muted-foreground w-full md:w-auto justify-between md:justify-end uppercase font-medium tracking-wide">
                       <div className="flex items-center gap-2">
                         {session.date}
                       </div>
@@ -677,7 +673,7 @@ export function CoachDashboard() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-gray-500 hover:text-gray-900 h-10 px-4 rounded-xl hover:bg-gray-100"
+                        className="text-muted-foreground hover:text-foreground h-10 px-4 rounded-xl hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))]"
                       >
                         <FileText className="h-4 w-4 mr-2" />{" "}
                         {t("coach.actions.viewNotes")}
@@ -686,11 +682,11 @@ export function CoachDashboard() {
                   </motion.div>
                 ))
               ) : (
-                <div className="text-center py-20 rounded-3xl bg-gray-50/30 border border-gray-100">
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                <div className="text-center py-20 rounded-3xl border border-[var(--border)]">
+                  <h3 className="text-lg font-medium text-foreground mb-1">
                     {t("coach.sessions.noPastTitle")}
                   </h3>
-                  <p className="text-gray-400">
+                  <p className="text-muted-foreground">
                     {t("coach.sessions.historyPlaceholder")}
                   </p>
                 </div>
@@ -701,15 +697,15 @@ export function CoachDashboard() {
 
         {/* Reschedule Dialog */}
         <Dialog open={isRescheduleOpen} onOpenChange={setIsRescheduleOpen}>
-          <DialogContent className="sm:max-w-[900px] w-full p-0 overflow-hidden gap-0 bg-white border-0 shadow-2xl rounded-3xl">
+          <DialogContent className="sm:max-w-[900px] w-full p-0 overflow-hidden gap-0 bg-background border border-[var(--border)] shadow-2xl rounded-3xl">
             <div className="flex flex-col md:flex-row min-h-[500px] max-h-[85vh] overflow-y-auto md:overflow-hidden">
               {/* Column 1: Calendar */}
-              <div className="flex-1 p-6 sm:p-8 border-r border-gray-100 flex flex-col bg-white">
+              <div className="flex-1 p-6 sm:p-8 border-r border-[var(--border)] flex flex-col bg-background">
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">
+                  <h2 className="text-xl font-bold text-foreground mb-1">
                     {t("coach.sessions.rescheduleTitle")}
                   </h2>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     {t("coach.sessions.rescheduleDescription", {
                       name: selectedSession?.studentName,
                     })}
@@ -721,7 +717,7 @@ export function CoachDashboard() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 rounded-full hover:bg-gray-100"
+                    className="h-8 w-8 rounded-full hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))]"
                     onClick={() => {
                       const newMonth = new Date(currentMonth);
                       newMonth.setMonth(newMonth.getMonth() - 1);
@@ -730,13 +726,13 @@ export function CoachDashboard() {
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <span className="text-base font-semibold text-gray-900 capitalize">
+                  <span className="text-base font-semibold text-foreground capitalize">
                     {format(currentMonth, "MMMM yyyy")}
                   </span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 rounded-full hover:bg-gray-100"
+                    className="h-8 w-8 rounded-full hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))]"
                     onClick={() => {
                       const newMonth = new Date(currentMonth);
                       newMonth.setMonth(newMonth.getMonth() + 1);
@@ -764,7 +760,7 @@ export function CoachDashboard() {
                       month_grid: "w-full border-collapse",
                       weekdays: "flex justify-between mb-2",
                       weekday:
-                        "text-gray-400 font-medium text-xs uppercase w-9 text-center",
+                        "text-muted-foreground font-medium text-xs uppercase w-9 text-center",
                       week: "flex justify-between w-full mb-2",
                       day: "h-9 w-9 text-center text-sm relative flex items-center justify-center p-0 hover:bg-transparent focus-within:relative focus-within:z-20",
                       day_button: cn(
@@ -773,9 +769,9 @@ export function CoachDashboard() {
                       ),
                       selected:
                         "bg-blue-600 !text-white hover:!bg-blue-700 hover:!text-white shadow-md font-semibold",
-                      today: "bg-gray-100 text-gray-900 font-semibold",
-                      outside: "text-gray-300 opacity-50 pointer-events-none",
-                      disabled: "text-gray-300 opacity-50 cursor-not-allowed",
+                      today: "bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] text-foreground font-semibold",
+                      outside: "text-muted-foreground opacity-50 pointer-events-none",
+                      disabled: "text-muted-foreground opacity-50 cursor-not-allowed",
                       hidden: "invisible",
                     }}
                     disabled={(date) => {
@@ -788,8 +784,8 @@ export function CoachDashboard() {
               </div>
 
               {/* Column 2: Time Slots */}
-              <div className="flex-1 p-6 sm:p-8 bg-gray-50/50 flex flex-col">
-                <h3 className="font-semibold text-gray-900 mb-4">
+              <div className="flex-1 p-6 sm:p-8 bg-background flex flex-col">
+                <h3 className="font-semibold text-foreground mb-4">
                   {t("coach.sessions.availableTimes")}
                 </h3>
 
@@ -815,7 +811,7 @@ export function CoachDashboard() {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+                  <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
                     {t("coach.sessions.noAvailableSlots")}
                   </div>
                 )}

@@ -99,34 +99,25 @@ export default function EarningsPage() {
       label: "Total Earnings (Net)",
       value: `$${earningsStats?.totalEarnings?.toLocaleString() || "0"}`,
       icon: TrendingUp,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      border: "border-emerald-100",
-      blobColor: "bg-emerald-500",
+      iconBg: "bg-emerald-500/10",
+      iconColor: "text-emerald-500",
       subtext: "+12% from last month",
-      subtextColor: "text-emerald-600"
     },
     {
       label: "Pending Payout",
       value: `$${earningsStats?.pendingPayout?.toLocaleString() || "0"}`,
       icon: Clock,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
-      border: "border-amber-100",
-      blobColor: "bg-amber-500",
+      iconBg: "bg-amber-500/10",
+      iconColor: "text-amber-500",
       subtext: "Next payout: Apr 1st",
-      subtextColor: "text-amber-600"
     },
     {
       label: "Last Payout",
       value: `$${earningsStats?.lastPayoutAmount?.toLocaleString() || "0"}`,
       icon: DollarSign,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-      border: "border-blue-100",
-      blobColor: "bg-blue-500",
+      iconBg: "bg-blue-500/10",
+      iconColor: "text-blue-500",
       subtext: `Paid on ${earningsStats?.lastPayoutDate || "N/A"}`,
-      subtextColor: "text-blue-600"
     },
   ];
 
@@ -138,10 +129,10 @@ export default function EarningsPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             Error loading earnings data
           </h1>
-          <p className="text-gray-500 mt-2">{error || "Please try again later"}</p>
+          <p className="text-muted-foreground mt-2">{error || "Please try again later"}</p>
           <Button onClick={() => window.location.reload()} className="mt-4">
             Try Again
           </Button>
@@ -175,10 +166,11 @@ export default function EarningsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
-            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Financials</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
               {t("coaching.earnings.title")}
             </h1>
-            <p className="text-lg text-gray-500 font-medium">
+            <p className="text-sm text-muted-foreground">
               {t("coaching.earnings.subtitle")}
             </p>
             <div className="flex items-center gap-2 mt-2">
@@ -189,7 +181,7 @@ export default function EarningsPage() {
           </div>
           <Button
             variant="outline"
-            className="h-10 gap-2 rounded-xl bg-white border-gray-200 shadow-sm"
+            className="h-10 gap-2 rounded-xl"
             onClick={handleExport}
             disabled={isExporting}
           >
@@ -201,29 +193,15 @@ export default function EarningsPage() {
         {/* Premium Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {statsCards.map((stat, index) => (
-            <div
-              key={index}
-              className={`group relative overflow-hidden rounded-2xl border ${stat.border} bg-white p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
-            >
-              <div
-                className={`absolute right-0 top-0 h-24 w-24 translate-x-8 translate-y--8 rounded-full ${stat.blobColor} opacity-5 blur-2xl transition-transform duration-500 group-hover:scale-150`}
-              />
-
-              <div className="relative flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                  <h3 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
-                    {stat.value}
-                  </h3>
-                  <p className={`text-sm mt-3 font-medium ${stat.subtextColor} flex items-center gap-1.5`}>
-                    {stat.icon === TrendingUp && <TrendingUp className="w-3.5 h-3.5" />}
-                    {stat.subtext}
-                  </p>
+            <div key={index} className="dash-card p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`h-9 w-9 rounded-lg ${stat.iconBg} flex items-center justify-center`}>
+                  <stat.icon className={`h-4 w-4 ${stat.iconColor}`} strokeWidth={1.8} />
                 </div>
-                <div className={`rounded-xl ${stat.bg} p-3 ${stat.color} bg-opacity-50`}>
-                  <stat.icon className="h-6 w-6" />
-                </div>
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</span>
               </div>
+              <p className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{stat.subtext}</p>
             </div>
           ))}
         </div>
@@ -231,19 +209,19 @@ export default function EarningsPage() {
         {/* Breakdown Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">Transaction History</h2>
+            <h2 className="text-xl font-bold text-foreground">Transaction History</h2>
             <div className="flex gap-2">
               {/* Tabs could go here if needed, keeping it clean for now */}
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
+          <div className="dash-card overflow-hidden">
             {/* Header with Filter */}
-            <div className="p-4 border-b border-gray-100 bg-gray-50/30 flex justify-between items-center">
+            <div className="p-4 border-b border-[var(--border)] flex justify-between items-center">
               <div className="relative w-full max-w-sm">
                 {/* Search placeholder if needed */}
               </div>
-              <Button variant="outline" size="sm" className="h-8 gap-2 rounded-lg bg-white">
+              <Button variant="outline" size="sm" className="h-8 gap-2 rounded-lg">
                 <Filter className="w-3.5 h-3.5" />
                 Filter
               </Button>
@@ -251,20 +229,20 @@ export default function EarningsPage() {
 
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-gray-50/50">
-                  <TableRow className="border-gray-50 hover:bg-gray-50/50">
-                    <TableHead className="py-4 font-semibold text-gray-600 pl-6 w-[140px]">Date</TableHead>
-                    <TableHead className="py-4 font-semibold text-gray-600">Description</TableHead>
-                    <TableHead className="py-4 font-semibold text-gray-600 text-right">Gross Amount</TableHead>
-                    <TableHead className="py-4 font-semibold text-gray-600 text-right">Platform Fee</TableHead>
+                <TableHeader>
+                  <TableRow className="border-b border-[var(--border)] hover:bg-transparent">
+                    <TableHead className="py-4 font-semibold text-muted-foreground pl-6 w-[140px]">Date</TableHead>
+                    <TableHead className="py-4 font-semibold text-muted-foreground">Description</TableHead>
+                    <TableHead className="py-4 font-semibold text-muted-foreground text-right">Gross Amount</TableHead>
+                    <TableHead className="py-4 font-semibold text-muted-foreground text-right">Platform Fee</TableHead>
                     <TableHead className="py-4 font-semibold text-emerald-600 text-right">Net Earning</TableHead>
-                    <TableHead className="py-4 font-semibold text-gray-600 pr-6 w-[120px]">Status</TableHead>
+                    <TableHead className="py-4 font-semibold text-muted-foreground pr-6 w-[120px]">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedHistory.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-48 text-center text-gray-500">
+                      <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
                         No transactions found.
                       </TableCell>
                     </TableRow>
@@ -272,15 +250,15 @@ export default function EarningsPage() {
                     paginatedHistory.map((item, index) => (
                       <TableRow
                         key={index}
-                        className="group hover:bg-gray-50/50 border-gray-50 transition-colors"
+                        className="group hover:bg-muted/30 transition-colors"
                       >
-                        <TableCell className="font-medium text-gray-900 pl-6 py-4">
+                        <TableCell className="font-medium text-foreground pl-6 py-4">
                           {item.date}
                         </TableCell>
-                        <TableCell className="text-gray-600 font-medium py-4">
+                        <TableCell className="text-muted-foreground font-medium py-4">
                           {item.description}
                         </TableCell>
-                        <TableCell className="text-right font-medium text-gray-900 py-4">
+                        <TableCell className="text-right font-medium text-foreground py-4">
                           ${item.amountGross?.toFixed(2) || "0.00"}
                         </TableCell>
                         <TableCell className="text-right text-red-500 font-medium py-4">
@@ -316,9 +294,9 @@ export default function EarningsPage() {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/30">
-                <p className="text-sm text-gray-500">
-                  Showing page <span className="font-semibold text-gray-900">{page}</span> of <span className="font-semibold text-gray-900">{totalPages || 1}</span>
+              <div className="flex items-center justify-between border-t border-[var(--border)] p-4">
+                <p className="text-sm text-muted-foreground">
+                  Showing page <span className="font-semibold text-foreground">{page}</span> of <span className="font-semibold text-foreground">{totalPages || 1}</span>
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
@@ -326,7 +304,7 @@ export default function EarningsPage() {
                     size="sm"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="rounded-lg border-gray-200 hover:bg-white hover:text-gray-900 text-gray-500 h-8"
+                    className="rounded-lg h-8"
                   >
                     Previous
                   </Button>
@@ -335,7 +313,7 @@ export default function EarningsPage() {
                     size="sm"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
-                    className="rounded-lg border-gray-200 hover:bg-white hover:text-gray-900 text-gray-500 h-8"
+                    className="rounded-lg h-8"
                   >
                     Next
                   </Button>

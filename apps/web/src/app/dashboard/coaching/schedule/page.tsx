@@ -158,7 +158,7 @@ export default function CoachSessionsPage() {
   };
 
   const SessionCard = ({ session }: { session: any }) => (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="dash-card">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4 flex-1">
@@ -169,11 +169,11 @@ export default function CoachSessionsPage() {
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900">
+              <h3 className="font-semibold text-foreground">
                 {session.studentName || "Student"}
               </h3>
-              <p className="text-sm text-gray-600 mt-1">{session.topic}</p>
-              <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground mt-1">{session.topic}</p>
+              <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   <span>
@@ -246,8 +246,9 @@ export default function CoachSessionsPage() {
     <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Sessions</h1>
-          <p className="text-gray-500 mt-1">Manage your coaching sessions</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Scheduling</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">My Sessions</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage your coaching sessions</p>
         </div>
 
         {/* View Toggle */}
@@ -303,13 +304,13 @@ export default function CoachSessionsPage() {
                   <SessionCard key={session.id} session={session} />
                 ))
               ) : (
-                <Card>
+                <Card className="dash-card">
                   <CardContent className="p-12 text-center">
-                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground">
                       No upcoming sessions
                     </h3>
-                    <p className="text-gray-500 mt-1">
+                    <p className="text-muted-foreground mt-1">
                       Your upcoming coaching sessions will appear here
                     </p>
                   </CardContent>
@@ -329,13 +330,13 @@ export default function CoachSessionsPage() {
                   <SessionCard key={session.id} session={session} />
                 ))
               ) : (
-                <Card>
+                <Card className="dash-card">
                   <CardContent className="p-12 text-center">
-                    <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground">
                       No past sessions
                     </h3>
-                    <p className="text-gray-500 mt-1">
+                    <p className="text-muted-foreground mt-1">
                       Your completed sessions will appear here
                     </p>
                   </CardContent>
@@ -391,7 +392,7 @@ export default function CoachSessionsPage() {
               <DialogTitle>Cancel Session</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Are you sure you want to cancel this session? This action cannot
                 be undone.
               </p>

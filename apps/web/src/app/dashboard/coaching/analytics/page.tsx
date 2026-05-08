@@ -241,7 +241,7 @@ export default function AnalyticsPage() {
     }
   };
 
-  // Ultra-Premium StatCard
+  // StatCard
   const StatCard = ({
     title,
     value,
@@ -253,16 +253,8 @@ export default function AnalyticsPage() {
     iconColor = "text-blue-600",
     bg = "bg-blue-50",
   }: any) => (
-    <div className="group relative bg-white/70 backdrop-blur-2xl rounded-3xl p-6 border border-white/60 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-      {/* Decorative Background Blob */}
-      <div
-        className={cn(
-          "absolute -right-6 -top-6 h-32 w-32 rounded-full opacity-10 blur-2xl transition-transform group-hover:scale-150 bg-gradient-to-br",
-          gradient
-        )}
-      />
-
-      <div className="relative z-10 flex flex-col justify-between h-full gap-4">
+    <div className="dash-card p-6 transition-all duration-300">
+      <div className="flex flex-col justify-between h-full gap-4">
         <div className="flex justify-between items-start">
           <div
             className={cn(
@@ -293,15 +285,10 @@ export default function AnalyticsPage() {
         </div>
 
         <div>
-          <h3
-            className={cn(
-              "text-3xl font-extrabold tracking-tight mt-2 bg-clip-text text-transparent bg-gradient-to-br",
-              gradient
-            )}
-          >
+          <h3 className="text-3xl font-extrabold tracking-tight mt-2 text-foreground">
             {value}
           </h3>
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-widest mt-1">
+          <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mt-1">
             {title}
           </p>
         </div>
@@ -321,16 +308,17 @@ export default function AnalyticsPage() {
     <div className="space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
           <div>
-            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Performance</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
               Performance Analytics
             </h1>
-            <p className="text-lg text-gray-500 font-medium mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Track your growth, earnings, and student engagement
             </p>
           </div>
-          <div className="bg-white/60 backdrop-blur-xl p-1.5 rounded-2xl shadow-sm border border-white/50 flex items-center gap-2">
+          <div className="dash-card p-1.5 flex items-center gap-2">
             <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-[160px] bg-transparent border-none focus:ring-0 shadow-none font-semibold text-gray-700">
+              <SelectTrigger className="w-[160px] bg-transparent border-none focus:ring-0 shadow-none font-semibold text-foreground">
                 <Calendar className="mr-2 h-4 w-4 text-blue-500" />
                 <SelectValue placeholder="Select range" />
               </SelectTrigger>
@@ -388,14 +376,14 @@ export default function AnalyticsPage() {
         {/* Main Content Grid */}
         <div className="space-y-8">
           {/* Earnings Chart - Full Width */}
-          <Card className="border border-white/60 shadow-lg bg-white/70 backdrop-blur-2xl rounded-3xl overflow-hidden">
-            <CardHeader className="border-b border-gray-100/50 pb-4">
+          <Card className="dash-card overflow-hidden">
+            <CardHeader className="border-b border-[var(--border)] pb-4">
               <div className="flex justify-between items-center px-2">
                 <div>
-                  <CardTitle className="text-xl font-bold text-gray-900">
+                  <CardTitle className="text-xl font-bold text-foreground">
                     Earnings Overview
                   </CardTitle>
-                  <CardDescription className="text-gray-500 font-medium mt-1">
+                  <CardDescription className="text-muted-foreground font-medium mt-1">
                     Financial performance over time
                   </CardDescription>
                 </div>
@@ -420,30 +408,30 @@ export default function AnalyticsPage() {
                       ? "Last 3 Months"
                       : "Year to Date"}
                   </div>
-                  <div className="text-3xl font-extrabold text-gray-900">
+                  <div className="text-3xl font-extrabold text-foreground">
                     $
                     {(chartData || [])
                       .reduce((s, d) => s + (d.amount || 0), 0)
                       .toLocaleString()}
-                    <span className="text-sm font-medium text-gray-400 ml-2 align-middle">
+                    <span className="text-sm font-medium text-muted-foreground ml-2 align-middle">
                       Total Revenue
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-8">
                   <div className="text-right">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       Sessions
                     </div>
-                    <div className="text-2xl font-bold text-gray-900">
+                    <div className="text-2xl font-bold text-foreground">
                       {stats.totalSessions}
                     </div>
                   </div>
                   <div className="text-right hidden md:block">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       Avg Rating
                     </div>
-                    <div className="text-2xl font-bold text-gray-900 flex items-center justify-end gap-1">
+                    <div className="text-2xl font-bold text-foreground flex items-center justify-end gap-1">
                       {stats.averageRating?.toFixed
                         ? stats.averageRating.toFixed(1)
                         : stats.averageRating}
@@ -535,12 +523,12 @@ export default function AnalyticsPage() {
           {/* Bottom Row: Session Types & Recent Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Session Types */}
-            <Card className="border border-white/60 shadow-lg bg-white/70 backdrop-blur-2xl rounded-3xl">
-              <CardHeader className="border-b border-gray-100/50 pb-4">
-                <CardTitle className="text-xl font-bold text-gray-900">
+            <Card className="dash-card">
+              <CardHeader className="border-b border-[var(--border)] pb-4">
+                <CardTitle className="text-xl font-bold text-foreground">
                   Session Types
                 </CardTitle>
-                <CardDescription className="font-medium text-gray-500">
+                <CardDescription className="font-medium text-muted-foreground">
                   Distribution by topic
                 </CardDescription>
               </CardHeader>
@@ -579,7 +567,7 @@ export default function AnalyticsPage() {
 
                   {/* Legend list */}
                   <div className="w-full lg:w-1/2 flex flex-col gap-3 px-2">
-                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">
+                    <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
                       Topics Breakdown
                     </div>
                     {sessionDistribution.map((item, idx) => {
@@ -592,20 +580,20 @@ export default function AnalyticsPage() {
                       return (
                         <div
                           key={idx}
-                          className="flex items-center justify-between p-2 rounded-xl hover:bg-white/50 transition-colors"
+                          className="flex items-center justify-between p-2 rounded-xl hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <span
                               className="h-3 w-3 rounded-full shadow-sm ring-2 ring-white"
                               style={{ backgroundColor: item.color }}
                             />
-                            <div className="text-sm font-semibold text-gray-800">
+                            <div className="text-sm font-semibold text-foreground">
                               {item.name}
                             </div>
                           </div>
-                          <div className="text-sm font-bold text-gray-600">
+                          <div className="text-sm font-bold text-muted-foreground">
                             {pct}%{" "}
-                            <span className="text-gray-400 font-normal ml-1">
+                            <span className="text-muted-foreground font-normal ml-1">
                               ({item.value})
                             </span>
                           </div>
@@ -618,13 +606,13 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* Recent Activity */}
-            <Card className="border border-white/60 shadow-lg bg-white/70 backdrop-blur-2xl rounded-3xl">
-              <CardHeader className="border-b border-gray-100/50 pb-4">
-                <CardTitle className="flex items-center gap-2 text-xl font-bold text-gray-900">
+            <Card className="dash-card">
+              <CardHeader className="border-b border-[var(--border)] pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
                   <Activity className="h-5 w-5 text-blue-500" />
                   Recent Activity
                 </CardTitle>
-                <CardDescription className="font-medium text-gray-500">
+                <CardDescription className="font-medium text-muted-foreground">
                   Latest actions and updates
                 </CardDescription>
               </CardHeader>
@@ -633,7 +621,7 @@ export default function AnalyticsPage() {
                   {recentActivity.map((activity) => (
                     <div
                       key={activity.id}
-                      className="flex items-center justify-between group hover:bg-white p-3 rounded-2xl transition-all duration-200 border border-transparent hover:border-gray-100/50 hover:shadow-sm"
+                      className="flex items-center justify-between group hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] p-3 rounded-2xl transition-all duration-200 border border-transparent hover:shadow-sm"
                     >
                       <div className="flex items-center gap-4">
                         <div
@@ -651,10 +639,10 @@ export default function AnalyticsPage() {
                           {activity.user.charAt(0)}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                          <p className="text-sm font-bold text-foreground group-hover:text-blue-600 transition-colors">
                             {activity.user}
                           </p>
-                          <p className="text-xs font-medium text-gray-500 mt-0.5">
+                          <p className="text-xs font-medium text-muted-foreground mt-0.5">
                             {activity.action}
                           </p>
                         </div>
@@ -673,17 +661,17 @@ export default function AnalyticsPage() {
                             </span>
                           </div>
                         )}
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mt-1">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mt-1">
                           {activity.time}
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-100/50 flex justify-center">
+                <div className="mt-4 pt-4 border-t border-[var(--border)] flex justify-center">
                   <Button
                     variant="ghost"
-                    className="text-gray-500 hover:text-gray-900 font-semibold"
+                    className="text-muted-foreground hover:text-foreground font-semibold"
                     onClick={() =>
                       toast.info("Open full activity log coming soon")
                     }

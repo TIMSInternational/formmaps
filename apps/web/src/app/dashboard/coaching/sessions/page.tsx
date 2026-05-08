@@ -490,10 +490,11 @@ export default function SessionsPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight mb-2">
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Scheduling</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-2">
               Sessions History
             </h1>
-            <p className="text-gray-500 font-medium text-base sm:text-lg">
+            <p className="text-sm text-muted-foreground">
               Manage your coaching journey and session details
             </p>
           </div>
@@ -588,7 +589,7 @@ export default function SessionsPage() {
                   >
                     {stat.value}
                   </h3>
-                  <p className="text-sm font-medium text-gray-400 uppercase tracking-widest mt-1">
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mt-1">
                     {stat.label}
                   </p>
                 </div>
@@ -609,10 +610,10 @@ export default function SessionsPage() {
                 <TabsTrigger
                   key={tab}
                   value={tab}
-                  className="rounded-lg px-4 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all text-gray-500 capitalize flex-1 xl:flex-none"
+                  className="rounded-lg px-4 py-2 text-sm font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all text-muted-foreground capitalize flex-1 xl:flex-none"
                 >
                   {tab}
-                  <span className="ml-2 bg-gray-200/50 px-1.5 rounded-full text-xs text-gray-500 group-data-[state=active]:bg-blue-50 group-data-[state=active]:text-blue-600">
+                  <span className="ml-2 bg-gray-200/50 px-1.5 rounded-full text-xs text-muted-foreground group-data-[state=active]:bg-blue-50 group-data-[state=active]:text-blue-600">
                     {(counts as any)[tab]}
                   </span>
                 </TabsTrigger>
@@ -622,7 +623,7 @@ export default function SessionsPage() {
 
           <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
             <div className="relative flex-1 sm:min-w-[280px]">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search student, topic..."
                 className="pl-10 h-11 bg-white/80 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
@@ -671,17 +672,17 @@ export default function SessionsPage() {
               ))}
             </div>
           ) : sortedSessions.length === 0 ? (
-            <div className="text-center py-20 sm:py-32 bg-white/60 backdrop-blur-xl rounded-[2rem] border-2 border-dashed border-gray-200/60 flex flex-col items-center justify-center">
+            <div className="dash-card text-center py-20 sm:py-32 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center">
               <div className="h-20 w-20 bg-blue-50 rounded-full flex items-center justify-center mb-6 ring-8 ring-blue-50/50">
                 <CalendarDays
                   className="h-10 w-10 text-blue-500"
                   strokeWidth={1.5}
                 />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <h3 className="text-xl font-bold text-foreground mb-2">
                 No sessions found
               </h3>
-              <p className="text-gray-500 max-w-sm mx-auto">
+              <p className="text-muted-foreground max-w-sm mx-auto">
                 {searchQuery
                   ? "Try adjusting your filters or search query."
                   : "Looks like you haven't scheduled any sessions yet."}
@@ -705,7 +706,7 @@ export default function SessionsPage() {
                 ([dateKey, daySessions]: [string, any[]]) => (
                   <div key={dateKey} className="space-y-4">
                     <div className="flex items-center gap-4">
-                      <span className="text-sm font-bold text-gray-900 uppercase tracking-wider bg-white/50 px-3 py-1 rounded-full backdrop-blur-sm border border-black/5 shadow-sm">
+                      <span className="text-sm font-bold text-foreground uppercase tracking-wider bg-white/50 px-3 py-1 rounded-full backdrop-blur-sm border border-black/5 shadow-sm">
                         {dateKey}
                       </span>
                       <div className="h-px bg-gradient-to-r from-gray-200 to-transparent flex-1" />
@@ -720,7 +721,7 @@ export default function SessionsPage() {
                           transition={{ duration: 0.2, delay: index * 0.05 }}
                           className="group"
                         >
-                          <div className="relative bg-white/40 backdrop-blur-md p-6 rounded-3xl border border-white/60 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 overflow-hidden hover:bg-white/60">
+                          <div className="dash-card p-6 rounded-3xl overflow-hidden transition-all duration-300">
                             {/* Left Accent Gradient */}
                             <div
                               className={cn(
@@ -754,7 +755,7 @@ export default function SessionsPage() {
                                   />
                                   <Avatar className="h-16 w-16 border-4 border-white shadow-sm relative z-10">
                                     <AvatarImage src={session.studentAvatar} />
-                                    <AvatarFallback className="text-xl bg-gradient-to-br from-gray-50 to-gray-200 text-gray-600 font-bold">
+                                    <AvatarFallback className="text-xl bg-gradient-to-br from-gray-50 to-gray-200 text-muted-foreground font-bold">
                                       {session.studentName?.charAt(0)}
                                     </AvatarFallback>
                                   </Avatar>
@@ -762,7 +763,7 @@ export default function SessionsPage() {
 
                                 <div className="flex-1 min-w-0 space-y-1">
                                   <div className="flex flex-wrap items-center gap-3">
-                                    <h3 className="font-bold text-gray-900 text-xl tracking-tight truncate">
+                                    <h3 className="font-bold text-foreground text-xl tracking-tight truncate">
                                       {session.studentName}
                                     </h3>
                                     {getStatusBadge(session.status)}
@@ -770,7 +771,7 @@ export default function SessionsPage() {
                                   <div className="flex items-center gap-2">
                                     <Badge
                                       variant="secondary"
-                                      className="bg-white/80 border text-gray-500 font-medium px-2.5 py-0.5 shadow-sm"
+                                      className="bg-white/80 border text-muted-foreground font-medium px-2.5 py-0.5 shadow-sm"
                                     >
                                       {session.topic?.toUpperCase()}
                                     </Badge>
@@ -783,7 +784,7 @@ export default function SessionsPage() {
 
                               {/* Session Details */}
                               <div className="flex flex-row lg:flex-col gap-6 lg:gap-1.5 w-full lg:w-56 justify-between lg:justify-center">
-                                <div className="flex items-center gap-2.5 text-gray-700">
+                                <div className="flex items-center gap-2.5 text-foreground">
                                   <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                                     <Clock className="w-4 h-4" />
                                   </div>
@@ -791,7 +792,7 @@ export default function SessionsPage() {
                                     {session.time}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2.5 text-gray-500 text-sm font-medium pl-1">
+                                <div className="flex items-center gap-2.5 text-muted-foreground text-sm font-medium pl-1">
                                   <CalendarIcon className="w-4 h-4 opacity-50" />
                                   {session.duration} session
                                 </div>
@@ -820,7 +821,7 @@ export default function SessionsPage() {
                                   className="flex-1 lg:flex-none border-gray-200/60 bg-white/50 hover:bg-white text-gray-700 h-11 px-5 rounded-2xl font-semibold shadow-sm hover:shadow transition-all"
                                   onClick={() => handleViewNotes(session)}
                                 >
-                                  <FileText className="w-4 h-4 mr-2 text-gray-400" />{" "}
+                                  <FileText className="w-4 h-4 mr-2 text-muted-foreground" />{" "}
                                   Notes
                                 </Button>
 
@@ -829,7 +830,7 @@ export default function SessionsPage() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-11 w-11 rounded-2xl hover:bg-white hover:shadow-md text-gray-400 hover:text-gray-900 transition-all"
+                                      className="h-11 w-11 rounded-2xl hover:bg-white hover:shadow-md text-muted-foreground hover:text-foreground transition-all"
                                     >
                                       <MoreVertical className="h-5 w-5" />
                                     </Button>
@@ -844,7 +845,7 @@ export default function SessionsPage() {
                                       }
                                       className="rounded-lg p-2.5 font-medium cursor-pointer"
                                     >
-                                      <User className="mr-2 h-4 w-4 text-gray-400" />{" "}
+                                      <User className="mr-2 h-4 w-4 text-muted-foreground" />{" "}
                                       Profile
                                     </DropdownMenuItem>
                                     {(session.status === "confirmed" ||
@@ -899,17 +900,17 @@ export default function SessionsPage() {
               </DialogTitle>
               <DialogDescription className="ml-14 text-base">
                 Private notes for your session with{" "}
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-foreground">
                   {selectedSession?.studentName}
                 </span>
               </DialogDescription>
             </DialogHeader>
             <div className="px-6 py-4">
-              <div className="bg-amber-50/50 border border-amber-100 p-6 rounded-2xl text-gray-800 whitespace-pre-wrap leading-relaxed min-h-[150px] font-medium font-serif text-lg">
+              <div className="bg-amber-50/50 border border-amber-100 p-6 rounded-2xl text-foreground whitespace-pre-wrap leading-relaxed min-h-[150px] font-medium font-serif text-lg">
                 {selectedSession?.notes ||
                   "No notes available for this session."}
               </div>
-              <p className="mt-4 text-xs text-center text-gray-400 italic">
+              <p className="mt-4 text-xs text-center text-muted-foreground italic">
                 These notes are private and only visible to you.
               </p>
             </div>
@@ -934,12 +935,12 @@ export default function SessionsPage() {
               <div className="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center mb-6 animate-bounce-slow">
                 <AlertCircle className="h-8 w-8 text-red-500" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              <h3 className="text-2xl font-bold text-foreground mb-2">
                 Cancel Session?
               </h3>
-              <p className="text-gray-500 text-center mb-8 leading-relaxed">
+              <p className="text-muted-foreground text-center mb-8 leading-relaxed">
                 Are you sure you want to cancel the session with{" "}
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-foreground">
                   {selectedSession?.studentName}
                 </span>
                 ? This action cannot be undone.
@@ -982,7 +983,7 @@ export default function SessionsPage() {
                 </Button>
                 <Button
                   variant="ghost"
-                  className="w-full h-12 rounded-xl text-gray-600 font-semibold hover:bg-gray-100"
+                  className="w-full h-12 rounded-xl text-muted-foreground font-semibold hover:bg-gray-100"
                   onClick={() => setIsConfirmCancelOpen(false)}
                 >
                   Keep Session
@@ -999,10 +1000,10 @@ export default function SessionsPage() {
               {/* Column 1: Calendar */}
               <div className="flex-1 p-6 sm:p-8 border-r border-gray-100 flex flex-col bg-white">
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">
+                  <h2 className="text-xl font-bold text-foreground mb-1">
                     Reschedule Session
                   </h2>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Select a new date and time for{" "}
                     {selectedSession?.studentName}
                   </p>
@@ -1021,7 +1022,7 @@ export default function SessionsPage() {
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <span className="text-base font-semibold text-gray-900 capitalize">
+                  <span className="text-base font-semibold text-foreground capitalize">
                     {format(currentMonth, "MMMM yyyy")}
                   </span>
                   <Button
@@ -1055,7 +1056,7 @@ export default function SessionsPage() {
                       month_grid: "w-full border-collapse",
                       weekdays: "flex justify-between mb-2",
                       weekday:
-                        "text-gray-400 font-medium text-xs uppercase w-9 text-center",
+                        "text-muted-foreground font-medium text-xs uppercase w-9 text-center",
                       week: "flex justify-between w-full mb-2",
                       day: "h-9 w-9 text-center text-sm relative flex items-center justify-center p-0 hover:bg-transparent focus-within:relative focus-within:z-20",
                       day_button: cn(
@@ -1064,7 +1065,7 @@ export default function SessionsPage() {
                       ),
                       selected:
                         "bg-blue-600 !text-white hover:!bg-blue-700 hover:!text-white shadow-md font-semibold",
-                      today: "bg-gray-100 text-gray-900 font-semibold",
+                      today: "bg-gray-100 text-foreground font-semibold",
                       outside: "text-gray-300 opacity-50 pointer-events-none",
                       disabled: "text-gray-300 opacity-50 cursor-not-allowed",
                       hidden: "invisible",
@@ -1094,10 +1095,10 @@ export default function SessionsPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-900 text-sm truncate">
+                      <p className="font-bold text-foreground text-sm truncate">
                         {selectedSession?.studentName}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="text-xs text-muted-foreground truncate">
                         {selectedSession?.topic?.toUpperCase()}
                       </p>
                     </div>
@@ -1105,11 +1106,11 @@ export default function SessionsPage() {
                 </div>
 
                 <div className="flex-1 p-6 flex flex-col min-h-[300px]">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-500" />
                     Available Times
                     {rescheduleDate && (
-                      <span className="text-gray-400 font-normal ml-auto text-xs">
+                      <span className="text-muted-foreground font-normal ml-auto text-xs">
                         {format(rescheduleDate, "MMM d")}
                       </span>
                     )}
@@ -1117,21 +1118,21 @@ export default function SessionsPage() {
 
                   <div className="flex-1 overflow-y-auto custom-scrollbar -mr-2 pr-2">
                     {isLoadingSlots ? (
-                      <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-3">
+                      <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-3">
                         <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                         <p className="text-xs">Checking availability...</p>
                       </div>
                     ) : !rescheduleDate ? (
-                      <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center p-4">
+                      <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-center p-4">
                         <CalendarDays className="h-10 w-10 mb-3 opacity-20" />
                         <p className="text-sm">Select a date to see times</p>
                       </div>
                     ) : availableSlots.length === 0 ? (
-                      <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center p-4">
+                      <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-center p-4">
                         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                           <Clock className="h-5 w-5 opacity-30" />
                         </div>
-                        <p className="text-sm font-medium text-gray-600 mb-1">
+                        <p className="text-sm font-medium text-muted-foreground mb-1">
                           No slots available
                         </p>
                         <p className="text-xs">Try selecting another date</p>
