@@ -108,12 +108,26 @@ function BuilderInner() {
 
       // If backend has nodes, use them
       if (detail.nodes?.length) {
-        setNodes(detail.nodes.map((n: CourseSequenceNode) => ({
-          id: n.id, type: "courseNode", position: n.position,
-          data: { ...n.data, onDelete: handleDeleteNode },
+        setNodes(detail.nodes.map((n: any) => ({
+          id: n.id,
+          type: n.type || "courseNode",
+          position: n.position || { x: Number(n.positionX) || 0, y: Number(n.positionY) || 0 },
+          data: {
+            courseId: n.data?.courseId || n.courseId || "",
+            courseCode: n.data?.courseCode || n.courseCode || "",
+            courseName: n.data?.courseName || n.courseName || "",
+            label: n.data?.courseName || n.data?.label || n.courseName || "",
+            gradeLevel: n.data?.gradeLevel || n.gradeLevel || 0,
+            credits: n.data?.credits || n.credits || 0,
+            semester: n.data?.semester || "Fall",
+            status: n.data?.status || "elective",
+            onDelete: handleDeleteNode,
+          },
         })));
-        if (detail.edges?.length) setEdges(detail.edges.map((e: CourseSequenceEdge) => ({
-          id: e.id, source: e.source, target: e.target,
+        if (detail.edges?.length) setEdges(detail.edges.map((e: any) => ({
+          id: e.id,
+          source: e.source || e.sourceNodeId,
+          target: e.target || e.targetNodeId,
           type: "editable", animated: false,
         })));
         setInitialized(true);
@@ -287,6 +301,10 @@ function BuilderInner() {
 
       setCurrentId(savedId);
       setBackedById(savedId);
+      // Update URL so reopening uses the correct ID
+      if (paramId === "new" && savedId !== "new") {
+        router.replace(`/school-admin/course-sequences/${savedId}/builder`);
+      }
       toast.success("Sequence saved!");
     } catch (err) {
       console.error("Save failed:", err);
