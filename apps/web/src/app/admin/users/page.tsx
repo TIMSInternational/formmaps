@@ -122,8 +122,8 @@ export default function AdminUsersPage() {
     },
     {
       label: "Active Users (MAU)",
-      value: statsLoading ? <Skeleton className="h-9 w-24" /> : (telemetryData?.metrics.mau.toLocaleString() || "0"),
-      growth: telemetryData?.metrics.newUsers ? (telemetryData.metrics.newUsers / (telemetryData.metrics.mau || 1)) * 100 : 0, // Approx growth based on new users
+      value: statsLoading ? <Skeleton className="h-9 w-24" /> : (telemetryData?.metrics?.mau?.toLocaleString() || "0"),
+      growth: telemetryData?.metrics?.newUsers ? (telemetryData.metrics.newUsers / (telemetryData.metrics.mau || 1)) * 100 : 0,
       icon: UserCheck,
       color: "text-emerald-600",
       bg: "bg-emerald-50",
@@ -132,7 +132,7 @@ export default function AdminUsersPage() {
     },
     {
       label: "New Signups",
-      value: statsLoading ? <Skeleton className="h-9 w-24" /> : (telemetryData?.metrics.newUsers.toLocaleString() || "0"),
+      value: statsLoading ? <Skeleton className="h-9 w-24" /> : (telemetryData?.metrics?.newUsers?.toLocaleString() || "0"),
       growth: null, // No historical data readily available for this metric in summary
       icon: UserPlus,
       color: "text-violet-600",
