@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Camera,
@@ -17,14 +18,15 @@ import {
   Globe,
   Linkedin,
   Twitter,
+  User,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export default function CoachProfilePage() {
   const { t } = useTranslation();
   const { user } = useGlobalStore();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [profileData, setProfileData] = useState({
     name: user.name || "",
@@ -38,43 +40,40 @@ export default function CoachProfilePage() {
     twitter: "",
   });
 
-  // Fetch profile data on mount
   React.useEffect(() => {
     const fetchProfile = async () => {
       try {
         setIsLoading(true);
-        // Dynamically import to avoid server-side issues if any
-        const { getCoachDetails } = await import("@/services/coachService");
-        if (!user.id) return;
-        const data = await getCoachDetails(user.id);
+        // Use /coach/me which resolves by userId (not coach ID)
+        const { getCoachProfile } = await import("@/services/coachService");
+        const data = await getCoachProfile();
 
         if (data) {
           setProfileData((prev) => ({
             ...prev,
             name: data.name || user.name || "",
-            // email is usually not editable or comes from user store
             title: data.title || "",
             bio: data.bio || "",
             location: data.location || "",
-            // Map other fields if they exist in the API response
-            // Note: Phone and Social links might not be in the standard Coach type yet
-            // but we'll preserve local state if they aren't returned
+            phone: (data as any).phone || "",
+            website: (data as any).website || "",
+            linkedin: (data as any).linkedin || "",
+            twitter: (data as any).twitter || "",
           }));
         }
-      } catch (error) {
-        toast.error(t("coaching.profile.failedToLoad"));
+      } catch {
+        // Profile data is optional — degrade gracefully
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (user.id) {
-      fetchProfile();
-    }
+    if (user.id) fetchProfile();
   }, [user.id, user.name]);
 
   const handleSave = async () => {
     try {
+      setIsSaving(true);
       const { updateCoachProfile } = await import("@/services/coachService");
       await updateCoachProfile({
         name: profileData.name,
@@ -85,12 +84,14 @@ export default function CoachProfilePage() {
         website: profileData.website,
         linkedin: profileData.linkedin,
         twitter: profileData.twitter,
-      });
+      } as any);
 
       toast.success(t("coaching.profile.updated"));
       setIsEditing(false);
-    } catch (error) {
+    } catch {
       toast.error(t("coaching.profile.failedToUpdate"));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -99,430 +100,213 @@ export default function CoachProfilePage() {
     if (!file) return;
 
     try {
-      setIsLoading(true); // Block interaction
-
-      // Create immediate preview using safe Base64
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setAvatarPreview(base64String);
-      };
+      reader.onloadend = () => setAvatarPreview(reader.result as string);
       reader.readAsDataURL(file);
 
       toast.info(t("coaching.profile.uploading"));
-
       const { uploadProfileImage } = await import("@/services/coachService");
       await uploadProfileImage(file);
-
       toast.success(t("coaching.profile.uploadSuccess"));
-    } catch (error) {
+    } catch {
       toast.error(t("coaching.profile.uploadFailed"));
-      // Revert preview on error if desired, but user might retry
       setAvatarPreview(null);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // Calculate profile completion
   const completionPercentage = React.useMemo(() => {
-    const fields = [
-      "name",
-      "title",
-      "bio",
-      "email",
-      "phone",
-      "location",
-      "website",
-      "linkedin",
-      "twitter",
-    ];
-    const filled = fields.filter(
-      (f) => profileData[f as keyof typeof profileData]?.length > 0
-    ).length;
+    const fields = ["name", "title", "bio", "email", "phone", "location", "website", "linkedin", "twitter"];
+    const filled = fields.filter((f) => profileData[f as keyof typeof profileData]?.length > 0).length;
     return Math.round((filled / fields.length) * 100);
   }, [profileData]);
 
+  const update = (field: string, value: string) =>
+    setProfileData((prev) => ({ ...prev, [field]: value }));
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <Skeleton className="h-10 w-1/3" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <Skeleton className="lg:col-span-4 h-96" />
+          <Skeleton className="lg:col-span-8 h-96" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Coach</p>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-              Profile &amp; Identity
-            </h1>
-            <p className="text-sm text-muted-foreground max-w-xl">
-              Manage your public presence. A complete profile helps students
-              trust and connect with you.
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            {!isEditing ? (
-              <Button
-                onClick={() => setIsEditing(true)}
-              >
-                Edit Profile
-              </Button>
-            ) : (
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setIsEditing(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSave}
-                >
-                  Save Changes
-                </Button>
-              </div>
-            )}
-          </div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Coach</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mt-1">Profile</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage your public presence. A complete profile helps students connect with you.
+          </p>
         </div>
+        <div className="flex gap-2">
+          {!isEditing ? (
+            <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Sidebar (Sticky) */}
-          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-8">
-            {/* Profile Card */}
-            <div className="dash-card flex flex-col items-center text-center relative overflow-hidden group">
-              {/* Decorative Cover */}
-              <div className="absolute top-0 left-0 w-full h-36 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 opacity-90 group-hover:opacity-100 transition-opacity duration-500">
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Sidebar */}
+        <div className="lg:col-span-4 lg:sticky lg:top-8">
+          <div className="dash-card overflow-hidden">
+            {/* Avatar Section */}
+            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 h-24" />
+            <div className="flex flex-col items-center -mt-12 pb-6 px-6">
+              <div className="relative group">
+                <Avatar className="h-24 w-24 border-4 border-[var(--card,#fff)] shadow-lg">
+                  <AvatarImage src={avatarPreview || user.image || user.avatar || undefined} className="object-cover" />
+                  <AvatarFallback className="bg-[var(--admin-bg-hover)] text-muted-foreground text-3xl font-bold">
+                    {user.name?.charAt(0).toUpperCase() || "C"}
+                  </AvatarFallback>
+                </Avatar>
+                {isEditing && (
+                  <label htmlFor="avatar-upload" className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <Camera className="h-5 w-5 text-white" />
+                    <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  </label>
+                )}
               </div>
 
-              <div className="relative mt-16 mb-6">
-                <div className="h-40 w-40 rounded-full p-1.5 bg-white shadow-2xl ring-4 ring-blue-50/50 overflow-hidden relative group-hover:scale-105 transition-transform duration-500 cubic-[0.34,1.56,0.64,1]">
-                  <Avatar className="h-full w-full border-4 border-white">
-                    <AvatarImage
-                      src={
-                        avatarPreview ||
-                        user.image ||
-                        user.avatar ||
-                        undefined
-                      }
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-[var(--admin-bg-hover)] text-muted-foreground text-5xl font-bold">
-                      {user.name?.charAt(0).toUpperCase() || "C"}
-                    </AvatarFallback>
-                  </Avatar>
+              <h2 className="text-lg font-bold text-foreground mt-4">{profileData.name || "Your Name"}</h2>
+              <p className="text-sm text-muted-foreground">{profileData.title || "Coach"}</p>
 
-                  {isEditing && (
-                    <label
-                      htmlFor="avatar-upload"
-                      className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer"
-                    >
-                      <Camera className="h-8 w-8 text-white drop-shadow-lg mb-1" />
-                      <span className="text-white text-xs font-bold uppercase tracking-widest drop-shadow-md">
-                        Change
-                      </span>
-                      <input
-                        id="avatar-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageUpload}
-                      />
-                    </label>
-                  )}
+              <div className="w-full mt-6 space-y-2">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground p-2.5 rounded-lg bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))]">
+                  <Mail className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{profileData.email}</span>
                 </div>
-                {isEditing && (
-                  <div className="absolute bottom-1 right-2 translate-x-0 translate-y-0">
-                    <div className="bg-blue-600 text-white p-2.5 rounded-2xl shadow-lg border-4 border-white pointer-events-none animate-bounce">
-                      <Camera className="h-4 w-4" />
-                    </div>
+                {profileData.location && (
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground p-2.5 rounded-lg bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))]">
+                    <MapPin className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{profileData.location}</span>
                   </div>
                 )}
               </div>
 
-              <div className="px-8 pb-8 w-full">
-                <h2 className="text-2xl font-bold text-foreground mb-1">
-                  {profileData.name || "Your Name"}
-                </h2>
-                <p className="text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full text-sm inline-block mb-6">
-                  {profileData.title || "Coach Title"}
-                </p>
-
-                <div className="space-y-3 w-full">
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] p-3 rounded-2xl border border-[var(--border)] transition-colors group/item">
-                    <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shadow-sm text-blue-500">
-                      <Mail className="h-4 w-4" />
-                    </div>
-                    <span className="truncate font-medium">
-                      {profileData.email}
-                    </span>
-                  </div>
-                  {profileData.location && (
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] p-3 rounded-2xl border border-[var(--border)] transition-colors group/item">
-                      <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shadow-sm text-purple-500">
-                        <MapPin className="h-4 w-4" />
-                      </div>
-                      <span className="truncate font-medium">
-                        {profileData.location}
-                      </span>
-                    </div>
-                  )}
+              {/* Completion */}
+              <div className="w-full mt-6 pt-4 border-t border-[var(--border)]">
+                <div className="flex justify-between text-xs mb-2">
+                  <span className="text-muted-foreground font-medium">Profile Strength</span>
+                  <span className={completionPercentage === 100 ? "text-emerald-500 font-bold" : "text-blue-500 font-bold"}>
+                    {completionPercentage}%
+                  </span>
                 </div>
+                <div className="h-1.5 w-full bg-[var(--admin-bg-hover)] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${completionPercentage === 100 ? "bg-emerald-500" : "bg-blue-500"}`}
+                    style={{ width: `${completionPercentage}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                {/* Completion Widget */}
-                <div className="mt-8 pt-6 border-t border-[var(--border)]">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                      Profile Strength
-                    </span>
-                    <span
-                      className={`text-xs font-bold ${
-                        completionPercentage === 100
-                          ? "text-green-500"
-                          : "text-blue-500"
-                      }`}
-                    >
-                      {completionPercentage}%
-                    </span>
-                  </div>
-                  <div className="h-2 w-full bg-[var(--admin-bg-hover)] rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-1000 ease-out ${
-                        completionPercentage === 100
-                          ? "bg-green-500"
-                          : "bg-gradient-to-r from-blue-500 to-purple-500"
-                      }`}
-                      style={{ width: `${completionPercentage}%` }}
-                    />
-                  </div>
-                  {completionPercentage < 100 && (
-                    <p className="text-xs text-muted-foreground mt-2 font-medium">
-                      Add more details to reach 100%
-                    </p>
-                  )}
+        {/* Form */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Personal Details */}
+          <div className="dash-card overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <User className="h-4 w-4 text-blue-500" />
+              </div>
+              <div>
+                <span className="text-sm font-semibold text-foreground">Personal Details</span>
+                <p className="text-xs text-muted-foreground">Basic identity information</p>
+              </div>
+            </div>
+            <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Full Name</Label>
+                <Input value={profileData.name} onChange={(e) => update("name", e.target.value)} disabled={!isEditing} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Professional Title</Label>
+                <Input value={profileData.title} onChange={(e) => update("title", e.target.value)} disabled={!isEditing} placeholder="e.g. Career Coach" />
+              </div>
+              <div className="col-span-1 md:col-span-2 space-y-1.5">
+                <Label className="text-xs text-muted-foreground">About You</Label>
+                <Textarea value={profileData.bio} onChange={(e) => update("bio", e.target.value)} disabled={!isEditing} rows={4} placeholder="Tell students about your experience..." className="resize-none" />
+                <p className="text-right text-[11px] text-muted-foreground">{profileData.bio?.length || 0} / 500</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Email (Private)</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input value={profileData.email} disabled className="pl-9 cursor-not-allowed" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Phone (Private)</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input type="tel" value={profileData.phone} onChange={(e) => update("phone", e.target.value)} disabled={!isEditing} placeholder="+1 (555) 000-0000" className="pl-9" />
+                </div>
+              </div>
+              <div className="col-span-1 md:col-span-2 space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Location</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input value={profileData.location} onChange={(e) => update("location", e.target.value)} disabled={!isEditing} placeholder="City, Country" className="pl-9" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Edit Form */}
-          <div className="lg:col-span-8 space-y-8">
-            {/* Personal Details Card */}
-            <div className="dash-card p-8">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="h-12 w-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                  <div className="h-3 w-3 rounded-full bg-blue-600" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground">
-                    Personal Details
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    Correct information helps verify your identity.
-                  </p>
-                </div>
+          {/* Social Links */}
+          <div className="dash-card overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                <Globe className="h-4 w-4 text-purple-500" />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                <div className="space-y-2">
-                  <Label className="text-sm font-bold text-foreground ml-1">
-                    Full Name
-                  </Label>
-                  <Input
-                    value={profileData.name}
-                    onChange={(e) =>
-                      setProfileData({ ...profileData, name: e.target.value })
-                    }
-                    disabled={!isEditing}
-                    className="h-12 rounded-xl font-medium"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-bold text-foreground ml-1">
-                    Professional Title
-                  </Label>
-                  <Input
-                    value={profileData.title}
-                    onChange={(e) =>
-                      setProfileData({ ...profileData, title: e.target.value })
-                    }
-                    disabled={!isEditing}
-                    placeholder="e.g. Senior Product Designer"
-                    className="h-12 rounded-xl font-medium"
-                  />
-                </div>
-
-                <div className="col-span-1 md:col-span-2 space-y-2">
-                  <Label className="text-sm font-bold text-foreground ml-1">
-                    About You
-                  </Label>
-                  <Textarea
-                    value={profileData.bio}
-                    onChange={(e) =>
-                      setProfileData({ ...profileData, bio: e.target.value })
-                    }
-                    disabled={!isEditing}
-                    rows={4}
-                    placeholder="Tell students about your experience, expertise, and what they can expect from your sessions..."
-                    className="min-h-[140px] rounded-2xl resize-none p-4"
-                  />
-                  <p className="text-right text-xs text-muted-foreground font-medium">
-                    {profileData.bio?.length || 0} / 500 characters
-                  </p>
-                </div>
-
-                <div className="bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] rounded-2xl p-6 col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 border border-[var(--border)]">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">
-                      Email (Private)
-                    </Label>
-                    <div className="relative group">
-                      <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <Input
-                        value={profileData.email}
-                        disabled={true}
-                        className="pl-12 h-12 rounded-xl cursor-not-allowed font-medium"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">
-                      Phone (Private)
-                    </Label>
-                    <div className="relative group">
-                      <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <Input
-                        type="tel"
-                        value={profileData.phone}
-                        onChange={(e) =>
-                          setProfileData({
-                            ...profileData,
-                            phone: e.target.value,
-                          })
-                        }
-                        disabled={!isEditing}
-                        placeholder="+1 (555) 000-0000"
-                        className="pl-12 h-12 rounded-xl font-medium"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="col-span-1 md:col-span-2 space-y-2">
-                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">
-                      Location
-                    </Label>
-                    <div className="relative group">
-                      <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <Input
-                        value={profileData.location}
-                        onChange={(e) =>
-                          setProfileData({
-                            ...profileData,
-                            location: e.target.value,
-                          })
-                        }
-                        disabled={!isEditing}
-                        placeholder="City, Country"
-                        className="pl-12 h-12 rounded-xl font-medium"
-                      />
-                    </div>
-                  </div>
-                </div>
+              <div>
+                <span className="text-sm font-semibold text-foreground">Social Presence</span>
+                <p className="text-xs text-muted-foreground">Where can students find more about you?</p>
               </div>
             </div>
-
-            {/* Social Profiles */}
-            <div className="dash-card p-8">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="h-12 w-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center">
-                  <Globe className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground">
-                    Social Presence
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    Where can students find more about you?
-                  </p>
+            <div className="p-5 space-y-5">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Personal Website</Label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input type="url" value={profileData.website} onChange={(e) => update("website", e.target.value)} disabled={!isEditing} placeholder="https://yourwebsite.com" className="pl-9" />
                 </div>
               </div>
-
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <Label className="text-sm font-bold text-foreground ml-1">
-                    Personal Website
-                  </Label>
-                  <div className="relative group">
-                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground flex items-center justify-center">
-                      <Globe className="h-4 w-4" />
-                    </div>
-                    <Input
-                      type="url"
-                      value={profileData.website}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          website: e.target.value,
-                        })
-                      }
-                      disabled={!isEditing}
-                      placeholder="https://yourwebsite.com"
-                      className="pl-12 h-12 rounded-xl font-medium"
-                    />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">LinkedIn</Label>
+                  <div className="relative">
+                    <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0A66C2]" />
+                    <Input type="url" value={profileData.linkedin} onChange={(e) => update("linkedin", e.target.value)} disabled={!isEditing} placeholder="linkedin.com/in/username" className="pl-9" />
                   </div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-bold text-foreground ml-1">
-                      LinkedIn
-                    </Label>
-                    <div className="relative group">
-                      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#0A66C2] flex items-center justify-center">
-                        <Linkedin className="h-4 w-4 fill-current" />
-                      </div>
-                      <Input
-                        type="url"
-                        value={profileData.linkedin}
-                        onChange={(e) =>
-                          setProfileData({
-                            ...profileData,
-                            linkedin: e.target.value,
-                          })
-                        }
-                        disabled={!isEditing}
-                        placeholder="linkedin.com/in/username"
-                        className="pl-12 h-12 rounded-xl font-medium"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-bold text-foreground ml-1">
-                      Twitter / X
-                    </Label>
-                    <div className="relative group">
-                      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-foreground flex items-center justify-center">
-                        <Twitter className="h-4 w-4 fill-current" />
-                      </div>
-                      <Input
-                        type="url"
-                        value={profileData.twitter}
-                        onChange={(e) =>
-                          setProfileData({
-                            ...profileData,
-                            twitter: e.target.value,
-                          })
-                        }
-                        disabled={!isEditing}
-                        placeholder="twitter.com/username"
-                        className="pl-12 h-12 rounded-xl font-medium"
-                      />
-                    </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Twitter / X</Label>
+                  <div className="relative">
+                    <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground" />
+                    <Input type="url" value={profileData.twitter} onChange={(e) => update("twitter", e.target.value)} disabled={!isEditing} placeholder="twitter.com/username" className="pl-9" />
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
     </div>
   );
 }

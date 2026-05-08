@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import {
-  getCoachDetails,
+  getCoachProfile,
   getAvailability,
   getCoachBankAccount,
   getCoachPayouts,
@@ -33,22 +33,23 @@ export default function CoachSettingsPage() {
         if (!user?.id) return;
         const [detailsRes, availabilityRes, bankRes, payoutsRes] =
           await Promise.all([
-            getCoachDetails(user.id),
+            getCoachProfile(),
             getAvailability(),
             getCoachBankAccount(),
             getCoachPayouts(),
           ]);
 
-        // Service response shapes vary: some return the raw object, others return { data: object }
-        // Normalize results into the simplest usable form for the UI.
-        setCoachDetails((detailsRes as any) || null);
-        setAvailability((availabilityRes as any) || null);
+        // Normalize — services return different shapes
+        setCoachDetails((detailsRes as any)?.data || (detailsRes as any) || null);
+        setAvailability((availabilityRes as any)?.data || (availabilityRes as any) || null);
         setBankAccount((bankRes as any)?.data || (bankRes as any) || null);
 
+        const payoutsData = (payoutsRes as any);
         const payoutItems =
-          (payoutsRes as any)?.items ||
-          (payoutsRes as any)?.data ||
-          (payoutsRes as any) ||
+          payoutsData?.items ||
+          payoutsData?.data?.items ||
+          payoutsData?.data ||
+          payoutsData ||
           [];
         setPayouts(Array.isArray(payoutItems) ? payoutItems : []);
       } catch (e) {
