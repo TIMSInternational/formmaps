@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-} from "@/components/ui/card";
+import {} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,9 +17,7 @@ import {
   DollarSign,
   TrendingUp,
   Clock,
-  ArrowRight,
   Download,
-  Filter,
 } from "lucide-react";
 import {
   getCoachEarnings,
@@ -181,7 +177,7 @@ export default function EarningsPage() {
           </div>
           <Button
             variant="outline"
-            className="h-10 gap-2 rounded-xl"
+            className="gap-2"
             onClick={handleExport}
             disabled={isExporting}
           >
@@ -206,26 +202,15 @@ export default function EarningsPage() {
           ))}
         </div>
 
-        {/* Breakdown Section */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-foreground">Transaction History</h2>
-            <div className="flex gap-2">
-              {/* Tabs could go here if needed, keeping it clean for now */}
-            </div>
+        {/* Transaction History */}
+        <div className="dash-card overflow-hidden">
+          <div className="px-5 py-4 border-b border-[var(--border)] flex justify-between items-center">
+            <span className="text-sm font-semibold text-foreground">Transaction History</span>
+            <Button variant="outline" size="sm" className="h-8 gap-2 rounded-lg">
+              <Download className="w-3.5 h-3.5" />
+              Export
+            </Button>
           </div>
-
-          <div className="dash-card overflow-hidden">
-            {/* Header with Filter */}
-            <div className="p-4 border-b border-[var(--border)] flex justify-between items-center">
-              <div className="relative w-full max-w-sm">
-                {/* Search placeholder if needed */}
-              </div>
-              <Button variant="outline" size="sm" className="h-8 gap-2 rounded-lg">
-                <Filter className="w-3.5 h-3.5" />
-                Filter
-              </Button>
-            </div>
 
             <div className="overflow-x-auto">
               <Table>
@@ -320,7 +305,6 @@ export default function EarningsPage() {
                 </div>
               </div>
             )}
-          </div>
         </div>
     </div>
   );
@@ -329,13 +313,13 @@ export default function EarningsPage() {
 function LoadingState() {
   return (
     <div className="space-y-8">
-        <Skeleton className="h-10 w-1/3 rounded-xl" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-40 rounded-3xl" />
-          ))}
-        </div>
-        <Skeleton className="h-96 rounded-3xl" />
+      <Skeleton className="h-10 w-1/3" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-28" />
+        ))}
+      </div>
+      <Skeleton className="h-96" />
     </div>
   );
 }
