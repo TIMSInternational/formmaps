@@ -121,7 +121,7 @@ export default function CounselorStudentDetailPage() {
 
   const notes: CounselorNote[] = notesData?.data ?? [];
 
-  const initials = student.name
+  const initials = (student.name || "?")
     .split(" ")
     .map((w: string) => w[0])
     .join("")

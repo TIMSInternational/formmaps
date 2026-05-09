@@ -93,7 +93,7 @@ export default function ParentChildrenPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {children.map((child, idx) => {
-            const initials = child.studentName
+            const initials = (child.studentName || "?")
               .split(" ")
               .map((w) => w[0])
               .join("")
