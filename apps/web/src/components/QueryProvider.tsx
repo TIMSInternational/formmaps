@@ -4,23 +4,28 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState } from 'react';
 
+let _queryClient: QueryClient | null = null;
+
+export function getQueryClient(): QueryClient | null {
+  return _queryClient;
+}
+
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
-    () =>
-      new QueryClient({
+    () => {
+      const client = new QueryClient({
         defaultOptions: {
           queries: {
-            // Cache data for 5 minutes by default
             staleTime: 5 * 60 * 1000,
-            // Keep data in cache for 10 minutes
             gcTime: 10 * 60 * 1000,
-            // Retry failed requests 2 times
             retry: 2,
-            // Don't refetch on window focus in development
             refetchOnWindowFocus: process.env.NODE_ENV === 'production',
           },
         },
-      })
+      });
+      _queryClient = client;
+      return client;
+    }
   );
 
   return (

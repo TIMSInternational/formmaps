@@ -5,6 +5,7 @@ import { updateResume, getResumeById } from "@/services/resumeService";
 import { telemetry } from "@/services/telemetryService";
 import { isTokenExpired } from "@/utils/tokenUtils";
 import { logout as apiLogout } from "@/services/authService";
+import { getQueryClient } from "@/components/QueryProvider";
 
 // Resume Builder Types
 interface PersonalInfo {
@@ -240,7 +241,11 @@ export const useGlobalStore = create<GlobalState>()(
           apiLogout().catch(() => {});
           if (typeof window !== "undefined") {
             localStorage.removeItem("token");
+            localStorage.removeItem("refreshToken");
+            localStorage.removeItem("tokenExpiry");
           }
+          // Clear React Query cache to prevent data leak on shared devices
+          getQueryClient()?.clear();
           // Reset user state
           set({
             user: {

@@ -53,7 +53,8 @@ export default function LoginPage() {
   const { setUser } = useGlobalStore();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const defaultRedirect = searchParams.get("redirect") || "/dashboard";
+  const rawRedirect = searchParams.get("redirect") || "/dashboard";
+  const defaultRedirect = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/dashboard";
 
   const onSubmit = async (data: LoginFormData) => {
     setApiError(null);

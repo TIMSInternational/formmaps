@@ -208,7 +208,8 @@ export default function CoachOnboardingPage({
 
 
       // Redirect to dashboard
-      router.push(response.redirectUrl || `/dashboard`);
+      const redirect = response.redirectUrl;
+      router.push(redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/dashboard");
     } catch (error) {
       toast.error("Failed to submit onboarding data. Please try again.");
     } finally {

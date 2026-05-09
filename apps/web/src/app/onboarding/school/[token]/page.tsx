@@ -155,7 +155,8 @@ export default function SchoolAdminOnboardingPage({
       localStorage.removeItem(`school_onboarding_step_${token}`);
 
       // Redirect to school admin dashboard
-      router.push(response.redirectUrl || "/school-admin");
+      const redirect = response.redirectUrl;
+      router.push(redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/school-admin");
     } catch (error) {
       toast.error("Failed to submit onboarding data. Please try again.");
     } finally {
