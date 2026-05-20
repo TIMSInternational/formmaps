@@ -27,7 +27,7 @@ export interface EvaluationProgress {
 }
 
 export function useEvaluationData() {
-  const { language } = useGlobalStore();
+  const { language, user } = useGlobalStore();
   const [sessions, setSessions] = useState<EvaluationSession[]>([]);
   const [currentSession, setCurrentSession] =
     useState<EvaluationSession | null>(null);
@@ -120,7 +120,8 @@ export function useEvaluationData() {
           });
         } else {
           // Standard student flow
-          const userId = "current-user-id"; // In a real scenario, get from auth context
+          const userId = user?.id;
+          if (!userId) return;
           const evaluationGroups = await getUserEvaluationGroupsForSessions(
             userId,
             language
