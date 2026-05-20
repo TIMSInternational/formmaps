@@ -74,10 +74,12 @@ export default function PCAAssessmentPage() {
       );
 
       if (result.success && result.assessmentUrl) {
-        setAssessmentUrl(result.assessmentUrl);
+        // Open PCA survey in new tab (TIMS has mixed content issues that break iframes)
+        window.open(result.assessmentUrl, "_blank", "noopener,noreferrer");
+        toast.success(t("dashboard.assessmentStarted", "Assessment opened in a new tab. Complete it there and return here to view results."));
         setTimeout(() => {
           refreshPCAData();
-        }, 2000);
+        }, 5000);
       } else {
         toast.error(result.message || t("dashboard.failedToCreateAssessment", "Failed to create assessment"));
       }
@@ -99,38 +101,41 @@ export default function PCAAssessmentPage() {
     );
   }
 
-  // Iframe mode
+  // Assessment opened in new tab — show waiting state
   if (assessmentUrl) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="bg-card border-b border-border px-4 py-3">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setAssessmentUrl(null)}
-                className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                {t("dashboard.backToConfiguration")}
-              </button>
-              <span className="text-border">|</span>
-              <span className="text-sm font-semibold text-foreground">
-                {t("dashboard.pcaTitle")}
-              </span>
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-secondary px-2.5 py-1 rounded-md border border-border">
-              {t("dashboard.assessmentInProgress")}
-            </span>
+      <div className="max-w-4xl mx-auto py-6">
+        <Link
+          href="/dashboard/assessments"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4 transition-colors"
+        >
+          <ArrowLeft className="w-3 h-3" />
+          {t("dashboard.assessments", "Assessments")}
+        </Link>
+        <div className="dash-card p-8 text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mx-auto">
+            <Clock className="w-6 h-6 text-blue-600 animate-pulse" />
           </div>
-        </div>
-        <div className="h-[calc(100vh-53px)]">
-          <iframe
-            src={assessmentUrl}
-            className="w-full h-full border-0"
-            title="PCA Assessment"
-            allow="fullscreen"
-            sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation"
-          />
+          <h2 className="text-lg font-semibold text-foreground">
+            {t("dashboard.assessmentInProgress", "Assessment In Progress")}
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            {t("dashboard.assessmentOpenedInTab", "Your PCA assessment is open in another tab. Complete it there and click the button below to check your results.")}
+          </p>
+          <div className="flex gap-3 justify-center pt-2">
+            <button
+              onClick={() => window.open(assessmentUrl, "_blank")}
+              className="px-4 py-2 rounded-lg text-sm font-medium border border-border hover:bg-secondary transition-colors"
+            >
+              {t("dashboard.reopenAssessment", "Reopen Assessment")}
+            </button>
+            <button
+              onClick={() => { setAssessmentUrl(null); refreshPCAData(); }}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
+            >
+              {t("dashboard.checkResults", "Check Results")}
+            </button>
+          </div>
         </div>
       </div>
     );

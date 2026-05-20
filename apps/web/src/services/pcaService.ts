@@ -127,14 +127,14 @@ export async function addPCAEvaluation(
 ): Promise<PCAAssessmentResponse> {
   try {
     const langParam = language === "spanish" ? "sp" : "en";
-    const coKey = language === "spanish" ? "NXDAPS" : "NXDAPI";
 
     const result = await apiRequest(`/api/pcaapi/add-evaluation?lang=${langParam}`, {
       method: "POST",
       data: {
         UserId: userId,
-        CoKey: coKey,
-        Permail: userData.permail || userData.UserMail || "",
+        PerMail: userData.permail || userData.UserMail || "",
+        PcaTip: "D",
+        CoRegCod: langParam === "sp" ? "es-co" : "en",
         ...userData,
       },
     });
