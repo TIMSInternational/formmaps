@@ -109,17 +109,12 @@ export function useTimsCareerScoring() {
     queryFn: async () => {
       if (!userId) throw new Error("User not found");
 
-      // 1. DISC scores from PCA — backend expects "Active"/"Passive" strings
-      // Scores above 50 = Active (dominant in that trait)
-      const d = pcaData?.results?.data?.pcaD1 || 0;
-      const i = pcaData?.results?.data?.pcaI1 || 0;
-      const s = pcaData?.results?.data?.pcaS1 || 0;
-      const c = pcaData?.results?.data?.pcaC1 || 0;
+      // 1. DISC scores from PCA — send raw percentages for graduated scoring
       const discScores = {
-        d: d > 50 ? "Active" : "Passive",
-        i: i > 50 ? "Active" : "Passive",
-        s: s > 50 ? "Active" : "Passive",
-        c: c > 50 ? "Active" : "Passive",
+        d: pcaData?.results?.data?.pcaD1 || 0,
+        i: pcaData?.results?.data?.pcaI1 || 0,
+        s: pcaData?.results?.data?.pcaS1 || 0,
+        c: pcaData?.results?.data?.pcaC1 || 0,
       };
 
       // 2. MIL scores from completed exams (empty if none)

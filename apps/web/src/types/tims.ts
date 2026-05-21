@@ -1,10 +1,10 @@
 // ── Request Types ──────────────────────────────────────────
 
 export interface DISCScores {
-  d: string; // "Active" | "Passive"
-  i: string;
-  s: string;
-  c: string;
+  d: number; // Raw percentage 0-100 from PCA/TIMS
+  i: number;
+  s: number;
+  c: number;
 }
 
 export interface MILScores {
