@@ -94,6 +94,7 @@ export default function MILExamRunner({
         const examData = await startMILExam(examId, language);
         const newSession: MILSession = {
           examId,
+          apiSessionId: examData.sessionId,
           startTime: new Date().toISOString(),
           answers: [],
           currentQuestion: 0,

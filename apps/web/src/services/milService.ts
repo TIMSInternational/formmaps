@@ -160,6 +160,7 @@ export interface MILAnswer {
 
 export interface MILSession {
   examId: string;
+  apiSessionId?: string;
   startTime: string;
   answers: MILAnswer[];
   currentQuestion: number;
@@ -541,6 +542,7 @@ export async function submitMILExam(
   }));
 
   const submissionData = {
+    sessionId: session.apiSessionId,
     examId: session.examId,
     userId: userId,
     startTime: session.startTime,
@@ -588,6 +590,7 @@ export async function completeMILExam(
   }));
 
   const completionData = {
+    sessionId: session.apiSessionId,
     examId: session.examId,
     userId: userId,
     startTime: session.startTime,
