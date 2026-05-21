@@ -641,11 +641,21 @@ export default function MILInstructions({
   // Handle Practice Step
   if (currentStep === "practice") {
     return (
-      <MILPracticeExamples
-        examId={exam.id as any}
-        onComplete={() => setCurrentStep("test")}
-        onBack={() => setCurrentStep("instructions")}
-      />
+      <div>
+        <MILPracticeExamples
+          examId={exam.id as any}
+          onComplete={() => setCurrentStep("test")}
+          onBack={() => setCurrentStep("instructions")}
+        />
+        <div className="text-center py-2">
+          <button
+            onClick={() => setCurrentStep("test")}
+            className="text-xs text-muted-foreground hover:text-foreground underline transition-colors"
+          >
+            Skip practice and start test
+          </button>
+        </div>
+      </div>
     );
   }
 
