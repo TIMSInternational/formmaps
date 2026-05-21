@@ -72,7 +72,7 @@ const NAV_SECTIONS: NavSection[] = [
         sub: [
           { label: "common.overview", href: "/dashboard/assessments", icon: Eye },
           { label: "dashboard.pcaAssessment", href: "/dashboard/assessments/pca", icon: Brain },
-          { label: "dashboard.liaAssessment", href: "/dashboard/assessments/mil", icon: Scale },
+          { label: "dashboard.liaAssessment", href: "/dashboard/assessments/lia", icon: Scale },
           { label: "dashboard.evaluationTitle", href: "/dashboard/assessments/evaluation", icon: Target },
           { label: "dashboard.timeline", href: "/dashboard/timeline", icon: Clock },
         ],

@@ -45,7 +45,7 @@ const PAGES: CommandItem[] = [
 
 const ACTIONS: CommandItem[] = [
   { id: "start-pca", label: "Start PCA Assessment", description: "Personality assessment", href: "/dashboard/assessments/pca", icon: Sparkles, group: "Actions" },
-  { id: "start-mil", label: "Start MIL Assessment", description: "Cognitive assessment", href: "/dashboard/assessments/mil", icon: Compass, group: "Actions" },
+  { id: "start-mil", label: "Start MIL Assessment", description: "Cognitive assessment", href: "/dashboard/assessments/lia", icon: Compass, group: "Actions" },
   { id: "browse-universities", label: "Browse Universities", description: "Find your match", href: "/dashboard/university", icon: University, group: "Actions" },
 ];
 

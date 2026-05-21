@@ -41,7 +41,7 @@ export function JourneyProgress({
 }: JourneyProgressProps) {
   const milestones: Milestone[] = [
     { id: "pca", label: "PCA Assessment", description: "Personality profile", icon: FileText, completed: pcaCompleted, href: "/dashboard/assessments/pca" },
-    { id: "mil", label: "MIL Assessment", description: "Cognitive abilities", icon: Target, completed: milCompleted, href: "/dashboard/assessments/mil" },
+    { id: "mil", label: "MIL Assessment", description: "Cognitive abilities", icon: Target, completed: milCompleted, href: "/dashboard/assessments/lia" },
     { id: "career", label: "Career Explorer", description: "Find your match", icon: Briefcase, completed: careerExplored, href: "/dashboard/career-paths" },
     { id: "courses", label: "Start Learning", description: "Enroll in courses", icon: BookOpen, completed: coursesStarted, href: "/dashboard/learning/courses" },
     { id: "resume", label: "Build Resume", description: "AI-powered builder", icon: Award, completed: resumeBuilt, href: "/dashboard/resumes" },

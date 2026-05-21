@@ -124,7 +124,7 @@ export function MILResults({ className, milDataProp }: MILResultsProps) {
         </div>
 
         <a
-          href="/dashboard/assessments/mil"
+          href="/dashboard/assessments/lia"
           className={cn(buttonVariants({ variant: "default" }), "w-full py-3")}
         >
           <span>{t("dashboard.startAssessment")}</span>
@@ -290,7 +290,7 @@ export function MILResults({ className, milDataProp }: MILResultsProps) {
         {/* Actions */}
         <div className="flex items-center gap-3 mt-auto pt-6 border-t border-slate-100/50">
           <a
-            href="/dashboard/assessments/mil"
+            href="/dashboard/assessments/lia"
             className={cn(
               buttonVariants({ variant: isCompleted ? "default" : "default" }),
               "flex-1 py-2.5",

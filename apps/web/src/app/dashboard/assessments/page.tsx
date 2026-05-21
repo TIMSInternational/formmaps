@@ -113,7 +113,7 @@ export default function AssessmentsPage() {
       title: t("dashboard.liaTitle"),
       description: t("dashboard.liaDescription"),
       status: liaAssessment?.status || "not_started",
-      href: (liaAssessment?.status === "completed") ? "/dashboard/assessments/mil/results" : "/dashboard/assessments/mil",
+      href: (liaAssessment?.status === "completed") ? "/dashboard/assessments/lia/results" : "/dashboard/assessments/lia",
       actionLabel: liaAssessment?.status === "completed" ? t("dashboard.viewResults") : liaAssessment?.status === "in_progress" ? t("dashboard.continueLIA") : t("dashboard.startLIA"),
       isLink: true,
     },

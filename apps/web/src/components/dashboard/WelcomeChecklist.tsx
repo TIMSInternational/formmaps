@@ -54,7 +54,7 @@ export function WelcomeChecklist({
 
   const items: ChecklistItem[] = [
     { id: "pca", label: "Take PCA Assessment", description: "Discover your personality profile", href: "/dashboard/assessments/pca", icon: FileText, completed: pcaCompleted },
-    { id: "mil", label: "Take MIL Assessment", description: "Measure your cognitive abilities", href: "/dashboard/assessments/mil", icon: Target, completed: milCompleted },
+    { id: "mil", label: "Take MIL Assessment", description: "Measure your cognitive abilities", href: "/dashboard/assessments/lia", icon: Target, completed: milCompleted },
     { id: "career", label: "Explore Career Matches", description: "See your top 10 career paths", href: "/dashboard/career-paths", icon: Briefcase, completed: careerExplored },
     { id: "courses", label: "Start a Course", description: "Begin building your skills", href: "/dashboard/learning/courses", icon: BookOpen, completed: coursesStarted },
   ];

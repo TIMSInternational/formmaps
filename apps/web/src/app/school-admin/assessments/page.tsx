@@ -28,7 +28,7 @@ const assessmentMeta: Record<string, {
     description: "Measures student learning style preferences across 8 intelligence types (linguistic, logical-mathematical, spatial, musical, bodily-kinesthetic, interpersonal, intrapersonal, naturalistic).",
     color: "#3b82f6",
     features: ["Self-assessment questionnaire", "8 intelligence dimensions", "Learning style report", "Career alignment insights"],
-    studentRoute: "/dashboard/assessments/mil",
+    studentRoute: "/dashboard/assessments/lia",
   },
   PCA: {
     icon: Shield, label: "Personal Career Assessment",

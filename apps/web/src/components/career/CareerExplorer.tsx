@@ -141,7 +141,7 @@ export default function CareerExplorer() {
         name: t("career.gate.lia", "LIA Assessment"),
         description: t("career.gate.liaDesc", "Measure your cognitive abilities across 5 dimensions"),
         status: milStatus,
-        href: "/dashboard/assessments/mil",
+        href: "/dashboard/assessments/lia",
       },
       {
         name: t("career.gate.eval", "360° Evaluation"),

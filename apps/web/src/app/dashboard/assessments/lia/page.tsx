@@ -203,7 +203,7 @@ export default function MILAssessmentPage() {
   };
 
   const handleViewResults = () => {
-    window.location.href = "/dashboard/assessments/mil/results";
+    window.location.href = "/dashboard/assessments/lia/results";
   };
 
   const handleReturnToDashboard = () => {
@@ -365,7 +365,7 @@ export default function MILAssessmentPage() {
                 <p className="text-xs text-muted-foreground">All 5 cognitive subtests completed.</p>
               </div>
               <Link
-                href="/dashboard/assessments/mil/results"
+                href="/dashboard/assessments/lia/results"
                 className="bg-foreground text-background hover:bg-foreground/90 rounded-xl px-4 py-2 text-xs font-semibold transition-colors shrink-0"
               >
                 View Results
