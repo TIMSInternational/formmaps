@@ -437,7 +437,8 @@ export async function getMILExamById(
 ): Promise<MILExam> {
   try {
     const langParam = language === "spanish" ? "sp" : "en";
-    return await apiRequest(`/api/pcaexam/exams/${examId}?lang=${langParam}`);
+    const result = await apiRequest(`/api/pcaexam/exams/${examId}?lang=${langParam}`);
+    return result?.data || result;
   } catch (error) {
     if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return null as any;
     throw error;
@@ -453,10 +454,12 @@ export async function startMILExam(
 ): Promise<MILExam> {
   try {
     const langParam = language === "spanish" ? "sp" : "en";
-    return await apiRequest(
+    const result = await apiRequest(
       `/api/pcaexam/exams/${examId}/start?lang=${langParam}`,
       { method: "POST" }
     );
+    // API returns { success, data: { sessionId, questions, ... } } — unwrap
+    return result?.data || result;
   } catch (error) {
     if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return null as any;
     throw error;
@@ -472,9 +475,10 @@ export async function getMILExamInstructions(
 ): Promise<any> {
   try {
     const langParam = language === "spanish" ? "sp" : "en";
-    return await apiRequest(
+    const result = await apiRequest(
       `/api/pcaexam/exams/${examId}/instructions?lang=${langParam}`
     );
+    return result?.data || result;
   } catch (error) {
     if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return null;
 
