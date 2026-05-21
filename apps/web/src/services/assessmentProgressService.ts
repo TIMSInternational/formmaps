@@ -135,31 +135,23 @@ export async function getUserAssessmentProgress(
         // - Self-evaluation must be completed
         // - At least one from each group type (Parent, Teacher, SiblingFriend) must be completed
         // Self-evaluation has groupType "Parent" but relation "Self"
+        const gt = (g: any) => (g.groupType || "").toLowerCase();
+        const rel = (g: any) => (g.relation || "").toLowerCase();
         const selfCompleted = evaluationGroups.some(
-          (group) =>
-            (group.groupType === "Self" || group.relation === "Self") &&
-            group.isEvaluationCompleted
+          (g) => (gt(g) === "self" || rel(g) === "self") && g.isEvaluationCompleted
         );
         const parentCompleted = evaluationGroups.some(
-          (group) =>
-            group.groupType === "Parent" &&
-            group.relation !== "Self" &&
-            group.isEvaluationCompleted
+          (g) => gt(g) === "parent" && rel(g) !== "self" && g.isEvaluationCompleted
         );
         const teacherCompleted = evaluationGroups.some(
-          (group) =>
-            group.groupType === "Teacher" && group.isEvaluationCompleted
+          (g) => gt(g) === "teacher" && g.isEvaluationCompleted
         );
-        const siblingFriendCompleted = evaluationGroups.some(
-          (group) =>
-            group.groupType === "SiblingFriend" && group.isEvaluationCompleted
+        const otherCompleted = evaluationGroups.some(
+          (g) => (gt(g) === "siblingfriend" || gt(g) === "other") && g.isEvaluationCompleted
         );
 
         evaluationStatus =
-          selfCompleted &&
-            parentCompleted &&
-            teacherCompleted &&
-            siblingFriendCompleted
+          selfCompleted && parentCompleted && teacherCompleted && otherCompleted
             ? "completed"
             : "in_progress";
 
