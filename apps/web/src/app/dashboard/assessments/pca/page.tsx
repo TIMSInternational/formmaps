@@ -59,12 +59,11 @@ export default function PCAAssessmentPage() {
       const userData = {
         PerNom: user.name.split(" ")[0] || "User",
         PerApe: user.name.split(" ").slice(1).join(" ") || "Name",
-        PerNumIde: user.id.slice(-8),
+        PerNumIde: `${user.id.slice(-8)}-${Date.now().toString(36)}`,
         PerGen: selectedGender,
-        permail: user.email,
+        PerMail: user.email,
         JcaCod: selectedJCA,
         BillingCenter: "",
-        UserMail: user.email,
       };
 
       const result = await addPCAEvaluation(
