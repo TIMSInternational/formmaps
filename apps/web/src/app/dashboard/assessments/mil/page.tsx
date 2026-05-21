@@ -388,7 +388,7 @@ export default function MILAssessmentPage() {
   }
 
   // Instructions Screen
-  if (currentStep === "instructions") {
+  if (currentStep === "instructions" && exams[currentExamIndex]) {
     return (
       <MILInstructions
         exam={exams[currentExamIndex]}
@@ -399,7 +399,7 @@ export default function MILAssessmentPage() {
   }
 
   // Exam Screen
-  if (currentStep === "exam") {
+  if (currentStep === "exam" && exams[currentExamIndex]) {
     return (
       <MILExamRunner
         examId={exams[currentExamIndex].id as any}
@@ -410,7 +410,7 @@ export default function MILAssessmentPage() {
   }
 
   // Subtest Completion Screen
-  if (currentStep === "subtest-completed") {
+  if (currentStep === "subtest-completed" && exams[currentExamIndex]) {
     return (
       <MILSubtestCompletion
         completedExam={exams[currentExamIndex]}
