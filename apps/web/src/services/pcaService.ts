@@ -7,10 +7,9 @@ export interface PCAAssessmentRequest {
   PerApe: string;
   PerNumIde: string;
   PerGen: "M" | "F";
-  permail: string;
+  PerMail: string;
   JcaCod?: string;
   BillingCenter?: string;
-  UserMail: string;
 }
 
 export interface PCAAssessmentResponse {
