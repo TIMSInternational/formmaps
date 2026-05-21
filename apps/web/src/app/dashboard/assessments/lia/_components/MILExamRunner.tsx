@@ -69,21 +69,27 @@ export default function MILExamRunner({
     try {
       setLoading(true);
 
-      // Check for existing session
+      // Check for existing session — only resume if time hasn't expired
       const existingSession = loadMILSession(examId);
-      if (existingSession && !existingSession.isCompleted) {
+      const canResume = existingSession && !existingSession.isCompleted && (() => {
+        const elapsed = Math.floor((Date.now() - new Date(existingSession.startTime).getTime()) / 1000);
+        return elapsed < 600; // 10 min max — discard stale sessions
+      })();
+
+      if (canResume && existingSession) {
         const examData = await startMILExam(examId, language);
         setExam(examData);
         setSession(existingSession);
         setCurrentQuestionIndex(existingSession.currentQuestion);
 
-        // Calculate remaining time
         const elapsed = Math.floor(
           (Date.now() - new Date(existingSession.startTime).getTime()) / 1000
         );
-        const remaining = Math.max(0, examData.timeLimitMinutes * 60 - elapsed);
+        const remaining = Math.max(30, examData.timeLimitMinutes * 60 - elapsed);
         setTimeRemaining(remaining);
       } else {
+        // Clear stale session
+        if (existingSession) clearMILSession(examId);
         // Start new exam
         const examData = await startMILExam(examId, language);
         const newSession: MILSession = {
