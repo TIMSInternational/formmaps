@@ -23,12 +23,12 @@ export default function MILSubtestCompletion({
   const progressPercentage = (completedCount / totalExams) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.2 }}
-        className="bg-white rounded-2xl shadow-xl border p-6 sm:p-8 text-center max-w-md w-full"
+        className="bg-card rounded-2xl shadow-xl border p-6 sm:p-8 text-center max-w-md w-full"
       >
         {/* Success Icon */}
         <motion.div
@@ -56,10 +56,10 @@ export default function MILSubtestCompletion({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.2 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
             Subtest Complete!
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-6">
             You have successfully completed{" "}
             <strong>{completedExam.name}</strong>
           </p>
@@ -73,14 +73,14 @@ export default function MILSubtestCompletion({
           className="mb-8"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-foreground">
               Overall Progress
             </span>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-muted-foreground">
               {completedCount} of {totalExams} subtests completed
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3">
+          <div className="w-full bg-muted rounded-full h-3">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progressPercentage}%` }}
@@ -88,7 +88,7 @@ export default function MILSubtestCompletion({
               className="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full"
             />
           </div>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             {Math.round(progressPercentage)}% complete
           </p>
         </motion.div>
@@ -110,7 +110,7 @@ export default function MILSubtestCompletion({
               </button>
               <button
                 onClick={onReturnToDashboard}
-                className="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium"
+                className="w-full bg-secondary text-foreground py-3 px-6 rounded-lg hover:bg-muted transition-colors duration-200 font-medium"
               >
                 Return to Dashboard
               </button>
@@ -131,7 +131,7 @@ export default function MILSubtestCompletion({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.2 }}
-            className="text-xs text-gray-500 mt-4"
+            className="text-xs text-muted-foreground mt-4"
           >
             Take a moment to rest before continuing to the next subtest
           </motion.p>

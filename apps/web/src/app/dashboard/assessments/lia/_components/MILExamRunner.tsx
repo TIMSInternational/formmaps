@@ -280,7 +280,7 @@ export default function MILExamRunner({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.1 }}
-          className="relative bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-2 border-blue-200/60 rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-xl backdrop-blur-sm"
+          className="relative bg-card border-2 border-border rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-xl backdrop-blur-sm"
         >
           {/* Top Row */}
           <div className="grid grid-cols-4 gap-2 sm:gap-4 md:gap-8 mb-4 sm:mb-8">
@@ -292,7 +292,7 @@ export default function MILExamRunner({
                 transition={{ delay: index * 0.02, duration: 0.05 }}
                 className="text-center"
               >
-                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 font-mono tracking-wider drop-shadow-sm">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground font-mono tracking-wider drop-shadow-sm">
                   {pair.topLetter}
                 </div>
               </motion.div>
@@ -317,7 +317,7 @@ export default function MILExamRunner({
                 transition={{ delay: 0.1 + index * 0.02, duration: 0.1 }}
                 className="text-center"
               >
-                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 font-mono tracking-wider drop-shadow-sm">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground font-mono tracking-wider drop-shadow-sm">
                   {pair.bottomLetter}
                 </div>
               </motion.div>
@@ -356,11 +356,11 @@ export default function MILExamRunner({
                 <div
                   className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center ${
                     index === 1
-                      ? "bg-gradient-to-br from-purple-100 to-blue-100 border-2 border-purple-300 shadow-lg"
-                      : "bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300"
+                      ? "bg-purple-500/10 dark:bg-purple-500/20 border-2 border-purple-300 shadow-lg"
+                      : "bg-muted border-2 border-border"
                   }`}
                 >
-                  <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 font-mono">
+                  <span className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground font-mono">
                     {letter}
                   </span>
                 </div>
@@ -380,7 +380,7 @@ export default function MILExamRunner({
             transition={{ delay: 0.4, duration: 0.2 }}
             className="text-center mt-4 sm:mt-6"
           >
-            <p className="text-xs sm:text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Which outer letter is alphabetically furthest from the middle
               letter?
             </p>
@@ -427,13 +427,13 @@ export default function MILExamRunner({
                   <div
                     className={`w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl flex items-center justify-center ${
                       isMiddle
-                        ? "bg-gradient-to-br from-orange-100 to-yellow-100 border-2 border-orange-300 shadow-lg"
+                        ? "bg-orange-500/10 dark:bg-orange-500/20 border-2 border-orange-300 shadow-lg"
                         : isExtreme
-                        ? "bg-gradient-to-br from-red-100 to-orange-100 border-2 border-red-300 shadow-md"
-                        : "bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300"
+                        ? "bg-red-500/10 dark:bg-red-500/20 border-2 border-red-300 shadow-md"
+                        : "bg-muted border-2 border-border"
                     }`}
                   >
-                    <span className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 font-mono">
+                    <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground font-mono">
                       {number}
                     </span>
                   </div>
@@ -464,7 +464,7 @@ export default function MILExamRunner({
             transition={{ delay: 0.4, duration: 0.2 }}
             className="text-center mt-4 sm:mt-6"
           >
-            <p className="text-xs sm:text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Which extreme (highest or lowest) is furthest from the middle
               number?
             </p>
@@ -524,9 +524,9 @@ export default function MILExamRunner({
                 transition={{ delay: index * 0.02, duration: 0.05 }}
                 className="text-center"
               >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-white border-2 border-indigo-300 rounded-lg flex items-center justify-center shadow-sm">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-card border-2 border-indigo-300 rounded-lg flex items-center justify-center shadow-sm">
                   <span
-                    className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 font-mono inline-block transition-transform duration-200"
+                    className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground font-mono inline-block transition-transform duration-200"
                     style={{
                       transform: getTransform(pair.top),
                     }}
@@ -559,9 +559,9 @@ export default function MILExamRunner({
                 transition={{ delay: 0.1 + index * 0.02, duration: 0.1 }}
                 className="text-center"
               >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-white border-2 border-indigo-300 rounded-lg flex items-center justify-center shadow-sm">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-card border-2 border-indigo-300 rounded-lg flex items-center justify-center shadow-sm">
                   <span
-                    className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 font-mono inline-block transition-transform duration-200"
+                    className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground font-mono inline-block transition-transform duration-200"
                     style={{
                       transform: getTransform(pair.bottom),
                     }}
@@ -580,7 +580,7 @@ export default function MILExamRunner({
             transition={{ delay: 0.4, duration: 0.2 }}
             className="text-center mt-4 sm:mt-6"
           >
-            <p className="text-xs sm:text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               How many bottom figures are identical to the ones directly above
               them, after rotating them in any direction?
             </p>
@@ -601,7 +601,7 @@ export default function MILExamRunner({
           className={`px-3 py-2 sm:px-4 sm:py-3 rounded-xl font-medium text-xs sm:text-sm transition-all duration-100 min-w-[100px] sm:min-w-[120px] max-w-[180px] sm:max-w-[200px] text-center ${
             selectedAnswer === index
               ? "bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-2xl transform scale-105 ring-4 ring-blue-200/50"
-              : "bg-white border-2 border-gray-200 text-gray-700 hover:border-blue-300 hover:bg-blue-50 shadow-lg hover:shadow-xl"
+              : "bg-card border-2 border-border text-foreground hover:border-blue-300 hover:bg-blue-50 shadow-lg hover:shadow-xl"
           } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           <span className="block leading-tight">{option}</span>
@@ -622,7 +622,7 @@ export default function MILExamRunner({
           className={`w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl sm:rounded-2xl font-bold text-xl sm:text-2xl md:text-3xl transition-all duration-100 ${
             selectedAnswer === index
               ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white shadow-2xl transform scale-105 sm:scale-110 ring-2 sm:ring-4 ring-purple-200/50"
-              : "bg-white border-2 border-gray-200 text-gray-700 hover:border-purple-300 hover:bg-purple-50 shadow-lg hover:shadow-xl"
+              : "bg-card border-2 border-border text-foreground hover:border-purple-300 hover:bg-purple-50 shadow-lg hover:shadow-xl"
           } disabled:opacity-50 disabled:cursor-not-allowed font-mono`}
         >
           {letter}
@@ -647,7 +647,7 @@ export default function MILExamRunner({
           className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg md:text-xl transition-all duration-100 ${
             selectedAnswer === index
               ? "bg-gradient-to-br from-orange-600 to-red-600 text-white shadow-2xl transform scale-105 ring-2 sm:ring-4 ring-orange-200/50"
-              : "bg-white border-2 border-gray-200 text-gray-700 hover:border-orange-300 hover:bg-orange-50 shadow-lg hover:shadow-xl"
+              : "bg-card border-2 border-border text-foreground hover:border-orange-300 hover:bg-orange-50 shadow-lg hover:shadow-xl"
           } disabled:opacity-50 disabled:cursor-not-allowed font-mono`}
         >
           {number}
@@ -670,7 +670,7 @@ export default function MILExamRunner({
           className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg sm:rounded-xl font-bold text-lg sm:text-xl md:text-2xl transition-all duration-100 ${
             selectedAnswer === option
               ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-2xl transform scale-105 sm:scale-110 ring-2 sm:ring-4 ring-indigo-200/50"
-              : "bg-white border-2 border-gray-200 text-gray-700 hover:border-indigo-300 hover:bg-indigo-50 shadow-lg hover:shadow-xl"
+              : "bg-card border-2 border-border text-foreground hover:border-indigo-300 hover:bg-indigo-50 shadow-lg hover:shadow-xl"
           } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {option}
@@ -688,7 +688,7 @@ export default function MILExamRunner({
         className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg sm:rounded-xl font-bold text-lg sm:text-xl md:text-2xl transition-all duration-100 ${
           selectedAnswer === option
             ? "bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-2xl transform scale-105 sm:scale-110 ring-2 sm:ring-4 ring-blue-200/50"
-            : "bg-white border-2 border-gray-200 text-gray-700 hover:border-blue-300 hover:bg-blue-50 shadow-lg hover:shadow-xl"
+            : "bg-card border-2 border-border text-foreground hover:border-blue-300 hover:bg-blue-50 shadow-lg hover:shadow-xl"
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         {option}
@@ -698,10 +698,10 @@ export default function MILExamRunner({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading assessment...</p>
+          <p className="text-muted-foreground">Loading assessment...</p>
         </div>
       </div>
     );
@@ -709,7 +709,7 @@ export default function MILExamRunner({
 
   if (!exam || !session) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center max-w-md">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
@@ -726,10 +726,10 @@ export default function MILExamRunner({
               />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-medium text-foreground mb-2">
             Assessment Error
           </h3>
-          <p className="text-gray-600 mb-4">Failed to load assessment</p>
+          <p className="text-muted-foreground mb-4">Failed to load assessment</p>
           <button
             onClick={onBack}
             className="bg-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-700 transition-colors"
@@ -745,7 +745,7 @@ export default function MILExamRunner({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">No questions available for this assessment. Questions need to be configured.</p>
+          <p className="text-muted-foreground mb-4">No questions available for this assessment. Questions need to be configured.</p>
           <button onClick={onBack} className="bg-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-700 transition-colors">Go Back</button>
         </div>
       </div>
@@ -756,7 +756,7 @@ export default function MILExamRunner({
   const progress = ((currentQuestionIndex + 1) / exam.questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-background">
       {/* Violation Toast Notification */}
       <AnimatePresence>
         {showViolationToast && (
@@ -798,10 +798,10 @@ export default function MILExamRunner({
                   <p
                     className={`font-medium ${
                       tabViolations >= 3
-                        ? "text-red-900"
+                        ? "text-red-600 dark:text-red-400"
                         : tabViolations >= 2
                         ? "text-orange-900"
-                        : "text-yellow-900"
+                        : "text-yellow-600 dark:text-yellow-400"
                     }`}
                   >
                     {tabViolations >= 3
@@ -842,7 +842,7 @@ export default function MILExamRunner({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.1 }}
-              className="bg-white rounded-2xl p-8 text-center max-w-md shadow-2xl border"
+              className="bg-card rounded-2xl p-8 text-center max-w-md shadow-2xl border"
             >
               <div
                 className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
@@ -872,20 +872,20 @@ export default function MILExamRunner({
                 </svg>
               </div>
 
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <h3 className="text-xl font-bold text-foreground mb-2">
                 {tabViolations >= 3
                   ? "Assessment Restarting"
                   : "Return to Assessment"}
               </h3>
 
-              <p className="text-gray-600 mb-6">
+              <p className="text-muted-foreground mb-6">
                 {tabViolations >= 3
                   ? "You have exceeded the maximum number of tab switches. The assessment will restart automatically."
                   : "Please return to the assessment tab to continue. Switching tabs during the assessment is not allowed."}
               </p>
 
               {tabViolations < 3 && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   Warning {tabViolations}/3 - After 3 warnings, the assessment
                   will restart.
                 </p>
@@ -896,13 +896,13 @@ export default function MILExamRunner({
       </AnimatePresence>
 
       {/* Header */}
-      <div className="bg-white/90 backdrop-blur-md shadow-sm border-b border-white/20 sticky top-0 z-30">
+      <div className="bg-card/90 backdrop-blur-md border-b border-border border-white/20 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
               <button
                 onClick={onBack}
-                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0"
+                className="flex items-center text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
               >
                 <svg
                   className="w-4 h-4 sm:w-5 sm:h-5 mr-1"
@@ -919,26 +919,26 @@ export default function MILExamRunner({
                 </svg>
                 <span className="text-xs sm:text-sm">Back</span>
               </button>
-              <div className="h-4 sm:h-6 w-px bg-gray-300 flex-shrink-0"></div>
+              <div className="h-4 sm:h-6 w-px bg-muted flex-shrink-0"></div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-sm sm:text-lg md:text-xl font-semibold text-gray-900 truncate">
+                <h1 className="text-sm sm:text-lg md:text-xl font-semibold text-foreground truncate">
                   {exam.name}
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-500">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Q {currentQuestionIndex + 1}/{exam.questions.length}
                 </p>
               </div>
 
               {/* Mobile Progress Bar */}
               <div className="sm:hidden flex items-center space-x-2 flex-shrink-0">
-                <div className="w-16 bg-gray-200 rounded-full h-1.5">
+                <div className="w-16 bg-muted rounded-full h-1.5">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     className="bg-gradient-to-r from-blue-500 to-purple-600 h-1.5 rounded-full transition-all duration-100"
                   />
                 </div>
-                <span className="text-xs text-gray-600 min-w-[30px]">
+                <span className="text-xs text-muted-foreground min-w-[30px]">
                   {Math.round(progress)}%
                 </span>
                 {/* Mobile Question Dots - Limited */}
@@ -950,15 +950,15 @@ export default function MILExamRunner({
                         key={i}
                         className={`w-1 h-1 rounded-full transition-all duration-100 ${
                           i < currentQuestionIndex
-                            ? "bg-green-500"
+                            ? "bg-green-500/10 dark:bg-green-500/200"
                             : i === currentQuestionIndex
                             ? "bg-blue-500"
-                            : "bg-gray-300"
+                            : "bg-muted"
                         }`}
                       />
                     ))}
                   {exam.questions.length > 10 && (
-                    <span className="text-xs text-gray-500 ml-1">
+                    <span className="text-xs text-muted-foreground ml-1">
                       +{exam.questions.length - 10}
                     </span>
                   )}
@@ -967,14 +967,14 @@ export default function MILExamRunner({
 
               {/* Desktop Progress Bar */}
               <div className="hidden sm:flex items-center space-x-3 flex-shrink-0">
-                <div className="w-24 md:w-32 bg-gray-200 rounded-full h-2">
+                <div className="w-24 md:w-32 bg-muted rounded-full h-2">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-100"
                   />
                 </div>
-                <span className="text-sm text-gray-600 min-w-[50px]">
+                <span className="text-sm text-muted-foreground min-w-[50px]">
                   {Math.round(progress)}%
                 </span>
               </div>
@@ -988,15 +988,15 @@ export default function MILExamRunner({
                       key={i}
                       className={`w-1.5 h-1.5 rounded-full transition-all duration-100 ${
                         i < currentQuestionIndex
-                          ? "bg-green-500"
+                          ? "bg-green-500/10 dark:bg-green-500/200"
                           : i === currentQuestionIndex
                           ? "bg-blue-500"
-                          : "bg-gray-300"
+                          : "bg-muted"
                       }`}
                     />
                   ))}
                 {exam.questions.length > 20 && (
-                  <span className="text-xs text-gray-500 ml-1">
+                  <span className="text-xs text-muted-foreground ml-1">
                     +{exam.questions.length - 20}
                   </span>
                 )}
@@ -1010,7 +1010,7 @@ export default function MILExamRunner({
                   transition={{ duration: 0.1 }}
                   className={`flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium flex-shrink-0 ${
                     tabViolations >= 3
-                      ? "bg-red-100 text-red-800"
+                      ? "bg-red-100 text-red-600 dark:text-red-400"
                       : tabViolations >= 2
                       ? "bg-orange-100 text-orange-800"
                       : "bg-yellow-100 text-yellow-800"
@@ -1034,10 +1034,10 @@ export default function MILExamRunner({
 
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
               <div className="text-right">
-                <div className="text-sm sm:text-base md:text-lg font-bold text-gray-900">
+                <div className="text-sm sm:text-base md:text-lg font-bold text-foreground">
                   {formatTime(timeRemaining)}
                 </div>
-                <div className="text-xs text-gray-500 hidden sm:block">
+                <div className="text-xs text-muted-foreground hidden sm:block">
                   Time Remaining
                 </div>
               </div>
@@ -1054,7 +1054,7 @@ export default function MILExamRunner({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.1 }}
-            className="bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-xl border border-white/30 p-3 sm:p-6 md:p-8"
+            className="bg-card/95 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-xl border border-white/30 p-3 sm:p-6 md:p-8"
           >
             {/* Question Header */}
             <div className="text-center mb-4 sm:mb-6 md:mb-8">
@@ -1066,7 +1066,7 @@ export default function MILExamRunner({
               >
                 <div className="inline-flex items-center px-2 sm:px-3 py-1 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full mb-2 sm:mb-4">
                   <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mr-2 sm:mr-3"></div>
-                  <span className="text-xs sm:text-sm font-medium text-gray-700">
+                  <span className="text-xs sm:text-sm font-medium text-foreground">
                     Question {currentQuestionIndex + 1} of{" "}
                     {exam.questions.length}
                   </span>
@@ -1077,7 +1077,7 @@ export default function MILExamRunner({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.1 }}
-                className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-3 sm:mb-4 md:mb-6 px-2"
+                className="text-base sm:text-lg md:text-xl font-bold text-foreground mb-3 sm:mb-4 md:mb-6 px-2"
               >
                 {currentQuestion.questionText}
               </motion.h2>

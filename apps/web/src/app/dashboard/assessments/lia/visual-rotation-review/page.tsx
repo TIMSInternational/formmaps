@@ -70,17 +70,17 @@ export default function VisualRotationReviewPage() {
     const options = Array.from({ length: maxOptions + 1 }, (_, i) => i);
 
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+      <div className="bg-card border border-border rounded-lg p-6 mb-6">
         <div className="flex justify-between items-start mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-foreground">
             Question {question.questionNumber}
           </h3>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
             Pairs: {numPairs} | Correct: {question.correctAnswer}
           </div>
         </div>
 
-        <p className="text-gray-700 mb-6">{question.questionText}</p>
+        <p className="text-foreground mb-6">{question.questionText}</p>
 
         {/* Visual Rotation Display */}
         <div className="max-w-2xl mx-auto mb-6">
@@ -92,9 +92,9 @@ export default function VisualRotationReviewPage() {
             >
               {pairs.map((pair, index) => (
                 <div key={`top-${index}`} className="text-center">
-                  <div className="w-16 h-16 bg-white border-2 border-indigo-300 rounded-lg flex items-center justify-center shadow-sm">
+                  <div className="w-16 h-16 bg-card border-2 border-indigo-300 rounded-lg flex items-center justify-center shadow-sm">
                     <span
-                      className="text-2xl font-bold text-gray-800 font-mono inline-block transition-transform duration-200"
+                      className="text-2xl font-bold text-foreground font-mono inline-block transition-transform duration-200"
                       style={{
                         transform: getTransform(pair.top),
                       }}
@@ -102,7 +102,7 @@ export default function VisualRotationReviewPage() {
                       {pair.top.letter}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     {pair.top.rotationDegree}° {pair.top.isMirrored ? "M" : ""}
                   </div>
                 </div>
@@ -119,9 +119,9 @@ export default function VisualRotationReviewPage() {
             >
               {pairs.map((pair, index) => (
                 <div key={`bottom-${index}`} className="text-center">
-                  <div className="w-16 h-16 bg-white border-2 border-indigo-300 rounded-lg flex items-center justify-center shadow-sm">
+                  <div className="w-16 h-16 bg-card border-2 border-indigo-300 rounded-lg flex items-center justify-center shadow-sm">
                     <span
-                      className="text-2xl font-bold text-gray-800 font-mono inline-block transition-transform duration-200"
+                      className="text-2xl font-bold text-foreground font-mono inline-block transition-transform duration-200"
                       style={{
                         transform: getTransform(pair.bottom),
                       }}
@@ -129,7 +129,7 @@ export default function VisualRotationReviewPage() {
                       {pair.bottom.letter}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     {pair.bottom.rotationDegree}°{" "}
                     {pair.bottom.isMirrored ? "M" : ""}
                   </div>
@@ -148,7 +148,7 @@ export default function VisualRotationReviewPage() {
               className={`w-12 h-12 rounded-lg font-bold text-lg transition-all duration-100 ${
                 selectedAnswers[questionIndex] === option
                   ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-xl transform scale-110 ring-4 ring-indigo-200/50"
-                  : "bg-white border-2 border-gray-200 text-gray-700 hover:border-indigo-300 hover:bg-indigo-50 shadow-lg hover:shadow-xl"
+                  : "bg-card border-2 border-border text-foreground hover:border-indigo-300 hover:bg-indigo-50 shadow-lg hover:shadow-xl"
               }`}
             >
               {option}
@@ -157,9 +157,9 @@ export default function VisualRotationReviewPage() {
         </div>
 
         {/* Explanation */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">Explanation:</h4>
-          <p className="text-gray-700 text-sm">{question.explanation}</p>
+        <div className="bg-secondary border border-border rounded-lg p-4">
+          <h4 className="font-medium text-foreground mb-2">Explanation:</h4>
+          <p className="text-foreground text-sm">{question.explanation}</p>
 
           {/* Show selected vs correct */}
           <div className="mt-3 flex gap-4 text-sm">
@@ -169,8 +169,8 @@ export default function VisualRotationReviewPage() {
                   ? selectedAnswers[questionIndex] ===
                     parseInt(question.correctAnswer as string)
                     ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                  : "bg-gray-100 text-gray-600"
+                    : "bg-red-100 text-red-600 dark:text-red-400"
+                  : "bg-secondary text-muted-foreground"
               }`}
             >
               Your Answer: {selectedAnswers[questionIndex] ?? "Not selected"}
@@ -186,10 +186,10 @@ export default function VisualRotationReviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-secondary flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading visual rotation questions...</p>
+          <p className="text-muted-foreground">Loading visual rotation questions...</p>
         </div>
       </div>
     );
@@ -197,7 +197,7 @@ export default function VisualRotationReviewPage() {
 
   if (!exam) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-secondary flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
@@ -214,7 +214,7 @@ export default function VisualRotationReviewPage() {
               />
             </svg>
           </div>
-          <p className="text-gray-600">Failed to load visual rotation exam</p>
+          <p className="text-muted-foreground">Failed to load visual rotation exam</p>
         </div>
       </div>
     );
@@ -229,14 +229,14 @@ export default function VisualRotationReviewPage() {
   const totalAnswered = Object.keys(selectedAnswers).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-secondary">
       <div className="max-w-4xl mx-auto py-8 px-4">
         {/* Header */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <div className="bg-card border border-border rounded-lg p-6 mb-8">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             Visual Rotation Assessment - Review Mode
           </h1>
-          <p className="text-gray-600 mb-4">
+          <p className="text-muted-foreground mb-4">
             All {exam.questions.length} questions from the visual rotation
             assessment. No timer, no restrictions - perfect for review and
             testing.
@@ -249,7 +249,7 @@ export default function VisualRotationReviewPage() {
               <span>Total Questions: {exam.questions.length}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-green-500/10 dark:bg-green-500/200 rounded-full"></div>
               <span>Answered: {totalAnswered}</span>
             </div>
             <div className="flex items-center gap-2">
@@ -278,8 +278,8 @@ export default function VisualRotationReviewPage() {
         </div>
 
         {/* Summary */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mt-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Summary</h2>
+        <div className="bg-card border border-border rounded-lg p-6 mt-8">
+          <h2 className="text-xl font-semibold text-foreground mb-4">Summary</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">
@@ -287,7 +287,7 @@ export default function VisualRotationReviewPage() {
               </div>
               <div className="text-sm text-blue-800">Total Questions</div>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
+            <div className="text-center p-4 bg-green-500/10 dark:bg-green-500/20 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
                 {totalAnswered}
               </div>
@@ -297,7 +297,7 @@ export default function VisualRotationReviewPage() {
               <div className="text-2xl font-bold text-purple-600">
                 {correctAnswers}
               </div>
-              <div className="text-sm text-purple-800">Correct</div>
+              <div className="text-sm text-purple-600 dark:text-purple-400">Correct</div>
             </div>
             <div className="text-center p-4 bg-orange-50 rounded-lg">
               <div className="text-2xl font-bold text-orange-600">

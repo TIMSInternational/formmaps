@@ -447,12 +447,12 @@ export default function MILPracticeExamples({
     return (
       <div className="max-w-sm sm:max-w-md md:max-w-xl mx-auto mb-4 sm:mb-6">
         {/* Letter Pairs Container */}
-        <div className="bg-white border-2 border-blue-300 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-sm">
+        <div className="bg-card border-2 border-blue-300 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-sm">
           {/* Top Row */}
           <div className="grid grid-cols-4 gap-2 sm:gap-4 md:gap-6 mb-3 sm:mb-4 md:mb-6">
             {question.data.letterPairs.map((pair, index) => (
               <div key={`top-${index}`} className="text-center">
-                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 font-mono">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground font-mono">
                   {pair.topLetter}
                 </div>
               </div>
@@ -466,7 +466,7 @@ export default function MILPracticeExamples({
           <div className="grid grid-cols-4 gap-2 sm:gap-4 md:gap-6">
             {question.data.letterPairs.map((pair, index) => (
               <div key={`bottom-${index}`} className="text-center">
-                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 font-mono">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground font-mono">
                   {pair.bottomLetter}
                 </div>
               </div>
@@ -497,11 +497,11 @@ export default function MILPracticeExamples({
                 <div
                   className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center ${
                     index === 1
-                      ? "bg-gradient-to-br from-purple-100 to-blue-100 border-2 border-purple-300 shadow-lg"
-                      : "bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300"
+                      ? "bg-purple-500/10 dark:bg-purple-500/20 border-2 border-purple-300 shadow-lg"
+                      : "bg-muted border-2 border-border"
                   }`}
                 >
-                  <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 font-mono">
+                  <span className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground font-mono">
                     {letter}
                   </span>
                 </div>
@@ -547,13 +547,13 @@ export default function MILPracticeExamples({
                   <div
                     className={`w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl flex items-center justify-center ${
                       isMiddle
-                        ? "bg-gradient-to-br from-orange-100 to-yellow-100 border-2 border-orange-300 shadow-lg"
+                        ? "bg-orange-500/10 dark:bg-orange-500/20 border-2 border-orange-300 shadow-lg"
                         : isExtreme
-                        ? "bg-gradient-to-br from-red-100 to-orange-100 border-2 border-red-300 shadow-md"
-                        : "bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300"
+                        ? "bg-red-500/10 dark:bg-red-500/20 border-2 border-red-300 shadow-md"
+                        : "bg-muted border-2 border-border"
                     }`}
                   >
-                    <span className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 font-mono">
+                    <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground font-mono">
                       {number}
                     </span>
                   </div>
@@ -620,9 +620,9 @@ export default function MILPracticeExamples({
           >
             {pairs.map((pair, index) => (
               <div key={`top-${index}`} className="text-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white border-2 border-indigo-300 rounded-lg flex items-center justify-center shadow-sm">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-card border-2 border-indigo-300 rounded-lg flex items-center justify-center shadow-sm">
                   <span
-                    className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 font-mono inline-block transition-transform duration-200"
+                    className="text-lg sm:text-xl md:text-2xl font-bold text-foreground font-mono inline-block transition-transform duration-200"
                     style={{
                       transform: getTransform(pair.top),
                     }}
@@ -644,9 +644,9 @@ export default function MILPracticeExamples({
           >
             {pairs.map((pair, index) => (
               <div key={`bottom-${index}`} className="text-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white border-2 border-indigo-300 rounded-lg flex items-center justify-center shadow-sm">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-card border-2 border-indigo-300 rounded-lg flex items-center justify-center shadow-sm">
                   <span
-                    className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 font-mono inline-block transition-transform duration-200"
+                    className="text-lg sm:text-xl md:text-2xl font-bold text-foreground font-mono inline-block transition-transform duration-200"
                     style={{
                       transform: getTransform(pair.bottom),
                     }}
@@ -694,7 +694,7 @@ export default function MILPracticeExamples({
           className={`w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl sm:rounded-2xl font-bold text-xl sm:text-2xl md:text-3xl transition-all duration-100 ${
             selectedAnswer === index
               ? "bg-gradient-to-br from-purple-600 to-blue-600 text-white shadow-2xl transform scale-105 sm:scale-110 ring-2 sm:ring-4 ring-purple-200/50"
-              : "bg-white border-2 border-gray-200 text-gray-700 hover:border-purple-300 hover:bg-purple-50 shadow-lg hover:shadow-xl"
+              : "bg-card border-2 border-border text-foreground hover:border-purple-300 hover:bg-purple-50 shadow-lg hover:shadow-xl"
           } font-mono ${showFeedback ? "cursor-not-allowed opacity-50" : ""}`}
         >
           {letter}
@@ -718,7 +718,7 @@ export default function MILPracticeExamples({
           className={`w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-lg sm:rounded-xl font-bold text-lg sm:text-xl md:text-2xl transition-all duration-100 ${
             selectedAnswer === index
               ? "bg-gradient-to-br from-orange-600 to-red-600 text-white shadow-2xl transform scale-105 ring-2 sm:ring-4 ring-orange-200/50"
-              : "bg-white border-2 border-gray-200 text-gray-700 hover:border-orange-300 hover:bg-orange-50 shadow-lg hover:shadow-xl"
+              : "bg-card border-2 border-border text-foreground hover:border-orange-300 hover:bg-orange-50 shadow-lg hover:shadow-xl"
           } font-mono ${showFeedback ? "cursor-not-allowed opacity-50" : ""}`}
         >
           {number}
@@ -769,10 +769,10 @@ export default function MILPracticeExamples({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-secondary flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {t("dashboard.loadingPracticeExamples")}
           </p>
         </div>
@@ -782,9 +782,9 @@ export default function MILPracticeExamples({
 
   if (practiceQuestions.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-secondary flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">
+          <p className="text-muted-foreground mb-4">
             {t("dashboard.noPracticeQuestions")}
           </p>
           <button
@@ -802,19 +802,19 @@ export default function MILPracticeExamples({
 
   // Debug log to see the current question structure
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-8">
+    <div className="min-h-screen bg-secondary flex items-center justify-center py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-sm border p-8"
+          className="bg-card rounded-lg shadow-sm border p-8"
         >
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-foreground mb-2">
               {t("dashboard.practiceExamples")}
             </h1>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               {t("dashboard.answerCorrectlyToProceed")}
             </p>
 
@@ -825,16 +825,16 @@ export default function MILPracticeExamples({
                   key={index}
                   className={`w-3 h-3 rounded-full ${
                     completedQuestions[index]
-                      ? "bg-green-500"
+                      ? "bg-green-500/10 dark:bg-green-500/200"
                       : index === currentQuestion
                       ? "bg-blue-500"
-                      : "bg-gray-300"
+                      : "bg-muted"
                   }`}
                 />
               ))}
             </div>
 
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-muted-foreground">
               {t("dashboard.exampleOf", {
                 current: currentQuestion + 1,
                 total: practiceQuestions.length,
@@ -844,7 +844,7 @@ export default function MILPracticeExamples({
 
           {/* Question */}
           <div className="mb-8">
-            <h2 className="text-lg font-medium text-gray-900 text-center mb-6">
+            <h2 className="text-lg font-medium text-foreground text-center mb-6">
               {currentQ.questionText}
             </h2>
 
@@ -866,8 +866,8 @@ export default function MILPracticeExamples({
               animate={{ opacity: 1, y: 0 }}
               className={`p-4 rounded-lg mb-6 ${
                 isCorrect
-                  ? "bg-green-50 border border-green-200"
-                  : "bg-red-50 border border-red-200"
+                  ? "bg-green-500/10 dark:bg-green-500/200/10 dark:bg-green-500/10 dark:bg-green-500/200/20 border border-green-500/30"
+                  : "bg-red-500/10 dark:bg-red-500/20 border border-red-500/30"
               }`}
             >
               <div className="flex items-center mb-2">
@@ -898,7 +898,7 @@ export default function MILPracticeExamples({
                 )}
                 <span
                   className={`font-medium ${
-                    isCorrect ? "text-green-800" : "text-red-800"
+                    isCorrect ? "text-green-800" : "text-red-600 dark:text-red-400"
                   }`}
                 >
                   {isCorrect
@@ -956,7 +956,7 @@ export default function MILPracticeExamples({
           <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
             <button
               onClick={onBack}
-              className="px-4 py-2 sm:px-6 sm:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
+              className="px-4 py-2 sm:px-6 sm:py-3 border border-border text-foreground rounded-lg hover:bg-secondary transition-colors text-sm sm:text-base"
             >
               ← {t("dashboard.backToInstructions")}
             </button>

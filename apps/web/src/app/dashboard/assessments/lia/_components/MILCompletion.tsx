@@ -48,20 +48,20 @@ export default function MILCompletion({
     return {
       title: t("dashboard.milComplete"),
       message: t("dashboard.assessmentFinished"),
-      color: "text-gray-600",
+      color: "text-muted-foreground",
     };
   };
 
   const scoreInfo = getScoreMessage(overallScore);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-secondary flex items-center justify-center">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.2 }}
-          className="bg-white rounded-lg shadow-lg border p-8 text-center"
+          className="bg-card rounded-lg shadow-lg border p-8 text-center"
         >
           {/* Success Icon */}
           <motion.div
@@ -97,7 +97,7 @@ export default function MILCompletion({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-lg text-gray-600 mb-8"
+            className="text-lg text-muted-foreground mb-8"
           >
             You have completed the LIA Assessment
           </motion.p>
@@ -107,26 +107,26 @@ export default function MILCompletion({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="bg-gray-50 rounded-lg p-6 mb-8"
+            className="bg-secondary rounded-lg p-6 mb-8"
           >
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-purple-600">
                   {overallScore}%
                 </div>
-                <div className="text-sm text-gray-600">Overall Score</div>
+                <div className="text-sm text-muted-foreground">Overall Score</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-blue-600">
                   {completedCount}
                 </div>
-                <div className="text-sm text-gray-600">Subtests Completed</div>
+                <div className="text-sm text-muted-foreground">Subtests Completed</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-green-600">
                   {Math.floor(Math.random() * 20) + 60}
                 </div>
-                <div className="text-sm text-gray-600">Percentile Rank</div>
+                <div className="text-sm text-muted-foreground">Percentile Rank</div>
               </div>
             </div>
           </motion.div>
@@ -138,27 +138,27 @@ export default function MILCompletion({
             transition={{ delay: 0.6 }}
             className="text-left mb-8"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <h3 className="text-lg font-semibold text-foreground mb-4">
               Key Insights
             </h3>
             <div className="space-y-3">
               <div className="flex items-start">
                 <div className="w-2 h-2 bg-purple-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                <p className="text-gray-700">
+                <p className="text-foreground">
                   <strong>Pattern Recognition:</strong> Strong ability to
                   identify logical sequences and relationships
                 </p>
               </div>
               <div className="flex items-start">
                 <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                <p className="text-gray-700">
+                <p className="text-foreground">
                   <strong>Cognitive Processing:</strong>{" "}
                   {scoreInfo.message.toLowerCase()}
                 </p>
               </div>
               <div className="flex items-start">
                 <div className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                <p className="text-gray-700">
+                <p className="text-foreground">
                   <strong>Problem Solving:</strong> Demonstrates systematic
                   approach to complex tasks
                 </p>
@@ -192,9 +192,9 @@ export default function MILCompletion({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
-            className="mt-8 pt-6 border-t border-gray-200"
+            className="mt-8 pt-6 border-t border-border"
           >
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Your results have been saved and are available on your dashboard.
               <br />
               Assessment completed on {new Date().toLocaleDateString()}

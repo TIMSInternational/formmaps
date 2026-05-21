@@ -37,18 +37,18 @@ const ExportReportButton = dynamic(
 // --- Styled Components Aligned with Transactions Page ---
 
 const StatCard = ({ label, value, icon: Icon, color, bg, border, blobColor, sublabel }: any) => (
-  <div className={`group relative overflow-hidden rounded-2xl border ${border} bg-white p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
+  <div className={`group relative overflow-hidden rounded-2xl border ${border} bg-card p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
     <div
       className={`absolute right-0 top-0 h-24 w-24 translate-x-8 translate-y--8 rounded-full ${blobColor} opacity-5 blur-2xl transition-transform duration-500 group-hover:scale-150`}
     />
     
     <div className="relative flex items-start justify-between">
       <div>
-        <p className="text-sm font-medium text-gray-500">{label}</p>
-        <h3 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        <h3 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
           {value}
         </h3>
-        {sublabel && <p className="mt-1 text-xs text-gray-400 font-medium">{sublabel}</p>}
+        {sublabel && <p className="mt-1 text-xs text-muted-foreground font-medium">{sublabel}</p>}
       </div>
       <div className={`rounded-xl ${bg} p-3 ${color} bg-opacity-50`}>
         <Icon className="h-6 w-6" />
@@ -73,7 +73,7 @@ const SubtestCard = ({ test, index }: { test: any; index: number }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className={`group relative overflow-hidden rounded-2xl border ${border} bg-white p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
+      className={`group relative overflow-hidden rounded-2xl border ${border} bg-card p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
     >
       <div
         className={`absolute right-0 top-0 h-32 w-32 translate-x-10 translate-y--10 rounded-full ${blob} opacity-5 blur-3xl transition-transform duration-500 group-hover:scale-150`}
@@ -82,8 +82,8 @@ const SubtestCard = ({ test, index }: { test: any; index: number }) => {
       <div className="relative">
         <div className="flex justify-between items-start mb-4">
           <div>
-             <h4 className="font-bold text-gray-900 text-lg group-hover:text-indigo-600 transition-colors">{test.name}</h4>
-             <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+             <h4 className="font-bold text-foreground text-lg group-hover:text-indigo-600 transition-colors">{test.name}</h4>
+             <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {test.time}</span>
                 <span className="flex items-center gap-1"><Target className="w-3.5 h-3.5" /> {test.percentile}th %tile</span>
              </div>
@@ -93,7 +93,7 @@ const SubtestCard = ({ test, index }: { test: any; index: number }) => {
           </div>
         </div>
 
-        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
           <motion.div 
             initial={{ width: 0 }}
             animate={{ width: `${test.score}%` }}
@@ -123,10 +123,10 @@ export default function MILResultsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50/50 flex items-center justify-center">
+      <div className="min-h-screen bg-secondary/50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-gray-200 border-t-indigo-600 rounded-full animate-spin" />
-           <p className="text-gray-500 font-medium animate-pulse">{t("dashboard.loadingResults")}</p>
+          <div className="w-10 h-10 border-4 border-border border-t-indigo-600 rounded-full animate-spin" />
+           <p className="text-muted-foreground font-medium animate-pulse">{t("dashboard.loadingResults")}</p>
         </div>
       </div>
     );
@@ -164,16 +164,16 @@ export default function MILResultsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 font-sans text-gray-900">
+    <div className="min-h-screen bg-secondary/50 p-6 md:p-8 font-sans text-foreground">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
-            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-4xl font-bold text-foreground tracking-tight">
               {t("dashboard.liaResultsTitle")}
             </h1>
-            <p className="text-lg text-gray-500 font-medium">
+            <p className="text-lg text-muted-foreground font-medium">
                {completedCount === totalCount
                 ? t("dashboard.liaResultsComplete")
                 : t("dashboard.liaResultsInProgress")}
@@ -182,7 +182,7 @@ export default function MILResultsPage() {
           <div className="flex gap-3">
              <Button
               variant="outline"
-              className="h-10 gap-2 rounded-xl bg-white border-gray-200 shadow-sm text-gray-700 hover:text-gray-900"
+              className="h-10 gap-2 rounded-xl bg-card border-border shadow-sm text-foreground hover:text-foreground"
               onClick={() => window.print()}
             >
               <Printer className="w-4 h-4" />
@@ -238,7 +238,7 @@ export default function MILResultsPage() {
            {/* Left: Detailed Results (2 cols) */}
            <div className="lg:col-span-2 space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">{t("dashboard.subtestPerformance")}</h2>
+                <h2 className="text-xl font-bold text-foreground">{t("dashboard.subtestPerformance")}</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {subtestResults.map((result, idx) => (
@@ -249,8 +249,8 @@ export default function MILResultsPage() {
 
            {/* Right: Cognitive Profile (1 col) */}
            <div className="lg:col-span-1 space-y-6">
-              <h2 className="text-xl font-bold text-gray-900">{t("dashboard.cognitiveProfile")}</h2>
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 h-[400px] flex flex-col items-center justify-center relative overflow-hidden">
+              <h2 className="text-xl font-bold text-foreground">{t("dashboard.cognitiveProfile")}</h2>
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-6 h-[400px] flex flex-col items-center justify-center relative overflow-hidden">
                  {/* Decorative background blob for consistency */}
                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-purple-500/5 blur-3xl rounded-full pointer-events-none" />
                  
