@@ -140,6 +140,7 @@ export interface MILQuestion {
 
 export interface MILExam {
   id: string;
+  sessionId?: string;
   name: string;
   description: string;
   type: number;
