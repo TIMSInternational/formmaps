@@ -642,9 +642,14 @@ export default function MILInstructions({
     );
   }
 
-  // Handle Test Step
+  // Handle Test Step — trigger onStart via effect to avoid setState during render
+  useEffect(() => {
+    if (currentStep === "test") {
+      onStart();
+    }
+  }, [currentStep, onStart]);
+
   if (currentStep === "test") {
-    onStart();
     return null;
   }
 

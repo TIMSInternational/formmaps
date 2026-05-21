@@ -734,6 +734,17 @@ export default function MILExamRunner({
     );
   }
 
+  if (!exam.questions || exam.questions.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">No questions available for this assessment. Questions need to be configured.</p>
+          <button onClick={onBack} className="bg-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-700 transition-colors">Go Back</button>
+        </div>
+      </div>
+    );
+  }
+
   const currentQuestion = exam.questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / exam.questions.length) * 100;
 
