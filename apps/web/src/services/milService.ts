@@ -83,6 +83,12 @@ export async function retryPendingSubmissions(): Promise<void> {
     ...(token && { Authorization: `Bearer ${token}` }),
   };
   for (const submission of pending) {
+    // Skip stale submissions (>1 hour old) or those missing sessionId
+    const age = Date.now() - new Date(submission.timestamp).getTime();
+    if (age > 3600000 || !submission.body?.sessionId) {
+      removePendingSubmission(submission.key);
+      continue;
+    }
     try {
       const response = await submitWithRetry(
         submission.url,
