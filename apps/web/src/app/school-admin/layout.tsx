@@ -8,6 +8,7 @@ import { SchoolAdminSidebar } from "./_components/SchoolAdminSidebar";
 import { PageTopBar } from "@/components/layout/PageTopBar";
 import { ChatProvider } from "@/components/ai-chat/ChatContext";
 import { SidePanelContextProvider, SidePanelRenderer } from "@/components/side-panel/SidePanel";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 function SchoolAdminShell({ children }: { children: React.ReactNode }) {
   return (
@@ -88,7 +89,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <AdminThemeProvider>
       <ChatProvider>
-        <SchoolAdminShell>{children}</SchoolAdminShell>
+        <ErrorBoundary>
+          <SchoolAdminShell>{children}</SchoolAdminShell>
+        </ErrorBoundary>
       </ChatProvider>
     </AdminThemeProvider>
   );

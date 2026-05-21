@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { unwrapList } from "@/lib/unwrapList";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -104,15 +105,7 @@ export default function MySessionsPage() {
       const { getUserSessions } = await import("@/services/coachService");
       const response = await getUserSessions("all");
 
-      const rawSessions = Array.isArray((response as any)?.data?.sessions)
-        ? (response as any).data.sessions
-        : Array.isArray((response as any)?.data?.data)
-        ? (response as any).data.data
-        : Array.isArray((response as any)?.data)
-        ? (response as any).data
-        : Array.isArray(response)
-        ? response
-        : [];
+      const rawSessions = unwrapList(response, "sessions");
 
       const formattedSessions = rawSessions.map((session: any) => {
         const startTime = session.startTime || session.slot?.start;

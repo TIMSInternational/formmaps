@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { unwrapList } from "@/lib/unwrapList";
 import {
   Table,
   TableBody,
@@ -55,20 +56,7 @@ export function CoachesTable({ onEdit }: CoachesTableProps) {
           search: searchTerm,
         });
 
-        const anyResponse = response as any;
-
-        if (Array.isArray(anyResponse)) {
-          setCoaches(anyResponse);
-        } else if (anyResponse?.data && Array.isArray(anyResponse.data)) {
-          setCoaches(anyResponse.data);
-        } else if (
-          anyResponse?.data?.data &&
-          Array.isArray(anyResponse.data.data)
-        ) {
-          setCoaches(anyResponse.data.data);
-        } else {
-          setCoaches([]);
-        }
+        setCoaches(unwrapList(response, "coaches"));
       } catch (error) {
         toast.error(t("admin.coaches.loadingFailed"));
       } finally {

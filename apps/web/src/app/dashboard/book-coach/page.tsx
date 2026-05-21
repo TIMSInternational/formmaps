@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { unwrapList } from "@/lib/unwrapList";
 import {
   Card,
   CardContent,
@@ -46,21 +47,7 @@ export default function BookCoachPage() {
         const { getCoaches } = await import("@/services/coachService");
         const response: any = await getCoaches({ search });
 
-        // Handle different response structures
-        let coachesData: any[] = [];
-        if (Array.isArray(response)) {
-          coachesData = response;
-        } else if (response?.data) {
-          if (Array.isArray(response.data)) {
-            coachesData = response.data;
-          } else if (response.data?.coaches && Array.isArray(response.data.coaches)) {
-            coachesData = response.data.coaches;
-          } else if (response.data?.data && Array.isArray(response.data.data)) {
-            coachesData = response.data.data;
-          }
-        }
-
-        setCoaches(coachesData);
+        setCoaches(unwrapList(response, "coaches"));
       } catch (error) {
         console.error("Failed to fetch coaches:", error);
         setFetchError(t("coaching.find.fetchError", "Failed to load coaches. Please try again."));

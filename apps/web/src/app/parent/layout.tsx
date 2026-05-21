@@ -8,6 +8,7 @@ import { ParentSidebar } from "./_components/ParentSidebar";
 import { PageTopBar } from "@/components/layout/PageTopBar";
 import { ChatProvider } from "@/components/ai-chat/ChatContext";
 import { SidePanelContextProvider, SidePanelRenderer } from "@/components/side-panel/SidePanel";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 function ParentShell({ children }: { children: React.ReactNode }) {
   return (
@@ -82,7 +83,9 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
   return (
     <AdminThemeProvider>
       <ChatProvider>
-        <ParentShell>{children}</ParentShell>
+        <ErrorBoundary>
+          <ParentShell>{children}</ParentShell>
+        </ErrorBoundary>
       </ChatProvider>
     </AdminThemeProvider>
   );

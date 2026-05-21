@@ -9,6 +9,7 @@ import { ChatProvider } from "@/components/ai-chat/ChatContext";
 import { SidePanelContextProvider, SidePanelRenderer } from "@/components/side-panel/SidePanel";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 function AdminShell({ children }: { children: React.ReactNode }) {
   const { colors } = useAdminTheme();
@@ -84,7 +85,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <AdminThemeProvider>
       <ChatProvider>
-        <AdminShell>{children}</AdminShell>
+        <ErrorBoundary>
+          <AdminShell>{children}</AdminShell>
+        </ErrorBoundary>
       </ChatProvider>
     </AdminThemeProvider>
   );

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { format, isSameDay } from "date-fns";
+import { unwrapList } from "@/lib/unwrapList";
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -100,16 +101,7 @@ export default function SessionsPage() {
         // Fetch all sessions
         const sessionsData = await getCoachSessions("all");
 
-        // Robust data extraction — API returns { data: { sessions: [...] } }
-        const rawSessions = Array.isArray((sessionsData as any)?.data?.sessions)
-          ? (sessionsData as any).data.sessions
-          : Array.isArray((sessionsData as any)?.data?.data)
-            ? (sessionsData as any).data.data
-            : Array.isArray((sessionsData as any)?.data)
-              ? (sessionsData as any).data
-              : Array.isArray(sessionsData)
-                ? sessionsData
-                : [];
+        const rawSessions = unwrapList(sessionsData, "sessions");
 
         const resolveStartTs = (s: any): number | undefined => {
           const candidates = [

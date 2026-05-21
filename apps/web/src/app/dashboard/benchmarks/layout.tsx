@@ -2,6 +2,7 @@
 
 import React from "react";
 import BenchmarksHeader from "./_components/BenchmarksHeader";
+import { ErrorBoundarySection } from "@/components/ErrorBoundarySection";
 
 export default function BenchmarksLayout({
   children,
@@ -24,7 +25,9 @@ export default function BenchmarksLayout({
           onExportImage={handleExportImage}
         />
         <div className="mt-6">
-          {children}
+          <ErrorBoundarySection>
+            {children}
+          </ErrorBoundarySection>
         </div>
       </div>
     </div>

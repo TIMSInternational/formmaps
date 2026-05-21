@@ -7,9 +7,9 @@ import type {
   HolidayPayload,
 } from "@/types/calendar";
 import { apiRequest } from "@/lib/api/apiClient";
+import { unwrapList } from "@/lib/unwrapList";
 
 const unwrap = (res: any) => {
-  if (res?.data && res.data.data !== undefined) return res.data.data;
   return res?.data ?? res;
 };
 

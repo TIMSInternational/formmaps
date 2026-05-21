@@ -5,6 +5,7 @@ import { StudentSidebar } from "@/app/dashboard/_components/StudentSidebar";
 import { SidePanelContextProvider, SidePanelRenderer } from "@/components/side-panel/SidePanel";
 import { ChatProvider } from "@/components/ai-chat/ChatContext";
 import { PageTopBar } from "@/components/layout/PageTopBar";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 function CareersShell({ children }: { children: React.ReactNode }) {
   return (
@@ -65,7 +66,9 @@ export default function CareersLayout({ children }: { children: React.ReactNode 
   return (
     <AdminThemeProvider>
       <ChatProvider>
-        <CareersShell>{children}</CareersShell>
+        <ErrorBoundary>
+          <CareersShell>{children}</CareersShell>
+        </ErrorBoundary>
       </ChatProvider>
     </AdminThemeProvider>
   );

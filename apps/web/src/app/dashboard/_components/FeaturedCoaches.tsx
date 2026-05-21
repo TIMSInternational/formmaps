@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { unwrapList } from "@/lib/unwrapList";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Star,
@@ -24,8 +25,7 @@ export function FeaturedCoaches() {
     const fetchCoaches = async () => {
       try {
         const response = await getCoaches({ limit: 3 });
-        // @ts-expect-error - API response structure mismatch fix
-        setCoaches(response.data.data || response.data);
+        setCoaches(unwrapList(response, "coaches"));
       } catch (error) {
       // error handled silently
     } finally {

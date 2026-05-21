@@ -28,15 +28,13 @@ const buildPath = (endpoint: string, params?: Record<string, string | number | u
   return queryString ? `${endpoint}?${queryString}` : endpoint;
 };
 
-// Curriculum service uses a custom response unwrapper that preserves pagination shape
+// Curriculum service: unwrap response preserving pagination shape
 const unwrap = <T>(json: any): T => {
-  if (json.data && json.data.data !== undefined) {
-    if ("total" in json.data || "page" in json.data) {
-      return json.data as T;
-    }
-    return json.data.data as T;
-  }
-  return (json.data ?? json) as T;
+  const d = json?.data;
+  if (d == null) return json as T;
+  if ("total" in d || "page" in d) return d as T;
+  if (d.data !== undefined) return d.data as T;
+  return d as T;
 };
 
 // ============================================

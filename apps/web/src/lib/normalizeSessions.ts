@@ -11,9 +11,10 @@ export type NormalizedSession = {
 function extractArrayShape(input: any): any[] {
   if (!input) return [];
   if (Array.isArray(input)) return input;
-  if (input.data && Array.isArray(input.data.sessions)) return input.data.sessions;
-  if (Array.isArray(input.data)) return input.data;
-  if (input.data && Array.isArray(input.data.data)) return input.data.data;
+  const d = input.data;
+  if (d == null) return [];
+  if (Array.isArray(d)) return d;
+  if (Array.isArray(d.sessions)) return d.sessions;
   return [];
 }
 

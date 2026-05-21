@@ -1,3 +1,5 @@
+import { ErrorBoundarySection } from "@/components/ErrorBoundarySection";
+
 export default function PrintLayout({
   children,
 }: {
@@ -5,11 +7,9 @@ export default function PrintLayout({
 }) {
   return (
     <div className="min-h-screen bg-white text-slate-900 antialiased print:bg-white print:text-black">
-      {/* 
-        This layout is intentionally stripped of all navigation and sidebars.
-        It serves as a canvas for Puppeteer or browser printing.
-      */}
-      {children}
+      <ErrorBoundarySection>
+        {children}
+      </ErrorBoundarySection>
     </div>
   );
 }
