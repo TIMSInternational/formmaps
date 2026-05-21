@@ -133,7 +133,7 @@ export async function addPCAEvaluation(
       data: {
         UserId: userId,
         PerMail: userData.permail || userData.UserMail || "",
-        PcaTip: "D",
+        PcaTip: "A",
         CoRegCod: langParam === "sp" ? "es-co" : "en",
         ...userData,
       },
