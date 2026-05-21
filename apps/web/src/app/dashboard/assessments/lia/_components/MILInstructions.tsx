@@ -33,6 +33,13 @@ export default function MILInstructions({
     loadInstructions();
   }, [exam.id]);
 
+  // Trigger onStart when step transitions to "test" (must be before any early returns)
+  useEffect(() => {
+    if (currentStep === "test") {
+      onStart();
+    }
+  }, [currentStep, onStart]);
+
   const loadInstructions = async () => {
     try {
       setLoading(true);
@@ -641,13 +648,6 @@ export default function MILInstructions({
       />
     );
   }
-
-  // Handle Test Step — trigger onStart via effect to avoid setState during render
-  useEffect(() => {
-    if (currentStep === "test") {
-      onStart();
-    }
-  }, [currentStep, onStart]);
 
   if (currentStep === "test") {
     return null;
