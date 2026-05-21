@@ -331,7 +331,8 @@ export default function MILExamRunner({
   const renderLetterSequence = (question: MILQuestion) => {
     if (!question.data.letterSequence) return null;
 
-    const { letters } = question.data.letterSequence;
+    const letters = question.data.letterSequence.letters || question.data.letterSequence.outerLetters;
+    if (!letters) return null;
 
     return (
       <div className="max-w-lg mx-auto mb-6 sm:mb-8">
@@ -339,7 +340,7 @@ export default function MILExamRunner({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.1 }}
-          className="relative bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 border-2 border-purple-200/60 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-sm"
+          className="relative bg-card border-2 border-border rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-sm"
         >
           {/* Letter Sequence Display */}
           <div className="flex justify-center items-center space-x-4 sm:space-x-6 md:space-x-8">
