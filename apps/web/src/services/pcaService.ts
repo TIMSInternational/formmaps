@@ -131,9 +131,8 @@ export async function addPCAEvaluation(
       method: "POST",
       data: {
         UserId: userId,
-        PerMail: userData.permail || userData.UserMail || "",
         PcaTip: "A",
-        CoRegCod: langParam === "sp" ? "es-co" : "en",
+        CoRegCod: langParam === "sp" ? "es-co" : "es-co",
         ...userData,
       },
     });
