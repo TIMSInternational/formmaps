@@ -11,6 +11,7 @@ import { Roles } from "@/lib/permissions";
 import { roleHomeMap } from "@/lib/roleUtils";
 import { findRouteRule, resolveRedirect } from "@/lib/routePermissions";
 import { initSentry } from "@/lib/sentry";
+import { toast } from "sonner";
 
 interface AuthWrapperProps {
   children: React.ReactNode;
@@ -43,6 +44,16 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
   // Monitor token expiry in background
   useTokenMonitor(5);
+
+  // Listen for token expiry warning and show toast
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const mins = (e as CustomEvent).detail?.minutesRemaining;
+      toast.warning(`Your session expires in ${mins} minute${mins === 1 ? "" : "s"}. Save your work.`);
+    };
+    window.addEventListener("tokenExpiryWarning", handler);
+    return () => window.removeEventListener("tokenExpiryWarning", handler);
+  }, []);
 
   // Fetch and sync permissions from backend (keeps store fresh)
   useUserPermissions({ enabled: user.isAuthenticated && !isInitializing });
