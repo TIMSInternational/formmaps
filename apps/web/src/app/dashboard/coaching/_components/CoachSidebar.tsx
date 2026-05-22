@@ -107,7 +107,7 @@ export function CoachSidebar() {
   const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useGlobalStore();
+  const { user, logout } = useGlobalStore();
   const { mode, setMode, colors: themeColors } = useAdminTheme();
 
   const [collapsed, setCollapsed] = useState(false);
@@ -191,9 +191,9 @@ export function CoachSidebar() {
             background: "linear-gradient(135deg, #f59e0b, #d97706)",
             color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 11, fontWeight: 700, flexShrink: 0,
-          }}>C</div>
+          }}>{user.name?.charAt(0)?.toUpperCase() || "C"}</div>
           {!collapsed && <>
-            <span>Coach</span>
+            <span>{user.name || "Coach"}</span>
             <ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} />
           </>}
         </button>

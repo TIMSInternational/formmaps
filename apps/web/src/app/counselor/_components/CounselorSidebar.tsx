@@ -112,7 +112,7 @@ export function CounselorSidebar() {
   const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useGlobalStore();
+  const { user, logout } = useGlobalStore();
   const { mode, setMode, colors: themeColors } = useAdminTheme();
 
   const [collapsed, setCollapsed] = useState(false);
@@ -197,9 +197,9 @@ export function CounselorSidebar() {
             background: "linear-gradient(135deg, #6366f1, #4f46e5)",
             color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 11, fontWeight: 700, flexShrink: 0,
-          }}>C</div>
+          }}>{user.name?.charAt(0)?.toUpperCase() || "C"}</div>
           {!collapsed && <>
-            <span>Counselor</span>
+            <span>{user.name || "Counselor"}</span>
             <ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} />
           </>}
         </button>

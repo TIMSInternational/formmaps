@@ -185,9 +185,9 @@ export function AdminSidebar() {
             background: "linear-gradient(135deg, #8b5a6b, #4a3040)",
             color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 11, fontWeight: 700, flexShrink: 0,
-          }}>N</div>
+          }}>{user.name?.charAt(0)?.toUpperCase() || "A"}</div>
           {!collapsed && <>
-            <span>NexaDev</span>
+            <span>{user.name || "Admin"}</span>
             <ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} />
           </>}
         </button>

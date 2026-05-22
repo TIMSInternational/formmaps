@@ -140,7 +140,7 @@ export function SchoolAdminSidebar() {
   const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useGlobalStore();
+  const { user, logout } = useGlobalStore();
   const { mode, isDark, setMode, colors: themeColors } = useAdminTheme();
 
   const [collapsed, setCollapsed] = useState(false);
@@ -225,9 +225,9 @@ export function SchoolAdminSidebar() {
             background: "linear-gradient(135deg, #0d9488, #06b6d4)",
             color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 11, fontWeight: 700, flexShrink: 0,
-          }}>S</div>
+          }}>{user.name?.charAt(0)?.toUpperCase() || "S"}</div>
           {!collapsed && <>
-            <span>School Admin</span>
+            <span>{user.name || "School Admin"}</span>
             <ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} />
           </>}
         </button>

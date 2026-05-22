@@ -92,7 +92,7 @@ export function ParentSidebar() {
   const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useGlobalStore();
+  const { user, logout } = useGlobalStore();
   const { mode, setMode, colors: themeColors } = useAdminTheme();
 
   const [collapsed, setCollapsed] = useState(false);
@@ -156,8 +156,8 @@ export function ParentSidebar() {
           }}>
           <div style={{ width: 24, height: 24, borderRadius: 6, background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
             color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0,
-          }}>P</div>
-          {!collapsed && <><span>Parent</span><ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} /></>}
+          }}>{user.name?.charAt(0)?.toUpperCase() || "P"}</div>
+          {!collapsed && <><span>{user.name || "Parent"}</span><ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} /></>}
         </button>
         {!collapsed && (
           <button onClick={() => setCollapsed(true)} title="Collapse" style={{

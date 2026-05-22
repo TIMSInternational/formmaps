@@ -195,7 +195,7 @@ function TabBtn({ icon: Icon, active, onClick, title }: {
 export function StudentSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useGlobalStore();
+  const { user, logout } = useGlobalStore();
   const { t } = useTranslation();
   const { mode, setMode, colors: themeColors } = useAdminTheme();
   const { threads, currentThreadId, createThread, selectThread, deleteThread } = useChat();
@@ -280,9 +280,9 @@ export function StudentSidebar() {
             background: "linear-gradient(135deg, #8b5a6b, #4a3040)",
             color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 11, fontWeight: 700, flexShrink: 0,
-          }}>N</div>
+          }}>{user.name?.charAt(0)?.toUpperCase() || "S"}</div>
           {!collapsed && <>
-            <span>Nexa Univ</span>
+            <span>{user.name || "Student"}</span>
             <ChevronDown style={{ width: 12, height: 12, color: "var(--admin-font-light)" }} />
           </>}
         </button>
