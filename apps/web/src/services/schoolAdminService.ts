@@ -296,9 +296,9 @@ export async function updateAdminProfile(data: {
   name?: string;
   phone?: string;
 }): Promise<{ success: boolean; message: string }> {
-  return apiRequest(`/api/v1/school-admin/settings/profile${buildQueryString()}`, {
+  return apiRequest("/api/v1/user/profile", {
     method: "PUT",
-    data,
+    data: { fullName: data.name, phone: data.phone },
   });
 }
 
@@ -306,9 +306,18 @@ export async function changePassword(data: {
   currentPassword: string;
   newPassword: string;
 }): Promise<{ success: boolean; message: string }> {
-  return apiRequest(`/api/v1/school-admin/settings/password${buildQueryString()}`, {
+  // Get current user email from stored auth
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  let email = "";
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      email = payload.email || "";
+    } catch { /* ignore */ }
+  }
+  return apiRequest("/authapi/change-password", {
     method: "PUT",
-    data,
+    data: { email, password: data.newPassword },
   });
 }
 
