@@ -57,15 +57,25 @@ export async function updateSchoolProfile(payload: SchoolProfilePayload): Promis
 }
 
 export async function uploadSchoolLogo(file: File): Promise<{ logoUrl: string }> {
+  // Step 1: Upload file to S3 via upload endpoint
   const form = new FormData();
   form.append("file", file);
-  const res = await apiRequest("/api/v1/school-admin/school/logo", {
+  const uploadRes = await apiRequest("/api/v1/upload/school-logo", {
     method: "POST",
     data: form,
     headers: { "Content-Type": "multipart/form-data" },
   });
-  const data = res.data ?? res.Data ?? res;
-  return toCamel(data) as { logoUrl: string };
+  const uploadData = uploadRes.data ?? uploadRes.Data ?? uploadRes;
+  const logoUrl = uploadData.logoUrl || uploadData.url || "";
+  if (!logoUrl) throw new Error("Upload failed — no URL returned");
+
+  // Step 2: Update school profile with the new logo URL
+  await apiRequest("/api/v1/school-admin/school/profile", {
+    method: "PUT",
+    data: { logoUrl },
+  });
+
+  return { logoUrl };
 }
 
 // ============================================
