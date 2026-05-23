@@ -29,6 +29,7 @@ import {
   Home,
   MessageCircle,
   MessageCirclePlus,
+  Award,
 } from "lucide-react";
 
 type ThemeMode = "dark" | "light" | "system";
@@ -47,6 +48,13 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
       { label: t("counselor.nav.academicGaps", "Academic Gaps"), href: "/counselor/academic-gaps", icon: TrendingDown },
       { label: t("counselor.nav.evaluations", "360° Evaluations"), href: "/counselor/evaluations", icon: Radar },
       { label: t("counselor.nav.alerts", "Alerts"), href: "/counselor/alerts", icon: Bell },
+      { label: t("counselor.nav.recommendations", "Recommendations"), href: "/counselor/recommendations", icon: Award },
+    ],
+  },
+  {
+    label: t("counselor.nav.communication", "Communication"),
+    items: [
+      { label: t("counselor.nav.messages", "Messages"), href: "/messages", icon: MessageCircle },
     ],
   },
   {

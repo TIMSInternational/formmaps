@@ -100,6 +100,9 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "dashboard.portfolio", href: "/dashboard/portfolio", icon: FolderOpen },
       { label: "dashboard.coursePlan", href: "/dashboard/course-plan", icon: BookOpen },
       { label: "Applications", href: "/dashboard/applications", icon: Target },
+      { label: "Test Scores", href: "/dashboard/test-scores", icon: FileText },
+      { label: "Transcript", href: "/dashboard/transcript", icon: BookOpen },
+      { label: "Recommendations", href: "/dashboard/recommendations", icon: Award },
     ],
   },
   {
@@ -113,6 +116,12 @@ const NAV_SECTIONS: NavSection[] = [
           { label: "Find Coach", href: "/dashboard/book-coach", icon: Search },
         ],
       },
+    ],
+  },
+  {
+    label: "Communication",
+    items: [
+      { label: "Messages", href: "/messages", icon: MessageCircle },
     ],
   },
   {
