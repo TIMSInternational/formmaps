@@ -66,7 +66,70 @@ interface OnboardResult {
   linked: number;
   updated: number;
   failed: number;
-  results: Array<{ name: string; email: string; status: string; error?: string }>;
+  results: Array<{ name: string; email: string; status: string; error?: string; classLevel?: string; message?: string }>;
+}
+
+// Map API preview response to frontend shape
+function mapPreviewResponse(raw: any): PreviewResult {
+  const preview = raw.preview || [];
+  const validationErrors = raw.validationErrors || [];
+  const counselorPreview = raw.counselorPreview || [];
+  const summary = raw.summary || {};
+
+  const students: PreviewStudent[] = [
+    ...preview.map((p: any) => ({
+      name: p.name,
+      email: p.email,
+      classLevel: p.classLevel,
+      status: p.action === "create" || p.action === "link" ? "new" as const : p.action === "error" ? "error" as const : "existing" as const,
+      error: p.action === "error" ? p.message : undefined,
+      counselorName: p.counselorAssigned,
+    })),
+    ...validationErrors.map((e: any) => ({
+      name: "",
+      email: e.email || "",
+      classLevel: "",
+      status: "error" as const,
+      error: (e.errors || []).join("; "),
+    })),
+  ];
+
+  const counselors: CounselorLoad[] = counselorPreview.map((c: any) => ({
+    name: c.name,
+    currentCount: c.projectedAssignments - (preview.filter((p: any) => p.counselorAssigned === c.name).length),
+    newCount: preview.filter((p: any) => p.counselorAssigned === c.name).length,
+  }));
+
+  return {
+    students,
+    counselors,
+    summary: {
+      newCount: (summary.wouldCreate || 0) + (summary.wouldLink || 0),
+      existingCount: summary.wouldUpdate || 0,
+      errorCount: (summary.wouldFail || 0) + (summary.validationErrors || 0),
+      totalCounselors: counselorPreview.length,
+    },
+  };
+}
+
+// Map API onboard response to frontend shape
+function mapOnboardResponse(raw: any): OnboardResult {
+  const summary = raw.summary || {};
+  const results = (raw.results || []).map((r: any) => ({
+    name: r.name,
+    email: r.email,
+    classLevel: r.classLevel,
+    status: r.status,
+    error: r.status === "failed" ? r.message : undefined,
+    message: r.message || r.counselorAssigned ? `Counselor: ${r.counselorAssigned}` : undefined,
+  }));
+  return {
+    created: summary.created || 0,
+    linked: summary.linked || 0,
+    updated: summary.existing || 0,
+    failed: summary.failed || 0,
+    results,
+  };
 }
 
 // ─── CSV Helpers ──────────────────────────────────────────────────────────────
@@ -385,8 +448,8 @@ export default function BulkOnboardPage() {
         method: "POST",
         data: { students },
       });
-      const data: PreviewResult = res.data ?? res;
-      setPreviewResult(data);
+      const raw = res.data ?? res;
+      setPreviewResult(mapPreviewResponse(raw));
       setExcludedEmails(new Set());
       setStep(1);
     } catch (err: any) {
@@ -415,8 +478,8 @@ export default function BulkOnboardPage() {
         method: "POST",
         data: { students: studentsToSend },
       });
-      const result: OnboardResult = res.data ?? res;
-      setOnboardResult(result);
+      const raw = res.data ?? res;
+      setOnboardResult(mapOnboardResponse(raw));
       setStep(2);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || "Onboarding failed");
