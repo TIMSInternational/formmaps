@@ -89,7 +89,7 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
   {
     label: t("schoolAdmin.nav.communication", "Communication"),
     items: [
-      { label: t("schoolAdmin.nav.messages", "Messages"), href: "/messages", icon: MessageCircle },
+      { label: t("schoolAdmin.nav.messages", "Messages"), href: "/school-admin/messages", icon: MessageCircle },
     ],
   },
   {

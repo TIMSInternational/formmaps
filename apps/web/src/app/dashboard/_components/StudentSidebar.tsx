@@ -121,7 +121,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: "Communication",
     items: [
-      { label: "Messages", href: "/messages", icon: MessageCircle },
+      { label: "Messages", href: "/dashboard/messages", icon: MessageCircle },
     ],
   },
   {

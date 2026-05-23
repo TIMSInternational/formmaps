@@ -54,7 +54,7 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
   {
     label: t("counselor.nav.communication", "Communication"),
     items: [
-      { label: t("counselor.nav.messages", "Messages"), href: "/messages", icon: MessageCircle },
+      { label: t("counselor.nav.messages", "Messages"), href: "/counselor/messages", icon: MessageCircle },
     ],
   },
   {
