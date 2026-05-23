@@ -279,7 +279,7 @@ export default function CoursesPage() {
 
       {/* AI Import Review Dialog */}
       <Dialog open={!!aiReview} onOpenChange={(open) => { if (!open) setAiReview(null); }}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)" }}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", width: "90vw" }}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ color: "var(--admin-font-primary)" }}>
               <Sparkles style={{ width: 18, height: 18, color: "#8b5cf6" }} />
@@ -295,7 +295,7 @@ export default function CoursesPage() {
                   <FileText style={{ width: 14, height: 14, display: "inline", marginRight: 6 }} />
                   Courses ({aiReview.courses.length})
                 </h3>
-                <div style={{ maxHeight: 300, overflowY: "auto", borderRadius: 6, border: "1px solid var(--admin-border-default)" }}>
+                <div style={{ maxHeight: 500, overflowY: "auto", borderRadius: 6, border: "1px solid var(--admin-border-default)" }}>
                   <Table>
                     <TableHeader>
                       <TableRow style={{ background: "var(--admin-bg-hover)" }}>
