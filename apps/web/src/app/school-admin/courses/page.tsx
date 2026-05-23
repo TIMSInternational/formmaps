@@ -124,7 +124,12 @@ export default function CoursesPage() {
         method: "POST", data: { courses: aiReview.courses, sequences: aiReview.sequences },
       });
       const result = res.data ?? res;
-      toast.success(`Created ${result.coursesCreated} courses, ${result.sequencesCreated} sequences (${result.coursesSkipped} skipped)`);
+      const parts = [];
+      if (result.coursesCreated) parts.push(`${result.coursesCreated} custom courses created`);
+      if (result.coursesLinked) parts.push(`${result.coursesLinked} linked to catalog`);
+      if (result.sequencesCreated) parts.push(`${result.sequencesCreated} sequences`);
+      if (result.coursesSkipped) parts.push(`${result.coursesSkipped} skipped`);
+      toast.success(parts.join(", ") || "Import complete");
       setAiReview(null);
       queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
     } catch {
@@ -298,7 +303,7 @@ export default function CoursesPage() {
                         <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Name</TableHead>
                         <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Dept</TableHead>
                         <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Credits</TableHead>
-                        <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Level</TableHead>
+                        <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Type</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -309,7 +314,13 @@ export default function CoursesPage() {
                           <TableCell style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{c.department}</TableCell>
                           <TableCell style={{ fontSize: 12, color: "var(--admin-font-primary)" }}>{c.credits}</TableCell>
                           <TableCell>
-                            {c.difficulty && <Badge variant="outline" style={{ fontSize: 10 }}>{c.difficulty}</Badge>}
+                            {c.frameworkType ? (
+                              <Badge style={{ fontSize: 10, background: c.frameworkType === "AP" ? "#3b82f620" : c.frameworkType === "IB" ? "#8b5cf620" : "#14b8a620", color: c.frameworkType === "AP" ? "#3b82f6" : c.frameworkType === "IB" ? "#8b5cf6" : "#14b8a6", border: "none" }}>
+                                {c.frameworkType}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" style={{ fontSize: 10 }}>{c.difficulty || "custom"}</Badge>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
