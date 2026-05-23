@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BookOpen, Plus, Search, Upload, Loader2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, Plus, Search, Upload, Loader2, Trash2, ChevronLeft, ChevronRight, Sparkles, FileText, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSchoolCourses, useCreateSchoolCourse, useDeleteSchoolCourse, curriculumKeys } from "@/hooks/useCurriculumQueries";
@@ -31,7 +31,11 @@ export default function CoursesPage() {
   const [page, setPage] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
   const [csvImporting, setCsvImporting] = useState(false);
+  const [aiImporting, setAiImporting] = useState(false);
+  const [aiReview, setAiReview] = useState<{ courses: any[]; sequences: any[]; summary: string } | null>(null);
+  const [aiConfirming, setAiConfirming] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const aiFileRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useSchoolCourses({ search: search || undefined, department: department || undefined, page, limit: 20 });
   const createCourse = useCreateSchoolCourse();
@@ -85,6 +89,49 @@ export default function CoursesPage() {
     toast.success(`Imported ${success}, failed ${failed}`);
   };
 
+  const handleAiImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (aiFileRef.current) aiFileRef.current.value = "";
+    if (!file) return;
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) { toast.error("File too large (max 5MB)"); return; }
+    setAiImporting(true);
+    try {
+      const { apiRequest } = await import("@/lib/api/apiClient");
+      const form = new FormData();
+      form.append("file", file);
+      const res = await apiRequest("/api/v1/school-admin/courses/ai-import", {
+        method: "POST", data: form, headers: { "Content-Type": "multipart/form-data" },
+      });
+      const data = res.data ?? res;
+      if (data.courses?.length > 0) {
+        setAiReview(data);
+        toast.success(`Found ${data.courses.length} courses and ${data.sequences?.length || 0} sequences`);
+      } else {
+        toast.error("No courses found in the document");
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err.message || "Failed to process document");
+    } finally { setAiImporting(false); }
+  };
+
+  const handleAiConfirm = async () => {
+    if (!aiReview) return;
+    setAiConfirming(true);
+    try {
+      const { apiRequest } = await import("@/lib/api/apiClient");
+      const res = await apiRequest("/api/v1/school-admin/courses/ai-import/confirm", {
+        method: "POST", data: { courses: aiReview.courses, sequences: aiReview.sequences },
+      });
+      const result = res.data ?? res;
+      toast.success(`Created ${result.coursesCreated} courses, ${result.sequencesCreated} sequences (${result.coursesSkipped} skipped)`);
+      setAiReview(null);
+      queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
+    } catch {
+      toast.error("Failed to create courses");
+    } finally { setAiConfirming(false); }
+  };
+
   const courses = data?.data || [];
   const totalPages = data?.totalPages || 1;
   const depts = [...new Set(courses.map((c: any) => c.department).filter(Boolean))];
@@ -97,16 +144,25 @@ export default function CoursesPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>Course Catalog</h1>
-          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>Manage school courses, import from CSV</p>
+          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>Manage courses — add manually, CSV import, or AI-powered document import</p>
         </div>
         <div className="flex items-center gap-2">
           <input ref={fileRef} type="file" accept=".csv" onChange={handleImport} hidden />
+          <input ref={aiFileRef} type="file" accept=".pdf,.xlsx,.xls,.docx,.doc,.csv,.txt" onChange={handleAiImport} hidden />
           <button onClick={() => fileRef.current?.click()} disabled={csvImporting} style={{
             height: 32, borderRadius: 6, padding: "0 12px", fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 6,
             background: "var(--admin-bg-icon-box)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)", cursor: "pointer",
           }}>
             {csvImporting ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Upload style={{ width: 14, height: 14 }} />}
             {csvImporting ? "Importing…" : "CSV Import"}
+          </button>
+          <button onClick={() => aiFileRef.current?.click()} disabled={aiImporting} style={{
+            height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
+            background: "linear-gradient(135deg, #8b5cf6, #6366f1)", color: "#fff", border: "none", cursor: aiImporting ? "wait" : "pointer",
+            opacity: aiImporting ? 0.7 : 1,
+          }}>
+            {aiImporting ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Sparkles style={{ width: 14, height: 14 }} />}
+            {aiImporting ? "Processing…" : "AI Import"}
           </button>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
@@ -215,6 +271,90 @@ export default function CoursesPage() {
           </div>
         )}
       </div>
+
+      {/* AI Import Review Dialog */}
+      <Dialog open={!!aiReview} onOpenChange={(open) => { if (!open) setAiReview(null); }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)" }}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2" style={{ color: "var(--admin-font-primary)" }}>
+              <Sparkles style={{ width: 18, height: 18, color: "#8b5cf6" }} />
+              AI Import Review
+            </DialogTitle>
+          </DialogHeader>
+          {aiReview && (
+            <div className="space-y-4">
+              <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{aiReview.summary}</p>
+
+              <div>
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 8 }}>
+                  <FileText style={{ width: 14, height: 14, display: "inline", marginRight: 6 }} />
+                  Courses ({aiReview.courses.length})
+                </h3>
+                <div style={{ maxHeight: 300, overflowY: "auto", borderRadius: 6, border: "1px solid var(--admin-border-default)" }}>
+                  <Table>
+                    <TableHeader>
+                      <TableRow style={{ background: "var(--admin-bg-hover)" }}>
+                        <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Code</TableHead>
+                        <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Name</TableHead>
+                        <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Dept</TableHead>
+                        <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Credits</TableHead>
+                        <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Level</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {aiReview.courses.map((c: any, i: number) => (
+                        <TableRow key={i}>
+                          <TableCell style={{ fontSize: 12, fontFamily: "monospace", color: "var(--admin-font-primary)" }}>{c.code}</TableCell>
+                          <TableCell style={{ fontSize: 12, color: "var(--admin-font-primary)" }}>{c.name}</TableCell>
+                          <TableCell style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{c.department}</TableCell>
+                          <TableCell style={{ fontSize: 12, color: "var(--admin-font-primary)" }}>{c.credits}</TableCell>
+                          <TableCell>
+                            {c.difficulty && <Badge variant="outline" style={{ fontSize: 10 }}>{c.difficulty}</Badge>}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {aiReview.sequences.length > 0 && (
+                <div>
+                  <h3 style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 8 }}>
+                    Sequences ({aiReview.sequences.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {aiReview.sequences.map((seq: any, i: number) => (
+                      <div key={i} style={{ padding: "8px 12px", borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{seq.name}</div>
+                        <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
+                          {seq.courses?.join(" → ")}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <button onClick={() => setAiReview(null)} style={{
+              height: 36, borderRadius: 6, padding: "0 16px", fontSize: 13, fontWeight: 500,
+              background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
+              color: "var(--admin-font-secondary)", cursor: "pointer",
+            }}>Cancel</button>
+            <button onClick={handleAiConfirm} disabled={aiConfirming} style={{
+              height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 8,
+              background: "#14b8a6", color: "#fff", border: "none",
+              cursor: aiConfirming ? "wait" : "pointer", opacity: aiConfirming ? 0.7 : 1,
+            }}>
+              {aiConfirming ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Check style={{ width: 14, height: 14 }} />}
+              {aiConfirming ? "Creating…" : `Create ${aiReview?.courses.length || 0} Courses`}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
