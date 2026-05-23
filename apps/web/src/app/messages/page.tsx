@@ -6,7 +6,7 @@ import { useGlobalStore } from "@/store/useGlobalStore";
 
 export default function MessagesRedirect() {
   const router = useRouter();
-  const roleName = useGlobalStore((s) => s.user.roleName);
+  const roleName = useGlobalStore((s) => s.user.role);
 
   useEffect(() => {
     const role = (roleName || "").toLowerCase();
