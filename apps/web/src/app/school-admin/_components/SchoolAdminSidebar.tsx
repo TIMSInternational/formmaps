@@ -66,6 +66,7 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
       { label: t("schoolAdmin.nav.curriculum", "Curriculum"), href: "/school-admin/curriculum", icon: BookOpen },
       { label: t("schoolAdmin.nav.courses", "Courses"), href: "/school-admin/courses", icon: Library },
       { label: t("schoolAdmin.nav.sequences", "Sequences"), href: "/school-admin/course-sequences", icon: GitBranch },
+      { label: t("schoolAdmin.nav.gpaConfig", "GPA & Grading"), href: "/school-admin/gpa-config", icon: BarChart3 },
     ],
   },
   {
@@ -81,6 +82,12 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
       { label: t("schoolAdmin.nav.academicGaps", "Academic Gaps"), href: "/school-admin/academic-gaps", icon: TrendingDown },
       { label: t("schoolAdmin.nav.evaluations", "360° Evaluations"), href: "/school-admin/evaluations", icon: Radar },
       { label: t("schoolAdmin.nav.alerts", "Alerts"), href: "/school-admin/alerts", icon: Bell },
+    ],
+  },
+  {
+    label: t("schoolAdmin.nav.communication", "Communication"),
+    items: [
+      { label: t("schoolAdmin.nav.messages", "Messages"), href: "/messages", icon: MessageCircle },
     ],
   },
   {
