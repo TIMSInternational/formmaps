@@ -79,19 +79,19 @@ export async function adminListCourses(params?: {
   if (params?.page) q.set("page", String(params.page));
   if (params?.limit) q.set("limit", String(params.limit));
   if (params?.search) q.set("search", params.search);
-  const url = `/api/admin/courses?${q.toString()}`;
+  const url = `/api/course/admin?${q.toString()}`;
   const response = await apiRequest(url, { method: "GET" });
   const data = response?.data ?? response;
   return data;
 }
 
 export async function getCourseById(id: string) {
-  const response = await apiRequest(`/api/admin/courses/${id}`, { method: "GET" });
+  const response = await apiRequest(`/api/course/${id}`, { method: "GET" });
   return response?.data ?? response ?? null;
 }
 
 export async function adminCreateCourse(payload: Course) {
-  const response = await apiRequest(`/api/admin/courses`, {
+  const response = await apiRequest(`/api/course/admin`, {
     method: "POST",
     data: payload,
   });
@@ -100,14 +100,14 @@ export async function adminCreateCourse(payload: Course) {
 
 // --- Import flow wrappers (frontend -> API) ---
 export async function adminStartImport(url: string, source?: string) {
-  return apiRequest(`/api/admin/courses/import`, {
+  return apiRequest(`/api/course/admin/import`, {
     method: "POST",
     data: { url, source },
   });
 }
 
 export async function adminGetImportStatus(jobId: string) {
-  return apiRequest(`/api/admin/courses/import/${jobId}/status`, {
+  return apiRequest(`/api/course/admin/import/${jobId}/status`, {
     method: "GET",
   });
 }
@@ -116,14 +116,14 @@ export async function adminAcceptImport(
   jobId: string,
   overrides?: Record<string, any>
 ) {
-  return apiRequest(`/api/admin/courses/import/${jobId}/accept`, {
+  return apiRequest(`/api/course/admin/import/${jobId}/accept`, {
     method: "POST",
     data: { overrides },
   });
 }
 
 export async function adminUpdateCourse(id: string, payload: Partial<Course>) {
-  const response = await apiRequest(`/api/admin/courses/${id}`, {
+  const response = await apiRequest(`/api/course/admin/${id}`, {
     method: "PUT",
     data: payload,
   });
@@ -131,7 +131,7 @@ export async function adminUpdateCourse(id: string, payload: Partial<Course>) {
 }
 
 export async function adminDeleteCourse(id: string) {
-  const response = await apiRequest(`/api/admin/courses/${id}`, {
+  const response = await apiRequest(`/api/course/admin/${id}`, {
     method: "DELETE",
   });
   return response?.data ?? response;
@@ -141,7 +141,7 @@ export async function adminUpdateCourseApi(
   id: string,
   payload: Partial<Course>
 ) {
-  const response = await apiRequest(`/api/admin/courses/${id}`, {
+  const response = await apiRequest(`/api/course/admin/${id}`, {
     method: "PUT",
     data: payload,
   });
@@ -149,7 +149,7 @@ export async function adminUpdateCourseApi(
 }
 
 export async function adminDeleteCourseApi(id: string) {
-  const response = await apiRequest(`/api/admin/courses/${id}`, {
+  const response = await apiRequest(`/api/course/admin/${id}`, {
     method: "DELETE",
   });
   return response?.data ?? response;

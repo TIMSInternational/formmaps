@@ -22,25 +22,25 @@ export interface UserWithRole {
 
 // Get all roles
 export async function getAllRoles(): Promise<Role[]> {
-  const res = await apiRequest("/api/roleapi");
+  const res = await apiRequest("/api/role");
   return res.data ?? res;
 }
 
 // Get active roles only
 export async function getActiveRoles(): Promise<Role[]> {
-  const res = await apiRequest("/api/roleapi/active");
+  const res = await apiRequest("/api/role/active");
   return res.data ?? res;
 }
 
 // Get role by ID
 export async function getRoleById(roleId: string): Promise<Role> {
-  const res = await apiRequest(`/api/roleapi/${roleId}`);
+  const res = await apiRequest(`/api/role/${roleId}`);
   return res.data ?? res;
 }
 
 // Get role by name
 export async function getRoleByName(roleName: string): Promise<Role> {
-  const res = await apiRequest(`/api/roleapi/name/${roleName}`);
+  const res = await apiRequest(`/api/role/name/${roleName}`);
   return res.data ?? res;
 }
 
