@@ -279,14 +279,14 @@ export async function linkCoachBankAccount(data?: {
 }
 
 export async function getNotifications(): Promise<{ data: Notification[] }> {
-  return apiRequest(`/api/v1/notifications`);
+  return apiRequest(`/api/v1/user/notifications`);
 }
 
 export async function markNotificationRead(
   notificationId: string,
 ): Promise<{ success: boolean }> {
-  return apiRequest(`/api/v1/notifications/${notificationId}/read`, {
-    method: "PUT",
+  return apiRequest(`/api/v1/user/notifications/${notificationId}/read`, {
+    method: "PATCH",
   });
 }
 

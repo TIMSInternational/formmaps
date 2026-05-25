@@ -249,7 +249,7 @@ export async function getStudentDetailResult(
   studentId: string
 ): Promise<StudentDetailResult | null> {
   try {
-    const res = await apiRequest(`/api/v1/school-admin/results/${studentId}/detail${buildQueryString()}`);
+    const res = await apiRequest(`/api/v1/school-admin/results/${studentId}${buildQueryString()}`);
     return toCamel(res);
   } catch (error) {
     return null;
