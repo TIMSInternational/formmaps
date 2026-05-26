@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Radar, Users, CheckCircle2, Clock, AlertTriangle, Search, ChevronRight, RefreshCw, TimerReset, Send, MoreHorizontal, Loader2 } from "lucide-react";
+import { Radar, Users, CheckCircle2, Clock, AlertTriangle, Search, ChevronRight, RefreshCw, TimerReset, Send, MoreHorizontal, Loader2, CalendarDays, X } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -10,8 +11,8 @@ import { apiRequest } from "@/lib/api/apiClient";
 import { toast } from "sonner";
 import { getUserEvaluationGroups } from "@/services/evaluationService";
 
-async function extendEvaluationToken(groupId: string) {
-  return apiRequest(`/evaluation/extend-token/${groupId}`, { method: "PATCH" });
+async function extendEvaluationToken(groupId: string, days: number = 7) {
+  return apiRequest(`/evaluation/extend-token/${groupId}`, { method: "PATCH", data: { days } });
 }
 async function resetEvaluationCompletion(groupId: string) {
   return apiRequest(`/evaluation/reset-completion/${groupId}`, { method: "PATCH" });
@@ -37,6 +38,114 @@ const statusConfig = {
   not_started: { label: "Not Started", color: "var(--admin-font-tertiary)", bg: "var(--admin-bg-hover)" },
 };
 
+// ── Extend Deadline Picker ──
+function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClose }: {
+  currentExpiry: string | null;
+  isLoading: boolean;
+  onExtend: (days: number) => void;
+  onClose: () => void;
+}) {
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+
+  const currentDate = currentExpiry ? new Date(currentExpiry) : new Date();
+  const isExpired = currentDate < new Date();
+
+  const presets = [
+    { label: "1 day", days: 1 },
+    { label: "3 days", days: 3 },
+    { label: "1 week", days: 7 },
+    { label: "2 weeks", days: 14 },
+    { label: "1 month", days: 30 },
+  ];
+
+  const handleCalendarSelect = (date: Date | undefined) => {
+    if (!date) return;
+    setSelectedDate(date);
+    const diffMs = date.getTime() - Date.now();
+    const diffDays = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    onExtend(diffDays);
+  };
+
+  return (
+    <div style={{
+      marginTop: 8, borderRadius: 8,
+      background: "var(--admin-bg-card)", border: "1px solid rgba(59,130,246,0.2)",
+      overflow: "hidden",
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: "8px 12px", background: "rgba(59,130,246,0.04)",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        borderBottom: "1px solid rgba(59,130,246,0.1)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <CalendarDays style={{ width: 13, height: 13, color: "#3b82f6" }} />
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-primary)" }}>Extend Deadline</span>
+          <span style={{
+            fontSize: 10, padding: "1px 6px", borderRadius: 3,
+            background: isExpired ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.1)",
+            color: isExpired ? "#ef4444" : "#3b82f6", fontWeight: 600,
+          }}>
+            {isExpired ? "EXPIRED" : `Due ${currentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
+          </span>
+        </div>
+        <button onClick={onClose} style={{ width: 20, height: 20, borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <X style={{ width: 12, height: 12, color: "var(--admin-font-tertiary)" }} />
+        </button>
+      </div>
+
+      {/* Quick Presets */}
+      <div style={{ padding: "8px 12px", display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", fontWeight: 600 }}>Quick:</span>
+        {presets.map((p) => (
+          <button key={p.days} disabled={isLoading}
+            onClick={() => onExtend(p.days)}
+            style={{
+              height: 26, borderRadius: 5, padding: "0 10px", fontSize: 11, fontWeight: 600,
+              background: "var(--admin-bg-hover)", color: "#3b82f6",
+              border: "1px solid var(--admin-border-default)", cursor: "pointer",
+              opacity: isLoading ? 0.5 : 1,
+            }}>
+            {isLoading ? "..." : p.label}
+          </button>
+        ))}
+        <button
+          onClick={() => setShowCalendar(!showCalendar)}
+          style={{
+            height: 26, borderRadius: 5, padding: "0 10px", fontSize: 11, fontWeight: 600,
+            background: showCalendar ? "#3b82f6" : "var(--admin-bg-hover)",
+            color: showCalendar ? "#fff" : "var(--admin-font-primary)",
+            border: "1px solid var(--admin-border-default)", cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 4,
+          }}>
+          <CalendarDays style={{ width: 11, height: 11 }} />
+          Pick date
+        </button>
+      </div>
+
+      {/* Calendar */}
+      {showCalendar && (
+        <div style={{ padding: "0 12px 12px", display: "flex", justifyContent: "center" }}>
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleCalendarSelect}
+            disabled={{ before: new Date() }}
+            defaultMonth={currentDate > new Date() ? currentDate : new Date()}
+            className="rounded-md border"
+            style={{ color: "var(--admin-font-primary)" }}
+            classNames={{
+              button_previous: "h-7 w-7 p-0 flex items-center justify-center border rounded-md hover:bg-gray-100 absolute left-1 top-3",
+              button_next: "h-7 w-7 p-0 flex items-center justify-center border rounded-md hover:bg-gray-100 absolute right-1 top-3",
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Student 360 Detail Dialog ──
 function Student360Dialog({ student, open, onOpenChange }: {
   student: EvalStudent | null;
@@ -49,6 +158,8 @@ function Student360Dialog({ student, open, onOpenChange }: {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newEval, setNewEval] = useState({ name: "", email: "", relation: "Parent", groupType: "parent" });
   const [addLoading, setAddLoading] = useState(false);
+  const [extendingGroupId, setExtendingGroupId] = useState<string | null>(null);
+  const [resetConfirmGroup, setResetConfirmGroup] = useState<any>(null);
 
   const refreshGroups = async () => {
     if (!student) return;
@@ -66,13 +177,16 @@ function Student360Dialog({ student, open, onOpenChange }: {
 
   if (!student) return null;
 
-  const handleAction = async (groupId: string, action: "extend" | "resend" | "reset") => {
+  const handleAction = async (groupId: string, action: "extend" | "resend" | "reset", days?: number) => {
     setActionLoading(`${groupId}-${action}`);
     try {
-      if (action === "extend") await extendEvaluationToken(groupId);
+      if (action === "extend") {
+        await extendEvaluationToken(groupId, days || 7);
+        setExtendingGroupId(null);
+      }
       else if (action === "resend") await resendEvaluationEmail(groupId);
       else await resetEvaluationCompletion(groupId);
-      toast.success(action === "extend" ? "Token extended" : action === "resend" ? "Email resent" : "Completion reset");
+      toast.success(action === "extend" ? `Extended by ${days || 7} day(s)` : action === "resend" ? "Email resent" : "Completion reset");
       await refreshGroups();
     } catch {
       toast.error(`Failed to ${action}`);
@@ -294,10 +408,10 @@ function Student360Dialog({ student, open, onOpenChange }: {
                         </span>
                         {!isComplete && (
                           <div style={{ display: "flex", gap: 2 }}>
-                            <button title="Extend token (48h)" disabled={!!actionLoading}
-                              onClick={() => handleAction(g.id, "extend")}
-                              style={{ width: 26, height: 26, borderRadius: 4, border: "1px solid var(--admin-border-default)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              {actionLoading === `${g.id}-extend` ? <Loader2 style={{ width: 11, height: 11, animation: "spin 1s linear infinite" }} /> : <TimerReset style={{ width: 11, height: 11, color: "#3b82f6" }} />}
+                            <button title="Extend deadline" disabled={!!actionLoading}
+                              onClick={() => setExtendingGroupId(extendingGroupId === g.id ? null : g.id)}
+                              style={{ width: 26, height: 26, borderRadius: 4, border: extendingGroupId === g.id ? "1px solid #3b82f6" : "1px solid var(--admin-border-default)", background: extendingGroupId === g.id ? "rgba(59,130,246,0.05)" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <TimerReset style={{ width: 11, height: 11, color: "#3b82f6" }} />
                             </button>
                             <button title="Resend invitation" disabled={!!actionLoading}
                               onClick={() => handleAction(g.id, "resend")}
@@ -308,13 +422,22 @@ function Student360Dialog({ student, open, onOpenChange }: {
                         )}
                         {isComplete && (
                           <button title="Reset completion" disabled={!!actionLoading}
-                            onClick={() => handleAction(g.id, "reset")}
+                            onClick={() => setResetConfirmGroup(g)}
                             style={{ width: 26, height: 26, borderRadius: 4, border: "1px solid var(--admin-border-default)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            {actionLoading === `${g.id}-reset` ? <Loader2 style={{ width: 11, height: 11, animation: "spin 1s linear infinite" }} /> : <RefreshCw style={{ width: 11, height: 11, color: "#ef4444" }} />}
+                            <RefreshCw style={{ width: 11, height: 11, color: "#ef4444" }} />
                           </button>
                         )}
                       </div>
                     </div>
+                    {/* Extend deadline picker */}
+                    {extendingGroupId === g.id && !isComplete && (
+                      <ExtendDeadlinePicker
+                        currentExpiry={g.tokenExpiryDate}
+                        isLoading={actionLoading === `${g.id}-extend`}
+                        onExtend={(days) => handleAction(g.id, "extend", days)}
+                        onClose={() => setExtendingGroupId(null)}
+                      />
+                    )}
                   </div>
                 );
               })}
@@ -333,6 +456,73 @@ function Student360Dialog({ student, open, onOpenChange }: {
           </a>
         </div>
       </DialogContent>
+
+      {/* Reset Confirmation Dialog */}
+      <Dialog open={!!resetConfirmGroup} onOpenChange={(o) => { if (!o) setResetConfirmGroup(null); }}>
+        <DialogContent className="max-w-sm" style={{ padding: 0, overflow: "hidden" }} aria-describedby={undefined}>
+          <DialogHeader className="sr-only">
+            <DialogTitle>Reset Evaluation Confirmation</DialogTitle>
+            <DialogDescription>Confirm that you want to reset this evaluation</DialogDescription>
+          </DialogHeader>
+          <div style={{ padding: "20px 24px", textAlign: "center" }} className="space-y-4">
+            <div style={{
+              width: 48, height: 48, borderRadius: "50%", margin: "0 auto",
+              background: "rgba(239,68,68,0.1)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <AlertTriangle style={{ width: 24, height: 24, color: "#ef4444" }} />
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary)", marginBottom: 4 }}>
+                Reset Evaluation?
+              </h3>
+              <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", lineHeight: 1.5 }}>
+                This will <strong style={{ color: "#ef4444" }}>permanently delete</strong> all responses from{" "}
+                <strong>{resetConfirmGroup?.evaluatorName}</strong> ({resetConfirmGroup?.relation}).
+                They will need to complete the evaluation again from scratch.
+              </p>
+            </div>
+
+            <div style={{
+              padding: "10px 14px", borderRadius: 6,
+              background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)",
+              fontSize: 11, color: "#ef4444", fontWeight: 500, textAlign: "left",
+            }}>
+              This action cannot be undone. The evaluator will receive a new invitation link and their previous answers will be erased.
+            </div>
+
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", paddingTop: 4 }}>
+              <button onClick={() => setResetConfirmGroup(null)}
+                style={{
+                  height: 36, borderRadius: 6, padding: "0 20px",
+                  fontSize: 12, fontWeight: 600, background: "transparent",
+                  color: "var(--admin-font-primary)",
+                  border: "1px solid var(--admin-border-default)", cursor: "pointer",
+                }}>
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const gId = resetConfirmGroup?.id;
+                  setResetConfirmGroup(null);
+                  if (gId) await handleAction(gId, "reset");
+                }}
+                disabled={!!actionLoading}
+                style={{
+                  height: 36, borderRadius: 6, padding: "0 20px",
+                  fontSize: 12, fontWeight: 600,
+                  display: "flex", alignItems: "center", gap: 6,
+                  background: "#ef4444", color: "#fff",
+                  border: "none", cursor: "pointer",
+                }}>
+                {actionLoading ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : null}
+                Yes, Reset Evaluation
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
