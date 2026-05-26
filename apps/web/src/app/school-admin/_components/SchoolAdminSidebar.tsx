@@ -49,46 +49,15 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
     items: [
       { label: t("schoolAdmin.nav.dashboard", "Dashboard"), href: "/school-admin", icon: LayoutDashboard },
       { label: t("schoolAdmin.nav.students", "Students"), href: "/school-admin/students", icon: Users },
+      { label: t("schoolAdmin.nav.academics", "Academics"), href: "/school-admin/academics", icon: BookOpen },
+      { label: t("schoolAdmin.nav.assessments", "Assessment Hub"), href: "/school-admin/assessments", icon: ClipboardCheck },
       { label: t("schoolAdmin.nav.analytics", "Analytics"), href: "/school-admin/analytics", icon: BarChart3 },
-      { label: t("schoolAdmin.nav.results", "Results"), href: "/school-admin/results", icon: FileText },
-    ],
-  },
-  {
-    label: t("schoolAdmin.nav.schoolSetup", "School Setup"),
-    items: [
-      { label: t("schoolAdmin.nav.schoolProfile", "School Profile"), href: "/school-admin/profile", icon: Building2 },
-      { label: t("schoolAdmin.nav.usersAndRoles", "Users & Roles"), href: "/school-admin/users", icon: UserCog },
-      { label: t("schoolAdmin.nav.calendar", "Calendar"), href: "/school-admin/calendar", icon: CalendarDays },
-    ],
-  },
-  {
-    label: t("schoolAdmin.nav.academics", "Academics"),
-    items: [
-      { label: t("schoolAdmin.nav.curriculum", "Curriculum"), href: "/school-admin/curriculum", icon: BookOpen },
-      { label: t("schoolAdmin.nav.courses", "Courses"), href: "/school-admin/courses", icon: Library },
-      { label: t("schoolAdmin.nav.sequences", "Sequences"), href: "/school-admin/course-sequences", icon: GitBranch },
-      { label: t("schoolAdmin.nav.gpaConfig", "GPA & Grading"), href: "/school-admin/gpa-config", icon: BarChart3 },
-    ],
-  },
-  {
-    label: t("schoolAdmin.nav.dataAndAssessment", "Data & Assessment"),
-    items: [
-      { label: t("schoolAdmin.nav.assessments", "Assessments"), href: "/school-admin/assessments", icon: ClipboardCheck },
-      { label: t("schoolAdmin.nav.integrations", "Integrations"), href: "/school-admin/integrations", icon: Plug },
-    ],
-  },
-  {
-    label: t("schoolAdmin.nav.counselor", "Counselor"),
-    items: [
-      { label: t("schoolAdmin.nav.academicGaps", "Academic Gaps"), href: "/school-admin/academic-gaps", icon: TrendingDown },
-      { label: t("schoolAdmin.nav.evaluations", "360° Evaluations"), href: "/school-admin/evaluations", icon: Radar },
-      { label: t("schoolAdmin.nav.alerts", "Alerts"), href: "/school-admin/alerts", icon: Bell },
     ],
   },
   {
     label: t("schoolAdmin.nav.communication", "Communication"),
     items: [
-      { label: t("schoolAdmin.nav.messages", "Messages"), href: "/school-admin/messages", icon: MessageCircle },
+      { label: t("schoolAdmin.nav.communications", "Communications"), href: "/school-admin/messages", icon: MessageCircle },
     ],
   },
   {

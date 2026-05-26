@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { MessageCircle, Send, Search } from "lucide-react";
+import { MessageCircle, Send, Search, Bell } from "lucide-react";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
 import {
   listConversations,
   getConversationMessages,
@@ -12,6 +14,9 @@ import {
   MessageData,
 } from "@/services/messageService";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { AdminTabBar } from "@/app/school-admin/_components/AdminTabBar";
+
+const AlertsPanel = dynamic(() => import("./_components/AlertsPanel"));
 
 function formatTime(dateString: string | null): string {
   if (!dateString) return "";
@@ -29,7 +34,12 @@ function getInitials(name: string): string {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
 
-export default function MessagesPage() {
+const TABS = [
+  { key: "messages", label: "Messages", icon: MessageCircle },
+  { key: "alerts", label: "Alerts & Notifications", icon: Bell },
+] as const;
+
+function MessagesContent() {
   const userId = useGlobalStore((s) => s.user.id);
 
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
@@ -279,6 +289,20 @@ export default function MessagesPage() {
           )}
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+export default function MessagesPage() {
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") || "messages";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  return (
+    <div>
+      <AdminTabBar tabs={[...TABS]} activeTab={activeTab} onChange={setActiveTab} />
+      {activeTab === "messages" && <MessagesContent />}
+      {activeTab === "alerts" && <AlertsPanel />}
     </div>
   );
 }

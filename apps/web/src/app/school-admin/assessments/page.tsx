@@ -1,14 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ClipboardCheck, RotateCcw, Shield, Brain, Send, Users,
   Calendar, RefreshCw, Check, Clock, Minus, ChevronDown,
-  Sparkles, Loader2, Filter,
+  Sparkles, Loader2, Filter, FileText,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AdminTabBar } from "../_components/AdminTabBar";
+import { EvaluationsPanel } from "./_components/EvaluationsPanel";
+import { ResultsPanel } from "./_components/ResultsPanel";
 import {
   getSchedules, saveSchedules, getPipeline, sendReminders,
   setup360, getInsights,
@@ -503,6 +507,14 @@ const thStyle: React.CSSProperties = {
 import React from "react";
 
 export default function AssessmentCommandCenter() {
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState("command-center");
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "evaluations" || tab === "results" || tab === "command-center") setActiveTab(tab);
+  }, [searchParams]);
+
   // Queries
   const insightsQuery = useQuery({ queryKey: ["assessment-insights"], queryFn: () => getInsights(), staleTime: 1000 * 60 * 10 });
   const schedulesQuery = useQuery({ queryKey: ["assessment-schedules"], queryFn: getSchedules, staleTime: 1000 * 60 * 5 });
@@ -568,28 +580,46 @@ export default function AssessmentCommandCenter() {
         </p>
       </div>
 
-      {/* Insights */}
-      <InsightsCard
-        insights={insightsQuery.data}
-        onRefresh={() => refreshInsights.mutate()}
-        isRefreshing={refreshInsights.isPending}
+      <AdminTabBar
+        tabs={[
+          { key: "command-center", label: "Command Center", icon: ClipboardCheck },
+          { key: "evaluations", label: "360 Evaluations", icon: RotateCcw },
+          { key: "results", label: "Results & Reports", icon: FileText },
+        ]}
+        activeTab={activeTab}
+        onChange={setActiveTab}
       />
 
-      {/* Schedule */}
-      <ScheduleGrid
-        schedules={schedulesQuery.data || []}
-        onSave={s => saveSchedulesMut.mutate(s)}
-        isSaving={saveSchedulesMut.isPending}
-      />
+      {activeTab === "command-center" && (
+        <>
+          {/* Insights */}
+          <InsightsCard
+            insights={insightsQuery.data}
+            onRefresh={() => refreshInsights.mutate()}
+            isRefreshing={refreshInsights.isPending}
+          />
 
-      {/* Pipeline */}
-      <PipelineTable
-        pipeline={pipelineQuery.data || []}
-        onSendReminders={(ids, types) => remindersMut.mutate({ ids, types })}
-        onSetup360={ids => setup360Mut.mutate(ids)}
-        isSendingReminders={remindersMut.isPending}
-        isSettingUp360={setup360Mut.isPending}
-      />
+          {/* Schedule */}
+          <ScheduleGrid
+            schedules={schedulesQuery.data || []}
+            onSave={s => saveSchedulesMut.mutate(s)}
+            isSaving={saveSchedulesMut.isPending}
+          />
+
+          {/* Pipeline */}
+          <PipelineTable
+            pipeline={pipelineQuery.data || []}
+            onSendReminders={(ids, types) => remindersMut.mutate({ ids, types })}
+            onSetup360={ids => setup360Mut.mutate(ids)}
+            isSendingReminders={remindersMut.isPending}
+            isSettingUp360={setup360Mut.isPending}
+          />
+        </>
+      )}
+
+      {activeTab === "evaluations" && <EvaluationsPanel />}
+
+      {activeTab === "results" && <ResultsPanel />}
     </div>
   );
 }

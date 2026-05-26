@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useStudents, useSchoolAdminStats } from "@/hooks/useSchoolAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,18 +18,27 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Search, Users, UserPlus, MoreHorizontal, UserCheck, Eye, Mail, TrendingUp, BookOpen, Upload,
+  Search, Users, UserPlus, MoreHorizontal, UserCheck, Eye, Mail, TrendingUp, BookOpen, Upload, Shield, UserCog,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TableRowsSkeleton } from "@/components/skeletons/TableSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminStatCard } from "@/app/admin/_components/AdminStatCard";
 import { AdminTabBar } from "../_components/AdminTabBar";
+import dynamic from "next/dynamic";
+const StaffPanel = dynamic(() => import("./_components/StaffPanel").then(m => ({ default: m.StaffPanel })));
+const CounselorAssignPanel = dynamic(() => import("./_components/CounselorAssignPanel").then(m => ({ default: m.CounselorAssignPanel })));
 
 export default function StudentsPage() {
   const [activeTab, setActiveTab] = useState("roster");
   const { t } = useTranslation();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && ["roster", "onboard", "staff", "counselors"].includes(tab)) setActiveTab(tab);
+  }, [searchParams]);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [page, setPage] = useState(1);
@@ -90,12 +99,18 @@ export default function StudentsPage() {
         tabs={[
           { key: "roster", label: "Roster", icon: Users, count: stats?.totalStudents },
           { key: "onboard", label: "Invite & Onboard", icon: Upload },
+          { key: "staff", label: "Staff & Roles", icon: Shield },
+          { key: "counselors", label: "Counselor Assignments", icon: UserCog },
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}
       />
 
-      {activeTab === "onboard" ? (
+      {activeTab === "staff" ? (
+        <StaffPanel />
+      ) : activeTab === "counselors" ? (
+        <CounselorAssignPanel />
+      ) : activeTab === "onboard" ? (
         <div style={{ textAlign: "center", padding: 40 }}>
           <Upload style={{ width: 40, height: 40, color: "var(--admin-font-light)", margin: "0 auto 16px" }} />
           <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 8 }}>Invite & Onboard Students</h2>

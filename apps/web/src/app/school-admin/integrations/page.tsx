@@ -3,5 +3,5 @@
 import { redirect } from "next/navigation";
 
 export default function IntegrationsPage() {
-  redirect("/school-admin/integrations/isams");
+  redirect("/school-admin/settings?tab=integrations");
 }
