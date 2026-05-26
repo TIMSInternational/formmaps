@@ -25,7 +25,11 @@ import {
   ShieldCheck,
   User,
   Users,
-  Activity
+  Activity,
+  Brain,
+  BarChart3,
+  Lightbulb,
+  AlertTriangle,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,12 +62,46 @@ import {
   useStudentCommunityService,
   useVerifyCommunityServiceEntry,
 } from "@/hooks/useCommunityServiceQueries";
+import {
+  useStudentMILResults,
+  useStudentPCAHistory,
+  useStudentEvalGroups,
+  useStudentEvalProgress,
+  useStudentAcademicGaps,
+  useStudentRecommendations,
+  useStudentTranscript,
+  useStudentGpa,
+} from "@/hooks/useStudentDetailData";
 
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { StudentStatus } from "@/types/student";
 import type { NoteType, CounselorNote } from "@/types/counselorNotes";
-import type { CommunityServiceStatus } from "@/types/communityService";
+
+// Reusable card header
+function CardHeader({ icon: Icon, color, title, badge }: { icon: any; color: string; title: string; badge?: React.ReactNode }) {
+  return (
+    <div style={{
+      padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+      display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
+    }}>
+      <Icon style={{ width: 14, height: 14, color }} />
+      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{title}</span>
+      {badge}
+    </div>
+  );
+}
+
+function Card({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={className} style={{
+      borderRadius: 8, border: "1px solid var(--admin-border-default)",
+      background: "var(--admin-bg-card)", overflow: "hidden",
+    }}>
+      {children}
+    </div>
+  );
+}
 
 export default function StudentDetailsPage() {
   const { t } = useTranslation();
@@ -83,6 +121,16 @@ export default function StudentDetailsPage() {
   const adminRemove = useSchoolAdminRemoveCourse(studentId);
   const { data: changeRequestsData } = useSchoolAdminStudentChangeRequests(studentId, "pending");
   const reviewRequest = useSchoolAdminReviewChangeRequest(studentId);
+
+  // New data hooks
+  const { data: milData } = useStudentMILResults(studentId);
+  const { data: pcaData } = useStudentPCAHistory(studentId);
+  const { data: evalGroups } = useStudentEvalGroups(studentId);
+  const { data: evalProgress } = useStudentEvalProgress(studentId);
+  const { data: gapsData } = useStudentAcademicGaps(studentId);
+  const { data: recsData } = useStudentRecommendations(studentId);
+  const { data: transcriptData } = useStudentTranscript(studentId);
+  const { data: gpaData } = useStudentGpa(studentId);
 
   const [newNote, setNewNote] = useState("");
   const [noteType, setNoteType] = useState<NoteType>("general");
@@ -153,6 +201,14 @@ export default function StudentDetailsPage() {
   const plan = coursePlan?.plan;
   const notes = notesData?.data || [];
   const pendingRequests = changeRequestsData?.data ?? [];
+
+  // Computed assessment stats
+  const milCompleted = milData ? milData.completedExams : 0;
+  const milTotal = milData ? milData.totalExams : 5;
+  const pcaCompleted = pcaData?.completedExams ?? 0;
+  const pcaTotal = pcaData?.totalExams ?? 0;
+  const evalTotal = evalGroups?.length ?? 0;
+  const evalCompleted = evalGroups?.filter((g: any) => g.isEvaluationCompleted).length ?? 0;
 
   const handleAddNote = () => {
     if (!newNote.trim()) return;
@@ -233,10 +289,10 @@ export default function StudentDetailsPage() {
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: t("schoolAdmin.students.progress", "Course Progress"), value: `${student.progress}%`, icon: BookOpen, color: "#14b8a6" },
-          { label: t("schoolAdmin.students.avgScore", "Average Score"), value: `${student.averageScore?.toFixed(1) ?? "\u2014"}%`, icon: Award, color: "#f59e0b" },
-          { label: t("schoolAdmin.students.credits", "Earned Credits"), value: `${plan?.graduationProgress?.totalCreditsEarned ?? "0"} / ${plan?.graduationProgress?.totalCreditsRequired ?? "0"}`, icon: GraduationCap, color: "#6366f1" },
-          { label: t("schoolAdmin.students.lastActive", "Last Seen"), value: student.lastActive ? format(new Date(student.lastActive), "MMM do") : "Never", icon: Activity, color: "#3b82f6" },
+          { label: "GPA", value: gpaData?.gpaWeighted?.toFixed(2) ?? gpaData?.gpaUnweighted?.toFixed(2) ?? "\u2014", icon: Award, color: "#f59e0b" },
+          { label: "Credits", value: `${plan?.graduationProgress?.totalCreditsEarned ?? gpaData?.totalCredits ?? "0"} / ${plan?.graduationProgress?.totalCreditsRequired ?? "0"}`, icon: GraduationCap, color: "#6366f1" },
+          { label: "Assessments", value: `${milCompleted + pcaCompleted + evalCompleted} / ${milTotal + pcaTotal + evalTotal}`, icon: FileText, color: "#14b8a6" },
+          { label: "Last Seen", value: student.lastActive ? format(new Date(student.lastActive), "MMM do") : "Never", icon: Activity, color: "#3b82f6" },
         ].map((stat) => (
           <div key={stat.label} style={{
             borderRadius: 8, border: "1px solid var(--admin-border-default)",
@@ -262,11 +318,11 @@ export default function StudentDetailsPage() {
           borderRadius: 8, padding: 2, height: "auto",
         }} className="flex flex-wrap">
           {[
-            { value: "overview", icon: User, label: "Snapshot" },
-            { value: "courses", icon: BookOpen, label: "Enrollments" },
-            { value: "assessments", icon: FileText, label: "Testing" },
-            { value: "notes", icon: MessageSquare, label: "Records" },
-            { value: "graduation", icon: Award, label: "Extracurriculars" },
+            { value: "overview", icon: User, label: "Overview" },
+            { value: "assessments", icon: Brain, label: "Assessments" },
+            { value: "courses", icon: BookOpen, label: "Academics" },
+            { value: "notes", icon: MessageSquare, label: "Notes" },
+            { value: "graduation", icon: Heart, label: "Extracurriculars" },
             { value: "parents", icon: Users, label: "Guardians" },
           ].map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value} style={{ borderRadius: 6, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
@@ -275,23 +331,12 @@ export default function StudentDetailsPage() {
           ))}
         </TabsList>
 
-        {/* Overview Tab */}
+        {/* ==================== OVERVIEW TAB ==================== */}
         <TabsContent value="overview" className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Graduation Progress */}
-            <div style={{
-              borderRadius: 8, border: "1px solid var(--admin-border-default)",
-              background: "var(--admin-bg-card)", overflow: "hidden",
-            }}>
-              <div style={{
-                padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
-                display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
-              }}>
-                <GraduationCap style={{ width: 14, height: 14, color: "#6366f1" }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                  {t("schoolAdmin.students.graduationProgress", "Graduation Pathway")}
-                </span>
-              </div>
+            <Card>
+              <CardHeader icon={GraduationCap} color="#6366f1" title="Graduation Pathway" />
               <div style={{ padding: 16 }}>
                 {plan?.graduationProgress ? (
                   <div className="space-y-4">
@@ -307,9 +352,7 @@ export default function StudentDetailsPage() {
                         background: plan.graduationProgress.isOnTrack ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
                         color: plan.graduationProgress.isOnTrack ? "#10b981" : "#ef4444",
                       }}>
-                        {plan.graduationProgress.isOnTrack
-                          ? t("schoolAdmin.students.onTrack", "On Track")
-                          : t("schoolAdmin.students.atRisk", "At Risk")}
+                        {plan.graduationProgress.isOnTrack ? "On Track" : "At Risk"}
                       </span>
                     </div>
                     <Progress
@@ -323,66 +366,260 @@ export default function StudentDetailsPage() {
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
 
-            {/* Career Path */}
-            <div style={{
-              borderRadius: 8, border: "1px solid var(--admin-border-default)",
-              background: "var(--admin-bg-card)", overflow: "hidden",
-            }}>
-              <div style={{
-                padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
-                display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
-              }}>
-                <Target style={{ width: 14, height: 14, color: "#8b5cf6" }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                  {t("schoolAdmin.students.careerPath", "Career Affinities")}
-                </span>
+            {/* GPA & Transcript Summary */}
+            <Card>
+              <CardHeader icon={BarChart3} color="#f59e0b" title="GPA & Academic Standing" />
+              <div style={{ padding: 16 }}>
+                {gpaData ? (
+                  <div className="space-y-3">
+                    <div style={{ display: "flex", gap: 16 }}>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Weighted GPA</div>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 2 }}>
+                          {gpaData.gpaWeighted?.toFixed(2) ?? "\u2014"}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Unweighted</div>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 2 }}>
+                          {gpaData.gpaUnweighted?.toFixed(2) ?? "\u2014"}
+                        </div>
+                      </div>
+                      {gpaData.classRank && (
+                        <div>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Class Rank</div>
+                          <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 2 }}>
+                            #{gpaData.classRank} <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)", fontWeight: 400 }}>/ {gpaData.classSize}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
+                      Total Credits: {gpaData.totalCredits} {gpaData.computedAt && `| Last computed: ${format(new Date(gpaData.computedAt), "MMM d, yyyy")}`}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "20px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
+                    No GPA data computed yet.
+                  </div>
+                )}
               </div>
-              <div style={{ padding: 16, textAlign: "center" }}>
-                <Target style={{ width: 24, height: 24, color: "var(--admin-font-tertiary)", margin: "16px auto 8px", opacity: 0.4 }} />
-                <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", maxWidth: 220, margin: "0 auto" }}>
-                  {t("schoolAdmin.students.careerPathDesc", "No career assessment data available from the external integration yet.")}
-                </p>
-              </div>
-            </div>
+            </Card>
 
-            {/* 360 Evaluation */}
-            <div className="md:col-span-2" style={{
-              borderRadius: 8, border: "1px solid var(--admin-border-default)",
-              background: "var(--admin-bg-card)", overflow: "hidden",
-            }}>
-              <div style={{
-                padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
-                display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
-              }}>
-                <TrendingUp style={{ width: 14, height: 14, color: "#14b8a6" }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                  {t("schoolAdmin.students.evaluationStatus", "360 Diagnostics")}
-                </span>
+            {/* Assessment Completion Summary */}
+            <Card>
+              <CardHeader icon={TrendingUp} color="#14b8a6" title="Assessment Completion" />
+              <div style={{ padding: 16 }} className="space-y-3">
+                {[
+                  { label: "MIL / LIA", completed: milCompleted, total: milTotal, color: "#6366f1" },
+                  { label: "PCA Exams", completed: pcaCompleted, total: pcaTotal || 1, color: "#8b5cf6" },
+                  { label: "360 Evaluations", completed: evalCompleted, total: evalTotal || 1, color: "#14b8a6" },
+                ].map((item) => {
+                  const pct = item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0;
+                  return (
+                    <div key={item.label}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{item.label}</span>
+                        <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{item.completed}/{item.total} ({pct}%)</span>
+                      </div>
+                      <div style={{ height: 6, borderRadius: 3, background: "var(--admin-bg-hover)", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${pct}%`, borderRadius: 3, background: item.color, transition: "width 0.3s" }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <div style={{ padding: 16, textAlign: "center" }}>
-                <TrendingUp style={{ width: 28, height: 28, color: "var(--admin-font-tertiary)", margin: "16px auto 8px", opacity: 0.3 }} />
-                <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", maxWidth: 300, margin: "0 auto 12px" }}>
-                  {t("schoolAdmin.students.evaluationStatusDesc", "Comprehensive behavioral and academic 360-degree reviews will populate here when completed.")}
-                </p>
-                <button
-                  onClick={() => router.push("/school-admin/evaluations")}
-                  style={{
-                    height: 32, borderRadius: 6, padding: "0 12px",
-                    fontSize: 11, fontWeight: 600,
-                    background: "transparent", color: "var(--admin-font-primary)",
-                    border: "1px solid var(--admin-border-default)", cursor: "pointer",
-                  }}
-                >
-                  {t("schoolAdmin.students.viewEvaluations", "Go to Evaluations Hub")}
-                </button>
+            </Card>
+
+            {/* 360 Evaluation Status */}
+            <Card>
+              <CardHeader icon={Users} color="#ec4899" title="360 Evaluation Status" badge={
+                evalTotal > 0 ? (
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(236,72,153,0.1)", color: "#ec4899", marginLeft: 4 }}>
+                    {evalCompleted}/{evalTotal} complete
+                  </span>
+                ) : null
+              } />
+              <div style={{ padding: 16 }}>
+                {evalGroups && evalGroups.length > 0 ? (
+                  <div className="space-y-2">
+                    {evalGroups.map((g: any) => (
+                      <div key={g.id} style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        padding: "8px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+                        background: g.isEvaluationCompleted ? "rgba(16,185,129,0.03)" : "var(--admin-bg-card)",
+                      }}>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{g.evaluatorName}</div>
+                          <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{g.relation} | {g.evaluatorEmail}</div>
+                        </div>
+                        <span style={{
+                          fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
+                          background: g.isEvaluationCompleted ? "rgba(16,185,129,0.1)" : g.isTokenUsed ? "rgba(59,130,246,0.1)" : "rgba(245,158,11,0.1)",
+                          color: g.isEvaluationCompleted ? "#10b981" : g.isTokenUsed ? "#3b82f6" : "#f59e0b",
+                          textTransform: "uppercase",
+                        }}>
+                          {g.isEvaluationCompleted ? "Completed" : g.isTokenUsed ? "In Progress" : "Pending"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "20px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
+                    No 360 evaluations assigned yet.
+                  </div>
+                )}
               </div>
-            </div>
+            </Card>
           </div>
         </TabsContent>
 
-        {/* Courses Tab */}
+        {/* ==================== ASSESSMENTS TAB ==================== */}
+        <TabsContent value="assessments" className="mt-4 space-y-4">
+          {/* MIL / LIA Results */}
+          <Card>
+            <CardHeader icon={Brain} color="#6366f1" title="MIL / LIA Cognitive Assessment" badge={
+              milData ? (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(99,102,241,0.1)", color: "#6366f1", marginLeft: 4 }}>
+                  {milData.completedExams}/{milData.totalExams} complete
+                </span>
+              ) : null
+            } />
+            <div style={{ padding: 16 }}>
+              {milData && milData.completedExams > 0 ? (
+                <div className="space-y-4">
+                  {/* Overall Score */}
+                  <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                    <div style={{ padding: "12px 16px", borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", textAlign: "center", minWidth: 100 }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "#6366f1", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Overall Score</div>
+                      <div style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)" }}>{milData.overallScore?.toFixed(0) ?? "\u2014"}%</div>
+                    </div>
+                    {milData.overallPercentile != null && (
+                      <div style={{ padding: "12px 16px", borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", textAlign: "center", minWidth: 100 }}>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "#8b5cf6", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Percentile</div>
+                        <div style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)" }}>{milData.overallPercentile}th</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Cognitive Profile */}
+                  {milData.cognitiveProfile && (
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>Cognitive Profile</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {Object.entries(milData.cognitiveProfile).map(([key, value]) => (
+                          <div key={key} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)" }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-primary)", textTransform: "capitalize" }}>
+                                {key.replace(/([A-Z])/g, " $1").trim()}
+                              </div>
+                              <div style={{ height: 4, borderRadius: 2, background: "var(--admin-bg-hover)", marginTop: 4, overflow: "hidden" }}>
+                                <div style={{ height: "100%", width: `${Math.min(Number(value) || 0, 100)}%`, borderRadius: 2, background: "#6366f1" }} />
+                              </div>
+                            </div>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--admin-font-primary)", minWidth: 35, textAlign: "right" }}>{Number(value)?.toFixed(0) ?? "\u2014"}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Individual Exam Results */}
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>Exam Results</div>
+                    <div className="space-y-2">
+                      {milData.examResults?.map((exam: any) => (
+                        <div key={exam.examId || exam.examName} style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "8px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+                        }}>
+                          <div>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{exam.examName}</span>
+                            {exam.completedAt && (
+                              <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginLeft: 8 }}>
+                                {format(new Date(exam.completedAt), "MMM d, yyyy")}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {exam.scorePercentage != null && (
+                              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--admin-font-primary)" }}>{exam.scorePercentage.toFixed(0)}%</span>
+                            )}
+                            <span style={{
+                              fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase",
+                              background: exam.status === "completed" ? "rgba(16,185,129,0.1)" : exam.status === "in_progress" ? "rgba(59,130,246,0.1)" : "rgba(107,114,128,0.1)",
+                              color: exam.status === "completed" ? "#10b981" : exam.status === "in_progress" ? "#3b82f6" : "#6b7280",
+                            }}>
+                              {exam.status?.replace("_", " ")}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "24px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
+                  <Brain style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.4 }} />
+                  No MIL/LIA assessment results yet.
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* PCA Exam Results */}
+          <Card>
+            <CardHeader icon={Target} color="#8b5cf6" title="PCA Exam Results" badge={
+              pcaData ? (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(139,92,246,0.1)", color: "#8b5cf6", marginLeft: 4 }}>
+                  {pcaData.completedExams}/{pcaData.totalExams} complete | {pcaData.completionPercentage?.toFixed(0) ?? 0}%
+                </span>
+              ) : null
+            } />
+            <div style={{ padding: 16 }}>
+              {pcaData?.examStatus && pcaData.examStatus.length > 0 ? (
+                <div className="space-y-2">
+                  {pcaData.examStatus.map((exam: any) => (
+                    <div key={exam.examId || exam.examName} style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+                    }}>
+                      <div>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{exam.examName}</span>
+                        {exam.completionDate && (
+                          <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginLeft: 8 }}>
+                            {format(new Date(exam.completionDate), "MMM d, yyyy")}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {exam.scorePercentage > 0 && (
+                          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--admin-font-primary)" }}>{exam.scorePercentage.toFixed(0)}%</span>
+                        )}
+                        <span style={{
+                          fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase",
+                          background: exam.status === "completed" ? "rgba(16,185,129,0.1)" : exam.status === "in_progress" ? "rgba(59,130,246,0.1)" : "rgba(107,114,128,0.1)",
+                          color: exam.status === "completed" ? "#10b981" : exam.status === "in_progress" ? "#3b82f6" : "#6b7280",
+                        }}>
+                          {exam.status?.replace("_", " ")}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "24px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
+                  <Target style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.4 }} />
+                  No PCA exam results yet.
+                </div>
+              )}
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* ==================== ACADEMICS TAB ==================== */}
         <TabsContent value="courses" className="mt-4 space-y-4">
           {/* Pending change requests */}
           {pendingRequests.length > 0 && (
@@ -396,7 +633,7 @@ export default function StudentDetailsPage() {
               }}>
                 <AlertCircle style={{ width: 16, height: 16, color: "#f59e0b" }} />
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                  {t("schoolAdmin.students.pendingRequests", "Action Required: Course Requests")}
+                  Action Required: Course Requests
                 </span>
                 <span style={{
                   fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
@@ -450,7 +687,7 @@ export default function StudentDetailsPage() {
                         }}
                       >
                         <CheckCircle2 style={{ width: 12, height: 12 }} />
-                        {t("common.approve", "Approve")}
+                        Approve
                       </button>
                       <button
                         disabled={reviewRequest.isPending}
@@ -465,7 +702,7 @@ export default function StudentDetailsPage() {
                         }}
                       >
                         <XCircle style={{ width: 12, height: 12 }} />
-                        {t("common.reject", "Deny")}
+                        Deny
                       </button>
                     </div>
                   </div>
@@ -474,11 +711,140 @@ export default function StudentDetailsPage() {
             </div>
           )}
 
+          {/* Academic Gaps */}
+          {gapsData && gapsData.creditGaps && gapsData.creditGaps.length > 0 && (
+            <Card>
+              <CardHeader icon={AlertTriangle} color="#ef4444" title="Academic Gaps" badge={
+                <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                  background: gapsData.overallStatus === "on_track" ? "rgba(16,185,129,0.1)" : gapsData.overallStatus === "at_risk" ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
+                  color: gapsData.overallStatus === "on_track" ? "#10b981" : gapsData.overallStatus === "at_risk" ? "#f59e0b" : "#ef4444",
+                  marginLeft: 4, textTransform: "uppercase",
+                }}>
+                  {gapsData.overallStatus?.replace("_", " ")}
+                </span>
+              } />
+              <div style={{ padding: 16 }} className="space-y-2">
+                {gapsData.creditGaps.map((gap: any) => (
+                  <div key={gap.category} style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "8px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+                  }}>
+                    <div>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{gap.category}</span>
+                      <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginLeft: 8 }}>
+                        {gap.creditsEarned}/{gap.creditsRequired} credits
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      {gap.deficit > 0 && (
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "#ef4444" }}>-{gap.deficit}</span>
+                      )}
+                      <span style={{
+                        fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase",
+                        background: gap.severity === "critical" ? "rgba(239,68,68,0.1)" : gap.severity === "warning" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
+                        color: gap.severity === "critical" ? "#ef4444" : gap.severity === "warning" ? "#f59e0b" : "#3b82f6",
+                      }}>
+                        {gap.severity}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Course Recommendations */}
+          {recsData && (recsData.nextSemester?.length > 0 || recsData.longTerm?.length > 0) && (
+            <Card>
+              <CardHeader icon={Lightbulb} color="#f59e0b" title="Course Recommendations" />
+              <div style={{ padding: 16 }} className="space-y-4">
+                {recsData.nextSemester?.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>Next Semester</div>
+                    <div className="space-y-2">
+                      {recsData.nextSemester.map((rec: any) => (
+                        <div key={rec.courseId || rec.courseCode} style={{
+                          padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                        }}>
+                          <div>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{rec.courseName}</span>
+                            <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginLeft: 6 }}>{rec.courseCode}</span>
+                            <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{rec.reason}</div>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{rec.credits} cr</span>
+                            <span style={{
+                              fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase",
+                              background: rec.priority === "high" ? "rgba(239,68,68,0.1)" : rec.priority === "medium" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
+                              color: rec.priority === "high" ? "#ef4444" : rec.priority === "medium" ? "#f59e0b" : "#3b82f6",
+                            }}>
+                              {rec.priority}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {recsData.longTerm?.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>Long-Term Plan</div>
+                    <div className="space-y-2">
+                      {recsData.longTerm.map((rec: any) => (
+                        <div key={rec.courseId || rec.courseCode} style={{
+                          padding: "8px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                        }}>
+                          <div>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{rec.courseName}</span>
+                            <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginLeft: 6 }}>{rec.courseCode} | {rec.credits} cr</span>
+                          </div>
+                          <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", maxWidth: 200, textAlign: "right" }}>{rec.reason}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {/* Transcript */}
+          {transcriptData?.grades && Object.keys(transcriptData.grades).length > 0 && (
+            <Card>
+              <CardHeader icon={FileText} color="#3b82f6" title="Transcript" />
+              <div style={{ padding: 16 }} className="space-y-4">
+                {Object.entries(transcriptData.grades).sort(([a], [b]) => b.localeCompare(a)).map(([year, courses]) => (
+                  <div key={year}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 6, paddingBottom: 4, borderBottom: "1px solid var(--admin-border-default)" }}>
+                      {year}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: "4px 12px", fontSize: 11 }}>
+                      {(courses as any[]).map((c: any) => (
+                        <div key={c.id} style={{ display: "contents" }}>
+                          <span style={{ color: "var(--admin-font-primary)", fontWeight: 500 }}>{c.courseCode || "N/A"}</span>
+                          <span style={{ color: "var(--admin-font-tertiary)" }}>{c.credits} cr</span>
+                          <span style={{ color: "var(--admin-font-tertiary)", textTransform: "capitalize" }}>{c.courseLevel || "regular"}</span>
+                          <span style={{
+                            fontWeight: 600,
+                            color: c.grade === "A" || c.grade === "A+" || c.grade === "A-" ? "#10b981" :
+                              c.grade === "B" || c.grade === "B+" || c.grade === "B-" ? "#3b82f6" :
+                              c.grade === "F" ? "#ef4444" : "var(--admin-font-primary)",
+                          }}>
+                            {c.grade || (c.status === "in_progress" ? "IP" : "\u2014")}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           {/* Sequence Builder */}
-          <div style={{
-            borderRadius: 8, border: "1px solid var(--admin-border-default)",
-            background: "var(--admin-bg-card)", overflow: "hidden",
-          }}>
+          <Card>
             <SequenceBuilder
               planData={coursePlan}
               isLoading={false}
@@ -488,68 +854,15 @@ export default function StudentDetailsPage() {
               isCounselorAddPending={adminAdd.isPending}
               isCounselorRemovePending={adminRemove.isPending}
             />
-          </div>
+          </Card>
         </TabsContent>
 
-        {/* Assessments Tab */}
-        <TabsContent value="assessments" className="mt-4">
-          <div style={{
-            borderRadius: 8, border: "1px solid var(--admin-border-default)",
-            background: "var(--admin-bg-card)", overflow: "hidden",
-          }}>
-            <div style={{
-              padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
-              display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
-            }}>
-              <FileText style={{ width: 14, height: 14, color: "#6366f1" }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                {t("schoolAdmin.students.assessmentResults", "Academic Testing Portfolio")}
-              </span>
-            </div>
-            <div style={{ padding: 16 }}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3" style={{ marginBottom: 16 }}>
-                {[
-                  { label: "LIA Benchmark", color: "#6366f1" },
-                  { label: "PCA Diagnostics", color: "#8b5cf6" },
-                  { label: "MIL Assessment", color: "#14b8a6" },
-                ].map((item) => (
-                  <div key={item.label} style={{
-                    padding: "14px 16px", borderRadius: 6, textAlign: "center",
-                    border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)",
-                  }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: item.color, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>{item.label}</div>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)" }}>{"\u2014"}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{
-                textAlign: "center", padding: "16px", borderRadius: 6,
-                border: "1px dashed var(--admin-border-default)", color: "var(--admin-font-tertiary)", fontSize: 12,
-              }}>
-                {t("schoolAdmin.students.assessmentDesc", "Awaiting secure sync from district assessment repositories.")}
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Notes Tab */}
+        {/* ==================== NOTES TAB ==================== */}
         <TabsContent value="notes" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Add Note Form */}
-            <div style={{
-              borderRadius: 8, border: "1px solid var(--admin-border-default)",
-              background: "var(--admin-bg-card)", overflow: "hidden",
-            }} className="h-fit">
-              <div style={{
-                padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
-                display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
-              }}>
-                <Plus style={{ width: 14, height: 14, color: "#10b981" }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                  {t("schoolAdmin.students.addNote", "New Entry")}
-                </span>
-              </div>
+            <Card className="h-fit">
+              <CardHeader icon={Plus} color="#10b981" title="New Entry" />
               <div style={{ padding: 16 }} className="space-y-3">
                 <div className="space-y-1">
                   <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Category</label>
@@ -593,120 +906,108 @@ export default function StudentDetailsPage() {
                   }}
                 >
                   <Send style={{ width: 12, height: 12 }} />
-                  {t("schoolAdmin.students.saveNote", "Publish to File")}
+                  Publish to File
                 </button>
               </div>
-            </div>
+            </Card>
 
             {/* Notes List */}
-            <div className="lg:col-span-2" style={{
-              borderRadius: 8, border: "1px solid var(--admin-border-default)",
-              background: "var(--admin-bg-card)", overflow: "hidden",
-            }}>
-              <div style={{
-                padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                background: "var(--admin-bg-hover)",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <FileText style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                    {t("schoolAdmin.students.noteHistory", "Counselor File Ledger")}
-                  </span>
-                  <span style={{
-                    fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
-                    background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
-                    border: "1px solid var(--admin-border-default)",
-                  }}>
-                    {notes.length} entries
-                  </span>
-                </div>
-              </div>
-              <div style={{ padding: 16 }}>
-                {notes.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px 16px" }}>
-                    <MessageSquare style={{ width: 24, height: 24, color: "var(--admin-font-tertiary)", margin: "0 auto 8px", opacity: 0.4 }} />
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>No file entries found</div>
-                    <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
-                      {t("schoolAdmin.students.noNotes", "There are currently no notes or documentation on file for this student.")}
-                    </div>
+            <div className="lg:col-span-2">
+              <Card>
+                <div style={{
+                  padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  background: "var(--admin-bg-hover)",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <FileText style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Counselor Notes</span>
+                    <span style={{
+                      fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                      background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
+                      border: "1px solid var(--admin-border-default)",
+                    }}>
+                      {notes.length} entries
+                    </span>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {notes.map((note: CounselorNote) => (
-                      <div key={note.id} className="group" style={{
-                        padding: "12px 14px", borderRadius: 6,
-                        border: "1px solid var(--admin-border-default)",
-                        background: "var(--admin-bg-card)",
-                      }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 8 }}>
-                          <div style={{ display: "flex", gap: 6 }}>
-                            <span style={{
-                              fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
-                              background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
-                              textTransform: "uppercase", letterSpacing: "0.03em",
-                            }}>
-                              {note.type.replace('_', ' ')}
-                            </span>
-                            {note.isPrivate && (
+                </div>
+                <div style={{ padding: 16 }}>
+                  {notes.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "40px 16px" }}>
+                      <MessageSquare style={{ width: 24, height: 24, color: "var(--admin-font-tertiary)", margin: "0 auto 8px", opacity: 0.4 }} />
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>No notes found</div>
+                      <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
+                        There are currently no notes on file for this student.
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {notes.map((note: CounselorNote) => (
+                        <div key={note.id} className="group" style={{
+                          padding: "12px 14px", borderRadius: 6,
+                          border: "1px solid var(--admin-border-default)",
+                          background: "var(--admin-bg-card)",
+                        }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 8 }}>
+                            <div style={{ display: "flex", gap: 6 }}>
                               <span style={{
-                                fontSize: 9, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
-                                background: "rgba(245,158,11,0.1)", color: "#f59e0b",
+                                fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                                background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
                                 textTransform: "uppercase", letterSpacing: "0.03em",
                               }}>
-                                Confidential
+                                {note.type.replace('_', ' ')}
                               </span>
-                            )}
+                              {note.isPrivate && (
+                                <span style={{
+                                  fontSize: 9, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                                  background: "rgba(245,158,11,0.1)", color: "#f59e0b",
+                                  textTransform: "uppercase", letterSpacing: "0.03em",
+                                }}>
+                                  Confidential
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>
+                                {note.createdAt && format(new Date(note.createdAt), "MMM d, yyyy")}
+                              </span>
+                              <button
+                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => deleteNote.mutate({ noteId: note.id, studentId })}
+                                title="Delete entry"
+                                style={{ width: 22, height: 22, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer" }}
+                              >
+                                <Trash2 style={{ width: 12, height: 12, color: "#ef4444" }} />
+                              </button>
+                            </div>
                           </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>
-                              {note.createdAt && format(new Date(note.createdAt), "MMM d, yyyy")}
-                            </span>
-                            <button
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => deleteNote.mutate({ noteId: note.id, studentId })}
-                              title="Delete entry"
-                              style={{ width: 22, height: 22, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer" }}
-                            >
-                              <Trash2 style={{ width: 12, height: 12, color: "#ef4444" }} />
-                            </button>
-                          </div>
-                        </div>
 
-                        <div style={{ fontSize: 12, color: "var(--admin-font-primary)", whiteSpace: "pre-wrap", lineHeight: 1.5, padding: "8px 10px", borderRadius: 4, background: "var(--admin-bg-hover)" }}>
-                          {note.content}
-                        </div>
-
-                        {note.followUpDate && (
-                          <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 4, background: "rgba(245,158,11,0.08)", width: "fit-content" }}>
-                            <Clock style={{ width: 11, height: 11, color: "#f59e0b" }} />
-                            <span style={{ fontSize: 10, fontWeight: 600, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.03em" }}>
-                              Follow-up: {format(new Date(note.followUpDate), "MMM d, yyyy")}
-                            </span>
+                          <div style={{ fontSize: 12, color: "var(--admin-font-primary)", whiteSpace: "pre-wrap", lineHeight: 1.5, padding: "8px 10px", borderRadius: 4, background: "var(--admin-bg-hover)" }}>
+                            {note.content}
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+
+                          {note.followUpDate && (
+                            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 4, background: "rgba(245,158,11,0.08)", width: "fit-content" }}>
+                              <Clock style={{ width: 11, height: 11, color: "#f59e0b" }} />
+                              <span style={{ fontSize: 10, fontWeight: 600, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                                Follow-up: {format(new Date(note.followUpDate), "MMM d, yyyy")}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Card>
             </div>
           </div>
         </TabsContent>
 
-        {/* Extracurriculars / Community Service Tab */}
+        {/* ==================== EXTRACURRICULARS TAB ==================== */}
         <TabsContent value="graduation" className="mt-4">
-          <div style={{
-            borderRadius: 8, border: "1px solid var(--admin-border-default)",
-            background: "var(--admin-bg-card)", overflow: "hidden",
-          }}>
-            <div style={{
-              padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
-              display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)",
-            }}>
-              <Heart style={{ width: 14, height: 14, color: "#ec4899" }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Community Service Log</span>
-            </div>
+          <Card>
+            <CardHeader icon={Heart} color="#ec4899" title="Community Service Log" />
             <div style={{ padding: 16 }}>
               {/* Progress */}
               <div style={{
@@ -811,10 +1112,10 @@ export default function StudentDetailsPage() {
                 </div>
               )}
             </div>
-          </div>
+          </Card>
         </TabsContent>
 
-        {/* Parents & Guardians Tab */}
+        {/* ==================== GUARDIANS TAB ==================== */}
         <TabsContent value="parents" className="mt-4">
           <div style={{
             borderRadius: 8, border: "1px solid var(--admin-border-default)",

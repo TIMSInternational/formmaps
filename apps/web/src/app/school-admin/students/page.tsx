@@ -28,6 +28,7 @@ import { AdminTabBar } from "../_components/AdminTabBar";
 import dynamic from "next/dynamic";
 const StaffPanel = dynamic(() => import("./_components/StaffPanel").then(m => ({ default: m.StaffPanel })));
 const CounselorAssignPanel = dynamic(() => import("./_components/CounselorAssignPanel").then(m => ({ default: m.CounselorAssignPanel })));
+const InvitePanel = dynamic(() => import("./_components/InvitePanel").then(m => ({ default: m.InvitePanel })));
 
 export default function StudentsPage() {
   const [activeTab, setActiveTab] = useState("roster");
@@ -87,10 +88,10 @@ export default function StudentsPage() {
       {/* Header */}
       <div>
         <h1 className="text-[20px] font-semibold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>
-          Students
+          People
         </h1>
         <p className="text-[13px] mt-0.5" style={{ color: "var(--admin-font-light)" }}>
-          Manage students enrolled in your school
+          Manage students, counselors, coaches, and staff at your school
         </p>
       </div>
 
@@ -111,24 +112,7 @@ export default function StudentsPage() {
       ) : activeTab === "counselors" ? (
         <CounselorAssignPanel />
       ) : activeTab === "onboard" ? (
-        <div style={{ textAlign: "center", padding: 40 }}>
-          <Upload style={{ width: 40, height: 40, color: "var(--admin-font-light)", margin: "0 auto 16px" }} />
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 8 }}>Invite & Onboard Students</h2>
-          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginBottom: 20, maxWidth: 400, margin: "0 auto 20px" }}>
-            Invite individual students or bulk onboard from a CSV file with automatic counselor assignment.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-            <Button className="h-9 rounded-lg text-sm" style={{ background: "var(--admin-accent-green, #10b981)", color: "#fff" }}
-              onClick={() => router.push("/school-admin/students?invite=true")}>
-              <UserPlus className="mr-2 h-4 w-4" /> Invite Student
-            </Button>
-            <Button className="h-9 rounded-lg text-sm" variant="outline"
-              style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-primary)" }}
-              onClick={() => router.push("/school-admin/students/bulk-onboard")}>
-              <Upload className="mr-2 h-4 w-4" /> Bulk Onboard (CSV)
-            </Button>
-          </div>
-        </div>
+        <InvitePanel />
       ) : (
       <>
       {/* Roster Tab Content */}

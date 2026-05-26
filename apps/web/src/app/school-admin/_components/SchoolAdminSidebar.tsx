@@ -48,7 +48,7 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
     label: t("nav.main", "Main"),
     items: [
       { label: t("schoolAdmin.nav.dashboard", "Dashboard"), href: "/school-admin", icon: LayoutDashboard },
-      { label: t("schoolAdmin.nav.students", "Students"), href: "/school-admin/students", icon: Users },
+      { label: t("schoolAdmin.nav.students", "People"), href: "/school-admin/students", icon: Users },
       { label: t("schoolAdmin.nav.academics", "Academics"), href: "/school-admin/academics", icon: BookOpen },
       { label: t("schoolAdmin.nav.assessments", "Assessment Hub"), href: "/school-admin/assessments", icon: ClipboardCheck },
       { label: t("schoolAdmin.nav.analytics", "Analytics"), href: "/school-admin/analytics", icon: BarChart3 },

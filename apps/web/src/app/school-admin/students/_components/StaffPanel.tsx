@@ -129,6 +129,7 @@ export function StaffPanel() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="counselor">Counselor</SelectItem>
+                      <SelectItem value="coach">Coach</SelectItem>
                       <SelectItem value="staff">Staff</SelectItem>
                     </SelectContent>
                   </Select>

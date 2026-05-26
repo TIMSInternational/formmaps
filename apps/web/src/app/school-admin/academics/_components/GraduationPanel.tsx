@@ -48,8 +48,8 @@ export function GraduationPanel() {
   useEffect(() => {
     if (rules) {
       setTotalCredits(rules.totalCreditsRequired);
-      setCategories(rules.categoryRequirements);
-      setSpecialReqs(rules.specialRequirements);
+      setCategories(rules.categoryRequirements ?? []);
+      setSpecialReqs(rules.specialRequirements ?? []);
     }
   }, [rules]);
 
@@ -152,7 +152,7 @@ export function GraduationPanel() {
         {rules && (
           <div style={{ padding: 16 }}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {rules.categoryRequirements.map((cat, i) => (
+              {(rules.categoryRequirements ?? []).map((cat, i) => (
                 <div key={i} style={{
                   padding: "10px 12px", borderRadius: 6,
                   border: "1px solid var(--admin-border-default)",

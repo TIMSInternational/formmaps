@@ -33,7 +33,7 @@ function toCamel(obj: any): any {
 
 export async function getStudentAcademicGaps(studentId: string): Promise<StudentAcademicGaps> {
   const json = await apiRequest(
-    buildPath(`/api/v1/students/${studentId}/academic-gaps`)
+    buildPath(`/api/v1/school-admin/academic-gaps/students/${studentId}`)
   );
   return toCamel(json.data ?? json) as StudentAcademicGaps;
 }
@@ -57,7 +57,7 @@ export async function getStudentCourseRecommendations(
   studentId: string
 ): Promise<CourseRecommendationsResponse> {
   const json = await apiRequest(
-    buildPath(`/api/v1/students/${studentId}/course-recommendations`)
+    buildPath(`/api/v1/school-admin/academic-gaps/recommendations/${studentId}`)
   );
   return toCamel(json.data ?? json) as CourseRecommendationsResponse;
 }

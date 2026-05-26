@@ -138,6 +138,11 @@ export async function unassignStudents(counselorId: string, payload: StudentAssi
   });
 }
 
+export async function getAllCounselorAssignments(): Promise<Array<{ studentId: string; counselorId: string }>> {
+  const res = await apiRequest("/api/v1/school-admin/counselor-assignments/all");
+  return res.data ?? [];
+}
+
 export async function getCounselorStudents(counselorId: string, params?: {
   page?: number;
   limit?: number;

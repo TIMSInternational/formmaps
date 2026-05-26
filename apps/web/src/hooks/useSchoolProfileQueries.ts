@@ -12,6 +12,7 @@ import {
   assignStudents,
   unassignStudents,
   getCounselorStudents,
+  getAllCounselorAssignments,
   getMyCounselorStudents,
   getMyCounselorStudentDetail,
 } from "@/services/schoolProfileService";
@@ -35,6 +36,7 @@ export const schoolProfileKeys = {
     [...schoolProfileKeys.all, "counselor-students", counselorId, params] as const,
   myCounselorStudents: (params?: object) =>
     [...schoolProfileKeys.all, "my-students", params] as const,
+  allAssignments: () => [...schoolProfileKeys.all, "all-assignments"] as const,
 };
 
 // ============================================
@@ -130,7 +132,7 @@ export function useAssignStudents() {
       payload: StudentAssignPayload;
     }) => assignStudents(counselorId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: schoolProfileKeys.all });
+      queryClient.invalidateQueries({ queryKey: schoolProfileKeys.all, refetchType: "all" });
     },
   });
 }
@@ -146,7 +148,7 @@ export function useUnassignStudents() {
       payload: StudentAssignPayload;
     }) => unassignStudents(counselorId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: schoolProfileKeys.all });
+      queryClient.invalidateQueries({ queryKey: schoolProfileKeys.all, refetchType: "all" });
     },
   });
 }
@@ -163,8 +165,15 @@ export function useCounselorStudents(
     queryKey: schoolProfileKeys.counselorStudents(counselorId, params),
     queryFn: () => getCounselorStudents(counselorId, params),
     enabled: !!counselorId,
-    staleTime: 1000 * 60 * 5,
-    placeholderData: keepPreviousData,
+    staleTime: 0,
+  });
+}
+
+export function useAllCounselorAssignments() {
+  return useQuery({
+    queryKey: schoolProfileKeys.allAssignments(),
+    queryFn: getAllCounselorAssignments,
+    staleTime: 1000 * 60 * 2,
   });
 }
 
