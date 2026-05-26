@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
-import { Settings, Save, Trophy, Loader2 } from "lucide-react";
+import { Settings, Save, Trophy, Loader2, BarChart3 } from "lucide-react";
 import { getGpaConfig, updateGpaConfig, computeClassRanks, GpaConfig } from "@/services/transcriptService";
+import { AdminTabBar } from "../_components/AdminTabBar";
 
 // Default grade maps keyed by scale
 const DEFAULT_MAP_4: Record<string, number> = {
@@ -48,9 +49,11 @@ const DEFAULT_BONUSES: Record<string, number> = {
 const GRADE_ORDER = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"];
 
 export default function GpaConfigPage() {
+  const [activeTab, setActiveTab] = useState("config");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [computing, setComputing] = useState(false);
+  const [rankResults, setRankResults] = useState<any>(null);
 
   const [scale, setScale] = useState<4 | 5>(4);
   const [gradeMap, setGradeMap] = useState<Record<string, number>>({ ...DEFAULT_MAP_4 });
@@ -128,16 +131,74 @@ export default function GpaConfigPage() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
       >
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
-            GPA Configuration
-          </h1>
-          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-            Configure the grading scale and weight bonuses used to compute student GPAs and class ranks.
-          </p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <div>
+            <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
+              GPA & Rankings
+            </h1>
+            <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
+              Configure grading scales, compute class ranks, and view student rankings.
+            </p>
+          </div>
         </div>
+
+        <AdminTabBar
+          tabs={[
+            { key: "config", label: "Configuration", icon: Settings },
+            { key: "rankings", label: "Class Rankings", icon: Trophy },
+          ]}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        />
+      </motion.div>
+
+      {activeTab === "rankings" ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>Class Rankings</h2>
+              <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Compute and view student GPA rankings</p>
+            </div>
+            <button onClick={async () => {
+              setComputing(true);
+              try {
+                const result = await computeClassRanks();
+                setRankResults(result);
+                toast.success(`Class ranks computed for ${result?.updated || 0} students`);
+              } catch { toast.error("Failed to compute ranks"); }
+              finally { setComputing(false); }
+            }}
+              style={{
+                height: 36, borderRadius: 6, padding: "0 16px", fontSize: 12, fontWeight: 600,
+                display: "flex", alignItems: "center", gap: 6,
+                background: "#8b5cf6", color: "#fff", border: "none", cursor: "pointer",
+                opacity: computing ? 0.7 : 1,
+              }}>
+              {computing ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Trophy style={{ width: 14, height: 14 }} />}
+              {computing ? "Computing..." : "Compute Class Ranks"}
+            </button>
+          </div>
+          {rankResults && (
+            <div style={{ padding: 16, borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 8 }}>Results</p>
+              <p style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
+                Ranked <strong>{rankResults?.ranked || rankResults?.data?.ranked || 0}</strong> students out of <strong>{rankResults?.updated || 0}</strong>
+              </p>
+            </div>
+          )}
+          {!rankResults && (
+            <div style={{ textAlign: "center", padding: 48 }}>
+              <Trophy style={{ width: 40, height: 40, color: "var(--admin-font-light)", margin: "0 auto 16px", opacity: 0.3 }} />
+              <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>Click &quot;Compute Class Ranks&quot; to generate student rankings based on your GPA configuration.</p>
+            </div>
+          )}
+        </div>
+      ) : (
+      <>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div />
 
         {/* Action Buttons */}
         <div className="flex items-center gap-3 shrink-0">
@@ -496,7 +557,9 @@ export default function GpaConfigPage() {
               {saving ? "Saving..." : "Save Configuration"}
             </button>
           </motion.div>
-        </>
+      </>
+      )}
+      </>
       )}
     </div>
   );

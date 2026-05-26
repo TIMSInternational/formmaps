@@ -18,14 +18,16 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Search, Users, UserPlus, MoreHorizontal, UserCheck, Eye, Mail, TrendingUp, BookOpen,
+  Search, Users, UserPlus, MoreHorizontal, UserCheck, Eye, Mail, TrendingUp, BookOpen, Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TableRowsSkeleton } from "@/components/skeletons/TableSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminStatCard } from "@/app/admin/_components/AdminStatCard";
+import { AdminTabBar } from "../_components/AdminTabBar";
 
 export default function StudentsPage() {
+  const [activeTab, setActiveTab] = useState("roster");
   const { t } = useTranslation();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -74,53 +76,70 @@ export default function StudentsPage() {
   return (
     <div className="space-y-6" style={{ color: "var(--admin-font-primary)" }}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-[20px] font-semibold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>
-            Students
-          </h1>
-          <p className="text-[13px] mt-0.5" style={{ color: "var(--admin-font-light)" }}>
-            Manage students enrolled in your school
+      <div>
+        <h1 className="text-[20px] font-semibold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>
+          Students
+        </h1>
+        <p className="text-[13px] mt-0.5" style={{ color: "var(--admin-font-light)" }}>
+          Manage students enrolled in your school
+        </p>
+      </div>
+
+      {/* Tab Bar */}
+      <AdminTabBar
+        tabs={[
+          { key: "roster", label: "Roster", icon: Users, count: stats?.totalStudents },
+          { key: "onboard", label: "Invite & Onboard", icon: Upload },
+        ]}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+      />
+
+      {activeTab === "onboard" ? (
+        <div style={{ textAlign: "center", padding: 40 }}>
+          <Upload style={{ width: 40, height: 40, color: "var(--admin-font-light)", margin: "0 auto 16px" }} />
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 8 }}>Invite & Onboard Students</h2>
+          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginBottom: 20, maxWidth: 400, margin: "0 auto 20px" }}>
+            Invite individual students or bulk onboard from a CSV file with automatic counselor assignment.
           </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--admin-font-light)" }} />
-            <Input
-              placeholder="Search students..."
-              className="pl-9 h-9 rounded-lg text-sm"
-              style={{
-                background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
-                color: "var(--admin-font-primary)",
-              }}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <Button className="h-9 rounded-lg text-sm" style={{ background: "var(--admin-accent-green, #10b981)", color: "#fff" }}
+              onClick={() => router.push("/school-admin/students?invite=true")}>
+              <UserPlus className="mr-2 h-4 w-4" /> Invite Student
+            </Button>
+            <Button className="h-9 rounded-lg text-sm" variant="outline"
+              style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-primary)" }}
+              onClick={() => router.push("/school-admin/students/bulk-onboard")}>
+              <Upload className="mr-2 h-4 w-4" /> Bulk Onboard (CSV)
+            </Button>
           </div>
-
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-[130px] h-9 rounded-lg text-sm"
-              style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}>
-              <SelectValue placeholder="All Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button
-            className="h-9 rounded-lg text-sm"
-            style={{ background: "var(--admin-accent-green, #10b981)", color: "#fff" }}
-            onClick={() => router.push("/school-admin/students?invite=true")}
-          >
-            <UserPlus className="mr-2 h-4 w-4" />
-            Invite Student
-          </Button>
         </div>
+      ) : (
+      <>
+      {/* Roster Tab Content */}
+      <div className="flex flex-col sm:flex-row gap-3 w-full">
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--admin-font-light)" }} />
+          <Input placeholder="Search students..." className="pl-9 h-9 rounded-lg text-sm"
+            style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}
+            value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        </div>
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="w-[130px] h-9 rounded-lg text-sm"
+            style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}>
+            <SelectValue placeholder="All Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button className="h-9 rounded-lg text-sm" style={{ background: "var(--admin-accent-green, #10b981)", color: "#fff" }}
+          onClick={() => router.push("/school-admin/students?invite=true")}>
+          <UserPlus className="mr-2 h-4 w-4" /> Invite Student
+        </Button>
       </div>
 
       {/* Stats */}
@@ -255,6 +274,8 @@ export default function StudentsPage() {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

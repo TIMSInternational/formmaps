@@ -2,9 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Radar, Users, CheckCircle2, Clock, AlertTriangle, Search, ChevronRight } from "lucide-react";
+import { Radar, Users, CheckCircle2, Clock, AlertTriangle, Search, ChevronRight, RefreshCw, TimerReset, Send, MoreHorizontal } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
 import { toast } from "sonner";
+
+async function extendEvaluationToken(groupId: string) {
+  return apiRequest(`/evaluation/extend-token/${groupId}`, { method: "PATCH" });
+}
+async function resetEvaluationCompletion(groupId: string) {
+  return apiRequest(`/evaluation/reset-completion/${groupId}`, { method: "PATCH" });
+}
+async function resendEvaluationEmail(groupId: string) {
+  return apiRequest(`/evaluation/resend-email/${groupId}`, { method: "POST" });
+}
 
 interface EvalStudent {
   id: string;
@@ -143,8 +153,8 @@ export default function SchoolAdminEvaluationsPage() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
         {/* Table header */}
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", padding: "10px 16px", borderBottom: "1px solid var(--admin-border-light)", background: "var(--admin-bg-hover)" }}>
-          {["STUDENT", "GRADE", "EVALUATORS", "SELF", "STATUS"].map((h) => (
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", padding: "10px 16px", borderBottom: "1px solid var(--admin-border-light)", background: "var(--admin-bg-hover)" }}>
+          {["STUDENT", "GRADE", "EVALUATORS", "SELF", "STATUS", "ACTIONS"].map((h) => (
             <span key={h} style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)" }}>{h}</span>
           ))}
         </div>
@@ -163,7 +173,7 @@ export default function SchoolAdminEvaluationsPage() {
             const cfg = statusConfig[s.status];
             return (
               <div key={s.id} style={{
-                display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", padding: "12px 16px", alignItems: "center",
+                display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", padding: "12px 16px", alignItems: "center",
                 borderBottom: i < filtered.length - 1 ? "1px solid var(--admin-border-light)" : "none",
                 transition: "background 0.1s",
               }}
@@ -190,6 +200,17 @@ export default function SchoolAdminEvaluationsPage() {
                 }}>
                   {cfg.label}
                 </span>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <button title="Resend invitation emails" onClick={async () => {
+                    try {
+                      await apiRequest(`/evaluation/send-email-invitations/${s.id}`, { method: "POST" });
+                      toast.success(`Invitations resent for ${s.name}`);
+                    } catch { toast.error("Failed to resend"); }
+                  }}
+                    style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Send style={{ width: 12, height: 12, color: "var(--admin-font-tertiary)" }} />
+                  </button>
+                </div>
               </div>
             );
           })
