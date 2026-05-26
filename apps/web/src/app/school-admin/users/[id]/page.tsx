@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
@@ -65,6 +65,8 @@ import {
 import {
   useStudentMILResults,
   useStudentPCAHistory,
+  useStudentPCAResult,
+  useRegisterPCA,
   useStudentEvalGroups,
   useStudentEvalProgress,
   useStudentAcademicGaps,
@@ -72,11 +74,40 @@ import {
   useStudentTranscript,
   useStudentGpa,
 } from "@/hooks/useStudentDetailData";
+import type { PCADISCResult } from "@/hooks/useStudentDetailData";
 
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { StudentStatus } from "@/types/student";
 import type { NoteType, CounselorNote } from "@/types/counselorNotes";
+
+// PCA chart image — fetches through backend proxy to avoid CORS
+function PCAChartImage({ pcaCod }: { pcaCod?: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    if (!pcaCod) return;
+    let revoked = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pcaapi/img-report?pcaCod=${pcaCod}`,
+          { credentials: "include" }
+        );
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        if (!revoked) setSrc(url);
+      } catch { /* ignore */ }
+    })();
+    return () => { revoked = true; };
+  }, [pcaCod]);
+  if (!src) return null;
+  return (
+    <div style={{ marginTop: 8 }}>
+      <img src={src} alt="DISC Chart" style={{ width: "100%", borderRadius: 6, border: "1px solid var(--admin-border-default)" }} />
+    </div>
+  );
+}
 
 // Reusable card header
 function CardHeader({ icon: Icon, color, title, badge }: { icon: any; color: string; title: string; badge?: React.ReactNode }) {
@@ -125,6 +156,8 @@ export default function StudentDetailsPage() {
   // New data hooks
   const { data: milData } = useStudentMILResults(studentId);
   const { data: pcaData } = useStudentPCAHistory(studentId);
+  const { data: pcaDISC, isLoading: pcaDISCLoading } = useStudentPCAResult(studentId);
+  const registerPCA = useRegisterPCA(studentId);
   const { data: evalGroups } = useStudentEvalGroups(studentId);
   const { data: evalProgress } = useStudentEvalProgress(studentId);
   const { data: gapsData } = useStudentAcademicGaps(studentId);
@@ -205,8 +238,8 @@ export default function StudentDetailsPage() {
   // Computed assessment stats
   const milCompleted = milData ? milData.completedExams : 0;
   const milTotal = milData ? milData.totalExams : 5;
-  const pcaCompleted = pcaData?.completedExams ?? 0;
-  const pcaTotal = pcaData?.totalExams ?? 0;
+  const pcaCompleted = pcaDISC?.pcaD1 != null ? 1 : (pcaData?.completedExams ?? 0);
+  const pcaTotal = 1;
   const evalTotal = evalGroups?.length ?? 0;
   const evalCompleted = evalGroups?.filter((g: any) => g.isEvaluationCompleted).length ?? 0;
 
@@ -569,50 +602,104 @@ export default function StudentDetailsPage() {
             </div>
           </Card>
 
-          {/* PCA Exam Results */}
+          {/* PCA DISC Profile (TIMS) */}
           <Card>
-            <CardHeader icon={Target} color="#8b5cf6" title="PCA Exam Results" badge={
-              pcaData ? (
+            <CardHeader icon={Target} color="#8b5cf6" title="PCA DISC Profile" badge={
+              pcaDISC?.pcaFec ? (
                 <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(139,92,246,0.1)", color: "#8b5cf6", marginLeft: 4 }}>
-                  {pcaData.completedExams}/{pcaData.totalExams} complete | {pcaData.completionPercentage?.toFixed(0) ?? 0}%
+                  Completed {pcaDISC.pcaFec}
                 </span>
               ) : null
             } />
             <div style={{ padding: 16 }}>
-              {pcaData?.examStatus && pcaData.examStatus.length > 0 ? (
-                <div className="space-y-2">
-                  {pcaData.examStatus.map((exam: any) => (
-                    <div key={exam.examId || exam.examName} style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
-                    }}>
-                      <div>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{exam.examName}</span>
-                        {exam.completionDate && (
-                          <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginLeft: 8 }}>
-                            {format(new Date(exam.completionDate), "MMM d, yyyy")}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        {exam.scorePercentage > 0 && (
-                          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--admin-font-primary)" }}>{exam.scorePercentage.toFixed(0)}%</span>
-                        )}
-                        <span style={{
-                          fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase",
-                          background: exam.status === "completed" ? "rgba(16,185,129,0.1)" : exam.status === "in_progress" ? "rgba(59,130,246,0.1)" : "rgba(107,114,128,0.1)",
-                          color: exam.status === "completed" ? "#10b981" : exam.status === "in_progress" ? "#3b82f6" : "#6b7280",
-                        }}>
-                          {exam.status?.replace("_", " ")}
-                        </span>
+              {pcaDISCLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ) : pcaDISC && pcaDISC.pcaD1 != null ? (
+                <div className="space-y-4">
+                  {/* 3 DISC Graphs */}
+                  {[
+                    { title: "Work Adaptation", d: pcaDISC.pcaD1, i: pcaDISC.pcaI1, s: pcaDISC.pcaS1, c: pcaDISC.pcaC1 },
+                    { title: "Under Pressure", d: pcaDISC.pcaD2, i: pcaDISC.pcaI2, s: pcaDISC.pcaS2, c: pcaDISC.pcaC2 },
+                    { title: "Self-Image", d: pcaDISC.pcaD3, i: pcaDISC.pcaI3, s: pcaDISC.pcaS3, c: pcaDISC.pcaC3 },
+                  ].map((graph) => (
+                    <div key={graph.title}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 6 }}>{graph.title}</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
+                        {[
+                          { label: "D", value: graph.d, color: "#ef4444" },
+                          { label: "I", value: graph.i, color: "#f59e0b" },
+                          { label: "S", value: graph.s, color: "#10b981" },
+                          { label: "C", value: graph.c, color: "#3b82f6" },
+                        ].map((dim) => (
+                          <div key={dim.label} style={{ textAlign: "center" }}>
+                            <div style={{
+                              height: 48, position: "relative", background: "var(--admin-bg-hover)", borderRadius: 4, overflow: "hidden",
+                            }}>
+                              <div style={{
+                                position: "absolute", bottom: 0, left: 0, right: 0,
+                                height: `${Math.min(100, (dim.value ?? 0))}%`,
+                                background: dim.color, opacity: 0.7, borderRadius: "0 0 4px 4px",
+                              }} />
+                            </div>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: dim.color, marginTop: 2 }}>{dim.label}</div>
+                            <div style={{ fontSize: 9, color: "var(--admin-font-tertiary)" }}>{dim.value ?? "—"}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
+
+                  {/* Chart image from TIMS (proxied through backend to avoid CORS) */}
+                  <PCAChartImage pcaCod={pcaDISC.pcaCod} />
                 </div>
               ) : (
-                <div style={{ textAlign: "center", padding: "24px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
-                  <Target style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.4 }} />
-                  No PCA exam results yet.
+                <div style={{ textAlign: "center", padding: "24px 0" }}>
+                  <Target style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.4, color: "var(--admin-font-tertiary)" }} />
+                  <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginBottom: 12 }}>
+                    No PCA DISC results available.
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!student) return;
+                      const nameParts = (student.name || "").split(" ");
+                      registerPCA.mutate({
+                        PerNom: nameParts[0] || "",
+                        PerApe: nameParts.slice(1).join(" ") || nameParts[0] || "",
+                        PerNumIde: student.id,
+                        PerGen: "M",
+                        PerMail: student.email || "",
+                      }, {
+                        onSuccess: (res) => {
+                          if (res.success && res.assessmentUrl) {
+                            toast.success("PCA evaluation registered. Assessment link copied.");
+                            navigator.clipboard.writeText(res.assessmentUrl);
+                          } else {
+                            toast.error(res.message || "Failed to register PCA evaluation");
+                          }
+                        },
+                        onError: () => toast.error("Failed to register PCA evaluation"),
+                      });
+                    }}
+                    disabled={registerPCA.isPending}
+                    style={{
+                      padding: "8px 16px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                      background: "#8b5cf6", color: "#fff", border: "none", cursor: "pointer",
+                      opacity: registerPCA.isPending ? 0.6 : 1,
+                    }}
+                  >
+                    {registerPCA.isPending ? "Registering..." : "Register for PCA Assessment"}
+                  </button>
+                  {registerPCA.data?.assessmentUrl && (
+                    <div style={{ marginTop: 12, padding: "8px 12px", borderRadius: 6, background: "rgba(139,92,246,0.05)", border: "1px solid rgba(139,92,246,0.2)" }}>
+                      <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginBottom: 4 }}>Assessment Link (share with student):</div>
+                      <a href={registerPCA.data.assessmentUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#8b5cf6", wordBreak: "break-all" }}>
+                        {registerPCA.data.assessmentUrl}
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

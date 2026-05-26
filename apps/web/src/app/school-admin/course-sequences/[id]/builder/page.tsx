@@ -65,6 +65,81 @@ const canvasResetCSS = `
   }
 `;
 
+// ── Top-down layout: arrange nodes by depth level, multiple nodes per level ──
+const NODE_W = 200;
+const NODE_H = 120;
+const GAP_X = 60;
+const GAP_Y = 180;
+
+function layoutTopDown(nodes: Node[], edges: Edge[]): Node[] {
+  if (nodes.length === 0) return nodes;
+
+  // Build adjacency: source → targets
+  const children = new Map<string, string[]>();
+  const hasParent = new Set<string>();
+  for (const e of edges) {
+    const list = children.get(e.source) || [];
+    list.push(e.target);
+    children.set(e.source, list);
+    hasParent.add(e.target);
+  }
+
+  // Find roots (no incoming edges)
+  const roots = nodes.filter((n) => !hasParent.has(n.id)).map((n) => n.id);
+  if (roots.length === 0) roots.push(nodes[0].id);
+
+  // BFS to assign levels
+  const level = new Map<string, number>();
+  const queue = [...roots];
+  for (const r of roots) level.set(r, 0);
+  while (queue.length) {
+    const id = queue.shift()!;
+    const lvl = level.get(id)!;
+    for (const child of children.get(id) || []) {
+      const existing = level.get(child) ?? -1;
+      if (lvl + 1 > existing) level.set(child, lvl + 1);
+      queue.push(child);
+    }
+  }
+  // Assign unvisited nodes to level 0
+  for (const n of nodes) if (!level.has(n.id)) level.set(n.id, 0);
+
+  // Group by level
+  const levels = new Map<number, string[]>();
+  for (const [id, lvl] of level) {
+    const list = levels.get(lvl) || [];
+    list.push(id);
+    levels.set(lvl, list);
+  }
+
+  // Position each level centered horizontally
+  const maxLevel = Math.max(...levels.keys());
+  const positioned = new Map<string, { x: number; y: number }>();
+
+  // Find the widest level to use as centering reference
+  let maxLevelWidth = 0;
+  for (let lvl = 0; lvl <= maxLevel; lvl++) {
+    const ids = levels.get(lvl) || [];
+    const w = ids.length * NODE_W + (ids.length - 1) * GAP_X;
+    if (w > maxLevelWidth) maxLevelWidth = w;
+  }
+  const centerX = maxLevelWidth / 2;
+
+  for (let lvl = 0; lvl <= maxLevel; lvl++) {
+    const ids = levels.get(lvl) || [];
+    const totalW = ids.length * NODE_W + (ids.length - 1) * GAP_X;
+    const startX = centerX - totalW / 2;
+    ids.forEach((id, i) => {
+      positioned.set(id, { x: startX + i * (NODE_W + GAP_X), y: 40 + lvl * GAP_Y });
+    });
+  }
+
+  return nodes.map((n) => ({
+    ...n,
+    position: positioned.get(n.id) || n.position,
+  }));
+}
+
 // ── Inner component (needs ReactFlowProvider) ──
 function BuilderInner() {
   const params = useParams();
@@ -108,7 +183,7 @@ function BuilderInner() {
 
       // If backend has nodes, use them
       if (detail.nodes?.length) {
-        setNodes(detail.nodes.map((n: any) => ({
+        let parsedNodes: Node[] = detail.nodes.map((n: any) => ({
           id: n.id,
           type: n.type || "courseNode",
           position: n.position || { x: Number(n.positionX) || 0, y: Number(n.positionY) || 0 },
@@ -123,13 +198,21 @@ function BuilderInner() {
             status: n.data?.status || "elective",
             onDelete: handleDeleteNode,
           },
-        })));
-        if (detail.edges?.length) setEdges(detail.edges.map((e: any) => ({
+        }));
+        let parsedEdges: Edge[] = [];
+        if (detail.edges?.length) parsedEdges = detail.edges.map((e: any) => ({
           id: e.id,
           source: e.source || e.sourceNodeId,
           target: e.target || e.targetNodeId,
           type: "editable", animated: false,
-        })));
+        }));
+        // Auto-layout if all nodes share the same Y (old horizontal layout)
+        const ys = new Set(parsedNodes.map((n) => Math.round(n.position.y)));
+        if (ys.size === 1 && parsedNodes.length > 1 && parsedEdges.length > 0) {
+          parsedNodes = layoutTopDown(parsedNodes, parsedEdges);
+        }
+        setNodes(parsedNodes);
+        setEdges(parsedEdges);
         setInitialized(true);
         return;
       }
@@ -181,13 +264,15 @@ function BuilderInner() {
           const aiData = JSON.parse(localStorage.getItem("ai_sequence_blueprint") || "{}");
           setSequenceName(aiData.name || "AI Generated");
           const remap: Record<number, string> = {};
+          let aiNodes: Node[] = [];
+          let aiEdges: Edge[] = [];
           if (aiData.nodes) {
-            const ns: Node[] = aiData.nodes.map((n: any, i: number) => {
+            aiNodes = aiData.nodes.map((n: any, i: number) => {
               const nid = `node-${n.courseId}-${Date.now()}-${i}`;
               remap[i] = nid;
               return {
                 id: nid, type: "courseNode",
-                position: { x: Number(n.positionX) || 0, y: Number(n.positionY) || 0 },
+                position: { x: 0, y: 0 }, // will be laid out below
                 data: {
                   courseId: n.courseId, courseCode: n.courseCode,
                   courseName: n.courseName, label: n.courseName,
@@ -196,22 +281,32 @@ function BuilderInner() {
                 },
               };
             });
-            setNodes(ns);
           }
           if (aiData.edges) {
-            setEdges(aiData.edges.map((e: any, i: number) => ({
+            aiEdges = aiData.edges.map((e: any, i: number) => ({
               id: `edge-ai-${i}`,
               source: remap[e.sourceIndex] || e.sourceNodeId,
               target: remap[e.targetIndex] || e.targetNodeId,
               type: "editable", animated: false,
-            })).filter((e: Edge) => e.source && e.target));
+            })).filter((e: Edge) => e.source && e.target);
           }
+          // Apply top-down layout
+          setNodes(layoutTopDown(aiNodes, aiEdges));
+          setEdges(aiEdges);
           localStorage.removeItem("ai_sequence_blueprint");
         } catch {}
       }
       setInitialized(true);
     }
   }, [initialized, detail, detailLoading, currentId, searchParams, handleDeleteNode]);
+
+  // Auto-fit view after nodes are initialized
+  useEffect(() => {
+    if (initialized && nodes.length > 0) {
+      setTimeout(() => reactflow.fitView({ padding: 0.3 }), 50);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialized]);
 
   const onNodesChange = useCallback((c: NodeChange[]) =>
     setNodes((n) => applyNodeChanges(c, n)), []);

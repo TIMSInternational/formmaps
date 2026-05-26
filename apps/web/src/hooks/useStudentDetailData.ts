@@ -1,16 +1,18 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getMILResults, getUserExamHistory } from "@/services/milService";
 import { getUserEvaluationGroups, getEvaluationReport } from "@/services/evaluationService";
 import { getStudentAcademicGaps, getStudentCourseRecommendations } from "@/services/academicGapService";
 import { getStudentTranscript, getStudentGpa } from "@/services/transcriptService";
+import { getPCAResult, addPCAEvaluation } from "@/services/pcaService";
 import type { MILResultsData } from "@/services/milService";
 import type { StudentGpa, TranscriptData } from "@/services/transcriptService";
 
 export const studentDetailKeys = {
   milResults: (id: string) => ["student-detail", "mil", id] as const,
   pcaHistory: (id: string) => ["student-detail", "pca", id] as const,
+  pcaResult: (id: string) => ["student-detail", "pca-result", id] as const,
   evalGroups: (id: string) => ["student-detail", "eval-groups", id] as const,
   evalProgress: (id: string) => ["student-detail", "eval-progress", id] as const,
   academicGaps: (id: string) => ["student-detail", "gaps", id] as const,
@@ -99,5 +101,40 @@ export function useStudentGpa(studentId: string) {
     enabled: !!studentId,
     staleTime: 1000 * 60 * 5,
     retry: false,
+  });
+}
+
+export interface PCADISCResult {
+  pcaCod?: string;
+  pcaD1?: number; pcaI1?: number; pcaS1?: number; pcaC1?: number;
+  pcaD2?: number; pcaI2?: number; pcaS2?: number; pcaC2?: number;
+  pcaD3?: number; pcaI3?: number; pcaS3?: number; pcaC3?: number;
+  pcaImg?: string;
+  pcaLink?: string;
+  pcaFec?: string;
+}
+
+export function useStudentPCAResult(studentId: string) {
+  return useQuery<PCADISCResult | null>({
+    queryKey: studentDetailKeys.pcaResult(studentId),
+    queryFn: async () => {
+      const res = await getPCAResult(studentId);
+      return res?.data || res || null;
+    },
+    enabled: !!studentId,
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+  });
+}
+
+export function useRegisterPCA(studentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { PerNom: string; PerApe: string; PerNumIde: string; PerGen: "M" | "F"; PerMail: string }) =>
+      addPCAEvaluation(studentId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: studentDetailKeys.pcaResult(studentId) });
+      queryClient.invalidateQueries({ queryKey: studentDetailKeys.pcaHistory(studentId) });
+    },
   });
 }
