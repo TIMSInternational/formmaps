@@ -364,45 +364,54 @@ export function CoursesPanel() {
                   )}
 
                   {/* Prerequisite Chain */}
-                  {(prereqChain?.chain?.length ?? 0) > 0 && (
-                    <div>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-                        Prerequisite Chain ({prereqChain!.chain.length} course{prereqChain!.chain.length !== 1 ? "s" : ""})
+                  {(prereqChain?.chain?.length ?? 0) > 0 && (() => {
+                    // Group by depth
+                    const chain = prereqChain!.chain;
+                    const depths = [...new Set(chain.map((c: any) => c.depth))].sort((a: number, b: number) => a - b);
+                    const depthLabel = (d: number) => d === 1 ? "Direct prerequisites" : `${d} steps away`;
+                    return (
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                          Prerequisite Chain ({chain.length} course{chain.length !== 1 ? "s" : ""})
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                          {depths.map((depth: number, di: number) => {
+                            const courses = chain.filter((c: any) => c.depth === depth);
+                            return (
+                              <div key={depth}>
+                                <div style={{ fontSize: 10, fontWeight: 600, color: depth === 1 ? "#f59e0b" : "var(--admin-font-tertiary)", marginBottom: 4 }}>
+                                  {depthLabel(depth)}
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                                  {courses.map((p: any) => (
+                                    <div key={p.code} style={{
+                                      display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                                      borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
+                                    }}>
+                                      <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{p.name}</div>
+                                        <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", fontFamily: "monospace" }}>{p.code}{p.department ? ` · ${p.department}` : ""}</div>
+                                      </div>
+                                      <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                                        {p.isHonors && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>Honors</span>}
+                                        {p.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}>{p.frameworkType}</span>}
+                                        {Number(p.credits) > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>{p.credits} cr</span>}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                                {di < depths.length - 1 && (
+                                  <div style={{ display: "flex", justifyContent: "center", padding: "4px 0" }}>
+                                    <div style={{ width: 1, height: 10, background: "var(--admin-border-default)" }} />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                        {prereqChain!.chain.map((p: any, i: number) => (
-                          <div key={p.code}>
-                            <div style={{
-                              display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-                              borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
-                            }}>
-                              <div style={{
-                                width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
-                                background: p.depth === 1 ? "rgba(245,158,11,0.15)" : "rgba(107,114,128,0.1)",
-                                color: p.depth === 1 ? "#f59e0b" : "var(--admin-font-tertiary)",
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: 10, fontWeight: 700,
-                              }}>{p.depth}</div>
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{p.name}</div>
-                                <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", fontFamily: "monospace" }}>{p.code}{p.department ? ` · ${p.department}` : ""}</div>
-                              </div>
-                              <div style={{ display: "flex", gap: 4 }}>
-                                {p.isHonors && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>Honors</span>}
-                                {p.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}>{p.frameworkType}</span>}
-                                {Number(p.credits) > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>{p.credits} cr</span>}
-                              </div>
-                            </div>
-                            {i < prereqChain!.chain.length - 1 && (
-                              <div style={{ display: "flex", justifyContent: "center", padding: "2px 0" }}>
-                                <div style={{ width: 1, height: 12, background: "var(--admin-border-default)" }} />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                   {selectedCourse.prerequisites?.length > 0 && !prereqChain?.chain?.length && (
                     <div>
                       <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>

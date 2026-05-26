@@ -206,9 +206,8 @@ function BuilderInner() {
           target: e.target || e.targetNodeId,
           type: "editable", animated: false,
         }));
-        // Auto-layout if all nodes share the same Y (old horizontal layout)
-        const ys = new Set(parsedNodes.map((n) => Math.round(n.position.y)));
-        if (ys.size === 1 && parsedNodes.length > 1 && parsedEdges.length > 0) {
+        // Auto-layout: apply top-down layout when edges exist
+        if (parsedNodes.length > 1 && parsedEdges.length > 0) {
           parsedNodes = layoutTopDown(parsedNodes, parsedEdges);
         }
         setNodes(parsedNodes);
