@@ -184,8 +184,9 @@ export default function StudentsPage() {
               </TableRow>
             ) : (
               students.map((student: any) => (
-                <TableRow key={student.id} style={{ borderBottom: "1px solid var(--admin-border-default)" }}
+                <TableRow key={student.id} style={{ borderBottom: "1px solid var(--admin-border-default)", cursor: "pointer" }}
                   className="transition-colors"
+                  onClick={() => router.push(`/school-admin/users/${student.id}`)}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 >
@@ -233,7 +234,8 @@ export default function StudentsPage() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-7 w-7 p-0 rounded-full"
-                          style={{ color: "var(--admin-font-light)" }}>
+                          style={{ color: "var(--admin-font-light)" }}
+                          onClick={(e) => e.stopPropagation()}>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>

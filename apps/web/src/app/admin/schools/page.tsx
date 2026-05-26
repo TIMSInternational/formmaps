@@ -300,7 +300,8 @@ export default function SchoolsPage() {
                 schools.map((school) => (
                   <TableRow
                     key={school.id}
-                    className="hover:bg-gray-50/50 transition-colors"
+                    className="hover:bg-gray-50/50 transition-colors cursor-pointer"
+                    onClick={() => handleEditSchool(school)}
                   >
                     <TableCell className="font-medium">{school.name}</TableCell>
                     <TableCell>
@@ -344,34 +345,17 @@ export default function SchoolsPage() {
                         : "-"}
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleEditSchool(school)}
-                          >
-                            <Pencil className="mr-2 h-4 w-4" />
-                            {t("common.edit", "Edit")}
-                          </DropdownMenuItem>
-                          {(school.status === "invited" ||
-                            school.status === "pending") && (
-                            <DropdownMenuItem
-                              onClick={() => handleResendInvite(school)}
-                            >
-                              <Mail className="mr-2 h-4 w-4" />
-                              {t("admin.schools.resendInvite", "Resend Invite")}
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {(school.status === "invited" || school.status === "pending") && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={(e) => { e.stopPropagation(); handleResendInvite(school); }}
+                        >
+                          <Mail className="mr-1.5 h-3.5 w-3.5" />
+                          Resend
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

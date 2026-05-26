@@ -60,6 +60,8 @@ export interface SchoolCourse {
   corequisites?: string[];
   frameworkType?: FrameworkType;
   description?: string;
+  maxEnrollment?: number | null;
+  isHonors?: boolean;
   enrollmentCount: number;
   status: CourseStatus;
 }
@@ -74,6 +76,8 @@ export interface SchoolCoursePayload {
   corequisites?: string[];
   frameworkType?: FrameworkType;
   description?: string;
+  maxEnrollment?: number | null;
+  isHonors?: boolean;
 }
 
 export interface SchoolCoursesResponse {
@@ -123,11 +127,17 @@ export interface PrerequisiteCheckResult {
 
 export interface PrerequisiteChain {
   courseId: string;
-  courseName: string;
+  courseCode: string;
   chain: {
-    level: number;
-    courses: { code: string; name: string; type?: PrerequisiteRuleType }[];
+    code: string;
+    name: string;
+    department: string;
+    credits: number;
+    depth: number;
+    frameworkType: string | null;
+    isHonors: boolean;
   }[];
+  totalDepth: number;
 }
 
 // ============================================

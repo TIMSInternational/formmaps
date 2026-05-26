@@ -13,17 +13,14 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Search, Users, UserPlus, MoreHorizontal, Shield, Mail, Eye, Loader2,
+  Search, Users, UserPlus, Shield, Mail, Loader2, Send, UserX, Calendar, AtSign, BadgeCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSchoolUsers, useInviteStaff } from "@/hooks/useSchoolProfileQueries";
+import { apiRequest } from "@/lib/api/apiClient";
 import { TableRowsSkeleton } from "@/components/skeletons/TableSkeleton";
 import { AdminStatCard } from "@/app/admin/_components/AdminStatCard";
 
@@ -34,6 +31,8 @@ export function StaffPanel() {
   const [page, setPage] = useState(1);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteForm, setInviteForm] = useState({ name: "", email: "", role: "counselor" });
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const { data, isLoading, refetch } = useSchoolUsers({
     page, limit: 10, search: searchTerm,
@@ -60,12 +59,40 @@ export function StaffPanel() {
     } catch (err: any) { toast.error(err.message || "Failed to invite"); }
   };
 
+  const handleResendInvite = async (userId: string) => {
+    setActionLoading("resend");
+    try {
+      await apiRequest(`/api/v1/school-admin/students/${userId}/resend-invite`, { method: "POST" });
+      toast.success("Invitation resent");
+    } catch { toast.error("Failed to resend invitation"); }
+    setActionLoading(null);
+  };
+
+  const handleDeactivate = async (userId: string) => {
+    setActionLoading("deactivate");
+    try {
+      await apiRequest(`/api/v1/school-admin/students/${userId}`, { method: "DELETE" });
+      toast.success("User deactivated");
+      setSelectedUser(null);
+      refetch();
+    } catch { toast.error("Failed to deactivate user"); }
+    setActionLoading(null);
+  };
+
   // Count by role
   const roleCounts = users.reduce((acc: any, u: any) => {
     const r = (u.roleName || u.role || "other").toLowerCase();
     acc[r] = (acc[r] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+
+  const roleColor = (role: string) => {
+    const r = role.toLowerCase().replace(/_/g, " ");
+    if (r.includes("admin")) return { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6" };
+    if (r.includes("counselor")) return { bg: "rgba(59,130,246,0.1)", color: "#3b82f6" };
+    if (r.includes("coach")) return { bg: "rgba(245,158,11,0.1)", color: "#f59e0b" };
+    return { bg: "rgba(107,114,128,0.1)", color: "#6b7280" };
+  };
 
   return (
     <div className="space-y-6">
@@ -166,7 +193,7 @@ export function StaffPanel() {
         <Table>
           <TableHeader>
             <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
-              {["Name", "Email", "Role", "Grade", "Status", "Joined", "Actions"].map((h) => (
+              {["Name", "Email", "Role", "Grade", "Status", "Joined"].map((h) => (
                 <TableHead key={h} className="py-3 px-4" style={{
                   fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
                   color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)",
@@ -178,10 +205,10 @@ export function StaffPanel() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRowsSkeleton columnCount={7} rowCount={5} />
+              <TableRowsSkeleton columnCount={6} rowCount={5} />
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
+                <TableCell colSpan={6} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
                   <Users className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} />
                   <p className="text-sm">No users found</p>
                 </TableCell>
@@ -189,9 +216,11 @@ export function StaffPanel() {
             ) : (
               users.map((user: any) => {
                 const role = (user.roleName || user.role || "student").replace(/_/g, " ");
+                const rc = roleColor(role);
                 return (
-                  <TableRow key={user.id} style={{ borderBottom: "1px solid var(--admin-border-default)" }}
+                  <TableRow key={user.id} style={{ borderBottom: "1px solid var(--admin-border-default)", cursor: "pointer" }}
                     className="transition-colors"
+                    onClick={() => setSelectedUser(user)}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
                     <TableCell className="py-3 px-4">
@@ -210,7 +239,7 @@ export function StaffPanel() {
                     <TableCell className="py-3 px-4" style={{ fontSize: 13, color: "var(--admin-font-light)" }}>{user.email}</TableCell>
                     <TableCell className="py-3 px-4">
                       <Badge variant="outline" className="capitalize text-xs" style={{
-                        borderColor: "var(--admin-border-default)", color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)",
+                        borderColor: rc.color, color: rc.color, background: rc.bg, border: "none",
                       }}>
                         <Shield className="h-3 w-3 mr-1 opacity-60" />
                         {role}
@@ -229,26 +258,6 @@ export function StaffPanel() {
                     </TableCell>
                     <TableCell className="py-3 px-4" style={{ fontSize: 12, color: "var(--admin-font-light)" }}>
                       {user.createdDate ? new Date(user.createdDate).toLocaleDateString() : user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : "—"}
-                    </TableCell>
-                    <TableCell className="py-3 px-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-7 w-7 p-0 rounded-full" style={{ color: "var(--admin-font-light)" }}>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[150px]">
-                          <DropdownMenuLabel className="text-xs" style={{ color: "var(--admin-font-light)" }}>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem className="text-sm cursor-pointer">
-                            <Eye className="mr-2 h-3.5 w-3.5" /> View
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-sm cursor-pointer"
-                            onClick={() => { navigator.clipboard.writeText(user.email); toast.success("Email copied"); }}>
-                            <Mail className="mr-2 h-3.5 w-3.5" /> Copy Email
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
@@ -275,6 +284,141 @@ export function StaffPanel() {
           </div>
         </div>
       </div>
+
+      {/* User Detail Dialog */}
+      <Dialog open={!!selectedUser} onOpenChange={(open) => { if (!open) setSelectedUser(null); }}>
+        <DialogContent style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)", maxWidth: 440 }}>
+          {selectedUser && (() => {
+            const role = (selectedUser.roleName || selectedUser.role || "student").replace(/_/g, " ");
+            const rc = roleColor(role);
+            const isActive = (selectedUser.status || "active") === "active";
+            return (
+              <>
+                <DialogHeader>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: "50%",
+                      background: "linear-gradient(135deg, #14b8a6, #06b6d4)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", fontSize: 16, fontWeight: 700,
+                    }}>
+                      {selectedUser.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <DialogTitle style={{ color: "var(--admin-font-primary)", fontSize: 16, marginBottom: 2 }}>
+                        {selectedUser.name}
+                      </DialogTitle>
+                      <Badge variant="outline" className="capitalize text-xs" style={{
+                        borderColor: rc.color, color: rc.color, background: rc.bg, border: "none",
+                      }}>
+                        {role}
+                      </Badge>
+                    </div>
+                  </div>
+                </DialogHeader>
+
+                {/* Info rows */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "8px 0" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <AtSign style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)", flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: "var(--admin-font-primary)" }}>{selectedUser.email}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <BadgeCheck style={{ width: 14, height: 14, color: isActive ? "#10b981" : "#6b7280", flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: isActive ? "#10b981" : "#6b7280", fontWeight: 500 }}>
+                      {isActive ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <Calendar style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)", flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: "var(--admin-font-light)" }}>
+                      Joined {selectedUser.createdDate ? new Date(selectedUser.createdDate).toLocaleDateString() : selectedUser.joinedAt ? new Date(selectedUser.joinedAt).toLocaleDateString() : "—"}
+                    </span>
+                  </div>
+                  {selectedUser.gradeLevel && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <Users style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)", flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, color: "var(--admin-font-light)" }}>Grade {selectedUser.gradeLevel}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div style={{
+                  borderTop: "1px solid var(--admin-border-default)", paddingTop: 16, marginTop: 8,
+                  display: "flex", flexDirection: "column", gap: 8,
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)", marginBottom: 2 }}>
+                    Actions
+                  </div>
+
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(selectedUser.email); toast.success("Email copied to clipboard"); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+                      borderRadius: 6, border: "1px solid var(--admin-border-default)",
+                      background: "var(--admin-bg-card)", cursor: "pointer",
+                      fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)",
+                      width: "100%", textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-card)"; }}
+                  >
+                    <Mail style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
+                    Copy Email
+                  </button>
+
+                  <button
+                    onClick={() => handleResendInvite(selectedUser.id)}
+                    disabled={actionLoading === "resend"}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+                      borderRadius: 6, border: "1px solid var(--admin-border-default)",
+                      background: "var(--admin-bg-card)", cursor: "pointer",
+                      fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)",
+                      width: "100%", textAlign: "left",
+                      opacity: actionLoading === "resend" ? 0.6 : 1,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-card)"; }}
+                  >
+                    {actionLoading === "resend"
+                      ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite", color: "var(--admin-font-tertiary)" }} />
+                      : <Send style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />}
+                    Resend Invitation
+                  </button>
+
+                  {isActive && (
+                    <button
+                      onClick={() => {
+                        if (confirm(`Deactivate ${selectedUser.name}? They will lose access to the platform.`)) {
+                          handleDeactivate(selectedUser.id);
+                        }
+                      }}
+                      disabled={actionLoading === "deactivate"}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
+                        borderRadius: 6, border: "1px solid rgba(239,68,68,0.2)",
+                        background: "rgba(239,68,68,0.05)", cursor: "pointer",
+                        fontSize: 13, fontWeight: 500, color: "#ef4444",
+                        width: "100%", textAlign: "left",
+                        opacity: actionLoading === "deactivate" ? 0.6 : 1,
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.05)"; }}
+                    >
+                      {actionLoading === "deactivate"
+                        ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
+                        : <UserX style={{ width: 14, height: 14 }} />}
+                      Deactivate User
+                    </button>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

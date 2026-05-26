@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BookOpen, Plus, Search, Upload, Loader2, Trash2, ChevronLeft, ChevronRight, Sparkles, FileText, Check } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { BookOpen, Plus, Search, Upload, Loader2, Trash2, ChevronLeft, ChevronRight, Sparkles, FileText, Check, X, Save, AtSign, Layers, GraduationCap, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSchoolCourses, useCreateSchoolCourse, useDeleteSchoolCourse, curriculumKeys } from "@/hooks/useCurriculumQueries";
+import { useSchoolCourses, useCreateSchoolCourse, useUpdateSchoolCourse, useDeleteSchoolCourse, usePrerequisiteChain, curriculumKeys } from "@/hooks/useCurriculumQueries";
 import type { SchoolCoursePayload, FrameworkType } from "@/types/curriculum";
 import { AdminStatCard } from "@/app/admin/_components/AdminStatCard";
 import { TableRowsSkeleton } from "@/components/skeletons/TableSkeleton";
@@ -39,7 +40,12 @@ export function CoursesPanel() {
 
   const { data, isLoading } = useSchoolCourses({ search: search || undefined, department: department || undefined, page, limit: 20 });
   const createCourse = useCreateSchoolCourse();
+  const updateCourse = useUpdateSchoolCourse();
   const deleteCourse = useDeleteSchoolCourse();
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState<any>({});
+  const { data: prereqChain, isLoading: prereqLoading } = usePrerequisiteChain(selectedCourse?.id || null);
 
   const [form, setForm] = useState<SchoolCoursePayload & { prerequisitesString: string; corequisitesString: string; gradeLevelsString: string }>({
     code: "", name: "", department: "", credits: 1, gradeLevels: [], gradeLevelsString: "9",
@@ -76,9 +82,16 @@ export function CoursesPanel() {
       const code = col("code") >= 0 ? row[col("code")] : "";
       const name = col("name") >= 0 ? row[col("name")] : "";
       if (!code || !name) { failed++; continue; }
+      const description = col("description") >= 0 ? row[col("description")] : "";
+      const maxEnrollmentRaw = col("max_enrollment") >= 0 ? row[col("max_enrollment")] : (col("maxenrollment") >= 0 ? row[col("maxenrollment")] : (col("capacity") >= 0 ? row[col("capacity")] : ""));
+      const maxEnrollment = maxEnrollmentRaw ? parseInt(maxEnrollmentRaw, 10) || null : null;
+      const honorsRaw = col("honors") >= 0 ? row[col("honors")] : (col("ishonors") >= 0 ? row[col("ishonors")] : (col("is_honors") >= 0 ? row[col("is_honors")] : ""));
+      const isHonors = ["true", "yes", "1", "x", "honors"].includes(honorsRaw.toLowerCase());
+      const gradeLevelsRaw = col("grade_levels") >= 0 ? row[col("grade_levels")] : (col("gradelevels") >= 0 ? row[col("gradelevels")] : (col("grades") >= 0 ? row[col("grades")] : "9"));
+      const gradeLevels = gradeLevelsRaw.split(/[;|]/).map((s: string) => parseInt(s.trim(), 10)).filter((n: number) => !isNaN(n) && n >= 6 && n <= 12);
       try {
         await new Promise<void>((resolve, reject) => {
-          createCourse.mutate({ code, name, department: col("department") >= 0 ? row[col("department")] : "", credits: parseFloat(col("credits") >= 0 ? row[col("credits")] : "1") || 1, gradeLevels: [9] },
+          createCourse.mutate({ code, name, department: col("department") >= 0 ? row[col("department")] : "", credits: parseFloat(col("credits") >= 0 ? row[col("credits")] : "1") || 1, gradeLevels: gradeLevels.length ? gradeLevels : [9], description: description || undefined, maxEnrollment, isHonors },
             { onSuccess: () => resolve(), onError: (err: any) => reject(err) });
         });
         success++;
@@ -237,11 +250,15 @@ export function CoursesPanel() {
                 <BookOpen className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} /><p className="text-sm">No courses found</p>
               </TableCell></TableRow>
             ) : courses.map((c: any) => (
-              <TableRow key={c.id} style={{ borderBottom: "1px solid var(--admin-border-default)" }} className="transition-colors"
+              <TableRow key={c.id} style={{ borderBottom: "1px solid var(--admin-border-default)", cursor: "pointer" }} className="transition-colors"
+                onClick={() => { setSelectedCourse(c); setEditing(false); }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
                 <TableCell className="py-3 px-4" style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 600, color: "var(--admin-font-light)" }}>{c.code}</TableCell>
-                <TableCell className="py-3 px-4" style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{c.name}</TableCell>
+                <TableCell className="py-3 px-4">
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{c.name}</div>
+                  {c.description && <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 1, maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.description}</div>}
+                </TableCell>
                 <TableCell className="py-3 px-4"><Badge variant="outline" className="text-xs" style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)" }}>{c.department || "\u2014"}</Badge></TableCell>
                 <TableCell className="py-3 px-4 text-center" style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{c.credits}</TableCell>
                 <TableCell className="py-3 px-4">
@@ -251,7 +268,7 @@ export function CoursesPanel() {
                   <Badge className="text-xs font-medium shadow-none border-0" style={{ background: c.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(107,114,128,0.1)", color: c.status === "active" ? "#10b981" : "#6b7280" }}>{c.status || "active"}</Badge>
                 </TableCell>
                 <TableCell className="py-3 px-4">
-                  <button onClick={() => deleteCourse.mutate(c.id, { onSuccess: () => toast.success("Deleted") })} style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "1px solid var(--admin-border-default)", color: "#ef4444", cursor: "pointer" }}>
+                  <button onClick={(e) => { e.stopPropagation(); deleteCourse.mutate(c.id, { onSuccess: () => toast.success("Deleted") }); }} style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "1px solid var(--admin-border-default)", color: "#ef4444", cursor: "pointer" }}>
                     <Trash2 style={{ width: 12, height: 12 }} />
                   </button>
                 </TableCell>
@@ -273,6 +290,266 @@ export function CoursesPanel() {
           </div>
         )}
       </div>
+
+      {/* Course Detail Dialog */}
+      <Dialog open={!!selectedCourse && !editing} onOpenChange={(open) => { if (!open) setSelectedCourse(null); }}>
+        <DialogContent style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)", maxWidth: 540, padding: 0, overflow: "hidden" }}>
+          <DialogTitle className="sr-only">{selectedCourse?.name || "Course Details"}</DialogTitle>
+          {selectedCourse && (() => {
+            const enrolled = selectedCourse.enrollmentCount || 0;
+            const cap = selectedCourse.maxEnrollment;
+            const fillPct = cap ? Math.min(100, (enrolled / cap) * 100) : 0;
+            return (
+              <>
+                {/* Hero header */}
+                <div style={{ padding: "28px 28px 20px", background: "linear-gradient(135deg, rgba(20,184,166,0.08), rgba(59,130,246,0.06))", borderBottom: "1px solid var(--admin-border-default)" }}>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+                    <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", border: "1px solid var(--admin-border-default)" }}>{selectedCourse.code}</span>
+                    {selectedCourse.frameworkType && <Badge style={{ fontSize: 10, background: "rgba(59,130,246,0.15)", color: "#3b82f6", border: "none" }}>{selectedCourse.frameworkType}</Badge>}
+                    {selectedCourse.isHonors && <Badge style={{ fontSize: 10, background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "none" }}>Honors</Badge>}
+                    <Badge style={{ fontSize: 10, background: selectedCourse.status === "active" ? "rgba(16,185,129,0.15)" : "rgba(107,114,128,0.15)", color: selectedCourse.status === "active" ? "#10b981" : "#6b7280", border: "none" }}>{selectedCourse.status || "active"}</Badge>
+                  </div>
+                  <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)", lineHeight: 1.3, margin: 0 }}>{selectedCourse.name}</h2>
+                  {selectedCourse.department && <div style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 4 }}>{selectedCourse.department}</div>}
+                </div>
+
+                <div style={{ padding: "20px 28px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+                  {/* Description */}
+                  <div style={{ padding: "14px 16px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Description</div>
+                    <div style={{ fontSize: 13, color: selectedCourse.description ? "var(--admin-font-primary)" : "var(--admin-font-tertiary)", lineHeight: 1.6 }}>
+                      {selectedCourse.description || "No description has been added for this course yet."}
+                    </div>
+                  </div>
+
+                  {/* Stats row */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                    <div style={{ padding: "12px 14px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", textAlign: "center" }}>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)" }}>{selectedCourse.credits}</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginTop: 2 }}>Credits</div>
+                    </div>
+                    <div style={{ padding: "12px 14px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", textAlign: "center" }}>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)" }}>{enrolled}</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginTop: 2 }}>Enrolled</div>
+                    </div>
+                    <div style={{ padding: "12px 14px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", textAlign: "center" }}>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: cap ? "var(--admin-font-primary)" : "var(--admin-font-tertiary)" }}>{cap || "—"}</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginTop: 2 }}>Capacity</div>
+                    </div>
+                  </div>
+
+                  {/* Enrollment bar */}
+                  {cap && (
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>Enrollment</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: fillPct >= 90 ? "#ef4444" : fillPct >= 70 ? "#f59e0b" : "#10b981" }}>{enrolled} / {cap} ({fillPct.toFixed(0)}%)</span>
+                      </div>
+                      <div style={{ height: 6, borderRadius: 3, background: "var(--admin-bg-hover)", overflow: "hidden" }}>
+                        <div style={{ height: "100%", borderRadius: 3, width: `${fillPct}%`, background: fillPct >= 90 ? "#ef4444" : fillPct >= 70 ? "#f59e0b" : "#10b981", transition: "width 0.3s" }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Grade levels */}
+                  {(selectedCourse.gradeLevels || []).length > 0 && (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Grade Levels</div>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {selectedCourse.gradeLevels.map((g: number) => (
+                          <span key={g} style={{ fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 6, background: "rgba(16,185,129,0.1)", color: "#10b981" }}>Grade {g}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Prerequisite Chain */}
+                  {(prereqChain?.chain?.length ?? 0) > 0 && (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                        Prerequisite Chain ({prereqChain!.chain.length} course{prereqChain!.chain.length !== 1 ? "s" : ""})
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                        {prereqChain!.chain.map((p: any, i: number) => (
+                          <div key={p.code}>
+                            <div style={{
+                              display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                              borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
+                            }}>
+                              <div style={{
+                                width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                                background: p.depth === 1 ? "rgba(245,158,11,0.15)" : "rgba(107,114,128,0.1)",
+                                color: p.depth === 1 ? "#f59e0b" : "var(--admin-font-tertiary)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: 10, fontWeight: 700,
+                              }}>{p.depth}</div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{p.name}</div>
+                                <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", fontFamily: "monospace" }}>{p.code}{p.department ? ` · ${p.department}` : ""}</div>
+                              </div>
+                              <div style={{ display: "flex", gap: 4 }}>
+                                {p.isHonors && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>Honors</span>}
+                                {p.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}>{p.frameworkType}</span>}
+                                {Number(p.credits) > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>{p.credits} cr</span>}
+                              </div>
+                            </div>
+                            {i < prereqChain!.chain.length - 1 && (
+                              <div style={{ display: "flex", justifyContent: "center", padding: "2px 0" }}>
+                                <div style={{ width: 1, height: 12, background: "var(--admin-border-default)" }} />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {selectedCourse.prerequisites?.length > 0 && !prereqChain?.chain?.length && (
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                        {prereqLoading ? "Loading Prerequisite Chain..." : "Prerequisites"}
+                      </div>
+                      {!prereqLoading && (
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          {selectedCourse.prerequisites.map((p: string) => (
+                            <span key={p} style={{ fontSize: 12, fontWeight: 500, padding: "4px 10px", borderRadius: 6, background: "rgba(245,158,11,0.1)", color: "#f59e0b", fontFamily: "monospace" }}>{p}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action buttons */}
+                  <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
+                    <button onClick={() => {
+                      setEditing(true);
+                      setEditForm({
+                        name: selectedCourse.name || "", description: selectedCourse.description || "",
+                        department: selectedCourse.department || "", credits: selectedCourse.credits || 0,
+                        maxEnrollment: selectedCourse.maxEnrollment || "",
+                        isHonors: selectedCourse.isHonors || false,
+                        gradeLevelsString: (selectedCourse.gradeLevels || []).join(", "),
+                        prerequisitesString: (selectedCourse.prerequisites || []).join(", "),
+                        frameworkType: selectedCourse.frameworkType || "",
+                      });
+                    }} style={{
+                      flex: 1, height: 40, borderRadius: 8, fontSize: 13, fontWeight: 600,
+                      background: "var(--admin-accent-blue, #3b82f6)", color: "#fff", border: "none", cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    }}>
+                      <Save style={{ width: 14, height: 14 }} /> Edit Course
+                    </button>
+                    <button onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm(`Delete ${selectedCourse.name}?`)) {
+                        deleteCourse.mutate(selectedCourse.id, { onSuccess: () => { toast.success("Course deleted"); setSelectedCourse(null); } });
+                      }
+                    }} style={{
+                      width: 40, height: 40, borderRadius: 8, border: "1px solid rgba(239,68,68,0.3)",
+                      background: "rgba(239,68,68,0.05)", color: "#ef4444", cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      <Trash2 style={{ width: 14, height: 14 }} />
+                    </button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Course Edit Dialog */}
+      <Dialog open={!!selectedCourse && editing} onOpenChange={(open) => { if (!open) setEditing(false); }}>
+        <DialogContent style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)", maxWidth: 520 }}>
+          {selectedCourse && (
+            <>
+              <DialogHeader>
+                <DialogTitle style={{ color: "var(--admin-font-primary)" }}>Edit: {selectedCourse.code}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto py-2">
+                <div className="space-y-1">
+                  <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Name *</Label>
+                  <Input style={inputStyle} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+                </div>
+                <div className="space-y-1">
+                  <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Description</Label>
+                  <Textarea style={{ ...inputStyle, height: "auto", minHeight: 80 }} rows={3} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} placeholder="What students will learn in this course..." />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Department</Label>
+                    <Input style={inputStyle} value={editForm.department} onChange={(e) => setEditForm({ ...editForm, department: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Credits</Label>
+                    <Input type="number" min={0} style={inputStyle} value={editForm.credits} onChange={(e) => setEditForm({ ...editForm, credits: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Max Enrollment</Label>
+                    <Input type="number" min={0} style={inputStyle} value={editForm.maxEnrollment} onChange={(e) => setEditForm({ ...editForm, maxEnrollment: e.target.value ? Number(e.target.value) : "" })} placeholder="No limit" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Grade Levels</Label>
+                    <Input style={inputStyle} value={editForm.gradeLevelsString} onChange={(e) => setEditForm({ ...editForm, gradeLevelsString: e.target.value })} placeholder="9, 10, 11" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Framework</Label>
+                    <Select value={editForm.frameworkType || "NONE"} onValueChange={(v) => setEditForm({ ...editForm, frameworkType: v === "NONE" ? "" : v })}>
+                      <SelectTrigger style={inputStyle}><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="NONE">None</SelectItem><SelectItem value="AP">AP</SelectItem><SelectItem value="IB">IB</SelectItem><SelectItem value="NATIONAL">National</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Prerequisites (comma-separated codes)</Label>
+                  <Input style={inputStyle} value={editForm.prerequisitesString} onChange={(e) => setEditForm({ ...editForm, prerequisitesString: e.target.value })} placeholder="MATH-101, ENG-101" />
+                </div>
+                <div className="flex items-center gap-3" style={{ padding: "4px 0" }}>
+                  <input type="checkbox" id="isHonors" checked={editForm.isHonors || false} onChange={(e) => setEditForm({ ...editForm, isHonors: e.target.checked })}
+                    style={{ width: 16, height: 16, accentColor: "#f59e0b" }} />
+                  <Label htmlFor="isHonors" style={{ fontSize: 13, color: "var(--admin-font-primary)", cursor: "pointer" }}>Honors course (weighted GPA)</Label>
+                </div>
+              </div>
+              <DialogFooter className="gap-2">
+                <button onClick={() => setEditing(false)} style={{
+                  height: 36, borderRadius: 6, padding: "0 16px", fontSize: 13, fontWeight: 500,
+                  background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
+                  color: "var(--admin-font-secondary)", cursor: "pointer",
+                }}>Cancel</button>
+                <button onClick={() => {
+                  const gradeLevels = editForm.gradeLevelsString.split(",").map((s: string) => parseInt(s.trim(), 10)).filter((n: number) => !isNaN(n));
+                  const prerequisites = editForm.prerequisitesString.split(",").map((s: string) => s.trim()).filter(Boolean);
+                  updateCourse.mutate({ courseId: selectedCourse.id, payload: {
+                    name: editForm.name, description: editForm.description, department: editForm.department,
+                    credits: editForm.credits, gradeLevels, prerequisites,
+                    maxEnrollment: editForm.maxEnrollment ? Number(editForm.maxEnrollment) : null,
+                    isHonors: editForm.isHonors || false,
+                    frameworkType: editForm.frameworkType || undefined,
+                  }}, {
+                    onSuccess: () => {
+                      toast.success("Course updated");
+                      setSelectedCourse({ ...selectedCourse, name: editForm.name, description: editForm.description, department: editForm.department, credits: editForm.credits, gradeLevels, prerequisites, maxEnrollment: editForm.maxEnrollment ? Number(editForm.maxEnrollment) : null, isHonors: editForm.isHonors, frameworkType: editForm.frameworkType || undefined });
+                      setEditing(false);
+                      queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
+                    },
+                    onError: () => toast.error("Failed to update"),
+                  });
+                }} disabled={updateCourse.isPending} style={{
+                  height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600,
+                  background: "#14b8a6", color: "#fff", border: "none", cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 6,
+                  opacity: updateCourse.isPending ? 0.6 : 1,
+                }}>
+                  {updateCourse.isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Check style={{ width: 14, height: 14 }} />}
+                  Save Changes
+                </button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* AI Import Review Dialog */}
       <Dialog open={!!aiReview} onOpenChange={(open) => { if (!open) setAiReview(null); }}>
@@ -298,8 +575,10 @@ export function CoursesPanel() {
                       <TableRow style={{ background: "var(--admin-bg-hover)" }}>
                         <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Code</TableHead>
                         <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Name</TableHead>
+                        <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Description</TableHead>
                         <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Dept</TableHead>
-                        <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Credits</TableHead>
+                        <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Cr.</TableHead>
+                        <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Cap</TableHead>
                         <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Type</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -307,9 +586,14 @@ export function CoursesPanel() {
                       {aiReview.courses.map((c: any, i: number) => (
                         <TableRow key={i}>
                           <TableCell style={{ fontSize: 12, fontFamily: "monospace", color: "var(--admin-font-primary)" }}>{c.code}</TableCell>
-                          <TableCell style={{ fontSize: 12, color: "var(--admin-font-primary)" }}>{c.name}</TableCell>
+                          <TableCell style={{ fontSize: 12, color: "var(--admin-font-primary)" }}>
+                            <div>{c.name}</div>
+                            {c.isHonors && <Badge style={{ fontSize: 9, marginTop: 2, background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "none" }}>Honors</Badge>}
+                          </TableCell>
+                          <TableCell style={{ fontSize: 11, color: "var(--admin-font-tertiary)", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={c.description}>{c.description || "—"}</TableCell>
                           <TableCell style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{c.department}</TableCell>
-                          <TableCell style={{ fontSize: 12, color: "var(--admin-font-primary)" }}>{c.credits}</TableCell>
+                          <TableCell style={{ fontSize: 12, color: "var(--admin-font-primary)", textAlign: "center" }}>{c.credits}</TableCell>
+                          <TableCell style={{ fontSize: 12, color: c.maxEnrollment ? "var(--admin-font-primary)" : "var(--admin-font-tertiary)", textAlign: "center" }}>{c.maxEnrollment || "—"}</TableCell>
                           <TableCell>
                             {c.frameworkType ? (
                               <Badge style={{ fontSize: 10, background: c.frameworkType === "AP" ? "#3b82f620" : c.frameworkType === "IB" ? "#8b5cf620" : "#14b8a620", color: c.frameworkType === "AP" ? "#3b82f6" : c.frameworkType === "IB" ? "#8b5cf6" : "#14b8a6", border: "none" }}>
