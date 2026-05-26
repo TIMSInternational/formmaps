@@ -7,6 +7,7 @@ const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000,
+  withCredentials: true, // Send httpOnly cookies with every request
 });
 
 // Flag to prevent infinite refresh loops
