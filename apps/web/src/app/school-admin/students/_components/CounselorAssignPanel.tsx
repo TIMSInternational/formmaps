@@ -389,7 +389,7 @@ export function CounselorAssignPanel() {
 
   const counselors = (users?.data ?? []).filter(
     (u: SchoolUser) =>
-      u.role.includes("counselor") &&
+      (u.role || u.roleName || "").toLowerCase().includes("counselor") &&
       (!search || u.name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase()))
   );
 
