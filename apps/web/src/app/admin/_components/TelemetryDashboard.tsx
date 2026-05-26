@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -37,7 +38,7 @@ interface TelemetryDashboardProps {
   period?: "day" | "week" | "month" | "year";
 }
 
-export function TelemetryDashboard({ period = "week" }: TelemetryDashboardProps) {
+export const TelemetryDashboard = React.memo(function TelemetryDashboard({ period = "week" }: TelemetryDashboardProps) {
   const { data: analytics, isLoading, error } = useTelemetryAnalytics(period);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -453,4 +454,4 @@ export function TelemetryDashboard({ period = "week" }: TelemetryDashboardProps)
       )}
     </div>
   );
-}
+});

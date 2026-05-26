@@ -102,7 +102,8 @@ export function useTimsCareerScoring() {
   const { data: profileData } = useDerived360Profile();
 
   const userId = user?.id;
-  const isEnabled = !!userId && isPCACompleted && isMILCompleted;
+  // Enable scoring once we have a userId — gracefully handles missing PCA/MIL data
+  const isEnabled = !!userId;
 
   const query = useQuery({
     queryKey: timsKeys.scores(userId || ""),

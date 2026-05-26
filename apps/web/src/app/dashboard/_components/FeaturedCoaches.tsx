@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { unwrapList } from "@/lib/unwrapList";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -16,7 +16,7 @@ import { Coach } from "@/types/coach";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
-export function FeaturedCoaches() {
+export const FeaturedCoaches = React.memo(function FeaturedCoaches() {
   const { t } = useTranslation();
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -207,4 +207,4 @@ export function FeaturedCoaches() {
       )}
     </section>
   );
-}
+});
