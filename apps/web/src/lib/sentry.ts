@@ -5,7 +5,8 @@ const SENTRY_MODULE = "@sentry/nextjs";
 
 async function loadSentry(): Promise<any | null> {
   try {
-    return await (Function('m', 'return import(m)')(SENTRY_MODULE));
+    // Dynamic import — module may not be installed
+    return await (new Function('m', 'return import(m)')(SENTRY_MODULE));
   } catch {
     return null;
   }

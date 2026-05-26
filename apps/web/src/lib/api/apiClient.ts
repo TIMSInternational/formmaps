@@ -98,7 +98,7 @@ apiClient.interceptors.response.use(
           message = 'Internal server error. Please try again later.';
           break;
         default:
-          message = data?.message || `Request failed with status ${status}`;
+          message = (status >= 500) ? 'Something went wrong. Please try again.' : (data?.message || 'Request failed. Please try again.');
       }
 
       if (status === 403) {
