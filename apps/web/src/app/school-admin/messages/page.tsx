@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageCircle, Send, Search, Bell } from "lucide-react";
 import { toast } from "sonner";
@@ -295,12 +295,19 @@ function MessagesContent() {
 
 export default function MessagesPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialTab = searchParams.get("tab") || "messages";
   const [activeTab, setActiveTab] = useState(initialTab);
 
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    const url = key === "messages" ? "/school-admin/messages" : `/school-admin/messages?tab=${key}`;
+    router.replace(url, { scroll: false });
+  };
+
   return (
     <div>
-      <AdminTabBar tabs={[...TABS]} activeTab={activeTab} onChange={setActiveTab} />
+      <AdminTabBar tabs={[...TABS]} activeTab={activeTab} onChange={handleTabChange} />
       {activeTab === "messages" && <MessagesContent />}
       {activeTab === "alerts" && <AlertsPanel />}
     </div>

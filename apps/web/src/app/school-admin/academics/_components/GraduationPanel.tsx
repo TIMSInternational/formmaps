@@ -206,11 +206,11 @@ export function GraduationPanel() {
                 <div key={i} className="flex gap-2 items-end" style={{ border: "1px solid var(--admin-border-default)", padding: 12, borderRadius: 6 }}>
                   <div className="flex-1 space-y-1">
                     <Label className="text-xs">Category</Label>
-                    <Input value={cat.category} onChange={(e) => updateCategory(i, "category", e.target.value)} placeholder="e.g. Mathematics" />
+                    <Input value={cat.category ?? ""} onChange={(e) => updateCategory(i, "category", e.target.value)} placeholder="e.g. Mathematics" />
                   </div>
                   <div className="w-24 space-y-1">
                     <Label className="text-xs">Credits</Label>
-                    <Input type="number" value={cat.minCredits} onChange={(e) => updateCategory(i, "minCredits", Number(e.target.value))} />
+                    <Input type="number" value={cat.minCredits ?? 0} onChange={(e) => updateCategory(i, "minCredits", Number(e.target.value))} />
                   </div>
                   <button
                     onClick={() => removeCategory(i)}

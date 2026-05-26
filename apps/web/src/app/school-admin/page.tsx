@@ -60,7 +60,7 @@ function AtRiskWidget() {
           {atRisk.slice(0, 5).map((s: any) => {
             const pcaMissing = Object.values(s.pca || {}).filter(v => v !== "done").length;
             return (
-              <Link key={s.id} href={`/school-admin/students/${s.id}`} style={{
+              <Link key={s.id} href={`/school-admin/users/${s.id}`} style={{
                 display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 6,
                 background: "var(--admin-bg-hover)", textDecoration: "none",
               }}>
@@ -204,7 +204,7 @@ function ActionItems() {
 // QUICK NAVIGATION
 // ─────────────────────────────────────────────────────────────
 const navCards = [
-  { label: "Students", sub: "Roster, invites, staff", icon: Users, href: "/school-admin/students", color: "#3b82f6" },
+  { label: "Students", sub: "Roster, invites, staff", icon: Users, href: "/school-admin/users", color: "#3b82f6" },
   { label: "Academics", sub: "Courses, GPA, graduation", icon: BookOpen, href: "/school-admin/academics", color: "#10b981" },
   { label: "Assessments", sub: "Pipeline, schedule, 360", icon: ClipboardCheck, href: "/school-admin/assessments", color: "#8b5cf6" },
   { label: "Analytics", sub: "Trends & performance", icon: BarChart3, href: "/school-admin/analytics", color: "#f59e0b" },
@@ -232,11 +232,11 @@ function RecentStudents() {
             Recent Students
           </span>
         </div>
-        <Link href="/school-admin/students" style={{ fontSize: 11, color: "var(--admin-font-tertiary)", textDecoration: "none" }}>View all</Link>
+        <Link href="/school-admin/users" style={{ fontSize: 11, color: "var(--admin-font-tertiary)", textDecoration: "none" }}>View all</Link>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {students.length > 0 ? students.map((s: any) => (
-          <Link key={s.id} href={`/school-admin/students/${s.id}`} style={{
+          <Link key={s.id} href={`/school-admin/users/${s.id}`} style={{
             display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 6,
             background: "var(--admin-bg-hover)", textDecoration: "none",
           }}>

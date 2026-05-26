@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import dynamic from "next/dynamic";
 import { Input } from "@/components/ui/input";
@@ -378,12 +378,19 @@ function GeneralSettings() {
 
 export default function SettingsPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialTab = searchParams.get("tab") || "general";
   const [activeTab, setActiveTab] = useState(initialTab);
 
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    const url = key === "general" ? "/school-admin/settings" : `/school-admin/settings?tab=${key}`;
+    router.replace(url, { scroll: false });
+  };
+
   return (
     <div>
-      <AdminTabBar tabs={[...TABS]} activeTab={activeTab} onChange={setActiveTab} />
+      <AdminTabBar tabs={[...TABS]} activeTab={activeTab} onChange={handleTabChange} />
       {activeTab === "general" && <GeneralSettings />}
       {activeTab === "profile" && <ProfilePanel />}
       {activeTab === "calendar" && <CalendarPanel />}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -10,6 +10,9 @@ import {
   Sparkles, Loader2, Filter, FileText,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { AdminTabBar } from "../_components/AdminTabBar";
 import { EvaluationsPanel } from "./_components/EvaluationsPanel";
 import { ResultsPanel } from "./_components/ResultsPanel";
@@ -291,6 +294,147 @@ function ScheduleGrid({ schedules, onSave, isSaving }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // PIPELINE TABLE
 // ─────────────────────────────────────────────────────────────────────────────
+// ── Student Assessment Detail Dialog ──
+function StudentAssessmentDialog({ student, open, onOpenChange }: {
+  student: PipelineStudent | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  if (!student) return null;
+
+  const pcaEntries = Object.entries(student.pca);
+  const pcaDone = pcaEntries.filter(([, v]) => v === "done").length;
+  const pcaTotal = pcaEntries.length;
+
+  const statusColor = (s: string) => s === "done" ? "#10b981" : s === "in_progress" ? "#f59e0b" : "#6b7280";
+  const statusLabel = (s: string) => s === "done" ? "Completed" : s === "in_progress" ? "In Progress" : "Not Started";
+  const statusBg = (s: string) => s === "done" ? "rgba(16,185,129,0.1)" : s === "in_progress" ? "rgba(245,158,11,0.1)" : "rgba(107,114,128,0.1)";
+
+  const overallDone = pcaDone + (student.mil === "done" ? 1 : 0) + student.eval360Detail.completed;
+  const overallTotal = pcaTotal + 1 + (student.eval360Detail.total || 1);
+  const overallPct = overallTotal > 0 ? Math.round((overallDone / overallTotal) * 100) : 0;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg" style={{ padding: 0, overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--admin-border-default)" }}>
+          <DialogHeader>
+            <DialogTitle style={{ fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+              <Brain style={{ width: 18, height: 18, color: "#6366f1" }} />
+              {student.name}
+            </DialogTitle>
+            <DialogDescription style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
+              {student.email} {student.gradeLevel ? `| Grade ${student.gradeLevel}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        <div style={{ padding: 16 }} className="space-y-4">
+          {/* Overall Progress */}
+          <div style={{ padding: "12px 16px", borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Overall Completion</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: overallPct === 100 ? "#10b981" : "var(--admin-font-primary)" }}>{overallPct}%</span>
+            </div>
+            <div style={{ height: 6, borderRadius: 3, background: "var(--admin-bg-card)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${overallPct}%`, borderRadius: 3, background: overallPct === 100 ? "#10b981" : "#3b82f6", transition: "width 0.3s" }} />
+            </div>
+          </div>
+
+          {/* PCA Exams */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+              PCA Cognitive Assessment ({pcaDone}/{pcaTotal})
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {pcaEntries.map(([name, status]) => (
+                <div key={name} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "8px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+                }}>
+                  <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>
+                    {EXAM_SHORT[name] || name.replace(/([A-Z])/g, " $1").trim()}
+                  </span>
+                  <span style={{
+                    fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
+                    background: statusBg(status), color: statusColor(status), textTransform: "uppercase",
+                  }}>
+                    {statusLabel(status)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MIL */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+              MIL / LIA Assessment
+            </div>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>Multiple Intelligence Lens</span>
+              <span style={{
+                fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
+                background: statusBg(student.mil), color: statusColor(student.mil), textTransform: "uppercase",
+              }}>
+                {statusLabel(student.mil)}
+              </span>
+            </div>
+          </div>
+
+          {/* 360 Evaluation */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+              360° Evaluation ({student.eval360Detail.completed}/{student.eval360Detail.total || "—"})
+            </div>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>Evaluator Responses</span>
+              <span style={{
+                fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
+                background: statusBg(student.eval360), color: statusColor(student.eval360), textTransform: "uppercase",
+              }}>
+                {statusLabel(student.eval360)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: "12px 20px", borderTop: "1px solid var(--admin-border-default)", display: "flex", justifyContent: "flex-end", gap: 8 }}>
+          <button
+            onClick={() => onOpenChange(false)}
+            style={{
+              height: 36, borderRadius: 6, padding: "0 14px",
+              fontSize: 12, fontWeight: 600, background: "transparent",
+              color: "var(--admin-font-primary)",
+              border: "1px solid var(--admin-border-default)", cursor: "pointer",
+            }}
+          >
+            Close
+          </button>
+          <a
+            href={`/school-admin/users/${student.id}`}
+            style={{
+              height: 36, borderRadius: 6, padding: "0 14px",
+              fontSize: 12, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 6,
+              background: "var(--admin-accent-blue, #3b82f6)", color: "#fff",
+              border: "none", cursor: "pointer", textDecoration: "none",
+            }}
+          >
+            View Full Profile
+          </a>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function PipelineTable({ pipeline, onSendReminders, onSetup360, isSendingReminders, isSettingUp360 }: {
   pipeline: PipelineStudent[];
   onSendReminders: (ids: string[], types: string[]) => void;
@@ -301,6 +445,7 @@ function PipelineTable({ pipeline, onSendReminders, onSetup360, isSendingReminde
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [gradeFilter, setGradeFilter] = useState<number | null>(null);
   const [showIncomplete, setShowIncomplete] = useState(false);
+  const [detailStudent, setDetailStudent] = useState<PipelineStudent | null>(null);
 
   let filtered = pipeline;
   if (gradeFilter) filtered = filtered.filter(s => s.gradeLevel === gradeFilter);
@@ -445,8 +590,14 @@ function PipelineTable({ pipeline, onSendReminders, onSetup360, isSendingReminde
           </thead>
           <tbody>
             {filtered.map(s => (
-              <tr key={s.id} style={{ borderTop: "1px solid var(--admin-border-default)" }}>
-                <td style={{ padding: "6px 10px" }}>
+              <tr
+                key={s.id}
+                style={{ borderTop: "1px solid var(--admin-border-default)", cursor: "pointer" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                onClick={() => setDetailStudent(s)}
+              >
+                <td style={{ padding: "6px 10px" }} onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     checked={selected.has(s.id)}
@@ -455,7 +606,7 @@ function PipelineTable({ pipeline, onSendReminders, onSetup360, isSendingReminde
                   />
                 </td>
                 <td style={{ padding: "6px 10px" }}>
-                  <div style={{ fontWeight: 500, color: "var(--admin-font-primary)" }}>{s.name}</div>
+                  <div style={{ fontWeight: 500, color: "var(--admin-accent-blue, #3b82f6)" }}>{s.name}</div>
                   <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{s.email}</div>
                 </td>
                 <td style={{ padding: "6px 10px", textAlign: "center", color: "var(--admin-font-secondary)" }}>
@@ -491,6 +642,12 @@ function PipelineTable({ pipeline, onSendReminders, onSetup360, isSendingReminde
           </tbody>
         </table>
       </div>
+
+      <StudentAssessmentDialog
+        student={detailStudent}
+        open={!!detailStudent}
+        onOpenChange={(open) => { if (!open) setDetailStudent(null); }}
+      />
     </div>
   );
 }
@@ -508,12 +665,19 @@ import React from "react";
 
 export default function AssessmentCommandCenter() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("command-center");
 
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab === "evaluations" || tab === "results" || tab === "command-center") setActiveTab(tab);
   }, [searchParams]);
+
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    const url = key === "command-center" ? "/school-admin/assessments" : `/school-admin/assessments?tab=${key}`;
+    router.replace(url, { scroll: false });
+  };
 
   // Queries
   const insightsQuery = useQuery({ queryKey: ["assessment-insights"], queryFn: () => getInsights(), staleTime: 1000 * 60 * 10 });
@@ -587,7 +751,7 @@ export default function AssessmentCommandCenter() {
           { key: "results", label: "Results & Reports", icon: FileText },
         ]}
         activeTab={activeTab}
-        onChange={setActiveTab}
+        onChange={handleTabChange}
       />
 
       {activeTab === "command-center" && (

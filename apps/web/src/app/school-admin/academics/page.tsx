@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Library, BookOpen, GitBranch, BarChart3, GraduationCap, TrendingDown } from "lucide-react";
 import { AdminTabBar } from "../_components/AdminTabBar";
@@ -26,10 +26,17 @@ type TabKey = (typeof TABS)[number]["key"];
 
 export default function AcademicsPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialTab = (searchParams.get("tab") as TabKey) || "courses";
   const [activeTab, setActiveTab] = useState<string>(
     TABS.some(t => t.key === initialTab) ? initialTab : "courses"
   );
+
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    const url = key === "courses" ? "/school-admin/academics" : `/school-admin/academics?tab=${key}`;
+    router.replace(url, { scroll: false });
+  };
 
   return (
     <div className="space-y-6">
@@ -46,7 +53,7 @@ export default function AcademicsPage() {
       <AdminTabBar
         tabs={[...TABS]}
         activeTab={activeTab}
-        onChange={setActiveTab}
+        onChange={handleTabChange}
       />
 
       {activeTab === "courses" && <CoursesPanel />}
