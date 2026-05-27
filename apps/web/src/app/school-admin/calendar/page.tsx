@@ -117,28 +117,67 @@ export default function AcademicCalendarPage() {
   const currentYear = years.find(y => y.isCurrent);
   const allTerms = currentYear?.terms ?? [];
 
+  const daysInMonth = getDaysInMonth(viewYear, viewMonth);
+  const firstDay = getFirstDayOfMonth(viewYear, viewMonth);
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Single-day events (holidays)
   const dayEvents = new Map<string, { label: string; color: string }[]>();
   for (const h of holidays) {
     const key = new Date(h.date).toISOString().slice(0, 10);
     if (!dayEvents.has(key)) dayEvents.set(key, []);
     dayEvents.get(key)!.push({ label: h.name, color: TYPE_COLORS[h.type] || "#ef4444" });
   }
+
+  // Multi-day span events (terms, assessment windows, multi-day breaks)
+  interface SpanEvent { id: string; label: string; color: string; startDate: string; endDate: string; }
+  const spanEvents: SpanEvent[] = [];
   for (const t of allTerms) {
-    for (const d of [{ date: t.startDate, label: `${t.name} starts` }, { date: t.endDate, label: `${t.name} ends` }]) {
-      const key = new Date(d.date).toISOString().slice(0, 10);
-      if (!dayEvents.has(key)) dayEvents.set(key, []);
-      dayEvents.get(key)!.push({ label: d.label, color: "#6366f1" });
-    }
+    spanEvents.push({ id: `term-${t.id}`, label: t.name, color: "#6366f1", startDate: new Date(t.startDate).toISOString().slice(0, 10), endDate: new Date(t.endDate).toISOString().slice(0, 10) });
   }
   for (const a of assessments) {
-    const key = new Date(a.startDate).toISOString().slice(0, 10);
-    if (!dayEvents.has(key)) dayEvents.set(key, []);
-    dayEvents.get(key)!.push({ label: a.name || a.assessmentTypes?.join(", ") || "Assessment", color: "#8b5cf6" });
+    spanEvents.push({ id: `ap-${a.id}`, label: a.name || a.assessmentTypes?.join(", ") || "Assessment", color: "#8b5cf6", startDate: new Date(a.startDate).toISOString().slice(0, 10), endDate: new Date(a.endDate).toISOString().slice(0, 10) });
   }
 
-  const daysInMonth = getDaysInMonth(viewYear, viewMonth);
-  const firstDay = getFirstDayOfMonth(viewYear, viewMonth);
-  const today = new Date().toISOString().slice(0, 10);
+  // Build span bar rows for this month — each bar is {label, color, gridColStart, gridColSpan, row}
+  interface SpanBar { id: string; label: string; color: string; colStart: number; colSpan: number; row: number; }
+  const spanBars: SpanBar[] = [];
+  const rowOccupancy: Map<number, number[]>[] = []; // track which columns are taken per row
+
+  for (const ev of spanEvents) {
+    const evStart = new Date(ev.startDate);
+    const evEnd = new Date(ev.endDate);
+    // Clamp to current month
+    const monthStart = new Date(viewYear, viewMonth, 1);
+    const monthEnd = new Date(viewYear, viewMonth + 1, 0);
+    const clampedStart = evStart < monthStart ? monthStart : evStart;
+    const clampedEnd = evEnd > monthEnd ? monthEnd : evEnd;
+    if (clampedStart > monthEnd || clampedEnd < monthStart) continue;
+
+    const startCol = (clampedStart.getDate() - 1) + firstDay;
+    const endCol = (clampedEnd.getDate() - 1) + firstDay;
+    const colSpan = endCol - startCol + 1;
+    if (colSpan <= 0) continue;
+
+    // Break into week rows (each row is 7 columns)
+    let remaining = colSpan;
+    let col = startCol;
+    let isFirst = true;
+    while (remaining > 0) {
+      const rowIdx = Math.floor(col / 7);
+      const colInRow = col % 7;
+      const availInRow = 7 - colInRow;
+      const span = Math.min(remaining, availInRow);
+
+      // Find free slot row within the cell
+      let slotRow = 0;
+      // Simple: just stack them
+      spanBars.push({ id: ev.id + `-r${rowIdx}`, label: isFirst ? ev.label : `↳ ${ev.label}`, color: ev.color, colStart: col, colSpan: span, row: rowIdx });
+      isFirst = false;
+      remaining -= span;
+      col += span;
+    }
+  }
 
   const prevMonth = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); } else setViewMonth(viewMonth - 1); };
   const nextMonth = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); } else setViewMonth(viewMonth + 1); };
@@ -188,40 +227,75 @@ export default function AcademicCalendarPage() {
               <div key={d} style={{ padding: "8px 0", textAlign: "center", fontSize: 11, fontWeight: 600, color: "var(--admin-font-light)" }}>{d}</div>
             ))}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
-            {[...Array(firstDay)].map((_, i) => <div key={`e${i}`} style={{ minHeight: 72, borderRight: "1px solid var(--admin-border-light)", borderBottom: "1px solid var(--admin-border-light)" }} />)}
-            {[...Array(daysInMonth)].map((_, i) => {
-              const day = i + 1;
-              const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              const events = dayEvents.get(dateStr) || [];
-              const isToday = dateStr === today;
-              const isQuickAdd = quickAddDate === dateStr;
-              return (
-                <div key={day}
-                  onClick={() => { if (!isQuickAdd && events.length === 0) { setQuickAddDate(dateStr); setQuickAddName(""); setQuickAddType("holiday"); } }}
-                  style={{ minHeight: 72, padding: "4px 6px", borderRight: "1px solid var(--admin-border-light)", borderBottom: "1px solid var(--admin-border-light)", background: isQuickAdd ? "rgba(99,102,241,0.10)" : isToday ? "rgba(99,102,241,0.06)" : "transparent", cursor: events.length === 0 && !isQuickAdd ? "pointer" : "default", position: "relative" }}>
-                  <div style={{ fontSize: 12, fontWeight: isToday ? 700 : 400, color: isToday ? "#6366f1" : "var(--admin-font-secondary)", marginBottom: 2 }}>{day}</div>
-                  {isQuickAdd ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }} onClick={e => e.stopPropagation()}>
-                      <input value={quickAddName} onChange={e => setQuickAddName(e.target.value)} placeholder="Name" style={{ fontSize: 10, padding: "2px 4px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", width: "100%", outline: "none" }} />
-                      <select value={quickAddType} onChange={e => setQuickAddType(e.target.value)} style={{ fontSize: 9, padding: "1px 2px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)" }}>
-                        {["holiday","break","professional_development","exam","event"].map(t => <option key={t} value={t}>{t}</option>)}
-                      </select>
-                      <div style={{ display: "flex", gap: 2 }}>
-                        <button onClick={() => handleAddHoliday(quickAddName, dateStr, quickAddType)} disabled={!quickAddName || savingHoliday} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, border: "none", background: "#6366f1", color: "#fff", cursor: "pointer", opacity: !quickAddName ? 0.5 : 1 }}>Add</button>
-                        <button onClick={() => setQuickAddDate(null)} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", cursor: "pointer" }}>
-                          <X style={{ width: 8, height: 8 }} />
-                        </button>
+          <div style={{ position: "relative" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
+              {[...Array(firstDay)].map((_, i) => <div key={`e${i}`} style={{ minHeight: 80, borderRight: "1px solid var(--admin-border-light)", borderBottom: "1px solid var(--admin-border-light)" }} />)}
+              {[...Array(daysInMonth)].map((_, i) => {
+                const day = i + 1;
+                const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                const events = dayEvents.get(dateStr) || [];
+                const isToday = dateStr === today;
+                const isQuickAdd = quickAddDate === dateStr;
+                return (
+                  <div key={day}
+                    onClick={() => { if (!isQuickAdd && events.length === 0) { setQuickAddDate(dateStr); setQuickAddName(""); setQuickAddType("holiday"); } }}
+                    style={{ minHeight: 80, padding: "4px 6px", borderRight: "1px solid var(--admin-border-light)", borderBottom: "1px solid var(--admin-border-light)", background: isQuickAdd ? "rgba(99,102,241,0.10)" : isToday ? "rgba(99,102,241,0.06)" : "transparent", cursor: events.length === 0 && !isQuickAdd ? "pointer" : "default", position: "relative" }}>
+                    <div style={{ fontSize: 12, fontWeight: isToday ? 700 : 400, color: isToday ? "#6366f1" : "var(--admin-font-secondary)", marginBottom: 2 }}>{day}</div>
+                    {isQuickAdd ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }} onClick={e => e.stopPropagation()}>
+                        <input value={quickAddName} onChange={e => setQuickAddName(e.target.value)} placeholder="Name" style={{ fontSize: 10, padding: "2px 4px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", width: "100%", outline: "none" }} />
+                        <select value={quickAddType} onChange={e => setQuickAddType(e.target.value)} style={{ fontSize: 9, padding: "1px 2px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)" }}>
+                          {["holiday","break","professional_development","exam","event"].map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                        <div style={{ display: "flex", gap: 2 }}>
+                          <button onClick={() => handleAddHoliday(quickAddName, dateStr, quickAddType)} disabled={!quickAddName || savingHoliday} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, border: "none", background: "#6366f1", color: "#fff", cursor: "pointer", opacity: !quickAddName ? 0.5 : 1 }}>Add</button>
+                          <button onClick={() => setQuickAddDate(null)} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", cursor: "pointer" }}>
+                            <X style={{ width: 8, height: 8 }} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <>
-                      {events.slice(0, 2).map((e, j) => (
-                        <div key={j} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, marginBottom: 1, background: `${e.color}15`, color: e.color, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.label}</div>
-                      ))}
-                      {events.length > 2 && <div style={{ fontSize: 9, color: "var(--admin-font-light)" }}>+{events.length - 2}</div>}
-                    </>
-                  )}
+                    ) : (
+                      <div style={{ marginTop: 14 }}>
+                        {events.slice(0, 2).map((e, j) => (
+                          <div key={j} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, marginBottom: 1, background: `${e.color}15`, color: e.color, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.label}</div>
+                        ))}
+                        {events.length > 2 && <div style={{ fontSize: 9, color: "var(--admin-font-light)" }}>+{events.length - 2}</div>}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Multi-day span bars — positioned absolutely over the grid */}
+            {spanBars.map((bar) => {
+              const totalCols = firstDay + daysInMonth;
+              const totalRows = Math.ceil(totalCols / 7);
+              const row = Math.floor(bar.colStart / 7);
+              const col = bar.colStart % 7;
+              // Each cell: 100/7 % wide, ~80px tall (minHeight)
+              const leftPct = (col / 7) * 100;
+              const widthPct = (bar.colSpan / 7) * 100;
+              // Row offset: header row height (day names) is separate, each data row ~80px
+              const topPx = row * 80 + 18; // 18px offset for date number
+              return (
+                <div key={bar.id} style={{
+                  position: "absolute",
+                  left: `${leftPct}%`,
+                  width: `${widthPct}%`,
+                  top: topPx,
+                  height: 14,
+                  background: `${bar.color}20`,
+                  borderLeft: `2px solid ${bar.color}`,
+                  borderRadius: "0 3px 3px 0",
+                  display: "flex", alignItems: "center",
+                  padding: "0 4px",
+                  pointerEvents: "none",
+                  zIndex: 2,
+                }}>
+                  <span style={{ fontSize: 8, fontWeight: 600, color: bar.color, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {bar.label}
+                  </span>
                 </div>
               );
             })}
