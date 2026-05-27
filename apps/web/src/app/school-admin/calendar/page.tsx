@@ -11,7 +11,7 @@ interface AcademicYear {
   terms: { id: string; name: string; startDate: string; endDate: string; sortOrder: number }[];
 }
 interface Holiday { id: string; name: string; date: string; type: string; }
-interface AssessmentPeriod { id: string; assessmentType: string; gradeLevel: number; startDate: string; endDate: string; }
+interface AssessmentPeriod { id: string; name: string; termId: string; assessmentTypes: string[]; startDate: string; endDate: string; }
 
 function formatDate(d: string) { return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
 function formatShort(d: string) { return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
@@ -94,7 +94,10 @@ export default function AcademicCalendarPage() {
     if (!assessmentStart || !assessmentEnd) return;
     setSavingAssessment(true);
     try {
-      await apiRequest("/api/v1/school-admin/calendar/assessment-periods", { method: "POST", data: { assessmentType, gradeLevel: parseInt(assessmentGrade), startDate: assessmentStart, endDate: assessmentEnd } });
+      const currentAY = years.find(y => y.isCurrent);
+      const termId = currentAY?.terms?.[0]?.id || "";
+      const name = `${assessmentType} — Grade ${assessmentGrade}`;
+      await apiRequest("/api/v1/school-admin/calendar/assessment-periods", { method: "POST", data: { name, termId, assessmentTypes: [assessmentType], startDate: assessmentStart, endDate: assessmentEnd } });
       toast.success("Assessment window added");
       setAssessmentType("PCA"); setAssessmentGrade("9"); setAssessmentStart(""); setAssessmentEnd("");
       setShowAssessmentForm(false);
@@ -130,7 +133,7 @@ export default function AcademicCalendarPage() {
   for (const a of assessments) {
     const key = new Date(a.startDate).toISOString().slice(0, 10);
     if (!dayEvents.has(key)) dayEvents.set(key, []);
-    dayEvents.get(key)!.push({ label: `${a.assessmentType} Gr${a.gradeLevel}`, color: "#8b5cf6" });
+    dayEvents.get(key)!.push({ label: a.name || a.assessmentTypes?.join(", ") || "Assessment", color: "#8b5cf6" });
   }
 
   const daysInMonth = getDaysInMonth(viewYear, viewMonth);
@@ -305,7 +308,7 @@ export default function AcademicCalendarPage() {
               {assessments.length === 0 ? <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No assessment windows</div> : assessments.map(a => (
                 <div key={a.id} className="group" style={{ padding: "6px 10px", borderRadius: 4, marginBottom: 2, border: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{a.assessmentType} — Grade {a.gradeLevel}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{a.name || a.assessmentTypes?.join(", ") || "Assessment"}</div>
                     <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{formatShort(a.startDate)} — {formatShort(a.endDate)}</div>
                   </div>
                   <button onClick={() => handleDeleteAssessment(a.id)} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ width: 18, height: 18, borderRadius: 3, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
