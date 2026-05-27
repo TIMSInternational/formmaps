@@ -52,6 +52,7 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
       { label: t("schoolAdmin.nav.academics", "Academics"), href: "/school-admin/academics", icon: BookOpen },
       { label: t("schoolAdmin.nav.assessments", "Assessment Hub"), href: "/school-admin/assessments", icon: ClipboardCheck },
       { label: t("schoolAdmin.nav.analytics", "Analytics"), href: "/school-admin/analytics", icon: BarChart3 },
+      { label: t("schoolAdmin.nav.insights", "AI Insights"), href: "/school-admin/insights", icon: Radar },
       { label: t("schoolAdmin.nav.reports", "Reports"), href: "/school-admin/reports", icon: FileText },
     ],
   },
