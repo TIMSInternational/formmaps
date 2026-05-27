@@ -41,9 +41,9 @@ function useParents(params: { page: number; limit: number; search: string }) {
     queryKey: ["school-admin", "parents", params],
     queryFn: () =>
       apiRequest<ParentsResponse>(
-        `/school-admin/parents?page=${params.page}&limit=${params.limit}&search=${encodeURIComponent(params.search)}`
+        `/api/v1/school-admin/parents?page=${params.page}&limit=${params.limit}&search=${encodeURIComponent(params.search)}`
       ),
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 30,
   });
 }
 
@@ -57,7 +57,6 @@ export default function ParentsPage() {
   const [studentResults, setStudentResults] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [inviting, setInviting] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -254,7 +253,7 @@ export default function ParentsPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRowsSkeleton columnCount={5} rowCount={5} />
+              <TableRowsSkeleton columnCount={6} rowCount={5} />
             ) : parents.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
