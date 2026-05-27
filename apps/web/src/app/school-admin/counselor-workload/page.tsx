@@ -1,14 +1,15 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api/apiClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Users, Mail, CalendarCheck, FileText, ChevronDown, ChevronUp,
-  User, GraduationCap,
+  User, GraduationCap, Plus, X, ArrowRightLeft,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 interface AssignedStudent {
   id: string;
@@ -54,8 +55,317 @@ function LoadBar({ current, max }: { current: number; max: number }) {
   );
 }
 
-function CounselorCard({ counselor, index }: { counselor: CounselorWorkload; index: number }) {
+interface SearchStudent {
+  id: string;
+  name: string;
+  email: string;
+  gradeLevel?: string | null;
+}
+
+function AssignStudentsModal({
+  counselorId,
+  counselorName,
+  onClose,
+  onSuccess,
+}: {
+  counselorId: string;
+  counselorName: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState<SearchStudent[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!search.trim()) {
+      setResults([]);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await apiRequest(`/api/v1/school-admin/students?search=${encodeURIComponent(search.trim())}&limit=20`);
+        setResults(res?.data ?? res ?? []);
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [search]);
+
+  const toggleStudent = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleAssign = async () => {
+    if (selected.size === 0) return;
+    setAssigning(true);
+    try {
+      await apiRequest(`/api/v1/school-admin/counselors/${counselorId}/assign-students`, {
+        method: "POST",
+        data: { studentIds: Array.from(selected) },
+      });
+      toast.success(`Assigned ${selected.size} student(s) to ${counselorName}`);
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      toast.error("Failed to assign students", { description: err?.message });
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: 460, maxHeight: "80vh", borderRadius: 12, overflow: "hidden",
+          background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
+          display: "flex", flexDirection: "column",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          padding: "16px 20px", borderBottom: "1px solid var(--admin-border-light)",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "var(--admin-font-primary)" }}>Assign Students</div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>to {counselorName}</div>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+            <X style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
+          </button>
+        </div>
+
+        {/* Search */}
+        <div style={{ padding: "12px 20px" }}>
+          <input
+            type="text"
+            placeholder="Search students by name or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            autoFocus
+            style={{
+              width: "100%", padding: "8px 12px", borderRadius: 8, fontSize: 13,
+              border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)",
+              color: "var(--admin-font-primary)", outline: "none", fontFamily: "inherit",
+            }}
+          />
+        </div>
+
+        {/* Results */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "0 12px 12px" }}>
+          {loading ? (
+            <div style={{ padding: 20, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>Searching...</div>
+          ) : results.length === 0 && search.trim() ? (
+            <div style={{ padding: 20, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>No students found</div>
+          ) : (
+            results.map((s) => (
+              <label
+                key={s.id}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                  borderRadius: 8, cursor: "pointer",
+                  background: selected.has(s.id) ? "var(--admin-bg-hover)" : "transparent",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.has(s.id)}
+                  onChange={() => toggleStudent(s.id)}
+                  style={{ accentColor: "#6366f1" }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{s.name}</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{s.email}</div>
+                </div>
+                {s.gradeLevel && (
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)" }}>
+                    {s.gradeLevel}
+                  </span>
+                )}
+              </label>
+            ))
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          padding: "12px 20px", borderTop: "1px solid var(--admin-border-light)",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>
+            {selected.size} selected
+          </span>
+          <button
+            onClick={handleAssign}
+            disabled={selected.size === 0 || assigning}
+            style={{
+              padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+              background: selected.size === 0 || assigning ? "var(--admin-bg-hover)" : "#6366f1",
+              color: selected.size === 0 || assigning ? "var(--admin-font-tertiary)" : "#fff",
+              border: "none", cursor: selected.size === 0 || assigning ? "not-allowed" : "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            {assigning ? "Assigning..." : "Assign Selected"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReassignDropdown({
+  studentId,
+  studentName,
+  currentCounselorId,
+  counselors,
+  onSuccess,
+}: {
+  studentId: string;
+  studentName: string;
+  currentCounselorId: string;
+  counselors: CounselorWorkload[];
+  onSuccess: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [reassigning, setReassigning] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleReassign = async (newCounselorId: string) => {
+    setReassigning(true);
+    try {
+      await apiRequest(`/api/v1/school-admin/counselors/${currentCounselorId}/assign-students`, {
+        method: "DELETE",
+        data: { studentIds: [studentId] },
+      });
+      await apiRequest(`/api/v1/school-admin/counselors/${newCounselorId}/assign-students`, {
+        method: "POST",
+        data: { studentIds: [studentId] },
+      });
+      const target = counselors.find((c) => c.id === newCounselorId);
+      toast.success(`Reassigned ${studentName} to ${target?.name ?? "new counselor"}`);
+      onSuccess();
+    } catch (err: any) {
+      toast.error("Failed to reassign student", { description: err?.message });
+    } finally {
+      setReassigning(false);
+      setOpen(false);
+    }
+  };
+
+  const otherCounselors = counselors.filter((c) => c.id !== currentCounselorId);
+  if (otherCounselors.length === 0) return null;
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        title="Reassign to another counselor"
+        onClick={() => setOpen(!open)}
+        disabled={reassigning}
+        style={{
+          background: "none", border: "none", cursor: "pointer", padding: 4,
+          color: "var(--admin-font-tertiary)", display: "flex", alignItems: "center",
+          opacity: reassigning ? 0.5 : 1,
+        }}
+      >
+        <ArrowRightLeft style={{ width: 13, height: 13 }} />
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute", right: 0, top: "100%", zIndex: 100,
+          background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
+          borderRadius: 8, minWidth: 200, boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+          padding: 4, marginTop: 4,
+        }}>
+          <div style={{ padding: "6px 10px", fontSize: 11, color: "var(--admin-font-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Reassign to
+          </div>
+          {otherCounselors.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => handleReassign(c.id)}
+              style={{
+                display: "block", width: "100%", textAlign: "left", padding: "8px 10px",
+                borderRadius: 6, fontSize: 13, color: "var(--admin-font-primary)",
+                background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--admin-bg-hover)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              <div style={{ fontWeight: 500 }}>{c.name}</div>
+              <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{c.studentCount} students</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CounselorCard({
+  counselor,
+  index,
+  allCounselors,
+  onRefetch,
+}: {
+  counselor: CounselorWorkload;
+  index: number;
+  allCounselors: CounselorWorkload[];
+  onRefetch: () => void;
+}) {
   const [expanded, setExpanded] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [confirmUnassign, setConfirmUnassign] = useState<string | null>(null);
+  const [unassigning, setUnassigning] = useState(false);
+
+  const handleUnassign = async (studentId: string) => {
+    setUnassigning(true);
+    try {
+      await apiRequest(`/api/v1/school-admin/counselors/${counselor.id}/assign-students`, {
+        method: "DELETE",
+        data: { studentIds: [studentId] },
+      });
+      const student = counselor.assignedStudents.find((s) => s.id === studentId);
+      toast.success(`Unassigned ${student?.name ?? "student"} from ${counselor.name}`);
+      onRefetch();
+    } catch (err: any) {
+      toast.error("Failed to unassign student", { description: err?.message });
+    } finally {
+      setUnassigning(false);
+      setConfirmUnassign(null);
+    }
+  };
 
   return (
     <motion.div
@@ -87,6 +397,18 @@ function CounselorCard({ counselor, index }: { counselor: CounselorWorkload; ind
               {counselor.email}
             </div>
           </div>
+          <button
+            onClick={() => setShowAssignModal(true)}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+              background: "#6366f1", color: "#fff",
+              border: "none", cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
+            }}
+          >
+            <Plus style={{ width: 13, height: 13 }} />
+            Assign Students
+          </button>
         </div>
 
         {/* Stats row */}
@@ -148,9 +470,10 @@ function CounselorCard({ counselor, index }: { counselor: CounselorWorkload; ind
               {counselor.assignedStudents.map((student) => (
                 <div
                   key={student.id}
+                  className="group"
                   style={{
                     display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-                    borderRadius: 8,
+                    borderRadius: 8, position: "relative",
                   }}
                 >
                   <div style={{
@@ -178,17 +501,74 @@ function CounselorCard({ counselor, index }: { counselor: CounselorWorkload; ind
                     width: 8, height: 8, borderRadius: 4, flexShrink: 0,
                     background: student.isActive ? "#22c55e" : "#94a3b8",
                   }} />
+                  {/* Action buttons — visible on hover */}
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+                    <ReassignDropdown
+                      studentId={student.id}
+                      studentName={student.name}
+                      currentCounselorId={counselor.id}
+                      counselors={allCounselors}
+                      onSuccess={onRefetch}
+                    />
+                    {confirmUnassign === student.id ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <button
+                          onClick={() => handleUnassign(student.id)}
+                          disabled={unassigning}
+                          style={{
+                            padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                            background: "#ef4444", color: "#fff",
+                            border: "none", cursor: "pointer", fontFamily: "inherit",
+                            opacity: unassigning ? 0.5 : 1,
+                          }}
+                        >
+                          {unassigning ? "..." : "Confirm"}
+                        </button>
+                        <button
+                          onClick={() => setConfirmUnassign(null)}
+                          style={{
+                            padding: "2px 6px", borderRadius: 6, fontSize: 11,
+                            background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)",
+                            border: "none", cursor: "pointer", fontFamily: "inherit",
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        title="Unassign student"
+                        onClick={() => setConfirmUnassign(student.id)}
+                        style={{
+                          background: "none", border: "none", cursor: "pointer", padding: 4,
+                          color: "var(--admin-font-tertiary)", display: "flex", alignItems: "center",
+                        }}
+                      >
+                        <X style={{ width: 13, height: 13 }} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showAssignModal && (
+        <AssignStudentsModal
+          counselorId={counselor.id}
+          counselorName={counselor.name}
+          onClose={() => setShowAssignModal(false)}
+          onSuccess={onRefetch}
+        />
+      )}
     </motion.div>
   );
 }
 
 export default function CounselorWorkloadPage() {
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery<CounselorWorkload[]>({
     queryKey: ["counselor-workload"],
     queryFn: async () => {
@@ -197,6 +577,7 @@ export default function CounselorWorkloadPage() {
     },
   });
 
+  const refetch = () => queryClient.invalidateQueries({ queryKey: ["counselor-workload"] });
   const counselors = data ?? [];
   const totalStudents = counselors.reduce((s, c) => s + c.studentCount, 0);
   const totalSessions = counselors.reduce((s, c) => s + c.sessionCount, 0);
@@ -256,7 +637,7 @@ export default function CounselorWorkloadPage() {
       ) : (
         <div className="space-y-4">
           {counselors.map((c, i) => (
-            <CounselorCard key={c.id} counselor={c} index={i} />
+            <CounselorCard key={c.id} counselor={c} index={i} allCounselors={counselors} onRefetch={refetch} />
           ))}
         </div>
       )}

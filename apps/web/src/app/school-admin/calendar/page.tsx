@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Star, BookOpen, Clock, PartyPopper } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Star, BookOpen, Clock, PartyPopper, Trash2, Plus, X } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
+import { toast } from "sonner";
 
 interface AcademicYear {
   id: string; name: string; startDate: string; endDate: string; isCurrent: boolean;
@@ -27,6 +28,27 @@ export default function AcademicCalendarPage() {
   const [loading, setLoading] = useState(true);
   const [viewMonth, setViewMonth] = useState(new Date().getMonth());
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Holiday form
+  const [showHolidayForm, setShowHolidayForm] = useState(false);
+  const [holidayName, setHolidayName] = useState("");
+  const [holidayDate, setHolidayDate] = useState("");
+  const [holidayType, setHolidayType] = useState("holiday");
+  const [savingHoliday, setSavingHoliday] = useState(false);
+
+  // Assessment form
+  const [showAssessmentForm, setShowAssessmentForm] = useState(false);
+  const [assessmentType, setAssessmentType] = useState("PCA");
+  const [assessmentGrade, setAssessmentGrade] = useState("9");
+  const [assessmentStart, setAssessmentStart] = useState("");
+  const [assessmentEnd, setAssessmentEnd] = useState("");
+  const [savingAssessment, setSavingAssessment] = useState(false);
+
+  // Quick-add from calendar click
+  const [quickAddDate, setQuickAddDate] = useState<string | null>(null);
+  const [quickAddName, setQuickAddName] = useState("");
+  const [quickAddType, setQuickAddType] = useState("holiday");
 
   useEffect(() => {
     (async () => {
@@ -42,7 +64,52 @@ export default function AcademicCalendarPage() {
       } catch {}
       setLoading(false);
     })();
-  }, []);
+  }, [refreshKey]);
+
+  const refetch = () => setRefreshKey(k => k + 1);
+
+  const handleAddHoliday = async (name: string, date: string, type: string) => {
+    if (!name || !date) return;
+    setSavingHoliday(true);
+    try {
+      await apiRequest("/api/v1/school-admin/calendar/holidays", { method: "POST", data: { holidays: [{ name, date, type }] } });
+      toast.success("Holiday added");
+      setHolidayName(""); setHolidayDate(""); setHolidayType("holiday");
+      setShowHolidayForm(false);
+      setQuickAddDate(null); setQuickAddName(""); setQuickAddType("holiday");
+      refetch();
+    } catch { toast.error("Failed to add holiday"); }
+    setSavingHoliday(false);
+  };
+
+  const handleDeleteHoliday = async (id: string) => {
+    try {
+      await apiRequest(`/api/v1/school-admin/calendar/holidays/${id}`, { method: "DELETE" });
+      toast.success("Holiday deleted");
+      refetch();
+    } catch { toast.error("Failed to delete holiday"); }
+  };
+
+  const handleAddAssessment = async () => {
+    if (!assessmentStart || !assessmentEnd) return;
+    setSavingAssessment(true);
+    try {
+      await apiRequest("/api/v1/school-admin/calendar/assessment-periods", { method: "POST", data: { assessmentType, gradeLevel: parseInt(assessmentGrade), startDate: assessmentStart, endDate: assessmentEnd } });
+      toast.success("Assessment window added");
+      setAssessmentType("PCA"); setAssessmentGrade("9"); setAssessmentStart(""); setAssessmentEnd("");
+      setShowAssessmentForm(false);
+      refetch();
+    } catch { toast.error("Failed to add assessment window"); }
+    setSavingAssessment(false);
+  };
+
+  const handleDeleteAssessment = async (id: string) => {
+    try {
+      await apiRequest(`/api/v1/school-admin/calendar/assessment-periods/${id}`, { method: "DELETE" });
+      toast.success("Assessment window deleted");
+      refetch();
+    } catch { toast.error("Failed to delete assessment window"); }
+  };
 
   const currentYear = years.find(y => y.isCurrent);
   const allTerms = currentYear?.terms ?? [];
@@ -125,13 +192,33 @@ export default function AcademicCalendarPage() {
               const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
               const events = dayEvents.get(dateStr) || [];
               const isToday = dateStr === today;
+              const isQuickAdd = quickAddDate === dateStr;
               return (
-                <div key={day} style={{ minHeight: 72, padding: "4px 6px", borderRight: "1px solid var(--admin-border-light)", borderBottom: "1px solid var(--admin-border-light)", background: isToday ? "rgba(99,102,241,0.06)" : "transparent" }}>
+                <div key={day}
+                  onClick={() => { if (!isQuickAdd && events.length === 0) { setQuickAddDate(dateStr); setQuickAddName(""); setQuickAddType("holiday"); } }}
+                  style={{ minHeight: 72, padding: "4px 6px", borderRight: "1px solid var(--admin-border-light)", borderBottom: "1px solid var(--admin-border-light)", background: isQuickAdd ? "rgba(99,102,241,0.10)" : isToday ? "rgba(99,102,241,0.06)" : "transparent", cursor: events.length === 0 && !isQuickAdd ? "pointer" : "default", position: "relative" }}>
                   <div style={{ fontSize: 12, fontWeight: isToday ? 700 : 400, color: isToday ? "#6366f1" : "var(--admin-font-secondary)", marginBottom: 2 }}>{day}</div>
-                  {events.slice(0, 2).map((e, j) => (
-                    <div key={j} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, marginBottom: 1, background: `${e.color}15`, color: e.color, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.label}</div>
-                  ))}
-                  {events.length > 2 && <div style={{ fontSize: 9, color: "var(--admin-font-light)" }}>+{events.length - 2}</div>}
+                  {isQuickAdd ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }} onClick={e => e.stopPropagation()}>
+                      <input value={quickAddName} onChange={e => setQuickAddName(e.target.value)} placeholder="Name" style={{ fontSize: 10, padding: "2px 4px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", width: "100%", outline: "none" }} />
+                      <select value={quickAddType} onChange={e => setQuickAddType(e.target.value)} style={{ fontSize: 9, padding: "1px 2px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)" }}>
+                        {["holiday","break","professional_development","exam","event"].map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                      <div style={{ display: "flex", gap: 2 }}>
+                        <button onClick={() => handleAddHoliday(quickAddName, dateStr, quickAddType)} disabled={!quickAddName || savingHoliday} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, border: "none", background: "#6366f1", color: "#fff", cursor: "pointer", opacity: !quickAddName ? 0.5 : 1 }}>Add</button>
+                        <button onClick={() => setQuickAddDate(null)} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", cursor: "pointer" }}>
+                          <X style={{ width: 8, height: 8 }} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {events.slice(0, 2).map((e, j) => (
+                        <div key={j} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, marginBottom: 1, background: `${e.color}15`, color: e.color, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.label}</div>
+                      ))}
+                      {events.length > 2 && <div style={{ fontSize: 9, color: "var(--admin-font-light)" }}>+{events.length - 2}</div>}
+                    </>
+                  )}
                 </div>
               );
             })}
@@ -154,27 +241,76 @@ export default function AcademicCalendarPage() {
             </div>
           </div>
           <div style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
-            <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 6 }}>
-              <PartyPopper style={{ width: 13, height: 13, color: "#ef4444" }} /><span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Holidays & Breaks</span>
+            <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <PartyPopper style={{ width: 13, height: 13, color: "#ef4444" }} /><span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Holidays & Breaks</span>
+              </div>
+              <button onClick={() => setShowHolidayForm(!showHolidayForm)} style={{ width: 22, height: 22, borderRadius: 4, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {showHolidayForm ? <X style={{ width: 11, height: 11, color: "var(--admin-font-tertiary)" }} /> : <Plus style={{ width: 11, height: 11, color: "var(--admin-font-tertiary)" }} />}
+              </button>
             </div>
+            {showHolidayForm && (
+              <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", flexDirection: "column", gap: 6 }}>
+                <input value={holidayName} onChange={e => setHolidayName(e.target.value)} placeholder="Holiday name" style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }} />
+                <input type="date" value={holidayDate} onChange={e => setHolidayDate(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }} />
+                <select value={holidayType} onChange={e => setHolidayType(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }}>
+                  {["holiday","break","professional_development","exam","event"].map(t => <option key={t} value={t}>{t.replace("_", " ")}</option>)}
+                </select>
+                <button onClick={() => handleAddHoliday(holidayName, holidayDate, holidayType)} disabled={!holidayName || !holidayDate || savingHoliday} style={{ fontSize: 12, fontWeight: 600, padding: "5px 0", borderRadius: 5, border: "none", background: "#ef4444", color: "#fff", cursor: "pointer", opacity: (!holidayName || !holidayDate || savingHoliday) ? 0.5 : 1 }}>
+                  {savingHoliday ? "Adding..." : "Add Holiday"}
+                </button>
+              </div>
+            )}
             <div style={{ padding: 8, maxHeight: 200, overflowY: "auto" }}>
               {holidays.length === 0 ? <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No holidays added</div> : holidays.map(h => (
-                <div key={h.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 10px", borderRadius: 4, marginBottom: 2 }}>
+                <div key={h.id} className="group" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 10px", borderRadius: 4, marginBottom: 2, position: "relative" }}>
                   <div><div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{h.name}</div><div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{formatShort(h.date)}</div></div>
-                  <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: `${TYPE_COLORS[h.type] || "#6b7280"}15`, color: TYPE_COLORS[h.type] || "#6b7280", fontWeight: 600, textTransform: "capitalize" }}>{h.type}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: `${TYPE_COLORS[h.type] || "#6b7280"}15`, color: TYPE_COLORS[h.type] || "#6b7280", fontWeight: 600, textTransform: "capitalize" }}>{h.type}</span>
+                    <button onClick={() => handleDeleteHoliday(h.id)} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ width: 18, height: 18, borderRadius: 3, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Trash2 style={{ width: 11, height: 11, color: "#ef4444" }} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
           <div style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
-            <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 6 }}>
-              <Clock style={{ width: 13, height: 13, color: "#8b5cf6" }} /><span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Assessment Windows</span>
+            <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Clock style={{ width: 13, height: 13, color: "#8b5cf6" }} /><span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Assessment Windows</span>
+              </div>
+              <button onClick={() => setShowAssessmentForm(!showAssessmentForm)} style={{ width: 22, height: 22, borderRadius: 4, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {showAssessmentForm ? <X style={{ width: 11, height: 11, color: "var(--admin-font-tertiary)" }} /> : <Plus style={{ width: 11, height: 11, color: "var(--admin-font-tertiary)" }} />}
+              </button>
             </div>
+            {showAssessmentForm && (
+              <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", flexDirection: "column", gap: 6 }}>
+                <select value={assessmentType} onChange={e => setAssessmentType(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }}>
+                  {["PCA","MIL","360"].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <select value={assessmentGrade} onChange={e => setAssessmentGrade(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }}>
+                  {["9","10","11","12"].map(g => <option key={g} value={g}>Grade {g}</option>)}
+                </select>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <input type="date" value={assessmentStart} onChange={e => setAssessmentStart(e.target.value)} placeholder="Start" style={{ fontSize: 11, padding: "5px 6px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none", flex: 1 }} />
+                  <input type="date" value={assessmentEnd} onChange={e => setAssessmentEnd(e.target.value)} placeholder="End" style={{ fontSize: 11, padding: "5px 6px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none", flex: 1 }} />
+                </div>
+                <button onClick={handleAddAssessment} disabled={!assessmentStart || !assessmentEnd || savingAssessment} style={{ fontSize: 12, fontWeight: 600, padding: "5px 0", borderRadius: 5, border: "none", background: "#8b5cf6", color: "#fff", cursor: "pointer", opacity: (!assessmentStart || !assessmentEnd || savingAssessment) ? 0.5 : 1 }}>
+                  {savingAssessment ? "Adding..." : "Add Window"}
+                </button>
+              </div>
+            )}
             <div style={{ padding: 8, maxHeight: 200, overflowY: "auto" }}>
               {assessments.length === 0 ? <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No assessment windows</div> : assessments.map(a => (
-                <div key={a.id} style={{ padding: "6px 10px", borderRadius: 4, marginBottom: 2, border: "1px solid var(--admin-border-default)" }}>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{a.assessmentType} — Grade {a.gradeLevel}</div>
-                  <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{formatShort(a.startDate)} — {formatShort(a.endDate)}</div>
+                <div key={a.id} className="group" style={{ padding: "6px 10px", borderRadius: 4, marginBottom: 2, border: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{a.assessmentType} — Grade {a.gradeLevel}</div>
+                    <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{formatShort(a.startDate)} — {formatShort(a.endDate)}</div>
+                  </div>
+                  <button onClick={() => handleDeleteAssessment(a.id)} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ width: 18, height: 18, borderRadius: 3, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Trash2 style={{ width: 11, height: 11, color: "#ef4444" }} />
+                  </button>
                 </div>
               ))}
             </div>
