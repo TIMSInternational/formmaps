@@ -299,11 +299,29 @@ function ReassignDropdown({
   const otherCounselors = counselors.filter((c) => c.id !== currentCounselorId);
   if (otherCounselors.length === 0) return null;
 
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+
+  const handleOpen = () => {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const dropdownHeight = (otherCounselors.length * 52) + 36; // estimate
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUpward = spaceBelow < dropdownHeight + 8;
+      setDropdownPos({
+        top: openUpward ? rect.top - dropdownHeight - 4 : rect.bottom + 4,
+        left: Math.max(8, rect.right - 220),
+      });
+    }
+    setOpen(!open);
+  };
+
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button
+        ref={btnRef}
         title="Reassign to another counselor"
-        onClick={() => setOpen(!open)}
+        onClick={handleOpen}
         disabled={reassigning}
         style={{
           background: "none", border: "none", cursor: "pointer", padding: 4,
@@ -315,10 +333,10 @@ function ReassignDropdown({
       </button>
       {open && (
         <div style={{
-          position: "absolute", right: 0, top: "100%", zIndex: 100,
+          position: "fixed", top: dropdownPos.top, left: dropdownPos.left, zIndex: 9999,
           background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
-          borderRadius: 8, minWidth: 200, boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-          padding: 4, marginTop: 4,
+          borderRadius: 8, minWidth: 220, boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+          padding: 4,
         }}>
           <div style={{ padding: "6px 10px", fontSize: 11, color: "var(--admin-font-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
             Reassign to
