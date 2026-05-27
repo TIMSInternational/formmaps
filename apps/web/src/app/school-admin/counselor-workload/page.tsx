@@ -65,11 +65,13 @@ interface SearchStudent {
 function AssignStudentsModal({
   counselorId,
   counselorName,
+  alreadyAssignedIds,
   onClose,
   onSuccess,
 }: {
   counselorId: string;
   counselorName: string;
+  alreadyAssignedIds: Set<string>;
   onClose: () => void;
   onSuccess: () => void;
 }) {
@@ -80,23 +82,21 @@ function AssignStudentsModal({
   const [assigning, setAssigning] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Load all students on mount, filter on search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!search.trim()) {
-      setResults([]);
-      return;
-    }
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await apiRequest(`/api/v1/school-admin/students?search=${encodeURIComponent(search.trim())}&limit=20`);
+        const searchParam = search.trim() ? `&search=${encodeURIComponent(search.trim())}` : "";
+        const res = await apiRequest(`/api/v1/school-admin/students?limit=50${searchParam}`);
         setResults(res?.data ?? res ?? []);
       } catch {
         setResults([]);
       } finally {
         setLoading(false);
       }
-    }, 300);
+    }, search.trim() ? 300 : 0);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [search]);
 
@@ -177,36 +177,48 @@ function AssignStudentsModal({
         {/* Results */}
         <div style={{ flex: 1, overflowY: "auto", padding: "0 12px 12px" }}>
           {loading ? (
-            <div style={{ padding: 20, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>Searching...</div>
-          ) : results.length === 0 && search.trim() ? (
-            <div style={{ padding: 20, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>No students found</div>
+            <div style={{ padding: 20, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>Loading students...</div>
+          ) : results.length === 0 ? (
+            <div style={{ padding: 20, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>
+              {search.trim() ? "No students match your search" : "No students in this school"}
+            </div>
           ) : (
-            results.map((s) => (
-              <label
-                key={s.id}
-                style={{
-                  display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-                  borderRadius: 8, cursor: "pointer",
-                  background: selected.has(s.id) ? "var(--admin-bg-hover)" : "transparent",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={selected.has(s.id)}
-                  onChange={() => toggleStudent(s.id)}
-                  style={{ accentColor: "#6366f1" }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{s.name}</div>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{s.email}</div>
-                </div>
-                {s.gradeLevel && (
-                  <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)" }}>
-                    {s.gradeLevel}
-                  </span>
-                )}
-              </label>
-            ))
+            results.map((s) => {
+              const alreadyAssigned = alreadyAssignedIds.has(s.id);
+              return (
+                <label
+                  key={s.id}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                    borderRadius: 8, cursor: alreadyAssigned ? "default" : "pointer",
+                    background: selected.has(s.id) ? "var(--admin-bg-hover)" : "transparent",
+                    opacity: alreadyAssigned ? 0.5 : 1,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.has(s.id)}
+                    onChange={() => { if (!alreadyAssigned) toggleStudent(s.id); }}
+                    disabled={alreadyAssigned}
+                    style={{ accentColor: "#6366f1" }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{s.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{s.email}</div>
+                  </div>
+                  {alreadyAssigned && (
+                    <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(16,185,129,0.1)", color: "#10b981" }}>
+                      Assigned
+                    </span>
+                  )}
+                  {s.gradeLevel && (
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)" }}>
+                      Gr {s.gradeLevel}
+                    </span>
+                  )}
+                </label>
+              );
+            })
           )}
         </div>
 
@@ -559,6 +571,7 @@ function CounselorCard({
         <AssignStudentsModal
           counselorId={counselor.id}
           counselorName={counselor.name}
+          alreadyAssignedIds={new Set(counselor.assignedStudents.map(s => s.id))}
           onClose={() => setShowAssignModal(false)}
           onSuccess={onRefetch}
         />
