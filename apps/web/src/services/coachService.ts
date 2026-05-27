@@ -152,11 +152,10 @@ export async function getCoachAnalyticsReport(
   if (endDate) query.append("endDate", endDate);
   if (type) query.append("type", type);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const url = `${baseUrl}/api/v1/coach/me/analytics/report?${query.toString()}`;
   const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
+    credentials: "include",
   });
   if (!response.ok) throw new Error("Failed to fetch analytics report");
   const contentType = response.headers.get("content-type") || "";
@@ -584,12 +583,11 @@ export async function getCoachEarningsHistory(): Promise<
 export async function exportCoachEarnings(
   format: "csv" | "pdf" = "csv",
 ): Promise<void> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const response = await fetch(
     `${baseUrl}/api/v1/coach/me/earnings/export?format=${format}`,
     {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
     },
   );
 
@@ -673,12 +671,11 @@ export async function getCoachBilling(params?: {
 }
 
 export async function downloadInvoice(billingId: string): Promise<void> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const response = await fetch(
     `${baseUrl}/api/v1/coach/me/billing/${billingId}/invoice`,
     {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
     },
   );
 

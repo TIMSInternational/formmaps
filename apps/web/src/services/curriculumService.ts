@@ -214,11 +214,9 @@ export async function getCourseImportStatus(jobId: string): Promise<CourseImport
 export async function downloadCourseImportFailures(jobId: string): Promise<Blob> {
   // Blob download requires raw fetch — apiRequest returns parsed JSON
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const res = await fetch(
     `${baseUrl}/api/v1/school-admin/courses/import/${jobId}/download-failures`,
-    { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+    { credentials: "include" }
   );
   if (!res.ok) throw new Error("Failed to download failure report");
   return res.blob();

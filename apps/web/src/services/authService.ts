@@ -48,6 +48,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
   const response = await fetch(`${API_BASE}/authapi/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ email, password }),
   });
 
@@ -103,6 +104,7 @@ export async function signUp(
   const response = await fetch(`${API_BASE}/authapi/signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ name, email, password, roleId }),
   });
 
@@ -147,31 +149,36 @@ export async function signUp(
   };
 }
 
-export function getCurrentUser(): Promise<UserProfile> {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token found");
+/**
+ * Get current user profile. With cookie-based auth, we can no longer decode
+ * the JWT from localStorage. This calls the /api/v1/user/me endpoint.
+ * For synchronous access to user data, use useGlobalStore().user instead.
+ */
+export async function getCurrentUser(): Promise<UserProfile> {
+  const response = await fetch(`${API_BASE}/api/v1/user/me`, {
+    credentials: "include",
+  });
 
-  const decoded = decodeJWTToken(token);
-  if (!decoded) throw new Error("Invalid token");
+  if (!response.ok) throw new Error("Not authenticated");
 
-  // Our JWT uses: sub, name, email, role, schoolId, permissions
-  const role = decoded.role || "student";
-  const permissions = decoded.permissions || [];
+  const result = await response.json();
+  const user = result.data || result;
+  const role = user.role?.name || user.roleName || "student";
 
-  return Promise.resolve({
-    id: decoded.sub || "unknown",
-    name: decoded.name || "User",
-    email: decoded.email || "user@example.com",
-    roleId: role,
-    schoolId: decoded.schoolId || "",
-    permissions,
+  return {
+    id: user.id || "unknown",
+    name: user.name || "User",
+    email: user.email || "",
+    roleId: user.roleId || role,
+    schoolId: user.schoolId || "",
+    permissions: user.permissions || [],
     role: {
-      id: role,
+      id: user.roleId || role,
       name: role,
       description: `${role} role`,
       isActive: true,
     },
-  });
+  };
 }
 
 export function decodeJWTToken(token: string): any {
@@ -203,14 +210,11 @@ export function isSuperAdminRole(roleName: string): boolean {
 
 export async function logout(): Promise<void> {
   try {
-    const token = localStorage.getItem("token");
-    if (token) {
-      // Revoke all refresh tokens on the backend
-      await fetch(`${API_BASE}/authapi/refresh`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => {}); // Best-effort
-    }
+    // Revoke all refresh tokens on the backend (cookies sent automatically)
+    await fetch(`${API_BASE}/authapi/refresh`, {
+      method: "DELETE",
+      credentials: "include",
+    }).catch(() => {}); // Best-effort
   } finally {
     clearTokens();
   }

@@ -56,7 +56,7 @@ export function useTokenMonitor(warningMinutes = 5) {
       }
 
       // Token about to expire - try to refresh proactively
-      if (shouldRefreshToken(5) && !isRefreshingRef.current) {
+      if (shouldRefreshToken() && !isRefreshingRef.current) {
         await attemptRefresh();
         return;
       }

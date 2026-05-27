@@ -55,9 +55,7 @@ export async function exportTransactions(
     `${baseUrl}/api/v1/user/transactions/export?${params.toString()}`,
     {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
+      credentials: "include",
     }
   );
 

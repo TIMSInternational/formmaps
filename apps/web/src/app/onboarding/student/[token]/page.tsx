@@ -120,8 +120,7 @@ export default function StudentOnboardingPage({
 
       if (result.success) {
         if (result.token) {
-          // Auto-login logic
-          localStorage.setItem("token", result.token);
+          // Auto-login — cookies set by backend
 
           // Update global store
           setUser({

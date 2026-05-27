@@ -65,11 +65,10 @@ export function getTokenTimeRemaining(token: string | null): number | null {
 }
 
 /**
- * Get stored token from localStorage
+ * Get stored token — returns null. Auth is handled via httpOnly cookies.
  */
 export function getStoredToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("token");
+  return null;
 }
 
 /**
@@ -77,9 +76,7 @@ export function getStoredToken(): string | null {
  */
 export function forceLogout(message?: string): void {
   if (typeof window === "undefined") return;
-  
-  localStorage.removeItem("token");
-  
+
   // Show message if provided
   if (message) {
     // Store message to show on login page
@@ -103,30 +100,19 @@ export async function authFetch(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const token = getStoredToken();
-  
-  // Check if token is expired before making request
-  if (isTokenExpired(token)) {
-    forceLogout("Your session has expired. Please log in again.");
-    throw new Error("Token expired");
-  }
-  
-  // Add auth header
+  // Add default Content-Type if not set
   const headers = new Headers(options.headers);
-  if (token && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  
-  const response = await fetch(url, { ...options, headers });
-  
+
+  const response = await fetch(url, { ...options, headers, credentials: "include" });
+
   // Handle 401 - token rejected by server
   if (response.status === 401) {
     handle401Response();
     throw new Error("Unauthorized");
   }
-  
+
   return response;
 }

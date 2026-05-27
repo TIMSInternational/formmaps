@@ -23,9 +23,7 @@ export default function PaymentSuccess() {
       fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/stripe/status/${sessionId}`,
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          credentials: "include",
         }
       )
         .then((res) => res.json())

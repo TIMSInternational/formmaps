@@ -62,7 +62,6 @@ export default function LoginPage() {
     try {
       const response = await loginApi(data.email, data.password);
       if (!response.token) throw new Error("No token received from server");
-      localStorage.setItem("token", response.token);
 
       const roleName = response.user?.role?.name || null;
 

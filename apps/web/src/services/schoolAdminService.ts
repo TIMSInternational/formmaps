@@ -269,10 +269,9 @@ export async function exportResults(params: {
     dateTo: params.dateTo,
   });
   // Export returns a Blob — fall back to raw fetch for binary responses
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/school-admin/results/export${qs}`,
-    { headers: { Authorization: token ? `Bearer ${token}` : "" } }
+    { credentials: "include" }
   );
   if (!response.ok) throw new Error("Failed to export results");
   return response.blob();
@@ -306,18 +305,10 @@ export async function changePassword(data: {
   currentPassword: string;
   newPassword: string;
 }): Promise<{ success: boolean; message: string }> {
-  // Get current user email from stored auth
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  let email = "";
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      email = payload.email || "";
-    } catch { /* ignore */ }
-  }
+  // The backend extracts the user from the httpOnly cookie
   return apiRequest("/authapi/change-password", {
     method: "PUT",
-    data: { email, password: data.newPassword },
+    data: { password: data.newPassword },
   });
 }
 
@@ -331,29 +322,13 @@ export async function verifySchoolAdminAccess(): Promise<{
   schoolName?: string;
 }> {
   try {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!token) return { isSchoolAdmin: false };
-
-    // Try decoding the token first for a fast check
-    const decoded = decodeJWTToken(token);
-    if (decoded) {
-      const roleName = decoded.role?.name || decoded.roleName || decoded.role || "";
-      if (isAdminRole(roleName) || roleName === "school_admin") {
-        return {
-          isSchoolAdmin: true,
-          schoolId: decoded.schoolId || "school-1",
-          schoolName: decoded.schoolName || "Admin School",
-        };
-      }
-    }
-
-    // Fallback: Check profile
+    // Check profile via API (cookies sent automatically)
     const user = await getCurrentUser();
     const userRole = user.role?.name || "";
     if (isAdminRole(userRole)) {
       return {
         isSchoolAdmin: true,
-        schoolId: "school-1",
+        schoolId: user.schoolId || "school-1",
         schoolName: "Admin School",
       };
     }

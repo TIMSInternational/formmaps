@@ -23,8 +23,8 @@ export default function StripeTestButton({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
+          credentials: "include",
           body: JSON.stringify({
             userId: "test-user-123",
             amount: 2900, // $29.00
@@ -83,8 +83,8 @@ export default function StripeTestButton({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
+          credentials: "include",
           body: JSON.stringify({
             userId: "test-user-123",
             amount: 2900,

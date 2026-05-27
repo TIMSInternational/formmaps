@@ -84,9 +84,7 @@ function ParentOnboardingContent() {
       },
       {
         onSuccess: (result) => {
-          if (typeof window !== "undefined") {
-            localStorage.setItem("token", result.token);
-          }
+          // Cookies set by backend — update store
           setUser(result.user as any);
           setDone(true);
           setTimeout(() => router.push("/parent"), 2000);

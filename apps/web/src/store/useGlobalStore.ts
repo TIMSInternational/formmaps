@@ -3,7 +3,6 @@ import { devtools, persist } from "zustand/middleware";
 import { generateDummyContent } from "@/lib/dummyContentGenerator";
 import { updateResume, getResumeById } from "@/services/resumeService";
 import { telemetry } from "@/services/telemetryService";
-import { isTokenExpired } from "@/utils/tokenUtils";
 import { logout as apiLogout } from "@/services/authService";
 import { getQueryClient } from "@/components/QueryProvider";
 
@@ -237,13 +236,8 @@ export const useGlobalStore = create<GlobalState>()(
         logout: () => {
           // Track logout event
           telemetry.trackAuth("logout");
-          // Sign out + clear tokens
+          // Sign out + clear tokens (httpOnly cookies cleared by backend)
           apiLogout().catch(() => {});
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("token");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("tokenExpiry");
-          }
           // Clear React Query cache to prevent data leak on shared devices
           getQueryClient()?.clear();
           // Reset user state
@@ -261,69 +255,32 @@ export const useGlobalStore = create<GlobalState>()(
           });
         },
 
-        // Initialize authentication state from localStorage
+        // Initialize authentication state from logged_in cookie + persisted store
         initializeAuth: async () => {
-          if (typeof window !== "undefined") {
-            const token = localStorage.getItem("token");
-            const currentUser = get().user;
+          if (typeof window === "undefined") return;
 
-            // Check if token exists and is not expired
-            if (token) {
-              const tokenExpired = isTokenExpired(token);
+          const loggedIn = document.cookie.includes("logged_in=true");
+          const currentUser = get().user;
 
-              if (tokenExpired === true) {
-                // Token is expired - clear it and reset state
-                localStorage.removeItem("token");
-                set({
-                  user: {
-                    id: null,
-                    email: null,
-                    name: null,
-                    role: null,
-                    image: null,
-                    avatar: null,
-                    isAuthenticated: false,
-                  },
-                });
-                return;
-              }
-
-              // Token is valid and we have user data, restore session
-              if (currentUser.email) {
-                set((state) => ({
-                  user: { ...state.user, isAuthenticated: true },
-                }));
-                // Track login event
-                telemetry.trackAuth("login", "session_restore");
-              } else {
-                // Token exists but no user data - clear the token
-                localStorage.removeItem("token");
-                set({
-                  user: {
-                    id: null,
-                    email: null,
-                    name: null,
-                    role: null,
-                    image: null,
-                    avatar: null,
-                    isAuthenticated: false,
-                  },
-                });
-              }
-            } else {
-              // No token, ensure we're in unauthenticated state
-              set({
-                user: {
-                  id: null,
-                  email: null,
-                  name: null,
-                  role: null,
-                  image: null,
-                  avatar: null,
-                  isAuthenticated: false,
-                },
-              });
-            }
+          if (loggedIn && currentUser.email) {
+            // Cookie present and we have persisted user data — restore session
+            set((state) => ({
+              user: { ...state.user, isAuthenticated: true },
+            }));
+            telemetry.trackAuth("login", "session_restore");
+          } else {
+            // Not logged in or no user data — reset
+            set({
+              user: {
+                id: null,
+                email: null,
+                name: null,
+                role: null,
+                image: null,
+                avatar: null,
+                isAuthenticated: false,
+              },
+            });
           }
         },
 
@@ -810,10 +767,9 @@ export const useGlobalStore = create<GlobalState>()(
         fetchSettings: async () => {
           try {
             const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-            const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-            if (!token) return;
+            if (typeof window === "undefined") return;
             const response = await fetch(`${baseUrl}/api/v1/admin/settings`, {
-              headers: { Authorization: `Bearer ${token}` },
+              credentials: "include",
             });
             if (response.ok) {
               const json = await response.json();

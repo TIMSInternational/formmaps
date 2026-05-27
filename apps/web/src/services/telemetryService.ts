@@ -405,18 +405,12 @@ class TelemetryService {
     this.eventQueue = [];
 
     try {
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
 
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-
       // Use sendBeacon for sync flush (page unload)
+      // Note: sendBeacon does not support credentials/cookies
       if (sync && typeof navigator !== "undefined" && navigator.sendBeacon) {
         const blob = new Blob(
           [JSON.stringify({ events: eventsToSend })],
@@ -430,6 +424,7 @@ class TelemetryService {
       await fetch(this.config.apiEndpoint, {
         method: "POST",
         headers,
+        credentials: "include",
         body: JSON.stringify({ events: eventsToSend }),
       });
     } catch (error) {

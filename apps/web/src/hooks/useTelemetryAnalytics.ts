@@ -57,20 +57,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 async function getTelemetryAnalytics(
   period: "day" | "week" | "month" | "year"
 ): Promise<TelemetryAnalytics> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   const response = await fetch(
     `${API_BASE_URL}/api/v1/admin/analytics/summary?period=${period}`,
-    { headers }
+    {
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    }
   );
 
   if (!response.ok) {

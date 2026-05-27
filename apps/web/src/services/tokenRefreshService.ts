@@ -23,35 +23,27 @@ export interface RefreshResponse {
 }
 
 /**
- * Store tokens in localStorage (fallback for non-cookie flows)
- * httpOnly cookies are set by the backend automatically on login/refresh
+ * Store tokens — now a no-op. httpOnly cookies are set by the backend.
+ * Kept as a function to avoid breaking call sites during migration.
  */
-export function storeTokens(tokens: TokenPair): void {
-  if (typeof window === "undefined") return;
-  // Keep localStorage as fallback for direct fetch() calls that don't use withCredentials
-  localStorage.setItem("token", tokens.accessToken);
-  localStorage.setItem("refreshToken", tokens.refreshToken);
-  const expiryTime = Date.now() + tokens.expiresIn * 1000;
-  localStorage.setItem("tokenExpiry", expiryTime.toString());
+export function storeTokens(_tokens: TokenPair): void {
+  // No-op: auth is handled entirely via httpOnly cookies
 }
 
 /**
- * Get stored refresh token (fallback — primary is httpOnly cookie)
+ * Get stored refresh token — now returns null.
+ * The refresh token is in an httpOnly cookie sent automatically by the browser.
  */
 export function getRefreshToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("refreshToken");
+  return null;
 }
 
 /**
- * Check if user is logged in (reads non-httpOnly logged_in cookie or localStorage)
+ * Check if user is logged in (reads non-httpOnly logged_in cookie)
  */
 export function isLoggedIn(): boolean {
   if (typeof window === "undefined") return false;
-  // Check logged_in cookie (set by backend)
-  if (document.cookie.includes("logged_in=true")) return true;
-  // Fallback to localStorage
-  return !!localStorage.getItem("token");
+  return document.cookie.includes("logged_in=true");
 }
 
 /**
@@ -59,9 +51,6 @@ export function isLoggedIn(): boolean {
  */
 export function clearTokens(): void {
   if (typeof window === "undefined") return;
-  localStorage.removeItem("token");
-  localStorage.removeItem("refreshToken");
-  localStorage.removeItem("tokenExpiry");
   // Clear non-httpOnly cookie (httpOnly cookies cleared by backend on logout)
   document.cookie = "logged_in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 }
@@ -72,14 +61,11 @@ export function clearTokens(): void {
  * Also sends body refreshToken as fallback for older sessions.
  */
 export async function refreshAccessToken(): Promise<TokenPair | null> {
-  const refreshToken = getRefreshToken();
-
   try {
     const response = await fetch(`${API_BASE}/authapi/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include", // Send httpOnly cookies
-      body: JSON.stringify({ refreshToken: refreshToken || "" }),
     });
 
     if (!response.ok) {
@@ -92,8 +78,6 @@ export async function refreshAccessToken(): Promise<TokenPair | null> {
     const result: RefreshResponse = await response.json();
 
     if (result.success && result.data) {
-      // Store in localStorage as fallback (cookies already set by backend)
-      storeTokens(result.data);
       return result.data;
     }
 
@@ -104,36 +88,20 @@ export async function refreshAccessToken(): Promise<TokenPair | null> {
 }
 
 /**
- * Check if we should attempt a token refresh
+ * Check if we should attempt a token refresh.
+ * Without localStorage expiry, we rely on the server returning 401 and
+ * the response interceptor triggering a refresh. This function now only
+ * checks if the user appears logged in.
  */
-export function shouldRefreshToken(bufferMinutes = 5): boolean {
-  if (typeof window === "undefined") return false;
-  if (!isLoggedIn()) return false;
-
-  const expiryStr = localStorage.getItem("tokenExpiry");
-  if (!expiryStr) return false;
-
-  const expiryTime = parseInt(expiryStr, 10);
-  const bufferMs = bufferMinutes * 60 * 1000;
-
-  return Date.now() >= expiryTime - bufferMs;
+export function shouldRefreshToken(): boolean {
+  return isLoggedIn();
 }
 
 /**
- * Attempt to refresh token if needed
+ * Attempt to refresh token if needed.
+ * Returns null — callers should not depend on a token string.
+ * Auth is handled via httpOnly cookies.
  */
 export async function ensureValidToken(): Promise<string | null> {
-  if (typeof window === "undefined") return null;
-
-  const currentToken = localStorage.getItem("token");
-
-  if (shouldRefreshToken()) {
-    const newTokens = await refreshAccessToken();
-    if (newTokens) {
-      return newTokens.accessToken;
-    }
-    return currentToken;
-  }
-
-  return currentToken;
+  return null;
 }

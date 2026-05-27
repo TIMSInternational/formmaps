@@ -103,10 +103,7 @@ function OnboardingContent() {
       },
       {
         onSuccess: (result) => {
-          // Store JWT and user info
-          if (typeof window !== "undefined") {
-            localStorage.setItem("token", result.token);
-          }
+          // Cookies set by backend — update store
           setUser(result.user as any);
           // Show calendar step before final redirect
           const email = (result.user as any)?.email ?? tokenData?.email ?? null;

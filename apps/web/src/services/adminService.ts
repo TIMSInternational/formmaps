@@ -1,6 +1,5 @@
 // Admin service for handling admin-related API calls
-import { decodeJWTToken, isAdminRole, isSuperAdminRole } from "./authService";
-import { getRoleById } from "./roleService";
+import { isAdminRole, isSuperAdminRole } from "./authService";
 import { apiRequest } from "@/lib/api/apiClient";
 
 // Helper to get current language from localStorage
@@ -56,67 +55,24 @@ export interface CommissionStats {
 }
 
 export async function verifyAdminAccess(): Promise<AdminVerificationResponse> {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    throw new Error("No authentication token found");
+  if (typeof window === "undefined" || !document.cookie.includes("logged_in=true")) {
+    throw new Error("No authentication found");
   }
 
   // Use role-based verification directly since verify-admin endpoint doesn't exist
-  return await verifyAdminViaRoles(token);
+  return await verifyAdminViaRoles();
 }
 
-// Verify admin access using role APIs
-async function verifyAdminViaRoles(
-  token: string
-): Promise<AdminVerificationResponse> {
+// Verify admin access using the user profile API
+async function verifyAdminViaRoles(): Promise<AdminVerificationResponse> {
   try {
+    // Fetch user profile (cookies sent automatically)
+    const { getCurrentUser } = await import("./authService");
+    const user = await getCurrentUser();
+    const roleName = user.role?.name || "";
 
-    // First, try to decode the JWT token to get role information
-    const decodedToken = decodeJWTToken(token);
-    let roleId = null;
-    let roleName = null;
-
-    if (decodedToken) {
-      // Check for standard role fields
-      roleId = decodedToken.roleId || decodedToken.role_id;
-      roleName =
-        decodedToken.roleName || decodedToken.role_name || decodedToken.role;
-
-      // Check for Microsoft identity claims format
-      const roleClaimKey =
-        "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
-      if (decodedToken[roleClaimKey]) {
-        roleName = decodedToken[roleClaimKey];
-      }
-
-      // Check for name identifier (user ID)
-      const nameIdKey =
-        "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameididentifier";
-      if (decodedToken[nameIdKey]) {
-        roleId = decodedToken[nameIdKey];
-      }
-
-    }
-
-    // If we have roleId, get role details from API
-    if (roleId) {
-      try {
-        const roleDetails = await getRoleById(roleId);
-        roleName = roleDetails.name;
-      } catch (error) {
-      // error handled silently
-    }
-    }
-
-    // Check if the role name indicates admin access
     const isAdmin = roleName ? isAdminRole(roleName) : false;
     const isSuperAdmin = roleName ? isSuperAdminRole(roleName) : false;
-
-    // If no role found in token, fall back to simulation
-    if (!roleName) {
-      return simulateAdminVerification(token);
-    }
 
     return {
       isAdmin,
@@ -125,39 +81,13 @@ async function verifyAdminViaRoles(
       permissions: isAdmin ? ["read", "write", "delete"] : ["read"],
     };
   } catch (error) {
-    return simulateAdminVerification(token);
+    return {
+      isAdmin: false,
+      isSuperAdmin: false,
+      role: "user",
+      permissions: ["read"],
+    };
   }
-}
-
-// Simulate admin verification for development/testing
-function simulateAdminVerification(token: string): AdminVerificationResponse {
-
-  // Simple simulation: check if token contains admin indicators
-  const isTestAdmin = token.includes("admin") || token.includes("super");
-
-  // You can also check localStorage for user data
-  const userData = localStorage.getItem("user");
-  let userRole = "user";
-
-  if (userData) {
-    try {
-      const user = JSON.parse(userData);
-      userRole = user.role || "user";
-    } catch (e) {
-      // error handled silently
-    }
-  }
-
-  const isAdmin =
-    userRole === "admin" || userRole === "super_admin" || isTestAdmin;
-  const isSuperAdmin = userRole === "super_admin" || token.includes("super");
-
-  return {
-    isAdmin,
-    isSuperAdmin,
-    role: userRole,
-    permissions: isAdmin ? ["read", "write", "delete"] : ["read"],
-  };
 }
 
 // --- Admin Payout APIs ---
