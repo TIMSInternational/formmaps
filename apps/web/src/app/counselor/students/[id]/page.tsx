@@ -50,6 +50,10 @@ import {
   useStudentChangeRequests,
   useReviewChangeRequest,
 } from "@/hooks/useCoursePlanQueries";
+import {
+  useStudentRecommendations,
+  useStudentAcademicGaps,
+} from "@/hooks/useStudentDetailData";
 import type { NoteType, CounselorNote } from "@/types/counselorNotes";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -81,6 +85,8 @@ export default function CounselorStudentDetailPage() {
   const { data: coursePlan, isLoading: planLoading } = useStudentCoursePlan(studentId);
   const counselorAdd = useCounselorAddCourse(studentId);
   const counselorRemove = useCounselorRemoveCourse(studentId);
+  const { data: recsData } = useStudentRecommendations(studentId);
+  const { data: gapsData } = useStudentAcademicGaps(studentId);
   const { data: changeRequestsData } = useStudentChangeRequests(studentId, "pending");
   const reviewRequest = useReviewChangeRequest(studentId);
   const pendingRequests = changeRequestsData?.data ?? [];
@@ -458,6 +464,8 @@ export default function CounselorStudentDetailPage() {
             onCounselorRemove={(enrollmentId) => counselorRemove.mutate(enrollmentId)}
             isCounselorAddPending={counselorAdd.isPending}
             isCounselorRemovePending={counselorRemove.isPending}
+            recommendations={recsData}
+            academicGaps={gapsData}
           />
         </TabsContent>
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Video, VideoOff, Mic, MicOff, PhoneOff, Users, Loader2, FileText, PenSquare, Maximize2, Minimize2, Mail, GraduationCap, Calendar } from "lucide-react";
+import { Video, VideoOff, Mic, MicOff, PhoneOff, Users, Loader2, FileText, PenSquare, Maximize2, Minimize2, Mail, GraduationCap, Calendar, BookOpen, Lightbulb, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { getVideoSession, getVideoSignature, endVideoSession, VideoSession } from "@/services/videoService";
 import { getStudentNotes, createNote } from "@/services/counselorNotesService";
@@ -89,6 +89,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
 
   // Side panels (OSF-style)
   const [showPastNotes, setShowPastNotes] = useState(false);
+  const [showCoursePlan, setShowCoursePlan] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [participantInfo, setParticipantInfo] = useState<ParticipantInfo | null>(null);
   const [participantLoading, setParticipantLoading] = useState(false);
@@ -96,6 +97,8 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
   const [noteContent, setNoteContent] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [selectedNote, setSelectedNote] = useState<CounselorNote | null>(null);
+  const [coursePlanData, setCoursePlanData] = useState<any>(null);
+  const [recsData, setRecsData] = useState<any>(null);
 
   const otherPerson = session?.caller?.id === userId ? session?.participant : session?.caller;
   const isPrivilegedRole = ["school_admin", "counselor", "super admin"].includes(userRole);
@@ -129,11 +132,19 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
         setParticipantLoading(false);
       }
 
-      // Load notes
+      // Load notes + course plan + recommendations
       if (isPrivilegedRole) {
         try {
           const notesRes = await getStudentNotes(otherPerson.id, { limit: 20 });
           setNotes(notesRes?.data ?? []);
+        } catch {}
+        try {
+          const cpRes = await apiRequest(`/api/v1/school-admin/students/${otherPerson.id}/course-plan`);
+          setCoursePlanData(cpRes?.data ?? cpRes);
+        } catch {}
+        try {
+          const recRes = await apiRequest(`/api/v1/school-admin/academic-gaps/recommendations/${otherPerson.id}`);
+          setRecsData(recRes?.data ?? recRes);
         } catch {}
       }
     })();
@@ -431,7 +442,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
       </div>
 
       {/* ── Session Notepad — bottom-center (OSF: NoteDetailWidget) ── */}
-      {isPrivilegedRole && (
+      {isPrivilegedRole && !showCoursePlan && (
         <div style={{
           position: "absolute",
           top: "calc(30% + 32px)",
@@ -472,6 +483,128 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                 }}>
                 {savingNote ? "Saving..." : "Save Note"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Course Plan + Recommendations — bottom-center (togglable, replaces notes) ── */}
+      {isPrivilegedRole && showCoursePlan && (
+        <div style={{
+          position: "absolute",
+          top: "calc(30% + 32px)",
+          left: showPastNotes ? "calc(18% + 32px)" : 16,
+          right: "calc(37.5% + 32px)", bottom: 16,
+          transition: "left 0.3s, opacity 0.3s, visibility 0.3s",
+          opacity: isExpanded ? 0 : 1, visibility: isExpanded ? "hidden" : "visible",
+        }}>
+          <div style={{ height: "100%", backgroundColor: "var(--admin-bg-hover)", borderRadius: 8, border: "1px solid var(--admin-border-default)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 8 }}>
+              <BookOpen style={{ width: 14, height: 14, color: "var(--admin-accent-blue)" }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Course Plan & Recommendations</span>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
+
+              {/* Enrolled Courses by Semester */}
+              {coursePlanData?.plan?.enrollments && coursePlanData.plan.enrollments.length > 0 ? (
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)", marginBottom: 8 }}>Current Enrollments</div>
+                  {[9, 10, 11, 12].map((grade) => {
+                    const courses = coursePlanData.plan.enrollments.filter((e: any) => e.gradeLevel === grade);
+                    if (courses.length === 0) return null;
+                    return (
+                      <div key={grade} style={{ marginBottom: 10 }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4 }}>Grade {grade}</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                          {courses.map((c: any) => (
+                            <div key={c.id} style={{
+                              display: "flex", alignItems: "center", justifyContent: "space-between",
+                              padding: "5px 8px", borderRadius: 4, fontSize: 11,
+                              border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)",
+                            }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                                <span style={{
+                                  width: 6, height: 6, borderRadius: 3, flexShrink: 0,
+                                  background: c.status === "completed" ? "#10b981" : c.status === "in_progress" ? "#3b82f6" : "#9ca3af",
+                                }} />
+                                <span style={{ fontWeight: 500, color: "var(--admin-font-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.courseName}</span>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, color: "var(--admin-font-tertiary)" }}>
+                                <span>{c.courseCode}</span>
+                                <span>{c.credits} cr</span>
+                                {c.grade && <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{c.grade}</span>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ padding: 16, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No course plan data</div>
+              )}
+
+              {/* Graduation Progress */}
+              {coursePlanData?.plan?.graduationProgress && (
+                <div style={{ padding: "8px 10px", borderRadius: 6, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
+                    <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>Graduation Progress</span>
+                    <span style={{ color: coursePlanData.plan.graduationProgress.isOnTrack ? "#10b981" : "#ef4444", fontWeight: 600 }}>
+                      {coursePlanData.plan.graduationProgress.isOnTrack ? "On Track" : "At Risk"}
+                    </span>
+                  </div>
+                  <div style={{ width: "100%", height: 6, borderRadius: 3, background: "var(--admin-border-default)" }}>
+                    <div style={{
+                      height: 6, borderRadius: 3, background: "linear-gradient(90deg, #6366f1, #4f46e5)",
+                      width: `${coursePlanData.plan.graduationProgress.totalCreditsRequired > 0
+                        ? Math.min((coursePlanData.plan.graduationProgress.totalCreditsEarned / coursePlanData.plan.graduationProgress.totalCreditsRequired) * 100, 100) : 0}%`,
+                    }} />
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
+                    {coursePlanData.plan.graduationProgress.totalCreditsEarned} / {coursePlanData.plan.graduationProgress.totalCreditsRequired} credits
+                  </div>
+                </div>
+              )}
+
+              {/* AI Recommendations */}
+              {recsData && ((recsData.nextSemester?.length ?? 0) > 0 || (recsData.longTerm?.length ?? 0) > 0) && (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                    <Lightbulb style={{ width: 12, height: 12, color: "#f59e0b" }} />
+                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#f59e0b" }}>AI Recommendations</span>
+                  </div>
+                  {recsData.nextSemester?.map((rec: any) => (
+                    <div key={rec.courseId || rec.courseCode} style={{
+                      padding: "6px 8px", borderRadius: 4, marginBottom: 4, fontSize: 11,
+                      border: "1px solid rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.04)",
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{rec.courseName}</span>
+                        <span style={{
+                          fontSize: 9, fontWeight: 700, padding: "1px 5px", borderRadius: 3, textTransform: "uppercase",
+                          background: rec.priority === "high" ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)",
+                          color: rec.priority === "high" ? "#ef4444" : "#f59e0b",
+                        }}>{rec.priority}</span>
+                      </div>
+                      <div style={{ color: "var(--admin-font-tertiary)", marginTop: 2 }}>{rec.courseCode} · {rec.credits} cr</div>
+                      <div style={{ color: "var(--admin-font-light)", marginTop: 2, lineHeight: 1.4 }}>{rec.reason}</div>
+                    </div>
+                  ))}
+                  {recsData.longTerm?.map((rec: any) => (
+                    <div key={rec.courseId || rec.courseCode} style={{
+                      padding: "6px 8px", borderRadius: 4, marginBottom: 4, fontSize: 11,
+                      border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)",
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ fontWeight: 500, color: "var(--admin-font-primary)" }}>{rec.courseName}</span>
+                        <span style={{ color: "var(--admin-font-tertiary)" }}>{rec.credits} cr</span>
+                      </div>
+                      <div style={{ color: "var(--admin-font-light)", marginTop: 2 }}>{rec.reason}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -572,8 +705,18 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
             <button style={{ width: 40, height: 40, borderRadius: 8, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background 0.2s", backgroundColor: "#333" }}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#444"; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#333"; }}
-              onClick={() => { setSelectedNote(null); setNoteContent(""); if (isExpanded) setIsExpanded(false); }} title="New note">
+              onClick={() => { setShowCoursePlan(false); setSelectedNote(null); setNoteContent(""); if (isExpanded) setIsExpanded(false); }} title="New note">
               <PenSquare style={{ width: 18, height: 18, color: "#fff" }} />
+            </button>
+          )}
+
+          {/* Course Plan */}
+          {isPrivilegedRole && (
+            <button style={{ width: 40, height: 40, borderRadius: 8, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background 0.2s", backgroundColor: showCoursePlan ? "#6366f1" : "#333" }}
+              onMouseEnter={(e) => { if (!showCoursePlan) e.currentTarget.style.backgroundColor = "#444"; }}
+              onMouseLeave={(e) => { if (!showCoursePlan) e.currentTarget.style.backgroundColor = showCoursePlan ? "#6366f1" : "#333"; }}
+              onClick={() => { setShowCoursePlan(!showCoursePlan); if (isExpanded) setIsExpanded(false); }} title="Course plan & recommendations">
+              <BookOpen style={{ width: 18, height: 18, color: "#fff" }} />
             </button>
           )}
 

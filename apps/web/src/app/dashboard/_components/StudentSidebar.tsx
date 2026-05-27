@@ -99,7 +99,6 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "dashboard.resumeBuilder", href: "/dashboard/resumes", icon: ClipboardList },
       { label: "dashboard.portfolio", href: "/dashboard/portfolio", icon: FolderOpen },
-      { label: "dashboard.coursePlan", href: "/dashboard/course-plan", icon: BookOpen },
       { label: "Applications", href: "/dashboard/applications", icon: Target },
       { label: "Test Scores", href: "/dashboard/test-scores", icon: FileText },
       { label: "Transcript", href: "/dashboard/transcript", icon: BookOpen },

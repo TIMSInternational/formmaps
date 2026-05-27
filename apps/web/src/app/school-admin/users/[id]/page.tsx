@@ -956,6 +956,8 @@ export default function StudentDetailsPage() {
               onCounselorRemove={(enrollmentId) => adminRemove.mutate(enrollmentId)}
               isCounselorAddPending={adminAdd.isPending}
               isCounselorRemovePending={adminRemove.isPending}
+              recommendations={recsData}
+              academicGaps={gapsData}
             />
           </Card>
         </TabsContent>
