@@ -22,9 +22,14 @@ export async function listConversations(): Promise<ConversationSummary[]> {
   return res?.data ?? res ?? [];
 }
 
-export async function createConversation(counselorId: string): Promise<ConversationSummary> {
-  const res = await apiRequest("/api/v1/messages/conversations", { method: "POST", data: { counselorId } });
+export async function createConversation(recipientId: string): Promise<ConversationSummary> {
+  const res = await apiRequest("/api/v1/messages/conversations", { method: "POST", data: { recipientId } });
   return res?.data ?? res;
+}
+
+export async function searchContacts(search?: string): Promise<{ id: string; name: string; email: string; roleName: string }[]> {
+  const res = await apiRequest(`/api/v1/messages/contacts${search ? `?search=${encodeURIComponent(search)}` : ""}`, { method: "GET" });
+  return res?.data ?? res ?? [];
 }
 
 export async function getConversationMessages(id: string, page = 1, limit = 50): Promise<{ messages: MessageData[]; total: number }> {

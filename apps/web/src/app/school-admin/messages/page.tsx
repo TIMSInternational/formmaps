@@ -10,9 +10,12 @@ import {
   listConversations,
   getConversationMessages,
   sendMessage,
+  createConversation,
+  searchContacts,
   ConversationSummary,
   MessageData,
 } from "@/services/messageService";
+import { Plus, UserPlus, X } from "lucide-react";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { AdminTabBar } from "@/app/school-admin/_components/AdminTabBar";
 
@@ -50,6 +53,10 @@ function MessagesContent() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showNewMessage, setShowNewMessage] = useState(false);
+  const [contactSearch, setContactSearch] = useState("");
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -94,6 +101,31 @@ function MessagesContent() {
 
   useEffect(() => { if (selectedId) fetchMessages(selectedId); }, [selectedId, fetchMessages]);
   useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
+
+  // Contact search for new message
+  useEffect(() => {
+    if (!showNewMessage) return;
+    setContactsLoading(true);
+    const t = setTimeout(async () => {
+      try { setContacts(await searchContacts(contactSearch || undefined)); }
+      catch { setContacts([]); }
+      finally { setContactsLoading(false); }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [contactSearch, showNewMessage]);
+
+  const handleNewConversation = async (recipientId: string) => {
+    try {
+      const conv = await createConversation(recipientId);
+      setShowNewMessage(false);
+      setContactSearch("");
+      await fetchConversations();
+      setSelectedId(conv.id);
+      toast.success("Conversation started");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to start conversation");
+    }
+  };
 
   const handleSelect = (id: string) => { setSelectedId(id); setMessages([]); setInputValue(""); };
 
@@ -146,11 +178,21 @@ function MessagesContent() {
           <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--admin-border-light)", display: "flex", flexDirection: "column", gap: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Conversations</span>
-              {totalUnread > 0 && (
-                <span style={{ minWidth: 20, height: 20, borderRadius: 10, padding: "0 6px", background: "var(--admin-accent-blue)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {totalUnread > 99 ? "99+" : totalUnread}
-                </span>
-              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {totalUnread > 0 && (
+                  <span style={{ minWidth: 20, height: 20, borderRadius: 10, padding: "0 6px", background: "var(--admin-accent-blue)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {totalUnread > 99 ? "99+" : totalUnread}
+                  </span>
+                )}
+                <button onClick={() => setShowNewMessage(!showNewMessage)} style={{
+                  width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
+                  background: showNewMessage ? "var(--admin-accent-blue)" : "var(--admin-bg-hover)",
+                  color: showNewMessage ? "#fff" : "var(--admin-font-tertiary)",
+                  border: "none", cursor: "pointer",
+                }}>
+                  {showNewMessage ? <X style={{ width: 14, height: 14 }} /> : <Plus style={{ width: 14, height: 14 }} />}
+                </button>
+              </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-light)" }}>
               <Search style={{ width: 14, height: 14, color: "var(--admin-font-light)", flexShrink: 0 }} />
@@ -158,6 +200,40 @@ function MessagesContent() {
                 style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
             </div>
           </div>
+
+          {/* New Message Contact Picker */}
+          {showNewMessage && (
+            <div style={{ borderBottom: "1px solid var(--admin-border-default)", padding: "8px 12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-accent-blue)", marginBottom: 8 }}>
+                <UserPlus style={{ width: 14, height: 14, color: "var(--admin-accent-blue)", flexShrink: 0 }} />
+                <input placeholder="Search by name or email..." value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} autoFocus
+                  style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
+              </div>
+              <div style={{ maxHeight: 200, overflowY: "auto" }} className="space-y-1">
+                {contactsLoading ? (
+                  <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>Searching...</div>
+                ) : contacts.length === 0 ? (
+                  <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No contacts found</div>
+                ) : contacts.map((c) => (
+                  <button key={c.id} onClick={() => handleNewConversation(c.id)} style={{
+                    width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
+                    borderRadius: 6, border: "none", background: "transparent", cursor: "pointer",
+                    fontFamily: "inherit", textAlign: "left", color: "var(--admin-font-primary)",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #14b8a6, #06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
+                      {c.name?.charAt(0)?.toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</div>
+                      <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{c.roleName?.replace("_", " ")} · {c.email}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={{ flex: 1, overflowY: "auto", padding: 6 }}>
             {loadingConversations ? (
