@@ -77,7 +77,7 @@ function MessagesContent() {
 
   const fetchMessages = useCallback(async (id: string, silent = false) => {
     if (!silent) setLoadingMessages(true);
-    try { setMessages((await getConversationMessages(id))?.messages ?? []); }
+    try { const res: any = await getConversationMessages(id); setMessages(res?.data ?? res?.messages ?? []); }
     catch { if (!silent) toast.error("Failed to load messages."); }
     finally { if (!silent) setLoadingMessages(false); }
   }, []);
