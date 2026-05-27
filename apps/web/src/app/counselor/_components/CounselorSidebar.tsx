@@ -30,6 +30,8 @@ import {
   MessageCircle,
   MessageCirclePlus,
   Award,
+  Video,
+  FileText,
 } from "lucide-react";
 
 type ThemeMode = "dark" | "light" | "system";
@@ -49,12 +51,15 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
       { label: t("counselor.nav.evaluations", "360° Evaluations"), href: "/counselor/evaluations", icon: Radar },
       { label: t("counselor.nav.alerts", "Alerts"), href: "/counselor/alerts", icon: Bell },
       { label: t("counselor.nav.recommendations", "Recommendations"), href: "/counselor/recommendations", icon: Award },
+      { label: t("counselor.nav.reports", "Reports"), href: "/counselor/reports", icon: FileText },
     ],
   },
   {
     label: t("counselor.nav.communication", "Communication"),
     items: [
       { label: t("counselor.nav.messages", "Messages"), href: "/counselor/messages", icon: MessageCircle },
+      { label: t("counselor.nav.videoCalls", "Video Calls"), href: "/counselor/video", icon: Video },
+      { label: t("counselor.nav.sessionNotes", "Session Notes"), href: "/counselor/notes", icon: FileText },
     ],
   },
   {

@@ -14,9 +14,11 @@ import {
   MoreHorizontal,
   FileText,
   X,
+  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -39,6 +41,7 @@ import {
   getMyCounselorSessions,
   completeCounselorSession,
   cancelCounselorSession,
+  rescheduleCounselorSession,
 } from "@/services/counselorSessionService";
 import type { CounselorSession } from "@/services/counselorSessionService";
 
@@ -54,6 +57,10 @@ export default function CounselorSessionsPage() {
   const [cancelReason, setCancelReason] = useState("");
   const [counselorNotes, setCounselorNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const [rescheduleId, setRescheduleId] = useState<string | null>(null);
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
 
   useEffect(() => { fetchSessions(); }, []);
 
@@ -104,6 +111,25 @@ export default function CounselorSessionsPage() {
       fetchSessions();
     } catch (e: any) {
       toast.error(e.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReschedule = async (sessionId: string) => {
+    if (!newDate || !newTime) { toast.error("Please select a date and time"); return; }
+    setIsProcessing(true);
+    try {
+      const startTime = new Date(`${newDate}T${newTime}`);
+      const endTime = new Date(startTime.getTime() + 30 * 60000);
+      await rescheduleCounselorSession(sessionId, startTime.toISOString(), endTime.toISOString());
+      toast.success("Session rescheduled");
+      setRescheduleId(null);
+      setNewDate("");
+      setNewTime("");
+      fetchSessions();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to reschedule");
     } finally {
       setIsProcessing(false);
     }
@@ -249,6 +275,23 @@ export default function CounselorSessionsPage() {
                                 <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                                 Complete
                               </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 px-3 text-xs rounded-lg"
+                                onClick={() => {
+                                  if (rescheduleId === session.id) {
+                                    setRescheduleId(null);
+                                  } else {
+                                    setRescheduleId(session.id);
+                                    setNewDate("");
+                                    setNewTime("");
+                                  }
+                                }}
+                              >
+                                <CalendarClock className="h-3.5 w-3.5 mr-1" />
+                                Reschedule
+                              </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
@@ -285,6 +328,43 @@ export default function CounselorSessionsPage() {
                               </p>
                             </div>
                           )}
+                        </div>
+                      )}
+
+                      {rescheduleId === session.id && (
+                        <div className="mt-3 ml-[3.75rem] p-3 rounded-lg border border-[var(--border)] bg-[var(--admin-bg-hover,rgba(0,0,0,0.02))]">
+                          <p className="text-xs font-medium text-foreground mb-2">Reschedule to:</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Input
+                              type="date"
+                              value={newDate}
+                              onChange={(e) => setNewDate(e.target.value)}
+                              className="h-8 w-40 text-xs"
+                            />
+                            <Input
+                              type="time"
+                              value={newTime}
+                              onChange={(e) => setNewTime(e.target.value)}
+                              className="h-8 w-32 text-xs"
+                            />
+                            <Button
+                              size="sm"
+                              className="h-8 px-3 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+                              disabled={!newDate || !newTime || isProcessing}
+                              onClick={() => handleReschedule(session.id)}
+                            >
+                              {isProcessing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <CalendarClock className="h-3 w-3 mr-1" />}
+                              Confirm
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 px-2 text-xs rounded-lg"
+                              onClick={() => setRescheduleId(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </motion.div>

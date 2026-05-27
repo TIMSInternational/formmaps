@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ const typeIcons: Record<AlertType, React.ReactNode> = {
 
 export default function AlertsPage() {
   const { t } = useTranslation();
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
@@ -209,7 +211,18 @@ export default function AlertsPage() {
                     <p className="font-medium text-sm truncate text-foreground">{a.title}</p>
                     <p className="text-xs text-muted-foreground truncate">{a.message}</p>
                   </TableCell>
-                  <TableCell className="text-sm text-foreground">{a.studentName || "—"}</TableCell>
+                  <TableCell className="text-sm text-foreground">
+                    {a.studentId ? (
+                      <span
+                        className="cursor-pointer hover:text-blue-600 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); router.push(`/counselor/students/${a.studentId}`); }}
+                      >
+                        {a.studentName || "—"}
+                      </span>
+                    ) : (
+                      a.studentName || "—"
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge className={priorityColors[a.priority]}>{a.priority}</Badge>
                   </TableCell>
