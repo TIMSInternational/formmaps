@@ -37,6 +37,8 @@ function getInitials(name: string): string {
 export default function VideoCallsPage() {
   const router = useRouter();
   const userId = useGlobalStore((s) => s.user.id);
+  const userRole = useGlobalStore((s) => s.user.role);
+  const isStaff = ["counselor", "school_admin", "Super Admin"].includes(userRole || "");
 
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [sessions, setSessions] = useState<VideoSession[]>([]);
@@ -120,11 +122,13 @@ export default function VideoCallsPage() {
           <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>Video Calls</h1>
           <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginTop: 4 }}>Start a video call with your counselor or school staff.</p>
         </div>
-        <button onClick={() => setShowNewCall(!showNewCall)}
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 10, background: showNewCall ? "var(--admin-bg-hover)" : "linear-gradient(135deg, #6366f1, #4f46e5)", color: showNewCall ? "var(--admin-font-primary)" : "#fff", border: "1px solid var(--admin-border-default)", cursor: "pointer", fontSize: 13, fontWeight: 600, transition: "all 0.15s" }}>
-          {showNewCall ? <X style={{ width: 16, height: 16 }} /> : <Plus style={{ width: 16, height: 16 }} />}
-          {showNewCall ? "Cancel" : "New Call"}
-        </button>
+        {isStaff && (
+          <button onClick={() => setShowNewCall(!showNewCall)}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 10, background: showNewCall ? "var(--admin-bg-hover)" : "linear-gradient(135deg, #6366f1, #4f46e5)", color: showNewCall ? "var(--admin-font-primary)" : "#fff", border: "1px solid var(--admin-border-default)", cursor: "pointer", fontSize: 13, fontWeight: 600, transition: "all 0.15s" }}>
+            {showNewCall ? <X style={{ width: 16, height: 16 }} /> : <Plus style={{ width: 16, height: 16 }} />}
+            {showNewCall ? "Cancel" : "New Call"}
+          </button>
+        )}
       </motion.div>
 
       <AnimatePresence>
