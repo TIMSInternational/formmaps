@@ -169,7 +169,7 @@ export default function AcademicGapsPage() {
                       >
                         <Avatar className="h-10 w-10 border">
                           <AvatarFallback className={isSelected ? "bg-indigo-600 text-white" : "bg-[var(--admin-bg-hover)] text-foreground"}>
-                            {s.studentName.substring(0, 2).toUpperCase()}
+                            {(s.studentName || "??").substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
 

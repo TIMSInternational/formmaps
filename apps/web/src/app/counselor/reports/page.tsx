@@ -31,7 +31,8 @@ export default function CounselorReportsPage() {
     (async () => {
       try {
         const res = await apiRequest("/api/v1/counselor/me/students?limit=50");
-        setStudents(res?.data || []);
+        const items = Array.isArray(res?.data) ? res.data : res?.data?.data ?? [];
+        setStudents(Array.isArray(items) ? items : []);
       } catch {}
       setLoading(false);
     })();
