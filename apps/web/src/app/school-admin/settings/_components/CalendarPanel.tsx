@@ -12,8 +12,10 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2, Trash2, CalendarDays, BookOpenCheck, SunMedium, Calendar, Sparkles } from "lucide-react";
+import { Plus, Loader2, Trash2, CalendarDays, BookOpenCheck, SunMedium, Calendar, Sparkles, Clock, Save } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/api/apiClient";
 import {
   useAcademicYears, useCreateAcademicYear, useDeleteAcademicYear,
   useAssessmentPeriods, useCreateAssessmentPeriod, useDeleteAssessmentPeriod,
@@ -90,6 +92,25 @@ export default function CalendarPanel() {
     });
   };
 
+  // Course request deadline
+  const queryClient = useQueryClient();
+  const { data: deadlineData } = useQuery({
+    queryKey: ["course-request-deadline"],
+    queryFn: async () => { const res = await apiRequest("/api/v1/school-admin/course-request-deadline"); return res?.data ?? res; },
+    staleTime: 1000 * 60 * 10,
+  });
+  const [deadlineValue, setDeadlineValue] = useState("");
+  const [deadlineInit, setDeadlineInit] = useState(false);
+  if (deadlineData?.deadline && !deadlineInit) {
+    setDeadlineValue(new Date(deadlineData.deadline).toISOString().slice(0, 10));
+    setDeadlineInit(true);
+  }
+  const saveDeadline = useMutation({
+    mutationFn: async (deadline: string | null) => apiRequest("/api/v1/school-admin/course-request-deadline", { method: "PUT", data: { deadline } }),
+    onSuccess: () => { toast.success("Deadline saved"); queryClient.invalidateQueries({ queryKey: ["course-request-deadline"] }); },
+    onError: () => toast.error("Failed to save deadline"),
+  });
+
   const safeYears = Array.isArray(years) ? years : [];
   const safePeriods = Array.isArray(periods) ? periods : [];
   const safeHolidays = Array.isArray(holidays) ? holidays : [];
@@ -112,6 +133,39 @@ export default function CalendarPanel() {
         <AdminStatCard label="Assessment Windows" value={String(safePeriods.length)} icon={BookOpenCheck} sub="active periods" trend={0} />
         <AdminStatCard label="Holidays" value={String(safeHolidays.length)} icon={SunMedium} sub="scheduled" trend={0} />
       </div>
+
+      {/* Course Request Deadline */}
+      <SectionCard icon={Clock} title="Course Request Deadline" subtitle="Set a due date for students to submit course change requests" color="#ef4444">
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
+          <div style={{ flex: 1, maxWidth: 280 }}>
+            <Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginBottom: 6, display: "block" }}>Deadline Date</Label>
+            <Input type="date" style={inputStyle} value={deadlineValue} onChange={(e) => setDeadlineValue(e.target.value)} />
+          </div>
+          <button onClick={() => saveDeadline.mutate(deadlineValue || null)} disabled={saveDeadline.isPending} style={{
+            height: 36, borderRadius: 6, padding: "0 16px", fontSize: 12, fontWeight: 600,
+            display: "flex", alignItems: "center", gap: 6,
+            background: "#ef4444", color: "#fff", border: "none", cursor: "pointer",
+            opacity: saveDeadline.isPending ? 0.6 : 1,
+          }}>
+            {saveDeadline.isPending ? <Loader2 style={{ width: 13, height: 13, animation: "spin 1s linear infinite" }} /> : <Save style={{ width: 13, height: 13 }} />}
+            Set Deadline
+          </button>
+          {deadlineData?.deadline && (
+            <button onClick={() => { setDeadlineValue(""); saveDeadline.mutate(null); }} style={{
+              height: 36, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 500,
+              background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
+              color: "var(--admin-font-secondary)", cursor: "pointer",
+            }}>Clear</button>
+          )}
+        </div>
+        {deadlineData?.deadline && (
+          <div style={{ marginTop: 10, fontSize: 12, color: "var(--admin-font-tertiary)", display: "flex", alignItems: "center", gap: 6 }}>
+            <Clock style={{ width: 12, height: 12, color: "#ef4444" }} />
+            Current deadline: <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{new Date(deadlineData.deadline).toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
+            {new Date(deadlineData.deadline) < new Date() && <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>Expired</span>}
+          </div>
+        )}
+      </SectionCard>
 
       {/* Academic Years */}
       <SectionCard icon={CalendarDays} title="Academic Years" subtitle="Define educational timeline" color="#14b8a6"

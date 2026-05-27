@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/api/apiClient";
 import { motion } from "motion/react";
-import { Sparkles, Lightbulb, Plus } from "lucide-react";
+import { Sparkles, Lightbulb, Plus, Clock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,10 +30,47 @@ export default function CoursePlanPage() {
 
   const [showRecommendations, setShowRecommendations] = useState(false);
 
+  const { data: deadlineData } = useQuery({
+    queryKey: ["course-request-deadline"],
+    queryFn: async () => { const res = await apiRequest("/api/v1/school-admin/course-request-deadline"); return res?.data ?? res; },
+    staleTime: 1000 * 60 * 10,
+    retry: false,
+  });
+
   const pendingRequests = changeRequestsData?.data ?? [];
+  const deadline = deadlineData?.deadline ? new Date(deadlineData.deadline) : null;
+  const isExpired = deadline && deadline < new Date();
+  const daysLeft = deadline ? Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
 
   return (
     <div className="space-y-8">
+      {/* Deadline Banner */}
+      {deadline && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 8,
+          background: isExpired ? "rgba(239,68,68,0.08)" : daysLeft !== null && daysLeft <= 7 ? "rgba(245,158,11,0.08)" : "rgba(59,130,246,0.08)",
+          border: `1px solid ${isExpired ? "rgba(239,68,68,0.2)" : daysLeft !== null && daysLeft <= 7 ? "rgba(245,158,11,0.2)" : "rgba(59,130,246,0.2)"}`,
+        }}>
+          {isExpired ? (
+            <AlertTriangle style={{ width: 18, height: 18, color: "#ef4444", flexShrink: 0 }} />
+          ) : (
+            <Clock style={{ width: 18, height: 18, color: daysLeft !== null && daysLeft <= 7 ? "#f59e0b" : "#3b82f6", flexShrink: 0 }} />
+          )}
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: isExpired ? "#ef4444" : "var(--foreground)" }}>
+              {isExpired
+                ? "Course request deadline has passed"
+                : `Course requests due by ${deadline.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}`}
+            </div>
+            {!isExpired && daysLeft !== null && (
+              <div style={{ fontSize: 12, color: "var(--muted-foreground)", marginTop: 2 }}>
+                {daysLeft === 0 ? "Due today!" : daysLeft === 1 ? "1 day remaining" : `${daysLeft} days remaining`}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
