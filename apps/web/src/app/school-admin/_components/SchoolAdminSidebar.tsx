@@ -51,12 +51,15 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
     items: [
       { label: t("schoolAdmin.nav.dashboard", "Dashboard"), href: "/school-admin", icon: LayoutDashboard },
       { label: t("schoolAdmin.nav.students", "Users"), href: "/school-admin/users", icon: Users },
+      { label: "Parents", href: "/school-admin/parents", icon: UserCog },
       { label: t("schoolAdmin.nav.academics", "Academics"), href: "/school-admin/academics", icon: BookOpen },
       { label: t("schoolAdmin.nav.grades", "Grades & Progress"), href: "/school-admin/grades", icon: GraduationCap },
       { label: t("schoolAdmin.nav.assessments", "Assessment Hub"), href: "/school-admin/assessments", icon: ClipboardCheck },
       { label: t("schoolAdmin.nav.analytics", "Analytics"), href: "/school-admin/analytics", icon: BarChart3 },
       { label: t("schoolAdmin.nav.insights", "AI Insights"), href: "/school-admin/insights", icon: Radar },
       { label: t("schoolAdmin.nav.reports", "Reports"), href: "/school-admin/reports", icon: FileText },
+      { label: "Calendar", href: "/school-admin/calendar", icon: CalendarDays },
+      { label: "Counselor Workload", href: "/school-admin/counselor-workload", icon: Users },
     ],
   },
   {
@@ -64,12 +67,14 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
     items: [
       { label: t("schoolAdmin.nav.communications", "Communications"), href: "/school-admin/messages", icon: MessageCircle },
       { label: t("schoolAdmin.nav.videoCalls", "Video Calls"), href: "/school-admin/video", icon: Video },
+      { label: t("schoolAdmin.nav.sessionNotes", "Session Notes"), href: "/school-admin/notes", icon: FileText },
     ],
   },
   {
     label: t("schoolAdmin.nav.system", "System"),
     items: [
       { label: t("schoolAdmin.nav.settings", "Settings"), href: "/school-admin/settings", icon: Settings },
+      { label: "Integrations", href: "/school-admin/integrations", icon: Plug },
     ],
   },
 ];

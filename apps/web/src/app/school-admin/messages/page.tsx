@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { MessageCircle, Send, Search, Bell, Video } from "lucide-react";
+import { MessageCircle, Send, Search, Bell, Video, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import {
@@ -21,6 +21,7 @@ import { isVideoEnabled, createVideoSession } from "@/services/videoService";
 import { AdminTabBar } from "@/app/school-admin/_components/AdminTabBar";
 
 const AlertsPanel = dynamic(() => import("./_components/AlertsPanel"));
+const BroadcastPanel = dynamic(() => import("./_components/BroadcastPanel"));
 
 function formatTime(dateString: string | null): string {
   if (!dateString) return "";
@@ -40,6 +41,7 @@ function getInitials(name: string): string {
 
 const TABS = [
   { key: "messages", label: "Messages", icon: MessageCircle },
+  { key: "broadcast", label: "Broadcast", icon: Megaphone },
   { key: "alerts", label: "Alerts & Notifications", icon: Bell },
 ] as const;
 
@@ -412,6 +414,7 @@ export default function MessagesPage() {
     <div>
       <AdminTabBar tabs={[...TABS]} activeTab={activeTab} onChange={handleTabChange} />
       {activeTab === "messages" && <MessagesContent />}
+      {activeTab === "broadcast" && <BroadcastPanel />}
       {activeTab === "alerts" && <AlertsPanel />}
     </div>
   );
