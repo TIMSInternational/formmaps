@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Video, VideoOff, Mic, MicOff, PhoneOff, Users, Loader2, FileText, PenSquare, Maximize2, Minimize2 } from "lucide-react";
+import { Video, VideoOff, Mic, MicOff, PhoneOff, Users, Loader2, FileText, PenSquare, Maximize2, Minimize2, Mail, GraduationCap, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { getVideoSession, getVideoSignature, endVideoSession, VideoSession } from "@/services/videoService";
 import { getStudentNotes, createNote } from "@/services/counselorNotesService";
@@ -212,6 +212,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
       else if (e.message?.includes("network")) msg += "Please check your internet connection.";
       else msg += e.message || "Please try again.";
       setError(msg);
+      joinAttemptedRef.current = false; // Allow retry
     } finally { setIsLoading(false); }
   };
 
@@ -303,7 +304,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
         {!isJoined && <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>Your camera</div>}
       </div>
 
-      {/* ── Participant Info — top-center (OSF: ClientInfo) ── */}
+      {/* ── Participant Info — top-center (OSF: ClientInfo style) ── */}
       <div style={{
         position: "absolute", top: 16, left: "calc(18% + 32px)", right: "calc(37.5% + 32px)",
         height: "30%", minHeight: 130, overflow: "auto",
@@ -311,57 +312,94 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
         transition: "opacity 0.3s, visibility 0.3s",
       }}>
         <div style={{
-          height: "100%", backgroundColor: "var(--admin-bg-hover)", borderRadius: 8,
-          border: "1px solid var(--admin-border-default)", padding: 16, display: "flex", flexDirection: "column", gap: 8,
+          height: "100%", backgroundColor: "var(--admin-bg-hover)", borderRadius: 16,
+          border: "1px solid var(--admin-border-default)", padding: 24,
+          display: "flex", alignItems: "center", gap: 20,
         }}>
           {participantLoading ? (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--admin-font-tertiary)", fontSize: 13 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", color: "var(--admin-font-tertiary)", fontSize: 13 }}>
               <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite", marginRight: 8 }} />Loading...
             </div>
           ) : participantInfo ? (
             <>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 18, background: "linear-gradient(135deg, #6366f1, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
-                  {getInitials(participantInfo.name)}
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{participantInfo.name}</div>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{participantInfo.email}</div>
-                </div>
+              {/* Large avatar (OSF: 120px) */}
+              <div style={{
+                width: 90, height: 90, borderRadius: "50%", flexShrink: 0,
+                background: "linear-gradient(135deg, #6366f1, #4f46e5)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 32, fontWeight: 600, color: "#fff",
+              }}>
+                {getInitials(participantInfo.name)}
               </div>
-              {(participantInfo.gradeLevel || participantInfo.gpa !== undefined) && (
-                <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
+
+              {/* Info beside avatar (OSF style) */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--admin-font-primary)", margin: 0, lineHeight: 1.2 }}>
+                  {participantInfo.name}
+                </h2>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, fontSize: 13, color: "var(--admin-font-tertiary)" }}>
+                  <Mail style={{ width: 13, height: 13 }} />
+                  <span>{participantInfo.email}</span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 6, flexWrap: "wrap" }}>
                   {participantInfo.gradeLevel && (
-                    <div style={{ padding: "4px 10px", borderRadius: 6, background: "var(--admin-bg-card)", fontSize: 11, color: "var(--admin-font-secondary)" }}>
-                      Grade {participantInfo.gradeLevel}
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--admin-font-secondary)" }}>
+                      <GraduationCap style={{ width: 13, height: 13, color: "var(--admin-font-tertiary)" }} />
+                      <span>Grade {participantInfo.gradeLevel}</span>
                     </div>
                   )}
                   {participantInfo.gpa !== null && participantInfo.gpa !== undefined && (
-                    <div style={{ padding: "4px 10px", borderRadius: 6, background: "var(--admin-bg-card)", fontSize: 11, color: "var(--admin-font-secondary)" }}>
-                      GPA: {participantInfo.gpa}
-                    </div>
-                  )}
-                  {participantInfo.creditProgress && (
-                    <div style={{ padding: "4px 10px", borderRadius: 6, background: "var(--admin-bg-card)", fontSize: 11, color: "var(--admin-font-secondary)" }}>
-                      Credits: {participantInfo.creditProgress.earned}/{participantInfo.creditProgress.required} ({participantInfo.creditProgress.percentage}%)
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--admin-font-secondary)" }}>
+                      <Calendar style={{ width: 13, height: 13, color: "var(--admin-font-tertiary)" }} />
+                      <span>GPA: {participantInfo.gpa}</span>
                     </div>
                   )}
                 </div>
-              )}
-              {participantInfo.assessmentStatus && (
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
-                  {Object.entries(participantInfo.assessmentStatus).map(([key, val]) => (
-                    <div key={key} style={{ padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600, background: val === "completed" ? "#22c55e20" : val === "in_progress" ? "#f59e0b20" : "var(--admin-bg-card)", color: val === "completed" ? "#16a34a" : val === "in_progress" ? "#d97706" : "var(--admin-font-light)" }}>
-                      {key}: {val.replace("_", " ")}
-                    </div>
-                  ))}
+
+                {participantInfo.assessmentStatus && (
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+                    {Object.entries(participantInfo.assessmentStatus).map(([key, val]) => (
+                      <div key={key} style={{ padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600, background: val === "completed" ? "#22c55e20" : val === "in_progress" ? "#f59e0b20" : "var(--admin-bg-card)", color: val === "completed" ? "#16a34a" : val === "in_progress" ? "#d97706" : "var(--admin-font-light)" }}>
+                        {key}: {val.replace("_", " ")}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right-aligned meta (OSF style) */}
+              {participantInfo.creditProgress && (
+                <div style={{ textAlign: "right", alignSelf: "flex-start", flexShrink: 0 }}>
+                  <p style={{ fontSize: 11, color: "var(--admin-font-light)", marginBottom: 4 }}>
+                    Credits: {participantInfo.creditProgress.earned}/{participantInfo.creditProgress.required}
+                  </p>
+                  <p style={{ fontSize: 11, color: "var(--admin-font-light)" }}>
+                    Progress: {participantInfo.creditProgress.percentage}%
+                  </p>
                 </div>
               )}
             </>
           ) : (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--admin-font-tertiary)", fontSize: 13 }}>
-              {otherPerson?.name || "Participant"}
-            </div>
+            <>
+              <div style={{
+                width: 90, height: 90, borderRadius: "50%", flexShrink: 0,
+                background: "var(--admin-bg-card)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 32, fontWeight: 600, color: "var(--admin-font-light)",
+              }}>
+                {getInitials(otherPerson?.name || "?")}
+              </div>
+              <div>
+                <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--admin-font-primary)", margin: 0 }}>{otherPerson?.name}</h2>
+                {otherPerson?.email && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, fontSize: 13, color: "var(--admin-font-tertiary)" }}>
+                    <Mail style={{ width: 13, height: 13 }} /><span>{otherPerson.email}</span>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -451,15 +489,39 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
         <div ref={participantVideoRef} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} />
 
         {!isJoined && (
-          <div style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
+          <div style={{ textAlign: "center", position: "relative", zIndex: 1, maxWidth: 400, padding: 16 }}>
             {isLoading ? (
               <><Loader2 style={{ width: 24, height: 24, color: "#888", animation: "spin 1s linear infinite", margin: "0 auto 12px" }} /><div>Connecting to session...</div></>
+            ) : error ? (
+              <>
+                <VideoOff style={{ width: 48, height: 48, color: "#ef4444", margin: "0 auto 8px" }} />
+                <div style={{ color: "#f87171", fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>{error}</div>
+                <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+                  <button style={{ backgroundColor: "#10b981", color: "#fff", border: "none", padding: "10px 24px", borderRadius: 6, fontSize: 13, cursor: "pointer", fontWeight: 500 }}
+                    onClick={() => { setError(null); joinSession(); }}>
+                    Retry
+                  </button>
+                  <button style={{ backgroundColor: "#dc2626", color: "#fff", border: "none", padding: "10px 24px", borderRadius: 6, fontSize: 13, cursor: "pointer", fontWeight: 500 }}
+                    onClick={leaveSession}>
+                    End &amp; Leave
+                  </button>
+                </div>
+              </>
             ) : (
-              <><Video style={{ width: 48, height: 48, color: "#555", margin: "0 auto 8px" }} /><div style={{ marginBottom: 12 }}>{otherPerson?.name}&rsquo;s video</div>
-                <button style={{ backgroundColor: isSDKInitialized ? "#10b981" : "#6b7280", color: "#fff", border: "none", padding: "10px 28px", borderRadius: 6, fontSize: 14, cursor: isSDKInitialized ? "pointer" : "not-allowed", fontWeight: 500, opacity: isSDKInitialized ? 1 : 0.7 }}
-                  onClick={isSDKInitialized ? joinSession : undefined} disabled={!isSDKInitialized}>
-                  {isSDKInitialized ? "Start Session" : "Initializing..."}
-                </button></>
+              <>
+                <Video style={{ width: 48, height: 48, color: "#555", margin: "0 auto 8px" }} />
+                <div style={{ marginBottom: 12 }}>{otherPerson?.name}&rsquo;s video</div>
+                <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+                  <button style={{ backgroundColor: isSDKInitialized ? "#10b981" : "#6b7280", color: "#fff", border: "none", padding: "10px 28px", borderRadius: 6, fontSize: 14, cursor: isSDKInitialized ? "pointer" : "not-allowed", fontWeight: 500, opacity: isSDKInitialized ? 1 : 0.7 }}
+                    onClick={isSDKInitialized ? joinSession : undefined} disabled={!isSDKInitialized}>
+                    {isSDKInitialized ? "Start Session" : "Initializing..."}
+                  </button>
+                  <button style={{ backgroundColor: "#333", color: "#fff", border: "1px solid #555", padding: "10px 20px", borderRadius: 6, fontSize: 13, cursor: "pointer", fontWeight: 500 }}
+                    onClick={() => router.push(returnPath)}>
+                    Cancel
+                  </button>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -480,15 +542,13 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
           {isExpanded ? <Minimize2 style={{ width: 16, height: 16, color: "#fff" }} /> : <Maximize2 style={{ width: 16, height: 16, color: "#fff" }} />}
         </button>
 
-        {/* End Session (OSF) */}
-        {isJoined && (
-          <button style={{ position: "absolute", top: 12, right: 12, backgroundColor: "#dc2626", color: "#fff", border: "none", padding: "6px 14px", borderRadius: 6, fontSize: 13, cursor: isLoading ? "not-allowed" : "pointer", fontWeight: 500, display: "flex", alignItems: "center", gap: 6, opacity: isLoading ? 0.7 : 1, zIndex: 5 }}
-            onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = "#b91c1c"; }}
-            onMouseLeave={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = "#dc2626"; }}
-            onClick={!isLoading ? leaveSession : undefined} disabled={isLoading}>
-            <PhoneOff style={{ width: 14, height: 14 }} />{isLoading ? "Ending..." : "End Session"}
-          </button>
-        )}
+        {/* End Session — always visible */}
+        <button style={{ position: "absolute", top: 12, right: 12, backgroundColor: "#dc2626", color: "#fff", border: "none", padding: "6px 14px", borderRadius: 6, fontSize: 13, cursor: isLoading ? "not-allowed" : "pointer", fontWeight: 500, display: "flex", alignItems: "center", gap: 6, opacity: isLoading ? 0.7 : 1, zIndex: 5 }}
+          onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = "#b91c1c"; }}
+          onMouseLeave={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = "#dc2626"; }}
+          onClick={!isLoading ? leaveSession : undefined} disabled={isLoading}>
+          <PhoneOff style={{ width: 14, height: 14 }} />{isLoading ? "Ending..." : "End Session"}
+        </button>
 
         {/* ── Control Toolbar (OSF-style) ── */}
         <div style={{

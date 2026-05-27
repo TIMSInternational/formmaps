@@ -273,49 +273,65 @@ export default function StudentDetailsPage() {
         {t("schoolAdmin.students.backToList", "Back to Student Roster")}
       </button>
 
-      {/* Profile Banner */}
+      {/* Profile Banner — OSF ClientInfo style */}
       <div style={{
-        borderRadius: 8, border: "1px solid var(--admin-border-default)",
-        background: "var(--admin-bg-card)", padding: "20px 24px",
-        display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap",
+        borderRadius: 16, border: "1px solid var(--admin-border-default)",
+        background: "var(--admin-bg-card)", padding: "28px 32px",
+        display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap",
       }}>
-        <Avatar className="h-16 w-16" style={{ borderRadius: 12, border: "2px solid var(--admin-border-default)" }}>
+        <Avatar className="h-28 w-28" style={{ borderRadius: "50%", border: "3px solid var(--admin-border-default)" }}>
           <AvatarImage src={student.avatar || ""} className="object-cover" />
           <AvatarFallback style={{
-            borderRadius: 12,
-            background: "var(--admin-accent-blue, #3b82f6)",
-            color: "#fff", fontSize: 18, fontWeight: 700,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, #6366f1, #4f46e5)",
+            color: "#fff", fontSize: 36, fontWeight: 600,
           }}>
             {getInitials(student.name)}
           </AvatarFallback>
         </Avatar>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <h1 style={{ fontSize: 28, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
               {student.name}
             </h1>
             {statusBadge(student.status)}
           </div>
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-              <Mail style={{ width: 12, height: 12 }} />
-              <span>{student.email}</span>
-            </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 14, color: "var(--admin-font-tertiary)" }}>
+            <Mail style={{ width: 14, height: 14 }} />
+            <span>{student.email}</span>
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 20, marginTop: 8 }}>
             {(student.createdAt || student.joinedAt) && (
-              <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-                <Calendar style={{ width: 12, height: 12 }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, color: "var(--admin-font-secondary)" }}>
+                <Calendar style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
                 <span>{t("schoolAdmin.students.joined", "Joined")} {format(new Date(student.createdAt || student.joinedAt!), "MMM d, yyyy")}</span>
               </div>
             )}
-            {student.id && (
-              <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-                <ShieldCheck style={{ width: 12, height: 12 }} />
-                <span style={{ fontFamily: "monospace", fontSize: 10 }}>ID: {student.id.substring(0, 8).toUpperCase()}</span>
+            {(student as any).gradeLevel && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, color: "var(--admin-font-secondary)" }}>
+                <GraduationCap style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
+                <span>Grade {(student as any).gradeLevel}</span>
               </div>
             )}
           </div>
+        </div>
+
+        {/* Right-aligned meta (OSF style) */}
+        <div style={{ textAlign: "right", alignSelf: "flex-start", flexShrink: 0 }}>
+          {student.id && (
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--admin-font-light)", justifyContent: "flex-end" }}>
+              <ShieldCheck style={{ width: 12, height: 12 }} />
+              <span style={{ fontFamily: "monospace", fontSize: 10 }}>ID: {student.id.substring(0, 8).toUpperCase()}</span>
+            </div>
+          )}
+          {student.lastActive && (
+            <div style={{ fontSize: 11, color: "var(--admin-font-light)", marginTop: 4 }}>
+              Last active: {format(new Date(student.lastActive), "MMM d, yyyy")}
+            </div>
+          )}
         </div>
       </div>
 
