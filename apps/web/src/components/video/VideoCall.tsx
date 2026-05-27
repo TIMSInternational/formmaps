@@ -118,28 +118,36 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
   }, [sessionId]);
 
   // Load participant info + notes
+  // Use counselor endpoints for counselor role, school-admin for admin
+  const isCounselor = userRole === "counselor";
+
   useEffect(() => {
     if (!session || !otherPerson?.id) return;
     (async () => {
       setParticipantLoading(true);
       try {
-        const res = await apiRequest(`/api/v1/school-admin/students/${otherPerson.id}`);
+        // Try counselor endpoint first for counselor role, school-admin for admin
+        const studentUrl = isCounselor
+          ? `/api/v1/counselor/me/students/${otherPerson.id}`
+          : `/api/v1/school-admin/students/${otherPerson.id}`;
+        const res = await apiRequest(studentUrl);
         setParticipantInfo(res?.data ?? res);
       } catch {
-        // Non-student or no permission — use basic info from session
         setParticipantInfo({ id: otherPerson.id, name: otherPerson.name || "", email: otherPerson.email || "" });
       } finally {
         setParticipantLoading(false);
       }
 
-      // Load notes + course plan + recommendations
       if (isPrivilegedRole) {
         try {
           const notesRes = await getStudentNotes(otherPerson.id, { limit: 20 });
           setNotes(notesRes?.data ?? []);
         } catch {}
         try {
-          const cpRes = await apiRequest(`/api/v1/school-admin/students/${otherPerson.id}/course-plan`);
+          const cpUrl = isCounselor
+            ? `/api/v1/counselor/me/students/${otherPerson.id}/course-sequence`
+            : `/api/v1/school-admin/students/${otherPerson.id}/course-plan`;
+          const cpRes = await apiRequest(cpUrl);
           setCoursePlanData(cpRes?.data ?? cpRes);
         } catch {}
         try {
@@ -148,7 +156,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
         } catch {}
       }
     })();
-  }, [session, otherPerson?.id, isPrivilegedRole]);
+  }, [session, otherPerson?.id, isPrivilegedRole, isCounselor]);
 
   // Initialize SDK
   useEffect(() => {
