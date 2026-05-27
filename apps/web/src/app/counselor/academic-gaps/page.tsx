@@ -59,7 +59,7 @@ export default function AcademicGapsPage() {
   };
 
   const filteredStudents = summary?.data?.filter((s: AcademicGapSummaryItem) =>
-    s.studentName.toLowerCase().includes(searchQuery.toLowerCase())
+    (s.studentName || "").toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
   if (summaryLoading) {
