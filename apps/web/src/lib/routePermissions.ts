@@ -13,18 +13,27 @@ export interface RouteRule {
 /**
  * Route rules ordered from most-specific to least-specific.
  * The first matching rule wins.
+ *
+ * RBAC: Each portal is strictly locked to its role(s).
+ * No role can access another role's portal.
  */
 export const routeRules: RouteRule[] = [
-  // Super Admin panel — only super admins
+  // Super Admin panel
   {
     path: "/admin",
     allowed: [Roles.SUPER_ADMIN],
     redirect: "home",
   },
-  // Coaching portal — only coaches
+  // Coaching portal (must be before /dashboard)
   {
     path: "/dashboard/coaching",
-    allowed: [Roles.COACH],
+    allowed: [Roles.COACH, Roles.SUPER_ADMIN],
+    redirect: "home",
+  },
+  // Student dashboard — students only (coaches have /dashboard/coaching above)
+  {
+    path: "/dashboard",
+    allowed: [Roles.STUDENT, Roles.COACH],
     redirect: "home",
   },
   // School admin portal
@@ -49,15 +58,6 @@ export const routeRules: RouteRule[] = [
   {
     path: "/subscribe",
     allowed: [Roles.STUDENT],
-    redirect: "home",
-  },
-  // Dashboard — allow all authenticated roles. Non-students see nothing
-  // (page.tsx returns null). Specific sub-route rules above still enforce
-  // access for /dashboard/coaching etc. This prevents redirect loops when
-  // Next.js briefly renders /dashboard during client-side navigation.
-  {
-    path: "/dashboard",
-    allowed: [Roles.STUDENT, Roles.SUPER_ADMIN, Roles.COACH, Roles.SCHOOL_ADMIN, Roles.COUNSELOR, Roles.PARENT],
     redirect: "home",
   },
 ];

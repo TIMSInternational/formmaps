@@ -29,20 +29,6 @@ export default function DashboardPage() {
 
   const userRole = normalizeRole(user?.role || "");
 
-  // Redirect non-students to their proper portal
-  useEffect(() => {
-    if (!user?.isAuthenticated) return;
-    const home: Record<string, string> = {
-      [Roles.SCHOOL_ADMIN]: "/school-admin",
-      [Roles.SUPER_ADMIN]: "/admin",
-      [Roles.COUNSELOR]: "/counselor",
-      [Roles.PARENT]: "/parent",
-    };
-    if (home[userRole]) {
-      window.location.replace(home[userRole]);
-    }
-  }, [userRole, user?.isAuthenticated]);
-
   useEffect(() => {
     if (!user?.id || userRole === Roles.COACH) { setLoading(false); return; }
     const fetchDashboard = async () => {
