@@ -66,7 +66,8 @@ export default function VideoCallsPage() {
       try {
         const searchParam = contactSearch ? `&search=${encodeURIComponent(contactSearch)}` : "";
         const res = await apiRequest(`/api/v1/counselor/me/students?limit=50${searchParam}`);
-        setContacts(res?.data ?? res ?? []);
+        const items = Array.isArray(res?.data) ? res.data : res?.data?.data ?? res?.data ?? [];
+        setContacts(Array.isArray(items) ? items : []);
       } catch { setContacts([]); }
       finally { setContactsLoading(false); }
     }, 300);
