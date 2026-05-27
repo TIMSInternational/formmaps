@@ -10,12 +10,12 @@ import {
   getConversationMessages,
   sendMessage,
   createConversation,
-  searchContacts,
   ConversationSummary,
   MessageData,
 } from "@/services/messageService";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { isVideoEnabled, createVideoSession } from "@/services/videoService";
+import { apiRequest } from "@/lib/api/apiClient";
 
 function formatTime(dateString: string | null): string {
   if (!dateString) return "";
@@ -115,7 +115,11 @@ export default function MessagesPage() {
     if (!showNewMessage) return;
     setContactsLoading(true);
     const t = setTimeout(async () => {
-      try { setContacts(await searchContacts(contactSearch || undefined)); }
+      try {
+        const searchParam = contactSearch ? `&search=${encodeURIComponent(contactSearch)}` : "";
+        const res = await apiRequest(`/api/v1/counselor/me/students?limit=50${searchParam}`);
+        setContacts(res?.data ?? res ?? []);
+      }
       catch { setContacts([]); }
       finally { setContactsLoading(false); }
     }, 300);

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Video, VideoOff, Phone, Clock, Users, Plus, Search, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { isVideoEnabled, listVideoSessions, createVideoSession, VideoSession } from "@/services/videoService";
-import { searchContacts } from "@/services/messageService";
+import { apiRequest } from "@/lib/api/apiClient";
 import { useGlobalStore } from "@/store/useGlobalStore";
 
 function formatTime(dateString: string): string {
@@ -63,8 +63,11 @@ export default function VideoCallsPage() {
     if (!showNewCall) return;
     setContactsLoading(true);
     const t = setTimeout(async () => {
-      try { setContacts(await searchContacts(contactSearch || undefined)); }
-      catch { setContacts([]); }
+      try {
+        const searchParam = contactSearch ? `&search=${encodeURIComponent(contactSearch)}` : "";
+        const res = await apiRequest(`/api/v1/counselor/me/students?limit=50${searchParam}`);
+        setContacts(res?.data ?? res ?? []);
+      } catch { setContacts([]); }
       finally { setContactsLoading(false); }
     }, 300);
     return () => clearTimeout(t);
