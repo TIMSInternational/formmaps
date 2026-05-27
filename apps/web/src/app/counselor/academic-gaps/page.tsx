@@ -157,7 +157,7 @@ export default function AcademicGapsPage() {
                     const isSelected = selectedStudentId === s.studentId;
                     return (
                       <motion.button
-                        key={s.studentId}
+                        key={s.studentId || `gap-${index}`}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.03 }}
