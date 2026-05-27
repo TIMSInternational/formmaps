@@ -40,6 +40,7 @@ import {
   MessageCircle,
   MessageCirclePlus,
   Upload,
+  Video,
 } from "lucide-react";
 
 type ThemeMode = "dark" | "light" | "system";
@@ -62,6 +63,7 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
     label: t("schoolAdmin.nav.communication", "Communication"),
     items: [
       { label: t("schoolAdmin.nav.communications", "Communications"), href: "/school-admin/messages", icon: MessageCircle },
+      { label: t("schoolAdmin.nav.videoCalls", "Video Calls"), href: "/school-admin/video", icon: Video },
     ],
   },
   {

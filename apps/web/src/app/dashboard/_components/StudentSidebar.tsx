@@ -46,6 +46,7 @@ import {
   MessageCircle,
   MessageCirclePlus,
   Trash2,
+  Video,
 } from "lucide-react";
 
 type ThemeMode = "dark" | "light" | "system";
@@ -122,6 +123,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: "Communication",
     items: [
       { label: "Messages", href: "/dashboard/messages", icon: MessageCircle },
+      { label: "Video Calls", href: "/dashboard/video", icon: Video },
     ],
   },
   {

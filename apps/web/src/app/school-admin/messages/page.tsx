@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { MessageCircle, Send, Search, Bell } from "lucide-react";
+import { MessageCircle, Send, Search, Bell, Video } from "lucide-react";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import {
@@ -17,6 +17,7 @@ import {
 } from "@/services/messageService";
 import { Plus, UserPlus, X } from "lucide-react";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { isVideoEnabled, createVideoSession } from "@/services/videoService";
 import { AdminTabBar } from "@/app/school-admin/_components/AdminTabBar";
 
 const AlertsPanel = dynamic(() => import("./_components/AlertsPanel"));
@@ -43,6 +44,7 @@ const TABS = [
 ] as const;
 
 function MessagesContent() {
+  const router = useRouter();
   const userId = useGlobalStore((s) => s.user.id);
 
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
@@ -57,6 +59,8 @@ function MessagesContent() {
   const [contactSearch, setContactSearch] = useState("");
   const [contacts, setContacts] = useState<any[]>([]);
   const [contactsLoading, setContactsLoading] = useState(false);
+  const [videoEnabled, setVideoEnabled] = useState(false);
+  const [startingCall, setStartingCall] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -101,6 +105,20 @@ function MessagesContent() {
 
   useEffect(() => { if (selectedId) fetchMessages(selectedId); }, [selectedId, fetchMessages]);
   useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
+
+  // Check if video calls are enabled
+  useEffect(() => { isVideoEnabled().then(setVideoEnabled); }, []);
+
+  const handleStartCall = async () => {
+    if (!selectedConversation || startingCall) return;
+    setStartingCall(true);
+    try {
+      const session = await createVideoSession(selectedConversation.otherParticipant.id);
+      router.push(`/school-admin/video/${session.id}`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to start video call");
+    } finally { setStartingCall(false); }
+  };
 
   // Contact search for new message
   useEffect(() => {
@@ -295,10 +313,19 @@ function MessagesContent() {
                 <div style={{ width: 34, height: 34, borderRadius: 17, background: "linear-gradient(135deg, #6366f1, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>
                   {getInitials(selectedConversation.otherParticipant.name)}
                 </div>
-                <div>
+                <div style={{ flex: 1 }}>
                   <p style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", lineHeight: 1.2 }}>{selectedConversation.otherParticipant.name}</p>
                   <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 1 }}>{selectedConversation.otherParticipant.email}</p>
                 </div>
+                {videoEnabled && (
+                  <button onClick={handleStartCall} disabled={startingCall}
+                    title="Start Video Call"
+                    style={{ width: 34, height: 34, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--admin-bg-hover)", color: "var(--admin-accent-blue)", border: "1px solid var(--admin-border-light)", cursor: startingCall ? "default" : "pointer", transition: "all 0.15s", opacity: startingCall ? 0.5 : 1 }}
+                    onMouseEnter={(e) => { if (!startingCall) { e.currentTarget.style.background = "var(--admin-accent-blue)"; e.currentTarget.style.color = "#fff"; } }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; e.currentTarget.style.color = "var(--admin-accent-blue)"; }}>
+                    <Video style={{ width: 16, height: 16 }} />
+                  </button>
+                )}
               </div>
 
               <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>

@@ -22,6 +22,7 @@ import {
   MoreHorizontal,
   Pencil,
   Mail,
+  Video,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,6 +45,7 @@ import {
   getSchoolStats,
   resendSchoolInvite,
   updateSchool,
+  toggleSchoolFeature,
 } from "@/services/schoolService";
 import { SchoolEditForm } from "@/components/admin/SchoolEditForm";
 import { formatDate, cn } from "@/lib/utils";
@@ -97,6 +99,17 @@ export default function SchoolsPage() {
   const handleEditSchool = (school: School) => {
     setSelectedSchool(school);
     setIsEditOpen(true);
+  };
+
+  const handleToggleVideo = async (school: School) => {
+    const newVal = !school.videoCallsEnabled;
+    try {
+      await toggleSchoolFeature(school.id, { videoCallsEnabled: newVal });
+      setSchools((prev) => prev.map((s) => s.id === school.id ? { ...s, videoCallsEnabled: newVal } : s));
+      toast.success(`Video calls ${newVal ? "enabled" : "disabled"} for ${school.name}`);
+    } catch {
+      toast.error("Failed to update video calls setting");
+    }
   };
 
   const fetchData = async () => {
@@ -274,13 +287,14 @@ export default function SchoolsPage() {
                 <TableHead>Students</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Contract End</TableHead>
+                <TableHead>Video</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center">
                     <div className="flex justify-center items-center gap-2">
                       <Clock className="animate-spin h-5 w-5 text-gray-400" />
                       <span className="text-gray-500">Loading schools...</span>
@@ -290,7 +304,7 @@ export default function SchoolsPage() {
               ) : schools.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="h-24 text-center text-gray-500"
                   >
                     No schools found. Invite one to get started!
@@ -343,6 +357,21 @@ export default function SchoolsPage() {
                       {school.contractEnd
                         ? formatDate(school.contractEnd)
                         : "-"}
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleToggleVideo(school); }}
+                        title={school.videoCallsEnabled ? "Disable video calls" : "Enable video calls"}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors",
+                          school.videoCallsEnabled
+                            ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                        )}
+                      >
+                        <Video className="h-3 w-3" />
+                        {school.videoCallsEnabled ? "On" : "Off"}
+                      </button>
                     </TableCell>
                     <TableCell className="text-right">
                       {(school.status === "invited" || school.status === "pending") && (

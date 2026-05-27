@@ -60,6 +60,16 @@ export async function getSchoolStats(): Promise<SchoolStats> {
   }
 }
 
+export async function toggleSchoolFeature(
+  schoolId: string,
+  features: { videoCallsEnabled?: boolean },
+): Promise<{ success: boolean; data: { id: string; videoCallsEnabled: boolean } }> {
+  return apiRequest(`/api/v1/admin/schools/${schoolId}/features`, {
+    method: "PUT",
+    data: features,
+  });
+}
+
 // ============================================
 // School Admin Onboarding
 // ============================================
