@@ -179,7 +179,7 @@ export default function AcademicGapsPage() {
                           </p>
                           <div className="flex items-center gap-2 mt-1 -ml-1">
                             <Badge variant="outline" className={`px-2 py-0 text-[10px] uppercase font-bold tracking-wider ${priorityColor(s.overallStatus)}`}>
-                              {s.overallStatus.replace("_", " ")}
+                              {(s.overallStatus || "unknown").replace("_", " ")}
                             </Badge>
                             {s.missingRequiredCourses > 0 && (
                               <span className="text-xs font-medium text-muted-foreground bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] px-1.5 py-0.5 rounded-md">
