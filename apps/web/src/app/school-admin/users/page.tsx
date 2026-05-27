@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import {
   Search, Users, UserPlus, MoreHorizontal, UserCheck, Eye, Mail, TrendingUp, BookOpen, Upload, Shield, UserCog,
+  Download, CheckSquare, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TableRowsSkeleton } from "@/components/skeletons/TableSkeleton";
@@ -49,6 +50,36 @@ export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelected(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  };
+  const toggleAll = () => {
+    if (selected.size === students.length) setSelected(new Set());
+    else setSelected(new Set(students.map((s: any) => s.id)));
+  };
+  const clearSelection = () => setSelected(new Set());
+
+  const handleBulkCopyEmails = () => {
+    const emails = students.filter((s: any) => selected.has(s.id)).map((s: any) => s.email).join(", ");
+    navigator.clipboard.writeText(emails);
+    toast.success(`${selected.size} email${selected.size > 1 ? "s" : ""} copied`);
+  };
+
+  const handleBulkExportCSV = () => {
+    const rows = students.filter((s: any) => selected.has(s.id));
+    const headers = ["Name", "Email", "Role", "Grade", "Status", "Joined"];
+    const csv = [headers.join(","), ...rows.map((s: any) => [
+      `"${s.name || ""}"`, s.email || "", s.roleName || "student", s.gradeLevel || "",
+      s.status || "active", s.createdDate ? new Date(s.createdDate).toLocaleDateString() : "",
+    ].join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = `students-export-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    toast.success(`Exported ${rows.length} students`);
+  };
 
   const { data: stats, isLoading: statsLoading } = useSchoolAdminStats();
   const { data, isLoading: studentsLoading } = useStudents({
@@ -154,6 +185,41 @@ export default function StudentsPage() {
         ))}
       </div>
 
+      {/* Bulk Action Bar */}
+      {selected.size > 0 && (
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+          padding: "10px 16px", borderRadius: 8,
+          background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <CheckSquare style={{ width: 16, height: 16, color: "#3b82f6" }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#3b82f6" }}>{selected.size} selected</span>
+            <button onClick={clearSelection} style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }}>
+              <X style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
+            </button>
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={handleBulkCopyEmails} style={{
+              height: 30, borderRadius: 6, padding: "0 12px", fontSize: 11, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 5,
+              background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
+              color: "var(--admin-font-primary)", cursor: "pointer",
+            }}>
+              <Mail style={{ width: 12, height: 12 }} /> Copy Emails
+            </button>
+            <button onClick={handleBulkExportCSV} style={{
+              height: 30, borderRadius: 6, padding: "0 12px", fontSize: 11, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 5,
+              background: "#3b82f6", border: "none",
+              color: "#fff", cursor: "pointer",
+            }}>
+              <Download style={{ width: 12, height: 12 }} /> Export CSV
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div style={{
         borderRadius: 8, border: "1px solid var(--admin-border-default)",
@@ -162,6 +228,10 @@ export default function StudentsPage() {
         <Table>
           <TableHeader>
             <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
+              <TableHead className="py-3 px-2 w-10" style={{ background: "var(--admin-bg-hover)" }}>
+                <input type="checkbox" checked={students.length > 0 && selected.size === students.length}
+                  onChange={toggleAll} style={{ width: 15, height: 15, accentColor: "#3b82f6", cursor: "pointer" }} />
+              </TableHead>
               {["Name", "Email", "Role", "Grade", "Status", "Joined", "Actions"].map((h) => (
                 <TableHead key={h} className="py-3 px-4" style={{
                   fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
@@ -174,22 +244,30 @@ export default function StudentsPage() {
           </TableHeader>
           <TableBody>
             {studentsLoading ? (
-              <TableRowsSkeleton columnCount={7} rowCount={5} />
+              <TableRowsSkeleton columnCount={8} rowCount={5} />
             ) : students.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
+                <TableCell colSpan={8} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
                   <Users className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} />
                   <p className="text-sm">No students found</p>
                 </TableCell>
               </TableRow>
             ) : (
               students.map((student: any) => (
-                <TableRow key={student.id} style={{ borderBottom: "1px solid var(--admin-border-default)", cursor: "pointer" }}
+                <TableRow key={student.id} style={{
+                  borderBottom: "1px solid var(--admin-border-default)", cursor: "pointer",
+                  background: selected.has(student.id) ? "rgba(59,130,246,0.04)" : "transparent",
+                }}
                   className="transition-colors"
                   onClick={() => router.push(`/school-admin/users/${student.id}`)}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  onMouseEnter={(e) => { if (!selected.has(student.id)) e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
+                  onMouseLeave={(e) => { if (!selected.has(student.id)) e.currentTarget.style.background = "transparent"; }}
                 >
+                  <TableCell className="py-3 px-2 w-10">
+                    <input type="checkbox" checked={selected.has(student.id)}
+                      onChange={() => {}} onClick={(e) => toggleSelect(student.id, e)}
+                      style={{ width: 15, height: 15, accentColor: "#3b82f6", cursor: "pointer" }} />
+                  </TableCell>
                   <TableCell className="py-3 px-4">
                     <div className="flex items-center gap-3">
                       <div style={{

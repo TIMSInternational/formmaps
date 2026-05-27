@@ -242,7 +242,21 @@ function PCAReports({ student }: { student: any }) {
         ) : (
           <>
             <ReportRow icon={Image} label="DISC Chart Image" desc="Visual chart of D/I/S/C profile across 3 graphs" format="PNG" loading={loading === "chart"} onDownload={downloadChart} />
-            <ReportRow icon={FileText} label="Full PCA Report" desc="DISC scores, competences, and completion data" format="JSON" loading={loading === "full"} onDownload={downloadFullReport} />
+            <ReportRow icon={FileText} label="Full PCA Report" desc="DISC scores, competences, and completion data" format="JSON" loading={loading === "full"} onDownload={downloadFullReport}
+              onPrint={() => {
+                const d = pcaData;
+                const cmps = competences?.pcaCmps || [];
+                openPrintableReport("PCA DISC Profile Report", student.name, [
+                  { heading: "DISC Scores", content: `<table><tr><th></th><th>D</th><th>I</th><th>S</th><th>C</th></tr>
+                    <tr><td>Work Adaptation</td><td>${d.pcaD1}</td><td>${d.pcaI1}</td><td>${d.pcaS1}</td><td>${d.pcaC1}</td></tr>
+                    <tr><td>Under Pressure</td><td>${d.pcaD2}</td><td>${d.pcaI2}</td><td>${d.pcaS2}</td><td>${d.pcaC2}</td></tr>
+                    <tr><td>Self-Image</td><td>${d.pcaD3}</td><td>${d.pcaI3}</td><td>${d.pcaS3}</td><td>${d.pcaC3}</td></tr></table>
+                    <p style="font-size:12px;color:#888;">Completed: ${d.pcaFec || "—"}</p>` },
+                  ...(cmps.length ? [{ heading: `Competences (${cmps.length})`, content: `<table><tr><th>Competency</th><th>Level</th></tr>${cmps.map((c: any) =>
+                    `<tr><td>${c.cmpNom || c.CmpNom}</td><td><span class="badge" style="background:${(c.level || c.Level) >= 3 ? "#dcfce7;color:#16a34a" : (c.level || c.Level) >= 2 ? "#fef9c3;color:#ca8a04" : "#fee2e2;color:#dc2626"}">${c.level || c.Level}/3</span></td></tr>`).join("")}</table>` }] : []),
+                ]);
+              }}
+            />
             {pcaData.pcaFec && (
               <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 8 }}>
                 <CheckCircle2 style={{ width: 12, height: 12, display: "inline", verticalAlign: "middle", marginRight: 4, color: "#10b981" }} />
@@ -330,7 +344,22 @@ function MILReports({ student }: { student: any }) {
           </div>
         ) : (
           <>
-            <ReportRow icon={Brain} label="Cognitive Profile" desc="5 domains: Reasoning, Detection, Numeric, Memory, Orientation" format="JSON" loading={loading === "cognitive"} onDownload={downloadCognitive} />
+            <ReportRow icon={Brain} label="Cognitive Profile" desc="5 domains: Reasoning, Detection, Numeric, Memory, Orientation" format="JSON" loading={loading === "cognitive"} onDownload={downloadCognitive}
+              onPrint={() => {
+                const cp = milData.cognitiveProfile || {};
+                const labels: Record<string, string> = { PatternRecognition: "Pattern Recognition", VerbalReasoning: "Verbal Reasoning", WorkingMemory: "Working Memory", NumericVelocity: "Numeric Velocity", VisualRotation: "Visual Rotation" };
+                openPrintableReport("MIL / LIA Cognitive Profile", student.name, [
+                  { heading: "Overall Score", content: `<p style="font-size:28px;font-weight:700;">${milData.overallScore || 0}%</p><p style="color:#888;">Completed ${milData.completedExams || 0} of ${milData.totalExams || 5} exams</p>` },
+                  { heading: "Cognitive Domains", content: `<table><tr><th>Domain</th><th>Score</th><th>Visual</th></tr>${Object.entries(cp).map(([k, v]) => {
+                    const pct = Number(v) || 0;
+                    const color = pct >= 70 ? "#16a34a" : pct >= 40 ? "#ca8a04" : "#dc2626";
+                    return `<tr><td>${labels[k] || k}</td><td style="font-weight:600;">${pct}%</td><td><div class="bar-container"><div class="bar" style="width:${pct}%;background:${color};"></div></div></td></tr>`;
+                  }).join("")}</table>` },
+                  ...(milData.strengths?.length ? [{ heading: "Strengths", content: `<ul>${milData.strengths.map((s: string) => `<li>${s}</li>`).join("")}</ul>` }] : []),
+                  ...(milData.areasForGrowth?.length ? [{ heading: "Areas for Growth", content: `<ul>${milData.areasForGrowth.map((s: string) => `<li>${s}</li>`).join("")}</ul>` }] : []),
+                ]);
+              }}
+            />
             <ReportRow icon={BarChart3} label="Exam Results History" desc="All exam attempts with scores, timing, and per-question data" format="JSON" loading={loading === "history"} onDownload={downloadExamHistory} />
             {milData.overallScore != null && (
               <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 8 }}>
@@ -411,7 +440,19 @@ function EvalReports({ student }: { student: any }) {
           <Skeleton className="h-14 w-full" style={{ background: "var(--admin-bg-hover)" }} />
         ) : (
           <>
-            <ReportRow icon={FileText} label="Comprehensive Student Report" desc="Academic, assessments, courses, and career data combined" format="JSON" loading={loading === "comprehensive"} onDownload={downloadComprehensive} />
+            <ReportRow icon={FileText} label="Comprehensive Student Report" desc="Academic, assessments, courses, and career data combined" format="JSON" loading={loading === "comprehensive"} onDownload={downloadComprehensive}
+              onPrint={() => {
+                const d = reportData || {};
+                const s = d.student || {};
+                const ac = d.academic || {};
+                const ass = d.assessments || {};
+                openPrintableReport("Comprehensive Student Report", student.name, [
+                  { heading: "Student Information", content: `<table><tr><td><strong>Name:</strong> ${s.name || student.name}</td><td><strong>Email:</strong> ${s.email || student.email}</td></tr><tr><td><strong>Grade:</strong> ${s.gradeLevel || "—"}</td><td><strong>Status:</strong> ${s.status || "active"}</td></tr></table>` },
+                  { heading: "Academic Summary", content: `<table><tr><td><strong>GPA:</strong> ${ac.gpa ?? "—"}</td><td><strong>Credits Earned:</strong> ${ac.creditsEarned ?? "—"}</td><td><strong>Courses:</strong> ${d.courses?.length ?? 0}</td></tr></table>` },
+                  { heading: "Assessment Status", content: `<table><tr><th>Assessment</th><th>Status</th></tr><tr><td>PCA</td><td>${ass.pcaCount || 0} evaluations</td></tr><tr><td>MIL Average</td><td>${ass.milAverage || "—"}</td></tr><tr><td>360°</td><td>${ass.evalStatus || "—"}</td></tr></table>` },
+                ]);
+              }}
+            />
             <ReportRow icon={Briefcase} label="Career Profile Report" desc="PCA evaluations, career matches, and AI insights" format="JSON" loading={loading === "pca"} onDownload={downloadPCAReport} />
             {reportData?.assessments && (
               <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 8 }}>
@@ -428,8 +469,31 @@ function EvalReports({ student }: { student: any }) {
 }
 
 // ── Shared Report Row Component ──
-function ReportRow({ icon: Icon, label, desc, format, loading, onDownload }: {
-  icon: any; label: string; desc: string; format: string; loading: boolean; onDownload: () => void;
+// Open a printable HTML report in a new window (user can Ctrl+P to save as PDF)
+function openPrintableReport(title: string, studentName: string, sections: { heading: string; content: string }[]) {
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title} — ${studentName}</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 40px auto; padding: 0 24px; color: #1a1a1a; }
+  h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 16px; margin: 24px 0 12px; color: #555; border-bottom: 1px solid #eee; padding-bottom: 6px; }
+  .meta { font-size: 13px; color: #888; margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; } th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+  th { font-weight: 600; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .bar-container { display: inline-block; width: 60px; height: 8px; background: #f0f0f0; border-radius: 4px; vertical-align: middle; margin-left: 8px; }
+  .bar { height: 100%; border-radius: 4px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  @media print { body { margin: 20px; } }
+</style></head><body>
+<h1>${title}</h1>
+<div class="meta">${studentName} · Generated ${new Date().toLocaleDateString()}</div>
+${sections.map(s => `<h2>${s.heading}</h2>${s.content}`).join("")}
+<script>window.print();</script>
+</body></html>`;
+  const w = window.open("", "_blank");
+  if (w) { w.document.write(html); w.document.close(); }
+}
+
+function ReportRow({ icon: Icon, label, desc, format, loading, onDownload, onPrint }: {
+  icon: any; label: string; desc: string; format: string; loading: boolean; onDownload: () => void; onPrint?: () => void;
 }) {
   return (
     <div style={{
@@ -443,17 +507,29 @@ function ReportRow({ icon: Icon, label, desc, format, loading, onDownload }: {
         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{label}</div>
         <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 1 }}>{desc}</div>
       </div>
-      <Badge variant="outline" className="text-xs" style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-tertiary)", marginRight: 4 }}>{format}</Badge>
-      <button onClick={onDownload} disabled={loading} style={{
-        height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600,
-        display: "flex", alignItems: "center", gap: 6,
-        background: "var(--admin-accent-blue, #3b82f6)", color: "#fff",
-        border: "none", cursor: loading ? "wait" : "pointer",
-        opacity: loading ? 0.7 : 1,
-      }}>
-        {loading ? <Loader2 style={{ width: 13, height: 13, animation: "spin 1s linear infinite" }} /> : <Download style={{ width: 13, height: 13 }} />}
-        Download
-      </button>
+      <Badge variant="outline" className="text-xs" style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-tertiary)" }}>{format}</Badge>
+      <div style={{ display: "flex", gap: 4 }}>
+        {onPrint && (
+          <button onClick={onPrint} style={{
+            height: 32, borderRadius: 6, padding: "0 12px", fontSize: 12, fontWeight: 600,
+            display: "flex", alignItems: "center", gap: 5,
+            background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)",
+            border: "1px solid var(--admin-border-default)", cursor: "pointer",
+          }}>
+            <FileText style={{ width: 12, height: 12 }} /> Print
+          </button>
+        )}
+        <button onClick={onDownload} disabled={loading} style={{
+          height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600,
+          display: "flex", alignItems: "center", gap: 6,
+          background: "var(--admin-accent-blue, #3b82f6)", color: "#fff",
+          border: "none", cursor: loading ? "wait" : "pointer",
+          opacity: loading ? 0.7 : 1,
+        }}>
+          {loading ? <Loader2 style={{ width: 13, height: 13, animation: "spin 1s linear infinite" }} /> : <Download style={{ width: 13, height: 13 }} />}
+          Download
+        </button>
+      </div>
     </div>
   );
 }
