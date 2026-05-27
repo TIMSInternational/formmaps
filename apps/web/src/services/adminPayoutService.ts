@@ -108,7 +108,7 @@ export async function getAdminPayoutHistory(
   });
 
   const response = await apiRequest(
-    `/api/v1/admin/payouts/history${query ? `?${query}` : ""}`,
+    `/api/v1/admin/payouts${query ? `?${query}` : ""}`,
     { method: "GET" }
   );
 

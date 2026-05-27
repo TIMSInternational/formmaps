@@ -179,7 +179,7 @@ export async function reviewSchoolAdminStudentChangeRequest(
   payload: ChangeRequestReviewPayload
 ): Promise<CourseChangeRequest> {
   const json = await apiRequest(
-    `/api/v1/school-admin/students/${studentId}/course-plan/change-requests/${requestId}`,
+    `/api/v1/school-admin/students/${studentId}/course-plan/change-requests/${requestId}/review`,
     { method: "PUT", data: payload }
   );
   return json.data ?? json;
