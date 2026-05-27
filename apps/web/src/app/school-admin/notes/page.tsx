@@ -49,6 +49,7 @@ export default function SessionNotesPage() {
   const [typeFilter, setTypeFilter] = useState("");
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [groupBy, setGroupBy] = useState<"none" | "student" | "type">("none");
   const limit = 20;
 
   const { data, isLoading } = useQuery({
@@ -146,6 +147,26 @@ export default function SessionNotesPage() {
           <StickyNote style={{ width: 14, height: 14 }} />
           {total} note{total !== 1 ? "s" : ""}
         </div>
+
+        {/* Group by toggle */}
+        <div style={{ display: "flex", alignItems: "center", gap: 2, background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", borderRadius: 8, padding: 2 }}>
+          {([
+            { value: "none", label: "Timeline" },
+            { value: "student", label: "By Student" },
+            { value: "type", label: "By Type" },
+          ] as const).map((opt) => (
+            <button key={opt.value} onClick={() => setGroupBy(opt.value)}
+              style={{
+                height: 32, padding: "0 12px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                border: "none", cursor: "pointer", fontFamily: "inherit",
+                background: groupBy === opt.value ? "var(--admin-accent-blue, #3b82f6)" : "transparent",
+                color: groupBy === opt.value ? "#fff" : "var(--admin-font-tertiary)",
+                transition: "all 0.15s",
+              }}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Notes List */}
@@ -166,10 +187,58 @@ export default function SessionNotesPage() {
             {search || typeFilter ? "Try adjusting your search or filter" : "No counselor notes have been created yet"}
           </span>
         </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      ) : (() => {
+        // Group notes if needed
+        const groups: { label: string; key: string; notes: NoteData[] }[] = [];
+        if (groupBy === "student") {
+          const byStudent = new Map<string, NoteData[]>();
+          for (const n of notes) {
+            const key = n.student.id;
+            if (!byStudent.has(key)) byStudent.set(key, []);
+            byStudent.get(key)!.push(n);
+          }
+          for (const [key, items] of byStudent) {
+            groups.push({ label: items[0].student.name || items[0].student.email, key, notes: items });
+          }
+        } else if (groupBy === "type") {
+          const byType = new Map<string, NoteData[]>();
+          for (const n of notes) {
+            if (!byType.has(n.type)) byType.set(n.type, []);
+            byType.get(n.type)!.push(n);
+          }
+          for (const [key, items] of byType) {
+            groups.push({ label: key.replace("_", " "), key, notes: items });
+          }
+        } else {
+          groups.push({ label: "", key: "all", notes });
+        }
+
+        return (
+        <div style={{ display: "flex", flexDirection: "column", gap: groupBy !== "none" ? 20 : 10 }}>
+          {groups.map((group) => (
+            <div key={group.key}>
+              {groupBy !== "none" && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  {groupBy === "student" && (
+                    <span onClick={() => router.push(`/school-admin/users/${group.key}`)}
+                      style={{ fontSize: 15, fontWeight: 700, color: "var(--admin-font-primary)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLSpanElement).style.color = "#3b82f6"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLSpanElement).style.color = "var(--admin-font-primary)"; }}>
+                      <User style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
+                      {group.label}
+                    </span>
+                  )}
+                  {groupBy === "type" && (() => { const tc = typeColor(group.key); return (
+                    <span style={{ fontSize: 15, fontWeight: 700, color: tc.color, textTransform: "capitalize", display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 3, background: tc.color, display: "inline-block" }} />
+                      {group.label}
+                    </span>
+                  ); })()}
+                  <span style={{ fontSize: 11, color: "var(--admin-font-light)", padding: "2px 6px", borderRadius: 4, background: "var(--admin-bg-hover)" }}>{group.notes.length}</span>
+                </div>
+              )}
           <AnimatePresence mode="popLayout">
-            {notes.map((note, idx) => {
+            {group.notes.map((note, idx) => {
               const isExpanded = expandedId === note.id;
               const tc = typeColor(note.type);
               const contentPreview = note.content.length > 180
@@ -288,8 +357,11 @@ export default function SessionNotesPage() {
               );
             })}
           </AnimatePresence>
+            </div>
+          ))}
         </div>
-      )}
+        );
+      })()}
 
       {/* Pagination */}
       {totalPages > 1 && (
