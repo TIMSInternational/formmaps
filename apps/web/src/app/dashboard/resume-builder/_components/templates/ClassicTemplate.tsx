@@ -1,52 +1,53 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
-// Define styles for the Classic template - Jobright-style
+// Classic template styles — matches traditional academic/SWE resume format
 const classicStyles = StyleSheet.create({
   page: {
     flexDirection: "column",
     backgroundColor: "#ffffff",
-    padding: 40,
+    paddingTop: 36,
+    paddingBottom: 36,
+    paddingHorizontal: 48,
     fontFamily: "Times-Roman",
+    fontSize: 10,
+    color: "#000000",
   },
   header: {
     alignItems: "center",
-    marginBottom: 10,
-    paddingBottom: 0,
+    marginBottom: 6,
   },
   name: {
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: "Times-Bold",
     color: "#000000",
-    marginBottom: 4,
     textAlign: "center",
-    paddingBottom: 4,
-    borderBottomWidth: 0.75,
-    borderBottomColor: "#000000",
-    width: "100%",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 2,
   },
   contactRow: {
     fontSize: 9,
     color: "#000000",
-    marginTop: 4,
     textAlign: "center",
+    lineHeight: 1.4,
   },
   section: {
-    marginBottom: 8,
+    marginBottom: 6,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Times-Bold",
     color: "#000000",
-    paddingBottom: 2,
-    marginBottom: 4,
-    textAlign: "left",
+    paddingBottom: 1,
+    marginBottom: 3,
+    marginTop: 2,
     textTransform: "uppercase",
-    borderBottomWidth: 0.75,
+    borderBottomWidth: 1,
     borderBottomColor: "#000000",
   },
   entryItem: {
-    marginBottom: 4,
+    marginBottom: 5,
   },
   entryHeaderRow: {
     flexDirection: "row",
@@ -57,6 +58,7 @@ const classicStyles = StyleSheet.create({
     fontSize: 10,
     fontFamily: "Times-Bold",
     color: "#000000",
+    maxWidth: "70%",
   },
   entryDateRight: {
     fontSize: 10,
@@ -65,27 +67,37 @@ const classicStyles = StyleSheet.create({
   },
   entryItalicLeft: {
     fontSize: 10,
-    fontStyle: "italic",
+    fontFamily: "Times-Italic",
     color: "#000000",
+    maxWidth: "70%",
   },
   entryItalicRight: {
     fontSize: 10,
-    fontStyle: "italic",
+    fontFamily: "Times-Italic",
     color: "#000000",
     textAlign: "right",
   },
-  bulletText: {
-    fontSize: 9.5,
-    lineHeight: 1.35,
+  entryDetail: {
+    fontSize: 10,
     color: "#000000",
-    marginLeft: 12,
+    fontFamily: "Times-Italic",
+  },
+  bulletText: {
+    fontSize: 10,
+    lineHeight: 1.3,
+    color: "#000000",
+    marginLeft: 8,
     marginTop: 1,
+    textAlign: "justify",
   },
   skillLine: {
-    fontSize: 9.5,
-    lineHeight: 1.35,
+    fontSize: 10,
+    lineHeight: 1.4,
     color: "#000000",
     marginBottom: 1,
+  },
+  skillCategory: {
+    fontFamily: "Times-Bold",
   },
 });
 
@@ -175,32 +187,37 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
 
   const { personalInfo, customFields } = data;
 
-  // Build single contact line: phone | email | LinkedIn | GitHub | etc.
-  const contactItems: string[] = [];
-  if (personalInfo.phone) contactItems.push(personalInfo.phone);
-  if (personalInfo.email) contactItems.push(personalInfo.email);
-  if (personalInfo.linkedin) contactItems.push(personalInfo.linkedin);
-  if (personalInfo.github) contactItems.push(personalInfo.github);
-  if (personalInfo.website) contactItems.push(personalInfo.website);
-  if (personalInfo.portfolio) contactItems.push(personalInfo.portfolio);
-  if (personalInfo.twitter) contactItems.push(personalInfo.twitter);
-  if (personalInfo.location) contactItems.push(personalInfo.location);
+  // Build contact lines: line 1 = phone | email | linkedin, line 2 = github | website
+  const contactLine1: string[] = [];
+  const contactLine2: string[] = [];
+  if (personalInfo.phone) contactLine1.push(personalInfo.phone);
+  if (personalInfo.email) contactLine1.push(personalInfo.email);
+  if (personalInfo.linkedin) contactLine1.push(personalInfo.linkedin);
+  if (personalInfo.github) contactLine2.push(personalInfo.github);
+  if (personalInfo.website) contactLine2.push(personalInfo.website);
+  if (personalInfo.portfolio) contactLine2.push(personalInfo.portfolio);
+  if (personalInfo.location && contactLine1.length < 4) contactLine1.push(personalInfo.location);
+  else if (personalInfo.location) contactLine2.push(personalInfo.location);
 
-  // Add custom contact fields
   const customContactItems = (customFields ?? [])
     .filter((field) => field.enabled && field.value)
     .map((field) => `${field.name}: ${field.value}`);
-  contactItems.push(...customContactItems);
+  contactLine2.push(...customContactItems);
 
   return (
     <Document>
       <Page size="A4" style={classicStyles.page}>
-        {/* Header */}
+        {/* Header — Name centered large, contact below */}
         <View style={classicStyles.header}>
           <Text style={classicStyles.name}>{personalInfo.fullName}</Text>
-          {contactItems.length > 0 && (
+          {contactLine1.length > 0 && (
             <Text style={classicStyles.contactRow}>
-              {contactItems.join(" | ")}
+              {contactLine1.join("  |  ")}
+            </Text>
+          )}
+          {contactLine2.length > 0 && (
+            <Text style={classicStyles.contactRow}>
+              {contactLine2.join(" | ")}
             </Text>
           )}
         </View>
@@ -236,22 +253,20 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                     {edu.institution}
                   </Text>
                   <Text style={classicStyles.entryDateRight}>
-                    {edu.graduationDate}
+                    {edu.location}
                   </Text>
                 </View>
                 <View style={classicStyles.entryHeaderRow}>
                   <Text style={classicStyles.entryItalicLeft}>
                     {edu.degree}
                   </Text>
-                  {edu.location && (
-                    <Text style={classicStyles.entryItalicRight}>
-                      {edu.location}
-                    </Text>
-                  )}
+                  <Text style={classicStyles.entryItalicRight}>
+                    {edu.graduationDate ? `Expected: ${edu.graduationDate}` : ""}
+                  </Text>
                 </View>
                 {edu.gpa && (
-                  <Text style={classicStyles.bulletText}>
-                    {"•"} GPA: {edu.gpa}
+                  <Text style={{ fontSize: 10, color: "#000000", marginLeft: 0 }}>
+                    Overall GPA: {edu.gpa}
                   </Text>
                 )}
               </View>
@@ -272,18 +287,16 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                     {exp.company}
                   </Text>
                   <Text style={classicStyles.entryDateRight}>
-                    {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                    {exp.location}
                   </Text>
                 </View>
                 <View style={classicStyles.entryHeaderRow}>
                   <Text style={classicStyles.entryItalicLeft}>
                     {exp.jobTitle}
                   </Text>
-                  {exp.location && (
-                    <Text style={classicStyles.entryItalicRight}>
-                      {exp.location}
-                    </Text>
-                  )}
+                  <Text style={classicStyles.entryItalicRight}>
+                    {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                  </Text>
                 </View>
                 {exp.description.map((desc, index) => (
                   <Text key={index} style={classicStyles.bulletText}>
