@@ -43,6 +43,7 @@ export interface Resume {
   skills: ResumeSkills;
   experience: ResumeExperience[];
   education: ResumeEducation[];
+  sections?: Record<string, unknown>[];
   name: string;
   template: string;
   createdAt?: string;
@@ -171,6 +172,7 @@ export async function getResumeById(resumeId: string): Promise<Resume> {
     skills: {
       skills: groupSkillsFromFlat(raw.skills || raw.Skills || []),
     },
+    sections: raw.sections || [],
   };
 
   return mapped;

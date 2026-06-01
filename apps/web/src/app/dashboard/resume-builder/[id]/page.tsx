@@ -955,7 +955,23 @@ export default function ResumeBuilderPage() {
               }))
           ),
           customFields: [],
-          dynamicSections: [],
+          dynamicSections: ((apiData as unknown as { sections?: Record<string, unknown>[] }).sections || []).map((s: Record<string, unknown>) => ({
+            id: crypto.randomUUID(),
+            title: (s.title as string) || "",
+            type: (s.type as string) || "custom",
+            entries: Array.isArray(s.items)
+              ? (s.items as Record<string, unknown>[]).map((item) => ({
+                  id: crypto.randomUUID(),
+                  name: (item.name as string) || "",
+                  title: (item.name as string) || "",
+                  date: `${(item.startDate as string) || ""} - ${(item.endDate as string) || ""}`.replace(/^ - $/, ""),
+                  description: Array.isArray(item.bullets) ? (item.bullets as string[]).join("\n") : (item.description as string) || "",
+                  bullets: Array.isArray(item.bullets) ? (item.bullets as string[]).join("\n") : "",
+                }))
+              : [],
+            description: (s.content as string) || "",
+            bullets: "",
+          })),
           template: "classic",
         };
 
