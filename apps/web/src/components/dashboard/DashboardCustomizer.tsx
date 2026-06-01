@@ -17,7 +17,7 @@ export interface WidgetConfig {
   visible: boolean;
 }
 
-const STORAGE_KEY = "nexa_dashboard_widgets";
+const STORAGE_KEY = "formmaps_dashboard_widgets";
 
 const DEFAULT_WIDGETS: WidgetConfig[] = [
   { id: "stats", label: "Stat Cards", visible: true },

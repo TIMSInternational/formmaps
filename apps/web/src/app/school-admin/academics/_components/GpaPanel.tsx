@@ -108,8 +108,8 @@ function GradeImportTab() {
         <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 6 }}>CSV Format</div>
         <code style={{ fontSize: 11, color: "var(--admin-font-secondary)", display: "block", fontFamily: "monospace", lineHeight: 1.8 }}>
           email,course_code,grade,credits,semester<br />
-          test.student@nexa.dev,MATH101,A,1,Fall 2025<br />
-          test.student@nexa.dev,ENG101,B+,1,Fall 2025
+          test.student@formmaps.dev,MATH101,A,1,Fall 2025<br />
+          test.student@formmaps.dev,ENG101,B+,1,Fall 2025
         </code>
         <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 8 }}>
           Optional columns: <code>student_id</code>, <code>credits</code>, <code>semester</code>/<code>term</code>. Students are matched by email, courses by code.

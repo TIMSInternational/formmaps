@@ -29,7 +29,7 @@ async function submitWithRetry(
 }
 
 // --- Pending submission persistence for offline recovery ---
-const PENDING_KEY = "nexa_pending_mil_submissions";
+const PENDING_KEY = "formmaps_pending_mil_submissions";
 
 interface PendingSubmission {
   key: string;

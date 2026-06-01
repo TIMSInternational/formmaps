@@ -80,7 +80,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://images.unsplash.com https://*.amazonaws.com",
-              "connect-src 'self' http://localhost:* https://*.nexadev.ai https://cognito-idp.us-east-1.amazonaws.com https://*.timshr.com https://*.awsapprunner.com",
+              "connect-src 'self' http://localhost:* https://*.formmaps.ai https://cognito-idp.us-east-1.amazonaws.com https://*.timshr.com https://*.awsapprunner.com",
               "frame-src 'self' https://timshr.com https://*.timshr.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",

@@ -2,7 +2,7 @@
 .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
 /*
- * NEXA Admin Theme — Twenty CRM Style
+ * FORMMAPS Admin Theme — Twenty CRM Style
  * =====================================
  * Token-driven theme using CSS custom properties from AdminThemeProvider.
  * All --admin-* vars are set dynamically by the TS token system.

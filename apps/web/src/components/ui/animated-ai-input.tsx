@@ -17,7 +17,7 @@ export function AnimatedAIInput({
   onChange,
   onSend,
   disabled = false,
-  placeholder = "Ask NEXA AI anything...",
+  placeholder = "Ask FORMMAPS AI anything...",
 }: AnimatedAIInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isFocused, setIsFocused] = useState(false);

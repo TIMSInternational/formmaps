@@ -10,7 +10,7 @@ test.describe("Authentication", () => {
 
   test("student can login and reach dashboard", async ({ page }) => {
     await page.goto("/login");
-    await page.fill('input[name="email"], input[type="email"]', "test.student@nexa.dev");
+    await page.fill('input[name="email"], input[type="email"]', "test.student@formmaps.dev");
     await page.fill('input[name="password"], input[type="password"]', "Test1234!");
     await page.click('button[type="submit"]');
     await page.waitForURL("**/dashboard**", { timeout: 10000 });
@@ -19,7 +19,7 @@ test.describe("Authentication", () => {
 
   test("school admin can login and reach dashboard", async ({ page }) => {
     await page.goto("/login");
-    await page.fill('input[name="email"], input[type="email"]', "test.schooladmin@nexa.dev");
+    await page.fill('input[name="email"], input[type="email"]', "test.schooladmin@formmaps.dev");
     await page.fill('input[name="password"], input[type="password"]', "Test1234!");
     await page.click('button[type="submit"]');
     await page.waitForURL("**/school-admin**", { timeout: 10000 });

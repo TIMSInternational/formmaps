@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Nexa terms of service — rules and conditions for using our platform.",
+  description: "FormMaps terms of service — rules and conditions for using our platform.",
 };
 
 export default function TermsOfServicePage() {
@@ -14,12 +14,12 @@ export default function TermsOfServicePage() {
       <div className="prose prose-sm dark:prose-invert space-y-6">
         <section>
           <h2 className="text-xl font-semibold mt-6 mb-2">1. Acceptance of Terms</h2>
-          <p>By accessing or using the Nexa platform (&quot;Service&quot;), you agree to be bound by these Terms of Service. If you are using the Service on behalf of a school or organization, you represent that you have authority to bind that entity to these terms.</p>
+          <p>By accessing or using the FormMaps platform (&quot;Service&quot;), you agree to be bound by these Terms of Service. If you are using the Service on behalf of a school or organization, you represent that you have authority to bind that entity to these terms.</p>
         </section>
 
         <section>
           <h2 className="text-xl font-semibold mt-6 mb-2">2. Description of Service</h2>
-          <p>Nexa provides a career development and assessment platform for students, schools, counselors, coaches, and parents. Features include personality and cognitive assessments, career matching, university recommendations, course planning, resume building, and AI-powered insights.</p>
+          <p>FormMaps provides a career development and assessment platform for students, schools, counselors, coaches, and parents. Features include personality and cognitive assessments, career matching, university recommendations, course planning, resume building, and AI-powered insights.</p>
         </section>
 
         <section>
@@ -58,7 +58,7 @@ export default function TermsOfServicePage() {
 
         <section>
           <h2 className="text-xl font-semibold mt-6 mb-2">6. Intellectual Property</h2>
-          <p>The Service, including all content, features, and functionality, is owned by Nexa and protected by copyright, trademark, and other intellectual property laws. Assessment content, scoring algorithms, and AI-generated insights are proprietary.</p>
+          <p>The Service, including all content, features, and functionality, is owned by FormMaps and protected by copyright, trademark, and other intellectual property laws. Assessment content, scoring algorithms, and AI-generated insights are proprietary.</p>
         </section>
 
         <section>
@@ -72,7 +72,7 @@ export default function TermsOfServicePage() {
 
         <section>
           <h2 className="text-xl font-semibold mt-6 mb-2">8. Limitation of Liability</h2>
-          <p>Nexa shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service, including but not limited to loss of data, career opportunities, or academic decisions made based on our recommendations.</p>
+          <p>FormMaps shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service, including but not limited to loss of data, career opportunities, or academic decisions made based on our recommendations.</p>
         </section>
 
         <section>
@@ -87,7 +87,7 @@ export default function TermsOfServicePage() {
 
         <section>
           <h2 className="text-xl font-semibold mt-6 mb-2">11. Contact</h2>
-          <p>Questions about these Terms? Contact us at <a href="mailto:legal@nexadev.ai" className="text-blue-600 underline">legal@nexadev.ai</a>.</p>
+          <p>Questions about these Terms? Contact us at <a href="mailto:legal@formmaps.ai" className="text-blue-600 underline">legal@formmaps.ai</a>.</p>
         </section>
       </div>
     </main>

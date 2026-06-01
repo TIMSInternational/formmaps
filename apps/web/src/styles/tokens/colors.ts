@@ -1,4 +1,4 @@
-// Twenty CRM-inspired color tokens for NEXA admin theme
+// Twenty CRM-inspired color tokens for FORMMAPS admin theme
 // Dark values from twenty-ui/theme-dark.css, light from theme-light.css
 
 export const colorsDark = {

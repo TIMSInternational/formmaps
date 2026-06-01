@@ -131,7 +131,7 @@ export default function LoginPage() {
               color: "#fff", fontSize: 18, fontWeight: 700,
             }}>N</div>
             <span style={{ fontSize: 24, fontWeight: 700, color: "#ebebeb", letterSpacing: "-0.02em" }}>
-              Nexa Univ
+              FormMaps
             </span>
           </div>
 
@@ -189,7 +189,7 @@ export default function LoginPage() {
               display: "flex", alignItems: "center", justifyContent: "center",
               color: "#fff", fontSize: 14, fontWeight: 700,
             }}>N</div>
-            <span style={{ fontSize: 20, fontWeight: 700, color: "#ebebeb" }}>Nexa Univ</span>
+            <span style={{ fontSize: 20, fontWeight: 700, color: "#ebebeb" }}>FormMaps</span>
           </div>
 
           <div style={{ textAlign: "center", marginBottom: 32 }}>

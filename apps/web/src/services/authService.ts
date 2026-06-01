@@ -1,4 +1,4 @@
-// Auth service — powered by Nexa API (Node.js + Prisma backend)
+// Auth service — powered by FormMaps API (Node.js + Prisma backend)
 import { storeTokens, clearTokens } from "@/services/tokenRefreshService";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";

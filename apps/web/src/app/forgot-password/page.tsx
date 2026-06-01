@@ -134,7 +134,7 @@ export default function ForgotPasswordPage() {
             N
           </div>
           <span style={{ fontSize: 20, fontWeight: 700, color: "#ebebeb" }}>
-            Nexa Univ
+            FormMaps
           </span>
         </div>
 

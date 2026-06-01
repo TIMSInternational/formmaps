@@ -91,20 +91,20 @@ export const generateAssessmentPDF = async (
 
     // Let's refine the selector or add a class to the pages in page.tsx if possible.
     // But without changing page.tsx too much, we can select children of the main div.
-    // The main div in `NexaReport` (formerly NexaValuesPage) matches:
+    // The main div in `FormMapsReport` (formerly FormMapsValuesPage) matches:
     // <div className="min-h-screen bg-gray-100 py-8 flex flex-col items-center gap-8 ...">
     //   <div ... page 1 ...>
     //   <div ... page 2 ...>
     // </div>
 
-    // Find the NexaReport wrapper (skip our injected style tag)
-    // The NexaReport renders as: <div className="min-h-screen ...">...</div>
+    // Find the FormMapsReport wrapper (skip our injected style tag)
+    // The FormMapsReport renders as: <div className="min-h-screen ...">...</div>
     // We need to find this div, not the style tag we added
     const mainWrapper = Array.from(container.children).find(
       child => child.tagName !== 'STYLE'
     );
 
-    // Get the page divs inside NexaReport, filtering out any style tags
+    // Get the page divs inside FormMapsReport, filtering out any style tags
     const pages = Array.from(mainWrapper?.children || []).filter(
       child => child.tagName !== 'STYLE'
     );

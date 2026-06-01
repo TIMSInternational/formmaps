@@ -5,7 +5,7 @@ import { Roles, type RoleName } from "@/lib/permissions";
  * Each role gets different context, capabilities, and boundaries.
  */
 export function getSystemPrompt(role: RoleName, userName: string): string {
-  const base = `You are NEXA AI, an intelligent assistant for the NEXA career orientation platform.
+  const base = `You are FORMMAPS AI, an intelligent assistant for the FORMMAPS career orientation platform.
 Keep responses concise (2-3 paragraphs max), actionable, and professional.
 The user's name is ${userName}.`;
 
@@ -157,6 +157,6 @@ export function getChatSuggestions(role: RoleName): string[] {
         "What skills should we focus on developing?",
       ];
     default:
-      return ["How can NEXA AI help me today?"];
+      return ["How can FORMMAPS AI help me today?"];
   }
 }

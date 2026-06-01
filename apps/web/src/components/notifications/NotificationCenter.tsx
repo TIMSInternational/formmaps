@@ -33,8 +33,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   system: AlertCircle,
 };
 
-const STORAGE_KEY = "nexa_notifications";
-const DISMISSED_KEY = "nexa_notifications_dismissed";
+const STORAGE_KEY = "formmaps_notifications";
+const DISMISSED_KEY = "formmaps_notifications_dismissed";
 
 function getStoredNotifications(): Notification[] {
   try {
@@ -58,7 +58,7 @@ function generateNotifications(): Notification[] {
   const notifications: Notification[] = [
     {
       id: "welcome",
-      title: "Welcome to NEXA",
+      title: "Welcome to FORMMAPS",
       description: "Complete your assessments to unlock personalized career and university recommendations.",
       type: "system",
       read: false,

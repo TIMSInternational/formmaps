@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const DISMISSED_KEY = "nexa_welcome_dismissed";
+const DISMISSED_KEY = "formmaps_welcome_dismissed";
 
 interface ChecklistItem {
   id: string;

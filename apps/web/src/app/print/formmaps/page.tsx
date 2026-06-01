@@ -2,7 +2,7 @@ import React from "react";
 import { Glasses, Settings, Calculator, Puzzle, Timer } from "lucide-react";
 import type { AssessmentReportData } from "@/types/assessmentReport";
 
-// Default mock data used for standalone preview at /print/nexa
+// Default mock data used for standalone preview at /print/formmaps
 const defaultMockData: AssessmentReportData = {
   candidate: {
     name: "Maria Paula Mendoza",
@@ -81,11 +81,11 @@ const defaultMockData: AssessmentReportData = {
   conclusion: { text: "", nextSteps: [] },
 };
 
-interface NexaReportProps {
+interface FormMapsReportProps {
   data?: AssessmentReportData;
 }
 
-export default function NexaValuesPage({ data }: NexaReportProps = {}) {
+export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
   // Merge provided data with defaults — use provided data if available, otherwise fallback
   const d = data || defaultMockData;
   const candidateName = d.candidate.name;
@@ -152,7 +152,7 @@ export default function NexaValuesPage({ data }: NexaReportProps = {}) {
           <div className="absolute top-[25mm] left-10 z-20">
             <div className="flex flex-col text-white">
               <h2 className="text-5xl font-medium tracking-tight leading-[0.85] font-montserrat">
-                NEXA
+                FORMMAPS
               </h2>
               <h3 className="text-sm font-bold text-[#67e8f9] tracking-[0.3em] ml-0.5 mt-2 font-montserrat">
                 LOGO ACA

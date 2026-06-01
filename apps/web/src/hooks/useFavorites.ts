@@ -10,7 +10,7 @@ import { useGlobalStore } from "@/store/useGlobalStore";
 import { telemetry } from "@/services/telemetryService";
 import { toast } from "@/hooks/useToast";
 
-const FAVORITES_KEY = "nexa_career_favorites";
+const FAVORITES_KEY = "formmaps_career_favorites";
 
 function loadLocalFavorites(): string[] {
   try {

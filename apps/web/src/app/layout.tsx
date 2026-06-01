@@ -16,8 +16,8 @@ validateEnv();
 
 export const metadata: Metadata = {
   title: {
-    default: "Nexa Univ - Career Development Platform",
-    template: "%s | Nexa Univ",
+    default: "FormMaps - Career Development Platform",
+    template: "%s | FormMaps",
   },
   description:
     "Accelerate your career with personalized learning paths, skill assessments, and market insights.",
@@ -28,19 +28,19 @@ export const metadata: Metadata = {
     "job market",
     "resume builder",
   ],
-  authors: [{ name: "Nexa Univ" }],
-  creator: "Nexa Univ",
+  authors: [{ name: "FormMaps" }],
+  creator: "FormMaps",
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "Nexa Univ",
-    title: "Nexa Univ - Career Development Platform",
+    siteName: "FormMaps",
+    title: "FormMaps - Career Development Platform",
     description:
       "Accelerate your career with personalized learning paths, skill assessments, and market insights.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nexa Univ - Career Development Platform",
+    title: "FormMaps - Career Development Platform",
     description:
       "Accelerate your career with personalized learning paths, skill assessments, and market insights.",
   },

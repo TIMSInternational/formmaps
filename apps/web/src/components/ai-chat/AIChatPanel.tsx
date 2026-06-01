@@ -307,7 +307,7 @@ export function AIChatSidePanel() {
                 display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 10,
                 background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
               }}>
-                <ShiningText text={toolStatus || "NEXA AI is thinking..."} />
+                <ShiningText text={toolStatus || "FORMMAPS AI is thinking..."} />
               </div>
             </div>
           )}

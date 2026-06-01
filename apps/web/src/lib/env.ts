@@ -19,7 +19,7 @@ export function validateEnv(): void {
 
   if (missing.length > 0) {
     console.warn(
-      `[nexa] Missing environment variables: ${missing.join(", ")}. Some features may not work.`
+      `[formmaps] Missing environment variables: ${missing.join(", ")}. Some features may not work.`
     );
   }
 }

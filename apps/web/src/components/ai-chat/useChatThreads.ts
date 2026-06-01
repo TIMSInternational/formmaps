@@ -19,10 +19,10 @@ export interface ChatThread {
 
 // Storage keys are per-user to isolate chats between accounts
 function storageKey(userId: string) {
-  return `nexa_chat_threads_${userId}`;
+  return `formmaps_chat_threads_${userId}`;
 }
 function currentThreadKey(userId: string) {
-  return `nexa_current_thread_${userId}`;
+  return `formmaps_current_thread_${userId}`;
 }
 
 function loadThreads(userId: string): ChatThread[] {

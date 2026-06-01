@@ -14,7 +14,7 @@ import { X } from "lucide-react";
 
 // ── Constants (Twenty-style) ──
 const SIDE_PANEL_WIDTH_VAR = "--side-panel-width";
-const STORAGE_KEY = "nexa_side_panel_width";
+const STORAGE_KEY = "formmaps_side_panel_width";
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 600;
 const DEFAULT_WIDTH = 400;
