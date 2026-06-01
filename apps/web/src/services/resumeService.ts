@@ -7,6 +7,7 @@ export interface ResumePersonal {
   location: string;
   linkedIn?: string;
   website?: string;
+  github?: string;
 }
 
 export interface ResumeSkillGroups {
@@ -32,6 +33,7 @@ export interface ResumeEducation {
   location: string;
   startDate: string;
   endDate: string;
+  gpa?: string;
 }
 
 export interface Resume {
@@ -137,12 +139,13 @@ export async function getResumeById(resumeId: string): Promise<Resume> {
     createdAt: raw.createdDate || raw.CreatedDate || raw.createdAt,
     updatedAt: raw.updatedAt || raw.UpdatedAt,
     personal: {
-      fullName: raw.personalInfo?.fullName || raw.PersonalInfo?.FullName || "",
+      fullName: raw.personalInfo?.fullName || raw.personalInfo?.name || raw.PersonalInfo?.FullName || "",
       email: raw.personalInfo?.email || raw.PersonalInfo?.Email || "",
       phone: raw.personalInfo?.phone || raw.PersonalInfo?.Phone || "",
       location: raw.personalInfo?.location || raw.PersonalInfo?.Location || "",
-      linkedIn: raw.personalInfo?.linkedIn || raw.PersonalInfo?.LinkedIn || "",
+      linkedIn: raw.personalInfo?.linkedIn || raw.personalInfo?.linkedin || raw.PersonalInfo?.LinkedIn || "",
       website: raw.personalInfo?.website || raw.PersonalInfo?.Website || "",
+      github: raw.personalInfo?.github || "",
     },
     summary: raw.personalInfo?.summary || raw.PersonalInfo?.Summary || raw.summary || "",
     experience: (raw.experience || raw.Experience || []).map((exp: any) => ({
@@ -162,7 +165,8 @@ export async function getResumeById(resumeId: string): Promise<Resume> {
       institution: edu.school || edu.School || edu.institution || edu.Institution || "",
       location: edu.location || edu.Location || "",
       startDate: edu.startDate || edu.StartDate || "",
-      endDate: edu.endDate || edu.EndDate || "",
+      endDate: edu.endDate || edu.EndDate || edu.year || "",
+      gpa: edu.gpa || "",
     })),
     skills: {
       skills: groupSkillsFromFlat(raw.skills || raw.Skills || []),
