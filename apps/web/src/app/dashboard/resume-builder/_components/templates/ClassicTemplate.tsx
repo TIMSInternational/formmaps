@@ -261,7 +261,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                     {edu.degree}
                   </Text>
                   <Text style={classicStyles.entryItalicRight}>
-                    {edu.graduationDate ? `Expected: ${edu.graduationDate}` : ""}
+                    {edu.graduationDate || ""}
                   </Text>
                 </View>
                 {edu.gpa && (

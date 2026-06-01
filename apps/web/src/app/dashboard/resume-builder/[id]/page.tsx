@@ -918,12 +918,13 @@ export default function ResumeBuilderPage() {
         const storeData: ResumeData = {
           careerField: "",
           personalInfo: {
-            fullName: apiData.personal?.fullName || "",
+            fullName: apiData.personal?.fullName || (apiData.personal as unknown as Record<string, string>)?.name || "",
             email: apiData.personal?.email || "",
             phone: apiData.personal?.phone || "",
             location: apiData.personal?.location || "",
-            linkedin: apiData.personal?.linkedIn || "",
+            linkedin: apiData.personal?.linkedIn || (apiData.personal as unknown as Record<string, string>)?.linkedin || "",
             website: apiData.personal?.website || "",
+            github: (apiData.personal as unknown as Record<string, string>)?.github || "",
             summary: apiData.summary || "",
           },
           experience: (apiData.experience || []).map((exp) => ({
@@ -941,8 +942,8 @@ export default function ResumeBuilderPage() {
             degree: edu.degree,
             institution: edu.institution,
             location: edu.location,
-            graduationDate: edu.endDate,
-            gpa: "",
+            graduationDate: edu.endDate || (edu as unknown as Record<string, string>).year || "",
+            gpa: (edu as unknown as Record<string, string>).gpa || "",
           })),
           skills: Object.entries(apiData.skills?.skills || {}).flatMap(
             ([category, skillNames]) =>
