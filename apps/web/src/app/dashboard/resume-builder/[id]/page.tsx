@@ -958,14 +958,15 @@ export default function ResumeBuilderPage() {
           dynamicSections: ((apiData as unknown as { sections?: Record<string, unknown>[] }).sections || []).map((s: Record<string, unknown>) => ({
             id: crypto.randomUUID(),
             title: (s.title as string) || "",
-            type: (s.type as string) || "custom",
+            type: (s.type as string) || ((s.title as string)?.toLowerCase().includes("certif") ? "certifications" : (s.title as string)?.toLowerCase().includes("project") ? "projects" : "custom"),
             entries: Array.isArray(s.items)
               ? (s.items as Record<string, unknown>[]).map((item) => ({
                   id: crypto.randomUUID(),
                   name: (item.name as string) || "",
                   title: (item.name as string) || "",
-                  date: `${(item.startDate as string) || ""} - ${(item.endDate as string) || ""}`.replace(/^ - $/, ""),
-                  description: Array.isArray(item.bullets) ? (item.bullets as string[]).join("\n") : (item.description as string) || "",
+                  date: (item.year as string) || `${(item.startDate as string) || ""} - ${(item.endDate as string) || ""}`.replace(/^ - $/, ""),
+                  issuer: (item.issuer as string) || "",
+                  description: Array.isArray(item.bullets) ? (item.bullets as string[]).join("\n") : (item.description as string) || (item.issuer as string) || "",
                   bullets: Array.isArray(item.bullets) ? (item.bullets as string[]).join("\n") : "",
                 }))
               : [],

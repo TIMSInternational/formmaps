@@ -383,7 +383,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                         </>
                       )}
                       {/* Certificates */}
-                      {section.type === "certificates" && (
+                      {(section.type === "certificates" || section.type === "certifications") && (
                         <>
                           <View style={classicStyles.entryHeaderRow}>
                             <Text style={classicStyles.entryBoldLeft}>
