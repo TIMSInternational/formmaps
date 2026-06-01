@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { useTelemetryAnalytics } from "@/hooks/useTelemetryAnalytics";
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+const COLORS = ["#065292", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 interface TelemetryDashboardProps {
   period?: "day" | "week" | "month" | "year";
@@ -221,7 +221,7 @@ export const TelemetryDashboard = React.memo(function TelemetryDashboard({ perio
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'New Users', value: metrics.newUsers || 0, color: '#3b82f6' },
+                        { name: 'New Users', value: metrics.newUsers || 0, color: '#065292' },
                         { name: 'Returning', value: metrics.returningUsers || 0, color: '#10b981' }
                       ]}
                       cx="50%"
@@ -232,7 +232,7 @@ export const TelemetryDashboard = React.memo(function TelemetryDashboard({ perio
                       dataKey="value"
                       strokeWidth={0}
                     >
-                      <Cell fill="#3b82f6" />
+                      <Cell fill="#065292" />
                       <Cell fill="#10b981" />
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
@@ -297,7 +297,7 @@ export const TelemetryDashboard = React.memo(function TelemetryDashboard({ perio
                     axisLine={false}
                   />
                   <Tooltip cursor={{fill: 'rgba(0,0,0,0.02)'}} content={<CustomTooltip />} />
-                  <Bar dataKey="views" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={24} />
+                  <Bar dataKey="views" fill="#065292" radius={[0, 4, 4, 0]} barSize={24} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -419,8 +419,8 @@ export const TelemetryDashboard = React.memo(function TelemetryDashboard({ perio
               <AreaChart data={metrics.dailyActiveUsersTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorTrend" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#065292" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#065292" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -443,7 +443,7 @@ export const TelemetryDashboard = React.memo(function TelemetryDashboard({ perio
                 <Area
                   type="monotone"
                   dataKey="users"
-                  stroke="#3b82f6"
+                  stroke="#065292"
                   fill="url(#colorTrend)"
                   strokeWidth={2}
                 />

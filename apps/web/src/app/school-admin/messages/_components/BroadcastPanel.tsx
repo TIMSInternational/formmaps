@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 const GROUPS = [
-  { key: "students", label: "All Students", icon: GraduationCap, color: "#6366f1" },
+  { key: "students", label: "All Students", icon: GraduationCap, color: "#065292" },
   { key: "parents", label: "All Parents", icon: Users, color: "#14b8a6" },
   { key: "counselors", label: "All Counselors", icon: UserCheck, color: "#f59e0b" },
   { key: "staff", label: "All Staff", icon: Briefcase, color: "#ef4444" },
@@ -57,7 +57,7 @@ export default function BroadcastPanel() {
           Communication
         </span>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 10 }}>
-          <Megaphone style={{ width: 24, height: 24, color: "#6366f1" }} />
+          <Megaphone style={{ width: 24, height: 24, color: "#065292" }} />
           Broadcast Message
         </h1>
         <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginTop: 4, maxWidth: 480 }}>
@@ -153,7 +153,7 @@ export default function BroadcastPanel() {
               color: "var(--admin-font-primary)", fontFamily: "inherit",
               outline: "none",
             }}
-            onFocus={(e) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue, #3b82f6)"; }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue, #065292)"; }}
             onBlur={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}
           />
           <div style={{ fontSize: 11, color: "var(--admin-font-light)", marginTop: 4, textAlign: "right" }}>
@@ -183,7 +183,7 @@ export default function BroadcastPanel() {
                   disabled={sending}
                   style={{
                     padding: "4px 12px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-                    background: "#6366f1", color: "#fff", border: "none", cursor: "pointer",
+                    background: "#065292", color: "#fff", border: "none", cursor: "pointer",
                     display: "flex", alignItems: "center", gap: 4, fontFamily: "inherit",
                   }}
                 >
@@ -207,7 +207,7 @@ export default function BroadcastPanel() {
               style={{
                 height: 40, borderRadius: 10, padding: "0 24px", fontSize: 13, fontWeight: 600,
                 display: "flex", alignItems: "center", gap: 8,
-                background: canSend ? "linear-gradient(135deg, #6366f1, #4f46e5)" : "var(--admin-bg-hover)",
+                background: canSend ? "#065292" : "var(--admin-bg-hover)",
                 color: canSend ? "#fff" : "var(--admin-font-light)",
                 border: canSend ? "none" : "1px solid var(--admin-border-default)",
                 cursor: canSend ? "pointer" : "not-allowed",

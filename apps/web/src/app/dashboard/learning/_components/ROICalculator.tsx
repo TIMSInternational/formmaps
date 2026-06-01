@@ -81,11 +81,11 @@ export default function ROICalculator({ data, radarData }: ROICalculatorProps) {
                 />
                 <Bar
                   dataKey="Potential"
-                  fill="#4f46e5" /* indigo-600 */
+                  fill="#065292" /* indigo-600 */
                   radius={[0, 4, 4, 0]}
                   barSize={24}
                   name="Potential"
-                  label={{ position: "right", fill: "#4f46e5", fontWeight: "bold", fontSize: 11, formatter: (val: any) => `$${(Number(val)/1000).toFixed(0)}k` }}
+                  label={{ position: "right", fill: "#065292", fontWeight: "bold", fontSize: 11, formatter: (val: any) => `$${(Number(val)/1000).toFixed(0)}k` }}
                 />
               </DynamicBarChart>
             </ResponsiveContainer>
@@ -117,9 +117,9 @@ export default function ROICalculator({ data, radarData }: ROICalculatorProps) {
                      <Radar
                         name="Projected"
                         dataKey="B"
-                        stroke="#4f46e5"
+                        stroke="#065292"
                         strokeWidth={2}
-                        fill="#4f46e5"
+                        fill="#065292"
                         fillOpacity={0.4}
                      />
                      <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} iconType="circle" />

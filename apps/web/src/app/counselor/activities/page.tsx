@@ -40,12 +40,12 @@ const CATEGORIES = [
 ];
 
 const CATEGORY_COLORS: Record<string, { color: string; bg: string }> = {
-  academic: { color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
+  academic: { color: "#065292", bg: "rgba(59,130,246,0.1)" },
   athletic: { color: "#10b981", bg: "rgba(16,185,129,0.1)" },
   arts: { color: "#8b5cf6", bg: "rgba(139,92,246,0.1)" },
   community_service: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   work: { color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
-  leadership: { color: "#6366f1", bg: "rgba(99,102,241,0.1)" },
+  leadership: { color: "#065292", bg: "rgba(99,102,241,0.1)" },
 };
 
 const CATEGORY_OPTIONS = CATEGORIES.filter((c) => c.key !== "all");
@@ -284,7 +284,7 @@ export default function CounselorActivitiesPage() {
               style={{
                 height: 36, borderRadius: 8, padding: "0 16px", fontSize: 13, fontWeight: 600,
                 display: "flex", alignItems: "center", gap: 6,
-                background: "#6366f1", color: "#fff", border: "none", cursor: "pointer",
+                background: "#065292", color: "#fff", border: "none", cursor: "pointer",
               }}>
               <Plus style={{ width: 14, height: 14 }} />
               Add Activity
@@ -416,7 +416,7 @@ export default function CounselorActivitiesPage() {
                   <button onClick={handleSubmit} disabled={isMutating}
                     style={{
                       height: 36, borderRadius: 6, padding: "0 16px", fontSize: 13, fontWeight: 600,
-                      background: "#6366f1", color: "#fff", border: "none", cursor: "pointer",
+                      background: "#065292", color: "#fff", border: "none", cursor: "pointer",
                       display: "flex", alignItems: "center", gap: 6,
                       opacity: isMutating ? 0.6 : 1,
                     }}>
@@ -508,7 +508,7 @@ export default function CounselorActivitiesPage() {
                             border: "1px solid var(--admin-border-default)", background: "transparent",
                             cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
                           }}>
-                          <Pencil style={{ width: 12, height: 12, color: "#3b82f6" }} />
+                          <Pencil style={{ width: 12, height: 12, color: "#065292" }} />
                         </button>
                         <button onClick={() => deleteMutation.mutate(a.id)} title="Delete"
                           style={{

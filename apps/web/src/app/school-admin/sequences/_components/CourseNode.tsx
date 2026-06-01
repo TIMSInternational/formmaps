@@ -23,7 +23,7 @@ function getDeptIcon(dept?: string) {
 
 // ── Grade-level accent colors ──
 const gradeColors: Record<number, string> = {
-  9: "#3b82f6", 10: "#8b5cf6", 11: "#f59e0b", 12: "#10b981",
+  9: "#065292", 10: "#8b5cf6", 11: "#f59e0b", 12: "#10b981",
 };
 
 function CourseNodeComponent({ id, data, selected }: NodeProps) {
@@ -152,7 +152,7 @@ function CourseNodeComponent({ id, data, selected }: NodeProps) {
                 : "var(--admin-accent-bg-blue, rgba(59,130,246,0.1))",
               color: status === "required" ? "var(--admin-accent-red, #ef4444)"
                 : status === "recommended" ? "var(--admin-accent-green, #10b981)"
-                : "var(--admin-accent-blue, #3b82f6)",
+                : "var(--admin-accent-blue, #065292)",
             }}>
               {status}
             </span>

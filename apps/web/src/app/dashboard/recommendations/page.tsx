@@ -33,8 +33,8 @@ const STATUS_META: Record<
 > = {
   requested: {
     label: "Requested",
-    color: "#3b82f6",
-    bg: "#3b82f610",
+    color: "#065292",
+    bg: "#06529210",
     icon: Clock,
   },
   accepted: {
@@ -395,7 +395,7 @@ export default function RecommendationsPage() {
             display: "flex",
             alignItems: "center",
             gap: 6,
-            background: "var(--admin-accent-blue, #3b82f6)",
+            background: "var(--admin-accent-blue, #065292)",
             color: "#fff",
             border: "none",
             cursor: "pointer",
@@ -614,7 +614,7 @@ export default function RecommendationsPage() {
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
-                    background: "var(--admin-accent-blue, #3b82f6)",
+                    background: "var(--admin-accent-blue, #065292)",
                     color: "#fff",
                     border: "none",
                     cursor: submitting ? "not-allowed" : "pointer",
@@ -660,7 +660,7 @@ export default function RecommendationsPage() {
           }}
         >
           <FileText
-            style={{ width: 14, height: 14, color: "#6366f1" }}
+            style={{ width: 14, height: 14, color: "#065292" }}
           />
           <span
             style={{
@@ -746,7 +746,7 @@ export default function RecommendationsPage() {
                     width: 32,
                     height: 32,
                     borderRadius: 8,
-                    background: "#6366f115",
+                    background: "#06529215",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -754,7 +754,7 @@ export default function RecommendationsPage() {
                   }}
                 >
                   <User
-                    style={{ width: 14, height: 14, color: "#6366f1" }}
+                    style={{ width: 14, height: 14, color: "#065292" }}
                   />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>

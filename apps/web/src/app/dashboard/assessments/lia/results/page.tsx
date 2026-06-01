@@ -261,14 +261,14 @@ export default function MILResultsPage() {
                     <Radar
                       name="Score"
                       dataKey="A"
-                      stroke="#6366f1"
+                      stroke="#065292"
                       strokeWidth={3}
-                      fill="#6366f1"
+                      fill="#065292"
                       fillOpacity={0.2}
                     />
                     <RechartsTooltip 
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                      itemStyle={{ color: '#4f46e5', fontWeight: 600 }}
+                      itemStyle={{ color: '#065292', fontWeight: 600 }}
                     />
                   </RadarChart>
                 </ResponsiveContainer>

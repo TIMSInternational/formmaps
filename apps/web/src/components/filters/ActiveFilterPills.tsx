@@ -26,7 +26,7 @@ export function ActiveFilterPills({ pills, onRemove, onClearAll }: ActiveFilterP
           className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors"
           style={{
             background: "var(--admin-accent-bg-blue, rgba(59,130,246,0.1))",
-            color: "var(--admin-accent-blue, #3b82f6)",
+            color: "var(--admin-accent-blue, #065292)",
             border: "1px solid var(--admin-accent-border-blue, rgba(59,130,246,0.15))",
           }}
         >

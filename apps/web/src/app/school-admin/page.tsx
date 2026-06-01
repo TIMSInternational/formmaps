@@ -48,7 +48,7 @@ function AIBriefing() {
         <button onClick={() => refetch()} disabled={isFetching} style={{
           height: 40, borderRadius: 8, padding: "0 24px", fontSize: 13, fontWeight: 600,
           display: "flex", alignItems: "center", gap: 8,
-          background: "linear-gradient(135deg, #8b5cf6, #6366f1)", color: "#fff",
+          background: "linear-gradient(135deg, #8b5cf6, #065292)", color: "#fff",
           border: "none", cursor: "pointer", flexShrink: 0,
         }}>
           <Sparkles style={{ width: 15, height: 15 }} /> Generate Briefing
@@ -97,7 +97,7 @@ function AIBriefing() {
       {urgentActions.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(urgentActions.length, 3)}, 1fr)`, gap: 10 }}>
           {urgentActions.slice(0, 3).map((action: any, i: number) => {
-            const color = action.impact === "high" ? "#ef4444" : action.impact === "medium" ? "#f59e0b" : "#3b82f6";
+            const color = action.impact === "high" ? "#ef4444" : action.impact === "medium" ? "#f59e0b" : "#065292";
             return (
               <div key={i} style={{
                 padding: "14px 16px", borderRadius: 8, borderLeft: `3px solid ${color}`,
@@ -232,13 +232,13 @@ function ActionItems() {
   const items = [
     alerts?.critical > 0 && { label: `${alerts.critical} critical alert${alerts.critical > 1 ? "s" : ""}`, color: "#ef4444", icon: AlertTriangle, href: "/school-admin/messages?tab=alerts" },
     alerts?.high > 0 && { label: `${alerts.high} high priority`, color: "#f59e0b", icon: Bell, href: "/school-admin/messages?tab=alerts" },
-    alerts?.newSinceLogin > 0 && { label: `${alerts.newSinceLogin} new since login`, color: "#3b82f6", icon: Activity, href: "/school-admin/messages?tab=alerts" },
+    alerts?.newSinceLogin > 0 && { label: `${alerts.newSinceLogin} new since login`, color: "#065292", icon: Activity, href: "/school-admin/messages?tab=alerts" },
   ].filter(Boolean);
 
   return (
     <div style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-        <ClipboardCheck style={{ width: 14, height: 14, color: "#3b82f6" }} />
+        <ClipboardCheck style={{ width: 14, height: 14, color: "#065292" }} />
         <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)" }}>Action Items</span>
       </div>
       {items.length === 0 ? (
@@ -302,7 +302,7 @@ function RecentStudents() {
 
 // ─── NAV CARDS ───
 const navCards = [
-  { label: "Students", sub: "Roster, invites, staff", icon: Users, href: "/school-admin/users", color: "#3b82f6" },
+  { label: "Students", sub: "Roster, invites, staff", icon: Users, href: "/school-admin/users", color: "#065292" },
   { label: "Academics", sub: "Courses, GPA, graduation", icon: BookOpen, href: "/school-admin/academics", color: "#10b981" },
   { label: "Assessments", sub: "Pipeline, schedule, 360", icon: ClipboardCheck, href: "/school-admin/assessments", color: "#8b5cf6" },
   { label: "AI Insights", sub: "School-wide analysis", icon: Sparkles, href: "/school-admin/insights", color: "#f59e0b" },
@@ -324,7 +324,7 @@ export default function SchoolAdminDashboard() {
         {/* Top Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
           {[
-            { label: "Students", value: stats?.totalStudents?.toLocaleString() || "—", icon: Users, color: "#3b82f6" },
+            { label: "Students", value: stats?.totalStudents?.toLocaleString() || "—", icon: Users, color: "#065292" },
             { label: "Assessments", value: stats?.completedAssessments?.toLocaleString() || "—", icon: ClipboardCheck, color: "#8b5cf6" },
             { label: "Avg Score", value: stats ? `${(stats.averageScore || 0).toFixed(0)}%` : "—", icon: TrendingUp, color: "#10b981" },
             { label: "Courses", value: (stats as any)?.totalCourses?.toLocaleString() || "—", icon: GraduationCap, color: "#f59e0b" },

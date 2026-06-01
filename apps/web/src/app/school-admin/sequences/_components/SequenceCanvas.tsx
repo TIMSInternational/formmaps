@@ -122,7 +122,7 @@ function SequenceCanvasInner({ initialNodes = [], initialEdges = [], sequenceNam
                 <button onClick={handleSave} title="Save" style={{
                   height: 32, borderRadius: 6, padding: "0 14px",
                   display: "flex", alignItems: "center", gap: 6,
-                  background: "var(--admin-accent-blue, #3b82f6)", border: "none", color: "#fff",
+                  background: "var(--admin-accent-blue, #065292)", border: "none", color: "#fff",
                   cursor: "pointer", fontSize: 12, fontWeight: 600,
                 }}>
                   <Save style={{ width: 13, height: 13 }} /> Save

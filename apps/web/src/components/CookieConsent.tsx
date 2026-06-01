@@ -45,7 +45,7 @@ export function CookieConsent() {
       <button
         onClick={accept}
         style={{
-          background: "#3b82f6",
+          background: "#065292",
           color: "#fff",
           border: "none",
           borderRadius: 6,

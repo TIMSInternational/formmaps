@@ -284,7 +284,7 @@ export default function JobMarketPulsePage() {
                                     {roleDemandData.map((entry, index) => (
                                         <Cell 
                                             key={`cell-${index}`} 
-                                            fill={hoveredRole === index ? '#4f46e5' : '#cbd5e1'} 
+                                            fill={hoveredRole === index ? '#065292' : '#cbd5e1'} 
                                             className="transition-all duration-300"
                                             onMouseEnter={() => setHoveredRole(index)}
                                             onMouseLeave={() => setHoveredRole(null)}

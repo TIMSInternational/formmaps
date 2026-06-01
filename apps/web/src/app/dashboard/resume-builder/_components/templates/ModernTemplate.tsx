@@ -20,7 +20,7 @@ const modernStyles = StyleSheet.create({
   header: {
     marginBottom: 20,
     borderBottomWidth: 2,
-    borderBottomColor: "#3b82f6",
+    borderBottomColor: "#065292",
     paddingBottom: 15,
   },
   name: {
@@ -72,7 +72,7 @@ const modernStyles = StyleSheet.create({
   },
   company: {
     fontSize: 11,
-    color: "#3b82f6",
+    color: "#065292",
     marginBottom: 3,
   },
   dateLocation: {

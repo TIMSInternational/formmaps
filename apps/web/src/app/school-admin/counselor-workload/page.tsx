@@ -200,7 +200,7 @@ function AssignStudentsModal({
                     checked={selected.has(s.id)}
                     onChange={() => { if (!alreadyAssigned) toggleStudent(s.id); }}
                     disabled={alreadyAssigned}
-                    style={{ accentColor: "#6366f1" }}
+                    style={{ accentColor: "#065292" }}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{s.name}</div>
@@ -235,7 +235,7 @@ function AssignStudentsModal({
             disabled={selected.size === 0 || assigning}
             style={{
               padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-              background: selected.size === 0 || assigning ? "var(--admin-bg-hover)" : "#6366f1",
+              background: selected.size === 0 || assigning ? "var(--admin-bg-hover)" : "#065292",
               color: selected.size === 0 || assigning ? "var(--admin-font-tertiary)" : "#fff",
               border: "none", cursor: selected.size === 0 || assigning ? "not-allowed" : "pointer",
               fontFamily: "inherit",
@@ -414,7 +414,7 @@ function CounselorCard({
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
           <div style={{
             width: 44, height: 44, borderRadius: 22, flexShrink: 0,
-            background: "linear-gradient(135deg, #6366f1, #4f46e5)",
+            background: "#065292",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 14, fontWeight: 700, color: "#fff",
           }}>
@@ -432,7 +432,7 @@ function CounselorCard({
             style={{
               display: "flex", alignItems: "center", gap: 6,
               padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-              background: "#6366f1", color: "#fff",
+              background: "#065292", color: "#fff",
               border: "none", cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
             }}
           >
@@ -444,7 +444,7 @@ function CounselorCard({
         {/* Stats row */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
           {[
-            { icon: Users, label: "Students", value: counselor.studentCount, color: "#6366f1" },
+            { icon: Users, label: "Students", value: counselor.studentCount, color: "#065292" },
             { icon: CalendarCheck, label: "Sessions", value: counselor.sessionCount, color: "#14b8a6" },
             { icon: FileText, label: "Notes", value: counselor.noteCount, color: "#f59e0b" },
           ].map((stat) => (
@@ -476,7 +476,7 @@ function CounselorCard({
             onClick={() => setExpanded(!expanded)}
             style={{
               display: "flex", alignItems: "center", gap: 6, marginTop: 14,
-              fontSize: 12, fontWeight: 600, color: "var(--admin-accent-blue, #3b82f6)",
+              fontSize: 12, fontWeight: 600, color: "var(--admin-accent-blue, #065292)",
               background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit",
             }}
           >
@@ -621,7 +621,7 @@ export default function CounselorWorkloadPage() {
           Administration
         </span>
         <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--admin-font-primary)", display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
-          <Users style={{ width: 22, height: 22, color: "#6366f1" }} />
+          <Users style={{ width: 22, height: 22, color: "#065292" }} />
           Counselor Workload
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
@@ -635,7 +635,7 @@ export default function CounselorWorkloadPage() {
         style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}
       >
         {[
-          { label: "Counselors", value: counselors.length, color: "#6366f1" },
+          { label: "Counselors", value: counselors.length, color: "#065292" },
           { label: "Total Students Assigned", value: totalStudents, color: "#14b8a6" },
           { label: "Total Sessions", value: totalSessions, color: "#f59e0b" },
         ].map((s) => (

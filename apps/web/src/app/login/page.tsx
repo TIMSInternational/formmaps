@@ -96,118 +96,95 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        background: "#1d1d1d",
-        fontFamily: "Inter, -apple-system, system-ui, sans-serif",
-      }}
-    >
+    <div className="min-h-dvh flex" style={{ fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>
       {/* Left Panel — Branding */}
       <div
-        className="hidden lg:flex lg:w-[45%]"
-        style={{
-          background: "#171717",
-          borderRight: "1px solid #282828",
-          flexDirection: "column",
-          justifyContent: "center",
-          padding: "0 64px",
-          position: "relative",
-          overflow: "hidden",
-        }}
+        className="hidden lg:flex lg:w-[48%] relative overflow-hidden"
+        style={{ background: "#065292" }}
       >
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
+          className="flex flex-col justify-center px-16 relative z-10"
         >
           {/* Logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 48 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 10,
-              background: "linear-gradient(135deg, #8b5a6b, #4a3040)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#fff", fontSize: 18, fontWeight: 700,
-            }}>N</div>
-            <span style={{ fontSize: 24, fontWeight: 700, color: "#ebebeb", letterSpacing: "-0.02em" }}>
-              FormMaps
-            </span>
+          <div className="flex items-center gap-3 mb-12">
+            <img src="/logo-icon.svg" alt="FormMaps" className="w-12 h-12" style={{ filter: "brightness(0) invert(1)" }} />
+            <div>
+              <span className="text-2xl font-bold text-white tracking-tight">FORM</span>
+              <span className="text-2xl font-bold tracking-tight" style={{ color: "#FFD600" }}>MAPS</span>
+            </div>
           </div>
 
-          <h1 style={{ fontSize: 36, fontWeight: 700, color: "#ebebeb", lineHeight: 1.2, marginBottom: 16, letterSpacing: "-0.02em" }}>
-            Welcome back to
+          <h1 className="text-4xl font-bold text-white leading-tight mb-4">
+            Find your path.
             <br />
-            <span style={{ color: "#818181" }}>your career journey</span>
+            <span style={{ color: "#FFD600" }}>Shape your future.</span>
           </h1>
-          <p style={{ fontSize: 15, color: "#666", lineHeight: 1.6, maxWidth: 400, marginBottom: 40 }}>
-            Continue building your professional future with AI-powered tools
-            and personalized guidance.
+          <p className="text-base mb-10" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 420, lineHeight: 1.7 }}>
+            AI-powered college counseling and career guidance platform for students, counselors, and schools.
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="flex flex-col gap-4">
             {[
-              { text: "AI-powered resume builder" },
-              { text: "Personalized career matching" },
-              { text: "Expert coaching & mentorship" },
-              { text: "Real-time progress tracking" },
+              { icon: "graduation", text: "College admission predictions" },
+              { icon: "compass", text: "Career pathway discovery" },
+              { icon: "chart", text: "AI-powered student insights" },
+              { icon: "shield", text: "Secure school administration" },
             ].map((item, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + i * 0.1 }}
-                style={{ display: "flex", alignItems: "center", gap: 12 }}
+                className="flex items-center gap-3"
               >
-                <div style={{
-                  width: 6, height: 6, borderRadius: 3,
-                  background: "#3b82f6", flexShrink: 0,
-                }} />
-                <span style={{ fontSize: 14, color: "#b3b3b3" }}>{item.text}</span>
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#FFD600" }} />
+                <span className="text-sm" style={{ color: "rgba(255,255,255,0.85)" }}>{item.text}</span>
               </motion.div>
             ))}
           </div>
         </motion.div>
+
+        {/* Decorative circle */}
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full" style={{ background: "rgba(255,214,0,0.08)" }} />
+        <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
       </div>
 
       {/* Right Panel — Login Form */}
-      <div style={{
-        flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "48px 24px",
-      }}>
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12" style={{ background: "#FFFFFF" }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          style={{ width: "100%", maxWidth: 400 }}
+          className="w-full max-w-sm"
         >
           {/* Mobile Logo */}
-          <div className="lg:hidden" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 40 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8,
-              background: "linear-gradient(135deg, #8b5a6b, #4a3040)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#fff", fontSize: 14, fontWeight: 700,
-            }}>N</div>
-            <span style={{ fontSize: 20, fontWeight: 700, color: "#ebebeb" }}>FormMaps</span>
+          <div className="lg:hidden flex items-center justify-center gap-2 mb-10">
+            <img src="/logo-icon.svg" alt="FormMaps" className="w-10 h-10" />
+            <div>
+              <span className="text-xl font-bold" style={{ color: "#111111" }}>FORM</span>
+              <span className="text-xl font-bold" style={{ color: "#065292" }}>MAPS</span>
+            </div>
           </div>
 
-          <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <h1 style={{ fontSize: 24, fontWeight: 600, color: "#ebebeb", marginBottom: 8 }}>
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-semibold mb-2" style={{ color: "#111111" }}>
               {t("auth.login.title")}
             </h1>
-            <p style={{ fontSize: 13, color: "#818181" }}>{t("auth.login.subtitle")}</p>
+            <p className="text-sm" style={{ color: "#666" }}>{t("auth.login.subtitle")}</p>
           </div>
 
           <Form {...form}>
-            <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
               {/* Email */}
               <FormField
                 control={control}
                 name="email"
                 render={({ field }) => (
-                  <FormItem style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    <FormLabel style={{ fontSize: 12, fontWeight: 500, color: "#b3b3b3" }}>
+                  <FormItem className="flex flex-col gap-1.5">
+                    <FormLabel className="text-xs font-medium" style={{ color: "#333" }}>
                       {t("auth.login.emailLabel")}
                     </FormLabel>
                     <FormControl>
@@ -215,17 +192,13 @@ export default function LoginPage() {
                         type="email"
                         placeholder={t("auth.login.emailPlaceholder")}
                         {...field}
-                        style={{
-                          height: 40, padding: "0 12px", fontSize: 13,
-                          background: "#1e1e1e", border: "1px solid #2a2a2a",
-                          borderRadius: 6, color: "#ebebeb", outline: "none",
-                          width: "100%",
-                        }}
-                        onFocus={(e) => { e.currentTarget.style.borderColor = "#555"; }}
-                        onBlur={(e) => { e.currentTarget.style.borderColor = "#2a2a2a"; }}
+                        className="h-11 px-3 text-sm rounded-lg border outline-none transition-colors w-full"
+                        style={{ background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" }}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+                        onBlur={(e) => { e.currentTarget.style.borderColor = "#E0E0E0"; }}
                       />
                     </FormControl>
-                    <FormMessage style={{ fontSize: 12, color: "#ef4444" }} />
+                    <FormMessage className="text-xs text-red-500" />
                   </FormItem>
                 )}
               />
@@ -235,57 +208,51 @@ export default function LoginPage() {
                 control={control}
                 name="password"
                 render={({ field }) => (
-                  <FormItem style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <FormLabel style={{ fontSize: 12, fontWeight: 500, color: "#b3b3b3" }}>
+                  <FormItem className="flex flex-col gap-1.5">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-xs font-medium" style={{ color: "#333" }}>
                         {t("auth.login.passwordLabel")}
                       </FormLabel>
-                      <Link href="/forgot-password" style={{ fontSize: 12, color: "#818181", textDecoration: "none" }}>
+                      <Link href="/forgot-password" className="text-xs no-underline" style={{ color: "#065292" }}>
                         Forgot password?
                       </Link>
                     </div>
-                    <div style={{ position: "relative" }}>
+                    <div className="relative">
                       <FormControl>
                         <input
                           type={showPassword ? "text" : "password"}
                           placeholder={t("auth.login.passwordPlaceholder")}
                           {...field}
-                          style={{
-                            height: 40, padding: "0 40px 0 12px", fontSize: 13,
-                            background: "#1e1e1e", border: "1px solid #2a2a2a",
-                            borderRadius: 6, color: "#ebebeb", outline: "none",
-                            width: "100%",
-                          }}
-                          onFocus={(e) => { e.currentTarget.style.borderColor = "#555"; }}
-                          onBlur={(e) => { e.currentTarget.style.borderColor = "#2a2a2a"; }}
+                          className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
+                          style={{ background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = "#E0E0E0"; }}
                         />
                       </FormControl>
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        style={{
-                          position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-                          background: "transparent", border: "none", cursor: "pointer",
-                          color: "#818181", display: "flex", alignItems: "center",
-                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer flex items-center"
+                        style={{ color: "#999" }}
                         aria-label={showPassword ? "Hide password" : "Show password"}
                       >
-                        {showPassword ? <EyeOff style={{ width: 16, height: 16 }} /> : <Eye style={{ width: 16, height: 16 }} />}
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    <FormMessage style={{ fontSize: 12, color: "#ef4444" }} />
+                    <FormMessage className="text-xs text-red-500" />
                   </FormItem>
                 )}
               />
 
               {/* Remember Me */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="flex items-center gap-2">
                 <input
                   id="remember"
                   type="checkbox"
-                  style={{ width: 14, height: 14, accentColor: "#3b82f6" }}
+                  className="w-3.5 h-3.5"
+                  style={{ accentColor: "#065292" }}
                 />
-                <label htmlFor="remember" style={{ fontSize: 12, color: "#818181" }}>
+                <label htmlFor="remember" className="text-xs" style={{ color: "#666" }}>
                   {t("auth.login.remember")}
                 </label>
               </div>
@@ -295,17 +262,15 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
+                className="h-11 rounded-lg border-none text-sm font-semibold cursor-pointer transition-all"
                 style={{
-                  height: 40, borderRadius: 6, border: "none",
-                  background: "#ebebeb", color: "#171717",
-                  fontSize: 13, fontWeight: 600, cursor: "pointer",
-                  opacity: isSubmitting ? 0.5 : 1,
-                  transition: "opacity 0.15s",
+                  background: "#065292", color: "#FFFFFF",
+                  opacity: isSubmitting ? 0.6 : 1,
                 }}
               >
                 {isSubmitting ? (
-                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                    <div style={{ width: 14, height: 14, border: "2px solid #171717", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     {t("auth.login.submitting")}
                   </span>
                 ) : (
@@ -315,16 +280,14 @@ export default function LoginPage() {
             </form>
           </Form>
 
-          <p style={{ marginTop: 32, textAlign: "center", fontSize: 13, color: "#818181" }}>
+          <p className="mt-8 text-center text-sm" style={{ color: "#666" }}>
             {t("auth.login.noAccountText")}{" "}
-            <Link href="/signup" style={{ color: "#ebebeb", fontWeight: 500, textDecoration: "none" }}>
+            <Link href="/signup" className="font-medium no-underline" style={{ color: "#065292" }}>
               {t("auth.login.signUp")}
             </Link>
           </p>
         </motion.div>
       </div>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

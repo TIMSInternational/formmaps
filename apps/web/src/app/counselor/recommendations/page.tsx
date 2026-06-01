@@ -39,8 +39,8 @@ const STATUS_META: Record<
 > = {
   requested: {
     label: "Requested",
-    color: "#3b82f6",
-    bg: "#3b82f610",
+    color: "#065292",
+    bg: "#06529210",
     icon: Clock,
   },
   accepted: {
@@ -350,7 +350,7 @@ export default function CounselorRecommendationsPage() {
     {
       label: "Requested",
       value: countByStatus.requested ?? 0,
-      color: "#3b82f6",
+      color: "#065292",
       icon: Clock,
     },
     {
@@ -477,7 +477,7 @@ export default function CounselorRecommendationsPage() {
             background: "var(--admin-bg-hover)",
           }}
         >
-          <Users style={{ width: 14, height: 14, color: "#6366f1" }} />
+          <Users style={{ width: 14, height: 14, color: "#065292" }} />
           <span
             style={{
               fontSize: 13,
@@ -562,7 +562,7 @@ export default function CounselorRecommendationsPage() {
                   <TableRow
                     key={req.id}
                     style={{
-                      background: isMe ? "var(--admin-accent-blue, #3b82f6)08" : undefined,
+                      background: isMe ? "var(--admin-accent-blue, #065292)08" : undefined,
                     }}
                   >
                     <TableCell>
@@ -572,14 +572,14 @@ export default function CounselorRecommendationsPage() {
                             width: 26,
                             height: 26,
                             borderRadius: 6,
-                            background: "#6366f115",
+                            background: "#06529215",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             flexShrink: 0,
                           }}
                         >
-                          <User style={{ width: 12, height: 12, color: "#6366f1" }} />
+                          <User style={{ width: 12, height: 12, color: "#065292" }} />
                         </div>
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
@@ -602,8 +602,8 @@ export default function CounselorRecommendationsPage() {
                               fontWeight: 600,
                               padding: "1px 5px",
                               borderRadius: 3,
-                              background: "#3b82f615",
-                              color: "#3b82f6",
+                              background: "#06529215",
+                              color: "#065292",
                             }}
                           >
                             You

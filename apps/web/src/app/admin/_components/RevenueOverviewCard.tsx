@@ -72,7 +72,7 @@ export function RevenueOverviewCard() {
           <svg width="260" height="130" viewBox="0 0 260 130">
             {outerDots.map((dot, i) => (
               <motion.circle
-                key={`o-${i}`} cx={dot.x} cy={dot.y} r="5" fill="#3b82f6"
+                key={`o-${i}`} cx={dot.x} cy={dot.y} r="5" fill="#065292"
                 variants={shouldAnimate ? dotVariants : undefined}
                 initial={shouldAnimate ? "hidden" : "visible"}
                 animate="visible"
@@ -100,7 +100,7 @@ export function RevenueOverviewCard() {
         {/* Legend */}
         <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 3, height: 12, borderRadius: 2, background: "#3b82f6" }} />
+            <div style={{ width: 3, height: 12, borderRadius: 2, background: "#065292" }} />
             <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Revenue</span>
             <span style={{ fontSize: 11, fontWeight: 600, color: revenueGrowth >= 0 ? "var(--admin-accent-green)" : "var(--admin-accent-red)" }}>
               {revenueGrowth >= 0 ? "+" : ""}{revenueGrowth.toFixed(1)}%

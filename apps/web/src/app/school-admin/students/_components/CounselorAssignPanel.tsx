@@ -79,7 +79,7 @@ function ReassignDialog({
         <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--admin-border-default)" }}>
           <DialogHeader>
             <DialogTitle style={{ fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-              <ArrowRightLeft style={{ width: 18, height: 18, color: "var(--admin-accent-blue, #3b82f6)" }} />
+              <ArrowRightLeft style={{ width: 18, height: 18, color: "var(--admin-accent-blue, #065292)" }} />
               Reassign Student
             </DialogTitle>
             <DialogDescription style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
@@ -103,7 +103,7 @@ function ReassignDialog({
                 style={{
                   display: "flex", alignItems: "center", gap: 10,
                   padding: "8px 10px", borderRadius: 6, cursor: "pointer",
-                  border: targetId === c.id ? "1px solid var(--admin-accent-blue, #3b82f6)" : "1px solid transparent",
+                  border: targetId === c.id ? "1px solid var(--admin-accent-blue, #065292)" : "1px solid transparent",
                   background: targetId === c.id ? "rgba(59,130,246,0.05)" : "transparent",
                 }}
                 onClick={() => setTargetId(c.id)}
@@ -112,7 +112,7 @@ function ReassignDialog({
                   width: 28, height: 28, borderRadius: "50%",
                   background: targetId === c.id ? "rgba(59,130,246,0.15)" : "var(--admin-bg-hover)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 10, fontWeight: 700, color: targetId === c.id ? "var(--admin-accent-blue, #3b82f6)" : "var(--admin-font-primary)",
+                  fontSize: 10, fontWeight: 700, color: targetId === c.id ? "var(--admin-accent-blue, #065292)" : "var(--admin-font-primary)",
                 }}>
                   {c.name?.slice(0, 2).toUpperCase()}
                 </div>
@@ -149,7 +149,7 @@ function ReassignDialog({
               height: 36, borderRadius: 6, padding: "0 14px",
               fontSize: 12, fontWeight: 600,
               display: "flex", alignItems: "center", gap: 6,
-              background: "var(--admin-accent-blue, #3b82f6)", color: "#fff",
+              background: "var(--admin-accent-blue, #065292)", color: "#fff",
               border: "none", cursor: "pointer",
               opacity: (!targetId || isPending) ? 0.6 : 1,
             }}
@@ -273,7 +273,7 @@ function CounselorRow({
       >
         <TableCell className="pl-4">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ color: expanded ? "var(--admin-accent-blue, #3b82f6)" : "var(--admin-font-tertiary)" }}>
+            <div style={{ color: expanded ? "var(--admin-accent-blue, #065292)" : "var(--admin-font-tertiary)" }}>
               {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             </div>
             <div style={{
@@ -293,7 +293,7 @@ function CounselorRow({
         <TableCell>
           <span style={{
             fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
-            background: "rgba(99,102,241,0.1)", color: "#6366f1",
+            background: "rgba(99,102,241,0.1)", color: "#065292",
             textTransform: "capitalize",
           }}>
             {(counselor.role || "counselor").replace('_', ' ')}
@@ -314,7 +314,7 @@ function CounselorRow({
               fontSize: 11, fontWeight: 600,
               display: "inline-flex", alignItems: "center", gap: 4,
               background: "transparent",
-              color: "var(--admin-accent-blue, #3b82f6)",
+              color: "var(--admin-accent-blue, #065292)",
               border: "1px solid var(--admin-border-default)",
               cursor: "pointer",
             }}
@@ -330,7 +330,7 @@ function CounselorRow({
           <TableCell colSpan={4} style={{ padding: 0 }}>
             <div style={{ padding: "16px 16px 16px 56px" }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-                <UserCheck style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #3b82f6)" }} />
+                <UserCheck style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #065292)" }} />
                 Current Caseload ({caseloadCount} students)
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -356,7 +356,7 @@ function CounselorRow({
                           {s.name?.slice(0, 2).toUpperCase()}
                         </div>
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-accent-blue, #3b82f6)", display: "flex", alignItems: "center", gap: 4 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-accent-blue, #065292)", display: "flex", alignItems: "center", gap: 4 }}>
                             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</span>
                             <ExternalLink style={{ width: 10, height: 10, flexShrink: 0, opacity: 0 }} className="group-hover:opacity-100 transition-opacity" />
                           </div>
@@ -380,7 +380,7 @@ function CounselorRow({
                           title="Reassign to another counselor"
                           style={{ width: 24, height: 24, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer" }}
                         >
-                          <ArrowRightLeft style={{ width: 12, height: 12, color: "var(--admin-accent-blue, #3b82f6)" }} />
+                          <ArrowRightLeft style={{ width: 12, height: 12, color: "var(--admin-accent-blue, #065292)" }} />
                         </button>
                         <button
                           onClick={() => handleUnassign(s.id)}
@@ -411,7 +411,7 @@ function CounselorRow({
           <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--admin-border-default)" }}>
             <DialogHeader>
               <DialogTitle style={{ fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-                <UserCheck style={{ width: 18, height: 18, color: "var(--admin-accent-blue, #3b82f6)" }} />
+                <UserCheck style={{ width: 18, height: 18, color: "var(--admin-accent-blue, #065292)" }} />
                 Assign Students to {counselor.name}
               </DialogTitle>
               <DialogDescription style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
@@ -461,7 +461,7 @@ function CounselorRow({
               </label>
               <span style={{
                 fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
-                background: "rgba(59,130,246,0.1)", color: "var(--admin-accent-blue, #3b82f6)",
+                background: "rgba(59,130,246,0.1)", color: "var(--admin-accent-blue, #065292)",
               }}>
                 {selected.size} total selected
               </span>
@@ -490,7 +490,7 @@ function CounselorRow({
                     style={{
                       display: "flex", alignItems: "center", gap: 10,
                       padding: "8px 10px", borderRadius: 6, cursor: "pointer",
-                      border: selected.has(s.id) ? "1px solid var(--admin-accent-blue, #3b82f6)" : "1px solid transparent",
+                      border: selected.has(s.id) ? "1px solid var(--admin-accent-blue, #065292)" : "1px solid transparent",
                       background: selected.has(s.id) ? "rgba(59,130,246,0.05)" : "transparent",
                     }}
                   >
@@ -549,7 +549,7 @@ function CounselorRow({
                 height: 36, borderRadius: 6, padding: "0 14px",
                 fontSize: 12, fontWeight: 600,
                 display: "flex", alignItems: "center", gap: 6,
-                background: "var(--admin-accent-blue, #3b82f6)", color: "#fff",
+                background: "var(--admin-accent-blue, #065292)", color: "#fff",
                 border: "none", cursor: "pointer",
                 opacity: (selected.size === 0 || assign.isPending) ? 0.6 : 1,
               }}
@@ -649,9 +649,9 @@ export function CounselorAssignPanel() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         {[
-          { label: "Counselors", value: allCounselors.length, icon: UserCheck, color: "#3b82f6" },
+          { label: "Counselors", value: allCounselors.length, icon: UserCheck, color: "#065292" },
           { label: "Total Students", value: totalStudents, icon: Users, color: "#6b7280" },
-          { label: "Avg Caseload", value: allCounselors.length > 0 ? Math.round(totalStudents / allCounselors.length) : 0, icon: BarChart3, color: "#6366f1" },
+          { label: "Avg Caseload", value: allCounselors.length > 0 ? Math.round(totalStudents / allCounselors.length) : 0, icon: BarChart3, color: "#065292" },
           { label: "Unassigned", value: "\u2014", sub: "Expand rows to view", icon: SortAsc, color: "#f59e0b" },
         ].map((stat) => (
           <div key={stat.label} style={{
@@ -688,7 +688,7 @@ export function CounselorAssignPanel() {
           flexWrap: "wrap",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Users style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #3b82f6)" }} />
+            <Users style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #065292)" }} />
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Counseling Department</div>
               <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Expand a counselor to view caseload. Click student names to view profiles. Hover for reassign/remove.</div>

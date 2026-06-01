@@ -41,8 +41,8 @@ interface BatchPrediction {
 
 const PREDICTION_COLORS: Record<string, { bg: string; text: string }> = {
   safety: { bg: "rgba(16,185,129,0.1)", text: "#10b981" },
-  likely: { bg: "rgba(59,130,246,0.1)", text: "#3b82f6" },
-  match: { bg: "rgba(99,102,241,0.1)", text: "#6366f1" },
+  likely: { bg: "rgba(59,130,246,0.1)", text: "#065292" },
+  match: { bg: "rgba(99,102,241,0.1)", text: "#065292" },
   competitive: { bg: "rgba(245,158,11,0.1)", text: "#f59e0b" },
   reach: { bg: "rgba(249,115,22,0.1)", text: "#f97316" },
   high_reach: { bg: "rgba(239,68,68,0.1)", text: "#ef4444" },
@@ -56,7 +56,7 @@ const CONFIDENCE_COLORS: Record<string, string> = {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   researching: { label: "Researching", color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
-  applying: { label: "Applying", color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
+  applying: { label: "Applying", color: "#065292", bg: "rgba(59,130,246,0.1)" },
   submitted: { label: "Submitted", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   accepted: { label: "Accepted", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
   rejected: { label: "Rejected", color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
@@ -225,7 +225,7 @@ export default function CollegeAppsPage() {
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
         {[
           { label: "TOTAL APPLICATIONS", value: totalApps, icon: GraduationCap, color: "var(--admin-font-primary)" },
-          { label: "SUBMITTED", value: submittedCount, icon: Send, color: "#3b82f6" },
+          { label: "SUBMITTED", value: submittedCount, icon: Send, color: "#065292" },
           { label: "ACCEPTED", value: acceptedCount, icon: CheckCircle2, color: "#10b981" },
           { label: "PENDING", value: pendingCount, icon: Clock, color: "#f59e0b" },
         ].map((stat) => (
@@ -273,7 +273,7 @@ export default function CollegeAppsPage() {
               style={{
                 height: 34, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600,
                 display: "flex", alignItems: "center", gap: 6,
-                background: "#6366f1", color: "#fff", border: "none", cursor: "pointer",
+                background: "#065292", color: "#fff", border: "none", cursor: "pointer",
               }}
             >
               <Plus style={{ width: 14, height: 14 }} />
@@ -389,7 +389,7 @@ export default function CollegeAppsPage() {
                   style={{
                     height: 34, borderRadius: 6, padding: "0 16px", fontSize: 12, fontWeight: 600,
                     display: "flex", alignItems: "center", gap: 4,
-                    background: "#6366f1", color: "#fff", border: "none", cursor: "pointer",
+                    background: "#065292", color: "#fff", border: "none", cursor: "pointer",
                     opacity: (addApp.isPending || !newApp.collegeName || !newApp.deadlineDate) ? 0.5 : 1,
                   }}
                 >

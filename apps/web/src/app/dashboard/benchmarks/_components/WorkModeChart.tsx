@@ -16,7 +16,7 @@ export default function WorkModeChart({ data, isLoading }: WorkModeChartProps) {
     return <Skeleton className="h-[300px] w-full rounded-lg" />;
   }
 
-  const COLORS = ['#10b981', '#3b82f6', '#f59e0b'];
+  const COLORS = ['#10b981', '#065292', '#f59e0b'];
 
   return (
     <div className="h-[300px] w-full">

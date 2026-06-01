@@ -128,7 +128,7 @@ export function GraduationPanel() {
           { label: "On Track", value: onTrack, icon: CheckCircle2, color: "#10b981" },
           { label: "At Risk", value: atRisk, icon: AlertTriangle, color: "#f59e0b" },
           { label: "Off Track", value: offTrack, icon: XCircle, color: "#ef4444" },
-          { label: "Avg Progress", value: `${avgProgress}%`, icon: TrendingUp, color: "#3b82f6" },
+          { label: "Avg Progress", value: `${avgProgress}%`, icon: TrendingUp, color: "#065292" },
         ].map((stat) => (
           <div key={stat.label} style={{
             padding: 16, borderRadius: 8, border: "1px solid var(--admin-border-default)",
@@ -153,7 +153,7 @@ export function GraduationPanel() {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(59,130,246,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <GraduationCap style={{ width: 16, height: 16, color: "#3b82f6" }} />
+              <GraduationCap style={{ width: 16, height: 16, color: "#065292" }} />
             </div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Graduation Requirements</div>
@@ -165,7 +165,7 @@ export function GraduationPanel() {
           <button onClick={() => setRuleDialogOpen(true)} style={{
             height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 6,
-            background: rules ? "var(--admin-bg-card)" : "#3b82f6",
+            background: rules ? "var(--admin-bg-card)" : "#065292",
             color: rules ? "var(--admin-font-primary)" : "#fff",
             border: rules ? "1px solid var(--admin-border-default)" : "none", cursor: "pointer",
           }}>
@@ -416,7 +416,7 @@ export function GraduationPanel() {
             <button onClick={handleSaveRules} disabled={createRules.isPending || updateRules.isPending} style={{
               height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600,
               display: "flex", alignItems: "center", gap: 6,
-              background: "#3b82f6", color: "#fff", border: "none", cursor: "pointer",
+              background: "#065292", color: "#fff", border: "none", cursor: "pointer",
               opacity: (createRules.isPending || updateRules.isPending) ? 0.6 : 1,
             }}>
               {(createRules.isPending || updateRules.isPending) && <Loader2 className="h-4 w-4 animate-spin" />}

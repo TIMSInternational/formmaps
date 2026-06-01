@@ -321,7 +321,7 @@ export default function CalendarPanel() {
               {safeHolidays.map((h) => (
                 <div key={h.id} style={{ padding: "8px 12px", borderRadius: 8, background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 4, height: 28, borderRadius: 2, background: h.type === "national" ? "#ef4444" : h.type === "school" ? "#3b82f6" : "#10b981" }} />
+                    <div style={{ width: 4, height: 28, borderRadius: 2, background: h.type === "national" ? "#ef4444" : h.type === "school" ? "#065292" : "#10b981" }} />
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{h.name}</div>
                       <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{new Date(h.date).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}</div>

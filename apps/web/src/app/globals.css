@@ -3,8 +3,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), sans-serif;
+  --font-sans: var(--font-poppins), var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-geist-mono);
+  --font-poppins: var(--font-poppins), sans-serif;
   --font-montserrat: var(--font-montserrat), sans-serif;
   --font-antonio: var(--font-antonio), sans-serif;
   --font-roboto: var(--font-roboto), sans-serif;
@@ -86,10 +87,10 @@
   --card-foreground: #0A0A0A;
   --popover: #FFFFFF;
   --popover-foreground: #0A0A0A;
-  --primary: #6366F1;
+  --primary: #065292;
   --primary-foreground: #FFFFFF;
   --secondary: #F0F0F3;
-  --secondary-foreground: #0A0A0A;
+  --secondary-foreground: #111111;
   --muted: #F0F0F3;
   --muted-foreground: #71717A;
   --accent: #F0F0F3;
@@ -97,20 +98,24 @@
   --destructive: #EF4444;
   --border: #D4D4D8;
   --input: #D4D4D8;
-  --ring: #6366F1;
-  --chart-1: #6366F1;
+  --ring: #065292;
+  --chart-1: #065292;
   --chart-2: #10B981;
-  --chart-3: #F59E0B;
+  --chart-3: #FFD600;
   --chart-4: #EF4444;
-  --chart-5: #8B5CF6;
+  --chart-5: #111111;
   --sidebar: #FAFAFA;
-  --sidebar-foreground: #0A0A0A;
-  --sidebar-primary: #6366F1;
+  --sidebar-foreground: #111111;
+  --sidebar-primary: #065292;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #F0F0F3;
-  --sidebar-accent-foreground: #0A0A0A;
+  --sidebar-accent-foreground: #111111;
   --sidebar-border: #D4D4D8;
-  --sidebar-ring: #6366F1;
+  --sidebar-ring: #065292;
+  --brand-blue: #065292;
+  --brand-yellow: #FFD600;
+  --brand-black: #111111;
+  --brand-white: #FFFFFF;
 }
 
 @layer base {
@@ -132,12 +137,12 @@
 
   /* Enhanced focus styles for keyboard accessibility */
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-indigo-500;
+    @apply outline-2 outline-offset-2 outline-[#065292];
   }
 
   /* Skip to main link styles */
   [href="#main-content"]:focus {
-    @apply not-sr-only fixed top-4 left-4 z-[9999] px-4 py-2 bg-indigo-600 text-white rounded-md;
+    @apply not-sr-only fixed top-4 left-4 z-[9999] px-4 py-2 bg-[#065292] text-white rounded-md;
   }
 
   /* Reduced motion preference */
@@ -214,7 +219,7 @@
   background: var(--admin-bg-hover, rgba(255,255,255,0.06));
 }
 [cmdk-input] {
-  caret-color: var(--admin-accent-blue, #3b82f6);
+  caret-color: var(--admin-accent-blue, #065292);
 }
 [cmdk-input]::placeholder {
   color: var(--admin-font-light, #555);

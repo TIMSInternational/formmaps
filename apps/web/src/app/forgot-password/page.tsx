@@ -122,7 +122,7 @@ export default function ForgotPasswordPage() {
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: "linear-gradient(135deg, #8b5a6b, #4a3040)",
+              background: "#065292",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

@@ -194,7 +194,7 @@ export default function MessagesPage() {
                         onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = active ? "var(--admin-bg-active)" : "transparent"; }}
                       >
-                        <div style={{ width: 36, height: 36, borderRadius: 18, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, background: active ? "linear-gradient(135deg, #6366f1, #4f46e5)" : "var(--admin-bg-hover)", color: active ? "#fff" : "var(--admin-font-tertiary)" }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 18, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, background: active ? "#065292" : "var(--admin-bg-hover)", color: active ? "#fff" : "var(--admin-font-tertiary)" }}>
                           {getInitials(conv.otherParticipant.name)}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -225,7 +225,7 @@ export default function MessagesPage() {
           {selectedConversation ? (
             <>
               <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--admin-border-light)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-                <div style={{ width: 34, height: 34, borderRadius: 17, background: "linear-gradient(135deg, #6366f1, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>
+                <div style={{ width: 34, height: 34, borderRadius: 17, background: "#065292", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>
                   {getInitials(selectedConversation.otherParticipant.name)}
                 </div>
                 <div style={{ flex: 1 }}>
@@ -265,7 +265,7 @@ export default function MessagesPage() {
                         <motion.div key={msg.id} initial={{ opacity: 0, y: 6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.15 }}
                           style={{ display: "flex", justifyContent: isOwn ? "flex-end" : "flex-start" }}>
                           <div style={{ maxWidth: "70%", display: "flex", flexDirection: "column", gap: 3, alignItems: isOwn ? "flex-end" : "flex-start" }}>
-                            <div style={{ padding: "10px 14px", fontSize: 13, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word", borderRadius: isOwn ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: isOwn ? "linear-gradient(135deg, #6366f1, #4f46e5)" : "var(--admin-bg-hover)", color: isOwn ? "#fff" : "var(--admin-font-primary)" }}>
+                            <div style={{ padding: "10px 14px", fontSize: 13, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word", borderRadius: isOwn ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: isOwn ? "#065292" : "var(--admin-bg-hover)", color: isOwn ? "#fff" : "var(--admin-font-primary)" }}>
                               {msg.content}
                             </div>
                             <span style={{ fontSize: 10, color: "var(--admin-font-light)", padding: "0 4px" }}>{formatTime(msg.createdDate)}</span>
@@ -284,7 +284,7 @@ export default function MessagesPage() {
                     placeholder="Type a message..." rows={1} disabled={sending}
                     style={{ flex: 1, resize: "none", border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit", lineHeight: 1.5, maxHeight: 120, overflowY: "auto", padding: "2px 0", fieldSizing: "content" } as React.CSSProperties} />
                   <button onClick={handleSend} disabled={!inputValue.trim() || sending}
-                    style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: inputValue.trim() ? "linear-gradient(135deg, #6366f1, #4f46e5)" : "var(--admin-bg-card)", color: inputValue.trim() ? "#fff" : "var(--admin-font-light)", border: "none", cursor: inputValue.trim() ? "pointer" : "default", transition: "all 0.15s" }}>
+                    style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: inputValue.trim() ? "#065292" : "var(--admin-bg-card)", color: inputValue.trim() ? "#fff" : "var(--admin-font-light)", border: "none", cursor: inputValue.trim() ? "pointer" : "default", transition: "all 0.15s" }}>
                     <Send style={{ width: 14, height: 14 }} />
                   </button>
                 </div>

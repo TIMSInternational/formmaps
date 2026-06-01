@@ -20,7 +20,7 @@ export function QuickStatsCard() {
       label: "Active Schools",
       value: (s?.activeSchools ?? s?.ActiveSchools)?.toLocaleString() || "—",
       icon: School,
-      color: "#3b82f6",
+      color: "#065292",
     },
     {
       label: "Total Coaches",
@@ -55,7 +55,7 @@ export function QuickStatsCard() {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
-        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3b82f6" }} />
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#065292" }} />
         <span
           style={{
             fontSize: 10,

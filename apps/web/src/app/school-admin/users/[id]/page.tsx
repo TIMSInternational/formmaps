@@ -202,7 +202,7 @@ export default function StudentDetailsPage() {
             height: 36, borderRadius: 6, padding: "0 16px",
             fontSize: 12, fontWeight: 600,
             display: "inline-flex", alignItems: "center", gap: 6,
-            background: "var(--admin-accent-blue, #3b82f6)", color: "#fff",
+            background: "var(--admin-accent-blue, #065292)", color: "#fff",
             border: "none", cursor: "pointer",
           }}
         >
@@ -217,7 +217,7 @@ export default function StudentDetailsPage() {
     const styles: Record<string, { bg: string; color: string }> = {
       active: { bg: "rgba(16,185,129,0.1)", color: "#10b981" },
       pending: { bg: "rgba(245,158,11,0.1)", color: "#f59e0b" },
-      accepted: { bg: "rgba(59,130,246,0.1)", color: "#3b82f6" },
+      accepted: { bg: "rgba(59,130,246,0.1)", color: "#065292" },
       inactive: { bg: "rgba(107,114,128,0.1)", color: "#6b7280" },
     };
     const s = styles[status] || styles.inactive;
@@ -269,7 +269,7 @@ export default function StudentDetailsPage() {
           cursor: "pointer",
         }}
       >
-        <ArrowLeft style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #3b82f6)" }} />
+        <ArrowLeft style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #065292)" }} />
         {t("schoolAdmin.students.backToList", "Back to Student Roster")}
       </button>
 
@@ -283,7 +283,7 @@ export default function StudentDetailsPage() {
           <AvatarImage src={student.avatar || ""} className="object-cover" />
           <AvatarFallback style={{
             borderRadius: "50%",
-            background: "linear-gradient(135deg, #6366f1, #4f46e5)",
+            background: "#065292",
             color: "#fff", fontSize: 36, fontWeight: 600,
           }}>
             {getInitials(student.name)}
@@ -339,9 +339,9 @@ export default function StudentDetailsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "GPA", value: gpaData?.gpaWeighted?.toFixed(2) ?? gpaData?.gpaUnweighted?.toFixed(2) ?? "\u2014", icon: Award, color: "#f59e0b" },
-          { label: "Credits", value: `${plan?.graduationProgress?.totalCreditsEarned ?? gpaData?.totalCredits ?? "0"} / ${plan?.graduationProgress?.totalCreditsRequired ?? "0"}`, icon: GraduationCap, color: "#6366f1" },
+          { label: "Credits", value: `${plan?.graduationProgress?.totalCreditsEarned ?? gpaData?.totalCredits ?? "0"} / ${plan?.graduationProgress?.totalCreditsRequired ?? "0"}`, icon: GraduationCap, color: "#065292" },
           { label: "Assessments", value: `${milCompleted + pcaCompleted + evalCompleted} / ${milTotal + pcaTotal + evalTotal}`, icon: FileText, color: "#14b8a6" },
-          { label: "Last Seen", value: student.lastActive ? format(new Date(student.lastActive), "MMM do") : "Never", icon: Activity, color: "#3b82f6" },
+          { label: "Last Seen", value: student.lastActive ? format(new Date(student.lastActive), "MMM do") : "Never", icon: Activity, color: "#065292" },
         ].map((stat) => (
           <div key={stat.label} style={{
             borderRadius: 8, border: "1px solid var(--admin-border-default)",
@@ -385,7 +385,7 @@ export default function StudentDetailsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Graduation Progress */}
             <Card>
-              <CardHeader icon={GraduationCap} color="#6366f1" title="Graduation Pathway" />
+              <CardHeader icon={GraduationCap} color="#065292" title="Graduation Pathway" />
               <div style={{ padding: 16 }}>
                 {plan?.graduationProgress ? (
                   <div className="space-y-4">
@@ -462,7 +462,7 @@ export default function StudentDetailsPage() {
               <CardHeader icon={TrendingUp} color="#14b8a6" title="Assessment Completion" />
               <div style={{ padding: 16 }} className="space-y-3">
                 {[
-                  { label: "MIL / LIA", completed: milCompleted, total: milTotal, color: "#6366f1" },
+                  { label: "MIL / LIA", completed: milCompleted, total: milTotal, color: "#065292" },
                   { label: "PCA Exams", completed: pcaCompleted, total: pcaTotal || 1, color: "#8b5cf6" },
                   { label: "360 Evaluations", completed: evalCompleted, total: evalTotal || 1, color: "#14b8a6" },
                 ].map((item) => {
@@ -507,7 +507,7 @@ export default function StudentDetailsPage() {
                         <span style={{
                           fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
                           background: g.isEvaluationCompleted ? "rgba(16,185,129,0.1)" : g.isTokenUsed ? "rgba(59,130,246,0.1)" : "rgba(245,158,11,0.1)",
-                          color: g.isEvaluationCompleted ? "#10b981" : g.isTokenUsed ? "#3b82f6" : "#f59e0b",
+                          color: g.isEvaluationCompleted ? "#10b981" : g.isTokenUsed ? "#065292" : "#f59e0b",
                           textTransform: "uppercase",
                         }}>
                           {g.isEvaluationCompleted ? "Completed" : g.isTokenUsed ? "In Progress" : "Pending"}
@@ -529,9 +529,9 @@ export default function StudentDetailsPage() {
         <TabsContent value="assessments" className="mt-4 space-y-4">
           {/* MIL / LIA Results */}
           <Card>
-            <CardHeader icon={Brain} color="#6366f1" title="MIL / LIA Cognitive Assessment" badge={
+            <CardHeader icon={Brain} color="#065292" title="MIL / LIA Cognitive Assessment" badge={
               milData ? (
-                <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(99,102,241,0.1)", color: "#6366f1", marginLeft: 4 }}>
+                <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(99,102,241,0.1)", color: "#065292", marginLeft: 4 }}>
                   {milData.completedExams}/{milData.totalExams} complete
                 </span>
               ) : null
@@ -542,7 +542,7 @@ export default function StudentDetailsPage() {
                   {/* Overall Score */}
                   <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
                     <div style={{ padding: "12px 16px", borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", textAlign: "center", minWidth: 100 }}>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: "#6366f1", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Overall Score</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: "#065292", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Overall Score</div>
                       <div style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)" }}>{milData.overallScore?.toFixed(0) ?? "\u2014"}%</div>
                     </div>
                     {milData.overallPercentile != null && (
@@ -565,7 +565,7 @@ export default function StudentDetailsPage() {
                                 {key.replace(/([A-Z])/g, " $1").trim()}
                               </div>
                               <div style={{ height: 4, borderRadius: 2, background: "var(--admin-bg-hover)", marginTop: 4, overflow: "hidden" }}>
-                                <div style={{ height: "100%", width: `${Math.min(Number(value) || 0, 100)}%`, borderRadius: 2, background: "#6366f1" }} />
+                                <div style={{ height: "100%", width: `${Math.min(Number(value) || 0, 100)}%`, borderRadius: 2, background: "#065292" }} />
                               </div>
                             </div>
                             <span style={{ fontSize: 13, fontWeight: 700, color: "var(--admin-font-primary)", minWidth: 35, textAlign: "right" }}>{Number(value)?.toFixed(0) ?? "\u2014"}</span>
@@ -599,7 +599,7 @@ export default function StudentDetailsPage() {
                             <span style={{
                               fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase",
                               background: exam.status === "completed" ? "rgba(16,185,129,0.1)" : exam.status === "in_progress" ? "rgba(59,130,246,0.1)" : "rgba(107,114,128,0.1)",
-                              color: exam.status === "completed" ? "#10b981" : exam.status === "in_progress" ? "#3b82f6" : "#6b7280",
+                              color: exam.status === "completed" ? "#10b981" : exam.status === "in_progress" ? "#065292" : "#6b7280",
                             }}>
                               {exam.status?.replace("_", " ")}
                             </span>
@@ -648,7 +648,7 @@ export default function StudentDetailsPage() {
                           { label: "D", value: graph.d, color: "#ef4444" },
                           { label: "I", value: graph.i, color: "#f59e0b" },
                           { label: "S", value: graph.s, color: "#10b981" },
-                          { label: "C", value: graph.c, color: "#3b82f6" },
+                          { label: "C", value: graph.c, color: "#065292" },
                         ].map((dim) => (
                           <div key={dim.label} style={{ textAlign: "center" }}>
                             <div style={{
@@ -845,7 +845,7 @@ export default function StudentDetailsPage() {
                       <span style={{
                         fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase",
                         background: gap.severity === "critical" ? "rgba(239,68,68,0.1)" : gap.severity === "warning" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
-                        color: gap.severity === "critical" ? "#ef4444" : gap.severity === "warning" ? "#f59e0b" : "#3b82f6",
+                        color: gap.severity === "critical" ? "#ef4444" : gap.severity === "warning" ? "#f59e0b" : "#065292",
                       }}>
                         {gap.severity}
                       </span>
@@ -880,7 +880,7 @@ export default function StudentDetailsPage() {
                             <span style={{
                               fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase",
                               background: rec.priority === "high" ? "rgba(239,68,68,0.1)" : rec.priority === "medium" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
-                              color: rec.priority === "high" ? "#ef4444" : rec.priority === "medium" ? "#f59e0b" : "#3b82f6",
+                              color: rec.priority === "high" ? "#ef4444" : rec.priority === "medium" ? "#f59e0b" : "#065292",
                             }}>
                               {rec.priority}
                             </span>
@@ -916,7 +916,7 @@ export default function StudentDetailsPage() {
           {/* Transcript */}
           {transcriptData?.grades && Object.keys(transcriptData.grades).length > 0 && (
             <Card>
-              <CardHeader icon={FileText} color="#3b82f6" title="Transcript" />
+              <CardHeader icon={FileText} color="#065292" title="Transcript" />
               <div style={{ padding: 16 }} className="space-y-4">
                 {Object.entries(transcriptData.grades).sort(([a], [b]) => b.localeCompare(a)).map(([year, courses]) => (
                   <div key={year}>
@@ -932,7 +932,7 @@ export default function StudentDetailsPage() {
                           <span style={{
                             fontWeight: 600,
                             color: c.grade === "A" || c.grade === "A+" || c.grade === "A-" ? "#10b981" :
-                              c.grade === "B" || c.grade === "B+" || c.grade === "B-" ? "#3b82f6" :
+                              c.grade === "B" || c.grade === "B+" || c.grade === "B-" ? "#065292" :
                               c.grade === "F" ? "#ef4444" : "var(--admin-font-primary)",
                           }}>
                             {c.grade || (c.status === "in_progress" ? "IP" : "\u2014")}
@@ -1005,7 +1005,7 @@ export default function StudentDetailsPage() {
                     width: "100%", height: 36, borderRadius: 6,
                     fontSize: 12, fontWeight: 600,
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                    background: "var(--admin-accent-blue, #3b82f6)", color: "#fff",
+                    background: "var(--admin-accent-blue, #065292)", color: "#fff",
                     border: "none", cursor: "pointer",
                     opacity: (!newNote.trim() || createNote.isPending) ? 0.6 : 1,
                   }}

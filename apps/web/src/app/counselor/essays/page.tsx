@@ -40,14 +40,14 @@ interface Comment {
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   draft: { label: "Draft", color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
   in_review: { label: "In Review", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-  revision: { label: "Revision", color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
+  revision: { label: "Revision", color: "#065292", bg: "rgba(59,130,246,0.1)" },
   final: { label: "Final", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
 };
 
 const TYPE_CONFIG: Record<string, { color: string; bg: string }> = {
   personal_statement: { color: "#8b5cf6", bg: "rgba(139,92,246,0.1)" },
-  supplemental: { color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
-  common_app: { color: "#6366f1", bg: "rgba(99,102,241,0.1)" },
+  supplemental: { color: "#065292", bg: "rgba(59,130,246,0.1)" },
+  common_app: { color: "#065292", bg: "rgba(99,102,241,0.1)" },
   coalition: { color: "#14b8a6", bg: "rgba(20,184,166,0.1)" },
   scholarship: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   other: { color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
@@ -361,7 +361,7 @@ export default function EssaysPage() {
                                     style={{
                                       height: 34, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600,
                                       display: "flex", alignItems: "center", gap: 4, alignSelf: "flex-end",
-                                      background: "#6366f1", color: "#fff", border: "none", cursor: "pointer",
+                                      background: "#065292", color: "#fff", border: "none", cursor: "pointer",
                                       opacity: (addComment.isPending || !newComment.trim()) ? 0.5 : 1,
                                     }}
                                   >

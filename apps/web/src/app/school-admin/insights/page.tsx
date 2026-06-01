@@ -43,7 +43,7 @@ export default function AIInsightsPage() {
         <button onClick={() => refetch()} disabled={isFetching} style={{
           height: 36, borderRadius: 8, padding: "0 18px", fontSize: 13, fontWeight: 600,
           display: "flex", alignItems: "center", gap: 6,
-          background: isFetching ? "var(--admin-bg-hover)" : "linear-gradient(135deg, #8b5cf6, #6366f1)",
+          background: isFetching ? "var(--admin-bg-hover)" : "linear-gradient(135deg, #8b5cf6, #065292)",
           color: isFetching ? "var(--admin-font-tertiary)" : "#fff",
           border: isFetching ? "1px solid var(--admin-border-default)" : "none", cursor: isFetching ? "wait" : "pointer",
         }}>
@@ -81,7 +81,7 @@ export default function AIInsightsPage() {
           {/* Key Metrics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: "Students", value: metrics.totalStudents || 0, icon: Users, color: "#3b82f6" },
+              { label: "Students", value: metrics.totalStudents || 0, icon: Users, color: "#065292" },
               { label: "Avg GPA", value: metrics.avgGPA || "—", icon: GraduationCap, color: "#10b981" },
               { label: "MIL Completed", value: `${metrics.milCompleted || 0}/${metrics.totalStudents || 0}`, icon: Brain, color: "#8b5cf6", sub: metrics.milAvg ? `Avg: ${metrics.milAvg}%` : undefined },
               { label: "360° Done", value: `${metrics.evalCompleted || 0}/${metrics.totalStudents || 0}`, icon: Target, color: "#f59e0b" },
@@ -111,7 +111,7 @@ export default function AIInsightsPage() {
               </div>
               <div style={{ padding: 16 }} className="space-y-3">
                 {urgentActions.map((a: any, i: number) => {
-                  const color = a.impact === "high" ? "#ef4444" : a.impact === "medium" ? "#f59e0b" : "#3b82f6";
+                  const color = a.impact === "high" ? "#ef4444" : a.impact === "medium" ? "#f59e0b" : "#065292";
                   return (
                     <div key={i} style={{ padding: "14px 16px", borderRadius: 8, borderLeft: `3px solid ${color}`, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -132,7 +132,7 @@ export default function AIInsightsPage() {
             <div style={{ borderRadius: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
               <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(59,130,246,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Lightbulb style={{ width: 16, height: 16, color: "#3b82f6" }} />
+                  <Lightbulb style={{ width: 16, height: 16, color: "#065292" }} />
                 </div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Key Insights</div>
@@ -143,7 +143,7 @@ export default function AIInsightsPage() {
                 {insights.length === 0 ? (
                   <div style={{ textAlign: "center", padding: 24, color: "var(--admin-font-tertiary)", fontSize: 12 }}>No insights available</div>
                 ) : insights.map((ins: any, i: number) => {
-                  const catColor: Record<string, string> = { academic: "#10b981", assessment: "#8b5cf6", graduation: "#3b82f6", staffing: "#f59e0b", engagement: "#ef4444" };
+                  const catColor: Record<string, string> = { academic: "#10b981", assessment: "#8b5cf6", graduation: "#065292", staffing: "#f59e0b", engagement: "#ef4444" };
                   return (
                     <div key={i} style={{ padding: "12px 14px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
@@ -201,7 +201,7 @@ export default function AIInsightsPage() {
               </div>
               <div style={{ padding: 16 }} className="space-y-3">
                 {recommendations.map((rec: any, i: number) => {
-                  const catColor: Record<string, string> = { course_offering: "#10b981", staffing: "#3b82f6", assessment: "#8b5cf6", academic: "#f59e0b" };
+                  const catColor: Record<string, string> = { course_offering: "#10b981", staffing: "#065292", assessment: "#8b5cf6", academic: "#f59e0b" };
                   const catIcon: Record<string, any> = { course_offering: BookOpen, staffing: Users, assessment: Target, academic: GraduationCap };
                   const Icon = catIcon[rec.category] || Lightbulb;
                   return (

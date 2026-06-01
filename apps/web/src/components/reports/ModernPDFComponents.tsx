@@ -24,7 +24,7 @@ const primaryFontBold = 'Helvetica-Bold';
 
 // Color Palette - Extended for Richer UI
 export const modernColors = {
-  primary: '#4f46e5', // Vibrant Indigo - New Core Brand Color
+  primary: '#065292', // Vibrant Indigo - New Core Brand Color
   secondary: '#ec4899', // Vibrant Pink
   accent: '#8b5cf6', // Vibrant Violet
   dark: '#0f172a', // Slate 900
@@ -314,8 +314,8 @@ export const DarkEditorialLayout = ({
      <Svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
          <Defs>
             <RadialGradient id="pageGlow" cx="50%" cy="0%" r="80%">
-                <Stop offset="0%" stopColor="#4f46e5" stopOpacity="0.05" />
-                <Stop offset="100%" stopColor="#4f46e5" stopOpacity="0" />
+                <Stop offset="0%" stopColor="#065292" stopOpacity="0.05" />
+                <Stop offset="100%" stopColor="#065292" stopOpacity="0" />
             </RadialGradient>
          </Defs>
          <Rect width="100%" height="100%" fill="url(#pageGlow)" />

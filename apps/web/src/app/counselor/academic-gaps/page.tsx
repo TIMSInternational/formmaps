@@ -83,7 +83,7 @@ function Skeleton({ width, height, radius = 10 }: { width?: string | number; hei
 
 // ── Mini progress bar ───────────────────────────────────────────────
 
-function MiniBar({ earned, required, color = "#6366f1", height = 4 }: {
+function MiniBar({ earned, required, color = "#065292", height = 4 }: {
   earned: number; required: number; color?: string; height?: number;
 }) {
   const pct = required > 0 ? Math.min(100, (earned / required) * 100) : 0;
@@ -159,7 +159,7 @@ function GapCategoryCard({ gap, recommendations, index }: {
                 onClick={() => setExpanded(!expanded)}
                 style={{
                   marginTop: 10, display: "flex", alignItems: "center", gap: 4,
-                  fontSize: 11, fontWeight: 600, color: "#6366f1",
+                  fontSize: 11, fontWeight: 600, color: "#065292",
                   background: "none", border: "none", cursor: "pointer", padding: 0,
                 }}
               >
@@ -183,7 +183,7 @@ function GapCategoryCard({ gap, recommendations, index }: {
                           background: "var(--admin-bg-hover, rgba(0,0,0,0.03))",
                           border: "1px solid var(--admin-border-default, rgba(0,0,0,0.06))",
                         }}>
-                          <BookOpen style={{ width: 13, height: 13, color: "#6366f1", flexShrink: 0 }} />
+                          <BookOpen style={{ width: 13, height: 13, color: "#065292", flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary, #111)" }}>
                               {r.courseName}
@@ -193,7 +193,7 @@ function GapCategoryCard({ gap, recommendations, index }: {
                             </span>
                           </div>
                           <span style={{
-                            fontSize: 10, fontWeight: 700, color: "#6366f1",
+                            fontSize: 10, fontWeight: 700, color: "#065292",
                             background: "rgba(99,102,241,0.1)", padding: "2px 6px", borderRadius: 4,
                             flexShrink: 0,
                           }}>
@@ -261,7 +261,7 @@ export default function AcademicGapsPage() {
       {/* ── Summary Stat Cards ── */}
       {summary && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-          <StatCard label="Total Students" value={summary.summary?.totalStudents ?? 0} color="#6366f1" icon={Users} delay={0.05} />
+          <StatCard label="Total Students" value={summary.summary?.totalStudents ?? 0} color="#065292" icon={Users} delay={0.05} />
           <StatCard label="Behind" value={summary.summary?.behind ?? 0} color="#ef4444" icon={AlertCircle} delay={0.1} />
           <StatCard label="At Risk" value={summary.summary?.atRisk ?? 0} color="#f59e0b" icon={AlertTriangle} delay={0.15} />
           <StatCard label="On Track" value={summary.summary?.onTrack ?? 0} color="#10b981" icon={CheckCircle2} delay={0.2} />
@@ -291,7 +291,7 @@ export default function AcademicGapsPage() {
           {/* Header + search */}
           <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid var(--admin-border-default, rgba(0,0,0,0.08))" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-              <Layers style={{ width: 14, height: 14, color: "#6366f1" }} />
+              <Layers style={{ width: 14, height: 14, color: "#065292" }} />
               <span style={{ fontSize: 12, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>Needs Review</span>
               <span style={{
                 fontSize: 10, fontWeight: 600, marginLeft: "auto",
@@ -349,7 +349,7 @@ export default function AcademicGapsPage() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{
                         width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-                        background: isSelected ? "#6366f1" : "var(--admin-bg-hover, rgba(0,0,0,0.05))",
+                        background: isSelected ? "#065292" : "var(--admin-bg-hover, rgba(0,0,0,0.05))",
                         color: isSelected ? "#fff" : "var(--admin-font-primary, #111)",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 10, fontWeight: 700,
@@ -359,7 +359,7 @@ export default function AcademicGapsPage() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{
                           fontSize: 12, fontWeight: 600, margin: 0,
-                          color: isSelected ? "#6366f1" : "var(--admin-font-primary, #111)",
+                          color: isSelected ? "#065292" : "var(--admin-font-primary, #111)",
                           overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const,
                         }}>
                           {s.studentName}
@@ -479,7 +479,7 @@ export default function AcademicGapsPage() {
                       <MiniBar
                         earned={(gaps as any).creditsEarned}
                         required={(gaps as any).creditsRequired}
-                        color="#6366f1"
+                        color="#065292"
                         height={8}
                       />
                     )}
@@ -735,7 +735,7 @@ export default function AcademicGapsPage() {
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                                 <span style={{
-                                  fontSize: 10, fontWeight: 700, color: "#6366f1",
+                                  fontSize: 10, fontWeight: 700, color: "#065292",
                                   background: "rgba(99,102,241,0.1)", padding: "2px 7px", borderRadius: 4,
                                 }}>
                                   {r.credits} cr

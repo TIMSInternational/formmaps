@@ -4,7 +4,7 @@ import { memo, useState, useMemo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Play, Plus } from "lucide-react";
 
-const ACCENT = "#3b82f6";
+const ACCENT = "#065292";
 
 function TriggerNodeComponent({ id, data, selected }: NodeProps) {
   const [isHovered, setIsHovered] = useState(false);

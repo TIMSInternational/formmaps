@@ -12,7 +12,7 @@
 
 /* ── Theme Scope ── */
 .admin-twenty {
-  font-family: Inter, -apple-system, system-ui, sans-serif;
+  font-family: var(--font-poppins), Poppins, Inter, -apple-system, system-ui, sans-serif;
   font-size: 13px;
   color: var(--admin-font-primary);
 
@@ -74,7 +74,7 @@
 .admin-twenty .bg-green-50,
 .admin-twenty .bg-green-50\/50 { background: var(--admin-accent-bg-green, rgba(16,185,129,0.1)) !important; }
 .admin-twenty .bg-blue-50,
-.admin-twenty .bg-blue-50\/50 { background: var(--admin-accent-bg-blue, rgba(59,130,246,0.1)) !important; }
+.admin-twenty .bg-blue-50\/50 { background: var(--admin-accent-bg-blue, rgba(6,82,146,0.1)) !important; }
 .admin-twenty .bg-purple-50\/50 { background: var(--admin-accent-bg-purple, rgba(139,92,246,0.1)) !important; }
 .admin-twenty .bg-orange-50\/50 { background: var(--admin-accent-bg-orange, rgba(249,115,22,0.1)) !important; }
 .admin-twenty .bg-emerald-50 { background: var(--admin-accent-bg-green, rgba(16,185,129,0.1)) !important; }
@@ -83,7 +83,7 @@
 
 /* Colored borders */
 .admin-twenty .border-blue-100,
-.admin-twenty .border-blue-200 { border-color: var(--admin-accent-border-blue, rgba(59,130,246,0.15)) !important; }
+.admin-twenty .border-blue-200 { border-color: var(--admin-accent-border-blue, rgba(6,82,146,0.15)) !important; }
 .admin-twenty .border-green-100 { border-color: var(--admin-accent-border-green, rgba(16,185,129,0.15)) !important; }
 .admin-twenty .border-purple-100 { border-color: var(--admin-accent-border-purple, rgba(139,92,246,0.15)) !important; }
 .admin-twenty .border-orange-100 { border-color: var(--admin-accent-border-orange, rgba(249,115,22,0.15)) !important; }

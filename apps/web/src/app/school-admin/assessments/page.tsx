@@ -104,7 +104,7 @@ function InsightsCard({ insights, onRefresh, isRefreshing }: {
 
       {/* Metric chips */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        <MetricChip label="Students" value={agg.totalStudents} color="#3b82f6" />
+        <MetricChip label="Students" value={agg.totalStudents} color="#065292" />
         <MetricChip label="Profiles" value={agg.profilesComplete} color="#10b981" />
         <MetricChip label="360° Reviews" value={agg.eval360Count} color="#f59e0b" />
         {Object.entries(agg.pcaAverages).map(([k, v]) => (
@@ -206,7 +206,7 @@ function ScheduleGrid({ schedules, onSave, isSaving }: {
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Calendar style={{ width: 16, height: 16, color: "#3b82f6" }} />
+          <Calendar style={{ width: 16, height: 16, color: "#065292" }} />
           <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Assessment Schedule</span>
         </div>
         <button
@@ -214,7 +214,7 @@ function ScheduleGrid({ schedules, onSave, isSaving }: {
           disabled={isSaving || !dirty}
           style={{
             height: 30, borderRadius: 6, padding: "0 14px", fontSize: 11, fontWeight: 600,
-            background: dirty ? "#3b82f6" : "var(--admin-bg-hover)",
+            background: dirty ? "#065292" : "var(--admin-bg-hover)",
             color: dirty ? "#fff" : "var(--admin-font-tertiary)",
             border: dirty ? "none" : "1px solid var(--admin-border-default)",
             cursor: dirty ? "pointer" : "default",
@@ -320,7 +320,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
         <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--admin-border-default)" }}>
           <DialogHeader>
             <DialogTitle style={{ fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-              <Brain style={{ width: 18, height: 18, color: "#6366f1" }} />
+              <Brain style={{ width: 18, height: 18, color: "#065292" }} />
               {student.name}
             </DialogTitle>
             <DialogDescription style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
@@ -337,7 +337,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
               <span style={{ fontSize: 12, fontWeight: 700, color: overallPct === 100 ? "#10b981" : "var(--admin-font-primary)" }}>{overallPct}%</span>
             </div>
             <div style={{ height: 6, borderRadius: 3, background: "var(--admin-bg-card)", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${overallPct}%`, borderRadius: 3, background: overallPct === 100 ? "#10b981" : "#3b82f6", transition: "width 0.3s" }} />
+              <div style={{ height: "100%", width: `${overallPct}%`, borderRadius: 3, background: overallPct === 100 ? "#10b981" : "#065292", transition: "width 0.3s" }} />
             </div>
           </div>
 
@@ -423,7 +423,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
               height: 36, borderRadius: 6, padding: "0 14px",
               fontSize: 12, fontWeight: 600,
               display: "flex", alignItems: "center", gap: 6,
-              background: "var(--admin-accent-blue, #3b82f6)", color: "#fff",
+              background: "var(--admin-accent-blue, #065292)", color: "#fff",
               border: "none", cursor: "pointer", textDecoration: "none",
             }}
           >
@@ -543,7 +543,7 @@ function PipelineTable({ pipeline, onSendReminders, onSetup360, isSendingReminde
                 style={{
                   height: 30, borderRadius: 6, padding: "0 12px", fontSize: 11, fontWeight: 600,
                   display: "flex", alignItems: "center", gap: 4,
-                  background: "#3b82f6", color: "#fff", border: "none", cursor: "pointer",
+                  background: "#065292", color: "#fff", border: "none", cursor: "pointer",
                 }}
               >
                 {isSendingReminders ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 12, height: 12 }} />}
@@ -576,7 +576,7 @@ function PipelineTable({ pipeline, onSendReminders, onSetup360, isSendingReminde
                   type="checkbox"
                   checked={filtered.length > 0 && selected.size === filtered.length}
                   onChange={toggleAll}
-                  style={{ accentColor: "#3b82f6" }}
+                  style={{ accentColor: "#065292" }}
                 />
               </th>
               <th style={{ ...thStyle, textAlign: "left" }}>Student</th>
@@ -602,11 +602,11 @@ function PipelineTable({ pipeline, onSendReminders, onSetup360, isSendingReminde
                     type="checkbox"
                     checked={selected.has(s.id)}
                     onChange={() => toggle(s.id)}
-                    style={{ accentColor: "#3b82f6" }}
+                    style={{ accentColor: "#065292" }}
                   />
                 </td>
                 <td style={{ padding: "6px 10px" }}>
-                  <div style={{ fontWeight: 500, color: "var(--admin-accent-blue, #3b82f6)" }}>{s.name}</div>
+                  <div style={{ fontWeight: 500, color: "var(--admin-accent-blue, #065292)" }}>{s.name}</div>
                   <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{s.email}</div>
                 </td>
                 <td style={{ padding: "6px 10px", textAlign: "center", color: "var(--admin-font-secondary)" }}>

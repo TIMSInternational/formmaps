@@ -438,7 +438,7 @@ function BuilderInner() {
         }}>
           <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid var(--admin-border-default)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <BookOpen style={{ width: 16, height: 16, color: "var(--admin-accent-blue, #3b82f6)" }} />
+              <BookOpen style={{ width: 16, height: 16, color: "var(--admin-accent-blue, #065292)" }} />
               <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Course Library</span>
             </div>
             <div className="space-y-2">
@@ -577,7 +577,7 @@ function BuilderInner() {
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <div style={{
                     width: 26, height: 26, borderRadius: 6,
-                    background: "var(--admin-accent-blue, #3b82f6)",
+                    background: "var(--admin-accent-blue, #065292)",
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
                     <Network style={{ width: 14, height: 14, color: "#fff" }} />
@@ -589,7 +589,7 @@ function BuilderInner() {
                       color: "var(--admin-font-primary)", borderRadius: 6,
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "var(--admin-accent-blue, #3b82f6)";
+                      e.currentTarget.style.borderColor = "var(--admin-accent-blue, #065292)";
                       e.currentTarget.style.background = "var(--admin-bg-hover)";
                     }}
                     onBlur={(e) => {
@@ -603,7 +603,7 @@ function BuilderInner() {
                   style={{
                     height: 32, borderRadius: 6, padding: "0 14px",
                     display: "flex", alignItems: "center", gap: 6,
-                    background: "var(--admin-accent-blue, #3b82f6)", color: "#fff", border: "none",
+                    background: "var(--admin-accent-blue, #065292)", color: "#fff", border: "none",
                     cursor: "pointer", fontSize: 12, fontWeight: 600,
                     opacity: saving ? 0.7 : 1,
                   }}>
@@ -661,7 +661,7 @@ function BuilderInner() {
                     display: "flex", alignItems: "center", justifyContent: "center",
                     margin: "0 auto 12px",
                   }}>
-                    <Network style={{ width: 24, height: 24, color: "var(--admin-accent-blue, #3b82f6)" }} />
+                    <Network style={{ width: 24, height: 24, color: "var(--admin-accent-blue, #065292)" }} />
                   </div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 6 }}>
                     Empty Sequence Map

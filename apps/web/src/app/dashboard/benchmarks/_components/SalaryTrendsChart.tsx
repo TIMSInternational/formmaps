@@ -48,8 +48,8 @@ export default function SalaryTrendsChart({ data, isLoading }: SalaryTrendsChart
         >
           <defs>
             <linearGradient id="colorAvg" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.9} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.6} />
+              <stop offset="5%" stopColor="#065292" stopOpacity={0.9} />
+              <stop offset="95%" stopColor="#065292" stopOpacity={0.6} />
             </linearGradient>
             <linearGradient id="colorMin" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.8} />

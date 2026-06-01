@@ -162,7 +162,7 @@ export function CoachSidebar() {
       width: collapsed ? COLLAPSED_W : EXPANDED_W,
       height: "100%", display: "flex", flexDirection: "column", flexShrink: 0,
       background: "transparent",
-      fontFamily: "Inter, -apple-system, system-ui, sans-serif",
+      fontFamily: "var(--font-poppins), Poppins, Inter, -apple-system, system-ui, sans-serif",
       fontSize: 13, userSelect: "none", overflow: "hidden",
       transition: "width 0.2s ease", position: "relative",
     }}>

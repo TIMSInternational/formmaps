@@ -34,7 +34,7 @@ export function MilestonesSection() {
               cy="64"
               r="56"
               fill="transparent"
-              stroke="#3b82f6"
+              stroke="#065292"
               strokeWidth="8"
               strokeDasharray={`${2 * Math.PI * 56}`}
               strokeDashoffset={`${2 * Math.PI * 56 * (1 - 0.45)}`}

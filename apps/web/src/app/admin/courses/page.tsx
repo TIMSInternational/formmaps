@@ -185,7 +185,7 @@ export default function CoursesPage() {
 
             {/* Sample from Catalog */}
             <div style={{ ...s, padding: 20 }}>
-                <h3 style={hdr}><BookOpen style={{ width: 14, height: 14, color: "#3b82f6" }} /> Sample from Catalog</h3>
+                <h3 style={hdr}><BookOpen style={{ width: 14, height: 14, color: "#065292" }} /> Sample from Catalog</h3>
                 <p className="text-[11px] mb-3" style={{ color: "var(--admin-font-tertiary)" }}>
                     A snapshot of courses available to students — all {allCourses.length} are used by the AI recommendation engine
                 </p>

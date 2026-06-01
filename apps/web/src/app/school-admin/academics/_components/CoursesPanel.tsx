@@ -173,7 +173,7 @@ export function CoursesPanel() {
           </button>
           <button onClick={() => aiFileRef.current?.click()} disabled={aiImporting} style={{
             height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
-            background: "linear-gradient(135deg, #8b5cf6, #6366f1)", color: "#fff", border: "none", cursor: aiImporting ? "wait" : "pointer",
+            background: "linear-gradient(135deg, #8b5cf6, #065292)", color: "#fff", border: "none", cursor: aiImporting ? "wait" : "pointer",
             opacity: aiImporting ? 0.7 : 1,
           }}>
             {aiImporting ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Sparkles style={{ width: 14, height: 14 }} />}
@@ -262,7 +262,7 @@ export function CoursesPanel() {
                 <TableCell className="py-3 px-4"><Badge variant="outline" className="text-xs" style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)" }}>{c.department || "\u2014"}</Badge></TableCell>
                 <TableCell className="py-3 px-4 text-center" style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{c.credits}</TableCell>
                 <TableCell className="py-3 px-4">
-                  {c.frameworkType ? <Badge className="text-xs" style={{ background: "rgba(59,130,246,0.1)", color: "#3b82f6", border: "none" }}>{c.frameworkType}</Badge> : <span style={{ color: "var(--admin-font-tertiary)" }}>{"\u2014"}</span>}
+                  {c.frameworkType ? <Badge className="text-xs" style={{ background: "rgba(59,130,246,0.1)", color: "#065292", border: "none" }}>{c.frameworkType}</Badge> : <span style={{ color: "var(--admin-font-tertiary)" }}>{"\u2014"}</span>}
                 </TableCell>
                 <TableCell className="py-3 px-4">
                   <Badge className="text-xs font-medium shadow-none border-0" style={{ background: c.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(107,114,128,0.1)", color: c.status === "active" ? "#10b981" : "#6b7280" }}>{c.status || "active"}</Badge>
@@ -305,7 +305,7 @@ export function CoursesPanel() {
                 <div style={{ padding: "28px 28px 20px", background: "linear-gradient(135deg, rgba(20,184,166,0.08), rgba(59,130,246,0.06))", borderBottom: "1px solid var(--admin-border-default)" }}>
                   <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
                     <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", border: "1px solid var(--admin-border-default)" }}>{selectedCourse.code}</span>
-                    {selectedCourse.frameworkType && <Badge style={{ fontSize: 10, background: "rgba(59,130,246,0.15)", color: "#3b82f6", border: "none" }}>{selectedCourse.frameworkType}</Badge>}
+                    {selectedCourse.frameworkType && <Badge style={{ fontSize: 10, background: "rgba(59,130,246,0.15)", color: "#065292", border: "none" }}>{selectedCourse.frameworkType}</Badge>}
                     {selectedCourse.isHonors && <Badge style={{ fontSize: 10, background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "none" }}>Honors</Badge>}
                     <Badge style={{ fontSize: 10, background: selectedCourse.status === "active" ? "rgba(16,185,129,0.15)" : "rgba(107,114,128,0.15)", color: selectedCourse.status === "active" ? "#10b981" : "#6b7280", border: "none" }}>{selectedCourse.status || "active"}</Badge>
                   </div>
@@ -394,7 +394,7 @@ export function CoursesPanel() {
                                       </div>
                                       <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                                         {p.isHonors && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>Honors</span>}
-                                        {p.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}>{p.frameworkType}</span>}
+                                        {p.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "#065292" }}>{p.frameworkType}</span>}
                                         {Number(p.credits) > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>{p.credits} cr</span>}
                                       </div>
                                     </div>
@@ -442,7 +442,7 @@ export function CoursesPanel() {
                       });
                     }} style={{
                       flex: 1, height: 40, borderRadius: 8, fontSize: 13, fontWeight: 600,
-                      background: "var(--admin-accent-blue, #3b82f6)", color: "#fff", border: "none", cursor: "pointer",
+                      background: "var(--admin-accent-blue, #065292)", color: "#fff", border: "none", cursor: "pointer",
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                     }}>
                       <Save style={{ width: 14, height: 14 }} /> Edit Course
@@ -605,7 +605,7 @@ export function CoursesPanel() {
                           <TableCell style={{ fontSize: 12, color: c.maxEnrollment ? "var(--admin-font-primary)" : "var(--admin-font-tertiary)", textAlign: "center" }}>{c.maxEnrollment || "—"}</TableCell>
                           <TableCell>
                             {c.frameworkType ? (
-                              <Badge style={{ fontSize: 10, background: c.frameworkType === "AP" ? "#3b82f620" : c.frameworkType === "IB" ? "#8b5cf620" : "#14b8a620", color: c.frameworkType === "AP" ? "#3b82f6" : c.frameworkType === "IB" ? "#8b5cf6" : "#14b8a6", border: "none" }}>
+                              <Badge style={{ fontSize: 10, background: c.frameworkType === "AP" ? "#06529220" : c.frameworkType === "IB" ? "#8b5cf620" : "#14b8a620", color: c.frameworkType === "AP" ? "#065292" : c.frameworkType === "IB" ? "#8b5cf6" : "#14b8a6", border: "none" }}>
                                 {c.frameworkType}
                               </Badge>
                             ) : (

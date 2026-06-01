@@ -22,13 +22,13 @@ function resolveIsDark(mode: ThemeMode): boolean {
   if (typeof window !== "undefined") {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   }
-  return true;
+  return false;
 }
 
 export function AdminThemeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>(() => {
-    if (typeof window === "undefined") return "dark";
-    return (localStorage.getItem(STORAGE_KEY) as ThemeMode) || "dark";
+    if (typeof window === "undefined") return "light";
+    return (localStorage.getItem(STORAGE_KEY) as ThemeMode) || "light";
   });
 
   const isDark = resolveIsDark(mode);

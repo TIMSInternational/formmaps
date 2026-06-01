@@ -72,7 +72,7 @@ function EditableEdgeComponent({
 
   // Three states: default → hover → selected (mirrors Twenty)
   const stroke = selected
-    ? "var(--admin-accent-blue, #3b82f6)"
+    ? "var(--admin-accent-blue, #065292)"
     : isHovered
       ? "var(--admin-font-light, #555)"
       : "var(--admin-border-default)";

@@ -48,13 +48,13 @@ const priorityBadge: Record<AlertPriority, { bg: string; color: string }> = {
   critical: { bg: "rgba(239,68,68,0.1)", color: "#ef4444" },
   high: { bg: "rgba(245,158,11,0.1)", color: "#f59e0b" },
   medium: { bg: "rgba(234,179,8,0.1)", color: "#eab308" },
-  low: { bg: "rgba(59,130,246,0.1)", color: "#3b82f6" },
+  low: { bg: "rgba(59,130,246,0.1)", color: "#065292" },
 };
 
 const typeIcons: Record<AlertType, React.ReactNode> = {
   grade_drop: <TrendingDown className="h-3.5 w-3.5" style={{ color: "#ef4444" }} />,
   missing_assessment: <AlertCircle className="h-3.5 w-3.5" style={{ color: "#f59e0b" }} />,
-  credit_gap: <MapPin className="h-3.5 w-3.5" style={{ color: "#3b82f6" }} />,
+  credit_gap: <MapPin className="h-3.5 w-3.5" style={{ color: "#065292" }} />,
   no_career_path: <AlertTriangle className="h-3.5 w-3.5" style={{ color: "#eab308" }} />,
   inactive: <Info className="h-3.5 w-3.5" style={{ color: "var(--admin-font-tertiary)" }} />,
 };
@@ -227,7 +227,7 @@ export default function AlertsPanel() {
         }}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3" style={{ marginBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Bell style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #3b82f6)" }} />
+              <Bell style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #065292)" }} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Alert Inbox</div>
                 <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Manage and resolve system-detected issues and warnings.</div>
@@ -386,7 +386,7 @@ export default function AlertsPanel() {
                       {a.status === "active" ? (
                         <span style={{
                           fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
-                          background: "rgba(99,102,241,0.1)", color: "#6366f1",
+                          background: "rgba(99,102,241,0.1)", color: "#065292",
                         }}>
                           Action Req.
                         </span>
@@ -465,7 +465,7 @@ export default function AlertsPanel() {
                       width: 28, height: 28, borderRadius: 4,
                       display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: 11, fontWeight: 600, cursor: "pointer",
-                      background: page === pageNum ? "var(--admin-accent-blue, #3b82f6)" : "var(--admin-bg-card)",
+                      background: page === pageNum ? "var(--admin-accent-blue, #065292)" : "var(--admin-bg-card)",
                       color: page === pageNum ? "#fff" : "var(--admin-font-primary)",
                       border: page === pageNum ? "none" : "1px solid var(--admin-border-default)",
                     }}

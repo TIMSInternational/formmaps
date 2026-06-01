@@ -156,7 +156,7 @@ export default function StudentGapAnalysisPage() {
           <button onClick={() => generateRecs()} disabled={aiLoading} style={{
             height: 44, borderRadius: 8, padding: "0 28px", fontSize: 14, fontWeight: 600,
             display: "inline-flex", alignItems: "center", gap: 8,
-            background: "linear-gradient(135deg, #8b5cf6, #6366f1)", color: "#fff",
+            background: "linear-gradient(135deg, #8b5cf6, #065292)", color: "#fff",
             border: "none", cursor: aiLoading ? "wait" : "pointer",
             opacity: aiLoading ? 0.7 : 1,
           }}>
@@ -204,7 +204,7 @@ export default function StudentGapAnalysisPage() {
                 background: si === 0 ? "rgba(59,130,246,0.1)" : "var(--admin-bg-card)",
                 border: "1px solid var(--admin-border-default)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 12, fontWeight: 700, color: si === 0 ? "#3b82f6" : "var(--admin-font-tertiary)",
+                fontSize: 12, fontWeight: 700, color: si === 0 ? "#065292" : "var(--admin-font-tertiary)",
               }}>{si + 1}</div>
               <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{sem.label}</span>
             </div>
@@ -213,7 +213,7 @@ export default function StudentGapAnalysisPage() {
 
           <div style={{ padding: 16 }} className="space-y-3">
             {sem.courses.map((course: any) => {
-              const priorityColor = course.priority === "critical" ? "#ef4444" : course.priority === "recommended" ? "#f59e0b" : "#3b82f6";
+              const priorityColor = course.priority === "critical" ? "#ef4444" : course.priority === "recommended" ? "#f59e0b" : "#065292";
               const isApproved = approvedCourses.has(course.courseId);
               return (
                 <div key={course.courseId} style={{
@@ -228,7 +228,7 @@ export default function StudentGapAnalysisPage() {
                         <span style={{ fontFamily: "monospace", fontSize: 11, color: "var(--admin-font-tertiary)" }}>{course.courseCode}</span>
                         <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: `${priorityColor}15`, color: priorityColor, textTransform: "capitalize" }}>{course.priority}</span>
                         {course.isHonors && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>Honors</span>}
-                        {course.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}>{course.frameworkType}</span>}
+                        {course.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "#065292" }}>{course.frameworkType}</span>}
                       </div>
                       <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.5, marginBottom: 6 }}>{course.reason}</div>
                       <div style={{ display: "flex", gap: 8, fontSize: 11, color: "var(--admin-font-tertiary)" }}>

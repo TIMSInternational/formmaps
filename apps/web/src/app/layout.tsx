@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { geistSans, geistMono } from "./fonts";
+import { geistSans, geistMono, poppins } from "./fonts";
 import "./globals.css";
 import { AuthWrapper } from "@/components/AuthWrapper";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -16,17 +16,17 @@ validateEnv();
 
 export const metadata: Metadata = {
   title: {
-    default: "FormMaps - Career Development Platform",
+    default: "FormMaps - Find your path. Shape your future.",
     template: "%s | FormMaps",
   },
   description:
-    "Accelerate your career with personalized learning paths, skill assessments, and market insights.",
+    "AI-powered college counseling and career guidance platform for students, counselors, and schools.",
   keywords: [
-    "career development",
-    "skill assessment",
-    "learning platform",
-    "job market",
-    "resume builder",
+    "college counseling",
+    "career guidance",
+    "admission predictions",
+    "student assessments",
+    "school platform",
   ],
   authors: [{ name: "FormMaps" }],
   creator: "FormMaps",
@@ -36,13 +36,13 @@ export const metadata: Metadata = {
     siteName: "FormMaps",
     title: "FormMaps - Career Development Platform",
     description:
-      "Accelerate your career with personalized learning paths, skill assessments, and market insights.",
+      "AI-powered college counseling and career guidance platform for students, counselors, and schools.",
   },
   twitter: {
     card: "summary_large_image",
     title: "FormMaps - Career Development Platform",
     description:
-      "Accelerate your career with personalized learning paths, skill assessments, and market insights.",
+      "AI-powered college counseling and career guidance platform for students, counselors, and schools.",
   },
   robots: {
     index: true,
@@ -67,7 +67,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans bg-background text-foreground antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} font-sans bg-background text-foreground antialiased`}
       >
         <SkipToMain mainId="main-content" />
         <ErrorBoundary>

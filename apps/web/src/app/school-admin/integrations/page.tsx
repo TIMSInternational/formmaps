@@ -11,9 +11,9 @@ interface Integration {
 }
 
 const INTEGRATIONS: Integration[] = [
-  { id: "isams", name: "iSAMS", description: "Sync student data, timetables, and grades from iSAMS school management system.", icon: Database, status: "available", color: "#3b82f6", href: "/school-admin/integrations/isams" },
+  { id: "isams", name: "iSAMS", description: "Sync student data, timetables, and grades from iSAMS school management system.", icon: Database, status: "available", color: "#065292", href: "/school-admin/integrations/isams" },
   { id: "tims", name: "TIMS PCA", description: "DISC personality assessment integration for career orientation and competency mapping.", icon: Shield, status: "connected", color: "#10b981" },
-  { id: "zoom", name: "Zoom Video SDK", description: "1:1 video calls between counselors, admins, and students with session recording.", icon: Globe, status: "available", color: "#6366f1" },
+  { id: "zoom", name: "Zoom Video SDK", description: "1:1 video calls between counselors, admins, and students with session recording.", icon: Globe, status: "available", color: "#065292" },
   { id: "google", name: "Google Workspace", description: "Single sign-on and Google Classroom integration for seamless student access.", icon: Globe, status: "coming_soon", color: "#f59e0b" },
   { id: "canvas", name: "Canvas LMS", description: "Import grades and assignments from Canvas Learning Management System.", icon: Database, status: "coming_soon", color: "#ef4444" },
   { id: "powerschool", name: "PowerSchool", description: "Sync student information system data including demographics and transcripts.", icon: Database, status: "coming_soon", color: "#8b5cf6" },
@@ -21,7 +21,7 @@ const INTEGRATIONS: Integration[] = [
 
 const STATUS_LABELS: Record<string, { label: string; bg: string; color: string }> = {
   connected: { label: "Connected", bg: "rgba(16,185,129,0.1)", color: "#10b981" },
-  available: { label: "Available", bg: "rgba(59,130,246,0.1)", color: "#3b82f6" },
+  available: { label: "Available", bg: "rgba(59,130,246,0.1)", color: "#065292" },
   coming_soon: { label: "Coming Soon", bg: "rgba(107,114,128,0.1)", color: "#6b7280" },
 };
 
@@ -42,8 +42,8 @@ export default function IntegrationsPage() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
         {[
           { label: "Connected", value: connected.toString(), icon: CheckCircle2, color: "#10b981" },
-          { label: "Available", value: available.toString(), icon: Plug, color: "#3b82f6" },
-          { label: "Total Integrations", value: INTEGRATIONS.length.toString(), icon: Settings, color: "#6366f1" },
+          { label: "Available", value: available.toString(), icon: Plug, color: "#065292" },
+          { label: "Total Integrations", value: INTEGRATIONS.length.toString(), icon: Settings, color: "#065292" },
         ].map((s) => (
           <div key={s.label} style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", padding: 16 }}>
             <s.icon style={{ width: 16, height: 16, color: s.color, marginBottom: 8 }} />

@@ -41,8 +41,8 @@ export default function EmployabilityChart({ data, isLoading }: EmployabilityCha
         <DynamicAreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+              <stop offset="5%" stopColor="#065292" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#065292" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -66,7 +66,7 @@ export default function EmployabilityChart({ data, isLoading }: EmployabilityCha
           <Area
             type="monotone"
             dataKey="value"
-            stroke="#3b82f6"
+            stroke="#065292"
             strokeWidth={3}
             fillOpacity={1}
             fill="url(#colorValue)"

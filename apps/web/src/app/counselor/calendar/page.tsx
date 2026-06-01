@@ -22,7 +22,7 @@ function getFirstDayOfMonth(y: number, m: number) { return new Date(y, m, 1).get
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  confirmed: { bg: "rgba(59,130,246,0.15)", text: "#3b82f6" },
+  confirmed: { bg: "rgba(59,130,246,0.15)", text: "#065292" },
   completed: { bg: "rgba(34,197,94,0.15)", text: "#22c55e" },
   cancelled: { bg: "rgba(239,68,68,0.15)", text: "#ef4444" },
   rescheduled: { bg: "rgba(245,158,11,0.15)", text: "#f59e0b" },
@@ -121,7 +121,7 @@ export default function CounselorCalendarPage() {
                 borderBottom: "1px solid var(--admin-border-light)",
                 background: isToday ? "rgba(99,102,241,0.06)" : "transparent",
               }}>
-                <div style={{ fontSize: 12, fontWeight: isToday ? 700 : 400, color: isToday ? "#6366f1" : "var(--admin-font-secondary)", marginBottom: 2 }}>{day}</div>
+                <div style={{ fontSize: 12, fontWeight: isToday ? 700 : 400, color: isToday ? "#065292" : "var(--admin-font-secondary)", marginBottom: 2 }}>{day}</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   {daySessions.slice(0, 3).map((s) => {
                     const colors = STATUS_COLORS[s.status] || STATUS_COLORS.confirmed;
@@ -153,7 +153,7 @@ export default function CounselorCalendarPage() {
       {/* Legend */}
       <div style={{ display: "flex", gap: 16, alignItems: "center", padding: "0 4px" }}>
         {[
-          { label: "Confirmed", color: "#3b82f6" },
+          { label: "Confirmed", color: "#065292" },
           { label: "Completed", color: "#22c55e" },
           { label: "Cancelled", color: "#ef4444" },
           { label: "Rescheduled", color: "#f59e0b" },
@@ -183,7 +183,7 @@ export default function CounselorCalendarPage() {
           >
             <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <CalendarDays style={{ width: 16, height: 16, color: "#6366f1" }} />
+                <CalendarDays style={{ width: 16, height: 16, color: "#065292" }} />
                 <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Session Details</span>
               </div>
               <button onClick={() => setSelected(null)} style={{ width: 24, height: 24, borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>

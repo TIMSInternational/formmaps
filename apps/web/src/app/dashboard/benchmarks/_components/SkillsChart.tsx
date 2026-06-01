@@ -28,7 +28,7 @@ export default function SkillsChart({ data, isLoading }: SkillsChartProps) {
     return <Skeleton className="h-[300px] w-full rounded-lg" />;
   }
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'];
+  const COLORS = ['#065292', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'];
 
   return (
     <div className="h-[600px] w-full">

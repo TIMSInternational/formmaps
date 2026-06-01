@@ -262,7 +262,7 @@ function PCAReports({ student }: { student: any }) {
     { label: "Dominance (D)", value: pcaData.pcaD1, color: "#ef4444" },
     { label: "Influence (I)", value: pcaData.pcaI1, color: "#eab308" },
     { label: "Steadiness (S)", value: pcaData.pcaS1, color: "#22c55e" },
-    { label: "Conscientiousness (C)", value: pcaData.pcaC1, color: "#3b82f6" },
+    { label: "Conscientiousness (C)", value: pcaData.pcaC1, color: "#065292" },
   ] : [];
 
   const careerMatches = careerData?.careerMatches || careerData?.careers || careerData?.topCareers || [];
@@ -355,7 +355,7 @@ function PCAReports({ student }: { student: any }) {
                       { label: "D", value: pcaData.pcaD2, color: "#ef4444" },
                       { label: "I", value: pcaData.pcaI2, color: "#eab308" },
                       { label: "S", value: pcaData.pcaS2, color: "#22c55e" },
-                      { label: "C", value: pcaData.pcaC2, color: "#3b82f6" },
+                      { label: "C", value: pcaData.pcaC2, color: "#065292" },
                     ].map((s) => (
                       <ScoreBar key={s.label} label={s.label} value={s.value} color={s.color} />
                     ))}
@@ -368,7 +368,7 @@ function PCAReports({ student }: { student: any }) {
                       { label: "D", value: pcaData.pcaD3, color: "#ef4444" },
                       { label: "I", value: pcaData.pcaI3, color: "#eab308" },
                       { label: "S", value: pcaData.pcaS3, color: "#22c55e" },
-                      { label: "C", value: pcaData.pcaC3, color: "#3b82f6" },
+                      { label: "C", value: pcaData.pcaC3, color: "#065292" },
                     ].map((s) => (
                       <ScoreBar key={s.label} label={s.label} value={s.value} color={s.color} />
                     ))}
@@ -468,7 +468,7 @@ function MILReports({ student }: { student: any }) {
 
   const cognitiveScores = hasMIL ? [
     { label: "Reasoning", key: "reasoning", color: "#8b5cf6" },
-    { label: "Detection", key: "detection", color: "#3b82f6" },
+    { label: "Detection", key: "detection", color: "#065292" },
     { label: "Numeric", key: "numeric", color: "#14b8a6" },
     { label: "Memory", key: "memory", color: "#f59e0b" },
     { label: "Orientation", key: "orientation", color: "#ef4444" },
@@ -513,7 +513,7 @@ function MILReports({ student }: { student: any }) {
 
   return (
     <div>
-      <StudentInfoHeader student={student} icon={Brain} iconColor="#3b82f6" subtitle="MIL / LIA Cognitive Assessment" />
+      <StudentInfoHeader student={student} icon={Brain} iconColor="#065292" subtitle="MIL / LIA Cognitive Assessment" />
       <div className="p-5 space-y-5">
         {!fetched ? (
           <div className="space-y-3">
@@ -769,7 +769,7 @@ function AcademicReports({ student }: { student: any }) {
                         color: (g.grade === "A" || g.grade === "A+" || g.grade === "A-" || (typeof g.grade === "number" && g.grade >= 90))
                           ? "#10b981"
                           : (g.grade === "B" || g.grade === "B+" || g.grade === "B-" || (typeof g.grade === "number" && g.grade >= 80))
-                            ? "#3b82f6"
+                            ? "#065292"
                             : (g.grade === "C" || g.grade === "C+" || g.grade === "C-" || (typeof g.grade === "number" && g.grade >= 70))
                               ? "#f59e0b"
                               : "#ef4444",

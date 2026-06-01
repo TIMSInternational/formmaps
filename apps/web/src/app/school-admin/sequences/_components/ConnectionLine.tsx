@@ -16,7 +16,7 @@ export function ConnectionLine({
     <path
       d={path}
       fill="none"
-      stroke="var(--admin-accent-blue, #3b82f6)"
+      stroke="var(--admin-accent-blue, #065292)"
       strokeWidth={1}
     />
   );

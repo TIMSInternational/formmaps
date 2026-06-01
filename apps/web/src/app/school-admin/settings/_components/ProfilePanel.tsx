@@ -138,7 +138,7 @@ export default function ProfilePanel() {
         <div className="lg:col-span-2 space-y-4">
           {/* Contract Status */}
           {profile && (
-            <SectionCard icon={Shield} title="Contract Status" subtitle="Subscription and enrollment info" color="#3b82f6">
+            <SectionCard icon={Shield} title="Contract Status" subtitle="Subscription and enrollment info" color="#065292">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div style={{ padding: "12px 16px", borderRadius: 8, background: "var(--admin-bg-hover)" }}>
                   <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 4 }}>Status</div>

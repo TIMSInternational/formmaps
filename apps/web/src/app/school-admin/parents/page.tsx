@@ -196,7 +196,7 @@ export default function ParentsPage() {
           </div>
           <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
             <Button onClick={handleInvite} disabled={!selectedStudent || !inviteForm.parentEmail.trim() || inviting}
-              className="h-9 rounded-lg text-sm" style={{ background: "var(--admin-accent-blue, #3b82f6)", color: "#fff", border: "none" }}>
+              className="h-9 rounded-lg text-sm" style={{ background: "var(--admin-accent-blue, #065292)", color: "#fff", border: "none" }}>
               <Mail className="w-3.5 h-3.5 mr-2" />{inviting ? "Sending..." : "Send Invitation"}
             </Button>
           </div>
@@ -216,7 +216,7 @@ export default function ParentsPage() {
           />
         </div>
         <Button onClick={() => setShowInvite(!showInvite)}
-          className="h-9 rounded-lg text-sm" style={{ background: showInvite ? "var(--admin-bg-hover)" : "var(--admin-accent-blue, #3b82f6)", color: showInvite ? "var(--admin-font-primary)" : "#fff", border: "1px solid var(--admin-border-default)" }}>
+          className="h-9 rounded-lg text-sm" style={{ background: showInvite ? "var(--admin-bg-hover)" : "var(--admin-accent-blue, #065292)", color: showInvite ? "var(--admin-font-primary)" : "#fff", border: "1px solid var(--admin-border-default)" }}>
           {showInvite ? <><X className="w-3.5 h-3.5 mr-2" />Cancel</> : <><Plus className="w-3.5 h-3.5 mr-2" />Invite Parent</>}
         </Button>
       </div>
@@ -325,9 +325,9 @@ export default function ParentsPage() {
                       {!parent.isAccepted && (
                         <button onClick={(e) => handleResend(parent.id, e)} title="Resend invite"
                           style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", cursor: "pointer", transition: "all 0.15s" }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(59,130,246,0.1)"; e.currentTarget.style.borderColor = "#3b82f6"; }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(59,130,246,0.1)"; e.currentTarget.style.borderColor = "#065292"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}>
-                          <Mail style={{ width: 12, height: 12, color: "#3b82f6" }} />
+                          <Mail style={{ width: 12, height: 12, color: "#065292" }} />
                         </button>
                       )}
                       <button onClick={(e) => handleUnlink(parent.id, e)} title="Unlink parent"
