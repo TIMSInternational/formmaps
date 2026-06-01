@@ -86,11 +86,11 @@ export async function getAllResumes(): Promise<Resume[]> {
     name: r.name || r.Name || "",
     template: r.template || r.Template || "classic",
     personal: {
-      fullName: r.personalInfo?.fullName || r.PersonalInfo?.FullName || "",
+      fullName: r.personalInfo?.fullName || r.personalInfo?.name || r.PersonalInfo?.FullName || "",
       email: r.personalInfo?.email || r.PersonalInfo?.Email || "",
       phone: r.personalInfo?.phone || r.PersonalInfo?.Phone || "",
       location: r.personalInfo?.location || r.PersonalInfo?.Location || "",
-      linkedIn: r.personalInfo?.linkedIn || r.PersonalInfo?.LinkedIn || "",
+      linkedIn: r.personalInfo?.linkedIn || r.personalInfo?.linkedin || r.PersonalInfo?.LinkedIn || "",
       website: r.personalInfo?.website || r.PersonalInfo?.Website || "",
     },
     summary: r.personalInfo?.summary || r.PersonalInfo?.Summary || r.summary || "",
