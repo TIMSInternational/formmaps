@@ -1,53 +1,53 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
-// Classic template styles — matches traditional academic/SWE resume format
+// Classic template styles — single-page SWE resume, tight spacing
 const classicStyles = StyleSheet.create({
   page: {
     flexDirection: "column",
     backgroundColor: "#ffffff",
-    paddingTop: 36,
-    paddingBottom: 36,
-    paddingHorizontal: 48,
+    paddingTop: 24,
+    paddingBottom: 20,
+    paddingHorizontal: 40,
     fontFamily: "Times-Roman",
-    fontSize: 10,
+    fontSize: 9.5,
     color: "#000000",
   },
   header: {
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 4,
   },
   name: {
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: "Times-Bold",
     color: "#000000",
     textAlign: "center",
     textTransform: "uppercase",
     letterSpacing: 1,
-    marginBottom: 2,
+    marginBottom: 1,
   },
   contactRow: {
-    fontSize: 9,
+    fontSize: 8.5,
     color: "#000000",
     textAlign: "center",
-    lineHeight: 1.4,
+    lineHeight: 1.3,
   },
   section: {
-    marginBottom: 6,
+    marginBottom: 3,
   },
   sectionTitle: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontFamily: "Times-Bold",
     color: "#000000",
     paddingBottom: 1,
-    marginBottom: 3,
-    marginTop: 2,
+    marginBottom: 2,
+    marginTop: 1,
     textTransform: "uppercase",
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.75,
     borderBottomColor: "#000000",
   },
   entryItem: {
-    marginBottom: 5,
+    marginBottom: 3,
   },
   entryHeaderRow: {
     flexDirection: "row",
@@ -55,46 +55,46 @@ const classicStyles = StyleSheet.create({
     alignItems: "flex-start",
   },
   entryBoldLeft: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: "Times-Bold",
     color: "#000000",
-    maxWidth: "70%",
+    maxWidth: "72%",
   },
   entryDateRight: {
-    fontSize: 10,
+    fontSize: 9.5,
     color: "#000000",
     textAlign: "right",
   },
   entryItalicLeft: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: "Times-Italic",
     color: "#000000",
-    maxWidth: "70%",
+    maxWidth: "72%",
   },
   entryItalicRight: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: "Times-Italic",
     color: "#000000",
     textAlign: "right",
   },
   entryDetail: {
-    fontSize: 10,
+    fontSize: 9.5,
     color: "#000000",
     fontFamily: "Times-Italic",
   },
   bulletText: {
-    fontSize: 10,
-    lineHeight: 1.3,
+    fontSize: 9.5,
+    lineHeight: 1.25,
     color: "#000000",
     marginLeft: 8,
-    marginTop: 1,
+    marginTop: 0.5,
     textAlign: "justify",
   },
   skillLine: {
-    fontSize: 10,
-    lineHeight: 1.4,
+    fontSize: 9.5,
+    lineHeight: 1.3,
     color: "#000000",
-    marginBottom: 1,
+    marginBottom: 0.5,
   },
   skillCategory: {
     fontFamily: "Times-Bold",
@@ -265,7 +265,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                   </Text>
                 </View>
                 {edu.gpa && (
-                  <Text style={{ fontSize: 10, color: "#000000", marginLeft: 0 }}>
+                  <Text style={{ fontSize: 9.5, color: "#000000" }}>
                     Overall GPA: {edu.gpa}
                   </Text>
                 )}
