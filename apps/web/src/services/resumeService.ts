@@ -100,7 +100,9 @@ export async function getAllResumes(): Promise<Resume[]> {
       title: exp.position || exp.Position || exp.title || exp.Title || "",
       startDate: exp.startDate || exp.StartDate || "",
       endDate: exp.endDate || exp.EndDate || "",
-      descriptions: exp.description
+      descriptions: exp.bullets?.length
+        ? exp.bullets
+        : exp.description
         ? (typeof exp.description === "string" ? exp.description.split("\n").filter(Boolean) : exp.description)
         : exp.descriptions || [],
     })),
@@ -149,7 +151,9 @@ export async function getResumeById(resumeId: string): Promise<Resume> {
       title: exp.position || exp.Position || exp.title || exp.Title || "",
       startDate: exp.startDate || exp.StartDate || "",
       endDate: exp.endDate || exp.EndDate || "",
-      descriptions: exp.description
+      descriptions: exp.bullets?.length
+        ? exp.bullets
+        : exp.description
         ? (typeof exp.description === "string" ? exp.description.split("\n").filter(Boolean) : exp.description)
         : exp.descriptions || [],
     })),
