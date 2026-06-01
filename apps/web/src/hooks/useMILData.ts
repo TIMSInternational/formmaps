@@ -69,22 +69,7 @@ export function useMILData() {
   const [error, setError] = useState<string | null>(null);
 
   const getCurrentUserId = (): string => {
-    // Prefer the store user ID
     if (storeUser?.id) return storeUser.id;
-    if (typeof window === "undefined") return "unknown";
-    try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        return (
-          payload[
-            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-          ] || "unknown"
-        );
-      }
-    } catch {
-      // token parse failed
-    }
     return "unknown";
   };
 

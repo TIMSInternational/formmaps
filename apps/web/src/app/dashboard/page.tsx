@@ -12,7 +12,7 @@ import { CareerMatchHub } from "./_components/CareerMatchHub";
 import { UniversityMatches } from "./_components/UniversityMatches";
 import { SkillBridgingCard } from "./_components/SkillBridgingCard";
 import { PortfolioSnapshot } from "./_components/PortfolioSnapshot";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { normalizeRole } from "@/lib/roleUtils";
 import { AdminTimeline } from "@/components/ui/admin-timeline";
 import { BookOpen, Target, FileText, GraduationCap, Lock } from "lucide-react";

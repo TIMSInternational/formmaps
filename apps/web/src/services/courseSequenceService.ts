@@ -71,7 +71,7 @@ export async function assignSequenceToStudents(
 }
 
 export async function getStudentCourseSequence(studentId: string): Promise<CourseSequenceDetail> {
-  const json = await apiRequest(`/api/v1/students/${studentId}/course-sequence`);
+  const json = await apiRequest(`/api/v1/school-admin/course-sequence/${studentId}`);
   return json.data ?? json;
 }
 

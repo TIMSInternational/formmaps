@@ -15,6 +15,10 @@ import {
   X,
   LoaderCircle,
   Search,
+  Lightbulb,
+  Sparkles,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -88,6 +92,14 @@ interface SequenceBuilderProps {
   isSubmitPending?: boolean;
   // Pending change requests (shown only in student mode)
   pendingRequests?: CourseChangeRequest[];
+  // Recommendations sidebar (counselor mode only)
+  recommendations?: {
+    nextSemester?: { courseId: string; courseCode: string; courseName: string; credits: number; priority: string; reason: string; semester?: string }[];
+    longTerm?: { courseId: string; courseCode: string; courseName: string; credits: number; reason: string }[];
+  } | null;
+  academicGaps?: {
+    creditGaps?: { category: string; creditsRequired: number; creditsEarned: number; deficit: number; severity: string; recommendation: string }[];
+  } | null;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -209,8 +221,13 @@ export function SequenceBuilder({
   onCancelRequest,
   isSubmitPending,
   pendingRequests,
+  recommendations,
+  academicGaps,
 }: SequenceBuilderProps) {
   const [expandedGrades, setExpandedGrades] = useState<number[]>([9, 10, 11, 12]);
+  const [showRecsPanel, setShowRecsPanel] = useState(false);
+  const hasRecs = recommendations && ((recommendations.nextSemester?.length ?? 0) > 0 || (recommendations.longTerm?.length ?? 0) > 0);
+  const hasGaps = academicGaps?.creditGaps && academicGaps.creditGaps.length > 0;
   const [addDialog, setAddDialog] = useState<{
     open: boolean;
     gradeLevel: number;
@@ -436,6 +453,106 @@ export function SequenceBuilder({
             {gradProg.isOnTrack ? "On Track" : "At Risk"}
           </Badge>
         </div>
+      )}
+
+      {/* ── Recommendations toggle + panel (counselor mode only) ─────── */}
+      {mode === "counselor" && (hasRecs || hasGaps) && (
+        <>
+          <button
+            onClick={() => setShowRecsPanel(!showRecsPanel)}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all",
+              showRecsPanel
+                ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+            )}
+          >
+            {showRecsPanel ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+            <Sparkles className={cn("h-4 w-4", showRecsPanel ? "text-indigo-500" : "text-gray-400")} />
+            {showRecsPanel ? "Hide Suggestions" : "AI Suggestions & Gaps"}
+          </button>
+
+          {showRecsPanel && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Course Recommendations */}
+              {hasRecs && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50/50 overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-200 bg-amber-50">
+                    <Lightbulb className="h-4 w-4 text-amber-600" />
+                    <span className="text-sm font-semibold text-amber-800">Recommended Courses</span>
+                  </div>
+                  <div className="p-3 space-y-3 max-h-80 overflow-y-auto">
+                    {recommendations!.nextSemester && recommendations!.nextSemester.length > 0 && (
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 mb-2 px-1">Next Semester</div>
+                        <div className="space-y-1.5">
+                          {recommendations!.nextSemester.map((rec) => (
+                            <div key={rec.courseId || rec.courseCode} className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-white border border-amber-100 text-xs">
+                              <div className="min-w-0">
+                                <div className="font-semibold text-gray-900">{rec.courseName}</div>
+                                <div className="text-gray-500 mt-0.5">{rec.courseCode} · {rec.credits} cr</div>
+                                <div className="text-gray-400 mt-1 leading-relaxed">{rec.reason}</div>
+                              </div>
+                              <span className={cn(
+                                "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase flex-shrink-0",
+                                rec.priority === "high" ? "bg-rose-100 text-rose-700" : rec.priority === "medium" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
+                              )}>
+                                {rec.priority}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {recommendations!.longTerm && recommendations!.longTerm.length > 0 && (
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 mb-2 px-1">Long-Term Plan</div>
+                        <div className="space-y-1.5">
+                          {recommendations!.longTerm.map((rec) => (
+                            <div key={rec.courseId || rec.courseCode} className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-white border border-amber-100 text-xs">
+                              <div className="min-w-0">
+                                <div className="font-semibold text-gray-900">{rec.courseName}</div>
+                                <div className="text-gray-500 mt-0.5">{rec.courseCode} · {rec.credits} cr</div>
+                              </div>
+                              <div className="text-gray-400 text-right text-[10px] max-w-[140px] flex-shrink-0">{rec.reason}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Academic Gaps */}
+              {hasGaps && (
+                <div className="rounded-xl border border-red-200 bg-red-50/50 overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-red-200 bg-red-50">
+                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                    <span className="text-sm font-semibold text-red-800">Academic Gaps</span>
+                  </div>
+                  <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
+                    {academicGaps!.creditGaps!.map((gap) => (
+                      <div key={gap.category} className="p-2.5 rounded-lg bg-white border border-red-100">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-semibold text-gray-900">{gap.category}</span>
+                          <span className="text-[10px] text-red-600 font-medium">{gap.deficit} cr deficit</span>
+                        </div>
+                        <div className="w-full bg-red-100 rounded-full h-1.5">
+                          <div className="bg-red-500 h-1.5 rounded-full transition-all" style={{ width: `${gap.creditsRequired > 0 ? Math.min((gap.creditsEarned / gap.creditsRequired) * 100, 100) : 0}%` }} />
+                        </div>
+                        <div className="flex justify-between mt-1 text-[10px] text-gray-400">
+                          <span>{gap.creditsEarned} earned</span>
+                          <span>{gap.creditsRequired} required</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* ── Grade rows ───────────────────────────────────────────────────── */}

@@ -10,6 +10,7 @@ export interface School {
   details?: string;
   contractStart?: string;
   contractEnd?: string;
+  videoCallsEnabled?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

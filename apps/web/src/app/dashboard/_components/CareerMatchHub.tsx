@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useTimsCareerScoring } from "@/hooks/useTimsQueries";
 import type { ScoredCareer } from "@/types/tims";
 import { Card } from "@/components/ui/card";
@@ -35,7 +35,7 @@ interface CareerMatchHubProps {
   aiSummary?: string;
 }
 
-export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
+export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
   const { data: timsData, isLoading, hasAssessments } = useTimsCareerScoring();
   const [selectedCareer, setSelectedCareer] = useState<ScoredCareer | null>(
     null,
@@ -303,4 +303,4 @@ export function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
       </Sheet>
     </>
   );
-}
+});

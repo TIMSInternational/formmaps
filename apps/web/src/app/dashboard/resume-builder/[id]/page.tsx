@@ -9,7 +9,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { useParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import {
   ChevronDown,
   ChevronUp,

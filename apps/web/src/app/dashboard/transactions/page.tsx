@@ -38,7 +38,7 @@ import {
 import { useExportTransactions } from "@/hooks/useTransactionDashboard";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 const containerVariants = {
   hidden: { opacity: 0 },

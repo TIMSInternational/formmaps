@@ -54,14 +54,14 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawRedirect = searchParams.get("redirect") || "/dashboard";
-  const defaultRedirect = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/dashboard";
+  const SAFE_PREFIXES = ["/dashboard", "/counselor", "/admin", "/school-admin", "/parent", "/careers", "/evaluation", "/subscribe"];
+  const defaultRedirect = (rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") && SAFE_PREFIXES.some(p => rawRedirect.startsWith(p))) ? rawRedirect : "/dashboard";
 
   const onSubmit = async (data: LoginFormData) => {
     setApiError(null);
     try {
       const response = await loginApi(data.email, data.password);
       if (!response.token) throw new Error("No token received from server");
-      localStorage.setItem("token", response.token);
 
       const roleName = response.user?.role?.name || null;
 

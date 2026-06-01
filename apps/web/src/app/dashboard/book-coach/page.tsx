@@ -17,7 +17,7 @@ import Link from "next/link";
 import { CoachesResponse } from "@/types/coach";
 import { useTranslation } from "react-i18next";
 import { CoachCardSkeleton } from "@/components/skeletons/CoachCardSkeleton";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 const containerVariants = {
   hidden: { opacity: 0 },

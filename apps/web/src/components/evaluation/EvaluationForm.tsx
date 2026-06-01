@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';import { useTranslation } from "react-i18next";import { 
+import { motion, AnimatePresence } from 'motion/react';import { useTranslation } from "react-i18next";import { 
   EvaluationSession, 
   EvaluationResponse, 
   CompetencyDimension, 

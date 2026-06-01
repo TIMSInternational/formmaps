@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { VideoCamera, CalendarBlank, UserCircle } from "@phosphor-icons/react";
 import { useState, useEffect } from "react";

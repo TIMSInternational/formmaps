@@ -14,14 +14,22 @@ export async function getMyCoursePlan(): Promise<StudentCoursePlanResponse> {
   return json.data ?? json;
 }
 
-// Get a specific student's course plan (counselor-facing)
+// Get a specific student's course plan (counselor or school-admin facing)
 export async function getStudentCoursePlan(
   studentId: string
 ): Promise<StudentCoursePlanResponse> {
-  const json = await apiRequest(
-    `/api/v1/school-admin/students/${studentId}/course-plan`
-  );
-  return json.data ?? json;
+  // Try counselor endpoint first, fall back to school-admin
+  try {
+    const json = await apiRequest(
+      `/api/v1/counselor/me/students/${studentId}/course-sequence`
+    );
+    return json.data ?? json;
+  } catch {
+    const json = await apiRequest(
+      `/api/v1/school-admin/students/${studentId}/course-plan`
+    );
+    return json.data ?? json;
+  }
 }
 
 // Get course recommendations for student (student-facing)
@@ -179,7 +187,7 @@ export async function reviewSchoolAdminStudentChangeRequest(
   payload: ChangeRequestReviewPayload
 ): Promise<CourseChangeRequest> {
   const json = await apiRequest(
-    `/api/v1/school-admin/students/${studentId}/course-plan/change-requests/${requestId}`,
+    `/api/v1/school-admin/students/${studentId}/course-plan/change-requests/${requestId}/review`,
     { method: "PUT", data: payload }
   );
   return json.data ?? json;

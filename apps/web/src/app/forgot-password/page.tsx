@@ -1,33 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { cognitoForgotPassword, cognitoConfirmPassword } from "@/lib/cognito";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 
-type Step = "email" | "code" | "success";
+const API = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+
+type Step = "email" | "reset" | "success";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("email");
+  const searchParams = useSearchParams();
+  const tokenFromUrl = searchParams.get("token");
+
+  const [step, setStep] = useState<Step>(tokenFromUrl ? "reset" : "email");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
+  const [token, setToken] = useState(tokenFromUrl || "");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [sent, setSent] = useState(false);
 
-  const handleSendCode = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (tokenFromUrl) {
+      setToken(tokenFromUrl);
+      setStep("reset");
+    }
+  }, [tokenFromUrl]);
+
+  const handleSendLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
     try {
-      await cognitoForgotPassword(email);
-      setStep("code");
-    } catch (err: any) {
-      setError(err.message || "Failed to send reset code.");
+      const res = await fetch(`${API}/authapi/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.message || "Failed to send reset link"); return; }
+      setSent(true);
+    } catch {
+      setError("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -41,17 +59,19 @@ export default function ForgotPasswordPage() {
       setError("Passwords do not match.");
       return;
     }
-    if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
 
     setIsLoading(true);
     try {
-      await cognitoConfirmPassword(email, code, newPassword);
+      const res = await fetch(`${API}/authapi/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password: newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.message || "Failed to reset password."); return; }
       setStep("success");
-    } catch (err: any) {
-      setError(err.message || "Failed to reset password.");
+    } catch {
+      setError("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +138,7 @@ export default function ForgotPasswordPage() {
           </span>
         </div>
 
-        {step === "email" && (
+        {step === "email" && !sent && (
           <>
             <div style={{ textAlign: "center", marginBottom: 32 }}>
               <h1
@@ -132,12 +152,12 @@ export default function ForgotPasswordPage() {
                 Reset your password
               </h1>
               <p style={{ fontSize: 13, color: "#818181" }}>
-                Enter your email and we will send you a verification code.
+                Enter your email and we&apos;ll send you a reset link.
               </p>
             </div>
 
             <form
-              onSubmit={handleSendCode}
+              onSubmit={handleSendLink}
               style={{ display: "flex", flexDirection: "column", gap: 20 }}
             >
               <div
@@ -184,13 +204,60 @@ export default function ForgotPasswordPage() {
                   transition: "opacity 0.15s",
                 }}
               >
-                {isLoading ? "Sending..." : "Send reset code"}
+                {isLoading ? "Sending..." : "Send reset link"}
               </button>
             </form>
           </>
         )}
 
-        {step === "code" && (
+        {step === "email" && sent && (
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginBottom: 16,
+              }}
+            >
+              <CheckCircle2
+                style={{ width: 48, height: 48, color: "#22c55e" }}
+              />
+            </div>
+            <h1
+              style={{
+                fontSize: 24,
+                fontWeight: 600,
+                color: "#ebebeb",
+                marginBottom: 8,
+              }}
+            >
+              Check your email
+            </h1>
+            <p
+              style={{
+                fontSize: 13,
+                color: "#818181",
+                marginBottom: 32,
+              }}
+            >
+              If an account exists for <span style={{ color: "#b3b3b3" }}>{email}</span>, we&apos;ve sent a password reset link. Check your inbox.
+            </p>
+            <button
+              onClick={() => { setSent(false); setError(null); }}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#818181",
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              Didn&apos;t receive it? Try again
+            </button>
+          </div>
+        )}
+
+        {step === "reset" && (
           <>
             <div style={{ textAlign: "center", marginBottom: 32 }}>
               <h1
@@ -201,12 +268,10 @@ export default function ForgotPasswordPage() {
                   marginBottom: 8,
                 }}
               >
-                Enter verification code
+                Set a new password
               </h1>
               <p style={{ fontSize: 13, color: "#818181" }}>
-                We sent a code to{" "}
-                <span style={{ color: "#b3b3b3" }}>{email}</span>. Check your
-                inbox.
+                Enter your new password below.
               </p>
             </div>
 
@@ -214,30 +279,6 @@ export default function ForgotPasswordPage() {
               onSubmit={handleResetPassword}
               style={{ display: "flex", flexDirection: "column", gap: 20 }}
             >
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 6 }}
-              >
-                <label
-                  style={{ fontSize: 12, fontWeight: 500, color: "#b3b3b3" }}
-                >
-                  Verification code
-                </label>
-                <input
-                  type="text"
-                  placeholder="123456"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  required
-                  style={inputStyle}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#555";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#2a2a2a";
-                  }}
-                />
-              </div>
-
               <div
                 style={{ display: "flex", flexDirection: "column", gap: 6 }}
               >
@@ -310,24 +351,6 @@ export default function ForgotPasswordPage() {
               >
                 {isLoading ? "Resetting..." : "Reset password"}
               </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setError(null);
-                  setStep("email");
-                }}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#818181",
-                  fontSize: 12,
-                  cursor: "pointer",
-                  textAlign: "center",
-                }}
-              >
-                Didn&apos;t receive a code? Go back and try again
-              </button>
             </form>
           </>
         )}
@@ -384,7 +407,7 @@ export default function ForgotPasswordPage() {
           </div>
         )}
 
-        {step !== "success" && (
+        {step !== "success" && !sent && (
           <p
             style={{
               marginTop: 32,

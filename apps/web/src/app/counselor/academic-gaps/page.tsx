@@ -1,38 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import {
   Search,
   TrendingDown,
   BookOpen,
-  Lightbulb,
   AlertTriangle,
   Target,
   Users,
   CheckCircle2,
   AlertCircle,
   Briefcase,
-  Layers
+  Layers,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import {
   useAcademicGapSummary,
@@ -40,485 +22,755 @@ import {
   useStudentCourseRecommendations,
 } from "@/hooks/useAcademicGapQueries";
 import type { AcademicGapSummaryItem } from "@/types/academicGap";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+// ── Status helpers ──────────────────────────────────────────────────
+
+const statusStyles: Record<string, { color: string; bg: string; label: string }> = {
+  behind:  { color: "#ef4444", bg: "rgba(239,68,68,0.1)",  label: "Behind" },
+  at_risk: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "At Risk" },
+  on_track:{ color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "On Track" },
+};
+
+const severityOrder: Record<string, number> = { behind: 0, at_risk: 1, on_track: 2 };
+
+// ── Stat Card ───────────────────────────────────────────────────────
+
+function StatCard({ label, value, color, icon: Icon, delay }: {
+  label: string; value: number; color: string; icon: any; delay: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      style={{
+        background: "var(--admin-bg-card, #fff)",
+        border: "1px solid var(--admin-border-default, rgba(0,0,0,0.08))",
+        borderRadius: 12,
+        padding: "16px 20px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 8,
+          background: `${color}15`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <Icon style={{ width: 15, height: 15, color }} strokeWidth={1.8} />
+        </div>
+        <span style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
+          textTransform: "uppercase" as const,
+          color: "var(--admin-font-tertiary, #888)",
+        }}>{label}</span>
+      </div>
+      <p style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary, #111)", letterSpacing: "-0.02em" }}>{value}</p>
+    </motion.div>
+  );
+}
+
+// ── Loading Skeleton ────────────────────────────────────────────────
+
+function Skeleton({ width, height, radius = 10 }: { width?: string | number; height: number; radius?: number }) {
+  return (
+    <div style={{
+      width: width ?? "100%", height, borderRadius: radius,
+      background: "var(--admin-bg-hover, rgba(0,0,0,0.05))",
+      animation: "pulse 1.5s ease-in-out infinite",
+    }} />
+  );
+}
+
+// ── Mini progress bar ───────────────────────────────────────────────
+
+function MiniBar({ earned, required, color = "#6366f1", height = 4 }: {
+  earned: number; required: number; color?: string; height?: number;
+}) {
+  const pct = required > 0 ? Math.min(100, (earned / required) * 100) : 0;
+  return (
+    <div style={{
+      height, borderRadius: height / 2, width: "100%",
+      background: "var(--admin-bg-hover, rgba(0,0,0,0.06))", overflow: "hidden",
+    }}>
+      <div style={{
+        height: "100%", width: `${pct}%`, borderRadius: height / 2,
+        background: color, transition: "width 0.4s ease",
+      }} />
+    </div>
+  );
+}
+
+// ── Expandable gap card ─────────────────────────────────────────────
+
+function GapCategoryCard({ gap, recommendations, index }: {
+  gap: { category: string; creditsEarned: number; creditsRequired: number; deficit: number };
+  recommendations: any[];
+  index: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const matching = recommendations.filter(
+    (r: any) => (r.category || "").toLowerCase() === (gap.category || "").toLowerCase()
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.06 }}
+      style={{
+        borderRadius: 10,
+        border: "1px solid rgba(239,68,68,0.2)",
+        background: "var(--admin-bg-card, #fff)",
+        overflow: "hidden",
+      }}
+    >
+      {/* Left accent */}
+      <div style={{ display: "flex" }}>
+        <div style={{ width: 4, background: "#ef4444", flexShrink: 0 }} />
+        <div style={{ flex: 1, padding: "14px 16px" }}>
+          {/* Header row */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={{ fontWeight: 700, fontSize: 13, color: "var(--admin-font-primary, #111)" }}>
+              {gap.category}
+            </span>
+            <span style={{
+              fontSize: 11, fontWeight: 700, color: "#ef4444",
+              background: "rgba(239,68,68,0.1)", padding: "2px 8px", borderRadius: 4,
+            }}>
+              -{gap.deficit} credits
+            </span>
+          </div>
+
+          {/* Progress bar */}
+          <MiniBar earned={gap.creditsEarned} required={gap.creditsRequired} color="#ef4444" height={6} />
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary, #888)" }}>
+              Earned: {gap.creditsEarned}
+            </span>
+            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary, #888)" }}>
+              Required: {gap.creditsRequired}
+            </span>
+          </div>
+
+          {/* Expand button */}
+          {matching.length > 0 && (
+            <>
+              <button
+                onClick={() => setExpanded(!expanded)}
+                style={{
+                  marginTop: 10, display: "flex", alignItems: "center", gap: 4,
+                  fontSize: 11, fontWeight: 600, color: "#6366f1",
+                  background: "none", border: "none", cursor: "pointer", padding: 0,
+                }}
+              >
+                {expanded ? <ChevronDown style={{ width: 13, height: 13 }} /> : <ChevronRight style={{ width: 13, height: 13 }} />}
+                {expanded ? "Hide" : "View"} courses to fill this gap ({matching.length})
+              </button>
+
+              <AnimatePresence>
+                {expanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    style={{ overflow: "hidden", marginTop: 8 }}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {matching.map((r: any, i: number) => (
+                        <div key={i} style={{
+                          display: "flex", alignItems: "center", gap: 10,
+                          padding: "8px 10px", borderRadius: 6,
+                          background: "var(--admin-bg-hover, rgba(0,0,0,0.03))",
+                          border: "1px solid var(--admin-border-default, rgba(0,0,0,0.06))",
+                        }}>
+                          <BookOpen style={{ width: 13, height: 13, color: "#6366f1", flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary, #111)" }}>
+                              {r.courseName}
+                            </span>
+                            <span style={{ fontSize: 10, color: "var(--admin-font-tertiary, #888)", marginLeft: 6, fontFamily: "monospace" }}>
+                              {r.courseCode}
+                            </span>
+                          </div>
+                          <span style={{
+                            fontSize: 10, fontWeight: 700, color: "#6366f1",
+                            background: "rgba(99,102,241,0.1)", padding: "2px 6px", borderRadius: 4,
+                            flexShrink: 0,
+                          }}>
+                            {r.credits} cr
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Main Page Component
+// ════════════════════════════════════════════════════════════════════
 
 export default function AcademicGapsPage() {
-  const { t } = useTranslation();
   const [selectedStudentId, setSelectedStudentId] = useState("");
-  const [tab, setTab] = useState("gaps");
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: summary, isLoading: summaryLoading } = useAcademicGapSummary({ limit: 50 });
   const { data: gaps, isLoading: gapsLoading } = useStudentAcademicGaps(selectedStudentId);
   const { data: recs, isLoading: recsLoading } = useStudentCourseRecommendations(selectedStudentId);
 
-  const priorityColor = (level: string) => {
-    if (level === "behind") return "bg-red-100 text-red-700 border-red-200";
-    if (level === "at_risk") return "bg-orange-100 text-orange-700 border-orange-200";
-    return "bg-emerald-100 text-emerald-700 border-emerald-200";
-  };
+  // Sort students: behind > at_risk > on_track, then filter by search
+  const sortedStudents = useMemo(() => {
+    const list = summary?.data || [];
+    return [...list]
+      .filter((s: AcademicGapSummaryItem) =>
+        (s.studentName || "").toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .sort((a: AcademicGapSummaryItem, b: AcademicGapSummaryItem) =>
+        (severityOrder[a.overallStatus] ?? 9) - (severityOrder[b.overallStatus] ?? 9)
+      );
+  }, [summary?.data, searchQuery]);
 
-  const filteredStudents = summary?.data?.filter((s: AcademicGapSummaryItem) =>
-    s.studentName.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  // Flatten recommendations for inline display
+  const allRecs = useMemo(() => {
+    if (!recs) return [];
+    return [...(recs.nextSemester || []), ...(recs.longTerm || [])];
+  }, [recs]);
 
+  // ── Loading state ──
   if (summaryLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-20 w-80 rounded-2xl" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} height={80} />)}
         </div>
-        <Skeleton className="h-[500px] w-full rounded-2xl" />
+        <Skeleton height={500} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-      {/* Page Header */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Analytics & Interventions</p>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mt-1">
-          {t("schoolAdmin.gaps.title", "Academic Gap Analysis")}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-          {t("schoolAdmin.gaps.subtitle", "Identify students off-track, review personalized credit analysis, and provide AI-generated course remediation plans.")}
-        </p>
-      </motion.div>
-
-      {/* Summary Stat Cards */}
+      {/* ── Summary Stat Cards ── */}
       {summary && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4"
-        >
-          {[
-            { label: "Total Students", value: summary.summary?.totalStudents ?? 0, icon: Users, iconColor: "text-indigo-500", iconBg: "bg-indigo-500/10" },
-            { label: "Behind", value: summary.summary?.behind ?? 0, icon: AlertCircle, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
-            { label: "At Risk", value: summary.summary?.atRisk ?? 0, icon: AlertTriangle, iconColor: "text-orange-500", iconBg: "bg-orange-500/10" },
-            { label: "On Track", value: summary.summary?.onTrack ?? 0, icon: CheckCircle2, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
-          ].map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.05 }}
-              className="dash-card p-5"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`h-9 w-9 rounded-lg ${stat.iconBg} flex items-center justify-center`}>
-                  <stat.icon className={`h-4 w-4 ${stat.iconColor}`} strokeWidth={1.8} />
-                </div>
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</p>
-            </motion.div>
-          ))}
-        </motion.div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+          <StatCard label="Total Students" value={summary.summary?.totalStudents ?? 0} color="#6366f1" icon={Users} delay={0.05} />
+          <StatCard label="Behind" value={summary.summary?.behind ?? 0} color="#ef4444" icon={AlertCircle} delay={0.1} />
+          <StatCard label="At Risk" value={summary.summary?.atRisk ?? 0} color="#f59e0b" icon={AlertTriangle} delay={0.15} />
+          <StatCard label="On Track" value={summary.summary?.onTrack ?? 0} color="#10b981" icon={CheckCircle2} delay={0.2} />
+        </div>
       )}
 
-      {/* Main Analysis Section */}
+      {/* ── Split Panel ── */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+        transition={{ delay: 0.15 }}
+        style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 16, alignItems: "start" }}
       >
-        {/* Left Col: Student List */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="dash-card sticky top-24 overflow-hidden flex flex-col max-h-[700px]">
-            <div className="p-5 border-b border-[var(--border)]">
-              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Layers className="h-4 w-4 text-indigo-500" />
-                {t("schoolAdmin.gaps.studentListHeader", "Needs Review")}
-              </h2>
-              <p className="text-xs text-muted-foreground mt-1 mb-4">Select a student to view their detailed gap analysis.</p>
 
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder={t("common.search", "Search students...")}
-                  className="pl-9 h-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+        {/* ── Left: Student List ── */}
+        <div style={{
+          background: "var(--admin-bg-card, #fff)",
+          border: "1px solid var(--admin-border-default, rgba(0,0,0,0.08))",
+          borderRadius: 12,
+          overflow: "hidden",
+          position: "sticky" as const,
+          top: 80,
+          maxHeight: "calc(100vh - 120px)",
+          display: "flex",
+          flexDirection: "column",
+        }}>
+          {/* Header + search */}
+          <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid var(--admin-border-default, rgba(0,0,0,0.08))" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+              <Layers style={{ width: 14, height: 14, color: "#6366f1" }} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>Needs Review</span>
+              <span style={{
+                fontSize: 10, fontWeight: 600, marginLeft: "auto",
+                color: "var(--admin-font-tertiary, #888)",
+              }}>
+                {sortedStudents.length} students
+              </span>
+            </div>
+            <div style={{ position: "relative" as const }}>
+              <Search style={{
+                width: 14, height: 14, color: "var(--admin-font-tertiary, #888)",
+                position: "absolute" as const, left: 10, top: "50%", transform: "translateY(-50%)",
+              }} />
+              <input
+                type="text"
+                placeholder="Search students..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: "100%", height: 34, borderRadius: 8,
+                  border: "1px solid var(--admin-border-default, rgba(0,0,0,0.1))",
+                  background: "var(--admin-bg-hover, rgba(0,0,0,0.02))",
+                  paddingLeft: 32, paddingRight: 10,
+                  fontSize: 12, color: "var(--admin-font-primary, #111)",
+                  outline: "none",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Student list */}
+          <div style={{ flex: 1, overflowY: "auto" as const, padding: 8 }}>
+            {sortedStudents.length > 0 ? (
+              sortedStudents.map((s: AcademicGapSummaryItem, index: number) => {
+                const isSelected = selectedStudentId === s.studentId;
+                const st = statusStyles[s.overallStatus] || statusStyles.on_track;
+                return (
+                  <motion.button
+                    key={s.studentId || `gap-${index}`}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.02 }}
+                    onClick={() => setSelectedStudentId(s.studentId)}
+                    style={{
+                      width: "100%", textAlign: "left" as const,
+                      padding: "10px 12px", borderRadius: 8,
+                      marginBottom: 2, cursor: "pointer",
+                      border: isSelected ? "1px solid rgba(99,102,241,0.3)" : "1px solid transparent",
+                      background: isSelected ? "rgba(99,102,241,0.08)" : "transparent",
+                      display: "flex", flexDirection: "column", gap: 6,
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {/* Row 1: Name + status */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{
+                        width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+                        background: isSelected ? "#6366f1" : "var(--admin-bg-hover, rgba(0,0,0,0.05))",
+                        color: isSelected ? "#fff" : "var(--admin-font-primary, #111)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 10, fontWeight: 700,
+                      }}>
+                        {(s.studentName || "??").substring(0, 2).toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{
+                          fontSize: 12, fontWeight: 600, margin: 0,
+                          color: isSelected ? "#6366f1" : "var(--admin-font-primary, #111)",
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const,
+                        }}>
+                          {s.studentName}
+                        </p>
+                      </div>
+                      <span style={{
+                        fontSize: 9, fontWeight: 700, letterSpacing: "0.05em",
+                        textTransform: "uppercase" as const,
+                        color: st.color, background: st.bg,
+                        padding: "2px 6px", borderRadius: 4,
+                        flexShrink: 0,
+                      }}>
+                        {st.label}
+                      </span>
+                    </div>
+
+                    {/* Row 2: Credit bar + gap count */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 38 }}>
+                      <div style={{ flex: 1 }}>
+                        <MiniBar
+                          earned={Math.max(0, (summary?.summary?.totalStudents ?? 24) - s.creditDeficit)}
+                          required={summary?.summary?.totalStudents ?? 24}
+                          color={s.overallStatus === "behind" ? "#ef4444" : s.overallStatus === "at_risk" ? "#f59e0b" : "#10b981"}
+                        />
+                      </div>
+                      {s.missingRequiredCourses > 0 && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 600,
+                          color: "var(--admin-font-tertiary, #888)",
+                          flexShrink: 0,
+                        }}>
+                          {s.missingRequiredCourses} gaps
+                        </span>
+                      )}
+                    </div>
+                  </motion.button>
+                );
+              })
+            ) : (
+              <div style={{ textAlign: "center", padding: "40px 16px" }}>
+                <Search style={{ width: 20, height: 20, color: "var(--admin-font-tertiary, #888)", margin: "0 auto 8px", opacity: 0.4 }} />
+                <p style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary, #111)", margin: 0 }}>No students found</p>
+                <p style={{ fontSize: 11, color: "var(--admin-font-tertiary, #888)", margin: "4px 0 0" }}>Try adjusting your search.</p>
               </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-3 space-y-1">
-              <AnimatePresence>
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.map((s: AcademicGapSummaryItem, index: number) => {
-                    const isSelected = selectedStudentId === s.studentId;
-                    return (
-                      <motion.button
-                        key={s.studentId}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.03 }}
-                        onClick={() => setSelectedStudentId(s.studentId)}
-                        className={`w-full text-left p-3 rounded-xl transition-all duration-200 flex items-center gap-3 ${isSelected
-                            ? "bg-indigo-500/10 border border-indigo-500/20"
-                            : "bg-transparent border border-transparent hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))]"
-                          }`}
-                      >
-                        <Avatar className="h-10 w-10 border">
-                          <AvatarFallback className={isSelected ? "bg-indigo-600 text-white" : "bg-[var(--admin-bg-hover)] text-foreground"}>
-                            {s.studentName.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <div className="min-w-0 flex-1">
-                          <p className={`font-semibold text-sm truncate ${isSelected ? "text-indigo-600" : "text-foreground"}`}>
-                            {s.studentName}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1 -ml-1">
-                            <Badge variant="outline" className={`px-2 py-0 text-[10px] uppercase font-bold tracking-wider ${priorityColor(s.overallStatus)}`}>
-                              {s.overallStatus.replace("_", " ")}
-                            </Badge>
-                            {s.missingRequiredCourses > 0 && (
-                              <span className="text-xs font-medium text-muted-foreground bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] px-1.5 py-0.5 rounded-md">
-                                {s.missingRequiredCourses} missing
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <div className="w-1.5 h-8 bg-indigo-500 rounded-full shrink-0" />
-                        )}
-                      </motion.button>
-                    );
-                  })
-                ) : (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12 px-4">
-                    <Search className="h-6 w-6 text-muted-foreground mx-auto mb-3 opacity-40" />
-                    <p className="text-foreground font-semibold">{t("common.noResults", "No students found")}</p>
-                    <p className="text-sm text-muted-foreground mt-1">Try adjusting your search query.</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Right Col: Detail View */}
-        <div className="lg:col-span-8">
+        {/* ── Right: Detail View ── */}
+        <div style={{ minHeight: 460 }}>
           <AnimatePresence mode="wait">
             {!selectedStudentId ? (
               <motion.div
                 key="empty"
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="h-full min-h-[500px]"
+                exit={{ opacity: 0, scale: 0.97 }}
+                style={{
+                  height: 460, borderRadius: 12,
+                  border: "2px dashed var(--admin-border-default, rgba(0,0,0,0.1))",
+                  background: "var(--admin-bg-card, #fff)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
               >
-                <div className="dash-card border-dashed h-full flex items-center justify-center">
-                  <div className="text-center py-24 max-w-sm mx-auto">
-                    <Target className="h-10 w-10 text-muted-foreground mx-auto mb-4 opacity-40" />
-                    <h3 className="text-lg font-bold text-foreground mb-2">Select a Student</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      Choose a student from the list to dive deep into their academic gaps, credit standing, and personalized AI course recommendations.
-                    </p>
-                  </div>
+                <div style={{ textAlign: "center", maxWidth: 300 }}>
+                  <Target style={{ width: 36, height: 36, color: "var(--admin-font-tertiary, #888)", margin: "0 auto 12px", opacity: 0.35 }} />
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary, #111)", margin: "0 0 6px" }}>
+                    Select a Student
+                  </h3>
+                  <p style={{ fontSize: 12, color: "var(--admin-font-tertiary, #888)", lineHeight: 1.5, margin: 0 }}>
+                    Choose a student from the list to view their credit gaps, missing coursework, and recommended courses.
+                  </p>
                 </div>
               </motion.div>
             ) : (
               <motion.div
-                key="detail"
-                initial={{ opacity: 0, y: 20 }}
+                key={selectedStudentId}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25 }}
+                style={{ display: "flex", flexDirection: "column", gap: 16 }}
               >
-                <Tabs value={tab} onValueChange={setTab} className="w-full">
-                  <div className="dash-card p-1.5 inline-flex mb-6 gap-1">
-                    <TabsList className="bg-transparent space-x-1 h-auto p-0">
-                      <TabsTrigger
-                        value="gaps"
-                        className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-[var(--admin-bg-hover)]"
-                      >
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Analysis & Gaps
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="recommendations"
-                        className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-[var(--admin-bg-hover)]"
-                      >
-                        <Lightbulb className="h-4 w-4 mr-2" />
-                        AI Action Plan
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
 
-                  {/* ANALYSIS & GAPS TAB */}
-                  <TabsContent value="gaps" className="mt-0 outline-none">
-                    <div className="dash-card overflow-hidden">
-                      <div className="p-6 border-b border-[var(--border)]">
-                        <h2 className="text-lg font-bold text-foreground flex items-center gap-3">
-                          <Target className="h-5 w-5 text-indigo-500" />
-                          Academic Deficiency Analysis
+                {/* ── Credit Summary Card ── */}
+                {gapsLoading ? (
+                  <Skeleton height={110} />
+                ) : gaps ? (
+                  <div style={{
+                    background: "var(--admin-bg-card, #fff)",
+                    border: "1px solid var(--admin-border-default, rgba(0,0,0,0.08))",
+                    borderRadius: 12, padding: "20px 24px",
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+                      <div>
+                        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary, #111)", margin: 0 }}>
+                          {(gaps as any).studentName || "Student"}
                         </h2>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Detailed breakdown of credit deficits, missing coursework, and career alignment issues.
-                        </p>
-                      </div>
-                      <div className="p-6 space-y-8">
-                        {gapsLoading ? (
-                          <div className="space-y-6">
-                            <Skeleton className="h-24 w-full rounded-xl" />
-                            <Skeleton className="h-24 w-full rounded-xl" />
-                            <Skeleton className="h-24 w-full rounded-xl" />
-                          </div>
-                        ) : gaps ? (
-                          <div className="space-y-8">
-                            {/* Credit Gaps */}
-                            {gaps.creditGaps.length > 0 && (
-                              <section>
-                                <div className="flex items-center gap-3 mb-4">
-                                  <div className="h-8 w-8 rounded-lg bg-red-500/10 flex items-center justify-center">
-                                    <TrendingDown className="h-4 w-4 text-red-500" />
-                                  </div>
-                                  <h3 className="text-base font-bold text-foreground">Credit Deficiencies</h3>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  {gaps.creditGaps.map((g, i) => (
-                                    <motion.div
-                                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                                      key={i}
-                                      className="p-5 rounded-xl border border-red-200 bg-red-50/30 relative overflow-hidden"
-                                    >
-                                      <div className="absolute top-0 left-0 w-1 h-full bg-red-400" />
-                                      <div className="flex justify-between items-start mb-3">
-                                        <span className="font-bold text-foreground">{g.category}</span>
-                                        <Badge variant="destructive" className="font-bold px-2 py-0.5">
-                                          -{g.deficit} credits
-                                        </Badge>
-                                      </div>
-                                      <Progress
-                                        value={(g.creditsEarned / g.creditsRequired) * 100}
-                                        className="h-2.5 bg-red-100 mb-2 [&>div]:bg-red-500"
-                                      />
-                                      <p className="text-xs font-semibold text-muted-foreground flex justify-between">
-                                        <span>Earned: {g.creditsEarned}</span>
-                                        <span>Required: {g.creditsRequired}</span>
-                                      </p>
-                                    </motion.div>
-                                  ))}
-                                </div>
-                              </section>
-                            )}
-
-                            {/* Course Gaps */}
-                            {gaps.courseGaps.length > 0 && (
-                              <section>
-                                <div className="flex items-center gap-3 mb-4">
-                                  <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                                    <BookOpen className="h-4 w-4 text-orange-500" />
-                                  </div>
-                                  <h3 className="text-base font-bold text-foreground">Missing Required Courses</h3>
-                                </div>
-                                <div className="p-5 rounded-xl border border-orange-200 bg-orange-50/30 relative overflow-hidden">
-                                  <div className="absolute top-0 left-0 w-1 h-full bg-orange-400" />
-                                  <div className="flex flex-wrap gap-2.5">
-                                    {gaps.courseGaps.map((g, i) => (
-                                      <motion.div
-                                        initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
-                                        key={i}
-                                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg dash-card"
-                                      >
-                                        <span className="font-semibold text-foreground text-sm">{g.courseName}</span>
-                                        <span className="text-xs font-mono text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">{g.courseCode}</span>
-                                      </motion.div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </section>
-                            )}
-
-                            {/* Career Gaps */}
-                            {gaps.careerGaps.length > 0 && (
-                              <section>
-                                <div className="flex items-center gap-3 mb-4">
-                                  <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                                    <Briefcase className="h-4 w-4 text-purple-500" />
-                                  </div>
-                                  <h3 className="text-base font-bold text-foreground">Career Alignment Warnings</h3>
-                                </div>
-                                <div className="space-y-3">
-                                  {gaps.careerGaps.map((g, i) => (
-                                    <motion.div
-                                      initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
-                                      key={i}
-                                      className="p-5 rounded-xl border border-purple-200 bg-purple-50/30 relative overflow-hidden flex items-start gap-4"
-                                    >
-                                      <div className="absolute top-0 left-0 w-1 h-full bg-purple-400" />
-                                      <Target className="h-5 w-5 text-purple-400 shrink-0 mt-0.5" />
-                                      <div>
-                                        <p className="font-bold text-foreground text-base">{g.careerPath}</p>
-                                        <div className="flex flex-wrap gap-1.5 mt-2">
-                                          {g.missingSkills.map((skill, idx) => (
-                                            <span key={idx} className="text-xs font-medium text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">
-                                              {skill}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    </motion.div>
-                                  ))}
-                                </div>
-                              </section>
-                            )}
-
-                            {/* All Good */}
-                            {gaps.creditGaps.length === 0 && gaps.courseGaps.length === 0 && gaps.careerGaps.length === 0 && (
-                              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-8 rounded-xl bg-emerald-50/50 border border-emerald-200 text-center">
-                                <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-3" />
-                                <h3 className="text-lg font-bold text-foreground mb-2">Student is On Track!</h3>
-                                <p className="text-muted-foreground max-w-md mx-auto text-sm">
-                                  No academic gaps, missing requirements, or career alignment issues detected.
-                                </p>
-                              </motion.div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <AlertCircle className="h-10 w-10 text-muted-foreground mb-3 opacity-40" />
-                            <p className="text-muted-foreground font-medium">Unable to load gap data.</p>
-                          </div>
+                        {(gaps as any).gradeLevel && (
+                          <p style={{ fontSize: 11, color: "var(--admin-font-tertiary, #888)", margin: "2px 0 0" }}>
+                            Grade {(gaps as any).gradeLevel}
+                          </p>
                         )}
                       </div>
-                    </div>
-                  </TabsContent>
-
-                  {/* RECOMMENDATIONS TAB */}
-                  <TabsContent value="recommendations" className="mt-0 outline-none">
-                    <div className="dash-card overflow-hidden">
-                      <div className="p-6 border-b border-[var(--border)] flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                          <h2 className="text-lg font-bold text-foreground flex items-center gap-3">
-                            <Lightbulb className="h-5 w-5 text-emerald-500" />
-                            AI Action Plan
-                          </h2>
-                          <p className="text-sm text-muted-foreground mt-1 max-w-lg">
-                            Smart, personalized course recommendations to resolve existing gaps.
+                      {(gaps as any).creditsRequired > 0 && (
+                        <div style={{ textAlign: "right" as const }}>
+                          <span style={{ fontSize: 20, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>
+                            {Math.round(((gaps as any).creditsEarned / (gaps as any).creditsRequired) * 100)}%
+                          </span>
+                          <p style={{ fontSize: 11, color: "var(--admin-font-tertiary, #888)", margin: "2px 0 0" }}>
+                            {(gaps as any).creditsEarned} / {(gaps as any).creditsRequired} credits
                           </p>
                         </div>
-                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border-emerald-200 w-fit font-bold tracking-wide flex gap-1.5 items-center">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                          </span>
-                          AI GENERATED
-                        </Badge>
-                      </div>
-
-                      <div className="p-6">
-                        {recsLoading ? (
-                          <div className="space-y-4">
-                            {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
-                          </div>
-                        ) : (recs?.nextSemester?.length || recs?.longTerm?.length) ? (
-                          <div className="space-y-10">
-                            {recs.reasoning && (
-                              <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="p-4 rounded-xl bg-gradient-to-r from-gray-900 to-indigo-900 text-white shadow-lg relative overflow-hidden">
-                                <div className="relative z-10">
-                                  <h4 className="text-xs font-bold uppercase tracking-widest text-indigo-300 mb-1 flex items-center gap-1.5">
-                                    <Target className="h-3.5 w-3.5" /> Core Strategy
-                                  </h4>
-                                  <p className="text-sm font-medium leading-relaxed opacity-90">{recs.reasoning}</p>
-                                </div>
-                              </motion.div>
-                            )}
-
-                            {recs.nextSemester.length > 0 && (
-                              <section>
-                                <h3 className="text-base font-bold text-foreground mb-4">Immediate Requirements (Next Semester)</h3>
-                                <div className="grid gap-4">
-                                  {recs.nextSemester.map((r, i) => (
-                                    <motion.div
-                                      initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                                      key={i}
-                                      className="dash-card p-5 relative overflow-hidden"
-                                    >
-                                      {r.priority === "high" && <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500" />}
-                                      {(r.priority === "medium" || !r.priority) && <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500" />}
-                                      <div className="pl-2">
-                                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-2">
-                                          <div>
-                                            <h4 className="text-base font-bold text-foreground">{r.courseName}</h4>
-                                            <div className="flex flex-wrap gap-2 mt-1.5">
-                                              <Badge variant="outline" className="font-mono">{r.courseCode}</Badge>
-                                              <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 font-bold">{r.credits} Credits</Badge>
-                                              <Badge className={`uppercase text-[10px] font-bold tracking-wider ${r.priority === 'high' ? 'bg-red-100 text-red-700 hover:bg-red-100' : 'bg-amber-100 text-amber-700 hover:bg-amber-100'}`}>
-                                                {r.priority} Priority
-                                              </Badge>
-                                            </div>
-                                          </div>
-                                          <div className="shrink-0 bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] px-3 py-1.5 rounded-lg text-center">
-                                            <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Source</p>
-                                            <p className="text-sm font-semibold text-foreground capitalize">{r.source.replace("_", " ")}</p>
-                                          </div>
-                                        </div>
-                                        <div className="bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] p-3 rounded-xl mt-3">
-                                          <p className="text-sm text-muted-foreground">
-                                            <span className="font-bold text-foreground mr-2">Why:</span>
-                                            {r.reason}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </motion.div>
-                                  ))}
-                                </div>
-                              </section>
-                            )}
-
-                            {recs.longTerm.length > 0 && (
-                              <section>
-                                <h3 className="text-base font-bold text-foreground mb-4">Long Term Path</h3>
-                                <div className="grid md:grid-cols-2 gap-4">
-                                  {recs.longTerm.map((r, i) => (
-                                    <motion.div
-                                      initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.1 + 0.3 }}
-                                      key={i}
-                                      className="dash-card p-5 relative overflow-hidden"
-                                    >
-                                      <div className="absolute top-0 left-0 w-1.5 h-full bg-slate-300" />
-                                      <div className="pl-2">
-                                        <div className="flex justify-between items-start mb-2">
-                                          <div>
-                                            <h4 className="font-bold text-foreground">{r.courseName}</h4>
-                                            <p className="text-sm text-muted-foreground font-mono mt-0.5">{r.courseCode}</p>
-                                          </div>
-                                          <Badge variant="outline">{r.credits} CR</Badge>
-                                        </div>
-                                        <p className="text-sm text-muted-foreground leading-relaxed mt-2">{r.reason}</p>
-                                      </div>
-                                    </motion.div>
-                                  ))}
-                                </div>
-                              </section>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center justify-center py-16 text-center">
-                            <Lightbulb className="h-8 w-8 text-muted-foreground mb-4 opacity-40" />
-                            <h3 className="text-base font-bold text-foreground mb-1">No Recommendations Available</h3>
-                            <p className="text-muted-foreground max-w-sm text-sm">The AI has not detected any required remediation at this time.</p>
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  </TabsContent>
-                </Tabs>
+                    {(gaps as any).creditsRequired > 0 && (
+                      <MiniBar
+                        earned={(gaps as any).creditsEarned}
+                        required={(gaps as any).creditsRequired}
+                        color="#6366f1"
+                        height={8}
+                      />
+                    )}
+                    {((gaps as any).creditsRequired - (gaps as any).creditsEarned) > 0 && (
+                      <p style={{ fontSize: 11, fontWeight: 600, color: "#ef4444", margin: "6px 0 0" }}>
+                        {(gaps as any).creditsRequired - (gaps as any).creditsEarned} credits remaining to graduate
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+
+                {/* ── Gap Categories ── */}
+                {gapsLoading ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <Skeleton height={90} />
+                    <Skeleton height={90} />
+                  </div>
+                ) : gaps ? (
+                  <>
+                    {/* Credit gaps */}
+                    {gaps.creditGaps?.length > 0 && (
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                          <div style={{
+                            width: 28, height: 28, borderRadius: 7,
+                            background: "rgba(239,68,68,0.1)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <TrendingDown style={{ width: 14, height: 14, color: "#ef4444" }} />
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>
+                            Credit Deficiencies
+                          </span>
+                          <span style={{
+                            fontSize: 10, fontWeight: 600, color: "#ef4444",
+                            background: "rgba(239,68,68,0.1)", padding: "2px 6px", borderRadius: 4,
+                          }}>
+                            {gaps.creditGaps.length} categories
+                          </span>
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                          {gaps.creditGaps.map((g, i) => (
+                            <GapCategoryCard key={i} gap={g} recommendations={allRecs} index={i} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Course gaps */}
+                    {gaps.courseGaps?.length > 0 && (
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                          <div style={{
+                            width: 28, height: 28, borderRadius: 7,
+                            background: "rgba(245,158,11,0.1)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <BookOpen style={{ width: 14, height: 14, color: "#f59e0b" }} />
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>
+                            Missing Required Courses
+                          </span>
+                        </div>
+                        <div style={{
+                          padding: 14, borderRadius: 10,
+                          border: "1px solid rgba(245,158,11,0.2)",
+                          background: "var(--admin-bg-card, #fff)",
+                          display: "flex", flexWrap: "wrap", gap: 8,
+                        }}>
+                          {gaps.courseGaps.map((g, i) => (
+                            <motion.div
+                              key={i}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: i * 0.04 }}
+                              style={{
+                                display: "inline-flex", alignItems: "center", gap: 6,
+                                padding: "5px 10px", borderRadius: 6,
+                                background: "var(--admin-bg-hover, rgba(0,0,0,0.03))",
+                                border: "1px solid var(--admin-border-default, rgba(0,0,0,0.06))",
+                              }}
+                            >
+                              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary, #111)" }}>
+                                {g.courseName}
+                              </span>
+                              <span style={{
+                                fontSize: 10, fontFamily: "monospace", color: "#f59e0b",
+                                background: "rgba(245,158,11,0.1)", padding: "1px 5px", borderRadius: 3,
+                              }}>
+                                {g.courseCode}
+                              </span>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Career gaps */}
+                    {gaps.careerGaps?.length > 0 && (
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                          <div style={{
+                            width: 28, height: 28, borderRadius: 7,
+                            background: "rgba(168,85,247,0.1)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <Briefcase style={{ width: 14, height: 14, color: "#a855f7" }} />
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>
+                            Career Alignment Warnings
+                          </span>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {gaps.careerGaps.map((g, i) => (
+                            <motion.div
+                              key={i}
+                              initial={{ opacity: 0, x: 12 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: i * 0.08 }}
+                              style={{
+                                padding: 14, borderRadius: 10,
+                                border: "1px solid rgba(168,85,247,0.2)",
+                                background: "var(--admin-bg-card, #fff)",
+                                display: "flex", alignItems: "flex-start", gap: 10,
+                              }}
+                            >
+                              <Target style={{ width: 16, height: 16, color: "#a855f7", flexShrink: 0, marginTop: 1 }} />
+                              <div>
+                                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--admin-font-primary, #111)", margin: 0 }}>
+                                  {g.careerPath}
+                                </p>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+                                  {g.missingSkills.map((skill, idx) => (
+                                    <span key={idx} style={{
+                                      fontSize: 10, fontWeight: 600, color: "#a855f7",
+                                      background: "rgba(168,85,247,0.1)", padding: "2px 7px", borderRadius: 4,
+                                    }}>
+                                      {skill}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* All good */}
+                    {(gaps.creditGaps?.length ?? 0) === 0 && (gaps.courseGaps?.length ?? 0) === 0 && (gaps.careerGaps?.length ?? 0) === 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.97 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        style={{
+                          padding: "32px 20px", borderRadius: 12, textAlign: "center",
+                          border: "1px solid rgba(16,185,129,0.2)",
+                          background: "rgba(16,185,129,0.04)",
+                        }}
+                      >
+                        <CheckCircle2 style={{ width: 28, height: 28, color: "#10b981", margin: "0 auto 8px" }} />
+                        <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--admin-font-primary, #111)", margin: "0 0 4px" }}>
+                          Student is On Track
+                        </h3>
+                        <p style={{ fontSize: 12, color: "var(--admin-font-tertiary, #888)", margin: 0, maxWidth: 320, marginLeft: "auto", marginRight: "auto" }}>
+                          No academic gaps, missing requirements, or career alignment issues detected.
+                        </p>
+                      </motion.div>
+                    )}
+                  </>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "40px 0" }}>
+                    <AlertCircle style={{ width: 28, height: 28, color: "var(--admin-font-tertiary, #888)", margin: "0 auto 8px", opacity: 0.4 }} />
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-tertiary, #888)", margin: 0 }}>
+                      Unable to load gap data.
+                    </p>
+                  </div>
+                )}
+
+                {/* ── Recommended Courses (inline) ── */}
+                {selectedStudentId && (
+                  <div style={{
+                    background: "var(--admin-bg-card, #fff)",
+                    border: "1px solid var(--admin-border-default, rgba(0,0,0,0.08))",
+                    borderRadius: 12, overflow: "hidden",
+                  }}>
+                    <div style={{
+                      padding: "14px 20px",
+                      borderBottom: "1px solid var(--admin-border-default, rgba(0,0,0,0.08))",
+                      display: "flex", alignItems: "center", gap: 8,
+                    }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: 7,
+                        background: "rgba(16,185,129,0.1)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <BookOpen style={{ width: 14, height: 14, color: "#10b981" }} />
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>
+                        Recommended Courses
+                      </span>
+                      {allRecs.length > 0 && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, color: "#10b981",
+                          background: "rgba(16,185,129,0.1)", padding: "2px 6px", borderRadius: 4,
+                        }}>
+                          {allRecs.length} courses
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ padding: 16 }}>
+                      {recsLoading ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          <Skeleton height={56} />
+                          <Skeleton height={56} />
+                          <Skeleton height={56} />
+                        </div>
+                      ) : allRecs.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {allRecs.map((r: any, i: number) => (
+                            <motion.div
+                              key={i}
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: i * 0.04 }}
+                              style={{
+                                padding: "10px 14px", borderRadius: 8,
+                                border: "1px solid var(--admin-border-default, rgba(0,0,0,0.06))",
+                                background: "var(--admin-bg-hover, rgba(0,0,0,0.015))",
+                                display: "flex", alignItems: "center", gap: 12,
+                              }}
+                            >
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>
+                                    {r.courseName}
+                                  </span>
+                                  <span style={{
+                                    fontSize: 10, fontFamily: "monospace", fontWeight: 600,
+                                    color: "var(--admin-font-tertiary, #888)",
+                                    background: "var(--admin-bg-card, #fff)",
+                                    padding: "1px 6px", borderRadius: 3,
+                                    border: "1px solid var(--admin-border-default, rgba(0,0,0,0.08))",
+                                  }}>
+                                    {r.courseCode}
+                                  </span>
+                                </div>
+                                {r.reason && (
+                                  <p style={{ fontSize: 11, color: "var(--admin-font-tertiary, #888)", margin: "3px 0 0", lineHeight: 1.4 }}>
+                                    {r.reason}
+                                  </p>
+                                )}
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                                <span style={{
+                                  fontSize: 10, fontWeight: 700, color: "#6366f1",
+                                  background: "rgba(99,102,241,0.1)", padding: "2px 7px", borderRadius: 4,
+                                }}>
+                                  {r.credits} cr
+                                </span>
+                                {r.source && (
+                                  <span style={{
+                                    fontSize: 9, fontWeight: 600,
+                                    textTransform: "uppercase" as const, letterSpacing: "0.03em",
+                                    color: "var(--admin-font-tertiary, #888)",
+                                    background: "var(--admin-bg-hover, rgba(0,0,0,0.04))",
+                                    padding: "2px 6px", borderRadius: 3,
+                                  }}>
+                                    {(r.source || "").replace("_", " ")}
+                                  </span>
+                                )}
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ textAlign: "center", padding: "24px 0" }}>
+                          <p style={{ fontSize: 12, color: "var(--admin-font-tertiary, #888)", margin: 0 }}>
+                            No recommendations available
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
               </motion.div>
             )}
           </AnimatePresence>
         </div>
+
       </motion.div>
     </div>
   );

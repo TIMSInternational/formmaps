@@ -452,7 +452,8 @@ export default function AdminUsersPage() {
                 </TableRow>
               ) : (
                 users.map((user) => (
-                  <TableRow key={user.id} className="border-gray-50 hover:bg-gray-50/50 transition-colors">
+                  <TableRow key={user.id} className="border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer"
+                    onClick={() => handleViewProfile(user)}>
                     <TableCell className="font-medium text-gray-900 pl-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
@@ -491,42 +492,10 @@ export default function AdminUsersPage() {
                       {new Date(user.joinedDate).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right pr-6 py-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full">
-                            <span className="sr-only">{t('admin.users.openMenu')}</span>
-                            <MoreHorizontal className="h-4 w-4 text-gray-400" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[160px] rounded-xl border-gray-100 shadow-lg">
-                          <DropdownMenuLabel className="text-xs text-gray-400 font-normal">
-                            {t("admin.users.dropdown.actions")}
-                          </DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleViewProfile(user)} className="text-sm font-medium text-gray-700 cursor-pointer">
-                            <Eye className="mr-2 h-3.5 w-3.5 text-gray-400" />
-                            {t("admin.users.dropdown.viewProfile")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleViewProfile(user)} className="text-sm font-medium text-gray-700 cursor-pointer">
-                            <Pencil className="mr-2 h-3.5 w-3.5 text-gray-400" />
-                            {t("admin.users.dropdown.editDetails")}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator className="bg-gray-50" />
-                          <DropdownMenuItem
-                            onClick={() => {
-                              navigator.clipboard.writeText(user.email);
-                              toast.success(t("admin.users.emailCopied"));
-                            }}
-                            className="text-sm font-medium text-gray-700 cursor-pointer"
-                          >
-                            <Mail className="mr-2 h-3.5 w-3.5 text-gray-400" />
-                            {t("admin.users.dropdown.copyEmail")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeactivateUser(user)} className="text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer font-medium">
-                            <UserX className="mr-2 h-3.5 w-3.5" />
-                            {t("admin.users.dropdown.deactivateUser")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                        onClick={(e) => e.stopPropagation()}>
+                        <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -561,6 +530,58 @@ export default function AdminUsersPage() {
             </div>
           </div>
         </div>
+      {/* User Detail Dialog */}
+      <Dialog open={!!selectedUser} onOpenChange={(open) => { if (!open) setSelectedUser(null); }}>
+        <DialogContent className="sm:max-w-[420px] rounded-2xl border-gray-100 shadow-2xl p-0 overflow-hidden">
+          {selectedUser && (
+            <>
+              <div className="bg-gray-50/50 p-6 border-b border-gray-100">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-lg font-bold text-gray-600">
+                    {selectedUser.name?.charAt(0)?.toUpperCase() || "?"}
+                  </div>
+                  <div>
+                    <DialogTitle className="text-lg font-bold text-gray-900">{selectedUser.name}</DialogTitle>
+                    <Badge variant="outline" className="capitalize font-medium border-gray-200 text-gray-600 bg-white mt-1">
+                      {selectedUser.role}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 space-y-3">
+                <div className="flex items-center gap-3 text-sm">
+                  <Mail className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-700">{selectedUser.email}</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <UserCheck className="h-4 w-4 text-gray-400" />
+                  <Badge variant={selectedUser.status === "active" ? "default" : "secondary"}
+                    className={`font-medium shadow-none border-0 ${selectedUser.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
+                    {selectedUser.status}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <Users className="h-4 w-4 text-gray-400" />
+                  Joined {new Date(selectedUser.joinedDate).toLocaleDateString()}
+                </div>
+              </div>
+              <div className="border-t border-gray-100 p-4 space-y-2">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Actions</p>
+                <button onClick={() => { navigator.clipboard.writeText(selectedUser.email); toast.success("Email copied"); }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left">
+                  <Mail className="h-4 w-4 text-gray-400" /> Copy Email
+                </button>
+                {selectedUser.status === "active" && (
+                  <button onClick={() => { setSelectedUser(null); handleDeactivateUser(selectedUser); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors text-left">
+                    <UserX className="h-4 w-4" /> Deactivate User
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
       <ConfirmDialog />
     </div>
   );

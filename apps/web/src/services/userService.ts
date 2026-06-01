@@ -23,7 +23,7 @@ export async function uploadProfileAvatar(
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await apiRequest("/api/v1/user/profile/avatar", {
+  const res = await apiRequest("/api/v1/upload/profile-image", {
     method: "POST",
     data: formData,
     headers: { "Content-Type": "multipart/form-data" },
@@ -37,7 +37,7 @@ export async function uploadProfileCover(
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await apiRequest("/api/v1/user/profile/cover", {
+  const res = await apiRequest("/api/v1/upload/profile-image", {
     method: "POST",
     data: formData,
     headers: { "Content-Type": "multipart/form-data" },

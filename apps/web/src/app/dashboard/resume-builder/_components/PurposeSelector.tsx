@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Briefcase, GraduationCap, FileText } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 

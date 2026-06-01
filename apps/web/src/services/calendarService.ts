@@ -137,11 +137,15 @@ export async function checkCalendarAuthStatus(
     tokenStatus: string;
     provider: string;
   };
-}> {
-  const res = await apiRequest(
-    `/api/v1/coach/auth/${provider}/status?email=${encodeURIComponent(email)}`
-  );
-  return res.data || res;
+} | null> {
+  try {
+    const res = await apiRequest(
+      `/api/v1/coach/auth/${provider}/status?email=${encodeURIComponent(email)}`
+    );
+    return res.data || res;
+  } catch {
+    return null;
+  }
 }
 
 export async function disconnectCalendar(

@@ -46,6 +46,7 @@ import {
   MessageCircle,
   MessageCirclePlus,
   Trash2,
+  Video,
 } from "lucide-react";
 
 type ThemeMode = "dark" | "light" | "system";
@@ -98,8 +99,10 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "dashboard.resumeBuilder", href: "/dashboard/resumes", icon: ClipboardList },
       { label: "dashboard.portfolio", href: "/dashboard/portfolio", icon: FolderOpen },
-      { label: "dashboard.coursePlan", href: "/dashboard/course-plan", icon: BookOpen },
       { label: "Applications", href: "/dashboard/applications", icon: Target },
+      { label: "Test Scores", href: "/dashboard/test-scores", icon: FileText },
+      { label: "Transcript", href: "/dashboard/transcript", icon: BookOpen },
+      { label: "Recommendations", href: "/dashboard/recommendations", icon: Award },
     ],
   },
   {
@@ -113,6 +116,13 @@ const NAV_SECTIONS: NavSection[] = [
           { label: "Find Coach", href: "/dashboard/book-coach", icon: Search },
         ],
       },
+    ],
+  },
+  {
+    label: "Communication",
+    items: [
+      { label: "Messages", href: "/dashboard/messages", icon: MessageCircle },
+      { label: "Video Calls", href: "/dashboard/video", icon: Video },
     ],
   },
   {

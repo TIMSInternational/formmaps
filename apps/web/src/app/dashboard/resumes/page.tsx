@@ -66,12 +66,11 @@ export default function MyResumesPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const token = localStorage.getItem("token");
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/resume/upload-and-parse`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
           body: formData,
         }
       );

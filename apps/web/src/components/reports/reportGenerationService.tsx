@@ -23,10 +23,9 @@ const downloadBlob = (blob: Blob, filename: string) => {
 
 // Fetch a PDF report from the backend
 const fetchBackendReport = async (endpoint: string, filename: string): Promise<void> => {
-  const token = localStorage.getItem('token');
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    credentials: 'include',
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: 'application/pdf',
     },
   });

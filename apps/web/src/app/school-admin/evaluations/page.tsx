@@ -1,6 +1,8 @@
 "use client";
-
-// School-Admin view of 360° Evaluations — re-uses the same evaluation components.
-// School admins see all students; counselors only see assigned students.
-
-export { default } from "@/app/counselor/evaluations/page";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+export default function EvaluationsRedirect() {
+  const router = useRouter();
+  useEffect(() => { router.replace("/school-admin/assessments?tab=evaluations"); }, [router]);
+  return null;
+}

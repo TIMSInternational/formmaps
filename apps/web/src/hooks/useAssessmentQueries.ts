@@ -36,10 +36,9 @@ export function useAssessmentProgress(userId: string) {
     queryKey: assessmentKeys.progress(userId),
     queryFn: () => getUserAssessmentProgress(userId, language),
     enabled: !!userId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: true, // Refetch when user returns to tab
-    refetchInterval: 5 * 60 * 1000, // Background refetch every 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -50,10 +49,9 @@ export function useDashboardAssessmentSummary(userId: string) {
     queryKey: assessmentKeys.dashboardSummary(userId),
     queryFn: () => getDashboardAssessmentSummary(userId, language),
     enabled: !!userId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: true, // Refetch when user returns to tab
-    refetchInterval: 3 * 60 * 1000, // Background refetch every 3 minutes for dashboard
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 }
 

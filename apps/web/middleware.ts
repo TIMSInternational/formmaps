@@ -46,22 +46,27 @@ export function middleware(request: NextRequest) {
 
     const shouldSkip = skipPaths.some((p) => pathname.startsWith(p));
     if (!shouldSkip) {
-      // Try to get token from Authorization header or cookie named 'token'
+      // Check if user is logged in via cookie
       const authHeader = request.headers.get("authorization");
       let token = null;
       if (authHeader && authHeader.startsWith("Bearer ")) {
         token = authHeader.slice(7);
       } else {
-        const cookie = request.cookies.get("token");
-        if (cookie) token = cookie.value;
+        // Backend sets httpOnly "access_token" cookie — middleware can't read it
+        // Use the non-httpOnly "logged_in" cookie as auth signal instead
+        const loggedIn = request.cookies.get("logged_in");
+        const accessToken = request.cookies.get("access_token");
+        if (loggedIn?.value === "true" || accessToken) token = "cookie-auth";
       }
 
       if (token) {
         try {
+          // Forward cookies to API for server-side auth check
+          const cookieHeader = request.headers.get("cookie") || "";
           const profileRes = fetch(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/authapi/profile`,
             {
-              headers: { Authorization: `Bearer ${token}` },
+              headers: { Cookie: cookieHeader },
             }
           );
 

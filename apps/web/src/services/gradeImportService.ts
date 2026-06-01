@@ -33,11 +33,9 @@ export async function getGradeImportStatus(jobId: string): Promise<GradeImportSt
 export async function downloadGradeImportFailures(jobId: string): Promise<Blob> {
   // Blob download requires raw fetch — apiRequest returns parsed JSON
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const res = await fetch(
     `${baseUrl}/api/v1/school-admin/grades/import/${jobId}/download-failures`,
-    { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+    { credentials: "include" }
   );
   if (!res.ok) throw new Error("Failed to download failure report");
   return res.blob();

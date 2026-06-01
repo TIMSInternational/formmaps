@@ -177,7 +177,7 @@ export async function rescheduleCounselorSession(
 ): Promise<{ id: string; status: string; startTime: string; endTime: string }> {
   const res = await apiRequest(
     `/api/v1/counselor/sessions/${id}/reschedule`,
-    { method: "PUT", data: { newStartTime, newEndTime } }
+    { method: "PUT", data: { startTime: newStartTime, endTime: newEndTime } }
   );
   return res.data ?? res;
 }

@@ -13,9 +13,8 @@ import { groupThreadsByDate, formatThreadTime } from "@/components/ai-chat/useCh
 import {
   LayoutDashboard,
   Users,
-  TrendingDown,
-  Bell,
-  Radar,
+  BookOpen,
+  ClipboardCheck,
   CalendarDays,
   Settings,
   ChevronDown,
@@ -29,6 +28,7 @@ import {
   Home,
   MessageCircle,
   MessageCirclePlus,
+  GraduationCap,
 } from "lucide-react";
 
 type ThemeMode = "dark" | "light" | "system";
@@ -38,21 +38,22 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
     label: t("nav.main", "Main"),
     items: [
       { label: t("counselor.nav.overview", "Overview"), href: "/counselor", icon: LayoutDashboard },
+      { label: t("counselor.nav.myStudents", "My Students"), href: "/counselor/students", icon: Users },
     ],
   },
   {
     label: t("counselor.nav.caseload", "Caseload"),
     items: [
-      { label: t("counselor.nav.myStudents", "My Students"), href: "/counselor/students", icon: Users },
-      { label: t("counselor.nav.academicGaps", "Academic Gaps"), href: "/counselor/academic-gaps", icon: TrendingDown },
-      { label: t("counselor.nav.evaluations", "360° Evaluations"), href: "/counselor/evaluations", icon: Radar },
-      { label: t("counselor.nav.alerts", "Alerts"), href: "/counselor/alerts", icon: Bell },
+      { label: t("counselor.nav.academics", "Academics"), href: "/counselor/academics", icon: BookOpen },
+      { label: t("counselor.nav.assessments", "Assessments"), href: "/counselor/assessments", icon: ClipboardCheck },
+      { label: t("counselor.nav.collegePrep", "College Prep"), href: "/counselor/college-prep", icon: GraduationCap },
     ],
   },
   {
-    label: t("counselor.nav.scheduling", "Scheduling"),
+    label: t("counselor.nav.communication", "Communication"),
     items: [
-      { label: t("counselor.nav.sessions", "Sessions"), href: "/counselor/sessions", icon: CalendarDays },
+      { label: t("counselor.nav.communication", "Communication"), href: "/counselor/communication", icon: MessageCircle },
+      { label: t("counselor.nav.scheduling", "Scheduling"), href: "/counselor/scheduling", icon: CalendarDays },
     ],
   },
   {

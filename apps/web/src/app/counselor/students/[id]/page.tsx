@@ -19,6 +19,10 @@ import {
   Trash2,
   Target,
   LoaderCircle,
+  Brain,
+  CheckCircle2,
+  Circle,
+  RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +54,17 @@ import {
   useStudentChangeRequests,
   useReviewChangeRequest,
 } from "@/hooks/useCoursePlanQueries";
+import {
+  useStudentRecommendations,
+  useStudentAcademicGaps,
+  useStudentTranscript,
+  useStudentGpa,
+} from "@/hooks/useStudentDetailData";
+import {
+  useAssessmentProgress,
+  useMILHistory,
+  useEvaluationGroups,
+} from "@/hooks/useAssessmentQueries";
 import type { NoteType, CounselorNote } from "@/types/counselorNotes";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -66,6 +81,22 @@ const ASSESSMENT_COLORS: Record<string, string> = {
   not_started: "bg-gray-100 text-gray-500",
 };
 
+const PCA_EXAM_NAMES: Record<string, string> = {
+  PatternRecognition: "Pattern Recognition",
+  VerbalReasoning: "Verbal Reasoning",
+  WorkingMemory: "Working Memory",
+  NumericVelocity: "Numeric Velocity",
+  VisualRotation: "Visual Rotation",
+};
+
+const PCA_EXAM_KEYS = [
+  "PatternRecognition",
+  "VerbalReasoning",
+  "WorkingMemory",
+  "NumericVelocity",
+  "VisualRotation",
+] as const;
+
 export default function CounselorStudentDetailPage() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -81,9 +112,18 @@ export default function CounselorStudentDetailPage() {
   const { data: coursePlan, isLoading: planLoading } = useStudentCoursePlan(studentId);
   const counselorAdd = useCounselorAddCourse(studentId);
   const counselorRemove = useCounselorRemoveCourse(studentId);
+  const { data: recsData } = useStudentRecommendations(studentId);
+  const { data: gapsData } = useStudentAcademicGaps(studentId);
+  const { data: transcriptData } = useStudentTranscript(studentId);
+  const { data: gpaData } = useStudentGpa(studentId);
   const { data: changeRequestsData } = useStudentChangeRequests(studentId, "pending");
   const reviewRequest = useReviewChangeRequest(studentId);
   const pendingRequests = changeRequestsData?.data ?? [];
+
+  // Assessment data
+  const { data: assessmentProgress, isLoading: assessmentsLoading } = useAssessmentProgress(studentId);
+  const { data: milHistory } = useMILHistory(studentId);
+  const { data: evalGroups } = useEvaluationGroups(studentId);
 
   const [newNote, setNewNote] = useState("");
   const [noteType, setNoteType] = useState<NoteType>("general");
@@ -261,10 +301,18 @@ export default function CounselorStudentDetailPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="notes">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="notes">
             <MessageSquare className="h-4 w-4 mr-2" />
             Counselor Notes
+          </TabsTrigger>
+          <TabsTrigger value="assessments">
+            <Brain className="h-4 w-4 mr-2" />
+            Assessments
+          </TabsTrigger>
+          <TabsTrigger value="grades">
+            <Award className="h-4 w-4 mr-2" />
+            Grades
           </TabsTrigger>
           <TabsTrigger value="course-plan">
             <BookOpen className="h-4 w-4 mr-2" />
@@ -375,6 +423,381 @@ export default function CounselorStudentDetailPage() {
           </Card>
         </TabsContent>
 
+        {/* Assessments Tab */}
+        <TabsContent value="assessments" className="mt-6 space-y-5">
+          {assessmentsLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          ) : (
+            <>
+              {/* Overall Completion */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Brain className="h-4 w-4 text-violet-600" />
+                    Overall Assessment Completion
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const pct = assessmentProgress?.overallCompletion?.percentageComplete ?? 0;
+                    const completed = assessmentProgress?.overallCompletion?.completedAssessments ?? 0;
+                    const total = assessmentProgress?.overallCompletion?.totalAssessments ?? 3;
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">{completed}/{total} assessments completed</span>
+                          <span className="font-semibold text-gray-900">{pct}%</span>
+                        </div>
+                        <Progress value={pct} className="h-2.5" />
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              {/* PCA Cognitive Assessment */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between text-base">
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-4 w-4 text-indigo-600" />
+                      PCA Cognitive Assessment
+                    </div>
+                    {(() => {
+                      const examStatuses = milHistory?.examStatus ?? [];
+                      const completedCount = examStatuses.filter(
+                        (e: any) => e.status === "completed"
+                      ).length;
+                      return (
+                        <span className="text-sm font-normal text-gray-500">
+                          {completedCount}/5 completed
+                        </span>
+                      );
+                    })()}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {PCA_EXAM_KEYS.map((examKey) => {
+                      const displayName = PCA_EXAM_NAMES[examKey];
+                      // Match by exam name from API data
+                      const examStatuses = milHistory?.examStatus ?? [];
+                      const match = examStatuses.find(
+                        (e: any) =>
+                          e.examName === displayName ||
+                          e.examName?.replace(/\s+/g, "") === examKey
+                      );
+                      const status: string = match?.status ?? "not_started";
+                      const statusLabel =
+                        status === "completed"
+                          ? "Completed"
+                          : status === "in_progress"
+                            ? "In Progress"
+                            : "Not Started";
+                      const StatusIcon =
+                        status === "completed"
+                          ? CheckCircle2
+                          : status === "in_progress"
+                            ? RotateCw
+                            : Circle;
+                      const iconColor =
+                        status === "completed"
+                          ? "text-emerald-500"
+                          : status === "in_progress"
+                            ? "text-amber-500"
+                            : "text-gray-300";
+
+                      return (
+                        <div
+                          key={examKey}
+                          className="flex items-center justify-between p-3 border rounded-xl"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <StatusIcon className={cn("h-4 w-4", iconColor)} />
+                            <span className="text-sm font-medium text-gray-700">
+                              {displayName}
+                            </span>
+                          </div>
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              "text-xs",
+                              ASSESSMENT_COLORS[status] || "bg-gray-100 text-gray-500"
+                            )}
+                          >
+                            {statusLabel}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* MIL/LIA Assessment */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between text-base">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4 text-teal-600" />
+                      MIL / LIA Assessment
+                    </div>
+                    {(() => {
+                      const status = assessmentProgress?.milAssessment?.status ?? "not_started";
+                      const statusLabel =
+                        status === "completed"
+                          ? "Completed"
+                          : status === "in_progress"
+                            ? "In Progress"
+                            : "Not Started";
+                      return (
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "text-xs",
+                            ASSESSMENT_COLORS[status] || "bg-gray-100 text-gray-500"
+                          )}
+                        >
+                          {statusLabel}
+                        </Badge>
+                      );
+                    })()}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const mil = assessmentProgress?.milAssessment;
+                    const enhanced = mil?.enhancedData;
+                    if (!mil || mil.status === "not_started") {
+                      return (
+                        <p className="text-sm text-gray-400 text-center py-4">
+                          Student has not started the MIL/LIA assessment.
+                        </p>
+                      );
+                    }
+                    return (
+                      <div className="flex items-center gap-6 text-sm">
+                        {enhanced && (
+                          <>
+                            <div>
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Exams</p>
+                              <p className="text-lg font-bold text-gray-900 mt-0.5">
+                                {enhanced.completedExams}/{enhanced.totalExams}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Completion</p>
+                              <p className="text-lg font-bold text-gray-900 mt-0.5">
+                                {Math.round(enhanced.completionPercentage)}%
+                              </p>
+                            </div>
+                          </>
+                        )}
+                        {mil.progress?.averageScore > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Avg Score</p>
+                            <p className="text-lg font-bold text-gray-900 mt-0.5">
+                              {Math.round(mil.progress.averageScore)}%
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              {/* 360° Evaluation */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between text-base">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-blue-600" />
+                      360° Evaluation
+                    </div>
+                    {(() => {
+                      const status = assessmentProgress?.evaluationAssessment?.status ?? "not_started";
+                      const statusLabel =
+                        status === "completed"
+                          ? "Completed"
+                          : status === "in_progress"
+                            ? "In Progress"
+                            : "Not Started";
+                      return (
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "text-xs",
+                            ASSESSMENT_COLORS[status] || "bg-gray-100 text-gray-500"
+                          )}
+                        >
+                          {statusLabel}
+                        </Badge>
+                      );
+                    })()}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const evalData = assessmentProgress?.evaluationAssessment;
+                    const groups = evalGroups ?? evalData?.evaluationGroups ?? [];
+                    if (!groups.length) {
+                      return (
+                        <p className="text-sm text-gray-400 text-center py-4">
+                          No evaluators have been added yet.
+                        </p>
+                      );
+                    }
+                    const completedCount = groups.filter(
+                      (g: any) => g.isEvaluationCompleted
+                    ).length;
+                    return (
+                      <div className="flex items-center gap-6 text-sm">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Evaluators</p>
+                          <p className="text-lg font-bold text-gray-900 mt-0.5">
+                            {completedCount}/{groups.length} completed
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Response Rate</p>
+                          <p className="text-lg font-bold text-gray-900 mt-0.5">
+                            {groups.length > 0
+                              ? Math.round((completedCount / groups.length) * 100)
+                              : 0}%
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </TabsContent>
+
+        {/* Grades Tab */}
+        <TabsContent value="grades" className="mt-6 space-y-5">
+          {/* GPA Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Award className="h-4 w-4 text-amber-600" />
+                GPA Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {gpaData ? (
+                <div className="space-y-3">
+                  <div className="flex gap-8">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Weighted GPA</p>
+                      <p className="text-2xl font-bold text-gray-900 mt-1">
+                        {gpaData.gpaWeighted?.toFixed(2) ?? "\u2014"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Unweighted GPA</p>
+                      <p className="text-2xl font-bold text-gray-900 mt-1">
+                        {gpaData.gpaUnweighted?.toFixed(2) ?? "\u2014"}
+                      </p>
+                    </div>
+                    {gpaData.classRank && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Class Rank</p>
+                        <p className="text-2xl font-bold text-gray-900 mt-1">
+                          #{gpaData.classRank}{" "}
+                          <span className="text-sm text-gray-400 font-normal">/ {gpaData.classSize}</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    Total Credits: {gpaData.totalCredits}
+                    {gpaData.computedAt && ` | Last computed: ${format(new Date(gpaData.computedAt), "MMM d, yyyy")}`}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-6">No GPA data computed yet.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Transcript / Grades Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <BookOpen className="h-4 w-4 text-indigo-600" />
+                Transcript
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {transcriptData?.grades && Object.keys(transcriptData.grades).length > 0 ? (
+                <div className="space-y-5">
+                  {Object.entries(transcriptData.grades)
+                    .sort(([a], [b]) => b.localeCompare(a))
+                    .map(([year, courses]) => (
+                      <div key={year}>
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2 pb-1 border-b border-gray-100">
+                          {year}
+                        </h4>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-xs text-gray-500 uppercase">
+                                <th className="text-left py-1.5 pr-3 font-medium">Code</th>
+                                <th className="text-left py-1.5 pr-3 font-medium">Course</th>
+                                <th className="text-center py-1.5 pr-3 font-medium">Credits</th>
+                                <th className="text-center py-1.5 pr-3 font-medium">Grade</th>
+                                <th className="text-center py-1.5 font-medium">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(courses as any[]).map((c: any) => (
+                                <tr key={c.id} className="border-t border-gray-50">
+                                  <td className="py-1.5 pr-3 text-gray-600 font-medium">{c.courseCode || "N/A"}</td>
+                                  <td className="py-1.5 pr-3 text-gray-700">{c.courseLevel || "Regular"}</td>
+                                  <td className="py-1.5 pr-3 text-center text-gray-500">{c.credits}</td>
+                                  <td className={cn(
+                                    "py-1.5 pr-3 text-center font-semibold",
+                                    c.grade === "A" || c.grade === "A+" || c.grade === "A-" ? "text-emerald-600" :
+                                    c.grade === "B" || c.grade === "B+" || c.grade === "B-" ? "text-blue-600" :
+                                    c.grade === "F" ? "text-red-600" : "text-gray-700"
+                                  )}>
+                                    {c.grade || (c.status === "in_progress" ? "IP" : "\u2014")}
+                                  </td>
+                                  <td className="py-1.5 text-center">
+                                    <Badge variant="secondary" className={cn(
+                                      "text-xs capitalize",
+                                      c.status === "completed" ? "bg-emerald-100 text-emerald-700" :
+                                      c.status === "in_progress" ? "bg-amber-100 text-amber-700" :
+                                      "bg-gray-100 text-gray-600"
+                                    )}>
+                                      {c.status?.replace("_", " ") || "enrolled"}
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-8">
+                  No transcript data available for this student.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Course Plan Tab */}
         <TabsContent value="course-plan" className="mt-6 space-y-6">
           {/* Pending change requests from student */}
@@ -458,6 +881,8 @@ export default function CounselorStudentDetailPage() {
             onCounselorRemove={(enrollmentId) => counselorRemove.mutate(enrollmentId)}
             isCounselorAddPending={counselorAdd.isPending}
             isCounselorRemovePending={counselorRemove.isPending}
+            recommendations={recsData}
+            academicGaps={gapsData}
           />
         </TabsContent>
 

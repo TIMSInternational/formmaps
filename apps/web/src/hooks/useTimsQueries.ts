@@ -26,13 +26,12 @@ export function useDerived360Profile() {
 
       // Call the backend to aggregate all 360° feedback and derive profile
       try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
         const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
         const resp = await fetch(`${API_BASE}/api/v1/assessment/derive-profile/${userId}`, {
           headers: {
             "Content-Type": "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
           },
+          credentials: "include",
         });
 
         if (resp.ok) {
@@ -102,7 +101,8 @@ export function useTimsCareerScoring() {
   const { data: profileData } = useDerived360Profile();
 
   const userId = user?.id;
-  const isEnabled = !!userId && isPCACompleted && isMILCompleted;
+  // Enable scoring once we have a userId — gracefully handles missing PCA/MIL data
+  const isEnabled = !!userId;
 
   const query = useQuery({
     queryKey: timsKeys.scores(userId || ""),

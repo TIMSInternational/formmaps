@@ -210,10 +210,10 @@ export function usePrerequisiteCheck(courseId: string, studentId: string) {
   });
 }
 
-export function usePrerequisiteChain(courseId: string) {
+export function usePrerequisiteChain(courseId: string | null) {
   return useQuery({
-    queryKey: curriculumKeys.prerequisiteChain(courseId),
-    queryFn: () => getPrerequisiteChain(courseId),
+    queryKey: curriculumKeys.prerequisiteChain(courseId || ""),
+    queryFn: () => getPrerequisiteChain(courseId!),
     enabled: !!courseId,
     staleTime: 1000 * 60 * 10,
   });

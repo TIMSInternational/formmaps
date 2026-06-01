@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FiAward, FiBookOpen, FiBriefcase, FiTrendingUp, FiArrowUpRight, FiClock, FiStar, FiCalendar, FiUser } from "react-icons/fi";
 import { Button } from "@/components/ui/button";

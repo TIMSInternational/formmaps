@@ -31,13 +31,13 @@ export async function getUserTransactions(params?: {
   if (params?.limit) query.append("limit", params.limit.toString());
 
   const qs = query.toString();
-  const res = await apiRequest(`/api/v1/transactions${qs ? `?${qs}` : ""}`);
+  const res = await apiRequest(`/api/v1/user/transactions${qs ? `?${qs}` : ""}`);
   return res.data || res;
 }
 
 export async function getTransactionById(
   transactionId: string
 ): Promise<Transaction> {
-  const res = await apiRequest(`/api/v1/transactions/${transactionId}`);
+  const res = await apiRequest(`/api/v1/user/transactions/${transactionId}`);
   return res.data || res;
 }

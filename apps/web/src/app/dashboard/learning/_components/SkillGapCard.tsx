@@ -4,7 +4,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Check, Sparkles, TrendingUp, ChevronRight } from "lucide-react";
 import { SkillGapData } from "@/services/benchmarkService";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 interface SkillGapCardProps {
   gap: SkillGapData;

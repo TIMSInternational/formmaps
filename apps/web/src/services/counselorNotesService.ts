@@ -18,7 +18,7 @@ export async function getStudentNotes(
   }
   const qs = query.toString();
   const res = await apiRequest(
-    `/api/v1/school-admin/students/${studentId}/notes${qs ? `?${qs}` : ""}`
+    `/api/v1/counselor/students/${studentId}/notes${qs ? `?${qs}` : ""}`
   );
   return res.data ?? res;
 }
@@ -29,7 +29,7 @@ export async function createNote(
 ): Promise<CounselorNote> {
   const { studentId, ...body } = payload;
   const res = await apiRequest(
-    `/api/v1/school-admin/students/${studentId}/notes`,
+    `/api/v1/counselor/students/${studentId}/notes`,
     { method: "POST", data: body }
   );
   return res.data ?? res;
@@ -40,7 +40,7 @@ export async function updateNote(
   noteId: string,
   payload: Partial<CounselorNotePayload>
 ): Promise<CounselorNote> {
-  const res = await apiRequest(`/api/v1/school-admin/notes/${noteId}`, {
+  const res = await apiRequest(`/api/v1/counselor/notes/${noteId}`, {
     method: "PUT",
     data: payload,
   });
@@ -49,7 +49,7 @@ export async function updateNote(
 
 // Delete a note
 export async function deleteNote(noteId: string): Promise<void> {
-  await apiRequest(`/api/v1/school-admin/notes/${noteId}`, {
+  await apiRequest(`/api/v1/counselor/notes/${noteId}`, {
     method: "DELETE",
   });
 }
@@ -57,7 +57,7 @@ export async function deleteNote(noteId: string): Promise<void> {
 // Mark follow-up as completed
 export async function completeFollowUp(noteId: string): Promise<CounselorNote> {
   const res = await apiRequest(
-    `/api/v1/school-admin/notes/${noteId}/complete-followup`,
+    `/api/v1/counselor/notes/${noteId}/complete-followup`,
     { method: "PUT" }
   );
   return res.data ?? res;

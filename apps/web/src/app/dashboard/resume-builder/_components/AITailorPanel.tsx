@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Check, X, Sparkles, TrendingUp } from "lucide-react";
 import type { ExtractedJobData, TailoredResume } from "@/types/resume";
 

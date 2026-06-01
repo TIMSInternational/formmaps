@@ -63,22 +63,9 @@ export default function MILAssessmentPage() {
   >([]);
   const [progressLoading, setProgressLoading] = useState(true);
 
-  // Get current user ID from global store or token fallback
+  // Get current user ID from global store
   const getCurrentUserId = (): string => {
     if (user?.id) return user.id;
-    try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        return (
-          payload[
-            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-          ] || "unknown"
-        );
-      }
-    } catch {
-      // fallback to unknown
-    }
     return "unknown";
   };
 

@@ -54,7 +54,7 @@ import {
 import { toast } from "sonner";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { StudentDetailsSheet } from "./_components/StudentDetailsSheet";

@@ -1,124 +1,732 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  ClipboardCheck, RotateCcw, Settings2, Loader2, Save, Shield,
-  Users, ExternalLink, Calendar, BarChart3, Eye, Send,
-} from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  useAssessmentConfig,
-  useUpdateAssessmentConfig,
-  useAssessmentStatus,
-} from "@/hooks/useAssessmentConfigQueries";
-import type { AssessmentConfigItem } from "@/types/assessmentConfig";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+  ClipboardCheck, RotateCcw, Shield, Brain, Send, Users,
+  Calendar, RefreshCw, Check, Clock, Minus, ChevronDown,
+  Sparkles, Loader2, Filter, FileText,
+} from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { AdminTabBar } from "../_components/AdminTabBar";
+import { EvaluationsPanel } from "./_components/EvaluationsPanel";
+import { ResultsPanel } from "./_components/ResultsPanel";
+import {
+  getSchedules, saveSchedules, getPipeline, sendReminders,
+  setup360, getInsights,
+  type PipelineStudent, type AssessmentSchedule, type InsightsData,
+} from "@/services/assessmentCommandService";
 
-const assessmentMeta: Record<string, {
-  icon: any; label: string; description: string; color: string;
-  features: string[]; studentRoute?: string;
-}> = {
-  MIL: {
-    icon: ClipboardCheck, label: "Multiple Intelligence Lens",
-    description: "Measures student learning style preferences across 8 intelligence types (linguistic, logical-mathematical, spatial, musical, bodily-kinesthetic, interpersonal, intrapersonal, naturalistic).",
-    color: "#3b82f6",
-    features: ["Self-assessment questionnaire", "8 intelligence dimensions", "Learning style report", "Career alignment insights"],
-    studentRoute: "/dashboard/assessments/lia",
-  },
-  PCA: {
-    icon: Shield, label: "Personal Career Assessment",
-    description: "Evaluates career interests and aptitudes across industry clusters. Maps student preferences to career pathways and generates personalized recommendations.",
-    color: "#8b5cf6",
-    features: ["Interest inventory", "Aptitude matching", "Career cluster mapping", "Pathway recommendations"],
-    studentRoute: "/dashboard/assessments",
-  },
-  "360": {
-    icon: RotateCcw, label: "360° Evaluation",
-    description: "Multi-perspective feedback collection from teachers, peers, parents, and self-assessment. Provides holistic view of student competencies and growth areas.",
-    color: "#10b981",
-    features: ["Multi-evaluator feedback", "Competency framework", "Growth tracking", "Aggregated reports"],
-    studentRoute: "/evaluation/evaluator",
-  },
+const GRADES = [9, 10, 11, 12];
+const GRADE_LABELS: Record<number, string> = { 9: "Freshman", 10: "Sophomore", 11: "Junior", 12: "Senior" };
+const ASSESSMENT_TYPES = ["PCA", "MIL", "360"] as const;
+const EXAM_TYPES = ["PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation"];
+const EXAM_SHORT: Record<string, string> = {
+  PatternRecognition: "Pattern", VerbalReasoning: "Verbal",
+  WorkingMemory: "Memory", NumericVelocity: "Numeric", VisualRotation: "Rotation",
 };
 
-// Persist config to localStorage when backend is unavailable
-const STORAGE_KEY = "assessment_config_local";
-
-function loadLocalConfig(): AssessmentConfigItem[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch {}
-  return [
-    { assessmentType: "MIL", isEnabled: true, description: "" },
-    { assessmentType: "PCA", isEnabled: true, description: "" },
-    { assessmentType: "360", isEnabled: false, description: "" },
-  ];
+function StatusIcon({ status }: { status: string }) {
+  if (status === "done") return <Check style={{ width: 14, height: 14, color: "#10b981" }} />;
+  if (status === "in_progress") return <Clock style={{ width: 14, height: 14, color: "#f59e0b" }} />;
+  return <Minus style={{ width: 14, height: 14, color: "#6b7280" }} />;
 }
 
-function saveLocalConfig(items: AssessmentConfigItem[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function AssessmentConfigPage() {
-  const router = useRouter();
-  const { data: config, isLoading: configLoading, isError: configError } = useAssessmentConfig();
-  const { data: status } = useAssessmentStatus();
-  const update = useUpdateAssessmentConfig();
+// ─────────────────────────────────────────────────────────────────────────────
+// INSIGHTS CARD
+// ─────────────────────────────────────────────────────────────────────────────
+function InsightsCard({ insights, onRefresh, isRefreshing }: {
+  insights: InsightsData | undefined;
+  onRefresh: () => void;
+  isRefreshing: boolean;
+}) {
+  if (!insights?.hasEnoughData) {
+    return (
+      <div style={{
+        borderRadius: 8, border: "1px solid var(--admin-border-default)",
+        background: "var(--admin-bg-card)", padding: 20,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <Sparkles style={{ width: 16, height: 16, color: "#8b5cf6" }} />
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>School Insights</span>
+        </div>
+        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>
+          {insights?.message || "Insights will appear once enough students complete assessments."}
+        </p>
+      </div>
+    );
+  }
 
-  const [items, setItems] = useState<AssessmentConfigItem[]>([]);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const agg = insights.aggregates!;
+  return (
+    <div style={{
+      borderRadius: 8, border: "1px solid var(--admin-border-default)",
+      background: "var(--admin-bg-card)", padding: 20,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Sparkles style={{ width: 16, height: 16, color: "#8b5cf6" }} />
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>AI School Insights</span>
+          {insights.cached && (
+            <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>Cached</span>
+          )}
+        </div>
+        <button
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          style={{
+            height: 30, borderRadius: 6, padding: "0 10px", fontSize: 11, fontWeight: 500,
+            display: "flex", alignItems: "center", gap: 4,
+            background: "transparent", color: "var(--admin-font-tertiary)",
+            border: "1px solid var(--admin-border-default)", cursor: "pointer",
+          }}
+        >
+          <RefreshCw style={{ width: 12, height: 12, animation: isRefreshing ? "spin 1s linear infinite" : "none" }} />
+          Refresh
+        </button>
+      </div>
 
-  // Load config from backend or localStorage fallback
+      {/* Narrative */}
+      {insights.narrative && (
+        <p style={{ fontSize: 13, color: "var(--admin-font-secondary)", lineHeight: 1.6, marginBottom: 16, padding: 12, borderRadius: 6, background: "var(--admin-bg-hover)" }}>
+          {insights.narrative}
+        </p>
+      )}
+
+      {/* Metric chips */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <MetricChip label="Students" value={agg.totalStudents} color="#3b82f6" />
+        <MetricChip label="Profiles" value={agg.profilesComplete} color="#10b981" />
+        <MetricChip label="360° Reviews" value={agg.eval360Count} color="#f59e0b" />
+        {Object.entries(agg.pcaAverages).map(([k, v]) => (
+          <MetricChip key={k} label={EXAM_SHORT[k] || k} value={`${v}%`} color="#8b5cf6" />
+        ))}
+      </div>
+
+      {/* DISC + Career */}
+      {(agg.discDistribution || agg.topCareerClusters?.length > 0) && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 14 }}>
+          {agg.discDistribution && (
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 4 }}>DISC Distribution</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {Object.entries(agg.discDistribution).map(([k, v]) => (
+                  <span key={k} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)" }}>
+                    {k}: {v}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {agg.topCareerClusters?.length > 0 && (
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 4 }}>Top Career Clusters</div>
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                {agg.topCareerClusters.map(c => (
+                  <span key={c.name} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)" }}>
+                    {c.name} ({c.count})
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MetricChip({ label, value, color }: { label: string; value: string | number; color: string }) {
+  return (
+    <div style={{
+      padding: "6px 12px", borderRadius: 6, background: `${color}10`,
+      border: `1px solid ${color}20`,
+    }}>
+      <div style={{ fontSize: 16, fontWeight: 700, color, letterSpacing: "-0.02em" }}>{value}</div>
+      <div style={{ fontSize: 9, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase" }}>{label}</div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCHEDULE GRID
+// ─────────────────────────────────────────────────────────────────────────────
+function ScheduleGrid({ schedules, onSave, isSaving }: {
+  schedules: AssessmentSchedule[];
+  onSave: (s: { gradeLevel: number; assessmentType: string; startDate: string; endDate: string }[]) => void;
+  isSaving: boolean;
+}) {
+  const [draft, setDraft] = useState<Record<string, { startDate: string; endDate: string }>>({});
+  const [dirty, setDirty] = useState(false);
+
   useEffect(() => {
-    if (config?.configs && config.configs.length > 0) {
-      setItems(config.configs);
+    const map: Record<string, { startDate: string; endDate: string }> = {};
+    for (const s of schedules) {
+      map[`${s.gradeLevel}-${s.assessmentType}`] = {
+        startDate: s.startDate.split("T")[0],
+        endDate: s.endDate.split("T")[0],
+      };
+    }
+    setDraft(map);
+  }, [schedules]);
+
+  const update = (grade: number, type: string, field: "startDate" | "endDate", val: string) => {
+    const key = `${grade}-${type}`;
+    setDraft(prev => ({ ...prev, [key]: { ...prev[key] || { startDate: "", endDate: "" }, [field]: val } }));
+    setDirty(true);
+  };
+
+  const handleSave = () => {
+    const items = Object.entries(draft)
+      .filter(([, v]) => v.startDate && v.endDate)
+      .map(([k, v]) => {
+        const [grade, type] = k.split("-");
+        return { gradeLevel: parseInt(grade), assessmentType: type, startDate: v.startDate, endDate: v.endDate };
+      });
+    onSave(items);
+    setDirty(false);
+  };
+
+  return (
+    <div style={{
+      borderRadius: 8, border: "1px solid var(--admin-border-default)",
+      background: "var(--admin-bg-card)", overflow: "hidden",
+    }}>
+      <div style={{
+        padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Calendar style={{ width: 16, height: 16, color: "#3b82f6" }} />
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Assessment Schedule</span>
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={isSaving || !dirty}
+          style={{
+            height: 30, borderRadius: 6, padding: "0 14px", fontSize: 11, fontWeight: 600,
+            background: dirty ? "#3b82f6" : "var(--admin-bg-hover)",
+            color: dirty ? "#fff" : "var(--admin-font-tertiary)",
+            border: dirty ? "none" : "1px solid var(--admin-border-default)",
+            cursor: dirty ? "pointer" : "default",
+            display: "flex", alignItems: "center", gap: 4,
+          }}
+        >
+          {isSaving ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : null}
+          {dirty ? "Save Schedule" : "Saved"}
+        </button>
+      </div>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr style={{ background: "var(--admin-bg-hover)" }}>
+              <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 600, color: "var(--admin-font-tertiary)", fontSize: 10, textTransform: "uppercase" }}>Grade</th>
+              {ASSESSMENT_TYPES.map(t => (
+                <th key={t} colSpan={2} style={{ padding: "8px 12px", textAlign: "center", fontWeight: 600, color: "var(--admin-font-tertiary)", fontSize: 10, textTransform: "uppercase" }}>{t}</th>
+              ))}
+            </tr>
+            <tr style={{ background: "var(--admin-bg-hover)" }}>
+              <th />
+              {ASSESSMENT_TYPES.map(t => (
+                <React.Fragment key={t}>
+                  <th style={{ padding: "4px 8px", textAlign: "center", fontWeight: 500, color: "var(--admin-font-tertiary)", fontSize: 9 }}>Start</th>
+                  <th style={{ padding: "4px 8px", textAlign: "center", fontWeight: 500, color: "var(--admin-font-tertiary)", fontSize: 9 }}>End</th>
+                </React.Fragment>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {GRADES.map(g => (
+              <tr key={g} style={{ borderTop: "1px solid var(--admin-border-default)" }}>
+                <td style={{ padding: "8px 12px", fontWeight: 600, color: "var(--admin-font-primary)" }}>
+                  {g} <span style={{ fontWeight: 400, color: "var(--admin-font-tertiary)" }}>({GRADE_LABELS[g]})</span>
+                </td>
+                {ASSESSMENT_TYPES.map(t => {
+                  const key = `${g}-${t}`;
+                  const val = draft[key] || { startDate: "", endDate: "" };
+                  return (
+                    <React.Fragment key={t}>
+                      <td style={{ padding: "4px 6px" }}>
+                        <input
+                          type="date"
+                          value={val.startDate}
+                          onChange={e => update(g, t, "startDate", e.target.value)}
+                          style={{
+                            width: "100%", fontSize: 11, padding: "4px 6px", borderRadius: 4,
+                            border: "1px solid var(--admin-border-default)",
+                            background: "var(--admin-bg-input)", color: "var(--admin-font-primary)",
+                          }}
+                        />
+                      </td>
+                      <td style={{ padding: "4px 6px" }}>
+                        <input
+                          type="date"
+                          value={val.endDate}
+                          onChange={e => update(g, t, "endDate", e.target.value)}
+                          style={{
+                            width: "100%", fontSize: 11, padding: "4px 6px", borderRadius: 4,
+                            border: "1px solid var(--admin-border-default)",
+                            background: "var(--admin-bg-input)", color: "var(--admin-font-primary)",
+                          }}
+                        />
+                      </td>
+                    </React.Fragment>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PIPELINE TABLE
+// ─────────────────────────────────────────────────────────────────────────────
+// ── Student Assessment Detail Dialog ──
+function StudentAssessmentDialog({ student, open, onOpenChange }: {
+  student: PipelineStudent | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  if (!student) return null;
+
+  const pcaEntries = Object.entries(student.pca);
+  const pcaDone = pcaEntries.filter(([, v]) => v === "done").length;
+  const pcaTotal = pcaEntries.length;
+
+  const statusColor = (s: string) => s === "done" ? "#10b981" : s === "in_progress" ? "#f59e0b" : "#6b7280";
+  const statusLabel = (s: string) => s === "done" ? "Completed" : s === "in_progress" ? "In Progress" : "Not Started";
+  const statusBg = (s: string) => s === "done" ? "rgba(16,185,129,0.1)" : s === "in_progress" ? "rgba(245,158,11,0.1)" : "rgba(107,114,128,0.1)";
+
+  const overallDone = pcaDone + (student.mil === "done" ? 1 : 0) + student.eval360Detail.completed;
+  const overallTotal = pcaTotal + 1 + (student.eval360Detail.total || 1);
+  const overallPct = overallTotal > 0 ? Math.round((overallDone / overallTotal) * 100) : 0;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg" style={{ padding: 0, overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--admin-border-default)" }}>
+          <DialogHeader>
+            <DialogTitle style={{ fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+              <Brain style={{ width: 18, height: 18, color: "#6366f1" }} />
+              {student.name}
+            </DialogTitle>
+            <DialogDescription style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
+              {student.email} {student.gradeLevel ? `| Grade ${student.gradeLevel}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        <div style={{ padding: 16 }} className="space-y-4">
+          {/* Overall Progress */}
+          <div style={{ padding: "12px 16px", borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Overall Completion</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: overallPct === 100 ? "#10b981" : "var(--admin-font-primary)" }}>{overallPct}%</span>
+            </div>
+            <div style={{ height: 6, borderRadius: 3, background: "var(--admin-bg-card)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${overallPct}%`, borderRadius: 3, background: overallPct === 100 ? "#10b981" : "#3b82f6", transition: "width 0.3s" }} />
+            </div>
+          </div>
+
+          {/* PCA Exams */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+              PCA Cognitive Assessment ({pcaDone}/{pcaTotal})
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {pcaEntries.map(([name, status]) => (
+                <div key={name} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "8px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+                }}>
+                  <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>
+                    {EXAM_SHORT[name] || name.replace(/([A-Z])/g, " $1").trim()}
+                  </span>
+                  <span style={{
+                    fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
+                    background: statusBg(status), color: statusColor(status), textTransform: "uppercase",
+                  }}>
+                    {statusLabel(status)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MIL */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+              MIL / LIA Assessment
+            </div>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>Multiple Intelligence Lens</span>
+              <span style={{
+                fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
+                background: statusBg(student.mil), color: statusColor(student.mil), textTransform: "uppercase",
+              }}>
+                {statusLabel(student.mil)}
+              </span>
+            </div>
+          </div>
+
+          {/* 360 Evaluation */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+              360° Evaluation ({student.eval360Detail.completed}/{student.eval360Detail.total || "—"})
+            </div>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>Evaluator Responses</span>
+              <span style={{
+                fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
+                background: statusBg(student.eval360), color: statusColor(student.eval360), textTransform: "uppercase",
+              }}>
+                {statusLabel(student.eval360)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: "12px 20px", borderTop: "1px solid var(--admin-border-default)", display: "flex", justifyContent: "flex-end", gap: 8 }}>
+          <button
+            onClick={() => onOpenChange(false)}
+            style={{
+              height: 36, borderRadius: 6, padding: "0 14px",
+              fontSize: 12, fontWeight: 600, background: "transparent",
+              color: "var(--admin-font-primary)",
+              border: "1px solid var(--admin-border-default)", cursor: "pointer",
+            }}
+          >
+            Close
+          </button>
+          <a
+            href={`/school-admin/users/${student.id}`}
+            style={{
+              height: 36, borderRadius: 6, padding: "0 14px",
+              fontSize: 12, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 6,
+              background: "var(--admin-accent-blue, #3b82f6)", color: "#fff",
+              border: "none", cursor: "pointer", textDecoration: "none",
+            }}
+          >
+            View Full Profile
+          </a>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PipelineTable({ pipeline, onSendReminders, onSetup360, isSendingReminders, isSettingUp360 }: {
+  pipeline: PipelineStudent[];
+  onSendReminders: (ids: string[], types: string[]) => void;
+  onSetup360: (ids: string[]) => void;
+  isSendingReminders: boolean;
+  isSettingUp360: boolean;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [gradeFilter, setGradeFilter] = useState<number | null>(null);
+  const [showIncomplete, setShowIncomplete] = useState(false);
+  const [detailStudent, setDetailStudent] = useState<PipelineStudent | null>(null);
+
+  let filtered = pipeline;
+  if (gradeFilter) filtered = filtered.filter(s => s.gradeLevel === gradeFilter);
+  if (showIncomplete) {
+    filtered = filtered.filter(s => {
+      const pcaIncomplete = Object.values(s.pca).some(v => v !== "done");
+      return pcaIncomplete || s.mil !== "done" || s.eval360 !== "done";
+    });
+  }
+
+  const toggleAll = () => {
+    if (selected.size === filtered.length) {
+      setSelected(new Set());
     } else {
-      setItems(loadLocalConfig());
+      setSelected(new Set(filtered.map(s => s.id)));
     }
-  }, [config]);
-
-  const toggleAssessment = (type: string) => {
-    setItems((prev) =>
-      prev.map((a) => (a.assessmentType === type ? { ...a, isEnabled: !a.isEnabled } : a))
-    );
-    setHasChanges(true);
   };
 
-  const updateDescription = (type: string, description: string) => {
-    setItems((prev) =>
-      prev.map((a) => (a.assessmentType === type ? { ...a, description } : a))
-    );
-    setHasChanges(true);
+  const toggle = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   };
 
-  const handleSave = async () => {
-    if (saving) return;
-    setSaving(true);
-    try {
-      await update.mutateAsync({ configs: items });
-      toast.success("Assessment configuration saved");
-    } catch {
-      // Backend unavailable — save locally
-      saveLocalConfig(items);
-      toast.success("Configuration saved locally");
-    }
-    setHasChanges(false);
-    setSaving(false);
+  const selectedIds = Array.from(selected);
+  const pendingTypes: string[] = [];
+  if (selectedIds.length > 0) {
+    const selectedStudents = filtered.filter(s => selected.has(s.id));
+    const hasPcaIncomplete = selectedStudents.some(s => Object.values(s.pca).some(v => v !== "done"));
+    const hasMilIncomplete = selectedStudents.some(s => s.mil !== "done");
+    const has360Incomplete = selectedStudents.some(s => s.eval360 !== "done");
+    if (hasPcaIncomplete) pendingTypes.push("PCA (Cognitive Assessment)");
+    if (hasMilIncomplete) pendingTypes.push("MIL (Multiple Intelligence Lens)");
+    if (has360Incomplete) pendingTypes.push("360° Evaluation");
+  }
+
+  return (
+    <div style={{
+      borderRadius: 8, border: "1px solid var(--admin-border-default)",
+      background: "var(--admin-bg-card)", overflow: "hidden",
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)",
+        display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Users style={{ width: 16, height: 16, color: "#10b981" }} />
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+            Assessment Pipeline
+          </span>
+          <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
+            ({filtered.length} student{filtered.length !== 1 ? "s" : ""})
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          {/* Grade filter */}
+          <select
+            value={gradeFilter || ""}
+            onChange={e => setGradeFilter(e.target.value ? parseInt(e.target.value) : null)}
+            style={{
+              height: 30, borderRadius: 6, padding: "0 8px", fontSize: 11,
+              background: "var(--admin-bg-input)", color: "var(--admin-font-primary)",
+              border: "1px solid var(--admin-border-default)",
+            }}
+          >
+            <option value="">All Grades</option>
+            {GRADES.map(g => <option key={g} value={g}>{GRADE_LABELS[g]} ({g})</option>)}
+          </select>
+
+          {/* Incomplete filter */}
+          <button
+            onClick={() => setShowIncomplete(!showIncomplete)}
+            style={{
+              height: 30, borderRadius: 6, padding: "0 10px", fontSize: 11, fontWeight: 500,
+              display: "flex", alignItems: "center", gap: 4,
+              background: showIncomplete ? "#f59e0b15" : "transparent",
+              color: showIncomplete ? "#f59e0b" : "var(--admin-font-tertiary)",
+              border: `1px solid ${showIncomplete ? "#f59e0b40" : "var(--admin-border-default)"}`,
+              cursor: "pointer",
+            }}
+          >
+            <Filter style={{ width: 12, height: 12 }} />
+            Incomplete Only
+          </button>
+
+          {/* Bulk actions */}
+          {selected.size > 0 && (
+            <>
+              <button
+                onClick={() => onSendReminders(selectedIds, pendingTypes)}
+                disabled={isSendingReminders}
+                style={{
+                  height: 30, borderRadius: 6, padding: "0 12px", fontSize: 11, fontWeight: 600,
+                  display: "flex", alignItems: "center", gap: 4,
+                  background: "#3b82f6", color: "#fff", border: "none", cursor: "pointer",
+                }}
+              >
+                {isSendingReminders ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 12, height: 12 }} />}
+                Remind ({selected.size})
+              </button>
+              <button
+                onClick={() => onSetup360(selectedIds)}
+                disabled={isSettingUp360}
+                style={{
+                  height: 30, borderRadius: 6, padding: "0 12px", fontSize: 11, fontWeight: 600,
+                  display: "flex", alignItems: "center", gap: 4,
+                  background: "#10b981", color: "#fff", border: "none", cursor: "pointer",
+                }}
+              >
+                {isSettingUp360 ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : <RotateCcw style={{ width: 12, height: 12 }} />}
+                Setup 360°
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr style={{ background: "var(--admin-bg-hover)" }}>
+              <th style={{ padding: "8px 10px", textAlign: "left", width: 32 }}>
+                <input
+                  type="checkbox"
+                  checked={filtered.length > 0 && selected.size === filtered.length}
+                  onChange={toggleAll}
+                  style={{ accentColor: "#3b82f6" }}
+                />
+              </th>
+              <th style={{ ...thStyle, textAlign: "left" }}>Student</th>
+              <th style={thStyle}>Grade</th>
+              {EXAM_TYPES.map(t => (
+                <th key={t} style={thStyle} title={t}>{EXAM_SHORT[t]}</th>
+              ))}
+              <th style={thStyle}>MIL</th>
+              <th style={thStyle}>360°</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(s => (
+              <tr
+                key={s.id}
+                style={{ borderTop: "1px solid var(--admin-border-default)", cursor: "pointer" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                onClick={() => setDetailStudent(s)}
+              >
+                <td style={{ padding: "6px 10px" }} onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={selected.has(s.id)}
+                    onChange={() => toggle(s.id)}
+                    style={{ accentColor: "#3b82f6" }}
+                  />
+                </td>
+                <td style={{ padding: "6px 10px" }}>
+                  <div style={{ fontWeight: 500, color: "var(--admin-accent-blue, #3b82f6)" }}>{s.name}</div>
+                  <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{s.email}</div>
+                </td>
+                <td style={{ padding: "6px 10px", textAlign: "center", color: "var(--admin-font-secondary)" }}>
+                  {s.gradeLevel || "—"}
+                </td>
+                {EXAM_TYPES.map(t => (
+                  <td key={t} style={{ padding: "6px 10px", textAlign: "center" }}>
+                    <StatusIcon status={s.pca[t] || "not_started"} />
+                  </td>
+                ))}
+                <td style={{ padding: "6px 10px", textAlign: "center" }}>
+                  <StatusIcon status={s.mil} />
+                </td>
+                <td style={{ padding: "6px 10px", textAlign: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                    <StatusIcon status={s.eval360} />
+                    {s.eval360Detail.total > 0 && (
+                      <span style={{ fontSize: 9, color: "var(--admin-font-tertiary)" }}>
+                        {s.eval360Detail.completed}/{s.eval360Detail.total}
+                      </span>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={10} style={{ padding: 24, textAlign: "center", color: "var(--admin-font-tertiary)", fontSize: 13 }}>
+                  No students found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <StudentAssessmentDialog
+        student={detailStudent}
+        open={!!detailStudent}
+        onOpenChange={(open) => { if (!open) setDetailStudent(null); }}
+      />
+    </div>
+  );
+}
+
+const thStyle: React.CSSProperties = {
+  padding: "8px 10px", textAlign: "center", fontWeight: 600,
+  color: "var(--admin-font-tertiary)", fontSize: 10, textTransform: "uppercase",
+  letterSpacing: "0.04em",
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+import React from "react";
+
+export default function AssessmentCommandCenter() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState("command-center");
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "evaluations" || tab === "results" || tab === "command-center") setActiveTab(tab);
+  }, [searchParams]);
+
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    const url = key === "command-center" ? "/school-admin/assessments" : `/school-admin/assessments?tab=${key}`;
+    router.replace(url, { scroll: false });
   };
 
-  const enabledCount = items.filter((a) => a.isEnabled).length;
+  // Queries
+  const insightsQuery = useQuery({ queryKey: ["assessment-insights"], queryFn: () => getInsights(), staleTime: 1000 * 60 * 10 });
+  const schedulesQuery = useQuery({ queryKey: ["assessment-schedules"], queryFn: getSchedules, staleTime: 1000 * 60 * 5 });
+  const pipelineQuery = useQuery({ queryKey: ["assessment-pipeline"], queryFn: () => getPipeline(), staleTime: 1000 * 60 * 2 });
 
-  if (configLoading) {
+  // Mutations
+  const refreshInsights = useMutation({
+    mutationFn: () => getInsights(true),
+    onSuccess: (data) => {
+      insightsQuery.refetch();
+      toast.success("Insights refreshed");
+    },
+    onError: () => toast.error("Failed to refresh insights"),
+  });
+
+  const saveSchedulesMut = useMutation({
+    mutationFn: (s: { gradeLevel: number; assessmentType: string; startDate: string; endDate: string }[]) => saveSchedules(s),
+    onSuccess: () => { schedulesQuery.refetch(); toast.success("Schedule saved"); },
+    onError: () => toast.error("Failed to save schedule"),
+  });
+
+  const remindersMut = useMutation({
+    mutationFn: ({ ids, types }: { ids: string[]; types: string[] }) => sendReminders(ids, types),
+    onSuccess: (data: any) => {
+      toast.success(`Reminders sent to ${data.sent} student${data.sent !== 1 ? "s" : ""}`);
+      if (data.failed > 0) toast.warning(`${data.failed} email(s) failed`);
+    },
+    onError: () => toast.error("Failed to send reminders"),
+  });
+
+  const setup360Mut = useMutation({
+    mutationFn: (ids: string[]) => setup360(ids),
+    onSuccess: (data: any) => {
+      toast.success(`360° setup complete: ${data.created} groups created, ${data.emailsSent} invites sent`);
+      if (data.skipped > 0) toast.info(`${data.skipped} already existed`);
+      pipelineQuery.refetch();
+    },
+    onError: () => toast.error("Failed to setup 360° evaluations"),
+  });
+
+  const isLoading = insightsQuery.isLoading || schedulesQuery.isLoading || pipelineQuery.isLoading;
+
+  if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-8 w-48" style={{ background: "var(--admin-bg-hover)" }} />
+        <Skeleton className="h-8 w-64" style={{ background: "var(--admin-bg-hover)" }} />
+        <Skeleton className="h-[120px]" style={{ background: "var(--admin-bg-hover)" }} />
+        <Skeleton className="h-[200px]" style={{ background: "var(--admin-bg-hover)" }} />
         <Skeleton className="h-[400px]" style={{ background: "var(--admin-bg-hover)" }} />
       </div>
     );
@@ -127,204 +735,55 @@ export default function AssessmentConfigPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
-            Assessment Configuration
-          </h1>
-          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-            Enable, disable, and configure assessment types available to your students
-          </p>
-        </div>
-        <button
-          onClick={handleSave}
-          disabled={saving || !hasChanges}
-          style={{
-            height: 36, borderRadius: 6, padding: "0 20px",
-            fontSize: 12, fontWeight: 600,
-            display: "flex", alignItems: "center", gap: 6,
-            background: hasChanges ? "var(--admin-accent-blue, #3b82f6)" : "var(--admin-bg-hover)",
-            color: hasChanges ? "#fff" : "var(--admin-font-tertiary)",
-            border: hasChanges ? "none" : "1px solid var(--admin-border-default)",
-            cursor: hasChanges ? "pointer" : "default",
-            opacity: saving ? 0.7 : 1,
-            transition: "all 0.15s",
-          }}
-        >
-          {saving
-            ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
-            : <Save style={{ width: 14, height: 14 }} />}
-          {hasChanges ? "Save Changes" : "Saved"}
-        </button>
+      <div>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
+          Assessment Command Center
+        </h1>
+        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
+          Schedule assessments, track student progress, send reminders, and view AI-powered insights
+        </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "Total Types", value: items.length, icon: ClipboardCheck, color: "#6366f1" },
-          { label: "Enabled", value: enabledCount, icon: ClipboardCheck, color: "#10b981" },
-          { label: "Disabled", value: items.length - enabledCount, icon: ClipboardCheck, color: "#ef4444" },
-          { label: "Completion", value: status?.summary ? Object.values(status.summary).reduce((a, s) => a + s.completed, 0) : "—", icon: BarChart3, color: "#8b5cf6" },
-        ].map((stat) => (
-          <div key={stat.label} style={{
-            borderRadius: 8, border: "1px solid var(--admin-border-default)",
-            background: "var(--admin-bg-card)", padding: 16,
-          }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8,
-              background: `${stat.color}15`,
-              display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10,
-            }}>
-              <stat.icon style={{ width: 16, height: 16, color: stat.color }} />
-            </div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)", letterSpacing: "-0.02em" }}>
-              {stat.value}
-            </div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>
-              {stat.label}
-            </div>
-          </div>
-        ))}
-      </div>
+      <AdminTabBar
+        tabs={[
+          { key: "command-center", label: "Command Center", icon: ClipboardCheck },
+          { key: "evaluations", label: "360 Evaluations", icon: RotateCcw },
+          { key: "results", label: "Results & Reports", icon: FileText },
+        ]}
+        activeTab={activeTab}
+        onChange={handleTabChange}
+      />
 
-      {/* Assessment Cards */}
-      <div className="space-y-4">
-        {items.map((assessment) => {
-          const meta = assessmentMeta[assessment.assessmentType];
-          const Icon = meta?.icon || Settings2;
-          const color = meta?.color || "#6b7280";
+      {activeTab === "command-center" && (
+        <>
+          {/* Insights */}
+          <InsightsCard
+            insights={insightsQuery.data}
+            onRefresh={() => refreshInsights.mutate()}
+            isRefreshing={refreshInsights.isPending}
+          />
 
-          return (
-            <div
-              key={assessment.assessmentType}
-              style={{
-                borderRadius: 8,
-                border: `1px solid ${assessment.isEnabled ? "var(--admin-border-default)" : "var(--admin-border-default)"}`,
-                background: "var(--admin-bg-card)",
-                overflow: "hidden",
-                transition: "all 0.15s",
-              }}
-            >
-              {/* Card Header */}
-              <div style={{
-                padding: "14px 16px",
-                borderBottom: "1px solid var(--admin-border-default)",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                background: assessment.isEnabled ? "var(--admin-bg-hover)" : "transparent",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 8,
-                    background: assessment.isEnabled ? `${color}15` : "var(--admin-bg-hover)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    transition: "background 0.15s",
-                  }}>
-                    <Icon style={{ width: 18, height: 18, color: assessment.isEnabled ? color : "var(--admin-font-tertiary)" }} />
-                  </div>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                        {assessment.assessmentType}
-                      </span>
-                      {meta?.label && (
-                        <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)", fontWeight: 400 }}>
-                          — {meta.label}
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
-                      <span style={{
-                        fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
-                        background: assessment.isEnabled ? `${color}12` : "var(--admin-bg-hover)",
-                        color: assessment.isEnabled ? color : "var(--admin-font-tertiary)",
-                        transition: "all 0.15s",
-                      }}>
-                        {assessment.isEnabled ? "Active" : "Inactive"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  {assessment.isEnabled && meta?.studentRoute && (
-                    <button
-                      onClick={() => router.push(meta.studentRoute!)}
-                      title="Preview student view"
-                      style={{
-                        height: 30, borderRadius: 6, padding: "0 10px",
-                        fontSize: 11, fontWeight: 500,
-                        display: "flex", alignItems: "center", gap: 4,
-                        background: "transparent", color: "var(--admin-font-tertiary)",
-                        border: "1px solid var(--admin-border-default)", cursor: "pointer",
-                        transition: "color 0.1s, border-color 0.1s",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = color; e.currentTarget.style.borderColor = color; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = "var(--admin-font-tertiary)"; e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}
-                    >
-                      <Eye style={{ width: 12, height: 12 }} /> Preview
-                    </button>
-                  )}
-                  <Switch
-                    checked={assessment.isEnabled}
-                    onCheckedChange={() => toggleAssessment(assessment.assessmentType)}
-                  />
-                </div>
-              </div>
+          {/* Schedule */}
+          <ScheduleGrid
+            schedules={schedulesQuery.data || []}
+            onSave={s => saveSchedulesMut.mutate(s)}
+            isSaving={saveSchedulesMut.isPending}
+          />
 
-              {/* Card Body */}
-              <div style={{ padding: "14px 16px", opacity: assessment.isEnabled ? 1 : 0.5, transition: "opacity 0.15s" }}>
-                {/* Description */}
-                {meta?.description && (
-                  <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginBottom: 14, lineHeight: 1.5 }}>
-                    {meta.description}
-                  </p>
-                )}
+          {/* Pipeline */}
+          <PipelineTable
+            pipeline={pipelineQuery.data || []}
+            onSendReminders={(ids, types) => remindersMut.mutate({ ids, types })}
+            onSetup360={ids => setup360Mut.mutate(ids)}
+            isSendingReminders={remindersMut.isPending}
+            isSettingUp360={setup360Mut.isPending}
+          />
+        </>
+      )}
 
-                {/* Features */}
-                {meta?.features && (
-                  <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>
-                      Capabilities
-                    </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                      {meta.features.map((f) => (
-                        <span key={f} style={{
-                          fontSize: 11, fontWeight: 500, padding: "3px 8px", borderRadius: 4,
-                          background: "var(--admin-bg-hover)",
-                          color: "var(--admin-font-secondary)",
-                          border: "1px solid var(--admin-border-default)",
-                        }}>
-                          {f}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+      {activeTab === "evaluations" && <EvaluationsPanel />}
 
-                {/* Custom Description */}
-                <div className="space-y-2">
-                  <Label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                    Custom Description for Students
-                  </Label>
-                  <Textarea
-                    value={assessment.description}
-                    onChange={(e) => updateDescription(assessment.assessmentType, e.target.value)}
-                    placeholder={`Describe what ${assessment.assessmentType} means for your students...`}
-                    rows={2}
-                    disabled={!assessment.isEnabled}
-                    style={{
-                      background: "var(--admin-bg-input)",
-                      border: "1px solid var(--admin-border-default)",
-                      color: "var(--admin-font-primary)",
-                      fontSize: 13, borderRadius: 6, resize: "none",
-                      minHeight: 56,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {activeTab === "results" && <ResultsPanel />}
     </div>
   );
 }

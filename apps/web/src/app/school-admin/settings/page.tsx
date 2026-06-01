@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import dynamic from "next/dynamic";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,12 +17,27 @@ import {
   Users,
   Loader2,
   Beaker,
+  Building2,
+  CalendarDays,
+  Plug,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSchoolSettings } from "@/hooks/useSchoolAdmin";
 import { updateAdminProfile, changePassword } from "@/services/schoolAdminService";
+import { AdminTabBar } from "@/app/school-admin/_components/AdminTabBar";
 
-export default function SettingsPage() {
+const ProfilePanel = dynamic(() => import("./_components/ProfilePanel"));
+const CalendarPanel = dynamic(() => import("./_components/CalendarPanel"));
+const IntegrationsPanel = dynamic(() => import("./_components/IntegrationsPanel"));
+
+const TABS = [
+  { key: "general", label: "General", icon: Settings },
+  { key: "profile", label: "School Profile", icon: Building2 },
+  { key: "calendar", label: "Calendar", icon: CalendarDays },
+  { key: "integrations", label: "Integrations", icon: Plug },
+] as const;
+
+function GeneralSettings() {
   const { t } = useTranslation();
   const { data: settings, isLoading, refetch } = useSchoolSettings();
 
@@ -355,6 +372,29 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+export default function SettingsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const initialTab = searchParams.get("tab") || "general";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    const url = key === "general" ? "/school-admin/settings" : `/school-admin/settings?tab=${key}`;
+    router.replace(url, { scroll: false });
+  };
+
+  return (
+    <div>
+      <AdminTabBar tabs={[...TABS]} activeTab={activeTab} onChange={handleTabChange} />
+      {activeTab === "general" && <GeneralSettings />}
+      {activeTab === "profile" && <ProfilePanel />}
+      {activeTab === "calendar" && <CalendarPanel />}
+      {activeTab === "integrations" && <IntegrationsPanel />}
     </div>
   );
 }

@@ -158,9 +158,8 @@ export default function SignupPage() {
         // userRoleId
       );
 
-      // on signup success, call login to get token
+      // on signup success, call login to get token (cookies set by backend)
       const loginRes = await loginApi(data.email, data.password);
-      localStorage.setItem("token", loginRes.token);
 
       // Extract role name from login response
       const roleName = loginRes.user?.role?.name || null;

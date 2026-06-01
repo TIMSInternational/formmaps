@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import React from "react";
 import { useUIDesign } from "@/components/ui-provider";
-import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import { motion, useMotionTemplate, useMotionValue } from "motion/react";
 
 interface PremiumCardProps extends React.HTMLAttributes<HTMLDivElement> {
   innerClassName?: string;

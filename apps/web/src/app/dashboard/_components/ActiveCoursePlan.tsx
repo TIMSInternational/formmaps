@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { PremiumCard } from "./PremiumCard";
 import { useTranslation } from "react-i18next";
 import { CheckCircle, PlayCircle, LockKey, DotsThree, BookOpen } from "@phosphor-icons/react";

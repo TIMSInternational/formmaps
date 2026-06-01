@@ -4,7 +4,7 @@ import React from "react";
 import AnimatedCounter from "./AnimatedCounter";
 import { TrendingUp, DollarSign, Clock, Target, ArrowUpRight, Zap } from "lucide-react";
 import { ROIData } from "@/services/benchmarkService";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 interface StatsCardsProps {
   roiData: ROIData;

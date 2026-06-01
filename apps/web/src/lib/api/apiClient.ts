@@ -7,6 +7,7 @@ const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000,
+  withCredentials: true, // Send httpOnly cookies with every request
 });
 
 // Flag to prevent infinite refresh loops
@@ -44,8 +45,7 @@ apiClient.interceptors.response.use(
           // Another refresh is in progress — queue this request
           return new Promise<string>((resolve, reject) => {
             failedQueue.push({ resolve, reject });
-          }).then(token => {
-            originalRequest.headers['Authorization'] = `Bearer ${token}`;
+          }).then(() => {
             return apiClient(originalRequest);
           });
         }
@@ -56,8 +56,7 @@ apiClient.interceptors.response.use(
         try {
           const newTokens = await refreshAccessToken();
           if (newTokens) {
-            originalRequest.headers['Authorization'] = `Bearer ${newTokens.accessToken}`;
-            processQueue(null, newTokens.accessToken);
+            processQueue(null, 'refreshed');
             return apiClient(originalRequest);
           } else {
             // Refresh failed — redirect to login
@@ -98,7 +97,7 @@ apiClient.interceptors.response.use(
           message = 'Internal server error. Please try again later.';
           break;
         default:
-          message = data?.message || `Request failed with status ${status}`;
+          message = (status >= 500) ? 'Something went wrong. Please try again.' : (data?.message || 'Request failed. Please try again.');
       }
 
       if (status === 403) {
@@ -119,17 +118,10 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Request interceptor to attach JWT token if present
+// Request interceptor — no longer attaches Authorization header.
+// Auth is handled via httpOnly cookies (withCredentials: true).
 apiClient.interceptors.request.use(
-  config => {
-    try {
-      const token = localStorage.getItem('token');
-      if (token && config.headers) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-      }
-    } catch {}
-    return config;
-  },
+  config => config,
   error => Promise.reject(error)
 );
 

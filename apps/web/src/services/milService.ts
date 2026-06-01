@@ -14,6 +14,7 @@ async function submitWithRetry(
       const response = await fetch(url, {
         method: "POST",
         headers,
+        credentials: "include",
         body: JSON.stringify(body),
       });
       if (response.ok) return response;
@@ -75,12 +76,8 @@ export function getPendingSubmissions(): PendingSubmission[] {
 
 export async function retryPendingSubmissions(): Promise<void> {
   const pending = getPendingSubmissions();
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
   };
   for (const submission of pending) {
     // Skip stale submissions (>1 hour old) or those missing sessionId
@@ -562,11 +559,8 @@ export async function submitMILExam(
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   const url = `${baseUrl}/api/pcaexam/submit?lang=${langParam}`;
   const submissionKey = `submit_${session.examId}_${userId}`;
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
   };
 
   try {
@@ -611,11 +605,8 @@ export async function completeMILExam(
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   const url = `${baseUrl}/api/pcaexam/complete?lang=${langParam}`;
   const completionKey = `complete_${session.examId}_${userId}`;
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
   };
 
   try {

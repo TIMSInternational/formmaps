@@ -7,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, Save, Loader2, Plus, Trash2, Settings2, Globe } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { CalendarDays, Save, Loader2, Plus, Trash2, Settings2, Globe, User, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { useGlobalStore } from "@/store/useGlobalStore";
+import { apiRequest } from "@/lib/api/apiClient";
 import { getCounselorAvailability, updateCounselorAvailability } from "@/services/counselorSessionService";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -37,6 +40,36 @@ interface DaySchedule {
 }
 
 export default function CounselorSettingsPage() {
+  const { user } = useGlobalStore();
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (!newPassword || newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await apiRequest("/authapi/change-password", {
+        method: "PUT",
+        data: { email: user.email, password: newPassword },
+      });
+      toast.success("Password changed successfully");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to change password");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [timezone, setTimezone] = useState("UTC");
@@ -114,6 +147,70 @@ export default function CounselorSettingsPage() {
           {saving ? <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-2" />}
           Save Changes
         </Button>
+      </div>
+
+      {/* Profile Section */}
+      <div className="dash-card overflow-hidden">
+        <div className="p-4 md:p-5 border-b border-[var(--border)]">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 bg-violet-500/10 rounded-lg flex items-center justify-center">
+              <User className="h-4 w-4 text-violet-500" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">Profile</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Your account information</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 md:p-5 space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Name</Label>
+              <p className="text-sm font-medium text-foreground mt-1">{user.name || "\u2014"}</p>
+            </div>
+            <div>
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Email</Label>
+              <p className="text-sm font-medium text-foreground mt-1">{user.email || "\u2014"}</p>
+            </div>
+          </div>
+
+          <div className="border-t border-[var(--border)] pt-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Lock className="h-4 w-4 text-amber-500" />
+              <h3 className="text-sm font-semibold text-foreground">Change Password</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-lg">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">New Password</Label>
+                <Input
+                  type="password"
+                  placeholder="Min. 8 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="h-9 text-sm rounded-lg"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Confirm Password</Label>
+                <Input
+                  type="password"
+                  placeholder="Re-enter password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="h-9 text-sm rounded-lg"
+                />
+              </div>
+            </div>
+            <Button
+              onClick={handleChangePassword}
+              disabled={changingPassword || !newPassword}
+              className="mt-3 bg-amber-600 hover:bg-amber-700 text-white shadow-sm rounded-lg px-4 h-9 text-sm"
+            >
+              {changingPassword ? <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> : <Lock className="h-3.5 w-3.5 mr-2" />}
+              Update Password
+            </Button>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-4">

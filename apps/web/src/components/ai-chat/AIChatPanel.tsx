@@ -59,12 +59,6 @@ export function AIChatSidePanel() {
     async (text: string) => {
       if (!text.trim() || loading) return;
 
-      const token = localStorage.getItem("token");
-      if (!token) {
-        // No token — user needs to re-login
-        return;
-      }
-
       // Cancel any in-flight request
       abortRef.current?.abort();
       const controller = new AbortController();
@@ -100,8 +94,8 @@ export function AIChatSidePanel() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
           },
+          credentials: "include",
           body: JSON.stringify({
             user_id: user?.id || "",
             message: text.trim(),

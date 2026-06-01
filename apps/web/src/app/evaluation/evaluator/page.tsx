@@ -177,13 +177,10 @@ export default function EvaluatorPage() {
       setIsValidating(true);
 
       const langParam = language === "spanish" ? "sp" : "en";
-      const authToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
 
       const response = await fetch(
         `${API_BASE_URL}/evaluation/360evolutor/${token}?lang=${langParam}`,
-        { method: "GET", headers }
+        { method: "GET", headers: { "Content-Type": "application/json" }, credentials: "include" }
       );
 
       if (!response.ok) {

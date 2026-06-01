@@ -32,7 +32,7 @@ export interface Transaction {
  * Get transaction statistics (total spent, invoice count, etc.)
  */
 export async function getTransactionStats(): Promise<TransactionStats> {
-  return apiRequest("/api/v1/transactions/stats", {
+  return apiRequest("/api/v1/user/transactions/stats", {
     method: "GET",
   });
 }
@@ -52,12 +52,10 @@ export async function exportTransactions(
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   const response = await fetch(
-    `${baseUrl}/api/v1/transactions/export?${params.toString()}`,
+    `${baseUrl}/api/v1/user/transactions/export?${params.toString()}`,
     {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
+      credentials: "include",
     }
   );
 

@@ -38,7 +38,7 @@ export const questions360Service = {
   // Get all questions
   async getAllQuestions(): Promise<Question360[]> {
     try {
-      const response = await apiRequest<any>("/api/Question360/all", {
+      const response = await apiRequest<any>("/api/question360/all", {
         method: "GET",
       });
 
@@ -58,7 +58,7 @@ export const questions360Service = {
 
   // Get question by ID
   async getQuestionById(id: string): Promise<Question360> {
-    const response = await apiRequest<Question360>(`/api/Question360/${id}`, {
+    const response = await apiRequest<Question360>(`/api/question360/${id}`, {
       method: "GET",
     });
     return response;
@@ -67,7 +67,7 @@ export const questions360Service = {
   // Get questions by category
   async getQuestionsByCategory(category: string): Promise<Question360[]> {
     const response = await apiRequest<Question360[]>(
-      `/api/Question360/category/${category}`,
+      `/api/question360/category/${category}`,
       {
         method: "GET",
       }
@@ -78,7 +78,7 @@ export const questions360Service = {
   // Get sub-questions by parent ID
   async getSubQuestions(parentQuestionId: string): Promise<Question360[]> {
     const response = await apiRequest<Question360[]>(
-      `/api/Question360/sub-questions/${parentQuestionId}`,
+      `/api/question360/sub-questions/${parentQuestionId}`,
       {
         method: "GET",
       }
@@ -91,7 +91,7 @@ export const questions360Service = {
     relationType: string
   ): Promise<Question360[]> {
     const response = await apiRequest<Question360[]>(
-      `/api/Question360/relation/${relationType}`,
+      `/api/question360/relation/${relationType}`,
       {
         method: "GET",
       }
@@ -101,7 +101,7 @@ export const questions360Service = {
 
   // Create new question
   async createQuestion(data: CreateQuestion360Request): Promise<Question360> {
-    const response = await apiRequest<Question360>("/api/Question360", {
+    const response = await apiRequest<Question360>("/api/question360", {
       method: "POST",
       data,
     });
@@ -113,7 +113,7 @@ export const questions360Service = {
     id: string,
     data: UpdateQuestion360Request
   ): Promise<Question360> {
-    const response = await apiRequest<Question360>(`/api/Question360/${id}`, {
+    const response = await apiRequest<Question360>(`/api/question360/${id}`, {
       method: "PUT",
       data,
     });
@@ -125,7 +125,7 @@ export const questions360Service = {
     id: string
   ): Promise<{ success: boolean; message: string }> {
     const response = await apiRequest<{ success: boolean; message: string }>(
-      `/api/Question360/${id}`,
+      `/api/question360/${id}`,
       {
         method: "DELETE",
       }
@@ -136,7 +136,7 @@ export const questions360Service = {
   // Activate question
   async activateQuestion(id: string): Promise<Question360> {
     const response = await apiRequest<Question360>(
-      `/api/Question360/${id}/activate`,
+      `/api/question360/${id}/activate`,
       {
         method: "PATCH",
       }
@@ -147,7 +147,7 @@ export const questions360Service = {
   // Deactivate question
   async deactivateQuestion(id: string): Promise<Question360> {
     const response = await apiRequest<Question360>(
-      `/api/Question360/${id}/deactivate`,
+      `/api/question360/${id}/deactivate`,
       {
         method: "PATCH",
       }
@@ -167,7 +167,7 @@ export const questions360Service = {
       created: number;
       failed: number;
       errors?: string[];
-    }>("/api/Question360/bulk", {
+    }>("/api/question360/bulk", {
       method: "POST",
       data,
     });
