@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { Video, VideoOff, Clock, Plus, UserPlus, X, Calendar, CalendarClock, Trash2 } from "lucide-react";
+import { Video, VideoOff, Clock, Plus, X, CalendarClock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   isVideoEnabled,
@@ -16,6 +16,7 @@ import {
 } from "@/services/videoService";
 import { apiRequest } from "@/lib/api/apiClient";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { NewCallPanel } from "./_components/NewCallPanel";
 
 function formatTime(dateString: string): string {
   const date = new Date(dateString);
@@ -36,10 +37,8 @@ function formatScheduledTime(dateString: string): string {
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
-
   const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const dateStr = date.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
-
   if (diffMins < 0) return `${dateStr} at ${timeStr} (overdue)`;
   if (diffMins < 60) return `In ${diffMins}m - ${timeStr}`;
   if (diffHours < 24) return `In ${diffHours}h - Today at ${timeStr}`;
@@ -60,7 +59,6 @@ function getInitials(name: string): string {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
 
-// Get minimum datetime for the schedule picker (now + 5 min, rounded to next 15 min)
 function getMinDatetime(): string {
   const d = new Date(Date.now() + 5 * 60000);
   d.setMinutes(Math.ceil(d.getMinutes() / 15) * 15, 0, 0);
@@ -81,7 +79,6 @@ export default function VideoCallsPage() {
   const [contactsLoading, setContactsLoading] = useState(false);
   const [startingCall, setStartingCall] = useState(false);
 
-  // Schedule form state
   const [scheduleParticipant, setScheduleParticipant] = useState<{ id: string; name: string } | null>(null);
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleDuration, setScheduleDuration] = useState(60);
@@ -101,7 +98,6 @@ export default function VideoCallsPage() {
     })();
   }, []);
 
-  // Contact search
   useEffect(() => {
     if (!showNewCall) return;
     setContactsLoading(true);
@@ -222,156 +218,54 @@ export default function VideoCallsPage() {
       {/* New Call / Schedule Panel */}
       <AnimatePresence>
         {showNewCall && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-            style={{ borderRadius: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
-            <div style={{ padding: 16 }}>
-              {/* Mode Toggle */}
-              <div style={{ display: "flex", gap: 4, marginBottom: 12, padding: 3, borderRadius: 8, background: "var(--admin-bg-hover)" }}>
-                <button onClick={() => { setMode("call"); setScheduleParticipant(null); }}
-                  style={{ flex: 1, padding: "7px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", background: mode === "call" ? "#065292" : "transparent", color: mode === "call" ? "#fff" : "var(--admin-font-tertiary)", transition: "all 0.15s" }}>
-                  <Video style={{ width: 14, height: 14, display: "inline", verticalAlign: -2, marginRight: 6 }} />
-                  Call Now
-                </button>
-                <button onClick={() => setMode("schedule")}
-                  style={{ flex: 1, padding: "7px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", background: mode === "schedule" ? "#065292" : "transparent", color: mode === "schedule" ? "#fff" : "var(--admin-font-tertiary)", transition: "all 0.15s" }}>
-                  <Calendar style={{ width: 14, height: 14, display: "inline", verticalAlign: -2, marginRight: 6 }} />
-                  Schedule
-                </button>
-              </div>
-
-              {/* Contact Search */}
-              {(mode === "call" || (mode === "schedule" && !scheduleParticipant)) && (
-                <>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-accent-blue)", marginBottom: 12 }}>
-                    <UserPlus style={{ width: 16, height: 16, color: "var(--admin-accent-blue)", flexShrink: 0 }} />
-                    <input placeholder={mode === "call" ? "Search by name or email to start a call..." : "Search for a student to schedule with..."}
-                      value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} autoFocus
-                      style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 14, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
-                  </div>
-                  <div style={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
-                    {contactsLoading ? (
-                      <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>Searching...</div>
-                    ) : contacts.length === 0 ? (
-                      <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>No contacts found</div>
-                    ) : contacts.map((c) => (
-                      <button key={c.id}
-                        onClick={() => mode === "call" ? handleStartCall(c.id) : setScheduleParticipant({ id: c.id, name: c.name })}
-                        disabled={startingCall}
-                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, border: "none", background: "transparent", cursor: startingCall ? "default" : "pointer", fontFamily: "inherit", textAlign: "left", color: "var(--admin-font-primary)", transition: "background 0.1s" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#065292", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
-                          {c.name?.charAt(0)?.toUpperCase()}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 14, fontWeight: 500 }}>{c.name}</div>
-                          <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{c.roleName?.replace("_", " ")} · {c.email}</div>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 6, background: mode === "call" ? "linear-gradient(135deg, #22c55e, #16a34a)" : "#065292", color: "#fff", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
-                          {mode === "call" ? <Video style={{ width: 14, height: 14 }} /> : <Calendar style={{ width: 14, height: 14 }} />}
-                          {mode === "call" ? "Call" : "Select"}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* Schedule Form (after selecting participant) */}
-              {mode === "schedule" && scheduleParticipant && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {/* Selected participant */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 8, background: "var(--admin-bg-hover)" }}>
-                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#065292", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 13, fontWeight: 600 }}>
-                      {getInitials(scheduleParticipant.name)}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{scheduleParticipant.name}</div>
-                      <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Scheduling video call</div>
-                    </div>
-                    <button onClick={() => setScheduleParticipant(null)}
-                      style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--admin-font-tertiary)", padding: 4 }}>
-                      <X style={{ width: 16, height: 16 }} />
-                    </button>
-                  </div>
-
-                  {/* Date/Time picker */}
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>Date & Time</label>
-                    <input type="datetime-local" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} min={getMinDatetime()}
-                      style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
-                  </div>
-
-                  {/* Duration */}
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>Duration</label>
-                    <select value={scheduleDuration} onChange={(e) => setScheduleDuration(Number(e.target.value))}
-                      style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", fontSize: 14, fontFamily: "inherit", outline: "none" }}>
-                      <option value={15}>15 minutes</option>
-                      <option value={30}>30 minutes</option>
-                      <option value={45}>45 minutes</option>
-                      <option value={60}>1 hour</option>
-                      <option value={90}>1.5 hours</option>
-                      <option value={120}>2 hours</option>
-                    </select>
-                  </div>
-
-                  {/* Notes */}
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>Notes (optional)</label>
-                    <textarea value={scheduleNotes} onChange={(e) => setScheduleNotes(e.target.value)} placeholder="Agenda or topics to discuss..."
-                      rows={2} maxLength={500}
-                      style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", fontSize: 14, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} />
-                  </div>
-
-                  {/* Submit */}
-                  <button onClick={handleSchedule} disabled={!scheduleDate || scheduling}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 20px", borderRadius: 10, border: "none", background: !scheduleDate ? "var(--admin-bg-hover)" : "#065292", color: !scheduleDate ? "var(--admin-font-tertiary)" : "#fff", cursor: !scheduleDate || scheduling ? "default" : "pointer", fontSize: 14, fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s" }}>
-                    <CalendarClock style={{ width: 16, height: 16 }} />
-                    {scheduling ? "Scheduling..." : "Schedule Call"}
-                  </button>
-                </div>
-              )}
-            </div>
-          </motion.div>
+          <NewCallPanel
+            mode={mode}
+            onModeChange={setMode}
+            contactSearch={contactSearch}
+            onContactSearchChange={setContactSearch}
+            contacts={contacts}
+            contactsLoading={contactsLoading}
+            startingCall={startingCall}
+            onStartCall={handleStartCall}
+            scheduleParticipant={scheduleParticipant}
+            onSelectParticipant={setScheduleParticipant}
+            onClearParticipant={() => setScheduleParticipant(null)}
+            scheduleDate={scheduleDate}
+            onScheduleDateChange={setScheduleDate}
+            scheduleDuration={scheduleDuration}
+            onScheduleDurationChange={setScheduleDuration}
+            scheduleNotes={scheduleNotes}
+            onScheduleNotesChange={setScheduleNotes}
+            scheduling={scheduling}
+            onSchedule={handleSchedule}
+            minDatetime={getMinDatetime()}
+          />
         )}
       </AnimatePresence>
 
       {/* Scheduled Sessions */}
       {scheduledSessions.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)", marginBottom: 8 }}>
-            Upcoming Calls
-          </div>
+          <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)", marginBottom: 8 }}>Upcoming Calls</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {scheduledSessions.map((s) => {
               const other = s.caller?.id === userId ? s.participant : s.caller;
-              const isReady = new Date(s.startTime).getTime() - Date.now() < 10 * 60000; // within 10 min
+              const isReady = new Date(s.startTime).getTime() - Date.now() < 10 * 60000;
               return (
-                <div key={s.id}
-                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 10, border: `1px solid ${isReady ? "#065292" : "var(--admin-border-default)"}`, background: "var(--admin-bg-card)", width: "100%" }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 20, background: "#065292", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
-                    {getInitials(other?.name || "?")}
-                  </div>
+                <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 10, border: `1px solid ${isReady ? "#065292" : "var(--admin-border-default)"}`, background: "var(--admin-bg-card)", width: "100%" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 20, background: "#065292", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{getInitials(other?.name || "?")}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{other?.name}</div>
-                    <div style={{ fontSize: 12, color: isReady ? "#065292" : "var(--admin-font-tertiary)", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
-                      <CalendarClock style={{ width: 12, height: 12 }} />
-                      {formatScheduledTime(s.startTime)}
-                    </div>
+                    <div style={{ fontSize: 12, color: isReady ? "#065292" : "var(--admin-font-tertiary)", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}><CalendarClock style={{ width: 12, height: 12 }} />{formatScheduledTime(s.startTime)}</div>
                   </div>
                   <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                     {isReady && (
-                      <button onClick={() => handleStartScheduled(s.id)}
-                        style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 6, background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "inherit" }}>
-                        <Video style={{ width: 14, height: 14 }} />
-                        Start
+                      <button onClick={() => handleStartScheduled(s.id)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 6, background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+                        <Video style={{ width: 14, height: 14 }} />Start
                       </button>
                     )}
-                    <button onClick={() => handleCancelScheduled(s.id)}
-                      style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", borderRadius: 6, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", fontSize: 12, fontWeight: 500, border: "1px solid var(--admin-border-default)", cursor: "pointer", fontFamily: "inherit" }}>
-                      <Trash2 style={{ width: 12, height: 12 }} />
-                      Cancel
+                    <button onClick={() => handleCancelScheduled(s.id)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", borderRadius: 6, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", fontSize: 12, fontWeight: 500, border: "1px solid var(--admin-border-default)", cursor: "pointer", fontFamily: "inherit" }}>
+                      <Trash2 style={{ width: 12, height: 12 }} />Cancel
                     </button>
                   </div>
                 </div>
@@ -393,9 +287,7 @@ export default function VideoCallsPage() {
                   style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 10, border: "1px solid #22c55e40", background: "var(--admin-bg-card)", cursor: "pointer", fontFamily: "inherit", textAlign: "left", color: "var(--admin-font-primary)", transition: "border-color 0.15s", width: "100%" }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#22c55e"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#22c55e40"; }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 20, background: "linear-gradient(135deg, #22c55e, #16a34a)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
-                    {getInitials(other?.name || "?")}
-                  </div>
+                  <div style={{ width: 40, height: 40, borderRadius: 20, background: "linear-gradient(135deg, #22c55e, #16a34a)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{getInitials(other?.name || "?")}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 600 }}>{other?.name}</div>
                     <div style={{ fontSize: 12, color: "#22c55e", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
@@ -403,9 +295,7 @@ export default function VideoCallsPage() {
                       In progress · {formatTime(s.startTime)}
                     </div>
                   </div>
-                  <div style={{ padding: "6px 14px", borderRadius: 6, background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", fontSize: 12, fontWeight: 600 }}>
-                    Rejoin
-                  </div>
+                  <div style={{ padding: "6px 14px", borderRadius: 6, background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", fontSize: 12, fontWeight: 600 }}>Rejoin</div>
                 </button>
               );
             })}
@@ -435,9 +325,7 @@ export default function VideoCallsPage() {
                   style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", transition: "border-color 0.15s" }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-hover)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 18, background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--admin-font-tertiary)", flexShrink: 0 }}>
-                    {getInitials(other?.name || "?")}
-                  </div>
+                  <div style={{ width: 36, height: 36, borderRadius: 18, background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "var(--admin-font-tertiary)", flexShrink: 0 }}>{getInitials(other?.name || "?")}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{other?.name}</div>
                     <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 1 }}>{other?.email}</div>
@@ -445,8 +333,7 @@ export default function VideoCallsPage() {
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
                     <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{formatTime(s.startTime)}</div>
                     <div style={{ fontSize: 11, color: "var(--admin-font-light)", marginTop: 2, display: "flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
-                      <Clock style={{ width: 10, height: 10 }} />
-                      {formatDuration(s.startTime, s.endTime)}
+                      <Clock style={{ width: 10, height: 10 }} />{formatDuration(s.startTime, s.endTime)}
                     </div>
                   </div>
                 </div>
