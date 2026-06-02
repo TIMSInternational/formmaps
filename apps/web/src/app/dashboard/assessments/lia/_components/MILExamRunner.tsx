@@ -18,6 +18,7 @@ import {
   completeMILExam,
 } from "@/services/milService";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { toast } from "sonner";
 
 interface MILExamRunnerProps {
   examId: MILExamId;
@@ -254,6 +255,7 @@ export default function MILExamRunner({
         } catch (error) {
           // Reset hasSubmitted on error to allow retry
           setHasSubmitted(false);
+          toast.error("Failed to submit exam. Your answers have been saved locally.");
         } finally {
           setIsSubmitting(false);
         }
@@ -283,7 +285,7 @@ export default function MILExamRunner({
           className="relative bg-card border-2 border-border rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-xl backdrop-blur-sm"
         >
           {/* Top Row */}
-          <div className="grid grid-cols-4 gap-2 sm:gap-4 md:gap-8 mb-4 sm:mb-8">
+          <div className={`grid gap-2 sm:gap-4 md:gap-8 mb-4 sm:mb-8`} style={{ gridTemplateColumns: `repeat(${question.data.letterPairs.length}, 1fr)` }}>
             {question.data.letterPairs.map((pair, index) => (
               <motion.div
                 key={`top-${index}`}
@@ -308,7 +310,7 @@ export default function MILExamRunner({
           />
 
           {/* Bottom Row */}
-          <div className="grid grid-cols-4 gap-2 sm:gap-4 md:gap-8">
+          <div className={`grid gap-2 sm:gap-4 md:gap-8`} style={{ gridTemplateColumns: `repeat(${question.data.letterPairs.length}, 1fr)` }}>
             {question.data.letterPairs.map((pair, index) => (
               <motion.div
                 key={`bottom-${index}`}
