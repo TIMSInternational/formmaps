@@ -85,7 +85,7 @@ const SubtestCard = ({ test, index }: { test: any; index: number }) => {
              <h4 className="font-bold text-foreground text-lg group-hover:text-indigo-600 transition-colors">{test.name}</h4>
              <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {test.time}</span>
-                <span className="flex items-center gap-1"><Target className="w-3.5 h-3.5" /> {test.percentile}th %tile</span>
+                <span className="flex items-center gap-1"><Target className="w-3.5 h-3.5" /> {test.accuracy}% accuracy</span>
              </div>
           </div>
           <div className={`rounded-xl ${bg} p-2 ${color}`}>
@@ -145,7 +145,7 @@ export default function MILResultsPage() {
     .map((exam) => ({
       name: exam.examName,
       score: Math.round(exam.scorePercentage),
-      percentile: Math.round(exam.accuracyPercentage),
+      accuracy: Math.round(exam.accuracyPercentage),
       time: exam.totalTimeSpent
         ? exam.totalTimeSpent.replace(/^00:/, "").replace(/^0/, "")
         : "--:--",
@@ -159,8 +159,8 @@ export default function MILResultsPage() {
     fullMark: 100,
   }));
 
-  const averagePercentile = Math.round(
-    subtestResults.reduce((acc, curr) => acc + curr.percentile, 0) / (subtestResults.length || 1)
+  const averageAccuracy = Math.round(
+    subtestResults.reduce((acc, curr) => acc + curr.accuracy, 0) / (subtestResults.length || 1)
   );
 
   return (
@@ -211,10 +211,10 @@ export default function MILResultsPage() {
                 border="border-indigo-100"
                 blobColor="bg-indigo-500"
             />
-            <StatCard 
-                label={t("dashboard.avgPercentile")}
-                value={`${averagePercentile}%`}
-                sublabel="Better than average"
+            <StatCard
+                label={t("dashboard.avgAccuracy")}
+                value={`${averageAccuracy}%`}
+                sublabel="Answer accuracy"
                 icon={TrendingUp}
                 color="text-emerald-600"
                 bg="bg-emerald-50"

@@ -124,7 +124,7 @@ export default function MILCompletion({
               </div>
               <div>
                 <div className="text-2xl font-bold text-green-600">
-                  {Math.floor(Math.random() * 20) + 60}
+                  N/A
                 </div>
                 <div className="text-sm text-muted-foreground">Percentile Rank</div>
               </div>
