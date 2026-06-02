@@ -59,7 +59,7 @@ function MessagesContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showNewMessage, setShowNewMessage] = useState(false);
   const [contactSearch, setContactSearch] = useState("");
-  const [contacts, setContacts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<{ id: string; name: string; email: string; roleName?: string }[]>([]);
   const [contactsLoading, setContactsLoading] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState(false);
   const [startingCall, setStartingCall] = useState(false);
@@ -83,7 +83,7 @@ function MessagesContent() {
 
   const fetchMessages = useCallback(async (id: string, silent = false) => {
     if (!silent) setLoadingMessages(true);
-    try { const res: any = await getConversationMessages(id); setMessages(res?.data ?? res?.messages ?? []); }
+    try { const res = await getConversationMessages(id); setMessages(res?.messages ?? []); }
     catch { if (!silent) toast.error("Failed to load messages."); }
     finally { if (!silent) setLoadingMessages(false); }
   }, []);
@@ -117,8 +117,9 @@ function MessagesContent() {
     try {
       const session = await createVideoSession(selectedConversation.otherParticipant.id);
       router.push(`/school-admin/video/${session.id}`);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to start video call");
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      toast.error(e?.response?.data?.message || "Failed to start video call");
     } finally { setStartingCall(false); }
   };
 
@@ -142,8 +143,9 @@ function MessagesContent() {
       await fetchConversations();
       setSelectedId(conv.id);
       toast.success("Conversation started");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to start conversation");
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      toast.error(e?.response?.data?.message || "Failed to start conversation");
     }
   };
 

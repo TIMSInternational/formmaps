@@ -10,7 +10,7 @@ import { useGlobalStore } from "@/store/useGlobalStore";
 
 export const careerKeys = {
   all: ["careers"] as const,
-  list: (params?: Record<string, any>) =>
+  list: (params?: Record<string, unknown>) =>
     [
       ...careerKeys.all,
       "list",
@@ -63,7 +63,7 @@ export function useRecommendations(userId?: string) {
 export function usePrefetchCareers() {
   const queryClient = useQueryClient();
   return {
-    prefetchList: (params?: any) =>
+    prefetchList: (params?: Record<string, unknown>) =>
       queryClient.prefetchQuery({
         queryKey: careerKeys.list(params),
         queryFn: () => listCareers(params),

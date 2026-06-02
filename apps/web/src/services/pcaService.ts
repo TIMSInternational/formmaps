@@ -14,10 +14,14 @@ export interface PCAAssessmentRequest {
 
 export interface PCAAssessmentResponse {
   success: boolean;
-  data?: any;
+  data?: Record<string, unknown>;
   message?: string;
   assessmentUrl?: string;
   pcaCod?: string;
+}
+
+interface ApiError extends Error {
+  status?: number;
 }
 
 // ===== All calls go through backend proxy at /api/pcaapi/* =====
@@ -25,15 +29,16 @@ export interface PCAAssessmentResponse {
 /**
  * Get PCA Result by userId (via backend proxy — backend resolves PcaCod internally)
  */
-export async function getPCAResult(userId: string): Promise<any> {
+export async function getPCAResult(userId: string): Promise<Record<string, unknown> | null> {
   try {
-    const res = await apiRequest("/api/pcaapi/get-result", {
+    const res = await apiRequest<Record<string, unknown>>("/api/pcaapi/get-result", {
       method: "POST",
       data: { UserId: userId },
     });
-    return res?.data || res;
-  } catch (err: any) {
-    if (err?.status === 401 || err?.status === 403) return null;
+    return (res?.data || res) as Record<string, unknown>;
+  } catch (err: unknown) {
+    const apiErr = err as ApiError;
+    if (apiErr?.status === 401 || apiErr?.status === 403) return null;
     throw err;
   }
 }
@@ -44,15 +49,16 @@ export async function getPCAResult(userId: string): Promise<any> {
 export async function getPCACompetences(
   userId: string,
   cmpTims: "1" | "0" = "1"
-): Promise<any> {
+): Promise<Record<string, unknown> | null> {
   try {
-    const res = await apiRequest("/api/pcaapi/get-competences", {
+    const res = await apiRequest<Record<string, unknown>>("/api/pcaapi/get-competences", {
       method: "POST",
       data: { UserId: userId, CmpTims: cmpTims },
     });
-    return res?.data || res;
-  } catch (err: any) {
-    if (err?.status === 401 || err?.status === 403) return null;
+    return (res?.data || res) as Record<string, unknown>;
+  } catch (err: unknown) {
+    const apiErr = err as ApiError;
+    if (apiErr?.status === 401 || apiErr?.status === 403) return null;
     throw err;
   }
 }
@@ -64,15 +70,16 @@ export async function getPCAVsJCAAnalysis(
   userId: string,
   jcaCodExt: string,
   anlsTip: string = "g"
-): Promise<any> {
+): Promise<Record<string, unknown> | null> {
   try {
-    const res = await apiRequest("/api/pcaapi/get-pca-vs-jca", {
+    const res = await apiRequest<Record<string, unknown>>("/api/pcaapi/get-pca-vs-jca", {
       method: "POST",
       data: { UserId: userId, JcaCodExt: jcaCodExt, AnlsTip: anlsTip },
     });
-    return res?.data || res;
-  } catch (err: any) {
-    if (err?.status === 401 || err?.status === 403) return null;
+    return (res?.data || res) as Record<string, unknown>;
+  } catch (err: unknown) {
+    const apiErr = err as ApiError;
+    if (apiErr?.status === 401 || apiErr?.status === 403) return null;
     throw err;
   }
 }
@@ -83,15 +90,16 @@ export async function getPCAVsJCAAnalysis(
 export async function getPCAResultByUserId(
   userId: string,
   language: "english" | "spanish" = "english"
-): Promise<any> {
+): Promise<Record<string, unknown> | null> {
   const langParam = language === "spanish" ? "sp" : "en";
   try {
-    return await apiRequest(`/api/pcaapi/get-result?lang=${langParam}`, {
+    return await apiRequest<Record<string, unknown>>(`/api/pcaapi/get-result?lang=${langParam}`, {
       method: "POST",
       data: { UserId: userId },
     });
-  } catch (err: any) {
-    if (err?.status === 401 || err?.status === 403) return null;
+  } catch (err: unknown) {
+    const apiErr = err as ApiError;
+    if (apiErr?.status === 401 || apiErr?.status === 403) return null;
     throw err;
   }
 }
@@ -103,15 +111,16 @@ export async function getPCACompetencesByUserId(
   userId: string,
   cmpTims: "1" | "0" = "1",
   language: "english" | "spanish" = "english"
-): Promise<any> {
+): Promise<Record<string, unknown> | null> {
   const langParam = language === "spanish" ? "sp" : "en";
   try {
-    return await apiRequest(`/api/pcaapi/get-competences?lang=${langParam}`, {
+    return await apiRequest<Record<string, unknown>>(`/api/pcaapi/get-competences?lang=${langParam}`, {
       method: "POST",
       data: { UserId: userId, CmpTims: cmpTims },
     });
-  } catch (err: any) {
-    if (err?.status === 401 || err?.status === 403) return null;
+  } catch (err: unknown) {
+    const apiErr = err as ApiError;
+    if (apiErr?.status === 401 || apiErr?.status === 403) return null;
     throw err;
   }
 }
@@ -166,14 +175,15 @@ export async function addPCAEvaluation(
  */
 export async function getAllPCAEvaluations(
   language: "english" | "spanish" = "english"
-): Promise<any> {
+): Promise<Record<string, unknown> | null> {
   const langParam = language === "spanish" ? "sp" : "en";
   try {
-    return await apiRequest(`/api/pcaapi/evaluations?lang=${langParam}`, {
+    return await apiRequest<Record<string, unknown>>(`/api/pcaapi/evaluations?lang=${langParam}`, {
       method: "GET",
     });
-  } catch (err: any) {
-    if (err?.status === 401 || err?.status === 403) return null;
+  } catch (err: unknown) {
+    const apiErr = err as ApiError;
+    if (apiErr?.status === 401 || apiErr?.status === 403) return null;
     throw err;
   }
 }
@@ -192,8 +202,9 @@ export async function checkPCAStatus(
 }> {
   try {
     const allEvaluations = await getAllPCAEvaluations(language);
-    const userEvaluation = allEvaluations?.data?.find(
-      (evaluation: any) => evaluation.userId === userId
+    const evaluationData = allEvaluations?.data as Array<Record<string, unknown>> | undefined;
+    const userEvaluation = evaluationData?.find(
+      (evaluation: Record<string, unknown>) => evaluation.userId === userId
     );
 
     if (!userEvaluation) {
@@ -209,9 +220,9 @@ export async function checkPCAStatus(
           if (parsed.isCompleted) {
             return {
               status: "completed",
-              pcaCod: parsed.pcaCod || userEvaluation.pcaCod,
+              pcaCod: (parsed.pcaCod || userEvaluation.pcaCod) as string | undefined,
               hasResults: true,
-              lastActivity: parsed.lastUpdated || userEvaluation.createdAt || new Date().toISOString(),
+              lastActivity: (parsed.lastUpdated || userEvaluation.createdAt || new Date().toISOString()) as string,
             };
           }
         }
@@ -221,12 +232,13 @@ export async function checkPCAStatus(
     // Try fetching results from TIMS API
     try {
       const result = await getPCAResultByUserId(userId, language);
-      if (result?.data && (result.data.pcaCod || result.data.pcaD1 != null)) {
+      const resultData = result?.data as Record<string, unknown> | undefined;
+      if (resultData && (resultData.pcaCod || resultData.pcaD1 != null)) {
         return {
           status: "completed",
-          pcaCod: userEvaluation.pcaCod,
+          pcaCod: userEvaluation.pcaCod as string | undefined,
           hasResults: true,
-          lastActivity: userEvaluation.createdAt || new Date().toISOString(),
+          lastActivity: (userEvaluation.createdAt as string) || new Date().toISOString(),
         };
       }
     } catch {
@@ -235,9 +247,9 @@ export async function checkPCAStatus(
 
     return {
       status: "in_progress",
-      pcaCod: userEvaluation.pcaCod,
+      pcaCod: userEvaluation.pcaCod as string | undefined,
       hasResults: false,
-      lastActivity: userEvaluation.createdAt || new Date().toISOString(),
+      lastActivity: (userEvaluation.createdAt as string) || new Date().toISOString(),
     };
   } catch {
     return { status: "not_started" };

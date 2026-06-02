@@ -30,16 +30,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
+import type { NormalizedSession } from "@/lib/normalizeSessions";
+
+/** Schedule-page session: ScheduleSession + extra display fields the normalize fn copies through */
+interface ScheduleSession extends NormalizedSession {
+  studentName?: string;
+  studentImage?: string;
+  topic?: string;
+  meetingLink?: string;
+}
 
 export default function CoachSchedulePage() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("upcoming");
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<ScheduleSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
-  const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [selectedSession, setSelectedSession] = useState<ScheduleSession | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [cancelReason, setCancelReason] = useState("");
@@ -47,7 +56,7 @@ export default function CoachSchedulePage() {
   const SESSION_CACHE_KEY = "coach_sessions_all";
   const CACHE_TTL = 1000 * 60 * 2;
 
-  async function fetchWithRetry(fn: () => Promise<any>, retries = 2, delay = 300) {
+  async function fetchWithRetry<T>(fn: () => Promise<T>, retries = 2, delay = 300): Promise<T> {
     try { return await fn(); }
     catch (err) {
       if (retries <= 0) throw err;
@@ -59,12 +68,12 @@ export default function CoachSchedulePage() {
   const fetchSessions = async () => {
     try {
       setIsLoading(true);
-      const cached = ((globalThis as any).__sessionCache ??= new Map());
+      const cached = ((globalThis as unknown as { __sessionCache?: Map<string, { ts: number; data: ScheduleSession[] }> }).__sessionCache ??= new Map());
       const entry = cached.get(SESSION_CACHE_KEY);
       if (entry && Date.now() - entry.ts < CACHE_TTL) { setSessions(entry.data); return; }
 
       const { getCoachSessions } = await import("@/services/coachService");
-      const rawResponse: any = await fetchWithRetry(() => getCoachSessions("all"));
+      const rawResponse = await fetchWithRetry(() => getCoachSessions("all"));
       const normalize = (await import("@/lib/normalizeSessions")).default;
       const normalized = normalize(rawResponse);
       setSessions(normalized);
@@ -79,18 +88,18 @@ export default function CoachSchedulePage() {
   useEffect(() => { fetchSessions(); }, []);
 
   const now = Date.now();
-  const upcomingSessions = useMemo(() => sessions.filter((s: any) => isUpcoming(s, now)), [sessions]);
-  const pastSessions = useMemo(() => sessions.filter((s: any) => isPast(s, now)), [sessions]);
+  const upcomingSessions = useMemo(() => sessions.filter((s) => isUpcoming(s, now)), [sessions]);
+  const pastSessions = useMemo(() => sessions.filter((s) => isPast(s, now)), [sessions]);
   const displayed = activeTab === "upcoming" ? upcomingSessions : pastSessions;
 
-  const handleRescheduleClick = (session: any) => {
+  const handleRescheduleClick = (session: ScheduleSession) => {
     setSelectedSession(session);
     setRescheduleDate("");
     setRescheduleTime("");
     setIsRescheduleOpen(true);
   };
 
-  const handleCancelClick = (session: any) => {
+  const handleCancelClick = (session: ScheduleSession) => {
     setSelectedSession(session);
     setCancelReason("");
     setIsCancelOpen(true);
@@ -127,15 +136,17 @@ export default function CoachSchedulePage() {
     }
   };
 
-  const formatSessionDate = (session: any) => {
+  const formatSessionDate = (session: ScheduleSession) => {
     try {
+      if (!session.startTime) return "TBD";
       const d = new Date(session.startTime);
       return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
     } catch { return "TBD"; }
   };
 
-  const formatSessionTime = (session: any) => {
+  const formatSessionTime = (session: ScheduleSession) => {
     try {
+      if (!session.startTime) return "TBD";
       const d = new Date(session.startTime);
       return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     } catch { return "TBD"; }
@@ -201,7 +212,7 @@ export default function CoachSchedulePage() {
       {viewMode === "calendar" ? (
         <CalendarView
           sessions={sessions}
-          onSessionClick={(session) => handleRescheduleClick(session)}
+          onSessionClick={(session) => handleRescheduleClick(session as ScheduleSession)}
         />
       ) : (
         <div className="dash-card overflow-hidden">

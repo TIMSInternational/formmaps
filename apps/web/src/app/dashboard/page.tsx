@@ -21,10 +21,18 @@ import { useAssessmentProgress } from "@/hooks/useAssessmentQueries";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 
+interface DashboardData {
+  activeCourse?: Record<string, unknown>;
+  ActiveCourse?: Record<string, unknown>;
+  pcaResults?: unknown;
+  aiSummary?: string;
+  AiSummary?: string;
+}
+
 export default function DashboardPage() {
   const { t } = useTranslation();
   const { user } = useGlobalStore();
-  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const userRole = normalizeRole(user?.role || "");

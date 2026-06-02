@@ -146,7 +146,7 @@ export async function getCoachAnalyticsReport(
   startDate?: string,
   endDate?: string,
   type: "csv" | "pdf" = "pdf",
-): Promise<Blob | { data: any }> {
+): Promise<Blob | { data: Record<string, unknown> }> {
   const query = new URLSearchParams();
   if (startDate) query.append("startDate", startDate);
   if (endDate) query.append("endDate", endDate);
@@ -456,7 +456,7 @@ export async function inviteCoach(data: {
   return apiRequest(`/authapi/invite-coach`, { method: "POST", data });
 }
 
-export async function inviteCoachBulk(file: File): Promise<any[]> {
+export async function inviteCoachBulk(file: File): Promise<Array<{ email: string; success: boolean; message?: string }>> {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -476,7 +476,7 @@ export async function updateCoach(
 
 export async function signupCoachBulk(
   coaches: { fullName: string; email: string; password?: string }[],
-): Promise<any[]> {
+): Promise<Array<{ email: string; success: boolean; message?: string }>> {
   return apiRequest(`/authapi/signup-coach-bulk`, {
     method: "POST",
     data: { coaches },
@@ -499,7 +499,7 @@ export async function testCoachAPIs(): Promise<void> {
   }
 }
 
-export async function uploadProfileImage(file: File): Promise<any> {
+export async function uploadProfileImage(file: File): Promise<Coach> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -523,7 +523,7 @@ export async function getCoachStudents(params?: {
   page?: number;
   limit?: number;
   search?: string;
-}): Promise<{ data: any[]; total: number }> {
+}): Promise<{ data: StudentSummary[]; total: number }> {
   const query = new URLSearchParams();
   if (params?.page) query.append("page", params.page.toString());
   if (params?.limit) query.append("limit", params.limit.toString());
@@ -535,7 +535,7 @@ export async function getCoachStudents(params?: {
   return res.data;
 }
 
-export async function getCoachStudentDetails(studentId: string): Promise<any> {
+export async function getCoachStudentDetails(studentId: string): Promise<StudentDetails> {
   const res = await apiRequest(`/api/v1/coach/me/students/${studentId}`);
   return res.data;
 }
@@ -614,7 +614,7 @@ export async function updateCoachPayoutSettings(
   settings: Partial<PayoutSettings>,
 ): Promise<PayoutSettings> {
   // Map UI field names to API field names
-  const requestBody: any = {};
+  const requestBody: Partial<PayoutSettings> = {};
   if (settings.frequency) requestBody.frequency = settings.frequency;
   if (settings.method) requestBody.method = settings.method;
   if (settings.bankAccountNumber)

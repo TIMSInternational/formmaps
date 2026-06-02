@@ -6,14 +6,18 @@ import type {
 } from "@/types/seniorProject";
 import { apiRequest } from "@/lib/api/apiClient";
 
+interface ApiError extends Error {
+  response?: { status?: number };
+}
+
 // ─── Student: own senior project ──────────────────────────────────
 
 export async function getMySeniorProject(): Promise<SeniorProject | null> {
   try {
     const res = await apiRequest("/api/v1/student/senior-project");
     return (res.data ?? res) as SeniorProject;
-  } catch (err: any) {
-    if (err?.response?.status === 404) return null;
+  } catch (err: unknown) {
+    if ((err as ApiError)?.response?.status === 404) return null;
     throw err;
   }
 }
@@ -61,8 +65,8 @@ export async function getStudentSeniorProject(
       `/api/v1/school-admin/students/${studentId}/senior-project`
     );
     return (res.data ?? res) as SeniorProject;
-  } catch (err: any) {
-    if (err?.response?.status === 404) return null;
+  } catch (err: unknown) {
+    if ((err as ApiError)?.response?.status === 404) return null;
     throw err;
   }
 }

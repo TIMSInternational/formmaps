@@ -45,6 +45,32 @@ import { useReviewChangeRequest } from "@/hooks/useCoursePlanQueries";
 import { getMyCounselorSessions } from "@/services/counselorSessionService";
 import type { CounselorSession } from "@/services/counselorSessionService";
 
+interface ChangeRequestItem {
+  id: string;
+  studentId: string;
+  studentName: string;
+  courseName: string;
+  gradeLevel: number;
+  semester: string;
+  action: string;
+  studentNote?: string;
+}
+
+interface FollowUpItem {
+  id: string;
+  studentName: string;
+  content: string;
+  followUpDate: string;
+}
+
+interface NoteItem {
+  id: string;
+  studentName: string;
+  type: string;
+  content: string;
+  createdAt: string;
+}
+
 export default function CounselorDashboardPage() {
   const { t } = useTranslation();
   const [rightTab, setRightTab] = useState<"followups" | "requests">("followups");
@@ -61,9 +87,12 @@ export default function CounselorDashboardPage() {
   const [pipelineGrade, setPipelineGrade] = useState<string>("");
   const [incompleteOnly, setIncompleteOnly] = useState(false);
 
+  interface BriefingResponse { data?: { briefing?: string; urgentActions?: { title: string; description: string; impact: string }[] } }
+  interface PipelineStudent { id: string; name: string; gradeLevel?: number; pcaExams?: Record<string, string>; milStatus?: string; eval360Status?: string }
+
   const { data: briefingData, isLoading: briefingLoading, refetch: refetchBriefing, dataUpdatedAt: briefingUpdatedAt } = useQuery({
     queryKey: ["counselor-ai-briefing"],
-    queryFn: () => apiRequest<any>("/api/v1/counselor/ai-briefing"),
+    queryFn: () => apiRequest<BriefingResponse>("/api/v1/counselor/ai-briefing"),
     staleTime: 10 * 60 * 1000,
   });
 
@@ -74,7 +103,7 @@ export default function CounselorDashboardPage() {
       if (pipelineGrade) params.set("grade", pipelineGrade);
       if (incompleteOnly) params.set("incompleteOnly", "true");
       const qs = params.toString();
-      return apiRequest<any>(`/api/v1/counselor/assessment-pipeline${qs ? `?${qs}` : ""}`);
+      return apiRequest<{ data?: PipelineStudent[] }>(`/api/v1/counselor/assessment-pipeline${qs ? `?${qs}` : ""}`);
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -87,14 +116,18 @@ export default function CounselorDashboardPage() {
 
   const router = useRouter();
 
-  const totalStudents =
-    (studentsData as any)?.total ?? (dashData as any)?.assignedCount ?? 0;
-  const pendingFollowUps = (dashData as any)?.followUps ?? 0;
-  const recentNotesCount = (dashData as any)?.recentNotes?.length ?? 0;
-  const overdueFollowUps = (dashData as any)?.overdueFollowUps ?? 0;
+  const studentsObj = studentsData as Record<string, unknown> | undefined;
+  const dashObj = dashData as Record<string, unknown> | undefined;
+  const crObj = changeRequestsData as Record<string, unknown> | undefined;
 
-  const changeRequests: any[] = (changeRequestsData as any)?.data ?? [];
-  const pendingCRCount = (changeRequestsData as any)?.total ?? changeRequests.length;
+  const totalStudents =
+    (studentsObj?.total as number | undefined) ?? (dashObj?.assignedCount as number | undefined) ?? 0;
+  const pendingFollowUps = (dashObj?.followUps as number | undefined) ?? 0;
+  const recentNotesCount = (Array.isArray(dashObj?.recentNotes) ? dashObj.recentNotes.length : 0);
+  const overdueFollowUps = (dashObj?.overdueFollowUps as number | undefined) ?? 0;
+
+  const changeRequests: ChangeRequestItem[] = (Array.isArray(crObj?.data) ? crObj.data : []) as ChangeRequestItem[];
+  const pendingCRCount = (crObj?.total as number | undefined) ?? changeRequests.length;
 
   const isLoading = dashLoading || studentsLoading;
 
@@ -220,14 +253,14 @@ export default function CounselorDashboardPage() {
               </div>
             ) : (
               <p className="text-sm text-slate-200 leading-relaxed">
-                {(briefingData as any)?.data?.briefing ?? "No briefing available yet."}
+                {briefingData?.data?.briefing ?? "No briefing available yet."}
               </p>
             )}
           </div>
           {/* Urgent Action Items */}
-          {!briefingLoading && (briefingData as any)?.data?.urgentActions?.length > 0 && (
+          {!briefingLoading && (briefingData?.data?.urgentActions?.length ?? 0) > 0 && (
             <div className="border-t border-slate-200 divide-y divide-slate-100">
-              {((briefingData as any).data.urgentActions as any[]).slice(0, 3).map((item: any, idx: number) => (
+              {briefingData!.data!.urgentActions!.slice(0, 3).map((item, idx) => (
                 <div key={idx} className="flex items-start gap-3 px-5 py-3">
                   <div className="mt-0.5">
                     <AlertTriangle className={`h-3.5 w-3.5 ${
@@ -370,7 +403,7 @@ export default function CounselorDashboardPage() {
                     <Skeleton key={i} className="h-8 w-full" />
                   ))}
                 </div>
-              ) : !((pipelineData as any)?.data ?? (pipelineData as any))?.length ? (
+              ) : !(pipelineData?.data ?? []).length ? (
                 <div className="text-center py-12">
                   <Users className="h-10 w-10 text-gray-200 mx-auto mb-2" />
                   <p className="text-gray-400 text-sm">No students found.</p>
@@ -393,8 +426,8 @@ export default function CounselorDashboardPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {(((pipelineData as any)?.data ?? (pipelineData as any)) as any[]).slice(0, 10).map((s: any) => {
-                          const pca = s.pcaExams ?? {};
+                        {(pipelineData?.data ?? []).slice(0, 10).map((s) => {
+                          const pca: Record<string, string> = s.pcaExams ?? {};
                           const examKeys = ["PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation"] as const;
                           return (
                             <tr
@@ -453,7 +486,7 @@ export default function CounselorDashboardPage() {
                       </tbody>
                     </table>
                   </div>
-                  {(((pipelineData as any)?.data ?? (pipelineData as any)) as any[]).length > 10 && (
+                  {(pipelineData?.data ?? []).length > 10 && (
                     <div className="px-5 py-3 border-t border-gray-100">
                       <Link href="/counselor/students" className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
                         View All Students →
@@ -515,9 +548,9 @@ export default function CounselorDashboardPage() {
                       <Skeleton key={i} className="h-14 w-full" />
                     ))}
                   </div>
-                ) : (dashData as any)?.pendingFollowUpsList?.length ? (
+                ) : (Array.isArray(dashObj?.pendingFollowUpsList) && dashObj.pendingFollowUpsList.length) ? (
                   <div className="space-y-3">
-                    {(dashData as any).pendingFollowUpsList.map((item: any) => (
+                    {(dashObj.pendingFollowUpsList as FollowUpItem[]).map((item) => (
                       <div
                         key={item.id}
                         className="flex items-start gap-3 p-3 bg-yellow-50/60 border border-yellow-100 rounded-lg"
@@ -558,7 +591,7 @@ export default function CounselorDashboardPage() {
                   </div>
                 ) : changeRequests.length > 0 ? (
                   <div className="space-y-3">
-                    {changeRequests.map((req: any) => (
+                    {changeRequests.map((req) => (
                       <ChangeRequestCard key={req.id} req={req} />
                     ))}
                   </div>
@@ -578,7 +611,7 @@ export default function CounselorDashboardPage() {
       </motion.div>
 
       {/* Recent Notes */}
-      {(dashData as any)?.recentNotes?.length > 0 && (
+      {Array.isArray(dashObj?.recentNotes) && dashObj.recentNotes.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -593,7 +626,7 @@ export default function CounselorDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {(dashData as any).recentNotes.map((note: any) => (
+                {(dashObj!.recentNotes as NoteItem[]).map((note) => (
                   <div
                     key={note.id}
                     className="flex items-start gap-3 p-3 bg-white border border-gray-100 rounded-lg shadow-sm"
@@ -628,7 +661,7 @@ export default function CounselorDashboardPage() {
 
 // ── Inline change request card with approve / reject ─────────────────────────
 
-function ChangeRequestCard({ req }: { req: any }) {
+function ChangeRequestCard({ req }: { req: ChangeRequestItem }) {
   const { t } = useTranslation();
   const router = useRouter();
   const review = useReviewChangeRequest(req.studentId);

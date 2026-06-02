@@ -88,7 +88,7 @@ export function useUpdateAssessmentProgress() {
     mutationFn: async ({ userId, assessmentType, progressData }: { 
       userId: string; 
       assessmentType: 'mil' | 'evaluation' | 'pca';
-      progressData: any;
+      progressData: Record<string, unknown>;
     }) => {
       // This would typically call an API to update progress
       return { userId, assessmentType, progressData };
@@ -130,13 +130,14 @@ export function useOptimisticAssessmentUpdate() {
     // Optimistically update dashboard summary
     queryClient.setQueryData(
       assessmentKeys.dashboardSummary(userId),
-      (oldData: any) => {
-        if (!oldData?.assessments) return oldData;
-        
+      (oldData: unknown) => {
+        const data = oldData as { assessments?: { type: string; status: string }[] } | undefined;
+        if (!data?.assessments) return oldData;
+
         return {
-          ...oldData,
-          assessments: oldData.assessments.map((assessment: any) => 
-            assessment.type === assessmentType 
+          ...data,
+          assessments: data.assessments.map((assessment) =>
+            assessment.type === assessmentType
               ? { ...assessment, status: newStatus }
               : assessment
           ),
@@ -148,13 +149,14 @@ export function useOptimisticAssessmentUpdate() {
   const updateAssessmentCompletion = (userId: string, assessmentType: string, completion: number) => {
     queryClient.setQueryData(
       assessmentKeys.dashboardSummary(userId),
-      (oldData: any) => {
-        if (!oldData?.assessments) return oldData;
-        
+      (oldData: unknown) => {
+        const data = oldData as { assessments?: { type: string; completion: number }[] } | undefined;
+        if (!data?.assessments) return oldData;
+
         return {
-          ...oldData,
-          assessments: oldData.assessments.map((assessment: any) => 
-            assessment.type === assessmentType 
+          ...data,
+          assessments: data.assessments.map((assessment) =>
+            assessment.type === assessmentType
               ? { ...assessment, completion }
               : assessment
           ),

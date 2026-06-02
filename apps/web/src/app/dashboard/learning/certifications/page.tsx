@@ -25,7 +25,11 @@ export default function CertificationsPage() {
   const { data: recData } = useRecommendedCourses();
   const { language } = useGlobalStore();
 
-  const enrollments: CourseEnrollment[] = Array.isArray(enrollmentData) ? enrollmentData : (enrollmentData as any)?.data || (enrollmentData as any)?.enrollments || [];
+  const enrollments: CourseEnrollment[] = Array.isArray(enrollmentData)
+    ? enrollmentData
+    : (enrollmentData as { data?: CourseEnrollment[]; enrollments?: CourseEnrollment[] } | undefined)?.data
+      || (enrollmentData as { data?: CourseEnrollment[]; enrollments?: CourseEnrollment[] } | undefined)?.enrollments
+      || [];
   const recommendedCourses = recData?.courses || [];
 
   const enrolledCourses = enrollments;
@@ -35,7 +39,7 @@ export default function CertificationsPage() {
   // Combine: in-progress first, then completed, then top recommended (not enrolled)
   const enrolledIds = new Set(enrollments.map((e) => e.courseId));
   const suggestedCourses = recommendedCourses
-    .filter((c: any) => !enrolledIds.has(c.id))
+    .filter((c: Course) => !enrolledIds.has(c.id))
     .slice(0, 3);
 
   return (
@@ -178,7 +182,7 @@ export default function CertificationsPage() {
                 </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {suggestedCourses.map((course: any, idx: number) => (
+                {suggestedCourses.map((course: Course, idx: number) => (
                   <Link
                     key={course.id || `suggested-${idx}`}
                     href={course.courseraUrl || "/dashboard/learning/courses"}

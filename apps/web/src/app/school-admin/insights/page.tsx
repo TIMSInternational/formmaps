@@ -92,7 +92,7 @@ export default function AIInsightsPage() {
                 </div>
                 <div style={{ fontSize: 24, fontWeight: 700, color: s.color }}>{s.value}</div>
                 <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginTop: 2 }}>{s.label}</div>
-                {(s as any).sub && <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{(s as any).sub}</div>}
+                {"sub" in s && s.sub && <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{s.sub}</div>}
               </div>
             ))}
           </div>
@@ -110,15 +110,16 @@ export default function AIInsightsPage() {
                 </div>
               </div>
               <div style={{ padding: 16 }} className="space-y-3">
-                {urgentActions.map((a: any, i: number) => {
-                  const color = a.impact === "high" ? "#ef4444" : a.impact === "medium" ? "#f59e0b" : "#065292";
+                {urgentActions.map((a: Record<string, unknown>, i: number) => {
+                  const impact = String(a.impact ?? "");
+                  const color = impact === "high" ? "#ef4444" : impact === "medium" ? "#f59e0b" : "#065292";
                   return (
                     <div key={i} style={{ padding: "14px 16px", borderRadius: 8, borderLeft: `3px solid ${color}`, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{a.title}</span>
-                        <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", padding: "2px 6px", borderRadius: 3, background: `${color}15`, color }}>{a.impact}</span>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{String(a.title ?? "")}</span>
+                        <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", padding: "2px 6px", borderRadius: 3, background: `${color}15`, color }}>{impact}</span>
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.5 }}>{a.description}</div>
+                      <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.5 }}>{String(a.description ?? "")}</div>
                     </div>
                   );
                 })}
@@ -142,15 +143,16 @@ export default function AIInsightsPage() {
               <div style={{ padding: 16 }} className="space-y-3">
                 {insights.length === 0 ? (
                   <div style={{ textAlign: "center", padding: 24, color: "var(--admin-font-tertiary)", fontSize: 12 }}>No insights available</div>
-                ) : insights.map((ins: any, i: number) => {
+                ) : insights.map((ins: Record<string, unknown>, i: number) => {
                   const catColor: Record<string, string> = { academic: "#10b981", assessment: "#8b5cf6", graduation: "#065292", staffing: "#f59e0b", engagement: "#ef4444" };
+                  const category = String(ins.category ?? "");
                   return (
                     <div key={i} style={{ padding: "12px 14px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{ins.title}</span>
-                        <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: `${catColor[ins.category] || "#6b7280"}15`, color: catColor[ins.category] || "#6b7280", textTransform: "capitalize" }}>{ins.category}</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{String(ins.title ?? "")}</span>
+                        <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: `${catColor[category] || "#6b7280"}15`, color: catColor[category] || "#6b7280", textTransform: "capitalize" }}>{category}</span>
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.5 }}>{ins.description}</div>
+                      <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.5 }}>{String(ins.description ?? "")}</div>
                     </div>
                   );
                 })}
@@ -171,15 +173,16 @@ export default function AIInsightsPage() {
               <div style={{ padding: 16 }} className="space-y-3">
                 {predictions.length === 0 ? (
                   <div style={{ textAlign: "center", padding: 24, color: "var(--admin-font-tertiary)", fontSize: 12 }}>No predictions available</div>
-                ) : predictions.map((pred: any, i: number) => {
-                  const confColor = pred.confidence === "high" ? "#10b981" : pred.confidence === "medium" ? "#f59e0b" : "#6b7280";
+                ) : predictions.map((pred: Record<string, unknown>, i: number) => {
+                  const confidence = String(pred.confidence ?? "");
+                  const confColor = confidence === "high" ? "#10b981" : confidence === "medium" ? "#f59e0b" : "#6b7280";
                   return (
                     <div key={i} style={{ padding: "12px 14px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{pred.title}</span>
-                        <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: `${confColor}15`, color: confColor }}>{pred.confidence} confidence</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{String(pred.title ?? "")}</span>
+                        <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: `${confColor}15`, color: confColor }}>{confidence} confidence</span>
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.5 }}>{pred.description}</div>
+                      <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.5 }}>{String(pred.description ?? "")}</div>
                     </div>
                   );
                 })}
@@ -200,18 +203,19 @@ export default function AIInsightsPage() {
                 </div>
               </div>
               <div style={{ padding: 16 }} className="space-y-3">
-                {recommendations.map((rec: any, i: number) => {
+                {recommendations.map((rec: Record<string, unknown>, i: number) => {
                   const catColor: Record<string, string> = { course_offering: "#10b981", staffing: "#065292", assessment: "#8b5cf6", academic: "#f59e0b" };
-                  const catIcon: Record<string, any> = { course_offering: BookOpen, staffing: Users, assessment: Target, academic: GraduationCap };
-                  const Icon = catIcon[rec.category] || Lightbulb;
+                  const catIcon: Record<string, typeof BookOpen> = { course_offering: BookOpen, staffing: Users, assessment: Target, academic: GraduationCap };
+                  const category = String(rec.category ?? "");
+                  const Icon = catIcon[category] || Lightbulb;
                   return (
                     <div key={i} style={{ padding: "14px 16px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", display: "flex", gap: 12 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 6, background: `${catColor[rec.category] || "#6b7280"}10`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <Icon style={{ width: 16, height: 16, color: catColor[rec.category] || "#6b7280" }} />
+                      <div style={{ width: 32, height: 32, borderRadius: 6, background: `${catColor[category] || "#6b7280"}10`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Icon style={{ width: 16, height: 16, color: catColor[category] || "#6b7280" }} />
                       </div>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 4 }}>{rec.title}</div>
-                        <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.5 }}>{rec.description}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 4 }}>{String(rec.title ?? "")}</div>
+                        <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.5 }}>{String(rec.description ?? "")}</div>
                       </div>
                     </div>
                   );
@@ -232,7 +236,7 @@ export default function AIInsightsPage() {
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>Top Enrolled Courses</div>
                     <div className="space-y-2">
-                      {metrics.topCourses.map((c: any, i: number) => (
+                      {metrics.topCourses.map((c: { name: string; count: number }, i: number) => (
                         <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 10px", borderRadius: 6, background: "var(--admin-bg-hover)" }}>
                           <span style={{ fontSize: 12, color: "var(--admin-font-primary)" }}>{c.name}</span>
                           <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{c.count} students</span>

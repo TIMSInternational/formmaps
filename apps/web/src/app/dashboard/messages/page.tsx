@@ -99,8 +99,9 @@ export default function MessagesPage() {
     try {
       const session = await createVideoSession(selectedConversation.otherParticipant.id);
       router.push(`/dashboard/video/${session.id}`);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to start video call");
+    } catch (err: unknown) {
+      const errObj = err as { response?: { data?: { message?: string } } };
+      toast.error(errObj?.response?.data?.message || "Failed to start video call");
     } finally { setStartingCall(false); }
   };
 

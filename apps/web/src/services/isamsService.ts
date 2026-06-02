@@ -1,6 +1,6 @@
 import { apiRequest } from "@/lib/api/apiClient";
 
-export async function saveIsamsConfig(schoolId: string, payload: any) {
+export async function saveIsamsConfig(schoolId: string, payload: Record<string, unknown>) {
   return await apiRequest(
     `/api/v1/school-admin/integrations/isams?schoolId=${encodeURIComponent(schoolId)}`,
     { method: "POST", data: payload }

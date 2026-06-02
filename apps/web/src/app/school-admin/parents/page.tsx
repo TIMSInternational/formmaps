@@ -54,8 +54,8 @@ export default function ParentsPage() {
   const [page, setPage] = useState(1);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteForm, setInviteForm] = useState({ studentSearch: "", parentEmail: "", parentName: "" });
-  const [studentResults, setStudentResults] = useState<any[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [studentResults, setStudentResults] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string; email: string } | null>(null);
   const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export default function ParentsPage() {
       toast.success("Parent invitation sent");
       setShowInvite(false); setInviteForm({ studentSearch: "", parentEmail: "", parentName: "" }); setSelectedStudent(null);
       refetch();
-    } catch (err: any) { toast.error(err?.data?.message || "Failed to invite parent"); }
+    } catch (err: unknown) { const e = err as { data?: { message?: string } }; toast.error(e?.data?.message || "Failed to invite parent"); }
     finally { setInviting(false); }
   };
 
@@ -168,7 +168,7 @@ export default function ParentsPage() {
                     className="h-9 text-sm" style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }} />
                   {studentResults.length > 0 && (
                     <div style={{ border: "1px solid var(--admin-border-default)", borderRadius: 6, marginTop: 4, maxHeight: 150, overflowY: "auto", background: "var(--admin-bg-card)" }}>
-                      {studentResults.map((s: any) => (
+                      {studentResults.map((s) => (
                         <button key={s.id} onClick={() => { setSelectedStudent(s); setInviteForm(f => ({ ...f, studentSearch: "" })); setStudentResults([]); }}
                           style={{ width: "100%", padding: "6px 10px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left", fontSize: 12, color: "var(--admin-font-primary)", fontFamily: "inherit" }}
                           onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}

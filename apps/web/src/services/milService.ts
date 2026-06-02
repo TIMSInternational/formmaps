@@ -2,10 +2,14 @@
 
 import { apiRequest } from "@/lib/api/apiClient";
 
+interface ApiError extends Error {
+  status?: number;
+}
+
 // --- Retry helper with exponential backoff ---
 async function submitWithRetry(
   url: string,
-  body: any,
+  body: Record<string, unknown>,
   headers: Record<string, string>,
   maxRetries = 3
 ): Promise<Response> {
@@ -34,11 +38,11 @@ const PENDING_KEY = "formmaps_pending_mil_submissions";
 interface PendingSubmission {
   key: string;
   url: string;
-  body: any;
+  body: Record<string, unknown>;
   timestamp: string;
 }
 
-function savePendingSubmission(key: string, url: string, data: any): void {
+function savePendingSubmission(key: string, url: string, data: Record<string, unknown>): void {
   try {
     const existing: PendingSubmission[] = JSON.parse(
       localStorage.getItem(PENDING_KEY) || "[]"
@@ -144,6 +148,12 @@ export interface MILExam {
   timeLimitMinutes: number;
   totalQuestions: number;
   questions: MILQuestion[];
+}
+
+export interface MILExamInstructions {
+  instructions: string;
+  timeLimit: number;
+  examType: number;
 }
 
 export interface MILExamMetadata {
@@ -324,7 +334,8 @@ export async function getAllUserExamResults(
     const json = await apiRequest(`/api/pcaexam/all-results?lang=${langParam}`);
     return Array.isArray(json) ? json : json.data || [];
   } catch (error) {
-    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return [];
+    const status = (error instanceof Error && "status" in error) ? (error as ApiError).status : undefined;
+    if (status === 401 || status === 403) return [];
     throw error;
   }
 }
@@ -340,8 +351,9 @@ export async function getUserExamHistory(
     const langParam = language === "spanish" ? "sp" : "en";
     return await apiRequest(`/api/pcaexam/history/${userId}?lang=${langParam}`);
   } catch (error) {
-    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403)
-      return { exams: [], totalExams: 0, completedExams: 0 } as any;
+    const status = (error instanceof Error && "status" in error) ? (error as ApiError).status : undefined;
+    if (status === 401 || status === 403)
+      return { exams: [], totalExams: 0, completedExams: 0 } as unknown as EnhancedUserExamHistory;
     throw error;
   }
 }
@@ -380,7 +392,7 @@ export function getUserProgressSummary(
     4: "Visual Rotation",
   };
 
-  const examTypes: { [key: string]: any } = {};
+  const examTypes: { [key: string]: { name: string; attempts: number; bestScore: number; lastAttempt?: string } } = {};
 
   validResults.forEach((result) => {
     const typeName =
@@ -400,7 +412,7 @@ export function getUserProgressSummary(
       result.result.scorePercentage
     );
 
-    if (new Date(result.date) > new Date(examTypes[typeName].lastAttempt)) {
+    if (examTypes[typeName].lastAttempt && new Date(result.date) > new Date(examTypes[typeName].lastAttempt)) {
       examTypes[typeName].lastAttempt = result.date;
     }
   });
@@ -428,7 +440,8 @@ export async function getAllMILExams(
     const json = await apiRequest(`/api/pcaexam/exams?lang=${langParam}`);
     return Array.isArray(json) ? json : json.data || [];
   } catch (error) {
-    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return [];
+    const status = (error instanceof Error && "status" in error) ? (error as ApiError).status : undefined;
+    if (status === 401 || status === 403) return [];
     throw error;
   }
 }
@@ -445,7 +458,8 @@ export async function getMILExamById(
     const result = await apiRequest(`/api/pcaexam/exams/${examId}?lang=${langParam}`);
     return result?.data || result;
   } catch (error) {
-    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return null as any;
+    const status = (error instanceof Error && "status" in error) ? (error as ApiError).status : undefined;
+    if (status === 401 || status === 403) return null as unknown as MILExam;
     throw error;
   }
 }
@@ -466,7 +480,8 @@ export async function startMILExam(
     // API returns { success, data: { sessionId, questions, ... } } — unwrap
     return result?.data || result;
   } catch (error) {
-    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return null as any;
+    const status = (error instanceof Error && "status" in error) ? (error as ApiError).status : undefined;
+    if (status === 401 || status === 403) return null as unknown as MILExam;
     throw error;
   }
 }
@@ -477,7 +492,7 @@ export async function startMILExam(
 export async function getMILExamInstructions(
   examId: MILExamId,
   language: "english" | "spanish" = "english"
-): Promise<any> {
+): Promise<MILExamInstructions | null> {
   try {
     const langParam = language === "spanish" ? "sp" : "en";
     const result = await apiRequest(
@@ -485,7 +500,8 @@ export async function getMILExamInstructions(
     );
     return result?.data || result;
   } catch (error) {
-    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return null;
+    const status = (error instanceof Error && "status" in error) ? (error as ApiError).status : undefined;
+    if (status === 401 || status === 403) return null;
 
     // Fallback to local instructions for pattern recognition and numeric velocity
     if (examId === MIL_EXAMS.FEATURE_DETECTION) {
@@ -537,7 +553,7 @@ export async function submitMILExam(
   session: MILSession,
   userId: string,
   language: "english" | "spanish" = "english"
-): Promise<any> {
+): Promise<Record<string, unknown>> {
   const examAnswers = session.answers
     .filter((answer) => {
       // Validate each answer before submission
@@ -590,7 +606,7 @@ export async function completeMILExam(
   session: MILSession,
   userId: string,
   language: "english" | "spanish" = "english"
-): Promise<any> {
+): Promise<Record<string, unknown>> {
   const examAnswers = session.answers.map((answer) => ({
     questionNumber: answer.questionNumber,
     selectedAnswer: answer.answer.toString(),

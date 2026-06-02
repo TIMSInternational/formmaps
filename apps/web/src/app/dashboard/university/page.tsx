@@ -12,7 +12,7 @@ import {
   useUniversityFavoriteMutation,
   useUniversityFavorites,
 } from "@/hooks/useUniversityQueries";
-import { University, UniversityFilters } from "@/types/university";
+import { University, UniversityFilters, UniversityRecommendation } from "@/types/university";
 import UniversityCard from "@/components/dashboard/University/UniversityCard";
 import UniversityFiltersPanel from "@/components/dashboard/University/UniversityFilters";
 import { useSidePanel } from "@/components/side-panel/SidePanel";
@@ -55,8 +55,8 @@ export default function UniversityPage() {
     const fields = searchParams.get("fields");
     if (search) initial.search = search;
     if (countries) initial.countries = countries.split(",");
-    if (degrees) initial.degrees = degrees.split(",") as any;
-    if (fields) initial.fields = fields.split(",") as any;
+    if (degrees) initial.degrees = degrees.split(",") as UniversityFilters["degrees"];
+    if (fields) initial.fields = fields.split(",") as UniversityFilters["fields"];
     return initial;
   });
 
@@ -100,7 +100,7 @@ export default function UniversityPage() {
   const hasRecommendations = !!(
     recoQuery.data?.recommendations?.length || recoQuery.data?.universities?.length
   );
-  const recoUniversities = recoQuery.data?.recommendations?.map((r: any) => r.university || r)
+  const recoUniversities = recoQuery.data?.recommendations?.map((r: UniversityRecommendation) => r.university || r)
     || recoQuery.data?.universities
     || [];
 
@@ -110,8 +110,10 @@ export default function UniversityPage() {
       : listQuery.data?.universities
   ) as University[] | undefined;
 
-  const recommendationMap = new Map(
-    (recoQuery.data?.recommendations || recoQuery.data?.universities || []).map((r: any) => [r.university?.id || r.id, r])
+  const recommendationMap = new Map<string, UniversityRecommendation>(
+    (recoQuery.data?.recommendations || []).map((r) => [
+      r.university.id, r
+    ] as [string, UniversityRecommendation])
   );
 
   const handleViewDetails = React.useCallback(
@@ -317,11 +319,10 @@ export default function UniversityPage() {
                       <UniversityCard
                         key={u.id}
                         university={u}
-                        matchScore={rec?.matchScore || (u as any).matchScore}
+                        matchScore={rec?.matchScore || (u as University & { matchScore?: number }).matchScore}
                         matchReasons={
                           rec?.matchReasonsArray?.[language === "spanish" ? "es" : "en"]
-                          || rec?.matchReasons
-                          || (u as any).matchReasons
+                          || (u as University & { matchReasons?: string[] }).matchReasons
                         }
                         onViewDetails={handleViewDetails}
                         variant="featured"
@@ -385,8 +386,8 @@ export default function UniversityPage() {
 
       <CompareBar
         getUniversity={(id) => {
-          const all = [
-            ...(recoQuery.data?.recommendations?.map((r: any) => r.university || r) ?? []),
+          const all: University[] = [
+            ...(recoQuery.data?.recommendations?.map((r) => r.university) ?? []),
             ...(recoQuery.data?.universities ?? []),
             ...(listQuery.data?.universities ?? []),
           ];

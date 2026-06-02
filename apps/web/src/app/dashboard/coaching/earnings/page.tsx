@@ -31,12 +31,25 @@ import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
+interface ExtendedEarningsStats extends CoachEarningsStats {
+  totalSessions?: number;
+  monthlyEarnings?: number;
+  currency?: string;
+}
+
+interface ExtendedEarningsHistoryItem extends EarningsHistoryItem {
+  id?: string;
+  studentName?: string;
+  amount?: number;
+  currency?: string;
+}
+
 export default function EarningsPage() {
   const { t } = useTranslation();
-  const [earningsStats, setEarningsStats] = useState<CoachEarningsStats | null>(
+  const [earningsStats, setEarningsStats] = useState<ExtendedEarningsStats | null>(
     null
   );
-  const [earningsHistory, setEarningsHistory] = useState<EarningsHistoryItem[]>(
+  const [earningsHistory, setEarningsHistory] = useState<ExtendedEarningsHistoryItem[]>(
     []
   );
   const [isLoading, setIsLoading] = useState(true);
@@ -65,14 +78,17 @@ export default function EarningsPage() {
         setCommissionRate(profileResponse.platformCommission);
       }
       // API returns { history: [...] } (already unwrapped by service)
-      const historyData = Array.isArray((historyResponse as any)?.history)
-        ? (historyResponse as any).history
-        : Array.isArray(historyResponse)
-          ? historyResponse
-          : Array.isArray((historyResponse as any)?.data?.history)
-            ? (historyResponse as any).data.history
-            : Array.isArray((historyResponse as any)?.data)
-              ? (historyResponse as any).data
+      const raw = historyResponse as unknown as
+        | ExtendedEarningsHistoryItem[]
+        | { history?: ExtendedEarningsHistoryItem[]; data?: { history?: ExtendedEarningsHistoryItem[] } | ExtendedEarningsHistoryItem[] };
+      const historyData: ExtendedEarningsHistoryItem[] = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.history)
+          ? raw.history
+          : Array.isArray(raw?.data)
+            ? raw.data as ExtendedEarningsHistoryItem[]
+            : Array.isArray((raw?.data as { history?: ExtendedEarningsHistoryItem[] })?.history)
+              ? (raw.data as { history: ExtendedEarningsHistoryItem[] }).history
               : [];
       setEarningsHistory(historyData);
       setError(null);
@@ -102,11 +118,11 @@ export default function EarningsPage() {
       icon: TrendingUp,
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-500",
-      subtext: `${(earningsStats as any)?.totalSessions || 0} completed sessions`,
+      subtext: `${earningsStats?.totalSessions || 0} completed sessions`,
     },
     {
       label: "This Month",
-      value: `$${(earningsStats as any)?.monthlyEarnings?.toLocaleString() || "0"}`,
+      value: `$${earningsStats?.monthlyEarnings?.toLocaleString() || "0"}`,
       icon: Clock,
       iconBg: "bg-amber-500/10",
       iconColor: "text-amber-500",
@@ -114,11 +130,11 @@ export default function EarningsPage() {
     },
     {
       label: "Sessions Completed",
-      value: (earningsStats as any)?.totalSessions?.toLocaleString() || "0",
+      value: earningsStats?.totalSessions?.toLocaleString() || "0",
       icon: DollarSign,
       iconBg: "bg-blue-500/10",
       iconColor: "text-blue-500",
-      subtext: `Currency: ${(earningsStats as any)?.currency || "USD"}`,
+      subtext: `Currency: ${earningsStats?.currency || "USD"}`,
     },
   ];
 
@@ -237,8 +253,8 @@ export default function EarningsPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    paginatedHistory.map((item: any, index) => {
-                      const gross = item.amountGross ?? item.amount ?? 0;
+                    paginatedHistory.map((item, index) => {
+                      const gross = item.amountGross ?? 0;
                       const dateStr = item.date ? new Date(item.date).toLocaleDateString() : "—";
                       return (
                         <TableRow key={item.id || index} className="hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] transition-colors">

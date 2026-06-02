@@ -14,11 +14,12 @@ import { cn } from "@/lib/utils";
 
 interface Session {
   id: string;
-  startTime: string; // ISO
-  endTime?: string; // ISO, if missing assume 1h
-  studentName: string;
+  startTime: Date | string | null;
+  endTime?: Date | string | null;
+  studentName?: string;
   status: string;
   topic?: string;
+  [key: string]: unknown;
 }
 
 interface WeekViewProps {
@@ -54,20 +55,22 @@ export function WeekView({ currentDate, sessions, onSessionClick }: WeekViewProp
   const getSessionsForDay = (day: Date) => {
     return sessions.filter(s => {
       try {
-        return isSameDay(day, new Date(s.startTime));
+        if (!s.startTime) return false;
+        return isSameDay(day, new Date(s.startTime as string | Date));
       } catch { return false; }
     });
   };
 
   const getPositionStyles = (session: Session) => {
     try {
-      const start = new Date(session.startTime);
+      if (!session.startTime) return { top: 0, height: 64 };
+      const start = new Date(session.startTime as string | Date);
       const dayStart = startOfDay(start);
       const minutesFromStart = differenceInMinutes(start, dayStart);
 
       let duration = 60; // default 60 min
       if (session.endTime) {
-        duration = differenceInMinutes(new Date(session.endTime), start);
+        duration = differenceInMinutes(new Date(session.endTime as string | Date), start);
       }
 
       // 1 hour = 64px height
@@ -146,10 +149,10 @@ export function WeekView({ currentDate, sessions, onSessionClick }: WeekViewProp
                   style={getPositionStyles(session)}
                 >
                   <div className="font-semibold truncate">
-                    {session.studentName}
+                    {session.studentName || "Student"}
                   </div>
                   <div className="truncate opacity-80">
-                    {format(new Date(session.startTime), "HH:mm")} - {session.endTime ? format(new Date(session.endTime), "HH:mm") : '1h'}
+                    {session.startTime ? format(new Date(session.startTime as string | Date), "HH:mm") : "TBD"} - {session.endTime ? format(new Date(session.endTime as string | Date), "HH:mm") : '1h'}
                   </div>
                 </button>
               ))}

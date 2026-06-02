@@ -2,6 +2,10 @@
 
 import { apiRequest } from "@/lib/api/apiClient";
 
+interface ApiError extends Error {
+  status?: number;
+}
+
 export interface CompetencyDimension {
   id: string;
   name: string;
@@ -555,12 +559,13 @@ export async function getUserEvaluationGroups(
     const result = await apiRequest(`/evaluation/user/${userId}?lang=${langParam}`);
     const groups = result.data || [];
     // Map createdDate → createdAt for frontend consistency
-    return groups.map((g: any) => ({
+    return groups.map((g: EvaluationGroupWithId & { createdDate?: string; CreatedDate?: string }) => ({
       ...g,
       createdAt: g.createdAt || g.createdDate || g.CreatedDate || "",
     }));
   } catch (error) {
-    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return [];
+    const status = (error instanceof Error && "status" in error) ? (error as ApiError).status : undefined;
+    if (status === 401 || status === 403) return [];
     throw error;
   }
 }
@@ -573,7 +578,8 @@ export async function getCounselorEvaluations(): Promise<CounselorEvaluationGrou
     const result = await apiRequest(`/api/v1/counselor/evaluations`);
     return result.data || [];
   } catch (error) {
-    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return [];
+    const status = (error instanceof Error && "status" in error) ? (error as ApiError).status : undefined;
+    if (status === 401 || status === 403) return [];
     throw error;
   }
 }
@@ -641,7 +647,7 @@ export async function resendInvitationLink(groupId: string): Promise<void> {
 export async function sendBulkEmailInvitations(userId: string): Promise<{
   success: boolean;
   message: string;
-  results?: any[];
+  results?: Array<{ evaluationGroupId: string; success: boolean; message?: string }>;
 }> {
   return await apiRequest(`/evaluation/send-email-invitations/${userId}`, {
     method: "POST",
@@ -653,7 +659,7 @@ export async function sendSelectedEmailInvitations(
 ): Promise<{
   success: boolean;
   message: string;
-  results?: any[];
+  results?: Array<{ evaluationGroupId: string; success: boolean; message?: string }>;
 }> {
   return await apiRequest(`/evaluation/send-invitations-selected`, {
     method: "POST",
@@ -996,7 +1002,8 @@ export async function getUserEvaluationGroupsForSessions(
   try {
     return await apiRequest(`/evaluation/user/${userId}?lang=${langParam}`);
   } catch (error) {
-    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return [];
+    const status = (error instanceof Error && "status" in error) ? (error as ApiError).status : undefined;
+    if (status === 401 || status === 403) return [];
     throw error;
   }
 }
@@ -1027,7 +1034,8 @@ export async function getEvaluationSession(
     );
     return result.data || result;
   } catch (error) {
-    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return null as any;
+    const status = (error instanceof Error && "status" in error) ? (error as ApiError).status : undefined;
+    if (status === 401 || status === 403) return null as unknown as EvaluationSession;
     throw error;
   }
 }
@@ -1122,7 +1130,8 @@ export async function getEvaluationReport(
     );
     return result.data || result;
   } catch (error) {
-    if ((error as any)?.response?.status === 401 || (error as any)?.response?.status === 403) return null as any;
+    const status = (error instanceof Error && "status" in error) ? (error as ApiError).status : undefined;
+    if (status === 401 || status === 403) return null as unknown as EvaluationReport;
     throw error;
   }
 }

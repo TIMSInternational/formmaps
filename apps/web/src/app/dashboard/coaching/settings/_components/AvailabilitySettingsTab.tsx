@@ -44,10 +44,15 @@ const DEFAULT_SCHEDULE: DaySchedule[] = DAYS.map((day) => ({
 }));
 
 interface AvailabilitySettingsTabProps {
-  availability?: any | null;
+  availability?: Availability | null;
   isLoading?: boolean;
-  onUpdated?: (newData: any) => void;
+  onUpdated?: (newData: Partial<Availability>) => void;
 }
+
+type Availability = {
+  timezone: string;
+  weeklySchedule: DaySchedule[];
+};
 
 export function AvailabilitySettingsTab({
   availability: parentAvailability,

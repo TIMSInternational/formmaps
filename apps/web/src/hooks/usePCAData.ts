@@ -10,10 +10,28 @@ import { useGlobalStore } from "@/store/useGlobalStore";
 import { normalizeRole } from "@/lib/roleUtils";
 import { Roles } from "@/lib/permissions";
 
+export interface PCAResults {
+  data?: {
+    pcaD1?: number;
+    pcaI1?: number;
+    pcaS1?: number;
+    pcaC1?: number;
+    [key: string]: unknown;
+  };
+  overallScore?: number;
+  totalScore?: number;
+  score?: number;
+  [key: string]: unknown;
+}
+
+export interface PCACompetences {
+  [key: string]: unknown;
+}
+
 export interface PCAData {
   pcaCod: string;
-  results?: any;
-  competences?: any;
+  results?: PCAResults | null;
+  competences?: PCACompetences | null;
   lastUpdated?: string;
   isCompleted: boolean;
   status?: "not_started" | "in_progress" | "completed" | "not_found";
@@ -48,15 +66,17 @@ export function usePCAData() {
       }
 
       // If user has PCA evaluation, try to get results and competences
-      let results = null;
-      let competences = null;
+      let results: PCAResults | null = null;
+      let competences: PCACompetences | null = null;
 
       if (statusData.hasResults && user?.id) {
         try {
-          [results, competences] = await Promise.all([
+          const [rawResults, rawCompetences] = await Promise.all([
             getPCAResultByUserId(user.id, language).catch(() => null),
             getPCACompetencesByUserId(user.id, "1", language).catch(() => null),
           ]);
+          results = rawResults as PCAResults | null;
+          competences = rawCompetences as PCACompetences | null;
         } catch (err) {
           console.error("Failed to fetch PCA results/competences:", err);
         }
@@ -72,18 +92,19 @@ export function usePCAData() {
         // Calculate overall score from PCA dimensions if available
         overallScore: results?.data
           ? (() => {
-              const d = results.data.pcaD1 || 0;
-              const i = results.data.pcaI1 || 0;
-              const s = results.data.pcaS1 || 0;
-              const c = results.data.pcaC1 || 0;
+              const rd = results.data!;
+              const d = rd.pcaD1 || 0;
+              const i = rd.pcaI1 || 0;
+              const s = rd.pcaS1 || 0;
+              const c = rd.pcaC1 || 0;
               const scores = [d, i, s, c].filter((score) => score > 0);
               return scores.length > 0
                 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
                 : 0;
             })()
-          : results?.overallScore || results?.totalScore || results?.score || 0,
-        totalScore: results?.totalScore,
-        score: results?.score,
+          : (results?.overallScore || results?.totalScore || results?.score || 0) as number,
+        totalScore: results?.totalScore as number | undefined,
+        score: results?.score as number | undefined,
       };
 
       setPcaData(data);

@@ -15,7 +15,7 @@ export interface TestScore {
   apSubject: string | null;
   apScore: number | null;
   totalScore: number | null;
-  subScores: any;
+  subScores: Record<string, unknown> | null;
   isSuperScore: boolean;
   isOfficial: boolean;
   createdDate: string;

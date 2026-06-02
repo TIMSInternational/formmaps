@@ -4,17 +4,10 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Search, Users, MessageCircle, CalendarPlus, AlertCircle } from "lucide-react";
 import { getCoachStudents } from "@/services/coachService";
-
-interface CoachStudent {
-  id: string;
-  name: string;
-  email: string;
-  sessionCount: number;
-  lastSessionDate: string | null;
-}
+import type { StudentSummary } from "@/types/coach";
 
 export default function CoachStudentsPage() {
-  const [students, setStudents] = useState<CoachStudent[]>([]);
+  const [students, setStudents] = useState<StudentSummary[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -190,13 +183,13 @@ export default function CoachStudentsPage() {
                 <div>
                   <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", margin: 0 }}>Sessions</p>
                   <p style={{ fontSize: 16, fontWeight: 600, color: "#065292", margin: 0 }}>
-                    {student.sessionCount ?? 0}
+                    {student.totalSessions ?? 0}
                   </p>
                 </div>
                 <div>
                   <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", margin: 0 }}>Last Session</p>
                   <p style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-secondary)", margin: 0 }}>
-                    {formatDate(student.lastSessionDate)}
+                    {formatDate(student.lastBookedAt ?? null)}
                   </p>
                 </div>
               </div>

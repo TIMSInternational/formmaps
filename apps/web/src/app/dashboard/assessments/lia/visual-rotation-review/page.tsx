@@ -51,7 +51,7 @@ export default function VisualRotationReviewPage() {
       }
     }
 
-    const getTransform = (item: any) => {
+    const getTransform = (item: { rotationDegree: number; isMirrored: boolean }) => {
       let transform = "";
 
       if (item.rotationDegree !== 0) {

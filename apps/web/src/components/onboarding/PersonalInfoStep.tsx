@@ -65,8 +65,8 @@ export function PersonalInfoStep({ data, onNext }: PersonalInfoStepProps) {
         reader.readAsDataURL(file);
 
         const { uploadProfileImage } = await import("@/services/coachService");
-        const { url } = await uploadProfileImage(file);
-        setImagePreview(url);
+        const coach = await uploadProfileImage(file);
+        if (coach.image) setImagePreview(coach.image);
       } catch (error) {
       // error handled silently
     }

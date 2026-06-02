@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/api/apiClient";
 import { toast } from "sonner";
-import { getUserEvaluationGroups } from "@/services/evaluationService";
+import { getUserEvaluationGroups, type EvaluationGroupWithId } from "@/services/evaluationService";
 
 // --- API helpers ---
 async function extendEvaluationToken(groupId: string, days: number = 7) {
@@ -143,7 +143,7 @@ function Student360Dialog({ student, open, onOpenChange }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [groups, setGroups] = useState<any[]>([]);
+  const [groups, setGroups] = useState<EvaluationGroupWithId[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -203,8 +203,9 @@ function Student360Dialog({ student, open, onOpenChange }: {
       setNewEval({ name: "", email: "", relation: "Parent", groupType: "parent" });
       setShowAddForm(false);
       await refreshGroups();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to add evaluator");
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      toast.error(e?.response?.data?.message || "Failed to add evaluator");
     } finally {
       setAddLoading(false);
     }
@@ -229,9 +230,9 @@ function Student360Dialog({ student, open, onOpenChange }: {
     { value: "SiblingFriend", group: "sibling_friend", label: "Sibling / Friend" },
   ];
 
-  const completed = groups.filter((g: any) => g.isEvaluationCompleted).length;
+  const completed = groups.filter((g) => g.isEvaluationCompleted).length;
   const pct = groups.length > 0 ? Math.round((completed / groups.length) * 100) : 0;
-  const unsent = groups.filter((g: any) => !g.isEmailSent && !g.isEvaluationCompleted).length;
+  const unsent = groups.filter((g) => !g.isEmailSent && !g.isEvaluationCompleted).length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -336,7 +337,7 @@ function Student360Dialog({ student, open, onOpenChange }: {
               <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Evaluators ({groups.length})
               </div>
-              {groups.map((g: any) => {
+              {groups.map((g) => {
                 const isComplete = g.isEvaluationCompleted;
                 const isExpired = g.tokenExpiryDate && new Date(g.tokenExpiryDate) < new Date() && !isComplete;
                 return (

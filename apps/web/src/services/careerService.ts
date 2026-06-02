@@ -18,7 +18,7 @@ export async function listCareers(query?: {
   // which calls POST /api/v1/careers/score and returns the full ranked list.
   // This function is kept for backward compatibility but callers should prefer the hook.
   try {
-    const res = await apiRequest<any>("api/v1/careers/catalog", { method: "GET" });
+    const res = await apiRequest<{ data?: { careers?: CareerRole[] } }>("api/v1/careers/catalog", { method: "GET" });
     return { careers: (res.data?.careers || []) as CareerRole[], meta: { total: 0, page: 1, pageSize: 20 } };
   } catch {
     return { careers: [] as CareerRole[], meta: { total: 0, page: 1, pageSize: 20 } };
@@ -27,7 +27,7 @@ export async function listCareers(query?: {
 
 export async function getCareerById(id: string): Promise<CareerRole | null> {
   try {
-    const res = await apiRequest<any>(`api/v1/careers/${id}`, { method: "GET" });
+    const res = await apiRequest<{ data?: { career?: CareerRole } & CareerRole }>(`api/v1/careers/${id}`, { method: "GET" });
     return (res.data?.career || res.data || null) as CareerRole | null;
   } catch {
     return null;
@@ -36,7 +36,7 @@ export async function getCareerById(id: string): Promise<CareerRole | null> {
 
 export async function getCareerFamilies() {
   try {
-    const res = await apiRequest<any>("api/v1/careers/clusters", { method: "GET" });
+    const res = await apiRequest<{ data?: { clusters?: unknown[] } & unknown[] }>("api/v1/careers/clusters", { method: "GET" });
     return res.data?.clusters || res.data || [];
   } catch {
     return [];
@@ -75,10 +75,10 @@ export async function adminDeleteCareer(id: string) {
 
 export async function recommendCareers(payload: {
   userId: string;
-  context?: any;
+  context?: Record<string, unknown>;
 }) {
   try {
-    const res = await apiRequest<{ data: any }>("/api/v1/careers/score", {
+    const res = await apiRequest<{ data: Record<string, unknown> }>("/api/v1/careers/score", {
       method: "POST",
       data: payload,
     });
@@ -92,7 +92,7 @@ export async function recommendCareers(payload: {
 
 export async function getFavoritesForUser(userId: string) {
   try {
-    const res = await apiRequest<any>(`/api/v1/careers/favorites`, { method: "GET" });
+    const res = await apiRequest<{ data?: { favorites?: string[] } }>(`/api/v1/careers/favorites`, { method: "GET" });
     return { favorites: (res.data?.favorites || []) as string[] };
   } catch {
     return { favorites: [] as string[] };
@@ -101,7 +101,7 @@ export async function getFavoritesForUser(userId: string) {
 
 export async function addFavorite(userId: string, careerId: string) {
   try {
-    const res = await apiRequest<any>(`/api/v1/careers/favorites/${careerId}`, { method: "POST" });
+    const res = await apiRequest<{ data?: { favorites?: string[] } }>(`/api/v1/careers/favorites/${careerId}`, { method: "POST" });
     return { success: true, favorites: (res.data?.favorites || []) as string[] };
   } catch {
     return { success: false, favorites: [] as string[] };
@@ -110,7 +110,7 @@ export async function addFavorite(userId: string, careerId: string) {
 
 export async function removeFavorite(userId: string, careerId: string) {
   try {
-    const res = await apiRequest<any>(`/api/v1/careers/favorites/${careerId}`, { method: "DELETE" });
+    const res = await apiRequest<{ data?: { favorites?: string[] } }>(`/api/v1/careers/favorites/${careerId}`, { method: "DELETE" });
     return { success: true, favorites: (res.data?.favorites || []) as string[] };
   } catch {
     return { success: false, favorites: [] as string[] };

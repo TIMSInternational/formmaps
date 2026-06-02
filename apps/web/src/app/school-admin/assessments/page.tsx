@@ -702,7 +702,7 @@ export default function AssessmentCommandCenter() {
 
   const remindersMut = useMutation({
     mutationFn: ({ ids, types }: { ids: string[]; types: string[] }) => sendReminders(ids, types),
-    onSuccess: (data: any) => {
+    onSuccess: (data: { sent: number; failed: number }) => {
       toast.success(`Reminders sent to ${data.sent} student${data.sent !== 1 ? "s" : ""}`);
       if (data.failed > 0) toast.warning(`${data.failed} email(s) failed`);
     },
@@ -711,7 +711,7 @@ export default function AssessmentCommandCenter() {
 
   const setup360Mut = useMutation({
     mutationFn: (ids: string[]) => setup360(ids),
-    onSuccess: (data: any) => {
+    onSuccess: (data: { created: number; emailsSent: number; skipped: number }) => {
       toast.success(`360° setup complete: ${data.created} groups created, ${data.emailsSent} invites sent`);
       if (data.skipped > 0) toast.info(`${data.skipped} already existed`);
       pipelineQuery.refetch();

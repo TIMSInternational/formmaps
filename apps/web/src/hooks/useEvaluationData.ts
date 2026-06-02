@@ -106,7 +106,7 @@ export function useEvaluationData() {
               email: group.evaluatorEmail,
               phone: "",
               relationship: group.relation,
-              groupType: (group.groupType?.toLowerCase() || "parent") as any,
+              groupType: (group.groupType?.toLowerCase() || "parent") as "self" | "parent" | "teacher" | "sibling_friend",
               invitationToken: group.invitationToken,
               invitationSent: group.isTokenUsed,
               responseReceived: group.isEvaluationCompleted,

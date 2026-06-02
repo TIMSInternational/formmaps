@@ -1,6 +1,17 @@
 import { apiRequest } from "@/lib/api/apiClient";
 import { Payout, PayoutStatus } from "@/types/coach";
 
+interface ApiPayload extends Record<string, unknown> {
+  data?: unknown;
+  items?: AdminPayout[];
+  payouts?: AdminPayout[];
+  total?: number;
+  totalCount?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+}
+
 export interface AdminPayout extends Payout {
   payoutId?: string; // Some endpoints return payoutId instead of id
   coachId: string;
@@ -61,10 +72,11 @@ export async function getAdminPayouts(
     { method: "GET" }
   );
 
-  const payload: any = (response as any).data ?? response;
+  const raw = response as ApiPayload;
+  const payload: ApiPayload = (raw.data as ApiPayload) ?? raw;
   const items: AdminPayout[] = Array.isArray(payload)
     ? payload
-    : payload.items || payload.data || payload.payouts || [];
+    : (payload.items || payload.data || payload.payouts || []) as AdminPayout[];
 
   return {
     items,
@@ -78,21 +90,21 @@ export async function getAdminPayouts(
 export async function approveAdminPayout(
   payoutId: string
 ): Promise<AdminPayout> {
-  const response = await apiRequest(`/api/v1/admin/payouts/${payoutId}/approve`, {
+  const response = await apiRequest<ApiPayload>(`/api/v1/admin/payouts/${payoutId}/approve`, {
     method: "POST",
   });
-  return (response as any).data ?? (response as any);
+  return (response.data ?? response) as AdminPayout;
 }
 
 export async function rejectAdminPayout(
   payoutId: string,
   reason: string
 ): Promise<AdminPayout> {
-  const response = await apiRequest(`/api/v1/admin/payouts/${payoutId}/reject`, {
+  const response = await apiRequest<ApiPayload>(`/api/v1/admin/payouts/${payoutId}/reject`, {
     method: "POST",
     data: { reason },
   });
-  return (response as any).data ?? (response as any);
+  return (response.data ?? response) as AdminPayout;
 }
 
 export async function getAdminPayoutHistory(
@@ -112,10 +124,11 @@ export async function getAdminPayoutHistory(
     { method: "GET" }
   );
 
-  const payload: any = (response as any).data ?? response;
+  const raw = response as ApiPayload;
+  const payload: ApiPayload = (raw.data as ApiPayload) ?? raw;
   const items: AdminPayout[] = Array.isArray(payload)
     ? payload
-    : payload.items || payload.data || payload.payouts || [];
+    : (payload.items || payload.data || payload.payouts || []) as AdminPayout[];
 
   return {
     items,
@@ -134,11 +147,11 @@ export async function getCommissionStats(
     endDate: params.endDate,
   });
 
-  const response = await apiRequest(
+  const response = await apiRequest<ApiPayload>(
     `/api/v1/admin/commission-stats${query ? `?${query}` : ""}`,
     { method: "GET" }
   );
 
-  const payload: any = (response as any).data ?? response;
-  return payload as CommissionStatsResponse;
+  const payload = (response.data ?? response) as CommissionStatsResponse;
+  return payload;
 }

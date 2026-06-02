@@ -70,11 +70,13 @@ export default function BookCounselorPage() {
     async function fetchCounselors() {
       try {
         const raw = await getSchoolCounselors();
-        const data: { id: string; name: string; email: string; avatar?: string }[] = Array.isArray(raw) ? raw : (raw as any)?.data || [];
+        const rawObj = raw as { data?: { id: string; name: string; email: string; avatar?: string }[] } | undefined;
+        const data: { id: string; name: string; email: string; avatar?: string }[] = Array.isArray(raw) ? raw : rawObj?.data || [];
         setCounselors(data);
         if (data.length > 0) {
           // If the user happens to have an assigned counselor, prefer them. Otherwise pick the first.
-          const assignedId = (user as any)?.counselorId || (user as any)?.assignedCounselorId;
+          const userRecord = user as Record<string, unknown> | null;
+          const assignedId = (userRecord?.counselorId as string | undefined) || (userRecord?.assignedCounselorId as string | undefined);
           const assignedOpt = data.find(c => c.id === assignedId);
           if (assignedOpt) {
              setSelectedCounselorId(assignedOpt.id);
@@ -110,7 +112,7 @@ export default function BookCounselorPage() {
       const result = await getCounselorSlots(selectedCounselorId, dateStr);
       const rawSlots = result.slots || [];
       // API may return string[] (ISO timestamps) or TimeSlot[] — normalize
-      const normalized = rawSlots.map((s: any) => {
+      const normalized = rawSlots.map((s: string | TimeSlot) => {
         if (typeof s === "string") {
           const start = new Date(s);
           const end = new Date(start.getTime() + 30 * 60 * 1000);
@@ -141,8 +143,9 @@ export default function BookCounselorPage() {
       });
       setBooked(true);
       toast.success("Session booked successfully!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to book session");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to book session";
+      toast.error(message);
     } finally {
       setIsBooking(false);
     }

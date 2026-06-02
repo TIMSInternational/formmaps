@@ -9,7 +9,7 @@ import type {
 import { apiRequest } from "@/lib/api/apiClient";
 import { unwrapList } from "@/lib/unwrapList";
 
-const unwrap = (res: any) => {
+const unwrap = (res: Record<string, unknown>) => {
   return res?.data ?? res;
 };
 

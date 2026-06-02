@@ -60,11 +60,32 @@ import { Calendar } from "@/components/ui/calendar";
 import { StudentDetailsSheet } from "./_components/StudentDetailsSheet";
 import { SessionCardSkeleton } from "@/components/skeletons/SessionCardSkeleton";
 
+interface FormattedSession {
+  id: string;
+  date: string;
+  time: string;
+  duration: string;
+  studentName: string;
+  studentAvatar?: string;
+  studentId?: string;
+  topic: string;
+  status: string;
+  startTimestamp?: number;
+  bucket: string;
+  notes: string;
+  startTime?: string;
+  endTime?: string;
+  slot?: { start: string; end: string };
+  meetingLink?: string;
+  studentImage?: string;
+  [key: string]: unknown;
+}
+
 export default function SessionsPage() {
   const { t } = useTranslation();
   const { user } = useGlobalStore();
   const router = useRouter();
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<FormattedSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
@@ -73,7 +94,7 @@ export default function SessionsPage() {
 
   // State for Notes Dialog
   const [isNotesOpen, setIsNotesOpen] = useState(false);
-  const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [selectedSession, setSelectedSession] = useState<FormattedSession | null>(null);
   const [isConfirmCancelOpen, setIsConfirmCancelOpen] = useState(false);
 
   // State for Student Profile Sheet
@@ -103,10 +124,10 @@ export default function SessionsPage() {
 
         const rawSessions = unwrapList(sessionsData, "sessions");
 
-        const resolveStartTs = (s: any): number | undefined => {
+        const resolveStartTs = (s: Record<string, unknown>): number | undefined => {
           const candidates = [
             s.startTime,
-            s.slot?.start,
+            (s.slot as { start?: string } | undefined)?.start,
             s.start,
             s.start_date,
             s.startDate,
@@ -125,14 +146,34 @@ export default function SessionsPage() {
           return undefined;
         };
 
-        const formattedSessions = rawSessions
-          .map((session: any) => {
+        interface RawSession {
+          id?: string;
+          startTime?: string;
+          endTime?: string;
+          slot?: { start?: string; end?: string };
+          status?: string;
+          studentName?: string;
+          userName?: string;
+          studentAvatar?: string;
+          userAvatar?: string;
+          studentId?: string;
+          userId?: string;
+          topic?: string;
+          notes?: string;
+          meetingLink?: string;
+          student?: { name?: string; fullName?: string; image?: string; avatar?: string; id?: string; _id?: string };
+          user?: { name?: string; fullName?: string; image?: string; avatar?: string; id?: string; _id?: string };
+          [key: string]: unknown;
+        }
+
+        const formattedSessions = (rawSessions as RawSession[])
+          .map((session) => {
             // Safety check for session object
             if (!session) return null;
 
             const startTime = session.startTime || session.slot?.start;
             const endTime = session.endTime || session.slot?.end;
-            const startTimestamp = resolveStartTs(session);
+            const startTimestamp = resolveStartTs(session as unknown as Record<string, unknown>);
 
             let date = "TBD";
             let time = "TBD";
@@ -210,9 +251,9 @@ export default function SessionsPage() {
               startTimestamp,
               bucket,
               notes: session.notes || "No notes available for this session.",
-            };
+            } as FormattedSession;
           })
-          .filter(Boolean); // Remove nulls
+          .filter((s): s is FormattedSession => s !== null);
 
         setSessions(formattedSessions);
       } catch (error) {
@@ -229,7 +270,7 @@ export default function SessionsPage() {
 
   // --- Reschedule Logic (from Dashboard) ---
 
-  const handleRescheduleClick = (session: any) => {
+  const handleRescheduleClick = (session: FormattedSession) => {
     setSelectedSession(session);
     setRescheduleDate(new Date());
     setSelectedTime(null);
@@ -336,20 +377,11 @@ export default function SessionsPage() {
   // Filter logic
   const nowTs = Date.now();
 
-  const resolveStartTs = (s: any): number | undefined => {
+  const resolveStartTs = (s: FormattedSession): number | undefined => {
     if (typeof s.startTimestamp === "number") return s.startTimestamp;
     const candidates = [
       s.startTime,
       s.slot?.start,
-      s.start,
-      s.start_date,
-      s.startDate,
-      s.sessionStart,
-      s.sessionDate,
-      s.session_date,
-      s.date,
-      s.datetime,
-      s.start_time,
     ].filter(Boolean);
 
     for (const value of candidates) {
@@ -413,14 +445,14 @@ export default function SessionsPage() {
     );
   });
 
-  const groupedSessions: Record<string, any[]> = sortedSessions.reduce(
+  const groupedSessions: Record<string, FormattedSession[]> = sortedSessions.reduce(
     (acc, s) => {
       const key = s?.date || "TBD";
       if (!acc[key]) acc[key] = [];
       acc[key].push(s);
       return acc;
     },
-    {} as Record<string, any[]>
+    {} as Record<string, FormattedSession[]>
   );
 
   const counts = {
@@ -464,7 +496,7 @@ export default function SessionsPage() {
     }
   };
 
-  const handleViewNotes = (session: any) => {
+  const handleViewNotes = (session: FormattedSession) => {
     setSelectedSession(session);
     setIsNotesOpen(true);
   };
@@ -538,7 +570,7 @@ export default function SessionsPage() {
                   value={tab}
                   className="rounded-lg px-4 py-2 text-sm font-medium transition-all capitalize flex-1 xl:flex-none"
                 >
-                  {tab} ({(counts as any)[tab]})
+                  {tab} ({counts[tab as keyof typeof counts]})
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -626,7 +658,7 @@ export default function SessionsPage() {
           ) : (
             <div className="space-y-8">
               {Object.entries(groupedSessions).map(
-                ([dateKey, daySessions]: [string, any[]]) => (
+                ([dateKey, daySessions]: [string, FormattedSession[]]) => (
                   <div key={dateKey} className="space-y-4">
                     <div className="flex items-center gap-4">
                       <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -648,7 +680,7 @@ export default function SessionsPage() {
                             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
                               <div
                                 className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-                                onClick={() => handleViewProfile(session.studentId)}
+                                onClick={() => handleViewProfile(session.studentId || "")}
                               >
                                 <Avatar className="h-10 w-10 border border-[var(--border)]">
                                   <AvatarImage src={session.studentAvatar} />
@@ -694,7 +726,7 @@ export default function SessionsPage() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem onClick={() => handleViewProfile(session.studentId)} className="cursor-pointer">
+                                    <DropdownMenuItem onClick={() => handleViewProfile(session.studentId || "")} className="cursor-pointer">
                                       <User className="mr-2 h-4 w-4 text-muted-foreground" /> Profile
                                     </DropdownMenuItem>
                                     {(session.status === "confirmed" || session.status === "rescheduled") && (

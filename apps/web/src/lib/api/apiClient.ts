@@ -106,9 +106,9 @@ apiClient.interceptors.response.use(
       // 5xx and network errors: callers decide whether to toast
       // (React Query has its own retry, so toasting here causes false alarms)
 
-      const enhancedError = new Error(message);
-      (enhancedError as any).status = status;
-      (enhancedError as any).data = data;
+      const enhancedError = new Error(message) as Error & { status: number; data: unknown };
+      enhancedError.status = status;
+      enhancedError.data = data;
       return Promise.reject(enhancedError);
     } else if (error.request) {
       return Promise.reject(new Error('Network error. Please check your connection and try again.'));
@@ -126,6 +126,7 @@ apiClient.interceptors.request.use(
 );
 
 // Generic API request function with retry logic
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function apiRequest<T = any>(
   path: string,
   config?: AxiosRequestConfig & { retries?: number; showErrorToast?: boolean }
@@ -146,7 +147,7 @@ export async function apiRequest<T = any>(
       lastError = error as Error;
 
       // Don't retry on client errors (4xx) except 429 (rate limited)
-      const status = (error as any)?.status;
+      const status = (error as Error & { status?: number })?.status;
       if (status && status >= 400 && status < 500 && status !== 429) {
         throw error;
       }

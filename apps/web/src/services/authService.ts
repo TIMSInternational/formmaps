@@ -181,7 +181,7 @@ export async function getCurrentUser(): Promise<UserProfile> {
   };
 }
 
-export function decodeJWTToken(token: string): any {
+export function decodeJWTToken(token: string): { exp?: number; iat?: number; [key: string]: unknown } | null {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;

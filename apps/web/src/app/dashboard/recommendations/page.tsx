@@ -334,9 +334,10 @@ export default function RecommendationsPage() {
       toast.success("Recommendation request sent");
       resetForm();
       load();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errObj = err as { response?: { data?: { message?: string } } };
       const msg =
-        err?.response?.data?.message ?? "Failed to send request";
+        errObj?.response?.data?.message ?? "Failed to send request";
       toast.error(msg);
     } finally {
       setSubmitting(false);

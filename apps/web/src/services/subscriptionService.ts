@@ -198,7 +198,19 @@ const defaultSubscriptionData: SubscriptionData = {
 /**
  * Enhance plan data with UI-specific fields based on plan characteristics
  */
-function enhancePlanWithUIFields(plan: any) {
+interface RawPlan {
+  id?: string;
+  _id?: string;
+  name?: string;
+  description?: string;
+  price?: number;
+  interval?: string;
+  features?: string[];
+  stripeProductId?: string;
+  stripePriceId?: string;
+}
+
+function enhancePlanWithUIFields(plan: RawPlan) {
   const interval = plan.interval || "month";
   const price = plan.price || 0;
 
@@ -300,16 +312,16 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionData> {
 
         const transformedData: SubscriptionData = {
           subscription: defaultSubscriptionData.subscription,
-          billingOptions: plans.map((plan: any) => {
+          billingOptions: plans.map((plan: RawPlan) => {
 
             // Enhance plan data with UI-specific fields based on interval
             const enhancedPlan = enhancePlanWithUIFields(plan);
 
             return {
-              id: plan.id || plan._id,
-              name: plan.name,
+              id: plan.id || plan._id || "",
+              name: plan.name || "",
               description: plan.description || enhancedPlan.description,
-              price: plan.price,
+              price: plan.price || 0,
               originalPrice: enhancedPlan.originalPrice,
               period: plan.interval || "month",
               popular: enhancedPlan.popular,
@@ -353,8 +365,8 @@ export async function createSubscriptionPlan(payload: {
   interval: string;
   features: string[];
   description?: string;
-}): Promise<any> {
-  return apiRequest("/api/subscriptionplan", {
+}): Promise<Record<string, unknown>> {
+  return apiRequest<Record<string, unknown>>("/api/subscriptionplan", {
     method: "POST",
     data: payload,
   });
@@ -373,8 +385,8 @@ export async function updateSubscriptionPlan(
     description?: string;
     isActive?: boolean;
   }
-): Promise<any> {
-  return apiRequest(`/api/subscriptionplan/${planId}`, {
+): Promise<Record<string, unknown>> {
+  return apiRequest<Record<string, unknown>>(`/api/subscriptionplan/${planId}`, {
     method: "PUT",
     data: payload,
   });
@@ -383,8 +395,8 @@ export async function updateSubscriptionPlan(
 /**
  * Delete (deactivate) a subscription plan (admin only)
  */
-export async function deleteSubscriptionPlan(planId: string): Promise<any> {
-  return apiRequest(`/api/subscriptionplan/${planId}`, {
+export async function deleteSubscriptionPlan(planId: string): Promise<Record<string, unknown>> {
+  return apiRequest<Record<string, unknown>>(`/api/subscriptionplan/${planId}`, {
     method: "DELETE",
   });
 }
@@ -392,8 +404,8 @@ export async function deleteSubscriptionPlan(planId: string): Promise<any> {
 /**
  * Get a specific subscription plan by ID
  */
-export async function getSubscriptionPlanById(planId: string): Promise<any> {
-  return apiRequest(`/api/subscriptionplan/${planId}`, {
+export async function getSubscriptionPlanById(planId: string): Promise<Record<string, unknown>> {
+  return apiRequest<Record<string, unknown>>(`/api/subscriptionplan/${planId}`, {
     method: "GET",
   });
 }
@@ -422,7 +434,7 @@ export async function getUserSubscription(
     });
   } catch (error) {
     // Return null if no subscription found
-    if ((error as any)?.status === 404) {
+    if ((error as { status?: number })?.status === 404) {
       return null;
     }
     throw error;

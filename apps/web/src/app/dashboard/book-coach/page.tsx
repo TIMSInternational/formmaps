@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Star, Filter } from "lucide-react";
 import Link from "next/link";
-import { CoachesResponse } from "@/types/coach";
+import { Coach, CoachesResponse } from "@/types/coach";
 import { useTranslation } from "react-i18next";
 import { CoachCardSkeleton } from "@/components/skeletons/CoachCardSkeleton";
 import { motion } from "motion/react";
@@ -34,7 +34,7 @@ const itemVariants = {
 
 export default function BookCoachPage() {
   const { t } = useTranslation();
-  const [coaches, setCoaches] = useState<any[]>([]);
+  const [coaches, setCoaches] = useState<Coach[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -45,7 +45,7 @@ export default function BookCoachPage() {
       try {
         setFetchError(null);
         const { getCoaches } = await import("@/services/coachService");
-        const response: any = await getCoaches({ search });
+        const response: CoachesResponse = await getCoaches({ search });
 
         setCoaches(unwrapList(response, "coaches"));
       } catch (error) {
@@ -127,7 +127,7 @@ export default function BookCoachPage() {
                   <div className="p-5 flex-1 flex flex-col">
                     <div className="flex items-start gap-4 mb-4">
                       <Avatar className="h-14 w-14 border-2 border-border">
-                        <AvatarImage src={coach.image || coach.imageUrl} />
+                        <AvatarImage src={coach.image} />
                         <AvatarFallback className="bg-secondary text-foreground font-bold">
                           {coach.name?.charAt(0)}
                         </AvatarFallback>
@@ -142,7 +142,7 @@ export default function BookCoachPage() {
                           </div>
                           <div className="flex items-center gap-1 text-xs font-medium text-amber-600">
                             <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-                            {coach.rating || coach.avgRating || t("coaching.find.new")}
+                            {coach.rating || t("coaching.find.new")}
                           </div>
                         </div>
                       </div>

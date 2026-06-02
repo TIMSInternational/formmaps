@@ -36,7 +36,18 @@ const ExportReportButton = dynamic(
 
 // --- Styled Components Aligned with Transactions Page ---
 
-const StatCard = ({ label, value, icon: Icon, color, bg, border, blobColor, sublabel }: any) => (
+interface StatCardProps {
+  label: string;
+  value: string | number;
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+  border: string;
+  blobColor: string;
+  sublabel?: string;
+}
+
+const StatCard = ({ label, value, icon: Icon, color, bg, border, blobColor, sublabel }: StatCardProps) => (
   <div className={`group relative overflow-hidden rounded-2xl border ${border} bg-card p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
     <div
       className={`absolute right-0 top-0 h-24 w-24 translate-x-8 translate-y--8 rounded-full ${blobColor} opacity-5 blur-2xl transition-transform duration-500 group-hover:scale-150`}
@@ -57,7 +68,15 @@ const StatCard = ({ label, value, icon: Icon, color, bg, border, blobColor, subl
   </div>
 );
 
-const SubtestCard = ({ test, index }: { test: any; index: number }) => {
+interface SubtestResult {
+  name: string;
+  score: number;
+  accuracy: number;
+  time: string;
+  fullMark: number;
+}
+
+const SubtestCard = ({ test, index }: { test: SubtestResult; index: number }) => {
   // Determine colors based on score
   const isHigh = test.score >= 80;
   const isMed = test.score >= 60;

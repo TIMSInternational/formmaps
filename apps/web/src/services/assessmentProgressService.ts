@@ -16,12 +16,34 @@ import {
 } from "./evaluationService";
 import { checkPCAStatus } from "./pcaService";
 
+interface MILEnhancedData {
+  completedExams: number;
+  totalExams: number;
+  completionPercentage: number;
+  examStatus: Array<{
+    examId: string;
+    examName: string;
+    status: "completed" | "in_progress" | "not_started";
+    scorePercentage: number | null;
+    percentile: number | null;
+    correctAnswers: number | null;
+    incorrectAnswers: number | null;
+    skippedAnswers: number | null;
+    totalQuestions: number;
+    timeSpent: string | null;
+    timeLimitMinutes: number;
+    isTimeExpired: boolean | null;
+    completedAt: string | null;
+    answeredQuestions: number | null;
+  }>;
+}
+
 export interface AssessmentOverallProgress {
   milAssessment: {
     status: "not_started" | "in_progress" | "completed";
     progress: UserProgressSummary;
     lastActivity?: string;
-    enhancedData?: any; // Enhanced API data
+    enhancedData?: MILEnhancedData | null;
   };
   evaluationAssessment: {
     status: "not_started" | "in_progress" | "completed";
@@ -31,7 +53,7 @@ export interface AssessmentOverallProgress {
   };
   pcaAssessment: {
     status: "not_started" | "in_progress" | "completed";
-    progress?: any; // Will be filled when PCA API is available
+    progress?: number;
     lastActivity?: string;
   };
   overallCompletion: {
@@ -53,7 +75,7 @@ export async function getUserAssessmentProgress(
     let milProgress: UserProgressSummary;
     let milStatus: "not_started" | "in_progress" | "completed" = "not_started";
     let milLastActivity: string | undefined;
-    let enhancedMilData: any = null;
+    let enhancedMilData: MILEnhancedData | null = null;
 
     try {
       const milResults = await getMILResults(userId);
@@ -135,8 +157,8 @@ export async function getUserAssessmentProgress(
         // - Self-evaluation must be completed
         // - At least one from each group type (Parent, Teacher, SiblingFriend) must be completed
         // Self-evaluation has groupType "Parent" but relation "Self"
-        const gt = (g: any) => (g.groupType || "").toLowerCase();
-        const rel = (g: any) => (g.relation || "").toLowerCase();
+        const gt = (g: EvaluationGroupProgress) => (g.groupType || "").toLowerCase();
+        const rel = (g: EvaluationGroupProgress) => (g.relation || "").toLowerCase();
         const selfCompleted = evaluationGroups.some(
           (g) => (gt(g) === "self" || rel(g) === "self") && g.isEvaluationCompleted
         );

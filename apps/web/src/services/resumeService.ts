@@ -1,5 +1,71 @@
 import { apiRequest } from "@/lib/api/apiClient";
 
+/** Raw backend shapes — field names vary (camelCase, PascalCase, snake_case) */
+interface RawResumeEntity {
+  ID?: string;
+  _id?: string;
+  id?: string;
+  name?: string;
+  Name?: string;
+  template?: string;
+  Template?: string;
+  personalInfo?: Record<string, string | undefined>;
+  PersonalInfo?: Record<string, string | undefined>;
+  summary?: string;
+  experience?: RawExperience[];
+  Experience?: RawExperience[];
+  education?: RawEducation[];
+  Education?: RawEducation[];
+  skills?: RawSkillItem[];
+  Skills?: RawSkillItem[];
+  sections?: Record<string, unknown>[];
+  createdDate?: string;
+  CreatedDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  UpdatedAt?: string;
+}
+
+interface RawExperience {
+  company?: string;
+  Company?: string;
+  location?: string;
+  Location?: string;
+  position?: string;
+  Position?: string;
+  title?: string;
+  Title?: string;
+  startDate?: string;
+  StartDate?: string;
+  endDate?: string;
+  EndDate?: string;
+  bullets?: string[];
+  description?: string | string[];
+  descriptions?: string[];
+}
+
+interface RawEducation {
+  degree?: string;
+  Degree?: string;
+  school?: string;
+  School?: string;
+  institution?: string;
+  Institution?: string;
+  location?: string;
+  Location?: string;
+  startDate?: string;
+  StartDate?: string;
+  endDate?: string;
+  EndDate?: string;
+  year?: string;
+  gpa?: string;
+}
+
+interface RawSkillItem {
+  name?: string;
+  Name?: string;
+}
+
 export interface ResumePersonal {
   fullName: string;
   email: string;
@@ -83,7 +149,7 @@ export async function getAllResumes(): Promise<Resume[]> {
   const response = await apiRequest("/api/resume", { method: "GET" });
   const raw = response.data?.data || response.data || [];
   // Map backend ID field to frontend _id
-  return raw.map((r: any) => ({
+  return raw.map((r: RawResumeEntity) => ({
     ...r,
     _id: r.ID || r._id || r.id || "",
     name: r.name || r.Name || "",
@@ -97,7 +163,7 @@ export async function getAllResumes(): Promise<Resume[]> {
       website: r.personalInfo?.website || r.PersonalInfo?.Website || "",
     },
     summary: r.personalInfo?.summary || r.PersonalInfo?.Summary || r.summary || "",
-    experience: (r.experience || r.Experience || []).map((exp: any) => ({
+    experience: (r.experience || r.Experience || []).map((exp: RawExperience) => ({
       company: exp.company || exp.Company || "",
       location: exp.location || exp.Location || "",
       title: exp.position || exp.Position || exp.title || exp.Title || "",
@@ -109,7 +175,7 @@ export async function getAllResumes(): Promise<Resume[]> {
         ? (typeof exp.description === "string" ? exp.description.split("\n").filter(Boolean) : exp.description)
         : exp.descriptions || [],
     })),
-    education: (r.education || r.Education || []).map((edu: any) => ({
+    education: (r.education || r.Education || []).map((edu: RawEducation) => ({
       degree: edu.degree || edu.Degree || "",
       institution: edu.school || edu.School || edu.institution || "",
       location: edu.location || edu.Location || "",
@@ -149,7 +215,7 @@ export async function getResumeById(resumeId: string): Promise<Resume> {
       github: raw.personalInfo?.github || "",
     },
     summary: raw.personalInfo?.summary || raw.PersonalInfo?.Summary || raw.summary || "",
-    experience: (raw.experience || raw.Experience || []).map((exp: any) => ({
+    experience: (raw.experience || raw.Experience || []).map((exp: RawExperience) => ({
       company: exp.company || exp.Company || "",
       location: exp.location || exp.Location || "",
       title: exp.position || exp.Position || exp.title || exp.Title || "",
@@ -161,7 +227,7 @@ export async function getResumeById(resumeId: string): Promise<Resume> {
         ? (typeof exp.description === "string" ? exp.description.split("\n").filter(Boolean) : exp.description)
         : exp.descriptions || [],
     })),
-    education: (raw.education || raw.Education || []).map((edu: any) => ({
+    education: (raw.education || raw.Education || []).map((edu: RawEducation) => ({
       degree: edu.degree || edu.Degree || "",
       institution: edu.school || edu.School || edu.institution || edu.Institution || "",
       location: edu.location || edu.Location || "",
@@ -178,15 +244,16 @@ export async function getResumeById(resumeId: string): Promise<Resume> {
   return mapped;
 }
 
-function groupSkillsFromFlat(skills: any[]): ResumeSkillGroups {
+function groupSkillsFromFlat(skills: (string | RawSkillItem)[]): ResumeSkillGroups {
   if (!Array.isArray(skills) || skills.length === 0) return {};
   // If already grouped object format, return as-is
   if (skills.length > 0 && typeof skills[0] === "string") {
-    return { "Skills": skills };
+    return { "Skills": skills as string[] };
   }
   // Flat SkillItem[] → grouped by category or "Key Skills"
   const grouped: ResumeSkillGroups = {};
   for (const skill of skills) {
+    if (typeof skill === "string") continue;
     const name = skill.name || skill.Name || "";
     if (!name) continue;
     const category = "Key Skills";

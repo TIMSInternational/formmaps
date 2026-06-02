@@ -8,6 +8,8 @@ import {
   TimelineExportConfig,
   AssessmentType,
   TimelineEventStatus,
+  MILEventMetadata,
+  PCAEventMetadata,
 } from "@/types/timeline";
 import { getUserExamHistory, EnhancedUserExamHistory } from "./milService";
 import {
@@ -476,8 +478,8 @@ export async function getTimelineStats(
       (e) => e.eventType === "completed"
     );
     const milScores = completedMILEvents
-      .map((e) => (e.metadata as any)?.scorePercentage)
-      .filter((s) => typeof s === "number");
+      .map((e) => (e.metadata as MILEventMetadata)?.scorePercentage)
+      .filter((s): s is number => typeof s === "number");
     const avgMILScore =
       milScores.length > 0
         ? milScores.reduce((a, b) => a + b, 0) / milScores.length
@@ -565,8 +567,8 @@ export function prepareCSVExport(
 
   const rows = events.map((event) => {
     const score =
-      (event.metadata as any)?.scorePercentage ||
-      (event.metadata as any)?.overallScore ||
+      (event.metadata as MILEventMetadata)?.scorePercentage ||
+      (event.metadata as PCAEventMetadata)?.overallScore ||
       "";
 
     return [

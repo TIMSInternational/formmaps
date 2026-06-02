@@ -16,10 +16,11 @@ import { MoreHorizontal } from "lucide-react";
 
 interface Session {
   id: string;
-  startTime: string;
-  studentName: string;
+  startTime: Date | string | null;
+  studentName?: string;
   status: string;
   topic?: string;
+  [key: string]: unknown;
 }
 
 interface MonthViewProps {
@@ -42,9 +43,10 @@ export function MonthView({ currentDate, sessions, onSessionClick }: MonthViewPr
   const getSessionsForDay = (day: Date) => {
     return sessions.filter((session) => {
       try {
-        const sessionDate = new Date(session.startTime);
+        if (!session.startTime) return false;
+        const sessionDate = new Date(session.startTime as string | Date);
         return isSameDay(day, sessionDate);
-      } catch (e) {
+      } catch {
         return false;
       }
     });
@@ -115,7 +117,7 @@ export function MonthView({ currentDate, sessions, onSessionClick }: MonthViewPr
                           "bg-gray-400"
                     )} />
                     <span className="font-medium truncate">
-                      {format(new Date(session.startTime), "HH:mm")} {session.studentName}
+                      {session.startTime ? format(new Date(session.startTime as string | Date), "HH:mm") : "TBD"} {session.studentName || "Student"}
                     </span>
                   </button>
                 ))}

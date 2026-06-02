@@ -23,15 +23,15 @@ import {
   getCoachEarningsHistory,
   PayoutSettings,
 } from "@/services/coachService";
-import { Payout } from "@/types/coach";
+import { Payout, BankAccount } from "@/types/coach";
 import { toast } from "sonner";
 
 interface PaymentSettingsTabProps {
-  bankAccount?: any | null;
-  payouts?: any[] | null;
+  bankAccount?: BankAccount | null;
+  payouts?: Payout[] | null;
   isLoading?: boolean;
-  onBankAccountUpdated?: (bank: any | null) => void;
-  onPayoutsUpdated?: (payouts: any[]) => void;
+  onBankAccountUpdated?: (bank: BankAccount | null) => void;
+  onPayoutsUpdated?: (payouts: Payout[]) => void;
 }
 
 export function PaymentSettingsTab({

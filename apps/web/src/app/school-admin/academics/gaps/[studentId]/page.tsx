@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+interface StudentWithGrade { name?: string; gradeLevel?: number | string }
+interface GpaWithGpa { gpa?: number; gpaUnweighted?: number | null; gpaWeighted?: number | null }
+
 export default function StudentGapAnalysisPage() {
   const params = useParams();
   const router = useRouter();
@@ -107,8 +110,8 @@ export default function StudentGapAnalysisPage() {
           <div style={{ flex: 1 }}>
             <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)", margin: 0 }}>{student?.name}</h1>
             <div style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2, display: "flex", gap: 16 }}>
-              {(student as any)?.gradeLevel && <span>Grade {(student as any).gradeLevel}</span>}
-              {(gpaData as any)?.gpa != null && <span>GPA: {(gpaData as any).gpa.toFixed(2)}</span>}
+              {(student as StudentWithGrade | undefined)?.gradeLevel && <span>Grade {(student as StudentWithGrade).gradeLevel}</span>}
+              {(gpaData as GpaWithGpa | undefined)?.gpa != null && <span>GPA: {Number((gpaData as GpaWithGpa).gpa).toFixed(2)}</span>}
               <span>{progress?.totalCreditsEarned || 0} / {progress?.totalCreditsRequired || 0} credits</span>
             </div>
           </div>
@@ -123,7 +126,7 @@ export default function StudentGapAnalysisPage() {
         {/* Category progress bars */}
         {progress?.categoryProgress?.length > 0 && (
           <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
-            {progress.categoryProgress.map((cat: any) => {
+            {progress.categoryProgress.map((cat: { category: string; progress: number; met: boolean; earned: number; required: number }) => {
               const pct = cat.progress || 0;
               const catColor = cat.met ? "#10b981" : pct >= 50 ? "#f59e0b" : "#ef4444";
               return (
@@ -191,7 +194,7 @@ export default function StudentGapAnalysisPage() {
       )}
 
       {/* Semester-by-Semester Pathway */}
-      {aiData?.semesters?.map((sem: any, si: number) => (
+      {aiData?.semesters?.map((sem: { label: string; courses: { courseId: string; courseName: string; courseCode: string; priority: string; isHonors?: boolean; frameworkType?: string; reason: string; credits: number; department?: string }[] }, si: number) => (
         <div key={si} style={{ borderRadius: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
           <div style={{
             padding: "14px 20px", borderBottom: "1px solid var(--admin-border-default)",
@@ -212,7 +215,7 @@ export default function StudentGapAnalysisPage() {
           </div>
 
           <div style={{ padding: 16 }} className="space-y-3">
-            {sem.courses.map((course: any) => {
+            {sem.courses.map((course) => {
               const priorityColor = course.priority === "critical" ? "#ef4444" : course.priority === "recommended" ? "#f59e0b" : "#065292";
               const isApproved = approvedCourses.has(course.courseId);
               return (

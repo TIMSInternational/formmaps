@@ -33,15 +33,30 @@ import {
   getCoachAnalytics,
   getCoachAnalyticsReport,
 } from "@/services/coachService";
+import type { CoachAnalytics } from "@/types/coach";
 import { toast } from "sonner";
 import { motion } from "motion/react";
+
+interface ChartDataPoint {
+  name: string;
+  amount: number;
+  sessions: number;
+}
+
+interface MonthlyDataItem {
+  month?: string;
+  label?: string;
+  earnings?: number;
+  amount?: number;
+  sessions?: number;
+}
 
 export default function AnalyticsPage() {
   const { t } = useTranslation();
   const { user } = useGlobalStore();
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState("30d");
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [stats, setStats] = useState({
     totalEarnings: 0,
     totalSessions: 0,
@@ -49,9 +64,8 @@ export default function AnalyticsPage() {
     clientCount: 0,
   });
 
-  const extractAnalytics = (res: any) => {
-    // API returns { success, data: { totalEarnings, totalSessions, averageRating, clientCount, monthlyData } }
-    const analytics = res?.data ?? res;
+  const extractAnalytics = (res: { data?: CoachAnalytics } | CoachAnalytics) => {
+    const analytics = (res as { data?: CoachAnalytics }).data ?? (res as CoachAnalytics);
     if (!analytics) return;
 
     setStats({
@@ -61,10 +75,10 @@ export default function AnalyticsPage() {
       clientCount: analytics.clientCount ?? analytics.activeStudents ?? 0,
     });
 
-    const monthly = analytics.monthlyData ?? analytics.earningsHistory ?? [];
+    const monthly: MonthlyDataItem[] = analytics.monthlyData ?? analytics.earningsHistory ?? [];
     if (Array.isArray(monthly) && monthly.length > 0) {
       setChartData(
-        monthly.map((h: any) => ({
+        monthly.map((h: MonthlyDataItem) => ({
           name: h.month || h.label || "",
           amount: h.earnings ?? h.amount ?? 0,
           sessions: h.sessions ?? 0,
@@ -94,11 +108,11 @@ export default function AnalyticsPage() {
     const refetch = async () => {
       try {
         const res = await getCoachAnalytics(dateRange);
-        const analytics = res?.data ?? res;
-        const monthly = analytics?.monthlyData ?? analytics?.earningsHistory ?? [];
+        const analytics = res?.data ?? (res as unknown as CoachAnalytics);
+        const monthly: MonthlyDataItem[] = analytics?.monthlyData ?? analytics?.earningsHistory ?? [];
         if (Array.isArray(monthly) && monthly.length > 0) {
           setChartData(
-            monthly.map((h: any) => ({
+            monthly.map((h: MonthlyDataItem) => ({
               name: h.month || h.label || "",
               amount: h.earnings ?? h.amount ?? 0,
               sessions: h.sessions ?? 0,

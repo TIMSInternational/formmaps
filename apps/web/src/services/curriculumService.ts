@@ -29,8 +29,9 @@ const buildPath = (endpoint: string, params?: Record<string, string | number | u
 };
 
 // Curriculum service: unwrap response preserving pagination shape
-const unwrap = <T>(json: any): T => {
-  const d = json?.data;
+const unwrap = <T>(json: unknown): T => {
+  const obj = json as Record<string, unknown> | null;
+  const d = obj?.data as Record<string, unknown> | undefined;
   if (d == null) return json as T;
   if ("total" in d || "page" in d) return d as T;
   if (d.data !== undefined) return d.data as T;

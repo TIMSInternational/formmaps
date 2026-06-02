@@ -7,6 +7,7 @@ import {
   getCoachBankAccount,
   getCoachPayouts,
 } from "@/services/coachService";
+import type { Coach, Availability, BankAccount, Payout } from "@/types/coach";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PricingSettingsTab } from "./_components/PricingSettingsTab";
@@ -18,10 +19,10 @@ import { useTranslation } from "react-i18next";
 export default function CoachSettingsPage() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("pricing");
-  const [coachDetails, setCoachDetails] = useState<any | null>(null);
-  const [availability, setAvailability] = useState<any | null>(null);
-  const [bankAccount, setBankAccount] = useState<any | null>(null);
-  const [payouts, setPayouts] = useState<any[] | null>(null);
+  const [coachDetails, setCoachDetails] = useState<Coach | null>(null);
+  const [availability, setAvailability] = useState<Availability | null>(null);
+  const [bankAccount, setBankAccount] = useState<BankAccount | null>(null);
+  const [payouts, setPayouts] = useState<Payout[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const { user } = useGlobalStore();
@@ -39,18 +40,13 @@ export default function CoachSettingsPage() {
             getCoachPayouts(),
           ]);
 
-        // Normalize — services return different shapes
-        setCoachDetails((detailsRes as any)?.data || (detailsRes as any) || null);
-        setAvailability((availabilityRes as any)?.data || (availabilityRes as any) || null);
-        setBankAccount((bankRes as any)?.data || (bankRes as any) || null);
+        // Normalize — services already unwrap, but handle both shapes defensively
+        setCoachDetails(detailsRes || null);
+        setAvailability(availabilityRes || null);
+        const bankData = (bankRes as { data?: BankAccount })?.data ?? bankRes as BankAccount;
+        setBankAccount(bankData || null);
 
-        const payoutsData = (payoutsRes as any);
-        const payoutItems =
-          payoutsData?.items ||
-          payoutsData?.data?.items ||
-          payoutsData?.data ||
-          payoutsData ||
-          [];
+        const payoutItems = payoutsRes?.items ?? [];
         setPayouts(Array.isArray(payoutItems) ? payoutItems : []);
       } catch (e) {
       // error handled silently
@@ -116,8 +112,8 @@ export default function CoachSettingsPage() {
               <PricingSettingsTab
                 coachDetails={coachDetails}
                 isLoading={isLoading}
-                onUpdated={(newData: any) =>
-                  setCoachDetails((prev: any) => ({ ...prev, ...(newData || {}) }))
+                onUpdated={(newData: Partial<Coach>) =>
+                  setCoachDetails((prev) => ({ ...prev, ...newData } as Coach))
                 }
               />
             </TabsContent>
@@ -126,8 +122,8 @@ export default function CoachSettingsPage() {
               <AvailabilitySettingsTab
                 availability={availability}
                 isLoading={isLoading}
-                onUpdated={(newData: any) =>
-                  setAvailability((prev: any) => ({ ...prev, ...(newData || {}) }))
+                onUpdated={(newData: Partial<Availability>) =>
+                  setAvailability((prev) => ({ ...prev, ...newData } as Availability))
                 }
               />
             </TabsContent>
@@ -137,7 +133,7 @@ export default function CoachSettingsPage() {
                 bankAccount={bankAccount}
                 payouts={payouts}
                 isLoading={isLoading}
-                onBankAccountUpdated={(bank: any) => setBankAccount(bank)}
+                onBankAccountUpdated={(bank: BankAccount | null) => setBankAccount(bank)}
                 onPayoutsUpdated={(p) => setPayouts(p)}
               />
             </TabsContent>

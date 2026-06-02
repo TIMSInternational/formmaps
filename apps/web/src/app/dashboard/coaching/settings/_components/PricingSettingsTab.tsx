@@ -21,11 +21,12 @@ import {
 import { DollarSign, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import type { Coach } from "@/types/coach";
 
 interface PricingSettingsTabProps {
-  coachDetails?: any | null;
+  coachDetails?: Coach | null;
   isLoading?: boolean;
-  onUpdated?: (newData: any) => void;
+  onUpdated?: (newData: Partial<Coach>) => void;
 }
 
 export function PricingSettingsTab({

@@ -11,10 +11,11 @@ import { WeekView } from "./WeekView";
 
 interface Session {
   id: string;
-  startTime: string;
-  studentName: string;
+  startTime: Date | string | null;
+  studentName?: string;
   status: string;
   topic?: string;
+  [key: string]: unknown;
 }
 
 interface CalendarViewProps {
