@@ -34,7 +34,7 @@ export default function DashboardPage() {
     const fetchDashboard = async () => {
       try {
         const res = await apiRequest(`/api/v1/Dashboard/student/${user.id}`, { method: "GET" });
-        const data = res?.data ?? res;
+        const data = res?.data?.data ?? res?.data ?? {};
         if (data) setDashboardData(data);
       } catch {
         // Dashboard data is optional — gracefully degrade

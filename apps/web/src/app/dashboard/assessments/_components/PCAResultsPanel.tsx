@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ModalSkeleton } from "@/components/ui/skeletons";
 
@@ -30,9 +30,10 @@ export default function PCAResultsPanel({
 }: PCAResultsPanelProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any>(null);
-  const [competences, setCompetences] = useState<any>(null);
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<Record<string, unknown> | null>(null);
+  const [competences, setCompetences] = useState<Record<string, unknown> | null>(null);
+  const [analysis, setAnalysis] = useState<Record<string, unknown> | null>(null);
   const [selectedJCA, setSelectedJCA] = useState<JCACode>("GTCML");
   const [activeTab, setActiveTab] = useState<
     "results" | "competences" | "analysis"
@@ -54,11 +55,12 @@ export default function PCAResultsPanel({
 
   const loadResults = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await getPCAResult(userId);
       setResults(data);
-    } catch (error) {
-      // error handled silently
+    } catch {
+      setError("Failed to load results");
     } finally {
       setLoading(false);
     }
@@ -66,11 +68,12 @@ export default function PCAResultsPanel({
 
   const loadCompetences = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await getPCACompetences(userId, "1"); // TIMS format
       setCompetences(data);
-    } catch (error) {
-      // error handled silently
+    } catch {
+      setError("Failed to load competences");
     } finally {
       setLoading(false);
     }
@@ -78,20 +81,21 @@ export default function PCAResultsPanel({
 
   const loadAnalysis = async () => {
     setLoading(true);
+    setError(null);
     try {
       const analysisData = await getPCAVsJCAAnalysis(userId, selectedJCA, "g");
       setAnalysis(analysisData);
-    } catch (error) {
-      // error handled silently
+    } catch {
+      setError("Failed to load analysis");
     } finally {
       setLoading(false);
     }
   };
 
   // Helper to safely access data properties handling case and structure variations
-  const getVal = (obj: any, key: string) => {
+  const getRaw = (obj: Record<string, unknown> | null, key: string): unknown => {
     if (!obj) return null;
-    const data = obj.data || obj;
+    const data = (obj.data && typeof obj.data === "object" ? obj.data : obj) as Record<string, unknown>;
     // Try explicit key, then PascalCase, then lowercase
     const exact = data[key];
     if (exact !== undefined) return exact;
@@ -102,8 +106,15 @@ export default function PCAResultsPanel({
     return null;
   };
 
-  const getPercentage = (obj: any, key: string) => {
-    const val = getVal(obj, key);
+  // String-safe version for rendering in JSX
+  const getVal = (obj: Record<string, unknown> | null, key: string): string | null => {
+    const v = getRaw(obj, key);
+    if (v === null || v === undefined) return null;
+    return String(v);
+  };
+
+  const getPercentage = (obj: Record<string, unknown> | null, key: string) => {
+    const val = getRaw(obj, key);
     return typeof val === 'number' ? val : 0;
   };
 
@@ -141,6 +152,26 @@ export default function PCAResultsPanel({
         {/* Content */}
         <div className="p-6 overflow-y-auto flex-1 bg-gray-50/50">
           {loading && <ModalSkeleton />}
+
+          {error && !loading && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <AlertCircle className="h-8 w-8 text-red-400 mb-3" />
+              <p className="text-gray-700 font-medium mb-1">{error}</p>
+              <p className="text-gray-500 text-sm mb-4">Please try again or contact support if the issue persists.</p>
+              <button
+                onClick={() => {
+                  setError(null);
+                  if (activeTab === "results") loadResults();
+                  else if (activeTab === "competences") loadCompetences();
+                  else if (activeTab === "analysis") loadAnalysis();
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry
+              </button>
+            </div>
+          )}
 
           {/* Results Tab */}
           {activeTab === "results" && !loading && (
@@ -280,7 +311,7 @@ export default function PCAResultsPanel({
                       </h3>
                       <div style={{ textAlign: "center" }}>
                         <img
-                          src={getVal(results, "pcaImg")}
+                          src={getVal(results, "pcaImg") ?? undefined}
                           alt="DISC Profile Graph"
                           style={{ maxWidth: "100%", borderRadius: 8, border: "1px solid #e5e7eb" }}
                         />
@@ -295,7 +326,7 @@ export default function PCAResultsPanel({
                     </h3>
                     <div className="flex flex-col sm:flex-row gap-4">
                       <a
-                        href={getVal(results, "pcaLink")}
+                        href={getVal(results, "pcaLink") ?? undefined}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-1 inline-flex items-center justify-center px-4 py-3 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors font-medium border border-blue-100"
@@ -308,7 +339,7 @@ export default function PCAResultsPanel({
 
                       {getVal(results, "pcaImg") && (
                         <a
-                          href={getVal(results, "pcaImg")}
+                          href={getVal(results, "pcaImg") ?? undefined}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex-1 inline-flex items-center justify-center px-4 py-3 bg-purple-50 text-purple-700 rounded-xl hover:bg-purple-100 transition-colors font-medium border border-purple-100"

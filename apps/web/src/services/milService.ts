@@ -538,12 +538,20 @@ export async function submitMILExam(
   userId: string,
   language: "english" | "spanish" = "english"
 ): Promise<any> {
-  const examAnswers = session.answers.map((answer) => ({
-    questionNumber: answer.questionNumber,
-    selectedAnswer: answer.answer.toString(),
-    isAnswered: true,
-    timeSpent: formatTimeSpent(answer.timeSpent),
-  }));
+  const examAnswers = session.answers
+    .filter((answer) => {
+      // Validate each answer before submission
+      if (answer.questionNumber <= 0) return false;
+      if (answer.answer === undefined || answer.answer === null || answer.answer.toString().trim() === "") return false;
+      if (answer.timeSpent < 0) return false;
+      return true;
+    })
+    .map((answer) => ({
+      questionNumber: answer.questionNumber,
+      selectedAnswer: answer.answer.toString(),
+      isAnswered: true,
+      timeSpent: formatTimeSpent(Math.max(0, answer.timeSpent)),
+    }));
 
   const submissionData = {
     sessionId: session.apiSessionId,
