@@ -115,7 +115,15 @@ export default function PCAResultsPanel({
 
   const getPercentage = (obj: Record<string, unknown> | null, key: string) => {
     const val = getRaw(obj, key);
-    return typeof val === 'number' ? val : 0;
+    if (val === null || val === undefined) return null;
+    const num = typeof val === 'number' ? val : Number(val);
+    return Number.isFinite(num) ? num : null;
+  };
+
+  // Validate that DISC scores are present and numeric
+  const hasDISCScores = (obj: Record<string, unknown> | null): boolean => {
+    const required = ["pcaD1", "pcaI1", "pcaS1", "pcaC1"];
+    return required.every(key => getPercentage(obj, key) !== null);
   };
 
   return (
@@ -216,6 +224,13 @@ export default function PCAResultsPanel({
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
                       DISC Profile Scores
                     </h3>
+                    {!hasDISCScores(results) ? (
+                      <div className="flex items-center gap-3 py-8 justify-center text-gray-500">
+                        <AlertCircle className="h-5 w-5" />
+                        <span className="text-sm font-medium">Results not available — DISC scores are incomplete or still processing.</span>
+                      </div>
+                    ) : (
+                    <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       {/* Primary Scores */}
                       <div>
@@ -224,10 +239,10 @@ export default function PCAResultsPanel({
                         </h4>
                         <div className="space-y-4">
                           {[
-                            { label: "Dominance (D)", val: getPercentage(results, "pcaD1"), color: "bg-red-500", text: "text-red-600" },
-                            { label: "Influence (I)", val: getPercentage(results, "pcaI1"), color: "bg-yellow-500", text: "text-yellow-600" },
-                            { label: "Steadiness (S)", val: getPercentage(results, "pcaS1"), color: "bg-green-500", text: "text-green-600" },
-                            { label: "Conscientiousness (C)", val: getPercentage(results, "pcaC1"), color: "bg-blue-500", text: "text-blue-600" }
+                            { label: "Dominance (D)", val: getPercentage(results, "pcaD1") ?? 0, color: "bg-red-500", text: "text-red-600" },
+                            { label: "Influence (I)", val: getPercentage(results, "pcaI1") ?? 0, color: "bg-yellow-500", text: "text-yellow-600" },
+                            { label: "Steadiness (S)", val: getPercentage(results, "pcaS1") ?? 0, color: "bg-green-500", text: "text-green-600" },
+                            { label: "Conscientiousness (C)", val: getPercentage(results, "pcaC1") ?? 0, color: "bg-blue-500", text: "text-blue-600" }
                           ].map((item, idx) => (
                             <div key={idx} className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
@@ -252,10 +267,10 @@ export default function PCAResultsPanel({
                         </h4>
                         <div className="space-y-4">
                           {[
-                            { label: "Dominance 2 (D2)", val: getPercentage(results, "pcaD2"), color: "bg-red-400/80", text: "text-red-500" },
-                            { label: "Influence 2 (I2)", val: getPercentage(results, "pcaI2"), color: "bg-yellow-400/80", text: "text-yellow-500" },
-                            { label: "Steadiness 2 (S2)", val: getPercentage(results, "pcaS2"), color: "bg-green-400/80", text: "text-green-500" },
-                            { label: "Conscientiousness 2 (C2)", val: getPercentage(results, "pcaC2"), color: "bg-blue-400/80", text: "text-blue-500" }
+                            { label: "Dominance 2 (D2)", val: getPercentage(results, "pcaD2") ?? 0, color: "bg-red-400/80", text: "text-red-500" },
+                            { label: "Influence 2 (I2)", val: getPercentage(results, "pcaI2") ?? 0, color: "bg-yellow-400/80", text: "text-yellow-500" },
+                            { label: "Steadiness 2 (S2)", val: getPercentage(results, "pcaS2") ?? 0, color: "bg-green-400/80", text: "text-green-500" },
+                            { label: "Conscientiousness 2 (C2)", val: getPercentage(results, "pcaC2") ?? 0, color: "bg-blue-400/80", text: "text-blue-500" }
                           ].map((item, idx) => (
                             <div key={idx} className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
@@ -281,10 +296,10 @@ export default function PCAResultsPanel({
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                         {[
-                          { label: "Dominance 3 (D3)", val: getPercentage(results, "pcaD3"), color: "bg-red-500/70", text: "text-red-500" },
-                          { label: "Influence 3 (I3)", val: getPercentage(results, "pcaI3"), color: "bg-yellow-500/70", text: "text-yellow-500" },
-                          { label: "Steadiness 3 (S3)", val: getPercentage(results, "pcaS3"), color: "bg-green-500/70", text: "text-green-500" },
-                          { label: "Conscientiousness 3 (C3)", val: getPercentage(results, "pcaC3"), color: "bg-blue-500/70", text: "text-blue-500" }
+                          { label: "Dominance 3 (D3)", val: getPercentage(results, "pcaD3") ?? 0, color: "bg-red-500/70", text: "text-red-500" },
+                          { label: "Influence 3 (I3)", val: getPercentage(results, "pcaI3") ?? 0, color: "bg-yellow-500/70", text: "text-yellow-500" },
+                          { label: "Steadiness 3 (S3)", val: getPercentage(results, "pcaS3") ?? 0, color: "bg-green-500/70", text: "text-green-500" },
+                          { label: "Conscientiousness 3 (C3)", val: getPercentage(results, "pcaC3") ?? 0, color: "bg-blue-500/70", text: "text-blue-500" }
                         ].map((item, idx) => (
                           <div key={idx} className="space-y-1">
                             <div className="flex items-center justify-between text-sm">
@@ -301,6 +316,8 @@ export default function PCAResultsPanel({
                         ))}
                       </div>
                     </div>
+                    </>
+                    )}
                   </div>
 
                   {/* PCA Report Image */}

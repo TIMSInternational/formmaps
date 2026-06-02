@@ -94,18 +94,13 @@ export default function MILAssessmentPage() {
           examTypes: {},
         });
 
-        // Sync completedExams state with API data so subtests cards show correctly
+        // API is the source of truth — always sync localStorage to match
         const completedIds = completed.map((e) => e.examId);
-        setCompletedExams((prev) => {
-          if (completedIds.length > prev.length) {
-            localStorage.setItem(
-              "mil_completed_exams",
-              JSON.stringify(completedIds)
-            );
-            return completedIds;
-          }
-          return prev;
-        });
+        localStorage.setItem(
+          "mil_completed_exams",
+          JSON.stringify(completedIds)
+        );
+        setCompletedExams(completedIds);
       } else {
         setLiaProgress({
           totalAttempts: 0,

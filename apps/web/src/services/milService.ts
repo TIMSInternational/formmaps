@@ -680,14 +680,25 @@ export function clearMILSession(examId: string): void {
 }
 
 /**
+ * Normalize a letter pair object — handles backend field naming variations.
+ * Backend may return topLetter/bottomLetter or TopLetter/BottomLetter (PascalCase).
+ */
+function normalizeLetterPair(pair: Record<string, unknown>): { topLetter: string; bottomLetter: string } {
+  const top = (pair.topLetter ?? pair.TopLetter ?? pair.top_letter ?? "") as string;
+  const bottom = (pair.bottomLetter ?? pair.BottomLetter ?? pair.bottom_letter ?? "") as string;
+  return { topLetter: top, bottomLetter: bottom };
+}
+
+/**
  * Calculate matching letter pairs for pattern recognition
  */
 export function calculateMatchingPairs(
   letterPairs: Array<{ topLetter: string; bottomLetter: string }>
 ): number {
-  return letterPairs.filter(
-    (pair) => pair.topLetter.toLowerCase() === pair.bottomLetter.toLowerCase()
-  ).length;
+  return letterPairs.filter((pair) => {
+    const { topLetter, bottomLetter } = normalizeLetterPair(pair as unknown as Record<string, unknown>);
+    return topLetter.toLowerCase() === bottomLetter.toLowerCase();
+  }).length;
 }
 
 /**
