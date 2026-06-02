@@ -50,7 +50,7 @@ export async function setDefaultPaymentMethod(
   const response = await apiRequest(
     `/api/v1/user/payment-methods/${paymentMethodId}/default`,
     {
-      method: "PATCH",
+      method: "PUT",
     }
   );
   return response.data || response;

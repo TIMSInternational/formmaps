@@ -41,7 +41,7 @@ export async function getAlertSummary(): Promise<AlertSummary> {
 
 export async function updateAlert(alertId: string, payload: AlertUpdatePayload): Promise<Alert> {
   const res = await apiRequest(`/api/v1/alerts/${alertId}`, {
-    method: "PATCH",
+    method: "PUT",
     data: payload,
   });
   return toCamel(res.data ?? res) as Alert;

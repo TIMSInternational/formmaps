@@ -132,13 +132,13 @@ export async function getParentNotifications(): Promise<ParentNotification[]> {
 
 export async function markParentNotificationRead(id: string): Promise<void> {
   await apiRequest(`/api/v1/parent/notifications/${id}/read`, {
-    method: "PATCH",
+    method: "PUT",
   });
 }
 
 export async function markAllParentNotificationsRead(): Promise<void> {
   await apiRequest("/api/v1/parent/notifications/read-all", {
-    method: "PATCH",
+    method: "PUT",
   });
 }
 

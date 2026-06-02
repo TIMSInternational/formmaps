@@ -138,7 +138,7 @@ export const questions360Service = {
     const response = await apiRequest<Question360>(
       `/api/question360/${id}/activate`,
       {
-        method: "PATCH",
+        method: "PUT",
       }
     );
     return response;
@@ -149,7 +149,7 @@ export const questions360Service = {
     const response = await apiRequest<Question360>(
       `/api/question360/${id}/deactivate`,
       {
-        method: "PATCH",
+        method: "PUT",
       }
     );
     return response;

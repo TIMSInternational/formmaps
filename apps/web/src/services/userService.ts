@@ -75,7 +75,7 @@ export async function updateUserSettings(
   settings: Partial<UserSettings>
 ): Promise<UserSettings> {
   const res = await apiRequest("/api/v1/user/settings", {
-    method: "PATCH",
+    method: "PUT",
     data: settings,
   });
   return res.data || res;

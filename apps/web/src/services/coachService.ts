@@ -285,7 +285,7 @@ export async function markNotificationRead(
   notificationId: string,
 ): Promise<{ success: boolean }> {
   return apiRequest(`/api/v1/user/notifications/${notificationId}/read`, {
-    method: "PATCH",
+    method: "PUT",
   });
 }
 
