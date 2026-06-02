@@ -12,12 +12,9 @@ import { LoadBar } from "./LoadBar";
 import { AssignStudentsModal } from "./AssignStudentsModal";
 import { ReassignDropdown } from "./ReassignDropdown";
 import type { CounselorWorkload } from "./ReassignDropdown";
+import { getInitials } from "@/lib/stringUtils";
 
 const MAX_STUDENT_LOAD = 25;
-
-function getInitials(name: string): string {
-  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-}
 
 export type { CounselorWorkload };
 

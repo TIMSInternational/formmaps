@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { ChevronLeft, ChevronRight, CalendarDays, X } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
+import { formatTimeOfDay } from "@/lib/dateUtils";
 
 interface Session {
   id: string;
@@ -61,10 +62,7 @@ export default function CounselorCalendarPage() {
   const prevMonth = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); } else setViewMonth(viewMonth - 1); };
   const nextMonth = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); } else setViewMonth(viewMonth + 1); };
 
-  const formatTime = (iso: string) => {
-    try { return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }); }
-    catch { return ""; }
-  };
+  const formatTime = formatTimeOfDay;
 
   if (loading) {
     return (

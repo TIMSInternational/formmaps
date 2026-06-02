@@ -27,6 +27,7 @@ import {
   Shield,
   Languages,
 } from "lucide-react";
+import { getInitials as _getInitials } from "@/lib/stringUtils";
 
 export function UserProfileDropdown() {
   const router = useRouter();
@@ -62,15 +63,7 @@ export function UserProfileDropdown() {
   const currentLanguage =
     languages.find((lang) => lang.code === i18n.language) || languages[0];
 
-  const getInitials = (name: string | null) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const getInitials = (name: string | null) => name ? _getInitials(name) : "U";
 
   const getUserDisplayName = () => {
     return user.name || user.email || "User";

@@ -50,6 +50,7 @@ import {
   useStudentGpa,
   useStudentAcademicGaps,
 } from "@/hooks/useStudentDetailData";
+import { getInitials as _getInitials } from "@/lib/stringUtils";
 
 import { format } from "date-fns";
 import { StudentStatus } from "@/types/student";
@@ -88,10 +89,7 @@ export default function StudentDetailsPage() {
   const { data: transcriptData } = useStudentTranscript(studentId);
   const { data: gpaData } = useStudentGpa(studentId);
 
-  const getInitials = (name: string) => {
-    if (!name) return "ST";
-    return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
-  };
+  const getInitials = (name: string) => name ? _getInitials(name) : "ST";
 
   if (isLoading) {
     return (

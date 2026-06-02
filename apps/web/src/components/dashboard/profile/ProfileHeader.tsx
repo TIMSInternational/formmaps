@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { uploadProfileAvatar, uploadProfileCover, getUserProfile } from "@/services/userService";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { UserProfile } from "@/types/user";
+import { getInitials } from "@/lib/stringUtils";
 import Link from "next/link";
 
 export function ProfileHeader() {
@@ -54,14 +55,6 @@ export function ProfileHeader() {
   const displayTwitter = profile?.socialLinks?.twitter || "";
   const displayAvatarUrl = avatarUrl || user.avatar || user.image || undefined;
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

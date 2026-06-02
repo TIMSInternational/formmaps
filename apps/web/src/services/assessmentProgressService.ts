@@ -1,7 +1,6 @@
 // Assessment Progress Service - Combines all assessment data
 import { apiRequest } from "@/lib/api/apiClient";
 import {
-  getAllUserExamResults,
   getUserProgressSummary,
   getUserExamHistory,
   getMILResults,

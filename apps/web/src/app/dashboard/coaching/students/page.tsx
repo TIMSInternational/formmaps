@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { Search, Users, MessageCircle, CalendarPlus, AlertCircle } from "lucide-react";
 import { getCoachStudents } from "@/services/coachService";
 import type { StudentSummary } from "@/types/coach";
+import { getInitials } from "@/lib/stringUtils";
 
 export default function CoachStudentsPage() {
   const [students, setStudents] = useState<StudentSummary[]>([]);
@@ -30,13 +31,6 @@ export default function CoachStudentsPage() {
     const timeout = setTimeout(fetchStudents, 300);
     return () => clearTimeout(timeout);
   }, [search]);
-
-  const getInitials = (name: string) => {
-    const parts = name.split(" ");
-    return parts.length >= 2
-      ? `${parts[0][0]}${parts[1][0]}`.toUpperCase()
-      : name.slice(0, 2).toUpperCase();
-  };
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "No sessions yet";

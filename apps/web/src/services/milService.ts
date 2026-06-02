@@ -324,23 +324,6 @@ export async function getMILResults(userId: string): Promise<MILResultsData | nu
 }
 
 /**
- * @deprecated Use getMILResults() instead. This returns ALL users' results.
- */
-export async function getAllUserExamResults(
-  language: "english" | "spanish" = "english"
-): Promise<UserExamResult[]> {
-  try {
-    const langParam = language === "spanish" ? "sp" : "en";
-    const json = await apiRequest(`/api/pcaexam/all-results?lang=${langParam}`);
-    return Array.isArray(json) ? json : json.data || [];
-  } catch (error) {
-    const status = (error instanceof Error && "status" in error) ? (error as ApiError).status : undefined;
-    if (status === 401 || status === 403) return [];
-    throw error;
-  }
-}
-
-/**
  * Get user exam history for specific user (Enhanced API)
  */
 export async function getUserExamHistory(

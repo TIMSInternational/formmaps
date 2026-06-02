@@ -8,7 +8,6 @@ import {
 } from "@/services/assessmentProgressService";
 import {
   getUserExamHistory,
-  getAllUserExamResults,
 } from "@/services/milService";
 import { getUserEvaluationGroups } from "@/services/evaluationService";
 import { useGlobalStore } from "@/store/useGlobalStore";
@@ -63,16 +62,6 @@ export function useMILHistory(userId: string) {
     queryFn: () => getUserExamHistory(userId, language),
     enabled: !!userId,
     staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-}
-
-// All MIL Results Hook
-export function useAllMILResults() {
-  const { language } = useGlobalStore();
-  return useQuery({
-    queryKey: assessmentKeys.milResults(),
-    queryFn: () => getAllUserExamResults(language),
-    staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 

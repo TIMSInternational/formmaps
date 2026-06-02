@@ -1009,17 +1009,6 @@ export async function getUserEvaluationGroupsForSessions(
 }
 
 /**
- * Get all evaluation sessions for the current user
- * DEPRECATED: This function calls a non-existent endpoint
- * Use getUserEvaluationGroupsForSessions instead
- */
-export async function getEvaluationSessions(): Promise<EvaluationSession[]> {
-  throw new Error(
-    "This function calls a non-existent endpoint. Use getUserEvaluationGroupsForSessions instead."
-  );
-}
-
-/**
  * Get a specific evaluation session by ID (maps to user evaluation groups)
  * Maps to backend GET /evaluation/user/{userId}
  */

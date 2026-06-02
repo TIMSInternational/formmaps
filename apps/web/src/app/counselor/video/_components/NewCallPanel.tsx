@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { Video, UserPlus, X, Calendar, CalendarClock } from "lucide-react";
+import { getInitials } from "@/lib/stringUtils";
 
 interface Contact {
   id: string;
@@ -36,10 +37,6 @@ interface NewCallPanelProps {
   scheduling: boolean;
   onSchedule: () => void;
   minDatetime: string;
-}
-
-function getInitials(name: string): string {
-  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
 
 export function NewCallPanel({

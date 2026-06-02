@@ -85,7 +85,7 @@ export default function AdminUsersPage() {
     if (!confirmed) return;
     try {
       await apiRequest(`/api/v1/admin/users/${user.id}/status`, {
-        method: "PATCH",
+        method: "PUT",
         data: { isActive: false },
       });
       toast.success(`${user.name} has been deactivated`);

@@ -16,22 +16,8 @@ import {
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { isVideoEnabled, createVideoSession } from "@/services/videoService";
 import { apiRequest } from "@/lib/api/apiClient";
-
-function formatTime(dateString: string | null): string {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return date.toLocaleDateString([], { weekday: "short" });
-  return date.toLocaleDateString([], { month: "short", day: "numeric" });
-}
-
-function getInitials(name: string): string {
-  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-}
+import { formatMessageTime as formatTime } from "@/lib/dateUtils";
+import { getInitials } from "@/lib/stringUtils";
 
 export default function MessagesPage() {
   const router = useRouter();

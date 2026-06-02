@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { ChevronLeft, ChevronRight, CalendarDays, X, Clock, User } from "lucide-react";
 import { getCoachSessions } from "@/services/coachService";
 import { Booking } from "@/types/coach";
+import { formatTimeOfDay } from "@/lib/dateUtils";
 
 function getDaysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate(); }
 function getFirstDayOfMonth(y: number, m: number) { return new Date(y, m, 1).getDay(); }
@@ -60,10 +61,7 @@ export default function CoachCalendarPage() {
     else setViewMonth(viewMonth + 1);
   };
 
-  const formatTime = (iso: string) => {
-    try { return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }); }
-    catch { return ""; }
-  };
+  const formatTime = formatTimeOfDay;
 
   const selectedSessions = selectedDay ? (sessionsByDate.get(selectedDay) || []) : [];
 

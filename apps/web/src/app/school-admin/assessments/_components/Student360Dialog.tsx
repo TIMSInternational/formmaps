@@ -37,10 +37,10 @@ interface EvaluationGroup {
 // ── API helpers ──
 
 async function extendEvaluationToken(groupId: string, days: number = 7) {
-  return apiRequest(`/evaluation/extend-token/${groupId}`, { method: "PATCH", data: { days } });
+  return apiRequest(`/evaluation/extend-token/${groupId}`, { method: "PUT", data: { days } });
 }
 async function resetEvaluationCompletion(groupId: string) {
-  return apiRequest(`/evaluation/reset-completion/${groupId}`, { method: "PATCH" });
+  return apiRequest(`/evaluation/reset-completion/${groupId}`, { method: "PUT" });
 }
 async function resendEvaluationEmail(groupId: string) {
   return apiRequest(`/evaluation/resend-email/${groupId}`, { method: "POST" });

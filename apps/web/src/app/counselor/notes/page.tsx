@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api/apiClient";
+import { formatDate, formatTimeOfDay } from "@/lib/dateUtils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -70,15 +71,7 @@ export default function CounselorNotesPage() {
   const total: number = data?.total ?? 0;
   const totalPages = Math.ceil(total / limit);
 
-  const formatDate = (d: string) => {
-    const date = new Date(d);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  };
-
-  const formatTime = (d: string) => {
-    const date = new Date(d);
-    return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  };
+  const formatTime = formatTimeOfDay;
 
   const typeColor = (type: string) => TYPE_COLORS[type] ?? TYPE_COLORS.general;
 

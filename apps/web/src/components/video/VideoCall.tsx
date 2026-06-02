@@ -9,6 +9,7 @@ import { getStudentNotes, createNote } from "@/services/counselorNotesService";
 import type { CounselorNote } from "@/types/counselorNotes";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { apiRequest } from "@/lib/api/apiClient";
+import { getInitials } from "@/lib/stringUtils";
 
 // Zoom SDK type interfaces (matching OSF)
 interface ZoomUser {
@@ -42,9 +43,6 @@ interface VideoCallProps {
   returnPath: string;
 }
 
-function getInitials(name: string): string {
-  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-}
 
 function formatNoteDate(d: string): string {
   const date = new Date(d);
