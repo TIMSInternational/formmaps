@@ -11,20 +11,14 @@ import { useGlobalStore } from "@/store/useGlobalStore";
 import { apiRequest } from "@/lib/api/apiClient";
 import { getInitials } from "@/lib/stringUtils";
 
-// Zoom SDK type interfaces (matching OSF)
-interface ZoomUser {
-  userId: number;
-  userName: string;
-  bVideoOn: boolean;
-  bAudioOn: boolean;
-  muted: boolean;
-  isHost: boolean;
-}
-
-interface ZoomEventPayload {
-  action?: "Start" | "Stop";
-  userId?: number;
-  state?: string;
+// Daily.co participant type
+interface DailyParticipant {
+  session_id: string;
+  user_name: string;
+  local: boolean;
+  video: boolean;
+  audio: boolean;
+  tracks: Record<string, { state: string; track?: MediaStreamTrack }>;
 }
 
 interface ParticipantInfo {
@@ -66,23 +60,20 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
   const [session, setSession] = useState<VideoSession | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
 
-  // Zoom states
-  const clientRef = useRef<any>(null);
-  const streamRef = useRef<any>(null);
+  // Daily.co call states
+  const clientRef = useRef<ReturnType<typeof import("@daily-co/daily-js").default.createCallObject> | null>(null);
   const [isSDKInitialized, setIsSDKInitialized] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(false);
   const [isAudioOn, setIsAudioOn] = useState(false);
   const [isVideoStarting, setIsVideoStarting] = useState(false);
   const [isAudioStarting, setIsAudioStarting] = useState(false);
-  const [participants, setParticipants] = useState<ZoomUser[]>([]);
+  const [participants, setParticipants] = useState<DailyParticipant[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const selfVideoRef = useRef<HTMLDivElement>(null);
   const participantVideoRef = useRef<HTMLDivElement>(null);
-  const videoInitializedRef = useRef(false);
-  const audioInitializedRef = useRef(false);
   const joinAttemptedRef = useRef(false);
 
   // Side panels (OSF-style)
@@ -161,7 +152,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
   // Initialize SDK
   useEffect(() => {
     if (!session) return;
-    initializeZoomSDK();
+    initializeDailySDK();
     const handleBeforeUnload = (e: BeforeUnloadEvent) => { if (isJoined) { e.preventDefault(); e.returnValue = ""; cleanup(); } };
     const handleUnload = () => { if (isJoined) cleanup(); };
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -177,40 +168,54 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
   }, [isSDKInitialized, session]);
 
   const cleanup = async () => {
-    if (streamRef.current) {
-      if (isVideoOn) { try { await streamRef.current.stopVideo(); } catch {} const uid = clientRef.current?.getCurrentUserInfo()?.userId; if (uid) { try { streamRef.current.detachVideo(uid); } catch {} } }
-      if (isAudioOn) { try { await streamRef.current.stopAudio(); } catch {} }
+    if (isJoined && clientRef.current) {
+      try { await clientRef.current.leave(); } catch {}
+      try { clientRef.current.destroy(); } catch {}
     }
-    if (isJoined && clientRef.current) { try { await clientRef.current.leave(); } catch {} }
-    videoInitializedRef.current = false; audioInitializedRef.current = false;
+    if (selfVideoRef.current) selfVideoRef.current.innerHTML = "";
+    if (participantVideoRef.current) participantVideoRef.current.innerHTML = "";
   };
 
-  const initializeZoomSDK = async () => {
+  const initializeDailySDK = async () => {
     try {
-      const ZoomVideo = (await import("@zoom/videosdk")).default;
-      const client = ZoomVideo.createClient();
-      clientRef.current = client;
-      await client.init("en-US", "Global", { patchJsMedia: true, leaveOnPageUnload: true, stayAwake: true, enforceMultipleVideos: false, enforceVirtualBackground: false });
+      const Daily = (await import("@daily-co/daily-js")).default;
+      const callObject = Daily.createCallObject({ startVideoOff: false, startAudioOff: false });
+      clientRef.current = callObject;
+
+      // Track events — attach remote video to DOM
+      callObject.on("track-started", (event) => {
+        if (!event) return;
+        const { participant, track } = event as { participant?: DailyParticipant; track?: MediaStreamTrack };
+        if (!participant || participant.local || !track) return;
+        if (track.kind === "video" && participantVideoRef.current) {
+          participantVideoRef.current.innerHTML = "";
+          const videoEl = document.createElement("video");
+          videoEl.srcObject = new MediaStream([track]);
+          videoEl.autoplay = true; videoEl.playsInline = true;
+          videoEl.style.width = "100%"; videoEl.style.height = "100%"; videoEl.style.objectFit = "cover";
+          participantVideoRef.current.appendChild(videoEl);
+        }
+      });
+      callObject.on("track-stopped", (event) => {
+        const { participant, track } = (event || {}) as { participant?: DailyParticipant; track?: MediaStreamTrack };
+        if (participant && !participant.local && track?.kind === "video" && participantVideoRef.current) {
+          participantVideoRef.current.innerHTML = "";
+        }
+      });
+      callObject.on("participant-joined", () => { updateParticipants(); });
+      callObject.on("participant-left", () => { updateParticipants(); });
+      callObject.on("error", (e) => { setError(`Connection error: ${(e as { errorMsg?: string })?.errorMsg || "Please try again."}`); });
+      callObject.on("left-meeting", () => { setIsJoined(false); });
+
       setIsSDKInitialized(true);
-      setupEventListeners(client);
     } catch { setError("Failed to initialize video system. Please refresh the page."); }
   };
 
-  const setupEventListeners = (client: any) => {
-    client.on("peer-video-state-change", (payload: unknown) => {
-      const evt = payload as ZoomEventPayload;
-      if (evt.action === "Start" && participantVideoRef.current && streamRef.current) {
-        participantVideoRef.current.innerHTML = "";
-        streamRef.current.renderVideo(participantVideoRef.current, evt.userId || 0, 640, 360, 0, 0, 3)
-          .catch(() => { streamRef.current?.attachVideo(evt.userId || 0, 3).then((el: HTMLVideoElement) => { if (participantVideoRef.current && el) { el.style.width = "100%"; el.style.height = "100%"; el.style.objectFit = "cover"; participantVideoRef.current.appendChild(el); } }); });
-      } else if (evt.action === "Stop") {
-        try { if (participantVideoRef.current) streamRef.current?.stopRenderVideo(participantVideoRef.current, evt.userId || 0); } catch { streamRef.current?.detachVideo(evt.userId || 0); }
-        if (participantVideoRef.current) participantVideoRef.current.innerHTML = "";
-      }
-    });
-    client.on("user-added", (p: unknown) => { setParticipants((prev) => [...prev, ...(p as ZoomUser[])]); });
-    client.on("user-removed", (p: unknown) => { const r = p as ZoomUser[]; setParticipants((prev) => prev.filter((x) => !r.some((u) => u.userId === x.userId))); });
-    client.on("connection-change", (p: unknown) => { if ((p as ZoomEventPayload).state === "Closed") setError("Connection lost. Please rejoin the session."); });
+  const updateParticipants = () => {
+    if (!clientRef.current) return;
+    const all = clientRef.current.participants();
+    const remote = Object.values(all).filter((p) => !(p as DailyParticipant).local);
+    setParticipants(remote as DailyParticipant[]);
   };
 
   const joinSession = async () => {
@@ -218,50 +223,64 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
     setIsLoading(true); setError(null);
     try {
       const isHost = session.caller?.id === userId;
-      const signature = await getVideoSignature(session.sessionName, isHost ? 1 : 0);
-      await clientRef.current.join(session.sessionName, signature, userName, "");
-      streamRef.current = clientRef.current.getMediaStream();
+      const { signature, roomUrl } = await getVideoSignature(session.sessionName, isHost ? 1 : 0);
+      await clientRef.current.join({ url: roomUrl, token: signature, userName });
+
+      // Attach local video
+      const local = clientRef.current.participants().local as DailyParticipant;
+      if (local?.tracks?.video?.track && selfVideoRef.current) {
+        selfVideoRef.current.innerHTML = "";
+        const videoEl = document.createElement("video");
+        videoEl.srcObject = new MediaStream([local.tracks.video.track]);
+        videoEl.autoplay = true; videoEl.playsInline = true; videoEl.muted = true;
+        videoEl.style.width = "100%"; videoEl.style.height = "100%"; videoEl.style.objectFit = "cover";
+        selfVideoRef.current.appendChild(videoEl);
+      }
+
       setIsJoined(true);
-      const allUsers = clientRef.current.getAllUser();
-      const selfUserId = clientRef.current.getCurrentUserInfo()?.userId;
-      setParticipants(allUsers.filter((u: ZoomUser) => u.userId !== selfUserId));
+      setIsVideoOn(clientRef.current.localVideo());
+      setIsAudioOn(clientRef.current.localAudio());
+      updateParticipants();
     } catch (err: unknown) {
-      let msg = "Failed to join session. "; const e = err as Error;
-      if (e.message?.includes("signature")) msg += "Invalid session credentials.";
-      else if (e.message?.includes("network")) msg += "Please check your internet connection.";
-      else msg += e.message || "Please try again.";
-      setError(msg);
-      joinAttemptedRef.current = false; // Allow retry
+      const e = err as Error;
+      setError(`Failed to join session. ${e.message || "Please try again."}`);
+      joinAttemptedRef.current = false;
     } finally { setIsLoading(false); }
   };
 
   const toggleVideo = async () => {
-    if (!streamRef.current || !isJoined || isVideoStarting) return;
+    if (!clientRef.current || !isJoined || isVideoStarting) return;
     setIsVideoStarting(true);
     try {
-      const uid = clientRef.current?.getCurrentUserInfo()?.userId; if (!uid) return;
-      if (isVideoOn) {
-        await streamRef.current.stopVideo();
-        try { if (selfVideoRef.current) await streamRef.current.stopRenderVideo(selfVideoRef.current, uid); } catch { await streamRef.current.detachVideo(uid); }
-        if (selfVideoRef.current) selfVideoRef.current.innerHTML = "";
-        setIsVideoOn(false); videoInitializedRef.current = false;
-      } else {
-        if (!videoInitializedRef.current) { await streamRef.current.startVideo(); videoInitializedRef.current = true; }
-        if (selfVideoRef.current) selfVideoRef.current.innerHTML = "";
-        try { if (selfVideoRef.current) await streamRef.current.renderVideo(selfVideoRef.current, uid, 640, 360, 0, 0, 2); }
-        catch { const el = await streamRef.current.attachVideo(uid, 2); if (selfVideoRef.current && el) { el.style.width = "100%"; el.style.height = "100%"; el.style.objectFit = "cover"; selfVideoRef.current.appendChild(el); } }
-        setIsVideoOn(true);
+      clientRef.current.setLocalVideo(!isVideoOn);
+      setIsVideoOn(!isVideoOn);
+      // Update self video element
+      if (!isVideoOn) {
+        // Turning on — wait for track
+        setTimeout(() => {
+          const local = clientRef.current?.participants()?.local as DailyParticipant | undefined;
+          if (local?.tracks?.video?.track && selfVideoRef.current) {
+            selfVideoRef.current.innerHTML = "";
+            const videoEl = document.createElement("video");
+            videoEl.srcObject = new MediaStream([local.tracks.video.track]);
+            videoEl.autoplay = true; videoEl.playsInline = true; videoEl.muted = true;
+            videoEl.style.width = "100%"; videoEl.style.height = "100%"; videoEl.style.objectFit = "cover";
+            selfVideoRef.current.appendChild(videoEl);
+          }
+        }, 300);
+      } else if (selfVideoRef.current) {
+        selfVideoRef.current.innerHTML = "";
       }
-    } catch (err: unknown) { setError(`Failed to ${isVideoOn ? "stop" : "start"} video: ${(err as Error).message}`); videoInitializedRef.current = false; }
+    } catch (err: unknown) { setError(`Failed to ${isVideoOn ? "stop" : "start"} video: ${(err as Error).message}`); }
     finally { setIsVideoStarting(false); }
   };
 
   const toggleAudio = async () => {
-    if (!streamRef.current || !isJoined || isAudioStarting) return;
+    if (!clientRef.current || !isJoined || isAudioStarting) return;
     setIsAudioStarting(true);
     try {
-      if (isAudioOn) { await streamRef.current.stopAudio(); setIsAudioOn(false); audioInitializedRef.current = false; }
-      else { await streamRef.current.startAudio(); audioInitializedRef.current = true; setIsAudioOn(true); }
+      clientRef.current.setLocalAudio(!isAudioOn);
+      setIsAudioOn(!isAudioOn);
     } catch (err: unknown) { setError(`Failed to ${isAudioOn ? "mute" : "unmute"} audio: ${(err as Error).message}`); }
     finally { setIsAudioStarting(false); }
   };

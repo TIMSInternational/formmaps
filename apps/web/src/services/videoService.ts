@@ -22,12 +22,22 @@ export async function listVideoSessions(): Promise<VideoSession[]> {
   return res?.data ?? [];
 }
 
-export async function getVideoSignature(sessionName: string, role: number): Promise<string> {
+export interface VideoSignatureResponse {
+  signature: string;
+  roomUrl: string;
+  roomName: string;
+}
+
+export async function getVideoSignature(sessionName: string, role: number): Promise<VideoSignatureResponse> {
   const res = await apiRequest("/api/v1/video/signature", {
     method: "POST",
     data: { sessionName, role },
   });
-  return res?.data?.signature ?? res?.signature;
+  return {
+    signature: res?.data?.signature ?? res?.signature ?? "",
+    roomUrl: res?.data?.roomUrl ?? "",
+    roomName: res?.data?.roomName ?? sessionName,
+  };
 }
 
 export async function createVideoSession(participantId: string): Promise<VideoSession> {
