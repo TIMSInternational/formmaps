@@ -46,3 +46,25 @@ export async function getVideoSession(sessionId: string): Promise<VideoSession> 
 export async function endVideoSession(sessionId: string): Promise<void> {
   await apiRequest(`/api/v1/video/sessions/${sessionId}/end`, { method: "POST" });
 }
+
+export async function scheduleVideoSession(
+  participantId: string,
+  scheduledAt: string,
+  duration: number = 60,
+  notes: string = ""
+): Promise<VideoSession> {
+  const res = await apiRequest("/api/v1/video/sessions/schedule", {
+    method: "POST",
+    data: { participantId, scheduledAt, duration, notes },
+  });
+  return res?.data ?? res;
+}
+
+export async function startScheduledSession(sessionId: string): Promise<VideoSession> {
+  const res = await apiRequest(`/api/v1/video/sessions/${sessionId}/start`, { method: "POST" });
+  return res?.data ?? res;
+}
+
+export async function cancelVideoSession(sessionId: string): Promise<void> {
+  await apiRequest(`/api/v1/video/sessions/${sessionId}/cancel`, { method: "POST" });
+}

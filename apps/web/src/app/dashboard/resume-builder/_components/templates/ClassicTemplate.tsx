@@ -602,6 +602,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                       {/* Generic rendering for any other section types not explicitly handled */}
                       {section.type !== "projects" &&
                         section.type !== "certificates" &&
+                        section.type !== "certifications" &&
                         section.type !== "languages" &&
                         section.type !== "publications" &&
                         section.type !== "courses" &&
@@ -881,7 +882,7 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                         )}
                       </>
                     )}
-                    {section.type === "certificates" && (
+                    {(section.type === "certificates" || section.type === "certifications") && (
                       <>
                         <div className="flex justify-between">
                           <span className="font-bold text-black text-[9px]">
