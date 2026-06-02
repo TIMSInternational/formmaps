@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api/apiClient";
+import { toCamel } from "@/lib/toCamel";
 import type {
   StudentAcademicGaps,
   AcademicGapSummary,
@@ -16,16 +17,6 @@ const buildPath = (endpoint: string, params?: Record<string, string | number | u
   const queryString = qs.toString();
   return queryString ? `${endpoint}?${queryString}` : endpoint;
 };
-
-function toCamel(obj: any): any {
-  if (Array.isArray(obj)) return obj.map(toCamel);
-  if (obj !== null && typeof obj === "object" && !(obj instanceof Date)) {
-    return Object.fromEntries(
-      Object.entries(obj).map(([k, v]) => [k.charAt(0).toLowerCase() + k.slice(1), toCamel(v)])
-    );
-  }
-  return obj;
-}
 
 // ============================================
 // Academic Gap Analysis (SCRUM-139)

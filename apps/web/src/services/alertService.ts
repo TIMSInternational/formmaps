@@ -7,16 +7,7 @@ import type {
   AlertsQueryParams,
 } from "@/types/alert";
 import { apiRequest } from "@/lib/api/apiClient";
-
-function toCamel(obj: any): any {
-  if (Array.isArray(obj)) return obj.map(toCamel);
-  if (obj !== null && typeof obj === "object" && !(obj instanceof Date)) {
-    return Object.fromEntries(
-      Object.entries(obj).map(([k, v]) => [k.charAt(0).toLowerCase() + k.slice(1), toCamel(v)])
-    );
-  }
-  return obj;
-}
+import { toCamel } from "@/lib/toCamel";
 
 // ============================================
 // Alerts

@@ -13,20 +13,7 @@ import {
 } from "@/types/student";
 import { decodeJWTToken, isAdminRole, getCurrentUser } from "./authService";
 import { apiRequest } from "@/lib/api/apiClient";
-
-// Convert PascalCase keys from .NET to camelCase
-function toCamel(obj: any): any {
-  if (Array.isArray(obj)) return obj.map(toCamel);
-  if (obj !== null && typeof obj === "object" && !(obj instanceof Date)) {
-    return Object.fromEntries(
-      Object.entries(obj).map(([k, v]) => [
-        k.charAt(0).toLowerCase() + k.slice(1),
-        toCamel(v),
-      ])
-    );
-  }
-  return obj;
-}
+import { toCamel } from "@/lib/toCamel";
 
 // Helper to get current language from i18n
 export const getCurrentLanguage = (): "en" | "sp" => {
@@ -173,7 +160,7 @@ export async function getAnalyticsOverview(
 
   try {
     const res = await apiRequest(`/api/v1/school-admin/analytics/overview${buildQueryString({ period })}`);
-    const data = toCamel(res.data || res);
+    const data = toCamel<Partial<AnalyticsOverview>>(res.data || res);
 
     return {
       studentEngagement: { ...defaultData.studentEngagement, ...(data.studentEngagement || {}) },
@@ -197,7 +184,7 @@ export async function getPerformanceTrends(
 
   try {
     const res = await apiRequest(`/api/v1/school-admin/analytics/performance-trends${buildQueryString({ period, metric })}`);
-    const data = toCamel(res.data || res);
+    const data = toCamel<Partial<PerformanceTrendData>>(res.data || res);
 
     return {
       labels: data.labels || defaultData.labels,
@@ -284,8 +271,8 @@ export async function exportResults(params: {
 export async function getSchoolSettings(): Promise<SchoolSettings | null> {
   try {
     const res = await apiRequest(`/api/v1/school-admin/settings${buildQueryString()}`);
-    const camel = toCamel(res);
-    return camel?.data ?? camel;
+    const camel = toCamel<{ data?: SchoolSettings }>(res);
+    return camel?.data ?? (camel as unknown as SchoolSettings);
   } catch (error) {
     return null;
   }

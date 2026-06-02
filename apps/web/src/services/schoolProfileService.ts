@@ -10,20 +10,7 @@ import type {
   CounselorStudentsResponse,
 } from "@/types/assessmentConfig";
 import { apiRequest } from "@/lib/api/apiClient";
-
-// Convert PascalCase keys from .NET to camelCase
-function toCamel(obj: any): any {
-  if (Array.isArray(obj)) return obj.map(toCamel);
-  if (obj !== null && typeof obj === "object" && !(obj instanceof Date)) {
-    return Object.fromEntries(
-      Object.entries(obj).map(([k, v]) => [
-        k.charAt(0).toLowerCase() + k.slice(1),
-        toCamel(v),
-      ])
-    );
-  }
-  return obj;
-}
+import { toCamel } from "@/lib/toCamel";
 
 const buildQueryString = (params?: Record<string, string | number | undefined>): string => {
   if (!params) return "";
