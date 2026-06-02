@@ -125,18 +125,20 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
     if (!session || !otherPerson?.id) return;
     (async () => {
       setParticipantLoading(true);
-      try {
-        // Try counselor endpoint first for counselor role, school-admin for admin
-        const studentUrl = isCounselor
-          ? `/api/v1/counselor/me/students/${otherPerson.id}`
-          : `/api/v1/school-admin/students/${otherPerson.id}`;
-        const res = await apiRequest(studentUrl);
-        setParticipantInfo(res?.data ?? res);
-      } catch {
+      if (isPrivilegedRole) {
+        try {
+          const studentUrl = isCounselor
+            ? `/api/v1/counselor/me/students/${otherPerson.id}`
+            : `/api/v1/school-admin/students/${otherPerson.id}`;
+          const res = await apiRequest(studentUrl);
+          setParticipantInfo(res?.data ?? res);
+        } catch {
+          setParticipantInfo({ id: otherPerson.id, name: otherPerson.name || "", email: otherPerson.email || "" });
+        }
+      } else {
         setParticipantInfo({ id: otherPerson.id, name: otherPerson.name || "", email: otherPerson.email || "" });
-      } finally {
-        setParticipantLoading(false);
       }
+      setParticipantLoading(false);
 
       if (isPrivilegedRole) {
         try {

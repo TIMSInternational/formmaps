@@ -214,7 +214,7 @@ export default function SessionNotesPage() {
         }
 
         return (
-        <div style={{ display: "flex", flexDirection: "column", gap: groupBy !== "none" ? 20 : 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: groupBy !== "none" ? 24 : 16 }}>
           {groups.map((group) => (
             <div key={group.key}>
               {groupBy !== "none" && (
@@ -237,6 +237,7 @@ export default function SessionNotesPage() {
                   <span style={{ fontSize: 11, color: "var(--admin-font-light)", padding: "2px 6px", borderRadius: 4, background: "var(--admin-bg-hover)" }}>{group.notes.length}</span>
                 </div>
               )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <AnimatePresence mode="popLayout">
             {group.notes.map((note, idx) => {
               const isExpanded = expandedId === note.id;
@@ -357,6 +358,7 @@ export default function SessionNotesPage() {
               );
             })}
           </AnimatePresence>
+          </div>
             </div>
           ))}
         </div>
