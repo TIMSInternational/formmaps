@@ -9,7 +9,7 @@ import { X } from "lucide-react";
 export function ATSCheck({ onClose }: { onClose?: () => void }) {
   const { resumeBuilder } = useGlobalStore();
   const [jobDesc, setJobDesc] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<{ score: number; matched: string[]; missing: string[] } | null>(null);
 
   const handleAnalyze = () => {
     const r = getATSScore(resumeBuilder.data, jobDesc);

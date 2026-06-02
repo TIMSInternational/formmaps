@@ -105,7 +105,7 @@ export function StatCards({ courseData }: StatCardsProps) {
 
   const completedCount =
     assessmentData?.assessments?.filter(
-      (a: any) => a.status === "completed"
+      (a: { status: string }) => a.status === "completed"
     ).length ?? 0;
   const totalCount = assessmentData?.assessments?.length ?? 3;
 

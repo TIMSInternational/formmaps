@@ -2,14 +2,25 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Loader2, FileText } from 'lucide-react';
 
+// React-PDF dynamic import types — ComponentType<Record<string,unknown>> for JSX usage
+type ReactPDFModule = Awaited<typeof import('@react-pdf/renderer')>;
+
+interface ResumeData {
+  template?: string;
+  personalInfo?: { fullName?: string; email?: string; phone?: string; location?: string; summary?: string };
+  experience?: { jobTitle: string; company: string; startDate: string; endDate: string; location: string; description?: string[] }[];
+  education?: { degree: string; institution: string; graduationDate: string; location: string; gpa?: string }[];
+  skills?: { name: string }[];
+}
+
 interface TemplatePDFPreviewProps {
-  data: any;
+  data: ResumeData;
   templateId: string;
   className?: string;
 }
 
 export function TemplatePDFPreview({ data, templateId, className = "" }: TemplatePDFPreviewProps) {
-  const [pdfComponents, setPdfComponents] = useState<any>(null);
+  const [pdfComponents, setPdfComponents] = useState<ReactPDFModule | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [loadingPDF, setLoadingPDF] = useState(false);
 
@@ -23,14 +34,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
       setLoadingPDF(true);
       
       import('@react-pdf/renderer').then((reactPdf) => {
-        setPdfComponents({
-          PDFViewer: reactPdf.PDFViewer,
-          Document: reactPdf.Document,
-          Page: reactPdf.Page,
-          Text: reactPdf.Text,
-          View: reactPdf.View,
-          StyleSheet: reactPdf.StyleSheet
-        });
+        setPdfComponents(reactPdf);
         setLoadingPDF(false);
       }).catch((error) => {
         setLoadingPDF(false);
@@ -49,7 +53,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
       const getTemplateStyles = (template: string) => {
         const baseStyles = {
           page: {
-            flexDirection: 'column',
+            flexDirection: 'column' as const,
             backgroundColor: '#FFFFFF',
             padding: '0.5in', // Smaller padding for preview
             fontSize: 9, // Smaller font for preview
@@ -57,16 +61,16 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
             lineHeight: 1.1,
           },
           header: {
-            textAlign: 'center',
+            textAlign: 'center' as const,
             marginBottom: 8,
             paddingBottom: 4,
           },
           name: {
             fontSize: 12, // Smaller for preview
-            fontWeight: 'bold',
+            fontWeight: 'bold' as const,
             marginBottom: 3,
             color: '#000000',
-            textTransform: 'uppercase',
+            textTransform: 'uppercase' as const,
           },
           contact: {
             fontSize: 8,
@@ -76,11 +80,11 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
           },
           sectionTitle: {
             fontSize: 10,
-            fontWeight: 'bold',
+            fontWeight: 'bold' as const,
             marginTop: 8,
             marginBottom: 4,
             color: '#000000',
-            textTransform: 'uppercase',
+            textTransform: 'uppercase' as const,
             letterSpacing: 0.5,
             borderBottom: '1pt solid #000000',
             paddingBottom: 2,
@@ -99,14 +103,14 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
             lineHeight: 1.2,
           },
           experienceHeader: {
-            flexDirection: 'row',
+            flexDirection: 'row' as const,
             justifyContent: 'space-between',
             marginBottom: 2,
             alignItems: 'flex-start',
           },
           jobTitle: {
             fontSize: 9,
-            fontWeight: 'bold',
+            fontWeight: 'bold' as const,
             color: '#000000',
             marginBottom: 1,
           },
@@ -118,13 +122,13 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
           date: {
             fontSize: 8,
             color: '#000000',
-            textAlign: 'right',
-            fontWeight: 'normal',
+            textAlign: 'right' as const,
+            fontWeight: 'normal' as const,
           },
           location: {
             fontSize: 8,
             color: '#000000',
-            textAlign: 'right',
+            textAlign: 'right' as const,
             marginTop: 1,
           },
         };
@@ -142,7 +146,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
               ...baseStyles,
               name: { ...baseStyles.name, color: '#7c3aed' },
               sectionTitle: { ...baseStyles.sectionTitle, color: '#7c3aed', borderBottom: '1pt solid #7c3aed' },
-              header: { ...baseStyles.header, textAlign: 'left' },
+              header: { ...baseStyles.header, textAlign: 'left' as const },
             };
           case 'minimal':
             return {
@@ -166,7 +170,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
         }
       };
     
-      const styles = StyleSheet.create(getTemplateStyles(templateId));
+      const styles = StyleSheet.create(getTemplateStyles(templateId) as Parameters<typeof StyleSheet.create>[0]);
 
       // Use sample data for preview
       const sampleData = {
@@ -177,7 +181,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
           location: data.personalInfo?.location || 'City, State',
           summary: data.personalInfo?.summary || 'Professional summary highlighting key skills and experience.'
         },
-        experience: data.experience?.length > 0 ? data.experience.slice(0, 2) : [
+        experience: (data.experience?.length ?? 0) > 0 ? data.experience!.slice(0, 2) : [
           {
             jobTitle: 'Software Engineer',
             company: 'Tech Company',
@@ -187,7 +191,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
             description: ['Key achievement or responsibility']
           }
         ],
-        education: data.education?.length > 0 ? data.education.slice(0, 1) : [
+        education: (data.education?.length ?? 0) > 0 ? data.education!.slice(0, 1) : [
           {
             degree: 'Bachelor of Science',
             institution: 'University Name',
@@ -222,7 +226,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
             {/* Experience */}
             <View>
               <Text style={styles.sectionTitle}>Experience</Text>
-              {sampleData.experience.map((exp: any, index: number) => (
+              {sampleData.experience.map((exp: { jobTitle: string; company: string; startDate: string; endDate: string; location: string; description?: string[] }, index: number) => (
                 <View key={index} style={{ marginBottom: 6 }}>
                   <View style={styles.experienceHeader}>
                     <View style={{ flex: 1 }}>
@@ -248,7 +252,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
             {/* Education */}
             <View>
               <Text style={styles.sectionTitle}>Education</Text>
-              {sampleData.education.map((edu: any, index: number) => (
+              {sampleData.education.map((edu: { degree: string; institution: string; graduationDate: string; location: string; gpa?: string }, index: number) => (
                 <View key={index} style={{ marginBottom: 4 }}>
                   <View style={styles.experienceHeader}>
                     <View style={{ flex: 1 }}>

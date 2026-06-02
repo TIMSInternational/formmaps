@@ -20,9 +20,26 @@ import { toast } from "sonner";
 import { TableRowsSkeleton } from "@/components/skeletons/TableSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
+interface BillingPeriod {
+  period?: string;
+  totalRevenue?: number;
+  totalBookings?: number;
+  platformFeeAmount?: number;
+  dueDate?: string;
+  status?: string;
+}
+
+interface BillingHistoryItem {
+  id: string;
+  period: string;
+  totalRevenue: number;
+  platformFeeAmount: number;
+  status: string;
+}
+
 interface BillingSettingsTabProps {
-  billingCurrent?: any | null;
-  billingHistory?: any[] | null;
+  billingCurrent?: BillingPeriod | null;
+  billingHistory?: BillingHistoryItem[] | null;
   isLoading?: boolean;
 }
 
@@ -32,8 +49,8 @@ export function BillingSettingsTab({
   isLoading: parentLoading,
 }: BillingSettingsTabProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPeriod, setCurrentPeriod] = useState<any>(null);
-  const [billingHistory, setBillingHistory] = useState<any[]>([]);
+  const [currentPeriod, setCurrentPeriod] = useState<BillingPeriod | null>(null);
+  const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 

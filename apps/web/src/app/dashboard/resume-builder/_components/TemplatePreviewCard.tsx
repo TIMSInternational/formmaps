@@ -2,14 +2,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Loader2, FileText } from 'lucide-react';
 
+type ReactPDFModule = Awaited<typeof import('@react-pdf/renderer')>;
+
+interface ResumeData {
+  template?: string;
+  personalInfo?: { fullName?: string; email?: string; phone?: string; location?: string; linkedin?: string; website?: string; summary?: string };
+  experience?: { jobTitle: string; company: string; startDate: string; endDate: string; location: string; description?: string[] }[];
+  education?: { degree: string; institution: string; graduationDate: string; location: string; gpa?: string }[];
+  skills?: { name: string }[];
+}
+
 interface TemplatePreviewCardProps {
-  data: any;
+  data: ResumeData;
   templateId: string;
   className?: string;
 }
 
 export function TemplatePreviewCard({ data, templateId, className = "" }: TemplatePreviewCardProps) {
-  const [pdfComponents, setPdfComponents] = useState<any>(null);
+  const [pdfComponents, setPdfComponents] = useState<ReactPDFModule | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [loadingPDF, setLoadingPDF] = useState(false);
 
@@ -23,14 +33,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
       setLoadingPDF(true);
 
       import('@react-pdf/renderer').then((reactPdf) => {
-        setPdfComponents({
-          PDFViewer: reactPdf.PDFViewer,
-          Document: reactPdf.Document,
-          Page: reactPdf.Page,
-          Text: reactPdf.Text,
-          View: reactPdf.View,
-          StyleSheet: reactPdf.StyleSheet
-        });
+        setPdfComponents(reactPdf);
         setLoadingPDF(false);
       }).catch((error) => {
         setLoadingPDF(false);
@@ -50,7 +53,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
           // Base styles for A4 paper (210 × 297 mm)
           const baseStyles = {
             page: {
-              flexDirection: 'column',
+              flexDirection: 'column' as const,
               backgroundColor: '#FFFFFF',
               padding: '0.75in', // Standard padding like LivePreview
               fontSize: 11, // Standard font size like LivePreview
@@ -61,7 +64,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
             // Common elements - improved spacing
             name: {
               fontSize: 16,
-              fontWeight: 'bold',
+              fontWeight: 'bold' as const,
               marginBottom: 6, // Increased spacing after name
               color: '#000000',
             },
@@ -73,11 +76,11 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
             },
             sectionTitle: {
               fontSize: 12,
-              fontWeight: 'bold',
+              fontWeight: 'bold' as const,
               marginTop: 16, // Increased top margin for better section separation
               marginBottom: 8, // Increased bottom margin for better spacing
               color: '#000000',
-              textTransform: 'uppercase',
+              textTransform: 'uppercase' as const,
               letterSpacing: 0.5,
             },
             text: {
@@ -95,7 +98,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
             },
             jobTitle: {
               fontSize: 12,
-              fontWeight: 'bold',
+              fontWeight: 'bold' as const,
               color: '#000000',
               marginBottom: 1,
             },
@@ -107,7 +110,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
             date: {
               fontSize: 11,
               color: '#000000',
-              fontWeight: 'normal',
+              fontWeight: 'normal' as const,
             },
             skillItem: {
               fontSize: 11,
@@ -125,12 +128,12 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                 ...baseStyles,
                 page: { ...baseStyles.page, flexDirection: 'column' },
                 header: {
-                  textAlign: 'center',
+                  textAlign: 'center' as const,
                   marginBottom: 14, // Reduced from 20 for better space utilization
                   paddingBottom: 8, // Reduced from 10
                   borderBottom: '2pt solid #2563eb',
                 },
-                name: { ...baseStyles.name, color: '#2563eb', textTransform: 'uppercase' },
+                name: { ...baseStyles.name, color: '#2563eb', textTransform: 'uppercase' as const },
                 sectionTitle: {
                   ...baseStyles.sectionTitle,
                   color: '#2563eb',
@@ -141,7 +144,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                   marginBottom: 6, // Reduced from 8
                 },
                 experienceHeader: {
-                  flexDirection: 'row',
+                  flexDirection: 'row' as const,
                   justifyContent: 'space-between',
                   marginBottom: 3, // Reduced from 4
                   alignItems: 'flex-start',
@@ -200,7 +203,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                   marginBottom: 6, // Reduced from 8
                 },
                 experienceHeader: {
-                  flexDirection: 'column',
+                  flexDirection: 'column' as const,
                   marginBottom: 3, // Reduced from 4
                 },
               };
@@ -211,7 +214,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                 ...baseStyles,
                 page: { ...baseStyles.page, flexDirection: 'column' },
                 header: {
-                  textAlign: 'left',
+                  textAlign: 'left' as const,
                   marginBottom: 16, // Reduced from 20
                   paddingBottom: 8, // Reduced from 10
                 },
@@ -228,7 +231,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                   marginBottom: 6, // Reduced from 8
                 },
                 experienceHeader: {
-                  flexDirection: 'row',
+                  flexDirection: 'row' as const,
                   justifyContent: 'space-between',
                   marginBottom: 3,
                   alignItems: 'flex-start',
@@ -241,7 +244,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                 ...baseStyles,
                 page: { ...baseStyles.page, flexDirection: 'column' },
                 header: {
-                  textAlign: 'center',
+                  textAlign: 'center' as const,
                   marginBottom: 16, // Further reduced from 20
                   paddingBottom: 10, // Further reduced padding
                   borderBottom: '4pt solid #1f2937', // Thicker border for distinction
@@ -252,9 +255,9 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                   ...baseStyles.name,
                   fontSize: 20, // Reduced from 22 to prevent overlap
                   color: '#1f2937',
-                  textTransform: 'none',
+                  textTransform: 'none' as const,
                   letterSpacing: 1.5, // Reduced letter spacing
-                  fontWeight: 'bold',
+                  fontWeight: 'bold' as const,
                   marginBottom: 10, // Increased from 6 to prevent overlap with contact info
                   lineHeight: 1.2, // Added proper line height
                 },
@@ -271,7 +274,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                   backgroundColor: '#1f2937', // Dark background
                   fontSize: 12, // Slightly smaller
                   borderBottom: 'none',
-                  textTransform: 'uppercase',
+                  textTransform: 'uppercase' as const,
                   letterSpacing: 1.2, // Reduced letter spacing
                   padding: 3, // Further reduced padding
                   marginTop: 10, // Further reduced from 12
@@ -281,19 +284,19 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                   ...baseStyles.jobTitle,
                   fontSize: 13, // Reduced from 14
                   color: '#1f2937',
-                  fontWeight: 'bold',
+                  fontWeight: 'bold' as const,
                 },
                 jobTitleMain: {
                   ...baseStyles.jobTitle,
                   fontSize: 13,
                   color: '#1f2937', // Dark text for main content
-                  fontWeight: 'bold',
+                  fontWeight: 'bold' as const,
                 },
                 company: {
                   ...baseStyles.company,
                   fontSize: 11, // Reduced from 12
                   color: '#4b5563',
-                  fontStyle: 'italic', // Italicized company names
+                  fontStyle: 'italic' as const, // Italicized company names
                 },
                 companyMain: {
                   ...baseStyles.company,
@@ -313,7 +316,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                   marginLeft: 16, // Reduced indentation
                 },
                 experienceHeader: {
-                  flexDirection: 'row',
+                  flexDirection: 'row' as const,
                   justifyContent: 'space-between',
                   marginBottom: 4, // Reduced from 6
                   alignItems: 'flex-start',
@@ -324,7 +327,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                   ...baseStyles.date,
                   fontSize: 10, // Reduced from 11
                   color: '#6b7280',
-                  fontWeight: 'bold',
+                  fontWeight: 'bold' as const,
                 },
               };
 
@@ -334,7 +337,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                 ...baseStyles,
                 page: { ...baseStyles.page, flexDirection: 'column' },
                 header: {
-                  textAlign: 'left',
+                  textAlign: 'left' as const,
                   marginBottom: 20, // Increased spacing after header
                   paddingBottom: 12, // Increased padding
                   backgroundColor: '#f0fdf4',
@@ -350,7 +353,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                   borderBottom: 'none',
                 },
                 experienceHeader: {
-                  flexDirection: 'row',
+                  flexDirection: 'row' as const,
                   justifyContent: 'space-between',
                   marginBottom: 3,
                   alignItems: 'flex-start',
@@ -358,8 +361,8 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                   padding: 4,
                 },
                 skillsGrid: {
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
+                  flexDirection: 'row' as const,
+                  flexWrap: 'wrap' as const,
                   gap: 8,
                 },
                 skillTag: {
@@ -375,7 +378,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
               return {
                 ...baseStyles,
                 header: {
-                  textAlign: 'center',
+                  textAlign: 'center' as const,
                   marginBottom: 8,
                   paddingBottom: 4,
                 },
@@ -384,7 +387,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                   borderBottom: '1pt solid #000000',
                 },
                 experienceHeader: {
-                  flexDirection: 'row',
+                  flexDirection: 'row' as const,
                   justifyContent: 'space-between',
                   marginBottom: 2,
                   alignItems: 'flex-start',
@@ -393,7 +396,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
           }
         };
       
-        const styles = StyleSheet.create(getTemplateStyles(templateId));
+        const styles = StyleSheet.create(getTemplateStyles(templateId) as Parameters<typeof StyleSheet.create>[0]);
 
         // Optimized sample data for single-page layout
         const sampleData = {
@@ -406,7 +409,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
             website: data.personalInfo?.website || 'alexandra-portfolio.com',
             summary: data.personalInfo?.summary || 'Results-driven professional with 8+ years of experience in project management and strategic planning. Proven track record of leading cross-functional teams and delivering projects ahead of schedule.'
           },
-          experience: data.experience?.length > 0 ? data.experience.slice(0, 2) : [
+          experience: (data.experience?.length ?? 0) > 0 ? data.experience!.slice(0, 2) : [
             {
               jobTitle: 'Senior Project Manager',
               company: 'TechCorp Solutions',
@@ -432,7 +435,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
               ]
             }
           ],
-          education: data.education?.length > 0 ? data.education.slice(0, 1) : [
+          education: (data.education?.length ?? 0) > 0 ? data.education!.slice(0, 1) : [
             {
               degree: 'Master of Business Administration (MBA)',
               institution: 'Stanford University',
@@ -441,7 +444,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
               gpa: '3.8/4.0'
             }
           ],
-          skills: data.skills?.length > 0 ? data.skills.slice(0, 8) : [
+          skills: (data.skills?.length ?? 0) > 0 ? data.skills!.slice(0, 8) : [
             { name: 'Project Management' },
             { name: 'Agile/Scrum' },
             { name: 'Stakeholder Management' },
@@ -477,12 +480,12 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                       <Text style={styles.contact}>{sampleData.personalInfo.location}</Text>
 
                       <Text style={styles.sectionTitle}>Skills</Text>
-                      {sampleData.skills.map((skill: any, index: number) => (
+                      {sampleData.skills.map((skill: { name: string }, index: number) => (
                         <Text key={index} style={styles.text}>• {skill.name}</Text>
                       ))}
 
                       <Text style={styles.sectionTitle}>Education</Text>
-                      {sampleData.education.map((edu: any, index: number) => (
+                      {sampleData.education.map((edu: { degree: string; institution: string; graduationDate: string; location: string; gpa?: string }, index: number) => (
                         <View key={index} style={{ marginBottom: 3 }}>
                           <Text style={{...styles.text, fontWeight: 'bold'}}>{edu.degree}</Text>
                           <Text style={styles.text}>{edu.institution}</Text>
@@ -502,7 +505,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                       <Text style={styles.textMain}>{sampleData.personalInfo.summary}</Text>
 
                       <Text style={styles.sectionTitleMain}>Professional Experience</Text>
-                      {sampleData.experience.map((exp: any, index: number) => (
+                      {sampleData.experience.map((exp: { jobTitle: string; company: string; startDate: string; endDate: string; location: string; description?: string[] }, index: number) => (
                         <View key={index} style={{ marginBottom: 4 }}>
                           <View style={styles.experienceHeader}>
                             <Text style={styles.jobTitleMain}>{exp.jobTitle}</Text>
@@ -550,7 +553,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                     {/* Professional Experience */}
                     <View style={{ marginBottom: templateId === 'executive' ? 4 : 8 }}>
                       <Text style={styles.sectionTitle}>Professional Experience</Text>
-                      {sampleData.experience.map((exp: any, index: number) => (
+                      {sampleData.experience.map((exp: { jobTitle: string; company: string; startDate: string; endDate: string; location: string; description?: string[] }, index: number) => (
                         <View key={index} style={{ marginBottom: 4 }}>
                           <View style={styles.experienceHeader}>
                             <View style={{ flex: 1 }}>
@@ -571,7 +574,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                     {/* Education */}
                     <View style={{ marginBottom: templateId === 'executive' ? 4 : 8 }}>
                       <Text style={styles.sectionTitle}>Education</Text>
-                      {sampleData.education.map((edu: any, index: number) => (
+                      {sampleData.education.map((edu: { degree: string; institution: string; graduationDate: string; location: string; gpa?: string }, index: number) => (
                         <View key={index} style={{ marginBottom: templateId === 'executive' ? 2 : 4 }}>
                           <View style={styles.experienceHeader}>
                             <View style={{ flex: 1 }}>
@@ -592,15 +595,15 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                       <Text style={styles.sectionTitle}>Core Competencies</Text>
                       {templateId === 'tech' ? (
                         <View style={styles.skillsGrid}>
-                          {sampleData.skills.map((skill: any, index: number) => (
+                          {sampleData.skills.map((skill: { name: string }, index: number) => (
                             <View key={index} style={styles.skillTag}>
                               <Text style={{ fontSize: 6, color: '#065f46' }}>{skill.name}</Text>
                             </View>
                           ))}
                         </View>
                       ) : (
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                          {sampleData.skills.map((skill: any, index: number) => (
+                        <View style={{ flexDirection: 'row' as const, flexWrap: 'wrap' }}>
+                          {sampleData.skills.map((skill: { name: string }, index: number) => (
                             <Text key={index} style={styles.skillItem}>{skill.name}</Text>
                           ))}
                         </View>

@@ -87,8 +87,8 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
   // Track if data is currently being debounced
   const isDataChanging = JSON.stringify(data) !== JSON.stringify(debouncedData);
 
-  const [pdfComponents, setPdfComponents] = useState<any>(null);
-  const [templateComponent, setTemplateComponent] = useState<any>(null);
+  const [pdfComponents, setPdfComponents] = useState<Awaited<typeof import('@react-pdf/renderer')> | null>(null);
+  const [templateComponent, setTemplateComponent] = useState<React.ComponentType<{ data: typeof data }> | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [loadingPDF, setLoadingPDF] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -105,9 +105,7 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
 
       import("@react-pdf/renderer")
         .then((reactPdf) => {
-          setPdfComponents({
-            PDFViewer: reactPdf.PDFViewer,
-          });
+          setPdfComponents(reactPdf);
           setLoadingPDF(false);
         })
         .catch((error) => {

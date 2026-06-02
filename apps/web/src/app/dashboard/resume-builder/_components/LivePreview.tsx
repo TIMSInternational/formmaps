@@ -69,6 +69,8 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+type ReactPDFModule = Awaited<typeof import('@react-pdf/renderer')>;
+
 export function LivePreview() {
   const { resumeBuilder } = useGlobalStore();
   const { data } = resumeBuilder;
@@ -80,7 +82,7 @@ export function LivePreview() {
   // Track if data is currently being debounced
   const isDataChanging = JSON.stringify(data) !== JSON.stringify(debouncedData);
   
-  const [pdfComponents, setPdfComponents] = useState<any>(null);
+  const [pdfComponents, setPdfComponents] = useState<ReactPDFModule | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [loadingPDF, setLoadingPDF] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -96,14 +98,7 @@ export function LivePreview() {
       setPdfError(null);
       
       import('@react-pdf/renderer').then((reactPdf) => {
-        setPdfComponents({
-          PDFViewer: reactPdf.PDFViewer,
-          Document: reactPdf.Document,
-          Page: reactPdf.Page,
-          Text: reactPdf.Text,
-          View: reactPdf.View,
-          StyleSheet: reactPdf.StyleSheet
-        });
+        setPdfComponents(reactPdf);
         setLoadingPDF(false);
       }).catch((error) => {
         setPdfError('Failed to load PDF components. Please try again.');

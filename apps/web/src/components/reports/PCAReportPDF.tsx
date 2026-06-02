@@ -256,7 +256,7 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
       <Page size="A4" style={sharedStyles.page}>
         {/* Header Banner */}
         <View style={styles.headerBanner}>
-          <Text style={styles.headerLogo}>TimCare</Text>
+          <Text style={styles.headerLogo}>FormMaps</Text>
           <Text style={styles.headerTitle}>PCA Personality Profile Report</Text>
           <Text style={styles.headerSubtitle}>Personal Characteristics Assessment • DISC-Based Analysis</Text>
         </View>

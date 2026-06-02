@@ -89,8 +89,8 @@ export default function AssessmentsPage() {
     }
   };
 
-  const liaAssessment = assessmentProgress?.assessments?.find((a: any) => a.type === "mil");
-  const evaluationAssessment = assessmentProgress?.assessments?.find((a: any) => a.type === "evaluation");
+  const liaAssessment = assessmentProgress?.assessments?.find((a: { type: string }) => a.type === "mil");
+  const evaluationAssessment = assessmentProgress?.assessments?.find((a: { type: string }) => a.type === "evaluation");
 
   const assessments = [
     {

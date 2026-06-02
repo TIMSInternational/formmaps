@@ -47,6 +47,7 @@ import { DynamicBookingModal } from "@/lib/dynamic-imports";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { getStudentCounselorSessions, cancelCounselorSession } from "@/services/counselorSessionService";
 import type { CounselorSession } from "@/services/counselorSessionService";
+import type { Coach } from "@/types/coach";
 
 
 interface Session {
@@ -83,7 +84,7 @@ export default function MySessionsPage() {
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-  const [rescheduleCoach, setRescheduleCoach] = useState<any>(null);
+  const [rescheduleCoach, setRescheduleCoach] = useState<Coach | null>(null);
   // Counselor session cancel
   const [cancelCounselorOpen, setCancelCounselorOpen] = useState(false);
   const [selectedCounselorSession, setSelectedCounselorSession] = useState<CounselorSession | null>(null);
@@ -107,7 +108,10 @@ export default function MySessionsPage() {
 
       const rawSessions = unwrapList(response, "sessions");
 
-      const formattedSessions = rawSessions.map((session: any) => {
+      interface RawSession extends Partial<Session> {
+        coach?: { name?: string; image?: string; title?: string };
+      }
+      const formattedSessions = rawSessions.map((session: RawSession) => {
         const startTime = session.startTime || session.slot?.start;
         const endTime = session.endTime || session.slot?.end;
 
@@ -144,7 +148,7 @@ export default function MySessionsPage() {
         };
       });
 
-      setSessions(formattedSessions);
+      setSessions(formattedSessions as Session[]);
     } catch (error) {
       toast.error(t("sessions.messages.failedToLoad"));
     } finally {
@@ -171,8 +175,8 @@ export default function MySessionsPage() {
       toast.success("Session cancelled");
       setCancelCounselorOpen(false);
       fetchCounselorSessions();
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to cancel session");
     }
   };
 
@@ -294,7 +298,7 @@ export default function MySessionsPage() {
   };
 
   const now = new Date();
-  const isSessionPast = (s: any) => {
+  const isSessionPast = (s: { endTime?: string; startTime?: string }) => {
     const endTime = s.endTime || s.startTime;
     return endTime ? new Date(endTime) < now : false;
   };

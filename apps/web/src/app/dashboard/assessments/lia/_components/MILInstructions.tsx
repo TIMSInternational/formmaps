@@ -8,8 +8,38 @@ import {
   MILExamMetadata,
   getMILExamInstructions,
   MIL_EXAMS,
+  type MILExamId,
 } from "@/services/milService";
 import MILPracticeExamples from "./MILPracticeExamples";
+
+interface MILExampleItem {
+  question?: string;
+  data?: string[][];
+  letterPairs?: { top: string; bottom: string }[];
+  answer?: string | number;
+  correctAnswer?: string | number;
+  explanation?: string;
+}
+
+interface MILInstructionExample {
+  letterPairs?: { top: string; bottom: string }[];
+  numbers?: number[];
+  statements?: string[];
+  question?: string;
+  options?: string[];
+  letters?: string[];
+  grid?: unknown;
+  correctAnswer?: string | number;
+  explanation?: string;
+}
+
+interface MILInstructionData {
+  title?: string;
+  description?: string;
+  instructions?: string[] | string;
+  examples?: MILExampleItem[] | string;
+  example?: MILInstructionExample;
+}
 
 interface MILInstructionsProps {
   exam: MILExamMetadata;
@@ -27,7 +57,7 @@ export default function MILInstructions({
   const [currentStep, setCurrentStep] = useState<
     "instructions" | "practice" | "test"
   >("instructions");
-  const [instructions, setInstructions] = useState<any>(null);
+  const [instructions, setInstructions] = useState<MILInstructionData | string | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     loadInstructions();
@@ -43,7 +73,7 @@ export default function MILInstructions({
   const loadInstructions = async () => {
     try {
       setLoading(true);
-      const data = await getMILExamInstructions(exam.id as any, language);
+      const data = await getMILExamInstructions(exam.id as MILExamId, language);
       setInstructions(data);
     } catch (error) {
       // error handled silently
@@ -106,6 +136,21 @@ export default function MILInstructions({
   const getInstructionContent = () => {
     // Show API instructions if available
     if (instructions) {
+      if (typeof instructions === "string") {
+        return (
+          <div className="space-y-6">
+            <div className="bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/30 rounded-lg p-4 mb-6">
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                🎯 {t("dashboard.testInstructions")}
+              </h3>
+              <div className="text-blue-800">
+                <p>{instructions}</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      // instructions is now narrowed to MILInstructionData
       return (
         <div className="space-y-6">
           <div className="bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/30 rounded-lg p-4 mb-6">
@@ -113,9 +158,6 @@ export default function MILInstructions({
               🎯 {t("dashboard.testInstructions")}
             </h3>
             <div className="text-blue-800">
-              {typeof instructions === "string" ? (
-                <p>{instructions}</p>
-              ) : (
                 <div>
                   {instructions.title && (
                     <h4 className="font-semibold mb-2">{instructions.title}</h4>
@@ -139,7 +181,6 @@ export default function MILInstructions({
                     </div>
                   )}
                 </div>
-              )}
             </div>
           </div>
 
@@ -151,7 +192,7 @@ export default function MILInstructions({
               </h3>
               <div className="space-y-4">
                 {Array.isArray(instructions.examples) ? (
-                  instructions.examples.map((example: any, index: number) => (
+                  instructions.examples.map((example: MILExampleItem | string, index: number) => (
                     <div
                       key={index}
                       className="bg-card border border-yellow-500/30 rounded-lg p-4"
@@ -276,7 +317,7 @@ export default function MILInstructions({
                             (num: number, index: number) => {
                               // Determine if this is the lowest, highest, or middle number
                               const sorted = [
-                                ...instructions.example.numbers,
+                                ...(instructions.example?.numbers ?? []),
                               ].sort((a, b) => a - b);
                               const lowest = sorted[0];
                               const highest = sorted[sorted.length - 1];
@@ -493,7 +534,7 @@ export default function MILInstructions({
                               },
                             ];
 
-                            const getTransform = (item: any) => {
+                            const getTransform = (item: { rotationDegree: number; isMirrored: boolean }) => {
                               let transform = "";
                               if (item.rotationDegree !== 0) {
                                 transform += `rotate(${item.rotationDegree}deg)`;
@@ -643,7 +684,7 @@ export default function MILInstructions({
     return (
       <div>
         <MILPracticeExamples
-          examId={exam.id as any}
+          examId={exam.id as MILExamId}
           onComplete={() => setCurrentStep("test")}
           onBack={() => setCurrentStep("instructions")}
         />
