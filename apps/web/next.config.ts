@@ -71,7 +71,7 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-XSS-Protection", value: "0" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=()" },
           {
             key: "Content-Security-Policy",
             value: [
@@ -80,8 +80,8 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://images.unsplash.com https://*.amazonaws.com",
-              "connect-src 'self' http://localhost:* https://*.formmaps.ai https://cognito-idp.us-east-1.amazonaws.com https://*.timshr.com https://*.awsapprunner.com",
-              "frame-src 'self' https://timshr.com https://*.timshr.com",
+              "connect-src 'self' http://localhost:* https://*.formmaps.ai https://cognito-idp.us-east-1.amazonaws.com https://*.timshr.com https://*.awsapprunner.com https://*.daily.co https://*.wss.daily.co wss://*.daily.co",
+              "frame-src 'self' https://timshr.com https://*.timshr.com https://*.daily.co",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
