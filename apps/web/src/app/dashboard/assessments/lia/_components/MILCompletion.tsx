@@ -1,8 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "motion/react";
-import { CheckCircle2, ArrowRight } from "lucide-react";
+import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useGlobalStore } from "@/store/useGlobalStore";
+import { getUserEvaluationGroups, createEvaluationGroup } from "@/services/evaluationService";
+import { toast } from "sonner";
 
 interface MILCompletionProps {
   onViewResults: () => void;
@@ -13,6 +17,44 @@ export default function MILCompletion({
   onReturnToDashboard,
 }: MILCompletionProps) {
   const router = useRouter();
+  const { user, language } = useGlobalStore();
+  const [starting, setStarting] = useState(false);
+
+  const handleStart360 = async () => {
+    try {
+      setStarting(true);
+      const groups = await getUserEvaluationGroups(user?.id || "", language);
+
+      let selfGroup = groups?.find(
+        (g) => g.groupType === "Parent" && g.relation === "Self"
+      );
+
+      if (!selfGroup || !selfGroup.id) {
+        selfGroup = await createEvaluationGroup({
+          evaluatorName: user?.name || "Self",
+          evaluatorEmail: user?.email || "",
+          relation: "Self",
+          groupType: "Parent",
+          evaluatedUserId: user?.id || "",
+        });
+      }
+
+      if (selfGroup?.id) {
+        if (selfGroup.isEvaluationCompleted) {
+          // Self-eval already done — go to evaluator management
+          router.push("/dashboard/assessments/evaluation");
+        } else {
+          router.push(`/evaluation/evaluator?t=${selfGroup.id}`);
+        }
+      } else {
+        toast.error("Failed to start evaluation. Please try again.");
+      }
+    } catch {
+      toast.error("Failed to start evaluation. Please try again.");
+    } finally {
+      setStarting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-secondary flex items-center justify-center">
@@ -23,7 +65,6 @@ export default function MILCompletion({
           transition={{ duration: 0.2 }}
           className="bg-card rounded-lg shadow-lg border p-8 text-center"
         >
-          {/* Success Icon */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -51,7 +92,6 @@ export default function MILCompletion({
             Thank you for completing all 5 subtests. Your responses have been saved and will be reviewed by your counselor.
           </motion.p>
 
-          {/* Next Step Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -60,11 +100,10 @@ export default function MILCompletion({
           >
             <p className="text-sm font-semibold text-blue-900 mb-1">Next Step</p>
             <p className="text-sm text-blue-700">
-              Complete the <strong>360° Evaluation</strong> to get a comprehensive view of your strengths and areas for growth.
+              Complete the <strong>360° Evaluation</strong> — start by evaluating yourself, then invite peers, parents, and teachers to evaluate you.
             </p>
           </motion.div>
 
-          {/* Action Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -72,11 +111,15 @@ export default function MILCompletion({
             className="flex flex-col gap-3"
           >
             <button
-              onClick={() => router.push("/dashboard/assessments?tab=360")}
-              className="w-full bg-[#065292] text-white py-3 px-6 rounded-lg hover:bg-[#054a83] transition-colors font-medium flex items-center justify-center gap-2"
+              onClick={handleStart360}
+              disabled={starting}
+              className="w-full bg-[#065292] text-white py-3 px-6 rounded-lg hover:bg-[#054a83] transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              Start 360° Evaluation
-              <ArrowRight className="w-4 h-4" />
+              {starting ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Starting...</>
+              ) : (
+                <>Start 360° Self-Evaluation <ArrowRight className="w-4 h-4" /></>
+              )}
             </button>
             <button
               onClick={onReturnToDashboard}
