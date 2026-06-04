@@ -106,8 +106,13 @@ export default function MILExamRunner({
         saveMILSession(newSession);
       }
       setQuestionStartTime(Date.now());
-    } catch {
-      // error handled silently
+    } catch (err: unknown) {
+      // If 409 (already completed), signal parent to skip this exam
+      const status = (err as { status?: number })?.status;
+      if (status === 409) {
+        onComplete();
+        return;
+      }
     } finally {
       setLoading(false);
     }
