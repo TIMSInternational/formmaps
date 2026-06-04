@@ -160,7 +160,7 @@ export default function EvaluatorPage() {
       const submitData = {
         evaluationGroupId: token || "",
         evaluatorEmail: evaluatorData?.evaluatorEmail || "",
-        token: invitationToken || "",
+        token: invitationToken || token || "",
         answers,
         comment: "",
       };
