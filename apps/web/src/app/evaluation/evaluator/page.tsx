@@ -15,7 +15,7 @@ export default function EvaluatorPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { language } = useGlobalStore();
-  const token = searchParams.get("t");
+  const token = searchParams.get("token");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(true);
@@ -158,7 +158,9 @@ export default function EvaluatorPage() {
         }));
 
       const submitData = {
-        evaluationGroupId: token || "",
+        // The backend resolves the group by (id + invitationToken). The URL only
+        // carries the token, so use the real group id returned by get360EvaluatorForm.
+        evaluationGroupId: evaluationData.evaluatorGroupId,
         evaluatorEmail: evaluatorData?.evaluatorEmail || "",
         token: invitationToken || token || "",
         answers,
