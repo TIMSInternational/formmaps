@@ -28,7 +28,13 @@ import {
   Star,
   GraduationCap,
   Filter,
+  Lock,
+  CheckCircle2,
+  Circle,
+  ArrowRight,
 } from "lucide-react";
+import { useAssessmentProgress } from "@/hooks/useAssessmentQueries";
+import Link from "next/link";
 import { EmptyState } from "@/components/empty-state/EmptyState";
 import { ActiveFilterPills, type FilterPill } from "@/components/filters/ActiveFilterPills";
 import { CompareBar } from "@/components/compare/CompareBar";
@@ -45,6 +51,84 @@ export default function UniversityPage() {
   const userId = user?.id ?? "mock-user";
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // Assessment gate — same as Career Paths Explorer
+  const { data: assessmentProgress, isLoading: assessmentLoading } = useAssessmentProgress(userId);
+  const allAssessmentsComplete = assessmentProgress?.overallCompletion?.completedAssessments === 3;
+
+  if (!assessmentLoading && !allAssessmentsComplete) {
+    const pcaStatus = assessmentProgress?.pcaAssessment?.status || "not_started";
+    const milStatus = assessmentProgress?.milAssessment?.status || "not_started";
+    const evalStatus = assessmentProgress?.evaluationAssessment?.status || "not_started";
+
+    const assessments = [
+      { name: "PCA Assessment", description: "Discover your DISC personality profile", status: pcaStatus, href: "/dashboard/assessments/pca" },
+      { name: "LIA Assessment", description: "Measure your cognitive abilities across 5 dimensions", status: milStatus, href: "/dashboard/assessments/lia" },
+      { name: "360° Evaluation", description: "Gather feedback from peers, parents, and teachers", status: evalStatus, href: "/dashboard/assessments/evaluation" },
+    ];
+    const completedCount = assessments.filter((a) => a.status === "completed").length;
+
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto py-8">
+        <div className="text-center space-y-3">
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200/30">
+            <Lock className="w-7 h-7 text-white" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Complete Your Assessments</h1>
+          <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto leading-relaxed">
+            Finish all 3 assessments to unlock personalized university recommendations based on your profile, competencies, and preferences.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground">
+          <span>{completedCount}/3 completed</span>
+          <div className="flex gap-1.5">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className={`w-8 h-2 rounded-full transition-colors ${i < completedCount ? "bg-emerald-500" : "bg-muted"}`} />
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {assessments.map((assessment) => {
+            const isComplete = assessment.status === "completed";
+            const isInProgress = assessment.status === "in_progress";
+            return (
+              <Link key={assessment.name} href={assessment.href}
+                className={`flex items-center gap-4 p-5 rounded-2xl border transition-all duration-200 ${
+                  isComplete ? "bg-emerald-50/50 border-emerald-200/60" : "bg-card border-border hover:border-primary/30 hover:shadow-sm"
+                }`}
+              >
+                <div className="shrink-0">
+                  {isComplete ? <CheckCircle2 className="w-6 h-6 text-emerald-500" /> : <Circle className={`w-6 h-6 ${isInProgress ? "text-amber-400" : "text-muted-foreground/30"}`} />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className={`text-sm font-semibold ${isComplete ? "text-emerald-700" : "text-foreground"}`}>
+                    {assessment.name}
+                    {isInProgress && <span className="ml-2 text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">In Progress</span>}
+                  </h3>
+                  <p className={`text-xs mt-0.5 ${isComplete ? "text-emerald-600/70" : "text-muted-foreground"}`}>{assessment.description}</p>
+                </div>
+                {!isComplete && <ArrowRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />}
+              </Link>
+            );
+          })}
+        </div>
+
+        {completedCount < 3 && (() => {
+          const next = assessments.find((a) => a.status !== "completed");
+          return next ? (
+            <div className="text-center pt-2">
+              <Link href={next.href} className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm">
+                {next.status === "in_progress" ? "Continue Assessment" : "Start Next Assessment"}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          ) : null;
+        })()}
+      </div>
+    );
+  }
 
   // Initialize filters from URL params
   const [filters, setFiltersState] = React.useState<UniversityFilters>(() => {
