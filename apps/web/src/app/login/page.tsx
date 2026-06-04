@@ -70,6 +70,7 @@ export default function LoginPage() {
         email: data.email,
         name: response.user?.name || data.email.split("@")[0],
         role: roleName,
+        accessToken: response.token,
         schoolId: response.user?.schoolId || null,
         avatar: response.user?.avatarUrl || response.user?.profilePicture || response.user?.avatar || response.user?.image || null,
         permissions: response.user?.permissions || [],

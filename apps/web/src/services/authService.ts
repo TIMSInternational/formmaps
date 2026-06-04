@@ -155,14 +155,9 @@ export async function signUp(
  * For synchronous access to user data, use useGlobalStore().user instead.
  */
 export async function getCurrentUser(): Promise<UserProfile> {
-  const response = await fetch(`${API_BASE}/api/v1/user/me`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) throw new Error("Not authenticated");
-
-  const result = await response.json();
-  const user = result.data || result;
+  const { apiRequest } = await import("@/lib/api/apiClient");
+  const result = await apiRequest("/api/v1/user/me");
+  const user = result?.data || result;
   const role = user.role?.name || user.roleName || "student";
 
   return {

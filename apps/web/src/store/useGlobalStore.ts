@@ -120,6 +120,7 @@ interface GlobalState {
     contractEnd?: string | null;
     subscriptionStatus?: "active" | "past_due" | "canceled" | "none" | null;
     permissions?: string[];
+    accessToken?: string | null;
     isAuthenticated: boolean;
   };
   setUser: (user: Partial<GlobalState["user"]>) => void;
@@ -250,20 +251,21 @@ export const useGlobalStore = create<GlobalState>()(
               image: null,
               avatar: null,
               permissions: [],
+              accessToken: null,
               isAuthenticated: false,
             },
           });
         },
 
-        // Initialize authentication state from logged_in cookie + persisted store
+        // Initialize authentication state from cookie OR persisted token
         initializeAuth: async () => {
           if (typeof window === "undefined") return;
 
           const loggedIn = document.cookie.includes("logged_in=true");
           const currentUser = get().user;
 
-          if (loggedIn && currentUser.email) {
-            // Cookie present and we have persisted user data — restore session
+          if ((loggedIn || currentUser.accessToken) && currentUser.email) {
+            // Cookie or token present and we have persisted user data — restore session
             set((state) => ({
               user: { ...state.user, isAuthenticated: true },
             }));
@@ -278,6 +280,7 @@ export const useGlobalStore = create<GlobalState>()(
                 role: null,
                 image: null,
                 avatar: null,
+                accessToken: null,
                 isAuthenticated: false,
               },
             });

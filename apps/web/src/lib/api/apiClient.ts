@@ -118,10 +118,18 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Request interceptor — no longer attaches Authorization header.
-// Auth is handled via httpOnly cookies (withCredentials: true).
+// Request interceptor — attach Bearer token from store as fallback for cross-site cookie blocking
 apiClient.interceptors.request.use(
-  config => config,
+  config => {
+    if (typeof window !== "undefined") {
+      const { useGlobalStore } = require("@/store/useGlobalStore");
+      const token = useGlobalStore.getState().user.accessToken;
+      if (token && !config.headers?.["Authorization"]) {
+        config.headers.set("Authorization", `Bearer ${token}`);
+      }
+    }
+    return config;
+  },
   error => Promise.reject(error)
 );
 
