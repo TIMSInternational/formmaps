@@ -63,7 +63,7 @@ export default function LoginPage() {
       const response = await loginApi(data.email, data.password);
       if (!response.token) throw new Error("No token received from server");
 
-      const roleName = response.user?.role?.name || null;
+      const roleName = response.user?.roleName || response.user?.role?.name || null;
 
       setUser({
         id: response.user?.id || "",
@@ -78,12 +78,10 @@ export default function LoginPage() {
       });
 
       const normalized = normalizeRole(roleName);
-      // ALWAYS use roleHomeMap for the user's role — ignore redirect param
-      // for non-students to prevent sending admins to student pages
+      // Always send user to their role's home page — redirect param is only
+      // honored if it matches a route the user's role can access
       const roleHome = roleHomeMap[normalized];
-      const redirectTo = normalized === Roles.STUDENT
-        ? (defaultRedirect !== "/dashboard" ? defaultRedirect : roleHome)
-        : roleHome;
+      const redirectTo = roleHome;
 
       // Hard navigation to avoid race conditions with AuthWrapper's router.replace
       window.location.href = redirectTo;
