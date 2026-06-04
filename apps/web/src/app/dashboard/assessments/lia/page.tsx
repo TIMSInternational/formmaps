@@ -236,7 +236,7 @@ export default function MILAssessmentPage() {
 
   // MIL Assessment Overview Screen
   if (currentStep === "overview") {
-    const allComplete = completedExams.length >= exams.length && exams.length > 0;
+    const allComplete = exams.length > 0 && exams.every(e => completedExams.includes(e.id));
 
     return (
       <div className="max-w-4xl mx-auto py-6">
@@ -300,8 +300,8 @@ export default function MILAssessmentPage() {
           {/* Subtests — compact grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {exams.map((exam, index) => {
-              const isDone = completedExams.includes(exam.id) || index < completedExams.length;
-              const isNext = !isDone && index === completedExams.length;
+              const isDone = completedExams.includes(exam.id);
+              const isNext = !isDone && !completedExams.includes(exam.id);
 
               return (
                 <div
@@ -355,7 +355,10 @@ export default function MILAssessmentPage() {
             </div>
           ) : (
             <button
-              onClick={() => handleStartExam(completedExams.length)}
+              onClick={() => {
+                const nextIndex = exams.findIndex(e => !completedExams.includes(e.id));
+                handleStartExam(nextIndex >= 0 ? nextIndex : 0);
+              }}
               className="w-full bg-foreground text-background hover:bg-foreground/90 rounded-xl px-6 py-2.5 font-semibold text-sm transition-colors flex items-center justify-center gap-2"
             >
               {completedExams.length === 0
