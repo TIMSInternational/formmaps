@@ -124,6 +124,7 @@ apiClient.interceptors.request.use(
     if (typeof window !== "undefined") {
       const { useGlobalStore } = require("@/store/useGlobalStore");
       const token = useGlobalStore.getState().user.accessToken;
+      console.log("[API] Request:", config.url, "| hasToken:", !!token);
       if (token && !config.headers?.["Authorization"]) {
         config.headers.set("Authorization", `Bearer ${token}`);
       }

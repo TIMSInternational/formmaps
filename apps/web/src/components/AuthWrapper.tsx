@@ -90,6 +90,12 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
   // Compute redirect target synchronously — if non-null, we show spinner instead of children
   const redirectTarget = useMemo(() => {
+    console.log("[AUTH-WRAPPER] Computing redirect:", {
+      isInitializing, hasHydrated, pathname,
+      isAuthenticated: user.isAuthenticated, role,
+      isProtectedRoute, isPublicOnboarding,
+    });
+
     if (isInitializing || !hasHydrated) return null;
     if (isPublicOnboarding) return null;
 
@@ -97,14 +103,17 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
     // Unauthenticated on protected route
     if (!user.isAuthenticated && isProtectedRoute) {
+      console.log("[AUTH-WRAPPER] Not authenticated on protected route — redirecting to login");
       return `/login?redirect=${encodeURIComponent(pathname)}`;
     }
 
     // Route-rule based access control
     if (user.isAuthenticated && isProtectedRoute) {
       const rule = findRouteRule(pathname);
+      console.log("[AUTH-WRAPPER] Route rule check:", { rule, role, allowed: rule?.allowed });
       if (rule && !rule.allowed.includes(role)) {
         const target = resolveRedirect(rule, role);
+        console.log("[AUTH-WRAPPER] Role not allowed — redirecting to:", target);
         if (target !== pathname && !pathname.startsWith(target)) {
           return target;
         }
