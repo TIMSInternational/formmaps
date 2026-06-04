@@ -127,7 +127,8 @@ export default function StudentOnboardingPage({
             id: result.user.id,
             name: result.user.name,
             email: result.user.email,
-            role: result.user.role?.name,
+            role: result.user.role?.name || result.user.roleName,
+            accessToken: result.token,
             isAuthenticated: true,
           });
 
