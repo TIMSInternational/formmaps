@@ -1,17 +1,12 @@
 "use client";
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
-import { useTranslation } from "react-i18next";
+import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGlobalStore } from "@/store/useGlobalStore";
-import { cn } from "@/lib/utils";
 import {
   Form,
   FormField,
@@ -24,18 +19,17 @@ import {
   verifyStudentToken,
   completeStudentOnboarding,
 } from "@/services/studentOnboardingService";
-import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
-// Password validation schema
 const passwordSchema = z
   .object({
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number"),
+      .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+      .regex(/[a-z]/, "Must contain at least one lowercase letter")
+      .regex(/[0-9]/, "Must contain at least one number"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -51,7 +45,6 @@ export default function StudentOnboardingPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = use(params);
-  const { t } = useTranslation();
   const router = useRouter();
   const { setUser } = useGlobalStore();
 
@@ -64,65 +57,43 @@ export default function StudentOnboardingPage({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Form setup
   const form = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      password: "",
-      confirmPassword: "",
-    },
+    defaultValues: { password: "", confirmPassword: "" },
   });
+  const { handleSubmit, control, formState: { errors } } = form;
 
-  const {
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = form;
-
-  // Verify token on mount
   useEffect(() => {
     const checkToken = async () => {
       try {
         setIsLoading(true);
         const result = await verifyStudentToken(token);
-
-        // Handle potential string/boolean mismatch from API
         const isValidToken = result.isValid === true || result.isValid === "true";
-
         if (isValidToken) {
           setIsValid(true);
           setStudentName(result.student?.name || "Student");
           setUserId(result.student?.id || "");
         } else {
           setIsValid(false);
-          // show more details for debugging if available
-          const debugMsg = JSON.stringify(result, null, 2);
-          setErrorObj(result.message || `Invalid invitation link (Debug: ${debugMsg})`);
+          setErrorObj(result.message || "Invalid invitation link");
         }
-      } catch (err) {
+      } catch {
         setIsValid(false);
         setErrorObj("Failed to verify invitation. Please try again.");
       } finally {
         setIsLoading(false);
       }
     };
-
     checkToken();
   }, [token]);
 
   const onSubmit = async (data: PasswordFormData) => {
     setIsSubmitting(true);
     try {
-      if (!userId) {
-        throw new Error("Student ID not found. Please refresh the page.");
-      }
+      if (!userId) throw new Error("Student ID not found. Please refresh the page.");
       const result = await completeStudentOnboarding(token, data.password, data.confirmPassword, userId);
-
       if (result.success) {
         if (result.token) {
-          // Auto-login — cookies set by backend
-
-          // Update global store
           setUser({
             id: result.user.id,
             name: result.user.name,
@@ -131,236 +102,251 @@ export default function StudentOnboardingPage({
             accessToken: result.token,
             isAuthenticated: true,
           });
-
           toast.success("Account activated successfully!");
-
-          // Small delay for user to see success state
-          setTimeout(() => {
-            router.push("/dashboard");
-          }, 1500);
+          setTimeout(() => { router.push("/dashboard"); }, 1500);
         } else {
-          // Success but no token - redirect to login
           toast.success("Account activated! Please log in.");
-          setTimeout(() => {
-            router.push("/login");
-          }, 2000);
+          setTimeout(() => { router.push("/login"); }, 2000);
         }
       } else {
         throw new Error(result.message || "Activation failed");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to activate account");
+    } catch (err: unknown) {
+      toast.error((err as Error).message || "Failed to activate account");
       setIsSubmitting(false);
     }
   };
 
-  // Loading State
+  // Loading
   if (isLoading) {
     return (
-      <div className="min-h-screen flex relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-100" />
-        <div className="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
-          <div className="w-full max-w-md relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/40">
-            <div className="text-center mb-8 flex flex-col items-center">
-              <Skeleton className="w-16 h-16 rounded-2xl mb-6 rotate-12" />
-              <Skeleton className="h-8 w-64 mb-2" />
-              <Skeleton className="h-4 w-80" />
-            </div>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-12 w-full rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-40" />
-                <Skeleton className="h-12 w-full rounded-xl" />
-              </div>
-              <Skeleton className="h-12 w-full rounded-xl mt-8" />
-            </div>
+      <div className="min-h-screen flex" style={{ background: "#FFFFFF" }}>
+        <div className="hidden lg:flex lg:w-[48%]" style={{ background: "#065292" }} />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="w-full max-w-sm space-y-6">
+            <Skeleton className="h-10 w-10 mx-auto rounded-lg" />
+            <Skeleton className="h-8 w-48 mx-auto" />
+            <Skeleton className="h-4 w-64 mx-auto" />
+            <Skeleton className="h-11 w-full rounded-lg" />
+            <Skeleton className="h-11 w-full rounded-lg" />
+            <Skeleton className="h-11 w-full rounded-lg" />
           </div>
         </div>
       </div>
     );
   }
 
-  // Error State (Invalid Token)
+  // Error
   if (!isValid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-gray-100">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertCircle className="w-8 h-8 text-red-600" />
+      <div className="min-h-screen flex" style={{ background: "#FFFFFF" }}>
+        <div className="hidden lg:flex lg:w-[48%] items-center justify-center" style={{ background: "#065292" }}>
+          <div className="px-16">
+            <div className="flex items-center gap-3 mb-8">
+              <img src="/logo-icon.svg" alt="FormMaps" className="w-12 h-12" style={{ filter: "brightness(0) invert(1)" }} />
+              <div>
+                <span className="text-2xl font-bold text-white">FORM</span>
+                <span className="text-2xl font-bold" style={{ color: "#FFD600" }}>MAPS</span>
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold text-white leading-tight">
+              Find your path.<br />
+              <span style={{ color: "#FFD600" }}>Shape your future.</span>
+            </h2>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Invalid Invitation
-          </h2>
-          <p className="text-gray-600 mb-8">
-            {errorObj || "This invitation link is invalid or has expired."}
-          </p>
-          <Button
-            onClick={() => router.push("/login")}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12"
-          >
-            Back to Login
-          </Button>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="w-full max-w-sm text-center">
+            <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-5">
+              <AlertCircle className="w-7 h-7 text-red-500" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2" style={{ color: "#111" }}>Invalid Invitation</h2>
+            <p className="text-sm mb-6" style={{ color: "#666" }}>
+              {errorObj || "This invitation link is invalid or has expired."}
+            </p>
+            <button
+              onClick={() => router.push("/login")}
+              className="w-full h-11 rounded-lg text-sm font-semibold text-white transition-colors"
+              style={{ background: "#065292" }}
+            >
+              Back to Login
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Success/Form State
+  // Form
   return (
-    <div className="min-h-screen flex relative overflow-hidden">
-      {/* Background Pattern (Same as Login/Signup) */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-100">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `
-            radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
-            linear-gradient(45deg, transparent 40%, rgba(79, 70, 229, 0.05) 60%, transparent 80%)
-          `,
-          }}
-        />
+    <div className="min-h-screen flex" style={{ background: "#FFFFFF" }}>
+      {/* Left Panel — Branding */}
+      <div
+        className="hidden lg:flex lg:w-[48%] relative overflow-hidden"
+        style={{ background: "#065292" }}
+      >
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col justify-center px-16 relative z-10"
+        >
+          <div className="flex items-center gap-3 mb-12">
+            <img src="/logo-icon.svg" alt="FormMaps" className="w-12 h-12" style={{ filter: "brightness(0) invert(1)" }} />
+            <div>
+              <span className="text-2xl font-bold text-white tracking-tight">FORM</span>
+              <span className="text-2xl font-bold tracking-tight" style={{ color: "#FFD600" }}>MAPS</span>
+            </div>
+          </div>
+
+          <h1 className="text-4xl font-bold text-white leading-tight mb-4">
+            Welcome to<br />
+            <span style={{ color: "#FFD600" }}>Country Day School.</span>
+          </h1>
+          <p className="text-base mb-10" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 420, lineHeight: 1.7 }}>
+            Set up your account to access personalized college counseling, career guidance, and AI-powered insights.
+          </p>
+
+          <div className="flex flex-col gap-4">
+            {[
+              "Discover your strengths with assessments",
+              "Get AI-powered career recommendations",
+              "Track college applications & scholarships",
+              "Connect with counselors & coaches",
+            ].map((text, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 + i * 0.1 }}
+                className="flex items-center gap-3"
+              >
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#FFD600" }} />
+                <span className="text-sm" style={{ color: "rgba(255,255,255,0.85)" }}>{text}</span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full" style={{ background: "rgba(255,214,0,0.08)" }} />
+        <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
+      {/* Right Panel — Form */}
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="w-full max-w-md relative"
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-sm"
         >
-          {/* Glassmorphism Card */}
-          <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/40">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-12 shadow-inner">
-                <span className="text-3xl">👋</span>
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Welcome, {studentName.split(" ")[0]}!
-              </h1>
-              <p className="text-gray-600">
-                Set a password to activate your account and access your student dashboard.
-              </p>
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex items-center justify-center gap-2 mb-10">
+            <img src="/logo-icon.svg" alt="FormMaps" className="w-10 h-10" />
+            <div>
+              <span className="text-xl font-bold" style={{ color: "#111111" }}>FORM</span>
+              <span className="text-xl font-bold" style={{ color: "#065292" }}>MAPS</span>
             </div>
-
-            <Form {...form}>
-              <form
-                onSubmit={handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
-                {/* Password Field */}
-                <FormField
-                  control={control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-gray-700 font-medium">
-                        Create Password
-                      </FormLabel>
-                      <div className="relative">
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Enter a strong password"
-                            className={cn(
-                              "h-12 bg-white/60 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/20 rounded-xl pr-12",
-                              errors.password && "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                            )}
-                          />
-                        </FormControl>
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showPassword ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          ) : (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Confirm Password Field */}
-                <FormField
-                  control={control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-gray-700 font-medium">
-                        Confirm Password
-                      </FormLabel>
-                      <div className="relative">
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type={showConfirmPassword ? "text" : "password"}
-                            placeholder="Re-enter your password"
-                            className={cn(
-                              "h-12 bg-white/60 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/20 rounded-xl pr-12",
-                              errors.confirmPassword && "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                            )}
-                          />
-                        </FormControl>
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          {showConfirmPassword ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          ) : (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full h-12 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Activating Account...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="mr-2 h-5 w-5" />
-                      Activate Account
-                    </>
-                  )}
-                </Button>
-              </form>
-            </Form>
           </div>
 
-          <p className="text-center text-gray-500 mt-6 text-sm">
-            © {new Date().getFullYear()} UNIV.365. All rights reserved.
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-semibold mb-2" style={{ color: "#111111" }}>
+              Welcome, {studentName.split(" ")[0]}!
+            </h1>
+            <p className="text-sm" style={{ color: "#666" }}>
+              Create a password to activate your student account
+            </p>
+          </div>
+
+          <Form {...form}>
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+              <FormField
+                control={control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-1.5">
+                    <FormLabel className="text-xs font-medium" style={{ color: "#333" }}>
+                      Password
+                    </FormLabel>
+                    <div className="relative">
+                      <FormControl>
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Create a strong password"
+                          {...field}
+                          className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
+                          style={{ background: "#F8F9FA", borderColor: errors.password ? "#dc2626" : "#E0E0E0", color: "#111" }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = errors.password ? "#dc2626" : "#E0E0E0"; }}
+                        />
+                      </FormControl>
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#999" }}>
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-1.5">
+                    <FormLabel className="text-xs font-medium" style={{ color: "#333" }}>
+                      Confirm Password
+                    </FormLabel>
+                    <div className="relative">
+                      <FormControl>
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Re-enter your password"
+                          {...field}
+                          className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
+                          style={{ background: "#F8F9FA", borderColor: errors.confirmPassword ? "#dc2626" : "#E0E0E0", color: "#111" }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+                          onBlur={(e) => { e.currentTarget.style.borderColor = errors.confirmPassword ? "#dc2626" : "#E0E0E0"; }}
+                        />
+                      </FormControl>
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#999" }}>
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Password requirements hint */}
+              <div className="text-[11px] space-y-1" style={{ color: "#999" }}>
+                <p>Password must contain:</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+                  <span>• 8+ characters</span>
+                  <span>• Uppercase letter</span>
+                  <span>• Lowercase letter</span>
+                  <span>• Number</span>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-11 rounded-lg text-sm font-semibold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                style={{ background: "#065292" }}
+              >
+                {isSubmitting ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Activating...</>
+                ) : (
+                  <><CheckCircle2 className="w-4 h-4" /> Activate Account</>
+                )}
+              </button>
+            </form>
+          </Form>
+
+          <p className="text-center mt-6 text-xs" style={{ color: "#999" }}>
+            Already have an account?{" "}
+            <a href="/login" className="font-medium" style={{ color: "#065292" }}>Sign in</a>
           </p>
         </motion.div>
       </div>
