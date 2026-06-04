@@ -41,11 +41,16 @@ interface DaySchedule {
 
 export default function CounselorSettingsPage() {
   const { user } = useGlobalStore();
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
 
   const handleChangePassword = async () => {
+    if (!currentPassword) {
+      toast.error("Enter your current password");
+      return;
+    }
     if (!newPassword || newPassword.length < 8) {
       toast.error("Password must be at least 8 characters");
       return;
@@ -58,9 +63,10 @@ export default function CounselorSettingsPage() {
     try {
       await apiRequest("/authapi/change-password", {
         method: "PUT",
-        data: { email: user.email, password: newPassword },
+        data: { email: user.email, password: newPassword, oldPassword: currentPassword },
       });
       toast.success("Password changed successfully");
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (e: any) {
@@ -180,6 +186,16 @@ export default function CounselorSettingsPage() {
               <h3 className="text-sm font-semibold text-foreground">Change Password</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-lg">
+              <div className="md:col-span-2">
+                <Label className="text-xs text-muted-foreground mb-1 block">Current Password</Label>
+                <Input
+                  type="password"
+                  placeholder="Enter current password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="h-9 text-sm rounded-lg"
+                />
+              </div>
               <div>
                 <Label className="text-xs text-muted-foreground mb-1 block">New Password</Label>
                 <Input
@@ -203,7 +219,7 @@ export default function CounselorSettingsPage() {
             </div>
             <Button
               onClick={handleChangePassword}
-              disabled={changingPassword || !newPassword}
+              disabled={changingPassword || !currentPassword || !newPassword}
               className="mt-3 bg-amber-600 hover:bg-amber-700 text-white shadow-sm rounded-lg px-4 h-9 text-sm"
             >
               {changingPassword ? <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> : <Lock className="h-3.5 w-3.5 mr-2" />}
