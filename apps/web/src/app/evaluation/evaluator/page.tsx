@@ -83,8 +83,8 @@ export default function EvaluatorPage() {
 
       const questions: EvaluationQuestion[] = questionsRaw.map((q: ApiQuestion, index: number) => ({
         id: q.id || `q-${index}`,
-        questionText: q.questionEnglishText,
-        questionTextSpanish: q.questionSpanishText,
+        questionText: q.questionEnglishText || (q as any).questionText || "",
+        questionTextSpanish: q.questionSpanishText || (q as any).questionTextEs || "",
         questionType: "both" as const,
         isRequired: true,
         order: q.questionNumber || index + 1,
