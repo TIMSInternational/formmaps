@@ -175,12 +175,22 @@ export default function MILAssessmentPage() {
   };
 
   const handleContinueToNext = () => {
-    // Check if all exams are completed
-    if (currentExamIndex < exams.length - 1) {
-      setCurrentExamIndex(currentExamIndex + 1);
+    // Find the next incomplete exam after the current one
+    const nextIncomplete = exams.findIndex(
+      (e, i) => i > currentExamIndex && !completedExams.includes(e.id)
+    );
+    if (nextIncomplete >= 0) {
+      setCurrentExamIndex(nextIncomplete);
       setCurrentStep("instructions");
     } else {
-      setCurrentStep("completed");
+      // All exams done — check if truly all complete
+      const allDone = exams.every(e => completedExams.includes(e.id));
+      if (allDone) {
+        setCurrentStep("completed");
+      } else {
+        // Some earlier exam still not done — go back to overview
+        setCurrentStep("overview");
+      }
     }
   };
 
