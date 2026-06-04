@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useTranslation } from "react-i18next";
-import { useMILData } from "@/hooks/useMILData";
+import { CheckCircle2, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface MILCompletionProps {
   onViewResults: () => void;
@@ -10,53 +10,13 @@ interface MILCompletionProps {
 }
 
 export default function MILCompletion({
-  onViewResults,
   onReturnToDashboard,
 }: MILCompletionProps) {
-  const { t } = useTranslation();
-  const { progress, getOverallScore } = useMILData();
-
-  const overallScore = getOverallScore();
-  const completedCount = progress?.completedExams.length || 0;
-  const totalCount = progress?.totalExams || 5;
-
-  const getScoreMessage = (score: number) => {
-    if (score >= 90)
-      return {
-        title: t("dashboard.outstanding"),
-        message: t("dashboard.exceptionalPerformance"),
-        color: "text-green-600",
-      };
-    if (score >= 80)
-      return {
-        title: t("dashboard.excellent"),
-        message: t("dashboard.strongAbilities"),
-        color: "text-blue-600",
-      };
-    if (score >= 70)
-      return {
-        title: t("dashboard.goodWork"),
-        message: t("dashboard.solidPerformance"),
-        color: "text-purple-600",
-      };
-    if (score >= 60)
-      return {
-        title: t("dashboard.wellDone"),
-        message: t("dashboard.developingSkills"),
-        color: "text-yellow-600",
-      };
-    return {
-      title: t("dashboard.milComplete"),
-      message: t("dashboard.assessmentFinished"),
-      color: "text-muted-foreground",
-    };
-  };
-
-  const scoreInfo = getScoreMessage(overallScore);
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-secondary flex items-center justify-center">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-lg mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -68,137 +28,62 @@ export default function MILCompletion({
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
+            className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
           >
-            <svg
-              className="w-12 h-12 text-green-600"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                clipRule="evenodd"
-              />
-            </svg>
+            <CheckCircle2 className="w-10 h-10 text-green-600" />
           </motion.div>
 
-          {/* Title */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className={`text-3xl font-bold mb-2 ${scoreInfo.color}`}
+            className="text-2xl font-bold text-foreground mb-3"
           >
-            {scoreInfo.title}
+            LIA Assessment Complete!
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-lg text-muted-foreground mb-8"
+            className="text-muted-foreground mb-8 leading-relaxed"
           >
-            You have completed the LIA Assessment
+            Thank you for completing all 5 subtests. Your responses have been saved and will be reviewed by your counselor.
           </motion.p>
 
-          {/* Score Summary */}
+          {/* Next Step Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="bg-secondary rounded-lg p-6 mb-8"
+            className="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-6 text-left"
           >
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold text-purple-600">
-                  {overallScore}%
-                </div>
-                <div className="text-sm text-muted-foreground">Overall Score</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-blue-600">
-                  {completedCount}
-                </div>
-                <div className="text-sm text-muted-foreground">Subtests Completed</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-green-600">
-                  N/A
-                </div>
-                <div className="text-sm text-muted-foreground">Percentile Rank</div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Key Insights */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="text-left mb-8"
-          >
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              Key Insights
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-start">
-                <div className="w-2 h-2 bg-purple-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                <p className="text-foreground">
-                  <strong>Pattern Recognition:</strong> Strong ability to
-                  identify logical sequences and relationships
-                </p>
-              </div>
-              <div className="flex items-start">
-                <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                <p className="text-foreground">
-                  <strong>Cognitive Processing:</strong>{" "}
-                  {scoreInfo.message.toLowerCase()}
-                </p>
-              </div>
-              <div className="flex items-start">
-                <div className="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                <p className="text-foreground">
-                  <strong>Problem Solving:</strong> Demonstrates systematic
-                  approach to complex tasks
-                </p>
-              </div>
-            </div>
+            <p className="text-sm font-semibold text-blue-900 mb-1">Next Step</p>
+            <p className="text-sm text-blue-700">
+              Complete the <strong>360° Evaluation</strong> to get a comprehensive view of your strengths and areas for growth.
+            </p>
           </motion.div>
 
           {/* Action Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="flex flex-col sm:flex-row gap-4"
+            transition={{ delay: 0.6 }}
+            className="flex flex-col gap-3"
           >
             <button
-              onClick={onViewResults}
-              className="flex-1 bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              onClick={() => router.push("/dashboard/assessments?tab=360")}
+              className="w-full bg-[#065292] text-white py-3 px-6 rounded-lg hover:bg-[#054a83] transition-colors font-medium flex items-center justify-center gap-2"
             >
-              View Detailed Results
+              Start 360° Evaluation
+              <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={onReturnToDashboard}
-              className="flex-1 bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+              className="w-full bg-secondary text-foreground py-3 px-6 rounded-lg hover:bg-secondary/80 transition-colors font-medium border"
             >
               Return to Dashboard
             </button>
-          </motion.div>
-
-          {/* Footer */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="mt-8 pt-6 border-t border-border"
-          >
-            <p className="text-sm text-muted-foreground">
-              Your results have been saved and are available on your dashboard.
-              <br />
-              Assessment completed on {new Date().toLocaleDateString()}
-            </p>
           </motion.div>
         </motion.div>
       </div>
