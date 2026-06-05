@@ -12,6 +12,7 @@ import {
   Monitor,
   Globe,
   Shield,
+  Lock,
   Loader2,
   Settings,
 } from "lucide-react";
@@ -20,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { getUserSettings, updateUserSettings } from "@/services/userService";
+import { apiRequest } from "@/lib/api/apiClient";
 
 /* ------------------------------------------------------------------ */
 /*  Section card wrapper                                               */
@@ -195,6 +197,34 @@ export default function StudentSettingsPage() {
   const [allowAnalytics, setAllowAnalytics] = useState(true);
 
   const [saving, setSaving] = useState(false);
+
+  // Change password
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmNewPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await apiRequest("/authapi/change-password", {
+        method: "PUT",
+        data: { email: user.email, password: newPassword, oldPassword: currentPassword },
+      });
+      toast.success("Password changed successfully");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to change password");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   // Load saved settings from the backend (null until first save)
   useEffect(() => {
@@ -405,6 +435,67 @@ export default function StudentSettingsPage() {
             checked={allowAnalytics}
             onChange={setAllowAnalytics}
           />
+        </div>
+      </SectionCard>
+
+      {/* ---- Security: change password ---- */}
+      <SectionCard icon={Lock} title="Security" subtitle="Change your password" delay={0.28}>
+        <div className="space-y-4 max-w-md">
+          <div className="space-y-1.5">
+            <Label htmlFor="current-password">Current password</Label>
+            <input
+              id="current-password"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              autoComplete="current-password"
+              className="w-full h-9 rounded-md px-3 text-sm outline-none"
+              style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="new-password">New password</Label>
+            <input
+              id="new-password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              autoComplete="new-password"
+              className="w-full h-9 rounded-md px-3 text-sm outline-none"
+              style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="confirm-new-password">Confirm new password</Label>
+            <input
+              id="confirm-new-password"
+              type="password"
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+              autoComplete="new-password"
+              className="w-full h-9 rounded-md px-3 text-sm outline-none"
+              style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleChangePassword}
+            disabled={changingPassword || !currentPassword || !newPassword || !confirmNewPassword}
+            style={{
+              height: 34,
+              borderRadius: 6,
+              padding: "0 16px",
+              fontSize: 13,
+              fontWeight: 600,
+              background: "var(--admin-accent-blue, #065292)",
+              color: "#fff",
+              border: "none",
+              cursor: changingPassword ? "not-allowed" : "pointer",
+              opacity: changingPassword || !currentPassword || !newPassword || !confirmNewPassword ? 0.6 : 1,
+            }}
+          >
+            {changingPassword ? "Changing..." : "Change password"}
+          </button>
         </div>
       </SectionCard>
 
