@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { formatAcceptanceRate } from "@/components/dashboard/University/universityFormat";
 import type {
   University,
   MatchBreakdown,
@@ -222,7 +223,7 @@ export function UniversityDetailPanel({
         <SectionLabel icon={Award} label={t("Key Facts", "Datos Clave")} />
         <div className="grid grid-cols-2 gap-2">
           <StatBox icon={Award} label={t("Rank", "Ranking")} value={globalRank ? `#${globalRank}` : "--"} accent="text-amber-400" />
-          <StatBox icon={Users} label={t("Accept", "Acepta")} value={acceptRate ? `${acceptRate}%` : "--"} accent="text-blue-400" />
+          <StatBox icon={Users} label={t("Accept", "Acepta")} value={formatAcceptanceRate(acceptRate)} accent="text-blue-400" />
           <StatBox icon={DollarSign} label={t("Tuition", "Matricula")} value={tuition > 0 ? `$${(tuition / 1000).toFixed(0)}k` : "--"} accent="text-emerald-400" />
           <StatBox icon={GraduationCap} label={t("Programs", "Programas")} value={String(recommendedPrograms?.length || university.programs?.length || "--")} accent="text-purple-400" />
         </div>
