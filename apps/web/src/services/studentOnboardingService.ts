@@ -69,6 +69,10 @@ export async function completeStudentOnboarding(
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      // Without credentials, the browser DISCARDS the cross-origin Set-Cookie
+      // from this response — the invited user ends up with a cookie-less
+      // session where every cookie-authenticated call 401s.
+      credentials: "include",
       body: JSON.stringify({
         Token: token,
         Password: password,
