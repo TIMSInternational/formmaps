@@ -12,7 +12,7 @@ import { InvitationActions } from "./_components/InvitationActions";
 import { useEvaluatorManagement } from "./_components/useEvaluatorManagement";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useEvaluationGroups } from "@/hooks/useAssessmentQueries";
-import { getUserEvaluationGroups, createEvaluationGroup } from "@/services/evaluationService";
+import { getSelfEvaluationUrl } from "@/services/evaluationService";
 import { toast } from "sonner";
 
 export default function EvaluatorsPage() {
@@ -30,24 +30,14 @@ export default function EvaluatorsPage() {
   const handleStartSelfEval = async () => {
     try {
       setStarting(true);
-      let groups = evalGroups;
-      if (!groups) {
-        groups = await getUserEvaluationGroups(user?.id || "", language);
-      }
-      let sg = groups?.find(
-        (g) => g.groupType === "Parent" && g.relation === "Self"
+      const selfEval = await getSelfEvaluationUrl(
+        user?.id || "",
+        user?.name || "Self",
+        user?.email || "",
+        language
       );
-      if (!sg || !sg.id) {
-        sg = await createEvaluationGroup({
-          evaluatorName: user?.name || "Self",
-          evaluatorEmail: user?.email || "",
-          relation: "Self",
-          groupType: "Parent",
-          evaluatedUserId: user?.id || "",
-        });
-      }
-      if (sg?.id) {
-        router.push(`/evaluation/evaluator?t=${sg.id}`);
+      if (selfEval) {
+        router.push(selfEval.url);
       } else {
         toast.error("Failed to start self-evaluation.");
       }

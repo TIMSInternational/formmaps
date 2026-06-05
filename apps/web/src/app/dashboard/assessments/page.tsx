@@ -11,10 +11,7 @@ import { useAssessmentCache } from "@/contexts/AssessmentCacheContext";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { retryPendingSubmissions } from "@/services/milService";
-import {
-  getUserEvaluationGroups,
-  createEvaluationGroup,
-} from "@/services/evaluationService";
+import { getSelfEvaluationUrl } from "@/services/evaluationService";
 import {
   Brain,
   Target,
@@ -57,28 +54,15 @@ export default function AssessmentsPage() {
   const handleStart360Evaluation = async () => {
     try {
       setIsStartingEvaluation(true);
-      let groups = evaluationGroups;
-      if (!groups) {
-        groups = await getUserEvaluationGroups(user?.id || "", language);
-      }
-
-      let selfGroup = groups?.find(
-        (group) => group.groupType === "Parent" && group.relation === "Self"
+      const selfEval = await getSelfEvaluationUrl(
+        user?.id || "",
+        user?.name || "Self",
+        user?.email || "",
+        language
       );
-
-      if (!selfGroup || !selfGroup.id) {
-        selfGroup = await createEvaluationGroup({
-          evaluatorName: user?.name || "Self",
-          evaluatorEmail: user?.email || "",
-          relation: "Self",
-          groupType: "Parent",
-          evaluatedUserId: user?.id || "",
-        });
-      }
-
-      if (selfGroup && selfGroup.id) {
+      if (selfEval) {
         invalidateSpecificAssessment(user?.id || "", "evaluation");
-        router.push(`/evaluation/evaluator?t=${selfGroup.id}`);
+        router.push(selfEval.url);
       } else {
         toast.error("Failed to create self evaluation. Please try again.");
       }
