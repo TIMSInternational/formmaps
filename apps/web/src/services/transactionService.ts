@@ -21,6 +21,23 @@ export interface TransactionResponse {
 
 import { apiRequest } from "@/lib/api/apiClient";
 
+// The API returns Payment rows (createdDate, nullable description, no `method`).
+// Map them to the Transaction shape the UI renders.
+function mapTransaction(p: any): Transaction {
+  return {
+    id: p.id,
+    amount: Number(p.amount ?? 0),
+    currency: p.currency ?? "USD",
+    status: p.status,
+    date: p.date ?? p.createdDate,
+    description: p.description ?? "Payment",
+    method: p.method ?? undefined,
+    paymentMethodId: p.paymentMethodId,
+    receiptUrl: p.receiptUrl,
+    bookingId: p.bookingId,
+  };
+}
+
 // Transaction APIs
 export async function getUserTransactions(params?: {
   page?: number;
@@ -32,12 +49,22 @@ export async function getUserTransactions(params?: {
 
   const qs = query.toString();
   const res = await apiRequest(`/api/v1/user/transactions${qs ? `?${qs}` : ""}`);
-  return res.data || res;
+  const data = res?.data ?? res ?? {};
+  const rows: any[] = data.transactions ?? data.items ?? [];
+  const pagination = data.pagination ?? {};
+
+  return {
+    items: rows.map(mapTransaction),
+    total: pagination.total ?? data.total ?? rows.length,
+    page: pagination.page ?? params?.page ?? 1,
+    limit: pagination.limit ?? params?.limit ?? rows.length,
+    totalPages: pagination.totalPages ?? 1,
+  };
 }
 
 export async function getTransactionById(
   transactionId: string
 ): Promise<Transaction> {
   const res = await apiRequest(`/api/v1/user/transactions/${transactionId}`);
-  return res.data || res;
+  return mapTransaction(res?.data ?? res ?? {});
 }
