@@ -160,12 +160,17 @@ export interface ParentOnboardingPayload {
 }
 
 export interface ParentOnboardingResult {
+  userId?: string;
   token: string;
+  refreshToken?: string;
+  redirectUrl?: string;
   user: {
     id: string;
     name: string;
     email: string;
-    role: string;
+    roleId: string;
+    roleName: string;
+    permissions?: string[];
   };
 }
 

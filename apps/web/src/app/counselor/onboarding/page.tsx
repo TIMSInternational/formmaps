@@ -53,8 +53,17 @@ function OnboardingContent() {
       { token, password, name: name.trim(), phone: phone || undefined, timezone: timezone || undefined },
       {
         onSuccess: (result) => {
-          setUser(result.user as Record<string, unknown>);
-          const email = (result.user as Record<string, string>)?.email ?? tokenData?.email ?? null;
+          // Backend set auth cookies; mirror login so the Bearer fallback + store are in sync.
+          setUser({
+            id: result.user.id,
+            name: result.user.name,
+            email: result.user.email,
+            role: result.user.roleName,
+            accessToken: result.token,
+            permissions: result.user.permissions,
+            isAuthenticated: true,
+          });
+          const email = result.user?.email ?? tokenData?.email ?? null;
           setOnboardedEmail(email);
           setShowCalendarStep(true);
         },
