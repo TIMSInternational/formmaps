@@ -51,7 +51,10 @@ export default function PCAResultsPanel({
         if (!analysis && !loading) loadAnalysis();
         break;
     }
-  }, [activeTab]);
+    // `loading` in deps: if a tab is selected while another load is in flight,
+    // re-run once it settles so the new tab's data still loads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, loading]);
 
   const loadResults = async () => {
     setLoading(true);
@@ -382,10 +385,34 @@ export default function PCAResultsPanel({
           {/* Competences Tab */}
           {activeTab === "competences" && !loading && (
             <div>
-              {competences ? (
-                <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl overflow-x-auto text-xs font-mono">
-                  {JSON.stringify(competences, null, 2)}
-                </pre>
+              {competences && Array.isArray(competences.pcaCmps) ? (
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Competency Levels</h3>
+                  <div className="space-y-3">
+                    {(competences.pcaCmps as Array<{ cmpNom?: string; level?: number }>).map((c, i) => {
+                      const level = Math.max(0, Math.min(3, Number(c.level) || 0));
+                      return (
+                        <div key={i} className="flex items-center justify-between gap-4">
+                          <span className="text-sm text-gray-700">{(c.cmpNom || "").trim()}</span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex gap-1">
+                              {[1, 2, 3].map((n) => (
+                                <span
+                                  key={n}
+                                  className="inline-block w-6 h-2 rounded-full"
+                                  style={{ background: n <= level ? "#065292" : "#e5e7eb" }}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs text-gray-500 w-14 text-right">
+                              {["—", "Low", "Medium", "High"][level]}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               ) : (
                 <div className="text-center py-12">
                   <p className="text-gray-500">No competence data available.</p>
@@ -418,9 +445,25 @@ export default function PCAResultsPanel({
               </div>
 
               {analysis ? (
-                <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl overflow-x-auto text-xs font-mono">
-                  {JSON.stringify(analysis, null, 2)}
-                </pre>
+                // NOTE: deliberately do NOT render the raw payload — its repLink
+                // embeds the vendor CoKey, which must never reach the client UI.
+                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm text-center">
+                  <p className="text-sm text-gray-500 mb-2">
+                    Competency match with {JCA_CODES[selectedJCA]}
+                  </p>
+                  <p className="text-5xl font-bold" style={{ color: "#065292" }}>
+                    {Number(analysis.val) || 0}%
+                  </p>
+                  <div className="mt-4 mx-auto max-w-sm h-2.5 rounded-full bg-gray-200 overflow-hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${Math.max(0, Math.min(100, Number(analysis.val) || 0))}%`, background: "#065292" }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-4">
+                    How closely your assessed competencies align with this job profile.
+                  </p>
+                </div>
               ) : (
                 <div className="text-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-gray-300 mx-auto mb-4" />
