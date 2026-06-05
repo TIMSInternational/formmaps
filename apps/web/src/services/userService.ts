@@ -71,6 +71,12 @@ export async function getSessionAnalytics(): Promise<SessionAnalytics> {
   return res.data || res;
 }
 
+/** Returns the saved settings row, or null when the user has never saved. */
+export async function getUserSettings(): Promise<UserSettings | null> {
+  const res = await apiRequest("/api/v1/user/settings");
+  return res?.data ?? null;
+}
+
 export async function updateUserSettings(
   settings: Partial<UserSettings>
 ): Promise<UserSettings> {

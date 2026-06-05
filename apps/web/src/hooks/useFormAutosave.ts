@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { apiRequest } from "@/lib/api/apiClient";
 
 /**
  * Form Autosave Hook
- * 
+ *
  * Provides autosave functionality for forms with backend API integration.
  * Automatically saves drafts on change (debounced) and restores on mount.
  */
@@ -24,30 +25,6 @@ interface AutosaveOptions {
   onSaveSuccess?: (draftId: string) => void;
   onSaveError?: (error: Error) => void;
   onRestoreSuccess?: (data: Record<string, unknown>) => void;
-}
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
-
-async function apiRequest<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string>),
-  };
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
-  }
-
-  return response.json();
 }
 
 export function useFormAutosave(
@@ -71,6 +48,16 @@ export function useFormAutosave(
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingData = useRef<Record<string, unknown> | null>(null);
 
+  // Keep latest callbacks in refs so callers can pass inline arrows without
+  // retriggering the mount-load effect (this previously caused an infinite
+  // request loop on every render).
+  const onSaveSuccessRef = useRef(onSaveSuccess);
+  const onSaveErrorRef = useRef(onSaveError);
+  const onRestoreSuccessRef = useRef(onRestoreSuccess);
+  onSaveSuccessRef.current = onSaveSuccess;
+  onSaveErrorRef.current = onSaveError;
+  onRestoreSuccessRef.current = onRestoreSuccess;
+
   /**
    * Load existing draft from backend
    */
@@ -79,24 +66,24 @@ export function useFormAutosave(
 
     try {
       setIsLoading(true);
-      const response = await apiRequest<{ drafts: Draft[] }>(
+      const response = await apiRequest<{ success: boolean; data?: { drafts?: Draft[] } }>(
         `/api/v1/user/drafts?formId=${encodeURIComponent(formId)}`
       );
 
-      const existingDraft = response.drafts?.[0] || null;
+      const existingDraft = response?.data?.drafts?.[0] || null;
       setDraft(existingDraft);
 
-      if (existingDraft && onRestoreSuccess) {
-        onRestoreSuccess(existingDraft.data);
+      if (existingDraft && onRestoreSuccessRef.current) {
+        onRestoreSuccessRef.current(existingDraft.data);
       }
 
       return existingDraft;
-    } catch (error) {
+    } catch {
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, [formId, enabled, onRestoreSuccess]);
+  }, [formId, enabled]);
 
   /**
    * Save draft to backend
@@ -108,22 +95,22 @@ export function useFormAutosave(
       try {
         setIsSaving(true);
 
-        const response = await apiRequest<{ success: boolean; draftId: string }>(
+        const response = await apiRequest<{ success: boolean; data?: { draftId?: string } }>(
           "/api/v1/user/drafts",
           {
             method: "POST",
-            body: JSON.stringify({
+            data: {
               formId,
               data,
               step,
-              lastModified: new Date().toISOString(),
-            }),
+            },
           }
         );
 
-        if (response.success) {
+        const draftId = response?.data?.draftId;
+        if (response?.success && draftId) {
           setDraft((prev) => ({
-            draftId: response.draftId,
+            draftId,
             formId,
             data,
             step,
@@ -132,24 +119,19 @@ export function useFormAutosave(
           }));
           setLastSaved(new Date());
 
-          if (onSaveSuccess) {
-            onSaveSuccess(response.draftId);
-          }
-
-          return response.draftId;
+          onSaveSuccessRef.current?.(draftId);
+          return draftId;
         }
 
         return null;
       } catch (error) {
-        if (onSaveError) {
-          onSaveError(error as Error);
-        }
+        onSaveErrorRef.current?.(error as Error);
         return null;
       } finally {
         setIsSaving(false);
       }
     },
-    [formId, enabled, onSaveSuccess, onSaveError]
+    [formId, enabled]
   );
 
   /**

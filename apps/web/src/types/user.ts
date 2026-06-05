@@ -30,16 +30,18 @@ export interface UserActivity {
   metadata?: Record<string, any>;
 }
 
+/** Mirrors the API user_settings row (PUT/GET /api/v1/user/settings). */
 export interface UserSettings {
-  notifications: {
-    email: boolean;
-    push: boolean;
-    sms: boolean;
-  };
-  theme: "light" | "dark" | "system";
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  bookingNotifications: boolean;
+  courseNotifications: boolean;
+  marketingEmails: boolean;
+  theme: string;
   language: string;
-  privacy: {
-    profileVisibility: "public" | "private" | "connections";
-    showActivity: boolean;
-  };
+  profileVisible: boolean;
+  showEmail: boolean;
+  showPhone: boolean;
+  shareProgress: boolean;
+  allowAnalytics: boolean;
 }

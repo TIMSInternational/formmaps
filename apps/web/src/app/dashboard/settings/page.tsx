@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { getUserSettings, updateUserSettings } from "@/services/userService";
 
 /* ------------------------------------------------------------------ */
 /*  Section card wrapper                                               */
@@ -195,18 +196,49 @@ export default function StudentSettingsPage() {
 
   const [saving, setSaving] = useState(false);
 
-  // Simulate loading
+  // Load saved settings from the backend (null until first save)
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 400);
-    return () => clearTimeout(timer);
+    let cancelled = false;
+    getUserSettings()
+      .then((settings) => {
+        if (cancelled || !settings) return;
+        setEmailNotifications(settings.emailNotifications);
+        setPushNotifications(settings.pushNotifications);
+        setSessionReminders(settings.bookingNotifications);
+        setWeeklyDigest(settings.marketingEmails);
+        setLanguage(settings.language);
+        setProfileVisible(settings.profileVisible);
+        setShareProgress(settings.shareProgress);
+        setAllowAnalytics(settings.allowAnalytics);
+      })
+      .catch(() => {}) // keep defaults on error
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
+    try {
+      await updateUserSettings({
+        emailNotifications,
+        pushNotifications,
+        bookingNotifications: sessionReminders,
+        marketingEmails: weeklyDigest,
+        language,
+        profileVisible,
+        shareProgress,
+        allowAnalytics,
+      });
       toast.success("Settings saved successfully");
-    }, 600);
+    } catch {
+      toast.error("Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
   /* ---- Loading state ---- */
