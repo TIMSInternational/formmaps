@@ -49,16 +49,3 @@ export async function updatePortfolioItem(
 export async function deletePortfolioItem(id: string): Promise<void> {
   await apiRequest(`/api/v1/student/portfolio/${id}`, { method: "DELETE" });
 }
-
-export async function uploadPortfolioAttachment(
-  itemId: string,
-  file: File
-): Promise<{ id: string; fileName: string; fileUrl: string }> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await apiRequest(
-    `/api/v1/student/portfolio/${itemId}/attachments`,
-    { method: "POST", data: formData, headers: { "Content-Type": "multipart/form-data" } }
-  );
-  return (res.data ?? res) as { id: string; fileName: string; fileUrl: string };
-}
