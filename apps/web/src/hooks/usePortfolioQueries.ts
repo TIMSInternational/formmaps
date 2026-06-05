@@ -7,7 +7,6 @@ import {
   createPortfolioItem,
   updatePortfolioItem,
   deletePortfolioItem,
-  uploadPortfolioAttachment,
 } from "@/services/portfolioService";
 import type { PortfolioItemPayload, PortfolioItemType } from "@/types/portfolio";
 import { toast } from "sonner";
@@ -71,19 +70,6 @@ export function useDeletePortfolioItem() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.all });
       toast.success("Portfolio item deleted");
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
-}
-
-export function useUploadPortfolioAttachment() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ itemId, file }: { itemId: string; file: File }) =>
-      uploadPortfolioAttachment(itemId, file),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: portfolioKeys.all });
-      toast.success("Attachment uploaded");
     },
     onError: (err: Error) => toast.error(err.message),
   });
