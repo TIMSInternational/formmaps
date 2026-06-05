@@ -12,6 +12,7 @@ import {
   CoachOnboardingData,
   INITIAL_ONBOARDING_DATA,
 } from "@/components/onboarding/types";
+import { useGlobalStore } from "@/store/useGlobalStore";
 import { toast } from "sonner";
 
 const STEPS = [
@@ -42,9 +43,10 @@ export default function CoachOnboardingPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
+  const { id } = use(params); // id is the invitation token
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setUser } = useGlobalStore();
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<CoachOnboardingData>(
     INITIAL_ONBOARDING_DATA
@@ -194,10 +196,23 @@ export default function CoachOnboardingPage({
       };
 
       if (!coachId) {
-        throw new Error("Coach ID not found");
+        throw new Error("Invitation could not be verified");
       }
 
-      const response = await submitOnboardingData(coachId, apiData);
+      // Submit with the invitation token (id); backend sets auth cookies + returns tokens.
+      const response = await submitOnboardingData(id, apiData);
+
+      // Log the coach in immediately (Bearer fallback + refresh cookie) so they
+      // aren't bounced to the manual login screen.
+      setUser({
+        id: response.user.id,
+        email: response.user.email,
+        name: response.user.name,
+        role: response.user.roleName,
+        accessToken: response.token,
+        permissions: response.user.permissions,
+        isAuthenticated: true,
+      });
 
       toast.success("Onboarding completed successfully!");
 
@@ -205,11 +220,10 @@ export default function CoachOnboardingPage({
       localStorage.removeItem(`onboarding_data_${id}`);
       localStorage.removeItem(`onboarding_step_${id}`);
 
-
-
-      // Redirect to dashboard
+      // Hard navigation avoids races with AuthWrapper's redirect logic.
       const redirect = response.redirectUrl;
-      router.push(redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/dashboard");
+      window.location.href =
+        redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/dashboard";
     } catch (error) {
       toast.error("Failed to submit onboarding data. Please try again.");
     } finally {
