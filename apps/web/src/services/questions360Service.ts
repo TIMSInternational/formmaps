@@ -58,54 +58,57 @@ export const questions360Service = {
 
   // Get question by ID
   async getQuestionById(id: string): Promise<Question360> {
-    const response = await apiRequest<Question360>(`/api/question360/${id}`, {
+    const response = await apiRequest<{ success: boolean; data: Question360 }>(`/api/question360/${id}`, {
       method: "GET",
     });
-    return response;
+    return (response?.data ?? response) as Question360;
   },
 
   // Get questions by category
   async getQuestionsByCategory(category: string): Promise<Question360[]> {
-    const response = await apiRequest<Question360[]>(
+    const response = await apiRequest<{ success: boolean; data: Question360[] }>(
       `/api/question360/category/${category}`,
       {
         method: "GET",
       }
     );
-    return response;
+    const data = response?.data ?? response;
+    return Array.isArray(data) ? data : [];
   },
 
   // Get sub-questions by parent ID
   async getSubQuestions(parentQuestionId: string): Promise<Question360[]> {
-    const response = await apiRequest<Question360[]>(
+    const response = await apiRequest<{ success: boolean; data: Question360[] }>(
       `/api/question360/sub-questions/${parentQuestionId}`,
       {
         method: "GET",
       }
     );
-    return response;
+    const data = response?.data ?? response;
+    return Array.isArray(data) ? data : [];
   },
 
   // Get questions by relation type
   async getQuestionsByRelationType(
     relationType: string
   ): Promise<Question360[]> {
-    const response = await apiRequest<Question360[]>(
+    const response = await apiRequest<{ success: boolean; data: Question360[] }>(
       `/api/question360/relation/${relationType}`,
       {
         method: "GET",
       }
     );
-    return response;
+    const data = response?.data ?? response;
+    return Array.isArray(data) ? data : [];
   },
 
   // Create new question
   async createQuestion(data: CreateQuestion360Request): Promise<Question360> {
-    const response = await apiRequest<Question360>("/api/question360", {
+    const response = await apiRequest<{ success: boolean; data: Question360 }>("/api/question360", {
       method: "POST",
       data,
     });
-    return response;
+    return (response?.data ?? response) as Question360;
   },
 
   // Update question
@@ -113,11 +116,11 @@ export const questions360Service = {
     id: string,
     data: UpdateQuestion360Request
   ): Promise<Question360> {
-    const response = await apiRequest<Question360>(`/api/question360/${id}`, {
+    const response = await apiRequest<{ success: boolean; data: Question360 }>(`/api/question360/${id}`, {
       method: "PUT",
       data,
     });
-    return response;
+    return (response?.data ?? response) as Question360;
   },
 
   // Delete question (soft delete)
@@ -135,27 +138,28 @@ export const questions360Service = {
 
   // Activate question
   async activateQuestion(id: string): Promise<Question360> {
-    const response = await apiRequest<Question360>(
+    const response = await apiRequest<{ success: boolean; data: Question360 }>(
       `/api/question360/${id}/activate`,
       {
         method: "PUT",
       }
     );
-    return response;
+    return (response?.data ?? response) as Question360;
   },
 
   // Deactivate question
   async deactivateQuestion(id: string): Promise<Question360> {
-    const response = await apiRequest<Question360>(
+    const response = await apiRequest<{ success: boolean; data: Question360 }>(
       `/api/question360/${id}/deactivate`,
       {
         method: "PUT",
       }
     );
-    return response;
+    return (response?.data ?? response) as Question360;
   },
 
-  // Bulk create questions
+  // Bulk create questions. Backend route is POST /bulk-create and expects a RAW
+  // ARRAY body; it responds {createdCount, totalRequested, errors:[{questionNumber,error}]}.
   async bulkCreateQuestions(data: BulkCreateQuestion360Request): Promise<{
     success: boolean;
     created: number;
@@ -164,14 +168,23 @@ export const questions360Service = {
   }> {
     const response = await apiRequest<{
       success: boolean;
-      created: number;
-      failed: number;
-      errors?: string[];
-    }>("/api/question360/bulk", {
+      data: {
+        createdCount: number;
+        totalRequested: number;
+        errors: { questionNumber: number; error: string }[];
+      };
+    }>("/api/question360/bulk-create", {
       method: "POST",
-      data,
+      data: data.questions,
     });
-    return response;
+    const result = response?.data ?? response;
+    const errors = Array.isArray(result?.errors) ? result.errors : [];
+    return {
+      success: errors.length === 0,
+      created: result?.createdCount ?? 0,
+      failed: errors.length,
+      errors: errors.map((e) => `Q${e.questionNumber}: ${e.error}`),
+    };
   },
 };
 
