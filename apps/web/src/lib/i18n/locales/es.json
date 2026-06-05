@@ -735,7 +735,9 @@
       "lastNamePlaceholder": "Pérez",
       "emailPlaceholder": "juan@ejemplo.com",
       "submit": "Crear cuenta",
-      "creating": "Creando cuenta..."
+      "creating": "Creando cuenta...",
+      "haveAccountText": "¿Ya tienes una cuenta?",
+      "signIn": "Iniciar sesión"
     }
   },
 

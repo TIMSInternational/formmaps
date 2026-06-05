@@ -29,9 +29,9 @@ export function SignupBrandingPanel() {
         >
           <div className="flex items-center space-x-3 mb-8">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-              <span className="text-2xl font-bold">U</span>
+              <span className="text-2xl font-bold">F</span>
             </div>
-            <span className="text-3xl font-bold">UNIV.365</span>
+            <span className="text-3xl font-bold">FORMMAPS</span>
           </div>
 
           <h1 className="text-4xl font-bold mb-4 leading-tight">

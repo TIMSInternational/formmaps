@@ -1,0 +1,51 @@
+import { apiClient, apiRequest } from "@/lib/api/apiClient";
+import { refreshAccessToken } from "@/services/tokenRefreshService";
+
+jest.mock("@/services/tokenRefreshService", () => ({
+  refreshAccessToken: jest.fn().mockResolvedValue(null),
+  isLoggedIn: jest.requireActual("@/services/tokenRefreshService").isLoggedIn,
+}));
+jest.mock("@/utils/tokenUtils", () => ({ forceLogout: jest.fn() }));
+jest.mock("@/hooks/useToast", () => ({
+  toast: { error: jest.fn(), warning: jest.fn(), success: jest.fn() },
+}));
+
+const mockRefresh = refreshAccessToken as jest.Mock;
+
+// Simulate a 401 response at the axios adapter level
+const adapter401 = (config: unknown) =>
+  Promise.reject({
+    config,
+    response: { status: 401, data: { success: false, message: "Unauthorized" } },
+    request: {},
+    isAxiosError: true,
+    toJSON: () => ({}),
+  });
+
+describe("apiClient 401 handling", () => {
+  let originalAdapter: unknown;
+
+  beforeAll(() => {
+    originalAdapter = apiClient.defaults.adapter;
+    apiClient.defaults.adapter = adapter401 as never;
+  });
+  afterAll(() => {
+    apiClient.defaults.adapter = originalAdapter as never;
+  });
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Start each test logged OUT
+    document.cookie = "logged_in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  });
+
+  it("does NOT attempt token refresh for anonymous sessions (public pages must not be hijacked to /login)", async () => {
+    await expect(apiRequest("/api/role/name/User")).rejects.toThrow();
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
+  it("attempts token refresh when the user is logged in", async () => {
+    document.cookie = "logged_in=true; path=/";
+    await expect(apiRequest("/api/v1/user/me")).rejects.toThrow();
+    expect(mockRefresh).toHaveBeenCalled();
+  });
+});
