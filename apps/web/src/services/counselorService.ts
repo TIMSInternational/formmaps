@@ -34,13 +34,17 @@ export interface CounselorOnboardingPayload {
 }
 
 export interface CounselorOnboardingResult {
+  userId?: string;
   token: string;
+  refreshToken?: string;
+  redirectUrl?: string;
   user: {
     id: string;
     name: string;
     email: string;
-    role: string;
-    schoolId: string;
+    roleId: string;
+    roleName: string;
+    permissions?: string[];
   };
 }
 
