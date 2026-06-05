@@ -20,23 +20,33 @@ import { apiRequest } from "@/lib/api/apiClient";
 
 export type { CoachesResponse };
 
-// --- Onboarding Endpoints ---
+// --- Onboarding Endpoints (public, invitation-token based) ---
 
+// Verify an invitation token and load the invited coach's identity.
 export async function getOnboardingStatus(
-  coachId: string,
+  token: string,
 ): Promise<OnboardingStatus> {
-  const res = await apiRequest(`/api/v1/coach/${coachId}/onboarding-status`);
+  const res = await apiRequest(`/api/v1/coach/onboarding/verify/${token}`);
   return res.data;
 }
 
+// Complete onboarding: set password + profile, returns auth tokens so the
+// coach is logged in immediately (no bounce to manual login).
 export async function submitOnboardingData(
-  coachId: string,
+  token: string,
   data: OnboardingData,
-): Promise<{ success: boolean; coachId: string; redirectUrl: string }> {
-  return apiRequest(`/api/v1/coach/${coachId}/onboarding`, {
+): Promise<{
+  coachId: string;
+  redirectUrl: string;
+  token: string;
+  refreshToken: string;
+  user: { id: string; name: string; email: string; roleId: string; roleName: string; permissions: string[] };
+}> {
+  const res = await apiRequest(`/api/v1/coach/onboarding/complete`, {
     method: "POST",
-    data,
+    data: { token, ...data },
   });
+  return res.data;
 }
 
 export async function getCalendarAuthUrl(

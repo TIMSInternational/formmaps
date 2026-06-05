@@ -75,6 +75,7 @@ export interface CalendarIntegrations {
 
 export interface OnboardingData {
   personalInfo: PersonalInfo;
+  pricing?: { hourlyRate: number; currency: string };
   availability: Availability;
   calendarIntegrations: CalendarIntegrations;
   password?: string;
