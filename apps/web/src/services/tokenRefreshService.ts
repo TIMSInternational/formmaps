@@ -69,7 +69,9 @@ export async function refreshAccessToken(): Promise<TokenPair | null> {
     });
 
     if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
+      // Any 4xx except 429 means the refresh token is missing/invalid/rejected —
+      // the session is unrecoverable. 429/5xx are transient; keep the session.
+      if (response.status >= 400 && response.status < 500 && response.status !== 429) {
         clearTokens();
       }
       return null;
