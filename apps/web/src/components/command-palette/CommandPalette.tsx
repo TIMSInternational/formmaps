@@ -49,6 +49,9 @@ const ACTIONS: CommandItem[] = [
   { id: "browse-universities", label: "Browse Universities", description: "Find your match", href: "/dashboard/university", icon: University, group: "Actions" },
 ];
 
+/** Dispatched on window to open the palette (e.g. by the top-bar search button). */
+export const OPEN_COMMAND_PALETTE_EVENT = "open-command-palette";
+
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -58,10 +61,19 @@ export function CommandPalette() {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setOpen((o) => !o);
+      } else if (e.key === "Escape") {
+        setOpen(false);
       }
     }
+    function onOpenEvent() {
+      setOpen(true);
+    }
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    window.addEventListener(OPEN_COMMAND_PALETTE_EVENT, onOpenEvent);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener(OPEN_COMMAND_PALETTE_EVENT, onOpenEvent);
+    };
   }, []);
 
   const runCommand = useCallback(
