@@ -264,25 +264,14 @@ export const useGlobalStore = create<GlobalState>()(
           const loggedIn = document.cookie.includes("logged_in=true");
           const currentUser = get().user;
 
-          console.log("[AUTH] initializeAuth:", {
-            loggedIn,
-            hasToken: !!currentUser.accessToken,
-            tokenPrefix: currentUser.accessToken?.slice(0, 20),
-            email: currentUser.email,
-            role: currentUser.role,
-            isAuthenticated: currentUser.isAuthenticated,
-          });
-
           if ((loggedIn || currentUser.accessToken) && currentUser.email) {
             // Cookie or token present and we have persisted user data — restore session
-            console.log("[AUTH] Restoring session");
             set((state) => ({
               user: { ...state.user, isAuthenticated: true },
             }));
             telemetry.trackAuth("login", "session_restore");
           } else {
             // Not logged in or no user data — reset
-            console.log("[AUTH] No session — resetting", { loggedIn, hasToken: !!currentUser.accessToken, hasEmail: !!currentUser.email });
             set({
               user: {
                 id: null,

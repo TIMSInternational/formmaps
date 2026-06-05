@@ -1,7 +1,15 @@
 import { MILExamId, MILQuestion } from "@/services/milService";
 
+// Practice examples per LIA subtest. Selection is keyed off the REAL exam IDs
+// (MIL_EXAMS.*: "feature-detection-001", "verbal-reasoning-001",
+// "working-memory-001", "numerical-speed-accuracy-001", "spatial-orientation-001")
+// and each `type` matches the real exam type (1=feature/letter-pairs,
+// 2=verbal, 3=working-memory, 4=numeric, 5=spatial). Previously these were
+// matched by stale slugs ("numeric-velocity"/"visual-rotation"/...), so the
+// numeric and spatial subtests fell through to the letter-pairs default and
+// showed practice that didn't match the actual assessment.
 export function createCustomPracticeQuestions(examId: MILExamId): MILQuestion[] {
-  if (examId.includes("pattern-recognition")) {
+  if (examId.includes("feature-detection")) {
     return [
       {
         questionNumber: 1,
@@ -101,7 +109,7 @@ export function createCustomPracticeQuestions(examId: MILExamId): MILQuestion[] 
         questionNumber: 1,
         questionText:
           "Which outer letter is alphabetically furthest from the middle letter?",
-        type: 2,
+        type: 3,
         data: {
           letterSequence: {
             letters: ["F", "H", "K"],
@@ -117,7 +125,7 @@ export function createCustomPracticeQuestions(examId: MILExamId): MILQuestion[] 
         questionNumber: 2,
         questionText:
           "Which outer letter is alphabetically furthest from the middle letter?",
-        type: 2,
+        type: 3,
         data: {
           letterSequence: {
             letters: ["P", "S", "U"],
@@ -133,7 +141,7 @@ export function createCustomPracticeQuestions(examId: MILExamId): MILQuestion[] 
         questionNumber: 3,
         questionText:
           "Which outer letter is alphabetically furthest from the middle letter?",
-        type: 2,
+        type: 3,
         data: {
           letterSequence: {
             letters: ["C", "E", "H"],
@@ -148,42 +156,42 @@ export function createCustomPracticeQuestions(examId: MILExamId): MILQuestion[] 
     ];
   }
 
-  if (examId.includes("numeric-velocity")) {
+  if (examId.includes("numerical-speed-accuracy")) {
     return [
       {
         questionNumber: 1,
         questionText:
           "Find the highest and lowest numbers, then determine which extreme is furthest from the middle number.",
-        type: 3,
+        type: 4,
         data: {
           numbers: [7, 1, 3],
         },
         explanation:
-          "In this case, the numbers are ordered from lowest to highest. The number 1 is the lowest, and the number 7 is the highest. The middle number is 3. The number 7 is furthest from 3. Therefore, the correct answer is letter A, which corresponds to the number 7.",
+          "The lowest number is 1 and the highest is 7. The middle (median) number is 3. The number 7 is 4 away from 3, while 1 is only 2 away — so 7 is furthest from the middle. The correct answer is 7.",
         correctAnswer: 7,
       },
       {
         questionNumber: 2,
         questionText:
           "Find the highest and lowest numbers, then determine which extreme is furthest from the middle number.",
-        type: 3,
+        type: 4,
         data: {
           numbers: [21, 29, 17],
         },
         explanation:
-          "In this case, the numbers are not in order from lowest to highest. Identify the lowest number (17) and the highest number (29). The middle number is 21. Now, determine which of the extremes (17 or 29) is furthest from the number 21. The number 29 is furthest from 21. Therefore, the correct answer is letter B, which corresponds to the number 29.",
+          "Identify the lowest number (17) and the highest number (29). The middle (median) number is 21. The number 29 is 8 away from 21, while 17 is only 4 away — so 29 is furthest from the middle. The correct answer is 29.",
         correctAnswer: 29,
       },
     ];
   }
 
-  if (examId.includes("visual-rotation")) {
+  if (examId.includes("spatial-orientation")) {
     return [
       {
         questionNumber: 1,
         questionText:
           "How many of the bottom figures are identical to the ones directly above them, after rotating them in any direction?",
-        type: 4,
+        type: 5,
         data: {
           visualRotationItems: [
             { letter: "R", rotationDegree: 0, isMirrored: false },
@@ -195,14 +203,14 @@ export function createCustomPracticeQuestions(examId: MILExamId): MILQuestion[] 
           ],
         },
         explanation:
-          "After rotation: First pair (R vs R rotated 180°) = MATCH, Second pair (R vs R mirrored) = NO MATCH, Third pair (R vs R normal) = MATCH. Answer: 2 pairs match.",
+          "Compare each top/bottom pair: pair 1 (R vs R) matches; pair 2 (R vs R rotated 180°) matches — rotation is allowed; pair 3 (R mirrored vs R) does NOT match, because a mirrored figure can't be reproduced by rotation alone. So 2 pairs match.",
         correctAnswer: 2,
       },
       {
         questionNumber: 2,
         questionText:
           "How many of the bottom figures are identical to the ones directly above them, after rotating them in any direction?",
-        type: 4,
+        type: 5,
         data: {
           visualRotationItems: [
             { letter: "R", rotationDegree: 0, isMirrored: false },
@@ -212,34 +220,34 @@ export function createCustomPracticeQuestions(examId: MILExamId): MILQuestion[] 
           ],
         },
         explanation:
-          "After rotation: First pair (R vs R rotated 90°) = MATCH, Second pair (R vs R rotated 270°) = MATCH. Both can be rotated to match the top. Answer: 2 pairs match.",
+          "Pair 1 (R vs R) matches. Pair 2 (R rotated 90° vs R rotated 270°) also matches — both are pure rotations of the same R. So 2 pairs match.",
         correctAnswer: 2,
       },
       {
         questionNumber: 3,
         questionText:
           "How many of the bottom figures are identical to the ones directly above them, after rotating them in any direction?",
-        type: 4,
+        type: 5,
         data: {
           visualRotationItems: [
             { letter: "R", rotationDegree: 0, isMirrored: false },
             { letter: "R", rotationDegree: 0, isMirrored: false },
             { letter: "R", rotationDegree: 0, isMirrored: false },
-            { letter: "R", rotationDegree: 0, isMirrored: false },
-            { letter: "R", rotationDegree: 0, isMirrored: false },
             { letter: "R", rotationDegree: 0, isMirrored: true },
             { letter: "R", rotationDegree: 180, isMirrored: false },
+            { letter: "R", rotationDegree: 90, isMirrored: false },
+            { letter: "R", rotationDegree: 0, isMirrored: false },
             { letter: "R", rotationDegree: 90, isMirrored: true },
           ],
         },
         explanation:
-          "After rotation: First pair (R vs R normal) = MATCH, Second pair (R vs R mirrored) = NO MATCH, Third pair (R vs R rotated 180°) = MATCH, Fourth pair (R vs R mirrored + 90°) = NO MATCH. Answer: 2 pairs match.",
+          "Pair 1 (R vs R) matches. Pair 2 (R vs R mirrored) does NOT match. Pair 3 (R rotated 180° vs R rotated 90°) matches — both pure rotations. Pair 4 (R vs R rotated 90° + mirrored) does NOT match. So 2 pairs match.",
         correctAnswer: 2,
       },
     ];
   }
 
-  // Default: return generic practice questions
+  // Default fallback: letter-pair (feature detection) practice.
   return [
     {
       questionNumber: 1,

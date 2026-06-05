@@ -292,10 +292,10 @@ export async function changePassword(data: {
   currentPassword: string;
   newPassword: string;
 }): Promise<{ success: boolean; message: string }> {
-  // The backend extracts the user from the httpOnly cookie
+  // The backend identifies the user from the auth token; oldPassword is verified server-side.
   return apiRequest("/authapi/change-password", {
     method: "PUT",
-    data: { password: data.newPassword },
+    data: { password: data.newPassword, oldPassword: data.currentPassword },
   });
 }
 

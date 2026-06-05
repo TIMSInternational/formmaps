@@ -84,8 +84,16 @@ function ParentOnboardingContent() {
       },
       {
         onSuccess: (result) => {
-          // Cookies set by backend — update store
-          setUser(result.user as any);
+          // Backend set auth cookies; mirror login so the Bearer fallback + store are in sync.
+          setUser({
+            id: result.user.id,
+            name: result.user.name,
+            email: result.user.email,
+            role: result.user.roleName,
+            accessToken: result.token,
+            permissions: result.user.permissions,
+            isAuthenticated: true,
+          });
           setDone(true);
           setTimeout(() => router.push("/parent"), 2000);
         },
