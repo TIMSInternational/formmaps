@@ -9,6 +9,8 @@ import StripeCheckout from "@/components/StripeCheckout";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { SubscriptionPlan } from "@/services/subscriptionStatusService";
+import { openBillingPortal } from "@/services/subscriptionService";
+import { toast } from "sonner";
 
 // Fallback plans used only if backend returns nothing
 const FALLBACK_PLANS = [
@@ -82,8 +84,21 @@ export default function SubscriptionsPage() {
   const { data: backendPlans, isLoading: plansLoading } = useSubscriptionPlans();
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
   const cancelMutation = useCancelSubscription();
   const userId = user.id || "";
+
+  const handleManageBilling = async () => {
+    setPortalLoading(true);
+    try {
+      const url = await openBillingPortal();
+      if (!url) throw new Error("No portal URL");
+      window.location.href = url;
+    } catch {
+      toast.error("Could not open the billing portal. Please try again.");
+      setPortalLoading(false);
+    }
+  };
 
   // Redirect school students away from this page
   if (subStatus?.planId === "school") {
@@ -152,28 +167,44 @@ export default function SubscriptionsPage() {
                 {plans.find(p => p.id === currentPlanId)?.name || currentPlanId}
               </strong> plan.
               {subStatus?.expiryDate && (
-                <> Renews {new Date(subStatus.expiryDate).toLocaleDateString()}</>
+                subStatus.cancelAtPeriodEnd
+                  ? <> Cancels {new Date(subStatus.expiryDate).toLocaleDateString()} — access until then</>
+                  : <> Renews {new Date(subStatus.expiryDate).toLocaleDateString()}</>
               )}
             </div>
           </div>
           <button
-            onClick={() => setShowCancelConfirm(true)}
+            onClick={handleManageBilling}
+            disabled={portalLoading}
             style={{
               padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 500,
-              background: "transparent", color: "var(--admin-font-tertiary)",
-              border: "1px solid var(--admin-border-default)", cursor: "pointer",
-              marginRight: 8,
+              background: "var(--admin-accent-blue)", color: "#fff",
+              border: "none", cursor: portalLoading ? "wait" : "pointer",
+              marginRight: 8, opacity: portalLoading ? 0.7 : 1,
             }}
           >
-            Cancel Plan
+            {portalLoading ? "Opening…" : "Manage Billing"}
           </button>
+          {!subStatus?.cancelAtPeriodEnd && (
+            <button
+              onClick={() => setShowCancelConfirm(true)}
+              style={{
+                padding: "6px 12px", borderRadius: 6, fontSize: 12, fontWeight: 500,
+                background: "transparent", color: "var(--admin-font-tertiary)",
+                border: "1px solid var(--admin-border-default)", cursor: "pointer",
+                marginRight: 8,
+              }}
+            >
+              Cancel Plan
+            </button>
+          )}
           <Badge style={{
             background: "var(--admin-accent-bg-green)",
             color: "var(--admin-accent-green)",
             border: "1px solid var(--admin-accent-border-green)",
             fontSize: 11, fontWeight: 600,
           }}>
-            Active
+            {subStatus?.cancelAtPeriodEnd ? "Ending" : "Active"}
           </Badge>
         </div>
       )}

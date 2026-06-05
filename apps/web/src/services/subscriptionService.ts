@@ -36,29 +36,6 @@ export interface FeatureComparison {
 }
 
 // User Subscription Interfaces
-export interface UserSubscription {
-  id: string;
-  userId: string;
-  planId: string;
-  status: "active" | "inactive" | "cancelled" | "expired" | "pending";
-  startDate: string;
-  endDate?: string;
-  paymentIntentId?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateSubscriptionPayload {
-  userId: string;
-  planId: string;
-  paymentIntentId: string;
-}
-
-export interface UpdateSubscriptionPayload {
-  status?: "active" | "inactive" | "cancelled" | "expired";
-  endDate?: string;
-}
-
 // Default subscription data (fallback)
 const defaultSubscriptionData: SubscriptionData = {
   subscription: {
@@ -282,14 +259,27 @@ export interface CheckoutSessionResponse {
 export async function createCheckoutSession(
   payload: CheckoutSessionPayload
 ): Promise<CheckoutSessionResponse> {
-  const response = await apiRequest<CheckoutSessionResponse>(
+  const response = await apiRequest<{ success: boolean; data: CheckoutSessionResponse }>(
     "/api/stripe/create-checkout-session",
     {
       method: "POST",
       data: payload,
     }
   );
-  return response;
+  // API envelope is {success, data:{sessionId, sessionUrl}} — unwrap it.
+  return (response?.data ?? response) as CheckoutSessionResponse;
+}
+
+/**
+ * Open the Stripe Customer Portal (manage payment method, invoices, cancel).
+ * Returns the portal URL to redirect the user to.
+ */
+export async function openBillingPortal(): Promise<string> {
+  const response = await apiRequest<{ success: boolean; data: { url: string } }>(
+    "/api/stripe/billing-portal",
+    { method: "POST" }
+  );
+  return (response?.data ?? response)?.url ?? "";
 }
 
 /**
@@ -410,85 +400,11 @@ export async function getSubscriptionPlanById(planId: string): Promise<Record<st
   });
 }
 
-/**
- * Create a new subscription
- */
-export async function createSubscription(
-  payload: CreateSubscriptionPayload
-): Promise<UserSubscription> {
-  return apiRequest("/api/subscriptions", {
-    method: "POST",
-    data: payload,
-  });
-}
-
-/**
- * Get user's current subscription
- */
-export async function getUserSubscription(
-  userId: string
-): Promise<UserSubscription | null> {
-  try {
-    return await apiRequest(`/api/subscriptions/user/${userId}`, {
-      method: "GET",
-    });
-  } catch (error) {
-    // Return null if no subscription found
-    if ((error as { status?: number })?.status === 404) {
-      return null;
-    }
-    throw error;
-  }
-}
-
-/**
- * Update user subscription
- */
-export async function updateSubscription(
-  subscriptionId: string,
-  payload: UpdateSubscriptionPayload
-): Promise<UserSubscription> {
-  return apiRequest(`/api/subscriptions/${subscriptionId}`, {
-    method: "PUT",
-    data: payload,
-  });
-}
-
-/**
- * Cancel user subscription
- */
-export async function cancelSubscription(
-  subscriptionId: string
-): Promise<UserSubscription> {
-  return apiRequest(`/api/subscriptions/${subscriptionId}/cancel`, {
-    method: "POST",
-  });
-}
-
-/**
- * Get all user subscriptions (history)
- */
-export async function getUserSubscriptionHistory(
-  userId: string
-): Promise<UserSubscription[]> {
-  return apiRequest(`/api/subscriptions/user/${userId}/history`, {
-    method: "GET",
-  });
-}
-
-/**
- * Helper function to check if user has active subscription
- */
-export function hasActiveSubscription(
-  subscription: UserSubscription | null
-): boolean {
-  if (!subscription) return false;
-
-  const now = new Date();
-  const endDate = subscription.endDate ? new Date(subscription.endDate) : null;
-
-  return subscription.status === "active" && (!endDate || endDate > now);
-}
+// NOTE: the old createSubscription/getUserSubscription/updateSubscription/
+// cancelSubscription/getUserSubscriptionHistory functions called /api/subscriptions*
+// endpoints that never existed on this backend — removed. Subscriptions are
+// managed via Stripe Checkout (createCheckoutSession), the Customer Portal
+// (openBillingPortal), and /api/stripe/cancel-subscription (subscriptionStatusService).
 
 /**
  * Helper function to find subscription plan by ID from a local array

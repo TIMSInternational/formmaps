@@ -5,6 +5,9 @@ export interface SubscriptionStatus {
   planId: string | null;
   status: "active" | "trialing" | "past_due" | "canceled" | "cancelled" | "none";
   expiryDate: string | null;
+  /** Cancelled but access retained until expiryDate ("Cancels on" vs "Renews on"). */
+  cancelAtPeriodEnd?: boolean;
+  isSchoolStudent?: boolean;
 }
 
 export interface SubscriptionPlan {
@@ -16,18 +19,6 @@ export interface SubscriptionPlan {
   isActive: boolean | null;
 }
 
-export interface CreateSubscriptionRequest {
-  planId: string;
-  paymentMethodId?: string;
-}
-
-export interface CreateSubscriptionResponse {
-  subscriptionId: string;
-  planId: string;
-  status: string;
-  startDate: string;
-  nextBillingDate: string;
-}
 
 /**
  * Get current subscription status for the user
@@ -61,15 +52,6 @@ export async function cancelSubscription(): Promise<{ success: boolean; message:
   return response.data || response;
 }
 
-/**
- * Create a new subscription
- */
-export async function createSubscription(
-  payload: CreateSubscriptionRequest
-): Promise<CreateSubscriptionResponse> {
-  const response = await apiRequest("/api/v1/subscriptions", {
-    method: "POST",
-    data: payload,
-  });
-  return response.data || response;
-}
+// NOTE: createSubscription (POST /api/v1/subscriptions) removed — that endpoint
+// never existed. Subscriptions are created via Stripe Checkout
+// (subscriptionService.createCheckoutSession) and confirmed by webhook.
