@@ -1247,7 +1247,9 @@
       "lastNamePlaceholder": "Doe",
       "emailPlaceholder": "john@example.com",
       "submit": "Create account",
-      "creating": "Creating account..."
+      "creating": "Creating account...",
+      "haveAccountText": "Already have an account?",
+      "signIn": "Sign in"
     }
   },
   "transactions": {

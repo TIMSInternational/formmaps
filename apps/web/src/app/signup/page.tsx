@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { signUp as signUpApi, login as loginApi } from "@/services/authService";
-import { getRoleByName } from "@/services/roleService";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,19 +55,8 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      let userRoleId = "686cc04c1237a82fc74b4a6a";
-      try {
-        const userRole = await getRoleByName("User");
-        userRoleId = userRole.id;
-      } catch {
-        try {
-          const studentRole = await getRoleByName("Student");
-          userRoleId = studentRole.id;
-        } catch {
-          // Use fallback roleId if both fail
-        }
-      }
-
+      // No role lookup: those endpoints require auth (401 for anonymous users)
+      // and the backend signup defaults to the Student role when roleId is omitted.
       await signUpApi(
         `${data.firstName} ${data.lastName}`,
         data.email,
@@ -279,9 +267,9 @@ export default function SignupPage() {
               </Form>
 
               <p className="mt-6 text-center text-sm text-gray-600">
-                {t("auth.login.noAccountText")}{" "}
+                {t("auth.signup.haveAccountText")}{" "}
                 <Link href="/login" className="font-medium text-purple-600 hover:text-purple-500 transition-colors">
-                  {t("auth.login.submit")}
+                  {t("auth.signup.signIn")}
                 </Link>
               </p>
             </div>
