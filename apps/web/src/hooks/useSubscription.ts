@@ -2,12 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getSubscriptionStatus,
   getSubscriptionPlans,
-  createSubscription,
   cancelSubscription,
   type SubscriptionStatus,
   type SubscriptionPlan,
-  type CreateSubscriptionRequest,
-  type CreateSubscriptionResponse,
 } from "@/services/subscriptionStatusService";
 
 /**
@@ -35,24 +32,6 @@ export function useSubscriptionPlans() {
     queryKey: ["subscriptionPlans"],
     queryFn: getSubscriptionPlans,
     staleTime: 10 * 60 * 1000,
-  });
-}
-
-/**
- * Hook to create a new subscription
- */
-export function useCreateSubscription() {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    CreateSubscriptionResponse,
-    Error,
-    CreateSubscriptionRequest
-  >({
-    mutationFn: createSubscription,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptionStatus"] });
-    },
   });
 }
 
