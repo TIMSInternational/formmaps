@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { toast } from '@/hooks/useToast';
-import { refreshAccessToken, clearTokens } from '@/services/tokenRefreshService';
+import { refreshAccessToken } from '@/services/tokenRefreshService';
+import { forceLogout } from '@/utils/tokenUtils';
 
 // Create an Axios instance with base URL and default headers
 const apiClient: AxiosInstance = axios.create({
@@ -59,22 +60,18 @@ apiClient.interceptors.response.use(
             processQueue(null, 'refreshed');
             return apiClient(originalRequest);
           } else {
-            // Refresh failed — redirect to login
+            // Refresh failed — full session teardown (store + cookies) and redirect.
+            // Tearing down only cookies leaves the persisted store authenticated,
+            // which makes AuthWrapper bounce /login back into the portal forever.
             processQueue(new Error('Token refresh failed'));
-            clearTokens();
             toast.error('Session expired', { description: 'Please log in again.' });
-            if (typeof window !== 'undefined') {
-              window.location.href = '/login';
-            }
+            forceLogout('Your session has expired. Please log in again.');
             return Promise.reject(new Error('Session expired. Please log in again.'));
           }
         } catch (refreshError) {
           processQueue(refreshError as Error);
-          clearTokens();
           toast.error('Session expired', { description: 'Please log in again.' });
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
-          }
+          forceLogout('Your session has expired. Please log in again.');
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;

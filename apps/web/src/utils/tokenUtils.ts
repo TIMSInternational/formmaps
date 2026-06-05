@@ -1,8 +1,11 @@
 /**
  * Token Utility Service
- * 
+ *
  * Handles JWT token validation, expiry checking, and centralized auth state management.
  */
+
+import { clearTokens } from "@/services/tokenRefreshService";
+import { hardNavigate } from "@/utils/navigation";
 
 /**
  * Decode JWT token payload (client-side only)
@@ -72,7 +75,11 @@ export function getStoredToken(): string | null {
 }
 
 /**
- * Clear auth state and redirect to login
+ * Clear auth state and redirect to login.
+ * Performs a FULL session teardown: resets the persisted auth store (otherwise
+ * AuthWrapper sees the stale persisted user and bounces /login back into the
+ * portal, causing an infinite reload loop), clears the logged_in cookie, then
+ * hard-navigates to /login.
  */
 export function forceLogout(message?: string): void {
   if (typeof window === "undefined") return;
@@ -82,8 +89,14 @@ export function forceLogout(message?: string): void {
     // Store message to show on login page
     sessionStorage.setItem("auth_message", message);
   }
-  
-  window.location.href = "/login";
+
+  // Lazy require to keep the store out of any server-side import graph
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useGlobalStore } = require("@/store/useGlobalStore");
+  useGlobalStore.getState().logout();
+  clearTokens();
+
+  hardNavigate("/login");
 }
 
 /**
