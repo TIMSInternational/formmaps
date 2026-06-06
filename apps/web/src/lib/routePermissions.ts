@@ -80,3 +80,20 @@ export function resolveRedirect(rule: RouteRule, role: RoleName): string {
   }
   return rule.redirect;
 }
+
+/**
+ * Resolve where login should land the user, honoring a ?redirect= deep link
+ * when it is safe (relative, inside a known portal) and the user's role may
+ * access it. Falls back to the role's home page otherwise.
+ */
+export function resolveLoginRedirect(redirectParam: string | null, role: RoleName): string {
+  const roleHome = roleHomeMap[role] || "/login";
+  if (!redirectParam) return roleHome;
+  if (!redirectParam.startsWith("/") || redirectParam.startsWith("//")) return roleHome;
+
+  const pathname = redirectParam.split(/[?#]/)[0];
+  const rule = findRouteRule(pathname);
+  if (!rule) return roleHome; // outside known portals
+  if (!rule.allowed.includes(role)) return roleHome;
+  return redirectParam;
+}
