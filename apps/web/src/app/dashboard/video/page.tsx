@@ -168,6 +168,7 @@ export default function VideoCallsPage() {
         basePath="/dashboard/video"
         onJoinActive={(id) => router.push(`/dashboard/video/${id}`)}
         onStartScheduled={handleJoinScheduled}
+        emptyHint="When your counselor or school staff starts or schedules a call with you, it will appear here."
       />
     </div>
   );
