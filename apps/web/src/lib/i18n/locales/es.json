@@ -214,7 +214,6 @@
       }
     }
   },
-
   "dashboard": {
     "title": "Panel de Control",
     "welcome": "Bienvenido a tu panel de control",
@@ -310,7 +309,6 @@
         "confirmReschedule": "Confirmar reprogramación"
       }
     },
-
     "courseCatalog": "Catálogo de Cursos",
     "resumeBuilder": "Constructor de Currículum",
     "resourceLibrary": "Biblioteca de Recursos",
@@ -419,7 +417,6 @@
       "education": "Nivel educativo",
       "location": "Ubicación"
     },
-
     "professionalAssessments": "Evaluaciones Profesionales",
     "assessmentsDescription": "Complete sus evaluaciones profesionales para desbloquear conocimientos personalizados sobre sus competencias, habilidades cognitivas y camino profesional ideal. Cada evaluación proporciona datos valiosos para su desarrollo profesional.",
     "pcaUserInfoIncomplete": "La información del usuario está incompleta. Por favor complete su perfil primero.",
@@ -666,12 +663,177 @@
   },
   "coaching": {
     "featuredCoaches": "Coaches Destacados",
-    "featuredDescription": "Conéctate con coaches mejor valorados adaptados a tu perfil",
+    "featuredDescription": "Conecta con coaches expertos para acelerar tu crecimiento profesional",
     "viewAllCoaches": "Ver Todos los Coaches",
     "bookSession": "Reservar Sesión",
     "from": "Desde",
     "noCoachesTitle": "No Hay Coaches Disponibles",
-    "noCoachesDesc": "Vuelve pronto para ver coaches destacados."
+    "noCoachesDesc": "Vuelve pronto para ver coaches destacados.",
+    "find": {
+      "title": "Encontrar un coach",
+      "subtitle": "Reserva sesiones 1:1 con expertos de la industria para acelerar tu carrera",
+      "searchPlaceholder": "Buscar por nombre, rol o empresa...",
+      "viewProfileBook": "Ver perfil y reservar",
+      "noCoachesFound": "No se encontraron coaches",
+      "tryAdjusting": "Intenta ajustar tus términos de búsqueda",
+      "remote": "Remoto",
+      "new": "Nuevo"
+    },
+    "earnings": {
+      "title": "Ganancias y Pagos",
+      "subtitle": "Rastrea tus ingresos, tarifas de plataforma y pagos.",
+      "unableToLoad": "No se pueden cargar los datos de ganancias",
+      "tryAgain": "Por favor intenta de nuevo más tarde",
+      "errorTitle": "Error al cargar los datos de ganancias"
+    },
+    "profile": {
+      "notFoundTitle": "Coach no encontrado",
+      "notFoundText": "El perfil del coach que buscas no existe.",
+      "goBack": "Volver",
+      "backToCoaches": "Volver a coaches",
+      "available": "DISPONIBLE",
+      "bookSession": "Reservar sesión",
+      "rating": "Calificación",
+      "location": "Ubicación",
+      "languages": "Idiomas",
+      "about": "Sobre el coach",
+      "expertise": "Experiencia y habilidades",
+      "coreSpecialization": "Especialización principal",
+      "topicsSkills": "Temas y habilidades",
+      "availability": "Disponibilidad",
+      "nextAvailable": "Siguiente disponible",
+      "slotsToday": "Turnos disponibles hoy",
+      "checkCalendar": "Ver calendario",
+      "freeCancellation": "Cancelación gratuita hasta 24h antes",
+      "updated": "Perfil actualizado con éxito",
+      "failedToUpdate": "Error al actualizar el perfil",
+      "uploading": "Subiendo imagen...",
+      "uploadSuccess": "Imagen de perfil actualizada con éxito",
+      "uploadFailed": "Error al subir la imagen",
+      "failedToLoad": "Error al cargar los datos del perfil"
+    },
+    "settings": {
+      "profileTitle": "Información del perfil",
+      "profileDescription": "Actualiza tu perfil público de coaching visible para los estudiantes.",
+      "fullName": "Nombre completo",
+      "professionalTitle": "Título profesional",
+      "bioPlaceholder": "Cuéntale a los estudiantes sobre tu experiencia de coaching...",
+      "uploadImage": "Subir imagen"
+    },
+    "dashboard": {
+      "availabilityUpdated": "Disponibilidad actualizada con éxito",
+      "failedToUpdateAvailability": "Error al actualizar la disponibilidad",
+      "failedToLoad": "Error al cargar datos del panel",
+      "noSlotsAvailable": "No hay turnos disponibles",
+      "failedToLoadSlots": "Error al cargar los turnos disponibles",
+      "selectDateTime": "Por favor selecciona una fecha y hora",
+      "rescheduleSuccess": "Sesión reprogramada con éxito",
+      "rescheduleFailed": "Error al reprogramar la sesión",
+      "sessionCancelled": "Sesión cancelada",
+      "cancelFailed": "Error al cancelar la sesión",
+      "reportDownloaded": "Informe descargado con éxito",
+      "reportDownloadFailed": "Error al descargar el informe",
+      "activityLogComingSoon": "Registro de actividad completo disponible próximamente",
+      "studentProfileNotFound": "Perfil del estudiante no encontrado",
+      "benchmarks": {
+        "overview": {
+          "salaryTitle": "Referencias salariales",
+          "details": "Detalles",
+          "topSkills": "Habilidades principales",
+          "workMode": "Modo de trabajo",
+          "costOfLiving": "Costo de vida",
+          "certifications": "Certificaciones",
+          "viewAll": "Ver todo",
+          "marketPulse": "Pulso del mercado",
+          "marketPulseDesc": "Métricas de la industria en tiempo real",
+          "liveUpdates": "Actualizaciones en vivo"
+        },
+        "compensation": {
+          "avgAnnualSalary": "Salario anual promedio",
+          "sinceLastYear": "desde el año pasado",
+          "purchasePowerIndex": "Índice de poder adquisitivo",
+          "relativeToNYC": "Relativo a Nueva York (100)",
+          "estimatedTakeHome": "Estimación de ingreso neto",
+          "afterEstimatedTaxes": "Después de impuestos estimados (~28%)",
+          "detailedSalaryTitle": "Desglose detallado de salario",
+          "cardDescription": "Rangos de compensación para roles de {{career}} en {{country}} a través de niveles de experiencia.",
+          "keyObservation": "Observación clave",
+          "keyObservationDesc": "Las bandas salariales para {{career}} en {{country}} se están ampliando. Los roles de nivel senior están experimentando un crecimiento más rápido debido a la escasez de talento especializado, mientras que la compensación de nivel de entrada se mantiene estable."
+        },
+        "skills": {
+          "title": "Habilidades y Crecimiento",
+          "subtitle": "Referencias de competencias y oportunidades de aprendizaje.",
+          "mostInDemand": "Habilidades más demandadas",
+          "cardDescription": "Frecuencia de habilidades solicitadas en descripciones de trabajo para {{career}}.",
+          "emergingTechWatch": "Vigilancia de tecnologías emergentes",
+          "emergingDesc": "Tecnologías que están ganando tracción rápidamente en los últimos 6 meses.",
+          "topCertifications": "Principales certificaciones",
+          "certificationsDesc": "Credenciales que impactan significativamente la probabilidad de contratación.",
+          "recommendedLearningPaths": "Rutas de aprendizaje recomendadas"
+        },
+        "market": {
+          "title": "Dinámica del mercado",
+          "subtitle": "Tendencias macroeconómicas y análisis de estabilidad laboral.",
+          "employabilityScore": "Puntuación de empleabilidad",
+          "employabilityDesc": "Tendencia histórica del éxito de colocación de roles en los últimos 5 años.",
+          "analysisLabel": "Análisis:",
+          "analysis": "Tendencia ascendiente consistente indica un mercado maduro para profesionales de {{career}}.",
+          "youthEmploymentRate": "Tasa de empleo juvenil",
+          "marketForecast": "Pronóstico del mercado",
+          "positiveOutlook": "Perspectiva positiva",
+          "positiveOutlookDesc": "Se proyecta que startups y sectores empresariales aumenten la contratación en un 15% en el tercer trimestre.",
+          "projectedHotspots": "Puntos calientes proyectados",
+          "recruiterSentiment": "Sentimiento de reclutadores",
+          "hiringSpeed": "Velocidad de contratación",
+          "interviewTech": "Técnica de entrevistas",
+          "contractRoles": "Roles por contrato",
+          "badgeFast": "Rápido",
+          "badgeRemote": "Remoto",
+          "badgeIncreasing": "En aumento"
+        },
+        "tabs": {
+          "overview": "Resumen",
+          "compensation": "Compensación",
+          "market": "Análisis de Mercado",
+          "skills": "Habilidades y Aprendizaje",
+          "demographics": "Demografía"
+        },
+        "header": {
+          "title": "Inteligencia Profesional",
+          "description": "Análisis profundo de tendencias de mercado globales, referencias salariales y requisitos de habilidades para tu trayectoria.",
+          "selectCountryPlaceholder": "Selecciona País",
+          "selectCareerPlaceholder": "Selecciona Profesión",
+          "shareReport": "Compartir Informe"
+        },
+        "demographics": {
+          "title": "Fuerza Laboral y Cultura",
+          "subtitle": "Desglose demográfico y tendencias del entorno laboral.",
+          "workModeTitle": "Distribución del modo de trabajo",
+          "workModeDesc": "Prevalencia de roles remotos, híbridos y presenciales.",
+          "remote": "Remoto",
+          "hybrid": "Híbrido",
+          "onsite": "Presencial",
+          "genderDiversityTitle": "Diversidad de Género",
+          "genderDiversityDesc": "Distribución de género en roles de {{career}}.",
+          "inclusivityTitle": "Puntuación de Inclusividad",
+          "inclusivityDesc": "Calificación promedio de la industria para políticas y beneficios laborales inclusivos.",
+          "enterpriseTrendTitle": "Tendencia Empresarial",
+          "enterpriseTrendDesc": "Las empresas Fortune 500 están trasladando un 20% más de roles a 'Remoto-First' en 2025.",
+          "readReport": "Leer Informe",
+          "badges": {
+            "parentalLeave": "Licencia parental",
+            "flexHours": "Horario flexible",
+            "wellness": "Programas de bienestar"
+          }
+        },
+        "common": {
+          "title": "Referencias",
+          "today": "Hoy",
+          "comparedToYesterday": "Comparado con ${{amount}} ayer",
+          "lastWeekIncome": "Ingresos de la semana pasada"
+        }
+      }
+    }
   },
   "benchmarks": {
     "marketDemand": "Demanda del Mercado",
@@ -740,7 +902,6 @@
       "signIn": "Iniciar sesión"
     }
   },
-
   "transactions": {
     "fetchFailed": "Error al cargar las transacciones",
     "noExport": "No hay transacciones para exportar",
@@ -1354,7 +1515,6 @@
     "success": "Trabajo de importación iniciado. Verifica el estado en breve.",
     "failure": "No se pudo iniciar la importación. Intenta de nuevo."
   },
-
   "profile": {
     "personalInfoTitle": "Información personal",
     "personalInfoDescription": "Actualiza tus datos principales.",
@@ -1370,21 +1530,33 @@
     "skillsDescription": "Presiona Enter para agregar una habilidad."
   },
   "booking": {
-    "enterDetailsTitle": "Ingresar detalles",
-    "topicLabel": "¿Sobre qué te gustaría hablar?",
+    "enterDetailsTitle": "Detalles de la Sesión",
+    "topicLabel": "Tema",
     "selectTopic": "Selecciona un tema",
     "topics": {
-      "careerGuidance": "Orientación profesional",
-      "interviewPrep": "Preparación para entrevistas",
-      "resumeReview": "Revisión de currículum",
-      "skillDevelopment": "Desarrollo de habilidades"
+      "careerGuidance": "Orientación Profesional",
+      "interviewPrep": "Preparación de Entrevista",
+      "resumeReview": "Revisión de CV",
+      "skillDevelopment": "Desarrollo de Habilidades"
     },
-    "notesLabel": "Notas adicionales (Opcional)",
-    "prepNotesPlaceholder": "Comparte cualquier información que ayude a prepararnos para la reunión...",
+    "notesLabel": "Notas (opcional)",
+    "prepNotesPlaceholder": "¿Algo que te gustaría preparar o discutir?",
     "processing": "Procesando...",
-    "rescheduleSession": "Reprogramar sesión",
-    "bookAndPay": "Reservar y pagar",
-    "scheduleEvent": "Programar evento"
+    "rescheduleSession": "Reprogramar Sesión",
+    "bookAndPay": "Reservar y Pagar",
+    "scheduleEvent": "Programar Sesión",
+    "selectDateTime": "Seleccionar Fecha y Hora",
+    "timesShownIn": "Horarios en {{timezone}}",
+    "convertedToLocal": "Convertido a tu hora local ({{timezone}})",
+    "selectDate": "Selecciona una fecha",
+    "checkingAvailability": "Verificando disponibilidad...",
+    "slotsAvailable": "{{count}} horarios disponibles",
+    "selectDateToSee": "Selecciona una fecha para ver horarios",
+    "noAvailability": "Sin disponibilidad",
+    "coachNotAvailable": "El coach no está disponible este día.",
+    "jumpTo": "Ir a {{date}}",
+    "continue": "Continuar",
+    "back": "Volver"
   },
   "testPCA": {
     "title": "Pruebas de la API PCA",
@@ -1396,7 +1568,6 @@
     "clickToRun": "Haz clic en un botón arriba para ejecutar las pruebas...",
     "endpointsTitle": "Endpoints de la API que se prueban"
   },
-
   "timeline": {
     "benchmarks": {
       "marketDemand": "Demanda del mercado",
@@ -1411,7 +1582,6 @@
       "topSkills": "Habilidades principales",
       "workMode": "Modo de trabajo"
     },
-
     "title": "Línea de Tiempo de Progreso",
     "subtitle": "Rastrea todas tus evaluaciones y progreso en un solo lugar",
     "breadcrumb": "Línea de Tiempo",
@@ -1441,7 +1611,6 @@
     "tryAgain": "Intentar de Nuevo",
     "backToDashboard": "Volver al Panel",
     "overallProgress": "Progreso General",
-
     "lastActivity": "Última Actividad",
     "thisWeek": "Esta Semana",
     "thisMonth": "Este Mes",
@@ -1550,9 +1719,9 @@
     }
   },
   "sessions": {
-    "title": "Mis sesiones de coaching",
+    "title": "Mis Sesiones",
     "subtitle": "Rastrea y gestiona todas tus citas de coaching",
-    "bookNew": "Reservar nueva sesión",
+    "bookNew": "Reservar Nueva",
     "stats": {
       "total": "Sesiones Totales",
       "upcoming": "Próximas",
@@ -1573,188 +1742,32 @@
       "failedToSubmitReview": "Error al enviar la reseña"
     },
     "status": {
+      "pending": "Pendiente de confirmación",
       "confirmed": "Confirmada",
       "completed": "Completada",
       "cancelled": "Cancelada",
       "rescheduled": "Reprogramada"
-    }
+    },
+    "totalSessions": "Total de Sesiones",
+    "upcoming": "Próximas",
+    "completed": "Completadas",
+    "cancelled": "Canceladas",
+    "bookCounselor": "Reservar Consejero",
+    "findCoach": "Buscar Coach",
+    "noSessions": "No se encontraron sesiones",
+    "noSessionsDesc": "Reserva una sesión con un consejero o coach para comenzar.",
+    "coaching": "Coaching",
+    "counseling": "Consejería",
+    "reschedule": "Reprogramar",
+    "cancel": "Cancelar Sesión",
+    "joinSession": "Unirse a Sesión",
+    "leaveReview": "Dejar Reseña"
   },
   "subscriptions": {
     "title": "Suscripciones",
     "subtitle": "Elige el plan perfecto para tu trayectoria profesional",
     "paymentSuccessfulTitle": "¡Pago exitoso!",
     "paymentSuccessfulBody": "Tu suscripción ha sido activada. Ahora tienes acceso a todas las funciones premium."
-  },
-  "coaching": {
-    "featuredCoaches": "Coaches Destacados",
-    "featuredDescription": "Conecta con coaches expertos para acelerar tu crecimiento profesional",
-    "viewAllCoaches": "Ver Todos los Coaches",
-    "bookSession": "Reservar Sesión",
-    "find": {
-      "title": "Encontrar un coach",
-      "subtitle": "Reserva sesiones 1:1 con expertos de la industria para acelerar tu carrera",
-      "searchPlaceholder": "Buscar por nombre, rol o empresa...",
-      "viewProfileBook": "Ver perfil y reservar",
-      "noCoachesFound": "No se encontraron coaches",
-      "tryAdjusting": "Intenta ajustar tus términos de búsqueda",
-      "remote": "Remoto",
-      "new": "Nuevo"
-    },
-    "earnings": {
-      "title": "Ganancias y Pagos",
-      "subtitle": "Rastrea tus ingresos, tarifas de plataforma y pagos.",
-      "unableToLoad": "No se pueden cargar los datos de ganancias",
-      "tryAgain": "Por favor intenta de nuevo más tarde",
-      "errorTitle": "Error al cargar los datos de ganancias"
-    },
-    "profile": {
-      "notFoundTitle": "Coach no encontrado",
-      "notFoundText": "El perfil del coach que buscas no existe.",
-      "goBack": "Volver",
-      "backToCoaches": "Volver a coaches",
-      "available": "DISPONIBLE",
-      "bookSession": "Reservar sesión",
-      "rating": "Calificación",
-      "location": "Ubicación",
-      "languages": "Idiomas",
-      "about": "Sobre el coach",
-      "expertise": "Experiencia y habilidades",
-      "coreSpecialization": "Especialización principal",
-      "topicsSkills": "Temas y habilidades",
-      "availability": "Disponibilidad",
-      "nextAvailable": "Siguiente disponible",
-      "slotsToday": "Turnos disponibles hoy",
-      "checkCalendar": "Ver calendario",
-      "freeCancellation": "Cancelación gratuita hasta 24h antes",
-      "updated": "Perfil actualizado con éxito",
-      "failedToUpdate": "Error al actualizar el perfil",
-      "uploading": "Subiendo imagen...",
-      "uploadSuccess": "Imagen de perfil actualizada con éxito",
-      "uploadFailed": "Error al subir la imagen",
-      "failedToLoad": "Error al cargar los datos del perfil"
-    },
-    "settings": {
-      "profileTitle": "Información del perfil",
-      "profileDescription": "Actualiza tu perfil público de coaching visible para los estudiantes.",
-      "fullName": "Nombre completo",
-      "professionalTitle": "Título profesional",
-      "bioPlaceholder": "Cuéntale a los estudiantes sobre tu experiencia de coaching...",
-      "uploadImage": "Subir imagen"
-    },
-    "dashboard": {
-      "availabilityUpdated": "Disponibilidad actualizada con éxito",
-      "failedToUpdateAvailability": "Error al actualizar la disponibilidad",
-      "failedToLoad": "Error al cargar datos del panel",
-      "noSlotsAvailable": "No hay turnos disponibles",
-      "failedToLoadSlots": "Error al cargar los turnos disponibles",
-      "selectDateTime": "Por favor selecciona una fecha y hora",
-      "rescheduleSuccess": "Sesión reprogramada con éxito",
-      "rescheduleFailed": "Error al reprogramar la sesión",
-      "sessionCancelled": "Sesión cancelada",
-      "cancelFailed": "Error al cancelar la sesión",
-      "reportDownloaded": "Informe descargado con éxito",
-      "reportDownloadFailed": "Error al descargar el informe",
-      "activityLogComingSoon": "Registro de actividad completo disponible próximamente",
-      "studentProfileNotFound": "Perfil del estudiante no encontrado",
-      "benchmarks": {
-        "overview": {
-          "salaryTitle": "Referencias salariales",
-          "details": "Detalles",
-          "topSkills": "Habilidades principales",
-          "workMode": "Modo de trabajo",
-          "costOfLiving": "Costo de vida",
-          "certifications": "Certificaciones",
-          "viewAll": "Ver todo",
-          "marketPulse": "Pulso del mercado",
-          "marketPulseDesc": "Métricas de la industria en tiempo real",
-          "liveUpdates": "Actualizaciones en vivo"
-        },
-        "compensation": {
-          "avgAnnualSalary": "Salario anual promedio",
-          "sinceLastYear": "desde el año pasado",
-          "purchasePowerIndex": "Índice de poder adquisitivo",
-          "relativeToNYC": "Relativo a Nueva York (100)",
-          "estimatedTakeHome": "Estimación de ingreso neto",
-          "afterEstimatedTaxes": "Después de impuestos estimados (~28%)",
-          "detailedSalaryTitle": "Desglose detallado de salario",
-          "cardDescription": "Rangos de compensación para roles de {{career}} en {{country}} a través de niveles de experiencia.",
-          "keyObservation": "Observación clave",
-          "keyObservationDesc": "Las bandas salariales para {{career}} en {{country}} se están ampliando. Los roles de nivel senior están experimentando un crecimiento más rápido debido a la escasez de talento especializado, mientras que la compensación de nivel de entrada se mantiene estable."
-        },
-        "skills": {
-          "title": "Habilidades y Crecimiento",
-          "subtitle": "Referencias de competencias y oportunidades de aprendizaje.",
-          "mostInDemand": "Habilidades más demandadas",
-          "cardDescription": "Frecuencia de habilidades solicitadas en descripciones de trabajo para {{career}}.",
-          "emergingTechWatch": "Vigilancia de tecnologías emergentes",
-          "emergingDesc": "Tecnologías que están ganando tracción rápidamente en los últimos 6 meses.",
-          "topCertifications": "Principales certificaciones",
-          "certificationsDesc": "Credenciales que impactan significativamente la probabilidad de contratación.",
-          "recommendedLearningPaths": "Rutas de aprendizaje recomendadas"
-        },
-        "market": {
-          "title": "Dinámica del mercado",
-          "subtitle": "Tendencias macroeconómicas y análisis de estabilidad laboral.",
-          "employabilityScore": "Puntuación de empleabilidad",
-          "employabilityDesc": "Tendencia histórica del éxito de colocación de roles en los últimos 5 años.",
-          "analysisLabel": "Análisis:",
-          "analysis": "Tendencia ascendiente consistente indica un mercado maduro para profesionales de {{career}}.",
-          "youthEmploymentRate": "Tasa de empleo juvenil",
-          "marketForecast": "Pronóstico del mercado",
-          "positiveOutlook": "Perspectiva positiva",
-          "positiveOutlookDesc": "Se proyecta que startups y sectores empresariales aumenten la contratación en un 15% en el tercer trimestre.",
-          "projectedHotspots": "Puntos calientes proyectados",
-          "recruiterSentiment": "Sentimiento de reclutadores",
-          "hiringSpeed": "Velocidad de contratación",
-          "interviewTech": "Técnica de entrevistas",
-          "contractRoles": "Roles por contrato",
-          "badgeFast": "Rápido",
-          "badgeRemote": "Remoto",
-          "badgeIncreasing": "En aumento"
-        },
-        "tabs": {
-          "overview": "Resumen",
-          "compensation": "Compensación",
-          "market": "Análisis de Mercado",
-          "skills": "Habilidades y Aprendizaje",
-          "demographics": "Demografía"
-        },
-        "header": {
-          "title": "Inteligencia Profesional",
-          "description": "Análisis profundo de tendencias de mercado globales, referencias salariales y requisitos de habilidades para tu trayectoria.",
-          "selectCountryPlaceholder": "Selecciona País",
-          "selectCareerPlaceholder": "Selecciona Profesión",
-          "shareReport": "Compartir Informe"
-        },
-        "demographics": {
-          "title": "Fuerza Laboral y Cultura",
-          "subtitle": "Desglose demográfico y tendencias del entorno laboral.",
-          "workModeTitle": "Distribución del modo de trabajo",
-          "workModeDesc": "Prevalencia de roles remotos, híbridos y presenciales.",
-          "remote": "Remoto",
-          "hybrid": "Híbrido",
-          "onsite": "Presencial",
-          "genderDiversityTitle": "Diversidad de Género",
-          "genderDiversityDesc": "Distribución de género en roles de {{career}}.",
-          "inclusivityTitle": "Puntuación de Inclusividad",
-          "inclusivityDesc": "Calificación promedio de la industria para políticas y beneficios laborales inclusivos.",
-          "enterpriseTrendTitle": "Tendencia Empresarial",
-          "enterpriseTrendDesc": "Las empresas Fortune 500 están trasladando un 20% más de roles a 'Remoto-First' en 2025.",
-          "readReport": "Leer Informe",
-          "badges": {
-            "parentalLeave": "Licencia parental",
-            "flexHours": "Horario flexible",
-            "wellness": "Programas de bienestar"
-          }
-        },
-        "common": {
-          "title": "Referencias",
-          "today": "Hoy",
-          "comparedToYesterday": "Comparado con ${{amount}} ayer",
-          "lastWeekIncome": "Ingresos de la semana pasada"
-        }
-      }
-    }
   },
   "language": {
     "english": "Inglés",
@@ -2049,52 +2062,5 @@
     "booked": "¡Sesión Reservada!",
     "confirmationMessage": "Tu sesión con el consejero ha sido confirmada.",
     "backToDashboard": "Volver al Panel"
-  },
-  "sessions": {
-    "title": "Mis Sesiones",
-    "totalSessions": "Total de Sesiones",
-    "upcoming": "Próximas",
-    "completed": "Completadas",
-    "cancelled": "Canceladas",
-    "bookCounselor": "Reservar Consejero",
-    "findCoach": "Buscar Coach",
-    "bookNew": "Reservar Nueva",
-    "noSessions": "No se encontraron sesiones",
-    "noSessionsDesc": "Reserva una sesión con un consejero o coach para comenzar.",
-    "coaching": "Coaching",
-    "counseling": "Consejería",
-    "reschedule": "Reprogramar",
-    "cancel": "Cancelar Sesión",
-    "joinSession": "Unirse a Sesión",
-    "leaveReview": "Dejar Reseña"
-  },
-  "booking": {
-    "selectDateTime": "Seleccionar Fecha y Hora",
-    "timesShownIn": "Horarios en {{timezone}}",
-    "convertedToLocal": "Convertido a tu hora local ({{timezone}})",
-    "selectDate": "Selecciona una fecha",
-    "checkingAvailability": "Verificando disponibilidad...",
-    "slotsAvailable": "{{count}} horarios disponibles",
-    "selectDateToSee": "Selecciona una fecha para ver horarios",
-    "noAvailability": "Sin disponibilidad",
-    "coachNotAvailable": "El coach no está disponible este día.",
-    "jumpTo": "Ir a {{date}}",
-    "continue": "Continuar",
-    "back": "Volver",
-    "enterDetailsTitle": "Detalles de la Sesión",
-    "topicLabel": "Tema",
-    "selectTopic": "Selecciona un tema",
-    "topics": {
-      "careerGuidance": "Orientación Profesional",
-      "interviewPrep": "Preparación de Entrevista",
-      "resumeReview": "Revisión de CV",
-      "skillDevelopment": "Desarrollo de Habilidades"
-    },
-    "notesLabel": "Notas (opcional)",
-    "prepNotesPlaceholder": "¿Algo que te gustaría preparar o discutir?",
-    "processing": "Procesando...",
-    "rescheduleSession": "Reprogramar Sesión",
-    "bookAndPay": "Reservar y Pagar",
-    "scheduleEvent": "Programar Sesión"
   }
 }

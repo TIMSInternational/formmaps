@@ -6,6 +6,13 @@ import type { TFunction } from "i18next";
 
 export function getStatusBadge(status: string, t: TFunction) {
   switch (status) {
+    case "pending":
+      return (
+        <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-amber-200 bg-amber-50 text-amber-700 inline-flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          {t("sessions.status.pending")}
+        </span>
+      );
     case "confirmed":
       return (
         <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-emerald-200 bg-emerald-50 text-emerald-700 inline-flex items-center gap-1">

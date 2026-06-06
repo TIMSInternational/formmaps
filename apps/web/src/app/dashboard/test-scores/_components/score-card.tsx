@@ -11,8 +11,8 @@ import {
   Calendar,
   AlertTriangle,
 } from "lucide-react";
-import { format } from "date-fns";
 import type { TestScore } from "@/services/testScoreService";
+import { formatDateOnly } from "@/lib/dateUtils";
 import { TYPE_COLOR, scoreLabel, scoreSubLabel } from "./score-helpers";
 
 interface ScoreCardProps {
@@ -54,7 +54,7 @@ export function ScoreCard({ score, index, onEdit, onDelete, deleting }: ScoreCar
           {score.testDate && (
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-md">
               <Calendar className="h-3 w-3" />
-              {format(new Date(score.testDate), "MMM d, yyyy")}
+              {formatDateOnly(score.testDate)}
             </span>
           )}
         </div>

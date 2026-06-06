@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { getCounselorSlots, bookCounselorSession, getSchoolCounselors } from "@/services/counselorSessionService";
 import type { TimeSlot } from "@/services/counselorSessionService";
+import { toLocalDateString } from "@/lib/dateUtils";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import {
   Select,
@@ -103,12 +104,11 @@ export default function BookCounselorPage() {
     setLoadingSlots(true);
     setSelectedSlot(null);
     try {
-      // Format using UTC date parts so the date string always matches the server's UTC-based slot generation,
-      // regardless of the student's local browser timezone.
-      const utcYear = date.getUTCFullYear();
-      const utcMonth = String(date.getUTCMonth() + 1).padStart(2, "0");
-      const utcDay = String(date.getUTCDate()).padStart(2, "0");
-      const dateStr = `${utcYear}-${utcMonth}-${utcDay}`;
+      // LOCAL calendar date: the week strip the student picks from is rendered
+      // in local time, and the server interprets the date as a calendar day in
+      // the counselor's timezone. Sending the UTC date here meant that after
+      // ~7-8 PM the page showed "Friday, June 5" but fetched June 6's slots.
+      const dateStr = toLocalDateString(date);
       const result = await getCounselorSlots(selectedCounselorId, dateStr);
       const rawSlots = result.slots || [];
       // API may return string[] (ISO timestamps) or TimeSlot[] — normalize
