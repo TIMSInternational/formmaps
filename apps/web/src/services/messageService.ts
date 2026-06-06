@@ -47,5 +47,5 @@ export async function sendMessage(conversationId: string, content: string): Prom
 
 export async function getUnreadCount(): Promise<number> {
   const res = await apiRequest("/api/v1/messages/unread-count", { method: "GET" });
-  return res?.data?.count ?? res?.count ?? 0;
+  return res?.data?.unreadCount ?? 0;
 }

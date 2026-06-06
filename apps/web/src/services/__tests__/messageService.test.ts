@@ -1,5 +1,5 @@
 import { apiRequest } from "@/lib/api/apiClient";
-import { getConversationMessages } from "@/services/messageService";
+import { getConversationMessages, getUnreadCount } from "@/services/messageService";
 
 jest.mock("@/lib/api/apiClient", () => ({ apiRequest: jest.fn() }));
 const mockApiRequest = apiRequest as jest.Mock;
@@ -33,5 +33,21 @@ describe("getConversationMessages", () => {
     const result = await getConversationMessages("conv1");
     expect(result.messages).toEqual([]);
     expect(result.total).toBe(0);
+  });
+});
+
+describe("getUnreadCount", () => {
+  it("reads unreadCount from the data envelope (not .count)", async () => {
+    // API returns { success, data: { unreadCount: N } } — the old service read
+    // res?.data?.count which is always undefined, returning 0 regardless.
+    mockApiRequest.mockResolvedValue({ success: true, data: { unreadCount: 5 } });
+    const count = await getUnreadCount();
+    expect(count).toBe(5);
+  });
+
+  it("returns 0 when there are no unread messages", async () => {
+    mockApiRequest.mockResolvedValue({ success: true, data: { unreadCount: 0 } });
+    const count = await getUnreadCount();
+    expect(count).toBe(0);
   });
 });
