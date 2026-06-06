@@ -6,11 +6,37 @@ import type {
 } from "@/types/communityService";
 import { apiRequest } from "@/lib/api/apiClient";
 
+// Backend shapes differ per endpoint (student: {data:[…],totalHours};
+// admin: bare entries[]) and hours come back as Decimal strings. Normalize
+// everything into the CommunityServiceSummary the pages render.
+function toSummary(payload: unknown): CommunityServiceSummary {
+  const p = (payload ?? {}) as Record<string, unknown>;
+  const rawEntries = Array.isArray(payload) ? payload : (p.entries ?? p.data ?? []);
+  const entries = (Array.isArray(rawEntries) ? rawEntries : []).map((e) => ({
+    ...(e as CommunityServiceEntry),
+    hours: Number((e as { hours: unknown }).hours) || 0,
+  }));
+  const logged =
+    typeof p.totalHoursLogged === "number" ? p.totalHoursLogged :
+    typeof p.totalHours === "number" ? p.totalHours :
+    entries.reduce((s, e) => s + e.hours, 0);
+  const verified =
+    typeof p.totalHoursVerified === "number"
+      ? p.totalHoursVerified
+      : entries.filter((e) => e.status === "verified").reduce((s, e) => s + e.hours, 0);
+  return {
+    totalHoursRequired: typeof p.totalHoursRequired === "number" ? p.totalHoursRequired : 40,
+    totalHoursLogged: logged,
+    totalHoursVerified: verified,
+    entries,
+  };
+}
+
 // ─── Student: own community service hours ─────────────────────────
 
 export async function getMyCommunityService(): Promise<CommunityServiceSummary> {
   const res = await apiRequest("/api/v1/student/community-service");
-  return (res.data ?? res) as CommunityServiceSummary;
+  return toSummary(res.data ?? res);
 }
 
 export async function logCommunityService(
@@ -31,7 +57,7 @@ export async function getStudentCommunityService(
   const res = await apiRequest(
     `/api/v1/school-admin/students/${studentId}/community-service`
   );
-  return (res.data ?? res) as CommunityServiceSummary;
+  return toSummary(res.data ?? res);
 }
 
 export async function verifyCommunityServiceEntry(
