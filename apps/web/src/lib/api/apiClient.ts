@@ -100,8 +100,11 @@ apiClient.interceptors.response.use(
           message = (status >= 500) ? 'Something went wrong. Please try again.' : (data?.message || 'Request failed. Please try again.');
       }
 
-      if (status === 403) {
-        toast.warning('Access denied', { description: message });
+      if (status === 403 && data?.code !== 'SUBSCRIPTION_REQUIRED') {
+        // Subscription-gate 403s are handled by AuthWrapper's /subscribe redirect;
+        // toasting each gated query produced a toast wall during the bounce.
+        // Stable id: repeat 403s replace the toast instead of stacking.
+        toast.warning('Access denied', { id: 'access-denied', description: message });
       }
       // 5xx and network errors: callers decide whether to toast
       // (React Query has its own retry, so toasting here causes false alarms)

@@ -4,6 +4,8 @@ interface ToastOptions {
   duration?: number;
   action?: { label: string; onClick: () => void };
   description?: string;
+  /** Stable id — a new toast with the same id replaces the old one instead of stacking. */
+  id?: string;
 }
 
 function success(message: string, opts?: ToastOptions) {
@@ -29,6 +31,7 @@ function error(message: string, opts?: ToastOptions) {
 function warning(message: string, opts?: ToastOptions) {
   sonnerToast.warning(message, {
     duration: opts?.duration ?? 5000,
+    id: opts?.id,
     description: opts?.description,
     action: opts?.action
       ? { label: opts.action.label, onClick: opts.action.onClick }
