@@ -23,27 +23,31 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
   const [results, setResults] = useState<StaffUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!query || query.length < 2) {
       setResults([]);
       setOpen(false);
+      setError(false);
       return;
     }
     const t = setTimeout(async () => {
       setLoading(true);
+      setError(false);
       try {
+        // Student-accessible endpoint: staff at the student's own school only
         const res = await apiRequest(
-          `/api/v1/school-admin/users?search=${encodeURIComponent(query)}&limit=10`,
+          `/api/v1/recommendations/staff?search=${encodeURIComponent(query)}&limit=10`,
           { method: "GET" }
         );
-        const users: StaffUser[] = (res?.data?.data ?? res?.data ?? []).filter(
-          (u: StaffUser) => u.roleName !== "student"
-        );
-        setResults(users);
+        const users = res?.data?.data ?? res?.data ?? [];
+        setResults(Array.isArray(users) ? users : []);
         setOpen(true);
       } catch {
         setResults([]);
+        setError(true);
+        setOpen(true);
       } finally {
         setLoading(false);
       }
@@ -120,7 +124,7 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
         )}
       </div>
       <AnimatePresence>
-        {open && results.length > 0 && (
+        {open && (
           <motion.div
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
@@ -138,6 +142,28 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
               overflow: "hidden",
             }}
           >
+            {error && (
+              <div
+                style={{
+                  padding: "10px 12px",
+                  fontSize: 12,
+                  color: "var(--admin-font-tertiary)",
+                }}
+              >
+                Search failed. Please try again.
+              </div>
+            )}
+            {!error && results.length === 0 && (
+              <div
+                style={{
+                  padding: "10px 12px",
+                  fontSize: 12,
+                  color: "var(--admin-font-tertiary)",
+                }}
+              >
+                No counselors or staff found at your school.
+              </div>
+            )}
             {results.map((u) => (
               <button
                 key={u.id}
