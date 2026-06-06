@@ -66,3 +66,33 @@ export function formatTimeOfDay(dateString: string): string {
     return new Date(dateString).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   } catch { return ""; }
 }
+
+/**
+ * YYYY-MM-DD using the LOCAL calendar date. Use this (never
+ * `toISOString().split("T")[0]`) when sending a user-selected day to the API:
+ * after ~7-8 PM in US timezones the UTC date is already tomorrow, so the UTC
+ * form silently requests the wrong day.
+ */
+export function toLocalDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Format a DATE-ONLY value (stored as UTC midnight, e.g. test-score dates,
+ * recommendation due dates) using its UTC parts. Local formatting shifts these
+ * a day back in any western timezone ("entered 2026-05-01, displayed Apr 30").
+ */
+export function formatDateOnly(dateString: string | null | undefined): string {
+  if (!dateString) return "—";
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}

@@ -37,7 +37,7 @@ interface Session {
   date: string;
   time: string;
   duration: string;
-  status: "confirmed" | "rescheduled" | "cancelled" | "completed";
+  status: "pending" | "confirmed" | "rescheduled" | "cancelled" | "completed";
   meetingLink?: string;
   slot?: { start: string; end: string };
 }
@@ -159,7 +159,8 @@ export function CoachingSessionsList({
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      {["confirmed", "rescheduled"].includes(session.status) ? (
+                      {/* pending included: students must be able to cancel/reschedule a not-yet-confirmed booking */}
+                      {["pending", "confirmed", "rescheduled"].includes(session.status) ? (
                         <>
                           {session.meetingLink && (
                             <Button

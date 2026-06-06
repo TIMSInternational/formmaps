@@ -25,7 +25,7 @@ import {
   useLogCommunityService,
 } from "@/hooks/useCommunityServiceQueries";
 import type { CommunityServiceStatus } from "@/types/communityService";
-import { format } from "date-fns";
+import { formatDateOnly } from "@/lib/dateUtils";
 
 const statusConfig: Record<
   CommunityServiceStatus,
@@ -374,7 +374,7 @@ export default function CommunityServicePage() {
                     <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1 bg-secondary px-2 py-0.5 rounded-md">
                         <Calendar className="h-3 w-3" />
-                        {format(new Date(entry.date), "MMM d, yyyy")}
+                        {formatDateOnly(entry.date)}
                       </span>
                       <span className="flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md">
                         <Clock className="h-3 w-3" />

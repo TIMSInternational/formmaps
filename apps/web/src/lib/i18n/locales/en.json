@@ -774,7 +774,7 @@
       "apply": "Apply"
     },
     "assessmentJourney": "Assessment Journey",
-    "assessmentSubtitle": "Your professional growth path",
+    "assessmentSubtitle": "Track your progress across all evaluations",
     "professionalCertified": "Professional Certified",
     "courseCatalog": "Course Catalog",
     "coach": {
@@ -906,9 +906,6 @@
     "today": "Today",
     "top3CareerMatch": "Top 3 Career Match",
     "showMore": "Show more",
-    "assessmentJourney": "Assessment Journey",
-    "assessmentSubtitle": "Track your progress across all evaluations",
-    "professionalCertified": "Professional Certified",
     "liveStatus": "Live Status",
     "nextAction": "Next Action",
     "upcomingSession": "Upcoming Session",
@@ -931,7 +928,6 @@
       "education": "Education Level",
       "location": "Location"
     },
-
     "professionalAssessments": "Professional Assessments",
     "assessmentsDescription": "Complete your professional assessments to unlock personalized insights about your competencies, cognitive abilities, and ideal career path. Each assessment provides valuable data for your professional development.",
     "pcaUserInfoIncomplete": "User information is incomplete. Please complete your profile first.",
@@ -1178,12 +1174,177 @@
   },
   "coaching": {
     "featuredCoaches": "Featured Coaches",
-    "featuredDescription": "Connect with top-rated coaches tailored to your profile",
+    "featuredDescription": "Connect with expert coaches to accelerate your career growth",
     "viewAllCoaches": "View All Coaches",
     "bookSession": "Book Session",
     "from": "From",
     "noCoachesTitle": "No Coaches Available",
-    "noCoachesDesc": "Check back soon for featured coaches."
+    "noCoachesDesc": "Check back soon for featured coaches.",
+    "find": {
+      "title": "Find a Coach",
+      "subtitle": "Book 1:1 sessions with industry experts to accelerate your career",
+      "searchPlaceholder": "Search by name, role, or company...",
+      "viewProfileBook": "View Profile & Book",
+      "noCoachesFound": "No coaches found",
+      "tryAdjusting": "Try adjusting your search terms",
+      "remote": "Remote",
+      "new": "New"
+    },
+    "earnings": {
+      "title": "Earnings & Payouts",
+      "subtitle": "Track your revenue, platform fees, and payouts.",
+      "unableToLoad": "Unable to load earnings data",
+      "tryAgain": "Please try again later",
+      "errorTitle": "Error loading earnings data"
+    },
+    "profile": {
+      "notFoundTitle": "Coach not found",
+      "notFoundText": "The coach profile you are looking for does not exist.",
+      "goBack": "Go Back",
+      "backToCoaches": "Back to Coaches",
+      "available": "AVAILABLE",
+      "bookSession": "Book Session",
+      "rating": "Rating",
+      "location": "Location",
+      "languages": "Languages",
+      "about": "About Coach",
+      "expertise": "Expertise & Skills",
+      "coreSpecialization": "Core Specialization",
+      "topicsSkills": "Topics & Skills",
+      "availability": "Availability",
+      "nextAvailable": "Next Available",
+      "slotsToday": "Slots available today",
+      "checkCalendar": "Check Calendar",
+      "freeCancellation": "Free cancellation up to 24h before",
+      "updated": "Profile updated successfully",
+      "failedToUpdate": "Failed to update profile",
+      "uploading": "Uploading image...",
+      "uploadSuccess": "Profile image updated successfully",
+      "uploadFailed": "Failed to upload image",
+      "failedToLoad": "Failed to load profile data"
+    },
+    "settings": {
+      "profileTitle": "Profile Information",
+      "profileDescription": "Update your public coaching profile visible to students.",
+      "fullName": "Full Name",
+      "professionalTitle": "Professional Title",
+      "bioPlaceholder": "Tell students about your coaching experience...",
+      "uploadImage": "Upload Image"
+    },
+    "dashboard": {
+      "availabilityUpdated": "Availability updated successfully",
+      "failedToUpdateAvailability": "Failed to update availability",
+      "failedToLoad": "Failed to load dashboard data",
+      "noSlotsAvailable": "No slots available",
+      "failedToLoadSlots": "Failed to load available slots",
+      "selectDateTime": "Please select a date and time",
+      "rescheduleSuccess": "Session rescheduled successfully",
+      "rescheduleFailed": "Failed to reschedule session",
+      "sessionCancelled": "Session cancelled",
+      "cancelFailed": "Failed to cancel session",
+      "reportDownloaded": "Report downloaded successfully",
+      "reportDownloadFailed": "Failed to download report",
+      "activityLogComingSoon": "Open full activity log coming soon",
+      "studentProfileNotFound": "Student profile not found",
+      "benchmarks": {
+        "overview": {
+          "salaryTitle": "Salary Benchmarks",
+          "details": "Details",
+          "topSkills": "Top Skills",
+          "workMode": "Work Mode",
+          "costOfLiving": "Cost of Living",
+          "certifications": "Certifications",
+          "viewAll": "View All",
+          "marketPulse": "Market Pulse",
+          "marketPulseDesc": "Real-time industry metrics",
+          "liveUpdates": "Live Updates"
+        },
+        "compensation": {
+          "avgAnnualSalary": "Avg. Annual Salary",
+          "sinceLastYear": "since last year",
+          "purchasePowerIndex": "Purchase Power Index",
+          "relativeToNYC": "Relative to New York City (100)",
+          "estimatedTakeHome": "Est. Take Home",
+          "afterEstimatedTaxes": "After estimated taxes (~28%)",
+          "detailedSalaryTitle": "Detailed Salary Breakdown",
+          "cardDescription": "Compensation ranges for {{career}} roles in {{country}} across experience levels.",
+          "keyObservation": "Key Observation",
+          "keyObservationDesc": "Salary bands for {{career}} in {{country}} are widening. Senior-level roles are seeing faster growth due to a shortage of specialized talent, while entry-level compensation remains stable."
+        },
+        "skills": {
+          "title": "Skills & Growth",
+          "subtitle": "Competency benchmarks and learning opportunities.",
+          "mostInDemand": "Most In-Demand Skills",
+          "cardDescription": "Frequency of skills requested in job descriptions for {{career}}.",
+          "emergingTechWatch": "Emerging Tech Watch",
+          "emergingDesc": "Technologies gaining rapid traction in the last 6 months.",
+          "topCertifications": "Top Certifications",
+          "certificationsDesc": "Credentials that significantly impact hiring probability.",
+          "recommendedLearningPaths": "Recommended Learning Paths"
+        },
+        "market": {
+          "title": "Market Dynamics",
+          "subtitle": "Macro-economic trends and employment stability analysis.",
+          "employabilityScore": "Employability Score",
+          "employabilityDesc": "Historical trend of role placement success over the last 5 years.",
+          "analysisLabel": "Analysis:",
+          "analysis": "Consistent upward trend indicates a maturing market for {{career}} professionals.",
+          "youthEmploymentRate": "Youth Employment Rate",
+          "marketForecast": "Market Forecast",
+          "positiveOutlook": "Positive Outlook",
+          "positiveOutlookDesc": "Startups and enterprise sectors are projected to increase hiring by 15% in Q3.",
+          "projectedHotspots": "Projected Hotspots",
+          "recruiterSentiment": "Recruiter Sentiment",
+          "hiringSpeed": "Hiring Speed",
+          "interviewTech": "Interview Tech",
+          "contractRoles": "Contract Roles",
+          "badgeFast": "Fast",
+          "badgeRemote": "Remote",
+          "badgeIncreasing": "Increasing"
+        },
+        "tabs": {
+          "overview": "Overview",
+          "compensation": "Compensation",
+          "market": "Market Analysis",
+          "skills": "Skills & Learning",
+          "demographics": "Demographics"
+        },
+        "header": {
+          "title": "Career Intelligence",
+          "description": "Deep-dive into global market trends, salary benchmarks, and skill requirements for your path.",
+          "selectCountryPlaceholder": "Select Country",
+          "selectCareerPlaceholder": "Select Career",
+          "shareReport": "Share Report"
+        },
+        "demographics": {
+          "title": "Workforce & Culture",
+          "subtitle": "Demographic breakdown and work environment trends.",
+          "workModeTitle": "Work Mode Distribution",
+          "workModeDesc": "Prevalence of Remote vs Hybrid vs Onsite roles.",
+          "remote": "Remote",
+          "hybrid": "Hybrid",
+          "onsite": "Onsite",
+          "genderDiversityTitle": "Gender Diversity",
+          "genderDiversityDesc": "Gender distribution in {{career}} roles.",
+          "inclusivityTitle": "Inclusivity Score",
+          "inclusivityDesc": "Industry average rating for inclusive workplace policies and benefits.",
+          "enterpriseTrendTitle": "Enterprise Trend",
+          "enterpriseTrendDesc": "Fortune 500 companies are shifting 20% more roles to \"Remote-First\" in 2025.",
+          "readReport": "Read Report",
+          "badges": {
+            "parentalLeave": "Parental Leave",
+            "flexHours": "Flex Hours",
+            "wellness": "Wellness Programs"
+          }
+        },
+        "common": {
+          "title": "Benchmarks",
+          "today": "Today",
+          "comparedToYesterday": "Compared to ${{amount}} yesterday",
+          "lastWeekIncome": "Last week income"
+        }
+      }
+    }
   },
   "benchmarks": {
     "marketDemand": "Market Demand",
@@ -1403,8 +1564,8 @@
     "skillsDescription": "Press Enter to add a skill."
   },
   "booking": {
-    "enterDetailsTitle": "Enter Details",
-    "topicLabel": "What would you like to discuss?",
+    "enterDetailsTitle": "Enter Session Details",
+    "topicLabel": "Topic",
     "selectTopic": "Select a topic",
     "topics": {
       "careerGuidance": "Career Guidance",
@@ -1412,12 +1573,24 @@
       "resumeReview": "Resume Review",
       "skillDevelopment": "Skill Development"
     },
-    "notesLabel": "Additional Notes (Optional)",
-    "prepNotesPlaceholder": "Share anything that will help prepare for our meeting...",
+    "notesLabel": "Notes (optional)",
+    "prepNotesPlaceholder": "Anything you'd like to prepare or discuss?",
     "processing": "Processing...",
     "rescheduleSession": "Reschedule Session",
     "bookAndPay": "Book & Pay",
-    "scheduleEvent": "Schedule Event"
+    "scheduleEvent": "Schedule Session",
+    "selectDateTime": "Select a Date & Time",
+    "timesShownIn": "Times shown in {{timezone}}",
+    "convertedToLocal": "Converted to your local time ({{timezone}})",
+    "selectDate": "Select a date",
+    "checkingAvailability": "Checking availability...",
+    "slotsAvailable": "{{count}} slots available",
+    "selectDateToSee": "Select a date to see available times",
+    "noAvailability": "No availability",
+    "coachNotAvailable": "Coach is not available on this day.",
+    "jumpTo": "Jump to {{date}}",
+    "continue": "Continue",
+    "back": "Back"
   },
   "testPCA": {
     "title": "PCA API Testing",
@@ -1443,7 +1616,6 @@
       "topSkills": "Top Skills",
       "workMode": "Work Mode"
     },
-
     "title": "Progress Timeline",
     "subtitle": "Track all your assessments and progress in one place",
     "breadcrumb": "Timeline",
@@ -1473,7 +1645,6 @@
     "tryAgain": "Try Again",
     "backToDashboard": "Back to Dashboard",
     "overallProgress": "Overall Progress",
-
     "lastActivity": "Last Activity",
     "thisWeek": "This Week",
     "thisMonth": "This Month",
@@ -1582,9 +1753,9 @@
     }
   },
   "sessions": {
-    "title": "My Coaching Sessions",
+    "title": "My Sessions",
     "subtitle": "Track and manage all your coaching appointments",
-    "bookNew": "Book New Session",
+    "bookNew": "Book New",
     "stats": {
       "total": "Total Sessions",
       "upcoming": "Upcoming",
@@ -1605,189 +1776,32 @@
       "failedToSubmitReview": "Failed to submit review"
     },
     "status": {
+      "pending": "Pending Confirmation",
       "confirmed": "Confirmed",
       "completed": "Completed",
       "cancelled": "Cancelled",
       "rescheduled": "Rescheduled"
-    }
+    },
+    "totalSessions": "Total Sessions",
+    "upcoming": "Upcoming",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "bookCounselor": "Book Counselor Session",
+    "findCoach": "Find a Coach",
+    "noSessions": "No sessions found",
+    "noSessionsDesc": "Book a session with a counselor or coach to get started.",
+    "coaching": "Coaching",
+    "counseling": "Counseling",
+    "reschedule": "Reschedule",
+    "cancel": "Cancel Session",
+    "joinSession": "Join Session",
+    "leaveReview": "Leave Review"
   },
   "subscriptions": {
     "title": "Subscriptions",
     "subtitle": "Choose the perfect plan for your career journey",
     "paymentSuccessfulTitle": "Payment Successful!",
     "paymentSuccessfulBody": "Your subscription has been activated. You now have access to all premium features."
-  },
-  "coaching": {
-    "featuredCoaches": "Featured Coaches",
-    "featuredDescription": "Connect with expert coaches to accelerate your career growth",
-    "viewAllCoaches": "View All Coaches",
-    "bookSession": "Book Session",
-    "find": {
-      "title": "Find a Coach",
-      "subtitle": "Book 1:1 sessions with industry experts to accelerate your career",
-      "searchPlaceholder": "Search by name, role, or company...",
-      "viewProfileBook": "View Profile & Book",
-      "noCoachesFound": "No coaches found",
-      "tryAdjusting": "Try adjusting your search terms",
-      "remote": "Remote",
-      "new": "New"
-    },
-    "earnings": {
-      "title": "Earnings & Payouts",
-      "subtitle": "Track your revenue, platform fees, and payouts.",
-      "unableToLoad": "Unable to load earnings data",
-      "tryAgain": "Please try again later",
-      "errorTitle": "Error loading earnings data"
-    },
-    "profile": {
-      "notFoundTitle": "Coach not found",
-      "notFoundText": "The coach profile you are looking for does not exist.",
-      "goBack": "Go Back",
-      "backToCoaches": "Back to Coaches",
-      "available": "AVAILABLE",
-      "bookSession": "Book Session",
-      "rating": "Rating",
-      "location": "Location",
-      "languages": "Languages",
-      "about": "About Coach",
-      "expertise": "Expertise & Skills",
-      "coreSpecialization": "Core Specialization",
-      "topicsSkills": "Topics & Skills",
-      "availability": "Availability",
-      "nextAvailable": "Next Available",
-      "slotsToday": "Slots available today",
-      "checkCalendar": "Check Calendar",
-      "freeCancellation": "Free cancellation up to 24h before",
-      "updated": "Profile updated successfully",
-      "failedToUpdate": "Failed to update profile",
-      "uploading": "Uploading image...",
-      "uploadSuccess": "Profile image updated successfully",
-      "uploadFailed": "Failed to upload image",
-      "failedToLoad": "Failed to load profile data"
-    },
-
-    "settings": {
-      "profileTitle": "Profile Information",
-      "profileDescription": "Update your public coaching profile visible to students.",
-      "fullName": "Full Name",
-      "professionalTitle": "Professional Title",
-      "bioPlaceholder": "Tell students about your coaching experience...",
-      "uploadImage": "Upload Image"
-    },
-    "dashboard": {
-      "availabilityUpdated": "Availability updated successfully",
-      "failedToUpdateAvailability": "Failed to update availability",
-      "failedToLoad": "Failed to load dashboard data",
-      "noSlotsAvailable": "No slots available",
-      "failedToLoadSlots": "Failed to load available slots",
-      "selectDateTime": "Please select a date and time",
-      "rescheduleSuccess": "Session rescheduled successfully",
-      "rescheduleFailed": "Failed to reschedule session",
-      "sessionCancelled": "Session cancelled",
-      "cancelFailed": "Failed to cancel session",
-      "reportDownloaded": "Report downloaded successfully",
-      "reportDownloadFailed": "Failed to download report",
-      "activityLogComingSoon": "Open full activity log coming soon",
-      "studentProfileNotFound": "Student profile not found",
-      "benchmarks": {
-        "overview": {
-          "salaryTitle": "Salary Benchmarks",
-          "details": "Details",
-          "topSkills": "Top Skills",
-          "workMode": "Work Mode",
-          "costOfLiving": "Cost of Living",
-          "certifications": "Certifications",
-          "viewAll": "View All",
-          "marketPulse": "Market Pulse",
-          "marketPulseDesc": "Real-time industry metrics",
-          "liveUpdates": "Live Updates"
-        },
-        "compensation": {
-          "avgAnnualSalary": "Avg. Annual Salary",
-          "sinceLastYear": "since last year",
-          "purchasePowerIndex": "Purchase Power Index",
-          "relativeToNYC": "Relative to New York City (100)",
-          "estimatedTakeHome": "Est. Take Home",
-          "afterEstimatedTaxes": "After estimated taxes (~28%)",
-          "detailedSalaryTitle": "Detailed Salary Breakdown",
-          "cardDescription": "Compensation ranges for {{career}} roles in {{country}} across experience levels.",
-          "keyObservation": "Key Observation",
-          "keyObservationDesc": "Salary bands for {{career}} in {{country}} are widening. Senior-level roles are seeing faster growth due to a shortage of specialized talent, while entry-level compensation remains stable."
-        },
-        "skills": {
-          "title": "Skills & Growth",
-          "subtitle": "Competency benchmarks and learning opportunities.",
-          "mostInDemand": "Most In-Demand Skills",
-          "cardDescription": "Frequency of skills requested in job descriptions for {{career}}.",
-          "emergingTechWatch": "Emerging Tech Watch",
-          "emergingDesc": "Technologies gaining rapid traction in the last 6 months.",
-          "topCertifications": "Top Certifications",
-          "certificationsDesc": "Credentials that significantly impact hiring probability.",
-          "recommendedLearningPaths": "Recommended Learning Paths"
-        },
-        "market": {
-          "title": "Market Dynamics",
-          "subtitle": "Macro-economic trends and employment stability analysis.",
-          "employabilityScore": "Employability Score",
-          "employabilityDesc": "Historical trend of role placement success over the last 5 years.",
-          "analysisLabel": "Analysis:",
-          "analysis": "Consistent upward trend indicates a maturing market for {{career}} professionals.",
-          "youthEmploymentRate": "Youth Employment Rate",
-          "marketForecast": "Market Forecast",
-          "positiveOutlook": "Positive Outlook",
-          "positiveOutlookDesc": "Startups and enterprise sectors are projected to increase hiring by 15% in Q3.",
-          "projectedHotspots": "Projected Hotspots",
-          "recruiterSentiment": "Recruiter Sentiment",
-          "hiringSpeed": "Hiring Speed",
-          "interviewTech": "Interview Tech",
-          "contractRoles": "Contract Roles",
-          "badgeFast": "Fast",
-          "badgeRemote": "Remote",
-          "badgeIncreasing": "Increasing"
-        },
-        "tabs": {
-          "overview": "Overview",
-          "compensation": "Compensation",
-          "market": "Market Analysis",
-          "skills": "Skills & Learning",
-          "demographics": "Demographics"
-        },
-        "header": {
-          "title": "Career Intelligence",
-          "description": "Deep-dive into global market trends, salary benchmarks, and skill requirements for your path.",
-          "selectCountryPlaceholder": "Select Country",
-          "selectCareerPlaceholder": "Select Career",
-          "shareReport": "Share Report"
-        },
-        "demographics": {
-          "title": "Workforce & Culture",
-          "subtitle": "Demographic breakdown and work environment trends.",
-          "workModeTitle": "Work Mode Distribution",
-          "workModeDesc": "Prevalence of Remote vs Hybrid vs Onsite roles.",
-          "remote": "Remote",
-          "hybrid": "Hybrid",
-          "onsite": "Onsite",
-          "genderDiversityTitle": "Gender Diversity",
-          "genderDiversityDesc": "Gender distribution in {{career}} roles.",
-          "inclusivityTitle": "Inclusivity Score",
-          "inclusivityDesc": "Industry average rating for inclusive workplace policies and benefits.",
-          "enterpriseTrendTitle": "Enterprise Trend",
-          "enterpriseTrendDesc": "Fortune 500 companies are shifting 20% more roles to \"Remote-First\" in 2025.",
-          "readReport": "Read Report",
-          "badges": {
-            "parentalLeave": "Parental Leave",
-            "flexHours": "Flex Hours",
-            "wellness": "Wellness Programs"
-          }
-        },
-        "common": {
-          "title": "Benchmarks",
-          "today": "Today",
-          "comparedToYesterday": "Compared to ${{amount}} yesterday",
-          "lastWeekIncome": "Last week income"
-        }
-      }
-    }
   },
   "coach": {
     "greeting": {
@@ -1892,52 +1906,5 @@
     "booked": "Session Booked!",
     "confirmationMessage": "Your counselor session has been confirmed.",
     "backToDashboard": "Back to Dashboard"
-  },
-  "sessions": {
-    "title": "My Sessions",
-    "totalSessions": "Total Sessions",
-    "upcoming": "Upcoming",
-    "completed": "Completed",
-    "cancelled": "Cancelled",
-    "bookCounselor": "Book Counselor Session",
-    "findCoach": "Find a Coach",
-    "bookNew": "Book New",
-    "noSessions": "No sessions found",
-    "noSessionsDesc": "Book a session with a counselor or coach to get started.",
-    "coaching": "Coaching",
-    "counseling": "Counseling",
-    "reschedule": "Reschedule",
-    "cancel": "Cancel Session",
-    "joinSession": "Join Session",
-    "leaveReview": "Leave Review"
-  },
-  "booking": {
-    "selectDateTime": "Select a Date & Time",
-    "timesShownIn": "Times shown in {{timezone}}",
-    "convertedToLocal": "Converted to your local time ({{timezone}})",
-    "selectDate": "Select a date",
-    "checkingAvailability": "Checking availability...",
-    "slotsAvailable": "{{count}} slots available",
-    "selectDateToSee": "Select a date to see available times",
-    "noAvailability": "No availability",
-    "coachNotAvailable": "Coach is not available on this day.",
-    "jumpTo": "Jump to {{date}}",
-    "continue": "Continue",
-    "back": "Back",
-    "enterDetailsTitle": "Enter Session Details",
-    "topicLabel": "Topic",
-    "selectTopic": "Select a topic",
-    "topics": {
-      "careerGuidance": "Career Guidance",
-      "interviewPrep": "Interview Prep",
-      "resumeReview": "Resume Review",
-      "skillDevelopment": "Skill Development"
-    },
-    "notesLabel": "Notes (optional)",
-    "prepNotesPlaceholder": "Anything you'd like to prepare or discuss?",
-    "processing": "Processing...",
-    "rescheduleSession": "Reschedule Session",
-    "bookAndPay": "Book & Pay",
-    "scheduleEvent": "Schedule Session"
   }
 }
