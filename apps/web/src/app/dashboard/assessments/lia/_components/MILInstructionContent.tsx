@@ -544,7 +544,8 @@ export default function MILInstructionContent({
             {instructions.description && (
               <p className="mb-3">{instructions.description}</p>
             )}
-            {instructions.instructions && (
+            {/* Some exams send instructions identical to description — don't render the same paragraph twice */}
+            {instructions.instructions && instructions.instructions !== instructions.description && (
               <div className="space-y-2">
                 {Array.isArray(instructions.instructions) ? (
                   <ul className="list-disc pl-5 space-y-1">

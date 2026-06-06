@@ -15,6 +15,7 @@ function extractArrayShape(input: any): any[] {
   if (d == null) return [];
   if (Array.isArray(d)) return d;
   if (Array.isArray(d.sessions)) return d.sessions;
+  if (Array.isArray(d.data)) return d.data; // nested pagination envelope {data:{data:[…]}}
   return [];
 }
 
