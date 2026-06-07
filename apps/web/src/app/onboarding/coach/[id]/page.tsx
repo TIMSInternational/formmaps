@@ -75,22 +75,23 @@ export default function CoachOnboardingPage({
   }, [id]);
 
   // Handle googleConnected query param
-  // Handle calendar connection callbacks
+  // Handle calendar connection callbacks (?calendar=connected|error from /api/v1/calendar)
   useEffect(() => {
-    const googleConnected = searchParams.get("googleConnected");
-    const outlookConnected = searchParams.get("outlookConnected");
-
-    // Determine which provider to verify
-    const provider = googleConnected === "true" ? "google" : outlookConnected === "true" ? "outlook" : null;
-
-    if (provider && email) {
+    const calendarResult = searchParams.get("calendar");
+    if (calendarResult === "error") {
+      toast.error("Calendar connection failed. You can retry or skip this step.");
+      setCurrentStep(4);
+      return;
+    }
+    if (calendarResult === "connected") {
       const verifyConnection = async () => {
         try {
           setIsLoading(true);
-          const { checkCalendarAuthStatus } = await import("@/services/coachService");
-          const status = await checkCalendarAuthStatus(provider, email);
+          const { getCalendarStatus } = await import("@/services/calendarService");
+          const [google, outlook] = await Promise.all([getCalendarStatus("google"), getCalendarStatus("outlook")]);
+          const provider = google.connected ? "google" : outlook.connected ? "outlook" : null;
 
-          if (status.isAuthenticated && status.authDetails?.connected) {
+          if (provider) {
             setData((prev) => ({
               ...prev,
               calendarIntegrations: {
@@ -102,11 +103,11 @@ export default function CoachOnboardingPage({
             setCurrentStep(5);
             toast.success(`${provider === 'google' ? 'Google' : 'Outlook'} Calendar connected successfully!`);
           } else {
-            toast.error(`Failed to verify ${provider} Calendar connection. Please try again.`);
+            toast.error("Failed to verify the calendar connection. Please try again.");
             setCurrentStep(4); // Ensure we are on the Calendar Sync step
           }
         } catch (error) {
-          toast.error(`An error occurred while connecting ${provider} Calendar.`);
+          toast.error("An error occurred while connecting the calendar.");
           setCurrentStep(4);
         } finally {
           setIsLoading(false);

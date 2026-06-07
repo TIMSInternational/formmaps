@@ -23,30 +23,16 @@ export function CalendarSyncStep({
 
   const handleConnect = async (provider: "google" | "outlook") => {
     try {
-      const { getCalendarAuthUrl } = await import("@/services/coachService");
-      const { url } = await getCalendarAuthUrl(provider, email, window.location.href);
-      // Parse and inspect redirect_uri param if present
-      try {
-        const parsed = new URL(url);
-        const redirectUriEncoded = parsed.searchParams.get("redirect_uri");
-        if (redirectUriEncoded) {
-          const redirectUri = decodeURIComponent(redirectUriEncoded);
-          try {
-            const parsedRedirect = new URL(redirectUri);
-            if (
-              parsedRedirect.pathname.includes("/onboarding/coach/undefined")
-            ) {
-            }
-          } catch (_e) {
-            // ignore parse errors
-          }
-        }
-      } catch (_e) {
-        // ignore parse errors for log
+      const { getCalendarAuthUrl } = await import("@/services/calendarService");
+      const res = await getCalendarAuthUrl(provider);
+      if (!res.configured || !res.url) {
+        alert(t("onboarding.calendar.notConfigured", { defaultValue: "Calendar sync isn't enabled on this server yet — you can connect later from Settings." }));
+        return;
       }
+      const url = res.url;
 
       // Validate that we got a proper external OAuth URL
-      if (!url || !url.startsWith("http")) {
+      if (!url.startsWith("http")) {
         throw new Error(`Invalid auth URL received: ${url}`);
       }
 
