@@ -21,6 +21,7 @@ import { isVideoEnabled, createVideoSession } from "@/services/videoService";
 import { AdminTabBar } from "@/app/school-admin/_components/AdminTabBar";
 import { formatMessageTime as formatTime } from "@/lib/dateUtils";
 import { getInitials } from "@/lib/stringUtils";
+import ModerationMenu from "@/components/messages/ModerationMenu";
 
 const AlertsPanel = dynamic(() => import("./_components/AlertsPanel"));
 const BroadcastPanel = dynamic(() => import("./_components/BroadcastPanel"));
@@ -316,6 +317,10 @@ function MessagesContent() {
                     <Video style={{ width: 16, height: 16 }} />
                   </button>
                 )}
+                <ModerationMenu
+                  targetUserId={selectedConversation.otherParticipant.id}
+                  targetName={selectedConversation.otherParticipant.name}
+                />
               </div>
 
               <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
