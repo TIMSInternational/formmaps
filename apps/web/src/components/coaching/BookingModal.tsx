@@ -243,15 +243,22 @@ export function BookingModal({
         telemetry.trackSession("book", response.id, coach.id, topic);
       }
 
-      // 2. Check for Payment (only for new bookings)
-      if (mode === "book" && slotsData?.price && slotsData.price.amount > 0) {
+      // 2. Payment — all coaching is paid, so every new booking must complete
+      // checkout before the slot is held/confirmed (no free-booking path).
+      if (mode === "book") {
         if (!user.id) {
           toast.error("User not identified. Please log in.");
           setIsBooking(false);
           return;
         }
 
-        const amountInCents = Math.round(slotsData.price.amount * 100);
+        const amountInCents = Math.round((slotsData?.price?.amount ?? 0) * 100);
+        if (amountInCents <= 0) {
+          // Defensive: the API rejects coaches with no rate, so we shouldn't get here.
+          toast.error("This coach hasn't set a session rate yet.");
+          onClose();
+          return;
+        }
 
         try {
           toast.loading("Redirecting to payment...");
@@ -267,14 +274,7 @@ export function BookingModal({
           onClose();
         }
       } else {
-        if (mode === "book") {
-          toast.success(
-            `Session booked with ${coach?.name} on ${format(
-              date,
-              "PPP"
-            )} at ${selectedTime}`
-          );
-        }
+        // Reschedule already handled above.
         onClose();
       }
     } catch (error) {
