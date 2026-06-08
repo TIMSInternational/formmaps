@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const BASE = process.env.E2E_BASE_URL || "http://localhost:3006";
+const BASE = process.env.E2E_BASE_URL || "http://localhost:3000";
 
 test.describe("Authentication", () => {
   test("login page loads", async ({ page }) => {
