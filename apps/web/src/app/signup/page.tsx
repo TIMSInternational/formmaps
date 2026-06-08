@@ -35,6 +35,7 @@ export default function SignupPage() {
       email: "",
       password: "",
       confirmPassword: "",
+      dateOfBirth: "",
       acceptTerms: false,
       acceptMarketing: false,
     },
@@ -60,7 +61,9 @@ export default function SignupPage() {
       await signUpApi(
         `${data.firstName} ${data.lastName}`,
         data.email,
-        data.password
+        data.password,
+        undefined,
+        data.dateOfBirth
       );
 
       const loginRes = await loginApi(data.email, data.password);
@@ -215,6 +218,24 @@ export default function SignupPage() {
                             className={cn("h-11 text-base bg-white/50 backdrop-blur-sm border-gray-200/50 focus:border-purple-500 focus:ring-purple-500/20",
                               errors.email && "border-red-300 focus:border-red-500 focus:ring-red-500/20")} />
                         </FormControl>
+                        <FormMessage className="text-xs text-red-600" />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Date of birth (13+ age gate) */}
+                  <FormField
+                    control={control}
+                    name="dateOfBirth"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">Date of birth</FormLabel>
+                        <FormControl>
+                          <Input id="dateOfBirth" type="date" {...field} max={new Date().toISOString().split("T")[0]}
+                            className={cn("h-11 text-base bg-white/50 backdrop-blur-sm border-gray-200/50 focus:border-purple-500 focus:ring-purple-500/20",
+                              errors.dateOfBirth && "border-red-300 focus:border-red-500 focus:ring-red-500/20")} />
+                        </FormControl>
+                        <p className="text-[11px] text-gray-500">You must be at least 13 to create an account. Younger students join through their school.</p>
                         <FormMessage className="text-xs text-red-600" />
                       </FormItem>
                     )}
