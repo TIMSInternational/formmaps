@@ -100,6 +100,7 @@ export function StatCards({ courseData }: StatCardsProps) {
   const { data: portfolio, isLoading: portfolioLoading } =
     usePortfolioSummary();
 
+  const careersLocked = timsData?.data?.locked ?? false;
   const careers = timsData?.data?.careers ?? [];
   const topScore = careers.length > 0 ? Math.round(careers[0].totalScore) : 0;
 
@@ -128,9 +129,9 @@ export function StatCards({ courseData }: StatCardsProps) {
       <StatCard
         icon={<Compass className="w-4 h-4" />}
         label={t("dashboard.careerMatches", "Career Matches")}
-        value={String(careers.length)}
-        sub={topScore > 0 ? `Top: ${topScore}%` : undefined}
-        cta={t("dashboard.explore", "Explore")}
+        value={careersLocked ? t("dashboard.locked", "Locked") : String(careers.length)}
+        sub={!careersLocked && topScore > 0 ? `Top: ${topScore}%` : undefined}
+        cta={careersLocked ? t("dashboard.completeAssessments", "Complete assessments") : t("dashboard.explore", "Explore")}
         href="/dashboard/career-paths"
         loading={timsLoading}
       />
