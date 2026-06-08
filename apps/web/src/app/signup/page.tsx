@@ -63,7 +63,8 @@ export default function SignupPage() {
         data.email,
         data.password,
         undefined,
-        data.dateOfBirth
+        data.dateOfBirth,
+        data.acceptMarketing
       );
 
       const loginRes = await loginApi(data.email, data.password);
