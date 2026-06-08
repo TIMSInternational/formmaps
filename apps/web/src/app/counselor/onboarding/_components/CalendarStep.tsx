@@ -23,9 +23,13 @@ export function CalendarStep({ onboardedEmail, onGoToDashboard }: CalendarStepPr
   const handleConnectCalendar = async (provider: "google" | "outlook") => {
     try {
       setIsConnectingCalendar(true);
-      const email = onboardedEmail ?? undefined;
-      const { url } = await getCalendarAuthUrl(provider, email, window.location.href);
-      window.location.href = url;
+      const res = await getCalendarAuthUrl(provider);
+      if (!res.configured || !res.url) {
+        toast.error("Calendar sync isn't enabled on this server yet. You can connect later in Settings.");
+        setIsConnectingCalendar(false);
+        return;
+      }
+      window.location.href = res.url;
     } catch {
       toast.error("Failed to start calendar connection. You can connect later in Settings.");
       setIsConnectingCalendar(false);

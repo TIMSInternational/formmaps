@@ -110,33 +110,16 @@ export function AvailabilitySettingsTab({
     };
 
     const checkCalendarStatus = async () => {
-      if (!user?.email) return;
       try {
-        const { checkCalendarAuthStatus } =
-          await import("@/services/coachService");
-        const googleStatus = await checkCalendarAuthStatus(
-          "google",
-          user.email,
-        ).catch(() => null);
-        if (googleStatus?.authDetails?.connected) {
-          setCalendarConnection({
-            connected: true,
-            provider: "google",
-            email: googleStatus.email,
-          });
+        const { getCalendarStatus } = await import("@/services/calendarService");
+        const googleStatus = await getCalendarStatus("google");
+        if (googleStatus.connected) {
+          setCalendarConnection({ connected: true, provider: "google", email: googleStatus.email || undefined });
           return;
         }
-
-        const outlookStatus = await checkCalendarAuthStatus(
-          "outlook",
-          user.email,
-        ).catch(() => null);
-        if (outlookStatus?.authDetails?.connected) {
-          setCalendarConnection({
-            connected: true,
-            provider: "outlook",
-            email: outlookStatus.email,
-          });
+        const outlookStatus = await getCalendarStatus("outlook");
+        if (outlookStatus.connected) {
+          setCalendarConnection({ connected: true, provider: "outlook", email: outlookStatus.email || undefined });
         }
       } catch (e) {
       // error handled silently
@@ -152,13 +135,14 @@ export function AvailabilitySettingsTab({
   const handleConnectCalendar = async (provider: "google" | "outlook") => {
     try {
       setIsConnectingCalendar(true);
-      const { getCalendarAuthUrl } = await import("@/services/coachService");
-      const { url } = await getCalendarAuthUrl(
-        provider,
-        user?.email || undefined,
-        window.location.href,
-      );
-      window.location.href = url;
+      const { getCalendarAuthUrl } = await import("@/services/calendarService");
+      const res = await getCalendarAuthUrl(provider);
+      if (!res.configured || !res.url) {
+        toast.error("Calendar sync isn't enabled on this server yet.");
+        setIsConnectingCalendar(false);
+        return;
+      }
+      window.location.href = res.url;
     } catch (error) {
       toast.error(`Failed to connect to ${provider}`);
       setIsConnectingCalendar(false);
@@ -169,8 +153,8 @@ export function AvailabilitySettingsTab({
     if (!calendarConnection.provider) return;
     try {
       setIsConnectingCalendar(true);
-      const { disconnectCalendar } = await import("@/services/coachService");
-      await disconnectCalendar(calendarConnection.provider, user?.email || undefined);
+      const { disconnectCalendar } = await import("@/services/calendarService");
+      await disconnectCalendar(calendarConnection.provider);
       setCalendarConnection({ connected: false, provider: null });
       toast.success("Calendar disconnected successfully");
     } catch (error) {

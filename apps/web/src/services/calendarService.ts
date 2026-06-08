@@ -98,62 +98,39 @@ export async function deleteHoliday(id: string): Promise<void> {
   });
 }
 
+
 // ============================================
-// OAuth Calendar Integration (Google / Outlook)
+// OAuth Calendar Integration (Google / Outlook) — user-level, any role.
+// Identity comes from the JWT; no email params. Backend: /api/v1/calendar/*
 // ============================================
 
+export type CalendarProviderName = "google" | "outlook";
+
+export interface CalendarStatus {
+  configured: boolean;
+  connected: boolean;
+  email: string | null;
+  connectedAt: string | null;
+}
+
+/** configured:false means OAuth creds aren't set on this server — hide the buttons. */
 export async function getCalendarAuthUrl(
-  provider: "google" | "outlook",
-  email?: string,
-  redirectUrl?: string,
-): Promise<{ url: string }> {
-  const query = new URLSearchParams();
-  if (email) query.append("email", email);
-  if (redirectUrl) query.append("redirectUrl", redirectUrl);
-
-  const qs = query.toString();
-  const res = await apiRequest(`/api/v1/coach/auth/${provider}/url${qs ? `?${qs}` : ""}`);
-  const nested = res && typeof res === "object" ? res.data || res : res;
-  const url = nested?.url || nested?.callbackurl || res?.url || res?.callbackurl;
-  if (!url) {
-    throw new Error(`API did not return a valid URL. Response: ${JSON.stringify(res)}`);
-  }
-  return { url };
+  provider: CalendarProviderName,
+): Promise<{ configured: boolean; url?: string }> {
+  const returnTo = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/dashboard";
+  const res = await apiRequest(`/api/v1/calendar/${provider}/url?redirectUrl=${encodeURIComponent(returnTo)}`);
+  return res?.data ?? { configured: false };
 }
 
-export async function checkCalendarAuthStatus(
-  provider: "google" | "outlook",
-  email: string,
-): Promise<{
-  isAuthenticated: boolean;
-  email: string;
-  userId: string;
-  authDetails: {
-    connected: boolean;
-    hasAccessToken: boolean;
-    hasRefreshToken: boolean;
-    isTokenValid: boolean;
-    isTokenExpired: boolean;
-    tokenStatus: string;
-    provider: string;
-  };
-} | null> {
+export async function getCalendarStatus(provider: CalendarProviderName): Promise<CalendarStatus> {
   try {
-    const res = await apiRequest(
-      `/api/v1/coach/auth/${provider}/status?email=${encodeURIComponent(email)}`
-    );
-    return res.data || res;
+    const res = await apiRequest(`/api/v1/calendar/${provider}/status`);
+    return res?.data ?? { configured: false, connected: false, email: null, connectedAt: null };
   } catch {
-    return null;
+    return { configured: false, connected: false, email: null, connectedAt: null };
   }
 }
 
-export async function disconnectCalendar(
-  provider: "google" | "outlook",
-  email?: string,
-): Promise<{ success: boolean; message: string }> {
-  return apiRequest(`/api/v1/coach/auth/${provider}/disconnect`, {
-    method: "DELETE",
-    ...(email ? { data: { email } } : {}),
-  });
+export async function disconnectCalendar(provider: CalendarProviderName): Promise<void> {
+  await apiRequest(`/api/v1/calendar/${provider}/disconnect`, { method: "DELETE" });
 }
