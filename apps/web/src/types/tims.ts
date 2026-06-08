@@ -42,10 +42,12 @@ export interface ScoredCareer {
   aiInsight?: string;          // AI-generated personalized match explanation
 }
 
-/** API returns { data: { careers: [...], profileSummary: "..." } } */
+/** API returns { data: { careers: [...], profileSummary: "...", locked? } } */
 export interface ScoreCareersResponse {
   data: {
     careers: ScoredCareer[];
     profileSummary?: string;
+    /** true when assessments are incomplete — no real matches yet (don't show fake scores) */
+    locked?: boolean;
   };
 }
