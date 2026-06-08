@@ -7,15 +7,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Mail, Phone, ChevronDown } from "lucide-react";
+import { Mail, ChevronDown } from "lucide-react";
 
 interface InvitationActionsProps {
   totalEvaluators: number;
   allGroupsComplete: boolean;
   onSendAllEmails: () => void;
   onSendSpecificEmails: () => void;
-  onSendAllSMS: () => void;
-  onSendSpecificSMS: () => void;
+  // SMS invitations are not implemented yet — accepted but unused (no fake button).
+  onSendAllSMS?: () => void;
+  onSendSpecificSMS?: () => void;
   groupCount: number;
 }
 
@@ -24,8 +25,6 @@ export function InvitationActions({
   allGroupsComplete,
   onSendAllEmails,
   onSendSpecificEmails,
-  onSendAllSMS,
-  onSendSpecificSMS,
   groupCount,
 }: InvitationActionsProps) {
   const isDisabled = totalEvaluators === 0 || !allGroupsComplete;
@@ -60,27 +59,6 @@ export function InvitationActions({
                 Send to All
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onSendSpecificEmails}>
-                Send to Specific
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                disabled={isDisabled}
-                className="border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5"
-              >
-                <Phone className="w-4 h-4" />
-                <span>Send SMS Invitations</span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onSendAllSMS}>
-                Send to All
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onSendSpecificSMS}>
                 Send to Specific
               </DropdownMenuItem>
             </DropdownMenuContent>

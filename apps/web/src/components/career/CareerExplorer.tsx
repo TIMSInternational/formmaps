@@ -260,6 +260,9 @@ export default function CareerExplorer() {
           <p className="text-muted-foreground text-sm sm:text-base ml-0 sm:ml-[3.25rem] leading-relaxed">
             {t("career.explorer.subtitle", "Your top 10 career matches based on cognitive abilities, personality, and interests.")}
           </p>
+          <p className="text-[11px] text-muted-foreground/70 ml-0 sm:ml-[3.25rem] leading-relaxed">
+            {t("career.explorer.disclaimer", "These match estimates are based on your assessment data and are for informational guidance only — not a guarantee of employment and not a substitute for professional career counseling.")}
+          </p>
         </div>
       </div>
 

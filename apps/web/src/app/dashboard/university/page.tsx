@@ -247,6 +247,12 @@ export default function UniversityPage() {
               "Descubre universidades adaptadas a tu perfil, evaluaciones y aspiraciones profesionales."
             )}
           </p>
+          <p className="max-w-2xl text-[11px] text-muted-foreground/70 mt-1">
+            {t(
+              "Match and admission estimates are based on your assessment data and are for informational guidance only — not a guarantee of admission and not a substitute for professional counseling.",
+              "Las estimaciones de coincidencia y admisión se basan en tus datos de evaluación y son solo orientativas — no garantizan la admisión ni sustituyen la asesoría profesional."
+            )}
+          </p>
         </div>
 
         <UniversityStats
