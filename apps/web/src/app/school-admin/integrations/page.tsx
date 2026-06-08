@@ -13,7 +13,6 @@ interface Integration {
 const INTEGRATIONS: Integration[] = [
   { id: "isams", name: "iSAMS", description: "Sync student data, timetables, and grades from iSAMS school management system.", icon: Database, status: "available", color: "#065292", href: "/school-admin/integrations/isams" },
   { id: "tims", name: "TIMS PCA", description: "DISC personality assessment integration for career orientation and competency mapping.", icon: Shield, status: "connected", color: "#10b981" },
-  { id: "zoom", name: "Zoom Video SDK", description: "1:1 video calls between counselors, admins, and students with session recording.", icon: Globe, status: "available", color: "#065292" },
   { id: "google", name: "Google Workspace", description: "Single sign-on and Google Classroom integration for seamless student access.", icon: Globe, status: "coming_soon", color: "#f59e0b" },
   { id: "canvas", name: "Canvas LMS", description: "Import grades and assignments from Canvas Learning Management System.", icon: Database, status: "coming_soon", color: "#ef4444" },
   { id: "powerschool", name: "PowerSchool", description: "Sync student information system data including demographics and transcripts.", icon: Database, status: "coming_soon", color: "#8b5cf6" },
