@@ -15,6 +15,7 @@ import {
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { isVideoEnabled, createVideoSession } from "@/services/videoService";
 import NewConversation from "./_components/NewConversation";
+import ModerationMenu from "@/components/messages/ModerationMenu";
 import { formatMessageTime as formatTime } from "@/lib/dateUtils";
 import { getInitials } from "@/lib/stringUtils";
 
@@ -239,6 +240,10 @@ export default function MessagesPage() {
                     <Video style={{ width: 16, height: 16 }} />
                   </button>
                 )}
+                <ModerationMenu
+                  targetUserId={selectedConversation.otherParticipant.id}
+                  targetName={selectedConversation.otherParticipant.name}
+                />
               </div>
 
               <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
