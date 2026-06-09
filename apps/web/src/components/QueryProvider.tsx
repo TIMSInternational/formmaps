@@ -10,6 +10,10 @@ export function getQueryClient(): QueryClient | null {
   return _queryClient;
 }
 
+function getErrorStatus(error: unknown): number | undefined {
+  return (error as { status?: number } | undefined)?.status;
+}
+
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () => {
@@ -18,7 +22,11 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
           queries: {
             staleTime: 5 * 60 * 1000,
             gcTime: 10 * 60 * 1000,
-            retry: 2,
+            retry: (failureCount, error) => {
+              const status = getErrorStatus(error);
+              if (status && status >= 400 && status < 500) return false;
+              return failureCount < 2;
+            },
             refetchOnWindowFocus: process.env.NODE_ENV === 'production',
           },
         },

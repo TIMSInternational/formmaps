@@ -77,6 +77,7 @@ class TelemetryService {
   private eventQueue: TelemetryEvent[] = [];
   private flushTimer: ReturnType<typeof setInterval> | null = null;
   private isInitialized = false;
+  private disabledForSession = false;
 
   constructor(config: Partial<TelemetryConfig> = {}) {
     this.config = { ...defaultConfig, ...config };
@@ -90,6 +91,7 @@ class TelemetryService {
     if (this.isInitialized || typeof window === "undefined") return;
 
     this.isInitialized = true;
+    this.disabledForSession = false;
 
     // Set up periodic flush
     this.flushTimer = setInterval(() => {
@@ -171,11 +173,38 @@ class TelemetryService {
     return sanitized;
   }
 
+  private getStoredAccessToken(): string | null {
+    if (typeof window === "undefined") return null;
+
+    try {
+      const stored = localStorage.getItem("timcare-global-store");
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      return parsed?.state?.user?.accessToken || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private hasAuthSignal(): boolean {
+    if (typeof window === "undefined") return false;
+    return document.cookie.includes("logged_in=true") || !!this.getStoredAccessToken();
+  }
+
+  private requestHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    const token = this.getStoredAccessToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
+  }
+
   /**
    * Track a single event
    */
   track(type: TelemetryEventType, properties?: Record<string, unknown>): void {
-    if (!this.config.enabled) return;
+    if (!this.config.enabled || this.disabledForSession || !this.hasAuthSignal()) return;
 
     const event: TelemetryEvent = {
       type,
@@ -400,42 +429,34 @@ class TelemetryService {
    */
   async flush(sync = false): Promise<void> {
     if (this.eventQueue.length === 0) return;
+    if (!this.hasAuthSignal()) {
+      this.eventQueue = [];
+      return;
+    }
 
     const eventsToSend = [...this.eventQueue];
     this.eventQueue = [];
 
     try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-
-      // Use sendBeacon for sync flush (page unload)
-      // Note: sendBeacon does not support credentials/cookies
-      if (sync && typeof navigator !== "undefined" && navigator.sendBeacon) {
-        const blob = new Blob(
-          [JSON.stringify({ events: eventsToSend })],
-          { type: "application/json" }
-        );
-        navigator.sendBeacon(this.config.apiEndpoint, blob);
-        return;
-      }
-
-      // Regular async fetch
-      await fetch(this.config.apiEndpoint, {
+      const response = await fetch(this.config.apiEndpoint, {
         method: "POST",
-        headers,
+        headers: this.requestHeaders(),
         credentials: "include",
         body: JSON.stringify({ events: eventsToSend }),
+        keepalive: sync,
       });
-    } catch (error) {
-      // On failure, add events back to queue for retry
 
-      // If 401/403 (unauthorized), stop trying and clear queue to prevent loops
-      if (error instanceof Response && (error.status === 401 || error.status === 403)) {
+      if (response.status === 401 || response.status === 403) {
+        this.disabledForSession = true;
         this.eventQueue = [];
         return;
       }
 
+      if (!response.ok) {
+        throw new Error(`Telemetry request failed: ${response.status}`);
+      }
+    } catch (error) {
+      // On failure, add events back to queue for retry
       // For other errors, keep events for retry (up to a limit)
       if (this.eventQueue.length < 100) {
         this.eventQueue = [...eventsToSend, ...this.eventQueue];

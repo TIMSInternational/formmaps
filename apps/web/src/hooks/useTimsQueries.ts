@@ -4,6 +4,7 @@ import { usePCAData } from "@/hooks/usePCAData";
 import { useMILData } from "@/hooks/useMILData";
 import { scoreCareers } from "@/services/timsService";
 import { ScoreCareersRequest } from "@/types/tims";
+import { apiRequest } from "@/lib/api/apiClient";
 
 export const timsKeys = {
   all: ["tims"] as const,
@@ -26,38 +27,30 @@ export function useDerived360Profile() {
 
       // Call the backend to aggregate all 360° feedback and derive profile
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-        const resp = await fetch(`${API_BASE}/api/v1/assessment/derive-profile/${userId}`, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
+        const response = await apiRequest(`/api/v1/assessment/derive-profile/${userId}`, {
+          method: "GET",
         });
+        const data = response?.data || response;
 
-        if (resp.ok) {
-          const json = await resp.json();
-          const data = json.data || json;
+        if (data.derivedInterests?.length > 0 || data.derivedMotivators?.length > 0) {
+          // Cache for offline use
+          localStorage.setItem(
+            `tims_profile_${userId}`,
+            JSON.stringify({
+              derivedInterests: data.derivedInterests,
+              derivedMotivators: data.derivedMotivators,
+              interestScores: data.interestScores,
+              motivatorScores: data.motivatorScores,
+              derivedAt: new Date().toISOString(),
+            })
+          );
 
-          if (data.derivedInterests?.length > 0 || data.derivedMotivators?.length > 0) {
-            // Cache for offline use
-            localStorage.setItem(
-              `tims_profile_${userId}`,
-              JSON.stringify({
-                derivedInterests: data.derivedInterests,
-                derivedMotivators: data.derivedMotivators,
-                interestScores: data.interestScores,
-                motivatorScores: data.motivatorScores,
-                derivedAt: new Date().toISOString(),
-              })
-            );
-
-            return {
-              derivedInterests: data.derivedInterests || [],
-              derivedMotivators: data.derivedMotivators || [],
-              interestScores: data.interestScores || {},
-              motivatorScores: data.motivatorScores || {},
-            };
-          }
+          return {
+            derivedInterests: data.derivedInterests || [],
+            derivedMotivators: data.derivedMotivators || [],
+            interestScores: data.interestScores || {},
+            motivatorScores: data.motivatorScores || {},
+          };
         }
       } catch {
         // API failed, try cache
@@ -86,7 +79,7 @@ export function useDerived360Profile() {
     },
     enabled: !!userId,
     staleTime: 30 * 60 * 1000,
-    retry: 1,
+    retry: false,
   });
 }
 
