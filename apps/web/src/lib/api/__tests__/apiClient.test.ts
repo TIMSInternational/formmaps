@@ -49,3 +49,32 @@ describe("apiClient 401 handling", () => {
     expect(mockRefresh).toHaveBeenCalled();
   });
 });
+
+describe("apiRequest retry handling", () => {
+  let originalAdapter: unknown;
+
+  beforeEach(() => {
+    originalAdapter = apiClient.defaults.adapter;
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    apiClient.defaults.adapter = originalAdapter as never;
+  });
+
+  it("does not retry 429 responses by default", async () => {
+    const adapter429 = jest.fn((config: unknown) =>
+      Promise.reject({
+        config,
+        response: { status: 429, data: { success: false, message: "Too many requests" } },
+        request: {},
+        isAxiosError: true,
+        toJSON: () => ({}),
+      }),
+    );
+    apiClient.defaults.adapter = adapter429 as never;
+
+    await expect(apiRequest("/api/v1/user/me")).rejects.toThrow("Too many requests");
+    expect(adapter429).toHaveBeenCalledTimes(1);
+  });
+});

@@ -140,9 +140,9 @@ apiClient.interceptors.request.use(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function apiRequest<T = any>(
   path: string,
-  config?: AxiosRequestConfig & { retries?: number; showErrorToast?: boolean }
+  config?: AxiosRequestConfig & { retries?: number; showErrorToast?: boolean; retryOnRateLimit?: boolean }
 ): Promise<T> {
-  const { retries = 2, showErrorToast, ...axiosConfig } = config || {};
+  const { retries = 2, showErrorToast, retryOnRateLimit = false, ...axiosConfig } = config || {};
 
   // Default: toast for mutations (POST/PUT/DELETE/PATCH), not for GET
   // GET requests are typically managed by React Query which has its own retry
@@ -157,9 +157,10 @@ export async function apiRequest<T = any>(
     } catch (error) {
       lastError = error as Error;
 
-      // Don't retry on client errors (4xx) except 429 (rate limited)
+      // Don't retry client errors by default. 429 is server backpressure; retrying
+      // it from every mounted query can turn one throttle event into a request storm.
       const status = (error as Error & { status?: number })?.status;
-      if (status && status >= 400 && status < 500 && status !== 429) {
+      if (status && status >= 400 && status < 500 && (status !== 429 || !retryOnRateLimit)) {
         throw error;
       }
 
