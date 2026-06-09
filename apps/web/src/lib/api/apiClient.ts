@@ -124,6 +124,16 @@ apiClient.interceptors.response.use(
 // Request interceptor — attach Bearer token from store as fallback for cross-site cookie blocking
 apiClient.interceptors.request.use(
   config => {
+    if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+      const headers = config.headers as {
+        delete?: (name: string) => void;
+        setContentType?: (value?: string | false) => void;
+      };
+      headers?.delete?.("Content-Type");
+      headers?.delete?.("content-type");
+      headers?.setContentType?.(undefined);
+    }
+
     if (typeof window !== "undefined") {
       const { useGlobalStore } = require("@/store/useGlobalStore");
       const token = useGlobalStore.getState().user.accessToken;

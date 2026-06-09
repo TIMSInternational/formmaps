@@ -77,4 +77,30 @@ describe("apiRequest retry handling", () => {
     await expect(apiRequest("/api/v1/user/me")).rejects.toThrow("Too many requests");
     expect(adapter429).toHaveBeenCalledTimes(1);
   });
+
+  it("does not force JSON content type for FormData uploads", async () => {
+    const adapter = jest.fn((config: unknown) =>
+      Promise.resolve({
+        config,
+        data: { success: true },
+        headers: {},
+        status: 200,
+        statusText: "OK",
+      }),
+    );
+    apiClient.defaults.adapter = adapter as never;
+    const formData = new FormData();
+    formData.append("file", new Blob(["resume"]), "resume.pdf");
+
+    await apiRequest("/api/resume/upload-and-parse", {
+      method: "POST",
+      data: formData,
+    });
+
+    const config = adapter.mock.calls[0][0] as {
+      headers: { get?: (name: string) => string | undefined; [key: string]: unknown };
+    };
+    const contentType = config.headers.get?.("Content-Type") ?? config.headers["Content-Type"];
+    expect(contentType).not.toBe("application/json");
+  });
 });
