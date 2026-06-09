@@ -33,6 +33,7 @@ describe("Signup page", () => {
     fireEvent.change(byId("firstName"), { target: { value: "Indie" } });
     fireEvent.change(byId("lastName"), { target: { value: "Student" } });
     fireEvent.change(byId("email"), { target: { value: "indie.student@formmaps.dev" } });
+    fireEvent.change(byId("dateOfBirth"), { target: { value: "2008-01-01" } });
     fireEvent.change(screen.getByPlaceholderText("Create a strong password"), {
       target: { value: "Test1234!" },
     });
@@ -52,6 +53,9 @@ describe("Signup page", () => {
       "Indie Student",
       "indie.student@formmaps.dev",
       "Test1234!",
+      undefined,
+      "2008-01-01",
+      false,
     );
     // The 401 from this pre-signup lookup hijacked anonymous users to /login
     expect(mockGetRole).not.toHaveBeenCalled();
