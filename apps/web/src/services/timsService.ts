@@ -24,7 +24,7 @@ export async function deriveProfile(
   interestScores: Record<string, number>;
   motivatorScores: Record<string, number>;
 }> {
-  const response = await apiRequest<any>("api/v1/assessment/derive-profile", {
+  const response = await apiRequest<any>("/api/v1/assessment/derive-profile", {
     method: "POST",
     data: { userId, answers },
   });
