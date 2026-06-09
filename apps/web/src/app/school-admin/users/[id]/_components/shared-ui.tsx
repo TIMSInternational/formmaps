@@ -2,25 +2,29 @@
 
 import { useState, useEffect } from "react";
 import type { LucideIcon } from "lucide-react";
+import { getPcaChartBlob } from "@/services/pcaImageService";
 
 export function PCAChartImage({ pcaCod }: { pcaCod?: string }) {
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
     if (!pcaCod) return;
-    let revoked = false;
+    let cancelled = false;
+    let objectUrl: string | null = null;
     (async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pcaapi/img-report?pcaCod=${pcaCod}`,
-          { credentials: "include" }
-        );
-        if (!res.ok) return;
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        if (!revoked) setSrc(url);
+        const blob = await getPcaChartBlob(pcaCod);
+        objectUrl = URL.createObjectURL(blob);
+        if (!cancelled) {
+          setSrc(objectUrl);
+        } else {
+          URL.revokeObjectURL(objectUrl);
+        }
       } catch { /* ignore */ }
     })();
-    return () => { revoked = true; };
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
   }, [pcaCod]);
   if (!src) return null;
   return (
