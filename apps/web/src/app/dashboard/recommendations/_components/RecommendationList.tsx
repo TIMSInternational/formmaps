@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { FileText, User, Calendar, CheckCircle2 } from "lucide-react";
 import { RecommendationRequest } from "@/services/recommendationService";
+import { formatDateOnly } from "@/lib/dateUtils";
 import StatusBadge from "./StatusBadge";
 
 interface RecommendationListProps {
@@ -182,7 +183,7 @@ export default function RecommendationList({ requests }: RecommendationListProps
                   }}
                 >
                   <Calendar style={{ width: 11, height: 11 }} />
-                  Due {new Date(req.dueDate).toLocaleDateString()}
+                  Due {formatDateOnly(req.dueDate)}
                 </div>
               )}
               {req.submittedAt && (

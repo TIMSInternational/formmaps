@@ -99,13 +99,15 @@ export async function signUp(
   name: string,
   email: string,
   password: string,
-  roleId?: string
+  roleId?: string,
+  dateOfBirth?: string,
+  acceptMarketing?: boolean
 ): Promise<LoginResponse> {
   const response = await fetch(`${API_BASE}/authapi/signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ name, email, password, roleId }),
+    body: JSON.stringify({ name, email, password, roleId, dateOfBirth, acceptMarketing }),
   });
 
   if (!response.ok) {

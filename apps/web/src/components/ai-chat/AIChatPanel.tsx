@@ -8,27 +8,12 @@ import { useGlobalStore } from "@/store/useGlobalStore";
 import { usePermission } from "@/hooks/usePermission";
 import { useChat } from "./ChatContext";
 import { getChatSuggestions } from "./aiPrompts";
+import { askAi } from "@/services/aiChatService";
 import type { ChatMessage } from "./useChatThreads";
 import { AnimatedAIInput } from "@/components/ui/animated-ai-input";
 import { ShiningText } from "@/components/ui/shining-text";
 
-const AI_SERVICE_URL =
-  process.env.NEXT_PUBLIC_AI_SERVICE_URL || "http://localhost:8000";
-
 const REQUEST_TIMEOUT_MS = 45_000;
-
-/** Parse SSE events from a line buffer, handling CRLF and partial chunks. */
-function parseSSELine(line: string): { text?: string; name?: string; status?: string; message?: string } | null {
-  const trimmed = line.replace(/\r$/, "");
-  if (!trimmed.startsWith("data:")) return null;
-  const jsonStr = trimmed.slice(5).trim();
-  if (!jsonStr) return null;
-  try {
-    return JSON.parse(jsonStr);
-  } catch {
-    return null;
-  }
-}
 
 /** Side-panel chat UI — works with ChatContext threads */
 export function AIChatSidePanel() {
@@ -90,74 +75,7 @@ export function AIChatSidePanel() {
           content: m.content,
         }));
 
-        const response = await fetch(`${AI_SERVICE_URL}/chat/stream`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            user_id: user?.id || "",
-            message: text.trim(),
-            role: role || "STUDENT",
-            conversation_id: threadId,
-            history,
-          }),
-          signal: controller.signal,
-        });
-
-        if (response.status === 401) {
-          addMessage(threadId, {
-            id: `e-${Date.now()}`,
-            role: "assistant",
-            content: "Your session has expired. Please log in again.",
-            timestamp: Date.now(),
-          });
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(`AI service error: ${response.status}`);
-        }
-
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error("No response body");
-
-        const decoder = new TextDecoder();
-        let buffer = "";
-        let fullText = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            const event = parseSSELine(line);
-            if (!event) continue;
-
-            if (event.text) {
-              fullText += event.text;
-            } else if (event.name && event.status) {
-              const label = event.name.replace(/_/g, " ").replace("get ", "");
-              setToolStatus(
-                event.status === "running" ? `Looking up ${label}...` : null,
-              );
-            } else if (event.message) {
-              fullText = event.message;
-            }
-          }
-        }
-
-        // Process remaining buffer
-        if (buffer.trim()) {
-          const event = parseSSELine(buffer);
-          if (event?.text) fullText += event.text;
-          else if (event?.message) fullText = event.message;
-        }
+        const fullText = await askAi(text.trim(), history, controller.signal);
 
         addMessage(threadId, {
           id: `a-${Date.now()}`,
@@ -166,21 +84,24 @@ export function AIChatSidePanel() {
           timestamp: Date.now(),
         });
       } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") {
-          addMessage(threadId, {
-            id: `e-${Date.now()}`,
-            role: "assistant",
-            content: "The request timed out. Please try a simpler question.",
-            timestamp: Date.now(),
-          });
-        } else {
-          addMessage(threadId, {
-            id: `e-${Date.now()}`,
-            role: "assistant",
-            content: "Sorry, I couldn't connect to the AI service right now. Please try again in a moment.",
-            timestamp: Date.now(),
-          });
+        const status = (err as { status?: number })?.status;
+        const aborted =
+          (err as { code?: string })?.code === "ERR_CANCELED" ||
+          (err instanceof DOMException && err.name === "AbortError");
+        let content = "Sorry, I couldn't connect to the AI service right now. Please try again in a moment.";
+        if (aborted) {
+          content = "The request timed out. Please try a simpler question.";
+        } else if (status === 401) {
+          content = "Your session has expired. Please log in again.";
+        } else if (status === 403) {
+          content = "FormMaps AI requires an active subscription. Visit the Subscriptions page to upgrade your plan.";
         }
+        addMessage(threadId, {
+          id: `e-${Date.now()}`,
+          role: "assistant",
+          content,
+          timestamp: Date.now(),
+        });
       } finally {
         clearTimeout(timeout);
         setLoading(false);

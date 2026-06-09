@@ -21,6 +21,16 @@ export const signupSchema = z
       .regex(/[a-z]/, "Password must contain at least one lowercase letter")
       .regex(/[0-9]/, "Password must contain at least one number"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
+    dateOfBirth: z
+      .string()
+      .min(1, "Date of birth is required")
+      .refine((s) => {
+        const d = new Date(s);
+        if (isNaN(d.getTime()) || d > new Date()) return false;
+        const thirteenAgo = new Date();
+        thirteenAgo.setFullYear(thirteenAgo.getFullYear() - 13);
+        return d <= thirteenAgo;
+      }, "You must be at least 13 years old to sign up. Ask your school to invite you."),
     acceptTerms: z
       .boolean()
       .refine(

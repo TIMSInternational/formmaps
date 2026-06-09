@@ -571,6 +571,43 @@ export async function getUserEvaluationGroups(
 }
 
 /**
+ * Find (or create) the student's SELF evaluation group and return the public
+ * evaluator-form URL. The form is keyed by the group's invitationToken — NOT
+ * the group id — and self groups must use groupType "Self" so the backend
+ * serves the Self question set (legacy groups were stored as Parent+Self).
+ */
+export async function getSelfEvaluationUrl(
+  userId: string,
+  name: string,
+  email: string,
+  language: "english" | "spanish" = "english"
+): Promise<{ url: string; completed: boolean } | null> {
+  const groups = await getUserEvaluationGroups(userId, language);
+  // Prefer canonical Self groups; legacy rows (groupType Parent + relation
+  // Self) get the Parent question set on the backend, so only fall back to
+  // them when no canonical group exists.
+  let selfGroup =
+    groups.find((g) => (g.groupType || "").toLowerCase() === "self") ||
+    groups.find((g) => g.groupType === "Parent" && g.relation === "Self");
+
+  if (!selfGroup?.invitationToken) {
+    selfGroup = await createEvaluationGroup({
+      evaluatorName: name || "Self",
+      evaluatorEmail: email,
+      relation: "Self",
+      groupType: "Self",
+      evaluatedUserId: userId,
+    });
+  }
+
+  if (!selfGroup?.invitationToken) return null;
+  return {
+    url: `/evaluation/evaluator?token=${selfGroup.invitationToken}`,
+    completed: !!selfGroup.isEvaluationCompleted,
+  };
+}
+
+/**
  * Get all evaluations for students assigned to the logged-in counselor
  */
 export async function getCounselorEvaluations(): Promise<CounselorEvaluationGroupResponse[]> {
@@ -866,30 +903,6 @@ export function validatePhoneNumber(phone: string): {
   }
 
   return { isValid: true };
-}
-
-/**
- * Check for duplicate evaluator (email or phone)
- */
-export async function checkDuplicateEvaluator(
-  email: string,
-  phone: string,
-  language: "english" | "spanish" = "english"
-): Promise<{
-  isDuplicate: boolean;
-  duplicateField?: "email" | "phone" | "both";
-  existingEvaluator?: {
-    name: string;
-    email: string;
-    phone: string;
-    groupType: string;
-  };
-}> {
-  const params = new URLSearchParams({ email, phone });
-  const langParam = language === "spanish" ? "sp" : "en";
-  return await apiRequest(
-    `/evaluation/check-duplicate?${params.toString()}&lang=${langParam}`
-  );
 }
 
 /**

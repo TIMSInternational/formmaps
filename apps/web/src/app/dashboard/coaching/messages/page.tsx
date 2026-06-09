@@ -16,6 +16,7 @@ import {
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { formatMessageTime as formatTime } from "@/lib/dateUtils";
 import { getInitials } from "@/lib/stringUtils";
+import ModerationMenu from "@/components/messages/ModerationMenu";
 
 export default function CoachMessagesPage() {
   const userId = useGlobalStore((s) => s.user.id);
@@ -278,6 +279,10 @@ export default function CoachMessagesPage() {
                   <p style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", lineHeight: 1.2 }}>{selectedConversation.otherParticipant.name}</p>
                   <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 1 }}>{selectedConversation.otherParticipant.email}</p>
                 </div>
+                <ModerationMenu
+                  targetUserId={selectedConversation.otherParticipant.id}
+                  targetName={selectedConversation.otherParticipant.name}
+                />
               </div>
 
               <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>

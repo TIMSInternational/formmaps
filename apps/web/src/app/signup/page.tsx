@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { signUp as signUpApi, login as loginApi } from "@/services/authService";
-import { getRoleByName } from "@/services/roleService";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,6 +35,7 @@ export default function SignupPage() {
       email: "",
       password: "",
       confirmPassword: "",
+      dateOfBirth: "",
       acceptTerms: false,
       acceptMarketing: false,
     },
@@ -56,23 +56,15 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      let userRoleId = "686cc04c1237a82fc74b4a6a";
-      try {
-        const userRole = await getRoleByName("User");
-        userRoleId = userRole.id;
-      } catch {
-        try {
-          const studentRole = await getRoleByName("Student");
-          userRoleId = studentRole.id;
-        } catch {
-          // Use fallback roleId if both fail
-        }
-      }
-
+      // No role lookup: those endpoints require auth (401 for anonymous users)
+      // and the backend signup defaults to the Student role when roleId is omitted.
       await signUpApi(
         `${data.firstName} ${data.lastName}`,
         data.email,
-        data.password
+        data.password,
+        undefined,
+        data.dateOfBirth,
+        data.acceptMarketing
       );
 
       const loginRes = await loginApi(data.email, data.password);
@@ -232,6 +224,24 @@ export default function SignupPage() {
                     )}
                   />
 
+                  {/* Date of birth (13+ age gate) */}
+                  <FormField
+                    control={control}
+                    name="dateOfBirth"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">Date of birth</FormLabel>
+                        <FormControl>
+                          <Input id="dateOfBirth" type="date" {...field} max={new Date().toISOString().split("T")[0]}
+                            className={cn("h-11 text-base bg-white/50 backdrop-blur-sm border-gray-200/50 focus:border-purple-500 focus:ring-purple-500/20",
+                              errors.dateOfBirth && "border-red-300 focus:border-red-500 focus:ring-red-500/20")} />
+                        </FormControl>
+                        <p className="text-[11px] text-gray-500">You must be at least 13 to create an account. Younger students join through their school.</p>
+                        <FormMessage className="text-xs text-red-600" />
+                      </FormItem>
+                    )}
+                  />
+
                   {/* Password */}
                   <PasswordInput control={control} errors={errors} name="password" label="Password"
                     placeholder="Create a strong password" showStrength currentPassword={password} />
@@ -279,9 +289,9 @@ export default function SignupPage() {
               </Form>
 
               <p className="mt-6 text-center text-sm text-gray-600">
-                {t("auth.login.noAccountText")}{" "}
+                {t("auth.signup.haveAccountText")}{" "}
                 <Link href="/login" className="font-medium text-purple-600 hover:text-purple-500 transition-colors">
-                  {t("auth.login.submit")}
+                  {t("auth.signup.signIn")}
                 </Link>
               </p>
             </div>

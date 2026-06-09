@@ -13,7 +13,6 @@ import {
   resendInvitationLink,
   sendBulkEmailInvitations,
   sendSelectedEmailInvitations,
-  checkDuplicateEvaluator,
   validatePhoneNumber,
   EvaluationGroupWithId,
 } from "@/services/evaluationService";
@@ -248,32 +247,9 @@ export function useEvaluatorManagement() {
         "This phone number is already used by another evaluator";
     }
 
-    if (!newErrors.email && newEvaluator.email) {
-      try {
-        const duplicateCheck = await checkDuplicateEvaluator(
-          newEvaluator.email,
-          newEvaluator.phone || ""
-        );
-        if (duplicateCheck.isDuplicate && duplicateCheck.existingEvaluator) {
-          const existing = duplicateCheck.existingEvaluator;
-          if (
-            duplicateCheck.duplicateField === "email" ||
-            duplicateCheck.duplicateField === "both"
-          ) {
-            newErrors.email = `Email already used by ${existing.name} in ${existing.groupType} group`;
-          }
-          if (
-            newEvaluator.phone &&
-            (duplicateCheck.duplicateField === "phone" ||
-              duplicateCheck.duplicateField === "both")
-          ) {
-            newErrors.phone = `Phone number already used by ${existing.name} in ${existing.groupType} group`;
-          }
-        }
-      } catch (error) {
-        // Continue without duplicate check from API if it fails
-      }
-    }
+    // NOTE: no remote duplicate check — /evaluation/check-duplicate does not
+    // exist on the backend (always 404'd). Local checks above + the server's
+    // 409 on create-group cover duplicates.
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

@@ -6,6 +6,22 @@ interface ApiError extends Error {
   status?: number;
 }
 
+/**
+ * Headers for the raw-fetch submission paths. Attaches a Bearer token from the
+ * store as a fallback for cookie-less sessions (e.g. fresh invited-student
+ * onboarding) — mirrors the apiClient request interceptor.
+ */
+function buildSubmitHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (typeof window !== "undefined") {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { useGlobalStore } = require("@/store/useGlobalStore");
+    const token = useGlobalStore.getState().user.accessToken;
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 // --- Retry helper with exponential backoff ---
 async function submitWithRetry(
   url: string,
@@ -80,9 +96,7 @@ export function getPendingSubmissions(): PendingSubmission[] {
 
 export async function retryPendingSubmissions(): Promise<void> {
   const pending = getPendingSubmissions();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const headers = buildSubmitHeaders();
   for (const submission of pending) {
     // Skip stale submissions (>1 hour old) or those missing sessionId
     const age = Date.now() - new Date(submission.timestamp).getTime();
@@ -566,9 +580,7 @@ export async function submitMILExam(
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   const url = `${baseUrl}/api/pcaexam/submit?lang=${langParam}`;
   const submissionKey = `submit_${session.examId}_${userId}`;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const headers = buildSubmitHeaders();
 
   try {
     const response = await submitWithRetry(url, submissionData, headers);
@@ -612,9 +624,7 @@ export async function completeMILExam(
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   const url = `${baseUrl}/api/pcaexam/complete?lang=${langParam}`;
   const completionKey = `complete_${session.examId}_${userId}`;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const headers = buildSubmitHeaders();
 
   try {
     const response = await submitWithRetry(url, completionData, headers);

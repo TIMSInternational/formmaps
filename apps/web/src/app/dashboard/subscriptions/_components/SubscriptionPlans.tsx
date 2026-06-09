@@ -42,8 +42,9 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
     null
   );
 
-  // Get user ID from global store, fallback to mock for development
-  const userId = user.id || "user-123";
+  // Real authenticated user id; never a mock — checkout must not run for a
+  // missing user (the server authorizes via the session token regardless).
+  const userId = user.id || "";
 
   // Load subscription plans
   useEffect(() => {

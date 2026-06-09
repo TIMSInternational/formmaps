@@ -23,73 +23,17 @@ export function CalendarSyncStep({
 
   const handleConnect = async (provider: "google" | "outlook") => {
     try {
-      const { getCalendarAuthUrl } = await import("@/services/coachService");
-      const { url } = await getCalendarAuthUrl(provider, email, window.location.href);
-      // Parse and inspect redirect_uri param if present
-      try {
-        const parsed = new URL(url);
-        const redirectUriEncoded = parsed.searchParams.get("redirect_uri");
-        if (redirectUriEncoded) {
-          const redirectUri = decodeURIComponent(redirectUriEncoded);
-          try {
-            const parsedRedirect = new URL(redirectUri);
-            if (
-              parsedRedirect.pathname.includes("/onboarding/coach/undefined")
-            ) {
-            }
-          } catch (_e) {
-            // ignore parse errors
-          }
-        }
-      } catch (_e) {
-        // ignore parse errors for log
-      }
-
-      // Validate that we got a proper external OAuth URL
-      if (!url || !url.startsWith("http")) {
-        throw new Error(`Invalid auth URL received: ${url}`);
-      }
-
-      // Check if it's redirecting back to our app (indicates API issue)
-      try {
-        const parsed = new URL(url);
-        const hostname = parsed.hostname || "";
-        const currentHost = window.location.hostname;
-        // Block only if the top-level host is the same as our app (internal redirect), not if our domain appears inside redirect_uri query param
-        if (
-          hostname === currentHost ||
-          url.includes("onboarding/coach/undefined")
-        ) {
-          alert(
-            t("onboarding.calendar.apiError", { url, defaultValue: `Calendar integration is not available yet. The API returned: ${url}` })
-          );
-          return;
-        }
-      } catch (err) {
-      // error handled silently
-    }
-
-      // Additional check for common OAuth providers
-      const isOAuthUrl =
-        url.includes("google.com") ||
-        url.includes("microsoft.com") ||
-        url.includes("accounts.google.com") ||
-        url.includes("login.microsoftonline.com");
-      if (!isOAuthUrl) {
-        alert(t("onboarding.calendar.unexpectedUrl", "Unexpected redirect URL received. Please contact support."));
+      const { getCalendarAuthUrl } = await import("@/services/calendarService");
+      const res = await getCalendarAuthUrl(provider);
+      if (!res.configured || !res.url) {
+        alert(t("onboarding.calendar.notConfigured", { defaultValue: "Calendar sync isn't enabled on this server yet — you can connect later from Settings." }));
         return;
       }
-
-      // Redirect to auth URL
-      window.location.href = url;
-    } catch (error) {
-      const message = (error && (error as any).message) || String(error);
-      alert(t("onboarding.calendar.connectFailed", { message, defaultValue: `Failed to connect calendar: ${message}` }));
-      // Fallback for demo/testing if API fails or is not implemented
-      setIntegrations((prev) => ({
-        ...prev,
-        [provider]: !prev[provider],
-      }));
+      // URL comes from our own authenticated API (built from constants).
+      window.location.href = res.url;
+    } catch {
+      // Never fake a connection on failure — the user can connect later in Settings.
+      alert(t("onboarding.calendar.connectFailed", { defaultValue: "Failed to start the calendar connection. You can connect later from Settings." }));
     }
   };
 

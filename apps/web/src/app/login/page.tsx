@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { normalizeRole, roleHomeMap } from "@/lib/roleUtils";
-import { Roles } from "@/lib/permissions";
+import { normalizeRole } from "@/lib/roleUtils";
+import { resolveLoginRedirect } from "@/lib/routePermissions";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login as loginApi } from "@/services/authService";
@@ -53,9 +53,7 @@ export default function LoginPage() {
   const { setUser } = useGlobalStore();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const rawRedirect = searchParams.get("redirect") || "/dashboard";
-  const SAFE_PREFIXES = ["/dashboard", "/counselor", "/admin", "/school-admin", "/parent", "/careers", "/evaluation", "/subscribe"];
-  const defaultRedirect = (rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") && SAFE_PREFIXES.some(p => rawRedirect.startsWith(p))) ? rawRedirect : "/dashboard";
+  const redirectParam = searchParams.get("redirect");
 
   const onSubmit = async (data: LoginFormData) => {
     setApiError(null);
@@ -78,10 +76,9 @@ export default function LoginPage() {
       });
 
       const normalized = normalizeRole(roleName);
-      // Always send user to their role's home page — redirect param is only
-      // honored if it matches a route the user's role can access
-      const roleHome = roleHomeMap[normalized];
-      const redirectTo = roleHome;
+      // Honor the ?redirect= deep link when safe and role-accessible;
+      // otherwise land on the role's home page.
+      const redirectTo = resolveLoginRedirect(redirectParam, normalized);
 
       // Hard navigation to avoid race conditions with AuthWrapper's router.replace
       window.location.href = redirectTo;

@@ -95,9 +95,11 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
     const isAuthRoute = authRoutes.includes(pathname);
 
-    // Unauthenticated on protected route
+    // Unauthenticated on protected route — keep the query string so deep
+    // links like /dashboard/courses?tab=plan survive the login round-trip
     if (!user.isAuthenticated && isProtectedRoute) {
-      return `/login?redirect=${encodeURIComponent(pathname)}`;
+      const search = typeof window !== "undefined" ? window.location.search : "";
+      return `/login?redirect=${encodeURIComponent(pathname + search)}`;
     }
 
     // Route-rule based access control

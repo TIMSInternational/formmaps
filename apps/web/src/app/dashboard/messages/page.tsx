@@ -14,6 +14,8 @@ import {
 } from "@/services/messageService";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { isVideoEnabled, createVideoSession } from "@/services/videoService";
+import NewConversation from "./_components/NewConversation";
+import ModerationMenu from "@/components/messages/ModerationMenu";
 import { formatMessageTime as formatTime } from "@/lib/dateUtils";
 import { getInitials } from "@/lib/stringUtils";
 
@@ -141,12 +143,22 @@ export default function MessagesPage() {
         <div style={{ width: 320, flexShrink: 0, display: "flex", flexDirection: "column", borderRight: "1px solid var(--admin-border-default)" }}>
           <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--admin-border-light)", display: "flex", flexDirection: "column", gap: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Conversations</span>
-              {totalUnread > 0 && (
-                <span style={{ minWidth: 20, height: 20, borderRadius: 10, padding: "0 6px", background: "var(--admin-accent-blue)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {totalUnread > 99 ? "99+" : totalUnread}
-                </span>
-              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Conversations</span>
+                {totalUnread > 0 && (
+                  <span style={{ minWidth: 20, height: 20, borderRadius: 10, padding: "0 6px", background: "var(--admin-accent-blue)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {totalUnread > 99 ? "99+" : totalUnread}
+                  </span>
+                )}
+              </div>
+              <NewConversation
+                onCreated={(conversation) => {
+                  setConversations((prev) =>
+                    prev.some((c) => c.id === conversation.id) ? prev : [conversation, ...prev]
+                  );
+                  handleSelect(conversation.id);
+                }}
+              />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-light)" }}>
               <Search style={{ width: 14, height: 14, color: "var(--admin-font-light)", flexShrink: 0 }} />
@@ -166,7 +178,7 @@ export default function MessagesPage() {
                   <MessageCircle style={{ width: 22, height: 22, color: "var(--admin-font-light)" }} />
                 </div>
                 <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", textAlign: "center" }}>
-                  {searchTerm ? "No conversations match your search." : "No conversations yet."}
+                  {searchTerm ? "No conversations match your search." : "No conversations yet. Click \"New\" to message a counselor or school admin."}
                 </p>
               </div>
             ) : (
@@ -228,6 +240,10 @@ export default function MessagesPage() {
                     <Video style={{ width: 16, height: 16 }} />
                   </button>
                 )}
+                <ModerationMenu
+                  targetUserId={selectedConversation.otherParticipant.id}
+                  targetName={selectedConversation.otherParticipant.name}
+                />
               </div>
 
               <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>

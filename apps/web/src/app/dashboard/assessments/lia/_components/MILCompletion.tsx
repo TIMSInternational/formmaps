@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useGlobalStore } from "@/store/useGlobalStore";
-import { getUserEvaluationGroups, createEvaluationGroup } from "@/services/evaluationService";
+import { getSelfEvaluationUrl } from "@/services/evaluationService";
 import { toast } from "sonner";
 
 interface MILCompletionProps {
@@ -23,28 +23,18 @@ export default function MILCompletion({
   const handleStart360 = async () => {
     try {
       setStarting(true);
-      const groups = await getUserEvaluationGroups(user?.id || "", language);
-
-      let selfGroup = groups?.find(
-        (g) => g.groupType === "Parent" && g.relation === "Self"
+      const selfEval = await getSelfEvaluationUrl(
+        user?.id || "",
+        user?.name || "Self",
+        user?.email || "",
+        language
       );
-
-      if (!selfGroup || !selfGroup.id) {
-        selfGroup = await createEvaluationGroup({
-          evaluatorName: user?.name || "Self",
-          evaluatorEmail: user?.email || "",
-          relation: "Self",
-          groupType: "Parent",
-          evaluatedUserId: user?.id || "",
-        });
-      }
-
-      if (selfGroup?.id) {
-        if (selfGroup.isEvaluationCompleted) {
+      if (selfEval) {
+        if (selfEval.completed) {
           // Self-eval already done — go to evaluator management
           router.push("/dashboard/assessments/evaluation");
         } else {
-          router.push(`/evaluation/evaluator?t=${selfGroup.id}`);
+          router.push(selfEval.url);
         }
       } else {
         toast.error("Failed to start evaluation. Please try again.");

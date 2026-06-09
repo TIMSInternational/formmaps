@@ -1,9 +1,10 @@
 import axios, { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { toast } from '@/hooks/useToast';
-import { refreshAccessToken, clearTokens } from '@/services/tokenRefreshService';
+import { refreshAccessToken, isLoggedIn } from '@/services/tokenRefreshService';
+import { forceLogout } from '@/utils/tokenUtils';
 
 // Create an Axios instance with base URL and default headers
-const apiClient: AxiosInstance = axios.create({
+export const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 30000,
@@ -39,8 +40,11 @@ apiClient.interceptors.response.use(
       const status = error.response.status;
       const data = error.response.data;
 
-      // Attempt token refresh on 401, but only once per request
-      if (status === 401 && !originalRequest._retry) {
+      // Attempt token refresh on 401, but only once per request, and only for
+      // sessions that were actually logged in — anonymous visitors hitting an
+      // auth-required endpoint (e.g. from the signup page) must NOT be
+      // redirected to /login by the teardown path below.
+      if (status === 401 && !originalRequest._retry && isLoggedIn()) {
         if (isRefreshing) {
           // Another refresh is in progress — queue this request
           return new Promise<string>((resolve, reject) => {
@@ -59,22 +63,18 @@ apiClient.interceptors.response.use(
             processQueue(null, 'refreshed');
             return apiClient(originalRequest);
           } else {
-            // Refresh failed — redirect to login
+            // Refresh failed — full session teardown (store + cookies) and redirect.
+            // Tearing down only cookies leaves the persisted store authenticated,
+            // which makes AuthWrapper bounce /login back into the portal forever.
             processQueue(new Error('Token refresh failed'));
-            clearTokens();
             toast.error('Session expired', { description: 'Please log in again.' });
-            if (typeof window !== 'undefined') {
-              window.location.href = '/login';
-            }
+            forceLogout('Your session has expired. Please log in again.');
             return Promise.reject(new Error('Session expired. Please log in again.'));
           }
         } catch (refreshError) {
           processQueue(refreshError as Error);
-          clearTokens();
           toast.error('Session expired', { description: 'Please log in again.' });
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
-          }
+          forceLogout('Your session has expired. Please log in again.');
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;
@@ -100,8 +100,11 @@ apiClient.interceptors.response.use(
           message = (status >= 500) ? 'Something went wrong. Please try again.' : (data?.message || 'Request failed. Please try again.');
       }
 
-      if (status === 403) {
-        toast.warning('Access denied', { description: message });
+      if (status === 403 && data?.code !== 'SUBSCRIPTION_REQUIRED') {
+        // Subscription-gate 403s are handled by AuthWrapper's /subscribe redirect;
+        // toasting each gated query produced a toast wall during the bounce.
+        // Stable id: repeat 403s replace the toast instead of stacking.
+        toast.warning('Access denied', { id: 'access-denied', description: message });
       }
       // 5xx and network errors: callers decide whether to toast
       // (React Query has its own retry, so toasting here causes false alarms)

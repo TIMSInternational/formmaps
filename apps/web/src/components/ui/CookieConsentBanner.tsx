@@ -38,7 +38,7 @@ export function CookieConsentBanner() {
             <p id="cookie-banner-description" className="text-sm text-gray-600">
               We use cookies and similar technologies to improve your experience, analyze traffic, 
               and personalize content. By clicking "Accept All", you consent to our use of cookies.{" "}
-              <Link href="/legal/privacy" className="text-indigo-600 hover:underline">
+              <Link href="/privacy" className="text-indigo-600 hover:underline">
                 Privacy Policy
               </Link>
             </p>

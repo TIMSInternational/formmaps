@@ -13,6 +13,8 @@ interface SessionsListProps {
   onJoinActive: (sessionId: string) => void;
   onStartScheduled?: (sessionId: string) => void;
   onCancelScheduled?: (sessionId: string) => void;
+  /** Empty-state hint. Students can't start calls, so the default "Click New Call" copy is wrong for them. */
+  emptyHint?: string;
 }
 
 export function SessionsList({
@@ -22,6 +24,7 @@ export function SessionsList({
   onJoinActive,
   onStartScheduled,
   onCancelScheduled,
+  emptyHint = 'Click "New Call" to start or schedule a 1:1 video call.',
 }: SessionsListProps) {
   const activeSessions = sessions.filter((s) => s.status === "video_active");
   const scheduledSessions = sessions
@@ -121,7 +124,7 @@ export function SessionsList({
               <Video style={{ width: 24, height: 24, color: "var(--admin-font-light)" }} />
             </div>
             <p style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>No video calls yet</p>
-            <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", textAlign: "center" }}>Click &quot;New Call&quot; to start or schedule a 1:1 video call.</p>
+            <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", textAlign: "center" }}>{emptyHint}</p>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>

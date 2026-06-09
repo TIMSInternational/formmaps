@@ -126,12 +126,14 @@ export default function ForgotPasswordPage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#fff",
-              fontSize: 14,
-              fontWeight: 700,
             }}
           >
-            N
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-icon.svg"
+              alt="FormMaps"
+              style={{ width: 20, height: 20, filter: "brightness(0) invert(1)" }}
+            />
           </div>
           <span style={{ fontSize: 20, fontWeight: 700, color: "#ebebeb" }}>
             FormMaps

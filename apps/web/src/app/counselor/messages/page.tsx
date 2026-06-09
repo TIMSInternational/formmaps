@@ -18,6 +18,7 @@ import { isVideoEnabled, createVideoSession } from "@/services/videoService";
 import { apiRequest } from "@/lib/api/apiClient";
 import { formatMessageTime as formatTime } from "@/lib/dateUtils";
 import { getInitials } from "@/lib/stringUtils";
+import ModerationMenu from "@/components/messages/ModerationMenu";
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -309,6 +310,10 @@ export default function MessagesPage() {
                     <Video style={{ width: 16, height: 16 }} />
                   </button>
                 )}
+                <ModerationMenu
+                  targetUserId={selectedConversation.otherParticipant.id}
+                  targetName={selectedConversation.otherParticipant.name}
+                />
               </div>
 
               <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>

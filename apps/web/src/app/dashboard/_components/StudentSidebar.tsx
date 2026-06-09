@@ -46,6 +46,7 @@ import {
   MessageCircle,
   MessageCirclePlus,
   Video,
+  HeartHandshake,
 } from "lucide-react";
 
 type ThemeMode = "dark" | "light" | "system";
@@ -102,6 +103,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Test Scores", href: "/dashboard/test-scores", icon: FileText },
       { label: "Transcript", href: "/dashboard/transcript", icon: BookOpen },
       { label: "Recommendations", href: "/dashboard/recommendations", icon: Award },
+      { label: "Community Service", href: "/dashboard/community-service", icon: HeartHandshake },
     ],
   },
   {

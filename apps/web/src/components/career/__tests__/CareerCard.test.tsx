@@ -23,7 +23,7 @@ const sampleCareer = {
 describe("CareerCard", () => {
   it("renders title, short description and match score", () => {
     const client = new QueryClient();
-    const { getByText } = render(
+    const { getByText, getByLabelText } = render(
       <QueryClientProvider client={client}>
         <I18nProvider>
           <CareerCard career={sampleCareer} />
@@ -32,6 +32,7 @@ describe("CareerCard", () => {
     );
     expect(getByText(/Data Analyst/i)).toBeInTheDocument();
     expect(getByText(/Analyze and interpret data/i)).toBeInTheDocument();
-    expect(getByText(/Match: 92%/i)).toBeInTheDocument();
+    // match score renders as a badge with an accessible label
+    expect(getByLabelText(/92% match/i)).toBeInTheDocument();
   });
 });

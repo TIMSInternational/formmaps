@@ -17,6 +17,7 @@ import { UniversityCardProps } from "@/types/university";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useCompare } from "@/components/compare/CompareContext";
+import { formatAcceptanceRate } from "./universityFormat";
 
 function UniversityCardInner({
   university,
@@ -136,7 +137,7 @@ function UniversityCardInner({
         <div className="flex flex-col items-center py-2.5 bg-[var(--admin-bg-hover)]">
           <Users className="h-3 w-3 text-[var(--admin-font-tertiary)] mb-1" />
           <span className="text-xs font-bold text-[var(--admin-font-primary)]">
-            {acceptRate ? `${acceptRate}%` : "—"}
+            {formatAcceptanceRate(acceptRate)}
           </span>
           <span className="text-[9px] text-[var(--admin-font-tertiary)]">{t("Accept", "Acepta")}</span>
         </div>

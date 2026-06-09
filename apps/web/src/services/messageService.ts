@@ -34,7 +34,10 @@ export async function searchContacts(search?: string): Promise<{ id: string; nam
 
 export async function getConversationMessages(id: string, page = 1, limit = 50): Promise<{ messages: MessageData[]; total: number }> {
   const res = await apiRequest(`/api/v1/messages/conversations/${id}?page=${page}&limit=${limit}`, { method: "GET" });
-  return res?.data ?? res;
+  // Backend pagination envelope: { success, data: { data: [...], total, page, ... } }
+  const payload = res?.data ?? res ?? {};
+  const messages = payload.data ?? payload.messages ?? [];
+  return { messages: Array.isArray(messages) ? messages : [], total: payload.total ?? 0 };
 }
 
 export async function sendMessage(conversationId: string, content: string): Promise<MessageData> {
@@ -44,5 +47,5 @@ export async function sendMessage(conversationId: string, content: string): Prom
 
 export async function getUnreadCount(): Promise<number> {
   const res = await apiRequest("/api/v1/messages/unread-count", { method: "GET" });
-  return res?.data?.count ?? res?.count ?? 0;
+  return res?.data?.unreadCount ?? 0;
 }
