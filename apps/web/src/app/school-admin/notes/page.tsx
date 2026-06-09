@@ -44,6 +44,20 @@ interface NoteData {
   author: { id: string; name: string; email: string };
 }
 
+interface NotesPayload {
+  data: NoteData[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages?: number;
+}
+
+type NotesResponse = { success?: boolean; data?: NotesPayload } | NotesPayload;
+
+function isNotesPayload(value: NotesResponse): value is NotesPayload {
+  return Array.isArray((value as NotesPayload).data);
+}
+
 export default function SessionNotesPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -61,15 +75,24 @@ export default function SessionNotesPage() {
       if (typeFilter) params.set("type", typeFilter);
       params.set("page", String(page));
       params.set("limit", String(limit));
-      const res = await apiRequest(`/api/v1/school-admin/notes?${params}`);
-      return res;
+      const res = await apiRequest<NotesResponse>(`/api/v1/school-admin/notes?${params}`);
+      const payload: Partial<NotesPayload> = isNotesPayload(res) ? res : res.data ?? {};
+      const total = Number(payload.total ?? 0);
+      const responseLimit = Number(payload.limit ?? limit);
+      return {
+        data: Array.isArray(payload.data) ? payload.data : [],
+        total,
+        page: Number(payload.page ?? page),
+        limit: responseLimit,
+        totalPages: Number(payload.totalPages ?? Math.ceil(total / responseLimit)),
+      };
     },
     staleTime: 1000 * 30,
   });
 
   const notes: NoteData[] = data?.data ?? [];
   const total: number = data?.total ?? 0;
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = data?.totalPages ?? Math.ceil(total / limit);
 
   const formatTime = formatTimeOfDay;
 

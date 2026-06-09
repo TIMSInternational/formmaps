@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/api/apiClient";
+import { getPcaChartBlob } from "@/services/pcaImageService";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -127,11 +128,11 @@ function PCAReports({ student }: { student: StudentRecord }) {
     if (!d?.pcaCod) return;
     setLoading("chart");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/pcaapi/img-report?pcaCod=${d.pcaCod}`, { credentials: "include" });
-      if (!res.ok) throw new Error();
-      const blob = await res.blob();
-      const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+      const blob = await getPcaChartBlob(String(d.pcaCod));
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url;
       a.download = `DISC-Chart-${student.name.replace(/\s+/g, "-")}.png`; a.click();
+      URL.revokeObjectURL(url);
       toast.success("DISC chart downloaded");
     } catch { toast.error("Failed to download chart"); }
     setLoading(null);
