@@ -60,6 +60,33 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 
   /**
+   * Same-origin API proxy.
+   *
+   * The browser calls RELATIVE paths (/api, /authapi, /evaluation) — i.e.
+   * NEXT_PUBLIC_API_BASE_URL is empty in prod — and Next proxies them server-side
+   * to the Express backend. This makes the API same-ORIGIN with the app, so the
+   * auth cookies are FIRST-PARTY (no longer blocked as third-party, which was the
+   * cross-site 401 loop) while staying httpOnly (no tokens in JS → no XSS theft).
+   *
+   * `afterFiles` → the app's own /api/* route handlers (e.g. /api/admin/courses)
+   * are matched first; only unmatched paths proxy to the backend.
+   *
+   * API_PROXY_TARGET defaults to the prod backend so a missing env var can't
+   * silently break the proxy. Local dev keeps NEXT_PUBLIC_API_BASE_URL pointed at
+   * http://localhost:3001 (direct, same-site) and never hits this rewrite.
+   */
+  async rewrites() {
+    const target = process.env.API_PROXY_TARGET || "https://5t8ch34ijm.us-east-1.awsapprunner.com";
+    return {
+      afterFiles: [
+        { source: "/api/:path*", destination: `${target}/api/:path*` },
+        { source: "/authapi/:path*", destination: `${target}/authapi/:path*` },
+        { source: "/evaluation/:path*", destination: `${target}/evaluation/:path*` },
+      ],
+    };
+  },
+
+  /**
    * Security headers — applied to all routes
    */
   async headers() {
