@@ -1,4 +1,7 @@
 import { apiRequest } from "@/lib/api/apiClient";
+import { useGlobalStore } from "@/store/useGlobalStore";
+import { normalizeRole } from "@/lib/roleUtils";
+import { Roles } from "@/lib/permissions";
 import type {
   StudentCoursePlanResponse,
   RecommendedCourse,
@@ -14,22 +17,19 @@ export async function getMyCoursePlan(): Promise<StudentCoursePlanResponse> {
   return json.data ?? json;
 }
 
-// Get a specific student's course plan (counselor or school-admin facing)
+// Get a specific student's course plan (counselor or school-admin facing).
+// Endpoint chosen by role — firing the counselor endpoint as an admin is a
+// guaranteed 403 (it 404s/403s for non-counselors), not a useful fallback.
 export async function getStudentCoursePlan(
   studentId: string
 ): Promise<StudentCoursePlanResponse> {
-  // Try counselor endpoint first, fall back to school-admin
-  try {
-    const json = await apiRequest(
-      `/api/v1/counselor/me/students/${studentId}/course-sequence`
-    );
-    return json.data ?? json;
-  } catch {
-    const json = await apiRequest(
-      `/api/v1/school-admin/students/${studentId}/course-plan`
-    );
-    return json.data ?? json;
-  }
+  const role = normalizeRole(useGlobalStore.getState().user.role);
+  const path =
+    role === Roles.COUNSELOR
+      ? `/api/v1/counselor/me/students/${studentId}/course-sequence`
+      : `/api/v1/school-admin/students/${studentId}/course-plan`;
+  const json = await apiRequest(path);
+  return json.data ?? json;
 }
 
 // Get course recommendations for student (student-facing)
