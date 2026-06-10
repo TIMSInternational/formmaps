@@ -1,5 +1,6 @@
 import { apiClient, apiRequest } from "@/lib/api/apiClient";
 import { refreshAccessToken } from "@/services/tokenRefreshService";
+import { forceLogout } from "@/utils/tokenUtils";
 
 jest.mock("@/services/tokenRefreshService", () => ({
   refreshAccessToken: jest.fn().mockResolvedValue(null),
@@ -11,6 +12,7 @@ jest.mock("@/hooks/useToast", () => ({
 }));
 
 const mockRefresh = refreshAccessToken as jest.Mock;
+const mockForceLogout = forceLogout as jest.Mock;
 
 // Simulate a 401 response at the axios adapter level
 const adapter401 = (config: unknown) =>
@@ -47,6 +49,16 @@ describe("apiClient 401 handling", () => {
     document.cookie = "logged_in=true; path=/";
     await expect(apiRequest("/api/v1/user/me")).rejects.toThrow();
     expect(mockRefresh).toHaveBeenCalled();
+  });
+
+  it("force-logs-out (no infinite loop) when a request still 401s after a successful refresh+retry", async () => {
+    // Cross-site cookie blocked / stale Bearer: refresh 'succeeds' but the retried
+    // request is still rejected. Must hard-logout, not churn refreshes forever.
+    document.cookie = "logged_in=true; path=/";
+    mockRefresh.mockResolvedValueOnce({ accessToken: "new", refreshToken: "r", expiresIn: 900 });
+    await expect(apiRequest("/api/v1/user/me")).rejects.toThrow();
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(mockForceLogout).toHaveBeenCalled();
   });
 });
 
