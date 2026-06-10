@@ -6,9 +6,9 @@ import { AdminSidebar } from "./_components/AdminSidebar";
 import { AdminThemeProvider } from "@/contexts/AdminThemeContext";
 import { ChatProvider } from "@/components/ai-chat/ChatContext";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
-import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppShell } from "@/components/layout/AppShell";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [isAdmin, loading, router]);
 
   if (loading || !isAdmin) {
-    return <DashboardSkeleton />;
+    return <LoadingSpinner />;
   }
 
   return (
