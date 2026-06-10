@@ -40,6 +40,19 @@ apiClient.interceptors.response.use(
       const status = error.response.status;
       const data = error.response.data;
 
+      // Circuit breaker: a 401 on a request we ALREADY refreshed-and-retried
+      // means the session is unrecoverable in this browser (e.g. the refreshed
+      // httpOnly cookie is blocked cross-site and the store's Bearer is stale).
+      // Without this, React Query keeps refetching → endless refresh churn that
+      // looks like a crash. Force a clean logout → /login instead of looping.
+      if (status === 401 && originalRequest._retry && isLoggedIn()) {
+        toast.error('Session expired', { description: 'Please log in again.' });
+        forceLogout('Your session has expired. Please log in again.');
+        const dead = new Error('Session expired. Please log in again.') as Error & { status: number };
+        dead.status = 401; // 4xx → apiRequest must NOT retry (no churn)
+        return Promise.reject(dead);
+      }
+
       // Attempt token refresh on 401, but only once per request, and only for
       // sessions that were actually logged in — anonymous visitors hitting an
       // auth-required endpoint (e.g. from the signup page) must NOT be
