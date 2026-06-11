@@ -52,7 +52,7 @@ export function ChecklistTab({
       {/* Action bar */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <span className="text-xs font-semibold" style={{ color: "var(--admin-font-secondary)" }}>
-          {checklist.filter((c) => c.completed).length}/{checklist.length} completed
+          {checklist.filter((c) => c.isCompleted).length}/{checklist.length} completed
         </span>
         <div className="flex gap-2">
           <button
@@ -168,7 +168,7 @@ export function ChecklistTab({
         <div className="space-y-4">
           {CATEGORY_ORDER.filter((cat) => checklist.some((c) => c.category === cat)).map((cat) => {
             const items = checklist.filter((c) => c.category === cat);
-            const done = items.filter((c) => c.completed).length;
+            const done = items.filter((c) => c.isCompleted).length;
             return (
               <div key={cat} className="space-y-1.5">
                 <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export function ChecklistTab({
                     style={{
                       background: "var(--admin-bg-card)",
                       border: "1px solid var(--admin-border-default)",
-                      opacity: item.completed ? 0.6 : 1,
+                      opacity: item.isCompleted ? 0.6 : 1,
                     }}
                   >
                     <button
@@ -198,22 +198,22 @@ export function ChecklistTab({
                       disabled={savingItem === item.id}
                       className="mt-0.5 shrink-0 h-4 w-4 rounded flex items-center justify-center transition-colors"
                       style={{
-                        background: item.completed ? "var(--admin-accent-green)" : "transparent",
-                        border: item.completed ? "none" : "1.5px solid var(--admin-border-default)",
+                        background: item.isCompleted ? "var(--admin-accent-green)" : "transparent",
+                        border: item.isCompleted ? "none" : "1.5px solid var(--admin-border-default)",
                       }}
                     >
                       {savingItem === item.id ? (
                         <Loader2 className="h-2.5 w-2.5 animate-spin text-white" />
-                      ) : item.completed ? (
+                      ) : item.isCompleted ? (
                         <Check className="h-2.5 w-2.5 text-white" />
                       ) : null}
                     </button>
                     <div className="flex-1 min-w-0">
                       <span
-                        className={cn("text-sm", item.completed && "line-through")}
+                        className={cn("text-sm", item.isCompleted && "line-through")}
                         style={{ color: "var(--admin-font-primary)" }}
                       >
-                        {item.name}
+                        {item.itemName}
                       </span>
                       <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                         {item.dueDate && (
