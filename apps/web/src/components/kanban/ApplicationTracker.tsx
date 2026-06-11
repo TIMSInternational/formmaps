@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Plus,
@@ -42,11 +43,13 @@ const COLUMNS: Column[] = [
 ];
 
 export function ApplicationTracker() {
+  const router = useRouter();
   const [applications, setApplications] = useState<TrackedApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [addingTo, setAddingTo] = useState<ColumnId | null>(null);
   const [newName, setNewName] = useState("");
   const [newLocation, setNewLocation] = useState("");
+  const [newDeadline, setNewDeadline] = useState("");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
 
   useEffect(() => {
@@ -72,16 +75,18 @@ export function ApplicationTracker() {
         name: newName.trim(),
         type: "university",
         location: newLocation.trim() || undefined,
+        deadline: newDeadline || undefined,
         column,
       });
       setApplications((prev) => [app, ...prev]);
       setNewName("");
       setNewLocation("");
+      setNewDeadline("");
       setAddingTo(null);
     } catch {
       toast.error("Failed to add application");
     }
-  }, [newName, newLocation]);
+  }, [newName, newLocation, newDeadline]);
 
   const moveApplication = useCallback(async (id: string, direction: "left" | "right") => {
     const colIds = COLUMNS.map((c) => c.id);
@@ -190,11 +195,12 @@ export function ApplicationTracker() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      className="relative rounded-lg p-3 cursor-default group"
+                      className="relative rounded-lg p-3 cursor-pointer group"
                       style={{
                         background: "var(--admin-bg-hover)",
                         border: "1px solid var(--admin-border-light)",
                       }}
+                      onClick={() => router.push(`/dashboard/applications/${app.id}`)}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-start gap-2 min-w-0">
@@ -232,7 +238,7 @@ export function ApplicationTracker() {
                         {/* Menu */}
                         <div className="relative">
                           <button
-                            onClick={() => setMenuOpen(menuOpen === app.id ? null : app.id)}
+                            onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === app.id ? null : app.id); }}
                             className="p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                             style={{ color: "var(--admin-font-tertiary)" }}
                           >
@@ -249,7 +255,7 @@ export function ApplicationTracker() {
                             >
                               {col.id !== "researching" && (
                                 <button
-                                  onClick={() => moveApplication(app.id, "left")}
+                                  onClick={(e) => { e.stopPropagation(); moveApplication(app.id, "left"); }}
                                   className="flex items-center gap-2 w-full px-3 py-2 text-[11px] transition-colors"
                                   style={{ color: "var(--admin-font-secondary)" }}
                                 >
@@ -258,7 +264,7 @@ export function ApplicationTracker() {
                               )}
                               {col.id !== "accepted" && (
                                 <button
-                                  onClick={() => moveApplication(app.id, "right")}
+                                  onClick={(e) => { e.stopPropagation(); moveApplication(app.id, "right"); }}
                                   className="flex items-center gap-2 w-full px-3 py-2 text-[11px] transition-colors"
                                   style={{ color: "var(--admin-font-secondary)" }}
                                 >
@@ -266,7 +272,7 @@ export function ApplicationTracker() {
                                 </button>
                               )}
                               <button
-                                onClick={() => removeApplication(app.id)}
+                                onClick={(e) => { e.stopPropagation(); removeApplication(app.id); }}
                                 className="flex items-center gap-2 w-full px-3 py-2 text-[11px] transition-colors"
                                 style={{ color: "var(--admin-accent-red)" }}
                               >
@@ -330,6 +336,18 @@ export function ApplicationTracker() {
                         color: "var(--admin-font-primary)",
                       }}
                     />
+                    <input
+                      type="date"
+                      aria-label="Application deadline"
+                      value={newDeadline}
+                      onChange={(e) => setNewDeadline(e.target.value)}
+                      className="w-full px-2 py-1.5 rounded text-xs outline-none"
+                      style={{
+                        background: "var(--admin-bg-input)",
+                        border: "1px solid var(--admin-border-default)",
+                        color: newDeadline ? "var(--admin-font-primary)" : "var(--admin-font-tertiary)",
+                      }}
+                    />
                     <div className="flex gap-1.5">
                       <button
                         onClick={() => addApplicationHandler(col.id)}
@@ -340,7 +358,7 @@ export function ApplicationTracker() {
                         Add
                       </button>
                       <button
-                        onClick={() => { setAddingTo(null); setNewName(""); setNewLocation(""); }}
+                        onClick={() => { setAddingTo(null); setNewName(""); setNewLocation(""); setNewDeadline(""); }}
                         className="px-2 py-1.5 rounded text-[11px]"
                         style={{ color: "var(--admin-font-tertiary)", border: "1px solid var(--admin-border-default)" }}
                       >

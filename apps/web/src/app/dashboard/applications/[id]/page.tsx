@@ -220,13 +220,13 @@ export default function ApplicationDetailPage() {
   }, [id]);
 
   const toggleChecklistItem = useCallback(async (item: ChecklistItem) => {
-    const updated = { ...item, completed: !item.completed };
+    const updated = { ...item, isCompleted: !item.isCompleted };
     setChecklist((prev) => prev.map((c) => (c.id === item.id ? updated : c)));
     try {
       setSavingItem(item.id);
       await apiRequest(`/api/v1/student/applications/${id}/checklist/${item.id}`, {
         method: "PUT",
-        data: { completed: updated.completed },
+        data: { isCompleted: updated.isCompleted },
         showErrorToast: true,
       });
     } catch {
@@ -243,7 +243,7 @@ export default function ApplicationDetailPage() {
       const res = await apiRequest<{ data: ChecklistItem }>(`/api/v1/student/applications/${id}/checklist`, {
         method: "POST",
         data: {
-          name: newItem.name.trim(),
+          itemName: newItem.name.trim(),
           category: newItem.category,
           dueDate: newItem.dueDate || undefined,
           notes: newItem.notes.trim() || undefined,
