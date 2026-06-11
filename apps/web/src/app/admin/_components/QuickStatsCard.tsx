@@ -36,7 +36,9 @@ export function QuickStatsCard() {
     },
     {
       label: "Total Students",
-      value: (s?.totalUsers ?? s?.TotalUsers)?.toLocaleString() || "—",
+      // totalStudents, not totalUsers — the card used to overcount by every
+      // staff/coach/parent account on the platform.
+      value: (s?.totalStudents ?? s?.TotalStudents)?.toLocaleString() || "—",
       icon: Users,
       color: "#10b981",
     },

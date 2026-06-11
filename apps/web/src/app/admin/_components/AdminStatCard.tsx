@@ -10,6 +10,9 @@ interface AdminStatCardProps {
   value: string | number;
   icon: LucideIcon;
   trend?: number;
+  // Override for the trend badge text — without it the badge renders
+  // `trend` as a percentage, which is wrong for count/dollar trends.
+  trendLabel?: string;
   sub?: string;
 }
 
@@ -81,7 +84,7 @@ function MiniBar({ trend }: { trend: number }) {
   );
 }
 
-export function AdminStatCard({ label, value, icon: Icon, trend, sub }: AdminStatCardProps) {
+export function AdminStatCard({ label, value, icon: Icon, trend, trendLabel, sub }: AdminStatCardProps) {
   const isPositive = trend !== undefined && trend >= 0;
   const trendColor = trend !== undefined
     ? isPositive ? "var(--admin-accent-green, #10b981)" : "var(--admin-accent-red, #ef4444)"
@@ -144,7 +147,7 @@ export function AdminStatCard({ label, value, icon: Icon, trend, sub }: AdminSta
             marginLeft: "auto",
           }}>
             <TrendIcon style={{ width: 11, height: 11 }} />
-            {isPositive ? "+" : ""}{Math.abs(trend).toFixed(1)}%
+            {trendLabel ?? `${isPositive ? "+" : "-"}${Math.abs(trend).toFixed(1)}%`}
           </div>
         )}
       </div>

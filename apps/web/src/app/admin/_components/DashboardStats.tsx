@@ -15,15 +15,19 @@ export function DashboardStats() {
       label: "Total Users",
       value: stats ? stats.totalUsers.toLocaleString() : "—",
       icon: Users,
+      // monthlyGrowth.users is a COUNT of new users this month, not a percent
       trend: stats?.monthlyGrowth?.users ?? 0,
-      sub: "vs last month",
+      trendLabel: `+${(stats?.monthlyGrowth?.users ?? 0).toLocaleString()}`,
+      sub: "new this month",
     },
     {
       label: "Total Revenue",
       value: stats ? `$${stats.totalRevenue.toLocaleString()}` : "—",
       icon: DollarSign,
+      // monthlyGrowth.revenue is DOLLARS collected this month, not a percent
       trend: stats?.monthlyGrowth?.revenue ?? 0,
-      sub: "vs last month",
+      trendLabel: `+$${(stats?.monthlyGrowth?.revenue ?? 0).toLocaleString()}`,
+      sub: "collected this month",
     },
     {
       label: "Growth",
