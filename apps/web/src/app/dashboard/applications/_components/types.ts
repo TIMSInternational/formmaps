@@ -10,13 +10,15 @@ export interface Essay {
   draft?: string;
 }
 
+// Field names match the API rows (itemName/isCompleted) — the old name/completed
+// shape made every item render blank and toggles never persist.
 export interface ChecklistItem {
   id: string;
-  name: string;
+  itemName: string;
   category: "test_scores" | "transcripts" | "recommendations" | "financial_aid" | "other";
   dueDate?: string;
   notes?: string;
-  completed: boolean;
+  isCompleted: boolean;
 }
 
 export const CATEGORY_LABELS: Record<ChecklistItem["category"], string> = {
