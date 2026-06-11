@@ -22,8 +22,8 @@ import { Card } from "@/components/ui/card";
 import Link from "next/link";
 
 interface DashboardData {
-  activeCourse?: Record<string, unknown>;
-  ActiveCourse?: Record<string, unknown>;
+  activeCourses?: number;
+  portfolioItems?: number;
   pcaResults?: unknown;
   aiSummary?: string;
   AiSummary?: string;
@@ -53,6 +53,14 @@ export default function DashboardPage() {
     fetchDashboard();
   }, [user?.id]);
 
+  // Hooks must run unconditionally — this used to sit below the coach
+  // early-return (rules-of-hooks violation).
+  const { data: assessmentProgress } = useAssessmentProgress(
+    userRole !== Roles.COACH ? user?.id || "" : ""
+  );
+  const allAssessmentsComplete =
+    assessmentProgress?.overallCompletion?.completedAssessments === 3;
+
   if (userRole === Roles.COACH) {
     const CoachDashboard = dynamic(
       () => import("@/components/dashboard/CoachDashboard"),
@@ -63,10 +71,6 @@ export default function DashboardPage() {
 
   const firstName =
     user.name?.split(" ")[0] || t("dashboard.defaultUserName", "there");
-
-  const { data: assessmentProgress } = useAssessmentProgress(user?.id || "");
-  const allAssessmentsComplete =
-    assessmentProgress?.overallCompletion?.completedAssessments === 3;
 
   if (loading) {
     return (
@@ -109,11 +113,7 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.05 }}
         >
-          <StatCards
-            courseData={
-              dashboardData?.activeCourse || dashboardData?.ActiveCourse || null
-            }
-          />
+          <StatCards activeCourses={dashboardData?.activeCourses ?? 0} />
         </motion.div>
 
         {/* ROW 2: Career Matches (8 cols) + Sidebar (4 cols) */}
@@ -169,7 +169,7 @@ export default function DashboardPage() {
                 id: "1",
                 title: "Complete Assessments",
                 description: "Take PCA and MIL evaluations to discover your strengths",
-                status: dashboardData?.pcaResults ? "completed" : "active",
+                status: allAssessmentsComplete ? "completed" : "active",
                 icon: <FileText style={{ width: 12, height: 12 }} />,
               },
               {
@@ -183,14 +183,14 @@ export default function DashboardPage() {
                 id: "3",
                 title: "Start Learning",
                 description: "Enroll in courses to build skills for your target career",
-                status: "pending",
+                status: (dashboardData?.activeCourses ?? 0) > 0 ? "completed" : "pending",
                 icon: <BookOpen style={{ width: 12, height: 12 }} />,
               },
               {
                 id: "4",
                 title: "Build Your Portfolio",
                 description: "Create your resume and showcase your achievements",
-                status: "pending",
+                status: (dashboardData?.portfolioItems ?? 0) > 0 ? "completed" : "pending",
                 icon: <GraduationCap style={{ width: 12, height: 12 }} />,
               },
             ]}

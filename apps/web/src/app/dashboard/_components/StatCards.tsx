@@ -87,10 +87,12 @@ function StatCard({
 }
 
 interface StatCardsProps {
-  courseData?: { title?: string; progress?: number } | null;
+  // Count of active course enrollments — the API's real field. (The card used
+  // to read a nonexistent activeCourse object, so it always showed 0.)
+  activeCourses?: number;
 }
 
-export function StatCards({ courseData }: StatCardsProps) {
+export function StatCards({ activeCourses = 0 }: StatCardsProps) {
   const { t } = useTranslation();
   const { user } = useGlobalStore();
 
@@ -151,13 +153,10 @@ export function StatCards({ courseData }: StatCardsProps) {
       <StatCard
         icon={<BookOpen className="w-4 h-4" />}
         label={t("dashboard.courses", "Courses")}
-        value={courseData?.title ? "1 active" : "0"}
-        progress={courseData?.progress ?? undefined}
-        sub={
-          courseData?.progress != null ? `${courseData.progress}% done` : undefined
-        }
+        value={String(activeCourses)}
+        sub={activeCourses > 0 ? "enrolled" : undefined}
         cta={
-          courseData
+          activeCourses > 0
             ? t("dashboard.resume", "Resume")
             : t("dashboard.browseCourses", "Browse")
         }
