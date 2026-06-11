@@ -49,6 +49,24 @@ export interface StudentCoursePlanResponse {
   recommendations: RecommendedCourse[];
 }
 
+// GET /student/course-plan/recommendations actually returns scored GLOBAL
+// courses (Course model) and, until assessments are done, a locked envelope.
+export interface GlobalCourseRecommendation {
+  id: string;
+  title: string;
+  shortDescription?: string | null;
+  category?: string | null;
+  provider?: string | null;
+  rating?: number | string | null;
+  matchScore: number;
+}
+
+export interface MyCourseRecommendationsResponse {
+  data: GlobalCourseRecommendation[];
+  locked: boolean;
+  completion?: import("./graduationPlan").AssessmentCompletion;
+}
+
 // ============================================
 // Course Change Requests (student → counselor approval)
 // ============================================
