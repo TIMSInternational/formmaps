@@ -22,13 +22,14 @@ export interface StudentCoursePlan {
   studentId: string;
   gradeLevel: number;
   enrollments: StudentCourseEnrollment[];
-  graduationProgress: {
+  // Optional: the student-facing endpoint returns bare rows without these
+  graduationProgress?: {
     totalCreditsEarned: number;
     totalCreditsRequired: number;
     percentage: number;
     isOnTrack: boolean;
   };
-  byGrade: Record<number, StudentCourseEnrollment[]>;
+  byGrade?: Record<number, StudentCourseEnrollment[]>;
 }
 
 export interface RecommendedCourse {
