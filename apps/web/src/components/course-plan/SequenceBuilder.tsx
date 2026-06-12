@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { useAvailableCourses } from "@/hooks/useCurriculumQueries";
+import { useSchoolCourses } from "@/hooks/useCurriculumQueries";
 import type {
   StudentCoursePlanResponse,
   StudentCourseEnrollment,
@@ -270,8 +270,9 @@ export function SequenceBuilder({
     note: string;
   }>({ open: false, course: null, note: "" });
 
-  // Fetch available courses from the school catalog
-  const { data: catalogData } = useAvailableCourses({ limit: 200, search: courseSearch || undefined });
+  // Fetch the SCHOOL catalog — never the global course list: adding a global
+  // course id into StudentCoursePlan renders as "Unknown course" everywhere.
+  const { data: catalogData } = useSchoolCourses({ limit: 200, search: courseSearch || undefined });
   const availableCourses = catalogData?.data ?? [];
 
   const plan = planData?.plan;

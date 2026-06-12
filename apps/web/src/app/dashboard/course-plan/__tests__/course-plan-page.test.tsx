@@ -14,6 +14,7 @@ import {
   getSupplementalCourses,
   submitGraduationPlan,
 } from "@/services/graduationPlanService";
+import { getMyCourseEligibility } from "@/services/curriculumService";
 import { apiRequest } from "@/lib/api/apiClient";
 
 jest.mock("@/services/coursePlanService", () => ({
@@ -35,7 +36,12 @@ jest.mock("@/services/graduationPlanService", () => ({
 }));
 jest.mock("@/lib/api/apiClient", () => ({ apiRequest: jest.fn() }));
 jest.mock("@/hooks/useCurriculumQueries", () => ({
-  useAvailableCourses: jest.fn(() => ({ data: undefined })),
+  ...jest.requireActual("@/hooks/useCurriculumQueries"),
+  useSchoolCourses: jest.fn(() => ({ data: undefined })),
+}));
+jest.mock("@/services/curriculumService", () => ({
+  ...jest.requireActual("@/services/curriculumService"),
+  getMyCourseEligibility: jest.fn(),
 }));
 
 const mockPlan = getMyCoursePlan as jest.Mock;
@@ -48,6 +54,7 @@ const mockGradPlan = getMyGraduationPlan as jest.Mock;
 const mockSupplemental = getSupplementalCourses as jest.Mock;
 const mockSubmit = submitGraduationPlan as jest.Mock;
 const mockApi = apiRequest as jest.Mock;
+const mockEligibility = getMyCourseEligibility as jest.Mock;
 
 const catalog = [
   { id: "c-alg", code: "MATH101", name: "Algebra I", department: "Math", credits: "1", gradeLevels: [9, 10], isHonors: false },
@@ -102,6 +109,7 @@ describe("Student course plan page", () => {
     mockAdd.mockResolvedValue(undefined);
     mockRemove.mockResolvedValue(undefined);
     mockSubmit.mockResolvedValue(draftPlan);
+    mockEligibility.mockResolvedValue([]);
   });
 
   it("renders the plan with course names resolved from the school catalog", async () => {
@@ -208,5 +216,14 @@ describe("Student course plan page", () => {
     renderPage();
     expect(await screen.findByText("Spanish for Beginners")).toBeInTheDocument();
     expect(screen.getByText(/fills: world language gap/i)).toBeInTheDocument();
+  });
+
+  it("shows a Needs-prereq badge on ineligible catalog rows", async () => {
+    mockEligibility.mockResolvedValue([
+      { courseId: "c-alg", courseCode: "MATH101", eligible: true, missing: [] },
+      { courseId: "c-art", courseCode: "ART101", eligible: false, missing: ["ART100"] },
+    ]);
+    renderPage();
+    expect(await screen.findByText(/needs ART100/i)).toBeInTheDocument();
   });
 });
