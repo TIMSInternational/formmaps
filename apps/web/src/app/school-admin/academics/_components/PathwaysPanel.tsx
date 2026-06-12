@@ -24,7 +24,9 @@ function CourseNode({ course, onClick }: { course: PathwayCourse; onClick: () =>
   return (
     <button onClick={onClick} title={`${course.name} — click to edit prerequisites`} style={NODE_BTN}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}>
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}
+      onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+      onBlur={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}>
       <span style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{course.code}</span>
       <span className="hidden md:inline" style={{ fontSize: 11, color: "var(--admin-font-tertiary)", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course.name}</span>
       {course.isHonors && <Badge style={{ fontSize: 9, background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "none" }}>Honors</Badge>}
@@ -110,7 +112,9 @@ export function PathwaysPanel() {
         </section>
       ))}
 
-      <EditPrerequisitesDialog course={editCourse} onClose={() => setEditCourse(null)} />
+      {editCourse && (
+        <EditPrerequisitesDialog key={editCourse.courseId} course={editCourse} onClose={() => setEditCourse(null)} />
+      )}
     </div>
   );
 }

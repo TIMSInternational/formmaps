@@ -48,7 +48,8 @@ const CATALOG = {
   data: [
     { id: "c1", code: "ALG1", name: "Algebra I", department: "Math", credits: 1, gradeLevels: [9], prerequisites: [], enrollmentCount: 0, status: "active" },
     { id: "c2", code: "ALG2", name: "Algebra II", department: "Math", credits: 1, gradeLevels: [10], prerequisites: ["ALG1"], enrollmentCount: 0, status: "active" },
-    { id: "c3", code: "CALC", name: "Calculus", department: "Math", credits: 1, gradeLevels: [11], prerequisites: ["ALG2"], enrollmentCount: 0, status: "active" },
+    // CALC carries corequisites — the PUT payload must echo them back (backend replaces wholesale)
+    { id: "c3", code: "CALC", name: "Calculus", department: "Math", credits: 1, gradeLevels: [11], prerequisites: ["ALG2"], corequisites: ["CALC-LAB"], enrollmentCount: 0, status: "active" },
     { id: "c6", code: "GEO", name: "Geometry", department: "Math", credits: 1, gradeLevels: [10], prerequisites: [], enrollmentCount: 0, status: "active" },
   ],
   total: 4, page: 1, limit: 500, totalPages: 1,
@@ -138,11 +139,11 @@ describe("PathwaysPanel", () => {
 
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith("c3", {
       prerequisiteRules: [{ type: "AND", courseIds: ["c2", "c6"] }],
-      corequisites: [],
+      corequisites: ["CALC-LAB"],
     }));
   });
 
-  it("removing a prerequisite chip excludes it from the saved payload", async () => {
+  it("removing a prerequisite chip excludes it from the saved payload (coreqs preserved)", async () => {
     mockPathways.mockResolvedValue(PATHWAYS);
     renderPanel();
 
@@ -152,7 +153,50 @@ describe("PathwaysPanel", () => {
 
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith("c3", {
       prerequisiteRules: [{ type: "AND", courseIds: [] }],
-      corequisites: [],
+      corequisites: ["CALC-LAB"],
     }));
+  });
+
+  it("surfaces prereq codes that are not in the catalog and drops them from the payload", async () => {
+    mockPathways.mockResolvedValue(PATHWAYS);
+    mockCatalog.mockResolvedValue({
+      ...CATALOG,
+      data: CATALOG.data.map((c) =>
+        c.id === "c3" ? { ...c, prerequisites: ["ALG2", "GHOST1"] } : c),
+    });
+    renderPanel();
+
+    fireEvent.click(await screen.findByText("CALC"));
+
+    expect(await screen.findByText(/not in catalog.*GHOST1/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
+    await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith("c3", {
+      prerequisiteRules: [{ type: "AND", courseIds: ["c2"] }],
+      corequisites: ["CALC-LAB"],
+    }));
+  });
+
+  it("blocks saving when the catalog did not load completely", async () => {
+    mockPathways.mockResolvedValue(PATHWAYS);
+    mockCatalog.mockResolvedValue({ ...CATALOG, total: 600 }); // more courses exist than were loaded
+    renderPanel();
+
+    fireEvent.click(await screen.findByText("CALC"));
+
+    expect(await screen.findByText(/saving is disabled/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Save$/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("blocks saving when the clicked course is missing from the loaded catalog", async () => {
+    mockPathways.mockResolvedValue(PATHWAYS);
+    mockCatalog.mockResolvedValue({ ...CATALOG, data: CATALOG.data.filter((c) => c.id !== "c3") , total: 3 });
+    renderPanel();
+
+    fireEvent.click(await screen.findByText("CALC"));
+
+    expect(await screen.findByText(/not found in the loaded catalog/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Save$/ })).toBeDisabled();
   });
 });

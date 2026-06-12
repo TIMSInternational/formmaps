@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -46,10 +46,18 @@ export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDi
     () => catalog.find((c) => c.id === course?.courseId),
     [catalog, course?.courseId],
   );
+  // The backend REPLACES prerequisites+corequisites wholesale on save, so a partial
+  // catalog (or missing target row) would silently wipe data — block saving instead.
+  const catalogIncomplete = !!catalogData && catalogData.total > catalog.length;
+  const saveBlocked = catalogLoading || !target || catalogIncomplete;
 
-  // Seed selection from the target course's current prerequisites once the catalog loads
+  // Seed selection from the target's current prerequisites ONCE per opened course —
+  // a background catalog refetch must not clobber in-progress edits.
+  const seededFor = useRef<string | null>(null);
   useEffect(() => {
-    if (!course || !target) { setSelectedIds([]); setUnresolvedCodes([]); setSearch(""); return; }
+    if (!course) { seededFor.current = null; setSelectedIds([]); setUnresolvedCodes([]); setSearch(""); return; }
+    if (!target || seededFor.current === course.courseId) return;
+    seededFor.current = course.courseId;
     const byCode = new Map(catalog.map((c) => [norm(c.code), c]));
     const ids: string[] = [];
     const unresolved: string[] = [];
@@ -76,7 +84,7 @@ export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDi
   }, [catalog, course?.courseId, selectedIds, search]);
 
   function handleSave() {
-    if (!course) return;
+    if (!course || saveBlocked) return;
     update.mutate(
       {
         courseId: course.courseId,
@@ -136,9 +144,17 @@ export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDi
               )}
             </div>
 
+            {!catalogLoading && (!target || catalogIncomplete) && (
+              <p style={{ fontSize: 12, color: "#dc2626" }}>
+                {!target
+                  ? "This course was not found in the loaded catalog — saving is disabled to avoid wiping its prerequisites."
+                  : "Your catalog is too large to load fully — saving is disabled to avoid wiping prerequisites."}
+              </p>
+            )}
+
             {/* School-catalog picker */}
             <div>
-              <Input placeholder="Search your school catalog..." value={search} onChange={(e) => setSearch(e.target.value)}
+              <Input aria-label="Search your school catalog" placeholder="Search your school catalog..." value={search} onChange={(e) => setSearch(e.target.value)}
                 style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", borderRadius: 6, color: "var(--admin-font-primary)", height: 36, fontSize: 13 }} />
               <div className="mt-2 overflow-y-auto" style={{ maxHeight: 220, borderRadius: 6, border: "1px solid var(--admin-border-default)" }}>
                 {candidates.map((c) => (
@@ -161,8 +177,8 @@ export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDi
 
         <DialogFooter className="gap-2">
           <button onClick={onClose} style={BTN_GHOST}>Cancel</button>
-          <button onClick={handleSave} disabled={update.isPending || catalogLoading}
-            style={{ ...BTN_PRIMARY, opacity: update.isPending || catalogLoading ? 0.7 : 1, cursor: update.isPending ? "wait" : "pointer" }}>
+          <button onClick={handleSave} disabled={update.isPending || saveBlocked}
+            style={{ ...BTN_PRIMARY, opacity: update.isPending || saveBlocked ? 0.7 : 1, cursor: update.isPending ? "wait" : saveBlocked ? "not-allowed" : "pointer" }}>
             {update.isPending && <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />}
             Save
           </button>
