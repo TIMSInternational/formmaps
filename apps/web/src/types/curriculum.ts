@@ -141,62 +141,24 @@ export interface PrerequisiteChain {
 }
 
 // ============================================
-// Course Sequence Types (SCRUM-138)
+// Course Pathway Types (derived from prereq graph)
 // ============================================
 
-export interface CourseSequenceNode {
-  id: string;
-  type: string;
-  data: {
-    courseId: string;
-    courseCode: string;
-    courseName: string;
-    credits: number;
-    gradeLevel: number;
-    semester: string;
-    status: "required" | "elective" | "recommended";
-  };
-  position: { x: number; y: number };
-}
-
-export interface CourseSequenceEdge {
-  id: string;
-  source: string;
-  target: string;
-  type: string;
-  animated?: boolean;
-}
-
-export interface CourseSequence {
-  id: string;
+export interface PathwayCourse {
+  courseId: string;
+  code: string;
   name: string;
-  description?: string;
-  createdBy: string;
-  createdByName: string;
-  studentCount: number;
-  lastModified: string;
+  isHonors: boolean;
 }
 
-export interface CourseSequenceDetail extends CourseSequence {
-  nodes: CourseSequenceNode[];
-  edges: CourseSequenceEdge[];
-  columns: { gradeLevel: number; label: string }[];
+export interface PathwayGroup {
+  department: string;
+  chains: PathwayCourse[][];
 }
 
-export interface CourseSequencePayload {
-  name: string;
-  description?: string;
-  nodes: CourseSequenceNode[];
-  edges: CourseSequenceEdge[];
-  columns: { gradeLevel: number; label: string }[];
-}
-
-export interface CourseSequencesResponse {
-  data: CourseSequence[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+export interface CoursePathwaysResponse {
+  truncated: boolean;
+  groups: PathwayGroup[];
 }
 
 // ============================================
