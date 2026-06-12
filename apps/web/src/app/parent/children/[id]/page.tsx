@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useChildProgress } from "@/hooks/useParentPortalQueries";
+import { ChildPlanTab } from "./_components/ChildPlanTab";
 
 export default function ChildProgressPage() {
   const { t } = useTranslation();
@@ -186,6 +187,9 @@ export default function ChildProgressPage() {
           <TabsTrigger value="actions">
             {t("parent.pendingActions", "Pending Actions")}
           </TabsTrigger>
+          <TabsTrigger value="course-plan">
+            {t("parent.coursePlan", "Course Plan")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="activity" className="mt-4">
@@ -274,6 +278,8 @@ export default function ChildProgressPage() {
             )}
           </div>
         </TabsContent>
+
+        <ChildPlanTab studentId={studentId} />
       </Tabs>
     </div>
   );

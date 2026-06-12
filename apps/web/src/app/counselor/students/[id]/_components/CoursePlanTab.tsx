@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TabsContent } from "@/components/ui/tabs";
 import { SequenceBuilder } from "@/components/course-plan/SequenceBuilder";
+import { ProposedPlanReviewCard } from "./ProposedPlanReviewCard";
 
 interface ChangeRequest {
   id: string;
@@ -57,6 +58,9 @@ export function CoursePlanTab({
 }: CoursePlanTabProps) {
   return (
     <TabsContent value="course-plan" className="mt-6 space-y-6">
+      {/* Proposed graduation plan awaiting review (renders only when one exists) */}
+      <ProposedPlanReviewCard studentId={studentId} coursePlan={coursePlan} />
+
       {/* Pending change requests from student */}
       {pendingRequests.length > 0 && (
         <Card className="border-amber-200 bg-amber-50/40">
