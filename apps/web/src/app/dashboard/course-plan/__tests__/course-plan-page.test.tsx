@@ -37,7 +37,7 @@ jest.mock("@/services/graduationPlanService", () => ({
 jest.mock("@/lib/api/apiClient", () => ({ apiRequest: jest.fn() }));
 jest.mock("@/hooks/useCurriculumQueries", () => ({
   ...jest.requireActual("@/hooks/useCurriculumQueries"),
-  useAvailableCourses: jest.fn(() => ({ data: undefined })),
+  useSchoolCourses: jest.fn(() => ({ data: undefined })),
 }));
 jest.mock("@/services/curriculumService", () => ({
   ...jest.requireActual("@/services/curriculumService"),

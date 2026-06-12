@@ -11,7 +11,7 @@ jest.mock("@/services/graduationPlanService", () => ({
   reviewGraduationPlan: jest.fn(),
 }));
 jest.mock("@/hooks/useCurriculumQueries", () => ({
-  useAvailableCourses: jest.fn(() => ({ data: undefined })),
+  useSchoolCourses: jest.fn(() => ({ data: undefined })),
 }));
 
 const mockGet = getStudentGraduationPlan as jest.Mock;

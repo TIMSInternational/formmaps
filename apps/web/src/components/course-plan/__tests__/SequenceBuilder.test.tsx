@@ -3,7 +3,7 @@ import { SequenceBuilder } from "../SequenceBuilder";
 import type { StudentCoursePlanResponse, StudentCourseEnrollment } from "@/types/coursePlan";
 
 jest.mock("@/hooks/useCurriculumQueries", () => ({
-  useAvailableCourses: jest.fn(() => ({ data: undefined })),
+  useSchoolCourses: jest.fn(() => ({ data: undefined })),
 }));
 
 const baseEnrollment: StudentCourseEnrollment = {
