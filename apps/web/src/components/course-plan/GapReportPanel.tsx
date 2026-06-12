@@ -39,8 +39,9 @@ export function GapReportPanel({ gaps, warnings = [], linkToSupplemental }: GapR
       )}
       {warnings.length > 0 && (
         <ul className="mt-2 space-y-1">
-          {warnings.map((w) => (
-            <li key={w} className="text-[11px] text-gray-600">
+          {/* engine warnings can repeat verbatim — index keeps keys unique */}
+          {warnings.map((w, i) => (
+            <li key={`${i}-${w.slice(0, 40)}`} className="text-[11px] text-gray-600">
               · {w}
             </li>
           ))}

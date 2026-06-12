@@ -34,20 +34,18 @@ const proposedPlan = {
   ],
 };
 
+// The counselor course-sequence endpoint returns bare rows — NO plan.gradeLevel.
+// The card must take the grade from the studentGradeLevel prop instead.
 const coursePlan = {
-  plan: {
-    studentId: "stu-1",
-    gradeLevel: 11,
-    enrollments: [],
-  },
+  plan: undefined,
   recommendations: [],
-};
+} as never;
 
 function renderCard() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <ProposedPlanReviewCard studentId="stu-1" coursePlan={coursePlan} />
+      <ProposedPlanReviewCard studentId="stu-1" coursePlan={coursePlan} studentGradeLevel={11} />
     </QueryClientProvider>,
   );
 }

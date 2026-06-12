@@ -26,9 +26,11 @@ interface ProposedPlanReviewCardProps {
   studentId: string;
   /** the student's official plan — existing rows render unchanged in the diff view */
   coursePlan: StudentCoursePlanResponse | undefined;
+  /** the student's current grade — the counselor course-sequence response has no plan.gradeLevel */
+  studentGradeLevel?: number;
 }
 
-export function ProposedPlanReviewCard({ studentId, coursePlan }: ProposedPlanReviewCardProps) {
+export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLevel }: ProposedPlanReviewCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [approveOpen, setApproveOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -51,7 +53,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan }: ProposedPlanRe
 
   if (!plan || plan.status !== "proposed") return null;
 
-  const currentGrade = coursePlan?.plan?.gradeLevel;
+  const currentGrade = studentGradeLevel ?? coursePlan?.plan?.gradeLevel;
   const currentGradeCount = plan.items.filter((i) => i.gradeLevel === currentGrade).length;
 
   const handleApprove = () => {

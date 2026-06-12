@@ -150,6 +150,7 @@ export default function CounselorStudentDetailPage() {
 
         <CoursePlanTab
           studentId={studentId}
+          studentGradeLevel={student.gradeLevel}
           coursePlan={coursePlan}
           planLoading={planLoading}
           pendingRequests={pendingRequests}

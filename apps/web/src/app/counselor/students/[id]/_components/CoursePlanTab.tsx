@@ -21,6 +21,7 @@ interface ChangeRequest {
 
 interface CoursePlanTabProps {
   studentId: string;
+  studentGradeLevel?: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   coursePlan: any;
   planLoading: boolean;
@@ -47,6 +48,7 @@ interface CoursePlanTabProps {
 
 export function CoursePlanTab({
   studentId,
+  studentGradeLevel,
   coursePlan,
   planLoading,
   pendingRequests,
@@ -59,7 +61,11 @@ export function CoursePlanTab({
   return (
     <TabsContent value="course-plan" className="mt-6 space-y-6">
       {/* Proposed graduation plan awaiting review (renders only when one exists) */}
-      <ProposedPlanReviewCard studentId={studentId} coursePlan={coursePlan} />
+      <ProposedPlanReviewCard
+        studentId={studentId}
+        coursePlan={coursePlan}
+        studentGradeLevel={studentGradeLevel}
+      />
 
       {/* Pending change requests from student */}
       {pendingRequests.length > 0 && (
