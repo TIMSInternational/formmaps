@@ -100,6 +100,11 @@ interface SequenceBuilderProps {
   academicGaps?: {
     creditGaps?: { category: string; creditsRequired: number; creditsEarned: number; deficit: number; severity: string; recommendation: string }[];
   } | null;
+  // Read-only rendering (no add/remove/request affordances)
+  readOnly?: boolean;
+  // Extra pseudo-enrollments injected into the grid (e.g. graduation-plan
+  // draft items, status "draft_proposed") — additive, never replaces rows.
+  extraEnrollments?: StudentCourseEnrollment[];
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -120,6 +125,7 @@ const STATUS_COLORS: Record<string, string> = {
   dropped: "bg-red-100 text-red-600 border-red-200",
   pending_add: "bg-amber-100 text-amber-700 border-amber-200",
   pending_remove: "bg-orange-100 text-orange-700 border-orange-200",
+  draft_proposed: "bg-yellow-50 text-gray-900 border-[#FFD600]",
 };
 
 const STATUS_ICONS: Record<string, typeof CheckCircle2> = {
@@ -127,6 +133,7 @@ const STATUS_ICONS: Record<string, typeof CheckCircle2> = {
   in_progress: Clock,
   planned: BookOpen,
   dropped: AlertTriangle,
+  draft_proposed: Sparkles,
 };
 
 const REQUEST_STATUS_COLORS: Record<string, string> = {
@@ -144,6 +151,7 @@ interface CourseCellProps {
   mode: Mode;
   onRemove: (course: StudentCourseEnrollment) => void;
   isRemovePending: boolean;
+  readOnly?: boolean;
 }
 
 function CourseCell({
@@ -152,6 +160,7 @@ function CourseCell({
   mode,
   onRemove,
   isRemovePending,
+  readOnly,
 }: CourseCellProps) {
   if (courses.length === 0) {
     return (
@@ -177,7 +186,14 @@ function CourseCell({
             <div className="flex items-start gap-1.5 min-w-0">
               <Icon className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="font-medium truncate leading-tight">{c.courseName}</p>
+                <p className="font-medium truncate leading-tight">
+                  {c.courseName}
+                  {c.status === "draft_proposed" && (
+                    <span className="ml-1.5 inline-block align-middle text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#FFD600] text-[#111111]">
+                      Proposed
+                    </span>
+                  )}
+                </p>
                 <p className="text-[10px] opacity-70 mt-0.5">
                   {c.courseCode} · {c.credits} cr
                   {c.grade ? ` · ${c.grade}` : ""}
@@ -186,7 +202,7 @@ function CourseCell({
               </div>
             </div>
             {/* Remove button — only for planned courses that don't already have pending remove */}
-            {c.status === "planned" && !hasPendingRemove && (
+            {!readOnly && c.status === "planned" && !hasPendingRemove && (
               <button
                 onClick={() => onRemove(c)}
                 disabled={isRemovePending}
@@ -223,6 +239,8 @@ export function SequenceBuilder({
   pendingRequests,
   recommendations,
   academicGaps,
+  readOnly,
+  extraEnrollments,
 }: SequenceBuilderProps) {
   const [expandedGrades, setExpandedGrades] = useState<number[]>([9, 10, 11, 12]);
   const [showRecsPanel, setShowRecsPanel] = useState(false);
@@ -266,19 +284,26 @@ export function SequenceBuilder({
       .map((r) => r.courseId)
   );
 
+  // Official rows + injected extras (graduation-plan draft items etc.) —
+  // extras are additive-only and never replace existing enrollments.
+  const allEnrollments = [
+    ...(plan?.enrollments ?? []),
+    ...(extraEnrollments ?? []),
+  ];
+
   // Group enrollments by gradeLevel+semester AND inject pending adds
   const getBySemester = (
     grade: number,
     semester: string
   ): StudentCourseEnrollment[] => {
     const semPrefix = semester.toLowerCase().substring(0, 3);
-    
-    // 1. Get official enrollments
-    const enrolled = plan?.enrollments?.filter(
+
+    // 1. Get official enrollments (+ injected extras)
+    const enrolled = allEnrollments.filter(
       (e) =>
         e.gradeLevel === grade &&
         e.semester.toLowerCase().startsWith(semPrefix)
-    ) ?? [];
+    );
 
     // 2. Inject pending add requests for student mode
     if (mode === "student" && pendingRequests) {
@@ -557,9 +582,9 @@ export function SequenceBuilder({
 
       {/* ── Grade rows ───────────────────────────────────────────────────── */}
       {[9, 10, 11, 12].map((grade) => {
-        const allCourses = plan?.enrollments?.filter(
+        const allCourses = allEnrollments.filter(
           (e) => e.gradeLevel === grade
-        ) ?? [];
+        );
         const totalCredits = allCourses.reduce((s, c) => s + (c.credits || 0), 0);
         const completedCount = allCourses.filter(
           (c) => c.status === "completed"
@@ -600,18 +625,20 @@ export function SequenceBuilder({
                         <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                           {sem}
                         </h4>
-                        <button
-                          onClick={() => openAddDialog(grade, sem)}
-                          className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 font-medium"
-                          title={
-                            mode === "counselor"
-                              ? "Add course directly"
-                              : "Request to add a course"
-                          }
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                          {mode === "counselor" ? "Add" : "Request"}
-                        </button>
+                        {!readOnly && (
+                          <button
+                            onClick={() => openAddDialog(grade, sem)}
+                            className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 font-medium"
+                            title={
+                              mode === "counselor"
+                                ? "Add course directly"
+                                : "Request to add a course"
+                            }
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            {mode === "counselor" ? "Add" : "Request"}
+                          </button>
+                        )}
                       </div>
                       <CourseCell
                         courses={semCourses}
@@ -619,6 +646,7 @@ export function SequenceBuilder({
                         mode={mode}
                         onRemove={handleRemoveClick}
                         isRemovePending={!!isCounselorRemovePending}
+                        readOnly={readOnly}
                       />
                     </div>
                   );

@@ -4,7 +4,7 @@ import { normalizeRole } from "@/lib/roleUtils";
 import { Roles } from "@/lib/permissions";
 import type {
   StudentCoursePlanResponse,
-  RecommendedCourse,
+  MyCourseRecommendationsResponse,
   CourseChangeRequestPayload,
   CourseChangeRequestsResponse,
   CourseChangeRequest,
@@ -32,10 +32,16 @@ export async function getStudentCoursePlan(
   return json.data ?? json;
 }
 
-// Get course recommendations for student (student-facing)
-export async function getMyCourseRecommendations(): Promise<RecommendedCourse[]> {
+// Get course recommendations for student (student-facing). Keeps the sibling
+// locked/completion flags — they gate the graduation-plan card too.
+export async function getMyCourseRecommendations(): Promise<MyCourseRecommendationsResponse> {
   const json = await apiRequest("/api/v1/student/course-plan/recommendations");
-  return json.data ?? json;
+  const items = json?.data ?? [];
+  return {
+    data: Array.isArray(items) ? items : [],
+    locked: json?.locked === true,
+    completion: json?.completion,
+  };
 }
 
 // Add course to plan

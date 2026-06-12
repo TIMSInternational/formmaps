@@ -2,7 +2,7 @@
 // Student Course Plan Types (Student-facing trajectory)
 // ============================================
 
-export type CourseEnrollmentStatus = "completed" | "in_progress" | "planned" | "dropped" | "pending_add" | "pending_remove";
+export type CourseEnrollmentStatus = "completed" | "in_progress" | "planned" | "dropped" | "pending_add" | "pending_remove" | "draft_proposed";
 
 export interface StudentCourseEnrollment {
   id: string;
@@ -22,13 +22,14 @@ export interface StudentCoursePlan {
   studentId: string;
   gradeLevel: number;
   enrollments: StudentCourseEnrollment[];
-  graduationProgress: {
+  // Optional: the student-facing endpoint returns bare rows without these
+  graduationProgress?: {
     totalCreditsEarned: number;
     totalCreditsRequired: number;
     percentage: number;
     isOnTrack: boolean;
   };
-  byGrade: Record<number, StudentCourseEnrollment[]>;
+  byGrade?: Record<number, StudentCourseEnrollment[]>;
 }
 
 export interface RecommendedCourse {
@@ -47,6 +48,24 @@ export interface RecommendedCourse {
 export interface StudentCoursePlanResponse {
   plan: StudentCoursePlan;
   recommendations: RecommendedCourse[];
+}
+
+// GET /student/course-plan/recommendations actually returns scored GLOBAL
+// courses (Course model) and, until assessments are done, a locked envelope.
+export interface GlobalCourseRecommendation {
+  id: string;
+  title: string;
+  shortDescription?: string | null;
+  category?: string | null;
+  provider?: string | null;
+  rating?: number | string | null;
+  matchScore: number;
+}
+
+export interface MyCourseRecommendationsResponse {
+  data: GlobalCourseRecommendation[];
+  locked: boolean;
+  completion?: import("./graduationPlan").AssessmentCompletion;
 }
 
 // ============================================

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TabsContent } from "@/components/ui/tabs";
 import { SequenceBuilder } from "@/components/course-plan/SequenceBuilder";
+import { ProposedPlanReviewCard } from "./ProposedPlanReviewCard";
 
 interface ChangeRequest {
   id: string;
@@ -20,6 +21,7 @@ interface ChangeRequest {
 
 interface CoursePlanTabProps {
   studentId: string;
+  studentGradeLevel?: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   coursePlan: any;
   planLoading: boolean;
@@ -46,6 +48,7 @@ interface CoursePlanTabProps {
 
 export function CoursePlanTab({
   studentId,
+  studentGradeLevel,
   coursePlan,
   planLoading,
   pendingRequests,
@@ -57,6 +60,13 @@ export function CoursePlanTab({
 }: CoursePlanTabProps) {
   return (
     <TabsContent value="course-plan" className="mt-6 space-y-6">
+      {/* Proposed graduation plan awaiting review (renders only when one exists) */}
+      <ProposedPlanReviewCard
+        studentId={studentId}
+        coursePlan={coursePlan}
+        studentGradeLevel={studentGradeLevel}
+      />
+
       {/* Pending change requests from student */}
       {pendingRequests.length > 0 && (
         <Card className="border-amber-200 bg-amber-50/40">

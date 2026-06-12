@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { UniversityGoalButton } from "./UniversityGoalButton";
 import { formatAcceptanceRate } from "@/components/dashboard/University/universityFormat";
 import type {
   University,
@@ -315,6 +316,13 @@ export function UniversityDetailPanel({
           </div>
         </div>
       )}
+
+      {/* Graduation goal entry point */}
+      <UniversityGoalButton
+        universityId={university.id}
+        universityName={university.name}
+        suggestedMajors={(recommendedPrograms ?? []).map((p) => p.name)}
+      />
 
       {/* Links */}
       <div className="flex gap-2 pt-2">
