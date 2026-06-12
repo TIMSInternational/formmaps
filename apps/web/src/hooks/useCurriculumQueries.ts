@@ -279,7 +279,10 @@ export function useApplyPrereqSuggestions() {
   return useMutation({
     mutationFn: (updates: PrereqApplyUpdate[]) => applyPrereqSuggestions(updates),
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
+      // Prereq edges feed the catalog AND the chain/check/eligibility views —
+      // invalidate the whole curriculum namespace to keep them coherent.
+      queryClient.invalidateQueries({ queryKey: curriculumKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["course-eligibility"] });
       toast.success(`${res.updated} ${res.updated === 1 ? "course" : "courses"} updated`);
     },
     onError: () => toast.error("Failed to apply prerequisites"),

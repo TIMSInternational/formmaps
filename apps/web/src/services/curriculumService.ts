@@ -228,17 +228,17 @@ export async function downloadCourseImportFailures(jobId: string): Promise<Blob>
 
 export async function analyzePrerequisites(): Promise<PrereqSuggestion[]> {
   const json = await apiRequest("/api/v1/school-admin/courses/prereq-analysis", { method: "POST" });
-  const items = json?.data ?? [];
+  const items = unwrap<PrereqSuggestion[] | null>(json);
   return Array.isArray(items) ? items : [];
 }
 
 export async function applyPrereqSuggestions(updates: PrereqApplyUpdate[]): Promise<{ updated: number }> {
   const json = await apiRequest("/api/v1/school-admin/courses/prereq-analysis/apply", { method: "POST", data: { updates } });
-  return json?.data ?? { updated: 0 };
+  return unwrap<{ updated: number } | null>(json) ?? { updated: 0 };
 }
 
 export async function getMyCourseEligibility(): Promise<CourseEligibility[]> {
   const json = await apiRequest("/api/v1/student/course-plan/eligibility");
-  const items = json?.data ?? [];
+  const items = unwrap<CourseEligibility[] | null>(json);
   return Array.isArray(items) ? items : [];
 }
