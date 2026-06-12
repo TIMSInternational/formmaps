@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Search, Loader2, Lightbulb } from "lucide-react";
+import { Plus, Search, Loader2, Lightbulb, Lock } from "lucide-react";
 import type { GlobalCourseRecommendation } from "@/types/coursePlan";
+import type { CourseEligibility } from "@/types/prereq";
 import type { SchoolCourse } from "./types";
 
 const TERMS = ["Fall", "Spring"];
@@ -14,6 +15,8 @@ interface CatalogSectionProps {
   busyId: string | null;
   /** assessment-based suggestions — clicking a chip searches the catalog for it */
   suggestions: GlobalCourseRecommendation[];
+  /** prerequisite eligibility keyed by courseId */
+  eligibility?: Map<string, CourseEligibility>;
 }
 
 export function CatalogSection({
@@ -22,6 +25,7 @@ export function CatalogSection({
   onAdd,
   busyId,
   suggestions,
+  eligibility,
 }: CatalogSectionProps) {
   const [search, setSearch] = useState("");
   const [term, setTerm] = useState("Fall");
@@ -109,6 +113,18 @@ export function CatalogSection({
                       HONORS
                     </span>
                   )}
+                  {(() => {
+                    const entry = eligibility?.get(c.id);
+                    if (entry && !entry.eligible && entry.missing.length > 0) {
+                      return (
+                        <span className="ml-2 inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: "#fff7e6", color: "#d97706", border: "1px solid #d97706" }}>
+                          <Lock className="h-3 w-3" />
+                          Needs {entry.missing.join(", ")}
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
                 </p>
                 <p className="text-xs" style={{ color: "var(--admin-font-tertiary)" }}>
                   {c.code} · {c.department ?? "—"} · {c.credits ?? "—"} credits

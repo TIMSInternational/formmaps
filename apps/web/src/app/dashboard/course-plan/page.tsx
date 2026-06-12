@@ -21,6 +21,7 @@ import {
   useSubmitGraduationPlan,
   useDiscardGraduationDraft,
 } from "@/hooks/useGraduationPlanQueries";
+import { useMyCourseEligibility } from "@/hooks/useCurriculumQueries";
 import type { StudentCoursePlanResponse } from "@/types/coursePlan";
 import type { SetGraduationTargetPayload } from "@/types/graduationPlan";
 import { GraduationTargetCard } from "./_components/GraduationTargetCard";
@@ -46,6 +47,7 @@ export default function CoursePlanPage() {
   const recsQuery = useMyCourseRecommendations();
   const targetQuery = useGraduationTarget();
   const gradPlanQuery = useMyGraduationPlan();
+  const eligibilityQuery = useMyCourseEligibility();
   const catalogQuery = useQuery({
     queryKey: ["school-catalog", "course-plan"],
     queryFn: () => apiRequest("/api/v1/school-admin/courses?limit=100"),
@@ -78,6 +80,10 @@ export default function CoursePlanPage() {
 
   const courseById = useMemo(() => new Map(catalog.map((c) => [c.id, c])), [catalog]);
   const plannedCourseIds = useMemo(() => new Set(enrollments.map((e) => e.courseId)), [enrollments]);
+  const eligibilityById = useMemo(
+    () => new Map((eligibilityQuery.data ?? []).map((e) => [e.courseId, e])),
+    [eligibilityQuery.data],
+  );
   const requests = requestsQuery.data?.data ?? [];
 
   const target = targetQuery.data;
@@ -224,6 +230,7 @@ export default function CoursePlanPage() {
         onAdd={handleAdd}
         busyId={busyId}
         suggestions={locked ? [] : recsQuery.data?.data ?? []}
+        eligibility={eligibilityById}
       />
 
       <SupplementalRail enabled={hasTarget} />
