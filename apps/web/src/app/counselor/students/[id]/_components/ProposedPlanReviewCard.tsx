@@ -188,6 +188,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan }: ProposedPlanRe
               onChange={(e) => setNote(e.target.value)}
               placeholder="What should change before you can approve this plan?"
               rows={3}
+              maxLength={1000}
             />
           </div>
           <div className="flex justify-end gap-2">
