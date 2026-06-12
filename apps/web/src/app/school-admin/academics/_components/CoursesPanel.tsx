@@ -309,11 +309,9 @@ export function CoursesPanel() {
       {aiReview && (
         <AiImportReviewDialog
           data={aiReview}
-          onClose={() => {
-            setAiReview(null);
-            // post-import: offer prerequisite analysis on the fresh catalog
-            setPrereqDialogOpen(true);
-          }}
+          onClose={() => setAiReview(null)}
+          // post-import: offer prerequisite analysis on the fresh catalog
+          onConfirmed={() => setPrereqDialogOpen(true)}
         />
       )}
 

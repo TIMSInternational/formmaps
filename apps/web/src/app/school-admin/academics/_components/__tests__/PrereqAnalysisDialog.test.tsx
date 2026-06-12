@@ -132,6 +132,16 @@ describe("PrereqAnalysisDialog", () => {
     expect(c3!.addPrerequisites.sort()).toEqual(["ALG2", "TRIG"]);
   });
 
+  it("shows error state and allows re-running analysis", async () => {
+    mockAnalyze.mockRejectedValueOnce(new Error("fail"));
+    renderDialog();
+    expect(await screen.findByText(/analysis failed/i)).toBeInTheDocument();
+    mockAnalyze.mockResolvedValue(SUGGESTIONS);
+    fireEvent.click(screen.getByRole("button", { name: /run again/i }));
+    await screen.findAllByText(/ALG2/);
+    expect(mockAnalyze).toHaveBeenCalledTimes(2);
+  });
+
   it("shows the honest empty state when analysis returns []", async () => {
     mockAnalyze.mockResolvedValue([]);
     renderDialog();
