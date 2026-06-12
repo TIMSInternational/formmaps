@@ -8,12 +8,12 @@ import { AdminTabBar } from "../_components/AdminTabBar";
 
 const CoursesPanel = dynamic(() => import("./_components/CoursesPanel").then(m => ({ default: m.CoursesPanel })));
 const CurriculumPanel = dynamic(() => import("./_components/CurriculumPanel").then(m => ({ default: m.CurriculumPanel })));
-const SequencesPanel = dynamic(() => import("./_components/SequencesPanel").then(m => ({ default: m.SequencesPanel })));
+const PathwaysPanel = dynamic(() => import("./_components/PathwaysPanel").then(m => ({ default: m.PathwaysPanel })));
 
 const TABS = [
   { key: "courses", label: "Courses", icon: Library },
   { key: "curriculum", label: "Curriculum", icon: BookOpen },
-  { key: "sequences", label: "Sequences", icon: GitBranch },
+  { key: "pathways", label: "Pathways", icon: GitBranch },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -31,7 +31,9 @@ export default function AcademicsPage() {
     }
   }, [searchParams, router]);
 
-  const initialTab = (searchParams.get("tab") as TabKey) || "courses";
+  // "sequences" is the retired name for the pathways tab — honor old links
+  const rawTab = searchParams.get("tab");
+  const initialTab = (rawTab === "sequences" ? "pathways" : rawTab) as TabKey || "courses";
   const [activeTab, setActiveTab] = useState<string>(
     TABS.some(t => t.key === initialTab) ? initialTab : "courses"
   );
@@ -46,14 +48,14 @@ export default function AcademicsPage() {
     <div className="space-y-6">
       <div>
         <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>Academics</h1>
-        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>Manage your course catalog, curriculum frameworks, and course sequences</p>
+        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>Manage your course catalog, curriculum frameworks, and course pathways</p>
       </div>
 
       <AdminTabBar tabs={[...TABS]} activeTab={activeTab} onChange={handleTabChange} />
 
       {activeTab === "courses" && <CoursesPanel />}
       {activeTab === "curriculum" && <CurriculumPanel />}
-      {activeTab === "sequences" && <SequencesPanel />}
+      {activeTab === "pathways" && <PathwaysPanel />}
     </div>
   );
 }

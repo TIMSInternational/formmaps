@@ -22,6 +22,7 @@ import {
   analyzePrerequisites,
   applyPrereqSuggestions,
   getMyCourseEligibility,
+  getCoursePathways,
 } from "@/services/curriculumService";
 import type { PrereqApplyUpdate } from "@/types/prereq";
 import type {
@@ -52,6 +53,7 @@ export const curriculumKeys = {
     [...curriculumKeys.all, "prerequisite-chain", courseId] as const,
   prerequisiteCheck: (courseId: string, studentId: string) =>
     [...curriculumKeys.all, "prerequisite-check", courseId, studentId] as const,
+  pathways: () => [...curriculumKeys.all, "pathways"] as const,
   aiRecognition: () => [...curriculumKeys.all, "ai-recognition"] as const,
 };
 
@@ -202,6 +204,7 @@ export function useUpdatePrerequisites() {
     }) => updatePrerequisites(courseId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
+      queryClient.invalidateQueries({ queryKey: curriculumKeys.pathways() });
     },
   });
 }
@@ -262,6 +265,16 @@ export function useApplyAIMapping() {
       queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
       queryClient.invalidateQueries({ queryKey: curriculumKeys.aiRecognition() });
     },
+  });
+}
+
+// ─── Course pathways (derived from the prereq graph) ─────────────────────────
+
+export function useCoursePathways() {
+  return useQuery({
+    queryKey: curriculumKeys.pathways(),
+    queryFn: getCoursePathways,
+    staleTime: 1000 * 60 * 5,
   });
 }
 

@@ -14,6 +14,7 @@ import type {
   PrerequisiteChain,
   AIRecognitionResponse,
   AIMappingAction,
+  CoursePathwaysResponse,
 } from "@/types/curriculum";
 import type { PrereqSuggestion, PrereqApplyUpdate, CourseEligibility } from "@/types/prereq";
 
@@ -222,6 +223,14 @@ export async function downloadCourseImportFailures(jobId: string): Promise<Blob>
   );
   if (!res.ok) throw new Error("Failed to download failure report");
   return res.blob();
+}
+
+// ─── Course pathways (derived from the prereq graph) ─────────────────────────
+
+export async function getCoursePathways(): Promise<CoursePathwaysResponse> {
+  const json = await apiRequest("/api/v1/school-admin/courses/pathways");
+  const data = unwrap<CoursePathwaysResponse | null>(json);
+  return data && Array.isArray(data.groups) ? data : { truncated: false, groups: [] };
 }
 
 // ─── Prerequisite analysis (admin) + eligibility (student) ──────────────────
