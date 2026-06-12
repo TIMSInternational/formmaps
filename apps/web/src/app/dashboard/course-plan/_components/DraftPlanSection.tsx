@@ -2,7 +2,8 @@
 
 import { Sparkles, Send, RefreshCw, Trash2, LoaderCircle, AlertTriangle } from "lucide-react";
 import { SequenceBuilder } from "@/components/course-plan/SequenceBuilder";
-import type { StudentCoursePlanResponse, StudentCourseEnrollment } from "@/types/coursePlan";
+import { planItemsToEnrollments } from "@/components/course-plan/planItems";
+import type { StudentCoursePlanResponse } from "@/types/coursePlan";
 import type { GraduationPlan } from "@/types/graduationPlan";
 
 interface DraftPlanSectionProps {
@@ -15,21 +16,6 @@ interface DraftPlanSectionProps {
   isSubmitting: boolean;
   isRegenerating: boolean;
   isDiscarding: boolean;
-}
-
-/** Map graduation-plan items to draft_proposed pseudo-enrollments. */
-export function draftItemsToEnrollments(plan: GraduationPlan): StudentCourseEnrollment[] {
-  return plan.items.map((i) => ({
-    id: `gp-${plan.id}-${i.courseId}-${i.gradeLevel}-${i.term ?? ""}`,
-    courseId: i.courseId,
-    courseCode: i.courseCode,
-    courseName: i.courseName,
-    category: i.category ?? "",
-    credits: i.credits,
-    gradeLevel: i.gradeLevel,
-    semester: i.term ?? "Fall",
-    status: "draft_proposed" as const,
-  }));
 }
 
 export function DraftPlanSection({
@@ -126,7 +112,7 @@ export function DraftPlanSection({
         isLoading={false}
         mode="student"
         readOnly
-        extraEnrollments={draftItemsToEnrollments(plan)}
+        extraEnrollments={planItemsToEnrollments(plan)}
       />
       <p className="text-[11px] text-[var(--admin-font-tertiary)]">
         Yellow “Proposed” courses are additions suggested for your goal — your
