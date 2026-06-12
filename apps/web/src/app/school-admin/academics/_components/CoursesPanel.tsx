@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BookOpen, Plus, Search, Upload, Loader2, Trash2, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { BookOpen, Plus, Search, Upload, Loader2, Trash2, ChevronLeft, ChevronRight, Sparkles, Network } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSchoolCourses, useCreateSchoolCourse, useDeleteSchoolCourse, curriculumKeys } from "@/hooks/useCurriculumQueries";
@@ -18,6 +18,7 @@ import { AdminStatCard } from "@/app/admin/_components/AdminStatCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CourseDetailDialog } from "./CourseDetailDialog";
 import { AiImportReviewDialog } from "./AiImportReviewDialog";
+import { PrereqAnalysisDialog } from "./PrereqAnalysisDialog";
 
 const inputStyle: React.CSSProperties = {
   background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
@@ -63,6 +64,7 @@ export function CoursesPanel() {
   const createCourse = useCreateSchoolCourse();
   const deleteCourse = useDeleteSchoolCourse();
   const [selectedCourse, setSelectedCourse] = useState<CourseRecord | null>(null);
+  const [prereqDialogOpen, setPrereqDialogOpen] = useState(false);
 
   const [form, setForm] = useState<SchoolCoursePayload & { prerequisitesString: string; corequisitesString: string; gradeLevelsString: string }>({
     code: "", name: "", department: "", credits: 1, gradeLevels: [], gradeLevelsString: "9",
@@ -174,6 +176,13 @@ export function CoursesPanel() {
           }}>
             {aiImporting ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Sparkles style={{ width: 14, height: 14 }} />}
             {aiImporting ? "Processing..." : "AI Import"}
+          </button>
+          <button onClick={() => setPrereqDialogOpen(true)} style={{
+            height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
+            background: "#065292", color: "#fff", border: "none", cursor: "pointer",
+          }}>
+            <Network style={{ width: 14, height: 14 }} />
+            Analyze prerequisites
           </button>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
@@ -301,8 +310,16 @@ export function CoursesPanel() {
         <AiImportReviewDialog
           data={aiReview}
           onClose={() => setAiReview(null)}
+          // post-import: offer prerequisite analysis on the fresh catalog
+          onConfirmed={() => setPrereqDialogOpen(true)}
         />
       )}
+
+      {/* Prerequisite Analysis Dialog */}
+      <PrereqAnalysisDialog
+        open={prereqDialogOpen}
+        onOpenChange={setPrereqDialogOpen}
+      />
     </div>
   );
 }

@@ -35,9 +35,11 @@ interface AiImportData {
 interface AiImportReviewDialogProps {
   data: AiImportData | null;
   onClose: () => void;
+  /** fired only after a SUCCESSFUL import confirm (not on cancel/dismiss) */
+  onConfirmed?: () => void;
 }
 
-export function AiImportReviewDialog({ data, onClose }: AiImportReviewDialogProps) {
+export function AiImportReviewDialog({ data, onClose, onConfirmed }: AiImportReviewDialogProps) {
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
 
@@ -57,8 +59,9 @@ export function AiImportReviewDialog({ data, onClose }: AiImportReviewDialogProp
       if (result.sequencesCreated) parts.push(`${result.sequencesCreated} sequences`);
       if (result.coursesSkipped) parts.push(`${result.coursesSkipped} skipped`);
       toast.success(parts.join(", ") || "Import complete");
-      onClose();
       queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
+      onClose();
+      onConfirmed?.();
     } catch {
       toast.error("Failed to create courses");
     } finally { setConfirming(false); }
