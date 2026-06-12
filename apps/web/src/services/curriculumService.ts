@@ -15,6 +15,7 @@ import type {
   AIRecognitionResponse,
   AIMappingAction,
 } from "@/types/curriculum";
+import type { PrereqSuggestion, PrereqApplyUpdate, CourseEligibility } from "@/types/prereq";
 
 const buildPath = (endpoint: string, params?: Record<string, string | number | undefined>) => {
   if (!params) return endpoint;
@@ -221,4 +222,23 @@ export async function downloadCourseImportFailures(jobId: string): Promise<Blob>
   );
   if (!res.ok) throw new Error("Failed to download failure report");
   return res.blob();
+}
+
+// ─── Prerequisite analysis (admin) + eligibility (student) ──────────────────
+
+export async function analyzePrerequisites(): Promise<PrereqSuggestion[]> {
+  const json = await apiRequest("/api/v1/school-admin/courses/prereq-analysis", { method: "POST" });
+  const items = json?.data ?? [];
+  return Array.isArray(items) ? items : [];
+}
+
+export async function applyPrereqSuggestions(updates: PrereqApplyUpdate[]): Promise<{ updated: number }> {
+  const json = await apiRequest("/api/v1/school-admin/courses/prereq-analysis/apply", { method: "POST", data: { updates } });
+  return json?.data ?? { updated: 0 };
+}
+
+export async function getMyCourseEligibility(): Promise<CourseEligibility[]> {
+  const json = await apiRequest("/api/v1/student/course-plan/eligibility");
+  const items = json?.data ?? [];
+  return Array.isArray(items) ? items : [];
 }

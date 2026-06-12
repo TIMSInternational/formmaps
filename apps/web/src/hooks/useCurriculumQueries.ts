@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   getFrameworks,
   updateFrameworks,
@@ -18,7 +19,11 @@ import {
   recognizeCourses,
   recognizeAllUnmapped,
   applyAIMapping,
+  analyzePrerequisites,
+  applyPrereqSuggestions,
+  getMyCourseEligibility,
 } from "@/services/curriculumService";
+import type { PrereqApplyUpdate } from "@/types/prereq";
 import type {
   FrameworkTogglePayload,
   FrameworkCourseOverride,
@@ -257,5 +262,35 @@ export function useApplyAIMapping() {
       queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
       queryClient.invalidateQueries({ queryKey: curriculumKeys.aiRecognition() });
     },
+  });
+}
+
+// ─── Prerequisite analysis + eligibility ─────────────────────────────────────
+
+export function useAnalyzePrerequisites() {
+  return useMutation({
+    mutationFn: analyzePrerequisites,
+    onError: () => toast.error("Prerequisite analysis failed — try again"),
+  });
+}
+
+export function useApplyPrereqSuggestions() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (updates: PrereqApplyUpdate[]) => applyPrereqSuggestions(updates),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
+      toast.success(`${res.updated} ${res.updated === 1 ? "course" : "courses"} updated`);
+    },
+    onError: () => toast.error("Failed to apply prerequisites"),
+  });
+}
+
+export function useMyCourseEligibility(enabled = true) {
+  return useQuery({
+    queryKey: ["course-eligibility", "me"],
+    queryFn: getMyCourseEligibility,
+    enabled,
+    staleTime: 5 * 60 * 1000,
   });
 }
