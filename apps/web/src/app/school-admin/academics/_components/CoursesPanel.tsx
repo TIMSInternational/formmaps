@@ -43,7 +43,6 @@ interface CourseRecord {
 
 interface AiReviewData {
   courses: Array<{ code: string; name: string; description?: string; department?: string; credits?: number; maxEnrollment?: number | null; frameworkType?: string; isHonors?: boolean; difficulty?: string }>;
-  sequences: Array<{ name: string; courses?: string[] }>;
   summary: string;
 }
 
@@ -138,7 +137,7 @@ export function CoursesPanel() {
       const result = res.data ?? res;
       if (result.courses?.length > 0) {
         setAiReview(result);
-        toast.success(`Found ${result.courses.length} courses and ${result.sequences?.length || 0} sequences`);
+        toast.success(`Found ${result.courses.length} courses`);
       } else {
         toast.error("No courses found in the document");
       }

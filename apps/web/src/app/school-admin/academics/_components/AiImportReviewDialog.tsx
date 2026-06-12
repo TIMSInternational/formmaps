@@ -21,14 +21,8 @@ interface AiImportCourse {
   difficulty?: string;
 }
 
-interface AiImportSequence {
-  name: string;
-  courses?: string[];
-}
-
 interface AiImportData {
   courses: AiImportCourse[];
-  sequences: AiImportSequence[];
   summary: string;
 }
 
@@ -50,13 +44,12 @@ export function AiImportReviewDialog({ data, onClose, onConfirmed }: AiImportRev
     try {
       const { apiRequest } = await import("@/lib/api/apiClient");
       const res = await apiRequest("/api/v1/school-admin/courses/ai-import/confirm", {
-        method: "POST", data: { courses: data.courses, sequences: data.sequences },
+        method: "POST", data: { courses: data.courses },
       });
       const result = res.data ?? res;
       const parts: string[] = [];
       if (result.coursesCreated) parts.push(`${result.coursesCreated} custom courses created`);
       if (result.coursesLinked) parts.push(`${result.coursesLinked} linked to catalog`);
-      if (result.sequencesCreated) parts.push(`${result.sequencesCreated} sequences`);
       if (result.coursesSkipped) parts.push(`${result.coursesSkipped} skipped`);
       toast.success(parts.join(", ") || "Import complete");
       queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
@@ -126,23 +119,6 @@ export function AiImportReviewDialog({ data, onClose, onConfirmed }: AiImportRev
             </div>
           </div>
 
-          {data.sequences.length > 0 && (
-            <div>
-              <h3 style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 8 }}>
-                Sequences ({data.sequences.length})
-              </h3>
-              <div className="space-y-2">
-                {data.sequences.map((seq, i) => (
-                  <div key={i} style={{ padding: "8px 12px", borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{seq.name}</div>
-                    <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-                      {seq.courses?.join(" \u2192 ")}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         <DialogFooter className="gap-2">
