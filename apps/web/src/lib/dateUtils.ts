@@ -15,6 +15,37 @@ export function formatTime(dateString: string): string {
   return date.toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+/**
+ * Format an elapsed-time value defensively for display.
+ * - number → treated as SECONDS, rendered as `m:ss` (or `h:mm:ss` if ≥ 1h)
+ * - string → returned with a leading `00:`/`0` trimmed (matches prior display)
+ * - falsy / unparseable → "--:--"
+ *
+ * Backend stores `totalTimeSpent` as `Int?` (seconds) but various API/hook
+ * paths surface it as either a number or a "HH:MM:SS" string — this handles both
+ * so callers never crash on `.replace` of a number.
+ */
+export function formatSeconds(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "--:--";
+
+  if (typeof value === "number") {
+    if (!Number.isFinite(value) || value < 0) return "--:--";
+    const total = Math.floor(value);
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const seconds = total % 60;
+    const ss = String(seconds).padStart(2, "0");
+    if (hours > 0) {
+      const mm = String(minutes).padStart(2, "0");
+      return `${hours}:${mm}:${ss}`;
+    }
+    return `${minutes}:${ss}`;
+  }
+
+  // string: keep prior trimming behavior ("00:04:32" → "4:32")
+  return value.replace(/^00:/, "").replace(/^0/, "");
+}
+
 export function formatDuration(start: string, end?: string): string {
   if (!end) return "Ongoing";
   const ms = new Date(end).getTime() - new Date(start).getTime();

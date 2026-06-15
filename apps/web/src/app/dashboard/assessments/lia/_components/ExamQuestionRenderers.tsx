@@ -145,10 +145,7 @@ export function renderNumberSequence(question: MILQuestion) {
     return null;
 
   const numbers = question.data.numbers;
-  const sortedNumbers = [...numbers].sort((a, b) => a - b);
-  const lowest = sortedNumbers[0];
-  const highest = sortedNumbers[2];
-  const middle = sortedNumbers[1];
+  const positionLabels = ["A", "B", "C"];
 
   return (
     <div className="max-w-lg mx-auto mb-6 sm:mb-8">
@@ -160,51 +157,24 @@ export function renderNumberSequence(question: MILQuestion) {
       >
         {/* Number Sequence Display */}
         <div className="flex justify-center items-center space-x-4 sm:space-x-6 md:space-x-8">
-          {numbers.map((number, index) => {
-            const isMiddle = number === middle;
-            const isExtreme = number === lowest || number === highest;
-
-            return (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1, duration: 0.2 }}
-                className={`text-center ${
-                  isMiddle ? "transform scale-110" : ""
-                }`}
-              >
-                <div
-                  className={`w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl flex items-center justify-center ${
-                    isMiddle
-                      ? "bg-orange-500/10 dark:bg-orange-500/20 border-2 border-orange-300 shadow-lg"
-                      : isExtreme
-                      ? "bg-red-500/10 dark:bg-red-500/20 border-2 border-red-300 shadow-md"
-                      : "bg-muted border-2 border-border"
-                  }`}
-                >
-                  <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground font-mono">
-                    {number}
-                  </span>
-                </div>
-                {isMiddle && (
-                  <div className="text-xs sm:text-sm text-orange-600 font-medium mt-2">
-                    Middle
-                  </div>
-                )}
-                {number === lowest && (
-                  <div className="text-xs sm:text-sm text-red-600 font-medium mt-2">
-                    Lowest
-                  </div>
-                )}
-                {number === highest && (
-                  <div className="text-xs sm:text-sm text-red-600 font-medium mt-2">
-                    Highest
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
+          {numbers.map((number, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.1, duration: 0.2 }}
+              className="text-center"
+            >
+              <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl flex items-center justify-center bg-muted border-2 border-border">
+                <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground font-mono">
+                  {number}
+                </span>
+              </div>
+              <div className="text-xs sm:text-sm text-orange-600 font-medium mt-2">
+                {positionLabels[index]}
+              </div>
+            </motion.div>
+          ))}
         </div>
 
         {/* Helper text */}
@@ -215,8 +185,8 @@ export function renderNumberSequence(question: MILQuestion) {
           className="text-center mt-4 sm:mt-6"
         >
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Which extreme (highest or lowest) is furthest from the middle
-            number?
+            Which value — A, B, or C — is the extreme (highest or lowest)
+            furthest from the middle number?
           </p>
         </motion.div>
       </motion.div>
@@ -371,25 +341,29 @@ export function renderAnswerOptions(
   }
 
   // Check if question has numbers (for Numeric Velocity)
+  // Render one option per presented number (positions A/B/C); onSelect passes
+  // the POSITION index 0/1/2 to match the backend's positional correctAnswer.
   if (question.data.numbers && question.data.numbers.length === 3) {
     const numbers = question.data.numbers;
-    const sortedNumbers = [...numbers].sort((a, b) => a - b);
-    const lowest = sortedNumbers[0];
-    const highest = sortedNumbers[2];
-    const extremes = [lowest, highest];
+    const positionLabels = ["A", "B", "C"];
 
-    return extremes.map((number, index) => (
+    return numbers.map((number, index) => (
       <button
         key={index}
         onClick={() => onSelect(index)}
         disabled={disabled}
-        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg md:text-xl transition-all duration-100 ${
+        className={`w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg md:text-xl transition-all duration-100 flex flex-col items-center justify-center ${
           selectedAnswer === index
             ? "bg-gradient-to-br from-orange-600 to-red-600 text-white shadow-2xl transform scale-105 ring-2 sm:ring-4 ring-orange-200/50"
             : "bg-card border-2 border-border text-foreground hover:border-orange-300 hover:bg-orange-50 shadow-lg hover:shadow-xl"
         } disabled:opacity-50 disabled:cursor-not-allowed font-mono`}
       >
-        {number}
+        <span className="text-base sm:text-lg md:text-xl leading-none">
+          {positionLabels[index]}
+        </span>
+        <span className="text-[10px] sm:text-xs opacity-80 leading-none mt-1">
+          {number}
+        </span>
       </button>
     ));
   }

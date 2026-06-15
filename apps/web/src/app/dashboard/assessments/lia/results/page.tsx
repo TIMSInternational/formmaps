@@ -5,7 +5,13 @@ import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useMILData } from "@/hooks/useMILData";
-import { loadMILSession, MILSession } from "@/services/milService";
+import {
+  loadMILSession,
+  MILSession,
+  EXAM_TYPE_TO_ID,
+} from "@/services/milService";
+import { formatSeconds } from "@/lib/dateUtils";
+import { buildLIAReportData } from "@/components/reports/buildLIAReportData";
 import dynamic from "next/dynamic";
 import {
   Radar,
@@ -68,12 +74,31 @@ const StatCard = ({ label, value, icon: Icon, color, bg, border, blobColor, subl
   </div>
 );
 
+interface SubtestBand {
+  labelEn: string;
+  color: string;
+}
+
+// Readable foreground for a band badge: dark text on light band colors (e.g. the
+// yellow Adecuado #FFD600), white otherwise. Keeps WCAG contrast on every band.
+function bandTextColor(hex: string): string {
+  const c = hex.replace("#", "");
+  if (c.length < 6) return "#ffffff";
+  const r = parseInt(c.slice(0, 2), 16);
+  const g = parseInt(c.slice(2, 4), 16);
+  const b = parseInt(c.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? "#111111" : "#ffffff";
+}
+
 interface SubtestResult {
   name: string;
   score: number;
   accuracy: number;
   time: string;
   fullMark: number;
+  examId: string;
+  band?: SubtestBand;
 }
 
 const SubtestCard = ({ test, index }: { test: SubtestResult; index: number }) => {
@@ -106,6 +131,14 @@ const SubtestCard = ({ test, index }: { test: SubtestResult; index: number }) =>
                 <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {test.time}</span>
                 <span className="flex items-center gap-1"><Target className="w-3.5 h-3.5" /> {test.accuracy}% accuracy</span>
              </div>
+             {test.band && (
+               <span
+                 className="inline-block mt-2 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                 style={{ backgroundColor: test.band.color, color: bandTextColor(test.band.color) }}
+               >
+                 {test.band.labelEn}
+               </span>
+             )}
           </div>
           <div className={`rounded-xl ${bg} p-2 ${color}`}>
             <span className="text-lg font-bold">{test.score}%</span>
@@ -127,8 +160,8 @@ const SubtestCard = ({ test, index }: { test: SubtestResult; index: number }) =>
 
 export default function MILResultsPage() {
   const { t } = useTranslation();
-  const { language } = useGlobalStore();
-  const { exams, progress, loading, getOverallScore } = useMILData();
+  const { language, user } = useGlobalStore();
+  const { exams, progress, loading, getOverallScore, weightedComposite } = useMILData();
   const [sessions, setSessions] = useState<MILSession[]>([]);
 
   useEffect(() => {
@@ -158,6 +191,13 @@ export default function MILResultsPage() {
   // Calculate actual total questions from exams API data
   const totalQuestions = exams.reduce((acc, exam) => acc + exam.totalQuestions, 0);
 
+  // Per-domain band lookup keyed by canonical exam id (from the weighted composite).
+  const bandByExamId = new Map<string, { labelEn: string; color: string }>();
+  for (const d of weightedComposite?.perDomain ?? []) {
+    const examId = EXAM_TYPE_TO_ID[d.type];
+    if (examId) bandByExamId.set(examId, { labelEn: d.labelEn, color: d.color });
+  }
+
   // Build subtest results from real API data (enhanced exam history)
   const subtestResults = (progress?.enhancedData?.examStatus || [])
     .filter((exam) => exam.status === "completed")
@@ -165,10 +205,10 @@ export default function MILResultsPage() {
       name: exam.examName,
       score: Math.round(exam.scorePercentage),
       accuracy: Math.round(exam.accuracyPercentage),
-      time: exam.totalTimeSpent
-        ? exam.totalTimeSpent.replace(/^00:/, "").replace(/^0/, "")
-        : "--:--",
+      time: formatSeconds(exam.totalTimeSpent),
       fullMark: 100,
+      examId: exam.examId,
+      band: bandByExamId.get(exam.examId),
     }));
 
   // Radar Chart Data
@@ -181,6 +221,21 @@ export default function MILResultsPage() {
   const averageAccuracy = Math.round(
     subtestResults.reduce((acc, curr) => acc + curr.accuracy, 0) / (subtestResults.length || 1)
   );
+
+  // Build the LIA PDF payload from the student's REAL results (no dummy data).
+  const liaReportData = buildLIAReportData({
+    user: { id: user.id, name: user.name, email: user.email },
+    overallScore,
+    averageAccuracy,
+    weightedComposite,
+    subtests: subtestResults.map((r) => ({
+      name: r.name,
+      score: r.score,
+      accuracy: r.accuracy,
+      timeSpent: r.time,
+      examId: r.examId,
+    })),
+  });
 
   return (
     <div className="min-h-screen bg-secondary/50 p-6 md:p-8 font-sans text-foreground">
@@ -210,6 +265,7 @@ export default function MILResultsPage() {
             
              <ExportReportButton
                 reportType="lia"
+                liaData={liaReportData}
                 label={t("dashboard.downloadPDFReport") || "Download Report"}
                 variant="outline"
                 className="h-10 gap-2 rounded-xl bg-indigo-600 text-white border-transparent hover:bg-indigo-700 shadow-sm shadow-indigo-200"
@@ -251,6 +307,45 @@ export default function MILResultsPage() {
                 blobColor="bg-amber-500"
             />
          </div>
+
+        {/* Weighted Composite Score (TIMS 300-point, provisional bands) */}
+        {weightedComposite && (
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {t("dashboard.compositeScore", "Composite Score")}
+                </p>
+                <div className="mt-2 flex items-baseline gap-3">
+                  <h3 className="text-4xl font-bold tracking-tight text-foreground">
+                    {weightedComposite.raw} <span className="text-2xl text-muted-foreground">/ 300</span>
+                  </h3>
+                  <span
+                    className="rounded-full px-3 py-1 text-sm font-semibold"
+                    style={{ backgroundColor: weightedComposite.color, color: bandTextColor(weightedComposite.color) }}
+                  >
+                    {weightedComposite.labelEn}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground italic">
+                  {t(
+                    "dashboard.bandsProvisionalNote",
+                    "Band thresholds provisional — pending norm validation"
+                  )}
+                </p>
+              </div>
+              <div className="h-3 w-full md:w-64 bg-secondary rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${weightedComposite.percent}%`,
+                    backgroundColor: weightedComposite.color,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Content Split */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

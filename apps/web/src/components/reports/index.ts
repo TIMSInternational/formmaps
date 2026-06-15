@@ -1,5 +1,5 @@
 // Export all report components and utilities
-export { default as LIAReportPDF, dummyLIAData } from './LIAReportPDF';
+export { default as LIAReportPDF } from './LIAReportPDF';
 export { default as PCAReportPDF, dummyPCAData } from './PCAReportPDF';
 export { default as ExportReportButton, useReportExport } from './ExportReportButton';
 export * from './reportGenerationService';
