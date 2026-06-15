@@ -99,58 +99,29 @@ export function renderNumberSequence(question: MILQuestion) {
     return null;
 
   const numbers = question.data.numbers;
-  const sortedNumbers = [...numbers].sort((a, b) => a - b);
-  const lowest = sortedNumbers[0];
-  const highest = sortedNumbers[2];
-  const middle = sortedNumbers[1];
+  const positionLabels = ["A", "B", "C"];
 
   return (
     <div className="max-w-lg mx-auto mb-6 sm:mb-8">
       <div className="relative bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 border-2 border-orange-200/60 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-sm">
         <div className="flex justify-center items-center space-x-4 sm:space-x-6 md:space-x-8">
-          {numbers.map((number, index) => {
-            const isMiddle = number === middle;
-            const isExtreme = number === lowest || number === highest;
-
-            return (
-              <div
-                key={index}
-                className={`text-center ${
-                  isMiddle ? "transform scale-110" : ""
-                }`}
-              >
-                <div
-                  className={`w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl flex items-center justify-center ${
-                    isMiddle
-                      ? "bg-orange-500/10 dark:bg-orange-500/20 border-2 border-orange-300 shadow-lg"
-                      : isExtreme
-                      ? "bg-red-500/10 dark:bg-red-500/20 border-2 border-red-300 shadow-md"
-                      : "bg-muted border-2 border-border"
-                  }`}
-                >
-                  <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground font-mono">
-                    {number}
-                  </span>
-                </div>
-                {isMiddle && (
-                  <div className="text-xs sm:text-sm text-orange-600 font-medium mt-2">
-                    Middle
-                  </div>
-                )}
-                {number === lowest && (
-                  <div className="text-xs sm:text-sm text-red-600 font-medium mt-2">
-                    Lowest
-                  </div>
-                )}
-                {number === highest && (
-                  <div className="text-xs sm:text-sm text-red-600 font-medium mt-2">
-                    Highest
-                  </div>
-                )}
+          {numbers.map((number, index) => (
+            <div key={index} className="text-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl flex items-center justify-center bg-muted border-2 border-border">
+                <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground font-mono">
+                  {number}
+                </span>
               </div>
-            );
-          })}
+              <div className="text-xs sm:text-sm text-orange-600 font-medium mt-2">
+                {positionLabels[index]}
+              </div>
+            </div>
+          ))}
         </div>
+        <p className="text-center text-xs sm:text-sm text-muted-foreground mt-4 sm:mt-6">
+          Which value — A, B, or C — is the extreme (highest or lowest) furthest
+          from the middle number?
+        </p>
       </div>
     </div>
   );
@@ -260,26 +231,29 @@ export function renderAnswerOptions(
     ));
   }
 
-  // Numbers (Numeric Velocity)
+  // Numbers (Numeric Velocity) — render one option per presented number
+  // (positions A/B/C); onSelect passes the POSITION index 0/1/2.
   if (question.data.numbers && question.data.numbers.length === 3) {
     const numbers = question.data.numbers;
-    const sortedNumbers = [...numbers].sort((a, b) => a - b);
-    const lowest = sortedNumbers[0];
-    const highest = sortedNumbers[2];
-    const extremes = [lowest, highest];
+    const positionLabels = ["A", "B", "C"];
 
-    return extremes.map((number, index) => (
+    return numbers.map((number, index) => (
       <button
         key={index}
         onClick={() => onSelect(index)}
         disabled={disabled}
-        className={`w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-lg sm:rounded-xl font-bold text-lg sm:text-xl md:text-2xl transition-all duration-100 ${
+        className={`w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-lg sm:rounded-xl font-bold transition-all duration-100 flex flex-col items-center justify-center ${
           selectedAnswer === index
             ? "bg-gradient-to-br from-orange-600 to-red-600 text-white shadow-2xl transform scale-105 ring-2 sm:ring-4 ring-orange-200/50"
             : "bg-card border-2 border-border text-foreground hover:border-orange-300 hover:bg-orange-50 shadow-lg hover:shadow-xl"
         } font-mono ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       >
-        {number}
+        <span className="text-lg sm:text-xl md:text-2xl leading-none">
+          {positionLabels[index]}
+        </span>
+        <span className="text-[10px] sm:text-xs opacity-80 leading-none mt-1">
+          {number}
+        </span>
       </button>
     ));
   }

@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useMILData } from "@/hooks/useMILData";
 import { loadMILSession, MILSession } from "@/services/milService";
+import { formatSeconds } from "@/lib/dateUtils";
+import { buildLIAReportData } from "@/components/reports/buildLIAReportData";
 import dynamic from "next/dynamic";
 import {
   Radar,
@@ -127,7 +129,7 @@ const SubtestCard = ({ test, index }: { test: SubtestResult; index: number }) =>
 
 export default function MILResultsPage() {
   const { t } = useTranslation();
-  const { language } = useGlobalStore();
+  const { language, user } = useGlobalStore();
   const { exams, progress, loading, getOverallScore } = useMILData();
   const [sessions, setSessions] = useState<MILSession[]>([]);
 
@@ -165,9 +167,7 @@ export default function MILResultsPage() {
       name: exam.examName,
       score: Math.round(exam.scorePercentage),
       accuracy: Math.round(exam.accuracyPercentage),
-      time: exam.totalTimeSpent
-        ? exam.totalTimeSpent.replace(/^00:/, "").replace(/^0/, "")
-        : "--:--",
+      time: formatSeconds(exam.totalTimeSpent),
       fullMark: 100,
     }));
 
@@ -181,6 +181,19 @@ export default function MILResultsPage() {
   const averageAccuracy = Math.round(
     subtestResults.reduce((acc, curr) => acc + curr.accuracy, 0) / (subtestResults.length || 1)
   );
+
+  // Build the LIA PDF payload from the student's REAL results (no dummy data).
+  const liaReportData = buildLIAReportData({
+    user: { id: user.id, name: user.name, email: user.email },
+    overallScore,
+    averageAccuracy,
+    subtests: subtestResults.map((r) => ({
+      name: r.name,
+      score: r.score,
+      accuracy: r.accuracy,
+      timeSpent: r.time,
+    })),
+  });
 
   return (
     <div className="min-h-screen bg-secondary/50 p-6 md:p-8 font-sans text-foreground">
@@ -210,6 +223,7 @@ export default function MILResultsPage() {
             
              <ExportReportButton
                 reportType="lia"
+                liaData={liaReportData}
                 label={t("dashboard.downloadPDFReport") || "Download Report"}
                 variant="outline"
                 className="h-10 gap-2 rounded-xl bg-indigo-600 text-white border-transparent hover:bg-indigo-700 shadow-sm shadow-indigo-200"
