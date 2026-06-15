@@ -1,6 +1,8 @@
 "use client";
 
 import { Sparkles, RefreshCw } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { InsightsData } from "@/services/assessmentCommandService";
 
 const EXAM_SHORT: Record<string, string> = {
@@ -73,9 +75,31 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
 
       {/* Narrative */}
       {insights.narrative && (
-        <p style={{ fontSize: 13, color: "var(--admin-font-secondary)", lineHeight: 1.6, marginBottom: 16, padding: 12, borderRadius: 6, background: "var(--admin-bg-hover)" }}>
-          {insights.narrative}
-        </p>
+        <div style={{ fontSize: 13, color: "var(--admin-font-secondary)", lineHeight: 1.6, marginBottom: 16, padding: 12, borderRadius: 6, background: "var(--admin-bg-hover)" }}>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              p: ({ children }) => <p style={{ marginBottom: 6 }}>{children}</p>,
+              strong: ({ children }) => <strong style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{children}</strong>,
+              ul: ({ children }) => <ul style={{ paddingLeft: 16, marginBottom: 6 }}>{children}</ul>,
+              ol: ({ children }) => <ol style={{ paddingLeft: 16, marginBottom: 6 }}>{children}</ol>,
+              li: ({ children }) => <li style={{ marginBottom: 2 }}>{children}</li>,
+              h1: ({ children }) => <h1 style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", margin: "4px 0" }}>{children}</h1>,
+              h2: ({ children }) => <h2 style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", margin: "4px 0" }}>{children}</h2>,
+              h3: ({ children }) => <h3 style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)", margin: "4px 0" }}>{children}</h3>,
+              code: ({ children }) => (
+                <code style={{ padding: "1px 4px", borderRadius: 3, fontSize: 11, background: "var(--admin-bg-hover)", color: "var(--admin-accent-blue)" }}>
+                  {children}
+                </code>
+              ),
+              a: ({ children, href }) => (
+                <a href={href} style={{ color: "var(--admin-accent-blue)" }}>{children}</a>
+              ),
+            }}
+          >
+            {insights.narrative}
+          </ReactMarkdown>
+        </div>
       )}
 
       {/* Metric chips */}
