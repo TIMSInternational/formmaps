@@ -7,6 +7,7 @@ import {
   MILResultsData,
   EnhancedUserExamHistory,
   ExamStatus,
+  LIAWeightedComposite,
 } from "@/services/milService";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { normalizeRole } from "@/lib/roleUtils";
@@ -18,6 +19,8 @@ export interface MILProgress {
   isCompleted: boolean;
   lastUpdated: string;
   enhancedData?: EnhancedUserExamHistory;
+  /** TIMS 300-point weighted composite + provisional bands (absent on older payloads). */
+  weightedComposite?: LIAWeightedComposite;
   examStatuses?: {
     completed: ExamStatus[];
     inProgress: ExamStatus[];
@@ -120,6 +123,8 @@ export function useMILData() {
           isCompleted: milResults.completedExams >= milResults.totalExams,
           lastUpdated: new Date().toISOString(),
           enhancedData,
+          // Optional — gracefully absent on older/cached payloads.
+          weightedComposite: milResults?.weightedComposite,
           examStatuses: {
             completed: completedExamStatuses,
             inProgress: inProgressExamStatuses,
@@ -274,6 +279,7 @@ export function useMILData() {
     getExamResults,
     getCompletionStats,
     getSubtestScores,
+    weightedComposite: progress?.weightedComposite,
     hasMIL: !!progress && progress.completedExams.length > 0,
     isCompleted: progress?.isCompleted || false,
     hasEnhancedData:
