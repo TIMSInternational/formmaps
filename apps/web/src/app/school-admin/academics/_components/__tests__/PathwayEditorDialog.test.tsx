@@ -10,7 +10,7 @@ import { updatePrerequisites } from "@/services/curriculumService";
 jest.mock("../PathwayCanvas", () => ({
   COURSE_DRAG_MIME: "application/pathway-course",
   PathwayCanvas: ({ onConnect, onDropCourse, readOnly, edges }: {
-    onConnect: (c: { source: string; target: string }) => void;
+    onConnect: (c: { source: string | null; target: string | null }) => void;
     onDropCourse: (id: string, p: { x: number; y: number }) => void;
     readOnly: boolean;
     edges: { length: number }[];
@@ -21,6 +21,7 @@ jest.mock("../PathwayCanvas", () => ({
       <button onClick={() => onConnect({ source: "c6", target: "c3" })}>add GEO→CALC</button>
       <button onClick={() => onConnect({ source: "c3", target: "c1" })}>add cycle</button>
       <button onClick={() => onConnect({ source: "c1", target: "c2" })}>add duplicate</button>
+      <button onClick={() => onConnect({ source: null, target: "c3" })}>add null-handle</button>
       <button onClick={() => onDropCourse("c6", { x: 0, y: 0 })}>drop GEO</button>
     </div>
   ),
@@ -119,6 +120,32 @@ describe("PathwayEditorDialog", () => {
     fireEvent.click(screen.getByText("add duplicate"));
     expect(mockToastError).toHaveBeenCalled();
     expect(screen.getByTestId("edge-count").textContent).toBe("2");
+  });
+
+  it("ignores a connection with a missing handle (null source/target)", () => {
+    renderDialog();
+    fireEvent.click(screen.getByText("add null-handle"));
+    expect(screen.getByTestId("edge-count").textContent).toBe("2"); // no edge, no crash
+    expect(mockToastError).not.toHaveBeenCalled();
+  });
+
+  it("dropping a palette course onto the canvas removes it from the palette", () => {
+    renderDialog();
+    expect(screen.getByText("GEO")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("drop GEO"));
+    expect(screen.queryByText("GEO")).not.toBeInTheDocument();
+    // placing a node with no edges is not itself a change
+    expect(screen.getByRole("button", { name: /^Saved$/ })).toBeDisabled();
+  });
+
+  it("names the courses that failed to save and keeps the dialog open", async () => {
+    mockUpdate.mockRejectedValueOnce(new Error("boom"));
+    const { onClose } = renderDialog();
+    fireEvent.click(screen.getByText("add GEO→CALC"));
+    fireEvent.click(screen.getByRole("button", { name: /^Save 1$/ }));
+
+    await waitFor(() => expect(mockToastError).toHaveBeenCalledWith(expect.stringContaining("CALC")));
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("prompts before discarding unsaved changes on close", () => {

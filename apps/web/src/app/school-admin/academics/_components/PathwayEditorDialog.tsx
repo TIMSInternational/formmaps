@@ -171,11 +171,15 @@ export function PathwayEditorDialog({ open, onClose }: PathwayEditorDialogProps)
     [edges, focusSet, readOnly, handleEdgeDelete],
   );
 
+  // Bumped after a partial save commits some courses to the baseline ref, to
+  // force pendingChanges to recompute (the baseline lives in a ref, not state).
+  const [baselineVersion, setBaselineVersion] = useState(0);
   const pendingChanges = useMemo(() => {
     if (readOnly) return [];
     const plain: PathwayEdge[] = edges.map((e) => ({ id: e.id, source: e.source, target: e.target }));
     return diffPrereqs(originalPrereqs.current, plain, catalogCourses);
-  }, [edges, catalogCourses, readOnly]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [edges, catalogCourses, readOnly, baselineVersion]);
   const dirty = pendingChanges.length > 0;
 
   const requestClose = useCallback(() => {
@@ -198,14 +202,26 @@ export function PathwayEditorDialog({ open, onClose }: PathwayEditorDialogProps)
     queryClient.invalidateQueries({ queryKey: curriculumKeys.pathways() });
     queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
 
-    const failed = results.filter((r) => r.status === "rejected").length;
-    if (failed === 0) {
+    // Commit the courses that saved into the baseline so they stop showing as
+    // dirty, and name the ones that failed so the admin knows what to retry.
+    const failedCodes: string[] = [];
+    results.forEach((r, i) => {
+      const change = pendingChanges[i];
+      if (r.status === "fulfilled") {
+        originalPrereqs.current[change.courseId] = change.courseIds;
+      } else {
+        failedCodes.push(byId.get(change.courseId)?.code ?? change.courseId);
+      }
+    });
+    setBaselineVersion((v) => v + 1);
+
+    if (failedCodes.length === 0) {
       toast.success(`Saved ${pendingChanges.length} ${pendingChanges.length === 1 ? "course" : "courses"}`);
       onClose();
     } else {
-      toast.error(`${failed} of ${pendingChanges.length} courses failed to save — they were left unchanged`);
+      toast.error(`Couldn't save ${failedCodes.join(", ")} — left unchanged. Other changes were saved.`);
     }
-  }, [dirty, readOnly, saving, pendingChanges, queryClient, onClose]);
+  }, [dirty, readOnly, saving, pendingChanges, queryClient, onClose, byId]);
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) requestClose(); }}>
