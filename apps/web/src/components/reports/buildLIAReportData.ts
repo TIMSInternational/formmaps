@@ -61,7 +61,11 @@ export function buildLIAReportData(input: BuildLIAReportInput): LIAReportData {
     },
     reportDate: new Date().toISOString(),
     overallScore: {
-      percentage: input.overallScore,
+      // When the weighted composite is present, the headline score MUST come from
+      // the same metric as the band (composite percent) — otherwise an uneven
+      // profile could show e.g. "100%" next to a "Low" composite band. Fall back to
+      // the unweighted average only when no composite is available.
+      percentage: composite ? composite.percent : input.overallScore,
       // No real percentile data yet (TIMS norm tables outstanding).
       percentileRank: null,
       // Real band classification from the weighted composite (provisional cut-offs).

@@ -91,6 +91,14 @@ describe("buildLIAReportData", () => {
       expect(out.overallScore.percentileRank).toBeNull();
     });
 
+    it("headline score uses the composite percent (same metric as the band), NOT the unweighted average", () => {
+      // compositeInput.overallScore (unweighted) is 73 but the composite percent is 66.
+      // The report must show 66 so the score and the "Exceeds" band can't contradict.
+      const out = buildLIAReportData(compositeInput);
+      expect(out.overallScore.percentage).toBe(66);
+      expect(out.overallScore.percentage).not.toBe(73);
+    });
+
     it("maps each subtest's interpretation to its per-domain band labelEn (matched by examId)", () => {
       const out = buildLIAReportData(compositeInput);
       expect(out.subtests[0].interpretation).toBe("Exceptional");

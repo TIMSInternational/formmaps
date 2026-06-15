@@ -79,6 +79,18 @@ interface SubtestBand {
   color: string;
 }
 
+// Readable foreground for a band badge: dark text on light band colors (e.g. the
+// yellow Adecuado #FFD600), white otherwise. Keeps WCAG contrast on every band.
+function bandTextColor(hex: string): string {
+  const c = hex.replace("#", "");
+  if (c.length < 6) return "#ffffff";
+  const r = parseInt(c.slice(0, 2), 16);
+  const g = parseInt(c.slice(2, 4), 16);
+  const b = parseInt(c.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? "#111111" : "#ffffff";
+}
+
 interface SubtestResult {
   name: string;
   score: number;
@@ -121,8 +133,8 @@ const SubtestCard = ({ test, index }: { test: SubtestResult; index: number }) =>
              </div>
              {test.band && (
                <span
-                 className="inline-block mt-2 rounded-full px-2.5 py-0.5 text-xs font-semibold text-white"
-                 style={{ backgroundColor: test.band.color }}
+                 className="inline-block mt-2 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                 style={{ backgroundColor: test.band.color, color: bandTextColor(test.band.color) }}
                >
                  {test.band.labelEn}
                </span>
@@ -309,8 +321,8 @@ export default function MILResultsPage() {
                     {weightedComposite.raw} <span className="text-2xl text-muted-foreground">/ 300</span>
                   </h3>
                   <span
-                    className="rounded-full px-3 py-1 text-sm font-semibold text-white"
-                    style={{ backgroundColor: weightedComposite.color }}
+                    className="rounded-full px-3 py-1 text-sm font-semibold"
+                    style={{ backgroundColor: weightedComposite.color, color: bandTextColor(weightedComposite.color) }}
                   >
                     {weightedComposite.labelEn}
                   </span>
