@@ -167,8 +167,8 @@ export function createCustomPracticeQuestions(examId: MILExamId): MILQuestion[] 
           numbers: [7, 1, 3],
         },
         explanation:
-          "The lowest number is 1 and the highest is 7. The middle (median) number is 3. The number 7 is 4 away from 3, while 1 is only 2 away — so 7 is furthest from the middle. The correct answer is 7.",
-        correctAnswer: 7,
+          "The lowest number is 1 and the highest is 7. The middle (median) number is 3. The number 7 is 4 away from 3, while 1 is only 2 away — so 7 is furthest from the middle. 7 is in position A, so the correct answer is letter A.",
+        correctAnswer: 0,
       },
       {
         questionNumber: 2,
@@ -179,8 +179,8 @@ export function createCustomPracticeQuestions(examId: MILExamId): MILQuestion[] 
           numbers: [21, 29, 17],
         },
         explanation:
-          "Identify the lowest number (17) and the highest number (29). The middle (median) number is 21. The number 29 is 8 away from 21, while 17 is only 4 away — so 29 is furthest from the middle. The correct answer is 29.",
-        correctAnswer: 29,
+          "Identify the lowest number (17) and the highest number (29). The middle (median) number is 21. The number 29 is 8 away from 21, while 17 is only 4 away — so 29 is furthest from the middle. 29 is in position B, so the correct answer is letter B.",
+        correctAnswer: 1,
       },
     ];
   }

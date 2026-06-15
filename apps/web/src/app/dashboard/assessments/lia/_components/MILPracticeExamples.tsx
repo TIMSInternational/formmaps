@@ -69,11 +69,9 @@ export default function MILPracticeExamples({
     }
 
     if (question.data.numbers && question.data.numbers.length === 3) {
-      const numbers = question.data.numbers;
-      const sortedNumbers = [...numbers].sort((a, b) => a - b);
-      const extremes = [sortedNumbers[0], sortedNumbers[2]];
-      const selectedNumber = extremes[answer];
-      return selectedNumber === question.correctAnswer;
+      // correctAnswer is the POSITION index 0/1/2 (A/B/C) of the extreme
+      // furthest from the middle, matching the backend encoding.
+      return answer === question.correctAnswer;
     }
 
     if (question.data.visualRotationItems) {
@@ -303,6 +301,15 @@ export default function MILPracticeExamples({
                       return `"${
                         currentQ.data.options[currentQ.correctAnswer]
                       }"`;
+                    }
+                    if (
+                      currentQ.data.numbers &&
+                      currentQ.data.numbers.length === 3 &&
+                      typeof currentQ.correctAnswer === "number"
+                    ) {
+                      const labels = ["A", "B", "C"];
+                      const idx = currentQ.correctAnswer;
+                      return `${labels[idx]} (${currentQ.data.numbers[idx]})`;
                     }
                     if (currentQ.correctAnswer !== undefined) {
                       return currentQ.correctAnswer.toString();
