@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, GitBranch, RefreshCw, TriangleAlert } from "lucide-react";
+import { ArrowRight, GitBranch, RefreshCw, TriangleAlert, Workflow } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCoursePathways } from "@/hooks/useCurriculumQueries";
 import { EditPrerequisitesDialog } from "./EditPrerequisitesDialog";
+import { PathwayEditorDialog } from "./PathwayEditorDialog";
 import type { PathwayCourse } from "@/types/curriculum";
+
+const BTN_EDITOR: React.CSSProperties = {
+  height: 34, borderRadius: 6, padding: "0 14px", fontSize: 13, fontWeight: 600,
+  display: "inline-flex", alignItems: "center", gap: 7,
+  background: "#065292", color: "#fff", border: "none", cursor: "pointer",
+};
 
 const NODE_BTN: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px",
@@ -37,6 +44,7 @@ function CourseNode({ course, onClick }: { course: PathwayCourse; onClick: () =>
 export function PathwaysPanel() {
   const { data, isLoading, isError, refetch } = useCoursePathways();
   const [editCourse, setEditCourse] = useState<PathwayCourse | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -60,24 +68,38 @@ export function PathwaysPanel() {
 
   const groups = data?.groups ?? [];
 
+  const editorButton = (
+    <button onClick={() => setEditorOpen(true)} style={BTN_EDITOR}>
+      <Workflow style={{ width: 15, height: 15 }} /> Open visual editor
+    </button>
+  );
+  const editorDialog = editorOpen && (
+    <PathwayEditorDialog open={editorOpen} onClose={() => setEditorOpen(false)} />
+  );
+
   if (groups.length === 0) {
     return (
       <div className="py-16 text-center" style={{ borderRadius: 8, border: "1px dashed var(--admin-border-default)" }}>
         <GitBranch style={{ width: 32, height: 32, margin: "0 auto 12px", opacity: 0.3, color: "var(--admin-font-tertiary)" }} />
         <div style={{ fontSize: 14, fontWeight: 500, color: "var(--admin-font-primary)", marginBottom: 4 }}>No pathways yet</div>
-        <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", maxWidth: 420, margin: "0 auto" }}>
-          Pathways are derived from course prerequisites. Add prerequisites to your courses
-          (or run Analyze Prerequisites on the Courses tab) and chains will appear here.
+        <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", maxWidth: 420, margin: "0 auto 16px" }}>
+          Pathways are derived from course prerequisites. Open the visual editor to draw them,
+          add prerequisites to your courses, or run Analyze Prerequisites on the Courses tab.
         </div>
+        {editorButton}
+        {editorDialog}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-        Derived from your course prerequisites — click any course to edit its prerequisites.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>
+          Derived from your course prerequisites — click any course to edit its prerequisites.
+        </p>
+        {editorButton}
+      </div>
 
       {data?.truncated && (
         <div className="flex items-center gap-2" style={{ padding: "8px 12px", borderRadius: 6, background: "rgba(217,119,6,0.08)", border: "1px solid rgba(217,119,6,0.3)" }}>
@@ -115,6 +137,7 @@ export function PathwaysPanel() {
       {editCourse && (
         <EditPrerequisitesDialog key={editCourse.courseId} course={editCourse} onClose={() => setEditCourse(null)} />
       )}
+      {editorDialog}
     </div>
   );
 }

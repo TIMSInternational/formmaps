@@ -11,6 +11,8 @@ module.exports = {
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    // Stub stylesheet imports (e.g. @xyflow/react/dist/style.css) — jest can't parse CSS
+    '\\.(css|less|scss|sass)$': '<rootDir>/__mocks__/styleMock.js',
   },
   // Playwright e2e specs use their own runner — jest must not pick them up
   testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
