@@ -1,7 +1,7 @@
 'use client';
 
 import { pdf } from '@react-pdf/renderer';
-import LIAReportPDF, { LIAReportData, dummyLIAData } from './LIAReportPDF';
+import LIAReportPDF, { LIAReportData } from './LIAReportPDF';
 import PCAReportPDF, { PCAReportData, dummyPCAData } from './PCAReportPDF';
 
 // Report types
@@ -38,17 +38,18 @@ const fetchBackendReport = async (endpoint: string, filename: string): Promise<v
   downloadBlob(blob, filename);
 };
 
-// Generate and download LIA Report
+// Generate and download LIA Report.
+// REQUIRES real assessment data — there is no dummy fallback. If a caller
+// fails to pass data we fail safe (log + no-op) rather than emitting a fake
+// "Alex Johnson" report.
 export const generateLIAReport = async (data?: LIAReportData): Promise<void> => {
-  const reportData = data || dummyLIAData;
-  const fileName = `LIA_Assessment_Report_${reportData.user.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-
-  try {
-    const blob = await pdf(<LIAReportPDF data={reportData} />).toBlob();
-    downloadBlob(blob, fileName);
-  } catch (error) {
-    throw error;
+  if (!data) {
+    console.error('generateLIAReport called without data — refusing to emit a placeholder report.');
+    return;
   }
+  const fileName = `LIA_Assessment_Report_${data.user.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+  const blob = await pdf(<LIAReportPDF data={data} />).toBlob();
+  downloadBlob(blob, fileName);
 };
 
 // Generate and download PCA Report
@@ -106,10 +107,9 @@ export const generateBenchmarkReport = async (userId?: string): Promise<void> =>
   );
 };
 
-// Get preview URL for LIA Report (for iframe display)
-export const getLIAReportPreviewUrl = async (data?: LIAReportData): Promise<string> => {
-  const reportData = data || dummyLIAData;
-  const blob = await pdf(<LIAReportPDF data={reportData} />).toBlob();
+// Get preview URL for LIA Report (for iframe display). Requires real data.
+export const getLIAReportPreviewUrl = async (data: LIAReportData): Promise<string> => {
+  const blob = await pdf(<LIAReportPDF data={data} />).toBlob();
   return URL.createObjectURL(blob);
 };
 
@@ -147,6 +147,6 @@ export const generateReport = async (
   }
 };
 
-// Export all types and dummy data
-export { dummyLIAData, dummyPCAData };
+// Export shared types (PCA still ships a dummy fallback; LIA does not).
+export { dummyPCAData };
 export type { LIAReportData, PCAReportData };
