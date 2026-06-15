@@ -148,12 +148,17 @@ export default function EvaluatorPage() {
       setIsSubmitting(true);
       setError(null);
 
+      // Only submit answered questions — a rating is required. Comment-only
+      // entries are dropped (the API rejects null ratings). Send the question's
+      // category so backend derivation never depends on question numbering.
       const answers = evaluationData.questions
-        .filter((q) => responses[q.id]?.rating || responses[q.id]?.textResponse)
+        .filter((q) => typeof responses[q.id]?.rating === "number")
         .map((q) => ({
           questionNumber: q.order,
+          questionId: q.id,
+          category: q.category,
           questionText: q.questionText || `Question ${q.order}`,
-          rating: responses[q.id]?.rating || null,
+          rating: responses[q.id]!.rating as number,
           comment: responses[q.id]?.textResponse || "",
         }));
 
