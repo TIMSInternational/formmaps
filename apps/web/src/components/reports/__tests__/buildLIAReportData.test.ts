@@ -62,4 +62,61 @@ describe("buildLIAReportData", () => {
     expect(out.user.name).not.toBe("Alex Johnson");
     expect(out.user.name.length).toBeGreaterThan(0);
   });
+
+  describe("weightedComposite mapping", () => {
+    const compositeInput = {
+      user: { id: "user-123", name: "Maria Garcia", email: "maria@formmaps.dev" },
+      overallScore: 73,
+      averageAccuracy: 81,
+      weightedComposite: {
+        raw: 198,
+        percent: 66,
+        band: "Excede",
+        labelEn: "Exceeds",
+        color: "#059669",
+        perDomain: [
+          { type: "PatternRecognition", percent: 85, weight: 20, band: "Excepcional", labelEn: "Exceptional", color: "#065292" },
+          { type: "VerbalReasoning", percent: 61, weight: 40, band: "Excede", labelEn: "Exceeds", color: "#059669" },
+        ],
+      },
+      subtests: [
+        { name: "Feature Detection", score: 85, accuracy: 90, examId: "feature-detection-001" },
+        { name: "Verbal Reasoning", score: 61, accuracy: 70, examId: "verbal-reasoning-001" },
+      ],
+    };
+
+    it("sets overall classification to the composite labelEn (percentile stays null)", () => {
+      const out = buildLIAReportData(compositeInput);
+      expect(out.overallScore.classification).toBe("Exceeds");
+      expect(out.overallScore.percentileRank).toBeNull();
+    });
+
+    it("maps each subtest's interpretation to its per-domain band labelEn (matched by examId)", () => {
+      const out = buildLIAReportData(compositeInput);
+      expect(out.subtests[0].interpretation).toBe("Exceptional");
+      expect(out.subtests[1].interpretation).toBe("Exceeds");
+    });
+
+    it("does NOT fabricate percentiles even with a composite present", () => {
+      const out = buildLIAReportData(compositeInput);
+      expect(out.subtests[0].percentile).toBeNull();
+      expect(out.subtests[1].percentile).toBeNull();
+    });
+
+    it("leaves subtest interpretation empty when no matching per-domain band", () => {
+      const out = buildLIAReportData({
+        ...compositeInput,
+        subtests: [{ name: "Working Memory", score: 50, accuracy: 60, examId: "working-memory-001" }],
+      });
+      expect(out.subtests[0].interpretation).toBe("");
+    });
+  });
+
+  it("produces a valid band-less report when weightedComposite is absent (no crash)", () => {
+    const out = buildLIAReportData(input);
+    expect(out.overallScore.classification).toBe("");
+    expect(out.subtests[0].interpretation).toBe("");
+    expect(out.subtests[1].interpretation).toBe("");
+    expect(out.overallScore.percentileRank).toBeNull();
+  });
 });

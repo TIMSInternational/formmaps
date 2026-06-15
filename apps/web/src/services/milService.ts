@@ -296,6 +296,43 @@ export interface UserProgressSummary {
  * where data.examResults[] has the same exam IDs used throughout
  * (pattern-recognition-001, verbal-reasoning-001, etc.)
  */
+/**
+ * LIA per-domain band (one entry per weighted domain). `type` is the backend
+ * ExamType key (e.g. "PatternRecognition") — map to a canonical examId via
+ * EXAM_TYPE_TO_ID when matching against subtest rows.
+ */
+export interface LIACompositeDomain {
+  type: string;
+  percent: number;
+  weight: number;
+  band: string;
+  labelEn: string;
+  color: string;
+}
+
+/**
+ * TIMS 300-point weighted composite + provisional 5-band classification.
+ * Bands are PROVISIONAL (quintiles) — surface a "provisional" note in the UI.
+ * May be absent on older/cached payloads — always extract defensively.
+ */
+export interface LIAWeightedComposite {
+  raw: number; // 0–300 weighted composite
+  percent: number; // 0–100
+  band: string; // Spanish band name (Insuficiente | Bajo | Adecuado | Excede | Excepcional)
+  labelEn: string; // Insufficient | Low | Adequate | Exceeds | Exceptional
+  color: string; // hex
+  perDomain: LIACompositeDomain[];
+}
+
+/** Map backend ExamType keys → canonical exam IDs used in the UI. */
+export const EXAM_TYPE_TO_ID: Record<string, string> = {
+  PatternRecognition: "feature-detection-001",
+  VerbalReasoning: "verbal-reasoning-001",
+  WorkingMemory: "working-memory-001",
+  NumericVelocity: "numerical-speed-accuracy-001",
+  VisualRotation: "spatial-orientation-001",
+};
+
 export interface MILResultsData {
   userId: string;
   overallScore: number;
@@ -303,6 +340,8 @@ export interface MILResultsData {
   completedExams: number;
   totalExams: number;
   lastCompletedAt: string | null;
+  /** Optional — absent on older payloads. */
+  weightedComposite?: LIAWeightedComposite;
   examResults: Array<{
     examId: string;
     examName: string;
