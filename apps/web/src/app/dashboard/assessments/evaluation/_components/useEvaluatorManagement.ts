@@ -296,13 +296,22 @@ export function useEvaluatorManagement() {
             "Evaluator details updated successfully! Note: API update functionality will be implemented soon."
           );
         } else {
-          await createEvaluationGroup({
+          const created = await createEvaluationGroup({
             evaluatorName: newEvaluator.name,
             evaluatorEmail: newEvaluator.email,
             relation: relationValue,
             groupType: apiGroupType as any,
             evaluatedUserId: user.id,
           });
+          // The invitation email is now sent on create (parity with the other
+          // invite flows). Confirm delivery, or tell the student to use Resend
+          // if the mailer couldn't deliver it.
+          const emailSent = (created as { emailSent?: boolean })?.emailSent;
+          toast.success(
+            emailSent === false
+              ? t("evaluation.toast.inviteEmailFailed", { name: newEvaluator.name })
+              : t("evaluation.toast.inviteSent", { name: newEvaluator.name })
+          );
         }
 
         await loadApiEvaluators();
