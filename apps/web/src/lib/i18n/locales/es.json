@@ -156,6 +156,8 @@
     },
     "toast": {
       "emailSent": "¡Correo de invitación enviado con éxito!",
+      "inviteSent": "Invitación enviada a {{name}}",
+      "inviteEmailFailed": "{{name}} agregado — no pudimos enviar la invitación por correo. Usa Reenviar para intentarlo de nuevo.",
       "emailFailed": "Error al enviar invitación por correo. Intenta de nuevo.",
       "emailPartial": "Algunas invitaciones pueden no haberse enviado. Verifica los resultados.",
       "evalRemoved": "¡Evaluador eliminado con éxito!",
