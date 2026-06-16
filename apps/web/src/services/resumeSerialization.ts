@@ -12,6 +12,8 @@
 import type { ResumeData } from "@/store/useGlobalStore";
 import type { Resume } from "@/services/resumeService";
 
+export type OriginalFileType = "pdf" | "docx" | "other";
+
 // --- Transport contract (what the backend stores + returns) --------------------
 
 export interface ApiExperience {
@@ -48,6 +50,8 @@ export interface ApiResumePayload {
   sections?: Record<string, unknown>[];
   customFields?: unknown[];
   fieldVisibility?: Record<string, boolean>;
+  hasOriginal?: boolean;
+  originalFileType?: OriginalFileType;
 }
 
 // --- Raw backend shapes (field names vary: camelCase / PascalCase / legacy) -----
@@ -116,6 +120,8 @@ export interface RawResumeEntity {
   createdAt?: string;
   updatedAt?: string;
   UpdatedAt?: string;
+  hasOriginal?: boolean;
+  originalFileType?: OriginalFileType;
 }
 
 // --- Read: backend entity -> in-app Resume (canonical) -------------------------
@@ -198,6 +204,8 @@ export function fromApiResume(raw: RawResumeEntity): Resume {
       skills: groupSkillsFromFlat(raw.skills || raw.Skills || []),
     },
     sections: raw.sections || [],
+    hasOriginal: raw.hasOriginal ?? false,
+    originalFileType: raw.originalFileType,
   };
 }
 
