@@ -39,8 +39,21 @@
     "coaching": "Coaching",
     "mainNavigation": "Navegación principal"
   },
+  "dev": {
+    "mil": {
+      "title": "Herramientas de prueba MIL",
+      "description": "Llena o borra los datos de prueba de práctica/examen MIL (solo desarrollo).",
+      "populateButton": "Llenar datos de prueba",
+      "clearButton": "Borrar datos de prueba",
+      "populated": "Datos de prueba MIL llenados.",
+      "populateFailed": "No se pudieron llenar los datos de prueba MIL.",
+      "cleared": "Datos de prueba MIL borrados.",
+      "clearFailed": "No se pudieron borrar los datos de prueba MIL."
+    }
+  },
   "common": {
     "search": "Buscar aquí",
+    "tryAgain": "Intentar de nuevo",
     "loading": "Cargando...",
     "progress": "Progreso",
     "refresh": "Actualizar",
@@ -661,7 +674,15 @@
         "keyObservationDesc": "El salario medio para {{career}} en {{country}} ha mostrado un crecimiento constante en los últimos 3 años."
       }
     },
-    "nextExample": "Siguiente Ejemplo"
+    "nextExample": "Siguiente Ejemplo",
+    "compositeScore": "Puntuación compuesta",
+    "avgAccuracy": "Precisión prom.",
+    "downloadPDFReport": "Descargar informe",
+    "bandsProvisionalNote": "Umbrales de banda provisionales — pendientes de validación de normas",
+    "aiInsight": "Perspectiva de IA",
+    "aiInsightMIL": "Tu área más fuerte es {{area}} ({{score}}%). Esto sugiere una gran aptitud para carreras que requieren esta habilidad cognitiva.",
+    "assessmentStarted": "Evaluación iniciada. Complétala a continuación.",
+    "failedToCreateAssessment": "No se pudo crear la evaluación. Inténtalo de nuevo."
   },
   "coaching": {
     "featuredCoaches": "Coaches Destacados",

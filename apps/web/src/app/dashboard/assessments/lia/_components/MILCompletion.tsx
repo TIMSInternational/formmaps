@@ -86,10 +86,10 @@ export default function MILCompletion({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-6 text-left"
+            className="bg-[#065292]/5 border border-[#065292]/30 rounded-lg p-5 mb-6 text-left"
           >
-            <p className="text-sm font-semibold text-blue-900 mb-1">Next Step</p>
-            <p className="text-sm text-blue-700">
+            <p className="text-sm font-semibold text-[#065292] mb-1">Next Step</p>
+            <p className="text-sm text-[#065292]">
               Complete the <strong>360° Evaluation</strong> — start by evaluating yourself, then invite peers, parents, and teachers to evaluate you.
             </p>
           </motion.div>

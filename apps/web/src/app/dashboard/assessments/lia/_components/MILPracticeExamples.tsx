@@ -138,7 +138,7 @@ export default function MILPracticeExamples({
     return (
       <div className="min-h-screen bg-secondary flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-8 h-8 border-4 border-[#065292] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-muted-foreground">
             {t("dashboard.loadingPracticeExamples")}
           </p>
@@ -193,7 +193,7 @@ export default function MILPracticeExamples({
                     completedQuestions[index]
                       ? "bg-green-500/10 dark:bg-green-500/200"
                       : index === currentQuestion
-                      ? "bg-blue-500"
+                      ? "bg-[#065292]"
                       : "bg-muted"
                   }`}
                 />
@@ -335,7 +335,7 @@ export default function MILPracticeExamples({
                 <button
                   onClick={handleSubmitAnswer}
                   disabled={selectedAnswer === null}
-                  className="bg-blue-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                  className="bg-[#065292] text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-[#054a83] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                 >
                   {t("dashboard.submitAnswer")}
                 </button>
@@ -358,7 +358,7 @@ export default function MILPracticeExamples({
                   ) : (
                     <button
                       onClick={handleContinue}
-                      className="bg-blue-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                      className="bg-[#065292] text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg hover:bg-[#054a83] transition-colors text-sm sm:text-base"
                     >
                       {t("dashboard.nextExample")}
                     </button>

@@ -35,7 +35,7 @@ export function InvitationSelectorDialog({
 }: InvitationSelectorDialogProps) {
   const colorClasses =
     checkboxColor === "blue"
-      ? "text-blue-600 focus:ring-blue-500"
+      ? "text-[#065292] focus:ring-[#065292]"
       : "text-emerald-600 focus:ring-emerald-500";
 
   return (

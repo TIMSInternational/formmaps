@@ -299,7 +299,7 @@ export default function MILAssessmentPage() {
             </div>
             <div className="w-full bg-secondary rounded-full h-1.5">
               <div
-                className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                className="bg-[#065292] h-1.5 rounded-full transition-all duration-300"
                 style={{
                   width: `${exams.length > 0 ? (completedExams.length / exams.length) * 100 : 0}%`,
                 }}
@@ -320,7 +320,7 @@ export default function MILAssessmentPage() {
                     isDone
                       ? "border-emerald-200 bg-emerald-50/50"
                       : isNext
-                      ? "border-blue-200 bg-blue-50/50"
+                      ? "border-[#065292]/30 bg-[#065292]/5"
                       : "border-border bg-secondary/50"
                   }`}
                 >

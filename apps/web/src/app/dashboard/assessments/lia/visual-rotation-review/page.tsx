@@ -147,8 +147,8 @@ export default function VisualRotationReviewPage() {
               onClick={() => handleAnswerSelect(questionIndex, option)}
               className={`w-12 h-12 rounded-lg font-bold text-lg transition-all duration-100 ${
                 selectedAnswers[questionIndex] === option
-                  ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-xl transform scale-110 ring-4 ring-indigo-200/50"
-                  : "bg-card border-2 border-border text-foreground hover:border-indigo-300 hover:bg-indigo-50 shadow-lg hover:shadow-xl"
+                  ? "bg-[#065292] text-white shadow-xl transform scale-110 ring-4 ring-[#065292]/30"
+                  : "bg-card border-2 border-border text-foreground hover:border-[#065292]/40 hover:bg-[#065292]/5 shadow-lg hover:shadow-xl"
               }`}
             >
               {option}
@@ -175,7 +175,7 @@ export default function VisualRotationReviewPage() {
             >
               Your Answer: {selectedAnswers[questionIndex] ?? "Not selected"}
             </div>
-            <div className="px-3 py-1 rounded bg-blue-100 text-blue-800">
+            <div className="px-3 py-1 rounded bg-[#065292]/10 text-[#054a83]">
               Correct Answer: {question.correctAnswer}
             </div>
           </div>
@@ -245,7 +245,7 @@ export default function VisualRotationReviewPage() {
           {/* Stats */}
           <div className="flex gap-6 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-[#065292] rounded-full"></div>
               <span>Total Questions: {exam.questions.length}</span>
             </div>
             <div className="flex items-center gap-2">
@@ -281,11 +281,11 @@ export default function VisualRotationReviewPage() {
         <div className="bg-card border border-border rounded-lg p-6 mt-8">
           <h2 className="text-xl font-semibold text-foreground mb-4">Summary</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
+            <div className="text-center p-4 bg-[#065292]/5 rounded-lg">
+              <div className="text-2xl font-bold text-[#065292]">
                 {exam.questions.length}
               </div>
-              <div className="text-sm text-blue-800">Total Questions</div>
+              <div className="text-sm text-[#054a83]">Total Questions</div>
             </div>
             <div className="text-center p-4 bg-green-500/10 dark:bg-green-500/20 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
