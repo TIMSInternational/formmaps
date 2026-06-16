@@ -51,8 +51,12 @@ export function StaffPanel() {
   const handleInvite = async () => {
     if (!inviteForm.name || !inviteForm.email) { toast.error("Name and email required"); return; }
     try {
-      await inviteStaff.mutateAsync({ name: inviteForm.name, email: inviteForm.email, role: inviteForm.role as "counselor" | "staff" });
-      toast.success("Invitation sent");
+      const result = await inviteStaff.mutateAsync({ name: inviteForm.name, email: inviteForm.email, role: inviteForm.role as "counselor" | "staff" }) as { emailSent?: boolean };
+      if (result?.emailSent === false) {
+        toast.error("Account created, but the invitation email could not be sent. Check the address, then use Resend.");
+      } else {
+        toast.success("Invitation sent");
+      }
       setIsInviteOpen(false);
       setInviteForm({ name: "", email: "", role: "counselor" });
       refetch();
@@ -62,8 +66,12 @@ export function StaffPanel() {
   const handleResendInvite = async (userId: string) => {
     setActionLoading("resend");
     try {
-      await apiRequest(`/api/v1/school-admin/students/${userId}/resend-invite`, { method: "POST" });
-      toast.success("Invitation resent");
+      const res = await apiRequest(`/api/v1/school-admin/students/${userId}/resend-invite`, { method: "POST" });
+      if (res?.data?.emailSent === false) {
+        toast.error("Could not send the invitation email. Verify the address is correct.");
+      } else {
+        toast.success("Invitation resent");
+      }
     } catch { toast.error("Failed to resend invitation"); }
     setActionLoading(null);
   };
