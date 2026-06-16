@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { generateDummyContent } from "@/lib/dummyContentGenerator";
 import { updateResume, getResumeById } from "@/services/resumeService";
+import { toApiResume } from "@/services/resumeSerialization";
 import { telemetry } from "@/services/telemetryService";
 import { logout as apiLogout } from "@/services/authService";
 import { getQueryClient } from "@/components/QueryProvider";
@@ -304,43 +305,9 @@ export const useGlobalStore = create<GlobalState>()(
           const state = get();
           if (state.currentResumeId && state.currentResumeId !== "new") {
             try {
-              // Map store data to API format
-              const apiData = {
-                personal: {
-                  fullName: state.resumeBuilder.data.personalInfo.fullName,
-                  email: state.resumeBuilder.data.personalInfo.email,
-                  phone: state.resumeBuilder.data.personalInfo.phone,
-                  location: state.resumeBuilder.data.personalInfo.location,
-                  linkedIn: state.resumeBuilder.data.personalInfo.linkedin,
-                  website: state.resumeBuilder.data.personalInfo.website,
-                },
-                summary: state.resumeBuilder.data.personalInfo.summary,
-                skills: {
-                  skills: state.resumeBuilder.data.skills.reduce(
-                    (acc, skill) => {
-                      if (!acc[skill.category]) acc[skill.category] = [];
-                      acc[skill.category].push(skill.name);
-                      return acc;
-                    },
-                    {} as Record<string, string[]>
-                  ),
-                },
-                experience: state.resumeBuilder.data.experience.map((exp) => ({
-                  company: exp.company,
-                  location: exp.location,
-                  title: exp.jobTitle,
-                  startDate: exp.startDate,
-                  endDate: exp.endDate,
-                  descriptions: exp.description,
-                })),
-                education: state.resumeBuilder.data.education.map((edu) => ({
-                  degree: edu.degree,
-                  institution: edu.institution,
-                  location: edu.location,
-                  startDate: edu.graduationDate, // Assuming graduationDate as endDate
-                  endDate: edu.graduationDate,
-                })),
-              };
+              // Serialize through the single source of truth so the payload
+              // matches the backend column contract (personalInfo + flat skills).
+              const apiData = toApiResume(state.resumeBuilder.data);
               await updateResume(state.currentResumeId, apiData);
               // Mark as not dirty once saved
               set((state) => ({

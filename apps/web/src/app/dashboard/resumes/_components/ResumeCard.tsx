@@ -97,9 +97,16 @@ export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate
 
       {/* Resume Info */}
       <div className="p-4">
-        <h3 className="text-sm font-bold text-foreground truncate mb-1.5">
-          {resume.name}
-        </h3>
+        <div className="flex items-center gap-2 mb-1.5">
+          <h3 className="text-sm font-bold text-foreground truncate">
+            {resume.name}
+          </h3>
+          {resume.hasOriginal && (
+            <span className="rounded-full bg-[#FFD600] px-2 py-0.5 text-[10px] font-semibold text-[#111111] shrink-0">
+              Original
+            </span>
+          )}
+        </div>
 
         <div className="flex items-center text-xs text-muted-foreground mb-3">
           <Calendar className="w-3 h-3 mr-1.5" />
