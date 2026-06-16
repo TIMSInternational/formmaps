@@ -1,5 +1,5 @@
 import { apiRequest } from "@/lib/api/apiClient";
-import { fromApiResume, type ApiResumePayload } from "@/services/resumeSerialization";
+import { fromApiResume, type ApiResumePayload, type OriginalFileType } from "@/services/resumeSerialization";
 
 export interface ResumePersonal {
   fullName: string;
@@ -50,7 +50,7 @@ export interface Resume {
   createdAt?: string;
   updatedAt?: string;
   hasOriginal?: boolean;
-  originalFileType?: string;
+  originalFileType?: OriginalFileType;
 }
 
 // Writers MUST emit the backend column contract (see resumeSerialization).
@@ -98,7 +98,8 @@ export async function getOriginalUrl(resumeId: string): Promise<string | null> {
   try {
     const res = await apiRequest(`/api/resume/${resumeId}/original`, { method: "GET" });
     return res?.data?.url ?? res?.url ?? null;
-  } catch {
+  } catch (e) {
+    console.error("getOriginalUrl failed", e);
     return null;
   }
 }

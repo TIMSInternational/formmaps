@@ -107,6 +107,16 @@ describe("save -> reload round-trip is lossless for personal info + skills", () 
   });
 });
 
+describe("toApiResume never emits original-file columns (immutability)", () => {
+  it("omits hasOriginal/originalFileType/originalFileKey/originalPdfKey", () => {
+    const api = toApiResume(sampleData) as unknown as Record<string, unknown>;
+    expect(api).not.toHaveProperty("hasOriginal");
+    expect(api).not.toHaveProperty("originalFileType");
+    expect(api).not.toHaveProperty("originalFileKey");
+    expect(api).not.toHaveProperty("originalPdfKey");
+  });
+});
+
 describe("fromApiResume carries original-file metadata", () => {
   it("passes through hasOriginal + originalFileType", () => {
     const r = fromApiResume({

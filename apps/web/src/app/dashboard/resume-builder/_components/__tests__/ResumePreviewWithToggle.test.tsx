@@ -27,4 +27,13 @@ describe("ResumePreviewWithToggle", () => {
     fireEvent.click(screen.getByRole("tab", { name: /edited/i }));
     expect(screen.getByText("EDITED CONTENT")).toBeInTheDocument();
   });
+
+  it("shows an error + fallback to Edited when the original fails to load", async () => {
+    render(
+      <ResumePreviewWithToggle hasOriginal loadOriginalUrl={jest.fn().mockResolvedValue(null)} edited={<div>EDITED CONTENT</div>} />,
+    );
+    expect(await screen.findByText(/couldn't load the original/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /view edited version/i }));
+    expect(screen.getByText("EDITED CONTENT")).toBeInTheDocument();
+  });
 });

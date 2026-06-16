@@ -250,7 +250,8 @@ export default function ResumeBuilderPage() {
         setHasOriginalState(Boolean(apiData?.hasOriginal));
       })
       .catch((error) => {
-      })
+          console.error("Failed to load resume", error);
+        })
       .finally(() => {
         if (isMounted) {
           initializationRef.current = true;
