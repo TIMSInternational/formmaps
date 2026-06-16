@@ -39,8 +39,21 @@
     "coaching": "Coaching",
     "mainNavigation": "Main navigation"
   },
+  "dev": {
+    "mil": {
+      "title": "MIL Test Tools",
+      "description": "Populate or clear MIL practice/exam test data (development only).",
+      "populateButton": "Populate Test Data",
+      "clearButton": "Clear Test Data",
+      "populated": "MIL test data populated.",
+      "populateFailed": "Failed to populate MIL test data.",
+      "cleared": "MIL test data cleared.",
+      "clearFailed": "Failed to clear MIL test data."
+    }
+  },
   "common": {
     "search": "Search here",
+    "tryAgain": "Try Again",
     "loading": "Loading...",
     "progress": "Progress",
     "refresh": "Refresh",
@@ -1172,7 +1185,15 @@
         "keyObservationDesc": "The median salary for {{career}} in {{country}} has shown consistent growth over the past 3 years."
       }
     },
-    "nextExample": "Next Example"
+    "nextExample": "Next Example",
+    "compositeScore": "Composite Score",
+    "avgAccuracy": "Avg Accuracy",
+    "downloadPDFReport": "Download Report",
+    "bandsProvisionalNote": "Band thresholds provisional — pending norm validation",
+    "aiInsight": "AI Insight",
+    "aiInsightMIL": "Your strongest area is {{area}} ({{score}}%). This suggests strong aptitude for careers requiring this cognitive skill.",
+    "assessmentStarted": "Assessment started. Complete it below.",
+    "failedToCreateAssessment": "Failed to create assessment. Please try again."
   },
   "coaching": {
     "featuredCoaches": "Featured Coaches",
