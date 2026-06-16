@@ -49,6 +49,8 @@ export interface Resume {
   template: string;
   createdAt?: string;
   updatedAt?: string;
+  hasOriginal?: boolean;
+  originalFileType?: string;
 }
 
 // Writers MUST emit the backend column contract (see resumeSerialization).
@@ -90,6 +92,15 @@ export async function getResumeById(resumeId: string): Promise<Resume> {
 
 export async function deleteResume(resumeId: string): Promise<void> {
   return apiRequest(`/api/resume/${resumeId}`, { method: "DELETE" });
+}
+
+export async function getOriginalUrl(resumeId: string): Promise<string | null> {
+  try {
+    const res = await apiRequest(`/api/resume/${resumeId}/original`, { method: "GET" });
+    return res?.data?.url ?? res?.url ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // AI Generation Functions

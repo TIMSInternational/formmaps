@@ -106,3 +106,19 @@ describe("save -> reload round-trip is lossless for personal info + skills", () 
     expect(resume.education[0].degree).toBe("B.S. Computer Science");
   });
 });
+
+describe("fromApiResume carries original-file metadata", () => {
+  it("passes through hasOriginal + originalFileType", () => {
+    const r = fromApiResume({
+      id: "r1",
+      personalInfo: { fullName: "Jane" },
+      experience: [],
+      education: [],
+      skills: [],
+      hasOriginal: true,
+      originalFileType: "pdf",
+    } as never);
+    expect(r.hasOriginal).toBe(true);
+    expect(r.originalFileType).toBe("pdf");
+  });
+});
