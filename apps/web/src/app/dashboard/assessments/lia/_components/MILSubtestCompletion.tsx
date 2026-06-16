@@ -85,7 +85,7 @@ export default function MILSubtestCompletion({
               initial={{ width: 0 }}
               animate={{ width: `${progressPercentage}%` }}
               transition={{ delay: 0.4, duration: 0.4 }}
-              className="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full"
+              className="bg-[#065292] h-3 rounded-full"
             />
           </div>
           <p className="text-xs text-muted-foreground mt-2">
@@ -104,7 +104,7 @@ export default function MILSubtestCompletion({
             <>
               <button
                 onClick={onContinue}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold shadow-lg"
+                className="w-full bg-[#065292] text-white py-3 px-6 rounded-lg hover:bg-[#054a83] transition-all duration-200 font-semibold shadow-lg"
               >
                 Continue to Next Subtest →
               </button>
@@ -118,7 +118,7 @@ export default function MILSubtestCompletion({
           ) : (
             <button
               onClick={onContinue}
-              className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 px-6 rounded-lg hover:from-green-700 hover:to-blue-700 transition-all duration-200 font-semibold shadow-lg"
+              className="w-full bg-[#065292] text-white py-3 px-6 rounded-lg hover:bg-[#054a83] transition-all duration-200 font-semibold shadow-lg"
             >
               View Final Results →
             </button>

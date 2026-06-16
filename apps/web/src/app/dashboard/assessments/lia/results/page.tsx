@@ -106,11 +106,11 @@ const SubtestCard = ({ test, index }: { test: SubtestResult; index: number }) =>
   const isHigh = test.score >= 80;
   const isMed = test.score >= 60;
   
-  const color = isHigh ? "text-emerald-600" : isMed ? "text-blue-600" : "text-amber-600";
-  const bg = isHigh ? "bg-emerald-50" : isMed ? "bg-blue-50" : "bg-amber-50";
-  const border = isHigh ? "border-emerald-100" : isMed ? "border-blue-100" : "border-amber-100";
-  const barColor = isHigh ? "bg-emerald-500" : isMed ? "bg-blue-500" : "bg-amber-500";
-  const blob = isHigh ? "bg-emerald-500" : isMed ? "bg-blue-500" : "bg-amber-500";
+  const color = isHigh ? "text-emerald-600" : isMed ? "text-[#065292]" : "text-amber-600";
+  const bg = isHigh ? "bg-emerald-50" : isMed ? "bg-[#065292]/5" : "bg-amber-50";
+  const border = isHigh ? "border-emerald-100" : isMed ? "border-[#065292]/20" : "border-amber-100";
+  const barColor = isHigh ? "bg-emerald-500" : isMed ? "bg-[#065292]" : "bg-amber-500";
+  const blob = isHigh ? "bg-emerald-500" : isMed ? "bg-[#065292]" : "bg-amber-500";
 
   return (
     <motion.div
@@ -268,7 +268,7 @@ export default function MILResultsPage() {
                 liaData={liaReportData}
                 label={t("dashboard.downloadPDFReport") || "Download Report"}
                 variant="outline"
-                className="h-10 gap-2 rounded-xl bg-indigo-600 text-white border-transparent hover:bg-indigo-700 shadow-sm shadow-indigo-200"
+                className="h-10 gap-2 rounded-xl bg-[#065292] text-white border-transparent hover:bg-[#054a83] shadow-sm"
                 size="md"
               />
           </div>

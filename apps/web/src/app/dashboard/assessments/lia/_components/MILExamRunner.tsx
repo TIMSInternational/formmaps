@@ -237,7 +237,7 @@ export default function MILExamRunner({
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-[#065292] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading assessment...</p>
         </div>
       </div>
@@ -302,8 +302,8 @@ export default function MILExamRunner({
             {/* Question Header */}
             <div className="text-center mb-4 sm:mb-6 md:mb-8">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.1 }} className="mb-3 sm:mb-4 md:mb-6">
-                <div className="inline-flex items-center px-2 sm:px-3 py-1 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full mb-2 sm:mb-4">
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mr-2 sm:mr-3"></div>
+                <div className="inline-flex items-center px-2 sm:px-3 py-1 bg-[#065292]/10 rounded-full mb-2 sm:mb-4">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#065292] rounded-full mr-2 sm:mr-3"></div>
                   <span className="text-xs sm:text-sm font-medium text-foreground">
                     Question {currentQuestionIndex + 1} of {exam.questions.length}
                   </span>
@@ -340,7 +340,7 @@ export default function MILExamRunner({
               <button
                 onClick={handleContinue}
                 disabled={selectedAnswer === null || isSubmitting}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 sm:px-8 sm:py-3 md:px-12 md:py-4 rounded-xl sm:rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-100 font-semibold text-sm sm:text-base md:text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-xl min-w-[140px] sm:min-w-[180px] md:min-w-[200px]"
+                className="bg-[#065292] text-white px-4 py-2 sm:px-8 sm:py-3 md:px-12 md:py-4 rounded-xl sm:rounded-2xl hover:bg-[#054a83] transition-all duration-100 font-semibold text-sm sm:text-base md:text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-xl min-w-[140px] sm:min-w-[180px] md:min-w-[200px]"
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center">

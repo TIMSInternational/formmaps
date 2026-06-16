@@ -32,8 +32,8 @@ function ExamIcon({ examId }: { examId: string }) {
   switch (examId) {
     case MIL_EXAMS.FEATURE_DETECTION:
       return (
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-          <svg {...iconProps} className="text-blue-600">
+        <div className="w-16 h-16 bg-[#065292]/10 rounded-full flex items-center justify-center">
+          <svg {...iconProps} className="text-[#065292]">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -147,7 +147,7 @@ export default function MILInstructions({
               </p>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold text-blue-600">
+              <div className="text-lg font-semibold text-[#065292]">
                 {exam.timeLimitMinutes} {t("dashboard.minutes")}
               </div>
               <div className="text-sm text-muted-foreground">
@@ -195,7 +195,7 @@ export default function MILInstructions({
             <div className="mb-8">
               {loading ? (
                 <div className="text-center py-8">
-                  <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <div className="w-6 h-6 border-2 border-[#065292] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                   <p className="text-muted-foreground">
                     {t("dashboard.loadingInstructions")}
                   </p>
@@ -230,7 +230,7 @@ export default function MILInstructions({
               </button>
               <button
                 onClick={() => setCurrentStep("practice")}
-                className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                className="px-8 py-3 bg-[#065292] text-white rounded-lg font-medium hover:bg-[#054a83] transition-colors"
               >
                 {t("dashboard.continueToPractice")}
               </button>
