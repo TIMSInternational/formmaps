@@ -206,7 +206,7 @@ export default function ExamProgressHeader({
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 h-1.5 rounded-full transition-all duration-100"
+                    className="bg-[#065292] h-1.5 rounded-full transition-all duration-100"
                   />
                 </div>
                 <span className="text-xs text-muted-foreground min-w-[30px]">
@@ -222,7 +222,7 @@ export default function ExamProgressHeader({
                           i < currentQuestionIndex
                             ? "bg-green-500/10 dark:bg-green-500/200"
                             : i === currentQuestionIndex
-                            ? "bg-blue-500"
+                            ? "bg-[#065292]"
                             : "bg-muted"
                         }`}
                       />
@@ -241,7 +241,7 @@ export default function ExamProgressHeader({
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-100"
+                    className="bg-[#065292] h-2 rounded-full transition-all duration-100"
                   />
                 </div>
                 <span className="text-sm text-muted-foreground min-w-[50px]">
@@ -260,7 +260,7 @@ export default function ExamProgressHeader({
                         i < currentQuestionIndex
                           ? "bg-green-500/10 dark:bg-green-500/200"
                           : i === currentQuestionIndex
-                          ? "bg-blue-500"
+                          ? "bg-[#065292]"
                           : "bg-muted"
                       }`}
                     />
