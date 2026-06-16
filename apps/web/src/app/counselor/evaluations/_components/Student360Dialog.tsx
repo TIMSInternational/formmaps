@@ -89,7 +89,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
     if (!newEval.name.trim() || !newEval.email.trim()) { toast.error("Name and email required"); return; }
     setAddLoading(true);
     try {
-      await apiRequest("/evaluation/create-group", {
+      const res = await apiRequest("/evaluation/create-group", {
         method: "POST",
         data: {
           evaluatorName: newEval.name,
@@ -99,7 +99,10 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
           evaluatedUserId: student.studentId,
         },
       });
-      toast.success(`Evaluator ${newEval.name} added`);
+      // The invitation email is now sent on create (parity with other invites).
+      toast.success(res?.data?.emailSent === false
+        ? `${newEval.name} added — couldn't email the invitation, use Resend`
+        : `Invitation sent to ${newEval.name}`);
       setNewEval({ name: "", email: "", relation: "Parent", groupType: "parent" });
       setShowAddForm(false);
       await refreshGroups();
