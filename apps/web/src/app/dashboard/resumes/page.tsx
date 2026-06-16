@@ -52,8 +52,13 @@ export default function MyResumesPage() {
         data: formData,
       });
       if (result.data) {
-        const updated = await getAllResumes();
-        setResumes(updated);
+        const resume = result.data;
+        const resumeId = resume.ID || resume._id || resume.id;
+        if (resumeId) {
+          router.push(`/dashboard/resume-builder/${resumeId}`);
+        } else {
+          alert("Failed to parse resume. Please try again.");
+        }
       } else {
         alert("Failed to parse resume. Please try again.");
       }
