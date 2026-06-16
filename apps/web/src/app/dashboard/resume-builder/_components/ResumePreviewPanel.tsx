@@ -2,12 +2,16 @@
 
 import { Sparkles } from "lucide-react";
 import { LivePreviewPDF } from "./LivePreviewPDF";
+import { ResumePreviewWithToggle } from "./ResumePreviewWithToggle";
+import { getOriginalUrl } from "@/services/resumeService";
 
 interface ResumePreviewPanelProps {
   fullName: string;
   template: string;
   careerField: string;
   onPopulateSampleData: (careerField: string) => void;
+  resumeId: string;
+  hasOriginal: boolean;
 }
 
 export function ResumePreviewPanel({
@@ -15,6 +19,8 @@ export function ResumePreviewPanel({
   template,
   careerField,
   onPopulateSampleData,
+  resumeId,
+  hasOriginal,
 }: ResumePreviewPanelProps) {
   return (
     <div className="bg-secondary/30 overflow-y-auto flex flex-col">
@@ -37,8 +43,12 @@ export function ResumePreviewPanel({
         </button>
       </div>
       {/* PDF Preview */}
-      <div className="flex-1 overflow-y-auto">
-        <LivePreviewPDF />
+      <div className="flex-1 overflow-y-auto p-3">
+        <ResumePreviewWithToggle
+          hasOriginal={hasOriginal}
+          loadOriginalUrl={() => getOriginalUrl(resumeId)}
+          edited={<LivePreviewPDF />}
+        />
       </div>
     </div>
   );

@@ -91,6 +91,7 @@ export default function ResumeBuilderPage() {
     resetResumeBuilder,
     setCurrentResumeId,
     loadResume,
+    currentResumeId,
   } = useGlobalStore();
 
   const buildSectionsFromStore = useCallback((): Section[] => {
@@ -246,6 +247,7 @@ export default function ResumeBuilderPage() {
         };
 
         loadResume(storeData);
+        setHasOriginalState(Boolean(apiData?.hasOriginal));
       })
       .catch((error) => {
       })
@@ -260,6 +262,7 @@ export default function ResumeBuilderPage() {
     };
   }, [params.id, populateWithDummyContent, resetResumeBuilder, loadResume]);
 
+  const [hasOriginalState, setHasOriginalState] = useState(false);
   const [activeTab, setActiveTab] = useState<"content" | "template">("content");
   const [showAddContentModal, setShowAddContentModal] = useState(false);
   const [showPersonalInfoModal, setShowPersonalInfoModal] = useState(false);
@@ -1021,6 +1024,8 @@ export default function ResumeBuilderPage() {
           template={resumeBuilder.data.template}
           careerField={resumeBuilder.data.careerField || ""}
           onPopulateSampleData={populateWithDummyContent}
+          resumeId={currentResumeId ?? ""}
+          hasOriginal={hasOriginalState}
         />
 
         {/* Right Panel — Tabs: AI Rewrite / Editor / Style */}
