@@ -583,6 +583,12 @@
     "backToInstructions": "Volver a las Instrucciones",
     "submitAnswer": "Enviar Respuesta",
     "startTest": "Comenzar Prueba",
+    "examConfirmTitle": "La evaluación comienza ahora",
+    "examConfirmCannotGoBack": "Una vez que comiences, no podrás regresar. No hay pausa y el cronómetro no se detendrá.",
+    "examConfirmUnderstood": "He comprendido los ejemplos y las instrucciones.",
+    "examConfirmConcentrate": "Concéntrate y trabaja rápido — tienes {{minutes}} minutos para {{questions}} preguntas.",
+    "examConfirmBegin": "Estoy listo — comenzar",
+    "examConfirmReview": "Revisar ejemplos de nuevo",
     "benchmarks": {
       "header": {
         "title": "Indicadores del Sector",
