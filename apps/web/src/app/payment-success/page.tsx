@@ -128,11 +128,15 @@ export default function PaymentSuccess() {
                 <h3 className="font-semibold mb-2" style={{ color: "#111111" }}>
                   {t("payments.details")}
                 </h3>
-                {paymentDetails.amount && (
+                {paymentDetails.amount > 0 ? (
                   <p className="text-sm text-gray-600">
                     <strong>{t("payments.amount")}</strong> $
                     {(paymentDetails.amount / 100).toFixed(2)}
                   </p>
+                ) : (
+                  // amount is 0 for a subscription started on its free trial — no
+                  // charge today. (Guard with `> 0`: `{0 && ...}` would render a bare "0".)
+                  <p className="text-sm text-gray-600">{t("payments.freeTrial")}</p>
                 )}
                 {paymentDetails.description && (
                   <p className="text-sm text-gray-600">
