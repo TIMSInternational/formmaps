@@ -150,13 +150,13 @@ export default function SubscribePage() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-6xl mx-auto px-4 py-14 md:py-20">
+      <div className="max-w-6xl mx-auto px-4 py-8 md:py-10">
         {/* Brand mark */}
-        <div className="flex items-center justify-center gap-2 mb-10">
-          <img src="/logo-icon.svg" alt="FormMaps" className="w-9 h-9" />
+        <div className="flex items-center justify-center gap-2 mb-5">
+          <img src="/logo-icon.svg" alt="FormMaps" className="w-8 h-8" />
           <div className="flex items-center">
-            <span className="text-xl font-bold tracking-tight" style={{ color: "#111111" }}>FORM</span>
-            <span className="text-xl font-bold tracking-tight" style={{ color: "#065292" }}>MAPS</span>
+            <span className="text-lg font-bold tracking-tight" style={{ color: "#111111" }}>FORM</span>
+            <span className="text-lg font-bold tracking-tight" style={{ color: "#065292" }}>MAPS</span>
           </div>
         </div>
 
@@ -164,24 +164,24 @@ export default function SubscribePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-16"
+          className="text-center mb-8"
         >
-          <Badge className="mb-4 border-0 px-4 py-1.5 font-semibold" style={{ background: "rgba(6,82,146,0.1)", color: "#065292" }}>
+          <Badge className="mb-3 border-0 px-4 py-1.5 font-semibold" style={{ background: "rgba(6,82,146,0.1)", color: "#065292" }}>
             Choose Your Plan
           </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4" style={{ color: "#111111" }}>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2" style={{ color: "#111111" }}>
             Invest in Your Future
           </h1>
-          <p className="text-lg text-gray-500 max-w-xl mx-auto">
+          <p className="text-base text-gray-500 max-w-xl mx-auto">
             Unlock AI-powered career tools, assessments, and personalized guidance to accelerate your professional journey.
           </p>
-          <p className="text-sm font-semibold mt-3" style={{ color: "#065292" }}>
+          <p className="text-sm font-semibold mt-2" style={{ color: "#065292" }}>
             Start with a 7-day free trial. No charge until your trial ends.
           </p>
         </motion.div>
 
         {/* Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6 items-start">
           {plans.map((plan, i) => {
             const Icon = plan.icon;
             return (
@@ -206,21 +206,21 @@ export default function SubscribePage() {
                   </div>
                 )}
 
-                <div className="p-8">
+                <div className="p-6">
                   {/* Icon + Name */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "#065292" }}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#065292" }}>
                       <Icon className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold" style={{ color: "#111111" }}>{plan.name}</h3>
+                      <h3 className="text-lg font-bold" style={{ color: "#111111" }}>{plan.name}</h3>
                       <p className="text-sm text-gray-500">{plan.description}</p>
                     </div>
                   </div>
 
                   {/* Price */}
-                  <div className="flex items-baseline gap-1 mb-8">
-                    <span className="text-4xl font-bold" style={{ color: "#111111" }}>${plan.price}</span>
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="text-3xl font-bold" style={{ color: "#111111" }}>${plan.price}</span>
                     <span className="text-gray-400 font-medium">/{plan.period}</span>
                   </div>
 
@@ -237,10 +237,10 @@ export default function SubscribePage() {
                       setProcessingPlan(null);
                     }}
                     disabled={processingPlan !== null}
-                    className="w-full mb-8"
+                    className="w-full mb-5"
                   >
                     <Button
-                      className="w-full h-12 rounded-xl font-semibold text-base transition-all shadow-sm hover:shadow-md"
+                      className="w-full h-11 rounded-xl font-semibold text-base transition-all shadow-sm hover:shadow-md"
                       style={
                         plan.popular
                           ? { background: "#065292", color: "#fff" }
@@ -257,7 +257,7 @@ export default function SubscribePage() {
                   </StripeCheckout>
 
                   {/* Features */}
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {plan.features.map((feature, j) => (
                       <div key={j} className="flex items-start gap-3">
                         <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: feature.highlighted ? "#065292" : "#9ca3af" }} />
@@ -278,7 +278,7 @@ export default function SubscribePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="text-center text-sm text-gray-400 mt-12"
+          className="text-center text-sm text-gray-400 mt-8"
         >
           Cancel anytime. Secure payments via Stripe.
         </motion.p>
