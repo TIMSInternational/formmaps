@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Eye, EyeOff } from "lucide-react";
 import {
   FormField,
   FormItem,
@@ -11,28 +10,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
-import type { Control, FieldErrors } from "react-hook-form";
+import type { Control } from "react-hook-form";
 import type { SignupFormData } from "./signupSchema";
-
-function EyeIcon({ open }: { open: boolean }) {
-  if (open) {
-    return (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-      </svg>
-    );
-  }
-  return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-    </svg>
-  );
-}
 
 interface PasswordInputProps {
   control: Control<SignupFormData>;
-  errors: FieldErrors<SignupFormData>;
   name: "password" | "confirmPassword";
   label: string;
   placeholder: string;
@@ -42,7 +24,6 @@ interface PasswordInputProps {
 
 export function PasswordInput({
   control,
-  errors,
   name,
   label,
   placeholder,
@@ -56,36 +37,37 @@ export function PasswordInput({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className="space-y-2">
-          <FormLabel htmlFor={name} className="text-sm font-medium text-gray-700">
+        <FormItem className="flex flex-col gap-1.5">
+          <FormLabel htmlFor={name} className="text-xs font-medium" style={{ color: "#333" }}>
             {label}
           </FormLabel>
           <div className="relative">
             <FormControl>
-              <Input
+              <input
                 id={name}
                 type={showPassword ? "text" : "password"}
                 {...field}
                 placeholder={placeholder}
-                className={cn(
-                  "h-11 text-base bg-white/50 backdrop-blur-sm border-gray-200/50 focus:border-purple-500 focus:ring-purple-500/20 pr-12",
-                  errors[name] &&
-                    "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                )}
+                className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
+                style={{ background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "#E0E0E0"; }}
               />
             </FormControl>
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer flex items-center"
+              style={{ color: "#999" }}
+              aria-label={showPassword ? "Hide password" : "Show password"}
             >
-              <EyeIcon open={showPassword} />
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
           {showStrength && currentPassword && (
             <PasswordStrengthIndicator password={currentPassword} />
           )}
-          <FormMessage className="text-xs text-red-600" />
+          <FormMessage className="text-xs text-red-500" />
         </FormItem>
       )}
     />
