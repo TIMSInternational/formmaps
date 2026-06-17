@@ -205,7 +205,7 @@ function TabBtn({ icon: Icon, active, onClick, title }: {
 export function StudentSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useGlobalStore();
+  const { user, logout, assessmentActive } = useGlobalStore();
   const { t } = useTranslation();
   const { mode, setMode, colors: themeColors } = useAdminTheme();
   const { threads, currentThreadId, createThread, selectThread } = useChat();
@@ -238,11 +238,13 @@ export function StudentSidebar() {
   };
 
   const openChatInPanel = (threadId?: string) => {
+    if (assessmentActive) return; // AI chat is blocked while an assessment is in progress
     if (threadId) selectThread(threadId);
     openPanel({ title: "Ask AI", content: <AIChatSidePanel /> });
   };
 
   const handleNewChat = () => {
+    if (assessmentActive) return;
     const thread = createThread();
     setActiveTab("chat");
     openChatInPanel(thread.id);
@@ -330,14 +332,16 @@ export function StudentSidebar() {
           </div>
           <button
             onClick={handleNewChat}
+            disabled={assessmentActive}
+            title={assessmentActive ? "AI chat is unavailable during an assessment" : undefined}
             style={{
               display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 10px 0 8px",
-              borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 500,
-              fontFamily: "inherit", marginLeft: "auto",
+              borderRadius: 6, border: "none", cursor: assessmentActive ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 500,
+              fontFamily: "inherit", marginLeft: "auto", opacity: assessmentActive ? 0.5 : 1,
               background: "var(--admin-bg-card-hover)", color: "var(--admin-font-secondary)",
               transition: "background 0.1s",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
+            onMouseEnter={(e) => { if (!assessmentActive) e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-card-hover)"; }}
           >
             <MessageCirclePlus style={{ width: 14, height: 14 }} />
@@ -447,10 +451,12 @@ export function StudentSidebar() {
               <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>No chats yet</span>
               <button
                 onClick={handleNewChat}
+                disabled={assessmentActive}
+                title={assessmentActive ? "AI chat is unavailable during an assessment" : undefined}
                 style={{
                   display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 12px",
-                  borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 500,
-                  fontFamily: "inherit", marginTop: 4,
+                  borderRadius: 6, border: "none", cursor: assessmentActive ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 500,
+                  fontFamily: "inherit", marginTop: 4, opacity: assessmentActive ? 0.5 : 1,
                   background: "var(--admin-accent-blue)", color: "#fff",
                 }}
               >
