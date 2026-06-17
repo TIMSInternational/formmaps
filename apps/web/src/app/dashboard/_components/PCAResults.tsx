@@ -79,13 +79,13 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
         bg: "bg-yellow-50",
       },
       {
-        name: "Steadiness",
+        name: "Solidity",
         score: data.pcaS1 || 0,
         color: "bg-green-500",
         bg: "bg-green-50",
       },
       {
-        name: "Conscientiousness",
+        name: "Control",
         score: data.pcaC1 || 0,
         color: "bg-blue-500",
         bg: "bg-blue-50",
