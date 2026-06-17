@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api/apiClient";
 
 export default function PaymentSuccess() {
   const { t } = useTranslation();
@@ -19,18 +20,19 @@ export default function PaymentSuccess() {
     const sessionId = searchParams.get("session_id");
 
     if (sessionId) {
-      // Verify payment with your backend
-      fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/stripe/status/${sessionId}`,
-        {
-          credentials: "include",
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status === "succeeded" || data.paymentStatus === "paid") {
+      // Verify payment via the app's API client. apiClient uses the correct
+      // (relative, proxied) base URL and attaches the auth token/cookie — a raw
+      // fetch to `${NEXT_PUBLIC_API_BASE_URL}/api/...` broke in prod because that
+      // env var is intentionally empty (Next proxies relative /api paths), so the
+      // URL became "undefined/api/..." → 404 → the verification error.
+      apiClient
+        .get(`/api/stripe/status/${sessionId}`)
+        .then((res) => {
+          // Backend envelope: { success, data: { status, amount, currency } }.
+          const d = res.data?.data ?? res.data ?? {};
+          if (d.status === "succeeded" || d.status === "paid" || d.paymentStatus === "paid") {
             setStatus("success");
-            setPaymentDetails(data);
+            setPaymentDetails(d);
             // Force subscription cache to show active — invalidation alone won't work
             // because the AuthWrapper's subscription observer is disabled on this page
             // (isProtectedRoute = false), so invalidation can't trigger a refetch.
@@ -38,7 +40,7 @@ export default function PaymentSuccess() {
             // the observer re-enables on /dashboard.
             queryClient.setQueryData(["subscriptionStatus"], {
               hasActiveSubscription: true,
-              planId: data.planId || "paid",
+              planId: d.planId || "paid",
               status: "active",
               expiryDate: null,
             });
@@ -46,13 +48,13 @@ export default function PaymentSuccess() {
             setStatus("failed");
           }
         })
-        .catch((err) => {
+        .catch(() => {
           setStatus("error");
         });
     } else {
       setStatus("error");
     }
-  }, [searchParams]);
+  }, [searchParams, queryClient]);
 
   const handleContinue = () => {
     // If it was a booking payment (we can guess by description or metadata if available, but for now generic check)
