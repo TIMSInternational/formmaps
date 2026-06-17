@@ -88,6 +88,34 @@ export function wouldCreateCycle(edges: PathwayEdge[], source: string, target: s
   return false;
 }
 
+/** Forward-reachable subgraph from a root course id: the root plus every course
+ *  that transitively requires it (follow source→target edges), and the edge ids
+ *  whose both ends are inside that set. Used by the per-pathway editor page. */
+export function subgraphFromRoot(
+  edges: PathwayEdge[],
+  rootId: string,
+): { nodeIds: Set<string>; edgeIds: Set<string> } {
+  const adj = new Map<string, string[]>();
+  for (const e of edges) {
+    const list = adj.get(e.source);
+    if (list) list.push(e.target);
+    else adj.set(e.source, [e.target]);
+  }
+  const nodeIds = new Set<string>([rootId]);
+  const stack = [rootId];
+  while (stack.length) {
+    const cur = stack.pop()!;
+    for (const next of adj.get(cur) ?? []) {
+      if (!nodeIds.has(next)) { nodeIds.add(next); stack.push(next); }
+    }
+  }
+  const edgeIds = new Set<string>();
+  for (const e of edges) {
+    if (nodeIds.has(e.source) && nodeIds.has(e.target)) edgeIds.add(e.id);
+  }
+  return { nodeIds, edgeIds };
+}
+
 /** Compute the set of courses whose prerequisite set changed vs the baseline,
  *  returning the PUT payload pieces for each (corequisites echoed back so the
  *  wholesale-replacing endpoint doesn't drop them). */
