@@ -310,7 +310,7 @@ export function renderAnswerOptions(
         disabled={disabled}
         className={`px-3 py-2 sm:px-4 sm:py-3 rounded-xl font-medium text-xs sm:text-sm transition-all duration-100 min-w-[100px] sm:min-w-[120px] max-w-[180px] sm:max-w-[200px] text-center ${
           selectedAnswer === index
-            ? "bg-[#065292] text-white shadow-2xl transform scale-105 ring-4 ring-[#065292]/30"
+            ? "bg-[#065292]/12 text-[#065292] border-2 border-[#065292] shadow-2xl transform scale-105 ring-4 ring-[#065292]/30"
             : "bg-card border-2 border-border text-foreground hover:border-[#065292]/40 hover:bg-[#065292]/5 shadow-lg hover:shadow-xl"
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
@@ -331,7 +331,7 @@ export function renderAnswerOptions(
         disabled={disabled}
         className={`w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl sm:rounded-2xl font-bold text-xl sm:text-2xl md:text-3xl transition-all duration-100 ${
           selectedAnswer === index
-            ? "bg-[#065292] text-white shadow-2xl transform scale-105 sm:scale-110 ring-2 sm:ring-4 ring-[#065292]/30"
+            ? "bg-[#065292]/12 text-[#065292] border-2 border-[#065292] shadow-2xl transform scale-105 sm:scale-110 ring-2 sm:ring-4 ring-[#065292]/30"
             : "bg-card border-2 border-border text-foreground hover:border-[#065292]/40 hover:bg-[#065292]/5 shadow-lg hover:shadow-xl"
         } disabled:opacity-50 disabled:cursor-not-allowed font-mono`}
       >
@@ -382,7 +382,7 @@ export function renderAnswerOptions(
         disabled={disabled}
         className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg sm:rounded-xl font-bold text-lg sm:text-xl md:text-2xl transition-all duration-100 ${
           selectedAnswer === option
-            ? "bg-[#065292] text-white shadow-2xl transform scale-105 sm:scale-110 ring-2 sm:ring-4 ring-[#065292]/30"
+            ? "bg-[#065292]/12 text-[#065292] border-2 border-[#065292] shadow-2xl transform scale-105 sm:scale-110 ring-2 sm:ring-4 ring-[#065292]/30"
             : "bg-card border-2 border-border text-foreground hover:border-[#065292]/40 hover:bg-[#065292]/5 shadow-lg hover:shadow-xl"
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
@@ -399,7 +399,7 @@ export function renderAnswerOptions(
       disabled={disabled}
       className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg sm:rounded-xl font-bold text-lg sm:text-xl md:text-2xl transition-all duration-100 ${
         selectedAnswer === option
-          ? "bg-[#065292] text-white shadow-2xl transform scale-105 sm:scale-110 ring-2 sm:ring-4 ring-[#065292]/30"
+          ? "bg-[#065292]/12 text-[#065292] border-2 border-[#065292] shadow-2xl transform scale-105 sm:scale-110 ring-2 sm:ring-4 ring-[#065292]/30"
           : "bg-card border-2 border-border text-foreground hover:border-[#065292]/40 hover:bg-[#065292]/5 shadow-lg hover:shadow-xl"
       } disabled:opacity-50 disabled:cursor-not-allowed`}
     >
