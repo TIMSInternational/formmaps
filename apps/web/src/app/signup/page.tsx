@@ -3,11 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { signUp as signUpApi, login as loginApi } from "@/services/authService";
 import { useRouter } from "next/navigation";
@@ -22,8 +18,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { signupSchema, type SignupFormData } from "./_components/signupSchema";
-import { SignupBrandingPanel } from "./_components/SignupBrandingPanel";
 import { PasswordInput } from "./_components/PasswordInput";
+import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
+
+const inputStyle = { background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" } as const;
+const focusOn = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = "#065292"; };
+const focusOff = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = "#E0E0E0"; };
 
 export default function SignupPage() {
   const { t } = useTranslation();
@@ -120,182 +120,162 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-100">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `
-            radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-            linear-gradient(135deg, transparent 30%, rgba(147, 51, 234, 0.05) 50%, transparent 70%)
-          `,
-          }}
-        />
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23a855f7' fill-opacity='0.03'%3E%3Cpath d='M20 20c0-11.046 8.954-20 20-20v20H20z'/%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-      </div>
+    <div className="min-h-dvh flex" style={{ fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>
+      {/* Left Panel — Branding (shared with login) */}
+      <AuthBrandingPanel />
 
-      {/* Left Panel - Clean Branding */}
-      <SignupBrandingPanel />
-
-      {/* Right Panel - Signup Form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-8 relative">
+      {/* Right Panel — Signup Form */}
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12" style={{ background: "#FFFFFF" }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="w-full max-w-md relative"
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-sm"
         >
-          <div className="relative bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20">
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/5 to-blue-500/5 blur-xl" />
-
-            <div className="relative">
-              {/* Mobile Logo */}
-              <div className="lg:hidden flex items-center justify-center space-x-2 mb-6">
-                <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">U</span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">UNIV.365</span>
-              </div>
-
-              <div className="text-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {t("auth.signup.title")}
-                </h1>
-                <p className="text-gray-600">{t("auth.signup.subtitle")}</p>
-              </div>
-
-              <Form {...form}>
-                <form onSubmit={handleSubmit(handleSubmitForm)} className="space-y-5">
-                  {/* Name Fields */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel htmlFor="firstName" className="text-sm font-medium text-gray-700">First name</FormLabel>
-                          <FormControl>
-                            <Input id="firstName" type="text" {...field} placeholder={t('auth.signup.firstNamePlaceholder')}
-                              className={cn("h-11 text-base bg-white/50 backdrop-blur-sm border-gray-200/50 focus:border-purple-500 focus:ring-purple-500/20",
-                                errors.firstName && "border-red-300 focus:border-red-500 focus:ring-red-500/20")} />
-                          </FormControl>
-                          <FormMessage className="text-xs text-red-600" />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel htmlFor="lastName" className="text-sm font-medium text-gray-700">Last name</FormLabel>
-                          <FormControl>
-                            <Input id="lastName" type="text" {...field} placeholder={t('auth.signup.lastNamePlaceholder')}
-                              className={cn("h-11 text-base bg-white/50 backdrop-blur-sm border-gray-200/50 focus:border-purple-500 focus:ring-purple-500/20",
-                                errors.lastName && "border-red-300 focus:border-red-500 focus:ring-red-500/20")} />
-                          </FormControl>
-                          <FormMessage className="text-xs text-red-600" />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Email */}
-                  <FormField
-                    control={control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel htmlFor="email" className="text-sm font-medium text-gray-700">Email address</FormLabel>
-                        <FormControl>
-                          <Input id="email" type="email" {...field} placeholder={t('auth.signup.emailPlaceholder')}
-                            className={cn("h-11 text-base bg-white/50 backdrop-blur-sm border-gray-200/50 focus:border-purple-500 focus:ring-purple-500/20",
-                              errors.email && "border-red-300 focus:border-red-500 focus:ring-red-500/20")} />
-                        </FormControl>
-                        <FormMessage className="text-xs text-red-600" />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Date of birth (13+ age gate) */}
-                  <FormField
-                    control={control}
-                    name="dateOfBirth"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel htmlFor="dateOfBirth" className="text-sm font-medium text-gray-700">Date of birth</FormLabel>
-                        <FormControl>
-                          <Input id="dateOfBirth" type="date" {...field} max={new Date().toISOString().split("T")[0]}
-                            className={cn("h-11 text-base bg-white/50 backdrop-blur-sm border-gray-200/50 focus:border-purple-500 focus:ring-purple-500/20",
-                              errors.dateOfBirth && "border-red-300 focus:border-red-500 focus:ring-red-500/20")} />
-                        </FormControl>
-                        <p className="text-[11px] text-gray-500">You must be at least 13 to create an account. Younger students join through their school.</p>
-                        <FormMessage className="text-xs text-red-600" />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Password */}
-                  <PasswordInput control={control} errors={errors} name="password" label="Password"
-                    placeholder="Create a strong password" showStrength currentPassword={password} />
-
-                  {/* Confirm Password */}
-                  <PasswordInput control={control} errors={errors} name="confirmPassword" label="Confirm password"
-                    placeholder="Confirm your password" />
-
-                  {/* Terms and Marketing */}
-                  <div className="space-y-3">
-                    <div className="flex items-start space-x-2">
-                      <input id="terms" type="checkbox" {...form.register("acceptTerms")}
-                        className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-0.5" />
-                      <Label htmlFor="terms" className="text-sm text-gray-700 leading-5">
-                        I agree to the{" "}
-                        <Link href="/terms" className="text-purple-600 hover:text-purple-500 font-medium">Terms of Service</Link>{" "}
-                        and{" "}
-                        <Link href="/privacy" className="text-purple-600 hover:text-purple-500 font-medium">Privacy Policy</Link>
-                      </Label>
-                    </div>
-                    {errors.acceptTerms && (
-                      <p className="text-xs text-red-600 ml-6">{errors.acceptTerms.message}</p>
-                    )}
-                    <div className="flex items-start space-x-2">
-                      <input id="marketing" type="checkbox" {...form.register("acceptMarketing")}
-                        className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-0.5" />
-                      <Label htmlFor="marketing" className="text-sm text-gray-700 leading-5">
-                        I&apos;d like to receive career tips and product updates via email
-                      </Label>
-                    </div>
-                  </div>
-
-                  <Button type="submit" disabled={isLoading}
-                    className="w-full h-12 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium rounded-xl shadow-lg disabled:opacity-50 transition-all duration-200">
-                    {isLoading ? (
-                      <div className="flex items-center space-x-2">
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>{t("auth.signup.creating")}</span>
-                      </div>
-                    ) : (
-                      t("auth.signup.submit")
-                    )}
-                  </Button>
-                </form>
-              </Form>
-
-              <p className="mt-6 text-center text-sm text-gray-600">
-                {t("auth.signup.haveAccountText")}{" "}
-                <Link href="/login" className="font-medium text-purple-600 hover:text-purple-500 transition-colors">
-                  {t("auth.signup.signIn")}
-                </Link>
-              </p>
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex items-center justify-center gap-2 mb-10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-icon.svg" alt="FormMaps" className="w-10 h-10" />
+            <div>
+              <span className="text-xl font-bold" style={{ color: "#111111" }}>FORM</span>
+              <span className="text-xl font-bold" style={{ color: "#065292" }}>MAPS</span>
             </div>
           </div>
+
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-semibold mb-2" style={{ color: "#111111" }}>
+              {t("auth.signup.title")}
+            </h1>
+            <p className="text-sm" style={{ color: "#666" }}>{t("auth.signup.subtitle")}</p>
+          </div>
+
+          <Form {...form}>
+            <form onSubmit={handleSubmit(handleSubmitForm)} className="flex flex-col gap-5">
+              {/* Name Fields */}
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col gap-1.5">
+                      <FormLabel htmlFor="firstName" className="text-xs font-medium" style={{ color: "#333" }}>First name</FormLabel>
+                      <FormControl>
+                        <input id="firstName" type="text" {...field} placeholder={t("auth.signup.firstNamePlaceholder")}
+                          className="h-11 px-3 text-sm rounded-lg border outline-none transition-colors w-full"
+                          style={inputStyle} onFocus={focusOn} onBlur={focusOff} />
+                      </FormControl>
+                      <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col gap-1.5">
+                      <FormLabel htmlFor="lastName" className="text-xs font-medium" style={{ color: "#333" }}>Last name</FormLabel>
+                      <FormControl>
+                        <input id="lastName" type="text" {...field} placeholder={t("auth.signup.lastNamePlaceholder")}
+                          className="h-11 px-3 text-sm rounded-lg border outline-none transition-colors w-full"
+                          style={inputStyle} onFocus={focusOn} onBlur={focusOff} />
+                      </FormControl>
+                      <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Email */}
+              <FormField
+                control={control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-1.5">
+                    <FormLabel htmlFor="email" className="text-xs font-medium" style={{ color: "#333" }}>Email address</FormLabel>
+                    <FormControl>
+                      <input id="email" type="email" {...field} placeholder={t("auth.signup.emailPlaceholder")}
+                        className="h-11 px-3 text-sm rounded-lg border outline-none transition-colors w-full"
+                        style={inputStyle} onFocus={focusOn} onBlur={focusOff} />
+                    </FormControl>
+                    <FormMessage className="text-xs text-red-500" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Date of birth (13+ age gate) */}
+              <FormField
+                control={control}
+                name="dateOfBirth"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-1.5">
+                    <FormLabel htmlFor="dateOfBirth" className="text-xs font-medium" style={{ color: "#333" }}>Date of birth</FormLabel>
+                    <FormControl>
+                      <input id="dateOfBirth" type="date" {...field} max={new Date().toISOString().split("T")[0]}
+                        className="h-11 px-3 text-sm rounded-lg border outline-none transition-colors w-full"
+                        style={inputStyle} onFocus={focusOn} onBlur={focusOff} />
+                    </FormControl>
+                    <p className="text-[11px]" style={{ color: "#999" }}>You must be at least 13 to create an account. Younger students join through their school.</p>
+                    <FormMessage className="text-xs text-red-500" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Password */}
+              <PasswordInput control={control} name="password" label="Password"
+                placeholder="Create a strong password" showStrength currentPassword={password} />
+
+              {/* Confirm Password */}
+              <PasswordInput control={control} name="confirmPassword" label="Confirm password"
+                placeholder="Confirm your password" />
+
+              {/* Terms */}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start gap-2">
+                  <input id="terms" type="checkbox" {...form.register("acceptTerms")}
+                    className="w-3.5 h-3.5 mt-0.5" style={{ accentColor: "#065292" }} />
+                  <label htmlFor="terms" className="text-xs leading-5" style={{ color: "#666" }}>
+                    I agree to the{" "}
+                    <Link href="/terms" className="font-medium no-underline" style={{ color: "#065292" }}>Terms of Service</Link>{" "}
+                    and{" "}
+                    <Link href="/privacy" className="font-medium no-underline" style={{ color: "#065292" }}>Privacy Policy</Link>
+                  </label>
+                </div>
+                {errors.acceptTerms && (
+                  <p className="text-xs text-red-500 ml-6">{errors.acceptTerms.message}</p>
+                )}
+                <div className="flex items-start gap-2">
+                  <input id="marketing" type="checkbox" {...form.register("acceptMarketing")}
+                    className="w-3.5 h-3.5 mt-0.5" style={{ accentColor: "#065292" }} />
+                  <label htmlFor="marketing" className="text-xs leading-5" style={{ color: "#666" }}>
+                    I&apos;d like to receive career tips and product updates via email
+                  </label>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="h-11 rounded-lg border-none text-sm font-semibold cursor-pointer transition-all"
+                style={{ background: "#065292", color: "#FFFFFF", opacity: isLoading ? 0.6 : 1 }}
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    {t("auth.signup.creating")}
+                  </span>
+                ) : (
+                  t("auth.signup.submit")
+                )}
+              </button>
+            </form>
+          </Form>
+
+          <p className="mt-8 text-center text-sm" style={{ color: "#666" }}>
+            {t("auth.signup.haveAccountText")}{" "}
+            <Link href="/login" className="font-medium no-underline" style={{ color: "#065292" }}>
+              {t("auth.signup.signIn")}
+            </Link>
+          </p>
         </motion.div>
       </div>
     </div>
