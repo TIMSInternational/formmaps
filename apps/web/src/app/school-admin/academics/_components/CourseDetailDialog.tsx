@@ -163,7 +163,7 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
             }}>Cancel</button>
             <button onClick={handleSave} disabled={updateCourse.isPending} style={{
               height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600,
-              background: "#14b8a6", color: "#fff", border: "none", cursor: "pointer",
+              background: "#065292", color: "#fff", border: "none", cursor: "pointer",
               display: "flex", alignItems: "center", gap: 6,
               opacity: updateCourse.isPending ? 0.6 : 1,
             }}>
@@ -182,16 +182,16 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
       <DialogContent style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)", maxWidth: 540, padding: 0, overflow: "hidden" }}>
         <DialogTitle className="sr-only">{course.name}</DialogTitle>
 
-        {/* Hero header */}
-        <div style={{ padding: "28px 28px 20px", background: "linear-gradient(135deg, rgba(20,184,166,0.08), rgba(59,130,246,0.06))", borderBottom: "1px solid var(--admin-border-default)" }}>
+        {/* Hero header — FormMaps brand */}
+        <div style={{ padding: "24px 28px 20px", background: "#065292", borderBottom: "1px solid var(--admin-border-default)" }}>
           <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
-            <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", border: "1px solid var(--admin-border-default)" }}>{course.code}</span>
-            {course.frameworkType && <Badge style={{ fontSize: 10, background: "rgba(59,130,246,0.15)", color: "#065292", border: "none" }}>{course.frameworkType}</Badge>}
-            {course.isHonors && <Badge style={{ fontSize: 10, background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "none" }}>Honors</Badge>}
-            <Badge style={{ fontSize: 10, background: course.status === "active" ? "rgba(16,185,129,0.15)" : "rgba(107,114,128,0.15)", color: course.status === "active" ? "#10b981" : "#6b7280", border: "none" }}>{course.status || "active"}</Badge>
+            <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.15)", color: "#fff" }}>{course.code}</span>
+            {course.frameworkType && <Badge style={{ fontSize: 10, background: "rgba(255,255,255,0.18)", color: "#fff", border: "none" }}>{course.frameworkType}</Badge>}
+            {course.isHonors && <Badge style={{ fontSize: 10, background: "#FFD600", color: "#111", border: "none" }}>Honors</Badge>}
+            <Badge style={{ fontSize: 10, background: course.status === "active" ? "rgba(5,150,105,0.95)" : "rgba(255,255,255,0.18)", color: "#fff", border: "none" }}>{course.status || "active"}</Badge>
           </div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)", lineHeight: 1.3, margin: 0 }}>{course.name}</h2>
-          {course.department && <div style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 4 }}>{course.department}</div>}
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1.3, margin: 0 }}>{course.name}</h2>
+          {course.department && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 4 }}>{course.department}</div>}
         </div>
 
         <div style={{ padding: "20px 28px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
