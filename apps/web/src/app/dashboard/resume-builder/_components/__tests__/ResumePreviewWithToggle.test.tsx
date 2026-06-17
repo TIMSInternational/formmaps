@@ -20,6 +20,38 @@ describe("ResumePreviewWithToggle", () => {
     expect(screen.queryByRole("tab", { name: /original/i })).not.toBeInTheDocument();
   });
 
+  it("defaults to Original once hasOriginal flips true after an async load", async () => {
+    const loadUrl = jest.fn().mockResolvedValue("https://signed.example/x.pdf");
+    // Mounts with hasOriginal=false (resume not loaded yet) → templated Edited view.
+    const { rerender } = render(
+      <ResumePreviewWithToggle hasOriginal={false} loadOriginalUrl={loadUrl} edited={<div>EDITED CONTENT</div>} />,
+    );
+    expect(screen.getByText("EDITED CONTENT")).toBeInTheDocument();
+    expect(loadUrl).not.toHaveBeenCalled();
+
+    // Resume finishes loading and reports it has an original.
+    rerender(
+      <ResumePreviewWithToggle hasOriginal loadOriginalUrl={loadUrl} edited={<div>EDITED CONTENT</div>} />,
+    );
+    await waitFor(() => expect(loadUrl).toHaveBeenCalled());
+    const frame = await screen.findByTitle("Original resume document");
+    expect(frame).toHaveAttribute("src", "https://signed.example/x.pdf");
+  });
+
+  it("keeps the user's Edited choice even after hasOriginal updates", () => {
+    const loadUrl = jest.fn().mockResolvedValue("https://signed.example/x.pdf");
+    const { rerender } = render(
+      <ResumePreviewWithToggle hasOriginal loadOriginalUrl={loadUrl} edited={<div>EDITED CONTENT</div>} />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: /edited/i }));
+    expect(screen.getByText("EDITED CONTENT")).toBeInTheDocument();
+
+    // An unrelated re-render toggles hasOriginal; the manual pick must stick.
+    rerender(<ResumePreviewWithToggle hasOriginal={false} loadOriginalUrl={loadUrl} edited={<div>EDITED CONTENT</div>} />);
+    rerender(<ResumePreviewWithToggle hasOriginal loadOriginalUrl={loadUrl} edited={<div>EDITED CONTENT</div>} />);
+    expect(screen.getByText("EDITED CONTENT")).toBeInTheDocument();
+  });
+
   it("switches to Edited when the Edited tab is clicked", async () => {
     render(
       <ResumePreviewWithToggle hasOriginal loadOriginalUrl={jest.fn().mockResolvedValue("https://signed.example/x.pdf")} edited={<div>EDITED CONTENT</div>} />,
