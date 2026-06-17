@@ -147,3 +147,28 @@ export function diffPrereqs(
   }
   return out;
 }
+
+/** Compute the PUT payloads for a canvas that may show only PART of the graph
+ *  (the per-pathway/root-scoped editor). A downstream course on the canvas can
+ *  have prerequisites that live OFF the canvas (a sibling chain converging on it);
+ *  those edges aren't drawn. To avoid the wholesale-replacing PUT silently deleting
+ *  them, we (a) detect changes using only the on-canvas portion of each course's
+ *  prerequisites, and (b) re-append the off-canvas sources to each changed course's
+ *  payload. When every prereq source is on the canvas (the all-pathways editor),
+ *  the off-canvas set is empty and this reduces to a plain diffPrereqs. */
+export function scopedPrereqChanges(
+  originalPrereqs: Record<string, string[]>,
+  edges: PathwayEdge[],
+  courses: CatalogCourse[],
+  onCanvasIds: Set<string>,
+): Array<{ courseId: string; courseIds: string[]; corequisites: string[] }> {
+  const scoped = courses.filter((c) => onCanvasIds.has(c.id));
+  const scopedOriginal: Record<string, string[]> = {};
+  for (const c of scoped) {
+    scopedOriginal[c.id] = (originalPrereqs[c.id] ?? []).filter((src) => onCanvasIds.has(src));
+  }
+  return diffPrereqs(scopedOriginal, edges, scoped).map((d) => {
+    const offCanvas = (originalPrereqs[d.courseId] ?? []).filter((src) => !onCanvasIds.has(src));
+    return offCanvas.length ? { ...d, courseIds: [...d.courseIds, ...offCanvas] } : d;
+  });
+}
