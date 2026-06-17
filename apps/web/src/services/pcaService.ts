@@ -136,12 +136,13 @@ export async function addPCAEvaluation(
   try {
     const langParam = language === "spanish" ? "sp" : "en";
 
+    // NOTE: do not send CoRegCod here — the backend derives the TIMS region/language
+    // from the ?lang= query param (sp -> es-co, en -> en) as the single source of truth.
     const result = await apiRequest(`/api/pcaapi/add-evaluation?lang=${langParam}`, {
       method: "POST",
       data: {
         UserId: userId,
         PcaTip: "A",
-        CoRegCod: langParam === "sp" ? "es-co" : "es-co",
         ...userData,
       },
     });

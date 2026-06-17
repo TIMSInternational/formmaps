@@ -11,6 +11,7 @@ import {
 } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
+import { useGlobalStore } from "@/store/useGlobalStore";
 
 // ── Constants (Twenty-style) ──
 const SIDE_PANEL_WIDTH_VAR = "--side-panel-width";
@@ -65,6 +66,12 @@ export function SidePanelContextProvider({ children }: { children: ReactNode }) 
   const closePanel = useCallback(() => {
     setState((s) => ({ ...s, isOpen: false }));
   }, []);
+
+  // Auto-close the panel (incl. the AI chat) the moment an assessment starts.
+  const assessmentActive = useGlobalStore((s) => s.assessmentActive);
+  useEffect(() => {
+    if (assessmentActive) closePanel();
+  }, [assessmentActive, closePanel]);
 
   // Close on Escape
   useEffect(() => {

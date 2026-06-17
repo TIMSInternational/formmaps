@@ -40,6 +40,8 @@ export default function StudentsPage() {
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab && ["roster", "onboard", "staff", "counselors"].includes(tab)) setActiveTab(tab);
+    // The "Invite Student" button (and ?invite=true links) open the onboard/invite panel.
+    else if (searchParams.get("invite") === "true") setActiveTab("onboard");
   }, [searchParams]);
 
   const handleTabChange = (key: string) => {
