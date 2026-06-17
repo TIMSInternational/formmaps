@@ -25,7 +25,6 @@ interface Plan {
   features: PlanFeature[];
   popular?: boolean;
   ctaText: string;
-  gradient: string;
   badge?: string;
 }
 
@@ -77,7 +76,6 @@ export default function SubscribePage() {
       price: 9.99,
       period: "month",
       icon: Zap,
-      gradient: "from-slate-600 to-slate-800",
       ctaText: "Get Started",
       features: [
         { text: "PCA & MIL Assessments" },
@@ -96,7 +94,6 @@ export default function SubscribePage() {
       icon: Sparkles,
       popular: true,
       badge: "Most Popular",
-      gradient: "from-blue-600 to-indigo-600",
       ctaText: "Start Pro",
       features: [
         { text: "Everything in Starter" },
@@ -117,7 +114,6 @@ export default function SubscribePage() {
       price: 49.99,
       period: "month",
       icon: Crown,
-      gradient: "from-purple-600 to-pink-600",
       ctaText: "Go Premium",
       features: [
         { text: "Everything in Pro" },
@@ -133,7 +129,7 @@ export default function SubscribePage() {
   ];
 
   return (
-    <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 via-white to-blue-50/30">
+    <div className="min-h-[100dvh] w-full bg-gradient-to-b from-[#f5f8fc] to-white">
       {/* Success toast */}
       <AnimatePresence>
         {showSuccess && (
@@ -143,10 +139,10 @@ export default function SubscribePage() {
             exit={{ opacity: 0, y: -30 }}
             className="fixed top-6 left-1/2 -translate-x-1/2 z-50"
           >
-            <div className="bg-white shadow-2xl rounded-2xl px-6 py-4 border border-green-100 flex items-center gap-3">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
+            <div className="bg-white shadow-2xl rounded-2xl px-6 py-4 border border-[#059669]/20 flex items-center gap-3">
+              <CheckCircle2 className="w-6 h-6" style={{ color: "#059669" }} />
               <div>
-                <p className="font-semibold text-gray-900">Payment successful!</p>
+                <p className="font-semibold" style={{ color: "#111111" }}>Payment successful!</p>
                 <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
               </div>
             </div>
@@ -154,23 +150,32 @@ export default function SubscribePage() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-6xl mx-auto px-4 py-16 md:py-24">
+      <div className="max-w-6xl mx-auto px-4 py-14 md:py-20">
+        {/* Brand mark */}
+        <div className="flex items-center justify-center gap-2 mb-10">
+          <img src="/logo-icon.svg" alt="FormMaps" className="w-9 h-9" />
+          <div className="flex items-center">
+            <span className="text-xl font-bold tracking-tight" style={{ color: "#111111" }}>FORM</span>
+            <span className="text-xl font-bold tracking-tight" style={{ color: "#065292" }}>MAPS</span>
+          </div>
+        </div>
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-16"
         >
-          <Badge className="mb-4 bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100 px-4 py-1.5">
+          <Badge className="mb-4 border-0 px-4 py-1.5 font-semibold" style={{ background: "rgba(6,82,146,0.1)", color: "#065292" }}>
             Choose Your Plan
           </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4" style={{ color: "#111111" }}>
             Invest in Your Future
           </h1>
           <p className="text-lg text-gray-500 max-w-xl mx-auto">
             Unlock AI-powered career tools, assessments, and personalized guidance to accelerate your professional journey.
           </p>
-          <p className="text-sm font-medium text-blue-600 mt-3">
+          <p className="text-sm font-semibold mt-3" style={{ color: "#065292" }}>
             Start with a 7-day free trial. No charge until your trial ends.
           </p>
         </motion.div>
@@ -187,13 +192,14 @@ export default function SubscribePage() {
                 transition={{ delay: i * 0.1 }}
                 className={`relative rounded-2xl border bg-white transition-all duration-300 hover:shadow-xl ${
                   plan.popular
-                    ? "border-blue-200 shadow-lg shadow-blue-100/50 scale-[1.02]"
+                    ? "shadow-lg scale-[1.02]"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
+                style={plan.popular ? { borderColor: "#065292", boxShadow: "0 10px 30px rgba(6,82,146,0.15)" } : undefined}
               >
                 {plan.badge && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <Badge className={`bg-gradient-to-r ${plan.gradient} text-white border-0 px-4 py-1 shadow-lg`}>
+                    <Badge className="text-white border-0 px-4 py-1 shadow-lg" style={{ background: "#065292" }}>
                       <Sparkles className="w-3 h-3 mr-1" />
                       {plan.badge}
                     </Badge>
@@ -203,18 +209,18 @@ export default function SubscribePage() {
                 <div className="p-8">
                   {/* Icon + Name */}
                   <div className="flex items-center gap-3 mb-4">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${plan.gradient} flex items-center justify-center`}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "#065292" }}>
                       <Icon className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+                      <h3 className="text-xl font-bold" style={{ color: "#111111" }}>{plan.name}</h3>
                       <p className="text-sm text-gray-500">{plan.description}</p>
                     </div>
                   </div>
 
                   {/* Price */}
                   <div className="flex items-baseline gap-1 mb-8">
-                    <span className="text-4xl font-bold text-gray-900">${plan.price}</span>
+                    <span className="text-4xl font-bold" style={{ color: "#111111" }}>${plan.price}</span>
                     <span className="text-gray-400 font-medium">/{plan.period}</span>
                   </div>
 
@@ -234,11 +240,12 @@ export default function SubscribePage() {
                     className="w-full mb-8"
                   >
                     <Button
-                      className={`w-full h-12 rounded-xl font-semibold text-base transition-all ${
+                      className="w-full h-12 rounded-xl font-semibold text-base transition-all shadow-sm hover:shadow-md"
+                      style={
                         plan.popular
-                          ? `bg-gradient-to-r ${plan.gradient} text-white shadow-md hover:shadow-lg hover:opacity-95`
-                          : "bg-gray-900 text-white hover:bg-gray-800"
-                      }`}
+                          ? { background: "#065292", color: "#fff" }
+                          : { background: "#fff", color: "#065292", border: "1px solid #065292" }
+                      }
                       disabled={processingPlan !== null}
                     >
                       {processingPlan === plan.id ? (
@@ -253,8 +260,8 @@ export default function SubscribePage() {
                   <div className="space-y-3">
                     {plan.features.map((feature, j) => (
                       <div key={j} className="flex items-start gap-3">
-                        <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${feature.highlighted ? "text-blue-600" : "text-gray-400"}`} />
-                        <span className={`text-sm ${feature.highlighted ? "text-gray-900 font-medium" : "text-gray-600"}`}>
+                        <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: feature.highlighted ? "#065292" : "#9ca3af" }} />
+                        <span className={`text-sm ${feature.highlighted ? "font-medium" : ""}`} style={{ color: feature.highlighted ? "#111111" : "#4b5563" }}>
                           {feature.text}
                         </span>
                       </div>
