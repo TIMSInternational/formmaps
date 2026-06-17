@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { AlertCircle, ChevronDown, Users } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useGlobalStore } from "@/store/useGlobalStore";
@@ -13,8 +13,7 @@ import { DEFAULT_RESPONSE_SCALE } from "./_components/types";
 
 export default function EvaluatorPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const { language } = useGlobalStore();
+  const { language, user } = useGlobalStore();
   const token = searchParams.get("token");
 
   const [isLoading, setIsLoading] = useState(true);
@@ -200,8 +199,9 @@ export default function EvaluatorPage() {
   if (error && !evaluationData) return <ErrorScreen error={error} />;
 
   if (success) {
-    setTimeout(() => { router.push("/dashboard/assessments"); }, 2500);
-    return <SuccessScreen />;
+    // NEVER auto-route a token-link evaluator into the app. Only an authenticated
+    // user (a student finishing their own self-evaluation) is offered a way back.
+    return <SuccessScreen returnHref={user?.isAuthenticated ? "/dashboard/assessments" : undefined} />;
   }
 
   if (alreadySubmitted) return <AlreadySubmittedScreen />;

@@ -33,7 +33,7 @@ export function ErrorScreen({ error }: ErrorScreenProps) {
   );
 }
 
-export function SuccessScreen() {
+export function SuccessScreen({ returnHref }: { returnHref?: string }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <motion.div
@@ -46,8 +46,21 @@ export function SuccessScreen() {
         </div>
         <h2 className="text-xl font-bold text-foreground mb-2">Thank You!</h2>
         <p className="text-sm text-muted-foreground">
-          Your evaluation has been submitted successfully. Redirecting...
+          Your evaluation has been submitted successfully. Thank you for your
+          participation — you may now close this window.
         </p>
+        {/* Only authenticated users (e.g. a student finishing their own
+            self-evaluation) get a way back into the app. External evaluators
+            reach this page via a token link with no session and must never be
+            routed into the student's dashboard. */}
+        {returnHref && (
+          <a
+            href={returnHref}
+            className="inline-block mt-5 px-5 py-2.5 rounded-lg bg-[#065292] text-white text-sm font-medium hover:bg-[#054a83] transition-colors"
+          >
+            Return to dashboard
+          </a>
+        )}
       </motion.div>
     </div>
   );
