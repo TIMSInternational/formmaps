@@ -73,23 +73,33 @@ export default function PaymentSuccess() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen bg-gradient-to-b from-[#f5f8fc] to-white flex flex-col items-center justify-center p-4">
+      {/* Brand mark */}
+      <div className="flex items-center justify-center gap-2 mb-6">
+        <img src="/logo-icon.svg" alt="FormMaps" className="w-8 h-8" />
+        <div className="flex items-center">
+          <span className="text-lg font-bold tracking-tight" style={{ color: "#111111" }}>FORM</span>
+          <span className="text-lg font-bold tracking-tight" style={{ color: "#065292" }}>MAPS</span>
+        </div>
+      </div>
+
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8" style={{ border: "1px solid rgba(6,82,146,0.1)" }}>
         {status === "loading" && (
           <div className="text-center">
-            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <div className="w-16 h-16 border-4 rounded-full animate-spin mx-auto mb-4" style={{ borderColor: "rgba(6,82,146,0.2)", borderTopColor: "#065292" }}></div>
+            <h2 className="text-xl font-semibold mb-2" style={{ color: "#111111" }}>
               {t("payments.verifying")}
             </h2>
-            <p className="text-gray-600">{t("payments.pleaseWait")}</p>
+            <p className="text-gray-500">{t("payments.pleaseWait")}</p>
           </div>
         )}
 
         {status === "success" && (
           <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(5,150,105,0.12)" }}>
               <svg
-                className="w-8 h-8 text-green-600"
+                className="w-8 h-8"
+                style={{ color: "#059669" }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -102,10 +112,10 @@ export default function PaymentSuccess() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold mb-2" style={{ color: "#111111" }}>
               {t("payments.successTitle")}
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-500 mb-6">
               {paymentDetails?.description
                 ?.toLowerCase()
                 .includes("coaching session")
@@ -114,8 +124,8 @@ export default function PaymentSuccess() {
             </p>
 
             {paymentDetails && (
-              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-                <h3 className="font-semibold text-gray-900 mb-2">
+              <div className="rounded-lg p-4 mb-6 text-left" style={{ background: "#f5f8fc", border: "1px solid rgba(6,82,146,0.1)" }}>
+                <h3 className="font-semibold mb-2" style={{ color: "#111111" }}>
                   {t("payments.details")}
                 </h3>
                 {paymentDetails.amount && (
@@ -141,7 +151,8 @@ export default function PaymentSuccess() {
 
             <button
               onClick={handleContinue}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="w-full text-white py-3 px-4 rounded-xl font-semibold transition-colors hover:opacity-95"
+              style={{ background: "#065292" }}
             >
               {paymentDetails?.description
                 ?.toLowerCase()
@@ -154,9 +165,10 @@ export default function PaymentSuccess() {
 
         {status === "failed" && (
           <div className="text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(220,38,38,0.1)" }}>
               <svg
-                className="w-8 h-8 text-red-600"
+                className="w-8 h-8"
+                style={{ color: "#dc2626" }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -169,10 +181,10 @@ export default function PaymentSuccess() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold mb-2" style={{ color: "#111111" }}>
               {t("payments.failedTitle")}
             </h2>
-            <p className="text-gray-600 mb-6">{t("payments.failedText")}</p>
+            <p className="text-gray-500 mb-6">{t("payments.failedText")}</p>
             <div className="space-y-3">
               <Link
                 href={
@@ -182,13 +194,15 @@ export default function PaymentSuccess() {
                     ? "/dashboard/my-sessions"
                     : "/dashboard/subscriptions"
                 }
-                className="block w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-center"
+                className="block w-full text-white py-3 px-4 rounded-xl font-semibold transition-colors hover:opacity-95 text-center"
+                style={{ background: "#065292" }}
               >
                 {t("payments.tryAgain")}
               </Link>
               <button
                 onClick={handleContinue}
-                className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                className="w-full py-3 px-4 rounded-xl font-semibold transition-colors hover:bg-gray-50"
+                style={{ border: "1px solid #065292", color: "#065292" }}
               >
                 {t("payments.backToDashboard")}
               </button>
@@ -198,9 +212,10 @@ export default function PaymentSuccess() {
 
         {status === "error" && (
           <div className="text-center">
-            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(217,119,6,0.12)" }}>
               <svg
-                className="w-8 h-8 text-yellow-600"
+                className="w-8 h-8"
+                style={{ color: "#d97706" }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -213,13 +228,14 @@ export default function PaymentSuccess() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold mb-2" style={{ color: "#111111" }}>
               {t("payments.errorTitle")}
             </h2>
-            <p className="text-gray-600 mb-6">{t("payments.errorText")}</p>
+            <p className="text-gray-500 mb-6">{t("payments.errorText")}</p>
             <button
               onClick={handleContinue}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="w-full text-white py-3 px-4 rounded-xl font-semibold transition-colors hover:opacity-95"
+              style={{ background: "#065292" }}
             >
               {t("payments.continueToDashboard")}
             </button>
