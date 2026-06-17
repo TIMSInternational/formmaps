@@ -1009,7 +1009,7 @@ export default function ResumeBuilderPage() {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] bg-foreground text-background px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-sm"
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] bg-[#065292] text-white px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-sm"
           >
             <Check className="w-4 h-4" />
             Saved
@@ -1030,7 +1030,7 @@ export default function ResumeBuilderPage() {
         />
 
         {/* Right Panel — Tabs: AI Rewrite / Editor / Style */}
-        <div className="border-l border-gray-200 dark:border-border flex flex-col h-full bg-white dark:bg-card overflow-hidden">
+        <div className="border-l border-border flex flex-col h-full bg-white dark:bg-card overflow-hidden">
           {/* Tab switcher */}
           <ResumeTabSwitcher activeTab={editorTab} setActiveTab={setEditorTab} />
 
@@ -1039,17 +1039,17 @@ export default function ResumeBuilderPage() {
             {/* AI Rewrite Tab */}
             {editorTab === "rewrite" && (
               <div className="p-4 space-y-4">
-                <div className="bg-gray-50 dark:bg-secondary/30 rounded-xl border border-gray-200 dark:border-border p-6 text-center space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-secondary flex items-center justify-center mx-auto">
-                    <Sparkles className="w-5 h-5 text-gray-500 dark:text-muted-foreground" />
+                <div className="bg-secondary/30 rounded-xl border border-border p-6 text-center space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#065292]/10 flex items-center justify-center mx-auto">
+                    <Sparkles className="w-5 h-5 text-[#065292]" />
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-foreground">AI Resume Optimization</p>
-                  <p className="text-xs text-gray-500 dark:text-muted-foreground max-w-[260px] mx-auto leading-relaxed">
+                  <p className="text-sm font-semibold text-foreground">AI Resume Optimization</p>
+                  <p className="text-xs text-muted-foreground max-w-[260px] mx-auto leading-relaxed">
                     Paste a job posting and let AI rewrite your resume bullets, optimize keywords, and boost your ATS score
                   </p>
                   <button
                     onClick={() => window.location.href = "/dashboard/resume-builder/new"}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-foreground text-white dark:text-background rounded-lg text-sm font-medium hover:bg-gray-800 dark:hover:bg-foreground/90 transition-colors shadow-sm"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#065292] text-white rounded-lg text-sm font-medium hover:bg-[#054473] transition-colors shadow-sm"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     Tailor for a Job
@@ -1088,8 +1088,8 @@ export default function ResumeBuilderPage() {
                     className={cn(
                       "bg-card rounded-lg border-2 overflow-hidden cursor-pointer transition-all",
                       resumeBuilder.data.template === template.id
-                        ? "border-primary shadow-lg"
-                        : "border-border hover:border-primary/50"
+                        ? "border-[#065292] shadow-lg"
+                        : "border-border hover:border-[#065292]/50"
                     )}
                     onClick={() => {
                       setResumeTemplate(template.id as any);
@@ -1108,7 +1108,7 @@ export default function ResumeBuilderPage() {
                           </p>
                         </div>
                         {resumeBuilder.data.template === template.id && (
-                          <div className="flex items-center gap-1 px-2 py-0.5 bg-primary text-primary-foreground rounded-full text-xs font-medium ml-2 flex-shrink-0">
+                          <div className="flex items-center gap-1 px-2 py-0.5 bg-[#065292] text-white rounded-full text-xs font-medium ml-2 flex-shrink-0">
                             <Check className="w-3 h-3" />
                             Active
                           </div>
@@ -1234,9 +1234,9 @@ export default function ResumeBuilderPage() {
               </SortableContext>
               <DragOverlay>
                 {activeId ? (
-                  <div className="bg-card rounded-lg border-2 border-primary shadow-2xl p-4 opacity-90">
+                  <div className="bg-card rounded-lg border-2 border-[#065292] shadow-2xl p-4 opacity-90">
                     <div className="flex items-center gap-3">
-                      <GripVertical className="w-5 h-5 text-primary" />
+                      <GripVertical className="w-5 h-5 text-[#065292]" />
                       <span className="font-semibold text-foreground">
                         {sections.find((s) => s.id === activeId)?.title ||
                           "Section"}
@@ -1251,7 +1251,7 @@ export default function ResumeBuilderPage() {
           {activeTab === "content" && (
             <button
               onClick={() => setShowAddContentModal(true)}
-              className="w-full py-2.5 bg-secondary/50 text-muted-foreground font-medium rounded-xl hover:bg-secondary hover:text-foreground border border-dashed border-border transition-colors flex items-center justify-center gap-2 text-xs"
+              className="w-full py-2.5 bg-secondary/30 text-muted-foreground font-medium rounded-xl hover:bg-[#065292]/10 hover:text-[#065292] hover:border-[#065292]/40 border border-dashed border-border transition-colors flex items-center justify-center gap-2 text-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               Add Section
@@ -1277,8 +1277,8 @@ export default function ResumeBuilderPage() {
                         className={cn(
                           "p-3 rounded-xl border text-left transition-all text-xs",
                           resumeBuilder.data.template === template.id
-                            ? "border-foreground bg-foreground/5 font-medium"
-                            : "border-border hover:border-foreground/20"
+                            ? "border-[#065292] bg-[#065292]/5 text-[#065292] font-semibold"
+                            : "border-border hover:border-[#065292]/30"
                         )}
                       >
                         {template.name}
@@ -1291,10 +1291,10 @@ export default function ResumeBuilderPage() {
           </div>
 
           {/* Bottom bar */}
-          <div className="border-t border-gray-200 dark:border-border p-3 shrink-0 bg-white dark:bg-card">
+          <div className="border-t border-border p-3 shrink-0 bg-white dark:bg-card">
             <button
               onClick={handleDownloadPDF}
-              className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-900 dark:bg-foreground text-white dark:text-background rounded-lg text-sm font-medium hover:bg-gray-800 dark:hover:bg-foreground/90 transition-colors shadow-sm"
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#065292] text-white rounded-lg text-sm font-medium hover:bg-[#054473] transition-colors shadow-sm"
             >
               <Download className="w-4 h-4" />
               Download Resume

@@ -66,7 +66,7 @@ export function EducationEditor({
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-3 bg-accent/20 rounded-lg border border-primary/30 space-y-2"
+      className="p-3 bg-[#065292]/5 rounded-lg border border-[#065292]/30 space-y-2"
     >
       <div className="grid grid-cols-2 gap-2">
         <div>
@@ -84,7 +84,7 @@ export function EducationEditor({
             }
             onBlur={isNew ? undefined : triggerSave}
             placeholder="Bachelor of Science"
-            className="w-full px-3 py-1.5 text-sm border border-input rounded-lg bg-background text-foreground focus:ring-2 focus:ring-ring outline-none"
+            className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none"
           />
         </div>
         <div>
@@ -102,7 +102,7 @@ export function EducationEditor({
             }
             onBlur={isNew ? undefined : triggerSave}
             placeholder="University Name"
-            className="w-full px-3 py-1.5 text-sm border border-input rounded-lg bg-background text-foreground focus:ring-2 focus:ring-ring outline-none"
+            className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none"
           />
         </div>
       </div>
@@ -122,7 +122,7 @@ export function EducationEditor({
             }
             onBlur={isNew ? undefined : triggerSave}
             placeholder="City, State"
-            className="w-full px-3 py-1.5 text-sm border border-input rounded-lg bg-background text-foreground focus:ring-2 focus:ring-ring outline-none"
+            className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none"
           />
         </div>
         <div>
@@ -140,7 +140,7 @@ export function EducationEditor({
             }
             onBlur={isNew ? undefined : triggerSave}
             placeholder="May 2024"
-            className="w-full px-3 py-1.5 text-sm border border-input rounded-lg bg-background text-foreground focus:ring-2 focus:ring-ring outline-none"
+            className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none"
           />
         </div>
         <div>
@@ -158,7 +158,7 @@ export function EducationEditor({
             }
             onBlur={isNew ? undefined : triggerSave}
             placeholder="3.8"
-            className="w-full px-3 py-1.5 text-sm border border-input rounded-lg bg-background text-foreground focus:ring-2 focus:ring-ring outline-none"
+            className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none"
           />
         </div>
       </div>
@@ -166,13 +166,13 @@ export function EducationEditor({
         <div className="flex justify-end gap-2">
           <button
             onClick={() => setEditingEducation(null)}
-            className="px-3 py-1.5 text-xs border border-input rounded-lg hover:bg-accent transition-colors"
+            className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-secondary/50 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={triggerSave}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 text-xs bg-[#065292] text-white rounded-lg hover:bg-[#054473] transition-colors"
           >
             <Check className="w-3 h-3" />
             Add
@@ -187,17 +187,25 @@ export function EducationEditor({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="bg-card rounded-lg border border-border overflow-hidden"
+      className={`bg-card rounded-xl border shadow-sm overflow-hidden transition-colors ${
+        expandedSection === "education"
+          ? "border-[#065292]/30"
+          : "border-border"
+      }`}
     >
       <button
         onClick={() => toggleSection("education")}
-        className="w-full flex items-center gap-3 p-4 hover:bg-accent/50 transition-colors"
+        className={`w-full flex items-center gap-3 p-4 transition-colors ${
+          expandedSection === "education"
+            ? "bg-[#065292]/5"
+            : "hover:bg-secondary/50"
+        }`}
       >
-        <GraduationCap className="w-5 h-5 text-primary flex-shrink-0" />
+        <GraduationCap className="w-5 h-5 text-[#065292] flex-shrink-0" />
         <span className="font-semibold text-foreground flex-1 text-left">
           Education
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="px-2 py-0.5 text-xs font-semibold bg-[#FFD600] text-[#111111] rounded-full">
           {education.length} entries
         </span>
         <motion.div
@@ -206,7 +214,13 @@ export function EducationEditor({
           }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+          <ChevronDown
+            className={`w-5 h-5 ${
+              expandedSection === "education"
+                ? "text-[#065292]"
+                : "text-muted-foreground"
+            }`}
+          />
         </motion.div>
       </button>
 
@@ -228,7 +242,7 @@ export function EducationEditor({
                       {editingEducation === edu.id ? (
                         renderEditForm(false)
                       ) : (
-                        <div className="p-2 bg-muted/30 rounded-lg border border-border hover:border-primary/50 transition-all">
+                        <div className="p-2 bg-secondary/30 rounded-lg border border-border hover:border-[#065292]/50 transition-all">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <h4 className="text-sm font-semibold text-foreground">
@@ -292,7 +306,7 @@ export function EducationEditor({
               ) : (
                 <button
                   onClick={handleAddEducation}
-                  className="w-full flex items-center justify-center gap-1 px-3 py-2 border border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                  className="w-full flex items-center justify-center gap-1 px-3 py-2 border border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-[#065292] hover:text-[#065292] transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Education
