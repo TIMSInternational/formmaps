@@ -294,13 +294,13 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
           <View style={{ flexDirection: 'row' }}>
             {/* S Quadrant */}
             <View style={{ ...styles.discQuadrant, backgroundColor: chartColors.steadiness, borderBottomLeftRadius: 8 }}>
-              <Text style={styles.discLabel}>S - Steadiness</Text>
+              <Text style={styles.discLabel}>S - Solidity</Text>
               <Text style={styles.discScore}>{data.discProfile.steadiness.natural}%</Text>
               <Text style={styles.discDescription}>{data.discProfile.steadiness.description}</Text>
             </View>
             {/* C Quadrant */}
             <View style={{ ...styles.discQuadrant, backgroundColor: chartColors.conscientiousness, borderBottomRightRadius: 8 }}>
-              <Text style={styles.discLabel}>C - Conscientiousness</Text>
+              <Text style={styles.discLabel}>C - Control</Text>
               <Text style={styles.discScore}>{data.discProfile.conscientiousness.natural}%</Text>
               <Text style={styles.discDescription}>{data.discProfile.conscientiousness.description}</Text>
             </View>
@@ -327,10 +327,10 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
             <ProgressBar label="Influence" value={data.discProfile.influence.natural} color={chartColors.influence} />
           </View>
           <View style={{ marginBottom: 10 }}>
-            <ProgressBar label="Steadiness" value={data.discProfile.steadiness.natural} color={chartColors.steadiness} />
+            <ProgressBar label="Solidity" value={data.discProfile.steadiness.natural} color={chartColors.steadiness} />
           </View>
           <View>
-            <ProgressBar label="Conscientiousness" value={data.discProfile.conscientiousness.natural} color={chartColors.conscientiousness} />
+            <ProgressBar label="Control" value={data.discProfile.conscientiousness.natural} color={chartColors.conscientiousness} />
           </View>
         </View>
 
