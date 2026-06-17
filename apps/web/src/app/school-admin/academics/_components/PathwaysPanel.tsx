@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, GitBranch, RefreshCw, TriangleAlert, Workflow } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,7 +30,7 @@ const BTN_SECONDARY: React.CSSProperties = {
 
 function CourseNode({ course, onClick }: { course: PathwayCourse; onClick: () => void }) {
   return (
-    <button onClick={onClick} title={`${course.name} — click to edit prerequisites`} style={NODE_BTN}
+    <button onClick={(e) => { e.stopPropagation(); onClick(); }} title={`${course.name} — click to edit prerequisites`} style={NODE_BTN}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}
       onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
@@ -42,6 +43,7 @@ function CourseNode({ course, onClick }: { course: PathwayCourse; onClick: () =>
 }
 
 export function PathwaysPanel() {
+  const router = useRouter();
   const { data, isLoading, isError, refetch } = useCoursePathways();
   const [editCourse, setEditCourse] = useState<PathwayCourse | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -96,7 +98,7 @@ export function PathwaysPanel() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-          Derived from your course prerequisites — click any course to edit its prerequisites.
+          Derived from your course prerequisites — click a pathway to open its editor, or click a course to edit its prerequisites.
         </p>
         {editorButton}
       </div>
@@ -120,7 +122,10 @@ export function PathwaysPanel() {
           </h3>
           <div className="space-y-2">
             {group.chains.map((chain) => (
-              <div key={chain.map((c) => c.code).join("|")} className="flex flex-wrap items-center gap-2"
+              <div key={chain.map((c) => c.code).join("|")}
+                onClick={() => router.push(`/school-admin/academics/pathways/${chain[0].courseId}/editor`)}
+                title="Open this pathway's visual editor"
+                className="group flex flex-wrap items-center gap-2 cursor-pointer"
                 style={{ padding: "10px 12px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
                 {chain.map((courseNode, i) => (
                   <span key={courseNode.courseId + i} className="flex items-center gap-2">
@@ -128,6 +133,10 @@ export function PathwaysPanel() {
                     <CourseNode course={courseNode} onClick={() => setEditCourse(courseNode)} />
                   </span>
                 ))}
+                <span className="ml-auto opacity-0 group-hover:opacity-100 flex items-center gap-1"
+                  style={{ fontSize: 12, fontWeight: 600, color: "#065292", transition: "opacity 0.15s" }}>
+                  Open editor <ArrowRight style={{ width: 13, height: 13 }} />
+                </span>
               </div>
             ))}
           </div>

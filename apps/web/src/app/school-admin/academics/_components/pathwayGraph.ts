@@ -88,6 +88,34 @@ export function wouldCreateCycle(edges: PathwayEdge[], source: string, target: s
   return false;
 }
 
+/** Forward-reachable subgraph from a root course id: the root plus every course
+ *  that transitively requires it (follow source→target edges), and the edge ids
+ *  whose both ends are inside that set. Used by the per-pathway editor page. */
+export function subgraphFromRoot(
+  edges: PathwayEdge[],
+  rootId: string,
+): { nodeIds: Set<string>; edgeIds: Set<string> } {
+  const adj = new Map<string, string[]>();
+  for (const e of edges) {
+    const list = adj.get(e.source);
+    if (list) list.push(e.target);
+    else adj.set(e.source, [e.target]);
+  }
+  const nodeIds = new Set<string>([rootId]);
+  const stack = [rootId];
+  while (stack.length) {
+    const cur = stack.pop()!;
+    for (const next of adj.get(cur) ?? []) {
+      if (!nodeIds.has(next)) { nodeIds.add(next); stack.push(next); }
+    }
+  }
+  const edgeIds = new Set<string>();
+  for (const e of edges) {
+    if (nodeIds.has(e.source) && nodeIds.has(e.target)) edgeIds.add(e.id);
+  }
+  return { nodeIds, edgeIds };
+}
+
 /** Compute the set of courses whose prerequisite set changed vs the baseline,
  *  returning the PUT payload pieces for each (corequisites echoed back so the
  *  wholesale-replacing endpoint doesn't drop them). */
@@ -118,4 +146,29 @@ export function diffPrereqs(
     });
   }
   return out;
+}
+
+/** Compute the PUT payloads for a canvas that may show only PART of the graph
+ *  (the per-pathway/root-scoped editor). A downstream course on the canvas can
+ *  have prerequisites that live OFF the canvas (a sibling chain converging on it);
+ *  those edges aren't drawn. To avoid the wholesale-replacing PUT silently deleting
+ *  them, we (a) detect changes using only the on-canvas portion of each course's
+ *  prerequisites, and (b) re-append the off-canvas sources to each changed course's
+ *  payload. When every prereq source is on the canvas (the all-pathways editor),
+ *  the off-canvas set is empty and this reduces to a plain diffPrereqs. */
+export function scopedPrereqChanges(
+  originalPrereqs: Record<string, string[]>,
+  edges: PathwayEdge[],
+  courses: CatalogCourse[],
+  onCanvasIds: Set<string>,
+): Array<{ courseId: string; courseIds: string[]; corequisites: string[] }> {
+  const scoped = courses.filter((c) => onCanvasIds.has(c.id));
+  const scopedOriginal: Record<string, string[]> = {};
+  for (const c of scoped) {
+    scopedOriginal[c.id] = (originalPrereqs[c.id] ?? []).filter((src) => onCanvasIds.has(src));
+  }
+  return diffPrereqs(scopedOriginal, edges, scoped).map((d) => {
+    const offCanvas = (originalPrereqs[d.courseId] ?? []).filter((src) => !onCanvasIds.has(src));
+    return offCanvas.length ? { ...d, courseIds: [...d.courseIds, ...offCanvas] } : d;
+  });
 }
