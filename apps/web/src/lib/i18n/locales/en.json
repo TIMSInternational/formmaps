@@ -1094,6 +1094,12 @@
     "backToInstructions": "Back to Instructions",
     "submitAnswer": "Submit Answer",
     "startTest": "Start Test",
+    "examConfirmTitle": "The evaluation starts now",
+    "examConfirmCannotGoBack": "Once you begin, you cannot go back. There is no pause and the timer will not stop.",
+    "examConfirmUnderstood": "I have understood the examples and instructions.",
+    "examConfirmConcentrate": "Concentrate and work quickly — you have {{minutes}} minutes for {{questions}} questions.",
+    "examConfirmBegin": "I'm ready — begin",
+    "examConfirmReview": "Review examples again",
     "benchmarks": {
       "header": {
         "title": "Industry Benchmarks",

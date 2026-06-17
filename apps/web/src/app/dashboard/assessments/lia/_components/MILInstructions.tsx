@@ -80,8 +80,9 @@ export default function MILInstructions({
   const { t } = useTranslation();
   const { language } = useGlobalStore();
   const [currentStep, setCurrentStep] = useState<
-    "instructions" | "practice" | "test"
+    "instructions" | "practice" | "confirm" | "test"
   >("instructions");
+  const [understood, setUnderstood] = useState(false);
   const [instructions, setInstructions] = useState<
     MILInstructionData | string | null
   >(null);
@@ -114,17 +115,91 @@ export default function MILInstructions({
       <div>
         <MILPracticeExamples
           examId={exam.id as MILExamId}
-          onComplete={() => setCurrentStep("test")}
+          onComplete={() => setCurrentStep("confirm")}
           onBack={() => setCurrentStep("instructions")}
         />
         <div className="text-center py-2">
           <button
-            onClick={() => setCurrentStep("test")}
+            onClick={() => setCurrentStep("confirm")}
             className="text-xs text-muted-foreground hover:text-foreground underline transition-colors"
           >
             Skip practice and start test
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (currentStep === "confirm") {
+    return (
+      <div className="min-h-screen bg-secondary flex items-center justify-center px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="w-full max-w-lg bg-card rounded-2xl shadow-xl border p-6 sm:p-8"
+        >
+          <div className="text-center mb-6">
+            <div className="w-14 h-14 bg-red-500/10 dark:bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-7 h-7 text-red-600 dark:text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"
+                />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              {t("dashboard.examConfirmTitle")}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {t("dashboard.examConfirmCannotGoBack")}
+            </p>
+          </div>
+
+          <div className="bg-[#065292]/5 border-2 border-[#065292]/20 rounded-xl p-4 mb-6 text-center">
+            <p className="text-base font-semibold text-[#065292]">
+              {t("dashboard.examConfirmConcentrate", {
+                minutes: exam.timeLimitMinutes,
+                questions: exam.totalQuestions,
+              })}
+            </p>
+          </div>
+
+          <label className="flex items-start gap-3 cursor-pointer mb-6 select-none">
+            <input
+              type="checkbox"
+              checked={understood}
+              onChange={(e) => setUnderstood(e.target.checked)}
+              className="mt-0.5 w-5 h-5 accent-[#065292] cursor-pointer shrink-0"
+            />
+            <span className="text-sm text-foreground">
+              {t("dashboard.examConfirmUnderstood")}
+            </span>
+          </label>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => setCurrentStep("practice")}
+              className="px-5 py-3 border border-border text-foreground rounded-xl font-medium hover:bg-secondary transition-colors text-sm sm:text-base"
+            >
+              ← {t("dashboard.examConfirmReview")}
+            </button>
+            <button
+              onClick={() => setCurrentStep("test")}
+              disabled={!understood}
+              className="flex-1 px-6 py-3 bg-[#065292] text-white rounded-xl font-semibold hover:bg-[#054a83] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+            >
+              {t("dashboard.examConfirmBegin")}
+            </button>
+          </div>
+        </motion.div>
       </div>
     );
   }

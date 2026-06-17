@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "motion/react";
+import { ArrowRight } from "lucide-react";
 import {
   MILExamId,
   startMILExam,
@@ -335,24 +336,34 @@ export default function MILExamRunner({
               {renderAnswerOptions(currentQuestion, selectedAnswer, handleAnswerSelect, isSubmitting)}
             </motion.div>
 
-            {/* Continue Button */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.1 }} className="text-center px-4">
-              <button
-                onClick={handleContinue}
-                disabled={selectedAnswer === null || isSubmitting}
-                className="bg-[#065292] text-white px-4 py-2 sm:px-8 sm:py-3 md:px-12 md:py-4 rounded-xl sm:rounded-2xl hover:bg-[#054a83] transition-all duration-100 font-semibold text-sm sm:text-base md:text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-xl min-w-[140px] sm:min-w-[180px] md:min-w-[200px]"
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center justify-center">
-                    <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    <span className="text-xs sm:text-sm md:text-base">Submitting...</span>
-                  </div>
-                ) : currentQuestionIndex + 1 >= exam.questions.length ? (
-                  "Complete Assessment"
-                ) : (
-                  "Continue"
-                )}
-              </button>
+            {/* Continue Button — boxed & prominent */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.1 }}
+              className="mt-4 sm:mt-6 border-t-2 border-[#065292]/15 pt-4 sm:pt-6 px-2 sm:px-4"
+            >
+              <div className="max-w-md mx-auto rounded-2xl border-2 border-[#065292]/30 bg-[#065292]/[0.05] p-3 sm:p-4 shadow-lg">
+                <button
+                  onClick={handleContinue}
+                  disabled={selectedAnswer === null || isSubmitting}
+                  className="w-full bg-[#065292] text-white px-6 py-4 sm:py-5 rounded-xl hover:bg-[#054a83] transition-all duration-100 font-bold text-lg sm:text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-xl flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Submitting...</span>
+                    </>
+                  ) : currentQuestionIndex + 1 >= exam.questions.length ? (
+                    "Complete Assessment"
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </>
+                  )}
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         </div>
