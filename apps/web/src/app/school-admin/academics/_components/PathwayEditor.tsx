@@ -191,9 +191,16 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
   const pendingChanges = useMemo(() => {
     if (readOnly) return [];
     const plain: PathwayEdge[] = edges.map((e) => ({ id: e.id, source: e.source, target: e.target }));
-    return diffPrereqs(originalPrereqs.current, plain, catalogCourses);
+    // Only diff courses currently on the canvas. Off-canvas courses aren't being
+    // edited — in the root-scoped editor the canvas holds just one subgraph, so
+    // diffing the full catalog would falsely flag (and wipe) every other course's
+    // prerequisites. In the all-pathways editor every prereq-bearing course is on
+    // the canvas, so this scoping is a no-op there.
+    const onCanvas = new Set(nodes.map((n) => n.id));
+    const scoped = catalogCourses.filter((c) => onCanvas.has(c.id));
+    return diffPrereqs(originalPrereqs.current, plain, scoped);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [edges, catalogCourses, readOnly, baselineVersion]);
+  }, [edges, nodes, catalogCourses, readOnly, baselineVersion]);
   const dirty = pendingChanges.length > 0;
 
   const requestClose = useCallback(() => {
