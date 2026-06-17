@@ -52,13 +52,16 @@ export default function MILExamRunner({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const { user, language } = useGlobalStore();
+  const { user, language, setAssessmentActive } = useGlobalStore();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const cleanupTabMonitoringRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    // Mark an assessment as in progress — blocks/closes the AI chat for its duration.
+    setAssessmentActive(true);
     initializeExam();
     return () => {
+      setAssessmentActive(false);
       if (timerRef.current) clearInterval(timerRef.current);
       if (cleanupTabMonitoringRef.current) cleanupTabMonitoringRef.current();
     };

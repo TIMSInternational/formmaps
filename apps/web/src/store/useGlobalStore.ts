@@ -173,6 +173,11 @@ interface GlobalState {
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
 
+  // Assessment in-progress flag (transient, not persisted). True while a student
+  // is actively taking a PCA survey or LIA/MIL exam — used to block/close the AI chat.
+  assessmentActive: boolean;
+  setAssessmentActive: (active: boolean) => void;
+
   // Settings
   platformFee: number;
   setPlatformFee: (fee: number) => void;
@@ -730,6 +735,10 @@ export const useGlobalStore = create<GlobalState>()(
         sidebarCollapsed: false,
         toggleSidebar: () =>
           set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+
+        // Assessment in-progress flag (transient; excluded from persist partialize)
+        assessmentActive: false,
+        setAssessmentActive: (active: boolean) => set({ assessmentActive: active }),
 
         // Settings
         platformFee: 15, // Default value

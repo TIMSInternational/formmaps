@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 export default function PCAAssessmentPage() {
-  const { user } = useGlobalStore();
+  const { user, setAssessmentActive } = useGlobalStore();
   const { t } = useTranslation();
   const { pcaData, loading, error, refreshPCAData, hasPCA, isCompleted } =
     usePCAData();
@@ -47,6 +47,13 @@ export default function PCAAssessmentPage() {
       setShowResults(true);
     }
   }, [searchParams, hasPCA, isCompleted, pcaData]);
+
+  // While the PCA survey iframe is open, mark an assessment in progress so the
+  // AI chat is blocked/closed. Clears on close or unmount.
+  useEffect(() => {
+    setAssessmentActive(!!assessmentUrl);
+    return () => setAssessmentActive(false);
+  }, [assessmentUrl, setAssessmentActive]);
 
   const handleStartAssessment = async () => {
     if (!user?.id || !user?.name || !user?.email) {
