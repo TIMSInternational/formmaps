@@ -217,11 +217,13 @@ export function createCustomPracticeQuestions(examId: MILExamId): MILQuestion[] 
             { letter: "R", rotationDegree: 0, isMirrored: false },
             { letter: "R", rotationDegree: 90, isMirrored: false },
             { letter: "R", rotationDegree: 270, isMirrored: false },
+            { letter: "R", rotationDegree: 0, isMirrored: false },
+            { letter: "R", rotationDegree: 180, isMirrored: false },
           ],
         },
         explanation:
-          "Pair 1 (R vs R) matches. Pair 2 (R rotated 90° vs R rotated 270°) also matches — both are pure rotations of the same R. So 2 pairs match.",
-        correctAnswer: 2,
+          "All three pairs are pure rotations of the same R (none are mirrored), so every bottom figure can be rotated to match the one above it. All 3 pairs match.",
+        correctAnswer: 3,
       },
       {
         questionNumber: 3,
@@ -231,18 +233,16 @@ export function createCustomPracticeQuestions(examId: MILExamId): MILQuestion[] 
         data: {
           visualRotationItems: [
             { letter: "R", rotationDegree: 0, isMirrored: false },
-            { letter: "R", rotationDegree: 0, isMirrored: false },
-            { letter: "R", rotationDegree: 0, isMirrored: false },
             { letter: "R", rotationDegree: 0, isMirrored: true },
+            { letter: "R", rotationDegree: 0, isMirrored: false },
             { letter: "R", rotationDegree: 180, isMirrored: false },
             { letter: "R", rotationDegree: 90, isMirrored: false },
-            { letter: "R", rotationDegree: 0, isMirrored: false },
             { letter: "R", rotationDegree: 90, isMirrored: true },
           ],
         },
         explanation:
-          "Pair 1 (R vs R) matches. Pair 2 (R vs R mirrored) does NOT match. Pair 3 (R rotated 180° vs R rotated 90°) matches — both pure rotations. Pair 4 (R vs R rotated 90° + mirrored) does NOT match. So 2 pairs match.",
-        correctAnswer: 2,
+          "Pair 1 (R vs mirrored R) does NOT match — a mirror image can't be reproduced by rotation. Pair 2 (R vs R rotated 180°) matches. Pair 3 (R rotated 90° vs that same R mirrored) does NOT match. So only 1 pair matches.",
+        correctAnswer: 1,
       },
     ];
   }
