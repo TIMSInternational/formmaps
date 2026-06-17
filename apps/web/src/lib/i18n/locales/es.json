@@ -462,8 +462,8 @@
     "assessmentSummary": "Resumen de la Evaluación",
     "dominance": "Dominancia",
     "influence": "Influencia",
-    "steadiness": "Estabilidad",
-    "conscientiousness": "Conciencia",
+    "steadiness": "Solidez",
+    "conscientiousness": "Control",
     "milStats": "{{attempts}} intentos • Mejor: {{score}}",
     "evaluationStats": "{{completed}} de {{total}} evaluadores completados",
     "statusInProgress": "En Progreso",
@@ -2061,8 +2061,8 @@
   "pca": {
     "dominance": "Dominancia",
     "influence": "Influencia",
-    "steadiness": "Estabilidad",
-    "conscientiousness": "Concienzudo"
+    "steadiness": "Solidez",
+    "conscientiousness": "Control"
   },
   "counselorBooking": {
     "title": "Reservar Sesión con Consejero",

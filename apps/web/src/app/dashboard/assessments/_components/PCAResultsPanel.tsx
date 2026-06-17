@@ -195,27 +195,27 @@ export default function PCAResultsPanel({
                       Personal Information
                     </h3>
                     <div className="grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
-                      <div className="flex justify-between border-b border-gray-50 pb-2">
-                        <span className="text-gray-500">Name:</span>
-                        <span className="font-medium text-gray-900">
+                      <div className="flex justify-between gap-3 min-w-0 border-b border-gray-50 pb-2">
+                        <span className="text-gray-500 shrink-0">Name:</span>
+                        <span className="font-medium text-gray-900 text-right break-words min-w-0">
                           {getVal(results, "perNom")} {getVal(results, "perApe")}
                         </span>
                       </div>
-                      <div className="flex justify-between border-b border-gray-50 pb-2">
-                        <span className="text-gray-500">ID:</span>
-                        <span className="font-medium text-gray-900">
+                      <div className="flex justify-between gap-3 min-w-0 border-b border-gray-50 pb-2">
+                        <span className="text-gray-500 shrink-0">ID:</span>
+                        <span className="font-medium text-gray-900 text-right break-words min-w-0">
                           {getVal(results, "perNumIde")}
                         </span>
                       </div>
-                      <div className="flex justify-between border-b border-gray-50 pb-2">
-                        <span className="text-gray-500">Gender:</span>
-                        <span className="font-medium text-gray-900">
+                      <div className="flex justify-between gap-3 min-w-0 border-b border-gray-50 pb-2">
+                        <span className="text-gray-500 shrink-0">Gender:</span>
+                        <span className="font-medium text-gray-900 text-right break-words min-w-0">
                           {getVal(results, "perGen") === "M" ? "Male" : "Female"}
                         </span>
                       </div>
-                      <div className="flex justify-between border-b border-gray-50 pb-2">
-                        <span className="text-gray-500">Email:</span>
-                        <span className="font-medium text-gray-900">
+                      <div className="flex justify-between gap-3 min-w-0 border-b border-gray-50 pb-2">
+                        <span className="text-gray-500 shrink-0">Email:</span>
+                        <span className="font-medium text-gray-900 text-right break-all min-w-0">
                           {getVal(results, "perMail") || getVal(results, "perEmail")}
                         </span>
                       </div>
@@ -244,8 +244,8 @@ export default function PCAResultsPanel({
                           {[
                             { label: "Dominance (D)", val: getPercentage(results, "pcaD1") ?? 0, color: "bg-red-500", text: "text-red-600" },
                             { label: "Influence (I)", val: getPercentage(results, "pcaI1") ?? 0, color: "bg-yellow-500", text: "text-yellow-600" },
-                            { label: "Steadiness (S)", val: getPercentage(results, "pcaS1") ?? 0, color: "bg-green-500", text: "text-green-600" },
-                            { label: "Conscientiousness (C)", val: getPercentage(results, "pcaC1") ?? 0, color: "bg-blue-500", text: "text-blue-600" }
+                            { label: "Solidity (S)", val: getPercentage(results, "pcaS1") ?? 0, color: "bg-green-500", text: "text-green-600" },
+                            { label: "Control (C)", val: getPercentage(results, "pcaC1") ?? 0, color: "bg-blue-500", text: "text-blue-600" }
                           ].map((item, idx) => (
                             <div key={idx} className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
@@ -272,8 +272,8 @@ export default function PCAResultsPanel({
                           {[
                             { label: "Dominance 2 (D2)", val: getPercentage(results, "pcaD2") ?? 0, color: "bg-red-400/80", text: "text-red-500" },
                             { label: "Influence 2 (I2)", val: getPercentage(results, "pcaI2") ?? 0, color: "bg-yellow-400/80", text: "text-yellow-500" },
-                            { label: "Steadiness 2 (S2)", val: getPercentage(results, "pcaS2") ?? 0, color: "bg-green-400/80", text: "text-green-500" },
-                            { label: "Conscientiousness 2 (C2)", val: getPercentage(results, "pcaC2") ?? 0, color: "bg-blue-400/80", text: "text-blue-500" }
+                            { label: "Solidity 2 (S2)", val: getPercentage(results, "pcaS2") ?? 0, color: "bg-green-400/80", text: "text-green-500" },
+                            { label: "Control 2 (C2)", val: getPercentage(results, "pcaC2") ?? 0, color: "bg-blue-400/80", text: "text-blue-500" }
                           ].map((item, idx) => (
                             <div key={idx} className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
@@ -301,8 +301,8 @@ export default function PCAResultsPanel({
                         {[
                           { label: "Dominance 3 (D3)", val: getPercentage(results, "pcaD3") ?? 0, color: "bg-red-500/70", text: "text-red-500" },
                           { label: "Influence 3 (I3)", val: getPercentage(results, "pcaI3") ?? 0, color: "bg-yellow-500/70", text: "text-yellow-500" },
-                          { label: "Steadiness 3 (S3)", val: getPercentage(results, "pcaS3") ?? 0, color: "bg-green-500/70", text: "text-green-500" },
-                          { label: "Conscientiousness 3 (C3)", val: getPercentage(results, "pcaC3") ?? 0, color: "bg-blue-500/70", text: "text-blue-500" }
+                          { label: "Solidity 3 (S3)", val: getPercentage(results, "pcaS3") ?? 0, color: "bg-green-500/70", text: "text-green-500" },
+                          { label: "Control 3 (C3)", val: getPercentage(results, "pcaC3") ?? 0, color: "bg-blue-500/70", text: "text-blue-500" }
                         ].map((item, idx) => (
                           <div key={idx} className="space-y-1">
                             <div className="flex items-center justify-between text-sm">

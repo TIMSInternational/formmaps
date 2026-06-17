@@ -973,8 +973,8 @@
     "assessmentSummary": "Assessment Summary",
     "dominance": "Dominance",
     "influence": "Influence",
-    "steadiness": "Steadiness",
-    "conscientiousness": "Conscientiousness",
+    "steadiness": "Solidity",
+    "conscientiousness": "Control",
     "milStats": "{{attempts}} attempts • Best: {{score}}",
     "evaluationStats": "{{completed}} of {{total}} evaluators completed",
     "statusInProgress": "In Progress",
@@ -1905,8 +1905,8 @@
   "pca": {
     "dominance": "Dominance",
     "influence": "Influence",
-    "steadiness": "Steadiness",
-    "conscientiousness": "Conscientiousness"
+    "steadiness": "Solidity",
+    "conscientiousness": "Control"
   },
   "counselorBooking": {
     "title": "Book a Counselor Session",
