@@ -30,13 +30,13 @@ export function ResumePreviewPanel({
           <span className="text-sm font-semibold text-foreground">
             {fullName || "Resume"}
           </span>
-          <span className="text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-border text-muted-foreground">
+          <span className="text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider bg-[#FFD600] text-[#111111]">
             {template}
           </span>
         </div>
         <button
           onClick={() => onPopulateSampleData(careerField || "technology")}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg border border-border transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-[#065292] hover:bg-[#065292]/10 hover:border-[#065292]/40 rounded-lg border border-border transition-colors"
         >
           <Sparkles className="w-3 h-3" />
           Sample Data

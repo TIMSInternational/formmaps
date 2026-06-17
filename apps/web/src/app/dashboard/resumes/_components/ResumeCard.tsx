@@ -6,6 +6,7 @@ import {
   MoreVertical, Trash2, Copy, Edit3, Calendar,
 } from "lucide-react";
 import type { Resume } from "@/services/resumeService";
+import { ResumeOriginalThumbnail } from "./ResumeOriginalThumbnail";
 
 interface ResumeCardProps {
   resume: Resume;
@@ -26,6 +27,47 @@ function formatDate(dateString: string) {
 }
 
 export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate, onDelete }: ResumeCardProps) {
+  const typesetPreview = (
+    <div style={{ transform: "scale(0.95)", transformOrigin: "top left", width: "105%", pointerEvents: "none" }}>
+      <div className="text-center border-b border-black pb-[2px] mb-[2px]">
+        <div className="text-[12px] font-bold tracking-wide uppercase text-black leading-tight">
+          {resume.personal?.fullName || resume.name}
+        </div>
+      </div>
+      <div className="text-center text-[7px] text-gray-500 mb-[4px]">
+        {[resume.personal?.phone, resume.personal?.email].filter(Boolean).join(" | ")}
+      </div>
+      {resume.summary && (
+        <div className="mb-[4px]">
+          <div className="text-[8px] font-bold uppercase border-b border-black/50 pb-[1px] mb-[2px] text-black">Summary</div>
+          <div className="text-[7px] leading-[1.2] text-gray-700 line-clamp-2">{resume.summary}</div>
+        </div>
+      )}
+      {resume.experience?.length > 0 && (
+        <div className="mb-[4px]">
+          <div className="text-[8px] font-bold uppercase border-b border-black/50 pb-[1px] mb-[2px] text-black">Experience</div>
+          {resume.experience.slice(0, 3).map((exp, i) => (
+            <div key={i} className="mb-[3px]">
+              <div className="flex justify-between text-[7.5px] text-black">
+                <span className="font-bold truncate">{exp.company}</span>
+                <span className="shrink-0 ml-2 text-gray-500 text-[7px]">{exp.startDate}</span>
+              </div>
+              <div className="text-[7px] italic text-gray-600 truncate">{exp.title}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {Object.values(resume.skills?.skills || {}).flat().length > 0 && (
+        <div>
+          <div className="text-[8px] font-bold uppercase border-b border-black/50 pb-[1px] mb-[2px] text-black">Skills</div>
+          <div className="text-[7px] leading-[1.2] text-gray-600 line-clamp-2">
+            {Object.values(resume.skills?.skills || {}).flat().slice(0, 15).join(", ")}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <motion.div
       key={resume._id}
@@ -41,44 +83,11 @@ export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate
         className="h-48 bg-white border-b border-border relative overflow-hidden rounded-t-xl px-3 pt-3"
         style={{ fontFamily: "'Times New Roman', Times, serif" }}
       >
-        <div style={{ transform: "scale(0.95)", transformOrigin: "top left", width: "105%", pointerEvents: "none" }}>
-          <div className="text-center border-b border-black pb-[2px] mb-[2px]">
-            <div className="text-[12px] font-bold tracking-wide uppercase text-black leading-tight">
-              {resume.personal?.fullName || resume.name}
-            </div>
-          </div>
-          <div className="text-center text-[7px] text-gray-500 mb-[4px]">
-            {[resume.personal?.phone, resume.personal?.email].filter(Boolean).join(" | ")}
-          </div>
-          {resume.summary && (
-            <div className="mb-[4px]">
-              <div className="text-[8px] font-bold uppercase border-b border-black/50 pb-[1px] mb-[2px] text-black">Summary</div>
-              <div className="text-[7px] leading-[1.2] text-gray-700 line-clamp-2">{resume.summary}</div>
-            </div>
-          )}
-          {resume.experience?.length > 0 && (
-            <div className="mb-[4px]">
-              <div className="text-[8px] font-bold uppercase border-b border-black/50 pb-[1px] mb-[2px] text-black">Experience</div>
-              {resume.experience.slice(0, 3).map((exp, i) => (
-                <div key={i} className="mb-[3px]">
-                  <div className="flex justify-between text-[7.5px] text-black">
-                    <span className="font-bold truncate">{exp.company}</span>
-                    <span className="shrink-0 ml-2 text-gray-500 text-[7px]">{exp.startDate}</span>
-                  </div>
-                  <div className="text-[7px] italic text-gray-600 truncate">{exp.title}</div>
-                </div>
-              ))}
-            </div>
-          )}
-          {Object.values(resume.skills?.skills || {}).flat().length > 0 && (
-            <div>
-              <div className="text-[8px] font-bold uppercase border-b border-black/50 pb-[1px] mb-[2px] text-black">Skills</div>
-              <div className="text-[7px] leading-[1.2] text-gray-600 line-clamp-2">
-                {Object.values(resume.skills?.skills || {}).flat().slice(0, 15).join(", ")}
-              </div>
-            </div>
-          )}
-        </div>
+        {resume.hasOriginal ? (
+          <ResumeOriginalThumbnail resumeId={resume._id} fallback={typesetPreview} />
+        ) : (
+          typesetPreview
+        )}
 
         {/* Template Badge */}
         <div className="absolute top-2 right-2">

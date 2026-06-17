@@ -49,17 +49,23 @@ export function SkillsEditor({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      className="bg-card rounded-lg border border-border overflow-hidden"
+      className={`bg-card rounded-xl border shadow-sm overflow-hidden transition-colors ${
+        expandedSection === "skills" ? "border-[#065292]/30" : "border-border"
+      }`}
     >
       <button
         onClick={() => toggleSection("skills")}
-        className="w-full flex items-center gap-3 p-4 hover:bg-accent/50 transition-colors"
+        className={`w-full flex items-center gap-3 p-4 transition-colors ${
+          expandedSection === "skills"
+            ? "bg-[#065292]/5"
+            : "hover:bg-secondary/50"
+        }`}
       >
-        <Award className="w-5 h-5 text-primary flex-shrink-0" />
+        <Award className="w-5 h-5 text-[#065292] flex-shrink-0" />
         <span className="font-semibold text-foreground flex-1 text-left">
           Skills
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="px-2 py-0.5 text-xs font-semibold bg-[#FFD600] text-[#111111] rounded-full">
           {skills.length} skills
         </span>
         <motion.div
@@ -68,7 +74,13 @@ export function SkillsEditor({
           }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+          <ChevronDown
+            className={`w-5 h-5 ${
+              expandedSection === "skills"
+                ? "text-[#065292]"
+                : "text-muted-foreground"
+            }`}
+          />
         </motion.div>
       </button>
 
@@ -88,7 +100,7 @@ export function SkillsEditor({
                   {skills.map((skill) => (
                     <div
                       key={skill.id}
-                      className="group relative px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20 hover:bg-primary/20 transition-colors"
+                      className="group relative px-3 py-1.5 bg-[#065292]/10 text-[#065292] rounded-full text-sm font-medium border border-[#065292]/20 hover:bg-[#065292]/20 transition-colors"
                     >
                       {skill.name}
                       <button
@@ -97,7 +109,7 @@ export function SkillsEditor({
                           setSaveSuccess(true);
                           setTimeout(() => setSaveSuccess(false), 2000);
                         }}
-                        className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -119,11 +131,11 @@ export function SkillsEditor({
                       }
                     }}
                     placeholder="Type a skill and press Enter"
-                    className="flex-1 px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
+                    className="flex-1 px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
                   />
                   <button
                     onClick={handleAddSkill}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                    className="px-4 py-2 bg-[#065292] text-white rounded-lg hover:bg-[#054473] transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>

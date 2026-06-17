@@ -151,7 +151,7 @@ export function ResumeModals({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-card rounded-lg border border-border max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-card rounded-xl shadow-2xl border border-border max-w-3xl w-full max-h-[90vh] overflow-y-auto"
             >
               <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between z-10">
                 <h2 className="text-xl font-bold text-foreground">
@@ -181,7 +181,7 @@ export function ResumeModals({
                       })
                     }
                     placeholder="John Doe"
-                    className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
+                    className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
                   />
                 </div>
 
@@ -200,7 +200,7 @@ export function ResumeModals({
                       })
                     }
                     placeholder="Senior Software Engineer"
-                    className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
+                    className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
                   />
                 </div>
 
@@ -238,7 +238,7 @@ export function ResumeModals({
                         })
                       }
                       placeholder="john@example.com"
-                      className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
+                      className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
                     />
                   </div>
 
@@ -274,7 +274,7 @@ export function ResumeModals({
                         })
                       }
                       placeholder="+1 (555) 123-4567"
-                      className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
+                      className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -312,7 +312,7 @@ export function ResumeModals({
                       })
                     }
                     placeholder="San Francisco, CA"
-                    className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
+                    className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
                   />
                 </div>
 
@@ -350,7 +350,7 @@ export function ResumeModals({
                         })
                       }
                       placeholder="linkedin.com/in/johndoe"
-                      className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
+                      className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
                     />
                   </div>
 
@@ -386,7 +386,7 @@ export function ResumeModals({
                         })
                       }
                       placeholder="johndoe.com"
-                      className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
+                      className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
                     />
                   </div>
                 </div>
@@ -406,7 +406,7 @@ export function ResumeModals({
                     }
                     placeholder="A brief summary of your professional background and key achievements..."
                     rows={4}
-                    className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all resize-none"
+                    className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all resize-none"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     2-3 sentences highlighting your experience and expertise
@@ -417,13 +417,13 @@ export function ResumeModals({
               <div className="border-t border-border px-6 py-4 flex items-center justify-between bg-muted/30">
                 <button
                   onClick={() => setShowPersonalInfoModal(false)}
-                  className="px-4 py-2 border border-input rounded-lg text-sm font-medium hover:bg-accent transition-colors"
+                  className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-secondary/50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSavePersonalInfo}
-                  className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                  className="flex items-center gap-2 px-6 py-2 bg-[#065292] text-white rounded-lg text-sm font-medium hover:bg-[#054473] transition-colors"
                 >
                   <Check className="w-4 h-4" />
                   Save Changes
@@ -449,7 +449,7 @@ export function ResumeModals({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-card rounded-lg border border-border max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-card rounded-xl shadow-2xl border border-border max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             >
               <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between z-10">
                 <h2 className="text-xl font-bold text-foreground">
@@ -487,7 +487,7 @@ export function ResumeModals({
                         }
                       }}
                       placeholder="e.g., JavaScript, Project Management, etc."
-                      className="flex-1 px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
+                      className="flex-1 px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
                     />
                     <button
                       onClick={() => {
@@ -502,7 +502,7 @@ export function ResumeModals({
                           setTimeout(() => setSaveSuccess(false), 2000);
                         }
                       }}
-                      className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                      className="px-4 py-2 bg-[#065292] text-white rounded-lg text-sm font-medium hover:bg-[#054473] transition-colors"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -522,7 +522,7 @@ export function ResumeModals({
                       {skills.map((skill) => (
                         <div
                           key={skill.id}
-                          className="group flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20 hover:bg-primary/20 transition-colors"
+                          className="group flex items-center gap-2 px-3 py-1.5 bg-[#065292]/10 text-[#065292] rounded-full text-sm font-medium border border-[#065292]/20 hover:bg-[#065292]/20 transition-colors"
                         >
                           <span>{skill.name}</span>
                           <button
@@ -549,7 +549,7 @@ export function ResumeModals({
               <div className="border-t border-border px-6 py-4 flex items-center justify-end bg-muted/30">
                 <button
                   onClick={() => setShowSkillsModal(false)}
-                  className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                  className="flex items-center gap-2 px-6 py-2 bg-[#065292] text-white rounded-lg text-sm font-medium hover:bg-[#054473] transition-colors"
                 >
                   <Check className="w-4 h-4" />
                   Done
@@ -575,7 +575,7 @@ export function ResumeModals({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-card rounded-lg border border-border max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-card rounded-xl shadow-2xl border border-border max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             >
               <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-foreground">
@@ -601,11 +601,11 @@ export function ResumeModals({
                       onClick={() =>
                         addSection(section.type, section.title, section.icon)
                       }
-                      className="group p-4 bg-background border border-border rounded-lg hover:border-primary hover:bg-accent/30 transition-all text-left"
+                      className="group p-4 bg-background border border-border rounded-xl hover:border-[#065292] hover:bg-[#065292]/5 transition-all text-left"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                          <section.icon className="w-5 h-5 text-primary" />
+                        <div className="p-2 bg-[#065292]/10 rounded-lg group-hover:bg-[#065292]/20 transition-colors">
+                          <section.icon className="w-5 h-5 text-[#065292]" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-foreground mb-1">
@@ -686,7 +686,7 @@ export function ResumeModals({
                       }
                     }}
                     placeholder="e.g., Hobbies, Volunteer Work, Additional Information"
-                    className="w-full px-4 py-2 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#065292] focus:border-[#065292]"
                     autoFocus
                   />
                   <p className="text-xs text-muted-foreground mt-2">
@@ -700,14 +700,14 @@ export function ResumeModals({
                       setShowCustomSectionTitleModal(false);
                       setCustomSectionTitle("");
                     }}
-                    className="px-4 py-2 border border-input rounded-lg hover:bg-accent transition-colors"
+                    className="px-4 py-2 border border-border rounded-lg hover:bg-secondary/50 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleConfirmCustomSectionTitle}
                     disabled={!customSectionTitle.trim()}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-[#065292] text-white rounded-lg hover:bg-[#054473] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Create Section
                   </button>
@@ -733,7 +733,7 @@ export function ResumeModals({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-card rounded-lg border border-border max-w-xl w-full max-h-[85vh] flex flex-col"
+              className="bg-card rounded-xl shadow-2xl border border-border max-w-xl w-full max-h-[85vh] flex flex-col"
             >
               <div className="bg-card border-b border-border px-4 py-3 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-lg font-bold text-foreground">
@@ -769,13 +769,13 @@ export function ResumeModals({
                         Required field - always visible
                       </p>
                     </div>
-                    <div className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                    <div className="px-2 py-0.5 bg-[#065292]/10 text-[#065292] text-xs font-medium rounded-full">
                       Required
                     </div>
                   </div>
 
                   {/* Professional Title */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Professional Title
                     </label>
@@ -789,7 +789,7 @@ export function ResumeModals({
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
                         fieldVisibility.professionalTitle
-                          ? "bg-primary"
+                          ? "bg-[#065292]"
                           : "bg-muted"
                       )}
                     >
@@ -810,7 +810,7 @@ export function ResumeModals({
                   </h3>
 
                   {/* Email */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Email
                     </label>
@@ -823,7 +823,7 @@ export function ResumeModals({
                       }
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        fieldVisibility.email ? "bg-primary" : "bg-muted"
+                        fieldVisibility.email ? "bg-[#065292]" : "bg-muted"
                       )}
                     >
                       <span
@@ -836,7 +836,7 @@ export function ResumeModals({
                   </div>
 
                   {/* Phone */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Phone
                     </label>
@@ -849,7 +849,7 @@ export function ResumeModals({
                       }
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        fieldVisibility.phone ? "bg-primary" : "bg-muted"
+                        fieldVisibility.phone ? "bg-[#065292]" : "bg-muted"
                       )}
                     >
                       <span
@@ -862,7 +862,7 @@ export function ResumeModals({
                   </div>
 
                   {/* Location */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Location
                     </label>
@@ -875,7 +875,7 @@ export function ResumeModals({
                       }
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        fieldVisibility.location ? "bg-primary" : "bg-muted"
+                        fieldVisibility.location ? "bg-[#065292]" : "bg-muted"
                       )}
                     >
                       <span
@@ -895,7 +895,7 @@ export function ResumeModals({
                   </h3>
 
                   {/* LinkedIn */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       LinkedIn URL
                     </label>
@@ -908,7 +908,7 @@ export function ResumeModals({
                       }
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        fieldVisibility.linkedin ? "bg-primary" : "bg-muted"
+                        fieldVisibility.linkedin ? "bg-[#065292]" : "bg-muted"
                       )}
                     >
                       <span
@@ -921,7 +921,7 @@ export function ResumeModals({
                   </div>
 
                   {/* Website */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Website/Portfolio
                     </label>
@@ -934,7 +934,7 @@ export function ResumeModals({
                       }
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        fieldVisibility.website ? "bg-primary" : "bg-muted"
+                        fieldVisibility.website ? "bg-[#065292]" : "bg-muted"
                       )}
                     >
                       <span
@@ -947,7 +947,7 @@ export function ResumeModals({
                   </div>
 
                   {/* GitHub */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       GitHub
                     </label>
@@ -960,7 +960,7 @@ export function ResumeModals({
                       }
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        fieldVisibility.github ? "bg-primary" : "bg-muted"
+                        fieldVisibility.github ? "bg-[#065292]" : "bg-muted"
                       )}
                     >
                       <span
@@ -973,7 +973,7 @@ export function ResumeModals({
                   </div>
 
                   {/* Twitter */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Twitter
                     </label>
@@ -986,7 +986,7 @@ export function ResumeModals({
                       }
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        fieldVisibility.twitter ? "bg-primary" : "bg-muted"
+                        fieldVisibility.twitter ? "bg-[#065292]" : "bg-muted"
                       )}
                     >
                       <span
@@ -1006,7 +1006,7 @@ export function ResumeModals({
                   </h3>
 
                   {/* Date of Birth */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Date of Birth
                     </label>
@@ -1019,7 +1019,7 @@ export function ResumeModals({
                       }
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        fieldVisibility.dateOfBirth ? "bg-primary" : "bg-muted"
+                        fieldVisibility.dateOfBirth ? "bg-[#065292]" : "bg-muted"
                       )}
                     >
                       <span
@@ -1032,7 +1032,7 @@ export function ResumeModals({
                   </div>
 
                   {/* Nationality */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Nationality
                     </label>
@@ -1045,7 +1045,7 @@ export function ResumeModals({
                       }
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        fieldVisibility.nationality ? "bg-primary" : "bg-muted"
+                        fieldVisibility.nationality ? "bg-[#065292]" : "bg-muted"
                       )}
                     >
                       <span
@@ -1058,7 +1058,7 @@ export function ResumeModals({
                   </div>
 
                   {/* Languages */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Languages
                     </label>
@@ -1071,7 +1071,7 @@ export function ResumeModals({
                       }
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        fieldVisibility.languages ? "bg-primary" : "bg-muted"
+                        fieldVisibility.languages ? "bg-[#065292]" : "bg-muted"
                       )}
                     >
                       <span
@@ -1084,7 +1084,7 @@ export function ResumeModals({
                   </div>
 
                   {/* Marital Status */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Marital Status
                     </label>
@@ -1098,7 +1098,7 @@ export function ResumeModals({
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
                         fieldVisibility.maritalStatus
-                          ? "bg-primary"
+                          ? "bg-[#065292]"
                           : "bg-muted"
                       )}
                     >
@@ -1112,7 +1112,7 @@ export function ResumeModals({
                   </div>
 
                   {/* Driver's License */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Driver's License
                     </label>
@@ -1126,7 +1126,7 @@ export function ResumeModals({
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
                         fieldVisibility.driversLicense
-                          ? "bg-primary"
+                          ? "bg-[#065292]"
                           : "bg-muted"
                       )}
                     >
@@ -1140,7 +1140,7 @@ export function ResumeModals({
                   </div>
 
                   {/* Military Service */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Military Service
                     </label>
@@ -1154,7 +1154,7 @@ export function ResumeModals({
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
                         fieldVisibility.militaryService
-                          ? "bg-primary"
+                          ? "bg-[#065292]"
                           : "bg-muted"
                       )}
                     >
@@ -1168,7 +1168,7 @@ export function ResumeModals({
                   </div>
 
                   {/* Visa Status */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Visa Status
                     </label>
@@ -1181,7 +1181,7 @@ export function ResumeModals({
                       }
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        fieldVisibility.visaStatus ? "bg-primary" : "bg-muted"
+                        fieldVisibility.visaStatus ? "bg-[#065292]" : "bg-muted"
                       )}
                     >
                       <span
@@ -1194,7 +1194,7 @@ export function ResumeModals({
                   </div>
 
                   {/* Preferred Pronouns */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Preferred Pronouns
                     </label>
@@ -1208,7 +1208,7 @@ export function ResumeModals({
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
                         fieldVisibility.preferredPronouns
-                          ? "bg-primary"
+                          ? "bg-[#065292]"
                           : "bg-muted"
                       )}
                     >
@@ -1229,7 +1229,7 @@ export function ResumeModals({
                   </h3>
 
                   {/* Summary */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Professional Summary
                     </label>
@@ -1242,7 +1242,7 @@ export function ResumeModals({
                       }
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        fieldVisibility.summary ? "bg-primary" : "bg-muted"
+                        fieldVisibility.summary ? "bg-[#065292]" : "bg-muted"
                       )}
                     >
                       <span
@@ -1255,7 +1255,7 @@ export function ResumeModals({
                   </div>
 
                   {/* Career Objective */}
-                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors">
+                  <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
                       Career Objective
                     </label>
@@ -1269,7 +1269,7 @@ export function ResumeModals({
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
                         fieldVisibility.careerObjective
-                          ? "bg-primary"
+                          ? "bg-[#065292]"
                           : "bg-muted"
                       )}
                     >
@@ -1306,7 +1306,7 @@ export function ResumeModals({
                             setNewCustomFieldName(e.target.value)
                           }
                           placeholder="e.g., Portfolio"
-                          className="w-full px-3 py-1.5 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                          className="w-full px-3 py-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#065292] focus:border-[#065292]"
                         />
                       </div>
                       <div>
@@ -1320,7 +1320,7 @@ export function ResumeModals({
                               e.target.value as "text" | "textarea"
                             )
                           }
-                          className="w-full px-3 py-1.5 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                          className="w-full px-3 py-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#065292] focus:border-[#065292]"
                         >
                           <option value="text">Text Input</option>
                           <option value="textarea">Text Area</option>
@@ -1329,7 +1329,7 @@ export function ResumeModals({
                     </div>
                     <button
                       onClick={handleCreateCustomField}
-                      className="w-full px-3 py-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                      className="w-full px-3 py-1.5 bg-[#065292] text-white rounded-lg hover:bg-[#054473] transition-colors text-sm font-medium"
                     >
                       Add Custom Field
                     </button>
@@ -1341,7 +1341,7 @@ export function ResumeModals({
                       {customFields.map((field) => (
                         <div
                           key={field.id}
-                          className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-primary/50 transition-colors"
+                          className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#065292]/50 transition-colors"
                         >
                           <div className="flex-1">
                             <label className="text-sm font-medium text-foreground">
@@ -1360,7 +1360,7 @@ export function ResumeModals({
                               }
                               className={cn(
                                 "relative w-11 h-6 rounded-full transition-colors",
-                                field.enabled ? "bg-primary" : "bg-muted"
+                                field.enabled ? "bg-[#065292]" : "bg-muted"
                               )}
                             >
                               <span
@@ -1389,7 +1389,7 @@ export function ResumeModals({
               <div className="bg-card border-t border-border px-4 py-3 flex justify-end flex-shrink-0">
                 <button
                   onClick={() => setShowManageFieldsModal(false)}
-                  className="px-4 py-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                  className="px-4 py-1.5 bg-[#065292] text-white rounded-lg hover:bg-[#054473] transition-colors text-sm font-medium"
                 >
                   Done
                 </button>

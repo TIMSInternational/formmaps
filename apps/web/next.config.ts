@@ -105,14 +105,20 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               // React dev mode needs eval() for debugging (callstack reconstruction);
               // never allowed in production builds.
+              // 'wasm-unsafe-eval' (prod): the resume "Edited" live preview (@react-pdf/renderer)
+              // compiles its yoga-layout WASM engine — the narrow WASM directive, not full eval().
               process.env.NODE_ENV === "development"
                 ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-                : "script-src 'self' 'unsafe-inline'",
+                : "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://images.unsplash.com https://*.amazonaws.com",
-              "connect-src 'self' http://localhost:* https://*.formmaps.ai https://cognito-idp.us-east-1.amazonaws.com https://*.timshr.com https://*.awsapprunner.com https://*.daily.co https://*.wss.daily.co wss://*.daily.co",
-              "frame-src 'self' https://timshr.com https://*.timshr.com https://*.daily.co",
+              // *.amazonaws.com: pdf.js fetches presigned S3 PDFs (resume original-doc thumbnails) over XHR.
+              // data:: @react-pdf/renderer fetches its yoga-layout WASM binary as a data: URL.
+              "connect-src 'self' data: http://localhost:* https://*.formmaps.ai https://cognito-idp.us-east-1.amazonaws.com https://*.amazonaws.com https://*.timshr.com https://*.awsapprunner.com https://*.daily.co https://*.wss.daily.co wss://*.daily.co",
+              // *.amazonaws.com: the resume "Original" pane iframes the presigned S3 PDF inline.
+              // blob:: the resume "Edited" live preview (@react-pdf/renderer PDFViewer) frames a blob: URL.
+              "frame-src 'self' blob: https://*.amazonaws.com https://timshr.com https://*.timshr.com https://*.daily.co",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
