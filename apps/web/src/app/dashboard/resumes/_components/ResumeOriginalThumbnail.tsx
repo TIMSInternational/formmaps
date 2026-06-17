@@ -102,6 +102,14 @@ export function ResumeOriginalThumbnail({ resumeId, fallback }: ResumeOriginalTh
         if (cancelled) return;
 
         setState("rendered");
+
+        // The bitmap now lives on the canvas, so release the pdf.js document and
+        // its Web Worker immediately. The resume grid keeps cards mounted after
+        // they scroll away — without this, the page would accumulate one live
+        // worker + document per viewed original. Null it first so the unmount
+        // cleanup below doesn't double-destroy.
+        pdfDoc = null;
+        doc.destroy();
       } catch {
         if (!cancelled) setState("error");
       }
