@@ -82,11 +82,11 @@ export default function PCAResultsPanel({
     }
   };
 
-  const loadAnalysis = async () => {
+  const loadAnalysis = async (jca: JCACode = selectedJCA) => {
     setLoading(true);
     setError(null);
     try {
-      const analysisData = await getPCAVsJCAAnalysis(userId, selectedJCA, "g");
+      const analysisData = await getPCAVsJCAAnalysis(userId, jca, "g");
       setAnalysis(analysisData);
     } catch {
       setError("Failed to load analysis");
@@ -431,8 +431,10 @@ export default function PCAResultsPanel({
                 <select
                   value={selectedJCA}
                   onChange={(e) => {
-                    setSelectedJCA(e.target.value as JCACode);
-                    setAnalysis(null); // Reset analysis when JCA changes
+                    const jca = e.target.value as JCACode;
+                    setSelectedJCA(jca);
+                    setAnalysis(null); // clear the old result…
+                    loadAnalysis(jca); // …and immediately re-fetch for the new job (else it sticks on "Analysing…")
                   }}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
