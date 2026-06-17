@@ -42,14 +42,18 @@ interface MILInstructionContentProps {
 function VisualRotationExample() {
   const { t } = useTranslation();
 
+  // Mirrors the real exam: both figures appear at varied rotations, R only.
+  // A pair MATCHES when both are the same R rotated (mirror = the only mismatch).
+  // Pair 1: same R rotated 90°/270° → MATCH. Pair 2: bottom is mirrored → MISMATCH.
+  // Pair 3: identical → MATCH. Correct answer = 2 matching pairs.
   const examplePairs = [
     {
-      top: { letter: "R", rotationDegree: 0, isMirrored: false },
-      bottom: { letter: "R", rotationDegree: 180, isMirrored: false },
+      top: { letter: "R", rotationDegree: 90, isMirrored: false },
+      bottom: { letter: "R", rotationDegree: 270, isMirrored: false },
     },
     {
-      top: { letter: "R", rotationDegree: 0, isMirrored: false },
-      bottom: { letter: "R", rotationDegree: 0, isMirrored: true },
+      top: { letter: "R", rotationDegree: 180, isMirrored: false },
+      bottom: { letter: "R", rotationDegree: 180, isMirrored: true },
     },
     {
       top: { letter: "R", rotationDegree: 0, isMirrored: false },
@@ -137,11 +141,11 @@ function VisualRotationExample() {
           {t("dashboard.howManyPairsMatch")}
         </h4>
         <div className="flex justify-center space-x-4">
-          {[0, 1, 2].map((num) => (
+          {[0, 1, 2, 3].map((num) => (
             <div
               key={num}
               className={`w-12 h-12 rounded-lg flex items-center justify-center border-2 ${
-                num === 1
+                num === 2
                   ? "bg-green-500/10 dark:bg-green-500/20 border-green-400"
                   : "bg-card border-border"
               }`}
