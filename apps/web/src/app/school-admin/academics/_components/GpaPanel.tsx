@@ -19,7 +19,8 @@ const DEFAULT_MAP_5: Record<string, number> = {
   "A+": 5.0, "A": 5.0, "A-": 4.7, "B+": 4.3, "B": 4.0, "B-": 3.7,
   "C+": 3.3, "C": 3.0, "C-": 2.7, "D+": 2.3, "D": 2.0, "D-": 1.7, "F": 0.0,
 };
-const DEFAULT_BONUSES: Record<string, number> = { HONORS: 0.5, AP: 1.0, IB: 1.0 };
+// Keys MUST be lowercase: the GPA engine looks up weightBonuses[courseLevel.toLowerCase()].
+const DEFAULT_BONUSES: Record<string, number> = { honors: 0.5, ap: 1.0, ib: 1.0 };
 const GRADE_ORDER = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"];
 
 // ─── CLASS RANKINGS TAB ───
@@ -141,7 +142,8 @@ function GpaConfigTab() {
           const s = config.scale === 5 ? 5 : 4;
           setScale(s);
           setGradeMap(Object.keys(config.unweightedMap).length > 0 ? { ...config.unweightedMap } : s === 5 ? { ...DEFAULT_MAP_5 } : { ...DEFAULT_MAP_4 });
-          setBonuses(Object.keys(config.weightBonuses).length > 0 ? { ...config.weightBonuses } : { ...DEFAULT_BONUSES });
+          const loadedBonuses = Object.entries(config.weightBonuses || {}).reduce<Record<string, number>>((acc, [k, v]) => { acc[k.toLowerCase()] = Number(v); return acc; }, {});
+          setBonuses(Object.keys(loadedBonuses).length > 0 ? loadedBonuses : { ...DEFAULT_BONUSES });
         }
       } catch {} finally { setLoading(false); }
     })();
@@ -216,9 +218,9 @@ function GpaConfigTab() {
         </div>
         <div style={{ padding: 16, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
           {[
-            { key: "HONORS", label: "Honors", color: "#8b5cf6" },
-            { key: "AP", label: "AP", color: "#065292" },
-            { key: "IB", label: "IB", color: "#10b981" },
+            { key: "honors", label: "Honors", color: "#8b5cf6" },
+            { key: "ap", label: "AP", color: "#065292" },
+            { key: "ib", label: "IB", color: "#10b981" },
           ].map(({ key, label, color }) => (
             <div key={key} style={{ padding: 12, borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
               <div style={{ fontSize: 12, fontWeight: 600, color, marginBottom: 8 }}>{label}</div>
