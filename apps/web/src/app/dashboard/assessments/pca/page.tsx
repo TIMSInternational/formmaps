@@ -85,6 +85,9 @@ export default function PCAAssessmentPage() {
         toast.success(t("dashboard.assessmentStarted", "Assessment started. Complete it below."));
       } else {
         toast.error(result.message || t("dashboard.failedToCreateAssessment", "Failed to create assessment"));
+        // If the assessment is already completed (server blocks a retake), re-sync
+        // so the screen flips to View Results instead of offering Start again.
+        refreshPCAData();
       }
     } catch (error) {
       toast.error(t("dashboard.failedToCreateAssessment", "Failed to create assessment. Please try again."));
@@ -270,7 +273,9 @@ export default function PCAAssessmentPage() {
                 </>
               ) : (
                 <>
-                  {t("dashboard.startPCA")}
+                  {hasPCA
+                    ? t("dashboard.resumePCA", "Resume Assessment")
+                    : t("dashboard.startPCA")}
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
