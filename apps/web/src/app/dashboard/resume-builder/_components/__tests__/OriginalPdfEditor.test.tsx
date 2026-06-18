@@ -53,6 +53,24 @@ describe("OriginalPdfEditor", () => {
       expect(out.get("fullName")?.textContent).toBe("FEDERICO TAFUR");
     });
 
+    it("binds a phone whose stored formatting differs, keeping the document's format", () => {
+      const host = makeHost(["(407) 946-3245 | fede@vt.edu"]);
+      const out = new Map<ContactField, HTMLElement>();
+      // stored as digits/dashes only — not a substring of the PDF's "(407) 946-3245"
+      bindContactFields(host, { phone: "407-946-3245" }, out);
+      const phoneEl = host.querySelector<HTMLElement>('span[data-field="phone"]');
+      expect(phoneEl?.textContent).toBe("(407) 946-3245");
+      expect(out.get("phone")).toBe(phoneEl);
+    });
+
+    it("does not bind a phone whose digits don't match (e.g. corrupted value)", () => {
+      const host = makeHost(["(407) 946-3245 | fede@vt.edu"]);
+      const out = new Map<ContactField, HTMLElement>();
+      // corrupted: 12 digits, not a digit-substring of the PDF's 10
+      bindContactFields(host, { phone: "(407) 946-324666" }, out);
+      expect(out.has("phone")).toBe(false);
+    });
+
     it("skips fields whose value isn't found in the document", () => {
       const host = makeHost(["Some unrelated heading"]);
       const out = new Map<ContactField, HTMLElement>();
