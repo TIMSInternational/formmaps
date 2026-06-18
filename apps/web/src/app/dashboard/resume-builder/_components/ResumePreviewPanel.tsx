@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { Sparkles } from "lucide-react";
 import { LivePreviewPDF } from "./LivePreviewPDF";
 import { OriginalPdfEditor } from "./OriginalPdfEditor";
+import type { ContactField, ContactValues } from "./OriginalPdfEditor";
 import { ResumePreviewWithToggle } from "./ResumePreviewWithToggle";
 import { getOriginalUrl } from "@/services/resumeService";
 
@@ -14,6 +15,10 @@ interface ResumePreviewPanelProps {
   onPopulateSampleData: (careerField: string) => void;
   resumeId: string;
   hasOriginal: boolean;
+  /** Live contact values + handlers for two-way sync with the original PDF. */
+  contactValues?: ContactValues;
+  onContactFieldChange?: (field: ContactField, value: string) => void;
+  onContactFieldCommit?: () => void;
 }
 
 export function ResumePreviewPanel({
@@ -23,6 +28,9 @@ export function ResumePreviewPanel({
   onPopulateSampleData,
   resumeId,
   hasOriginal,
+  contactValues,
+  onContactFieldChange,
+  onContactFieldCommit,
 }: ResumePreviewPanelProps) {
   // Stable reference so the in-place editor doesn't re-render the PDF each render.
   const loadOriginal = useCallback(() => getOriginalUrl(resumeId), [resumeId]);
@@ -51,7 +59,18 @@ export function ResumePreviewPanel({
         <ResumePreviewWithToggle
           hasOriginal={hasOriginal}
           loadOriginalUrl={loadOriginal}
-          edited={hasOriginal ? <OriginalPdfEditor loadUrl={loadOriginal} /> : <LivePreviewPDF />}
+          edited={
+            hasOriginal ? (
+              <OriginalPdfEditor
+                loadUrl={loadOriginal}
+                contactValues={contactValues}
+                onContactFieldChange={onContactFieldChange}
+                onContactFieldCommit={onContactFieldCommit}
+              />
+            ) : (
+              <LivePreviewPDF />
+            )
+          }
         />
       </div>
     </div>
