@@ -276,5 +276,6 @@
 }
 /* Sit the editable text layer above the (pointer-events-none) page canvas. */
 .pdf-edit-layer { z-index: 1; }
-/* Two-way-bound contact field: transparent (canvas shows through) until edited. */
-.pdf-edit-layer span.pdf-field { color: transparent; }
+/* Two-way-bound contact field: transparent (canvas shows through) until it is
+   edited or focused — :not() keeps this from overriding the reveal rules above. */
+.pdf-edit-layer span.pdf-field:not(.pdf-edited):not(:focus) { color: transparent; }
