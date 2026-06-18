@@ -1,7 +1,9 @@
 "use client";
 
+import { useCallback } from "react";
 import { Sparkles } from "lucide-react";
 import { LivePreviewPDF } from "./LivePreviewPDF";
+import { OriginalPdfEditor } from "./OriginalPdfEditor";
 import { ResumePreviewWithToggle } from "./ResumePreviewWithToggle";
 import { getOriginalUrl } from "@/services/resumeService";
 
@@ -22,6 +24,8 @@ export function ResumePreviewPanel({
   resumeId,
   hasOriginal,
 }: ResumePreviewPanelProps) {
+  // Stable reference so the in-place editor doesn't re-render the PDF each render.
+  const loadOriginal = useCallback(() => getOriginalUrl(resumeId), [resumeId]);
   return (
     <div className="bg-secondary/30 overflow-y-auto flex flex-col">
       {/* Preview toolbar */}
@@ -46,8 +50,8 @@ export function ResumePreviewPanel({
       <div className="flex-1 overflow-y-auto p-3">
         <ResumePreviewWithToggle
           hasOriginal={hasOriginal}
-          loadOriginalUrl={() => getOriginalUrl(resumeId)}
-          edited={<LivePreviewPDF />}
+          loadOriginalUrl={loadOriginal}
+          edited={hasOriginal ? <OriginalPdfEditor loadUrl={loadOriginal} /> : <LivePreviewPDF />}
         />
       </div>
     </div>
