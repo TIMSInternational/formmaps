@@ -262,17 +262,14 @@
 .textLayer .markedContent {
   display: contents;
 }
-/* Reveal an actively-edited or focused run, covering the original glyph. */
-.pdf-edit-layer span.pdf-edited {
-  color: #111111;
-  background: #ffffff;
-  outline: 1px solid rgba(6, 82, 146, 0.35);
-}
+/* Reveal an edited or focused run by covering the original glyph with the
+   document's OWN sampled background + text colour (set per-run as --pdf-bg /
+   --pdf-fg), so the edit blends into the page instead of looking like a box.
+   No outline — it should read as the real document, not a patch. */
+.pdf-edit-layer span.pdf-edited,
 .pdf-edit-layer span:focus {
-  color: #111111;
-  background: #ffffff;
-  outline: 1px solid #065292;
-  border-radius: 1px;
+  color: var(--pdf-fg, #111111);
+  background: var(--pdf-bg, #ffffff);
 }
 /* Sit the editable text layer above the (pointer-events-none) page canvas. */
 .pdf-edit-layer { z-index: 1; }
