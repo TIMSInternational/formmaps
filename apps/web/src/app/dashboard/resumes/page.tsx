@@ -139,7 +139,7 @@ export default function MyResumesPage() {
         <div className="relative shrink-0">
           <button
             onClick={() => setShowCreateMenu(!showCreateMenu)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-foreground text-background hover:bg-foreground/90 rounded-xl text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#065292] text-white hover:bg-[#054473] rounded-xl text-sm font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
             {t("dashboard.resumes.createButton")}
@@ -186,7 +186,7 @@ export default function MyResumesPage() {
             <FileText className="w-8 h-8 text-red-500 mx-auto mb-3" />
             <h3 className="text-sm font-bold text-foreground mb-1">Failed to load resumes</h3>
             <p className="text-xs text-muted-foreground mb-5">{error}</p>
-            <button onClick={() => window.location.reload()} className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background hover:bg-foreground/90 rounded-xl text-sm font-medium transition-colors">
+            <button onClick={() => window.location.reload()} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#065292] text-white hover:bg-[#054473] rounded-xl text-sm font-medium transition-colors">
               Try Again
             </button>
           </div>
@@ -198,7 +198,7 @@ export default function MyResumesPage() {
               Upload your existing resume to get started, then use AI to tailor it for specific job postings
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button onClick={() => fileInputRef.current?.click()} className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background hover:bg-foreground/90 rounded-xl text-sm font-medium transition-colors">
+              <button onClick={() => fileInputRef.current?.click()} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#065292] text-white hover:bg-[#054473] rounded-xl text-sm font-medium transition-colors">
                 <Upload className="w-4 h-4" /> Upload Resume (PDF)
               </button>
               <button onClick={handleCreateFromScratch} className="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary text-foreground hover:bg-border rounded-xl text-sm font-medium transition-colors border border-border">

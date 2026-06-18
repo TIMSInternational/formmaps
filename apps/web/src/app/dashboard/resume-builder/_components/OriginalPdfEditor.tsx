@@ -284,6 +284,48 @@ export function OriginalPdfEditor({
  * a case-insensitive fallback (keeping the document's own casing). A value that
  * can't be located is skipped — still editable on the right, just not mirrored.
  */
+/**
+ * Locate a phone number inside a run by its DIGIT sequence, so a stored value
+ * that differs only in formatting (e.g. "407-946-3245" vs "(407) 946-3245")
+ * still binds. Returns indices into the ORIGINAL text so the run keeps the
+ * document's own formatting when rebuilt.
+ */
+function locatePhoneByDigits(text: string, value: string): { start: number; end: number } | null {
+  const wanted = value.replace(/\D/g, "");
+  if (wanted.length < 7) return null; // too short to be a confident phone match
+  const digitIdx: number[] = [];
+  let digits = "";
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch >= "0" && ch <= "9") {
+      digitIdx.push(i);
+      digits += ch;
+    }
+  }
+  const at = digits.indexOf(wanted);
+  if (at < 0) return null;
+  let start = digitIdx[at];
+  let end = digitIdx[at + wanted.length - 1] + 1;
+  // Pull in wrapping formatting so e.g. "(407) 946-3245" binds whole, not "407) 946-3245".
+  while (start > 0 && (text[start - 1] === "(" || text[start - 1] === "+")) start--;
+  while (end < text.length && text[end] === ")") end++;
+  return { start, end };
+}
+
+/** Find a contact value in a run: exact, then case-insensitive, then (phone) by digits. */
+function locateValue(
+  text: string,
+  field: ContactField,
+  value: string,
+): { start: number; end: number } | null {
+  const exact = text.indexOf(value);
+  if (exact >= 0) return { start: exact, end: exact + value.length };
+  const lower = text.toLowerCase().indexOf(value.toLowerCase());
+  if (lower >= 0) return { start: lower, end: lower + value.length };
+  if (field === "phone") return locatePhoneByDigits(text, value);
+  return null;
+}
+
 export function bindContactFields(
   host: HTMLElement,
   values: ContactValues,
@@ -302,13 +344,9 @@ export function bindContactFields(
     const matches: Array<{ field: ContactField; start: number; end: number }> = [];
     for (const field of remaining) {
       const value = (values[field] ?? "").trim();
-      let idx = text.indexOf(value);
-      if (idx < 0) {
-        const lower = text.toLowerCase().indexOf(value.toLowerCase());
-        if (lower < 0) continue;
-        idx = lower;
-      }
-      matches.push({ field, start: idx, end: idx + value.length });
+      const located = locateValue(text, field, value);
+      if (!located) continue;
+      matches.push({ field, start: located.start, end: located.end });
     }
     if (matches.length === 0) continue;
 

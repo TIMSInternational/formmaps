@@ -98,7 +98,7 @@ export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate
 
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center">
-          <span className="opacity-0 group-hover:opacity-100 px-3 py-1.5 bg-foreground text-background rounded-xl text-xs font-medium transition-opacity">
+          <span className="opacity-0 group-hover:opacity-100 px-3 py-1.5 bg-[#065292] text-white rounded-xl text-xs font-medium transition-opacity">
             Edit Resume
           </span>
         </div>
