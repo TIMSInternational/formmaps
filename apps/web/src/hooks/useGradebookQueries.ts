@@ -19,13 +19,17 @@ export function useStudentGradebook(studentId: string | null) {
   });
 }
 
-// All grade mutations invalidate the student's gradebook + class rankings
-// (a grade change shifts GPA and therefore ranks).
+// A grade change shifts everything derived from StudentGrade: this student's
+// gradebook, their transcript/GPA/gaps/recommendations (student-detail keys all
+// end with the studentId), class rankings, and graduation progress.
 function useGradebookInvalidation(studentId: string) {
   const qc = useQueryClient();
   return () => {
     qc.invalidateQueries({ queryKey: gradebookKey(studentId) });
     qc.invalidateQueries({ queryKey: ["class-rankings"] });
+    qc.invalidateQueries({ queryKey: ["graduation-progress"] });
+    // Any student-scoped query (student-detail transcript/gpa/gaps, academic gaps, etc.)
+    qc.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && (q.queryKey as unknown[]).includes(studentId) });
   };
 }
 

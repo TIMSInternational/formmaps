@@ -64,8 +64,11 @@ export function GradeImportPanel({ onImported }: { onImported?: () => void }) {
       const data = res?.data ?? res;
       setResult(data);
       setPreview(null);
+      // Bulk import touches many students — invalidate all StudentGrade-derived caches.
       queryClient.invalidateQueries({ queryKey: ["gradebook"] });
       queryClient.invalidateQueries({ queryKey: ["class-rankings"] });
+      queryClient.invalidateQueries({ queryKey: ["graduation-progress"] });
+      queryClient.invalidateQueries({ queryKey: ["student-detail"] });
       onImported?.();
       toast.success(`Imported ${data.validRows || 0} grades, ${data.invalidRows || 0} failed`);
     } catch { toast.error("Import failed"); }
