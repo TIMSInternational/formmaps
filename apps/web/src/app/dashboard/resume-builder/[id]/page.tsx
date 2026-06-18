@@ -5,6 +5,7 @@ import {
   useEffect,
   useRef,
   useCallback,
+  useMemo,
 } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
@@ -903,6 +904,42 @@ export default function ResumeBuilderPage() {
     persistPersonalInfoForm(personalInfoForm, { closeModal: true });
   };
 
+  // ── Two-way contact sync with the original-PDF editor ──────────────────────
+  // Latest form in a ref so a commit from the document persists current values.
+  const personalInfoFormRef = useRef(personalInfoForm);
+  personalInfoFormRef.current = personalInfoForm;
+
+  const contactValues = useMemo(
+    () => ({
+      fullName: personalInfoForm.fullName ?? "",
+      email: personalInfoForm.email ?? "",
+      phone: personalInfoForm.phone ?? "",
+      location: personalInfoForm.location ?? "",
+      linkedin: personalInfoForm.linkedin ?? "",
+      website: personalInfoForm.website ?? "",
+      github: personalInfoForm.github ?? "",
+    }),
+    [
+      personalInfoForm.fullName,
+      personalInfoForm.email,
+      personalInfoForm.phone,
+      personalInfoForm.location,
+      personalInfoForm.linkedin,
+      personalInfoForm.website,
+      personalInfoForm.github,
+    ],
+  );
+
+  // left → right: the user edited a contact run on the document (live).
+  const handleContactFieldChange = useCallback((field: string, value: string) => {
+    setPersonalInfoForm((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  // commit on blur of a document run → persist current form (store + autosave).
+  const handleContactFieldCommit = useCallback(() => {
+    persistPersonalInfoForm(personalInfoFormRef.current);
+  }, [persistPersonalInfoForm]);
+
   // Education Handlers
   const handleAddEducation = () => {
     setEducationForm({
@@ -1027,6 +1064,9 @@ export default function ResumeBuilderPage() {
           onPopulateSampleData={populateWithDummyContent}
           resumeId={currentResumeId ?? ""}
           hasOriginal={hasOriginalState}
+          contactValues={contactValues}
+          onContactFieldChange={handleContactFieldChange}
+          onContactFieldCommit={handleContactFieldCommit}
         />
 
         {/* Right Panel — Tabs: AI Rewrite / Editor / Style */}

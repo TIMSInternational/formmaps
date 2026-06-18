@@ -276,3 +276,5 @@
 }
 /* Sit the editable text layer above the (pointer-events-none) page canvas. */
 .pdf-edit-layer { z-index: 1; }
+/* Two-way-bound contact field: transparent (canvas shows through) until edited. */
+.pdf-edit-layer span.pdf-field { color: transparent; }
