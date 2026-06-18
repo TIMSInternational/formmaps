@@ -115,7 +115,7 @@ export function OriginalPdfEditor({
           const viewport = page.getViewport({ scale });
 
           const pageEl = document.createElement("div");
-          pageEl.className = "relative mx-auto mb-4 bg-white shadow-sm rounded-sm overflow-hidden";
+          pageEl.className = "pdf-page relative mx-auto mb-4 bg-white shadow-sm rounded-sm overflow-hidden";
           pageEl.style.width = `${viewport.width}px`;
           pageEl.style.height = `${viewport.height}px`;
 
@@ -127,7 +127,9 @@ export function OriginalPdfEditor({
           // Canvas is purely the visual — all interaction happens on the text
           // layer above it, so it must not intercept clicks.
           canvas.className = "absolute inset-0 pointer-events-none";
-          const ctx = canvas.getContext("2d");
+          // willReadFrequently: we sample the page's own colors (below) so edits
+          // can blend into the document instead of looking like a pasted box.
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
           if (!ctx) {
             setState("error");
             return;
@@ -174,6 +176,15 @@ export function OriginalPdfEditor({
         // its own editable element so it can mirror the right-panel form.
         bindContactFields(host, contactValuesRef.current || {}, fieldEls);
 
+        // Sample each bound field's real background + text colour from the page
+        // so edits blend into the document (white-on-teal header, black-on-white
+        // body, …) instead of looking like a pasted box. Wait one frame so the
+        // wrapped elements have laid out before we read their geometry.
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        if (cancelled) return;
+        const dprNow = window.devicePixelRatio || 1;
+        for (const el of fieldEls.values()) sampleRunColors(el, dprNow);
+
         setState("ready");
       } catch {
         if (!cancelled) setState("error");
@@ -216,6 +227,10 @@ export function OriginalPdfEditor({
   const handleInput = useCallback((e: React.FormEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement | null;
     if (!target) return;
+    // First time a run is edited, blend it into the document's own colours.
+    if (!target.style.getPropertyValue("--pdf-bg")) {
+      sampleRunColors(target, window.devicePixelRatio || 1);
+    }
     if (target.dataset.field !== undefined) {
       const value = target.textContent ?? "";
       target.classList.toggle("pdf-edited", value !== target.dataset.orig);
@@ -224,6 +239,17 @@ export function OriginalPdfEditor({
     }
     if (target.dataset.orig !== undefined) {
       target.classList.toggle("pdf-edited", target.textContent !== target.dataset.orig);
+    }
+  }, []);
+
+  // Sample colours on focus too, so a run blends in the moment it's clicked
+  // (before any text changes) — not just once edited.
+  const handleFocus = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    const editable = target.dataset.field !== undefined || target.dataset.orig !== undefined;
+    if (editable && !target.style.getPropertyValue("--pdf-bg")) {
+      sampleRunColors(target, window.devicePixelRatio || 1);
     }
   }, []);
 
@@ -246,7 +272,7 @@ export function OriginalPdfEditor({
       {state === "error" && (
         <div className="p-6 text-sm text-muted-foreground">Couldn&apos;t load your document for editing.</div>
       )}
-      <div ref={hostRef} onInput={handleInput} onBlur={handleBlur} className="w-full" />
+      <div ref={hostRef} onInput={handleInput} onFocus={handleFocus} onBlur={handleBlur} className="w-full" />
     </div>
   );
 }
@@ -320,4 +346,90 @@ export function bindContactFields(
     }
     if (cursor < text.length) span.appendChild(document.createTextNode(text.slice(cursor)));
   }
+}
+
+/**
+ * Read the page canvas under a text run and stash its real background + text
+ * colours on the element (`--pdf-bg` / `--pdf-fg`). An edited run then covers the
+ * original glyph with the document's own background and renders the new text in
+ * the original colour, so edits blend in instead of looking like a pasted box.
+ * Best-effort: on any failure (e.g. a tainted canvas) it leaves the defaults.
+ */
+function sampleRunColors(el: HTMLElement, dpr: number): void {
+  // Lock the run to at least its original width so a SHORTER replacement still
+  // fully covers the original glyph (otherwise the tail of the old text shows,
+  // e.g. on a coloured header). Captured pre-edit, in layout (pre-transform) px.
+  if (!el.style.minWidth) {
+    el.style.display = "inline-block";
+    el.style.minWidth = `${el.offsetWidth}px`;
+  }
+  try {
+    const pageEl = el.closest<HTMLElement>(".pdf-page");
+    const canvas = pageEl?.querySelector("canvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+
+    const cr = canvas.getBoundingClientRect();
+    const fr = el.getBoundingClientRect();
+    if (fr.width < 1 || fr.height < 1) return;
+    const cw = canvas.width;
+    const ch = canvas.height;
+    const x = clampInt(Math.round((fr.left - cr.left) * dpr), 0, cw - 1);
+    const y = clampInt(Math.round((fr.top - cr.top) * dpr), 0, ch - 1);
+    const w = clampInt(Math.round(fr.width * dpr), 1, cw - x);
+    const h = clampInt(Math.round(fr.height * dpr), 1, ch - y);
+
+    // Background: the thin gaps just above and below the glyphs are almost
+    // always pure background — take the most common colour there.
+    const counts = new Map<string, number>();
+    const tally = (sx: number, sy: number, sw: number, sh: number) => {
+      if (sw < 1 || sh < 1) return;
+      const data = ctx.getImageData(sx, sy, sw, sh).data;
+      for (let o = 0; o < data.length; o += 4) {
+        const key = `${data[o] >> 4},${data[o + 1] >> 4},${data[o + 2] >> 4}`;
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+    };
+    tally(x, clampInt(y - 2, 0, ch - 1), w, 1);
+    tally(x, clampInt(y + h, 0, ch - 1), w, 1);
+    if (counts.size === 0) tally(x, y, w, h);
+    let bgKey = "15,15,15";
+    let bgMax = -1;
+    for (const [k, c] of counts) {
+      if (c > bgMax) {
+        bgMax = c;
+        bgKey = k;
+      }
+    }
+    const [br, bg, bb] = bgKey.split(",").map((n) => (parseInt(n, 10) << 4) + 8);
+
+    // Text colour: within the run, the pixel furthest from the background.
+    const inner = ctx.getImageData(x, y, w, h).data;
+    let fr2 = 17;
+    let fg2 = 17;
+    let fb2 = 17;
+    let far = -1;
+    for (let o = 0; o < inner.length; o += 4) {
+      const r = inner[o];
+      const g = inner[o + 1];
+      const b = inner[o + 2];
+      const d = (r - br) ** 2 + (g - bg) ** 2 + (b - bb) ** 2;
+      if (d > far) {
+        far = d;
+        fr2 = r;
+        fg2 = g;
+        fb2 = b;
+      }
+    }
+
+    el.style.setProperty("--pdf-bg", `rgb(${br},${bg},${bb})`);
+    el.style.setProperty("--pdf-fg", `rgb(${fr2},${fg2},${fb2})`);
+  } catch {
+    // tainted/unreadable canvas — keep the CSS defaults
+  }
+}
+
+function clampInt(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
 }
