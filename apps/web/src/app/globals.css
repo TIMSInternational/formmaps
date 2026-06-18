@@ -230,3 +230,49 @@
   background-image: var(--admin-bg-noisy);
   background-repeat: repeat;
 }
+/* ── In-place PDF editor (resume builder) ──────────────────────────────────
+   pdf.js TextLayer renders absolutely-positioned spans over the page canvas.
+   These rules (adapted from pdfjs-dist/web/pdf_viewer.css) position them; the
+   .pdf-edited / :focus rules reveal an edit by covering the original glyph. */
+.textLayer {
+  position: absolute;
+  inset: 0;
+  text-align: initial;
+  overflow: clip;
+  line-height: 1;
+  transform-origin: 0 0;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+.textLayer > :not(.markedContent),
+.textLayer .markedContent span:not(.markedContent) {
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  color: transparent;
+  transform-origin: 0% 0%;
+  z-index: 1;
+  --font-height: 0;
+  --scale-x: 1;
+  --rotate: 0deg;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+.textLayer .markedContent {
+  display: contents;
+}
+/* Reveal an actively-edited or focused run, covering the original glyph. */
+.pdf-edit-layer span.pdf-edited {
+  color: #111111;
+  background: #ffffff;
+  outline: 1px solid rgba(6, 82, 146, 0.35);
+}
+.pdf-edit-layer span:focus {
+  color: #111111;
+  background: #ffffff;
+  outline: 1px solid #065292;
+  border-radius: 1px;
+}
+/* Sit the editable text layer above the (pointer-events-none) page canvas. */
+.pdf-edit-layer { z-index: 1; }
