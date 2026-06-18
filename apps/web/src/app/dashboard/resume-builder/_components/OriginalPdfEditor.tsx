@@ -15,6 +15,12 @@ export const CONTACT_FIELDS = [
 export type ContactField = (typeof CONTACT_FIELDS)[number];
 export type ContactValues = Partial<Record<ContactField, string>>;
 
+/**
+ * Single-line experience values to two-way bind, keyed `exp.<index>.<field>`
+ * (field ∈ jobTitle | company | location | startDate | endDate).
+ */
+export type ExperienceValues = Record<string, string>;
+
 interface OriginalPdfEditorProps {
   /** Resolves to a (short-TTL signed) URL for the original PDF, or null. */
   loadUrl: () => Promise<string | null>;
@@ -24,6 +30,10 @@ interface OriginalPdfEditorProps {
   onContactFieldChange?: (field: ContactField, value: string) => void;
   /** Fired when a contact run loses focus, so the change can be persisted. */
   onContactFieldCommit?: () => void;
+  /** Live experience single-line values, keyed `exp.<index>.<field>`. */
+  experienceValues?: ExperienceValues;
+  /** Fired when an experience run loses focus → persist that field on its entry. */
+  onExperienceFieldCommit?: (index: number, field: string, value: string) => void;
 }
 
 type EditorState = "loading" | "ready" | "error";
@@ -48,11 +58,13 @@ export function OriginalPdfEditor({
   contactValues,
   onContactFieldChange,
   onContactFieldCommit,
+  experienceValues,
+  onExperienceFieldCommit,
 }: OriginalPdfEditorProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [state, setState] = useState<EditorState>("loading");
-  // field → the inner editable element wrapping that value on the document.
-  const fieldElsRef = useRef<Map<ContactField, HTMLElement>>(new Map());
+  // bound key (contact field or "exp.<i>.<field>") → the inner editable element.
+  const fieldElsRef = useRef<Map<string, HTMLElement>>(new Map());
 
   // Keep the latest callbacks / values in refs so the (expensive) load effect
   // that builds listeners doesn't re-run when the parent re-renders.
@@ -62,10 +74,15 @@ export function OriginalPdfEditor({
   onCommitRef.current = onContactFieldCommit;
   const contactValuesRef = useRef(contactValues);
   contactValuesRef.current = contactValues;
-  // Previous contact values, so the right→left effect applies only the user's
-  // actual changes — never overwriting the PDF's own text on first render
-  // (e.g. when the parsed value differs only in casing/format from the document).
+  const experienceValuesRef = useRef(experienceValues);
+  experienceValuesRef.current = experienceValues;
+  const onExpCommitRef = useRef(onExperienceFieldCommit);
+  onExpCommitRef.current = onExperienceFieldCommit;
+  // Previous values, so the right→left effects apply only the user's actual
+  // changes — never overwriting the PDF's own text on first render (e.g. when the
+  // parsed value differs only in casing/format from the document).
   const prevContactRef = useRef<ContactValues | null>(null);
+  const prevExperienceRef = useRef<ExperienceValues | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,6 +90,7 @@ export function OriginalPdfEditor({
     const fieldEls = fieldElsRef.current;
     fieldEls.clear();
     prevContactRef.current = null;
+    prevExperienceRef.current = null;
 
     (async () => {
       try {
@@ -172,9 +190,22 @@ export function OriginalPdfEditor({
 
         if (cancelled) return;
 
-        // Bind contact fields: locate each value in the document and wrap it in
-        // its own editable element so it can mirror the right-panel form.
-        bindContactFields(host, contactValuesRef.current || {}, fieldEls);
+        // Bind contact + experience values: locate each in the document and wrap
+        // it in its own editable element so it can mirror the right-panel form.
+        const targets: BindTarget[] = [];
+        const cv = contactValuesRef.current || {};
+        for (const f of CONTACT_FIELDS) {
+          const value = (cv[f] ?? "").trim();
+          if (value.length >= 2) {
+            targets.push({ key: f, value, kind: f === "phone" ? "phone" : undefined });
+          }
+        }
+        const ev = experienceValuesRef.current || {};
+        for (const [key, raw] of Object.entries(ev)) {
+          const value = (raw ?? "").trim();
+          if (value.length >= 2) targets.push({ key, value });
+        }
+        bindFields(host, targets, fieldEls);
 
         // Sample each bound field's real background + text colour from the page
         // so edits blend into the document (white-on-teal header, black-on-white
@@ -223,7 +254,26 @@ export function OriginalPdfEditor({
     }
   }, [contactValues, state]);
 
-  // Left → right (+ Phase-1 in-place edits for non-contact runs).
+  // Right → left for experience: when an experience field changes on the right
+  // (e.g. the entry modal saves), update its bound run on the document.
+  useEffect(() => {
+    if (state !== "ready" || !experienceValues) return;
+    const prev = prevExperienceRef.current;
+    prevExperienceRef.current = experienceValues;
+    if (!prev) return; // first pass only records the baseline
+    for (const [key, val] of Object.entries(experienceValues)) {
+      if (prev[key] === val) continue; // unchanged on the right
+      const el = fieldElsRef.current.get(key);
+      if (!el || document.activeElement === el) continue;
+      const next = val ?? "";
+      if ((el.textContent ?? "") !== next) {
+        el.textContent = next;
+        el.classList.toggle("pdf-edited", next !== el.dataset.orig);
+      }
+    }
+  }, [experienceValues, state]);
+
+  // Left → right (+ Phase-1 in-place edits for non-bound runs).
   const handleInput = useCallback((e: React.FormEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement | null;
     if (!target) return;
@@ -231,10 +281,13 @@ export function OriginalPdfEditor({
     if (!target.style.getPropertyValue("--pdf-bg")) {
       sampleRunColors(target, window.devicePixelRatio || 1);
     }
-    if (target.dataset.field !== undefined) {
+    const key = target.dataset.field;
+    if (key !== undefined) {
       const value = target.textContent ?? "";
       target.classList.toggle("pdf-edited", value !== target.dataset.orig);
-      onChangeRef.current?.(target.dataset.field as ContactField, value);
+      // Contact fields mirror live into the right-panel form; experience fields
+      // persist on blur (handleBlur) to avoid a save per keystroke.
+      if (!key.startsWith("exp.")) onChangeRef.current?.(key as ContactField, value);
       return;
     }
     if (target.dataset.orig !== undefined) {
@@ -253,17 +306,27 @@ export function OriginalPdfEditor({
     }
   }, []);
 
-  // Commit (persist) when a bound contact run loses focus.
+  // Commit (persist) when a bound run loses focus.
   const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement | null;
-    if (target?.dataset.field !== undefined) onCommitRef.current?.();
+    const key = target?.dataset.field;
+    if (key === undefined) return;
+    if (key.startsWith("exp.")) {
+      const [, idxStr, field] = key.split(".");
+      const index = Number(idxStr);
+      if (field && Number.isInteger(index)) {
+        onExpCommitRef.current?.(index, field, target?.textContent ?? "");
+      }
+      return;
+    }
+    onCommitRef.current?.();
   }, []);
 
   return (
     <div className="flex flex-col gap-2">
       {state === "ready" && (
         <p className="px-1 text-xs text-muted-foreground">
-          Editing your uploaded document — your contact details stay in sync with the panel on the right.
+          Editing your uploaded document — your contact and experience details stay in sync with the panel on the right.
         </p>
       )}
       {state === "loading" && (
@@ -312,41 +375,58 @@ function locatePhoneByDigits(text: string, value: string): { start: number; end:
   return { start, end };
 }
 
-/** Find a contact value in a run: exact, then case-insensitive, then (phone) by digits. */
-function locateValue(
-  text: string,
-  field: ContactField,
-  value: string,
-): { start: number; end: number } | null {
+/**
+ * One value to bind on the document. `key` is the bound id (a contact field like
+ * "phone", or an experience field like "exp.0.company"); `kind` selects a
+ * specialised matcher (phone digit-normalisation) — everything else is plain
+ * substring matching.
+ */
+export type BindTarget = { key: string; value: string; kind?: "phone" };
+
+/** Find a target's value in a run: exact, then case-insensitive, then (phone) by digits. */
+function locateTarget(text: string, target: BindTarget): { start: number; end: number } | null {
+  const { value } = target;
   const exact = text.indexOf(value);
   if (exact >= 0) return { start: exact, end: exact + value.length };
   const lower = text.toLowerCase().indexOf(value.toLowerCase());
   if (lower >= 0) return { start: lower, end: lower + value.length };
-  if (field === "phone") return locatePhoneByDigits(text, value);
+  if (target.kind === "phone") return locatePhoneByDigits(text, value);
   return null;
 }
 
-export function bindContactFields(
+/**
+ * Locate each target value in the document and wrap it in its own editable
+ * `[data-field]` element (keyed by `target.key`), locking the rest of the run.
+ * Handles several targets in one run (e.g. a "company  dates  title  location"
+ * experience line). Targets are matched in array order, so when two targets
+ * share an identical value (e.g. the same location in two jobs) they bind to
+ * successive occurrences in document order. A value that can't be located is
+ * skipped — still editable on the right, just not mirrored.
+ */
+export function bindFields(
   host: HTMLElement,
-  values: ContactValues,
-  out: Map<ContactField, HTMLElement>,
+  targets: BindTarget[],
+  out: Map<string, HTMLElement>,
 ) {
   const spans = Array.from(host.querySelectorAll<HTMLElement>(".pdf-edit-layer span[data-orig]"));
-  const remaining = new Set<ContactField>(
-    CONTACT_FIELDS.filter((f) => (values[f] ?? "").trim().length >= 2),
-  );
+  // Map preserves insertion (= array) order, which is the tie-breaker for
+  // duplicate values: earlier targets claim earlier occurrences.
+  const remaining = new Map<string, BindTarget>();
+  for (const t of targets) {
+    const value = (t.value ?? "").trim();
+    if (value.length >= 2) remaining.set(t.key, { ...t, value });
+  }
 
   for (const span of spans) {
     if (remaining.size === 0) break;
     const text = span.textContent ?? "";
 
-    // Collect every remaining field that appears in this run.
-    const matches: Array<{ field: ContactField; start: number; end: number }> = [];
-    for (const field of remaining) {
-      const value = (values[field] ?? "").trim();
-      const located = locateValue(text, field, value);
+    // Collect every remaining target that appears in this run.
+    const matches: Array<{ key: string; start: number; end: number }> = [];
+    for (const [key, t] of remaining) {
+      const located = locateTarget(text, t);
       if (!located) continue;
-      matches.push({ field, start: located.start, end: located.end });
+      matches.push({ key, start: located.start, end: located.end });
     }
     if (matches.length === 0) continue;
 
@@ -361,7 +441,7 @@ export function bindContactFields(
       }
     }
 
-    // Rebuild the run as: text … [field] … text, with each field its own editable
+    // Rebuild the run as: text … [field] … text, with each value its own editable
     // element. The run itself is no longer editable so separators stay put.
     span.replaceChildren();
     span.removeAttribute("data-orig");
@@ -372,18 +452,34 @@ export function bindContactFields(
       const matched = text.slice(m.start, m.end); // keep the PDF's own casing
       const fieldEl = document.createElement("span");
       fieldEl.className = "pdf-field";
-      fieldEl.dataset.field = m.field;
+      fieldEl.dataset.field = m.key;
       fieldEl.dataset.orig = matched;
       fieldEl.contentEditable = "true";
       fieldEl.spellcheck = false;
       fieldEl.textContent = matched;
       span.appendChild(fieldEl);
-      out.set(m.field, fieldEl);
-      remaining.delete(m.field);
+      out.set(m.key, fieldEl);
+      remaining.delete(m.key);
       cursor = m.end;
     }
     if (cursor < text.length) span.appendChild(document.createTextNode(text.slice(cursor)));
   }
+}
+
+/** Contact-field convenience wrapper over {@link bindFields}. */
+export function bindContactFields(
+  host: HTMLElement,
+  values: ContactValues,
+  out: Map<ContactField, HTMLElement>,
+) {
+  const targets: BindTarget[] = CONTACT_FIELDS.filter(
+    (f) => (values[f] ?? "").trim().length >= 2,
+  ).map((f) => ({
+    key: f,
+    value: (values[f] ?? "").trim(),
+    kind: f === "phone" ? ("phone" as const) : undefined,
+  }));
+  bindFields(host, targets, out as Map<string, HTMLElement>);
 }
 
 /**

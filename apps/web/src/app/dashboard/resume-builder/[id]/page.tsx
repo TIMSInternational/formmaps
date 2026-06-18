@@ -940,6 +940,30 @@ export default function ResumeBuilderPage() {
     persistPersonalInfoForm(personalInfoFormRef.current);
   }, [persistPersonalInfoForm]);
 
+  // ── Two-way experience sync (single-line fields) with the original-PDF editor ─
+  // Flatten the store's experience entries into `exp.<index>.<field>` values the
+  // editor binds onto the document; commit-on-blur persists back to the entry.
+  const experienceValues = useMemo(() => {
+    const out: Record<string, string> = {};
+    resumeBuilder.data.experience.forEach((e, i) => {
+      out[`exp.${i}.jobTitle`] = e.jobTitle ?? "";
+      out[`exp.${i}.company`] = e.company ?? "";
+      out[`exp.${i}.location`] = e.location ?? "";
+      out[`exp.${i}.startDate`] = e.startDate ?? "";
+      out[`exp.${i}.endDate`] = e.endDate ?? "";
+    });
+    return out;
+  }, [resumeBuilder.data.experience]);
+
+  const handleExperienceFieldCommit = useCallback(
+    (index: number, field: string, value: string) => {
+      const entry = resumeBuilder.data.experience[index];
+      if (!entry) return;
+      updateExperience(entry.id, { [field]: value } as Partial<(typeof resumeBuilder.data.experience)[number]>);
+    },
+    [resumeBuilder.data.experience, updateExperience],
+  );
+
   // Education Handlers
   const handleAddEducation = () => {
     setEducationForm({
@@ -1067,6 +1091,8 @@ export default function ResumeBuilderPage() {
           contactValues={contactValues}
           onContactFieldChange={handleContactFieldChange}
           onContactFieldCommit={handleContactFieldCommit}
+          experienceValues={experienceValues}
+          onExperienceFieldCommit={handleExperienceFieldCommit}
         />
 
         {/* Right Panel — Tabs: AI Rewrite / Editor / Style */}
