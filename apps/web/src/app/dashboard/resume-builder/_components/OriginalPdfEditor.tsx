@@ -381,28 +381,32 @@ function sampleRunColors(el: HTMLElement, dpr: number): void {
     const h = clampInt(Math.round(fr.height * dpr), 1, ch - y);
 
     // Background: the thin gaps just above and below the glyphs are almost
-    // always pure background — take the most common colour there.
-    const counts = new Map<string, number>();
+    // always pure background. Cluster the pixels into coarse buckets to find the
+    // dominant colour, then average the ACTUAL pixels in that bucket so the cover
+    // matches the page EXACTLY (e.g. true #fff, not a quantised ~#f8f8f8 box).
+    const buckets = new Map<string, { n: number; r: number; g: number; b: number }>();
     const tally = (sx: number, sy: number, sw: number, sh: number) => {
       if (sw < 1 || sh < 1) return;
       const data = ctx.getImageData(sx, sy, sw, sh).data;
       for (let o = 0; o < data.length; o += 4) {
         const key = `${data[o] >> 4},${data[o + 1] >> 4},${data[o + 2] >> 4}`;
-        counts.set(key, (counts.get(key) ?? 0) + 1);
+        const e = buckets.get(key) ?? { n: 0, r: 0, g: 0, b: 0 };
+        e.n += 1;
+        e.r += data[o];
+        e.g += data[o + 1];
+        e.b += data[o + 2];
+        buckets.set(key, e);
       }
     };
     tally(x, clampInt(y - 2, 0, ch - 1), w, 1);
     tally(x, clampInt(y + h, 0, ch - 1), w, 1);
-    if (counts.size === 0) tally(x, y, w, h);
-    let bgKey = "15,15,15";
-    let bgMax = -1;
-    for (const [k, c] of counts) {
-      if (c > bgMax) {
-        bgMax = c;
-        bgKey = k;
-      }
-    }
-    const [br, bg, bb] = bgKey.split(",").map((n) => (parseInt(n, 10) << 4) + 8);
+    if (buckets.size === 0) tally(x, y, w, h);
+    let mode = { n: 0, r: 255 * 1, g: 255, b: 255 };
+    for (const e of buckets.values()) if (e.n > mode.n) mode = e;
+    const denom = Math.max(1, mode.n);
+    const br = Math.round(mode.r / denom);
+    const bg = Math.round(mode.g / denom);
+    const bb = Math.round(mode.b / denom);
 
     // Text colour: within the run, the pixel furthest from the background.
     const inner = ctx.getImageData(x, y, w, h).data;
