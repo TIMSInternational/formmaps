@@ -83,23 +83,32 @@ function PCAReports({ student }: { student: StudentRecord }) {
   const [loading, setLoading] = useState<string | null>(null);
   const [pcaData, setPcaData] = useState<Record<string, unknown> | null>(null);
   const [competences, setCompetences] = useState<Record<string, unknown> | null>(null);
+  // Authoritative completion gate (B7): downloads enable only when the student has a
+  // completed PCA per the backend signal, not merely when DISC result data is present.
+  const [pcaCompleted, setPcaCompleted] = useState(false);
   const [fetched, setFetched] = useState(false);
 
   useEffect(() => {
+    let active = true;
     (async () => {
       try {
+        const res = await apiRequest(`/api/v1/school-admin/results/${student.id}/pca-status`);
+        const completed = (res?.data?.data ?? res?.data)?.completed === true;
+        if (active) setPcaCompleted(completed);
+      } catch { if (active) setPcaCompleted(false); }
+      try {
         const res = await apiRequest("/api/pcaapi/get-result", { method: "POST", data: { UserId: student.id } });
-        setPcaData(res?.data || res);
+        if (active) setPcaData(res?.data || res);
       } catch { /* no result */ }
       try {
         const res = await apiRequest("/api/pcaapi/get-competences", { method: "POST", data: { UserId: student.id } });
-        setCompetences(res?.data || res);
+        if (active) setCompetences(res?.data || res);
       } catch { /* no result */ }
-      setFetched(true);
+      if (active) setFetched(true);
     })();
+    return () => { active = false; };
   }, [student.id]);
 
-  const hasPCA = pcaData && (pcaData as Record<string, unknown>).pcaD1 != null;
   const d = pcaData as Record<string, unknown> | null;
 
   const downloadChart = async () => {
@@ -156,11 +165,11 @@ function PCAReports({ student }: { student: StudentRecord }) {
             <Skeleton className="h-14 w-full" style={{ background: "var(--admin-bg-hover)" }} />
             <Skeleton className="h-14 w-full" style={{ background: "var(--admin-bg-hover)" }} />
           </div>
-        ) : !hasPCA ? (
+        ) : !pcaCompleted ? (
           <div style={{ padding: 24, textAlign: "center", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
             <XCircle style={{ width: 24, height: 24, color: "var(--admin-font-tertiary)", margin: "0 auto 8px", opacity: 0.4 }} />
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>No PCA Results</div>
-            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>This student hasn&apos;t completed the PCA assessment yet.</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>PCA Not Completed</div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>Downloads unlock once this student completes the PCA assessment.</div>
           </div>
         ) : (
           <>
