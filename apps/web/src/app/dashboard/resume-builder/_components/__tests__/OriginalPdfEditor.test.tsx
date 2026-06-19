@@ -1,5 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { OriginalPdfEditor, bindContactFields, type ContactField } from "../OriginalPdfEditor";
+import {
+  OriginalPdfEditor,
+  bindContactFields,
+  bindFields,
+  type ContactField,
+  type BindTarget,
+} from "../OriginalPdfEditor";
 
 function makeHost(runs: string[]): HTMLElement {
   const host = document.createElement("div");
@@ -77,6 +83,57 @@ describe("OriginalPdfEditor", () => {
       bindContactFields(host, { phone: "(999) 000-1111" }, out);
       expect(out.has("phone")).toBe(false);
       expect(host.querySelector("[data-field]")).toBeNull();
+    });
+  });
+
+  describe("bindFields (generic keyed targets — experience)", () => {
+    it("binds an experience entry's single-line fields in one run", () => {
+      const host = makeHost([
+        "NexaDev Software Solutions   Feb 2024 - Feb 2026 Data-Analyst and Lead Developer   San José, Costa Rica",
+      ]);
+      const out = new Map<string, HTMLElement>();
+      const targets: BindTarget[] = [
+        { key: "exp.0.company", value: "NexaDev Software Solutions" },
+        { key: "exp.0.startDate", value: "Feb 2024" },
+        { key: "exp.0.endDate", value: "Feb 2026" },
+        { key: "exp.0.jobTitle", value: "Data-Analyst and Lead Developer" },
+        { key: "exp.0.location", value: "San José, Costa Rica" },
+      ];
+      bindFields(host, targets, out);
+      expect(out.get("exp.0.company")?.textContent).toBe("NexaDev Software Solutions");
+      expect(out.get("exp.0.startDate")?.textContent).toBe("Feb 2024");
+      expect(out.get("exp.0.endDate")?.textContent).toBe("Feb 2026");
+      expect(out.get("exp.0.jobTitle")?.textContent).toBe("Data-Analyst and Lead Developer");
+      expect(out.get("exp.0.location")?.textContent).toBe("San José, Costa Rica");
+    });
+
+    it("assigns duplicate identical values to entries in document order", () => {
+      const host = makeHost([
+        "Company A   San José, Costa Rica",
+        "Company B   San José, Costa Rica",
+      ]);
+      const out = new Map<string, HTMLElement>();
+      bindFields(
+        host,
+        [
+          { key: "exp.0.location", value: "San José, Costa Rica" },
+          { key: "exp.1.location", value: "San José, Costa Rica" },
+        ],
+        out,
+      );
+      // Both bind, and in document order: exp.0 (first occurrence) before exp.1.
+      const bound = Array.from(host.querySelectorAll("[data-field]")).map((e) =>
+        e.getAttribute("data-field"),
+      );
+      expect(bound).toEqual(["exp.0.location", "exp.1.location"]);
+    });
+
+    it("leaves a contact Map-based call working through the generic path", () => {
+      const host = makeHost(["FEDERICO TAFUR | fede@vt.edu"]);
+      const out = new Map<ContactField, HTMLElement>();
+      bindContactFields(host, { fullName: "FEDERICO TAFUR", email: "fede@vt.edu" }, out);
+      expect(out.get("fullName")?.textContent).toBe("FEDERICO TAFUR");
+      expect(out.get("email")?.textContent).toBe("fede@vt.edu");
     });
   });
 });
