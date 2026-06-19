@@ -12,16 +12,17 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Dialog, DialogContent,
 } from "@/components/ui/dialog";
 import {
-  Search, FileText, FilePlus, Download, Eye, Award, Clock, Target,
+  Search, FileText, FilePlus, Download, Eye,
 } from "lucide-react";
-import { useStudentResults, useStudentDetailResult } from "@/hooks/useSchoolAdmin";
+import { useStudentResults } from "@/hooks/useSchoolAdmin";
 import { exportResults } from "@/services/schoolAdminService";
 import { toast } from "sonner";
 import { TableRowsSkeleton } from "@/components/skeletons/TableSkeleton";
 import GradeImportForm from "@/components/school-admin/GradeImportForm";
+import { StudentReportModal } from "./StudentReportModal";
 
 export function ResultsPanel() {
   const { t } = useTranslation();
@@ -37,10 +38,6 @@ export function ResultsPanel() {
     page, limit,
     assessmentType: typeFilter !== "all" ? typeFilter : undefined,
   });
-  const { data: studentDetail, isLoading: detailLoading } = useStudentDetailResult(
-    selectedStudentId || "", !!selectedStudentId && isDetailOpen
-  );
-
   const handleExport = async (format: "csv" | "pdf") => {
     try {
       const blob = await exportResults({ format });
@@ -232,88 +229,12 @@ export function ResultsPanel() {
         )}
       </div>
 
-      {/* Student Detail Dialog */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" style={{
-          background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
-          color: "var(--admin-font-primary)",
-        }}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2" style={{ color: "var(--admin-font-primary)" }}>
-              <Award style={{ width: 18, height: 18, color: "#14b8a6" }} />
-              Student Performance Detail
-            </DialogTitle>
-            <DialogDescription style={{ color: "var(--admin-font-tertiary)" }}>
-              Detailed assessment history and performance breakdown
-            </DialogDescription>
-          </DialogHeader>
-
-          {detailLoading ? (
-            <div className="flex justify-center py-12" style={{ color: "var(--admin-font-light)" }}>Loading...</div>
-          ) : studentDetail ? (
-            <div className="space-y-5">
-              {/* Student Info */}
-              <div className="flex items-center gap-4 p-4 rounded-lg" style={{ background: "var(--admin-bg-hover)" }}>
-                <div style={{
-                  width: 48, height: 48, borderRadius: "50%",
-                  background: "linear-gradient(135deg, #14b8a6, #06b6d4)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "#fff", fontSize: 18, fontWeight: 700,
-                }}>
-                  {studentDetail.student?.name?.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 600 }}>{studentDetail.student?.name}</div>
-                  <div style={{ fontSize: 12, color: "var(--admin-font-light)" }}>{studentDetail.student?.email}</div>
-                </div>
-              </div>
-
-              {/* Summary */}
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label: "Assessments", value: studentDetail.summary?.totalAssessments || 0, color: "#14b8a6" },
-                  { label: "Avg. Score", value: `${(studentDetail.summary?.averageScore || 0).toFixed(1)}%`, color: "#8b5cf6" },
-                  { label: "Time Spent", value: `${studentDetail.summary?.totalTimeSpent || 0}m`, color: "#f59e0b" },
-                ].map((s) => (
-                  <div key={s.label} className="text-center p-3 rounded-lg" style={{ background: "var(--admin-bg-hover)" }}>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: s.color }}>{s.value}</div>
-                    <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Assessment History */}
-              {studentDetail.assessments?.length > 0 && (
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 8 }}>Assessment History</div>
-                  <div className="space-y-2">
-                    {studentDetail.assessments.map((a: any) => {
-                      const ss = getScoreStyle(a.score);
-                      return (
-                        <div key={a.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: "var(--admin-bg-hover)" }}>
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{a.name}</div>
-                            <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{new Date(a.completedAt).toLocaleDateString()}</div>
-                          </div>
-                          <div className="text-right">
-                            <span style={{ fontSize: 14, fontWeight: 700, color: ss.color }}>{a.score}%</span>
-                            <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{a.duration} min</div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-12" style={{ color: "var(--admin-font-light)" }}>
-              <FileText style={{ width: 32, height: 32, margin: "0 auto 8px", opacity: 0.3 }} />
-              <p className="text-sm">No details available</p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Student Report Viewer (redone) */}
+      <StudentReportModal
+        studentId={selectedStudentId}
+        open={isDetailOpen}
+        onOpenChange={(v) => { setIsDetailOpen(v); if (!v) setSelectedStudentId(null); }}
+      />
 
       {/* Grade Import Dialog */}
       <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>

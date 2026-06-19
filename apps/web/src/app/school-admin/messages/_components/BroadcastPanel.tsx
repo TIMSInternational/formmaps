@@ -144,14 +144,15 @@ export default function BroadcastPanel() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Type your broadcast message..."
-            rows={6}
+            rows={12}
+            maxLength={5000}
             style={{
-              width: "100%", resize: "vertical", borderRadius: 10,
+              width: "100%", resize: "vertical", borderRadius: 12,
               border: "1px solid var(--admin-border-default)",
               background: "var(--admin-bg-hover)",
-              padding: "12px 14px", fontSize: 13, lineHeight: 1.6,
+              padding: "16px 18px", fontSize: 14, lineHeight: 1.7,
               color: "var(--admin-font-primary)", fontFamily: "inherit",
-              outline: "none",
+              outline: "none", minHeight: 260,
             }}
             onFocus={(e) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue, #065292)"; }}
             onBlur={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}
