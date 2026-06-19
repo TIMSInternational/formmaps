@@ -51,6 +51,7 @@ export interface Resume {
   updatedAt?: string;
   hasOriginal?: boolean;
   originalFileType?: OriginalFileType;
+  documentEdits?: import("@/store/useGlobalStore").DocumentEdit[];
 }
 
 // Writers MUST emit the backend column contract (see resumeSerialization).

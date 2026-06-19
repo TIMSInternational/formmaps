@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useGlobalStore } from "@/store/useGlobalStore";
-import type { ResumeData } from "@/store/useGlobalStore";
+import type { ResumeData, DocumentEdit } from "@/store/useGlobalStore";
 import { useResumeHandlers } from "../_hooks/useResumeHandlers";
 import { LivePreviewPDF } from "../_components/LivePreviewPDF";
 import { PersonalInfoEditor } from "../_components/PersonalInfoEditor";
@@ -82,6 +82,7 @@ export default function ResumeBuilderPage() {
     addExperience,
     updateExperience,
     removeExperience,
+    setDocumentEdits,
     addSkill,
     removeSkill,
     setResumeTemplate,
@@ -245,6 +246,7 @@ export default function ResumeBuilderPage() {
             bullets: "",
           })),
           template: "classic",
+          documentEdits: Array.isArray(apiData.documentEdits) ? apiData.documentEdits : [],
         };
 
         loadResume(storeData);
@@ -963,6 +965,12 @@ export default function ResumeBuilderPage() {
     [updateExperience],
   );
 
+  // Persist the full set of in-place document edits (free-form + bound runs).
+  const handleDocumentEditsChange = useCallback(
+    (edits: DocumentEdit[]) => setDocumentEdits(edits),
+    [setDocumentEdits],
+  );
+
   // Education Handlers
   const handleAddEducation = () => {
     setEducationForm({
@@ -1092,6 +1100,8 @@ export default function ResumeBuilderPage() {
           onContactFieldCommit={handleContactFieldCommit}
           experienceValues={experienceValues}
           onExperienceFieldCommit={handleExperienceFieldCommit}
+          documentEdits={resumeBuilder.data.documentEdits}
+          onDocumentEditsChange={handleDocumentEditsChange}
         />
 
         {/* Right Panel — Tabs: AI Rewrite / Editor / Style */}
