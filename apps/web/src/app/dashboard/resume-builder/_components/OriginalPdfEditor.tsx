@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { bakeEditedPdf } from "../_lib/bakeEditedPdf";
+import type { DocumentEdit } from "@/store/useGlobalStore";
 
 /** Contact fields we two-way bind between the right panel and the PDF. */
 export const CONTACT_FIELDS = [
@@ -37,6 +38,10 @@ interface OriginalPdfEditorProps {
   experienceValues?: ExperienceValues;
   /** Fired when an experience run loses focus → persist that field on its entry. */
   onExperienceFieldCommit?: (entryId: string, field: string, value: string) => void;
+  /** Saved in-place edits to restore onto the document on load. */
+  documentEdits?: DocumentEdit[];
+  /** Fired with the full current edit set whenever a run changes, to persist it. */
+  onDocumentEditsChange?: (edits: DocumentEdit[]) => void;
   /** Filename for the "Download (with edits)" baked PDF. */
   fileName?: string;
 }
@@ -65,6 +70,8 @@ export function OriginalPdfEditor({
   onContactFieldCommit,
   experienceValues,
   onExperienceFieldCommit,
+  documentEdits,
+  onDocumentEditsChange,
   fileName,
 }: OriginalPdfEditorProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -86,11 +93,26 @@ export function OriginalPdfEditor({
   experienceValuesRef.current = experienceValues;
   const onExpCommitRef = useRef(onExperienceFieldCommit);
   onExpCommitRef.current = onExperienceFieldCommit;
+  const documentEditsRef = useRef(documentEdits);
+  documentEditsRef.current = documentEdits;
+  const onEditsRef = useRef(onDocumentEditsChange);
+  onEditsRef.current = onDocumentEditsChange;
   // Previous values, so the right→left effects apply only the user's actual
   // changes — never overwriting the PDF's own text on first render (e.g. when the
   // parsed value differs only in casing/format from the document).
   const prevContactRef = useRef<ContactValues | null>(null);
   const prevExperienceRef = useRef<ExperienceValues | null>(null);
+
+  // Persist the full current in-place edit set (called on document-run blur).
+  // No-op when nothing changed, so a focus-without-edit doesn't trigger a save.
+  const persistEdits = useCallback(() => {
+    const host = hostRef.current;
+    if (!host || !onEditsRef.current) return;
+    const edits = collectEdits(host);
+    const prev = documentEditsRef.current || [];
+    if (JSON.stringify(edits) === JSON.stringify(prev)) return;
+    onEditsRef.current(edits);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -189,7 +211,10 @@ export function OriginalPdfEditor({
           if (cancelled) return;
 
           // Make each text run editable and remember its original value so we
-          // can tell when it has actually changed.
+          // can tell when it has actually changed. Assign a per-page run index
+          // in pdf.js item order — value-independent, so it stays stable across
+          // reloads (and binding never shifts it) for locating saved edits.
+          let runIndex = 0;
           textDiv.querySelectorAll<HTMLElement>("span").forEach((span) => {
             if (!span.textContent || span.getAttribute("role") === "img") return;
             span.contentEditable = "true";
@@ -198,6 +223,7 @@ export function OriginalPdfEditor({
             // Original on-screen width, so the PDF baker covers the FULL original
             // glyph run even when the replacement is shorter.
             span.dataset.origWidth = String(span.getBoundingClientRect().width);
+            span.dataset.runIndex = String(runIndex++);
           });
         }
 
@@ -220,14 +246,19 @@ export function OriginalPdfEditor({
         }
         bindFields(host, targets, fieldEls);
 
-        // Sample each bound field's real background + text colour from the page
-        // so edits blend into the document (white-on-teal header, black-on-white
+        // Restore any saved in-place edits onto their runs (located by the stable
+        // pre-binding (page, runIndex) + an original-text guard).
+        const restored = restoreEdits(host, documentEditsRef.current || []);
+
+        // Sample each bound/restored field's real background + text colour from the
+        // page so edits blend into the document (white-on-teal header, black-on-white
         // body, …) instead of looking like a pasted box. Wait one frame so the
         // wrapped elements have laid out before we read their geometry.
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
         if (cancelled) return;
         const dprNow = window.devicePixelRatio || 1;
         for (const el of fieldEls.values()) sampleRunColors(el, dprNow);
+        for (const el of restored) sampleRunColors(el, dprNow);
 
         setState("ready");
       } catch {
@@ -319,19 +350,22 @@ export function OriginalPdfEditor({
     }
   }, []);
 
-  // Commit (persist) when a bound run loses focus.
+  // Commit when a run loses focus: structured commit for bound fields, plus the
+  // full document-edit set for any edited run (free-form or bound).
   const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement | null;
     const key = target?.dataset.field;
-    if (key === undefined) return;
-    if (key.startsWith("exp.")) {
-      // exp.<entryId>.<field> — entryId is a UUID (no dots), field has no dots.
-      const [, entryId, field] = key.split(".");
-      if (entryId && field) onExpCommitRef.current?.(entryId, field, target?.textContent ?? "");
-      return;
+    if (key !== undefined) {
+      if (key.startsWith("exp.")) {
+        // exp.<entryId>.<field> — entryId is a UUID (no dots), field has no dots.
+        const [, entryId, field] = key.split(".");
+        if (entryId && field) onExpCommitRef.current?.(entryId, field, target?.textContent ?? "");
+      } else {
+        onCommitRef.current?.();
+      }
     }
-    onCommitRef.current?.();
-  }, []);
+    if (target?.dataset.orig !== undefined) persistEdits();
+  }, [persistEdits]);
 
   // Bake the in-place edits into a new PDF (cover original glyphs + redraw the
   // edited text) and download it. Re-fetches the original bytes (CORS-allowed
@@ -543,6 +577,59 @@ export function bindContactFields(
     kind: f === "phone" ? ("phone" as const) : undefined,
   }));
   bindFields(host, targets, out as Map<string, HTMLElement>);
+}
+
+/**
+ * The editable run holding an edit, and the original span that owns its stable
+ * (page, runIndex). For a free-form run the two are the same element; for a
+ * bound field the run is the inner `[data-field]` sub-span and the owner is its
+ * `[data-run-index]` ancestor (the original text-layer span).
+ */
+function editableRuns(host: HTMLElement): Array<{ page: number; runIndex: number; el: HTMLElement }> {
+  const out: Array<{ page: number; runIndex: number; el: HTMLElement }> = [];
+  host.querySelectorAll<HTMLElement>(".pdf-page").forEach((pageEl, page) => {
+    pageEl.querySelectorAll<HTMLElement>("[data-orig]").forEach((el) => {
+      const owner = el.closest<HTMLElement>("[data-run-index]");
+      if (!owner) return;
+      out.push({ page, runIndex: Number(owner.dataset.runIndex), el });
+    });
+  });
+  return out;
+}
+
+/** Collect the current in-place edits (runs whose text differs from their original). */
+export function collectEdits(host: HTMLElement): DocumentEdit[] {
+  const out: DocumentEdit[] = [];
+  for (const { page, runIndex, el } of editableRuns(host)) {
+    const orig = el.dataset.orig ?? "";
+    const text = el.textContent ?? "";
+    if (text !== orig) out.push({ page, runIndex, orig, text });
+  }
+  return out;
+}
+
+/**
+ * Re-apply saved edits onto their runs. Located by the value-independent
+ * (page, runIndex) of the owning original span, then disambiguated within it by
+ * the original text (`orig`). A run that can't be matched (e.g. a bound field
+ * whose value diverged and no longer re-binds) is safely skipped — the panel
+ * still holds its structured value. Returns the elements actually restored.
+ */
+export function restoreEdits(host: HTMLElement, edits: DocumentEdit[]): HTMLElement[] {
+  if (!edits.length) return [];
+  const restored: HTMLElement[] = [];
+  const runs = editableRuns(host);
+  for (const e of edits) {
+    const match = runs.find(
+      (r) => r.page === e.page && r.runIndex === e.runIndex && (r.el.dataset.orig ?? "") === e.orig,
+    );
+    if (match && (match.el.textContent ?? "") !== e.text) {
+      match.el.textContent = e.text;
+      match.el.classList.add("pdf-edited");
+      restored.push(match.el);
+    }
+  }
+  return restored;
 }
 
 /**

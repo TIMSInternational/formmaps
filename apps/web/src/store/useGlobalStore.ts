@@ -80,8 +80,18 @@ interface DynamicSection {
   bullets?: string;
 }
 
+/** One in-place edit to the original PDF, located by page + run index. */
+export interface DocumentEdit {
+  page: number;
+  runIndex: number;
+  orig: string;
+  text: string;
+}
+
 export interface ResumeData {
   careerField: string;
+  /** In-place edits to the original-PDF document (free-form + bound fields). */
+  documentEdits?: DocumentEdit[];
   // Optional legacy field for compatibility
   userProfile?: any;
   personalInfo: PersonalInfo;
@@ -142,6 +152,7 @@ interface GlobalState {
   saveResumeToAPI: () => Promise<void>;
   setResumeStep: (step: number) => void;
   setCareerField: (careerField: string) => void;
+  setDocumentEdits: (edits: DocumentEdit[]) => void;
   updatePersonalInfo: (info: Partial<PersonalInfo>) => void;
   addExperience: (experience: Omit<Experience, "id">) => void;
   updateExperience: (id: string, experience: Partial<Experience>) => void;
@@ -336,6 +347,17 @@ export const useGlobalStore = create<GlobalState>()(
               isDirty: true,
             },
           })),
+
+        setDocumentEdits: (edits) => {
+          set((state) => ({
+            resumeBuilder: {
+              ...state.resumeBuilder,
+              data: { ...state.resumeBuilder.data, documentEdits: edits },
+              isDirty: true,
+            },
+          }));
+          get().saveResumeToAPI();
+        },
 
         updatePersonalInfo: (info) => {
           set((state) => ({
