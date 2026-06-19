@@ -52,3 +52,33 @@ describe("InsightsCard", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("InsightsCard — locked completion state", () => {
+  it("shows X/Y progress and the 100% unlock copy when below threshold", () => {
+    const insights = {
+      hasEnoughData: false,
+      completion: { total: 10, complete: 7, byComponent: { lia: 9, disc: 8, eval360: 7 } },
+    } as InsightsData;
+
+    const { getByText } = render(
+      <InsightsCard insights={insights} onRefresh={() => {}} isRefreshing={false} />
+    );
+
+    expect(getByText("7 / 10")).toBeInTheDocument();         // headline
+    expect(getByText(/unlock when 100%/i)).toBeInTheDocument(); // unlock copy
+    expect(getByText(/360:\s*7\/10/)).toBeInTheDocument();    // component breakdown chip
+  });
+
+  it("falls back to the message when completion data is absent", () => {
+    const insights = {
+      hasEnoughData: false,
+      message: "Need at least 3 students to generate school insights",
+    } as InsightsData;
+
+    const { getByText } = render(
+      <InsightsCard insights={insights} onRefresh={() => {}} isRefreshing={false} />
+    );
+
+    expect(getByText(/at least 3 students/i)).toBeInTheDocument();
+  });
+});
