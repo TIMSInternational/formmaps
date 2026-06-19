@@ -13,7 +13,7 @@ import {
   getPerformanceTrends,
   getTopPerformers,
   getStudentResults,
-  getStudentDetailResult,
+  getStudentReport,
   getSchoolSettings,
 } from "@/services/schoolAdminService";
 import { StudentInvitePayload, BulkStudentInvitePayload } from "@/types/student";
@@ -174,10 +174,10 @@ export function useStudentResults(params: {
   });
 }
 
-export function useStudentDetailResult(studentId: string, enabled: boolean = true) {
+export function useStudentReport(studentId: string, enabled: boolean = true) {
   return useQuery({
     queryKey: schoolAdminKeys.studentDetail(studentId),
-    queryFn: () => getStudentDetailResult(studentId),
+    queryFn: () => getStudentReport(studentId),
     enabled: enabled && !!studentId,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

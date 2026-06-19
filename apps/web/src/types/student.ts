@@ -107,32 +107,51 @@ export interface StudentResultsResponse {
   totalPages: number;
 }
 
-export interface StudentDetailResult {
+// Canonical per-student assessment report (matches backend getStudentReport, version "1").
+export interface StudentReport {
+  version: "1";
+  generatedAt: string;
   student: {
     id: string;
     name: string;
     email: string;
-    joinedAt: string;
-    status: StudentStatus;
+    gradeLevel: number | null;
   };
-  summary: {
-    totalAssessments: number;
+  completion: {
+    lia: boolean;
+    disc: boolean;
+    eval360: boolean;
+    overall: boolean;
+  };
+  pca: {
+    completed: boolean;
+    evaluationCount: number;
+    lastCompletedDate: string | null;
+  };
+  mil: {
+    completedCount: number;
     averageScore: number;
-    totalTimeSpent: number;
-    strongAreas: string[];
-    improvementAreas: string[];
+    sessions: {
+      id: string;
+      examName: string | null;
+      status: string | null;
+      completed: boolean;
+      scorePercentage: number;
+      startTime: string | null;
+      endTime: string | null;
+    }[];
   };
-  assessments: {
-    id: string;
-    name: string;
-    type: string;
-    score: number;
-    completedAt: string;
-    duration: number;
-    breakdown: {
-      sections: { name: string; score: number }[];
-    };
-  }[];
+  evaluation360: {
+    total: number;
+    completed: number;
+    groups: {
+      id: string;
+      groupType: string | null;
+      evaluatorName: string | null;
+      isCompleted: boolean;
+      completedDate: string | null;
+    }[];
+  };
 }
 
 export interface SchoolSettings {
