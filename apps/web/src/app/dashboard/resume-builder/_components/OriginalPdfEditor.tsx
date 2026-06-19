@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Download, Loader2 } from "lucide-react";
+import { bakeEditedPdf } from "../_lib/bakeEditedPdf";
 
 /** Contact fields we two-way bind between the right panel and the PDF. */
 export const CONTACT_FIELDS = [
@@ -35,6 +37,8 @@ interface OriginalPdfEditorProps {
   experienceValues?: ExperienceValues;
   /** Fired when an experience run loses focus → persist that field on its entry. */
   onExperienceFieldCommit?: (entryId: string, field: string, value: string) => void;
+  /** Filename for the "Download (with edits)" baked PDF. */
+  fileName?: string;
 }
 
 type EditorState = "loading" | "ready" | "error";
@@ -61,9 +65,12 @@ export function OriginalPdfEditor({
   onContactFieldCommit,
   experienceValues,
   onExperienceFieldCommit,
+  fileName,
 }: OriginalPdfEditorProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [state, setState] = useState<EditorState>("loading");
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
   // bound key (contact field or "exp.<i>.<field>") → the inner editable element.
   const fieldElsRef = useRef<Map<string, HTMLElement>>(new Map());
 
@@ -137,6 +144,8 @@ export function OriginalPdfEditor({
           pageEl.className = "pdf-page relative mx-auto mb-4 bg-white shadow-sm rounded-sm overflow-hidden";
           pageEl.style.width = `${viewport.width}px`;
           pageEl.style.height = `${viewport.height}px`;
+          // px-per-point, used by the PDF baker (Download) to map screen → PDF space.
+          pageEl.dataset.pdfScale = String(scale);
 
           const canvas = document.createElement("canvas");
           canvas.width = Math.floor(viewport.width * dpr);
@@ -321,12 +330,60 @@ export function OriginalPdfEditor({
     onCommitRef.current?.();
   }, []);
 
+  // Bake the in-place edits into a new PDF (cover original glyphs + redraw the
+  // edited text) and download it. Re-fetches the original bytes (CORS-allowed
+  // S3 GET) so the page's original copy is never mutated.
+  const handleDownload = useCallback(async () => {
+    const host = hostRef.current;
+    if (!host || downloading) return;
+    setDownloading(true);
+    setDownloadError(false);
+    try {
+      const url = await loadUrl();
+      if (!url) throw new Error("no original url");
+      const bytes = await (await fetch(url)).arrayBuffer();
+      const out = await bakeEditedPdf(bytes, host);
+      const blob = new Blob([out as BlobPart], { type: "application/pdf" });
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = fileName || "resume-edited.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      setDownloadError(true);
+      setTimeout(() => setDownloadError(false), 4000);
+    } finally {
+      setDownloading(false);
+    }
+  }, [loadUrl, fileName, downloading]);
+
   return (
     <div className="flex flex-col gap-2">
       {state === "ready" && (
-        <p className="px-1 text-xs text-muted-foreground">
-          Editing your uploaded document — your contact and experience details stay in sync with the panel on the right.
-        </p>
+        <div className="flex items-center justify-between gap-3 px-1">
+          <p className="text-xs text-muted-foreground">
+            Editing your uploaded document — your contact and experience details stay in sync with the panel on the right.
+          </p>
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={downloading}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#065292] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#054473] disabled:opacity-60"
+          >
+            {downloading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Download className="h-3.5 w-3.5" />
+            )}
+            {downloading ? "Preparing…" : "Download (with edits)"}
+          </button>
+        </div>
+      )}
+      {downloadError && (
+        <p className="px-1 text-xs text-[#dc2626]">Couldn&apos;t generate the PDF. Please try again.</p>
       )}
       {state === "loading" && (
         <div className="p-6 text-sm text-muted-foreground">Loading your document for editing…</div>

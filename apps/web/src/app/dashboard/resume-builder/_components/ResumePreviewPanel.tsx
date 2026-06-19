@@ -72,6 +72,7 @@ export function ResumePreviewPanel({
                 onContactFieldCommit={onContactFieldCommit}
                 experienceValues={experienceValues}
                 onExperienceFieldCommit={onExperienceFieldCommit}
+                fileName={`${fullName || "resume"} (edited).pdf`}
               />
             ) : (
               <LivePreviewPDF />
