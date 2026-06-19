@@ -193,6 +193,47 @@ describe("OriginalPdfEditor", () => {
       expect(spans[0].textContent).toBe("Summary one"); // untouched
     });
 
+    it("maps edits with the same (page,runIndex,orig) to distinct runs in order", () => {
+      // Two sub-runs in ONE owner span (same runIndex) sharing the same original
+      // text → same (page, runIndex, orig). They must restore to distinct runs.
+      const buildAmbiguous = () => {
+        const host = document.createElement("div");
+        const page = document.createElement("div");
+        page.className = "pdf-page";
+        const layer = document.createElement("div");
+        layer.className = "pdf-edit-layer";
+        const owner = document.createElement("span");
+        owner.dataset.runIndex = "0";
+        const mk = () => {
+          const s = document.createElement("span");
+          s.dataset.orig = "May 2024";
+          s.textContent = "May 2024";
+          return s;
+        };
+        const a = mk();
+        const b = mk();
+        owner.append(a, document.createTextNode(" - "), b);
+        layer.appendChild(owner);
+        page.appendChild(layer);
+        host.appendChild(page);
+        return { host, a, b };
+      };
+
+      const edited = buildAmbiguous();
+      edited.a.textContent = "Jan 2024";
+      edited.b.textContent = "Dec 2024";
+      const saved = collectEdits(edited.host);
+      expect(saved).toEqual([
+        { page: 0, runIndex: 0, orig: "May 2024", text: "Jan 2024" },
+        { page: 0, runIndex: 0, orig: "May 2024", text: "Dec 2024" },
+      ]);
+
+      const fresh = buildAmbiguous();
+      restoreEdits(fresh.host, saved);
+      expect(fresh.a.textContent).toBe("Jan 2024");
+      expect(fresh.b.textContent).toBe("Dec 2024");
+    });
+
     it("skips a saved edit whose original no longer matches (drift guard)", () => {
       const fresh = makePagedHost(["A different original now"]);
       const restored = restoreEdits(fresh, [

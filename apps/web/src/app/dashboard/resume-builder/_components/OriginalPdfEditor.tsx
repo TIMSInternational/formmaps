@@ -112,6 +112,9 @@ export function OriginalPdfEditor({
     const prev = documentEditsRef.current || [];
     if (JSON.stringify(edits) === JSON.stringify(prev)) return;
     onEditsRef.current(edits);
+    // Optimistically update the ref so a second blur before React commits the new
+    // prop doesn't re-fire the same payload.
+    documentEditsRef.current = edits;
   }, []);
 
   useEffect(() => {
@@ -619,11 +622,21 @@ export function restoreEdits(host: HTMLElement, edits: DocumentEdit[]): HTMLElem
   if (!edits.length) return [];
   const restored: HTMLElement[] = [];
   const runs = editableRuns(host);
+  // Consume each run once so that several edits sharing the same
+  // (page, runIndex, orig) — e.g. two identical bound values on one line — map to
+  // distinct runs in document order instead of all hitting the first match.
+  const used = new Set<HTMLElement>();
   for (const e of edits) {
     const match = runs.find(
-      (r) => r.page === e.page && r.runIndex === e.runIndex && (r.el.dataset.orig ?? "") === e.orig,
+      (r) =>
+        !used.has(r.el) &&
+        r.page === e.page &&
+        r.runIndex === e.runIndex &&
+        (r.el.dataset.orig ?? "") === e.orig,
     );
-    if (match && (match.el.textContent ?? "") !== e.text) {
+    if (!match) continue;
+    used.add(match.el);
+    if ((match.el.textContent ?? "") !== e.text) {
       match.el.textContent = e.text;
       match.el.classList.add("pdf-edited");
       restored.push(match.el);
