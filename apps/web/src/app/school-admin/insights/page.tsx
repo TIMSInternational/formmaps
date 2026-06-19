@@ -27,17 +27,22 @@ export default function AIInsightsPage() {
   const gating = data?.gating;
   const eligible = gating ? gating.eligible : true;
 
-  // Manual re-run adds ?refresh=true (bypasses the once-per-milestone cadence). The
-  // backend still enforces the 90% floor, so the button is disabled below it.
-  const handleRegenerate = async () => {
-    if (!eligible) return;
+  // Header action. When eligible (≥90%) it manually regenerates (?refresh=true bypasses
+  // the once-per-milestone cadence). Below 90% it stays enabled as a progress refresh —
+  // a plain re-fetch re-evaluates the gate and lets the backend auto-generate the moment
+  // completion crosses 90% (otherwise a stale 30-min cache could hide the unlock).
+  const handleHeaderAction = async () => {
     setRegenerating(true);
     try {
-      const res = await apiRequest("/api/v1/school-admin/ai-insights?refresh=true");
-      queryClient.setQueryData(["sa-ai-insights-full"], res?.data ?? res);
-      toast.success("Insights regenerated");
+      if (eligible) {
+        const res = await apiRequest("/api/v1/school-admin/ai-insights?refresh=true");
+        queryClient.setQueryData(["sa-ai-insights-full"], res?.data ?? res);
+        toast.success("Insights regenerated");
+      } else {
+        await queryClient.invalidateQueries({ queryKey: ["sa-ai-insights-full"] });
+      }
     } catch {
-      toast.error("Failed to regenerate insights");
+      toast.error(eligible ? "Failed to regenerate insights" : "Failed to refresh");
     } finally {
       setRegenerating(false);
     }
@@ -64,20 +69,20 @@ export default function AIInsightsPage() {
             AI-powered analysis of your school's data, trends, and recommendations
           </p>
         </div>
-        <button onClick={handleRegenerate} disabled={isFetching || !eligible}
-          title={!eligible ? "Unlocks at 90% assessment completion" : undefined}
+        <button onClick={handleHeaderAction} disabled={isLoading || isFetching}
+          title={!eligible ? "AI regeneration unlocks at 90% assessment completion — refreshes progress for now" : undefined}
           style={{
             height: 36, borderRadius: 8, padding: "0 18px", fontSize: 13, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 6,
-            background: isFetching || !eligible ? "var(--admin-bg-hover)" : "linear-gradient(135deg, #8b5cf6, #065292)",
-            color: isFetching || !eligible ? "var(--admin-font-tertiary)" : "#fff",
-            border: isFetching || !eligible ? "1px solid var(--admin-border-default)" : "none",
-            cursor: isFetching ? "wait" : !eligible ? "not-allowed" : "pointer",
+            background: isLoading || isFetching || !eligible ? "var(--admin-bg-hover)" : "linear-gradient(135deg, #8b5cf6, #065292)",
+            color: isLoading || isFetching || !eligible ? "var(--admin-font-tertiary)" : "#fff",
+            border: isLoading || isFetching || !eligible ? "1px solid var(--admin-border-default)" : "none",
+            cursor: isLoading || isFetching ? "wait" : "pointer",
           }}>
           {isFetching ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
             : !eligible ? <Lock style={{ width: 14, height: 14 }} />
             : <RefreshCw style={{ width: 14, height: 14 }} />}
-          {isFetching ? "Analyzing..." : "Regenerate"}
+          {isFetching ? (eligible ? "Analyzing..." : "Refreshing...") : eligible ? "Regenerate" : "Check progress"}
         </button>
       </div>
 
