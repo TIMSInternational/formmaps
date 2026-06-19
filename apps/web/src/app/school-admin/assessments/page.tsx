@@ -35,7 +35,10 @@ export default function AssessmentCommandCenter() {
   };
 
   // Queries
-  const insightsQuery = useQuery({ queryKey: ["assessment-insights"], queryFn: () => getInsights(), staleTime: 1000 * 60 * 10 });
+  // Gate-sensitive: completion can change off-page (students finishing) or via setup360
+  // below, so always re-evaluate the 100% gate on mount rather than trust a stale cache.
+  // (Cheap — the server caches the narrative 7 days; a 100% school returns it without a new AI call.)
+  const insightsQuery = useQuery({ queryKey: ["assessment-insights"], queryFn: () => getInsights(), staleTime: 0, refetchOnMount: "always" });
   const schedulesQuery = useQuery({ queryKey: ["assessment-schedules"], queryFn: getSchedules, staleTime: 1000 * 60 * 5 });
   const pipelineQuery = useQuery({ queryKey: ["assessment-pipeline"], queryFn: () => getPipeline(), staleTime: 1000 * 60 * 2 });
 
@@ -70,6 +73,8 @@ export default function AssessmentCommandCenter() {
       toast.success(`360 setup complete: ${data.created} groups created, ${data.emailsSent} invites sent`);
       if (data.skipped > 0) toast.info(`${data.skipped} already existed`);
       pipelineQuery.refetch();
+      // New 360 groups can drop students below allDone → re-evaluate the insights gate.
+      insightsQuery.refetch();
     },
     onError: () => toast.error("Failed to setup 360 evaluations"),
   });
