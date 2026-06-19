@@ -75,10 +75,13 @@ export async function bakeEditedPdf(
     for (const el of runs) {
       const rect = el.getBoundingClientRect();
       if (rect.width < 1 || rect.height < 1) continue;
+      // Cover at least the ORIGINAL run width so a shorter replacement can't
+      // leave the tail of the original glyphs showing.
+      const coverWidth = Math.max(rect.width, Number(el.dataset.origWidth) || 0);
       const mapped = mapRectToPdf({
         relX: rect.left - pageRect.left,
         top: rect.top - pageRect.top,
-        width: rect.width,
+        width: coverWidth,
         height: rect.height,
         scale,
         pageHeightPt,

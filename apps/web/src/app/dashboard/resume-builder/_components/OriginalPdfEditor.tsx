@@ -195,6 +195,9 @@ export function OriginalPdfEditor({
             span.contentEditable = "true";
             span.spellcheck = false;
             span.dataset.orig = span.textContent;
+            // Original on-screen width, so the PDF baker covers the FULL original
+            // glyph run even when the replacement is shorter.
+            span.dataset.origWidth = String(span.getBoundingClientRect().width);
           });
         }
 
@@ -341,9 +344,11 @@ export function OriginalPdfEditor({
     try {
       const url = await loadUrl();
       if (!url) throw new Error("no original url");
-      const bytes = await (await fetch(url)).arrayBuffer();
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`fetch original failed: ${res.status}`);
+      const bytes = await res.arrayBuffer();
       const out = await bakeEditedPdf(bytes, host);
-      const blob = new Blob([out as BlobPart], { type: "application/pdf" });
+      const blob = new Blob([out], { type: "application/pdf" });
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = objectUrl;
@@ -514,6 +519,8 @@ export function bindFields(
       fieldEl.spellcheck = false;
       fieldEl.textContent = matched;
       span.appendChild(fieldEl);
+      // Capture the bound run's original width (full value) for the PDF baker.
+      fieldEl.dataset.origWidth = String(fieldEl.getBoundingClientRect().width);
       out.set(m.key, fieldEl);
       remaining.delete(m.key);
       cursor = m.end;
