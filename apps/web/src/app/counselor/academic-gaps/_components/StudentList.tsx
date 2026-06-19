@@ -132,7 +132,7 @@ export function StudentList({
                     <MiniBar
                       earned={Math.max(0, (totalStudents ?? 24) - s.creditDeficit)}
                       required={totalStudents ?? 24}
-                      color={s.overallStatus === "behind" ? "#ef4444" : s.overallStatus === "at_risk" ? "#f59e0b" : "#10b981"}
+                      color={s.overallStatus === "off_track" ? "#ef4444" : s.overallStatus === "at_risk" ? "#f59e0b" : "#10b981"}
                     />
                   </div>
                   {s.missingRequiredCourses > 0 && (

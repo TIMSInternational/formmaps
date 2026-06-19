@@ -60,7 +60,7 @@ export default function AcademicGapsPage() {
       {summary && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
           <StatCard label="Total Students" value={summary.summary?.totalStudents ?? 0} color="#065292" icon={Users} delay={0.05} />
-          <StatCard label="Behind" value={summary.summary?.behind ?? 0} color="#ef4444" icon={AlertCircle} delay={0.1} />
+          <StatCard label="Off Track" value={summary.summary?.offTrack ?? 0} color="#ef4444" icon={AlertCircle} delay={0.1} />
           <StatCard label="At Risk" value={summary.summary?.atRisk ?? 0} color="#f59e0b" icon={AlertTriangle} delay={0.15} />
           <StatCard label="On Track" value={summary.summary?.onTrack ?? 0} color="#10b981" icon={CheckCircle2} delay={0.2} />
         </div>
