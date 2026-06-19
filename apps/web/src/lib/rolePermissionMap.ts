@@ -54,6 +54,20 @@ const rolePermissionMap: Record<RoleName, string[]> = {
     Permissions.Profile.Read, Permissions.Profile.Write,
   ],
 
+  [Roles.TEACHER]: [
+    Permissions.Students.Read,
+    Permissions.Courses.Read,
+    Permissions.CoursePlans.Read,
+    Permissions.Grades.Read,
+    Permissions.Assessments.Read,
+    Permissions.Evaluations.Read, Permissions.Evaluations.Submit,
+    Permissions.Reports.Read,
+    Permissions.Teacher.Dashboard,
+    Permissions.Recommendations.Respond,
+    Permissions.Careers.Read, Permissions.Universities.Read,
+    Permissions.Profile.Read, Permissions.Profile.Write,
+  ],
+
   [Roles.STUDENT]: [
     Permissions.Students.Read, Permissions.Students.Write,
     Permissions.Courses.Read,

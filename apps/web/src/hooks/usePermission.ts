@@ -40,6 +40,7 @@ export function usePermission() {
     isSuperAdmin: role === Roles.SUPER_ADMIN,
     isSchoolAdmin: role === Roles.SCHOOL_ADMIN,
     isCounselor: role === Roles.COUNSELOR,
+    isTeacher: role === Roles.TEACHER,
     isStudent: role === Roles.STUDENT,
     isCoach: role === Roles.COACH,
     isParent: role === Roles.PARENT,

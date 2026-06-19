@@ -54,6 +54,12 @@ export const routeRules: RouteRule[] = [
     allowed: [Roles.SUPER_ADMIN, Roles.PARENT],
     redirect: "home",
   },
+  // Teacher portal
+  {
+    path: "/teacher",
+    allowed: [Roles.SUPER_ADMIN, Roles.TEACHER],
+    redirect: "home",
+  },
   // Subscribe page — students only
   {
     path: "/subscribe",

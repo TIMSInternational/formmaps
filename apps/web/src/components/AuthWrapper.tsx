@@ -17,8 +17,8 @@ interface AuthWrapperProps {
   children: React.ReactNode;
 }
 
-const protectedRoutes = ["/dashboard", "/admin", "/subscribe", "/school-admin", "/parent", "/counselor"];
-const publicOnboardingRoutes = ["/parent/onboarding", "/counselor/onboarding"];
+const protectedRoutes = ["/dashboard", "/admin", "/subscribe", "/school-admin", "/parent", "/counselor", "/teacher"];
+const publicOnboardingRoutes = ["/parent/onboarding", "/counselor/onboarding", "/teacher/onboarding"];
 const authRoutes = ["/login", "/signup"];
 
 export function AuthWrapper({ children }: AuthWrapperProps) {
