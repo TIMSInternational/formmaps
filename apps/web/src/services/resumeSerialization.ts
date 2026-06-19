@@ -9,7 +9,7 @@
 // backend persists — so saving silently dropped personal info and wiped skills.
 // Every writer must now go through `toApiResume`, and every reader through
 // `fromApiResume`, which is the exact inverse.
-import type { ResumeData } from "@/store/useGlobalStore";
+import type { ResumeData, DocumentEdit } from "@/store/useGlobalStore";
 import type { Resume } from "@/services/resumeService";
 
 export type OriginalFileType = "pdf" | "docx" | "other";
@@ -50,6 +50,7 @@ export interface ApiResumePayload {
   sections?: Record<string, unknown>[];
   customFields?: unknown[];
   fieldVisibility?: Record<string, boolean>;
+  documentEdits?: DocumentEdit[];
   hasOriginal?: boolean;
   originalFileType?: OriginalFileType;
 }
@@ -115,6 +116,7 @@ export interface RawResumeEntity {
   skills?: (string | RawSkillItem)[];
   Skills?: (string | RawSkillItem)[];
   sections?: Record<string, unknown>[];
+  documentEdits?: DocumentEdit[];
   createdDate?: string;
   CreatedDate?: string;
   createdAt?: string;
@@ -204,6 +206,7 @@ export function fromApiResume(raw: RawResumeEntity): Resume {
       skills: groupSkillsFromFlat(raw.skills || raw.Skills || []),
     },
     sections: raw.sections || [],
+    documentEdits: Array.isArray(raw.documentEdits) ? raw.documentEdits : [],
     hasOriginal: raw.hasOriginal ?? false,
     originalFileType: raw.originalFileType,
   };
@@ -253,5 +256,6 @@ export function toApiResume(data: ResumeData): ApiResumePayload {
       unknown
     >[],
     customFields: data.customFields || [],
+    documentEdits: data.documentEdits || [],
   };
 }

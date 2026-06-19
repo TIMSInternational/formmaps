@@ -3,9 +3,30 @@ import {
   OriginalPdfEditor,
   bindContactFields,
   bindFields,
+  collectEdits,
+  restoreEdits,
   type ContactField,
   type BindTarget,
 } from "../OriginalPdfEditor";
+
+/** Build a host with one page of editable spans carrying data-orig + data-run-index. */
+function makePagedHost(runs: string[]): HTMLElement {
+  const host = document.createElement("div");
+  const page = document.createElement("div");
+  page.className = "pdf-page";
+  const layer = document.createElement("div");
+  layer.className = "pdf-edit-layer";
+  runs.forEach((text, i) => {
+    const span = document.createElement("span");
+    span.dataset.orig = text;
+    span.dataset.runIndex = String(i);
+    span.textContent = text;
+    layer.appendChild(span);
+  });
+  page.appendChild(layer);
+  host.appendChild(page);
+  return host;
+}
 
 function makeHost(runs: string[]): HTMLElement {
   const host = document.createElement("div");
@@ -134,6 +155,92 @@ describe("OriginalPdfEditor", () => {
       bindContactFields(host, { fullName: "FEDERICO TAFUR", email: "fede@vt.edu" }, out);
       expect(out.get("fullName")?.textContent).toBe("FEDERICO TAFUR");
       expect(out.get("email")?.textContent).toBe("fede@vt.edu");
+    });
+  });
+
+  describe("collectEdits / restoreEdits (persist document edits)", () => {
+    it("collects a free-form run's change keyed by (page, runIndex) with its original", () => {
+      const host = makePagedHost(["Summary line one", "Some bullet text"]);
+      const spans = host.querySelectorAll<HTMLElement>(".pdf-edit-layer span");
+      spans[1].textContent = "Some EDITED bullet text";
+      expect(collectEdits(host)).toEqual([
+        { page: 0, runIndex: 1, orig: "Some bullet text", text: "Some EDITED bullet text" },
+      ]);
+    });
+
+    it("collects a bound sub-span's change under its owner span's runIndex", () => {
+      const host = makePagedHost(["Data-Analyst and Lead Developer at NexaDev"]);
+      const out = new Map<string, HTMLElement>();
+      bindFields(host, [{ key: "exp.x.jobTitle", value: "Data-Analyst and Lead Developer" }], out);
+      out.get("exp.x.jobTitle")!.textContent = "Senior Staff Engineer";
+      const edits = collectEdits(host);
+      expect(edits).toEqual([
+        { page: 0, runIndex: 0, orig: "Data-Analyst and Lead Developer", text: "Senior Staff Engineer" },
+      ]);
+    });
+
+    it("round-trips: restore re-applies a collected edit onto a fresh render", () => {
+      const edited = makePagedHost(["Summary one", "Bullet two"]);
+      edited.querySelectorAll<HTMLElement>(".pdf-edit-layer span")[1].textContent = "Bullet TWO edited";
+      const saved = collectEdits(edited);
+
+      const fresh = makePagedHost(["Summary one", "Bullet two"]);
+      const restored = restoreEdits(fresh, saved);
+      expect(restored).toHaveLength(1);
+      const spans = fresh.querySelectorAll<HTMLElement>(".pdf-edit-layer span");
+      expect(spans[1].textContent).toBe("Bullet TWO edited");
+      expect(spans[1].classList.contains("pdf-edited")).toBe(true);
+      expect(spans[0].textContent).toBe("Summary one"); // untouched
+    });
+
+    it("maps edits with the same (page,runIndex,orig) to distinct runs in order", () => {
+      // Two sub-runs in ONE owner span (same runIndex) sharing the same original
+      // text → same (page, runIndex, orig). They must restore to distinct runs.
+      const buildAmbiguous = () => {
+        const host = document.createElement("div");
+        const page = document.createElement("div");
+        page.className = "pdf-page";
+        const layer = document.createElement("div");
+        layer.className = "pdf-edit-layer";
+        const owner = document.createElement("span");
+        owner.dataset.runIndex = "0";
+        const mk = () => {
+          const s = document.createElement("span");
+          s.dataset.orig = "May 2024";
+          s.textContent = "May 2024";
+          return s;
+        };
+        const a = mk();
+        const b = mk();
+        owner.append(a, document.createTextNode(" - "), b);
+        layer.appendChild(owner);
+        page.appendChild(layer);
+        host.appendChild(page);
+        return { host, a, b };
+      };
+
+      const edited = buildAmbiguous();
+      edited.a.textContent = "Jan 2024";
+      edited.b.textContent = "Dec 2024";
+      const saved = collectEdits(edited.host);
+      expect(saved).toEqual([
+        { page: 0, runIndex: 0, orig: "May 2024", text: "Jan 2024" },
+        { page: 0, runIndex: 0, orig: "May 2024", text: "Dec 2024" },
+      ]);
+
+      const fresh = buildAmbiguous();
+      restoreEdits(fresh.host, saved);
+      expect(fresh.a.textContent).toBe("Jan 2024");
+      expect(fresh.b.textContent).toBe("Dec 2024");
+    });
+
+    it("skips a saved edit whose original no longer matches (drift guard)", () => {
+      const fresh = makePagedHost(["A different original now"]);
+      const restored = restoreEdits(fresh, [
+        { page: 0, runIndex: 0, orig: "Old original text", text: "New text" },
+      ]);
+      expect(restored).toHaveLength(0);
+      expect(fresh.querySelector(".pdf-edit-layer span")?.textContent).toBe("A different original now");
     });
   });
 });
