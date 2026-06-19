@@ -14,7 +14,7 @@ import { GapSkeleton } from "./_components/GapHelpers";
 import { StudentList } from "./_components/StudentList";
 import { StudentDetailView } from "./_components/StudentDetailView";
 
-const severityOrder: Record<string, number> = { behind: 0, at_risk: 1, on_track: 2 };
+const severityOrder: Record<string, number> = { off_track: 0, at_risk: 1, on_track: 2 };
 
 export default function AcademicGapsPage() {
   const [selectedStudentId, setSelectedStudentId] = useState("");
