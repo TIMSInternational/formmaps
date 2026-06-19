@@ -3,12 +3,12 @@
 import { motion } from "motion/react";
 import { Search, Layers } from "lucide-react";
 import { MiniBar } from "./GapHelpers";
-import type { AcademicGapSummaryItem } from "@/types/academicGap";
+import type { AcademicGapSummaryItem, StudentAcademicStatus } from "@/types/academicGap";
 
-const statusStyles: Record<string, { color: string; bg: string; label: string }> = {
-  behind:  { color: "#ef4444", bg: "rgba(239,68,68,0.1)",  label: "Behind" },
-  at_risk: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "At Risk" },
-  on_track:{ color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "On Track" },
+const statusStyles: Record<StudentAcademicStatus, { color: string; bg: string; label: string }> = {
+  off_track: { color: "#ef4444", bg: "rgba(239,68,68,0.1)",  label: "Off Track" },
+  at_risk:   { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "At Risk" },
+  on_track:  { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "On Track" },
 };
 
 export function StudentList({
@@ -132,7 +132,7 @@ export function StudentList({
                     <MiniBar
                       earned={Math.max(0, (totalStudents ?? 24) - s.creditDeficit)}
                       required={totalStudents ?? 24}
-                      color={s.overallStatus === "behind" ? "#ef4444" : s.overallStatus === "at_risk" ? "#f59e0b" : "#10b981"}
+                      color={s.overallStatus === "off_track" ? "#ef4444" : s.overallStatus === "at_risk" ? "#f59e0b" : "#10b981"}
                     />
                   </div>
                   {s.missingRequiredCourses > 0 && (
