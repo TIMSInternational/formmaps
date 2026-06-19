@@ -24,6 +24,9 @@ export function normalizeRole(raw: string | null | undefined): RoleName {
     case "counselor":
       return Roles.COUNSELOR;
 
+    case "teacher":
+      return Roles.TEACHER;
+
     case "student":
     case "user":
       return Roles.STUDENT;
@@ -45,6 +48,7 @@ export const roleHomeMap: Record<RoleName, string> = {
   [Roles.SUPER_ADMIN]: "/admin",
   [Roles.SCHOOL_ADMIN]: "/school-admin",
   [Roles.COUNSELOR]: "/counselor",
+  [Roles.TEACHER]: "/teacher",
   [Roles.STUDENT]: "/dashboard",
   [Roles.COACH]: "/dashboard/coaching",
   [Roles.PARENT]: "/parent",

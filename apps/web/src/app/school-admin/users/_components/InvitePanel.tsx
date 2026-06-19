@@ -11,13 +11,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  UserPlus, Upload, Users, Trash2, Plus, Loader2, Send, GraduationCap, Shield, UserCheck,
+  UserPlus, Upload, Users, Trash2, Plus, Loader2, Send, GraduationCap, Shield, UserCheck, BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useInviteStudent } from "@/hooks/useSchoolAdmin";
 import { useInviteStaff } from "@/hooks/useSchoolProfileQueries";
 
-type InviteRole = "student" | "counselor" | "coach" | "staff";
+type InviteRole = "student" | "counselor" | "teacher" | "coach" | "staff";
 
 interface InviteRow {
   name: string;
@@ -28,6 +28,7 @@ interface InviteRow {
 const roleConfig: Record<InviteRole, { label: string; color: string; icon: any; description: string }> = {
   student: { label: "Students", color: "#065292", icon: GraduationCap, description: "Invite students individually or use CSV bulk onboard for larger groups." },
   counselor: { label: "Counselors", color: "#10b981", icon: UserCheck, description: "Invite counselors who will be assigned student caseloads." },
+  teacher: { label: "Teachers", color: "#065292", icon: BookOpen, description: "Invite teachers to complete 360° evaluations and respond to recommendation requests." },
   coach: { label: "Coaches", color: "#8b5cf6", icon: Users, description: "Invite career coaches to guide students through their career journey." },
   staff: { label: "Staff", color: "#f59e0b", icon: Shield, description: "Invite administrative staff members to help manage your school." },
 };

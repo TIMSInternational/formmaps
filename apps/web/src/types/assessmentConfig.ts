@@ -87,7 +87,7 @@ export interface SchoolUsersResponse {
 export interface StaffInvitePayload {
   email: string;
   name: string;
-  role: "counselor" | "staff" | "coach";
+  role: "counselor" | "teacher" | "staff" | "coach";
 }
 
 export interface BulkStaffInvitePayload {
