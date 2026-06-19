@@ -36,7 +36,7 @@ export async function getStudentAcademicGaps(studentId: string): Promise<Student
     gradeLevel: raw.gradeLevel ?? "",
     analysisDate: new Date().toISOString(),
     graduationTarget: "",
-    overallStatus: gapsList.length > 0 ? "behind" : "on_track",
+    overallStatus: gapsList.length > 0 ? "off_track" : "on_track",
     creditGaps: gapsList.map((g: any) => ({
       category: g.area ?? g.category ?? "Unknown",
       creditsEarned: g.earned ?? 0,

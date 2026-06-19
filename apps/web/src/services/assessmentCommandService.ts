@@ -24,6 +24,11 @@ export interface PipelineStudent {
 export interface InsightsData {
   hasEnoughData: boolean;
   message?: string;
+  completion?: {
+    total: number;
+    complete: number;
+    byComponent: { lia: number; disc: number; eval360: number };
+  };
   aggregates?: {
     totalStudents: number;
     profilesComplete: number;

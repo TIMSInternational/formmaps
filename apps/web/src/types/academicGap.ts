@@ -4,7 +4,7 @@
 
 export type GapSeverity = "critical" | "warning" | "info";
 export type GapUrgency = "high" | "medium" | "low";
-export type StudentAcademicStatus = "on_track" | "at_risk" | "behind";
+export type StudentAcademicStatus = "on_track" | "at_risk" | "off_track";
 
 export interface CreditGap {
   category: string;
@@ -61,9 +61,13 @@ export interface StudentAcademicGaps {
 export interface AcademicGapSummaryItem {
   studentId: string;
   studentName: string;
+  gradeLevel: number | null;
   overallStatus: StudentAcademicStatus;
   creditDeficit: number;
   missingRequiredCourses: number;
+  creditsEarned: number;
+  creditsRequired: number;
+  progressPercent: number;
   topGap: string;
 }
 
@@ -72,13 +76,9 @@ export interface AcademicGapSummary {
     totalStudents: number;
     onTrack: number;
     atRisk: number;
-    behind: number;
+    offTrack: number;
   };
   data: AcademicGapSummaryItem[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
 }
 
 // ============================================

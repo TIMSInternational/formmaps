@@ -10,7 +10,7 @@ interface AcademicYear {
   id: string; name: string; startDate: string; endDate: string; isCurrent: boolean;
   terms: { id: string; name: string; startDate: string; endDate: string; sortOrder: number }[];
 }
-interface Holiday { id: string; name: string; date: string; type: string; }
+interface Holiday { id: string; name: string; date: string; endDate?: string | null; type: string; }
 interface AssessmentPeriod { id: string; name: string; termId: string; assessmentTypes: string[]; startDate: string; endDate: string; }
 
 function formatDate(d: string) { return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
@@ -34,6 +34,7 @@ export default function AcademicCalendarPage() {
   const [showHolidayForm, setShowHolidayForm] = useState(false);
   const [holidayName, setHolidayName] = useState("");
   const [holidayDate, setHolidayDate] = useState("");
+  const [holidayEndDate, setHolidayEndDate] = useState("");
   const [holidayType, setHolidayType] = useState("holiday");
   const [savingHoliday, setSavingHoliday] = useState(false);
 
@@ -68,13 +69,16 @@ export default function AcademicCalendarPage() {
 
   const refetch = () => setRefreshKey(k => k + 1);
 
-  const handleAddHoliday = async (name: string, date: string, type: string) => {
+  const handleAddHoliday = async (name: string, date: string, type: string, endDate?: string) => {
     if (!name || !date) return;
+    if (endDate && endDate < date) { toast.error("End date must be after the start date"); return; }
     setSavingHoliday(true);
     try {
-      await apiRequest("/api/v1/school-admin/calendar/holidays", { method: "POST", data: { holidays: [{ name, date, type }] } });
+      const holiday: { name: string; date: string; type: string; endDate?: string } = { name, date, type };
+      if (endDate && endDate > date) holiday.endDate = endDate;
+      await apiRequest("/api/v1/school-admin/calendar/holidays", { method: "POST", data: { holidays: [holiday] } });
       toast.success("Holiday added");
-      setHolidayName(""); setHolidayDate(""); setHolidayType("holiday");
+      setHolidayName(""); setHolidayDate(""); setHolidayEndDate(""); setHolidayType("holiday");
       setShowHolidayForm(false);
       setQuickAddDate(null); setQuickAddName(""); setQuickAddType("holiday");
       refetch();
@@ -121,15 +125,19 @@ export default function AcademicCalendarPage() {
   const firstDay = getFirstDayOfMonth(viewYear, viewMonth);
   const today = new Date().toISOString().slice(0, 10);
 
-  // Single-day events (holidays)
+  // A holiday is multi-day when it carries an endDate strictly after its start.
+  const isMultiDay = (h: Holiday) => !!h.endDate && new Date(h.endDate).toISOString().slice(0, 10) > new Date(h.date).toISOString().slice(0, 10);
+
+  // Single-day events (single-day holidays only)
   const dayEvents = new Map<string, { label: string; color: string }[]>();
   for (const h of holidays) {
+    if (isMultiDay(h)) continue;
     const key = new Date(h.date).toISOString().slice(0, 10);
     if (!dayEvents.has(key)) dayEvents.set(key, []);
     dayEvents.get(key)!.push({ label: h.name, color: TYPE_COLORS[h.type] || "#ef4444" });
   }
 
-  // Multi-day span events (terms, assessment windows, multi-day breaks)
+  // Multi-day span events (terms, assessment windows, multi-day holidays/breaks)
   interface SpanEvent { id: string; label: string; color: string; startDate: string; endDate: string; }
   const spanEvents: SpanEvent[] = [];
   for (const t of allTerms) {
@@ -137,6 +145,10 @@ export default function AcademicCalendarPage() {
   }
   for (const a of assessments) {
     spanEvents.push({ id: `ap-${a.id}`, label: a.name || a.assessmentTypes?.join(", ") || "Assessment", color: "#8b5cf6", startDate: new Date(a.startDate).toISOString().slice(0, 10), endDate: new Date(a.endDate).toISOString().slice(0, 10) });
+  }
+  for (const h of holidays) {
+    if (!isMultiDay(h)) continue;
+    spanEvents.push({ id: `hol-${h.id}`, label: h.name, color: TYPE_COLORS[h.type] || "#ef4444", startDate: new Date(h.date).toISOString().slice(0, 10), endDate: new Date(h.endDate!).toISOString().slice(0, 10) });
   }
 
   // Build span bar rows for this month — each bar is {label, color, gridColStart, gridColSpan, row}
@@ -329,11 +341,18 @@ export default function AcademicCalendarPage() {
             {showHolidayForm && (
               <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", flexDirection: "column", gap: 6 }}>
                 <input value={holidayName} onChange={e => setHolidayName(e.target.value)} placeholder="Holiday name" style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }} />
-                <input type="date" value={holidayDate} onChange={e => setHolidayDate(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-light)" }}>Start date</label>
+                  <input type="date" value={holidayDate} onChange={e => setHolidayDate(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-light)" }}>End date <span style={{ fontWeight: 400, color: "var(--admin-font-tertiary)" }}>(optional — for multi-day)</span></label>
+                  <input type="date" value={holidayEndDate} min={holidayDate || undefined} onChange={e => setHolidayEndDate(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }} />
+                </div>
                 <select value={holidayType} onChange={e => setHolidayType(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }}>
                   {["holiday","break","professional_development","exam","event"].map(t => <option key={t} value={t}>{t.replace("_", " ")}</option>)}
                 </select>
-                <button onClick={() => handleAddHoliday(holidayName, holidayDate, holidayType)} disabled={!holidayName || !holidayDate || savingHoliday} style={{ fontSize: 12, fontWeight: 600, padding: "5px 0", borderRadius: 5, border: "none", background: "#ef4444", color: "#fff", cursor: "pointer", opacity: (!holidayName || !holidayDate || savingHoliday) ? 0.5 : 1 }}>
+                <button onClick={() => handleAddHoliday(holidayName, holidayDate, holidayType, holidayEndDate)} disabled={!holidayName || !holidayDate || savingHoliday} style={{ fontSize: 12, fontWeight: 600, padding: "5px 0", borderRadius: 5, border: "none", background: "#ef4444", color: "#fff", cursor: "pointer", opacity: (!holidayName || !holidayDate || savingHoliday) ? 0.5 : 1 }}>
                   {savingHoliday ? "Adding..." : "Add Holiday"}
                 </button>
               </div>
@@ -341,7 +360,7 @@ export default function AcademicCalendarPage() {
             <div style={{ padding: 8, maxHeight: 200, overflowY: "auto" }}>
               {holidays.length === 0 ? <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No holidays added</div> : holidays.map(h => (
                 <div key={h.id} className="group" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 10px", borderRadius: 4, marginBottom: 2, position: "relative" }}>
-                  <div><div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{h.name}</div><div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{formatShort(h.date)}</div></div>
+                  <div><div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{h.name}</div><div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{h.endDate ? `${formatShort(h.date)} — ${formatShort(h.endDate)}` : formatShort(h.date)}</div></div>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                     <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: `${TYPE_COLORS[h.type] || "#6b7280"}15`, color: TYPE_COLORS[h.type] || "#6b7280", fontWeight: 600, textTransform: "capitalize" }}>{h.type}</span>
                     <button onClick={() => handleDeleteHoliday(h.id)} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ width: 18, height: 18, borderRadius: 3, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>

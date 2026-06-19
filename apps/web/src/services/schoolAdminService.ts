@@ -8,7 +8,7 @@ import {
   PerformanceTrendData,
   TopPerformer,
   StudentResultsResponse,
-  StudentDetailResult,
+  StudentReport,
   SchoolSettings,
 } from "@/types/student";
 import { decodeJWTToken, isAdminRole, getCurrentUser } from "./authService";
@@ -232,12 +232,13 @@ export async function getStudentResults(params: {
   }
 }
 
-export async function getStudentDetailResult(
+export async function getStudentReport(
   studentId: string
-): Promise<StudentDetailResult | null> {
+): Promise<StudentReport | null> {
   try {
     const res = await apiRequest(`/api/v1/school-admin/results/${studentId}${buildQueryString()}`);
-    return toCamel(res);
+    const report = res?.data?.data ?? res?.data ?? null;
+    return report && report.student ? (report as StudentReport) : null;
   } catch (error) {
     return null;
   }

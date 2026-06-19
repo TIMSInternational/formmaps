@@ -74,7 +74,7 @@ export default function ProfilePanel() {
   const handleSave = () => {
     updateProfile.mutate({
       name: form.name || undefined, phone: form.phone || undefined,
-      website: form.website || undefined, timezone: form.timezone || undefined,
+      email: form.email, website: form.website || undefined, timezone: form.timezone || undefined,
       address: { street: form.street, city: form.city, state: form.state, country: form.country, postalCode: form.postalCode },
     }, {
       onSuccess: () => toast.success("Profile updated"),

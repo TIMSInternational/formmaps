@@ -28,6 +28,10 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
   isRefreshing: boolean;
 }) {
   if (!insights?.hasEnoughData) {
+    const completion = insights?.completion;
+    const pct = completion && completion.total > 0
+      ? Math.round((completion.complete / completion.total) * 100)
+      : 0;
     return (
       <div style={{
         borderRadius: 8, border: "1px solid var(--admin-border-default)",
@@ -35,11 +39,39 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <Sparkles style={{ width: 16, height: 16, color: "#8b5cf6" }} />
-          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>School Insights</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>AI School Insights</span>
         </div>
-        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>
-          {insights?.message || "Insights will appear once enough students complete assessments."}
-        </p>
+        {completion && completion.total > 0 ? (
+          <>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
+                <strong style={{ color: "var(--admin-font-primary)", fontWeight: 700 }}>{`${completion.complete} / ${completion.total}`}</strong> students completed all assessments
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#065292" }}>{pct}%</span>
+            </div>
+            <div style={{ height: 6, borderRadius: 4, background: "var(--admin-bg-hover)", overflow: "hidden", marginBottom: 10 }}>
+              <div style={{ height: "100%", width: `${pct}%`, background: "#065292", borderRadius: 4, transition: "width 0.3s ease" }} />
+            </div>
+            <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginBottom: 10 }}>
+              Insights unlock when 100% of students finish.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {[
+                { label: "MIL", value: completion.byComponent.lia },
+                { label: "DISC", value: completion.byComponent.disc },
+                { label: "360", value: completion.byComponent.eval360 },
+              ].map(c => (
+                <span key={c.label} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)" }}>
+                  {c.label}: {c.value}/{completion.total}
+                </span>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>
+            {insights?.message || "Insights will appear once enough students complete assessments."}
+          </p>
+        )}
       </div>
     );
   }

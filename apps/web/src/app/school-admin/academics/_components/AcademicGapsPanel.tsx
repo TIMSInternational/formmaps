@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,9 +13,16 @@ import {
 } from "@/components/ui/table";
 import {
   Search, AlertTriangle, Target, BarChart3, ChevronLeft, ChevronRight, GraduationCap,
-  TrendingDown, CheckCircle2, XCircle,
+  TrendingDown, CheckCircle2, XCircle, BookX,
 } from "lucide-react";
-import { useAllGraduationProgress } from "@/hooks/useGraduationQueries";
+import { useAcademicGapSummary } from "@/hooks/useAcademicGapQueries";
+import type { AcademicGapSummaryItem } from "@/types/academicGap";
+
+const PAGE_SIZE = 20;
+const statusMeta = (s: string) => s === "on_track"
+  ? { color: "#10b981", Icon: CheckCircle2 }
+  : s === "at_risk" ? { color: "#f59e0b", Icon: AlertTriangle }
+  : { color: "#ef4444", Icon: XCircle };
 
 export function AcademicGapsPanel() {
   const router = useRouter();
@@ -23,24 +30,28 @@ export function AcademicGapsPanel() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
 
-  const { data: gradProgress, isLoading: gradLoading } = useAllGraduationProgress({
-    page, limit: 20, status: statusFilter === "all" ? undefined : statusFilter, sortBy: "name",
-  });
+  // /academic-gaps/summary returns the full list (real credit deficit + missing
+  // required courses per student) — filter/search/paginate client-side.
+  const { data, isLoading } = useAcademicGapSummary();
+  const all: AcademicGapSummaryItem[] = data?.data ?? [];
+  const summary = data?.summary;
 
-  const students = gradProgress?.data || [];
-  const total = gradProgress?.total || 0;
-  const onTrack = students.filter((s: any) => s.status === "on_track").length;
-  const atRisk = students.filter((s: any) => s.status === "at_risk").length;
-  const offTrack = students.filter((s: any) => s.status === "off_track").length;
-  const avgProgress = students.length > 0
-    ? Math.round(students.reduce((sum: number, s: any) => sum + (s.progressPercent || 0), 0) / students.length)
+  const filtered = useMemo(() => {
+    return all.filter((s) =>
+      (statusFilter === "all" || s.overallStatus === statusFilter) &&
+      (!search || s.studentName?.toLowerCase().includes(search.toLowerCase())),
+    );
+  }, [all, statusFilter, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const avgProgress = all.length > 0
+    ? Math.round(all.reduce((sum, s) => sum + (s.progressPercent || 0), 0) / all.length)
     : 0;
 
-  const filtered = search
-    ? students.filter((s: any) => s.studentName?.toLowerCase().includes(search.toLowerCase()))
-    : students;
-
-  if (gradLoading) return (
+  if (isLoading) return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-24" style={{ background: "var(--admin-bg-hover)" }} />)}
@@ -54,10 +65,10 @@ export function AcademicGapsPanel() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {[
-          { label: "Total Students", value: total, icon: BarChart3, color: "var(--admin-font-primary)" },
-          { label: "On Track", value: onTrack, icon: CheckCircle2, color: "#10b981" },
-          { label: "At Risk", value: atRisk, icon: AlertTriangle, color: "#f59e0b" },
-          { label: "Off Track", value: offTrack, icon: XCircle, color: "#ef4444" },
+          { label: "Total Students", value: summary?.totalStudents ?? all.length, icon: BarChart3, color: "var(--admin-font-primary)" },
+          { label: "On Track", value: summary?.onTrack ?? 0, icon: CheckCircle2, color: "#10b981" },
+          { label: "At Risk", value: summary?.atRisk ?? 0, icon: AlertTriangle, color: "#f59e0b" },
+          { label: "Off Track", value: summary?.offTrack ?? 0, icon: XCircle, color: "#ef4444" },
           { label: "Avg Progress", value: `${avgProgress}%`, icon: Target, color: "#065292" },
         ].map((stat) => (
           <div key={stat.label} style={{ padding: 16, borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
@@ -82,7 +93,7 @@ export function AcademicGapsPanel() {
             </div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Academic Gap Analysis</div>
-              <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Click a student to view gaps and get AI course recommendations</div>
+              <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Credit deficit + missing required courses per student. Click a student for the full breakdown + AI course plan.</div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -110,7 +121,7 @@ export function AcademicGapsPanel() {
         <Table>
           <TableHeader>
             <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
-              {["Student", "Grade", "Credits", "Progress", "Gaps", "Status"].map((h) => (
+              {["Student", "Grade", "Credits", "Credit Gap", "Missing Courses", "Status"].map((h) => (
                 <TableHead key={h} className="py-3 px-4" style={{
                   fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
                   color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)",
@@ -119,17 +130,15 @@ export function AcademicGapsPanel() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {pageRows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} style={{ textAlign: "center", color: "var(--admin-font-tertiary)", padding: "48px 0", fontSize: 12 }}>
                   <GraduationCap style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.3 }} />
-                  {total === 0 ? "Set up graduation rules to track academic gaps" : "No students match your filters"}
+                  {all.length === 0 ? "Set up graduation rules to track academic gaps" : "No students match your filters"}
                 </TableCell>
               </TableRow>
-            ) : filtered.map((s: any) => {
-              const statusColor = s.status === "on_track" ? "#10b981" : s.status === "at_risk" ? "#f59e0b" : "#ef4444";
-              const StatusIcon = s.status === "on_track" ? CheckCircle2 : s.status === "at_risk" ? AlertTriangle : XCircle;
-              const deficit = (s.creditsRequired || 0) - (s.creditsCompleted || 0);
+            ) : pageRows.map((s) => {
+              const { color, Icon } = statusMeta(s.overallStatus);
               return (
                 <TableRow key={s.studentId} style={{ borderBottom: "1px solid var(--admin-border-default)", cursor: "pointer" }}
                   className="transition-colors"
@@ -140,36 +149,37 @@ export function AcademicGapsPanel() {
                     <div className="flex items-center gap-3">
                       <div style={{
                         width: 30, height: 30, borderRadius: "50%",
-                        background: `linear-gradient(135deg, ${statusColor}40, ${statusColor}20)`,
+                        background: `linear-gradient(135deg, ${color}40, ${color}20)`,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        color: statusColor, fontSize: 11, fontWeight: 600,
+                        color, fontSize: 11, fontWeight: 600,
                       }}>{s.studentName?.charAt(0)?.toUpperCase() || "?"}</div>
                       <span style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{s.studentName}</span>
                     </div>
                   </TableCell>
                   <TableCell className="py-3 px-4" style={{ fontSize: 13, color: "var(--admin-font-light)" }}>{s.gradeLevel ? `Gr. ${s.gradeLevel}` : "—"}</TableCell>
                   <TableCell className="py-3 px-4">
-                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{s.creditsCompleted || 0}</span>
-                    <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}> / {s.creditsRequired || 0}</span>
-                  </TableCell>
-                  <TableCell className="py-3 px-4" style={{ minWidth: 140 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ flex: 1, height: 6, borderRadius: 3, background: "var(--admin-bg-hover)", overflow: "hidden" }}>
-                        <div style={{ height: "100%", borderRadius: 3, width: `${Math.min(100, s.progressPercent || 0)}%`, background: statusColor }} />
-                      </div>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: statusColor, minWidth: 32, textAlign: "right" }}>{s.progressPercent || 0}%</span>
-                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{s.creditsEarned ?? 0}</span>
+                    <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}> / {s.creditsRequired ?? 0}</span>
                   </TableCell>
                   <TableCell className="py-3 px-4">
-                    {deficit > 0 ? (
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>-{deficit} credits</span>
+                    {(s.creditDeficit || 0) > 0 ? (
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>-{s.creditDeficit} credits</span>
                     ) : (
                       <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "rgba(16,185,129,0.1)", color: "#10b981" }}>Complete</span>
                     )}
                   </TableCell>
                   <TableCell className="py-3 px-4">
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: `${statusColor}15`, color: statusColor }}>
-                      <StatusIcon style={{ width: 12, height: 12 }} />{s.status?.replace("_", " ")}
+                    {(s.missingRequiredCourses || 0) > 0 ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
+                        <BookX style={{ width: 12, height: 12 }} />{s.missingRequiredCourses} {s.missingRequiredCourses === 1 ? "category" : "categories"}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="py-3 px-4">
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: `${color}15`, color }}>
+                      <Icon style={{ width: 12, height: 12 }} />{s.overallStatus?.replace("_", " ")}
                     </span>
                   </TableCell>
                 </TableRow>
@@ -178,13 +188,13 @@ export function AcademicGapsPanel() {
           </TableBody>
         </Table>
 
-        {gradProgress && (gradProgress.totalPages || 1) > 1 && (
+        {totalPages > 1 && (
           <div className="flex items-center justify-between p-3" style={{ borderTop: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)" }}>
-            <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>{((page - 1) * 20) + 1}–{Math.min(page * 20, gradProgress.total)} of {gradProgress.total}</p>
+            <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>{((safePage - 1) * PAGE_SIZE) + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}</p>
             <div className="flex gap-1">
-              <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md" disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}><ChevronLeft className="h-4 w-4" /></Button>
-              <span className="flex items-center px-2 text-xs" style={{ color: "var(--admin-font-tertiary)" }}>{page}/{gradProgress.totalPages}</span>
-              <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md" disabled={page >= (gradProgress.totalPages || 1)} onClick={() => setPage(p => p + 1)} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}><ChevronRight className="h-4 w-4" /></Button>
+              <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md" disabled={safePage <= 1} onClick={() => setPage(p => p - 1)} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}><ChevronLeft className="h-4 w-4" /></Button>
+              <span className="flex items-center px-2 text-xs" style={{ color: "var(--admin-font-tertiary)" }}>{safePage}/{totalPages}</span>
+              <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md" disabled={safePage >= totalPages} onClick={() => setPage(p => p + 1)} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}><ChevronRight className="h-4 w-4" /></Button>
             </div>
           </div>
         )}

@@ -1,16 +1,20 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api/apiClient";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import {
-  Sparkles, Loader2, AlertTriangle, Lightbulb, TrendingUp, BarChart3,
-  Users, BookOpen, GraduationCap, Brain, Target, Zap, ChevronRight,
-  CheckCircle2, XCircle, RefreshCw,
+  Sparkles, Loader2, Lightbulb, TrendingUp, BarChart3,
+  Users, BookOpen, GraduationCap, Brain, Target, Zap,
+  CheckCircle2, RefreshCw, Lock,
 } from "lucide-react";
 
 export default function AIInsightsPage() {
-  const { data, isLoading, isFetching, refetch } = useQuery({
+  const queryClient = useQueryClient();
+  const [regenerating, setRegenerating] = useState(false);
+  const { data, isLoading } = useQuery({
     queryKey: ["sa-ai-insights-full"],
     queryFn: async () => {
       const res = await apiRequest("/api/v1/school-admin/ai-insights");
@@ -19,6 +23,31 @@ export default function AIInsightsPage() {
     staleTime: 1000 * 60 * 30,
     retry: false,
   });
+
+  const gating = data?.gating;
+  const eligible = gating ? gating.eligible : true;
+
+  // Header action. When eligible (≥90%) it manually regenerates (?refresh=true bypasses
+  // the once-per-milestone cadence). Below 90% it stays enabled as a progress refresh —
+  // a plain re-fetch re-evaluates the gate and lets the backend auto-generate the moment
+  // completion crosses 90% (otherwise a stale 30-min cache could hide the unlock).
+  const handleHeaderAction = async () => {
+    setRegenerating(true);
+    try {
+      if (eligible) {
+        const res = await apiRequest("/api/v1/school-admin/ai-insights?refresh=true");
+        queryClient.setQueryData(["sa-ai-insights-full"], res?.data ?? res);
+        toast.success("Insights regenerated");
+      } else {
+        await queryClient.invalidateQueries({ queryKey: ["sa-ai-insights-full"] });
+      }
+    } catch {
+      toast.error(eligible ? "Failed to regenerate insights" : "Failed to refresh");
+    } finally {
+      setRegenerating(false);
+    }
+  };
+  const isFetching = regenerating;
 
   const metrics = data?.metrics || {};
   const insights = data?.insights || [];
@@ -40,17 +69,46 @@ export default function AIInsightsPage() {
             AI-powered analysis of your school's data, trends, and recommendations
           </p>
         </div>
-        <button onClick={() => refetch()} disabled={isFetching} style={{
-          height: 36, borderRadius: 8, padding: "0 18px", fontSize: 13, fontWeight: 600,
-          display: "flex", alignItems: "center", gap: 6,
-          background: isFetching ? "var(--admin-bg-hover)" : "linear-gradient(135deg, #8b5cf6, #065292)",
-          color: isFetching ? "var(--admin-font-tertiary)" : "#fff",
-          border: isFetching ? "1px solid var(--admin-border-default)" : "none", cursor: isFetching ? "wait" : "pointer",
-        }}>
-          {isFetching ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <RefreshCw style={{ width: 14, height: 14 }} />}
-          {isFetching ? "Analyzing..." : "Regenerate"}
+        <button onClick={handleHeaderAction} disabled={isLoading || isFetching}
+          title={!eligible ? "AI regeneration unlocks at 90% assessment completion — refreshes progress for now" : undefined}
+          style={{
+            height: 36, borderRadius: 8, padding: "0 18px", fontSize: 13, fontWeight: 600,
+            display: "flex", alignItems: "center", gap: 6,
+            background: isLoading || isFetching || !eligible ? "var(--admin-bg-hover)" : "linear-gradient(135deg, #8b5cf6, #065292)",
+            color: isLoading || isFetching || !eligible ? "var(--admin-font-tertiary)" : "#fff",
+            border: isLoading || isFetching || !eligible ? "1px solid var(--admin-border-default)" : "none",
+            cursor: isLoading || isFetching ? "wait" : "pointer",
+          }}>
+          {isFetching ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
+            : !eligible ? <Lock style={{ width: 14, height: 14 }} />
+            : <RefreshCw style={{ width: 14, height: 14 }} />}
+          {isFetching ? (eligible ? "Analyzing..." : "Refreshing...") : eligible ? "Regenerate" : "Check progress"}
         </button>
       </div>
+
+      {/* Completion gate banner — AI narrative unlocks at 90% class completion */}
+      {!isLoading && gating && !eligible && (
+        <div style={{
+          padding: "16px 20px", borderRadius: 12, display: "flex", alignItems: "center", gap: 14,
+          background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
+        }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: "rgba(217,119,6,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Lock style={{ width: 18, height: 18, color: "#d97706" }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+              AI insights unlock at 90% assessment completion
+            </div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
+              {gating.completed}/{gating.total} students have completed all assessments ({gating.completionRate}%).
+              Insights generate automatically at 90% and 100%.
+            </div>
+            <div style={{ marginTop: 8, height: 6, borderRadius: 3, background: "var(--admin-bg-hover)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${Math.min(100, gating.completionRate)}%`, background: "#d97706", borderRadius: 3 }} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-4">

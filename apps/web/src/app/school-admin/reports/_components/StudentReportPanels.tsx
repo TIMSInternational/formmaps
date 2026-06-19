@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/api/apiClient";
+import { openPrintableReport, escapeHtml } from "@/lib/printableReport";
 import { getPcaChartBlob } from "@/services/pcaImageService";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,29 +18,6 @@ interface StudentRecord {
   id: string;
   name: string;
   email: string;
-}
-
-// ── Open a printable HTML report in a new window ──
-function openPrintableReport(title: string, studentName: string, sections: { heading: string; content: string }[]) {
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title} — ${studentName}</title>
-<style>
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 40px auto; padding: 0 24px; color: #1a1a1a; }
-  h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 16px; margin: 24px 0 12px; color: #555; border-bottom: 1px solid #eee; padding-bottom: 6px; }
-  .meta { font-size: 13px; color: #888; margin-bottom: 24px; }
-  table { width: 100%; border-collapse: collapse; margin: 8px 0; } th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
-  th { font-weight: 600; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .bar-container { display: inline-block; width: 60px; height: 8px; background: #f0f0f0; border-radius: 4px; vertical-align: middle; margin-left: 8px; }
-  .bar { height: 100%; border-radius: 4px; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-  @media print { body { margin: 20px; } }
-</style></head><body>
-<h1>${title}</h1>
-<div class="meta">${studentName} · Generated ${new Date().toLocaleDateString()}</div>
-${sections.map(s => `<h2>${s.heading}</h2>${s.content}`).join("")}
-<script>window.print();</script>
-</body></html>`;
-  const w = window.open("", "_blank");
-  if (w) { w.document.write(html); w.document.close(); }
 }
 
 // ── Shared Report Row Component ──
@@ -105,23 +83,32 @@ function PCAReports({ student }: { student: StudentRecord }) {
   const [loading, setLoading] = useState<string | null>(null);
   const [pcaData, setPcaData] = useState<Record<string, unknown> | null>(null);
   const [competences, setCompetences] = useState<Record<string, unknown> | null>(null);
+  // Authoritative completion gate (B7): downloads enable only when the student has a
+  // completed PCA per the backend signal, not merely when DISC result data is present.
+  const [pcaCompleted, setPcaCompleted] = useState(false);
   const [fetched, setFetched] = useState(false);
 
   useEffect(() => {
+    let active = true;
     (async () => {
       try {
+        const res = await apiRequest(`/api/v1/school-admin/results/${student.id}/pca-status`);
+        const completed = (res?.data?.data ?? res?.data)?.completed === true;
+        if (active) setPcaCompleted(completed);
+      } catch { if (active) setPcaCompleted(false); }
+      try {
         const res = await apiRequest("/api/pcaapi/get-result", { method: "POST", data: { UserId: student.id } });
-        setPcaData(res?.data || res);
+        if (active) setPcaData(res?.data || res);
       } catch { /* no result */ }
       try {
         const res = await apiRequest("/api/pcaapi/get-competences", { method: "POST", data: { UserId: student.id } });
-        setCompetences(res?.data || res);
+        if (active) setCompetences(res?.data || res);
       } catch { /* no result */ }
-      setFetched(true);
+      if (active) setFetched(true);
     })();
+    return () => { active = false; };
   }, [student.id]);
 
-  const hasPCA = pcaData && (pcaData as Record<string, unknown>).pcaD1 != null;
   const d = pcaData as Record<string, unknown> | null;
 
   const downloadChart = async () => {
@@ -178,11 +165,11 @@ function PCAReports({ student }: { student: StudentRecord }) {
             <Skeleton className="h-14 w-full" style={{ background: "var(--admin-bg-hover)" }} />
             <Skeleton className="h-14 w-full" style={{ background: "var(--admin-bg-hover)" }} />
           </div>
-        ) : !hasPCA ? (
+        ) : !pcaCompleted ? (
           <div style={{ padding: 24, textAlign: "center", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
             <XCircle style={{ width: 24, height: 24, color: "var(--admin-font-tertiary)", margin: "0 auto 8px", opacity: 0.4 }} />
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>No PCA Results</div>
-            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>This student hasn&apos;t completed the PCA assessment yet.</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>PCA Not Completed</div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>Downloads unlock once this student completes the PCA assessment.</div>
           </div>
         ) : (
           <>
@@ -193,12 +180,12 @@ function PCAReports({ student }: { student: StudentRecord }) {
                 const cmps = ((competences as Record<string, unknown>)?.pcaCmps || []) as Array<Record<string, unknown>>;
                 openPrintableReport("PCA DISC Profile Report", student.name, [
                   { heading: "DISC Scores", content: `<table><tr><th></th><th>D</th><th>I</th><th>S</th><th>C</th></tr>
-                    <tr><td>Work Adaptation</td><td>${d.pcaD1}</td><td>${d.pcaI1}</td><td>${d.pcaS1}</td><td>${d.pcaC1}</td></tr>
-                    <tr><td>Under Pressure</td><td>${d.pcaD2}</td><td>${d.pcaI2}</td><td>${d.pcaS2}</td><td>${d.pcaC2}</td></tr>
-                    <tr><td>Self-Image</td><td>${d.pcaD3}</td><td>${d.pcaI3}</td><td>${d.pcaS3}</td><td>${d.pcaC3}</td></tr></table>
-                    <p style="font-size:12px;color:#888;">Completed: ${d.pcaFec || "\u2014"}</p>` },
+                    <tr><td>Work Adaptation</td><td>${escapeHtml(d.pcaD1)}</td><td>${escapeHtml(d.pcaI1)}</td><td>${escapeHtml(d.pcaS1)}</td><td>${escapeHtml(d.pcaC1)}</td></tr>
+                    <tr><td>Under Pressure</td><td>${escapeHtml(d.pcaD2)}</td><td>${escapeHtml(d.pcaI2)}</td><td>${escapeHtml(d.pcaS2)}</td><td>${escapeHtml(d.pcaC2)}</td></tr>
+                    <tr><td>Self-Image</td><td>${escapeHtml(d.pcaD3)}</td><td>${escapeHtml(d.pcaI3)}</td><td>${escapeHtml(d.pcaS3)}</td><td>${escapeHtml(d.pcaC3)}</td></tr></table>
+                    <p style="font-size:12px;color:#888;">Completed: ${escapeHtml(d.pcaFec || "\u2014")}</p>` },
                   ...(cmps.length ? [{ heading: `Competences (${cmps.length})`, content: `<table><tr><th>Competency</th><th>Level</th></tr>${cmps.map((c) =>
-                    `<tr><td>${c.cmpNom || c.CmpNom}</td><td><span class="badge" style="background:${(Number(c.level || c.Level)) >= 3 ? "#dcfce7;color:#16a34a" : (Number(c.level || c.Level)) >= 2 ? "#fef9c3;color:#ca8a04" : "#fee2e2;color:#dc2626"}">${c.level || c.Level}/3</span></td></tr>`).join("")}</table>` }] : []),
+                    `<tr><td>${escapeHtml(c.cmpNom || c.CmpNom)}</td><td><span class="badge" style="background:${(Number(c.level || c.Level)) >= 3 ? "#dcfce7;color:#16a34a" : (Number(c.level || c.Level)) >= 2 ? "#fef9c3;color:#ca8a04" : "#fee2e2;color:#dc2626"}">${escapeHtml(c.level || c.Level)}/3</span></td></tr>`).join("")}</table>` }] : []),
                 ]);
               }}
             />
@@ -294,14 +281,14 @@ function MILReports({ student }: { student: StudentRecord }) {
                 const cp = (milData?.cognitiveProfile || {}) as Record<string, unknown>;
                 const labels: Record<string, string> = { PatternRecognition: "Pattern Recognition", VerbalReasoning: "Verbal Reasoning", WorkingMemory: "Working Memory", NumericVelocity: "Numeric Velocity", VisualRotation: "Visual Rotation" };
                 openPrintableReport("MIL / LIA Cognitive Profile", student.name, [
-                  { heading: "Overall Score", content: `<p style="font-size:28px;font-weight:700;">${milData?.overallScore || 0}%</p><p style="color:#888;">Completed ${milData?.completedExams || 0} of ${milData?.totalExams || 5} exams</p>` },
+                  { heading: "Overall Score", content: `<p style="font-size:28px;font-weight:700;">${escapeHtml(milData?.overallScore || 0)}%</p><p style="color:#888;">Completed ${escapeHtml(milData?.completedExams || 0)} of ${escapeHtml(milData?.totalExams || 5)} exams</p>` },
                   { heading: "Cognitive Domains", content: `<table><tr><th>Domain</th><th>Score</th><th>Visual</th></tr>${Object.entries(cp).map(([k, v]) => {
                     const pct = Number(v) || 0;
                     const color = pct >= 70 ? "#16a34a" : pct >= 40 ? "#ca8a04" : "#dc2626";
-                    return `<tr><td>${labels[k] || k}</td><td style="font-weight:600;">${pct}%</td><td><div class="bar-container"><div class="bar" style="width:${pct}%;background:${color};"></div></div></td></tr>`;
+                    return `<tr><td>${escapeHtml(labels[k] || k)}</td><td style="font-weight:600;">${pct}%</td><td><div class="bar-container"><div class="bar" style="width:${pct}%;background:${color};"></div></div></td></tr>`;
                   }).join("")}</table>` },
-                  ...((milData?.strengths as string[])?.length ? [{ heading: "Strengths", content: `<ul>${(milData.strengths as string[]).map((s: string) => `<li>${s}</li>`).join("")}</ul>` }] : []),
-                  ...((milData?.areasForGrowth as string[])?.length ? [{ heading: "Areas for Growth", content: `<ul>${(milData.areasForGrowth as string[]).map((s: string) => `<li>${s}</li>`).join("")}</ul>` }] : []),
+                  ...((milData?.strengths as string[])?.length ? [{ heading: "Strengths", content: `<ul>${(milData.strengths as string[]).map((s: string) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>` }] : []),
+                  ...((milData?.areasForGrowth as string[])?.length ? [{ heading: "Areas for Growth", content: `<ul>${(milData.areasForGrowth as string[]).map((s: string) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>` }] : []),
                 ]);
               }}
             />
@@ -395,9 +382,9 @@ function EvalReports({ student }: { student: StudentRecord }) {
                 const ass = (rd.assessments || {}) as Record<string, unknown>;
                 const courses = rd.courses as unknown[] | undefined;
                 openPrintableReport("Comprehensive Student Report", student.name, [
-                  { heading: "Student Information", content: `<table><tr><td><strong>Name:</strong> ${s.name || student.name}</td><td><strong>Email:</strong> ${s.email || student.email}</td></tr><tr><td><strong>Grade:</strong> ${s.gradeLevel || "\u2014"}</td><td><strong>Status:</strong> ${s.status || "active"}</td></tr></table>` },
-                  { heading: "Academic Summary", content: `<table><tr><td><strong>GPA:</strong> ${ac.gpa ?? "\u2014"}</td><td><strong>Credits Earned:</strong> ${ac.creditsEarned ?? "\u2014"}</td><td><strong>Courses:</strong> ${courses?.length ?? 0}</td></tr></table>` },
-                  { heading: "Assessment Status", content: `<table><tr><th>Assessment</th><th>Status</th></tr><tr><td>PCA</td><td>${ass.pcaCount || 0} evaluations</td></tr><tr><td>MIL Average</td><td>${ass.milAverage || "\u2014"}</td></tr><tr><td>360</td><td>${ass.evalStatus || "\u2014"}</td></tr></table>` },
+                  { heading: "Student Information", content: `<table><tr><td><strong>Name:</strong> ${escapeHtml(s.name || student.name)}</td><td><strong>Email:</strong> ${escapeHtml(s.email || student.email)}</td></tr><tr><td><strong>Grade:</strong> ${escapeHtml(s.gradeLevel || "\u2014")}</td><td><strong>Status:</strong> ${escapeHtml(s.status || "active")}</td></tr></table>` },
+                  { heading: "Academic Summary", content: `<table><tr><td><strong>GPA:</strong> ${escapeHtml(ac.gpa ?? "\u2014")}</td><td><strong>Credits Earned:</strong> ${escapeHtml(ac.creditsEarned ?? "\u2014")}</td><td><strong>Courses:</strong> ${courses?.length ?? 0}</td></tr></table>` },
+                  { heading: "Assessment Status", content: `<table><tr><th>Assessment</th><th>Status</th></tr><tr><td>PCA</td><td>${escapeHtml(ass.pcaCount || 0)} evaluations</td></tr><tr><td>MIL Average</td><td>${escapeHtml(ass.milAverage || "\u2014")}</td></tr><tr><td>360</td><td>${escapeHtml(ass.evalStatus || "\u2014")}</td></tr></table>` },
                 ]);
               }}
             />

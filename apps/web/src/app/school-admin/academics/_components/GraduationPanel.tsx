@@ -72,8 +72,18 @@ export function GraduationPanel() {
     setCategories(categories.filter((_, i) => i !== index));
   };
 
-  const updateCategory = (index: number, field: string, value: string | number | boolean) => {
+  const updateCategory = (index: number, field: string, value: string | number | boolean | string[]) => {
     setCategories(categories.map((c, i) => (i === index ? { ...c, [field]: value } : c)));
+  };
+
+  const addSpecialReq = () => {
+    setSpecialReqs([...specialReqs, { name: "", type: "hours", value: 0, unit: "hours", description: "" }]);
+  };
+  const removeSpecialReq = (index: number) => {
+    setSpecialReqs(specialReqs.filter((_, i) => i !== index));
+  };
+  const updateSpecialReq = (index: number, field: string, value: string | number) => {
+    setSpecialReqs(specialReqs.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
   };
 
   const handleSaveRules = () => {
@@ -192,6 +202,18 @@ export function GraduationPanel() {
             </div>
           </div>
         )}
+        {rules && (rules.specialRequirements ?? []).length > 0 && (
+          <div style={{ padding: "0 16px 16px" }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>Special Requirements</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {(rules.specialRequirements ?? []).map((r, i) => (
+                <span key={i} title={r.description || undefined} style={{ fontSize: 12, padding: "6px 10px", borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)" }}>
+                  <strong style={{ color: "var(--admin-font-primary)" }}>{r.name || "Requirement"}</strong>{r.value ? ` — ${r.value} ${r.unit || ""}`.trimEnd() : ""}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Student Progress Table */}
@@ -254,7 +276,7 @@ export function GraduationPanel() {
                 return (
                   <TableRow key={s.studentId} style={{ borderBottom: "1px solid var(--admin-border-default)", cursor: "pointer" }}
                     className="transition-colors"
-                    onClick={() => router.push(`/school-admin/users/${s.studentId}`)}
+                    onClick={() => router.push(`/school-admin/academics/gaps/${s.studentId}`)}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
                     <TableCell className="py-3 px-4">
@@ -365,44 +387,118 @@ export function GraduationPanel() {
                 const isCustom = cat.category && !departments.includes(cat.category);
                 return (
                   <div key={i} style={{
-                    display: "flex", gap: 8, alignItems: "center", padding: 12, borderRadius: 6,
+                    display: "flex", flexDirection: "column", gap: 8, padding: 12, borderRadius: 6,
                     border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)",
                   }}>
-                    <div style={{ flex: 1 }}>
-                      <Select value={cat.category || "__empty"} onValueChange={(v) => updateCategory(i, "category", v === "__empty" ? "" : v)}>
-                        <SelectTrigger style={inputStyle}>
-                          <SelectValue placeholder="Select department..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__empty" disabled>Select department...</SelectItem>
-                          {availableDepts.map(d => (
-                            <SelectItem key={d} value={d}>{d}</SelectItem>
-                          ))}
-                          {cat.category && !availableDepts.includes(cat.category) && cat.category !== "__empty" && (
-                            <SelectItem value={cat.category}>{cat.category}</SelectItem>
-                          )}
-                          <SelectItem value="Electives">Electives</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <div style={{ flex: 1 }}>
+                        <Select value={cat.category || "__empty"} onValueChange={(v) => updateCategory(i, "category", v === "__empty" ? "" : v)}>
+                          <SelectTrigger style={inputStyle}>
+                            <SelectValue placeholder="Select department..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__empty" disabled>Select department...</SelectItem>
+                            {availableDepts.map(d => (
+                              <SelectItem key={d} value={d}>{d}</SelectItem>
+                            ))}
+                            {cat.category && !availableDepts.includes(cat.category) && cat.category !== "__empty" && (
+                              <SelectItem value={cat.category}>{cat.category}</SelectItem>
+                            )}
+                            <SelectItem value="Electives">Electives</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div style={{ width: 80 }}>
+                        <Input type="number" style={inputStyle} value={cat.minCredits ?? 0}
+                          onChange={(e) => updateCategory(i, "minCredits", Number(e.target.value))} />
+                      </div>
+                      <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)", whiteSpace: "nowrap" }}>credits</span>
+                      <button onClick={() => removeCategory(i)} style={{
+                        width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
+                        background: "transparent", border: "none", cursor: "pointer", color: "#ef4444",
+                      }}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
-                    <div style={{ width: 80 }}>
-                      <Input type="number" style={inputStyle} value={cat.minCredits ?? 0}
-                        onChange={(e) => updateCategory(i, "minCredits", Number(e.target.value))} />
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--admin-font-secondary)", cursor: "pointer", whiteSpace: "nowrap" }}>
+                        <input type="checkbox" checked={cat.electivesAllowed ?? false} style={{ accentColor: "#065292", width: 14, height: 14 }}
+                          onChange={(e) => updateCategory(i, "electivesAllowed", e.target.checked)} />
+                        Electives count here
+                      </label>
+                      <Input style={{ ...inputStyle, flex: 1, minWidth: 160 }}
+                        placeholder="Required course codes (comma-separated, e.g. ENG-9, ENG-10)"
+                        value={(cat.requiredCourses ?? []).join(", ")}
+                        onChange={(e) => updateCategory(i, "requiredCourses", e.target.value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean))} />
                     </div>
-                    <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)", whiteSpace: "nowrap" }}>credits</span>
-                    <button onClick={() => removeCategory(i)} style={{
-                      width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
-                      background: "transparent", border: "none", cursor: "pointer", color: "#ef4444",
-                    }}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
                   </div>
                 );
               })}
               {categories.length === 0 && (
                 <div style={{ textAlign: "center", padding: "20px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
                   No categories yet. Add categories like Mathematics, English, Science, etc.
+                </div>
+              )}
+            </div>
+
+            {/* Special Requirements (non-credit: service hours, exams, etc.) */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Special Requirements</Label>
+                  <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>Non-credit requirements (community service, capstone, exit exam…)</p>
+                </div>
+                <button onClick={addSpecialReq} style={{
+                  height: 30, borderRadius: 6, padding: "0 10px", fontSize: 11, fontWeight: 600,
+                  display: "flex", alignItems: "center", gap: 4,
+                  background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)",
+                  border: "1px solid var(--admin-border-default)", cursor: "pointer",
+                }}>
+                  <Plus className="h-3 w-3" /> Add Requirement
+                </button>
+              </div>
+              {specialReqs.map((r, i) => (
+                <div key={i} style={{
+                  display: "flex", flexDirection: "column", gap: 8, padding: 12, borderRadius: 6,
+                  border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)",
+                }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <Input style={{ ...inputStyle, flex: 1 }} placeholder="Name (e.g. Community Service)"
+                      value={r.name} onChange={(e) => updateSpecialReq(i, "name", e.target.value)} />
+                    <div style={{ width: 130 }}>
+                      <Select value={r.type} onValueChange={(v) => updateSpecialReq(i, "type", v)}>
+                        <SelectTrigger style={inputStyle}><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="hours">Hours</SelectItem>
+                          <SelectItem value="completion">Completion</SelectItem>
+                          <SelectItem value="assessment">Assessment</SelectItem>
+                          <SelectItem value="custom">Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div style={{ width: 80 }}>
+                      <Input type="number" style={inputStyle} placeholder="Value" value={r.value}
+                        onChange={(e) => updateSpecialReq(i, "value", Number(e.target.value))} />
+                    </div>
+                    <div style={{ width: 80 }}>
+                      <Input style={inputStyle} placeholder="Unit" value={r.unit}
+                        onChange={(e) => updateSpecialReq(i, "unit", e.target.value)} />
+                    </div>
+                    <button onClick={() => removeSpecialReq(i)} style={{
+                      width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
+                      background: "transparent", border: "none", cursor: "pointer", color: "#ef4444",
+                    }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <Input style={inputStyle} placeholder="Description (optional)"
+                    value={r.description} onChange={(e) => updateSpecialReq(i, "description", e.target.value)} />
+                </div>
+              ))}
+              {specialReqs.length === 0 && (
+                <div style={{ textAlign: "center", padding: "16px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
+                  No special requirements. Add things like service hours or a senior capstone.
                 </div>
               )}
             </div>
