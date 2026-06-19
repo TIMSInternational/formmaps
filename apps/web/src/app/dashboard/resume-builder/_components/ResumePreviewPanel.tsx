@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { Sparkles } from "lucide-react";
 import { LivePreviewPDF } from "./LivePreviewPDF";
 import { OriginalPdfEditor } from "./OriginalPdfEditor";
-import type { ContactField, ContactValues } from "./OriginalPdfEditor";
+import type { ContactField, ContactValues, ExperienceValues } from "./OriginalPdfEditor";
 import { ResumePreviewWithToggle } from "./ResumePreviewWithToggle";
 import { getOriginalUrl } from "@/services/resumeService";
 
@@ -19,6 +19,8 @@ interface ResumePreviewPanelProps {
   contactValues?: ContactValues;
   onContactFieldChange?: (field: ContactField, value: string) => void;
   onContactFieldCommit?: () => void;
+  experienceValues?: ExperienceValues;
+  onExperienceFieldCommit?: (entryId: string, field: string, value: string) => void;
 }
 
 export function ResumePreviewPanel({
@@ -31,6 +33,8 @@ export function ResumePreviewPanel({
   contactValues,
   onContactFieldChange,
   onContactFieldCommit,
+  experienceValues,
+  onExperienceFieldCommit,
 }: ResumePreviewPanelProps) {
   // Stable reference so the in-place editor doesn't re-render the PDF each render.
   const loadOriginal = useCallback(() => getOriginalUrl(resumeId), [resumeId]);
@@ -66,6 +70,8 @@ export function ResumePreviewPanel({
                 contactValues={contactValues}
                 onContactFieldChange={onContactFieldChange}
                 onContactFieldCommit={onContactFieldCommit}
+                experienceValues={experienceValues}
+                onExperienceFieldCommit={onExperienceFieldCommit}
               />
             ) : (
               <LivePreviewPDF />
