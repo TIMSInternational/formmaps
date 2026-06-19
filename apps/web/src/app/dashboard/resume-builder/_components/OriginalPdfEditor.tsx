@@ -16,8 +16,9 @@ export type ContactField = (typeof CONTACT_FIELDS)[number];
 export type ContactValues = Partial<Record<ContactField, string>>;
 
 /**
- * Single-line experience values to two-way bind, keyed `exp.<index>.<field>`
- * (field ∈ jobTitle | company | location | startDate | endDate).
+ * Single-line experience values to two-way bind, keyed `exp.<entryId>.<field>`
+ * (field ∈ jobTitle | company | location | startDate | endDate). Keyed by the
+ * entry's stable id (not its index) so deletes/reorders can't mis-route a commit.
  */
 export type ExperienceValues = Record<string, string>;
 
@@ -30,10 +31,10 @@ interface OriginalPdfEditorProps {
   onContactFieldChange?: (field: ContactField, value: string) => void;
   /** Fired when a contact run loses focus, so the change can be persisted. */
   onContactFieldCommit?: () => void;
-  /** Live experience single-line values, keyed `exp.<index>.<field>`. */
+  /** Live experience single-line values, keyed `exp.<entryId>.<field>`. */
   experienceValues?: ExperienceValues;
   /** Fired when an experience run loses focus → persist that field on its entry. */
-  onExperienceFieldCommit?: (index: number, field: string, value: string) => void;
+  onExperienceFieldCommit?: (entryId: string, field: string, value: string) => void;
 }
 
 type EditorState = "loading" | "ready" | "error";
@@ -312,11 +313,9 @@ export function OriginalPdfEditor({
     const key = target?.dataset.field;
     if (key === undefined) return;
     if (key.startsWith("exp.")) {
-      const [, idxStr, field] = key.split(".");
-      const index = Number(idxStr);
-      if (field && Number.isInteger(index)) {
-        onExpCommitRef.current?.(index, field, target?.textContent ?? "");
-      }
+      // exp.<entryId>.<field> — entryId is a UUID (no dots), field has no dots.
+      const [, entryId, field] = key.split(".");
+      if (entryId && field) onExpCommitRef.current?.(entryId, field, target?.textContent ?? "");
       return;
     }
     onCommitRef.current?.();

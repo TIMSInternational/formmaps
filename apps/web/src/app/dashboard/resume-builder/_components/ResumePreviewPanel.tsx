@@ -20,7 +20,7 @@ interface ResumePreviewPanelProps {
   onContactFieldChange?: (field: ContactField, value: string) => void;
   onContactFieldCommit?: () => void;
   experienceValues?: ExperienceValues;
-  onExperienceFieldCommit?: (index: number, field: string, value: string) => void;
+  onExperienceFieldCommit?: (entryId: string, field: string, value: string) => void;
 }
 
 export function ResumePreviewPanel({
