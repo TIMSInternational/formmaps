@@ -10,9 +10,12 @@ export interface RecommendationRequest {
   declineReason: string | null;
   dueDate: string | null;
   submittedAt: string | null;
+  letterFileKey: string | null;
+  letterFileName: string | null;
+  letterUploadedAt: string | null;
   createdDate: string;
   student?: { name: string; email: string };
-  recommender?: { name: string; email: string };
+  recommender?: { name: string; email: string; roleName?: string | null };
 }
 
 export async function requestRecommendation(data: {
@@ -47,6 +50,20 @@ export async function updateRecommendationStatus(id: string, status: "in_progres
 
 export async function linkApplications(id: string, applicationIds: string[]): Promise<void> {
   await apiRequest(`/api/v1/recommendations/${id}/link-applications`, { method: "POST", data: { applicationIds } });
+}
+
+/** Recommender uploads the signed PDF letter. Flips the request to "submitted". */
+export async function uploadRecommendationLetter(id: string, file: File): Promise<RecommendationRequest> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await apiRequest(`/api/v1/recommendations/${id}/letter`, { method: "POST", data: formData });
+  return res?.data ?? res;
+}
+
+/** Short-TTL signed URL for the uploaded letter (student/recommender/staff). */
+export async function getRecommendationLetterUrl(id: string): Promise<{ url: string; filename: string }> {
+  const res = await apiRequest(`/api/v1/recommendations/${id}/letter`, { method: "GET" });
+  return res?.data ?? res;
 }
 
 export interface RecommendationDashboard {
