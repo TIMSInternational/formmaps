@@ -291,9 +291,9 @@ export default function PCAResultsPanel({
                         <div className="space-y-4">
                           {[
                             { label: "Dominance (D)", val: getPercentage(results, "pcaD1") ?? 0, color: "bg-red-500", text: "text-red-600" },
-                            { label: "Influence (I)", val: getPercentage(results, "pcaI1") ?? 0, color: "bg-yellow-500", text: "text-yellow-600" },
+                            { label: "Influence (I)", val: getPercentage(results, "pcaI1") ?? 0, color: "bg-blue-600", text: "text-blue-700" },
                             { label: "Solidity (S)", val: getPercentage(results, "pcaS1") ?? 0, color: "bg-green-500", text: "text-green-600" },
-                            { label: "Control (C)", val: getPercentage(results, "pcaC1") ?? 0, color: "bg-blue-500", text: "text-blue-600" }
+                            { label: "Control (C)", val: getPercentage(results, "pcaC1") ?? 0, color: "bg-yellow-500", text: "text-yellow-600" }
                           ].map((item, idx) => (
                             <div key={idx} className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
@@ -319,9 +319,9 @@ export default function PCAResultsPanel({
                         <div className="space-y-4">
                           {[
                             { label: "Dominance 2 (D2)", val: getPercentage(results, "pcaD2") ?? 0, color: "bg-red-400/80", text: "text-red-500" },
-                            { label: "Influence 2 (I2)", val: getPercentage(results, "pcaI2") ?? 0, color: "bg-yellow-400/80", text: "text-yellow-500" },
+                            { label: "Influence 2 (I2)", val: getPercentage(results, "pcaI2") ?? 0, color: "bg-blue-500/80", text: "text-blue-600" },
                             { label: "Solidity 2 (S2)", val: getPercentage(results, "pcaS2") ?? 0, color: "bg-green-400/80", text: "text-green-500" },
-                            { label: "Control 2 (C2)", val: getPercentage(results, "pcaC2") ?? 0, color: "bg-blue-400/80", text: "text-blue-500" }
+                            { label: "Control 2 (C2)", val: getPercentage(results, "pcaC2") ?? 0, color: "bg-yellow-400/80", text: "text-yellow-500" }
                           ].map((item, idx) => (
                             <div key={idx} className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
@@ -348,9 +348,9 @@ export default function PCAResultsPanel({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                         {[
                           { label: "Dominance 3 (D3)", val: getPercentage(results, "pcaD3") ?? 0, color: "bg-red-500/70", text: "text-red-500" },
-                          { label: "Influence 3 (I3)", val: getPercentage(results, "pcaI3") ?? 0, color: "bg-yellow-500/70", text: "text-yellow-500" },
+                          { label: "Influence 3 (I3)", val: getPercentage(results, "pcaI3") ?? 0, color: "bg-blue-500/70", text: "text-blue-600" },
                           { label: "Solidity 3 (S3)", val: getPercentage(results, "pcaS3") ?? 0, color: "bg-green-500/70", text: "text-green-500" },
-                          { label: "Control 3 (C3)", val: getPercentage(results, "pcaC3") ?? 0, color: "bg-blue-500/70", text: "text-blue-500" }
+                          { label: "Control 3 (C3)", val: getPercentage(results, "pcaC3") ?? 0, color: "bg-yellow-500/70", text: "text-yellow-500" }
                         ].map((item, idx) => (
                           <div key={idx} className="space-y-1">
                             <div className="flex items-center justify-between text-sm">
