@@ -131,7 +131,7 @@ export default function PCAResultsPanel({
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-[1500px] w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-[1600px] w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
         <DialogHeader className="p-6 border-b shrink-0">
           <DialogTitle className="text-xl font-bold">
             PCA Results - {pcaCod.slice(0, 8)}...
@@ -213,9 +213,9 @@ export default function PCAResultsPanel({
                           {getVal(results, "perGen") === "M" ? "Male" : "Female"}
                         </span>
                       </div>
-                      <div className="flex justify-between gap-3 min-w-0 border-b border-gray-50 pb-2">
+                      <div className="col-span-2 flex justify-between gap-3 border-b border-gray-50 pb-2">
                         <span className="text-gray-500 shrink-0">Email:</span>
-                        <span className="font-medium text-gray-900 text-right break-all min-w-0">
+                        <span className="font-medium text-gray-900 text-right whitespace-nowrap">
                           {getVal(results, "perMail") || getVal(results, "perEmail")}
                         </span>
                       </div>
