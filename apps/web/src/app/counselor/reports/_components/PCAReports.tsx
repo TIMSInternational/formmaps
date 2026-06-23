@@ -37,9 +37,9 @@ export function PCAReports({ student }: { student: ReportStudent }) {
 
   const discScores = hasPCA ? [
     { label: "Dominance (D)", value: pcaData.pcaD1 as number, color: "#ef4444" },
-    { label: "Influence (I)", value: pcaData.pcaI1 as number, color: "#eab308" },
+    { label: "Influence (I)", value: pcaData.pcaI1 as number, color: "#065292" },
     { label: "Solidity (S)", value: pcaData.pcaS1 as number, color: "#22c55e" },
-    { label: "Control (C)", value: pcaData.pcaC1 as number, color: "#065292" },
+    { label: "Control (C)", value: pcaData.pcaC1 as number, color: "#eab308" },
   ] : [];
 
   const careerMatches = (careerData?.careerMatches || careerData?.careers || careerData?.topCareers || []) as Record<string, unknown>[];

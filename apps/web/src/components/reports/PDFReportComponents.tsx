@@ -140,11 +140,11 @@ export const chartColors = {
   cyan: '#06b6d4',
   pink: '#ec4899',
   orange: '#f97316',
-  // DISC colors
+  // DISC colors — canonical TIMS PCA mapping: D red, I blue, S green, C gold
   dominance: '#ef4444',
-  influence: '#facc15',
+  influence: '#065292',
   steadiness: '#22c55e',
-  conscientiousness: '#065292',
+  conscientiousness: '#eab308',
 };
 
 // Report Header Component
