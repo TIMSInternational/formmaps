@@ -326,7 +326,7 @@ export default function SchoolAdminDashboard() {
           {[
             { label: "Students", value: stats?.totalStudents?.toLocaleString() || "—", icon: Users, color: "#065292" },
             { label: "Assessments", value: stats?.completedAssessments?.toLocaleString() || "—", icon: ClipboardCheck, color: "#8b5cf6" },
-            { label: "Avg Score", value: stats ? `${(stats.averageScore || 0).toFixed(0)}%` : "—", icon: TrendingUp, color: "#10b981" },
+            { label: "Avg Exam Score", value: stats ? `${(stats.averageScore || 0).toFixed(0)}%` : "—", icon: TrendingUp, color: "#10b981" },
             { label: "Courses", value: (stats as any)?.totalCourses?.toLocaleString() || "—", icon: GraduationCap, color: "#f59e0b" },
           ].map((s) => (
             <motion.div key={s.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
