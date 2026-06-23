@@ -18,7 +18,7 @@ export async function listCareers(query?: {
   // which calls POST /api/v1/careers/score and returns the full ranked list.
   // This function is kept for backward compatibility but callers should prefer the hook.
   try {
-    const res = await apiRequest<{ data?: { careers?: CareerRole[] } }>("api/v1/careers/catalog", { method: "GET" });
+    const res = await apiRequest<{ data?: { careers?: CareerRole[] } }>("/api/v1/careers/catalog", { method: "GET" });
     return { careers: (res.data?.careers || []) as CareerRole[], meta: { total: 0, page: 1, pageSize: 20 } };
   } catch {
     return { careers: [] as CareerRole[], meta: { total: 0, page: 1, pageSize: 20 } };
@@ -30,7 +30,7 @@ export async function getCareerById(id: string): Promise<CareerRole | null> {
     // The detail endpoint returns { career, profile, studentMatch }. Pass the
     // whole data object through so the detail page can render all three; the
     // page reads rawData.career / rawData.profile / rawData.studentMatch.
-    const res = await apiRequest<{ data?: { career?: CareerRole } & CareerRole }>(`api/v1/careers/${id}`, { method: "GET" });
+    const res = await apiRequest<{ data?: { career?: CareerRole } & CareerRole }>(`/api/v1/careers/${id}`, { method: "GET" });
     return (res.data ?? null) as CareerRole | null;
   } catch {
     return null;
@@ -39,7 +39,7 @@ export async function getCareerById(id: string): Promise<CareerRole | null> {
 
 export async function getCareerFamilies() {
   try {
-    const res = await apiRequest<{ data?: { clusters?: unknown[] } & unknown[] }>("api/v1/careers/clusters", { method: "GET" });
+    const res = await apiRequest<{ data?: { clusters?: unknown[] } & unknown[] }>("/api/v1/careers/clusters", { method: "GET" });
     return res.data?.clusters || res.data || [];
   } catch {
     return [];
