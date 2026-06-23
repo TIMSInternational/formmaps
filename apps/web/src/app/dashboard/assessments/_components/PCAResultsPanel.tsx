@@ -131,7 +131,7 @@ export default function PCAResultsPanel({
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
         <DialogHeader className="p-6 border-b shrink-0">
           <DialogTitle className="text-xl font-bold">
             PCA Results - {pcaCod.slice(0, 8)}...

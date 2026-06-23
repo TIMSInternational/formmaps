@@ -3,9 +3,6 @@
 import { useCallback } from "react";
 import { Sparkles } from "lucide-react";
 import { LivePreviewPDF } from "./LivePreviewPDF";
-import { OriginalPdfEditor } from "./OriginalPdfEditor";
-import type { ContactField, ContactValues, ExperienceValues } from "./OriginalPdfEditor";
-import type { DocumentEdit } from "@/store/useGlobalStore";
 import { ResumePreviewWithToggle } from "./ResumePreviewWithToggle";
 import { getOriginalUrl } from "@/services/resumeService";
 
@@ -16,14 +13,6 @@ interface ResumePreviewPanelProps {
   onPopulateSampleData: (careerField: string) => void;
   resumeId: string;
   hasOriginal: boolean;
-  /** Live contact values + handlers for two-way sync with the original PDF. */
-  contactValues?: ContactValues;
-  onContactFieldChange?: (field: ContactField, value: string) => void;
-  onContactFieldCommit?: () => void;
-  experienceValues?: ExperienceValues;
-  onExperienceFieldCommit?: (entryId: string, field: string, value: string) => void;
-  documentEdits?: DocumentEdit[];
-  onDocumentEditsChange?: (edits: DocumentEdit[]) => void;
 }
 
 export function ResumePreviewPanel({
@@ -33,15 +22,8 @@ export function ResumePreviewPanel({
   onPopulateSampleData,
   resumeId,
   hasOriginal,
-  contactValues,
-  onContactFieldChange,
-  onContactFieldCommit,
-  experienceValues,
-  onExperienceFieldCommit,
-  documentEdits,
-  onDocumentEditsChange,
 }: ResumePreviewPanelProps) {
-  // Stable reference so the in-place editor doesn't re-render the PDF each render.
+  // Stable reference so the toggle doesn't re-fetch the original on each render.
   const loadOriginal = useCallback(() => getOriginalUrl(resumeId), [resumeId]);
   return (
     <div className="bg-secondary/30 overflow-y-auto flex flex-col">
@@ -63,28 +45,12 @@ export function ResumePreviewPanel({
           Sample Data
         </button>
       </div>
-      {/* PDF Preview */}
+      {/* PDF Preview — Original (uploaded PDF) vs Preview (live, AI-editable) */}
       <div className="flex-1 overflow-y-auto p-3">
         <ResumePreviewWithToggle
           hasOriginal={hasOriginal}
           loadOriginalUrl={loadOriginal}
-          edited={
-            hasOriginal ? (
-              <OriginalPdfEditor
-                loadUrl={loadOriginal}
-                contactValues={contactValues}
-                onContactFieldChange={onContactFieldChange}
-                onContactFieldCommit={onContactFieldCommit}
-                experienceValues={experienceValues}
-                onExperienceFieldCommit={onExperienceFieldCommit}
-                documentEdits={documentEdits}
-                onDocumentEditsChange={onDocumentEditsChange}
-                fileName={`${fullName || "resume"} (edited).pdf`}
-              />
-            ) : (
-              <LivePreviewPDF />
-            )
-          }
+          edited={<LivePreviewPDF />}
         />
       </div>
     </div>

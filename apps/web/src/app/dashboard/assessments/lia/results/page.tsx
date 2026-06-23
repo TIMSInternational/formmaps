@@ -101,60 +101,48 @@ interface SubtestResult {
   band?: SubtestBand;
 }
 
-const SubtestCard = ({ test, index }: { test: SubtestResult; index: number }) => {
-  // Determine colors based on score
+// PCA-popup-style horizontal labeled score bar: domain name on the left, a
+// colored fill, and a bold % on the right. Mirrors the DISC dimension bars in
+// PCAResultsPanel. Color follows the band hex when present, else falls back to
+// the score-based palette used by the LIA cards (high=emerald, mid=brand blue,
+// low=amber).
+const ScoreBar = ({ test, index }: { test: SubtestResult; index: number }) => {
   const isHigh = test.score >= 80;
   const isMed = test.score >= 60;
-  
-  const color = isHigh ? "text-emerald-600" : isMed ? "text-[#065292]" : "text-amber-600";
-  const bg = isHigh ? "bg-emerald-50" : isMed ? "bg-[#065292]/5" : "bg-amber-50";
-  const border = isHigh ? "border-emerald-100" : isMed ? "border-[#065292]/20" : "border-amber-100";
-  const barColor = isHigh ? "bg-emerald-500" : isMed ? "bg-[#065292]" : "bg-amber-500";
-  const blob = isHigh ? "bg-emerald-500" : isMed ? "bg-[#065292]" : "bg-amber-500";
+  const fallbackFill = isHigh ? "#10b981" : isMed ? "#065292" : "#f59e0b";
+  const fillColor = test.band?.color ?? fallbackFill;
+  const labelColor = isHigh ? "text-emerald-700" : isMed ? "text-[#065292]" : "text-amber-700";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      className={`group relative overflow-hidden rounded-2xl border ${border} bg-card p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
-    >
-      <div
-        className={`absolute right-0 top-0 h-32 w-32 translate-x-10 translate-y--10 rounded-full ${blob} opacity-5 blur-3xl transition-transform duration-500 group-hover:scale-150`}
-      />
-
-      <div className="relative">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-             <h4 className="font-bold text-foreground text-lg group-hover:text-indigo-600 transition-colors">{test.name}</h4>
-             <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {test.time}</span>
-                <span className="flex items-center gap-1"><Target className="w-3.5 h-3.5" /> {test.accuracy}% accuracy</span>
-             </div>
-             {test.band && (
-               <span
-                 className="inline-block mt-2 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                 style={{ backgroundColor: test.band.color, color: bandTextColor(test.band.color) }}
-               >
-                 {test.band.labelEn}
-               </span>
-             )}
-          </div>
-          <div className={`rounded-xl ${bg} p-2 ${color}`}>
-            <span className="text-lg font-bold">{test.score}%</span>
-          </div>
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <span className={`font-semibold ${labelColor} break-words`}>{test.name}</span>
+          {test.band && (
+            <span
+              className="rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none"
+              style={{ backgroundColor: test.band.color, color: bandTextColor(test.band.color) }}
+            >
+              {test.band.labelEn}
+            </span>
+          )}
         </div>
-
-        <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: `${test.score}%` }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className={`h-full ${barColor} rounded-full`}
-          />
-        </div>
+        <span className="font-bold text-foreground shrink-0">{test.score}%</span>
       </div>
-    </motion.div>
+      <div className="w-full bg-secondary rounded-full h-2.5 overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${test.score}%` }}
+          transition={{ duration: 1, delay: 0.3 + index * 0.08 }}
+          className="h-2.5 rounded-full"
+          style={{ backgroundColor: fillColor }}
+        />
+      </div>
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {test.time}</span>
+        <span className="flex items-center gap-1"><Target className="w-3 h-3" /> {test.accuracy}% accuracy</span>
+      </div>
+    </div>
   );
 };
 
@@ -347,47 +335,93 @@ export default function MILResultsPage() {
           </div>
         )}
 
+        {/* Personal Information — mirrors the PCA popup card */}
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">
+            {t("dashboard.personalInformation", "Personal Information")}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm">
+            {user.name && (
+              <div className="flex justify-between gap-3 min-w-0 border-b border-border/60 pb-2">
+                <span className="text-muted-foreground shrink-0">{t("dashboard.name", "Name")}:</span>
+                <span className="font-medium text-foreground text-right break-words min-w-0">{user.name}</span>
+              </div>
+            )}
+            {user.id && (
+              <div className="flex justify-between gap-3 min-w-0 border-b border-border/60 pb-2">
+                <span className="text-muted-foreground shrink-0">{t("dashboard.id", "ID")}:</span>
+                <span className="font-medium text-foreground text-right break-words min-w-0">{user.id}</span>
+              </div>
+            )}
+            {user.email && (
+              <div className="flex justify-between gap-3 min-w-0 border-b border-border/60 pb-2">
+                <span className="text-muted-foreground shrink-0">{t("dashboard.email", "Email")}:</span>
+                <span className="font-medium text-foreground text-right break-all min-w-0">{user.email}</span>
+              </div>
+            )}
+            {user.role && (
+              <div className="flex justify-between gap-3 min-w-0 border-b border-border/60 pb-2">
+                <span className="text-muted-foreground shrink-0">{t("dashboard.role", "Role")}:</span>
+                <span className="font-medium text-foreground text-right break-words min-w-0 capitalize">{user.role}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Main Content Split */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-           {/* Left: Detailed Results (2 cols) */}
+           {/* Left: Cognitive Aptitude Scores (PCA-style bars, primary) */}
            <div className="lg:col-span-2 space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-foreground">{t("dashboard.subtestPerformance")}</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {subtestResults.map((result, idx) => (
-                    <SubtestCard key={result.name} test={result} index={idx} />
-                  ))}
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
+                <div className="flex items-center gap-2 mb-5">
+                  <Activity className="w-5 h-5 text-[#065292]" />
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {t("dashboard.cognitiveAptitudeScores", "Cognitive Aptitude Scores")}
+                  </h2>
+                </div>
+                {subtestResults.length > 0 ? (
+                  <div className="space-y-6">
+                    {subtestResults.map((result, idx) => (
+                      <ScoreBar key={result.name} test={result} index={idx} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-muted-foreground text-sm">
+                    {t("dashboard.noResultsYet", "No completed subtests yet.")}
+                  </div>
+                )}
               </div>
            </div>
 
-           {/* Right: Cognitive Profile (1 col) */}
+           {/* Right: Cognitive Profile radar (secondary) + AI insight */}
            <div className="lg:col-span-1 space-y-6">
-              <h2 className="text-xl font-bold text-foreground">{t("dashboard.cognitiveProfile")}</h2>
-              <div className="bg-card rounded-2xl border border-border shadow-sm p-6 h-[400px] flex flex-col items-center justify-center relative overflow-hidden">
-                 {/* Decorative background blob for consistency */}
-                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-purple-500/5 blur-3xl rounded-full pointer-events-none" />
-                 
-                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                    <PolarGrid stroke="#f3f4f6" strokeDasharray="3 3" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 11, fontWeight: 500 }} />
-                    <Radar
-                      name="Score"
-                      dataKey="A"
-                      stroke="#065292"
-                      strokeWidth={3}
-                      fill="#065292"
-                      fillOpacity={0.2}
-                    />
-                    <RechartsTooltip 
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                      itemStyle={{ color: '#065292', fontWeight: 600 }}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
+                 <h2 className="text-sm font-semibold text-muted-foreground mb-3">{t("dashboard.cognitiveProfile")}</h2>
+                 <div className="h-[300px] flex items-center justify-center relative overflow-hidden">
+                   {/* Decorative background blob for consistency */}
+                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-purple-500/5 blur-3xl rounded-full pointer-events-none" />
+
+                   <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                      <PolarGrid stroke="#f3f4f6" strokeDasharray="3 3" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 11, fontWeight: 500 }} />
+                      <Radar
+                        name="Score"
+                        dataKey="A"
+                        stroke="#065292"
+                        strokeWidth={3}
+                        fill="#065292"
+                        fillOpacity={0.2}
+                      />
+                      <RechartsTooltip
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                        itemStyle={{ color: '#065292', fontWeight: 600 }}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                 </div>
               </div>
-              
+
               {subtestResults.length > 0 && (
               <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-100">
                   <div className="flex gap-3">
