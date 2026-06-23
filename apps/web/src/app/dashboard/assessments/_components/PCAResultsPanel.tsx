@@ -16,11 +16,59 @@ import {
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ModalSkeleton } from "@/components/ui/skeletons";
+import { getPcaChartBlob } from "@/services/pcaImageService";
 
 interface PCAResultsPanelProps {
   pcaCod: string;
   userId: string;
   onClose: () => void;
+}
+
+// DISC profile chart. Fetched same-origin via the backend proxy
+// (GET /api/pcaapi/img-report) so the vendor image URL — which embeds the
+// CoKey — never reaches the browser and isn't CSP-blocked. Renders the whole
+// card; returns null if the chart can't be loaded so there's no empty shell.
+function DiscChartImage({ pcaCod }: { pcaCod: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    setSrc(null);
+    setFailed(false);
+    (async () => {
+      try {
+        const blob = await getPcaChartBlob(pcaCod);
+        objectUrl = URL.createObjectURL(blob);
+        if (!cancelled) setSrc(objectUrl);
+        else URL.revokeObjectURL(objectUrl);
+      } catch {
+        if (!cancelled) setFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [pcaCod]);
+
+  if (failed) return null;
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">DISC Profile Graph</h3>
+      <div style={{ textAlign: "center" }}>
+        {src ? (
+          <img
+            src={src}
+            alt="DISC Profile Graph"
+            style={{ maxWidth: "100%", borderRadius: 8, border: "1px solid #e5e7eb" }}
+          />
+        ) : (
+          <Skeleton className="mx-auto h-64 w-full max-w-2xl rounded-lg" />
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function PCAResultsPanel({
@@ -323,21 +371,8 @@ export default function PCAResultsPanel({
                     )}
                   </div>
 
-                  {/* PCA Report Image */}
-                  {getVal(results, "pcaImg") && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        DISC Profile Graph
-                      </h3>
-                      <div style={{ textAlign: "center" }}>
-                        <img
-                          src={getVal(results, "pcaImg") ?? undefined}
-                          alt="DISC Profile Graph"
-                          style={{ maxWidth: "100%", borderRadius: 8, border: "1px solid #e5e7eb" }}
-                        />
-                      </div>
-                    </div>
-                  )}
+                  {/* DISC Profile Graph — served same-origin via the backend proxy */}
+                  <DiscChartImage pcaCod={pcaCod} />
 
                   {/* Assessment Details */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
@@ -356,20 +391,6 @@ export default function PCAResultsPanel({
                         </svg>
                         Full PDF Report
                       </a>
-
-                      {getVal(results, "pcaImg") && (
-                        <a
-                          href={getVal(results, "pcaImg") ?? undefined}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 inline-flex items-center justify-center px-4 py-3 bg-purple-50 text-purple-700 rounded-xl hover:bg-purple-100 transition-colors font-medium border border-purple-100"
-                        >
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          Visual Report Image
-                        </a>
-                      )}
                     </div>
                   </div>
                 </div>
