@@ -8,7 +8,7 @@ import {
   Activity,
   TrendingUp,
   TrendingDown,
-  GraduationCap,
+  ClipboardCheck,
 } from "lucide-react";
 import { useSchoolAdminStats } from "@/hooks/useSchoolAdmin";
 import { useTranslation } from "react-i18next";
@@ -65,9 +65,9 @@ export function SchoolAdminStats() {
       border: "border-emerald-100",
     },
     {
-      label: t("schoolAdmin.stats.avgScore", "Avg. Score"),
+      label: t("schoolAdmin.stats.avgScore", "Avg. Exam Score"),
       value: `${(stats.averageScore ?? 0).toFixed(1)}%`,
-      icon: GraduationCap,
+      icon: ClipboardCheck,
       color: "text-violet-600",
       bg: "bg-violet-50/50",
       border: "border-violet-100",

@@ -13,13 +13,46 @@ import {
   DollarSign,
   GraduationCap,
   TrendingUp,
-  Brain,
   Sparkles,
-  Shield,
+  Compass,
   Users,
-  Lightbulb,
-  BarChart3,
 } from "lucide-react";
+
+const BRAND_BLUE = "#065292";
+const BRAND_YELLOW = "#FFD600";
+
+interface CareerProfile {
+  overview: string;
+  whatYouDo: string[];
+  keyStrengths: string[];
+  educationPathways: string[];
+  typicalSalaryRange: string;
+  jobOutlook: string;
+  relatedCareers: string[];
+  dayInLife: string;
+}
+
+interface StudentMatch {
+  totalScore?: number;
+  confidence?: string;
+  aiInsight?: string;
+  needsBridging?: boolean;
+  bridgingReasons?: string[];
+  breakdown?: {
+    discScore?: number;
+    milScore?: number;
+    interestsScore?: number;
+    motivatorsScore?: number;
+  };
+}
+
+interface CareerDetailData {
+  career?: Record<string, unknown>;
+  profile?: CareerProfile | null;
+  studentMatch?: StudentMatch | null;
+}
+
+const looksLikeId = (s: string) => /^[A-Z]{2,5}-?\d{2,4}$/.test(s.trim());
 
 export default function CareerDetails() {
   const params = useParams();
@@ -31,87 +64,99 @@ export default function CareerDetails() {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4" />
+          <div
+            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
+            style={{ borderColor: BRAND_BLUE }}
+          />
           <p className="text-gray-600 font-medium">Loading career details...</p>
         </div>
       </div>
     );
 
-  // Parse the response — rawData is the `data` field from apiRequest
-  const career = (rawData as any)?.career ?? rawData;
-  const studentMatch = (rawData as any)?.studentMatch;
+  const data = (rawData ?? {}) as CareerDetailData;
+  const career = (data.career ?? rawData) as Record<string, unknown> | undefined;
+  const profile = data.profile ?? null;
+  const studentMatch = data.studentMatch ?? null;
 
   if (!career) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Career Not Found</h2>
         <p className="text-gray-600 mb-6">The career you are looking for does not exist.</p>
-        <button onClick={() => router.back()} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        <button
+          onClick={() => router.back()}
+          className="px-4 py-2 text-white rounded-lg"
+          style={{ backgroundColor: BRAND_BLUE }}
+        >
           Go Back
         </button>
       </div>
     );
   }
 
-  const title = career.programTitle || career.title?.en || "Career";
-  const cluster = (career.cluster || "").replace(/_/g, " ");
-  const overview = career.overview;
-  const education = career.education;
+  const title = (career.programTitle as string) || "Career";
+  const cluster = ((career.cluster as string) || "").replace(/_/g, " ");
+  const interests = (career.interest_fit as string[]) || [];
+  const motivators = (career.motivator_fit as string[]) || [];
+  const bridgingPaths = (career.bridging_paths as string) || "";
 
-  // Parse JSON strings from AI
-  const responsibilities = parseJsonArray(career.responsibilities);
-  const skills = parseJsonArray(career.skills);
-  const salaryRange = parseJsonObj(career.salaryRange);
-
-  // Student match data
-  const matchScore = studentMatch?.totalScore ?? 0;
-  const confidence = studentMatch?.confidence ?? "unknown";
+  const matchScore = studentMatch?.totalScore ?? null;
   const breakdown = studentMatch?.breakdown;
-  const studentMil = studentMatch?.studentMil;
-  const milKeys = career.milKeys || [];
-  const milRefs = career.milRefs || {};
-  const needsBridging = studentMatch?.needsBridging;
-  const bridgingReasons = studentMatch?.bridgingReasons || [];
-
-  const confColor = confidence === "high" ? "text-emerald-600" : confidence === "good" ? "text-blue-600" : "text-amber-600";
-  const confBg = confidence === "high" ? "bg-emerald-50 border-emerald-200" : confidence === "good" ? "bg-blue-50 border-blue-200" : "bg-amber-50 border-amber-200";
-  const confLabel = confidence === "high" ? "Excellent Match" : confidence === "good" ? "Strong Match" : "Good Match";
+  const confidence = studentMatch?.confidence ?? "";
+  const confLabel =
+    confidence === "high"
+      ? "Excellent Match"
+      : confidence === "good"
+        ? "Strong Match"
+        : confidence === "moderate"
+          ? "Good Match"
+          : "Match";
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-gray-50 pb-12">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button onClick={() => router.back()} className="flex items-center text-gray-500 hover:text-indigo-600 transition-colors mb-4 text-sm font-medium">
+      {/* Hero */}
+      <div className="border-b border-gray-200" style={{ backgroundColor: BRAND_BLUE }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center text-white/80 hover:text-white transition-colors mb-5 text-sm font-medium"
+          >
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to Careers
           </button>
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 text-xl font-bold shrink-0">
+              <div
+                className="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold shrink-0"
+                style={{ backgroundColor: BRAND_YELLOW, color: "#111111" }}
+              >
                 {title.charAt(0)}
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{title}</h1>
-                <p className="text-gray-500 mt-1 text-sm font-medium">{cluster}</p>
+                <h1 className="text-2xl md:text-3xl font-bold text-white">{title}</h1>
+                <p className="text-white/70 mt-1 text-sm font-medium">{cluster}</p>
               </div>
             </div>
 
-            {studentMatch && (
-              <div className={`flex items-center gap-4 px-5 py-3 rounded-2xl border ${confBg}`}>
+            {studentMatch && matchScore !== null && (
+              <div className="flex items-center gap-4 px-5 py-3 rounded-2xl bg-white/10 border border-white/20">
                 <div className="text-center">
-                  <div className={`text-3xl font-bold ${confColor}`}>{matchScore}%</div>
-                  <div className={`text-xs font-semibold uppercase tracking-wider ${confColor}`}>{confLabel}</div>
+                  <div className="text-3xl font-bold" style={{ color: BRAND_YELLOW }}>
+                    {matchScore}%
+                  </div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-white/80">{confLabel}</div>
                 </div>
-                <div className="h-10 w-px bg-gray-200" />
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                  <span className="text-gray-500">Cognitive</span>
-                  <span className="font-semibold text-gray-800">{breakdown?.milScore?.toFixed(0)}%</span>
-                  <span className="text-gray-500">Interests</span>
-                  <span className="font-semibold text-gray-800">{breakdown?.interestsScore?.toFixed(0)}%</span>
-                  <span className="text-gray-500">Motivators</span>
-                  <span className="font-semibold text-gray-800">{breakdown?.motivatorsScore?.toFixed(0)}%</span>
-                </div>
+                {breakdown && (
+                  <>
+                    <div className="h-12 w-px bg-white/20" />
+                    <div className="space-y-1.5 w-44">
+                      <MatchBar label="Personality" value={breakdown.discScore} />
+                      <MatchBar label="Cognitive" value={breakdown.milScore} />
+                      <MatchBar label="Interests" value={breakdown.interestsScore} />
+                      <MatchBar label="Motivators" value={breakdown.motivatorsScore} />
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -122,91 +167,33 @@ export default function CareerDetails() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-8">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Overview */}
-            {overview && (
-              <Section icon={<BookOpen />} title="About this Career">
-                <p className="text-gray-600 leading-relaxed">{overview}</p>
-              </Section>
-            )}
-
-            {/* Cognitive Fit */}
-            {studentMil && (
-              <Section icon={<Brain />} title="Your Cognitive Fit">
-                <div className="space-y-3">
-                  {milKeys.map((key: string, idx: number) => {
-                    const refVal = idx === 0 ? milRefs.key1Ref : idx === 1 ? milRefs.key2Ref : milRefs.key3Ref;
-                    const studentVal = studentMil[key.toLowerCase()] ?? 0;
-                    const exceeds = studentVal >= refVal;
-                    return (
-                      <div key={key} className="flex items-center gap-4">
-                        <div className="w-24 text-sm font-medium text-gray-700 capitalize">{key}</div>
-                        <div className="flex-1 relative">
-                          <div className="h-6 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${exceeds ? "bg-emerald-500" : "bg-amber-400"}`}
-                              style={{ width: `${Math.min(studentVal, 100)}%` }}
-                            />
-                          </div>
-                          {/* Threshold marker */}
-                          <div className="absolute top-0 h-6 border-l-2 border-dashed border-gray-400" style={{ left: `${refVal}%` }}>
-                            <span className="absolute -top-5 -translate-x-1/2 text-[10px] text-gray-400 whitespace-nowrap">req: {refVal}%</span>
-                          </div>
-                        </div>
-                        <div className={`w-14 text-right text-sm font-bold ${exceeds ? "text-emerald-600" : "text-amber-600"}`}>
-                          {studentVal}%
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {/* Non-key dimensions */}
-                  {studentMil && Object.entries(studentMil as Record<string, number>)
-                    .filter(([k]) => !milKeys.map((m: string) => m.toLowerCase()).includes(k))
-                    .map(([key, val]) => (
-                      <div key={key} className="flex items-center gap-4 opacity-50">
-                        <div className="w-24 text-sm font-medium text-gray-500 capitalize">{key}</div>
-                        <div className="flex-1">
-                          <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full bg-gray-300" style={{ width: `${Math.min(val, 100)}%` }} />
-                          </div>
-                        </div>
-                        <div className="w-14 text-right text-sm text-gray-400">{val}%</div>
-                      </div>
-                    ))}
-                </div>
-              </Section>
-            )}
-
-            {/* Bridging */}
-            {needsBridging && bridgingReasons.length > 0 && (
-              <div className="bg-amber-50 rounded-xl border border-amber-200 p-6">
-                <h2 className="text-lg font-bold text-amber-900 mb-3 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-amber-600" />
-                  Skill Gaps to Bridge
+            {/* Personalized insight */}
+            {studentMatch?.aiInsight && (
+              <div
+                className="rounded-xl p-6 border"
+                style={{ backgroundColor: "rgba(6,82,146,0.04)", borderColor: "rgba(6,82,146,0.2)" }}
+              >
+                <h2 className="text-base font-bold mb-2 flex items-center gap-2" style={{ color: BRAND_BLUE }}>
+                  <Sparkles className="w-5 h-5" /> Why this fits you
                 </h2>
-                <ul className="space-y-2">
-                  {bridgingReasons.map((r: string, i: number) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-amber-800">
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-                {career.bridgingPaths && (
-                  <div className="mt-4 pt-3 border-t border-amber-200">
-                    <p className="text-xs text-amber-700 font-medium mb-1">Recommended preparation:</p>
-                    <p className="text-sm text-amber-800">{career.bridgingPaths}</p>
-                  </div>
-                )}
+                <p className="text-gray-700 leading-relaxed text-sm">{studentMatch.aiInsight}</p>
               </div>
             )}
 
-            {/* Responsibilities */}
-            {responsibilities.length > 0 && (
-              <Section icon={<Target />} title="Key Responsibilities">
+            {/* Overview */}
+            {profile?.overview && (
+              <Section icon={<BookOpen />} title="About this Career">
+                <p className="text-gray-600 leading-relaxed">{profile.overview}</p>
+              </Section>
+            )}
+
+            {/* What You'd Do */}
+            {profile?.whatYouDo && profile.whatYouDo.length > 0 && (
+              <Section icon={<Target />} title="What You'd Do">
                 <ul className="space-y-3">
-                  {responsibilities.map((r: string, i: number) => (
+                  {profile.whatYouDo.map((r, i) => (
                     <li key={i} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" style={{ color: BRAND_BLUE }} />
                       <span className="text-gray-700 text-sm">{r}</span>
                     </li>
                   ))}
@@ -214,17 +201,33 @@ export default function CareerDetails() {
               </Section>
             )}
 
-            {/* Skills */}
-            {skills.length > 0 && (
-              <Section icon={<Zap />} title="Essential Skills">
+            {/* Day in the Life */}
+            {profile?.dayInLife && (
+              <Section icon={<Compass />} title="A Day in the Life">
+                <p className="text-gray-600 leading-relaxed">{profile.dayInLife}</p>
+              </Section>
+            )}
+
+            {/* Key Strengths */}
+            {profile?.keyStrengths && profile.keyStrengths.length > 0 && (
+              <Section icon={<Zap />} title="Key Strengths">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {skills.map((s: string, i: number) => (
+                  {profile.keyStrengths.map((s, i) => (
                     <div key={i} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                      <div className="h-2 w-2 rounded-full bg-indigo-500 shrink-0" />
+                      <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: BRAND_BLUE }} />
                       <span className="text-sm text-gray-700">{s}</span>
                     </div>
                   ))}
                 </div>
+              </Section>
+            )}
+
+            {/* No profile fallback — show catalog basics */}
+            {!profile && (
+              <Section icon={<BookOpen />} title="About this Career">
+                <p className="text-gray-600 leading-relaxed">
+                  {title} is part of the {cluster} cluster. Detailed guidance for this career is being prepared.
+                </p>
               </Section>
             )}
           </div>
@@ -232,90 +235,107 @@ export default function CareerDetails() {
           {/* Right Column */}
           <div className="space-y-6">
             {/* Salary */}
-            {salaryRange && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" /> Compensation
-                </h3>
-                <div className="space-y-3">
-                  {[
-                    { label: "Entry Level", value: salaryRange.entry, color: "text-gray-600" },
-                    { label: "Mid Career", value: salaryRange.mid, color: "text-indigo-600 font-bold text-lg" },
-                    { label: "Senior", value: salaryRange.senior, color: "text-gray-600" },
-                  ].map((tier) => (
-                    <div key={tier.label} className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500">{tier.label}</span>
-                      <span className={tier.color}>{tier.value}</span>
+            {profile?.typicalSalaryRange && (
+              <SideCard icon={<DollarSign className="w-4 h-4" />} title="Typical Salary Range">
+                <p className="text-sm font-semibold" style={{ color: BRAND_BLUE }}>
+                  {profile.typicalSalaryRange}
+                </p>
+              </SideCard>
+            )}
+
+            {/* Job Outlook */}
+            {profile?.jobOutlook && (
+              <SideCard icon={<TrendingUp className="w-4 h-4" />} title="Job Outlook">
+                <p className="text-sm text-gray-700 leading-relaxed">{profile.jobOutlook}</p>
+              </SideCard>
+            )}
+
+            {/* Education Pathways */}
+            {profile?.educationPathways && profile.educationPathways.length > 0 && (
+              <SideCard icon={<GraduationCap className="w-4 h-4" />} title="Education Pathways">
+                <div className="space-y-2">
+                  {profile.educationPathways.map((p, i) => (
+                    <div key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                      <span className="h-1.5 w-1.5 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: BRAND_YELLOW }} />
+                      {p}
                     </div>
                   ))}
                 </div>
-              </div>
+              </SideCard>
             )}
 
-            {/* Education */}
-            {education && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4" /> Education Path
-                </h3>
-                <p className="text-sm text-gray-700 leading-relaxed">{education}</p>
-              </div>
+            {/* Related Careers */}
+            {profile?.relatedCareers && profile.relatedCareers.length > 0 && (
+              <SideCard icon={<Users className="w-4 h-4" />} title="Related Careers">
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.relatedCareers.map((rc) =>
+                    looksLikeId(rc) ? (
+                      <a
+                        key={rc}
+                        href={`/careers/${rc.trim()}`}
+                        className="text-xs px-2 py-1 rounded-full hover:opacity-80"
+                        style={{ backgroundColor: "rgba(6,82,146,0.08)", color: BRAND_BLUE }}
+                      >
+                        {rc}
+                      </a>
+                    ) : (
+                      <span
+                        key={rc}
+                        className="text-xs px-2 py-1 rounded-full"
+                        style={{ backgroundColor: "rgba(6,82,146,0.08)", color: BRAND_BLUE }}
+                      >
+                        {rc}
+                      </span>
+                    ),
+                  )}
+                </div>
+              </SideCard>
             )}
 
-            {/* Career Requirements */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" /> Career Profile
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Personality Fit (DISC)</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {["D", "I", "S", "C"].map((dim) => {
-                      const req = career.discRequirements?.[dim.toLowerCase()] || "Either";
-                      return (
-                        <div key={dim} className={`text-center p-2 rounded-lg border ${req === "Active" ? "bg-indigo-50 border-indigo-200" : "bg-gray-50 border-gray-100"}`}>
-                          <div className="text-sm font-bold text-gray-700">{dim}</div>
-                          <div className={`text-xs ${req === "Active" ? "text-indigo-600 font-medium" : "text-gray-400"}`}>{req}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
+            {/* Catalog profile (interests / motivators / preparation) */}
+            {(interests.length > 0 || motivators.length > 0) && (
+              <SideCard icon={<Sparkles className="w-4 h-4" />} title="Career Profile">
+                <div className="space-y-4">
+                  {interests.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Interests</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {interests.map((i) => (
+                          <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full capitalize">
+                            {i.replace(/_/g, " ")}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {motivators.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Motivators</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {motivators.map((m) => (
+                          <span key={m} className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-full capitalize">
+                            {m.replace(/_/g, " ")}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Interests</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(career.interests || []).map((i: string) => (
-                      <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full capitalize">{i.replace(/_/g, " ")}</span>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Motivators</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(career.motivators || []).map((m: string) => (
-                      <span key={m} className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-full capitalize">{m.replace(/_/g, " ")}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+              </SideCard>
+            )}
 
-            {/* Preparation */}
-            {career.bridgingPaths && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4" /> Preparation Path
-                </h3>
+            {/* Preparation path from catalog bridging_paths */}
+            {bridgingPaths && (
+              <SideCard icon={<GraduationCap className="w-4 h-4" />} title="Preparation Path">
                 <div className="space-y-2">
-                  {career.bridgingPaths.split(";").map((path: string, i: number) => (
+                  {bridgingPaths.split(";").map((path, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-gray-700">
-                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 shrink-0" />
+                      <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: BRAND_BLUE }} />
                       {path.trim()}
                     </div>
                   ))}
                 </div>
-              </div>
+              </SideCard>
             )}
           </div>
         </div>
@@ -324,11 +344,27 @@ export default function CareerDetails() {
   );
 }
 
+function MatchBar({ label, value }: { label: string; value?: number }) {
+  const v = Math.max(0, Math.min(100, value ?? 0));
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] text-white/70 w-16 shrink-0">{label}</span>
+      <div className="flex-1 h-1.5 bg-white/15 rounded-full overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${v}%`, backgroundColor: BRAND_YELLOW }} />
+      </div>
+      <span className="text-[10px] text-white/80 w-7 text-right">{Math.round(v)}%</span>
+    </div>
+  );
+}
+
 function Section({ icon, title, children }: { icon: React.ReactElement; title: string; children: React.ReactNode }) {
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-6">
       <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-        {React.cloneElement(icon as React.ReactElement<any>, { className: "w-5 h-5 text-indigo-500" })}
+        {React.cloneElement(icon as React.ReactElement<{ className?: string; style?: React.CSSProperties }>, {
+          className: "w-5 h-5",
+          style: { color: BRAND_BLUE },
+        })}
         {title}
       </h2>
       {children}
@@ -336,18 +372,13 @@ function Section({ icon, title, children }: { icon: React.ReactElement; title: s
   );
 }
 
-function parseJsonArray(val: any): string[] {
-  if (Array.isArray(val)) return val;
-  if (typeof val === "string") {
-    try { return JSON.parse(val); } catch { return []; }
-  }
-  return [];
-}
-
-function parseJsonObj(val: any): any {
-  if (typeof val === "object" && val !== null && !Array.isArray(val)) return val;
-  if (typeof val === "string") {
-    try { return JSON.parse(val); } catch { return null; }
-  }
-  return null;
+function SideCard({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+        {icon} {title}
+      </h3>
+      {children}
+    </div>
+  );
 }
