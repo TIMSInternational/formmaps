@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-export type EditorTab = "rewrite" | "editor" | "style";
+export type EditorTab = "chat" | "style";
 
 interface ResumeTabSwitcherProps {
   activeTab: EditorTab;
@@ -12,7 +12,7 @@ interface ResumeTabSwitcherProps {
 export function ResumeTabSwitcher({ activeTab, setActiveTab }: ResumeTabSwitcherProps) {
   return (
     <div className="flex border-b border-border shrink-0 bg-secondary/30">
-      {(["rewrite", "editor", "style"] as const).map((tab) => (
+      {(["chat", "style"] as const).map((tab) => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab)}
@@ -23,7 +23,7 @@ export function ResumeTabSwitcher({ activeTab, setActiveTab }: ResumeTabSwitcher
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          {tab === "rewrite" ? "AI Rewrite" : tab === "editor" ? "Editor" : "Style"}
+          {tab === "chat" ? "AI Editor" : "Style"}
         </button>
       ))}
     </div>
