@@ -27,8 +27,11 @@ export async function listCareers(query?: {
 
 export async function getCareerById(id: string): Promise<CareerRole | null> {
   try {
+    // The detail endpoint returns { career, profile, studentMatch }. Pass the
+    // whole data object through so the detail page can render all three; the
+    // page reads rawData.career / rawData.profile / rawData.studentMatch.
     const res = await apiRequest<{ data?: { career?: CareerRole } & CareerRole }>(`api/v1/careers/${id}`, { method: "GET" });
-    return (res.data?.career || res.data || null) as CareerRole | null;
+    return (res.data ?? null) as CareerRole | null;
   } catch {
     return null;
   }
