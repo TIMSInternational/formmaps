@@ -1,24 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import {
   GraduationCap,
-  RefreshCw,
   Award,
   BookOpen,
   Hash,
   CreditCard,
+  TrendingUp,
+  Trophy,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  YAxis,
+  Tooltip,
+} from "recharts";
+import { QueryStateBoundary } from "@/components/QueryStateBoundary";
 import {
   getTranscript,
-  computeGpa,
+  getGpa,
   TranscriptData,
   StudentGpa,
 } from "@/services/transcriptService";
+import {
+  countCourseRigor,
+  buildGpaTrend,
+} from "@/services/transcriptDerive";
 
 const levelColors: Record<string, { bg: string; text: string }> = {
   AP: { bg: "bg-indigo-100", text: "text-indigo-700" },
@@ -42,213 +54,285 @@ function formatGpa(val: number | null | undefined): string {
 
 export default function TranscriptPage() {
   const [data, setData] = useState<TranscriptData | null>(null);
+  const [gpaRecord, setGpaRecord] = useState<StudentGpa | null>(null);
   const [loading, setLoading] = useState(true);
-  const [recomputing, setRecomputing] = useState(false);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const result = await getTranscript();
-        setData(result);
-      } catch {
-        toast.error("Failed to load transcript.");
-      } finally {
-        setLoading(false);
-      }
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const [transcript, gpa] = await Promise.all([
+        getTranscript(),
+        getGpa(),
+      ]);
+      setData(transcript);
+      setGpaRecord(gpa);
+    } catch {
+      setError(true);
+      toast.error("Failed to load transcript.");
+    } finally {
+      setLoading(false);
     }
-    load();
   }, []);
 
-  async function handleRecompute() {
-    setRecomputing(true);
-    try {
-      const updated: StudentGpa = await computeGpa();
-      setData((prev) =>
-        prev ? { ...prev, gpa: updated } : { grades: {}, gpa: updated }
-      );
-      toast.success("GPA recomputed successfully.");
-    } catch {
-      toast.error("Failed to recompute GPA.");
-    } finally {
-      setRecomputing(false);
-    }
-  }
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-28" />
-          ))}
-        </div>
-        <Skeleton className="h-96" />
+  const byYear = data?.byYear ?? {};
+  const academicYears = Object.keys(byYear).sort((a, b) => b.localeCompare(a));
+  const isEmpty = !loading && !error && academicYears.length === 0;
+
+  // Derive sweetener values
+  const rigor = countCourseRigor(byYear);
+  const rigorLabel = [
+    rigor.ap > 0 ? `${rigor.ap} AP` : null,
+    rigor.honors > 0 ? `${rigor.honors} Honors` : null,
+    rigor.ib > 0 ? `${rigor.ib} IB` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ") || "—";
+
+  const gpaTrend = buildGpaTrend(gpaRecord?.yearlyBreakdown);
+
+  const rankPercentile = gpaRecord?.rankPercentile ?? null;
+  const topPercent =
+    rankPercentile != null
+      ? `Top ${100 - Math.round(rankPercentile * 100)}%`
+      : "—";
+
+  const loadingFallback = (
+    <div className="space-y-6">
+      <Skeleton className="h-10 w-64" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-28" />
+        ))}
       </div>
-    );
-  }
+      <Skeleton className="h-96" />
+    </div>
+  );
 
-  const gpa = data?.gpa ?? null;
-  const grades = data?.grades ?? {};
-  const academicYears = Object.keys(grades).sort((a, b) => b.localeCompare(a));
+  const emptyFallback = (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      className="dash-card p-12 text-center"
+    >
+      <div className="w-14 h-14 mx-auto mb-4 bg-secondary rounded-xl border border-border flex items-center justify-center">
+        <BookOpen className="h-7 w-7 text-muted-foreground" />
+      </div>
+      <h3 className="text-sm font-bold text-foreground mb-1">No Courses Yet</h3>
+      <p className="text-xs text-muted-foreground max-w-md mx-auto">
+        Your transcript will populate once course grades have been entered by
+        your school.
+      </p>
+    </motion.div>
+  );
 
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-end justify-between gap-6"
-      >
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-            Academic Record
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground mb-1">
-            My Transcript
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            A full view of your academic history, GPA, and credit progress.
-          </p>
-        </div>
-
-        <div className="flex-shrink-0">
-          <Button
-            onClick={handleRecompute}
-            disabled={recomputing}
-            className="bg-foreground text-background hover:bg-foreground/90"
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${recomputing ? "animate-spin" : ""}`}
-            />
-            Recompute GPA
-          </Button>
-        </div>
-      </motion.div>
-
-      {/* GPA Summary Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="grid grid-cols-2 md:grid-cols-4 gap-3"
-      >
-        {/* Unweighted GPA */}
-        <div
-          className="dash-card p-5"
-          style={{ background: "var(--admin-bg-card)" }}
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-              <GraduationCap className="w-4 h-4 text-indigo-600" />
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">
-              Unweighted GPA
-            </p>
-          </div>
-          <p
-            className="text-2xl font-bold"
-            style={{ color: "var(--admin-font-primary, inherit)" }}
-          >
-            {formatGpa(gpa?.gpaUnweighted)}
-            <span className="text-sm text-muted-foreground font-medium ml-1">
-              / 4.0
-            </span>
-          </p>
-        </div>
-
-        {/* Weighted GPA */}
-        <div
-          className="dash-card p-5"
-          style={{ background: "var(--admin-bg-card)" }}
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-              <Award className="w-4 h-4 text-purple-600" />
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">
-              Weighted GPA
-            </p>
-          </div>
-          <p
-            className="text-2xl font-bold"
-            style={{ color: "var(--admin-font-primary, inherit)" }}
-          >
-            {formatGpa(gpa?.gpaWeighted)}
-            <span className="text-sm text-muted-foreground font-medium ml-1">
-              / 5.0
-            </span>
-          </p>
-        </div>
-
-        {/* Class Rank */}
-        <div
-          className="dash-card p-5"
-          style={{ background: "var(--admin-bg-card)" }}
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-              <Hash className="w-4 h-4 text-amber-600" />
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">
-              Class Rank
-            </p>
-          </div>
-          <p
-            className="text-2xl font-bold"
-            style={{ color: "var(--admin-font-primary, inherit)" }}
-          >
-            {gpa?.classRank != null && gpa?.classSize != null
-              ? `${gpa.classRank} / ${gpa.classSize}`
-              : "—"}
-          </p>
-        </div>
-
-        {/* Total Credits */}
-        <div
-          className="dash-card p-5"
-          style={{ background: "var(--admin-bg-card)" }}
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-              <CreditCard className="w-4 h-4 text-emerald-600" />
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">
-              Total Credits
-            </p>
-          </div>
-          <p
-            className="text-2xl font-bold"
-            style={{ color: "var(--admin-font-primary, inherit)" }}
-          >
-            {gpa?.totalCredits ?? 0}
-            <span className="text-sm text-muted-foreground font-medium ml-1">
-              cr
-            </span>
-          </p>
-        </div>
-      </motion.div>
-
-      {/* Transcript Table */}
-      {academicYears.length === 0 ? (
+    <QueryStateBoundary
+      isLoading={loading}
+      isError={error}
+      isEmpty={isEmpty}
+      onRetry={load}
+      loadingFallback={loadingFallback}
+      emptyFallback={emptyFallback}
+    >
+      <div className="space-y-8">
+        {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="dash-card p-12 text-center"
+          className="flex flex-col md:flex-row md:items-end justify-between gap-6"
         >
-          <div className="w-14 h-14 mx-auto mb-4 bg-secondary rounded-xl border border-border flex items-center justify-center">
-            <BookOpen className="h-7 w-7 text-muted-foreground" />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              Academic Record
+            </p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground mb-1">
+              My Transcript
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              A full view of your academic history, GPA, and credit progress.
+            </p>
           </div>
-          <h3 className="text-sm font-bold text-foreground mb-1">
-            No Courses Yet
-          </h3>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto">
-            Your transcript will populate once course grades have been entered
-            by your school.
-          </p>
         </motion.div>
-      ) : (
+
+        {/* GPA Summary Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3"
+        >
+          {/* Unweighted GPA */}
+          <div className="dash-card p-5" style={{ background: "var(--admin-bg-card)" }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                <GraduationCap className="w-4 h-4 text-indigo-600" />
+              </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Unweighted GPA
+              </p>
+            </div>
+            <p
+              className="text-2xl font-bold"
+              style={{ color: "var(--admin-font-primary, inherit)" }}
+            >
+              {formatGpa(data?.gpaUnweighted)}
+              <span className="text-sm text-muted-foreground font-medium ml-1">
+                / 4.0
+              </span>
+            </p>
+          </div>
+
+          {/* Weighted GPA */}
+          <div className="dash-card p-5" style={{ background: "var(--admin-bg-card)" }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                <Award className="w-4 h-4 text-purple-600" />
+              </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Weighted GPA
+              </p>
+            </div>
+            <p
+              className="text-2xl font-bold"
+              style={{ color: "var(--admin-font-primary, inherit)" }}
+            >
+              {formatGpa(data?.gpaWeighted)}
+              <span className="text-sm text-muted-foreground font-medium ml-1">
+                / 5.0
+              </span>
+            </p>
+          </div>
+
+          {/* Class Rank */}
+          <div className="dash-card p-5" style={{ background: "var(--admin-bg-card)" }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                <Hash className="w-4 h-4 text-amber-600" />
+              </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Class Rank
+              </p>
+            </div>
+            <p
+              className="text-2xl font-bold"
+              style={{ color: "var(--admin-font-primary, inherit)" }}
+            >
+              {gpaRecord?.classRank != null && gpaRecord?.classSize != null
+                ? `${gpaRecord.classRank} / ${gpaRecord.classSize}`
+                : "—"}
+            </p>
+          </div>
+
+          {/* Total Credits */}
+          <div className="dash-card p-5" style={{ background: "var(--admin-bg-card)" }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                <CreditCard className="w-4 h-4 text-emerald-600" />
+              </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Total Credits
+              </p>
+            </div>
+            <p
+              className="text-2xl font-bold"
+              style={{ color: "var(--admin-font-primary, inherit)" }}
+            >
+              {Number(data?.totalCredits ?? 0)}
+              <span className="text-sm text-muted-foreground font-medium ml-1">
+                cr
+              </span>
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Sweetener Row: Rigor Card + GPA Sparkline + Rank Percentile */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-3"
+        >
+          {/* Rigor Card */}
+          <div className="dash-card p-5" style={{ background: "var(--admin-bg-card)" }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-[#065292]" />
+              </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Course Rigor
+              </p>
+            </div>
+            <p
+              className="text-sm font-semibold"
+              style={{ color: "var(--admin-font-primary, inherit)" }}
+            >
+              {rigorLabel}
+            </p>
+          </div>
+
+          {/* GPA Trend Sparkline */}
+          <div className="dash-card p-5" style={{ background: "var(--admin-bg-card)" }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-[#065292]" />
+              </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                GPA Trend
+              </p>
+            </div>
+            {gpaTrend.length > 1 ? (
+              <ResponsiveContainer width="100%" height={48}>
+                <LineChart data={gpaTrend}>
+                  <YAxis domain={["auto", "auto"]} hide />
+                  <Tooltip
+                    formatter={(value) =>
+                      typeof value === "number" ? value.toFixed(2) : "—"
+                    }
+                    labelFormatter={(label: string) => label}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="gpaUnweighted"
+                    stroke="#065292"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {gpaTrend.length === 1 ? "More years needed for trend" : "—"}
+              </p>
+            )}
+          </div>
+
+          {/* Rank Percentile */}
+          <div className="dash-card p-5" style={{ background: "var(--admin-bg-card)" }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+                <Trophy className="w-4 h-4 text-amber-600" />
+              </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Class Standing
+              </p>
+            </div>
+            <p
+              className="text-2xl font-bold"
+              style={{ color: "var(--admin-font-primary, inherit)" }}
+            >
+              {topPercent}
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Transcript Table by Year */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -256,8 +340,8 @@ export default function TranscriptPage() {
           className="space-y-6"
         >
           {academicYears.map((year, yearIdx) => {
-            const rows = grades[year];
-            const yearGpa = gpa?.yearlyBreakdown?.[year];
+            const rows = byYear[year];
+            const yearGpa = gpaRecord?.yearlyBreakdown?.[year];
 
             return (
               <motion.div
@@ -281,19 +365,19 @@ export default function TranscriptPage() {
                       <span>
                         Unweighted:{" "}
                         <span className="font-semibold text-foreground">
-                          {formatGpa(yearGpa.unweighted)}
+                          {formatGpa(yearGpa.gpaUnweighted)}
                         </span>
                       </span>
                       <span>
                         Weighted:{" "}
                         <span className="font-semibold text-foreground">
-                          {formatGpa(yearGpa.weighted)}
+                          {formatGpa(yearGpa.gpaWeighted)}
                         </span>
                       </span>
                       <span>
                         Credits:{" "}
                         <span className="font-semibold text-foreground">
-                          {yearGpa.credits}
+                          {Number(yearGpa.totalCredits)}
                         </span>
                       </span>
                     </div>
@@ -345,7 +429,7 @@ export default function TranscriptPage() {
                               </span>
                             </td>
                             <td className="px-5 py-3 text-xs text-foreground">
-                              {row.credits}
+                              {Number(row.credits)}
                             </td>
                             <td className="px-5 py-3">
                               {row.courseLevel ? (
@@ -373,7 +457,7 @@ export default function TranscriptPage() {
             );
           })}
         </motion.div>
-      )}
-    </div>
+      </div>
+    </QueryStateBoundary>
   );
 }

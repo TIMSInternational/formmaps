@@ -7,22 +7,28 @@ export interface StudentGpa {
   classRank: number | null;
   classSize: number | null;
   rankPercentile: number | null;
-  yearlyBreakdown: Record<string, { unweighted: number; weighted: number; credits: number }>;
+  yearlyBreakdown: Record<string, { gpaUnweighted: number | null; gpaWeighted: number | null; totalCredits: number }>;
   computedAt: string;
 }
 
+export interface TranscriptRow {
+  id: string;
+  courseId: string;
+  courseCode: string | null;
+  grade: string | null;
+  credits: number;
+  courseLevel: string | null;
+  semester: string | null;
+  academicYear: string | null;
+  status: string;
+}
+
+// Matches getTranscriptData(): `byYear` for tables + FLAT GPA fields for cards.
 export interface TranscriptData {
-  grades: Record<string, Array<{
-    id: string;
-    courseId: string;
-    courseCode: string | null;
-    grade: string | null;
-    credits: number;
-    courseLevel: string | null;
-    semester: string | null;
-    status: string;
-  }>>;
-  gpa: StudentGpa | null;
+  byYear: Record<string, TranscriptRow[]>;
+  gpaUnweighted: number | null;
+  gpaWeighted: number | null;
+  totalCredits: number;
 }
 
 export interface GpaConfig {
