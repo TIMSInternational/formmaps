@@ -70,8 +70,8 @@ export function ResumePreviewWithToggle({ hasOriginal, loadOriginalUrl, edited }
     <div className="flex flex-col gap-3">
       {hasOriginal && (
         <div role="tablist" className="flex gap-2">
-          {tabBtn("original", "Original")}
-          {tabBtn("edited", "Edited")}
+          {tabBtn("original", "Original (uploaded PDF)")}
+          {tabBtn("edited", "Preview (live, AI-editable)")}
         </div>
       )}
 

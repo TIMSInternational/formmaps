@@ -95,6 +95,45 @@ export async function deleteResume(resumeId: string): Promise<void> {
   return apiRequest(`/api/resume/${resumeId}`, { method: "DELETE" });
 }
 
+export interface AiEditResult {
+  applied: boolean;
+  message?: string;
+  changeSummary?: string;
+  resume?: Resume;
+}
+
+/**
+ * Apply a natural-language edit to a resume. The backend re-writes the full
+ * resume via AI, persists it, and returns the updated row (or applied:false on
+ * a parse/validate failure so the resume is never corrupted).
+ */
+export async function aiEditResume(
+  resumeId: string,
+  instruction: string
+): Promise<AiEditResult> {
+  const response = await apiRequest(`/api/resume/${resumeId}/ai-edit`, {
+    method: "POST",
+    data: { instruction },
+  });
+  const data = (response?.data ?? response) as {
+    applied?: boolean;
+    message?: string;
+    changeSummary?: string;
+    resume?: unknown;
+  };
+  return {
+    applied: Boolean(data?.applied),
+    message: data?.message,
+    changeSummary: data?.changeSummary,
+    resume: data?.resume
+      ? fromApiResume({
+          ...(data.resume as Record<string, unknown>),
+          id: resumeId,
+        } as Parameters<typeof fromApiResume>[0])
+      : undefined,
+  };
+}
+
 export async function getOriginalUrl(resumeId: string): Promise<string | null> {
   try {
     const res = await apiRequest(`/api/resume/${resumeId}/original`, { method: "GET" });
