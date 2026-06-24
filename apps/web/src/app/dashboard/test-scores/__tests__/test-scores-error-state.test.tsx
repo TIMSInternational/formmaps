@@ -49,6 +49,7 @@ jest.mock("motion/react", () => {
 jest.mock("@/services/testScoreService", () => ({
   listTestScores: jest.fn(),
   getSuperScore: jest.fn(),
+  getCollegeFit: jest.fn(),
   addTestScore: jest.fn(),
   updateTestScore: jest.fn(),
   deleteTestScore: jest.fn(),
@@ -57,11 +58,13 @@ jest.mock("@/services/testScoreService", () => ({
 import {
   listTestScores,
   getSuperScore,
+  getCollegeFit,
 } from "@/services/testScoreService";
 import TestScoresPage from "../page";
 
 const mockListTestScores = listTestScores as jest.MockedFunction<typeof listTestScores>;
 const mockGetSuperScore = getSuperScore as jest.MockedFunction<typeof getSuperScore>;
+const mockGetCollegeFit = getCollegeFit as jest.MockedFunction<typeof getCollegeFit>;
 
 // ── tests ─────────────────────────────────────────────────────────────────────
 
@@ -71,6 +74,7 @@ describe("TestScoresPage — error state", () => {
   it("shows a 'couldn't load' message when service calls reject", async () => {
     mockListTestScores.mockRejectedValue(new Error("network error"));
     mockGetSuperScore.mockRejectedValue(new Error("network error"));
+    mockGetCollegeFit.mockRejectedValue(new Error("network error"));
 
     render(<TestScoresPage />);
 
@@ -83,6 +87,7 @@ describe("TestScoresPage — error state", () => {
   it("does NOT show 'No test scores yet' when service calls reject", async () => {
     mockListTestScores.mockRejectedValue(new Error("network error"));
     mockGetSuperScore.mockRejectedValue(new Error("network error"));
+    mockGetCollegeFit.mockRejectedValue(new Error("network error"));
 
     render(<TestScoresPage />);
 
@@ -95,6 +100,7 @@ describe("TestScoresPage — error state", () => {
   it("shows the empty state ('No test scores yet') when service resolves with empty data", async () => {
     mockListTestScores.mockResolvedValue([]);
     mockGetSuperScore.mockResolvedValue({ sat: null, act: null });
+    mockGetCollegeFit.mockResolvedValue({ superscore: null, colleges: [] });
 
     render(<TestScoresPage />);
 
@@ -107,6 +113,7 @@ describe("TestScoresPage — error state", () => {
   it("does NOT show the error UI when service resolves with empty data", async () => {
     mockListTestScores.mockResolvedValue([]);
     mockGetSuperScore.mockResolvedValue({ sat: null, act: null });
+    mockGetCollegeFit.mockResolvedValue({ superscore: null, colleges: [] });
 
     render(<TestScoresPage />);
 

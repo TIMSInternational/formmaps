@@ -12,8 +12,10 @@ import {
   updateTestScore,
   deleteTestScore,
   getSuperScore,
+  getCollegeFit,
   TestScore,
   SuperScore,
+  CollegeFitResult,
 } from "@/services/testScoreService";
 
 import {
@@ -25,10 +27,12 @@ import {
 import { ScoreEntryForm } from "./_components/score-entry-form";
 import { SuperScoreBanner } from "./_components/super-score-banner";
 import { ScoreList } from "./_components/score-list";
+import { CollegeFitCard } from "./_components/college-fit-card";
 
 export default function TestScoresPage() {
   const [scores, setScores] = useState<TestScore[]>([]);
   const [superScore, setSuperScore] = useState<SuperScore | null>(null);
+  const [collegeFit, setCollegeFit] = useState<CollegeFitResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<boolean>(false);
   const [showForm, setShowForm] = useState(false);
@@ -40,9 +44,10 @@ export default function TestScoresPage() {
   async function fetchAll() {
     setError(false);
     try {
-      const [s, ss] = await Promise.all([listTestScores(), getSuperScore()]);
+      const [s, ss, cf] = await Promise.all([listTestScores(), getSuperScore(), getCollegeFit()]);
       setScores(s);
       setSuperScore(ss);
+      setCollegeFit(cf);
     } catch {
       setError(true);
       toast.error("Failed to load test scores");
@@ -163,6 +168,8 @@ export default function TestScoresPage() {
       </motion.div>
 
       <SuperScoreBanner superScore={superScore} />
+
+      {collegeFit && <CollegeFitCard result={collegeFit} />}
 
       <ScoreEntryForm
         show={showForm}
