@@ -3,7 +3,7 @@
  * pending edit/delete, rejection note.
  */
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -299,6 +299,66 @@ describe("CommunityServicePage", () => {
       await screen.findByText("Library");
       expect(screen.queryByRole("button", { name: /edit/i })).toBeNull();
       expect(screen.queryByRole("button", { name: /delete/i })).toBeNull();
+    });
+  });
+
+  describe("delete path", () => {
+    const pendingEntry = {
+      id: "e5",
+      organization: "Park Cleanup",
+      description: "Cleaned the park",
+      hours: 2,
+      date: "2026-05-01",
+      status: "pending" as const,
+      createdAt: "2026-05-01T00:00:00Z",
+    };
+
+    function setupWithPendingEntry(deleteMutate: jest.Mock) {
+      mockUseMyCommunityService.mockReturnValue({
+        data: {
+          totalHoursRequired: 40,
+          totalHoursLogged: 2,
+          totalHoursVerified: 0,
+          entries: [pendingEntry],
+        },
+        isLoading: false,
+        isError: false,
+        refetch: jest.fn(),
+      });
+      mockUseLogCommunityService.mockReturnValue(noopMutation);
+      mockUseUpdateCommunityService.mockReturnValue(noopMutation);
+      mockUseDeleteCommunityService.mockReturnValue({
+        mutate: deleteMutate,
+        isPending: false,
+      });
+    }
+
+    it("calls delete mutate with the entry id when confirm returns true", async () => {
+      const deleteMutate = jest.fn();
+      setupWithPendingEntry(deleteMutate);
+      jest.spyOn(window, "confirm").mockReturnValue(true);
+
+      render(<CommunityServicePage />);
+      await screen.findByText("Park Cleanup");
+      fireEvent.click(screen.getByRole("button", { name: /delete/i }));
+
+      expect(deleteMutate).toHaveBeenCalledTimes(1);
+      expect(deleteMutate).toHaveBeenCalledWith(
+        "e5",
+        expect.objectContaining({ onSettled: expect.any(Function) }),
+      );
+    });
+
+    it("does NOT call delete mutate when confirm returns false", async () => {
+      const deleteMutate = jest.fn();
+      setupWithPendingEntry(deleteMutate);
+      jest.spyOn(window, "confirm").mockReturnValue(false);
+
+      render(<CommunityServicePage />);
+      await screen.findByText("Park Cleanup");
+      fireEvent.click(screen.getByRole("button", { name: /delete/i }));
+
+      expect(deleteMutate).not.toHaveBeenCalled();
     });
   });
 });

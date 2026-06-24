@@ -35,10 +35,10 @@ export interface ServiceEntryCardProps {
   index: number;
   onEdit: (entry: CommunityServiceEntry) => void;
   onDelete: (entryId: string) => void;
-  isDeleting: boolean;
+  deletingId: string | null;
 }
 
-export function ServiceEntryCard({ entry, index, onEdit, onDelete, isDeleting }: ServiceEntryCardProps) {
+export function ServiceEntryCard({ entry, index, onEdit, onDelete, deletingId }: ServiceEntryCardProps) {
   const sc = statusConfig[entry.status];
   const Icon = sc.icon;
   return (
@@ -103,7 +103,7 @@ export function ServiceEntryCard({ entry, index, onEdit, onDelete, isDeleting }:
               size="sm"
               variant="outline"
               onClick={() => onDelete(entry.id)}
-              disabled={isDeleting}
+              disabled={deletingId === entry.id}
               className="h-7 px-3 text-xs border-red-200 text-red-600 hover:bg-red-50"
             >
               <Trash2 className="h-3 w-3 mr-1" />

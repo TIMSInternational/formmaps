@@ -7,7 +7,6 @@ import {
   Plus,
   Clock,
   CheckCircle2,
-  XCircle,
   Calendar,
   Building2,
   User,
@@ -59,6 +58,7 @@ export default function CommunityServicePage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
 
   const openAddForm = () => {
@@ -106,7 +106,10 @@ export default function CommunityServicePage() {
 
   const handleDelete = (entryId: string) => {
     if (!window.confirm("Delete this entry? This cannot be undone.")) return;
-    deleteMutation.mutate(entryId);
+    setDeletingId(entryId);
+    deleteMutation.mutate(entryId, {
+      onSettled: () => setDeletingId(null),
+    });
   };
 
   const totalRequired = data?.totalHoursRequired ?? 0;
@@ -383,7 +386,7 @@ export default function CommunityServicePage() {
                 index={index}
                 onEdit={openEditForm}
                 onDelete={handleDelete}
-                isDeleting={deleteMutation.isPending}
+                deletingId={deletingId}
               />
             ))}
           </div>
