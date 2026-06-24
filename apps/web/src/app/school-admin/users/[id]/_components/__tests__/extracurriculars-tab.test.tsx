@@ -71,6 +71,7 @@ function buildSummary(overrides: Partial<CommunityServiceSummary> = {}): Communi
     totalHoursRequired: 60,
     totalHoursLogged: 10,
     totalHoursVerified: 5,
+    totalHoursPending: 5,
     entries: [baseEntry],
     ...overrides,
   };
