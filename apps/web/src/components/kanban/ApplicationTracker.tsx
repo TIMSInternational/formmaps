@@ -15,7 +15,6 @@ import {
   ArrowLeft,
   Loader2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
   listApplications,
   createApplication,
@@ -282,20 +281,7 @@ export function ApplicationTracker() {
                           )}
                         </div>
                       </div>
-                      {app.matchScore && (
-                        <div
-                          className={cn(
-                            "mt-2 text-[10px] font-semibold px-1.5 py-0.5 rounded w-fit",
-                            app.matchScore >= 80
-                              ? "bg-emerald-500/10 text-emerald-400"
-                              : app.matchScore >= 60
-                              ? "bg-blue-500/10 text-blue-400"
-                              : "bg-amber-500/10 text-amber-400",
-                          )}
-                        >
-                          {app.matchScore}% match
-                        </div>
-                      )}
+                      {/* matchScore / Fit badge intentionally hidden — always empty until the admission engine is wired in sub-project B. */}
                     </motion.div>
                   ))}
                 </AnimatePresence>
