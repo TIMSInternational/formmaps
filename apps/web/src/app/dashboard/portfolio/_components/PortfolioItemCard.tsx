@@ -44,11 +44,12 @@ export function PortfolioItemCard({ item, index, onEdit, onDelete }: PortfolioIt
                 )}
               </div>
             </div>
-            <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                aria-label={`Edit ${item.title}`}
+                className="h-7 w-7 text-muted-foreground hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2"
                 onClick={() => onEdit(item)}
               >
                 <Edit className="h-3.5 w-3.5" />
@@ -56,8 +57,13 @@ export function PortfolioItemCard({ item, index, onEdit, onDelete }: PortfolioIt
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-7 w-7 text-muted-foreground hover:text-rose-600"
-                onClick={() => onDelete(item.id)}
+                aria-label={`Delete ${item.title}`}
+                className="h-7 w-7 text-muted-foreground hover:text-rose-600 focus-visible:opacity-100 focus-visible:ring-2"
+                onClick={() => {
+                  if (window.confirm(`Delete "${item.title}"? This cannot be undone.`)) {
+                    onDelete(item.id);
+                  }
+                }}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
