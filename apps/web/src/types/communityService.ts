@@ -15,7 +15,7 @@ export interface CommunityServiceEntry {
   status: CommunityServiceStatus;
   verifiedBy?: string;
   verifiedAt?: string;
-  rejectionNote?: string;
+  note?: string;
   createdAt: string;
 }
 
@@ -31,6 +31,15 @@ export interface CommunityServicePayload {
   description: string;
   hours: number;
   date: string;
+  supervisorName?: string;
+  supervisorEmail?: string;
+}
+
+export interface CommunityServiceUpdatePayload {
+  organization?: string;
+  description?: string;
+  hours?: number;
+  date?: string;
   supervisorName?: string;
   supervisorEmail?: string;
 }

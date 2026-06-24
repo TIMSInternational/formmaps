@@ -6,9 +6,12 @@ import {
   logCommunityService,
   getStudentCommunityService,
   verifyCommunityServiceEntry,
+  updateCommunityService,
+  deleteCommunityService,
 } from "@/services/communityServiceService";
 import type {
   CommunityServicePayload,
+  CommunityServiceUpdatePayload,
   CommunityServiceVerifyPayload,
 } from "@/types/communityService";
 import { toast } from "sonner";
@@ -38,6 +41,31 @@ export function useLogCommunityService() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: communityServiceKeys.all });
       toast.success("Community service hours logged");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useUpdateCommunityService() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ entryId, payload }: { entryId: string; payload: CommunityServiceUpdatePayload }) =>
+      updateCommunityService(entryId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: communityServiceKeys.all });
+      toast.success("Entry updated");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useDeleteCommunityService() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (entryId: string) => deleteCommunityService(entryId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: communityServiceKeys.all });
+      toast.success("Entry deleted");
     },
     onError: (err: Error) => toast.error(err.message),
   });

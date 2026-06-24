@@ -33,18 +33,18 @@ export function ExtracurricularsTab({ csData, verifyEntry }: ExtracurricularsTab
             <div>
               <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Service Requirement</div>
               <div style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 2 }}>
-                {csData?.totalHoursVerified ?? 0} <span style={{ fontSize: 14, color: "var(--admin-font-tertiary)", fontWeight: 400 }}>/ {csData?.totalHoursRequired ?? 40} hrs</span>
+                {csData?.totalHoursVerified ?? 0} <span style={{ fontSize: 14, color: "var(--admin-font-tertiary)", fontWeight: 400 }}>/ {csData?.totalHoursRequired ?? 0} hrs</span>
               </div>
             </div>
             <Heart style={{ width: 20, height: 20, color: "#ec4899", opacity: 0.5 }} />
           </div>
           <Progress
-            value={((csData?.totalHoursVerified ?? 0) / (csData?.totalHoursRequired ?? 40)) * 100}
+            value={csData?.totalHoursRequired ? ((csData.totalHoursVerified ?? 0) / csData.totalHoursRequired) * 100 : 0}
             className="h-2"
           />
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
             <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>0 hrs</span>
-            <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>Goal: {csData?.totalHoursRequired ?? 40} hrs</span>
+            <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>Goal: {csData?.totalHoursRequired ?? 0} hrs</span>
           </div>
         </div>
 
@@ -83,6 +83,9 @@ export function ExtracurricularsTab({ csData, verifyEntry }: ExtracurricularsTab
                     {entry.description && (
                       <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 6, lineHeight: 1.4 }}>{entry.description}</p>
                     )}
+                    {entry.status === "rejected" && entry.note && (
+                      <p style={{ fontSize: 11, color: "#ef4444", marginTop: 6, lineHeight: 1.4 }}>Reason: {entry.note}</p>
+                    )}
                   </div>
 
                   {isPending && (
@@ -102,7 +105,11 @@ export function ExtracurricularsTab({ csData, verifyEntry }: ExtracurricularsTab
                       </button>
                       <button
                         disabled={verifyEntry.isPending}
-                        onClick={() => verifyEntry.mutate({ entryId: entry.id, payload: { status: "rejected" } })}
+                        onClick={() => {
+                          const note = window.prompt("Reason for rejection (optional):");
+                          if (note === null) return;
+                          verifyEntry.mutate({ entryId: entry.id, payload: { status: "rejected", note } });
+                        }}
                         style={{
                           height: 28, borderRadius: 5, padding: "0 8px",
                           fontSize: 10, fontWeight: 600,
