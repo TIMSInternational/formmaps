@@ -39,7 +39,7 @@ export function ExtracurricularsTab({ csData, verifyEntry }: ExtracurricularsTab
             <Heart style={{ width: 20, height: 20, color: "#ec4899", opacity: 0.5 }} />
           </div>
           <Progress
-            value={((csData?.totalHoursVerified ?? 0) / (csData?.totalHoursRequired ?? 0)) * 100}
+            value={csData?.totalHoursRequired ? ((csData.totalHoursVerified ?? 0) / csData.totalHoursRequired) * 100 : 0}
             className="h-2"
           />
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>

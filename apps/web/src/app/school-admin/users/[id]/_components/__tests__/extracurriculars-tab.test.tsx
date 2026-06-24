@@ -89,10 +89,19 @@ describe("ExtracurricularsTab — requirement fallback", () => {
     expect(screen.queryByText(/40 hrs/)).not.toBeInTheDocument();
   });
 
-  it("renders '/ 0 hrs' (not 40) when csData is undefined", () => {
+  it("renders '/ 0 hrs' (not 40) when csData is undefined, and emits no NaN console.error", () => {
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     render(<ExtracurricularsTab csData={undefined} verifyEntry={buildMutation()} />);
     // Should NOT show 40 anywhere
     expect(screen.queryByText(/40 hrs/)).not.toBeInTheDocument();
+    // Should positively show "/ 0 hrs"
+    expect(screen.getByText(/\/ 0 hrs/)).toBeInTheDocument();
+    // No NaN prop warning should have been emitted
+    const nanCalls = errorSpy.mock.calls.filter((args) =>
+      args.some((a) => typeof a === "string" && a.includes("NaN"))
+    );
+    expect(nanCalls).toHaveLength(0);
+    errorSpy.mockRestore();
   });
 });
 
