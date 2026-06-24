@@ -5,14 +5,17 @@ import { motion } from "motion/react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { QueryStateBoundary } from "@/components/QueryStateBoundary";
 import {
   listTestScores,
   addTestScore,
   updateTestScore,
   deleteTestScore,
   getSuperScore,
+  getCollegeFit,
   TestScore,
   SuperScore,
+  CollegeFitResult,
 } from "@/services/testScoreService";
 
 import {
@@ -24,11 +27,14 @@ import {
 import { ScoreEntryForm } from "./_components/score-entry-form";
 import { SuperScoreBanner } from "./_components/super-score-banner";
 import { ScoreList } from "./_components/score-list";
+import { CollegeFitCard } from "./_components/college-fit-card";
 
 export default function TestScoresPage() {
   const [scores, setScores] = useState<TestScore[]>([]);
   const [superScore, setSuperScore] = useState<SuperScore | null>(null);
+  const [collegeFit, setCollegeFit] = useState<CollegeFitResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<boolean>(false);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -36,11 +42,14 @@ export default function TestScoresPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
 
   async function fetchAll() {
+    setError(false);
     try {
-      const [s, ss] = await Promise.all([listTestScores(), getSuperScore()]);
+      const [s, ss, cf] = await Promise.all([listTestScores(), getSuperScore(), getCollegeFit()]);
       setScores(s);
       setSuperScore(ss);
+      setCollegeFit(cf);
     } catch {
+      setError(true);
       toast.error("Failed to load test scores");
     } finally {
       setLoading(false);
@@ -160,6 +169,8 @@ export default function TestScoresPage() {
 
       <SuperScoreBanner superScore={superScore} />
 
+      {collegeFit && <CollegeFitCard result={collegeFit} />}
+
       <ScoreEntryForm
         show={showForm}
         form={form}
@@ -170,16 +181,22 @@ export default function TestScoresPage() {
         onSave={handleSave}
       />
 
-      <ScoreList
-        loading={loading}
-        scores={scores}
-        grouped={grouped}
-        groupKeys={groupKeys}
-        deleting={deleting}
-        onEdit={openEdit}
-        onDelete={handleDelete}
-        onAddClick={openAdd}
-      />
+      <QueryStateBoundary
+        isLoading={loading}
+        isError={error}
+        onRetry={() => { setLoading(true); void fetchAll(); }}
+      >
+        <ScoreList
+          loading={false}
+          scores={scores}
+          grouped={grouped}
+          groupKeys={groupKeys}
+          deleting={deleting}
+          onEdit={openEdit}
+          onDelete={handleDelete}
+          onAddClick={openAdd}
+        />
+      </QueryStateBoundary>
     </div>
   );
 }

@@ -32,7 +32,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function DynamicFields({
+export function DynamicFields({
   form,
   onChange,
 }: {
@@ -60,7 +60,7 @@ function DynamicFields({
       return (
         <>
           <FieldRow>
-            <Field label="SAT Math (200\u2013800)">
+            <Field label="SAT Math (200–800)">
               <Input
                 type="number"
                 min={200}
@@ -72,7 +72,7 @@ function DynamicFields({
                 onChange={(e) => onChange({ satMath: e.target.value })}
               />
             </Field>
-            <Field label="SAT Reading & Writing (200\u2013800)">
+            <Field label="SAT Reading & Writing (200–800)">
               <Input
                 type="number"
                 min={200}
@@ -97,16 +97,16 @@ function DynamicFields({
       return (
         <>
           <FieldRow>
-            <Field label="English (1\u201336)">
+            <Field label="English (1–36)">
               <Input type="number" min={1} max={36} placeholder="34" className="h-10 bg-secondary border-border" value={form.actEnglish} onChange={(e) => onChange({ actEnglish: e.target.value })} />
             </Field>
-            <Field label="Math (1\u201336)">
+            <Field label="Math (1–36)">
               <Input type="number" min={1} max={36} placeholder="32" className="h-10 bg-secondary border-border" value={form.actMath} onChange={(e) => onChange({ actMath: e.target.value })} />
             </Field>
-            <Field label="Reading (1\u201336)">
+            <Field label="Reading (1–36)">
               <Input type="number" min={1} max={36} placeholder="35" className="h-10 bg-secondary border-border" value={form.actReading} onChange={(e) => onChange({ actReading: e.target.value })} />
             </Field>
-            <Field label="Science (1\u201336)">
+            <Field label="Science (1–36)">
               <Input type="number" min={1} max={36} placeholder="33" className="h-10 bg-secondary border-border" value={form.actScience} onChange={(e) => onChange({ actScience: e.target.value })} />
             </Field>
           </FieldRow>
@@ -124,7 +124,7 @@ function DynamicFields({
           <Field label="Subject">
             <Input placeholder="e.g. Calculus BC" className="h-10 bg-secondary border-border" value={form.apSubject} onChange={(e) => onChange({ apSubject: e.target.value })} />
           </Field>
-          <Field label="Score (1\u20135)">
+          <Field label="Score (1–5)">
             <Select value={form.apScore} onValueChange={(v) => onChange({ apScore: v })}>
               <SelectTrigger className="h-10 bg-secondary border-border">
                 <SelectValue placeholder="Select score" />

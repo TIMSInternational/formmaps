@@ -55,3 +55,24 @@ export async function getStudentTestScores(studentId: string): Promise<TestScore
   const res = await apiRequest(`/api/v1/test-scores/students/${studentId}/test-scores`, { method: "GET" });
   return res?.data ?? res ?? [];
 }
+
+export interface CollegeFit {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  acceptanceRate: number;
+  sat25: number;
+  sat75: number;
+  fit: "reach" | "match" | "safety";
+}
+
+export interface CollegeFitResult {
+  superscore: number | null;
+  colleges: CollegeFit[];
+}
+
+export async function getCollegeFit(): Promise<CollegeFitResult> {
+  const res = await apiRequest("/api/v1/test-scores/college-fit", { method: "GET" });
+  return res?.data ?? res;
+}
