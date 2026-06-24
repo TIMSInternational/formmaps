@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Edit } from "lucide-react";
+import { Plus, Edit, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { typeConfig, activityCategories } from "./portfolioConfig";
+import { polishDescription } from "./polishDescription";
 import type { PortfolioItemPayload, PortfolioItemType, PortfolioItem, StudentActivityCategory } from "@/types/portfolio";
 
 interface PortfolioFormDialogProps {
@@ -41,6 +43,18 @@ export function PortfolioFormDialog({
   isPending,
 }: PortfolioFormDialogProps) {
   const { t } = useTranslation();
+  const [polishing, setPolishing] = useState(false);
+
+  async function handlePolish() {
+    if (!formData.description || polishing) return;
+    setPolishing(true);
+    try {
+      const polished = await polishDescription(formData.description);
+      onFormDataChange({ ...formData, description: polished });
+    } finally {
+      setPolishing(false);
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -130,9 +144,26 @@ export function PortfolioFormDialog({
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</label>
-              <span className={`text-xs tabular-nums ${(formData.description ?? "").length > 150 ? "text-rose-500" : "text-muted-foreground"}`}>
-                {(formData.description ?? "").length}/150
-              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs text-[#065292] hover:text-[#065292] hover:bg-blue-50 gap-1"
+                  disabled={polishing || !(formData.description ?? "").trim()}
+                  onClick={handlePolish}
+                >
+                  {polishing ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3 h-3" />
+                  )}
+                  Polish with AI
+                </Button>
+                <span className={`text-xs tabular-nums ${(formData.description ?? "").length > 150 ? "text-rose-500" : "text-muted-foreground"}`}>
+                  {(formData.description ?? "").length}/150
+                </span>
+              </div>
             </div>
             <Textarea
               placeholder="Describe your responsibilities and what you learned..."
