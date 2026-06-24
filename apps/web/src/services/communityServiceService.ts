@@ -25,10 +25,16 @@ function toSummary(payload: unknown): CommunityServiceSummary {
     typeof p.totalHoursVerified === "number"
       ? p.totalHoursVerified
       : entries.filter((e) => e.status === "verified").reduce((s, e) => s + e.hours, 0);
+  // Pending counts ONLY status==="pending" hours. Deriving it as logged−verified
+  // wrongly folded rejected entries (which are in `logged`) into Pending.
+  const pending = entries
+    .filter((e) => e.status === "pending")
+    .reduce((s, e) => s + e.hours, 0);
   return {
     totalHoursRequired: typeof p.totalHoursRequired === "number" ? p.totalHoursRequired : 0,
     totalHoursLogged: logged,
     totalHoursVerified: verified,
+    totalHoursPending: pending,
     entries,
   };
 }

@@ -23,6 +23,7 @@ export interface CommunityServiceSummary {
   totalHoursRequired: number;
   totalHoursLogged: number;
   totalHoursVerified: number;
+  totalHoursPending: number;
   entries: CommunityServiceEntry[];
 }
 

@@ -35,7 +35,27 @@ describe("getMyCommunityService", () => {
     expect(summary.entries).toHaveLength(2);
     expect(summary.totalHoursLogged).toBe(6);
     expect(summary.totalHoursVerified).toBe(2);
+    expect(summary.totalHoursPending).toBe(4); // the one pending entry
     expect(summary.entries[0].hours).toBe(4); // numeric, not string
+  });
+
+  it("excludes REJECTED hours from totalHoursPending (only status==='pending' counts)", async () => {
+    // Regression: Pending used to be derived as logged−verified, which folded
+    // rejected hours into Pending. A rejected entry must count toward neither
+    // verified nor pending.
+    mockApiRequest.mockResolvedValue({
+      success: true,
+      data: {
+        data: [
+          entry({ id: "p1", hours: "5", status: "pending" }),
+          entry({ id: "v1", hours: "12", status: "verified" }),
+          entry({ id: "r1", hours: "8", status: "rejected" }),
+        ],
+      },
+    });
+    const summary = await getMyCommunityService();
+    expect(summary.totalHoursVerified).toBe(12);
+    expect(summary.totalHoursPending).toBe(5); // NOT 13 (the rejected 8 is excluded)
   });
 
   it("handles an empty log", async () => {
@@ -44,6 +64,7 @@ describe("getMyCommunityService", () => {
     expect(summary.entries).toEqual([]);
     expect(summary.totalHoursLogged).toBe(0);
     expect(summary.totalHoursVerified).toBe(0);
+    expect(summary.totalHoursPending).toBe(0);
   });
 });
 

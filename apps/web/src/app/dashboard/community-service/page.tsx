@@ -113,8 +113,8 @@ export default function CommunityServicePage() {
   };
 
   const totalRequired = data?.totalHoursRequired ?? 0;
-  const totalLogged = data?.totalHoursLogged ?? 0;
   const totalVerified = data?.totalHoursVerified ?? 0;
+  const totalPending = data?.totalHoursPending ?? 0;
   const progress = totalRequired > 0 ? Math.min((totalVerified / totalRequired) * 100, 100) : 0;
   const remaining = Math.max(0, totalRequired - totalVerified);
 
@@ -198,7 +198,7 @@ export default function CommunityServicePage() {
             <p className="text-xs font-medium text-muted-foreground">Pending</p>
           </div>
           <p className="text-2xl font-bold text-foreground">
-            {totalLogged - totalVerified > 0 ? totalLogged - totalVerified : 0}<span className="text-sm text-muted-foreground font-medium ml-1">hrs</span>
+            {totalPending}<span className="text-sm text-muted-foreground font-medium ml-1">hrs</span>
           </p>
         </div>
 
