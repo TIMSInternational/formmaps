@@ -230,11 +230,11 @@ export function AcademicsTab({
       )}
 
       {/* Transcript */}
-      {transcriptData?.grades && Object.keys(transcriptData.grades).length > 0 && (
+      {transcriptData?.byYear && Object.keys(transcriptData.byYear).length > 0 && (
         <Card>
           <CardHeader icon={FileText} color="#065292" title="Transcript" />
           <div style={{ padding: 16 }} className="space-y-4">
-            {Object.entries(transcriptData.grades).sort(([a], [b]) => b.localeCompare(a)).map(([year, courses]) => (
+            {Object.entries(transcriptData.byYear).sort(([a], [b]) => b.localeCompare(a)).map(([year, courses]) => (
               <div key={year}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 6, paddingBottom: 4, borderBottom: "1px solid var(--admin-border-default)" }}>
                   {year}
