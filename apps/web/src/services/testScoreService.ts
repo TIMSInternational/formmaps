@@ -61,7 +61,7 @@ export interface CollegeFit {
   name: string;
   city: string;
   state: string;
-  acceptanceRate: number;
+  acceptanceRate: number | null;
   sat25: number;
   sat75: number;
   fit: "reach" | "match" | "safety";

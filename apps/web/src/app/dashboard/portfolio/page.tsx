@@ -7,6 +7,7 @@ import { Plus, FolderOpen, Heart, Trophy, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { QueryStateBoundary } from "@/components/QueryStateBoundary";
 import {
   usePortfolioItems,
   usePortfolioSummary,
@@ -27,7 +28,7 @@ export default function PortfolioPage() {
   const [formData, setFormData] = useState<PortfolioItemPayload>(emptyPayload);
 
   const typeFilter = activeType === "all" ? undefined : (activeType as PortfolioItemType);
-  const { data: portfolioData, isLoading } = usePortfolioItems({ type: typeFilter });
+  const { data: portfolioData, isLoading, isError, refetch } = usePortfolioItems({ type: typeFilter });
   const { data: summary } = usePortfolioSummary();
   const createItem = useCreatePortfolioItem();
   const updateItem = useUpdatePortfolioItem();
@@ -69,18 +70,6 @@ export default function PortfolioPage() {
       createItem.mutate(formData, { onSuccess: () => setShowForm(false) });
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (<Skeleton key={i} className="h-28" />))}
-        </div>
-        <Skeleton className="h-96" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">
@@ -153,23 +142,38 @@ export default function PortfolioPage() {
       </motion.div>
 
       {/* Items Grid */}
-      {items.length === 0 ? (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="dash-card p-12 text-center">
-          <div className="w-14 h-14 mx-auto mb-4 bg-secondary rounded-xl border border-border flex items-center justify-center">
-            <FolderOpen className="h-7 w-7 text-muted-foreground" />
+      <QueryStateBoundary
+        isLoading={isLoading}
+        isError={isError}
+        isEmpty={items.length === 0}
+        onRetry={() => refetch()}
+        loadingFallback={
+          <div className="space-y-6">
+            <Skeleton className="h-10 w-64" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (<Skeleton key={i} className="h-28" />))}
+            </div>
+            <Skeleton className="h-96" />
           </div>
-          <h3 className="text-sm font-bold text-foreground mb-1">
-            {t("portfolio.noItemsTitle", "Build Your Portfolio")}
-          </h3>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto mb-6">
-            {t("portfolio.noItems", "Showcase your achievements, projects, and experiences to stand out. Start adding items to build your professional profile.")}
-          </p>
-          <Button onClick={openCreateForm} className="bg-foreground text-background hover:bg-foreground/90">
-            <Plus className="h-4 w-4 mr-2" />
-            {t("portfolio.addFirst", "Add Your First Item")}
-          </Button>
-        </motion.div>
-      ) : (
+        }
+        emptyFallback={
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="dash-card p-12 text-center">
+            <div className="w-14 h-14 mx-auto mb-4 bg-secondary rounded-xl border border-border flex items-center justify-center">
+              <FolderOpen className="h-7 w-7 text-muted-foreground" />
+            </div>
+            <h3 className="text-sm font-bold text-foreground mb-1">
+              {t("portfolio.noItemsTitle", "Build Your Portfolio")}
+            </h3>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto mb-6">
+              {t("portfolio.noItems", "Showcase your achievements, projects, and experiences to stand out. Start adding items to build your professional profile.")}
+            </p>
+            <Button onClick={openCreateForm} className="bg-foreground text-background hover:bg-foreground/90">
+              <Plus className="h-4 w-4 mr-2" />
+              {t("portfolio.addFirst", "Add Your First Item")}
+            </Button>
+          </motion.div>
+        }
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <AnimatePresence mode="popLayout">
             {items.map((item: PortfolioItem, index: number) => (
@@ -178,7 +182,7 @@ export default function PortfolioPage() {
             ))}
           </AnimatePresence>
         </div>
-      )}
+      </QueryStateBoundary>
 
       {/* Create/Edit Dialog */}
       <PortfolioFormDialog
