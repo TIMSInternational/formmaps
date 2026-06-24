@@ -152,7 +152,7 @@ export function EssaysTab({
           {essays.map((essay) => {
             const statusCfg = ESSAY_STATUS_CONFIG[essay.status];
             const isExpanded = expandedEssay === essay.id;
-            const draft = essayDrafts[essay.id] ?? essay.draft ?? "";
+            const draft = essayDrafts[essay.id] ?? essay.currentDraft ?? "";
             const wc = wordCount(draft);
             const review = aiReviews[essay.id];
 

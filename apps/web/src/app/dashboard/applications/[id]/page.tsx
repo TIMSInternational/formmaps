@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/apiClient";
 import { TrackedApplication } from "@/services/applicationService";
 import { Essay, ChecklistItem } from "../_components/types";
+import { buildDraftPayload, draftsFromEssays } from "./essay-payload";
 import { ApplicationHeader } from "../_components/application-header";
 import { OverviewTab } from "../_components/overview-tab";
 import { EssaysTab } from "../_components/essays-tab";
@@ -87,11 +88,9 @@ export default function ApplicationDetailPage() {
       try {
         setLoadingEssays(true);
         const res = await apiRequest<{ data: Essay[] }>(`/api/v1/student/applications/${id}/essays`, { method: "GET" });
-        const list: Essay[] = (res as { data: Essay[] })?.data ?? (res as unknown as Essay[]) ?? [];
+        const list: Essay[] = (res as unknown as { data: { data: Essay[] } })?.data?.data ?? (res as { data: Essay[] })?.data ?? [];
         setEssays(list);
-        const drafts: Record<string, string> = {};
-        list.forEach((e) => { if (e.draft) drafts[e.id] = e.draft; });
-        setEssayDrafts(drafts);
+        setEssayDrafts(draftsFromEssays(list));
       } catch {
         toast.error("Failed to load essays");
       } finally {
@@ -169,10 +168,10 @@ export default function ApplicationDetailPage() {
       const draft = essayDrafts[essayId] ?? "";
       const res = await apiRequest<{ data: Essay }>(`/api/v1/student/applications/${id}/essays/${essayId}`, {
         method: "PUT",
-        data: { draft, status: draft ? "in_progress" : "not_started" },
+        data: buildDraftPayload(draft),
         showErrorToast: true,
       });
-      const updated: Essay = (res as { data: Essay })?.data ?? (res as unknown as Essay);
+      const updated: Essay = (res as unknown as { data: { data: Essay } })?.data?.data ?? (res as { data: Essay })?.data ?? ({} as Essay);
       setEssays((prev) => prev.map((e) => (e.id === essayId ? { ...e, ...updated } : e)));
       toast.success("Draft saved");
     } catch {
@@ -185,12 +184,12 @@ export default function ApplicationDetailPage() {
   const requestAiReview = useCallback(async (essayId: string) => {
     try {
       setReviewingEssay(essayId);
-      const res = await apiRequest<{ feedback: string; data?: { feedback: string } }>(`/api/v1/student/applications/${id}/essays/${essayId}/ai-review`, {
+      const res = await apiRequest<{ data: { feedback: string } }>(`/api/v1/student/applications/${id}/essays/${essayId}/ai-review`, {
         method: "POST",
-        data: { draft: essayDrafts[essayId] ?? "" },
+        data: {},
         showErrorToast: true,
       });
-      const feedback: string = (res as { feedback: string })?.feedback ?? (res as { data?: { feedback: string } })?.data?.feedback ?? "No feedback returned.";
+      const feedback: string = (res as { data: { feedback: string } })?.data?.feedback ?? (res as unknown as { feedback: string })?.feedback ?? "No feedback returned.";
       setAiReviews((prev) => ({ ...prev, [essayId]: feedback }));
       toast.success("AI review complete");
     } catch {
