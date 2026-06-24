@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { PortfolioFormDialog } from "../PortfolioFormDialog";
 import { emptyPayload } from "../portfolioConfig";
 import type { PortfolioItemPayload } from "@/types/portfolio";
@@ -16,14 +16,17 @@ function buildPayload(overrides: Partial<PortfolioItemPayload> = {}): PortfolioI
   return { ...emptyPayload, ...overrides };
 }
 
-function renderDialog(payload: PortfolioItemPayload) {
+function renderDialog(
+  payload: PortfolioItemPayload,
+  onFormDataChange: jest.Mock = jest.fn(),
+) {
   return render(
     <PortfolioFormDialog
       open={true}
       onOpenChange={jest.fn()}
       editingItem={null}
       formData={payload}
-      onFormDataChange={jest.fn()}
+      onFormDataChange={onFormDataChange}
       onSubmit={jest.fn()}
       isPending={false}
     />,
@@ -46,6 +49,29 @@ describe("PortfolioFormDialog", () => {
   it("renders the Weeks/Year number input", () => {
     renderDialog(buildPayload());
     expect(screen.getByLabelText(/weeks\/year/i)).toBeInTheDocument();
+  });
+
+  it("preserves a typed 0 in number inputs (does not collapse to undefined)", () => {
+    const onFormDataChange = jest.fn();
+    renderDialog(buildPayload(), onFormDataChange);
+    fireEvent.change(screen.getByLabelText(/hours\/week/i), { target: { value: "0" } });
+    expect(onFormDataChange).toHaveBeenCalledWith(
+      expect.objectContaining({ hoursPerWeek: 0 }),
+    );
+    onFormDataChange.mockClear();
+    fireEvent.change(screen.getByLabelText(/weeks\/year/i), { target: { value: "0" } });
+    expect(onFormDataChange).toHaveBeenCalledWith(
+      expect.objectContaining({ weeksPerYear: 0 }),
+    );
+  });
+
+  it("clears a number input to undefined when emptied", () => {
+    const onFormDataChange = jest.fn();
+    renderDialog(buildPayload({ hoursPerWeek: 5 }), onFormDataChange);
+    fireEvent.change(screen.getByLabelText(/hours\/week/i), { target: { value: "" } });
+    expect(onFormDataChange).toHaveBeenCalledWith(
+      expect.objectContaining({ hoursPerWeek: undefined }),
+    );
   });
 
   it("renders the Activity Category select control", () => {

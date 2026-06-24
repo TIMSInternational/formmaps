@@ -53,7 +53,7 @@ describe("CollegeFitCard", () => {
   it("renders 'Admit rate N/A' (not '0% admit') when acceptanceRate is null", () => {
     const result: CollegeFitResult = {
       superscore: 1500,
-      colleges: [{ ...baseCollege, acceptanceRate: null as unknown as number }],
+      colleges: [{ ...baseCollege, acceptanceRate: null }],
     };
     render(<CollegeFitCard result={result} />);
     expect(screen.getByText(/Admit rate N\/A/)).toBeInTheDocument();
