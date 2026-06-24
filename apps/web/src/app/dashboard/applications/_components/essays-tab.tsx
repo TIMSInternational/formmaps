@@ -14,10 +14,13 @@ import {
 } from "lucide-react";
 import { Essay, ESSAY_STATUS_CONFIG, wordCount } from "./types";
 import { FormInput, LoadingRow, EmptyState } from "./shared";
+import { QueryStateBoundary } from "@/components/QueryStateBoundary";
 
 interface EssaysTabProps {
   essays: Essay[];
   loadingEssays: boolean;
+  essaysError?: boolean;
+  onRetryEssays?: () => void;
   expandedEssay: string | null;
   essayDrafts: Record<string, string>;
   savingEssay: string | null;
@@ -37,6 +40,8 @@ interface EssaysTabProps {
 export function EssaysTab({
   essays,
   loadingEssays,
+  essaysError = false,
+  onRetryEssays,
   expandedEssay,
   essayDrafts,
   savingEssay,
@@ -143,11 +148,14 @@ export function EssaysTab({
       </AnimatePresence>
 
       {/* Essay list */}
-      {loadingEssays ? (
-        <LoadingRow />
-      ) : essays.length === 0 ? (
-        <EmptyState icon={<BookOpen className="h-8 w-8" />} message="No essays yet. Add your first essay to get started." />
-      ) : (
+      <QueryStateBoundary
+        isLoading={loadingEssays}
+        isError={essaysError}
+        isEmpty={!loadingEssays && !essaysError && essays.length === 0}
+        onRetry={onRetryEssays}
+        loadingFallback={<LoadingRow />}
+        emptyFallback={<EmptyState icon={<BookOpen className="h-8 w-8" />} message="No essays yet. Add your first essay to get started." />}
+      >
         <div className="space-y-2">
           {essays.map((essay) => {
             const statusCfg = ESSAY_STATUS_CONFIG[essay.status];
@@ -321,7 +329,7 @@ export function EssaysTab({
             );
           })}
         </div>
-      )}
+      </QueryStateBoundary>
     </motion.div>
   );
 }
