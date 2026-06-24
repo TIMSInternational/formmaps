@@ -6,21 +6,20 @@ import { Badge } from "@/components/ui/badge";
 import { TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import type { StudentGpa, TranscriptData } from "@/services/transcriptService";
 
 interface TranscriptCourse {
   id: string;
   courseCode?: string | null;
   courseLevel?: string | null;
-  credits?: number;
+  credits?: number | null;
   grade?: string | null;
   status?: string;
 }
 
 interface GradesTabProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  gpaData: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transcriptData: any;
+  gpaData: StudentGpa | null | undefined;
+  transcriptData: TranscriptData | null | undefined;
 }
 
 export function GradesTab({ gpaData, transcriptData }: GradesTabProps) {
@@ -80,9 +79,9 @@ export function GradesTab({ gpaData, transcriptData }: GradesTabProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {transcriptData?.grades && Object.keys(transcriptData.grades).length > 0 ? (
+          {transcriptData?.byYear && Object.keys(transcriptData.byYear).length > 0 ? (
             <div className="space-y-5">
-              {Object.entries(transcriptData.grades)
+              {Object.entries(transcriptData.byYear)
                 .sort(([a], [b]) => b.localeCompare(a))
                 .map(([year, courses]) => (
                   <div key={year}>
@@ -105,7 +104,7 @@ export function GradesTab({ gpaData, transcriptData }: GradesTabProps) {
                             <tr key={c.id} className="border-t border-gray-50">
                               <td className="py-1.5 pr-3 text-gray-600 font-medium">{c.courseCode || "N/A"}</td>
                               <td className="py-1.5 pr-3 text-gray-700">{c.courseLevel || "Regular"}</td>
-                              <td className="py-1.5 pr-3 text-center text-gray-500">{c.credits}</td>
+                              <td className="py-1.5 pr-3 text-center text-gray-500">{Number(c.credits ?? 0)}</td>
                               <td className={cn(
                                 "py-1.5 pr-3 text-center font-semibold",
                                 c.grade === "A" || c.grade === "A+" || c.grade === "A-" ? "text-emerald-600" :

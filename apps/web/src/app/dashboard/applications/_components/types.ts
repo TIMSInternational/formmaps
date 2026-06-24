@@ -6,8 +6,8 @@ export interface Essay {
   prompt?: string;
   wordLimit?: number;
   dueDate?: string;
-  status: "not_started" | "in_progress" | "complete";
-  draft?: string;
+  status: "not_started" | "drafting" | "review" | "final";
+  currentDraft?: string;
 }
 
 // Field names match the API rows (itemName/isCompleted) — the old name/completed
@@ -37,10 +37,11 @@ export const CATEGORY_ORDER: ChecklistItem["category"][] = [
   "other",
 ];
 
-export const ESSAY_STATUS_CONFIG = {
+export const ESSAY_STATUS_CONFIG: Record<Essay["status"], { label: string; color: string; bg: string }> = {
   not_started: { label: "Not Started", color: "var(--admin-font-tertiary)", bg: "var(--admin-bg-hover)" },
-  in_progress: { label: "In Progress", color: "var(--admin-accent-amber)", bg: "rgba(245,158,11,0.1)" },
-  complete: { label: "Complete", color: "var(--admin-accent-green)", bg: "rgba(16,185,129,0.1)" },
+  drafting:    { label: "Drafting",    color: "var(--admin-accent-amber)",  bg: "rgba(245,158,11,0.1)" },
+  review:      { label: "In Review",   color: "var(--admin-accent-blue)",   bg: "rgba(59,130,246,0.1)" },
+  final:       { label: "Final",       color: "var(--admin-accent-green)",  bg: "rgba(16,185,129,0.1)" },
 };
 
 export const COLUMN_LABELS: Record<string, string> = {

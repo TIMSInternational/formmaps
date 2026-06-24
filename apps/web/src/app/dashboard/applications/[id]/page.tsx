@@ -14,10 +14,12 @@ import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/apiClient";
 import { TrackedApplication } from "@/services/applicationService";
 import { Essay, ChecklistItem } from "../_components/types";
+import { buildDraftPayload, draftsFromEssays } from "./essay-payload";
 import { ApplicationHeader } from "../_components/application-header";
 import { OverviewTab } from "../_components/overview-tab";
 import { EssaysTab } from "../_components/essays-tab";
 import { ChecklistTab } from "../_components/checklist-tab";
+import { QueryStateBoundary } from "@/components/QueryStateBoundary";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -32,6 +34,7 @@ export default function ApplicationDetailPage() {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [app, setApp] = useState<TrackedApplication | null>(null);
   const [isLoadingApp, setIsLoadingApp] = useState(true);
+  const [appLoadError, setAppLoadError] = useState(false);
 
   // Overview
   const [notes, setNotes] = useState("");
@@ -41,6 +44,7 @@ export default function ApplicationDetailPage() {
   // Essays
   const [essays, setEssays] = useState<Essay[]>([]);
   const [loadingEssays, setLoadingEssays] = useState(false);
+  const [essaysError, setEssaysError] = useState(false);
   const [expandedEssay, setExpandedEssay] = useState<string | null>(null);
   const [essayDrafts, setEssayDrafts] = useState<Record<string, string>>({});
   const [savingEssay, setSavingEssay] = useState<string | null>(null);
@@ -59,47 +63,51 @@ export default function ApplicationDetailPage() {
 
   // ── Load application ──────────────────────────────────────────────────────
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setIsLoadingApp(true);
-        const res = await apiRequest<{ data: TrackedApplication } | TrackedApplication>(
-          `/api/v1/student/applications/${id}`,
-          { method: "GET" }
-        );
-        const data = (res as { data: TrackedApplication })?.data ?? res;
-        setApp(data as TrackedApplication);
-        setNotes((data as TrackedApplication)?.notes ?? "");
-      } catch {
-        toast.error("Failed to load application");
-      } finally {
-        setIsLoadingApp(false);
-      }
+  const loadApp = useCallback(async () => {
+    try {
+      setIsLoadingApp(true);
+      setAppLoadError(false);
+      const res = await apiRequest<{ data: TrackedApplication } | TrackedApplication>(
+        `/api/v1/student/applications/${id}`,
+        { method: "GET" }
+      );
+      const data = (res as { data: TrackedApplication })?.data ?? res;
+      setApp(data as TrackedApplication);
+      setNotes((data as TrackedApplication)?.notes ?? "");
+    } catch {
+      setAppLoadError(true);
+      toast.error("Failed to load application");
+    } finally {
+      setIsLoadingApp(false);
     }
-    load();
   }, [id]);
+
+  useEffect(() => {
+    loadApp();
+  }, [loadApp]);
 
   // ── Load essays when tab opens ────────────────────────────────────────────
 
+  const loadEssays = useCallback(async () => {
+    try {
+      setLoadingEssays(true);
+      setEssaysError(false);
+      const res = await apiRequest<{ data: Essay[] }>(`/api/v1/student/applications/${id}/essays`, { method: "GET" });
+      const list: Essay[] = (res as unknown as { data: { data: Essay[] } })?.data?.data ?? (res as { data: Essay[] })?.data ?? [];
+      setEssays(list);
+      setEssayDrafts(draftsFromEssays(list));
+    } catch {
+      setEssaysError(true);
+      toast.error("Failed to load essays");
+    } finally {
+      setLoadingEssays(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     if (activeTab !== "essays" || essays.length > 0) return;
-    async function load() {
-      try {
-        setLoadingEssays(true);
-        const res = await apiRequest<{ data: Essay[] }>(`/api/v1/student/applications/${id}/essays`, { method: "GET" });
-        const list: Essay[] = (res as { data: Essay[] })?.data ?? (res as unknown as Essay[]) ?? [];
-        setEssays(list);
-        const drafts: Record<string, string> = {};
-        list.forEach((e) => { if (e.draft) drafts[e.id] = e.draft; });
-        setEssayDrafts(drafts);
-      } catch {
-        toast.error("Failed to load essays");
-      } finally {
-        setLoadingEssays(false);
-      }
-    }
-    load();
-  }, [activeTab, id, essays.length]);
+    loadEssays();
+  }, [activeTab, id, essays.length, loadEssays]);
 
   // ── Load checklist when tab opens ─────────────────────────────────────────
 
@@ -169,10 +177,10 @@ export default function ApplicationDetailPage() {
       const draft = essayDrafts[essayId] ?? "";
       const res = await apiRequest<{ data: Essay }>(`/api/v1/student/applications/${id}/essays/${essayId}`, {
         method: "PUT",
-        data: { draft, status: draft ? "in_progress" : "not_started" },
+        data: buildDraftPayload(draft),
         showErrorToast: true,
       });
-      const updated: Essay = (res as { data: Essay })?.data ?? (res as unknown as Essay);
+      const updated: Essay = (res as unknown as { data: { data: Essay } })?.data?.data ?? (res as { data: Essay })?.data ?? ({} as Essay);
       setEssays((prev) => prev.map((e) => (e.id === essayId ? { ...e, ...updated } : e)));
       toast.success("Draft saved");
     } catch {
@@ -185,12 +193,12 @@ export default function ApplicationDetailPage() {
   const requestAiReview = useCallback(async (essayId: string) => {
     try {
       setReviewingEssay(essayId);
-      const res = await apiRequest<{ feedback: string; data?: { feedback: string } }>(`/api/v1/student/applications/${id}/essays/${essayId}/ai-review`, {
+      const res = await apiRequest<{ data: { feedback: string } }>(`/api/v1/student/applications/${id}/essays/${essayId}/ai-review`, {
         method: "POST",
-        data: { draft: essayDrafts[essayId] ?? "" },
+        data: {},
         showErrorToast: true,
       });
-      const feedback: string = (res as { feedback: string })?.feedback ?? (res as { data?: { feedback: string } })?.data?.feedback ?? "No feedback returned.";
+      const feedback: string = (res as { data: { feedback: string } })?.data?.feedback ?? (res as unknown as { feedback: string })?.feedback ?? "No feedback returned.";
       setAiReviews((prev) => ({ ...prev, [essayId]: feedback }));
       toast.success("AI review complete");
     } catch {
@@ -268,27 +276,30 @@ export default function ApplicationDetailPage() {
     { id: "checklist", label: "Checklist", icon: <CheckSquare className="h-3.5 w-3.5" /> },
   ];
 
-  if (isLoadingApp) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!app) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 gap-3">
-        <FileText className="h-10 w-10 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Application not found.</p>
-        <button onClick={() => router.push("/dashboard/applications")} className="text-xs underline" style={{ color: "var(--admin-accent-blue)" }}>
-          Back to tracker
-        </button>
-      </div>
-    );
-  }
+  const appNotFound = !isLoadingApp && !appLoadError && !app;
 
   return (
+    <QueryStateBoundary
+      isLoading={isLoadingApp}
+      isError={appLoadError}
+      isEmpty={appNotFound}
+      onRetry={loadApp}
+      loadingFallback={
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      }
+      emptyFallback={
+        <div className="flex flex-col items-center justify-center py-24 gap-3">
+          <FileText className="h-10 w-10 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Application not found.</p>
+          <button onClick={() => router.push("/dashboard/applications")} className="text-xs underline" style={{ color: "var(--admin-accent-blue)" }}>
+            Back to tracker
+          </button>
+        </div>
+      }
+    >
+    {app && (
     <div className="space-y-5 max-w-4xl">
       {/* ── Header ── */}
       <ApplicationHeader app={app} onBack={() => router.push("/dashboard/applications")} />
@@ -335,6 +346,8 @@ export default function ApplicationDetailPage() {
           <EssaysTab
             essays={essays}
             loadingEssays={loadingEssays}
+            essaysError={essaysError}
+            onRetryEssays={loadEssays}
             expandedEssay={expandedEssay}
             essayDrafts={essayDrafts}
             savingEssay={savingEssay}
@@ -369,5 +382,7 @@ export default function ApplicationDetailPage() {
         )}
       </AnimatePresence>
     </div>
+    )}
+    </QueryStateBoundary>
   );
 }

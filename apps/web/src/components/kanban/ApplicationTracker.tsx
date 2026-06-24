@@ -13,9 +13,7 @@ import {
   Trash2,
   ArrowRight,
   ArrowLeft,
-  Loader2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
   listApplications,
   createApplication,
@@ -24,6 +22,7 @@ import {
   TrackedApplication,
 } from "@/services/applicationService";
 import { toast } from "sonner";
+import { QueryStateBoundary } from "@/components/QueryStateBoundary";
 
 type ColumnId = "researching" | "shortlisted" | "applying" | "applied" | "accepted";
 
@@ -46,6 +45,7 @@ export function ApplicationTracker() {
   const router = useRouter();
   const [applications, setApplications] = useState<TrackedApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
   const [addingTo, setAddingTo] = useState<ColumnId | null>(null);
   const [newName, setNewName] = useState("");
   const [newLocation, setNewLocation] = useState("");
@@ -59,9 +59,11 @@ export function ApplicationTracker() {
   const loadData = async () => {
     try {
       setIsLoading(true);
+      setIsError(false);
       const data = await listApplications();
       setApplications(data);
     } catch {
+      setIsError(true);
       toast.error("Failed to load applications");
     } finally {
       setIsLoading(false);
@@ -126,15 +128,8 @@ export function ApplicationTracker() {
     }
   }, [applications]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
+    <QueryStateBoundary isLoading={isLoading} isError={isError} onRetry={loadData}>
     <div className="space-y-4">
       {/* Columns */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
@@ -282,20 +277,7 @@ export function ApplicationTracker() {
                           )}
                         </div>
                       </div>
-                      {app.matchScore && (
-                        <div
-                          className={cn(
-                            "mt-2 text-[10px] font-semibold px-1.5 py-0.5 rounded w-fit",
-                            app.matchScore >= 80
-                              ? "bg-emerald-500/10 text-emerald-400"
-                              : app.matchScore >= 60
-                              ? "bg-blue-500/10 text-blue-400"
-                              : "bg-amber-500/10 text-amber-400",
-                          )}
-                        >
-                          {app.matchScore}% match
-                        </div>
-                      )}
+                      {/* matchScore / Fit badge intentionally hidden — always empty until the admission engine is wired in sub-project B. */}
                     </motion.div>
                   ))}
                 </AnimatePresence>
@@ -387,5 +369,6 @@ export function ApplicationTracker() {
         })}
       </div>
     </div>
+    </QueryStateBoundary>
   );
 }

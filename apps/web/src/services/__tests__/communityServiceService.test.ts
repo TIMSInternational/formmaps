@@ -1,5 +1,10 @@
 import { apiRequest } from "@/lib/api/apiClient";
-import { getMyCommunityService, getStudentCommunityService } from "@/services/communityServiceService";
+import {
+  getMyCommunityService,
+  getStudentCommunityService,
+  updateCommunityService,
+  deleteCommunityService,
+} from "@/services/communityServiceService";
 
 jest.mock("@/lib/api/apiClient", () => ({ apiRequest: jest.fn() }));
 const mockApiRequest = apiRequest as jest.Mock;
@@ -49,5 +54,48 @@ describe("getStudentCommunityService", () => {
     expect(summary.entries).toHaveLength(1);
     expect(summary.totalHoursLogged).toBe(4);
     expect(summary.totalHoursVerified).toBe(4);
+  });
+});
+
+describe("getMyCommunityService — totalHoursRequired", () => {
+  it("reads totalHoursRequired:60 from the payload", async () => {
+    mockApiRequest.mockResolvedValue({
+      success: true,
+      data: { data: [entry()], totalHours: 4, totalHoursRequired: 60 },
+    });
+    const summary = await getMyCommunityService();
+    expect(summary.totalHoursRequired).toBe(60);
+  });
+
+  it("defaults to 0 (never 40) when totalHoursRequired is absent", async () => {
+    mockApiRequest.mockResolvedValue({
+      success: true,
+      data: { data: [], totalHours: 0 },
+    });
+    const summary = await getMyCommunityService();
+    expect(summary.totalHoursRequired).toBe(0);
+    expect(summary.totalHoursRequired).not.toBe(40);
+  });
+});
+
+describe("updateCommunityService", () => {
+  it("issues a PUT to /api/v1/student/community-service/:id", async () => {
+    mockApiRequest.mockResolvedValue({ success: true, data: entry({ organization: "X" }) });
+    await updateCommunityService("e1", { organization: "X" });
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/api/v1/student/community-service/e1",
+      { method: "PUT", data: { organization: "X" } }
+    );
+  });
+});
+
+describe("deleteCommunityService", () => {
+  it("issues a DELETE to /api/v1/student/community-service/:id", async () => {
+    mockApiRequest.mockResolvedValue({ success: true, data: entry() });
+    await deleteCommunityService("e1");
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/api/v1/student/community-service/e1",
+      { method: "DELETE" }
+    );
   });
 });
