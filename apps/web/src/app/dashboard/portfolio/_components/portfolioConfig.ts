@@ -7,7 +7,7 @@ import {
   Star,
   FileText,
 } from "lucide-react";
-import type { PortfolioItemType, PortfolioItemPayload } from "@/types/portfolio";
+import type { PortfolioItemType, PortfolioItemPayload, StudentActivityCategory } from "@/types/portfolio";
 
 export const typeConfig: Record<
   PortfolioItemType,
@@ -60,4 +60,15 @@ export const emptyPayload: PortfolioItemPayload = {
   isCurrent: false,
   role: "",
   achievements: [],
+  activityCategory: "other",
 };
+
+export const activityCategories: { value: StudentActivityCategory; label: string }[] = [
+  { value: "academic", label: "Academic" },
+  { value: "athletic", label: "Athletic" },
+  { value: "arts", label: "Arts" },
+  { value: "community_service", label: "Community Service" },
+  { value: "work", label: "Work" },
+  { value: "leadership", label: "Leadership" },
+  { value: "other", label: "Other" },
+];

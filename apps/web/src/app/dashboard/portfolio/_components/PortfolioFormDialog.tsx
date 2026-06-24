@@ -18,8 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { typeConfig } from "./portfolioConfig";
-import type { PortfolioItemPayload, PortfolioItemType, PortfolioItem } from "@/types/portfolio";
+import { typeConfig, activityCategories } from "./portfolioConfig";
+import type { PortfolioItemPayload, PortfolioItemType, PortfolioItem, StudentActivityCategory } from "@/types/portfolio";
 
 interface PortfolioFormDialogProps {
   open: boolean;
@@ -128,11 +128,17 @@ export function PortfolioFormDialog({
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</label>
+              <span className={`text-xs tabular-nums ${(formData.description ?? "").length > 150 ? "text-rose-500" : "text-muted-foreground"}`}>
+                {(formData.description ?? "").length}/150
+              </span>
+            </div>
             <Textarea
               placeholder="Describe your responsibilities and what you learned..."
               className="resize-none bg-secondary border-border min-h-[80px]"
               value={formData.description}
+              maxLength={150}
               onChange={(e) =>
                 onFormDataChange({ ...formData, description: e.target.value })
               }
@@ -183,6 +189,79 @@ export function PortfolioFormDialog({
                   onFormDataChange({
                     ...formData,
                     totalHours: e.target.value ? Number(e.target.value) : undefined,
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1 md:col-span-1">
+              <label
+                htmlFor="portfolio-activity-category"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
+                Activity Category
+              </label>
+              <Select
+                value={formData.activityCategory ?? "other"}
+                onValueChange={(v) =>
+                  onFormDataChange({ ...formData, activityCategory: v as StudentActivityCategory })
+                }
+              >
+                <SelectTrigger
+                  id="portfolio-activity-category"
+                  className="h-10 bg-secondary border-border"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {activityCategories.map(({ value, label }) => (
+                    <SelectItem key={value} value={value} className="cursor-pointer">
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label
+                htmlFor="portfolio-hours-per-week"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
+                Hours/Week
+              </label>
+              <Input
+                id="portfolio-hours-per-week"
+                type="number"
+                placeholder="0"
+                className="h-10 bg-secondary border-border"
+                value={formData.hoursPerWeek ?? ""}
+                onChange={(e) =>
+                  onFormDataChange({
+                    ...formData,
+                    hoursPerWeek: Number(e.target.value) || undefined,
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <label
+                htmlFor="portfolio-weeks-per-year"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
+                Weeks/Year
+              </label>
+              <Input
+                id="portfolio-weeks-per-year"
+                type="number"
+                placeholder="0"
+                className="h-10 bg-secondary border-border"
+                value={formData.weeksPerYear ?? ""}
+                onChange={(e) =>
+                  onFormDataChange({
+                    ...formData,
+                    weeksPerYear: Number(e.target.value) || undefined,
                   })
                 }
               />
