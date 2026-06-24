@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { typeConfig, activityCategories } from "./portfolioConfig";
 import { polishDescription } from "./polishDescription";
@@ -74,6 +75,11 @@ export function PortfolioFormDialog({
                 </>
               )}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {editingItem
+                ? t("portfolio.editItemDescription", "Edit the details of this portfolio experience.")
+                : t("portfolio.addItemDescription", "Add a new experience to your portfolio.")}
+            </DialogDescription>
           </DialogHeader>
         </div>
 
@@ -271,7 +277,7 @@ export function PortfolioFormDialog({
                 onChange={(e) =>
                   onFormDataChange({
                     ...formData,
-                    hoursPerWeek: Number(e.target.value) || undefined,
+                    hoursPerWeek: e.target.value === "" ? undefined : Number(e.target.value),
                   })
                 }
               />
@@ -292,7 +298,7 @@ export function PortfolioFormDialog({
                 onChange={(e) =>
                   onFormDataChange({
                     ...formData,
-                    weeksPerYear: Number(e.target.value) || undefined,
+                    weeksPerYear: e.target.value === "" ? undefined : Number(e.target.value),
                   })
                 }
               />
