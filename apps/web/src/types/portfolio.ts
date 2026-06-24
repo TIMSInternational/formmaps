@@ -2,6 +2,15 @@
 // Student Portfolio Types (EPIC 6)
 // ============================================
 
+export type StudentActivityCategory =
+  | "academic"
+  | "athletic"
+  | "arts"
+  | "community_service"
+  | "work"
+  | "leadership"
+  | "other";
+
 export type PortfolioItemType =
   | "extracurricular"
   | "award"
@@ -22,6 +31,8 @@ export interface PortfolioItem {
   isCurrent: boolean;
   role?: string;
   hoursPerWeek?: number;
+  weeksPerYear?: number;
+  activityCategory?: StudentActivityCategory;
   totalHours?: number;
   achievements?: string[];
   attachments: PortfolioAttachment[];
@@ -47,6 +58,8 @@ export interface PortfolioItemPayload {
   isCurrent: boolean;
   role?: string;
   hoursPerWeek?: number;
+  weeksPerYear?: number;
+  activityCategory?: StudentActivityCategory;
   totalHours?: number;
   achievements?: string[];
 }
