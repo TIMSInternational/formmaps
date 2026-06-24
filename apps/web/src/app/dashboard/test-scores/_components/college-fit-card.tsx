@@ -56,7 +56,7 @@ export function CollegeFitCard({ result }: CollegeFitCardProps) {
                   {college.city}, {college.state}
                   {" · "}SAT {college.sat25}–{college.sat75}
                   {" · "}
-                  {(college.acceptanceRate * 100).toFixed(0)}% admit
+                  {college.acceptanceRate != null ? `${(college.acceptanceRate * 100).toFixed(0)}% admit` : "Admit rate N/A"}
                 </p>
               </div>
               <span
