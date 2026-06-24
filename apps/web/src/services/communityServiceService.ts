@@ -2,6 +2,7 @@ import type {
   CommunityServiceSummary,
   CommunityServiceEntry,
   CommunityServicePayload,
+  CommunityServiceUpdatePayload,
   CommunityServiceVerifyPayload,
 } from "@/types/communityService";
 import { apiRequest } from "@/lib/api/apiClient";
@@ -25,7 +26,7 @@ function toSummary(payload: unknown): CommunityServiceSummary {
       ? p.totalHoursVerified
       : entries.filter((e) => e.status === "verified").reduce((s, e) => s + e.hours, 0);
   return {
-    totalHoursRequired: typeof p.totalHoursRequired === "number" ? p.totalHoursRequired : 40,
+    totalHoursRequired: typeof p.totalHoursRequired === "number" ? p.totalHoursRequired : 0,
     totalHoursLogged: logged,
     totalHoursVerified: verified,
     entries,
@@ -68,5 +69,27 @@ export async function verifyCommunityServiceEntry(
     `/api/v1/school-admin/community-service/${entryId}/verify`,
     { method: "PUT", data: payload }
   );
+  return (res.data ?? res) as CommunityServiceEntry;
+}
+
+// ─── Student: edit and delete own entries ─────────────────────────
+
+export async function updateCommunityService(
+  entryId: string,
+  payload: CommunityServiceUpdatePayload
+): Promise<CommunityServiceEntry> {
+  const res = await apiRequest(`/api/v1/student/community-service/${entryId}`, {
+    method: "PUT",
+    data: payload,
+  });
+  return (res.data ?? res) as CommunityServiceEntry;
+}
+
+export async function deleteCommunityService(
+  entryId: string
+): Promise<CommunityServiceEntry> {
+  const res = await apiRequest(`/api/v1/student/community-service/${entryId}`, {
+    method: "DELETE",
+  });
   return (res.data ?? res) as CommunityServiceEntry;
 }
