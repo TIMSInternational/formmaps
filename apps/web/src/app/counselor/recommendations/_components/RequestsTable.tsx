@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import type { RecommendationRequest } from "@/services/recommendationService";
 import { StatusBadge } from "./StatusBadge";
-import { ActionMenu } from "./ActionMenu";
+import { RecommendationActionMenu as ActionMenu } from "@/components/recommendations/RecommendationActionMenu";
 
 export function RequestsTable({
   allRequests,

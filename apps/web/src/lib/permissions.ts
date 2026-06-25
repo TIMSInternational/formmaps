@@ -125,6 +125,7 @@ export const RolePermissionMap: Record<string, string[]> = {
     Permissions.Assessments.Read,
     Permissions.Evaluations.Read, Permissions.Evaluations.Manage,
     Permissions.Reports.Read, Permissions.Reports.School,
+    Permissions.Recommendations.Respond,
     Permissions.Alerts.Read, Permissions.Alerts.Manage,
     Permissions.Careers.Read, Permissions.Universities.Read,
     Permissions.Profile.Read, Permissions.Profile.Write,
@@ -138,6 +139,7 @@ export const RolePermissionMap: Record<string, string[]> = {
     Permissions.Assessments.Read,
     Permissions.Evaluations.Read, Permissions.Evaluations.Submit,
     Permissions.Reports.Read,
+    Permissions.Recommendations.Respond,
     Permissions.Alerts.Read, Permissions.Alerts.Manage,
     Permissions.Counselor.Dashboard, Permissions.Counselor.Notes, Permissions.Counselor.Sessions,
     Permissions.Careers.Read, Permissions.Universities.Read,
@@ -174,6 +176,7 @@ export const RolePermissionMap: Record<string, string[]> = {
     Permissions.Students.Read,
     Permissions.Coaching.Dashboard, Permissions.Coaching.Sessions,
     Permissions.Coaching.Earnings, Permissions.Coaching.Profile,
+    Permissions.Recommendations.Respond,
     Permissions.Profile.Read, Permissions.Profile.Write,
   ],
   parent: [

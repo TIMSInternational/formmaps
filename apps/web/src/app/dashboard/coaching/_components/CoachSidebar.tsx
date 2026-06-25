@@ -17,6 +17,7 @@ import {
   Video,
   DollarSign,
   BarChart3,
+  FileText,
   User,
   Users,
   Settings,
@@ -52,6 +53,7 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
       { label: t("coach.nav.calendar", "Calendar"), href: "/dashboard/coaching/calendar", icon: Calendar },
       { label: t("coach.nav.earnings", "Earnings"), href: "/dashboard/coaching/earnings", icon: DollarSign },
       { label: t("coach.nav.analytics", "Analytics"), href: "/dashboard/coaching/analytics", icon: BarChart3 },
+      { label: t("coach.nav.recommendations", "Recommendations"), href: "/dashboard/coaching/recommendations", icon: FileText },
     ],
   },
   {
