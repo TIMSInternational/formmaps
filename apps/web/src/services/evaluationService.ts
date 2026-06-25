@@ -939,7 +939,7 @@ export async function validateEvaluationToken(
       tokenExpiryDate: result.tokenExpiryDate,
       isTokenUsed: result.isTokenUsed,
       isEvaluationCompleted: result.isEvaluationCompleted,
-      instrument: result?.instrument ?? null,
+      instrument: result?.data?.instrument ?? result?.instrument ?? null,
     };
   } catch (error) {
     return {
