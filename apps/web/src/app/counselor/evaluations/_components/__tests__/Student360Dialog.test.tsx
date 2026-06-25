@@ -105,6 +105,7 @@ describe("Student360Dialog — instrument selector", () => {
       expect(createCall).toBeDefined();
       const payload = createCall![1].data;
       expect(payload.instrument).toBe("vocational");
+      expect(payload.instrumentVersion).toBe("2024-v1");
     });
   });
 
@@ -116,5 +117,47 @@ describe("Student360Dialog — instrument selector", () => {
     const options = screen.getAllByRole("option");
     const selfOption = options.find((o) => o.textContent === "Self Evaluation");
     expect(selfOption).toBeDefined();
+  });
+
+  it("creates evaluator group without instrumentVersion when vocational instrument fetch fails", async () => {
+    // Override the mock to reject the instrument fetch
+    mockApiRequest.mockImplementation((path: string) => {
+      if (path === "/api/v1/vocational360/instrument") {
+        return Promise.reject(new Error("Fetch failed"));
+      }
+      // create-group still succeeds
+      return Promise.resolve({ data: { emailSent: true } });
+    });
+
+    renderDialog();
+
+    // Open the add form
+    fireEvent.click(screen.getByRole("button", { name: /add evaluator/i }));
+
+    // Select Vocational 360
+    const instrumentSelect = screen.getByRole("combobox", { name: /instrument/i });
+    fireEvent.change(instrumentSelect, { target: { value: "vocational" } });
+
+    // Fill name and email
+    fireEvent.change(screen.getByPlaceholderText(/full name/i), { target: { value: "Charlie" } });
+    fireEvent.change(screen.getByPlaceholderText(/email address/i), { target: { value: "charlie@test.com" } });
+
+    // Wait for the instrument version fetch to reject
+    await waitFor(() =>
+      expect(mockApiRequest).toHaveBeenCalledWith("/api/v1/vocational360/instrument")
+    );
+
+    // Click Add
+    fireEvent.click(screen.getByRole("button", { name: /^add$/i }));
+
+    await waitFor(() => {
+      const createCall = mockApiRequest.mock.calls.find((c: string[]) => c[0] === "/evaluation/create-group");
+      expect(createCall).toBeDefined();
+      const payload = createCall![1].data;
+      // Creation must still happen even if fetch failed
+      expect(payload.instrument).toBe("vocational");
+      // instrumentVersion should be omitted (undefined)
+      expect(payload.instrumentVersion).toBeUndefined();
+    });
   });
 });
