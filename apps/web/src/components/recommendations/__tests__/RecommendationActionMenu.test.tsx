@@ -25,6 +25,18 @@ describe("RecommendationActionMenu", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("renders nothing for a declined request (terminal status — no available actions)", () => {
+    const { container } = render(
+      <RecommendationActionMenu
+        req={{ ...base, status: "declined", letterFileKey: null }}
+        isMyRequest
+        onAction={jest.fn()}
+      />
+    );
+    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByRole("button", { name: /actions/i })).toBeNull();
+  });
+
   it("accepts a requested request", async () => {
     respond.mockResolvedValue({});
     const onAction = jest.fn();

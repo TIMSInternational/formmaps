@@ -56,6 +56,8 @@ export function RecommendationActionMenu({
   const canUpload = req.status === "accepted" || req.status === "in_progress";
   const canDownload = req.status === "submitted" && !!req.letterFileKey;
 
+  if (!canRespond && !canMarkInProgress && !canUpload && !canDownload) return null;
+
   const handle = async (fn: () => Promise<void>) => {
     setLoading(true);
     setOpen(false);
