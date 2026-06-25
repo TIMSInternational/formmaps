@@ -89,6 +89,9 @@ export interface EvaluationData {
 export interface QuestionResponse {
   rating?: number;
   textResponse?: string;
+  selectedValues?: string[];
+  rankingOrder?: { value: string; rank: number }[];
+  textValue?: string;
 }
 
 export const DEFAULT_RESPONSE_SCALE: ResponseScale = {

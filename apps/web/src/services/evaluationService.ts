@@ -921,6 +921,7 @@ export async function validateEvaluationToken(
   tokenExpiryDate?: string;
   isTokenUsed?: boolean;
   isEvaluationCompleted?: boolean;
+  instrument?: string | null;
   error?: string;
 }> {
   try {
@@ -938,6 +939,7 @@ export async function validateEvaluationToken(
       tokenExpiryDate: result.tokenExpiryDate,
       isTokenUsed: result.isTokenUsed,
       isEvaluationCompleted: result.isEvaluationCompleted,
+      instrument: result?.instrument ?? null,
     };
   } catch (error) {
     return {
