@@ -47,4 +47,17 @@ describe("UploadLetterDialog", () => {
     const { container } = render(<UploadLetterDialog requestId="r1" open={false} onClose={jest.fn()} onUploaded={jest.fn()} />);
     expect(container).toBeEmptyDOMElement();
   });
+
+  it("resets selected file when dialog is closed and reopened", () => {
+    const { rerender } = render(<UploadLetterDialog requestId="r1" open={false} onClose={jest.fn()} onUploaded={jest.fn()} />);
+    // Open the dialog and pick a file
+    rerender(<UploadLetterDialog requestId="r1" open onClose={jest.fn()} onUploaded={jest.fn()} />);
+    pickPdf();
+    expect(screen.getByRole("button", { name: /upload/i })).not.toBeDisabled();
+    // Close the dialog
+    rerender(<UploadLetterDialog requestId="r1" open={false} onClose={jest.fn()} onUploaded={jest.fn()} />);
+    // Reopen — file should be cleared, Upload button disabled again
+    rerender(<UploadLetterDialog requestId="r1" open onClose={jest.fn()} onUploaded={jest.fn()} />);
+    expect(screen.getByRole("button", { name: /upload/i })).toBeDisabled();
+  });
 });

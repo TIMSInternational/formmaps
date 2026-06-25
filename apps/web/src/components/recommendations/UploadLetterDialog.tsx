@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Loader2, UploadCloud } from "lucide-react";
 import { uploadRecommendationLetter } from "@/services/recommendationService";
@@ -19,8 +19,12 @@ export function UploadLetterDialog({
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  if (!open) return null;
+  // Fix #1: Reset selected file when dialog (re)opens — hook must be before early return
+  useEffect(() => {
+    if (open) setFile(null);
+  }, [open]);
 
+  // Fix #3: handleUpload defined before the early-return guard
   const handleUpload = async () => {
     if (!file) return;
     setUploading(true);
@@ -35,6 +39,8 @@ export function UploadLetterDialog({
       setUploading(false);
     }
   };
+
+  if (!open) return null;
 
   return (
     <div
@@ -65,7 +71,7 @@ export function UploadLetterDialog({
           <button
             onClick={onClose}
             disabled={uploading}
-            style={{ height: 34, padding: "0 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", border: "1px solid var(--admin-border-default)", cursor: "pointer" }}
+            style={{ height: 34, padding: "0 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", border: "1px solid var(--admin-border-default)", cursor: uploading ? "not-allowed" : "pointer" }}
           >
             Cancel
           </button>
