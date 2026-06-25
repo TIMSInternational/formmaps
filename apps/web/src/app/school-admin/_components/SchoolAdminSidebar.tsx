@@ -68,6 +68,7 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
       { label: t("schoolAdmin.nav.communications", "Communications"), href: "/school-admin/messages", icon: MessageCircle },
       { label: t("schoolAdmin.nav.videoCalls", "Video Calls"), href: "/school-admin/video", icon: Video },
       { label: t("schoolAdmin.nav.sessionNotes", "Session Notes"), href: "/school-admin/notes", icon: FileText },
+      { label: t("schoolAdmin.nav.recommendations", "Recommendations"), href: "/school-admin/recommendations", icon: FileText },
     ],
   },
   {

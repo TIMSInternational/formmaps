@@ -13,6 +13,7 @@ import { groupThreadsByDate, formatThreadTime } from "@/components/ai-chat/useCh
 import {
   Home,
   FileCheck,
+  FileText,
   ChevronDown,
   ChevronRight,
   LogOut,
@@ -33,6 +34,7 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
     items: [
       { label: t("teacher.nav.dashboard", "Dashboard"), href: "/teacher", icon: Home },
       { label: t("teacher.nav.evaluations", "Evaluations"), href: "/teacher/evaluations", icon: FileCheck },
+      { label: t("teacher.nav.recommendations", "Recommendations"), href: "/teacher/recommendations", icon: FileText },
     ],
   },
 ];

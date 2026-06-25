@@ -29,6 +29,7 @@ import {
   MessageCircle,
   MessageCirclePlus,
   GraduationCap,
+  FileText,
 } from "lucide-react";
 
 type ThemeMode = "dark" | "light" | "system";
@@ -54,6 +55,7 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
     items: [
       { label: t("counselor.nav.communication", "Communication"), href: "/counselor/communication", icon: MessageCircle },
       { label: t("counselor.nav.scheduling", "Scheduling"), href: "/counselor/scheduling", icon: CalendarDays },
+      { label: t("counselor.nav.recommendations", "Recommendations"), href: "/counselor/recommendations", icon: FileText },
     ],
   },
 ];
