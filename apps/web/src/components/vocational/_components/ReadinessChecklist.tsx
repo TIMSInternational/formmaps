@@ -19,11 +19,11 @@ function Row({ label, ready, hint }: { label: string; ready: boolean; hint: stri
 
 export function ReadinessChecklist({ score, integrated }: { score: VocationalScoreOutcome; integrated: IntegratedOutcome }) {
   const ready360 = score.status === "ready";
-  // when integrated is ready, all three are present; otherwise its `missing` lists the gaps
-  const missing = integrated.status === "not_ready" ? integrated.missing : [];
+  // never_computed → not ready; ready → all ready; not_ready → check missing list
   const allReady = integrated.status === "ready";
-  const pcaReady = allReady || !missing.includes("pca");
-  const milReady = allReady || !missing.includes("mil");
+  const knownNotReady = integrated.status === "not_ready";
+  const pcaReady = allReady || (knownNotReady && !integrated.missing.includes("pca"));
+  const milReady = allReady || (knownNotReady && !integrated.missing.includes("mil"));
   return (
     <div className={CARD}>
       <p className="text-sm font-semibold text-gray-900 mb-3">Assessment readiness</p>
