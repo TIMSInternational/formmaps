@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import {
-  Radar, Users, CheckCircle2, Clock, AlertTriangle, Search, Send,
+  Radar, Users, CheckCircle2, Clock, AlertTriangle, Search, Send, FileText,
 } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
 import { toast } from "sonner";
+import Link from "next/link";
 import { Student360Dialog, type EvalStudent } from "./_components/Student360Dialog";
 
 const statusConfig = {
@@ -178,6 +179,10 @@ export default function CounselorEvaluationsPage() {
                     style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Send style={{ width: 12, height: 12, color: "var(--admin-font-tertiary)" }} />
                   </button>
+                  <Link href={`/counselor/evaluations/${s.studentId}/report`} title="View vocational report"
+                    style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <FileText style={{ width: 12, height: 12, color: "var(--admin-font-tertiary)" }} />
+                  </Link>
                 </div>
               </div>
             );
