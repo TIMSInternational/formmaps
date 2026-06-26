@@ -11,6 +11,7 @@ import { ReadinessChecklist } from "./_components/ReadinessChecklist";
 import { IntegratedHeadline } from "./_components/IntegratedHeadline";
 import { DimensionBreakdown } from "./_components/DimensionBreakdown";
 import { RankingsPanel } from "./_components/RankingsPanel";
+import { RecommendationsPanel } from "./_components/RecommendationsPanel";
 
 export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserId: string; selfView?: boolean }) {
   const [score, setScore] = useState<VocationalScoreOutcome | null>(null);
@@ -59,6 +60,7 @@ export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserI
       {ready360
         ? (<><DimensionBreakdown dimensions={ready360.dimensionScores} /><RankingsPanel rankings={ready360.rankings} /></>)
         : (<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-sm text-gray-500">The 360 evaluation isn&apos;t ready yet — it needs the student plus at least one other evaluator.</div>)}
+      <RecommendationsPanel evaluatedUserId={evaluatedUserId} />
     </div>
   );
 }
