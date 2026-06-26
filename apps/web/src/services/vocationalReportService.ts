@@ -66,3 +66,23 @@ export async function getIntegrated(evaluatedUserId: string): Promise<Integrated
   const res = await apiRequest(`/api/v1/vocational360/integrated/${enc(evaluatedUserId)}`);
   return unwrap<IntegratedOutcome>(res);
 }
+
+export interface Guidance {
+  summary: string;
+  recommendedPaths: { title: string; why: string }[];
+  strengths: string[];
+  growthAreas: string[];
+  nextSteps: string[];
+}
+export interface CareerMatch {
+  programId: string; programTitle: string; cluster: string;
+  totalScore: number; confidence: string; needsBridging: boolean; bridgingPaths: string;
+}
+export type VocationalRecommendations =
+  | { locked: true }
+  | { locked: false; careerMatches: CareerMatch[]; guidance: Guidance; industries: { value: string; count: number }[] };
+
+export async function getRecommendations(evaluatedUserId: string): Promise<VocationalRecommendations> {
+  const res = await apiRequest(`/api/v1/vocational360/recommendations/${enc(evaluatedUserId)}`);
+  return unwrap<VocationalRecommendations>(res);
+}
