@@ -23,7 +23,8 @@
  * Files excluded: *.test.tsx, *.spec.tsx, *.d.ts, __tests__/
  *
  * Usage:
- *   node scripts/check-hardcoded-strings.mjs
+ *   node scripts/check-hardcoded-strings.mjs            # write baseline (default)
+ *   node scripts/check-hardcoded-strings.mjs --dry-run  # print count only, no write (CI)
  */
 
 import { readFileSync, writeFileSync, readdirSync, statSync } from "fs";
@@ -91,6 +92,8 @@ function walk(dir, results = []) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 function main() {
+  const dryRun = process.argv.includes("--dry-run");
+
   const files = walk(APP_DIR);
   const findings = [];
 
@@ -112,20 +115,25 @@ function main() {
     }
   }
 
-  const baseline = {
-    generatedAt: new Date().toISOString(),
-    totalFindings: findings.length,
-    note:
-      "REPORT-ONLY. Phase V will flip to error-on-new-additions by comparing new runs against this baseline.",
-    findings,
-  };
-
-  writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + "\n", "utf8");
-
   console.log(`[i18n-hardcoded] Scanned ${files.length} files in src/app/**`);
   console.log(`[i18n-hardcoded] Likely hardcoded strings found: ${findings.length}`);
-  console.log(`[i18n-hardcoded] Baseline written to: scripts/i18n-hardcoded-baseline.json`);
-  console.log(`[i18n-hardcoded] Mode: REPORT-ONLY (exit 0). Phase V flips to gate mode.`);
+
+  if (dryRun) {
+    console.log(`[i18n-hardcoded] Mode: DRY-RUN — baseline NOT written (pass without --dry-run to update).`);
+  } else {
+    const baseline = {
+      generatedAt: new Date().toISOString(),
+      totalFindings: findings.length,
+      note:
+        "REPORT-ONLY. Phase V will flip to error-on-new-additions by comparing new runs against this baseline.",
+      findings,
+    };
+
+    writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + "\n", "utf8");
+
+    console.log(`[i18n-hardcoded] Baseline written to: scripts/i18n-hardcoded-baseline.json`);
+    console.log(`[i18n-hardcoded] Mode: REPORT-ONLY (exit 0). Phase V flips to gate mode.`);
+  }
 
   // Always exit 0 — this is a report, not a gate.
   process.exit(0);

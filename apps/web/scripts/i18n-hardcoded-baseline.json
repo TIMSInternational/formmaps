@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-28T23:31:22.452Z",
+  "generatedAt": "2026-06-28T23:36:10.347Z",
   "totalFindings": 841,
   "note": "REPORT-ONLY. Phase V will flip to error-on-new-additions by comparing new runs against this baseline.",
   "findings": [

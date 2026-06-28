@@ -19,7 +19,7 @@
  *   node scripts/check-i18n-parity.mjs
  */
 
-import { readFileSync, readdirSync } from "fs";
+import { readFileSync, readdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -92,6 +92,22 @@ function main() {
   for (const ns of namespaces) {
     const enPath = join(LOCALES_DIR, "en", `${ns}.json`);
     const esPath = join(LOCALES_DIR, "es", `${ns}.json`);
+
+    // Pre-check for missing counterpart files with a clear, actionable error.
+    if (!existsSync(esPath)) {
+      console.error(
+        `[i18n-parity] ERROR: Missing es counterpart for namespace '${ns}'. ` +
+          `Create locales/es/${ns}.json (seed with the same keys as en, English placeholder values).`
+      );
+      process.exit(1);
+    }
+    if (!existsSync(enPath)) {
+      console.error(
+        `[i18n-parity] ERROR: Missing en counterpart for namespace '${ns}'. ` +
+          `Create locales/en/${ns}.json (seed with the same keys as es, English placeholder values).`
+      );
+      process.exit(1);
+    }
 
     const enObj = loadJson(enPath);
     const esObj = loadJson(esPath);
