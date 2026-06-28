@@ -22,7 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { getUserSettings, updateUserSettings } from "@/services/userService";
 import { apiRequest } from "@/lib/api/apiClient";
-import { useSetLanguage } from "@/lib/i18n/useSetLanguage";
+import { useSetLanguage, applyLanguage } from "@/lib/i18n/useSetLanguage";
 
 /* ------------------------------------------------------------------ */
 /*  Section card wrapper                                               */
@@ -245,7 +245,7 @@ export default function StudentSettingsPage() {
           settings.language === "es" || settings.language === "spanish" ? "es" : "en";
         setLocalLanguage(lang);
         // Hydrate i18next + global store (skip PUT — value came FROM the DB).
-        setLanguage(lang).catch(() => {});
+        applyLanguage(lang);
         setProfileVisible(settings.profileVisible);
         setShareProgress(settings.shareProgress);
         setAllowAnalytics(settings.allowAnalytics);
@@ -257,7 +257,6 @@ export default function StudentSettingsPage() {
     return () => {
       cancelled = true;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSave = async () => {
