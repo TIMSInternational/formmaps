@@ -1,0 +1,4212 @@
+{
+  "generatedAt": "2026-06-28T23:31:22.452Z",
+  "totalFindings": 841,
+  "note": "REPORT-ONLY. Phase V will flip to error-on-new-additions by comparing new runs against this baseline.",
+  "findings": [
+    {
+      "file": "src/app/admin/_components/AdminSidebar.tsx",
+      "line": 180,
+      "text": "Collapse sidebar"
+    },
+    {
+      "file": "src/app/admin/_components/AdminSidebar.tsx",
+      "line": 192,
+      "text": "Expand sidebar"
+    },
+    {
+      "file": "src/app/admin/_components/AdminSidebar.tsx",
+      "line": 211,
+      "text": "Chat history"
+    },
+    {
+      "file": "src/app/admin/_components/AdminSidebar.tsx",
+      "line": 224,
+      "text": "New chat"
+    },
+    {
+      "file": "src/app/admin/_components/AdminSidebar.tsx",
+      "line": 249,
+      "text": "No chats yet"
+    },
+    {
+      "file": "src/app/admin/_components/AdminSidebar.tsx",
+      "line": 355,
+      "text": "Sign Out"
+    },
+    {
+      "file": "src/app/admin/_components/RevenueOverviewCard.tsx",
+      "line": 87,
+      "text": "This month"
+    },
+    {
+      "file": "src/app/admin/_components/RevenueOverviewCard.tsx",
+      "line": 94,
+      "text": "New users"
+    },
+    {
+      "file": "src/app/admin/_components/RevenueOverviewCard.tsx",
+      "line": 105,
+      "text": "Recent Activity"
+    },
+    {
+      "file": "src/app/admin/_components/TelemetryCharts.tsx",
+      "line": 109,
+      "text": "Total Users"
+    },
+    {
+      "file": "src/app/admin/_components/TelemetryCharts.tsx",
+      "line": 140,
+      "text": "Most visited pages by view count"
+    },
+    {
+      "file": "src/app/admin/_components/TelemetryCharts.tsx",
+      "line": 183,
+      "text": "Distribution of user actions"
+    },
+    {
+      "file": "src/app/admin/_components/TelemetryCharts.tsx",
+      "line": 239,
+      "text": "User journey milestones"
+    },
+    {
+      "file": "src/app/admin/_components/TelemetryDashboard.tsx",
+      "line": 70,
+      "text": "Telemetry data unavailable"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 44,
+      "text": "Analytics Unavailable"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 46,
+      "text": "Try Again"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 97,
+      "text": "Export CSV"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 132,
+      "text": "Avg Transaction"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 138,
+      "text": "Coach Rating"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 144,
+      "text": "Coach Sessions"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 154,
+      "text": "Revenue vs Transactions"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 155,
+      "text": "Monthly comparison"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 167,
+      "text": "User Growth"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 168,
+      "text": "New registrations over time"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 189,
+      "text": "Top Coaches"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 223,
+      "text": "No coach data"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 231,
+      "text": "Transaction Volume"
+    },
+    {
+      "file": "src/app/admin/analytics/page.tsx",
+      "line": 243,
+      "text": "Top Courses"
+    },
+    {
+      "file": "src/app/admin/careers/_components/CareerManager.tsx",
+      "line": 91,
+      "text": "Career Insights"
+    },
+    {
+      "file": "src/app/admin/careers/_components/CareerManager.tsx",
+      "line": 123,
+      "text": "No careers match"
+    },
+    {
+      "file": "src/app/admin/careers/_components/CareerManager.tsx",
+      "line": 150,
+      "text": "By Career Cluster"
+    },
+    {
+      "file": "src/app/admin/careers/_components/CareerManager.tsx",
+      "line": 154,
+      "text": "No cluster data"
+    },
+    {
+      "file": "src/app/admin/careers/_components/CareerManager.tsx",
+      "line": 175,
+      "text": "Largest Clusters"
+    },
+    {
+      "file": "src/app/admin/careers/_components/CareerManager.tsx",
+      "line": 196,
+      "text": "Sample from Database"
+    },
+    {
+      "file": "src/app/admin/courses/_components/CourseFormDialog.tsx",
+      "line": 242,
+      "text": "Brief description for course cards"
+    },
+    {
+      "file": "src/app/admin/courses/_components/CourseFormDialog.tsx",
+      "line": 258,
+      "text": "Detailed course description"
+    },
+    {
+      "file": "src/app/admin/courses/page.tsx",
+      "line": 68,
+      "text": "Course Insights"
+    },
+    {
+      "file": "src/app/admin/courses/page.tsx",
+      "line": 100,
+      "text": "No courses match your search"
+    },
+    {
+      "file": "src/app/admin/courses/page.tsx",
+      "line": 134,
+      "text": "Recommendations generated when students complete assessments"
+    },
+    {
+      "file": "src/app/admin/courses/page.tsx",
+      "line": 159,
+      "text": "Categories Breakdown"
+    },
+    {
+      "file": "src/app/admin/courses/page.tsx",
+      "line": 188,
+      "text": "Sample from Catalog"
+    },
+    {
+      "file": "src/app/admin/payouts/page.tsx",
+      "line": 225,
+      "text": "Filter by Status"
+    },
+    {
+      "file": "src/app/admin/payouts/page.tsx",
+      "line": 228,
+      "text": "All Statuses"
+    },
+    {
+      "file": "src/app/admin/payouts/page.tsx",
+      "line": 409,
+      "text": "Reject Payout"
+    },
+    {
+      "file": "src/app/admin/plans/page.tsx",
+      "line": 239,
+      "text": "No active plans"
+    },
+    {
+      "file": "src/app/admin/plans/page.tsx",
+      "line": 351,
+      "text": "Plan Name"
+    },
+    {
+      "file": "src/app/admin/plans/page.tsx",
+      "line": 376,
+      "text": "Billing Interval"
+    },
+    {
+      "file": "src/app/admin/questions/_components/QuestionCard.tsx",
+      "line": 106,
+      "text": "More Options"
+    },
+    {
+      "file": "src/app/admin/questions/_components/QuestionFormDialog.tsx",
+      "line": 77,
+      "text": "Relation Type"
+    },
+    {
+      "file": "src/app/admin/questions/_components/QuestionFormDialog.tsx",
+      "line": 143,
+      "text": "Question Number"
+    },
+    {
+      "file": "src/app/admin/questions/_components/QuestionFormDialog.tsx",
+      "line": 169,
+      "text": "Main Question"
+    },
+    {
+      "file": "src/app/admin/questions/_components/QuestionFormDialog.tsx",
+      "line": 178,
+      "text": "Parent Question"
+    },
+    {
+      "file": "src/app/admin/questions/_components/QuestionFormDialog.tsx",
+      "line": 184,
+      "text": "Select parent question"
+    },
+    {
+      "file": "src/app/admin/questions/page.tsx",
+      "line": 206,
+      "text": "Manage evaluation questions for feedback cycles"
+    },
+    {
+      "file": "src/app/admin/questions/page.tsx",
+      "line": 218,
+      "text": "All Relations"
+    },
+    {
+      "file": "src/app/admin/questions/page.tsx",
+      "line": 240,
+      "text": "All Categories"
+    },
+    {
+      "file": "src/app/admin/questions/page.tsx",
+      "line": 256,
+      "text": "No questions found"
+    },
+    {
+      "file": "src/app/admin/schools/page.tsx",
+      "line": 289,
+      "text": "Contract End"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 162,
+      "text": "General Information"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 163,
+      "text": "Basic platform details and branding"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 170,
+      "text": "Site Name"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 178,
+      "text": "Support Email"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 193,
+      "text": "Maintenance Mode"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 194,
+      "text": "Temporarily disable access for all users except admins"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 212,
+      "text": "External links and policy configs"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 218,
+      "text": "Privacy Policy URL"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 227,
+      "text": "Terms of Service URL"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 237,
+      "text": "Help Center URL"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 281,
+      "text": "Percentage taken from every transaction"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 304,
+      "text": "Payout Schedule"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 330,
+      "text": "Access controls"
+    },
+    {
+      "file": "src/app/admin/settings/page.tsx",
+      "line": 374,
+      "text": "Limit for user file uploads"
+    },
+    {
+      "file": "src/app/admin/users/_components/AddUserDialog.tsx",
+      "line": 99,
+      "text": "Email Address"
+    },
+    {
+      "file": "src/app/admin/users/_components/AddUserDialog.tsx",
+      "line": 117,
+      "text": "Select role"
+    },
+    {
+      "file": "src/app/counselor/_components/AIBriefingCard.tsx",
+      "line": 38,
+      "text": "AI Daily Briefing"
+    },
+    {
+      "file": "src/app/counselor/_components/AssessmentPipeline.tsx",
+      "line": 65,
+      "text": "All Grades"
+    },
+    {
+      "file": "src/app/counselor/_components/AssessmentPipeline.tsx",
+      "line": 101,
+      "text": "Pattern Recognition"
+    },
+    {
+      "file": "src/app/counselor/_components/AssessmentPipeline.tsx",
+      "line": 102,
+      "text": "Verbal Reasoning"
+    },
+    {
+      "file": "src/app/counselor/_components/AssessmentPipeline.tsx",
+      "line": 103,
+      "text": "Working Memory"
+    },
+    {
+      "file": "src/app/counselor/_components/AssessmentPipeline.tsx",
+      "line": 104,
+      "text": "Numeric Velocity"
+    },
+    {
+      "file": "src/app/counselor/_components/AssessmentPipeline.tsx",
+      "line": 105,
+      "text": "Visual Rotation"
+    },
+    {
+      "file": "src/app/counselor/_components/CounselorSidebar.tsx",
+      "line": 189,
+      "text": "Collapse sidebar"
+    },
+    {
+      "file": "src/app/counselor/_components/CounselorSidebar.tsx",
+      "line": 201,
+      "text": "Expand sidebar"
+    },
+    {
+      "file": "src/app/counselor/_components/CounselorSidebar.tsx",
+      "line": 220,
+      "text": "Chat history"
+    },
+    {
+      "file": "src/app/counselor/_components/CounselorSidebar.tsx",
+      "line": 233,
+      "text": "New chat"
+    },
+    {
+      "file": "src/app/counselor/_components/CounselorSidebar.tsx",
+      "line": 260,
+      "text": "No chats yet"
+    },
+    {
+      "file": "src/app/counselor/_components/CounselorSidebar.tsx",
+      "line": 364,
+      "text": "Sign Out"
+    },
+    {
+      "file": "src/app/counselor/academic-gaps/_components/StudentList.tsx",
+      "line": 45,
+      "text": "Needs Review"
+    },
+    {
+      "file": "src/app/counselor/academic-gaps/_components/StudentList.tsx",
+      "line": 154,
+      "text": "No students found"
+    },
+    {
+      "file": "src/app/counselor/academic-gaps/page.tsx",
+      "line": 62,
+      "text": "Total Students"
+    },
+    {
+      "file": "src/app/counselor/academic-gaps/page.tsx",
+      "line": 63,
+      "text": "Off Track"
+    },
+    {
+      "file": "src/app/counselor/academic-gaps/page.tsx",
+      "line": 64,
+      "text": "At Risk"
+    },
+    {
+      "file": "src/app/counselor/academic-gaps/page.tsx",
+      "line": 65,
+      "text": "On Track"
+    },
+    {
+      "file": "src/app/counselor/activities/_components/ActivityForm.tsx",
+      "line": 55,
+      "text": "Activity name"
+    },
+    {
+      "file": "src/app/counselor/activities/_components/ActivityForm.tsx",
+      "line": 76,
+      "text": "Start Date"
+    },
+    {
+      "file": "src/app/counselor/activities/page.tsx",
+      "line": 153,
+      "text": "College Prep"
+    },
+    {
+      "file": "src/app/counselor/activities/page.tsx",
+      "line": 178,
+      "text": "No students found"
+    },
+    {
+      "file": "src/app/counselor/alerts/page.tsx",
+      "line": 151,
+      "text": "All Types"
+    },
+    {
+      "file": "src/app/counselor/alerts/page.tsx",
+      "line": 153,
+      "text": "All Types"
+    },
+    {
+      "file": "src/app/counselor/alerts/page.tsx",
+      "line": 154,
+      "text": "Grade Drop"
+    },
+    {
+      "file": "src/app/counselor/alerts/page.tsx",
+      "line": 155,
+      "text": "Missing Assessment"
+    },
+    {
+      "file": "src/app/counselor/alerts/page.tsx",
+      "line": 156,
+      "text": "Credit Gap"
+    },
+    {
+      "file": "src/app/counselor/alerts/page.tsx",
+      "line": 157,
+      "text": "No Career Path"
+    },
+    {
+      "file": "src/app/counselor/alerts/page.tsx",
+      "line": 162,
+      "text": "All Priority"
+    },
+    {
+      "file": "src/app/counselor/alerts/page.tsx",
+      "line": 164,
+      "text": "All Priority"
+    },
+    {
+      "file": "src/app/counselor/alerts/page.tsx",
+      "line": 244,
+      "text": "No alerts found"
+    },
+    {
+      "file": "src/app/counselor/calendar/page.tsx",
+      "line": 79,
+      "text": "Session Calendar"
+    },
+    {
+      "file": "src/app/counselor/calendar/page.tsx",
+      "line": 185,
+      "text": "Session Details"
+    },
+    {
+      "file": "src/app/counselor/calendar/page.tsx",
+      "line": 222,
+      "text": "Student Notes"
+    },
+    {
+      "file": "src/app/counselor/calendar/page.tsx",
+      "line": 228,
+      "text": "Your Notes"
+    },
+    {
+      "file": "src/app/counselor/college-apps/_components/AddApplicationForm.tsx",
+      "line": 45,
+      "text": "Add Application"
+    },
+    {
+      "file": "src/app/counselor/college-apps/_components/AddApplicationForm.tsx",
+      "line": 78,
+      "text": "Deadline Type"
+    },
+    {
+      "file": "src/app/counselor/college-apps/_components/ApplicationRow.tsx",
+      "line": 139,
+      "text": "Remove application"
+    },
+    {
+      "file": "src/app/counselor/college-apps/page.tsx",
+      "line": 117,
+      "text": "College Prep"
+    },
+    {
+      "file": "src/app/counselor/college-apps/page.tsx",
+      "line": 118,
+      "text": "College Applications"
+    },
+    {
+      "file": "src/app/counselor/college-list/page.tsx",
+      "line": 164,
+      "text": "College Prep"
+    },
+    {
+      "file": "src/app/counselor/college-list/page.tsx",
+      "line": 165,
+      "text": "College List Builder"
+    },
+    {
+      "file": "src/app/counselor/college-list/page.tsx",
+      "line": 265,
+      "text": "Remove from list"
+    },
+    {
+      "file": "src/app/counselor/college-prep/page.tsx",
+      "line": 37,
+      "text": "College Prep"
+    },
+    {
+      "file": "src/app/counselor/documents/page.tsx",
+      "line": 400,
+      "text": "Delete request"
+    },
+    {
+      "file": "src/app/counselor/essays/page.tsx",
+      "line": 124,
+      "text": "College Prep"
+    },
+    {
+      "file": "src/app/counselor/evaluations/_components/ExtendDeadlinePicker.tsx",
+      "line": 48,
+      "text": "Extend Deadline"
+    },
+    {
+      "file": "src/app/counselor/evaluations/_components/Student360Dialog.tsx",
+      "line": 159,
+      "text": "Evaluation Progress"
+    },
+    {
+      "file": "src/app/counselor/evaluations/_components/Student360Dialog.tsx",
+      "line": 195,
+      "text": "Add New Evaluator"
+    },
+    {
+      "file": "src/app/counselor/evaluations/_components/Student360Dialog.tsx",
+      "line": 197,
+      "text": "Full name"
+    },
+    {
+      "file": "src/app/counselor/evaluations/_components/Student360Dialog.tsx",
+      "line": 199,
+      "text": "Email address"
+    },
+    {
+      "file": "src/app/counselor/evaluations/_components/Student360Dialog.tsx",
+      "line": 304,
+      "text": "Extend deadline"
+    },
+    {
+      "file": "src/app/counselor/evaluations/_components/Student360Dialog.tsx",
+      "line": 309,
+      "text": "Resend invitation"
+    },
+    {
+      "file": "src/app/counselor/evaluations/page.tsx",
+      "line": 55,
+      "text": "Student Assessments"
+    },
+    {
+      "file": "src/app/counselor/evaluations/page.tsx",
+      "line": 87,
+      "text": "Overall Completion"
+    },
+    {
+      "file": "src/app/counselor/evaluations/page.tsx",
+      "line": 173,
+      "text": "Resend invitation emails"
+    },
+    {
+      "file": "src/app/counselor/evaluations/page.tsx",
+      "line": 182,
+      "text": "View vocational report"
+    },
+    {
+      "file": "src/app/counselor/insights/page.tsx",
+      "line": 117,
+      "text": "AI Briefing"
+    },
+    {
+      "file": "src/app/counselor/insights/page.tsx",
+      "line": 148,
+      "text": "Urgent Actions"
+    },
+    {
+      "file": "src/app/counselor/insights/page.tsx",
+      "line": 181,
+      "text": "GPA Distribution"
+    },
+    {
+      "file": "src/app/counselor/insights/page.tsx",
+      "line": 243,
+      "text": "Top Career Clusters"
+    },
+    {
+      "file": "src/app/counselor/messages/_components/BroadcastPanel.tsx",
+      "line": 49,
+      "text": "Broadcast to My Students"
+    },
+    {
+      "file": "src/app/counselor/messages/page.tsx",
+      "line": 218,
+      "text": "No contacts found"
+    },
+    {
+      "file": "src/app/counselor/messages/page.tsx",
+      "line": 306,
+      "text": "Start Video Call"
+    },
+    {
+      "file": "src/app/counselor/messages/page.tsx",
+      "line": 376,
+      "text": "Select a conversation"
+    },
+    {
+      "file": "src/app/counselor/notes/page.tsx",
+      "line": 178,
+      "text": "No notes found"
+    },
+    {
+      "file": "src/app/counselor/onboarding/_components/CalendarStep.tsx",
+      "line": 87,
+      "text": "Google Calendar"
+    },
+    {
+      "file": "src/app/counselor/onboarding/_components/CalendarStep.tsx",
+      "line": 88,
+      "text": "Sync with Google"
+    },
+    {
+      "file": "src/app/counselor/onboarding/_components/CalendarStep.tsx",
+      "line": 101,
+      "text": "Outlook Calendar"
+    },
+    {
+      "file": "src/app/counselor/onboarding/_components/CalendarStep.tsx",
+      "line": 102,
+      "text": "Sync with Microsoft"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 83,
+      "text": "Invalid Invitation Link"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 108,
+      "text": "Invitation Expired or Invalid"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 112,
+      "text": "Go to Login"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 148,
+      "text": "Set Up Your Counselor Account"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 167,
+      "text": "Invited by"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 189,
+      "text": "Create your account"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 190,
+      "text": "Set a secure password to get started"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 195,
+      "text": "Full Name"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 196,
+      "text": "Your full name"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 208,
+      "text": "Confirm Password"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 210,
+      "text": "Repeat your password"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 215,
+      "text": "Passwords do not match"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 218,
+      "text": "Optional Profile Details"
+    },
+    {
+      "file": "src/app/counselor/onboarding/page.tsx",
+      "line": 227,
+      "text": "Select timezone"
+    },
+    {
+      "file": "src/app/counselor/reports/_components/AcademicReports.tsx",
+      "line": 92,
+      "text": "No Academic Data"
+    },
+    {
+      "file": "src/app/counselor/reports/_components/MILReports.tsx",
+      "line": 103,
+      "text": "Exams Completed"
+    },
+    {
+      "file": "src/app/counselor/reports/_components/MILReports.tsx",
+      "line": 110,
+      "text": "Overall Score"
+    },
+    {
+      "file": "src/app/counselor/reports/_components/PCAReports.tsx",
+      "line": 97,
+      "text": "No PCA Results"
+    },
+    {
+      "file": "src/app/counselor/reports/_components/PCAReports.tsx",
+      "line": 130,
+      "text": "Under Pressure"
+    },
+    {
+      "file": "src/app/counselor/reports/_components/PCAReports.tsx",
+      "line": 143,
+      "text": "Self Image"
+    },
+    {
+      "file": "src/app/counselor/scholarships/_components/ScholarshipCard.tsx",
+      "line": 98,
+      "text": "Delete scholarship"
+    },
+    {
+      "file": "src/app/counselor/scholarships/_components/ScholarshipForm.tsx",
+      "line": 40,
+      "text": "Add Scholarship"
+    },
+    {
+      "file": "src/app/counselor/scholarships/_components/ScholarshipForm.tsx",
+      "line": 43,
+      "text": "Scholarship name"
+    },
+    {
+      "file": "src/app/counselor/scholarships/page.tsx",
+      "line": 99,
+      "text": "College Prep"
+    },
+    {
+      "file": "src/app/counselor/scholarships/page.tsx",
+      "line": 100,
+      "text": "Scholarship Tracker"
+    },
+    {
+      "file": "src/app/counselor/scholarships/page.tsx",
+      "line": 124,
+      "text": "No students found"
+    },
+    {
+      "file": "src/app/counselor/sessions/page.tsx",
+      "line": 161,
+      "text": "My Sessions"
+    },
+    {
+      "file": "src/app/counselor/sessions/page.tsx",
+      "line": 162,
+      "text": "Manage counseling sessions with your students"
+    },
+    {
+      "file": "src/app/counselor/sessions/page.tsx",
+      "line": 195,
+      "text": "Session List"
+    },
+    {
+      "file": "src/app/counselor/sessions/page.tsx",
+      "line": 383,
+      "text": "Mark Session as Completed"
+    },
+    {
+      "file": "src/app/counselor/sessions/page.tsx",
+      "line": 413,
+      "text": "Cancel Session"
+    },
+    {
+      "file": "src/app/counselor/sessions/page.tsx",
+      "line": 414,
+      "text": "Cancel session with"
+    },
+    {
+      "file": "src/app/counselor/sessions/page.tsx",
+      "line": 417,
+      "text": "Reason for Cancellation"
+    },
+    {
+      "file": "src/app/counselor/sessions/page.tsx",
+      "line": 419,
+      "text": "Please let the student know why you"
+    },
+    {
+      "file": "src/app/counselor/sessions/page.tsx",
+      "line": 427,
+      "text": "Keep Session"
+    },
+    {
+      "file": "src/app/counselor/settings/page.tsx",
+      "line": 167,
+      "text": "Your account information"
+    },
+    {
+      "file": "src/app/counselor/settings/page.tsx",
+      "line": 186,
+      "text": "Change Password"
+    },
+    {
+      "file": "src/app/counselor/settings/page.tsx",
+      "line": 190,
+      "text": "Current Password"
+    },
+    {
+      "file": "src/app/counselor/settings/page.tsx",
+      "line": 193,
+      "text": "Enter current password"
+    },
+    {
+      "file": "src/app/counselor/settings/page.tsx",
+      "line": 200,
+      "text": "New Password"
+    },
+    {
+      "file": "src/app/counselor/settings/page.tsx",
+      "line": 210,
+      "text": "Confirm Password"
+    },
+    {
+      "file": "src/app/counselor/settings/page.tsx",
+      "line": 246,
+      "text": "Session Availability"
+    },
+    {
+      "file": "src/app/counselor/students/[id]/_components/AssessmentsTab.tsx",
+      "line": 228,
+      "text": "Avg Score"
+    },
+    {
+      "file": "src/app/counselor/students/[id]/_components/AssessmentsTab.tsx",
+      "line": 274,
+      "text": "Response Rate"
+    },
+    {
+      "file": "src/app/counselor/students/[id]/_components/GradesTab.tsx",
+      "line": 41,
+      "text": "Weighted GPA"
+    },
+    {
+      "file": "src/app/counselor/students/[id]/_components/GradesTab.tsx",
+      "line": 47,
+      "text": "Unweighted GPA"
+    },
+    {
+      "file": "src/app/counselor/students/[id]/_components/GradesTab.tsx",
+      "line": 54,
+      "text": "Class Rank"
+    },
+    {
+      "file": "src/app/counselor/students/[id]/_components/NotesTab.tsx",
+      "line": 64,
+      "text": "Follow Up"
+    },
+    {
+      "file": "src/app/counselor/students/[id]/_components/StudentStatCards.tsx",
+      "line": 58,
+      "text": "Last Active"
+    },
+    {
+      "file": "src/app/counselor/students/[id]/page.tsx",
+      "line": 92,
+      "text": "Student not found"
+    },
+    {
+      "file": "src/app/counselor/students/page.tsx",
+      "line": 76,
+      "text": "All Status"
+    },
+    {
+      "file": "src/app/counselor/students/page.tsx",
+      "line": 78,
+      "text": "All Status"
+    },
+    {
+      "file": "src/app/counselor/students/page.tsx",
+      "line": 80,
+      "text": "At Risk"
+    },
+    {
+      "file": "src/app/counselor/students/page.tsx",
+      "line": 109,
+      "text": "Credit Progress"
+    },
+    {
+      "file": "src/app/counselor/students/page.tsx",
+      "line": 111,
+      "text": "Career Path"
+    },
+    {
+      "file": "src/app/counselor/students/page.tsx",
+      "line": 113,
+      "text": "Last Active"
+    },
+    {
+      "file": "src/app/counselor/video/_components/NewCallPanel.tsx",
+      "line": 95,
+      "text": "No contacts found"
+    },
+    {
+      "file": "src/app/counselor/video/_components/NewCallPanel.tsx",
+      "line": 130,
+      "text": "Scheduling video call"
+    },
+    {
+      "file": "src/app/counselor/video/page.tsx",
+      "line": 138,
+      "text": "Video Calls"
+    },
+    {
+      "file": "src/app/counselor/video/page.tsx",
+      "line": 144,
+      "text": "Video Calls Not Available"
+    },
+    {
+      "file": "src/app/counselor/video/page.tsx",
+      "line": 159,
+      "text": "Video Calls"
+    },
+    {
+      "file": "src/app/dashboard/_components/ActiveCoursePlan.tsx",
+      "line": 84,
+      "text": "Go to learning"
+    },
+    {
+      "file": "src/app/dashboard/_components/CareerMatchHub.tsx",
+      "line": 71,
+      "text": "Your Career Matches"
+    },
+    {
+      "file": "src/app/dashboard/_components/StudentSidebar.tsx",
+      "line": 293,
+      "text": "Collapse sidebar"
+    },
+    {
+      "file": "src/app/dashboard/_components/StudentSidebar.tsx",
+      "line": 305,
+      "text": "Expand sidebar"
+    },
+    {
+      "file": "src/app/dashboard/_components/StudentSidebar.tsx",
+      "line": 331,
+      "text": "Chat history"
+    },
+    {
+      "file": "src/app/dashboard/_components/StudentSidebar.tsx",
+      "line": 348,
+      "text": "New chat"
+    },
+    {
+      "file": "src/app/dashboard/_components/StudentSidebar.tsx",
+      "line": 451,
+      "text": "No chats yet"
+    },
+    {
+      "file": "src/app/dashboard/_components/StudentSidebar.tsx",
+      "line": 573,
+      "text": "Sign Out"
+    },
+    {
+      "file": "src/app/dashboard/applications/_components/checklist-tab.tsx",
+      "line": 126,
+      "text": "Due date"
+    },
+    {
+      "file": "src/app/dashboard/applications/_components/essays-tab.tsx",
+      "line": 116,
+      "text": "Word limit"
+    },
+    {
+      "file": "src/app/dashboard/applications/_components/essays-tab.tsx",
+      "line": 122,
+      "text": "Due date"
+    },
+    {
+      "file": "src/app/dashboard/applications/_components/essays-tab.tsx",
+      "line": 246,
+      "text": "Over limit"
+    },
+    {
+      "file": "src/app/dashboard/applications/_components/overview-tab.tsx",
+      "line": 39,
+      "text": "Match Score"
+    },
+    {
+      "file": "src/app/dashboard/applications/calendar/page.tsx",
+      "line": 142,
+      "text": "Application Tracker"
+    },
+    {
+      "file": "src/app/dashboard/applications/calendar/page.tsx",
+      "line": 143,
+      "text": "Deadline Calendar"
+    },
+    {
+      "file": "src/app/dashboard/applications/calendar/page.tsx",
+      "line": 233,
+      "text": "Applications with Deadlines"
+    },
+    {
+      "file": "src/app/dashboard/assessments/_components/PCAResultsPanel.tsx",
+      "line": 58,
+      "text": "DISC Profile Graph"
+    },
+    {
+      "file": "src/app/dashboard/assessments/_components/PCAResultsPanel.tsx",
+      "line": 63,
+      "text": "DISC Profile Graph"
+    },
+    {
+      "file": "src/app/dashboard/assessments/_components/PCAResultsPanel.tsx",
+      "line": 411,
+      "text": "Competency Levels"
+    },
+    {
+      "file": "src/app/dashboard/assessments/evaluation/_components/AddEvaluatorDialog.tsx",
+      "line": 117,
+      "text": "Select a group"
+    },
+    {
+      "file": "src/app/dashboard/assessments/evaluation/_components/AddEvaluatorDialog.tsx",
+      "line": 151,
+      "text": "Enter evaluator"
+    },
+    {
+      "file": "src/app/dashboard/assessments/evaluation/_components/AddEvaluatorDialog.tsx",
+      "line": 171,
+      "text": "Enter evaluator"
+    },
+    {
+      "file": "src/app/dashboard/assessments/evaluation/_components/AddEvaluatorDialog.tsx",
+      "line": 218,
+      "text": "Select relationship"
+    },
+    {
+      "file": "src/app/dashboard/assessments/evaluation/_components/EvaluatorGroupCard.tsx",
+      "line": 113,
+      "text": "No evaluators yet"
+    },
+    {
+      "file": "src/app/dashboard/assessments/evaluation/_components/InvitationActions.tsx",
+      "line": 53,
+      "text": "Send Email Invitations"
+    },
+    {
+      "file": "src/app/dashboard/assessments/evaluation/page.tsx",
+      "line": 223,
+      "text": "Select Evaluators for Email"
+    },
+    {
+      "file": "src/app/dashboard/assessments/evaluation/page.tsx",
+      "line": 236,
+      "text": "Select Evaluators for SMS"
+    },
+    {
+      "file": "src/app/dashboard/assessments/lia/_components/MILCompletion.tsx",
+      "line": 91,
+      "text": "Next Step"
+    },
+    {
+      "file": "src/app/dashboard/assessments/lia/_components/MILExamRunner.tsx",
+      "line": 260,
+      "text": "Assessment Error"
+    },
+    {
+      "file": "src/app/dashboard/assessments/lia/_components/MILExamRunner.tsx",
+      "line": 261,
+      "text": "Failed to load assessment"
+    },
+    {
+      "file": "src/app/dashboard/assessments/lia/_components/MILExamRunner.tsx",
+      "line": 275,
+      "text": "Go Back"
+    },
+    {
+      "file": "src/app/dashboard/assessments/lia/results/page.tsx",
+      "line": 268,
+      "text": "Overall Score"
+    },
+    {
+      "file": "src/app/dashboard/assessments/lia/results/page.tsx",
+      "line": 280,
+      "text": "Answer accuracy"
+    },
+    {
+      "file": "src/app/dashboard/assessments/lia/visual-rotation-review/page.tsx",
+      "line": 217,
+      "text": "Failed to load visual rotation exam"
+    },
+    {
+      "file": "src/app/dashboard/assessments/lia/visual-rotation-review/page.tsx",
+      "line": 288,
+      "text": "Total Questions"
+    },
+    {
+      "file": "src/app/dashboard/assessments/page.tsx",
+      "line": 250,
+      "text": "Your personalized vocational profile and recommendations"
+    },
+    {
+      "file": "src/app/dashboard/assessments/pca/page.tsx",
+      "line": 138,
+      "text": "PCA Assessment"
+    },
+    {
+      "file": "src/app/dashboard/book-counselor/page.tsx",
+      "line": 170,
+      "text": "No Counselors Available"
+    },
+    {
+      "file": "src/app/dashboard/book-counselor/page.tsx",
+      "line": 174,
+      "text": "Go Back"
+    },
+    {
+      "file": "src/app/dashboard/book-counselor/page.tsx",
+      "line": 190,
+      "text": "FREE Session"
+    },
+    {
+      "file": "src/app/dashboard/book-counselor/page.tsx",
+      "line": 246,
+      "text": "Select a counselor"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 56,
+      "text": "Senior Developer Salary"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 57,
+      "text": "Average base pay"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 72,
+      "text": "View History"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 112,
+      "text": "Open Roles"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 163,
+      "text": "Trending Skills"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 164,
+      "text": "High demand technologies in your sector"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 168,
+      "text": "Match Rate"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 211,
+      "text": "Career Path"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 212,
+      "text": "Salary progression"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 247,
+      "text": "Top Hiring"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 249,
+      "text": "View All"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 269,
+      "text": "Hot Spots"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 297,
+      "text": "Recent Opportunities"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 298,
+      "text": "Curated specifically for your profile"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 301,
+      "text": "View All Jobs"
+    },
+    {
+      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
+      "line": 349,
+      "text": "Accelerate your growth"
+    },
+    {
+      "file": "src/app/dashboard/coaching/_components/CoachSidebar.tsx",
+      "line": 189,
+      "text": "Collapse sidebar"
+    },
+    {
+      "file": "src/app/dashboard/coaching/_components/CoachSidebar.tsx",
+      "line": 201,
+      "text": "Expand sidebar"
+    },
+    {
+      "file": "src/app/dashboard/coaching/_components/CoachSidebar.tsx",
+      "line": 219,
+      "text": "Chat history"
+    },
+    {
+      "file": "src/app/dashboard/coaching/_components/CoachSidebar.tsx",
+      "line": 232,
+      "text": "New chat"
+    },
+    {
+      "file": "src/app/dashboard/coaching/_components/CoachSidebar.tsx",
+      "line": 259,
+      "text": "No chats yet"
+    },
+    {
+      "file": "src/app/dashboard/coaching/_components/CoachSidebar.tsx",
+      "line": 365,
+      "text": "Sign Out"
+    },
+    {
+      "file": "src/app/dashboard/coaching/access-denied/page.tsx",
+      "line": 16,
+      "text": "Access Denied"
+    },
+    {
+      "file": "src/app/dashboard/coaching/analytics/page.tsx",
+      "line": 201,
+      "text": "Year to Date"
+    },
+    {
+      "file": "src/app/dashboard/coaching/analytics/page.tsx",
+      "line": 241,
+      "text": "Earnings Overview"
+    },
+    {
+      "file": "src/app/dashboard/coaching/analytics/page.tsx",
+      "line": 242,
+      "text": "Financial performance over time"
+    },
+    {
+      "file": "src/app/dashboard/coaching/analytics/page.tsx",
+      "line": 254,
+      "text": "Avg Rating"
+    },
+    {
+      "file": "src/app/dashboard/coaching/analytics/page.tsx",
+      "line": 298,
+      "text": "Monthly Breakdown"
+    },
+    {
+      "file": "src/app/dashboard/coaching/calendar/page.tsx",
+      "line": 82,
+      "text": "Session Calendar"
+    },
+    {
+      "file": "src/app/dashboard/coaching/calendar/page.tsx",
+      "line": 208,
+      "text": "Click a day to view sessions"
+    },
+    {
+      "file": "src/app/dashboard/coaching/calendar/page.tsx",
+      "line": 213,
+      "text": "No sessions on this day"
+    },
+    {
+      "file": "src/app/dashboard/coaching/earnings/page.tsx",
+      "line": 229,
+      "text": "Transaction History"
+    },
+    {
+      "file": "src/app/dashboard/coaching/messages/page.tsx",
+      "line": 196,
+      "text": "No contacts found"
+    },
+    {
+      "file": "src/app/dashboard/coaching/messages/page.tsx",
+      "line": 345,
+      "text": "Select a conversation"
+    },
+    {
+      "file": "src/app/dashboard/coaching/profile/page.tsx",
+      "line": 151,
+      "text": "Edit Profile"
+    },
+    {
+      "file": "src/app/dashboard/coaching/profile/page.tsx",
+      "line": 204,
+      "text": "Profile Strength"
+    },
+    {
+      "file": "src/app/dashboard/coaching/profile/page.tsx",
+      "line": 229,
+      "text": "Personal Details"
+    },
+    {
+      "file": "src/app/dashboard/coaching/profile/page.tsx",
+      "line": 230,
+      "text": "Basic identity information"
+    },
+    {
+      "file": "src/app/dashboard/coaching/profile/page.tsx",
+      "line": 235,
+      "text": "Full Name"
+    },
+    {
+      "file": "src/app/dashboard/coaching/profile/page.tsx",
+      "line": 239,
+      "text": "Professional Title"
+    },
+    {
+      "file": "src/app/dashboard/coaching/profile/page.tsx",
+      "line": 243,
+      "text": "About You"
+    },
+    {
+      "file": "src/app/dashboard/coaching/profile/page.tsx",
+      "line": 278,
+      "text": "Social Presence"
+    },
+    {
+      "file": "src/app/dashboard/coaching/profile/page.tsx",
+      "line": 284,
+      "text": "Personal Website"
+    },
+    {
+      "file": "src/app/dashboard/coaching/schedule/page.tsx",
+      "line": 161,
+      "text": "My Schedule"
+    },
+    {
+      "file": "src/app/dashboard/coaching/schedule/page.tsx",
+      "line": 162,
+      "text": "Manage your coaching sessions"
+    },
+    {
+      "file": "src/app/dashboard/coaching/schedule/page.tsx",
+      "line": 336,
+      "text": "Reschedule Session"
+    },
+    {
+      "file": "src/app/dashboard/coaching/schedule/page.tsx",
+      "line": 341,
+      "text": "New Date"
+    },
+    {
+      "file": "src/app/dashboard/coaching/schedule/page.tsx",
+      "line": 345,
+      "text": "New Time"
+    },
+    {
+      "file": "src/app/dashboard/coaching/schedule/page.tsx",
+      "line": 360,
+      "text": "Cancel Session"
+    },
+    {
+      "file": "src/app/dashboard/coaching/schedule/page.tsx",
+      "line": 375,
+      "text": "Keep Session"
+    },
+    {
+      "file": "src/app/dashboard/coaching/schedule/page.tsx",
+      "line": 376,
+      "text": "Confirm Cancellation"
+    },
+    {
+      "file": "src/app/dashboard/coaching/sessions/_components/RescheduleDialog.tsx",
+      "line": 261,
+      "text": "Select a date to see times"
+    },
+    {
+      "file": "src/app/dashboard/coaching/sessions/_components/RescheduleDialog.tsx",
+      "line": 271,
+      "text": "Try selecting another date"
+    },
+    {
+      "file": "src/app/dashboard/coaching/sessions/_components/SessionFilters.tsx",
+      "line": 81,
+      "text": "All Status"
+    },
+    {
+      "file": "src/app/dashboard/coaching/sessions/_components/SessionFilters.tsx",
+      "line": 84,
+      "text": "All Status"
+    },
+    {
+      "file": "src/app/dashboard/coaching/sessions/_components/SessionFilters.tsx",
+      "line": 97,
+      "text": "Upcoming First"
+    },
+    {
+      "file": "src/app/dashboard/coaching/sessions/_components/SessionFilters.tsx",
+      "line": 98,
+      "text": "Newest First"
+    },
+    {
+      "file": "src/app/dashboard/coaching/sessions/_components/SessionFilters.tsx",
+      "line": 99,
+      "text": "Oldest First"
+    },
+    {
+      "file": "src/app/dashboard/coaching/sessions/_components/StudentDetailsSheet.tsx",
+      "line": 61,
+      "text": "Student Profile"
+    },
+    {
+      "file": "src/app/dashboard/coaching/sessions/_components/StudentDetailsSheet.tsx",
+      "line": 92,
+      "text": "Total Sessions"
+    },
+    {
+      "file": "src/app/dashboard/coaching/sessions/page.tsx",
+      "line": 346,
+      "text": "No sessions found"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/AvailabilitySettingsTab.tsx",
+      "line": 222,
+      "text": "Weekly Schedule"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/AvailabilitySettingsTab.tsx",
+      "line": 229,
+      "text": "Select timezone"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/BillingSettingsTab.tsx",
+      "line": 135,
+      "text": "Current Billing Period"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/BillingSettingsTab.tsx",
+      "line": 154,
+      "text": "Total Revenue"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/BillingSettingsTab.tsx",
+      "line": 171,
+      "text": "Platform Fees"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/BillingSettingsTab.tsx",
+      "line": 176,
+      "text": "Deducted automatically"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/BillingSettingsTab.tsx",
+      "line": 185,
+      "text": "Next Invoice"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/BillingSettingsTab.tsx",
+      "line": 208,
+      "text": "Invoice History"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/BillingSettingsTab.tsx",
+      "line": 236,
+      "text": "No invoices found"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/CalendarIntegrationSection.tsx",
+      "line": 67,
+      "text": "Google Calendar"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/CalendarIntegrationSection.tsx",
+      "line": 112,
+      "text": "Outlook Calendar"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ConnectedAccountCard.tsx",
+      "line": 163,
+      "text": "Payout Frequency"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ConnectedAccountCard.tsx",
+      "line": 175,
+      "text": "Select frequency"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ConnectedAccountCard.tsx",
+      "line": 212,
+      "text": "Bank name"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ConnectedAccountCard.tsx",
+      "line": 223,
+      "text": "Account holder name"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ConnectedAccountCard.tsx",
+      "line": 234,
+      "text": "Account number"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ConnectedAccountCard.tsx",
+      "line": 245,
+      "text": "Routing number"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/EarningsSection.tsx",
+      "line": 26,
+      "text": "Total earnings"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/EarningsSection.tsx",
+      "line": 34,
+      "text": "Pending payout"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/EarningsSection.tsx",
+      "line": 42,
+      "text": "Last payout"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/EarningsSection.tsx",
+      "line": 54,
+      "text": "Recent earnings"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/LinkBankAccountForm.tsx",
+      "line": 83,
+      "text": "Full name on account"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/LinkBankAccountForm.tsx",
+      "line": 97,
+      "text": "Account number"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/LinkBankAccountForm.tsx",
+      "line": 162,
+      "text": "Select frequency"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/PayoutHistorySection.tsx",
+      "line": 40,
+      "text": "Payout History"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/PayoutHistorySection.tsx",
+      "line": 51,
+      "text": "Filter by status"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/PricingSettingsTab.tsx",
+      "line": 125,
+      "text": "Session Pricing"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/PricingSettingsTab.tsx",
+      "line": 137,
+      "text": "Select currency"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/PricingSettingsTab.tsx",
+      "line": 146,
+      "text": "Hourly Rate"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/PricingSettingsTab.tsx",
+      "line": 184,
+      "text": "Earnings Breakdown"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/PricingSettingsTab.tsx",
+      "line": 194,
+      "text": "Client Pays"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/PricingSettingsTab.tsx",
+      "line": 211,
+      "text": "Your Net Earnings"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ProfileSettingsTab.tsx",
+      "line": 118,
+      "text": "Profile Information"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ProfileSettingsTab.tsx",
+      "line": 126,
+      "text": "Profile Image"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ProfileSettingsTab.tsx",
+      "line": 148,
+      "text": "Full Name"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ProfileSettingsTab.tsx",
+      "line": 153,
+      "text": "Sarah Wilson"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ProfileSettingsTab.tsx",
+      "line": 159,
+      "text": "Professional Title"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ProfileSettingsTab.tsx",
+      "line": 164,
+      "text": "Senior Career Coach"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ProfileSettingsTab.tsx",
+      "line": 192,
+      "text": "Tech Leadership"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ProfileSettingsTab.tsx",
+      "line": 217,
+      "text": "Add a language"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ProfileSettingsTab.tsx",
+      "line": 238,
+      "text": "Expertise Tags"
+    },
+    {
+      "file": "src/app/dashboard/coaching/settings/_components/ProfileSettingsTab.tsx",
+      "line": 244,
+      "text": "Add a tag"
+    },
+    {
+      "file": "src/app/dashboard/coaching/students/page.tsx",
+      "line": 124,
+      "text": "No students found"
+    },
+    {
+      "file": "src/app/dashboard/coaching/students/page.tsx",
+      "line": 184,
+      "text": "Last Session"
+    },
+    {
+      "file": "src/app/dashboard/community-service/page.tsx",
+      "line": 129,
+      "text": "No service hours logged yet"
+    },
+    {
+      "file": "src/app/dashboard/community-service/page.tsx",
+      "line": 298,
+      "text": "Supervisor Name"
+    },
+    {
+      "file": "src/app/dashboard/community-service/page.tsx",
+      "line": 310,
+      "text": "Supervisor Email"
+    },
+    {
+      "file": "src/app/dashboard/community-service/page.tsx",
+      "line": 363,
+      "text": "Service Log"
+    },
+    {
+      "file": "src/app/dashboard/community-service/page.tsx",
+      "line": 364,
+      "text": "History of your volunteer work"
+    },
+    {
+      "file": "src/app/dashboard/course-plan/_components/DraftPlanSection.tsx",
+      "line": 41,
+      "text": "Draft plan ready"
+    },
+    {
+      "file": "src/app/dashboard/course-plan/_components/DraftPlanSection.tsx",
+      "line": 93,
+      "text": "Your counselor asked for changes"
+    },
+    {
+      "file": "src/app/dashboard/course-plan/_components/TargetPickerDialog.tsx",
+      "line": 67,
+      "text": "Choose your graduation goal"
+    },
+    {
+      "file": "src/app/dashboard/course-plan/_components/TargetPickerDialog.tsx",
+      "line": 198,
+      "text": "Or type a university name"
+    },
+    {
+      "file": "src/app/dashboard/learning/certifications/page.tsx",
+      "line": 105,
+      "text": "In Progress"
+    },
+    {
+      "file": "src/app/dashboard/learning/certifications/page.tsx",
+      "line": 126,
+      "text": "In Progress"
+    },
+    {
+      "file": "src/app/dashboard/learning/certifications/page.tsx",
+      "line": 155,
+      "text": "No courses yet"
+    },
+    {
+      "file": "src/app/dashboard/learning/certifications/page.tsx",
+      "line": 175,
+      "text": "Suggested Next"
+    },
+    {
+      "file": "src/app/dashboard/messages/_components/NewConversation.tsx",
+      "line": 74,
+      "text": "New conversation"
+    },
+    {
+      "file": "src/app/dashboard/messages/page.tsx",
+      "line": 236,
+      "text": "Start Video Call"
+    },
+    {
+      "file": "src/app/dashboard/messages/page.tsx",
+      "line": 306,
+      "text": "Select a conversation"
+    },
+    {
+      "file": "src/app/dashboard/my-sessions/_components/counselor-sessions-list.tsx",
+      "line": 48,
+      "text": "Counselor Sessions"
+    },
+    {
+      "file": "src/app/dashboard/my-sessions/_components/session-modals.tsx",
+      "line": 45,
+      "text": "Cancel Session"
+    },
+    {
+      "file": "src/app/dashboard/my-sessions/_components/session-modals.tsx",
+      "line": 56,
+      "text": "Please let us know why you"
+    },
+    {
+      "file": "src/app/dashboard/my-sessions/_components/session-modals.tsx",
+      "line": 105,
+      "text": "Leave a Review"
+    },
+    {
+      "file": "src/app/dashboard/my-sessions/_components/session-modals.tsx",
+      "line": 178,
+      "text": "Cancel Counselor Session"
+    },
+    {
+      "file": "src/app/dashboard/page.tsx",
+      "line": 166,
+      "text": "Your Journey"
+    },
+    {
+      "file": "src/app/dashboard/portfolio/_components/PortfolioFormDialog.tsx",
+      "line": 88,
+      "text": "Type of Experience"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/AITailorPanel.tsx",
+      "line": 139,
+      "text": "Use AI"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/AITailorPanel.tsx",
+      "line": 174,
+      "text": "Use AI"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/AITailorPanel.tsx",
+      "line": 223,
+      "text": "Use AI"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ATSCheck.tsx",
+      "line": 40,
+      "text": "ATS Optimization"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ATSCheck.tsx",
+      "line": 75,
+      "text": "ATS Score"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ATSCheck.tsx",
+      "line": 86,
+      "text": "Matched Keywords"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ATSCheck.tsx",
+      "line": 94,
+      "text": "Missing Keywords"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/CareerFieldStep.tsx",
+      "line": 27,
+      "text": "Choose Your Career Field"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/DynamicSectionForm.tsx",
+      "line": 522,
+      "text": "Edit entry"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/DynamicSectionForm.tsx",
+      "line": 531,
+      "text": "Delete entry"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/EducationEditor.tsx",
+      "line": 86,
+      "text": "Bachelor of Science"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/EducationEditor.tsx",
+      "line": 104,
+      "text": "University Name"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/EducationStep.tsx",
+      "line": 124,
+      "text": "Bachelor of Science in Computer Science"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/EducationStep.tsx",
+      "line": 135,
+      "text": "University of California"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/EducationStep.tsx",
+      "line": 151,
+      "text": "Graduation Date"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ExperienceEditor.tsx",
+      "line": 92,
+      "text": "Software Engineer"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ExperienceEditor.tsx",
+      "line": 110,
+      "text": "Company Name"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ExperienceStep.tsx",
+      "line": 153,
+      "text": "Freelance work"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ExperienceStep.tsx",
+      "line": 156,
+      "text": "Volunteer work"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ExperienceStep.tsx",
+      "line": 160,
+      "text": "Personal projects"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ExperienceStep.tsx",
+      "line": 164,
+      "text": "Leadership roles"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ExperienceStep.tsx",
+      "line": 265,
+      "text": "Start Date"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ExperienceStep.tsx",
+      "line": 275,
+      "text": "Current Position"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ExperienceStep.tsx",
+      "line": 294,
+      "text": "End Date"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/LivePreview.tsx",
+      "line": 36,
+      "text": "PDF Preview Error"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/LivePreviewPDF.tsx",
+      "line": 235,
+      "text": "Live Preview"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/PersonalInfoEditor.tsx",
+      "line": 169,
+      "text": "John Doe"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/PersonalInfoEditor.tsx",
+      "line": 189,
+      "text": "Software Engineer"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/PersonalInfoStep.tsx",
+      "line": 64,
+      "text": "John Doe"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/PersonalInfoStep.tsx",
+      "line": 82,
+      "text": "Phone Number"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/PersonalInfoStep.tsx",
+      "line": 103,
+      "text": "LinkedIn Profile"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/PersonalInfoStep.tsx",
+      "line": 157,
+      "text": "Get Started Quickly"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeComparisonTable.tsx",
+      "line": 239,
+      "text": "Job Requires"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeComparisonTable.tsx",
+      "line": 240,
+      "text": "Your Resume"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeComparisonTable.tsx",
+      "line": 298,
+      "text": "None matched"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeDashboard.tsx",
+      "line": 211,
+      "text": "Toggle live preview"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeDashboard.tsx",
+      "line": 236,
+      "text": "Customize sections"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeDashboard.tsx",
+      "line": 237,
+      "text": "Open settings"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeDashboard.tsx",
+      "line": 250,
+      "text": "Download resume as PDF"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeDashboard.tsx",
+      "line": 251,
+      "text": "Download resume"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeDashboard.tsx",
+      "line": 359,
+      "text": "Resume builder dashboard"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeModals.tsx",
+      "line": 183,
+      "text": "John Doe"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeModals.tsx",
+      "line": 202,
+      "text": "Senior Software Engineer"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeModals.tsx",
+      "line": 1325,
+      "text": "Text Input"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumeModals.tsx",
+      "line": 1326,
+      "text": "Text Area"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumePreview.tsx",
+      "line": 131,
+      "text": "Resume preview"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumePreviewWithHighlights.tsx",
+      "line": 126,
+      "text": "RELEVANT EXPERIENCE"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumePreviewWithHighlights.tsx",
+      "line": 162,
+      "text": "TECHNICAL SKILLS"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/ResumePreviewWithToggle.tsx",
+      "line": 81,
+      "text": "Original resume document"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SectionCard.tsx",
+      "line": 61,
+      "text": "No name added"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SectionCard.tsx",
+      "line": 66,
+      "text": "No email added"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SectionCard.tsx",
+      "line": 100,
+      "text": "No education added"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SectionCard.tsx",
+      "line": 122,
+      "text": "No skills added"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SectionCard.tsx",
+      "line": 180,
+      "text": "Required field"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SectionCard.tsx",
+      "line": 203,
+      "text": "Section complete"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SectionCard.tsx",
+      "line": 213,
+      "text": "Required field incomplete"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SectionCard.tsx",
+      "line": 313,
+      "text": "John Doe"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SectionCard.tsx",
+      "line": 339,
+      "text": "No work experience added yet"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SectionEditor.tsx",
+      "line": 284,
+      "text": "Remove entry"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SectionEditor.tsx",
+      "line": 355,
+      "text": "Job description and achievements"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SectionEditor.tsx",
+      "line": 534,
+      "text": "Back to dashboard"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SettingsSidebar.tsx",
+      "line": 141,
+      "text": "Drag to reorder"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SettingsSidebar.tsx",
+      "line": 314,
+      "text": "Close settings"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SettingsSidebar.tsx",
+      "line": 315,
+      "text": "Close settings"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SkillsEditor.tsx",
+      "line": 133,
+      "text": "Type a skill and press Enter"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SkillsStep.tsx",
+      "line": 127,
+      "text": "Add New Skill"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SkillsStep.tsx",
+      "line": 158,
+      "text": "Skill Level"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SkillsStep.tsx",
+      "line": 175,
+      "text": "Add Skill"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SmartTemplateSelector.tsx",
+      "line": 97,
+      "text": "No templates available"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SortableSection.tsx",
+      "line": 115,
+      "text": "Drag to reorder"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SortableSection.tsx",
+      "line": 145,
+      "text": "Save title"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/SortableSection.tsx",
+      "line": 181,
+      "text": "Edit section title"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplateDebugPage.tsx",
+      "line": 106,
+      "text": "Back to Resume Builder"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplateDebugPage.tsx",
+      "line": 110,
+      "text": "Template Debug Comparison"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePDFPreview.tsx",
+      "line": 309,
+      "text": "PDF preview unavailable"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewCard.tsx",
+      "line": 504,
+      "text": "Professional Summary"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewCard.tsx",
+      "line": 507,
+      "text": "Professional Experience"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewCard.tsx",
+      "line": 520,
+      "text": "Key Achievements"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewCard.tsx",
+      "line": 549,
+      "text": "Professional Summary"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewCard.tsx",
+      "line": 555,
+      "text": "Professional Experience"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewCard.tsx",
+      "line": 595,
+      "text": "Core Competencies"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewCard.tsx",
+      "line": 624,
+      "text": "Key Achievements"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewCard.tsx",
+      "line": 680,
+      "text": "Preview unavailable"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewStep.tsx",
+      "line": 57,
+      "text": "Resume Summary"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewStep.tsx",
+      "line": 66,
+      "text": "Resume Completion"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewStep.tsx",
+      "line": 82,
+      "text": "Section Details"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewStep.tsx",
+      "line": 89,
+      "text": "Career Field"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewStep.tsx",
+      "line": 112,
+      "text": "Personal Information"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplatePreviewStep.tsx",
+      "line": 132,
+      "text": "Work Experience"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/TemplateSelectionStep.tsx",
+      "line": 17,
+      "text": "Choose Your Template"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/ClassicTemplate.tsx",
+      "line": 228,
+      "text": "Career Objective"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/ClassicTemplate.tsx",
+      "line": 651,
+      "text": "Technical Skills"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/CreativeTemplate.tsx",
+      "line": 281,
+      "text": "Creative Professional"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/CreativeTemplate.tsx",
+      "line": 320,
+      "text": "Personal Info"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/CreativeTemplate.tsx",
+      "line": 384,
+      "text": "Additional Info"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/ExecutiveTemplate.tsx",
+      "line": 352,
+      "text": "Executive Summary"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/ExecutiveTemplate.tsx",
+      "line": 360,
+      "text": "Career Objective"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/ExecutiveTemplate.tsx",
+      "line": 383,
+      "text": "Professional Experience"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/ExecutiveTemplate.tsx",
+      "line": 439,
+      "text": "Core Competencies"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/MinimalTemplate.tsx",
+      "line": 446,
+      "text": "Additional Information"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/ModernTemplate.tsx",
+      "line": 311,
+      "text": "Career Objective"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/ModernTemplate.tsx",
+      "line": 321,
+      "text": "Professional Summary"
+    },
+    {
+      "file": "src/app/dashboard/resume-builder/_components/templates/TechTemplate.tsx",
+      "line": 584,
+      "text": "Code Sample"
+    },
+    {
+      "file": "src/app/dashboard/resumes/_components/ResumeCard.tsx",
+      "line": 133,
+      "text": "Edit resume"
+    },
+    {
+      "file": "src/app/dashboard/resumes/_components/ResumeCard.tsx",
+      "line": 147,
+      "text": "More options"
+    },
+    {
+      "file": "src/app/dashboard/resumes/page.tsx",
+      "line": 153,
+      "text": "From Scratch"
+    },
+    {
+      "file": "src/app/dashboard/resumes/page.tsx",
+      "line": 154,
+      "text": "Build your base resume"
+    },
+    {
+      "file": "src/app/dashboard/resumes/page.tsx",
+      "line": 162,
+      "text": "Import an existing resume"
+    },
+    {
+      "file": "src/app/dashboard/resumes/page.tsx",
+      "line": 169,
+      "text": "AI Tailor for Job"
+    },
+    {
+      "file": "src/app/dashboard/resumes/page.tsx",
+      "line": 170,
+      "text": "Optimize for a job posting"
+    },
+    {
+      "file": "src/app/dashboard/resumes/page.tsx",
+      "line": 187,
+      "text": "Failed to load resumes"
+    },
+    {
+      "file": "src/app/dashboard/resumes/page.tsx",
+      "line": 196,
+      "text": "No resumes yet"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 314,
+      "text": "Your account information"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 346,
+      "text": "Choose how you want to be notified"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 350,
+      "text": "Email Notifications"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 357,
+      "text": "Push Notifications"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 364,
+      "text": "Session Reminders"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 371,
+      "text": "Weekly Digest"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 380,
+      "text": "Select your preferred appearance"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 389,
+      "text": "Choose your preferred language"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 425,
+      "text": "Control your data and visibility"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 429,
+      "text": "Profile Visibility"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 436,
+      "text": "Share Progress"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 443,
+      "text": "Usage Analytics"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 452,
+      "text": "Change your password"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 455,
+      "text": "Current password"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 467,
+      "text": "New password"
+    },
+    {
+      "file": "src/app/dashboard/settings/page.tsx",
+      "line": 479,
+      "text": "Confirm new password"
+    },
+    {
+      "file": "src/app/dashboard/subscriptions/_components/SubscriptionPlans.tsx",
+      "line": 98,
+      "text": "Try Again"
+    },
+    {
+      "file": "src/app/dashboard/test-scores/_components/college-fit-card.tsx",
+      "line": 35,
+      "text": "College Fit"
+    },
+    {
+      "file": "src/app/dashboard/test-scores/_components/score-entry-form.tsx",
+      "line": 130,
+      "text": "Select score"
+    },
+    {
+      "file": "src/app/dashboard/test-scores/_components/score-entry-form.tsx",
+      "line": 144,
+      "text": "Total Score"
+    },
+    {
+      "file": "src/app/dashboard/test-scores/_components/score-entry-form.tsx",
+      "line": 201,
+      "text": "Test Type"
+    },
+    {
+      "file": "src/app/dashboard/test-scores/_components/score-entry-form.tsx",
+      "line": 214,
+      "text": "Test Date"
+    },
+    {
+      "file": "src/app/dashboard/test-scores/_components/score-entry-form.tsx",
+      "line": 232,
+      "text": "Official score"
+    },
+    {
+      "file": "src/app/dashboard/test-scores/_components/score-list.tsx",
+      "line": 47,
+      "text": "No test scores yet"
+    },
+    {
+      "file": "src/app/dashboard/transactions/page.tsx",
+      "line": 240,
+      "text": "Transaction ID"
+    },
+    {
+      "file": "src/app/dashboard/transactions/page.tsx",
+      "line": 326,
+      "text": "View Details"
+    },
+    {
+      "file": "src/app/dashboard/transactions/page.tsx",
+      "line": 327,
+      "text": "Download Invoice"
+    },
+    {
+      "file": "src/app/dashboard/transcript/page.tsx",
+      "line": 127,
+      "text": "No Courses Yet"
+    },
+    {
+      "file": "src/app/dashboard/university/page.tsx",
+      "line": 174,
+      "text": "Complete Your Assessments"
+    },
+    {
+      "file": "src/app/dashboard/university/page.tsx",
+      "line": 202,
+      "text": "In Progress"
+    },
+    {
+      "file": "src/app/dashboard/video/page.tsx",
+      "line": 94,
+      "text": "Video Calls"
+    },
+    {
+      "file": "src/app/dashboard/video/page.tsx",
+      "line": 100,
+      "text": "Video Calls Not Available"
+    },
+    {
+      "file": "src/app/dashboard/video/page.tsx",
+      "line": 114,
+      "text": "Video Calls"
+    },
+    {
+      "file": "src/app/dashboard/video/page.tsx",
+      "line": 140,
+      "text": "No contacts found"
+    },
+    {
+      "file": "src/app/error.tsx",
+      "line": 21,
+      "text": "Something went wrong"
+    },
+    {
+      "file": "src/app/evaluation/evaluator/_components/EvaluatorStatusScreens.tsx",
+      "line": 28,
+      "text": "Link Not Available"
+    },
+    {
+      "file": "src/app/evaluation/evaluator/_components/EvaluatorStatusScreens.tsx",
+      "line": 30,
+      "text": "Please contact your administrator"
+    },
+    {
+      "file": "src/app/evaluation/evaluator/_components/EvaluatorStatusScreens.tsx",
+      "line": 76,
+      "text": "Already Submitted"
+    },
+    {
+      "file": "src/app/evaluation/evaluator/_components/VocationalEvaluator.tsx",
+      "line": 44,
+      "text": "Already submitted"
+    },
+    {
+      "file": "src/app/not-found.tsx",
+      "line": 8,
+      "text": "Page Not Found"
+    },
+    {
+      "file": "src/app/onboarding/student/[token]/page.tsx",
+      "line": 163,
+      "text": "Invalid Invitation"
+    },
+    {
+      "file": "src/app/onboarding/student/[token]/page.tsx",
+      "line": 275,
+      "text": "Create a strong password"
+    },
+    {
+      "file": "src/app/onboarding/student/[token]/page.tsx",
+      "line": 341,
+      "text": "Activate Account"
+    },
+    {
+      "file": "src/app/onboarding/student/[token]/page.tsx",
+      "line": 349,
+      "text": "Sign in"
+    },
+    {
+      "file": "src/app/parent/_components/ParentSidebar.tsx",
+      "line": 163,
+      "text": "Collapse sidebar"
+    },
+    {
+      "file": "src/app/parent/_components/ParentSidebar.tsx",
+      "line": 175,
+      "text": "Expand sidebar"
+    },
+    {
+      "file": "src/app/parent/_components/ParentSidebar.tsx",
+      "line": 194,
+      "text": "Chat history"
+    },
+    {
+      "file": "src/app/parent/_components/ParentSidebar.tsx",
+      "line": 207,
+      "text": "New chat"
+    },
+    {
+      "file": "src/app/parent/_components/ParentSidebar.tsx",
+      "line": 229,
+      "text": "No chats yet"
+    },
+    {
+      "file": "src/app/parent/_components/ParentSidebar.tsx",
+      "line": 335,
+      "text": "Sign Out"
+    },
+    {
+      "file": "src/app/parent/children/page.tsx",
+      "line": 58,
+      "text": "Total Children"
+    },
+    {
+      "file": "src/app/parent/children/page.tsx",
+      "line": 143,
+      "text": "Graduation Progress"
+    },
+    {
+      "file": "src/app/parent/notifications/page.tsx",
+      "line": 90,
+      "text": "No notifications yet"
+    },
+    {
+      "file": "src/app/parent/onboarding/page.tsx",
+      "line": 121,
+      "text": "Go to Login"
+    },
+    {
+      "file": "src/app/parent/onboarding/page.tsx",
+      "line": 156,
+      "text": "Go to Login"
+    },
+    {
+      "file": "src/app/parent/onboarding/page.tsx",
+      "line": 273,
+      "text": "Create your account"
+    },
+    {
+      "file": "src/app/parent/onboarding/page.tsx",
+      "line": 290,
+      "text": "Your full name"
+    },
+    {
+      "file": "src/app/parent/onboarding/page.tsx",
+      "line": 336,
+      "text": "Repeat your password"
+    },
+    {
+      "file": "src/app/print/formmaps/page.tsx",
+      "line": 108,
+      "text": "Reference Design"
+    },
+    {
+      "file": "src/app/print/formmaps/page.tsx",
+      "line": 188,
+      "text": "Profile Illustration"
+    },
+    {
+      "file": "src/app/print/formmaps/page.tsx",
+      "line": 328,
+      "text": "Strengths and risks"
+    },
+    {
+      "file": "src/app/print/formmaps/page.tsx",
+      "line": 541,
+      "text": "Perfect fit"
+    },
+    {
+      "file": "src/app/print/formmaps/page.tsx",
+      "line": 558,
+      "text": "Highly recommended"
+    },
+    {
+      "file": "src/app/print/formmaps/page.tsx",
+      "line": 596,
+      "text": "Reference Overlay"
+    },
+    {
+      "file": "src/app/print/formmaps/page.tsx",
+      "line": 688,
+      "text": "Action checklist"
+    },
+    {
+      "file": "src/app/privacy/page.tsx",
+      "line": 11,
+      "text": "Privacy Policy"
+    },
+    {
+      "file": "src/app/privacy/page.tsx",
+      "line": 32,
+      "text": "Enable school administrators and counselors to support your development"
+    },
+    {
+      "file": "src/app/privacy/page.tsx",
+      "line": 33,
+      "text": "Process payments for subscription services"
+    },
+    {
+      "file": "src/app/privacy/page.tsx",
+      "line": 35,
+      "text": "Improve our platform through anonymized analytics"
+    },
+    {
+      "file": "src/app/privacy/page.tsx",
+      "line": 55,
+      "text": "HttpOnly secure cookies for authentication tokens"
+    },
+    {
+      "file": "src/app/privacy/page.tsx",
+      "line": 57,
+      "text": "Rate limiting to prevent abuse"
+    },
+    {
+      "file": "src/app/privacy/page.tsx",
+      "line": 66,
+      "text": "Access your personal data through your profile and dashboard"
+    },
+    {
+      "file": "src/app/privacy/page.tsx",
+      "line": 67,
+      "text": "Correct inaccurate information in your profile settings"
+    },
+    {
+      "file": "src/app/privacy/page.tsx",
+      "line": 68,
+      "text": "Request deletion of your account and associated data"
+    },
+    {
+      "file": "src/app/privacy/page.tsx",
+      "line": 69,
+      "text": "Export your assessment results and reports"
+    },
+    {
+      "file": "src/app/school-admin/_components/SchoolAdminSidebar.tsx",
+      "line": 208,
+      "text": "Collapse sidebar"
+    },
+    {
+      "file": "src/app/school-admin/_components/SchoolAdminSidebar.tsx",
+      "line": 220,
+      "text": "Expand sidebar"
+    },
+    {
+      "file": "src/app/school-admin/_components/SchoolAdminSidebar.tsx",
+      "line": 239,
+      "text": "Chat history"
+    },
+    {
+      "file": "src/app/school-admin/_components/SchoolAdminSidebar.tsx",
+      "line": 252,
+      "text": "New chat"
+    },
+    {
+      "file": "src/app/school-admin/_components/SchoolAdminSidebar.tsx",
+      "line": 279,
+      "text": "No chats yet"
+    },
+    {
+      "file": "src/app/school-admin/_components/SchoolAdminSidebar.tsx",
+      "line": 356,
+      "text": "School Administrator"
+    },
+    {
+      "file": "src/app/school-admin/_components/SchoolAdminSidebar.tsx",
+      "line": 385,
+      "text": "Sign Out"
+    },
+    {
+      "file": "src/app/school-admin/_components/SchoolAdminStats.tsx",
+      "line": 35,
+      "text": "Failed to load stats"
+    },
+    {
+      "file": "src/app/school-admin/_components/SchoolAdminStats.tsx",
+      "line": 36,
+      "text": "Please try refreshing the page"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/AcademicGapsPanel.tsx",
+      "line": 95,
+      "text": "Academic Gap Analysis"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/AcademicGapsPanel.tsx",
+      "line": 112,
+      "text": "All Status"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/AcademicGapsPanel.tsx",
+      "line": 113,
+      "text": "On Track"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/AcademicGapsPanel.tsx",
+      "line": 114,
+      "text": "At Risk"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/AcademicGapsPanel.tsx",
+      "line": 115,
+      "text": "Off Track"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CourseDetailDialog.tsx",
+      "line": 131,
+      "text": "Max Enrollment"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CourseDetailDialog.tsx",
+      "line": 132,
+      "text": "No limit"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CourseDetailDialog.tsx",
+      "line": 137,
+      "text": "Grade Levels"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CourseDetailDialog.tsx",
+      "line": 238,
+      "text": "Grade Levels"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
+      "line": 193,
+      "text": "Add Course"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
+      "line": 199,
+      "text": "Introduction to Algebra"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
+      "line": 203,
+      "text": "Grade Levels"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
+      "line": 225,
+      "text": "Total Courses"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
+      "line": 237,
+      "text": "Filter department"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
+      "line": 254,
+      "text": "No courses found"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CurriculumPanel.tsx",
+      "line": 55,
+      "text": "Total Courses"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CurriculumPanel.tsx",
+      "line": 66,
+      "text": "Framework Configuration"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CurriculumPanel.tsx",
+      "line": 67,
+      "text": "Toggle frameworks to populate course registry"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CurriculumPanel.tsx",
+      "line": 108,
+      "text": "Browse and modify catalogue"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/CurriculumPanel.tsx",
+      "line": 137,
+      "text": "No courses found"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/EditPrerequisitesDialog.tsx",
+      "line": 157,
+      "text": "Search your school catalog"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GpaPanel.tsx",
+      "line": 57,
+      "text": "Class Rankings"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GpaPanel.tsx",
+      "line": 58,
+      "text": "Student GPA rankings based on your grading configuration"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GpaPanel.tsx",
+      "line": 182,
+      "text": "Grading Scale"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GpaPanel.tsx",
+      "line": 183,
+      "text": "Set point values for each letter grade"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GpaPanel.tsx",
+      "line": 215,
+      "text": "Weight Bonuses"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GradeFormDialog.tsx",
+      "line": 107,
+      "text": "Academic year"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GradeFormDialog.tsx",
+      "line": 117,
+      "text": "Course level"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GradeImportPanel.tsx",
+      "line": 82,
+      "text": "Import Grades"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GradeImportPanel.tsx",
+      "line": 98,
+      "text": "CSV Format"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GradeImportPanel.tsx",
+      "line": 162,
+      "text": "Import Complete"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GradeImportPanel.tsx",
+      "line": 167,
+      "text": "Total Rows"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GradebookTab.tsx",
+      "line": 61,
+      "text": "Import CSV"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GradebookTab.tsx",
+      "line": 83,
+      "text": "No students found"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GradebookTab.tsx",
+      "line": 122,
+      "text": "Add grade"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GradebookTab.tsx",
+      "line": 167,
+      "text": "Import grades from CSV"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GraduationPanel.tsx",
+      "line": 169,
+      "text": "Graduation Requirements"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GraduationPanel.tsx",
+      "line": 207,
+      "text": "Special Requirements"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GraduationPanel.tsx",
+      "line": 226,
+      "text": "Student Graduation Progress"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GraduationPanel.tsx",
+      "line": 227,
+      "text": "Track credit completion toward graduation"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GraduationPanel.tsx",
+      "line": 240,
+      "text": "All Status"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GraduationPanel.tsx",
+      "line": 241,
+      "text": "On Track"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GraduationPanel.tsx",
+      "line": 242,
+      "text": "At Risk"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GraduationPanel.tsx",
+      "line": 243,
+      "text": "Off Track"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GraduationPanel.tsx",
+      "line": 364,
+      "text": "Total Credits Required to Graduate"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GraduationPanel.tsx",
+      "line": 371,
+      "text": "Credit Categories"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GraduationPanel.tsx",
+      "line": 372,
+      "text": "Define minimum credits per subject area"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/GraduationPanel.tsx",
+      "line": 449,
+      "text": "Special Requirements"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/PathwayEditor.tsx",
+      "line": 256,
+      "text": "Filter by department"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/PathwayEditor.tsx",
+      "line": 261,
+      "text": "All departments"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/PathwayEditor.tsx",
+      "line": 305,
+      "text": "Search courses to add"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/PathwayEditorDialog.tsx",
+      "line": 21,
+      "text": "Pathway editor"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/PathwaysPanel.tsx",
+      "line": 86,
+      "text": "No pathways yet"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/PathwaysPanel.tsx",
+      "line": 127,
+      "text": "Open this pathway"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/PrereqAnalysisDialog.tsx",
+      "line": 175,
+      "text": "Select all"
+    },
+    {
+      "file": "src/app/school-admin/academics/_components/PrereqEdge.tsx",
+      "line": 82,
+      "text": "Remove prerequisite"
+    },
+    {
+      "file": "src/app/school-admin/academics/gaps/[studentId]/page.tsx",
+      "line": 91,
+      "text": "Academic Gaps"
+    },
+    {
+      "file": "src/app/school-admin/academics/gaps/[studentId]/page.tsx",
+      "line": 155,
+      "text": "AI Course Pathway"
+    },
+    {
+      "file": "src/app/school-admin/academics/gaps/[studentId]/page.tsx",
+      "line": 190,
+      "text": "AI Plan Summary"
+    },
+    {
+      "file": "src/app/school-admin/analytics/page.tsx",
+      "line": 165,
+      "text": "Assessment Completion by Grade"
+    },
+    {
+      "file": "src/app/school-admin/analytics/page.tsx",
+      "line": 218,
+      "text": "Pipeline Summary"
+    },
+    {
+      "file": "src/app/school-admin/analytics/page.tsx",
+      "line": 252,
+      "text": "School Cognitive Profile"
+    },
+    {
+      "file": "src/app/school-admin/analytics/page.tsx",
+      "line": 280,
+      "text": "Top Career Interests"
+    },
+    {
+      "file": "src/app/school-admin/analytics/page.tsx",
+      "line": 313,
+      "text": "AI Insights"
+    },
+    {
+      "file": "src/app/school-admin/analytics/page.tsx",
+      "line": 349,
+      "text": "DISC Distribution"
+    },
+    {
+      "file": "src/app/school-admin/analytics/page.tsx",
+      "line": 376,
+      "text": "Top Performers"
+    },
+    {
+      "file": "src/app/school-admin/analytics/page.tsx",
+      "line": 377,
+      "text": "By GPA score"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/EvaluationsPanel.tsx",
+      "line": 105,
+      "text": "Overall Completion"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/EvaluationsPanel.tsx",
+      "line": 188,
+      "text": "Resend invitation emails"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/InsightsCard.tsx",
+      "line": 42,
+      "text": "AI School Insights"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/InsightsCard.tsx",
+      "line": 88,
+      "text": "AI School Insights"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/InsightsCard.tsx",
+      "line": 152,
+      "text": "DISC Distribution"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/InsightsCard.tsx",
+      "line": 164,
+      "text": "Top Career Clusters"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/PipelineTable.tsx",
+      "line": 72,
+      "text": "Overall Completion"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/PipelineTable.tsx",
+      "line": 114,
+      "text": "Multiple Intelligence Lens"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/PipelineTable.tsx",
+      "line": 133,
+      "text": "Evaluator Responses"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/PipelineTable.tsx",
+      "line": 253,
+      "text": "All Grades"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/ResultsPanel.tsx",
+      "line": 99,
+      "text": "Assessment Type"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/ResultsPanel.tsx",
+      "line": 102,
+      "text": "All Types"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/ResultsPanel.tsx",
+      "line": 103,
+      "text": "Career Assessment"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/ResultsPanel.tsx",
+      "line": 104,
+      "text": "Skills Assessment"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/ResultsPanel.tsx",
+      "line": 105,
+      "text": "Personality Test"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/ResultsPanel.tsx",
+      "line": 135,
+      "text": "No results found"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/ResultsPanel.tsx",
+      "line": 136,
+      "text": "Results will appear as students complete assessments"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/ScheduleGrid.tsx",
+      "line": 65,
+      "text": "Assessment Schedule"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/Student360Dialog.tsx",
+      "line": 92,
+      "text": "Extend Deadline"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/Student360Dialog.tsx",
+      "line": 284,
+      "text": "Evaluation Progress"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/Student360Dialog.tsx",
+      "line": 340,
+      "text": "Add New Evaluator"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/Student360Dialog.tsx",
+      "line": 342,
+      "text": "Full name"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/Student360Dialog.tsx",
+      "line": 344,
+      "text": "Email address"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/Student360Dialog.tsx",
+      "line": 449,
+      "text": "Extend deadline"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/Student360Dialog.tsx",
+      "line": 454,
+      "text": "Resend invitation"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/Student360Dialog.tsx",
+      "line": 462,
+      "text": "Reset completion"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/Student360Dialog.tsx",
+      "line": 501,
+      "text": "Reset Evaluation Confirmation"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/Student360Dialog.tsx",
+      "line": 502,
+      "text": "Confirm that you want to reset this evaluation"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/StudentReportModal.tsx",
+      "line": 170,
+      "text": "Cognitive Exams"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/StudentReportModal.tsx",
+      "line": 184,
+      "text": "In progress"
+    },
+    {
+      "file": "src/app/school-admin/assessments/_components/StudentReportModal.tsx",
+      "line": 198,
+      "text": "Not completed"
+    },
+    {
+      "file": "src/app/school-admin/calendar/page.tsx",
+      "line": 203,
+      "text": "Academic Calendar"
+    },
+    {
+      "file": "src/app/school-admin/calendar/page.tsx",
+      "line": 324,
+      "text": "No terms configured"
+    },
+    {
+      "file": "src/app/school-admin/calendar/page.tsx",
+      "line": 343,
+      "text": "Holiday name"
+    },
+    {
+      "file": "src/app/school-admin/calendar/page.tsx",
+      "line": 345,
+      "text": "Start date"
+    },
+    {
+      "file": "src/app/school-admin/calendar/page.tsx",
+      "line": 349,
+      "text": "End date"
+    },
+    {
+      "file": "src/app/school-admin/calendar/page.tsx",
+      "line": 361,
+      "text": "No holidays added"
+    },
+    {
+      "file": "src/app/school-admin/calendar/page.tsx",
+      "line": 377,
+      "text": "Assessment Windows"
+    },
+    {
+      "file": "src/app/school-admin/calendar/page.tsx",
+      "line": 401,
+      "text": "No assessment windows"
+    },
+    {
+      "file": "src/app/school-admin/counselor-workload/_components/AssignStudentsModal.tsx",
+      "line": 103,
+      "text": "Assign Students"
+    },
+    {
+      "file": "src/app/school-admin/counselor-workload/_components/CounselorCard.tsx",
+      "line": 226,
+      "text": "Unassign student"
+    },
+    {
+      "file": "src/app/school-admin/counselor-workload/_components/ReassignDropdown.tsx",
+      "line": 95,
+      "text": "Reassign to another counselor"
+    },
+    {
+      "file": "src/app/school-admin/insights/page.tsx",
+      "line": 130,
+      "text": "Executive Summary"
+    },
+    {
+      "file": "src/app/school-admin/insights/page.tsx",
+      "line": 166,
+      "text": "Urgent Actions"
+    },
+    {
+      "file": "src/app/school-admin/insights/page.tsx",
+      "line": 167,
+      "text": "Items requiring immediate attention"
+    },
+    {
+      "file": "src/app/school-admin/insights/page.tsx",
+      "line": 197,
+      "text": "Key Insights"
+    },
+    {
+      "file": "src/app/school-admin/insights/page.tsx",
+      "line": 203,
+      "text": "No insights available"
+    },
+    {
+      "file": "src/app/school-admin/insights/page.tsx",
+      "line": 233,
+      "text": "No predictions available"
+    },
+    {
+      "file": "src/app/school-admin/insights/page.tsx",
+      "line": 259,
+      "text": "Strategic Recommendations"
+    },
+    {
+      "file": "src/app/school-admin/insights/page.tsx",
+      "line": 290,
+      "text": "Data Summary"
+    },
+    {
+      "file": "src/app/school-admin/insights/page.tsx",
+      "line": 295,
+      "text": "Top Enrolled Courses"
+    },
+    {
+      "file": "src/app/school-admin/insights/page.tsx",
+      "line": 306,
+      "text": "Students by Grade"
+    },
+    {
+      "file": "src/app/school-admin/messages/_components/AlertTableRow.tsx",
+      "line": 134,
+      "text": "Dismiss Alert"
+    },
+    {
+      "file": "src/app/school-admin/messages/_components/AlertsPanel.tsx",
+      "line": 162,
+      "text": "Alert Inbox"
+    },
+    {
+      "file": "src/app/school-admin/messages/_components/AlertsPanel.tsx",
+      "line": 194,
+      "text": "All Types"
+    },
+    {
+      "file": "src/app/school-admin/messages/_components/AlertsPanel.tsx",
+      "line": 203,
+      "text": "All Priorities"
+    },
+    {
+      "file": "src/app/school-admin/messages/_components/AlertsPanel.tsx",
+      "line": 215,
+      "text": "All Statuses"
+    },
+    {
+      "file": "src/app/school-admin/messages/_components/AlertsPanel.tsx",
+      "line": 246,
+      "text": "Inbox Zero"
+    },
+    {
+      "file": "src/app/school-admin/messages/page.tsx",
+      "line": 225,
+      "text": "No contacts found"
+    },
+    {
+      "file": "src/app/school-admin/messages/page.tsx",
+      "line": 313,
+      "text": "Start Video Call"
+    },
+    {
+      "file": "src/app/school-admin/messages/page.tsx",
+      "line": 383,
+      "text": "Select a conversation"
+    },
+    {
+      "file": "src/app/school-admin/notes/page.tsx",
+      "line": 201,
+      "text": "No notes found"
+    },
+    {
+      "file": "src/app/school-admin/page.tsx",
+      "line": 44,
+      "text": "AI School Briefing"
+    },
+    {
+      "file": "src/app/school-admin/page.tsx",
+      "line": 87,
+      "text": "AI Briefing"
+    },
+    {
+      "file": "src/app/school-admin/page.tsx",
+      "line": 143,
+      "text": "Needs Attention"
+    },
+    {
+      "file": "src/app/school-admin/page.tsx",
+      "line": 152,
+      "text": "All students on track"
+    },
+    {
+      "file": "src/app/school-admin/page.tsx",
+      "line": 202,
+      "text": "Assessment Progress"
+    },
+    {
+      "file": "src/app/school-admin/page.tsx",
+      "line": 242,
+      "text": "Action Items"
+    },
+    {
+      "file": "src/app/school-admin/page.tsx",
+      "line": 247,
+      "text": "All clear"
+    },
+    {
+      "file": "src/app/school-admin/page.tsx",
+      "line": 277,
+      "text": "Recent Students"
+    },
+    {
+      "file": "src/app/school-admin/page.tsx",
+      "line": 279,
+      "text": "View all"
+    },
+    {
+      "file": "src/app/school-admin/page.tsx",
+      "line": 296,
+      "text": "No students yet"
+    },
+    {
+      "file": "src/app/school-admin/page.tsx",
+      "line": 320,
+      "text": "School Dashboard"
+    },
+    {
+      "file": "src/app/school-admin/page.tsx",
+      "line": 356,
+      "text": "Quick Navigation"
+    },
+    {
+      "file": "src/app/school-admin/parents/page.tsx",
+      "line": 154,
+      "text": "Invite Parent"
+    },
+    {
+      "file": "src/app/school-admin/parents/page.tsx",
+      "line": 186,
+      "text": "Parent Email"
+    },
+    {
+      "file": "src/app/school-admin/parents/page.tsx",
+      "line": 192,
+      "text": "Jane Doe"
+    },
+    {
+      "file": "src/app/school-admin/parents/page.tsx",
+      "line": 220,
+      "text": "Invite Parent"
+    },
+    {
+      "file": "src/app/school-admin/parents/page.tsx",
+      "line": 261,
+      "text": "No parents found"
+    },
+    {
+      "file": "src/app/school-admin/parents/page.tsx",
+      "line": 326,
+      "text": "Resend invite"
+    },
+    {
+      "file": "src/app/school-admin/parents/page.tsx",
+      "line": 333,
+      "text": "Unlink parent"
+    },
+    {
+      "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
+      "line": 171,
+      "text": "PCA Not Completed"
+    },
+    {
+      "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
+      "line": 176,
+      "text": "DISC Chart Image"
+    },
+    {
+      "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
+      "line": 177,
+      "text": "Full PCA Report"
+    },
+    {
+      "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
+      "line": 183,
+      "text": "Work Adaptation"
+    },
+    {
+      "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
+      "line": 184,
+      "text": "Under Pressure"
+    },
+    {
+      "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
+      "line": 279,
+      "text": "Cognitive Profile"
+    },
+    {
+      "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
+      "line": 295,
+      "text": "Exam Results History"
+    },
+    {
+      "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
+      "line": 377,
+      "text": "Comprehensive Student Report"
+    },
+    {
+      "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
+      "line": 387,
+      "text": "MIL Average"
+    },
+    {
+      "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
+      "line": 391,
+      "text": "Career Profile Report"
+    },
+    {
+      "file": "src/app/school-admin/reports/page.tsx",
+      "line": 56,
+      "text": "Download assessment reports and data exports per student"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 125,
+      "text": "Academic Calendar"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 132,
+      "text": "Academic Years"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 133,
+      "text": "Assessment Windows"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 138,
+      "text": "Course Request Deadline"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 141,
+      "text": "Deadline Date"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 171,
+      "text": "Academic Years"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 178,
+      "text": "Create Academic Year"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 199,
+      "text": "No academic years yet"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 236,
+      "text": "Assessment Windows"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 241,
+      "text": "Create Assessment Period"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 255,
+      "text": "Select term"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 269,
+      "text": "No active windows"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 292,
+      "text": "School Holidays"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 297,
+      "text": "Add Holiday"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 299,
+      "text": "Winter Break"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/CalendarPanel.tsx",
+      "line": 317,
+      "text": "No holidays set"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/IntegrationsPanel.tsx",
+      "line": 117,
+      "text": "Connect external systems for automated data synchronization"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/IntegrationsPanel.tsx",
+      "line": 181,
+      "text": "Enter your API key"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/IntegrationsPanel.tsx",
+      "line": 231,
+      "text": "Sync Capabilities"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/IntegrationsPanel.tsx",
+      "line": 232,
+      "text": "Data types synchronized from iSAMS"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/ProfilePanel.tsx",
+      "line": 141,
+      "text": "Contract Status"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/ProfilePanel.tsx",
+      "line": 170,
+      "text": "Basic Information"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/ProfilePanel.tsx",
+      "line": 172,
+      "text": "School Name"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/ProfilePanel.tsx",
+      "line": 178,
+      "text": "Contact Email"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/ProfilePanel.tsx",
+      "line": 187,
+      "text": "Select timezone"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/ProfilePanel.tsx",
+      "line": 200,
+      "text": "Physical location"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/ProfilePanel.tsx",
+      "line": 216,
+      "text": "Postal Code"
+    },
+    {
+      "file": "src/app/school-admin/settings/_components/ProfilePanel.tsx",
+      "line": 226,
+      "text": "School Logo"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/academics-tab.tsx",
+      "line": 136,
+      "text": "Academic Gaps"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/academics-tab.tsx",
+      "line": 178,
+      "text": "Course Recommendations"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/academics-tab.tsx",
+      "line": 182,
+      "text": "Next Semester"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/assessments-tab.tsx",
+      "line": 48,
+      "text": "Overall Score"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/assessments-tab.tsx",
+      "line": 62,
+      "text": "Cognitive Profile"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/assessments-tab.tsx",
+      "line": 83,
+      "text": "Exam Results"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/assessments-tab.tsx",
+      "line": 126,
+      "text": "PCA DISC Profile"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/extracurriculars-tab.tsx",
+      "line": 24,
+      "text": "Community Service Log"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/extracurriculars-tab.tsx",
+      "line": 34,
+      "text": "Service Requirement"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/extracurriculars-tab.tsx",
+      "line": 52,
+      "text": "Activity Ledger"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/notes-tab.tsx",
+      "line": 54,
+      "text": "New Entry"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/notes-tab.tsx",
+      "line": 63,
+      "text": "General Observation"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/notes-tab.tsx",
+      "line": 64,
+      "text": "Meeting Summary"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/notes-tab.tsx",
+      "line": 66,
+      "text": "Academic Intervention"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/notes-tab.tsx",
+      "line": 67,
+      "text": "Career Guidance"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/notes-tab.tsx",
+      "line": 113,
+      "text": "Counselor Notes"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/notes-tab.tsx",
+      "line": 127,
+      "text": "No notes found"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/notes-tab.tsx",
+      "line": 166,
+      "text": "Delete entry"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/overview-tab.tsx",
+      "line": 48,
+      "text": "Graduation Pathway"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/overview-tab.tsx",
+      "line": 54,
+      "text": "Credits Acquired"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/overview-tab.tsx",
+      "line": 88,
+      "text": "Weighted GPA"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/overview-tab.tsx",
+      "line": 101,
+      "text": "Class Rank"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/overview-tab.tsx",
+      "line": 122,
+      "text": "Assessment Completion"
+    },
+    {
+      "file": "src/app/school-admin/users/[id]/_components/shared-ui.tsx",
+      "line": 32,
+      "text": "DISC Chart"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/CounselorAssignPanel.tsx",
+      "line": 122,
+      "text": "Counseling Department"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/CounselorAssignPanel.tsx",
+      "line": 141,
+      "text": "No Counselors Found"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/CounselorAssignPanel.tsx",
+      "line": 151,
+      "text": "Staff Member"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/CounselorRow.tsx",
+      "line": 251,
+      "text": "Reassign to another counselor"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/CounselorRow.tsx",
+      "line": 258,
+      "text": "Remove from caseload"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/CounselorRow.tsx",
+      "line": 269,
+      "text": "No students assigned yet"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/CounselorRow.tsx",
+      "line": 315,
+      "text": "All Grades"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/CounselorRow.tsx",
+      "line": 331,
+      "text": "Select All"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/CounselorRow.tsx",
+      "line": 350,
+      "text": "No students found"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/InvitePanel.tsx",
+      "line": 209,
+      "text": "Full Name"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/InvitePanel.tsx",
+      "line": 210,
+      "text": "Email Address"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/InvitePanel.tsx",
+      "line": 222,
+      "text": "John Smith"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/StaffPanel.tsx",
+      "line": 120,
+      "text": "All Roles"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/StaffPanel.tsx",
+      "line": 123,
+      "text": "All Roles"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/StaffPanel.tsx",
+      "line": 143,
+      "text": "Invite Staff Member"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/StaffPanel.tsx",
+      "line": 150,
+      "text": "Full Name"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/StaffPanel.tsx",
+      "line": 191,
+      "text": "Total Users"
+    },
+    {
+      "file": "src/app/school-admin/users/_components/StaffPanel.tsx",
+      "line": 221,
+      "text": "No users found"
+    },
+    {
+      "file": "src/app/school-admin/users/bulk-onboard/_components/manual-row.tsx",
+      "line": 42,
+      "text": "Full name"
+    },
+    {
+      "file": "src/app/school-admin/users/bulk-onboard/_components/manual-row.tsx",
+      "line": 68,
+      "text": "Class level"
+    },
+    {
+      "file": "src/app/school-admin/users/page.tsx",
+      "line": 168,
+      "text": "All Status"
+    },
+    {
+      "file": "src/app/school-admin/users/page.tsx",
+      "line": 171,
+      "text": "All Status"
+    },
+    {
+      "file": "src/app/school-admin/users/page.tsx",
+      "line": 254,
+      "text": "No students found"
+    },
+    {
+      "file": "src/app/school-admin/video/page.tsx",
+      "line": 133,
+      "text": "Video Calls"
+    },
+    {
+      "file": "src/app/school-admin/video/page.tsx",
+      "line": 139,
+      "text": "Video Calls Not Available"
+    },
+    {
+      "file": "src/app/school-admin/video/page.tsx",
+      "line": 154,
+      "text": "Video Calls"
+    },
+    {
+      "file": "src/app/school-admin/video/page.tsx",
+      "line": 197,
+      "text": "No contacts found"
+    },
+    {
+      "file": "src/app/school-admin/video/page.tsx",
+      "line": 231,
+      "text": "Scheduling video call"
+    },
+    {
+      "file": "src/app/signup/page.tsx",
+      "line": 161,
+      "text": "First name"
+    },
+    {
+      "file": "src/app/signup/page.tsx",
+      "line": 176,
+      "text": "Last name"
+    },
+    {
+      "file": "src/app/signup/page.tsx",
+      "line": 194,
+      "text": "Email address"
+    },
+    {
+      "file": "src/app/signup/page.tsx",
+      "line": 211,
+      "text": "Date of birth"
+    },
+    {
+      "file": "src/app/signup/page.tsx",
+      "line": 225,
+      "text": "Create a strong password"
+    },
+    {
+      "file": "src/app/signup/page.tsx",
+      "line": 228,
+      "text": "Confirm password"
+    },
+    {
+      "file": "src/app/signup/page.tsx",
+      "line": 229,
+      "text": "Confirm your password"
+    },
+    {
+      "file": "src/app/signup/page.tsx",
+      "line": 238,
+      "text": "Terms of Service"
+    },
+    {
+      "file": "src/app/signup/page.tsx",
+      "line": 240,
+      "text": "Privacy Policy"
+    },
+    {
+      "file": "src/app/teacher/_components/TeacherSidebar.tsx",
+      "line": 160,
+      "text": "Collapse sidebar"
+    },
+    {
+      "file": "src/app/teacher/_components/TeacherSidebar.tsx",
+      "line": 172,
+      "text": "Expand sidebar"
+    },
+    {
+      "file": "src/app/teacher/_components/TeacherSidebar.tsx",
+      "line": 191,
+      "text": "Chat history"
+    },
+    {
+      "file": "src/app/teacher/_components/TeacherSidebar.tsx",
+      "line": 204,
+      "text": "New chat"
+    },
+    {
+      "file": "src/app/teacher/_components/TeacherSidebar.tsx",
+      "line": 226,
+      "text": "No chats yet"
+    },
+    {
+      "file": "src/app/teacher/_components/TeacherSidebar.tsx",
+      "line": 321,
+      "text": "Sign Out"
+    },
+    {
+      "file": "src/app/teacher/onboarding/page.tsx",
+      "line": 111,
+      "text": "Go to Login"
+    },
+    {
+      "file": "src/app/teacher/onboarding/page.tsx",
+      "line": 146,
+      "text": "Go to Login"
+    },
+    {
+      "file": "src/app/teacher/onboarding/page.tsx",
+      "line": 240,
+      "text": "Create your account"
+    },
+    {
+      "file": "src/app/teacher/onboarding/page.tsx",
+      "line": 257,
+      "text": "Your full name"
+    },
+    {
+      "file": "src/app/teacher/onboarding/page.tsx",
+      "line": 303,
+      "text": "Repeat your password"
+    },
+    {
+      "file": "src/app/terms/page.tsx",
+      "line": 11,
+      "text": "Terms of Service"
+    },
+    {
+      "file": "src/app/terms/page.tsx",
+      "line": 28,
+      "text": "You must provide accurate and complete information when creating an account"
+    },
+    {
+      "file": "src/app/terms/page.tsx",
+      "line": 29,
+      "text": "You are responsible for maintaining the security of your account credentials"
+    },
+    {
+      "file": "src/app/terms/page.tsx",
+      "line": 30,
+      "text": "You must notify us immediately of any unauthorized access to your account"
+    },
+    {
+      "file": "src/app/terms/page.tsx",
+      "line": 31,
+      "text": "One person may not maintain more than one account of the same role type"
+    },
+    {
+      "file": "src/app/terms/page.tsx",
+      "line": 38,
+      "text": "Individual students may access premium features through paid subscriptions"
+    },
+    {
+      "file": "src/app/terms/page.tsx",
+      "line": 40,
+      "text": "Payments are processed securely through Stripe"
+    },
+    {
+      "file": "src/app/terms/page.tsx",
+      "line": 50,
+      "text": "Use the Service for any unlawful purpose"
+    },
+    {
+      "file": "src/app/terms/page.tsx",
+      "line": 52,
+      "text": "Submit false or misleading assessment responses"
+    },
+    {
+      "file": "src/app/terms/page.tsx",
+      "line": 53,
+      "text": "Use automated tools to scrape or collect data from the platform"
+    },
+    {
+      "file": "src/app/terms/page.tsx",
+      "line": 55,
+      "text": "Share your account credentials with others"
+    }
+  ]
+}
