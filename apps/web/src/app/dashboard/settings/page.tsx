@@ -22,6 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { getUserSettings, updateUserSettings } from "@/services/userService";
 import { apiRequest } from "@/lib/api/apiClient";
+import { useSetLanguage } from "@/lib/i18n/useSetLanguage";
 
 /* ------------------------------------------------------------------ */
 /*  Section card wrapper                                               */
@@ -179,6 +180,7 @@ function ThemeOption({
 export default function StudentSettingsPage() {
   const user = useGlobalStore((s) => s.user);
   const { mode, setMode } = useAdminTheme();
+  const setLanguage = useSetLanguage();
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -188,8 +190,8 @@ export default function StudentSettingsPage() {
   const [sessionReminders, setSessionReminders] = useState(true);
   const [weeklyDigest, setWeeklyDigest] = useState(false);
 
-  // Language preference
-  const [language, setLanguage] = useState("en");
+  // Language preference (local display state only — actual changes go via setLanguage hook)
+  const [language, setLocalLanguage] = useState<"en" | "es">("en");
 
   // Privacy settings
   const [profileVisible, setProfileVisible] = useState(true);
@@ -226,7 +228,9 @@ export default function StudentSettingsPage() {
     }
   };
 
-  // Load saved settings from the backend (null until first save)
+  // Load saved settings from the backend (null until first save).
+  // On load, hydrate the i18n/store via the shared hook so the UI
+  // immediately reflects the persisted language preference.
   useEffect(() => {
     let cancelled = false;
     getUserSettings()
@@ -236,7 +240,12 @@ export default function StudentSettingsPage() {
         setPushNotifications(settings.pushNotifications);
         setSessionReminders(settings.bookingNotifications);
         setWeeklyDigest(settings.marketingEmails);
-        setLanguage(settings.language);
+        // Normalise to "en"|"es" — backend may return either code or legacy words.
+        const lang: "en" | "es" =
+          settings.language === "es" || settings.language === "spanish" ? "es" : "en";
+        setLocalLanguage(lang);
+        // Hydrate i18next + global store (skip PUT — value came FROM the DB).
+        setLanguage(lang).catch(() => {});
         setProfileVisible(settings.profileVisible);
         setShareProgress(settings.shareProgress);
         setAllowAnalytics(settings.allowAnalytics);
@@ -248,6 +257,7 @@ export default function StudentSettingsPage() {
     return () => {
       cancelled = true;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSave = async () => {
@@ -258,7 +268,7 @@ export default function StudentSettingsPage() {
         pushNotifications,
         bookingNotifications: sessionReminders,
         marketingEmails: weeklyDigest,
-        language,
+        language,  // already "en"|"es" from local state
         profileVisible,
         shareProgress,
         allowAnalytics,
@@ -379,16 +389,17 @@ export default function StudentSettingsPage() {
       {/* ---- Language ---- */}
       <SectionCard icon={Globe} title="Language" subtitle="Choose your preferred language" delay={0.2}>
         <div className="flex flex-wrap gap-2">
-          {[
+          {([
             { value: "en", label: "English" },
-            { value: "es", label: "Espanol" },
-            { value: "fr", label: "Francais" },
-            { value: "pt", label: "Portugues" },
-          ].map((lang) => (
+            { value: "es", label: "Español" },
+          ] as const).map((lang) => (
             <button
               key={lang.value}
               type="button"
-              onClick={() => setLanguage(lang.value)}
+              onClick={() => {
+                setLocalLanguage(lang.value);
+                setLanguage(lang.value).catch(() => {});
+              }}
               style={{
                 padding: "8px 16px",
                 borderRadius: 6,
