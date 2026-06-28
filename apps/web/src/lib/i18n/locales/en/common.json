@@ -91,7 +91,8 @@
     "inProgress": "IN PROGRESS",
     "notStarted": "NOT STARTED",
     "male": "Male",
-    "female": "Female"
+    "female": "Female",
+    "to": "a"
   },
   "error": {
     "somethingWentWrong": "Something went wrong",
@@ -360,7 +361,13 @@
         "ensureBaseUrl": "Ensure NEXT_PUBLIC_API_BASE_URL is set correctly",
         "includeProtocol": "Make sure the domain includes https:// protocol",
         "verifyDeployment": "Verify your deployment URL is accessible"
-      }
+      },
+      "urlGenerationFailed": "Fallo al generar URLs",
+      "ifUrlsInvalidLabel": "Si las URLs son inválidas:",
+      "fix1": "Verifica que estés ejecutando en un dominio apropiado (no localhost en producción)",
+      "fix2": "Asegúrate de que NEXT_PUBLIC_API_BASE_URL esté configurado correctamente",
+      "fix3": "Asegúrate de que el dominio incluya el protocolo https://",
+      "fix4": "Verifica que la URL de despliegue sea accesible"
     },
     "plans": {
       "editTitle": "Edit Plan",
@@ -527,7 +534,8 @@
         "contractPeriod": "Contract Period",
         "contractStatus": "Contract Status",
         "students": "Students",
-        "actions": "Actions"
+        "actions": "Actions",
+        "platformFee": "Comisión de Plataforma"
       },
       "studentsActive": "active",
       "actions": {
@@ -1936,5 +1944,239 @@
     "booked": "Session Booked!",
     "confirmationMessage": "Your counselor session has been confirmed.",
     "backToDashboard": "Back to Dashboard"
+  },
+  "schoolAdmin": {
+    "title": "Portal de Administración Escolar",
+    "role": "Admin Escolar",
+    "nav": {
+      "dashboard": "Panel",
+      "students": "Estudiantes",
+      "analytics": "Análisis",
+      "results": "Resultados",
+      "settings": "Configuración"
+    },
+    "dashboard": {
+      "title": "Panel Escolar",
+      "subtitle": "¡Bienvenido de vuelta! Aquí está el resumen de tu escuela.",
+      "inviteStudent": "Invitar Estudiante",
+      "quickActions": "Acciones Rápidas",
+      "recentStudents": "Estudiantes Recientes",
+      "performance": "Resumen de Rendimiento",
+      "viewAll": "Ver todo",
+      "viewDetails": "Ver detalles"
+    },
+    "stats": {
+      "totalStudents": "Total de Estudiantes",
+      "pendingInvites": "Invitaciones Pendientes",
+      "activeStudents": "Estudiantes Activos",
+      "avgScore": "Puntuación Prom.",
+      "studentsInSchool": "Estudiantes en tu escuela",
+      "awaitingAcceptance": "Esperando aceptación",
+      "currentlyActive": "Actualmente activos",
+      "averageAssessmentScore": "Puntuación promedio de evaluación"
+    },
+    "quickActions": {
+      "inviteStudents": {
+        "title": "Invitar Estudiantes",
+        "desc": "Agregar nuevos estudiantes a tu escuela"
+      },
+      "viewAnalytics": {
+        "title": "Ver Análisis",
+        "desc": "Seguir el rendimiento y tendencias de estudiantes"
+      },
+      "viewResults": {
+        "title": "Resultados de Estudiantes",
+        "desc": "Revisar evaluaciones y puntuaciones"
+      },
+      "manageStudents": {
+        "title": "Gestionar Estudiantes",
+        "desc": "Ver y gestionar todos los estudiantes"
+      }
+    },
+    "students": {
+      "title": "Gestión de Estudiantes",
+      "subtitle": "Invitar y gestionar estudiantes en tu escuela",
+      "inviteStudent": "Invitar Estudiante",
+      "searchPlaceholder": "Buscar estudiantes...",
+      "allStatuses": "Todos los Estados",
+      "noStudents": "Aún no hay estudiantes",
+      "noStudentsDesc": "Invita a tu primer estudiante para comenzar",
+      "inviteFirst": "Invitar Primer Estudiante",
+      "table": {
+        "student": "Estudiante",
+        "status": "Estado",
+        "progress": "Progreso",
+        "avgScore": "Puntuación Prom",
+        "lastActive": "Última Actividad",
+        "actions": "Acciones"
+      },
+      "status": {
+        "active": "Activo",
+        "pending": "Pendiente",
+        "accepted": "Aceptado",
+        "inactive": "Inactivo"
+      },
+      "actions": {
+        "resendInvite": "Reenviar Invitación",
+        "removeStudent": "Eliminar Estudiante",
+        "viewDetails": "Ver Detalles"
+      },
+      "invite": {
+        "title": "Invitar Estudiante",
+        "singleInvite": "Invitación Individual",
+        "bulkInvite": "Invitación Masiva",
+        "name": "Nombre del Estudiante",
+        "namePlaceholder": "Ingresa el nombre del estudiante",
+        "email": "Correo Electrónico",
+        "emailPlaceholder": "Ingresa el correo electrónico",
+        "sendInvite": "Enviar Invitación",
+        "sending": "Enviando...",
+        "bulkDescription": "Ingresa un estudiante por línea en formato: Nombre, Correo",
+        "bulkPlaceholder": "Juan Pérez, juan@ejemplo.com\nMaría García, maria@ejemplo.com",
+        "inviteAll": "Invitar a Todos",
+        "studentsToInvite": "{{count}} estudiante(s) para invitar",
+        "success": "Invitación enviada exitosamente",
+        "error": "Error al enviar la invitación",
+        "bulkSuccess": "{{count}} estudiantes invitados exitosamente",
+        "bulkError": "Error al invitar estudiantes"
+      },
+      "resendSuccess": "Invitación reenviada exitosamente",
+      "resendError": "Error al reenviar la invitación",
+      "removeSuccess": "Estudiante eliminado exitosamente",
+      "removeError": "Error al eliminar el estudiante",
+      "neverActive": "Nunca"
+    },
+    "analytics": {
+      "title": "Análisis",
+      "subtitle": "Seguir el rendimiento y la participación en toda tu escuela",
+      "period": {
+        "week": "Esta Semana",
+        "month": "Este Mes",
+        "quarter": "Este Trimestre",
+        "year": "Este Año"
+      },
+      "engagement": {
+        "title": "Participación Estudiantil",
+        "active": "Activos",
+        "inactive": "Inactivos"
+      },
+      "completion": {
+        "title": "Finalización de Evaluaciones",
+        "completed": "Completadas",
+        "inProgress": "En Progreso",
+        "notStarted": "No Iniciadas",
+        "rate": "Tasa de Finalización"
+      },
+      "performance": {
+        "title": "Rendimiento Promedio",
+        "score": "Puntuación Promedio",
+        "trend": "Tendencia"
+      },
+      "timeSpent": {
+        "title": "Tiempo Dedicado",
+        "average": "Horas Promedio",
+        "total": "Horas Totales"
+      },
+      "trends": {
+        "title": "Tendencias de Rendimiento",
+        "metric": {
+          "score": "Puntuación Promedio",
+          "completion": "Tasa de Finalización",
+          "time": "Tiempo Dedicado"
+        }
+      },
+      "topPerformers": {
+        "title": "Mejores Estudiantes",
+        "rank": "Posición",
+        "student": "Estudiante",
+        "score": "Puntuación",
+        "assessments": "Evaluaciones"
+      },
+      "noData": "No hay datos disponibles para el período seleccionado"
+    },
+    "results": {
+      "title": "Resultados de Estudiantes",
+      "subtitle": "Ver y exportar resultados de evaluaciones",
+      "export": "Exportar",
+      "exportCSV": "Exportar CSV",
+      "exportPDF": "Exportar PDF",
+      "allAssessments": "Todas las Evaluaciones",
+      "noResults": "No se encontraron resultados",
+      "noResultsDesc": "Los resultados de evaluaciones aparecerán aquí",
+      "table": {
+        "student": "Estudiante",
+        "assessment": "Evaluación",
+        "type": "Tipo",
+        "score": "Puntuación",
+        "completedAt": "Completado",
+        "duration": "Duración",
+        "actions": "Acciones"
+      },
+      "detail": {
+        "title": "Detalles del Estudiante",
+        "summary": "Resumen de Rendimiento",
+        "totalAssessments": "Evaluaciones Totales",
+        "averageScore": "Puntuación Promedio",
+        "totalTime": "Tiempo Total",
+        "strongAreas": "Áreas Fuertes",
+        "improvementAreas": "Áreas de Mejora",
+        "assessmentHistory": "Historial de Evaluaciones",
+        "noAssessments": "Aún no se han completado evaluaciones"
+      },
+      "exportSuccess": "Resultados exportados exitosamente",
+      "exportError": "Error al exportar resultados",
+      "minutes": "min"
+    },
+    "settings": {
+      "title": "Configuración",
+      "subtitle": "Gestionar tu cuenta y configuración de la escuela",
+      "schoolInfo": {
+        "title": "Información de la Escuela",
+        "subtitle": "Detalles de tu escuela e información del contrato",
+        "name": "Nombre de la Escuela",
+        "adminEmail": "Correo del Administrador",
+        "maxStudents": "Capacidad de Estudiantes",
+        "contractStart": "Inicio del Contrato",
+        "contractEnd": "Fin del Contrato",
+        "loadError": "No se pudo cargar la información de la escuela"
+      },
+      "profile": {
+        "title": "Configuración del Perfil",
+        "subtitle": "Actualiza tu información de perfil",
+        "name": "Nombre",
+        "namePlaceholder": "Tu nombre",
+        "phone": "Teléfono",
+        "phonePlaceholder": "+52 123 456 7890",
+        "update": "Actualizar Perfil",
+        "updating": "Actualizando...",
+        "success": "Perfil actualizado exitosamente",
+        "error": "Error al actualizar el perfil"
+      },
+      "password": {
+        "title": "Cambiar Contraseña",
+        "subtitle": "Mantén tu cuenta segura usando una contraseña fuerte",
+        "current": "Contraseña Actual",
+        "currentPlaceholder": "Ingresa la contraseña actual",
+        "new": "Nueva Contraseña",
+        "newPlaceholder": "Ingresa la nueva contraseña",
+        "confirm": "Confirmar Contraseña",
+        "confirmPlaceholder": "Confirma la nueva contraseña",
+        "change": "Cambiar Contraseña",
+        "changing": "Cambiando...",
+        "success": "Contraseña cambiada exitosamente",
+        "error": "Error al cambiar la contraseña",
+        "mismatch": "Las contraseñas no coinciden"
+      }
+    },
+    "common": {
+      "loading": "Cargando...",
+      "error": "Ocurrió un error",
+      "retry": "Reintentar",
+      "close": "Cerrar",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "go": "Ir",
+      "viewAll": "Ver todo"
+    }
   }
 }
