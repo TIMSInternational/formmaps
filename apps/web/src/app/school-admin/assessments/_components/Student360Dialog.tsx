@@ -165,7 +165,8 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newEval, setNewEval] = useState({ name: "", email: "", relation: "Parent", groupType: "parent" });
+  const [newEval, setNewEval] = useState({ name: "", email: "", relation: "Parent", groupType: "parent", instrument: "generic" });
+  const [instrumentVersion, setInstrumentVersion] = useState<string | undefined>(undefined);
   const [addLoading, setAddLoading] = useState(false);
   const [extendingGroupId, setExtendingGroupId] = useState<string | null>(null);
   const [resetConfirmGroup, setResetConfirmGroup] = useState<EvaluationGroup | null>(null);
@@ -180,7 +181,8 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
     if (!student || !open) return;
     setLoading(true);
     setShowAddForm(false);
-    setNewEval({ name: "", email: "", relation: "Parent", groupType: "parent" });
+    setNewEval({ name: "", email: "", relation: "Parent", groupType: "parent", instrument: "generic" });
+    setInstrumentVersion(undefined);
     refreshGroups().finally(() => setLoading(false));
   }, [student?.id, open]);
 
@@ -208,6 +210,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
     if (!newEval.name.trim() || !newEval.email.trim()) { toast.error("Name and email required"); return; }
     setAddLoading(true);
     try {
+      const isVocational = newEval.instrument === "vocational";
       const res = await apiRequest("/evaluation/create-group", {
         method: "POST",
         data: {
@@ -216,13 +219,15 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
           relation: newEval.relation,
           groupType: newEval.groupType,
           evaluatedUserId: student.id,
+          ...(isVocational ? { instrument: "vocational", ...(instrumentVersion ? { instrumentVersion } : {}) } : {}),
         },
       });
       // The invitation email is now sent on create (parity with other invites).
       toast.success(res?.data?.emailSent === false
         ? `${newEval.name} added — couldn't email the invitation, use Resend`
         : `Invitation sent to ${newEval.name}`);
-      setNewEval({ name: "", email: "", relation: "Parent", groupType: "parent" });
+      setNewEval({ name: "", email: "", relation: "Parent", groupType: "parent", instrument: "generic" });
+      setInstrumentVersion(undefined);
       setShowAddForm(false);
       await refreshGroups();
     } catch (err: unknown) {
@@ -347,6 +352,26 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                   }}
                   style={{ flex: 1, height: 34, borderRadius: 6, padding: "0 8px", fontSize: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", outline: "none" }}>
                   {relationOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <label htmlFor="admin-instrument-select" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>Instrument</label>
+                <select id="admin-instrument-select" aria-label="Instrument" value={newEval.instrument}
+                  onChange={async (e) => {
+                    const val = e.target.value;
+                    setNewEval({ ...newEval, instrument: val });
+                    if (val === "vocational") {
+                      try {
+                        const res = await apiRequest("/api/v1/vocational360/instrument");
+                        setInstrumentVersion((res as { data?: { version?: string } })?.data?.version);
+                      } catch {
+                        setInstrumentVersion(undefined);
+                      }
+                    } else {
+                      setInstrumentVersion(undefined);
+                    }
+                  }}
+                  style={{ flex: 1, height: 34, borderRadius: 6, padding: "0 8px", fontSize: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", outline: "none" }}>
+                  <option value="generic">Generic 360</option>
+                  <option value="vocational">Vocational 360</option>
                 </select>
                 <button onClick={handleAddEvaluator} disabled={addLoading || !newEval.name.trim() || !newEval.email.trim()}
                   style={{

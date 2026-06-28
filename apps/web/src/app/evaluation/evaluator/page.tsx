@@ -10,12 +10,15 @@ import { QuestionCard } from "./_components/QuestionCard";
 import { EvaluatorNavigation } from "./_components/EvaluatorNavigation";
 import type { EvaluationQuestion, ApiQuestion, ApiEvaluatorData, ApiResponse, EvaluationData, QuestionResponse } from "./_components/types";
 import { DEFAULT_RESPONSE_SCALE } from "./_components/types";
+import { validateEvaluationToken } from "@/services/evaluationService";
+import { VocationalEvaluator } from "./_components/VocationalEvaluator";
 
 export default function EvaluatorPage() {
   const searchParams = useSearchParams();
   const { language, user } = useGlobalStore();
   const token = searchParams.get("token");
 
+  const [instrument, setInstrument] = useState<string | null | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,9 +40,20 @@ export default function EvaluatorPage() {
       setError("No evaluation token provided.");
       setIsLoading(false);
       setIsValidating(false);
+      setInstrument(null);
       return;
     }
-    loadEvaluationData();
+    (async () => {
+      const result = await validateEvaluationToken(token);
+      const resolvedInstrument = result.instrument ?? null;
+      setInstrument(resolvedInstrument);
+      if (resolvedInstrument === "vocational") {
+        setIsLoading(false);
+        setIsValidating(false);
+        return;
+      }
+      loadEvaluationData();
+    })();
   }, [token]);
 
   const loadEvaluationData = async () => {
@@ -196,6 +210,9 @@ export default function EvaluatorPage() {
 
   // --- RENDER STATES ---
   if (isLoading || isValidating) return <LoadingScreen />;
+  // instrument branch: early-return before generic 360 body
+  if (instrument === undefined) return <LoadingScreen />;
+  if (instrument === "vocational" && token) return <VocationalEvaluator token={token} />;
   if (error && !evaluationData) return <ErrorScreen error={error} />;
 
   if (success) {
