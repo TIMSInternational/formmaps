@@ -31,14 +31,15 @@ const CalendarPanel = dynamic(() => import("./_components/CalendarPanel"));
 const IntegrationsPanel = dynamic(() => import("./_components/IntegrationsPanel"));
 
 const TABS = [
-  { key: "general", label: "General", icon: Settings },
-  { key: "profile", label: "School Profile", icon: Building2 },
-  { key: "calendar", label: "Calendar", icon: CalendarDays },
-  { key: "integrations", label: "Integrations", icon: Plug },
+  { key: "general", labelKey: "settings.tabs.general", icon: Settings },
+  { key: "profile", labelKey: "settings.tabs.profile", icon: Building2 },
+  { key: "calendar", labelKey: "settings.tabs.calendar", icon: CalendarDays },
+  { key: "integrations", labelKey: "settings.tabs.integrations", icon: Plug },
 ] as const;
 
 function GeneralSettings() {
   const { t } = useTranslation();
+  const { t: ts } = useTranslation("school_admin");
   const { data: settings, isLoading, refetch } = useSchoolSettings();
 
   // Profile form
@@ -115,10 +116,10 @@ function GeneralSettings() {
               <Beaker className="w-4 h-4" style={{ color: useMockData ? "#f59e0b" : "var(--admin-accent-green, #10b981)" }} />
               <div className="flex flex-col justify-center">
                 <Label htmlFor="mock-data-toggle" style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--admin-font-primary)", cursor: "pointer" }}>
-                  {useMockData ? "Preview Mode" : "Live Mode"}
+                  {useMockData ? ts("settings.mockToggle.previewMode") : ts("settings.mockToggle.liveMode")}
                 </Label>
                 <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginTop: 1 }}>
-                  {useMockData ? "Using mock data" : "Using real data"}
+                  {useMockData ? ts("settings.mockToggle.usingMock") : ts("settings.mockToggle.usingReal")}
                 </span>
               </div>
               <div className="ml-2 pl-3 flex items-center" style={{ borderLeft: "1px solid var(--admin-border-default)", height: 24 }}>
@@ -377,6 +378,7 @@ function GeneralSettings() {
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation("school_admin");
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialTab = searchParams.get("tab") || "general";
@@ -388,9 +390,11 @@ export default function SettingsPage() {
     router.replace(url, { scroll: false });
   };
 
+  const tabs = TABS.map(({ key, labelKey, icon }) => ({ key, label: t(labelKey), icon }));
+
   return (
     <div>
-      <AdminTabBar tabs={[...TABS]} activeTab={activeTab} onChange={handleTabChange} />
+      <AdminTabBar tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
       {activeTab === "general" && <GeneralSettings />}
       {activeTab === "profile" && <ProfilePanel />}
       {activeTab === "calendar" && <CalendarPanel />}

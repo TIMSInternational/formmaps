@@ -168,7 +168,7 @@ function AtRiskWidget() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{s.name}</div>
                   <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>
-                    {t("dashboard.atRisk.pcaMissing", { count: pcaMissing })}{s.mil !== "done" ? ` ${t("dashboard.atRisk.milIncomplete")}` : ""}{s.eval360 !== "done" ? ` ${t("dashboard.atRisk.evalPending")}` : ""}
+                    {pcaMissing} {t("dashboard.atRisk.pcaMissing", { count: pcaMissing })}{s.mil !== "done" ? ` ${t("dashboard.atRisk.milIncomplete")}` : ""}{s.eval360 !== "done" ? ` ${t("dashboard.atRisk.evalPending")}` : ""}
                   </div>
                 </div>
               </Link>

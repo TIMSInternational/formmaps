@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "@/lib/api/apiClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
@@ -9,6 +10,7 @@ import { CounselorCard } from "./_components/CounselorCard";
 import type { CounselorWorkload } from "./_components/CounselorCard";
 
 export default function CounselorWorkloadPage() {
+  const { t } = useTranslation("school_admin");
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery<CounselorWorkload[]>({
     queryKey: ["counselor-workload"],
@@ -28,14 +30,14 @@ export default function CounselorWorkloadPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>
-          Administration
+          {t("counselorWorkload.label")}
         </span>
         <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--admin-font-primary)", display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
           <Users style={{ width: 22, height: 22, color: "#065292" }} />
-          Counselor Workload
+          {t("counselorWorkload.title")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-          Overview of each counselor's caseload, sessions, and notes
+          {t("counselorWorkload.subtitle")}
         </p>
       </motion.div>
 
@@ -45,9 +47,9 @@ export default function CounselorWorkloadPage() {
         style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}
       >
         {[
-          { label: "Counselors", value: counselors.length, color: "#065292" },
-          { label: "Total Students Assigned", value: totalStudents, color: "#14b8a6" },
-          { label: "Total Sessions", value: totalSessions, color: "#f59e0b" },
+          { label: t("counselorWorkload.stats.counselors"), value: counselors.length, color: "#065292" },
+          { label: t("counselorWorkload.stats.totalStudents"), value: totalStudents, color: "#14b8a6" },
+          { label: t("counselorWorkload.stats.totalSessions"), value: totalSessions, color: "#f59e0b" },
         ].map((s) => (
           <div key={s.label} style={{
             padding: "16px 20px", borderRadius: 10,
@@ -73,7 +75,7 @@ export default function CounselorWorkloadPage() {
           background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
         }}>
           <Users style={{ width: 36, height: 36, color: "var(--admin-font-light)", margin: "0 auto 12px" }} />
-          <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)" }}>No counselors found in your school.</p>
+          <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)" }}>{t("counselorWorkload.noCounselors")}</p>
         </div>
       ) : (
         <div className="space-y-4">
