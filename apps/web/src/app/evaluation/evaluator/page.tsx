@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertCircle, ChevronDown, Users } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { LoadingScreen, ErrorScreen, SuccessScreen, AlreadySubmittedScreen } from "./_components/EvaluatorStatusScreens";
 import { QuestionCard } from "./_components/QuestionCard";
@@ -15,7 +16,13 @@ import { VocationalEvaluator } from "./_components/VocationalEvaluator";
 
 export default function EvaluatorPage() {
   const searchParams = useSearchParams();
-  const { language, user } = useGlobalStore();
+  const { t, i18n } = useTranslation();
+  const { user } = useGlobalStore();
+  // Single source of truth for the evaluator flow's language: i18next. The API
+  // content fetch (?lang) and the displayed chrome/content both derive from it,
+  // so they can never diverge. I18nProvider keeps i18next in sync with the
+  // persisted store preference, so this matches the user's chosen language.
+  const isSpanish = i18n.language?.startsWith("es") ?? false;
   const token = searchParams.get("token");
 
   const [instrument, setInstrument] = useState<string | null | undefined>(undefined);
@@ -37,7 +44,7 @@ export default function EvaluatorPage() {
 
   useEffect(() => {
     if (!token) {
-      setError("No evaluation token provided.");
+      setError(t("evaluation.evaluator.errNoToken"));
       setIsLoading(false);
       setIsValidating(false);
       setInstrument(null);
@@ -61,7 +68,7 @@ export default function EvaluatorPage() {
       setIsLoading(true);
       setIsValidating(true);
 
-      const langParam = language === "spanish" ? "sp" : "en";
+      const langParam = isSpanish ? "sp" : "en";
       const response = await fetch(
         `${API_BASE_URL}/evaluation/360evolutor/${token}?lang=${langParam}`,
         { method: "GET", headers: { "Content-Type": "application/json" }, credentials: "include" }
@@ -69,7 +76,7 @@ export default function EvaluatorPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || errorData?.errorMessage || `Failed to load evaluation (${response.status})`);
+        throw new Error(errorData?.message || errorData?.errorMessage || t("evaluation.evaluator.errLoadFailed", { status: response.status }));
       }
 
       const data: ApiResponse = await response.json();
@@ -108,7 +115,7 @@ export default function EvaluatorPage() {
       }));
 
       if (questions.length === 0) {
-        throw new Error("No questions available for this evaluation.");
+        throw new Error(t("evaluation.evaluator.errNoQuestions"));
       }
 
       setEvaluationData({
@@ -117,7 +124,7 @@ export default function EvaluatorPage() {
         responseScale: scale,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load evaluation.");
+      setError(err instanceof Error ? err.message : t("evaluation.evaluator.errLoadGeneric"));
     } finally {
       setIsLoading(false);
       setIsValidating(false);
@@ -185,7 +192,7 @@ export default function EvaluatorPage() {
         comment: "",
       };
 
-      const langParam = language === "spanish" ? "sp" : "en";
+      const langParam = isSpanish ? "sp" : "en";
       const response = await fetch(
         `${API_BASE_URL}/evaluation/submit-feedback?lang=${langParam}`,
         {
@@ -197,12 +204,12 @@ export default function EvaluatorPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || "Failed to submit evaluation.");
+        throw new Error(errorData?.message || t("evaluation.evaluator.errSubmitFailed"));
       }
 
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit evaluation. Please try again.");
+      setError(err instanceof Error ? err.message : t("evaluation.evaluator.errSubmitRetry"));
     } finally {
       setIsSubmitting(false);
     }
@@ -235,12 +242,10 @@ export default function EvaluatorPage() {
             <Users className="w-6 h-6 text-orange-600" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">
-            360° {language === "spanish" ? "Evaluacion" : "Evaluation"}
+            360° {t("evaluation.evaluator.title360")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {language === "spanish"
-              ? "Ayudanos a comprender las fortalezas profesionales"
-              : "Help us understand career strengths"}
+            {t("evaluation.evaluator.subtitle")}
           </p>
         </motion.div>
 
@@ -252,7 +257,7 @@ export default function EvaluatorPage() {
               className="w-full flex items-center justify-between p-3 text-left hover:bg-secondary/50 transition-colors"
             >
               <span className="text-xs font-semibold text-foreground">
-                {language === "spanish" ? "Detalles" : "Details"}
+                {t("evaluation.evaluator.details")}
                 <span className="text-muted-foreground font-normal ml-2">
                   {evaluatorData.evaluatorName} → {evaluatorData.evaluatedUserName}
                 </span>
@@ -269,10 +274,10 @@ export default function EvaluatorPage() {
                   className="overflow-hidden"
                 >
                   <div className="px-3 pb-3 grid grid-cols-2 gap-2 text-xs">
-                    <div><span className="text-muted-foreground">Evaluator:</span> <span className="font-medium text-foreground">{evaluatorData.evaluatorName}</span></div>
-                    <div><span className="text-muted-foreground">Evaluating:</span> <span className="font-medium text-foreground">{evaluatorData.evaluatedUserName}</span></div>
-                    <div><span className="text-muted-foreground">Relation:</span> <span className="font-medium text-foreground">{evaluatorData.relation}</span></div>
-                    <div><span className="text-muted-foreground">Group:</span> <span className="font-medium text-foreground">{evaluatorData.groupType}</span></div>
+                    <div><span className="text-muted-foreground">{t("evaluation.evaluator.evaluatorLabel")}</span> <span className="font-medium text-foreground">{evaluatorData.evaluatorName}</span></div>
+                    <div><span className="text-muted-foreground">{t("evaluation.evaluator.evaluatingLabel")}</span> <span className="font-medium text-foreground">{evaluatorData.evaluatedUserName}</span></div>
+                    <div><span className="text-muted-foreground">{t("evaluation.evaluator.relationLabel")}</span> <span className="font-medium text-foreground">{evaluatorData.relation}</span></div>
+                    <div><span className="text-muted-foreground">{t("evaluation.evaluator.groupLabel")}</span> <span className="font-medium text-foreground">{evaluatorData.groupType}</span></div>
                   </div>
                 </motion.div>
               )}
@@ -284,7 +289,7 @@ export default function EvaluatorPage() {
         <div className="dash-card p-3 mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-foreground">
-              {language === "spanish" ? "Pregunta" : "Question"} {currentStep + 1}/{evaluationData.questions.length}
+              {t("evaluation.evaluator.question")} {currentStep + 1}/{evaluationData.questions.length}
             </span>
             <span className="text-xs text-muted-foreground tabular-nums">{Math.round(progress)}%</span>
           </div>
@@ -314,7 +319,6 @@ export default function EvaluatorPage() {
             direction={direction}
             responseScale={evaluationData.responseScale}
             response={responses[currentQuestion.id]}
-            language={language}
             onResponseChange={handleResponseChange}
           />
         )}
@@ -327,7 +331,6 @@ export default function EvaluatorPage() {
         questionIds={evaluationData.questions.map((q) => q.id)}
         responses={responses}
         isSubmitting={isSubmitting}
-        language={language}
         onPrev={prevStep}
         onNext={nextStep}
         onGoToStep={goToStep}

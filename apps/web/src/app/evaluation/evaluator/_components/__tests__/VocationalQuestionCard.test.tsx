@@ -2,6 +2,23 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { VocationalQuestionCard, VocationalAnswerValue } from "../VocationalQuestionCard";
 import type { VocationalQuestionItem } from "@/services/vocationalTakeService";
 
+// Resolve real English copy (with {{var}} interpolation) so aria-label/text
+// queries match what users see.
+jest.mock("react-i18next", () => {
+  const en = require("@/lib/i18n/locales/en/common.json");
+  const get = (k: string) => k.split(".").reduce((o: unknown, p: string) => (o == null ? o : (o as Record<string, unknown>)[p]), en);
+  return {
+    useTranslation: () => ({
+      t: (k: string, opts?: Record<string, unknown>) => {
+        const v = get(k);
+        if (typeof v !== "string") return k;
+        return opts ? v.replace(/\{\{(\w+)\}\}/g, (_m, n) => String(opts[n] ?? `{{${n}}}`)) : v;
+      },
+      i18n: { language: "en" },
+    }),
+  };
+});
+
 const q = (over: Partial<VocationalQuestionItem>): VocationalQuestionItem => ({
   number: 1, block: "dimension", type: "likert", area: null, dimensionKey: "d", scaleAnchors: null, options: null, text: "Q?", ...over,
 });

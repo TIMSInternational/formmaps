@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { VocationalQuestionItem } from "@/services/vocationalTakeService";
 
 export interface VocationalAnswerValue {
@@ -23,6 +24,7 @@ export function VocationalQuestionCard({
   value: VocationalAnswerValue | undefined;
   onChange: (v: VocationalAnswerValue) => void;
 }) {
+  const { t } = useTranslation();
   const options = question.options ?? [];
 
   if (question.type === "likert") {
@@ -78,7 +80,7 @@ export function VocationalQuestionCard({
     return (
       <Textarea value={value?.textValue ?? ""} maxLength={4000} rows={5}
         onChange={(e) => onChange({ textValue: e.target.value })}
-        placeholder="Escribe tu respuesta…" className="w-full" />
+        placeholder={t("evaluation.vocational.answerPlaceholder")} className="w-full" />
     );
   }
 
@@ -100,8 +102,8 @@ export function VocationalQuestionCard({
         <li key={v} className="flex items-center justify-between rounded-lg border p-3" style={ROW_STYLE}>
           <span className="text-sm text-foreground">{idx + 1}. {labelOf(v)}</span>
           <div className="flex gap-1">
-            <button type="button" aria-label={`move ${labelOf(v)} up`} disabled={idx === 0} onClick={() => move(idx, -1)} className="disabled:opacity-30 p-1"><ChevronUp className="h-4 w-4" /></button>
-            <button type="button" aria-label={`move ${labelOf(v)} down`} disabled={idx === order.length - 1} onClick={() => move(idx, 1)} className="disabled:opacity-30 p-1"><ChevronDown className="h-4 w-4" /></button>
+            <button type="button" aria-label={t("evaluation.vocational.moveUp", { label: labelOf(v) })} disabled={idx === 0} onClick={() => move(idx, -1)} className="disabled:opacity-30 p-1"><ChevronUp className="h-4 w-4" /></button>
+            <button type="button" aria-label={t("evaluation.vocational.moveDown", { label: labelOf(v) })} disabled={idx === order.length - 1} onClick={() => move(idx, 1)} className="disabled:opacity-30 p-1"><ChevronDown className="h-4 w-4" /></button>
           </div>
         </li>
       ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Minus } from "lucide-react";
@@ -42,13 +43,14 @@ interface QuestionCardProps {
   direction: number;
   responseScale: ResponseScale;
   response: QuestionResponse | undefined;
-  language: string;
   onResponseChange: (questionId: string, field: "rating" | "textResponse", value: number | string) => void;
 }
 
 export function QuestionCard({
-  question, stepIndex, direction, responseScale, response, language, onResponseChange,
+  question, stepIndex, direction, responseScale, response, onResponseChange,
 }: QuestionCardProps) {
+  const { t, i18n } = useTranslation();
+  const isSpanish = i18n.language?.startsWith("es") ?? false;
   const [showComments, setShowComments] = useState(false);
 
   return (
@@ -68,22 +70,20 @@ export function QuestionCard({
               {stepIndex + 1}
             </span>
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-              {language === "spanish" ? "Pregunta" : "Question"}
+              {t("evaluation.evaluator.question")}
             </span>
           </div>
 
-          {/* Question text */}
+          {/* Question text — content language follows the UI language (i18next) */}
           <h2 className="text-base font-semibold text-foreground leading-relaxed mb-5">
-            {language === "spanish" && question.questionTextSpanish
+            {isSpanish && question.questionTextSpanish
               ? question.questionTextSpanish
               : question.questionText}
           </h2>
 
           {/* Rating label */}
           <p className="text-xs font-medium text-muted-foreground mb-3">
-            {language === "spanish"
-              ? "Que tanto estas de acuerdo?"
-              : "How much do you agree?"}
+            {t("evaluation.evaluator.howMuchAgree")}
           </p>
 
           {/* Rating options */}
@@ -103,7 +103,7 @@ export function QuestionCard({
                   id={`${question.id}-${option.value}`}
                 />
                 <span className="text-sm text-foreground">
-                  {language === "spanish" && option.labelSpanish
+                  {isSpanish && option.labelSpanish
                     ? option.labelSpanish
                     : option.label}
                 </span>
@@ -118,8 +118,8 @@ export function QuestionCard({
           >
             {showComments ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
             {showComments
-              ? (language === "spanish" ? "Ocultar comentarios" : "Hide comments")
-              : (language === "spanish" ? "Agregar comentarios" : "Add comments")}
+              ? t("evaluation.evaluator.hideComments")
+              : t("evaluation.evaluator.addComments")}
           </button>
 
           {/* Comments textarea */}
@@ -130,7 +130,7 @@ export function QuestionCard({
               className="mt-3"
             >
               <Textarea
-                placeholder={language === "spanish" ? "Comentarios adicionales..." : "Additional comments..."}
+                placeholder={t("evaluation.evaluator.commentsPlaceholder")}
                 value={response?.textResponse || ""}
                 onChange={(e) => onResponseChange(question.id, "textResponse", e.target.value)}
                 rows={3}

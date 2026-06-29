@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, CheckCircle2, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface QuestionResponse {
   rating?: number;
@@ -13,7 +14,6 @@ interface EvaluatorNavigationProps {
   questionIds: string[];
   responses: Record<string, QuestionResponse>;
   isSubmitting: boolean;
-  language: string;
   onPrev: () => void;
   onNext: () => void;
   onGoToStep: (step: number) => void;
@@ -22,8 +22,9 @@ interface EvaluatorNavigationProps {
 
 export function EvaluatorNavigation({
   currentStep, totalQuestions, questionIds, responses,
-  isSubmitting, language, onPrev, onNext, onGoToStep, onSubmit,
+  isSubmitting, onPrev, onNext, onGoToStep, onSubmit,
 }: EvaluatorNavigationProps) {
+  const { t } = useTranslation();
   const isLastStep = currentStep === totalQuestions - 1;
 
   return (
@@ -35,7 +36,7 @@ export function EvaluatorNavigation({
           className="px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">{language === "spanish" ? "Anterior" : "Previous"}</span>
+          <span className="hidden sm:inline">{t("evaluation.evaluator.previous")}</span>
         </button>
 
         {/* Step dots — desktop only */}
@@ -63,9 +64,9 @@ export function EvaluatorNavigation({
               className="w-full px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> {language === "spanish" ? "Enviando..." : "Submitting..."}</>
+                <><Loader2 className="w-4 h-4 animate-spin" /> {t("evaluation.evaluator.submitting")}</>
               ) : (
-                <><CheckCircle2 className="w-4 h-4" /> {language === "spanish" ? "Enviar" : "Submit"}</>
+                <><CheckCircle2 className="w-4 h-4" /> {t("evaluation.evaluator.submit")}</>
               )}
             </button>
           ) : (
@@ -73,7 +74,7 @@ export function EvaluatorNavigation({
               onClick={onNext}
               className="w-full px-6 py-2.5 rounded-xl bg-foreground text-background text-sm font-semibold hover:bg-foreground/90 transition-colors flex items-center justify-center gap-2"
             >
-              {language === "spanish" ? "Siguiente" : "Next"}
+              {t("evaluation.evaluator.next")}
               <ChevronRight className="w-4 h-4" />
             </button>
           )}

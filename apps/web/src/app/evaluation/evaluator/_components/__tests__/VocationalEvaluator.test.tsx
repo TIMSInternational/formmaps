@@ -2,6 +2,22 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { VocationalEvaluator } from "../VocationalEvaluator";
 import * as svc from "@/services/vocationalTakeService";
 
+// Resolve real English copy so text/role-name queries match what users see.
+jest.mock("react-i18next", () => {
+  const en = require("@/lib/i18n/locales/en/common.json");
+  const get = (k: string) => k.split(".").reduce((o: unknown, p: string) => (o == null ? o : (o as Record<string, unknown>)[p]), en);
+  return {
+    useTranslation: () => ({
+      t: (k: string, opts?: Record<string, unknown>) => {
+        const v = get(k);
+        if (typeof v !== "string") return k;
+        return opts ? v.replace(/\{\{(\w+)\}\}/g, (_m, n) => String(opts[n] ?? `{{${n}}}`)) : v;
+      },
+      i18n: { language: "en" },
+    }),
+  };
+});
+
 jest.mock("@/services/vocationalTakeService");
 const getForm = svc.getVocationalForm as jest.Mock;
 const submit = svc.submitVocationalAnswers as jest.Mock;
