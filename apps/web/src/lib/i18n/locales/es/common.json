@@ -1710,6 +1710,88 @@
       "preparationPath": "Ruta de preparación"
     }
   },
+  "onboarding": {
+    "loading": "Cargando...",
+    "steps": {
+      "setPasswordTitle": "Crear contraseña",
+      "setPasswordDesc": "Protege tu cuenta con una contraseña."
+    },
+    "toast": {
+      "completed": "¡Registro completado con éxito!",
+      "submitFailed": "No se pudieron enviar los datos de registro. Inténtalo de nuevo.",
+      "verifyFailed": "No se pudo verificar la invitación. Inténtalo de nuevo.",
+      "noToken": "No se proporcionó un token"
+    },
+    "error": {
+      "invalidLink": "Este enlace de invitación no es válido o ha expirado."
+    },
+    "student": {
+      "redirectInvalid": "Enlace de registro no válido. Revisa tu correo para encontrar el enlace correcto.",
+      "nameFallback": "Estudiante",
+      "invalidTokenMsg": "Enlace de invitación no válido",
+      "idNotFound": "No se encontró el ID del estudiante. Actualiza la página.",
+      "activatedRedirect": "¡Cuenta activada con éxito!",
+      "activatedLogin": "¡Cuenta activada! Inicia sesión.",
+      "activationFailed": "La activación falló",
+      "activationError": "No se pudo activar la cuenta",
+      "invalidHeading": "Invitación no válida",
+      "backToLogin": "Volver a iniciar sesión",
+      "welcomeTo": "Te damos la bienvenida a",
+      "subtitle": "Configura tu cuenta para acceder a orientación universitaria personalizada, guía profesional e información con IA.",
+      "bullet1": "Descubre tus fortalezas con evaluaciones",
+      "bullet2": "Recibe recomendaciones de carrera con IA",
+      "bullet3": "Haz seguimiento de solicitudes universitarias y becas",
+      "bullet4": "Conéctate con consejeros y coaches",
+      "welcomeUser": "¡Bienvenido, {{name}}!",
+      "createPassword": "Crea una contraseña para activar tu cuenta de estudiante",
+      "passwordLabel": "Contraseña",
+      "confirmLabel": "Confirmar contraseña",
+      "passwordPlaceholder": "Crea una contraseña segura",
+      "confirmPlaceholder": "Vuelve a ingresar tu contraseña",
+      "requirements": "La contraseña debe contener:",
+      "req8": "8+ caracteres",
+      "reqUpper": "Letra mayúscula",
+      "reqLower": "Letra minúscula",
+      "reqNumber": "Número",
+      "activating": "Activando...",
+      "activateAccount": "Activar cuenta",
+      "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+      "signIn": "Inicia sesión",
+      "validation": {
+        "passwordMin": "La contraseña debe tener al menos 8 caracteres",
+        "passwordUpper": "Debe contener al menos una letra mayúscula",
+        "passwordLower": "Debe contener al menos una letra minúscula",
+        "passwordNumber": "Debe contener al menos un número",
+        "passwordsMatch": "Las contraseñas no coinciden"
+      }
+    },
+    "counselor": {
+      "infoTitle": "Información del consejero",
+      "infoDesc": "Cuéntanos sobre ti para configurar tu perfil."
+    },
+    "coach": {
+      "personalTitle": "Información personal",
+      "personalDesc": "Cuéntanos sobre ti y tu experiencia como coach.",
+      "pricingTitle": "Precios",
+      "pricingDesc": "Define tu tarifa por hora y moneda.",
+      "availabilityTitle": "Disponibilidad",
+      "availabilityDesc": "Define tu horario semanal y zona horaria.",
+      "calendarTitle": "Sincronizar calendario",
+      "calendarDesc": "Conecta tu calendario para evitar reservas duplicadas.",
+      "calendarFailed": "La conexión del calendario falló. Puedes reintentar u omitir este paso.",
+      "calendarConnected": "¡Calendario de {{provider}} conectado con éxito!",
+      "calendarVerifyFailed": "No se pudo verificar la conexión del calendario. Inténtalo de nuevo.",
+      "calendarError": "Ocurrió un error al conectar el calendario.",
+      "invitationUnverified": "No se pudo verificar la invitación"
+    },
+    "school": {
+      "adminTitle": "Información del administrador",
+      "adminDesc": "Cuéntanos sobre ti como administrador de la escuela.",
+      "settingsTitle": "Configuración de la escuela",
+      "settingsDesc": "Configura las preferencias de notificación de tu escuela.",
+      "alreadyCompleted": "Ya completaste el registro."
+    }
+  },
   "compare": {
     "selectedCount": "{{count}} seleccionadas",
     "compareButton": "Comparar"

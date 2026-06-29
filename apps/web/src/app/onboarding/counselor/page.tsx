@@ -7,25 +7,26 @@ import { CounselorInfoStep, CounselorInfoData } from "@/components/onboarding/co
 import { PasswordStep } from "@/components/onboarding/PasswordStep";
 import { toast } from "sonner";
 import { CounselorOnboardingPayload } from "@/services/counselorService";
-
-const STEPS = [
-  {
-    title: "Counselor Information",
-    description: "Tell us about yourself to set up your profile.",
-  },
-  {
-    title: "Set Password",
-    description: "Secure your account with a password.",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 export default function CounselorOnboardingPage({
   searchParams,
 }: {
   searchParams: Promise<{ token: string }>;
 }) {
+  const { t } = useTranslation();
   const { token } = use(searchParams);
   const router = useRouter();
+  const STEPS = [
+    {
+      title: t("onboarding.counselor.infoTitle"),
+      description: t("onboarding.counselor.infoDesc"),
+    },
+    {
+      title: t("onboarding.steps.setPasswordTitle"),
+      description: t("onboarding.steps.setPasswordDesc"),
+    },
+  ];
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<Partial<CounselorOnboardingPayload>>({ token });
   const [schoolName, setSchoolName] = useState<string>("");
@@ -76,7 +77,7 @@ export default function CounselorOnboardingPage({
   useEffect(() => {
     const fetchStatus = async () => {
       if (!token) {
-        toast.error("No token provided");
+        toast.error(t("onboarding.toast.noToken"));
         router.push("/login");
         return;
       }
@@ -86,7 +87,7 @@ export default function CounselorOnboardingPage({
         const status = await verifyCounselorToken(token);
 
         if (!status) {
-          toast.error("This invitation link is invalid or has expired.");
+          toast.error(t("onboarding.error.invalidLink"));
           router.push("/login");
           return;
         }
@@ -95,7 +96,7 @@ export default function CounselorOnboardingPage({
         setEmail(status.email);
 
       } catch (error: any) {
-        toast.error(error.message || "Failed to verify invitation. Please try again.");
+        toast.error(error.message || t("onboarding.toast.verifyFailed"));
         router.push("/login");
       } finally {
         setIsLoading(false);
@@ -136,7 +137,7 @@ export default function CounselorOnboardingPage({
 
       await completeCounselorOnboarding(payload);
 
-      toast.success("Onboarding completed successfully!");
+      toast.success(t("onboarding.toast.completed"));
 
       // Clear localStorage on successful submission
       localStorage.removeItem(`counselor_onboarding_data_${token}`);
@@ -145,7 +146,7 @@ export default function CounselorOnboardingPage({
       // Redirect to counselor dashboard
       router.push("/counselor");
     } catch (error: any) {
-      toast.error(error.message || "Failed to submit onboarding data. Please try again.");
+      toast.error(error.message || t("onboarding.toast.submitFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -156,7 +157,7 @@ export default function CounselorOnboardingPage({
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">{t("onboarding.loading")}</p>
         </div>
       </div>
     );

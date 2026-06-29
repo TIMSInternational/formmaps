@@ -11,29 +11,30 @@ import {
   INITIAL_SCHOOL_ADMIN_ONBOARDING_DATA,
 } from "@/types/school";
 import { toast } from "sonner";
-
-const STEPS = [
-  {
-    title: "Admin Information",
-    description: "Tell us about yourself as the school administrator.",
-  },
-  {
-    title: "School Settings",
-    description: "Configure notification preferences for your school.",
-  },
-  {
-    title: "Set Password",
-    description: "Secure your account with a password.",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 export default function SchoolAdminOnboardingPage({
   params,
 }: {
   params: Promise<{ token: string }>;
 }) {
+  const { t } = useTranslation();
   const { token } = use(params);
   const router = useRouter();
+  const STEPS = [
+    {
+      title: t("onboarding.school.adminTitle"),
+      description: t("onboarding.school.adminDesc"),
+    },
+    {
+      title: t("onboarding.school.settingsTitle"),
+      description: t("onboarding.school.settingsDesc"),
+    },
+    {
+      title: t("onboarding.steps.setPasswordTitle"),
+      description: t("onboarding.steps.setPasswordDesc"),
+    },
+  ];
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<SchoolAdminOnboardingData>(
     INITIAL_SCHOOL_ADMIN_ONBOARDING_DATA,
@@ -88,13 +89,13 @@ export default function SchoolAdminOnboardingPage({
         const status = await getSchoolAdminOnboardingStatus(token);
 
         if (!status.isValid) {
-          toast.error("This invitation link is invalid or has expired.");
+          toast.error(t("onboarding.error.invalidLink"));
           router.push("/login");
           return;
         }
 
         if (status.status === "completed") {
-          toast.info("You have already completed onboarding.");
+          toast.info(t("onboarding.school.alreadyCompleted"));
           router.push("/login");
           return;
         }
@@ -113,7 +114,7 @@ export default function SchoolAdminOnboardingPage({
           }));
         }
       } catch (error) {
-        toast.error("Failed to verify invitation. Please try again.");
+        toast.error(t("onboarding.toast.verifyFailed"));
       } finally {
         setIsLoading(false);
       }
@@ -148,7 +149,7 @@ export default function SchoolAdminOnboardingPage({
 
       const response = await submitSchoolAdminOnboarding(token, finalData);
 
-      toast.success("Onboarding completed successfully!");
+      toast.success(t("onboarding.toast.completed"));
 
       // Clear localStorage on successful submission
       localStorage.removeItem(`school_onboarding_data_${token}`);
@@ -158,7 +159,7 @@ export default function SchoolAdminOnboardingPage({
       const redirect = response.redirectUrl;
       router.push(redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/school-admin");
     } catch (error) {
-      toast.error("Failed to submit onboarding data. Please try again.");
+      toast.error(t("onboarding.toast.submitFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -169,7 +170,7 @@ export default function SchoolAdminOnboardingPage({
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">{t("onboarding.loading")}</p>
         </div>
       </div>
     );

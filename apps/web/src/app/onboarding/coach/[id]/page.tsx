@@ -14,39 +14,40 @@ import {
 } from "@/components/onboarding/types";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { toast } from "sonner";
-
-const STEPS = [
-  {
-    title: "Personal Information",
-    description: "Tell us about yourself and your coaching expertise.",
-  },
-  {
-    title: "Pricing",
-    description: "Set your hourly rate and currency.",
-  },
-  {
-    title: "Availability",
-    description: "Set your weekly schedule and timezone.",
-  },
-  {
-    title: "Calendar Sync",
-    description: "Connect your calendar to avoid double bookings.",
-  },
-  {
-    title: "Set Password",
-    description: "Secure your account with a password.",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 export default function CoachOnboardingPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { t } = useTranslation();
   const { id } = use(params); // id is the invitation token
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setUser } = useGlobalStore();
+  const STEPS = [
+    {
+      title: t("onboarding.coach.personalTitle"),
+      description: t("onboarding.coach.personalDesc"),
+    },
+    {
+      title: t("onboarding.coach.pricingTitle"),
+      description: t("onboarding.coach.pricingDesc"),
+    },
+    {
+      title: t("onboarding.coach.availabilityTitle"),
+      description: t("onboarding.coach.availabilityDesc"),
+    },
+    {
+      title: t("onboarding.coach.calendarTitle"),
+      description: t("onboarding.coach.calendarDesc"),
+    },
+    {
+      title: t("onboarding.steps.setPasswordTitle"),
+      description: t("onboarding.steps.setPasswordDesc"),
+    },
+  ];
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<CoachOnboardingData>(
     INITIAL_ONBOARDING_DATA
@@ -79,7 +80,7 @@ export default function CoachOnboardingPage({
   useEffect(() => {
     const calendarResult = searchParams.get("calendar");
     if (calendarResult === "error") {
-      toast.error("Calendar connection failed. You can retry or skip this step.");
+      toast.error(t("onboarding.coach.calendarFailed"));
       setCurrentStep(4);
       return;
     }
@@ -101,13 +102,13 @@ export default function CoachOnboardingPage({
               },
             }));
             setCurrentStep(5);
-            toast.success(`${provider === 'google' ? 'Google' : 'Outlook'} Calendar connected successfully!`);
+            toast.success(t("onboarding.coach.calendarConnected", { provider: provider === 'google' ? 'Google' : 'Outlook' }));
           } else {
-            toast.error("Failed to verify the calendar connection. Please try again.");
+            toast.error(t("onboarding.coach.calendarVerifyFailed"));
             setCurrentStep(4); // Ensure we are on the Calendar Sync step
           }
         } catch (error) {
-          toast.error("An error occurred while connecting the calendar.");
+          toast.error(t("onboarding.coach.calendarError"));
           setCurrentStep(4);
         } finally {
           setIsLoading(false);
@@ -197,7 +198,7 @@ export default function CoachOnboardingPage({
       };
 
       if (!coachId) {
-        throw new Error("Invitation could not be verified");
+        throw new Error(t("onboarding.coach.invitationUnverified"));
       }
 
       // Submit with the invitation token (id); backend sets auth cookies + returns tokens.
@@ -215,7 +216,7 @@ export default function CoachOnboardingPage({
         isAuthenticated: true,
       });
 
-      toast.success("Onboarding completed successfully!");
+      toast.success(t("onboarding.toast.completed"));
 
       // Clear localStorage on successful submission
       localStorage.removeItem(`onboarding_data_${id}`);
@@ -226,7 +227,7 @@ export default function CoachOnboardingPage({
       window.location.href =
         redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/dashboard";
     } catch (error) {
-      toast.error("Failed to submit onboarding data. Please try again.");
+      toast.error(t("onboarding.toast.submitFailed"));
     } finally {
       setIsLoading(false);
     }
