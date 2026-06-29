@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { GraduationCap, ChevronDown, ChevronRight, LoaderCircle, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,13 +25,12 @@ import type { StudentCoursePlanResponse } from "@/types/coursePlan";
 
 interface ProposedPlanReviewCardProps {
   studentId: string;
-  /** the student's official plan — existing rows render unchanged in the diff view */
   coursePlan: StudentCoursePlanResponse | undefined;
-  /** the student's current grade — the counselor course-sequence response has no plan.gradeLevel */
   studentGradeLevel?: number;
 }
 
 export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLevel }: ProposedPlanReviewCardProps) {
+  const { t } = useTranslation("counselor");
   const [expanded, setExpanded] = useState(false);
   const [approveOpen, setApproveOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -73,7 +73,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
         <div className="flex flex-wrap items-center justify-between gap-3">
           <CardTitle className="text-sm font-semibold text-[#065292] flex items-center gap-2">
             <GraduationCap className="h-4 w-4" />
-            Proposed Graduation Plan
+            {t("planReview.title", "Proposed Graduation Plan")}
             {target && (
               <span className="font-normal text-gray-600">
                 — {[target.universityName, target.major].filter(Boolean).join(" · ")}
@@ -88,7 +88,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
               disabled={review.isPending}
             >
               {review.isPending && <LoaderCircle className="mr-1.5 h-3 w-3 animate-spin" />}
-              Approve
+              {t("planReview.approve", "Approve")}
             </Button>
             <Button
               size="sm"
@@ -97,7 +97,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
               onClick={() => setRejectOpen(true)}
               disabled={review.isPending}
             >
-              Reject
+              {t("planReview.reject", "Reject")}
             </Button>
           </div>
         </div>
@@ -110,11 +110,11 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
               key={grade}
               className="text-xs px-2.5 py-1 rounded-full bg-white border border-blue-100 text-gray-700"
             >
-              Grade {grade}: {agg.count} {agg.count === 1 ? "course" : "courses"} · {agg.credits} cr
+              {t("studentDetail.gradeN", { n: grade }, `Grade ${grade}`)}: {t(agg.count === 1 ? "planReview.courseCount_one" : "planReview.courseCount_other", { count: agg.count }, `${agg.count} courses`)} · {agg.credits} cr
             </span>
           ))}
           <span className="text-xs px-2.5 py-1 rounded-full bg-white border border-blue-100 text-gray-500">
-            {plan.totalPlannedCredits} credits total
+            {plan.totalPlannedCredits} {t("planReview.creditsTotal", "credits total")}
           </span>
         </div>
 
@@ -124,7 +124,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
           className="flex items-center gap-1 text-xs font-semibold text-[#065292] hover:underline"
         >
           {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-          View full plan
+          {t("planReview.viewFullPlan", "View full plan")}
         </button>
 
         {expanded && (
@@ -148,7 +148,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              Approve this plan?
+              {t("planReview.approveTitle", "Approve this plan?")}
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-gray-600">
@@ -159,7 +159,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setApproveOpen(false)}>
-              Cancel
+              {t("planReview.cancel", "Cancel")}
             </Button>
             <Button
               size="sm"
@@ -168,7 +168,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
               disabled={review.isPending}
             >
               {review.isPending && <LoaderCircle className="mr-1.5 h-3 w-3 animate-spin" />}
-              Confirm approval
+              {t("planReview.confirmApproval", "Confirm approval")}
             </Button>
           </div>
         </DialogContent>
@@ -180,22 +180,22 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <XCircle className="h-4 w-4 text-red-600" />
-              Send back for changes
+              {t("planReview.rejectTitle", "Send back for changes")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-1.5">
-            <Label className="text-xs">Note to student (required)</Label>
+            <Label className="text-xs">{t("planReview.noteLabel", "Note to student (required)")}</Label>
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="What should change before you can approve this plan?"
+              placeholder={t("planReview.notePlaceholder", "What should change before you can approve this plan?")}
               rows={3}
               maxLength={1000}
             />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setRejectOpen(false)}>
-              Cancel
+              {t("planReview.cancel", "Cancel")}
             </Button>
             <Button
               size="sm"
@@ -204,7 +204,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
               disabled={!note.trim() || review.isPending}
             >
               {review.isPending && <LoaderCircle className="mr-1.5 h-3 w-3 animate-spin" />}
-              Send back to student
+              {t("planReview.sendBack", "Send back to student")}
             </Button>
           </div>
         </DialogContent>

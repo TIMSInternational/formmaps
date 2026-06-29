@@ -42,7 +42,7 @@ interface DashboardRightPanelProps {
 }
 
 function ChangeRequestCard({ req }: { req: ChangeRequestItem }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("counselor");
   const router = useRouter();
   const review = useReviewChangeRequest(req.studentId);
 
@@ -72,14 +72,14 @@ function ChangeRequestCard({ req }: { req: ChangeRequestItem }) {
       <div className="flex gap-2">
         <Button size="sm" className="h-7 flex-1 text-xs bg-green-600 hover:bg-green-700 text-white gap-1" disabled={review.isPending} onClick={() => handleReview("approved")}>
           {review.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
-          {t("common.approve", "Approve")}
+          {t("coursePlan.approve", "Approve")}
         </Button>
         <Button size="sm" variant="outline" className="h-7 flex-1 text-xs text-red-600 border-red-200 hover:bg-red-50 gap-1" disabled={review.isPending} onClick={() => handleReview("rejected")}>
           <XCircle className="h-3 w-3" />
-          {t("common.reject", "Reject")}
+          {t("coursePlan.reject", "Reject")}
         </Button>
         <Button size="sm" variant="ghost" className="h-7 text-xs text-gray-500 hover:text-indigo-600 px-2" onClick={() => router.push(`/counselor/students/${req.studentId}`)}>
-          {t("common.view", "View")}
+          {t("common:common.view", "View")}
         </Button>
       </div>
     </div>
@@ -96,7 +96,7 @@ export function DashboardRightPanel({
   dashLoading,
   crLoading,
 }: DashboardRightPanelProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("counselor");
 
   return (
     <Card className="dash-card h-full">
@@ -109,7 +109,7 @@ export function DashboardRightPanel({
             }`}
           >
             <Clock className="h-3.5 w-3.5" />
-            {t("counselor.dashboard.followUps", "Follow-ups")}
+            {t("dashboard.followUps", "Follow-ups")}
             {pendingFollowUps > 0 && (
               <span className="bg-yellow-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {pendingFollowUps}
@@ -123,7 +123,7 @@ export function DashboardRightPanel({
             }`}
           >
             <Send className="h-3.5 w-3.5" />
-            {t("counselor.dashboard.requests", "Requests")}
+            {t("dashboard.requests", "Requests")}
             {pendingCRCount > 0 && (
               <span className="bg-orange-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {pendingCRCount > 9 ? "9+" : pendingCRCount}
@@ -158,9 +158,9 @@ export function DashboardRightPanel({
           ) : (
             <div className="text-center py-8">
               <CalendarClock className="h-9 w-9 text-gray-200 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">{t("counselor.dashboard.noFollowUps", "No upcoming follow-ups")}</p>
+              <p className="text-sm text-gray-400">{t("dashboard.noFollowUps", "No upcoming follow-ups")}</p>
               <p className="text-xs text-gray-300 mt-1">
-                {t("counselor.dashboard.followUpHint", "Set a follow-up date on a counselor note to see it here")}
+                {t("dashboard.followUpHint", "Set a follow-up date on a counselor note to see it here")}
               </p>
             </div>
           )
@@ -182,9 +182,9 @@ export function DashboardRightPanel({
           ) : (
             <div className="text-center py-8">
               <Send className="h-9 w-9 text-gray-200 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">{t("counselor.dashboard.noRequests", "No pending requests")}</p>
+              <p className="text-sm text-gray-400">{t("dashboard.noRequests", "No pending requests")}</p>
               <p className="text-xs text-gray-300 mt-1">
-                {t("counselor.dashboard.requestsHint", "Student course change requests will appear here")}
+                {t("dashboard.requestsHint", "Student course change requests will appear here")}
               </p>
             </div>
           )

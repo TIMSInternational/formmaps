@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Bell, Search, CheckCheck, Eye, AlertTriangle, Info, AlertCircle, Users, ShieldAlert, Sparkles } from "lucide-react";
+import { Bell, Search, CheckCheck, Eye, AlertTriangle, Info, AlertCircle, ShieldAlert, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAlerts,
@@ -49,7 +49,7 @@ const typeIcons: Record<AlertType, React.ReactNode> = {
 };
 
 export default function AlertsPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("counselor");
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -101,12 +101,12 @@ export default function AlertsPage() {
   return (
     <div className="space-y-8">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="space-y-1">
-        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Monitoring</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("alerts.badge", "Monitoring")}</p>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-          {t("schoolAdmin.alerts.title", "Alerts")}
+          {t("alerts.title", "Alerts")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {t("schoolAdmin.alerts.subtitle", "Monitor academic risks, deadlines, and system notifications.")}
+          {t("alerts.subtitle", "Monitor academic risks, deadlines, and system notifications.")}
         </p>
       </motion.div>
 
@@ -115,11 +115,11 @@ export default function AlertsPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {[
-              { label: "Total", value: summary.total ?? 0, icon: Bell, iconColor: "text-indigo-500", iconBg: "bg-indigo-500/10" },
-              { label: "Critical", value: summary.byPriority?.critical ?? 0, icon: ShieldAlert, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
-              { label: "High", value: summary.byPriority?.high ?? 0, icon: AlertTriangle, iconColor: "text-orange-500", iconBg: "bg-orange-500/10" },
-              { label: "New", value: summary.newSinceLastLogin ?? 0, icon: Sparkles, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
-              { label: "Low", value: summary.byPriority?.low ?? 0, icon: Info, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
+              { label: t("alerts.statTotal", "Total"), value: summary.total ?? 0, icon: Bell, iconColor: "text-indigo-500", iconBg: "bg-indigo-500/10" },
+              { label: t("alerts.critical", "Critical"), value: summary.byPriority?.critical ?? 0, icon: ShieldAlert, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
+              { label: t("alerts.high", "High"), value: summary.byPriority?.high ?? 0, icon: AlertTriangle, iconColor: "text-orange-500", iconBg: "bg-orange-500/10" },
+              { label: t("alerts.statNew", "New"), value: summary.newSinceLastLogin ?? 0, icon: Sparkles, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
+              { label: t("alerts.low", "Low"), value: summary.byPriority?.low ?? 0, icon: Info, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
             ].map((stat, i) => (
               <motion.div
                 key={stat.label}
@@ -145,32 +145,32 @@ export default function AlertsPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search alerts..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-10" />
+          <Input placeholder={t("alerts.searchPlaceholder", "Search alerts...")} value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-10" />
         </div>
         <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v === "all" ? "" : v); setPage(1); }}>
-          <SelectTrigger className="w-[170px]"><SelectValue placeholder="All Types" /></SelectTrigger>
+          <SelectTrigger className="w-[170px]"><SelectValue placeholder={t("alerts.allTypes", "All Types")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="grade_drop">Grade Drop</SelectItem>
-            <SelectItem value="missing_assessment">Missing Assessment</SelectItem>
-            <SelectItem value="credit_gap">Credit Gap</SelectItem>
-            <SelectItem value="no_career_path">No Career Path</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="all">{t("alerts.allTypes", "All Types")}</SelectItem>
+            <SelectItem value="grade_drop">{t("alerts.gradeDrop", "Grade Drop")}</SelectItem>
+            <SelectItem value="missing_assessment">{t("alerts.missingAssessment", "Missing Assessment")}</SelectItem>
+            <SelectItem value="credit_gap">{t("alerts.creditGap", "Credit Gap")}</SelectItem>
+            <SelectItem value="no_career_path">{t("alerts.noCareerPath", "No Career Path")}</SelectItem>
+            <SelectItem value="inactive">{t("alerts.inactive", "Inactive")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={priorityFilter} onValueChange={(v) => { setPriorityFilter(v === "all" ? "" : v); setPage(1); }}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="All Priority" /></SelectTrigger>
+          <SelectTrigger className="w-[140px]"><SelectValue placeholder={t("alerts.allPriority", "All Priority")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Priority</SelectItem>
-            <SelectItem value="critical">Critical</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="low">Low</SelectItem>
+            <SelectItem value="all">{t("alerts.allPriority", "All Priority")}</SelectItem>
+            <SelectItem value="critical">{t("alerts.critical", "Critical")}</SelectItem>
+            <SelectItem value="high">{t("alerts.high", "High")}</SelectItem>
+            <SelectItem value="medium">{t("alerts.medium", "Medium")}</SelectItem>
+            <SelectItem value="low">{t("alerts.low", "Low")}</SelectItem>
           </SelectContent>
         </Select>
         {selected.length > 0 && (
           <Button variant="outline" onClick={handleBulkDismiss} disabled={bulk.isPending}>
-            <CheckCheck className="h-4 w-4 mr-1" />Dismiss ({selected.length})
+            <CheckCheck className="h-4 w-4 mr-1" />{t("alerts.dismiss", { n: selected.length }, `Dismiss (${selected.length})`)}
           </Button>
         )}
       </motion.div>
@@ -180,19 +180,19 @@ export default function AlertsPage() {
         <div className="dash-card overflow-hidden">
           <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2">
             <Bell className="h-4 w-4 text-indigo-500" />
-            <span className="text-sm font-semibold text-foreground">Alerts</span>
+            <span className="text-sm font-semibold text-foreground">{t("alerts.tableTitle", "Alerts")}</span>
             {alerts && <Badge variant="secondary">{alerts.total}</Badge>}
           </div>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10"></TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>{t("alerts.colType", "Type")}</TableHead>
+                <TableHead>{t("alerts.colTitle", "Title")}</TableHead>
+                <TableHead>{t("alerts.colStudent", "Student")}</TableHead>
+                <TableHead>{t("alerts.colPriority", "Priority")}</TableHead>
+                <TableHead>{t("alerts.colStatus", "Status")}</TableHead>
+                <TableHead>{t("alerts.colDate", "Date")}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -241,7 +241,7 @@ export default function AlertsPage() {
               ))}
               {(!alerts?.data || alerts.data.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-12">No alerts found</TableCell>
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-12">{t("alerts.noAlerts", "No alerts found")}</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -251,9 +251,9 @@ export default function AlertsPage() {
 
       {alerts && alerts.totalPages > 1 && (
         <div className="flex justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>{t("common:common.previous", "Previous")}</Button>
           <span className="text-sm text-muted-foreground self-center">{page} / {alerts.totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= alerts.totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+          <Button variant="outline" size="sm" disabled={page >= alerts.totalPages} onClick={() => setPage((p) => p + 1)}>{t("common:common.next", "Next")}</Button>
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { Bell, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,6 +59,7 @@ export function CoursePlanTab({
   recommendations,
   academicGaps,
 }: CoursePlanTabProps) {
+  const { t } = useTranslation("counselor");
   return (
     <TabsContent value="course-plan" className="mt-6 space-y-6">
       {/* Proposed graduation plan awaiting review (renders only when one exists) */}
@@ -73,7 +75,7 @@ export function CoursePlanTab({
           <CardHeader>
             <CardTitle className="text-sm font-semibold text-amber-800 flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              Student Change Requests ({pendingRequests.length} pending)
+              {t("coursePlan.changeRequests", { n: pendingRequests.length }, `Student Change Requests (${pendingRequests.length} pending)`)}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -113,7 +115,7 @@ export function CoursePlanTab({
                     {reviewRequest.isPending && reviewRequest.variables?.requestId === req.id && reviewRequest.variables?.payload.status === "approved" ? (
                       <LoaderCircle className="mr-1.5 h-3 w-3 animate-spin" />
                     ) : null}
-                    Approve
+                    {t("coursePlan.approve", "Approve")}
                   </Button>
                   <Button
                     size="sm"
@@ -130,7 +132,7 @@ export function CoursePlanTab({
                     {reviewRequest.isPending && reviewRequest.variables?.requestId === req.id && reviewRequest.variables?.payload.status === "rejected" ? (
                       <LoaderCircle className="mr-1.5 h-3 w-3 animate-spin" />
                     ) : null}
-                    Reject
+                    {t("coursePlan.reject", "Reject")}
                   </Button>
                 </div>
               </div>

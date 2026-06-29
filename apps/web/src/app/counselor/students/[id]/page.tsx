@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Bell, MessageSquare, Brain, Award, BookOpen, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,6 +42,7 @@ import { CoursePlanTab } from "./_components/CoursePlanTab";
 
 export default function CounselorStudentDetailPage() {
   const router = useRouter();
+  const { t } = useTranslation("counselor");
   const params = useParams();
   const studentId = params.id as string;
 
@@ -89,9 +91,9 @@ export default function CounselorStudentDetailPage() {
     return (
       <div className="max-w-5xl mx-auto text-center py-20 space-y-4">
         <Bell className="h-12 w-12 text-amber-500 mx-auto" />
-        <h2 className="text-2xl font-bold text-gray-900">Student not found</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{t("studentDetail.notFound", "Student not found")}</h2>
         <Button onClick={() => router.push("/counselor/students")}>
-          Back to Students
+          {t("studentDetail.backToStudents", "Back to Students")}
         </Button>
       </div>
     );
@@ -112,23 +114,23 @@ export default function CounselorStudentDetailPage() {
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="notes">
             <MessageSquare className="h-4 w-4 mr-2" />
-            Counselor Notes
+            {t("studentDetail.tabNotes", "Counselor Notes")}
           </TabsTrigger>
           <TabsTrigger value="assessments">
             <Brain className="h-4 w-4 mr-2" />
-            Assessments
+            {t("studentDetail.tabAssessments", "Assessments")}
           </TabsTrigger>
           <TabsTrigger value="grades">
             <Award className="h-4 w-4 mr-2" />
-            Grades
+            {t("studentDetail.tabGrades", "Grades")}
           </TabsTrigger>
           <TabsTrigger value="course-plan">
             <BookOpen className="h-4 w-4 mr-2" />
-            Course Plan
+            {t("studentDetail.tabCoursePlan", "Course Plan")}
           </TabsTrigger>
           <TabsTrigger value="parents">
             <Users className="h-4 w-4 mr-2" />
-            Parents
+            {t("studentDetail.tabParents", "Parents")}
           </TabsTrigger>
         </TabsList>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import {
   Radar, Users, CheckCircle2, Clock, AlertTriangle, Search, Send, FileText,
@@ -10,18 +11,19 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { Student360Dialog, type EvalStudent } from "./_components/Student360Dialog";
 
-const statusConfig = {
-  completed: { label: "Completed", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
-  in_progress: { label: "In Progress", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-  not_started: { label: "Not Started", color: "var(--admin-font-tertiary)", bg: "var(--admin-bg-hover)" },
-};
-
 export default function CounselorEvaluationsPage() {
+  const { t } = useTranslation("counselor");
   const [students, setStudents] = useState<EvalStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [detailStudent, setDetailStudent] = useState<EvalStudent | null>(null);
+
+  const statusConfig = {
+    completed: { label: t("evaluations.statusCompleted", "Completed"), color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+    in_progress: { label: t("evaluations.statusInProgress", "In Progress"), color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+    not_started: { label: t("evaluations.statusNotStarted", "Not Started"), color: "var(--admin-font-tertiary)", bg: "var(--admin-bg-hover)" },
+  };
 
   useEffect(() => {
     (async () => {
@@ -48,16 +50,23 @@ export default function CounselorEvaluationsPage() {
   const notStartedCount = students.filter((s) => s.status === "not_started").length;
   const completionRate = students.length > 0 ? Math.round((completedCount / students.length) * 100) : 0;
 
+  const filterLabels: Record<string, string> = {
+    all: t("evaluations.filterAll", "All"),
+    completed: t("evaluations.filterCompleted", "Completed"),
+    in_progress: t("evaluations.filterInProgress", "In Progress"),
+    not_started: t("evaluations.filterNotStarted", "Not Started"),
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-tertiary)" }}>Student Assessments</p>
+        <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-tertiary)" }}>{t("evaluations.badge", "Student Assessments")}</p>
         <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em", marginTop: 2 }}>
-          360° Evaluations
+          {t("evaluations.title", "360° Evaluations")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2, maxWidth: 600 }}>
-          Track evaluation progress for your assigned students, manage evaluators, and send invitation reminders.
+          {t("evaluations.subtitle", "Track evaluation progress for your assigned students, manage evaluators, and send invitation reminders.")}
         </p>
       </motion.div>
 
@@ -65,17 +74,17 @@ export default function CounselorEvaluationsPage() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
         {[
-          { label: "MY STUDENTS", value: students.length, icon: Users, color: "var(--admin-font-primary)" },
-          { label: "COMPLETED", value: completedCount, icon: CheckCircle2, color: "#10b981" },
-          { label: "IN PROGRESS", value: inProgressCount, icon: Clock, color: "#f59e0b" },
-          { label: "NOT STARTED", value: notStartedCount, icon: AlertTriangle, color: "var(--admin-font-tertiary)" },
+          { label: t("evaluations.statMyStudents", "MY STUDENTS"), value: students.length, icon: Users, color: "var(--admin-font-primary)" },
+          { label: t("evaluations.statCompleted", "COMPLETED"), value: completedCount, icon: CheckCircle2, color: "#10b981" },
+          { label: t("evaluations.statInProgress", "IN PROGRESS"), value: inProgressCount, icon: Clock, color: "#f59e0b" },
+          { label: t("evaluations.statNotStarted", "NOT STARTED"), value: notStartedCount, icon: AlertTriangle, color: "var(--admin-font-tertiary)" },
         ].map((stat) => (
           <div key={stat.label} style={{ padding: 16, borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
               <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)" }}>{stat.label}</span>
               <stat.icon style={{ width: 16, height: 16, color: stat.color }} />
             </div>
-            <span style={{ fontSize: 28, fontWeight: 700, color: stat.color }}>{loading ? "\u2014" : stat.value}</span>
+            <span style={{ fontSize: 28, fontWeight: 700, color: stat.color }}>{loading ? "—" : stat.value}</span>
           </div>
         ))}
       </motion.div>
@@ -84,7 +93,7 @@ export default function CounselorEvaluationsPage() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         style={{ padding: 16, borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Overall Completion</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("evaluations.overallCompletion", "Overall Completion")}</span>
           <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>{completionRate}%</span>
         </div>
         <div style={{ height: 8, borderRadius: 4, background: "var(--admin-bg-hover)", overflow: "hidden" }}>
@@ -97,7 +106,7 @@ export default function CounselorEvaluationsPage() {
         style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", borderRadius: 8, background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", flex: "1 1 240px", maxWidth: 360 }}>
           <Search style={{ width: 14, height: 14, color: "var(--admin-font-light)", flexShrink: 0 }} />
-          <input placeholder="Search students..." value={search} onChange={(e) => setSearch(e.target.value)}
+          <input placeholder={t("students.searchPlaceholder", "Search students...")} value={search} onChange={(e) => setSearch(e.target.value)}
             style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
         </div>
         <div style={{ display: "flex", gap: 4 }}>
@@ -109,7 +118,7 @@ export default function CounselorEvaluationsPage() {
                 background: filterStatus === f ? "var(--admin-font-primary)" : "var(--admin-bg-card)",
                 color: filterStatus === f ? "var(--admin-bg-card)" : "var(--admin-font-secondary)",
               }}>
-              {f === "all" ? "All" : f === "in_progress" ? "In Progress" : f === "not_started" ? "Not Started" : "Completed"}
+              {filterLabels[f]}
             </button>
           ))}
         </div>
@@ -120,7 +129,14 @@ export default function CounselorEvaluationsPage() {
         style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
         {/* Table header */}
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", padding: "10px 16px", borderBottom: "1px solid var(--admin-border-light)", background: "var(--admin-bg-hover)" }}>
-          {["STUDENT", "GRADE", "EVALUATORS", "SELF", "STATUS", "ACTIONS"].map((h) => (
+          {[
+            t("evaluations.colStudent", "STUDENT"),
+            t("evaluations.colGrade", "GRADE"),
+            t("evaluations.colEvaluators", "EVALUATORS"),
+            t("evaluations.colSelf", "SELF"),
+            t("evaluations.colStatus", "STATUS"),
+            t("evaluations.colActions", "ACTIONS"),
+          ].map((h) => (
             <span key={h} style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)" }}>{h}</span>
           ))}
         </div>
@@ -133,12 +149,12 @@ export default function CounselorEvaluationsPage() {
           <div style={{ padding: 48, textAlign: "center" }}>
             <Radar style={{ width: 32, height: 32, color: "var(--admin-font-light)", margin: "0 auto 12px" }} />
             <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>
-              {search || filterStatus !== "all" ? "No students match your filter." : "No students assigned to you yet."}
+              {search || filterStatus !== "all" ? t("evaluations.noStudentsFilter", "No students match your filter.") : t("evaluations.noStudentsYet", "No students assigned to you yet.")}
             </p>
           </div>
         ) : (
           filtered.map((s, i) => {
-            const cfg = statusConfig[s.status];
+            const cfg = statusConfig[s.status as keyof typeof statusConfig] ?? statusConfig.not_started;
             return (
               <div key={s.studentId} style={{
                 display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", padding: "12px 16px", alignItems: "center",
@@ -154,13 +170,13 @@ export default function CounselorEvaluationsPage() {
                   <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 1 }}>{s.email}</p>
                 </div>
                 <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
-                  {s.gradeLevel ? `Grade ${s.gradeLevel}` : "\u2014"}
+                  {s.gradeLevel ? t("evaluations.gradeN", { n: s.gradeLevel }, `Grade ${s.gradeLevel}`) : "—"}
                 </span>
                 <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
                   {s.completedEvaluators}/{s.totalEvaluators}
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 600, color: s.selfCompleted ? "#10b981" : "var(--admin-font-light)" }}>
-                  {s.selfCompleted ? "Done" : "Pending"}
+                  {s.selfCompleted ? t("evaluations.selfDone", "Done") : t("evaluations.selfPending", "Pending")}
                 </span>
                 <span style={{
                   display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600,

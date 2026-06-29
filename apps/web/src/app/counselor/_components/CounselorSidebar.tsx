@@ -36,26 +36,26 @@ type ThemeMode = "dark" | "light" | "system";
 
 const getNavSections = (t: (key: string, fallback: string) => string) => [
   {
-    label: t("nav.main", "Main"),
+    label: t("common:nav.main", "Main"),
     items: [
-      { label: t("counselor.nav.overview", "Overview"), href: "/counselor", icon: LayoutDashboard },
-      { label: t("counselor.nav.myStudents", "My Students"), href: "/counselor/students", icon: Users },
+      { label: t("nav.overview", "Overview"), href: "/counselor", icon: LayoutDashboard },
+      { label: t("nav.myStudents", "My Students"), href: "/counselor/students", icon: Users },
     ],
   },
   {
-    label: t("counselor.nav.caseload", "Caseload"),
+    label: t("nav.caseload", "Caseload"),
     items: [
-      { label: t("counselor.nav.academics", "Academics"), href: "/counselor/academics", icon: BookOpen },
-      { label: t("counselor.nav.assessments", "Assessments"), href: "/counselor/assessments", icon: ClipboardCheck },
-      { label: t("counselor.nav.collegePrep", "College Prep"), href: "/counselor/college-prep", icon: GraduationCap },
+      { label: t("nav.academics", "Academics"), href: "/counselor/academics", icon: BookOpen },
+      { label: t("nav.assessments", "Assessments"), href: "/counselor/assessments", icon: ClipboardCheck },
+      { label: t("nav.collegePrep", "College Prep"), href: "/counselor/college-prep", icon: GraduationCap },
     ],
   },
   {
-    label: t("counselor.nav.communication", "Communication"),
+    label: t("nav.communication", "Communication"),
     items: [
-      { label: t("counselor.nav.communication", "Communication"), href: "/counselor/communication", icon: MessageCircle },
-      { label: t("counselor.nav.scheduling", "Scheduling"), href: "/counselor/scheduling", icon: CalendarDays },
-      { label: t("counselor.nav.recommendations", "Recommendations"), href: "/counselor/recommendations", icon: FileText },
+      { label: t("nav.communication", "Communication"), href: "/counselor/communication", icon: MessageCircle },
+      { label: t("nav.scheduling", "Scheduling"), href: "/counselor/scheduling", icon: CalendarDays },
+      { label: t("nav.recommendations", "Recommendations"), href: "/counselor/recommendations", icon: FileText },
     ],
   },
 ];
@@ -106,7 +106,7 @@ function TabBtn({ icon: Icon, active, onClick, title }: {
 }
 
 export function CounselorSidebar() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(["counselor", "common"]);
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useGlobalStore();
@@ -122,7 +122,7 @@ export function CounselorSidebar() {
 
   const openChatInPanel = (threadId?: string) => {
     if (threadId) selectThread(threadId);
-    openPanel({ title: t("shell.askAi"), content: <AIChatSidePanel /> });
+    openPanel({ title: t("common:shell.askAi"), content: <AIChatSidePanel /> });
   };
 
   const handleNewChat = () => {
@@ -149,7 +149,7 @@ export function CounselorSidebar() {
     setDropdownOpen(false);
   };
 
-  const themeLabel = mode === "dark" ? t("shell.themeDark") : mode === "light" ? t("shell.themeLight") : t("shell.themeSystem");
+  const themeLabel = mode === "dark" ? t("common:shell.themeDark") : mode === "light" ? t("common:shell.themeLight") : t("common:shell.themeSystem");
 
   const isActive = (href: string) => {
     if (href === "/counselor") return pathname === href;
@@ -186,7 +186,7 @@ export function CounselorSidebar() {
           <img src="/logo-icon.svg" alt="FormMaps" style={{ width: 24, height: 24, margin: "0 auto" }} />
         )}
         {!collapsed && (
-          <button onClick={() => setCollapsed(true)} title={t("shell.collapseSidebar")} style={{
+          <button onClick={() => setCollapsed(true)} title={t("common:shell.collapseSidebar")} style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: 28, height: 28, borderRadius: 4,
             color: C.fontTertiary, border: "none", background: "transparent",
@@ -198,7 +198,7 @@ export function CounselorSidebar() {
           </button>
         )}
         {collapsed && (
-          <button onClick={() => setCollapsed(false)} title={t("shell.expandSidebar")} style={{
+          <button onClick={() => setCollapsed(false)} title={t("common:shell.expandSidebar")} style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: 28, height: 28, borderRadius: 4, marginTop: 4,
             color: C.fontTertiary, border: "none", background: "transparent",
@@ -216,8 +216,8 @@ export function CounselorSidebar() {
       {!collapsed && (
         <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 4px", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 2, padding: 2, borderRadius: 6, background: "var(--admin-bg-card-hover)" }}>
-            <TabBtn icon={Home} active={activeTab === "home"} onClick={() => setActiveTab("home")} title={t("shell.navigationTab")} />
-            <TabBtn icon={MessageCircle} active={activeTab === "chat"} onClick={() => setActiveTab("chat")} title={t("shell.chatHistoryTab")} />
+            <TabBtn icon={Home} active={activeTab === "home"} onClick={() => setActiveTab("home")} title={t("common:shell.navigationTab")} />
+            <TabBtn icon={MessageCircle} active={activeTab === "chat"} onClick={() => setActiveTab("chat")} title={t("common:shell.chatHistoryTab")} />
           </div>
           <button onClick={handleNewChat} style={{
             display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 10px 0 8px",
@@ -230,7 +230,7 @@ export function CounselorSidebar() {
           onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-card-hover)"; }}
           >
             <MessageCirclePlus style={{ width: 14, height: 14 }} />
-            <span>{t("shell.newChat")}</span>
+            <span>{t("common:shell.newChat")}</span>
           </button>
         </div>
       )}
@@ -257,14 +257,14 @@ export function CounselorSidebar() {
         {chatGroups.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: 8, padding: 24 }}>
             <MessageCircle style={{ width: 24, height: 24, color: "var(--admin-font-light)" }} />
-            <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("shell.noChatsYet")}</span>
+            <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("common:shell.noChatsYet")}</span>
             <button onClick={handleNewChat} style={{
               display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 12px",
               borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 500,
               fontFamily: "inherit", marginTop: 4, background: "var(--admin-accent-blue)", color: "#fff",
             }}>
               <MessageCirclePlus style={{ width: 14, height: 14 }} />
-              {t("shell.startChat")}
+              {t("common:shell.startChat")}
             </button>
           </div>
         ) : (
@@ -333,7 +333,7 @@ export function CounselorSidebar() {
           {!collapsed && <>
             <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
               <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name || "Counselor"}</div>
-              <div style={{ fontSize: 10, color: C.fontTertiary }}>Counselor</div>
+              <div style={{ fontSize: 10, color: C.fontTertiary }}>{t("dashboard.badge", "Counselor")}</div>
             </div>
             <ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} />
           </>}
@@ -350,7 +350,7 @@ export function CounselorSidebar() {
             onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
               <Settings style={{ width: 14, height: 14, color: C.fontTertiary }} />
-              <span>{t("shell.settings")}</span>
+              <span>{t("common:shell.settings")}</span>
             </Link>
             <button onClick={() => { logout(); router.push("/login"); }} style={{
               display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 8px",
@@ -361,7 +361,7 @@ export function CounselorSidebar() {
             onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
               <LogOut style={{ width: 14, height: 14, color: C.fontTertiary }} />
-              <span>{t("shell.signOut")}</span>
+              <span>{t("common:shell.signOut")}</span>
             </button>
           </div>
         )}
@@ -392,7 +392,7 @@ export function CounselorSidebar() {
                   onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
                     <Moon style={{ width: 16, height: 16, color: C.fontTertiary, flexShrink: 0 }} />
-                    <span style={{ flex: 1 }}>{t("shell.theme")} · {themeLabel}</span>
+                    <span style={{ flex: 1 }}>{t("common:shell.theme")} · {themeLabel}</span>
                     <ChevronRight style={{ width: 12, height: 12, color: C.fontLight }} />
                   </button>
                 ) : (
@@ -406,13 +406,13 @@ export function CounselorSidebar() {
                     onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
                       <ChevronDown style={{ width: 12, height: 12, transform: "rotate(90deg)", color: C.fontLight }} />
-                      <span>{t("shell.theme")}</span>
+                      <span>{t("common:shell.theme")}</span>
                     </button>
                     <div style={{ height: 1, background: themeColors.border.hover, margin: "2px 6px" }} />
                     {([
-                      { mode: "light" as ThemeMode, label: t("shell.themeLight"), icon: Sun },
-                      { mode: "dark" as ThemeMode, label: t("shell.themeDark"), icon: Moon },
-                      { mode: "system" as ThemeMode, label: t("shell.themeSystem"), icon: Monitor },
+                      { mode: "light" as ThemeMode, label: t("common:shell.themeLight"), icon: Sun },
+                      { mode: "dark" as ThemeMode, label: t("common:shell.themeDark"), icon: Moon },
+                      { mode: "system" as ThemeMode, label: t("common:shell.themeSystem"), icon: Monitor },
                     ]).map((themeOption) => (
                       <button key={themeOption.mode} onClick={() => changeTheme(themeOption.mode)} style={{
                         display: "flex", alignItems: "center", gap: 12, width: "100%",

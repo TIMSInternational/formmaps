@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, RefreshCw, AlertTriangle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface UrgentAction {
   title: string;
@@ -22,6 +23,7 @@ interface AIBriefingCardProps {
 }
 
 export function AIBriefingCard({ briefing, urgentActions, isLoading, updatedAt, onRefresh }: AIBriefingCardProps) {
+  const { t } = useTranslation("counselor");
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -35,7 +37,7 @@ export function AIBriefingCard({ briefing, urgentActions, isLoading, updatedAt, 
               <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-indigo-300" />
               </div>
-              <h3 className="text-sm font-semibold text-white tracking-tight">AI Daily Briefing</h3>
+              <h3 className="text-sm font-semibold text-white tracking-tight">{t("ai.dailyBriefing", "AI Daily Briefing")}</h3>
             </div>
             <div className="flex items-center gap-2">
               {updatedAt > 0 && (
@@ -51,7 +53,7 @@ export function AIBriefingCard({ briefing, urgentActions, isLoading, updatedAt, 
                 disabled={isLoading}
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
-                <span className="ml-1 text-xs">Regenerate</span>
+                <span className="ml-1 text-xs">{t("ai.regenerate", "Regenerate")}</span>
               </Button>
             </div>
           </div>
@@ -63,7 +65,7 @@ export function AIBriefingCard({ briefing, urgentActions, isLoading, updatedAt, 
             </div>
           ) : (
             <p className="text-sm text-slate-200 leading-relaxed">
-              {briefing ?? "No briefing available yet."}
+              {briefing ?? t("ai.noBriefing", "No briefing available yet.")}
             </p>
           )}
         </div>

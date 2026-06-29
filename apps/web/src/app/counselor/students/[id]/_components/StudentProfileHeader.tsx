@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Mail, GraduationCap, Target, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -26,6 +27,7 @@ interface StudentProfileHeaderProps {
 }
 
 export function StudentProfileHeader({ student, onBack }: StudentProfileHeaderProps) {
+  const { t } = useTranslation("counselor");
   const initials = (student.name || "?")
     .split(" ")
     .map((w: string) => w[0])
@@ -41,7 +43,7 @@ export function StudentProfileHeader({ student, onBack }: StudentProfileHeaderPr
         onClick={onBack}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to My Students
+        {t("studentDetail.backToMyStudents", "Back to My Students")}
       </Button>
 
       <div className="bg-white rounded-2xl p-7 border border-gray-100 shadow-sm flex flex-col md:flex-row items-center md:items-start gap-7 mt-2">
@@ -70,7 +72,7 @@ export function StudentProfileHeader({ student, onBack }: StudentProfileHeaderPr
             </div>
             <div className="flex items-center gap-1.5">
               <GraduationCap className="h-3.5 w-3.5 text-gray-400" />
-              Grade {student.gradeLevel}
+              {t("studentDetail.gradeN", { n: student.gradeLevel }, `Grade ${student.gradeLevel}`)}
             </div>
             {student.careerPath && (
               <div className="flex items-center gap-1.5">
