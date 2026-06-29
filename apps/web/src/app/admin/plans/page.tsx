@@ -72,7 +72,7 @@ const PLAN_INTERVALS = [
 
 
 export default function AdminPlansPage() {
-    const { t } = useTranslation();
+    const { t } = useTranslation("platform_owner");
     const router = useRouter();
     const { isAdmin, loading: authLoading } = useAdminAccess();
     const { confirm, ConfirmDialog } = useConfirmDialog();
@@ -103,7 +103,7 @@ export default function AdminPlansPage() {
             // We want billingOptions
             setPlans(data.billingOptions || []);
         } catch (error) {
-            toast.error("Failed to load subscription plans");
+            toast.error(t("plans.toast.failedToLoad"));
         } finally {
             setLoading(false);
         }
@@ -146,7 +146,7 @@ export default function AdminPlansPage() {
     const handleSave = async () => {
         // Validation
         if (!formData.name.trim() || formData.price < 0) {
-            toast.error("Please fill in valid name and price");
+            toast.error(t("plans.toast.validationError"));
             return;
         }
 
@@ -161,31 +161,31 @@ export default function AdminPlansPage() {
 
             if (editingPlan) {
                 await updateSubscriptionPlan(editingPlan.id, payload);
-                toast.success("Plan updated successfully");
+                toast.success(t("plans.toast.updatedSuccess"));
             } else {
                 await createSubscriptionPlan(payload);
-                toast.success("Plan created successfully");
+                toast.success(t("plans.toast.createdSuccess"));
             }
 
             setIsDialogOpen(false);
             loadPlans();
         } catch (error) {
-            toast.error(editingPlan ? "Failed to update plan" : "Failed to create plan");
+            toast.error(editingPlan ? t("plans.toast.failedToUpdate") : t("plans.toast.failedToCreate"));
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleDelete = async (planId: string) => {
-        const confirmed = await confirm({ title: "Delete Plan", description: "Are you sure you want to delete this plan? This cannot be undone.", confirmLabel: "Delete", variant: "destructive" });
+        const confirmed = await confirm({ title: t("plans.confirm.deleteTitle"), description: t("plans.confirm.deleteDesc"), confirmLabel: t("plans.confirm.deleteLabel"), variant: "destructive" });
         if (!confirmed) return;
 
         try {
             await deleteSubscriptionPlan(planId);
-            toast.success("Plan deleted successfully");
+            toast.success(t("plans.toast.deletedSuccess"));
             loadPlans();
         } catch (error) {
-            toast.error("Failed to delete plan");
+            toast.error(t("plans.toast.failedToDelete"));
         }
     };
 
@@ -217,10 +217,10 @@ export default function AdminPlansPage() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="space-y-1">
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">
-                            Plans & Pricing
+                            {t("plans.title")}
                         </h1>
                         <p className="text-lg text-gray-500 font-medium">
-                            Manage subscription tiers and billing options
+                            {t("plans.subtitle")}
                         </p>
                     </div>
                     <Button
@@ -228,7 +228,7 @@ export default function AdminPlansPage() {
                         className="bg-gray-900 hover:bg-gray-800 text-white rounded-xl shadow-sm h-12 px-6"
                     >
                         <Plus className="mr-2 h-5 w-5" />
-                        Create New Plan
+                        {t("plans.createButton")}
                     </Button>
                 </div>
 
@@ -236,12 +236,12 @@ export default function AdminPlansPage() {
                 {plans.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
                         <CreditCard className="h-16 w-16 text-gray-200 mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-900">No active plans</h3>
+                        <h3 className="text-xl font-semibold text-gray-900">{t("plans.emptyTitle")}</h3>
                         <p className="text-gray-500 max-w-sm text-center mt-2 mb-6">
-                            Create your first subscription plan to start accepting payments from users.
+                            {t("plans.emptyDesc")}
                         </p>
                         <Button onClick={handleOpenCreate} variant="outline" className="rounded-xl">
-                            Create Plan
+                            {t("plans.emptyCreateButton")}
                         </Button>
                     </div>
                 ) : (
@@ -260,7 +260,7 @@ export default function AdminPlansPage() {
                                     {plan.popular && (
                                         <div className="absolute top-0 right-0 p-4">
                                             <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 shadow-sm rounded-lg px-2 py-1">
-                                                Popular
+                                                {t("plans.popular")}
                                             </Badge>
                                         </div>
                                     )}
@@ -273,7 +273,7 @@ export default function AdminPlansPage() {
                                                     ${(plan.price ?? 0).toFixed(2)}
                                                 </span>
                                                 <span className="text-gray-500 font-medium">
-                                                    /{plan.period === 'one-time' ? 'once' : plan.period === 'month' ? 'mo' : plan.period === 'year' ? 'yr' : plan.period}
+                                                    /{plan.period === 'one-time' ? t("plans.perPeriod.once") : plan.period === 'month' ? t("plans.perPeriod.monthly") : plan.period === 'year' ? t("plans.perPeriod.yearly") : plan.period}
                                                 </span>
                                             </div>
                                             {plan.description && (
@@ -294,7 +294,7 @@ export default function AdminPlansPage() {
                                             ))}
                                             {plan.features?.length > 5 && (
                                                 <p className="text-xs text-gray-400 font-medium pl-6">
-                                                    + {plan.features.length - 5} more features
+                                                    {t("plans.moreFeatures", { count: plan.features.length - 5 })}
                                                 </p>
                                             )}
                                         </div>
@@ -305,7 +305,7 @@ export default function AdminPlansPage() {
                                         <div className="flex items-center gap-2">
                                             <div className={`h-2.5 w-2.5 rounded-full ${plan.isActive !== false ? "bg-emerald-500" : "bg-gray-300"}`} />
                                             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                {plan.isActive !== false ? "Active" : "Inactive"}
+                                                {plan.isActive !== false ? t("plans.statusActive") : t("plans.statusInactive")}
                                             </span>
                                         </div>
                                         <div className="flex gap-1">
@@ -339,18 +339,18 @@ export default function AdminPlansPage() {
                     <DialogContent className="sm:max-w-lg rounded-3xl p-0 gap-0 overflow-hidden">
                         <DialogHeader className="p-8 pb-4">
                             <DialogTitle className="text-2xl font-bold text-gray-900">
-                                {editingPlan ? "Edit Plan" : "Create Subscription Plan"}
+                                {editingPlan ? t("plans.form.editTitle") : t("plans.form.createTitle")}
                             </DialogTitle>
                             <DialogDescription className="text-base text-gray-500">
-                                {editingPlan ? "Update details for this subscription tier." : "Define a new pricing tier for your users."}
+                                {editingPlan ? t("plans.form.editDesc") : t("plans.form.createDesc")}
                             </DialogDescription>
                         </DialogHeader>
 
                         <div className="px-8 space-y-6 py-4">
                             <div className="space-y-2">
-                                <Label className="text-gray-700 font-medium">Plan Name</Label>
+                                <Label className="text-gray-700 font-medium">{t("plans.form.planName")}</Label>
                                 <Input
-                                    placeholder="e.g. Pro Monthly"
+                                    placeholder={t("plans.form.planNamePlaceholder")}
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     className="h-11 rounded-xl border-gray-200 focus:ring-2 focus:ring-primary/20"
@@ -359,7 +359,7 @@ export default function AdminPlansPage() {
 
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <Label className="text-gray-700 font-medium">Price</Label>
+                                    <Label className="text-gray-700 font-medium">{t("plans.form.price")}</Label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
                                         <Input
@@ -373,7 +373,7 @@ export default function AdminPlansPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-gray-700 font-medium">Billing Interval</Label>
+                                    <Label className="text-gray-700 font-medium">{t("plans.form.billingInterval")}</Label>
                                     <Select
                                         value={formData.interval}
                                         onValueChange={(v: any) => setFormData({ ...formData, interval: v })}
@@ -382,9 +382,9 @@ export default function AdminPlansPage() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="monthly">Monthly</SelectItem>
-                                            <SelectItem value="yearly">Yearly</SelectItem>
-                                            <SelectItem value="one_time">One-time</SelectItem>
+                                            <SelectItem value="monthly">{t("plans.form.intervalMonthly")}</SelectItem>
+                                            <SelectItem value="yearly">{t("plans.form.intervalYearly")}</SelectItem>
+                                            <SelectItem value="one_time">{t("plans.form.intervalOneTime")}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -392,10 +392,10 @@ export default function AdminPlansPage() {
 
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <Label className="text-gray-700 font-medium">Features</Label>
+                                    <Label className="text-gray-700 font-medium">{t("plans.form.features")}</Label>
                                     <Button size="sm" variant="ghost" onClick={addFeature} className="h-8 text-primary hover:text-primary">
                                         <Plus className="h-3.5 w-3.5 mr-1" />
-                                        Add
+                                        {t("plans.form.addFeature")}
                                     </Button>
                                 </div>
                                 <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
@@ -405,7 +405,7 @@ export default function AdminPlansPage() {
                                                 value={feature}
                                                 onChange={(e) => updateFeature(idx, e.target.value)}
                                                 className="h-10 rounded-xl border-gray-200 flex-1"
-                                                placeholder="e.g. Unlimited Access"
+                                                placeholder={t("plans.form.featurePlaceholder")}
                                             />
                                             {formData.features.length > 1 && (
                                                 <Button size="icon" variant="ghost" onClick={() => removeFeature(idx)} className="h-10 w-10 text-gray-400 hover:text-red-500 rounded-xl">
@@ -420,11 +420,11 @@ export default function AdminPlansPage() {
 
                         <DialogFooter className="p-8 pt-4 bg-gray-50/50">
                             <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="rounded-xl h-11 border-gray-200 text-gray-700">
-                                Cancel
+                                {t("plans.form.cancelButton")}
                             </Button>
                             <Button onClick={handleSave} disabled={isSaving} className="rounded-xl h-11 bg-gray-900 text-white hover:bg-gray-800">
                                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                                {editingPlan ? "Save Changes" : "Create Plan"}
+                                {editingPlan ? t("plans.form.saveChanges") : t("plans.form.createButton")}
                             </Button>
                         </DialogFooter>
                     </DialogContent>

@@ -31,6 +31,7 @@ interface AddUserDialogProps {
 
 export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
   const { t } = useTranslation();
+  const { t: tPO } = useTranslation("platform_owner");
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newUser, setNewUser] = useState({
@@ -96,7 +97,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-semibold text-gray-700 ml-1">Email Address</Label>
+            <Label htmlFor="email" className="text-sm font-semibold text-gray-700 ml-1">{tPO("users.emailLabel")}</Label>
             <Input
               id="email"
               type="email"
@@ -108,18 +109,18 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="role" className="text-sm font-semibold text-gray-700 ml-1">Role</Label>
+              <Label htmlFor="role" className="text-sm font-semibold text-gray-700 ml-1">{tPO("users.roleLabel")}</Label>
               <Select
                 value={newUser.role}
                 onValueChange={(value) => setNewUser({ ...newUser, role: value })}
               >
                 <SelectTrigger className="h-11 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-100 transition-all text-gray-600">
-                  <SelectValue placeholder="Select role" />
+                  <SelectValue placeholder={tPO("users.roleSelectPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="coach">Coach</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="student">{tPO("users.roles.student")}</SelectItem>
+                  <SelectItem value="coach">{tPO("users.roles.coach")}</SelectItem>
+                  <SelectItem value="admin">{tPO("users.roles.admin")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -156,7 +157,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
             {isCreating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                {tPO("users.creating")}
               </>
             ) : (
               <>

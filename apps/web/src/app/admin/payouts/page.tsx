@@ -60,6 +60,7 @@ export default function AdminPayoutsPage() {
   const router = useRouter();
   const { isAdmin, loading: authLoading } = useAdminAccess();
   const { t } = useTranslation();
+  const { t: tPO } = useTranslation("platform_owner");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -151,7 +152,7 @@ export default function AdminPayoutsPage() {
   // Computed Stats for Cards (Using API data + fallbacks)
   const statsCards = [
     {
-      label: "Total Paid Out",
+      label: tPO("payouts.stats.totalPaidOut"),
       value: formatCurrency(statsData?.totalCommission || 0), // Assuming this maps to paid out or similar
       icon: Wallet,
       color: "text-emerald-600",
@@ -160,7 +161,7 @@ export default function AdminPayoutsPage() {
       blobColor: "bg-emerald-500"
     },
     {
-      label: "Total Payouts",
+      label: tPO("payouts.stats.totalPayouts"),
       value: (statsData?.totalPayouts || 0).toLocaleString(),
       icon: CheckCircle,
       color: "text-blue-600",
@@ -169,7 +170,7 @@ export default function AdminPayoutsPage() {
       blobColor: "bg-blue-500"
     },
     {
-      label: "Avg Commission",
+      label: tPO("payouts.stats.avgCommission"),
       value: (statsData as any)?.averageCommission ? formatCurrency((statsData as any).averageCommission) : formatCurrency((statsData?.totalCommission || 0) / Math.max(statsData?.totalPayouts || 1, 1)),
       icon: Clock,
       color: "text-amber-600",
@@ -178,7 +179,7 @@ export default function AdminPayoutsPage() {
       blobColor: "bg-amber-500"
     },
     {
-      label: "Commission Rate",
+      label: tPO("payouts.stats.commissionRate"),
       value: (statsData as any)?.commissionRate ? `${(statsData as any).commissionRate}%` : "15%",
       icon: XCircle,
       color: "text-violet-600",
@@ -222,14 +223,14 @@ export default function AdminPayoutsPage() {
             {/* Filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[160px] h-10 bg-white border-gray-200 rounded-xl shadow-sm text-gray-600 font-medium">
-                <SelectValue placeholder="Filter by Status" />
+                <SelectValue placeholder={tPO("payouts.filter.placeholder")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
+                <SelectItem value="all">{tPO("payouts.filter.allStatuses")}</SelectItem>
+                <SelectItem value="pending">{tPO("payouts.filter.pending")}</SelectItem>
+                <SelectItem value="processing">{tPO("payouts.filter.processing")}</SelectItem>
+                <SelectItem value="completed">{tPO("payouts.filter.completed")}</SelectItem>
+                <SelectItem value="failed">{tPO("payouts.filter.failed")}</SelectItem>
               </SelectContent>
             </Select>
             <Button onClick={() => refetch()} variant="outline" size="icon" className="h-10 w-10 rounded-xl bg-white border-gray-200 shadow-sm hover:bg-gray-50">
@@ -376,7 +377,7 @@ export default function AdminPayoutsPage() {
           {/* Pagination */}
           <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/30">
             <p className="text-sm text-gray-500">
-              Showing page <span className="font-semibold text-gray-900">{page}</span> of <span className="font-semibold text-gray-900">{totalPages || 1}</span>
+              {tPO("payouts.pagination.showingPage", { page, total: totalPages || 1 })}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -406,11 +407,11 @@ export default function AdminPayoutsPage() {
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Reject Payout</DialogTitle>
+            <DialogTitle>{tPO("payouts.rejectDialog.title")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <Textarea
-              placeholder="Enter a reason for rejection..."
+              placeholder={tPO("payouts.rejectDialog.reasonPlaceholder")}
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               rows={3}
@@ -418,14 +419,14 @@ export default function AdminPayoutsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
-              Cancel
+              {tPO("payouts.rejectDialog.cancelButton")}
             </Button>
             <Button
               variant="destructive"
               disabled={!rejectReason.trim()}
               onClick={handleReject}
             >
-              Reject Payout
+              {tPO("payouts.rejectDialog.rejectButton")}
             </Button>
           </DialogFooter>
         </DialogContent>

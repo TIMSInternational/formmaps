@@ -2,6 +2,7 @@
 
 import { toast } from "sonner";
 import { Mail, UserCheck, UserX, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -26,6 +27,7 @@ interface UserDetailDialogProps {
 }
 
 export function UserDetailDialog({ user, onClose, onDeactivate }: UserDetailDialogProps) {
+  const { t } = useTranslation("platform_owner");
   return (
     <Dialog open={!!user} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="sm:max-w-[420px] rounded-2xl border-gray-100 shadow-2xl p-0 overflow-hidden">
@@ -58,19 +60,19 @@ export function UserDetailDialog({ user, onClose, onDeactivate }: UserDetailDial
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-500">
                 <Users className="h-4 w-4 text-gray-400" />
-                Joined {new Date(user.joinedDate).toLocaleDateString()}
+                {t("users.joinedOn", { date: new Date(user.joinedDate).toLocaleDateString() })}
               </div>
             </div>
             <div className="border-t border-gray-100 p-4 space-y-2">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Actions</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t("users.detailActions")}</p>
               <button onClick={() => { navigator.clipboard.writeText(user.email); toast.success("Email copied"); }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left">
-                <Mail className="h-4 w-4 text-gray-400" /> Copy Email
+                <Mail className="h-4 w-4 text-gray-400" /> {t("users.copyEmail")}
               </button>
               {user.status === "active" && (
                 <button onClick={() => { onClose(); onDeactivate(user); }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors text-left">
-                  <UserX className="h-4 w-4" /> Deactivate User
+                  <UserX className="h-4 w-4" /> {t("users.deactivateUser")}
                 </button>
               )}
             </div>
