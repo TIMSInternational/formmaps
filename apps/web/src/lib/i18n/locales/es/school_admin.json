@@ -9,8 +9,7 @@
       "analyzing": "Analizando los datos de tu institución...",
       "analyzingSubtitle": "Revisando estudiantes, evaluaciones, calificaciones y progreso de graduación",
       "label": "Informe IA",
-      "fullAnalysis": "Análisis Completo",
-      "impactLabel": "impacto {{impact}}"
+      "fullAnalysis": "Análisis Completo"
     },
     "atRisk": {
       "title": "Requiere Atención",
@@ -63,31 +62,31 @@
       "staff": "Personal y Roles",
       "counselors": "Asignaciones de Orientadores"
     },
-    "search": "Buscar estudiantes...",
-    "allStatus": "Todos los estados",
-    "status": {
+    "searchPlaceholder": "Buscar estudiantes...",
+    "inviteStudent": "Invitar Estudiante",
+    "emailCopied_one": "{{count}} correo copiado",
+    "emailCopied_other": "{{count}} correos copiados",
+    "exportedStudents": "{{count}} estudiantes exportados",
+    "filter": {
+      "allStatus": "Todos los estados",
       "active": "Activo",
       "pending": "Pendiente",
       "inactive": "Inactivo"
     },
-    "inviteStudent": "Invitar Estudiante",
     "stats": {
       "totalStudents": "Total Estudiantes",
-      "enrolledInSchool": "inscritos en la institución",
+      "totalStudentsSub": "inscritos en la institución",
       "activeStudents": "Estudiantes Activos",
-      "currentlyActive": "actualmente activos",
+      "activeStudentsSub": "actualmente activos",
       "assessmentsDone": "Evaluaciones Completadas",
-      "completedAssessments": "evaluaciones completadas",
+      "assessmentsDoneSub": "evaluaciones completadas",
       "avgScore": "Puntaje Prom.",
-      "acrossAllStudents": "entre todos los estudiantes"
+      "avgScoreSub": "entre todos los estudiantes"
     },
-    "bulkActions": {
-      "selected": "{{count}} seleccionado",
+    "bulk": {
+      "selected": "{{count}} seleccionados",
       "copyEmails": "Copiar Correos",
-      "exportCsv": "Exportar CSV",
-      "emailCopied_one": "{{count}} correo copiado",
-      "emailCopied_other": "{{count}} correos copiados",
-      "exported": "{{count}} estudiantes exportados"
+      "exportCsv": "Exportar CSV"
     },
     "table": {
       "name": "Nombre",
@@ -100,16 +99,9 @@
     },
     "noStudents": "No se encontraron estudiantes",
     "actions": {
-      "label": "Acciones",
       "viewProfile": "Ver Perfil",
       "copyEmail": "Copiar Correo",
       "emailCopied": "Correo copiado"
-    },
-    "pagination": {
-      "page": "Página",
-      "of": "de",
-      "previous": "Anterior",
-      "next": "Siguiente"
     }
   },
   "analytics": {
@@ -128,12 +120,10 @@
       "fullyAssessed": "Evaluados al 100%",
       "avgGpa": "GPA Promedio",
       "weightedAvg": "Promedio ponderado",
-      "studentsOf": "{{done}} de {{total}} estudiantes",
-      "view": "Ver"
+      "studentsOf": "{{done}} de {{total}} estudiantes"
     },
     "completionByGrade": "Finalización de Evaluaciones por Grado",
     "noAssessmentData": "Aún no hay datos de evaluación disponibles.",
-    "gradeLabel": "{{grade}} ({{count}} estudiantes)",
     "gradeLabels": {
       "0": "Sin asignar",
       "9": "1.° año",
@@ -182,14 +172,16 @@
     "insightsRefreshed": "Insights actualizados",
     "insightsRefreshFailed": "Error al actualizar los insights",
     "scheduleSaved": "Horario guardado",
-    "scheduleFailed": "Error al guardar el horario",
+    "scheduleSaveFailed": "Error al guardar el horario",
     "remindersSent_one": "Recordatorio enviado a {{count}} estudiante",
     "remindersSent_other": "Recordatorios enviados a {{count}} estudiantes",
-    "remindersFailed_count": "{{count}} correo(s) fallaron",
-    "remindersFailed": "Error al enviar recordatorios",
+    "remindersFailed_one": "{{count}} correo falló",
+    "remindersFailed_other": "{{count}} correos fallaron",
+    "remindersError": "Error al enviar recordatorios",
     "setup360Success": "Configuración 360 completa: {{created}} grupos creados, {{emails}} invitaciones enviadas",
-    "setup360Skipped": "{{count}} ya existían",
-    "setup360Failed": "Error al configurar las evaluaciones 360"
+    "setup360Skipped_one": "{{count}} ya existía",
+    "setup360Skipped_other": "{{count}} ya existían",
+    "setup360Error": "Error al configurar las evaluaciones 360"
   },
   "insights": {
     "title": "Insights Escolares con IA",
@@ -248,123 +240,60 @@
       "gaps": "Brechas Académicas"
     }
   },
-  "graduation": {
-    "stats": {
-      "totalStudents": "Total Estudiantes",
-      "onTrack": "Al Día",
-      "atRisk": "En Riesgo",
-      "offTrack": "Rezagado",
-      "avgProgress": "Progreso Prom."
-    },
-    "noRules": "Sin reglas configuradas — establece requisitos para monitorear el progreso",
-    "creditsRequired": "{{total}} créditos totales requeridos",
-    "editRules": "Editar Reglas",
-    "setupRules": "Configurar Reglas",
-    "table": {
-      "student": "Estudiante",
-      "grade": "Grado",
-      "credits": "Créditos",
-      "progress": "Progreso",
-      "status": "Estado"
-    },
-    "search": "Buscar estudiantes...",
-    "setupRulesFirst": "Configura las reglas de graduación para ver el progreso de los estudiantes",
-    "noStudents": "No se encontraron estudiantes",
-    "rulesSaved": "Reglas guardadas",
-    "rulesFailed": "Error al guardar",
-    "rulesCreated": "Reglas creadas",
-    "rulesCreateFailed": "Error al crear",
-    "requirement": "Requisito",
-    "gradeLabel": "Grado {{grade}}"
-  },
-  "academicGaps": {
-    "stats": {
-      "totalStudents": "Total Estudiantes",
-      "onTrack": "Al Día",
-      "atRisk": "En Riesgo",
-      "offTrack": "Rezagado",
-      "avgProgress": "Progreso Prom."
-    },
-    "search": "Buscar estudiantes...",
-    "table": {
-      "student": "Estudiante",
-      "grade": "Grado",
-      "credits": "Créditos",
-      "creditGap": "Déficit de Créditos",
-      "missingCourses": "Cursos Faltantes",
-      "status": "Estado"
-    },
-    "noRules": "Configura las reglas de graduación para monitorear brechas académicas",
-    "noStudents": "Ningún estudiante coincide con tus filtros"
-  },
   "reports": {
     "title": "Informes",
     "subtitle": "Descarga informes de evaluación y exportaciones de datos por estudiante",
     "tabs": {
       "pca": "PCA / Perfil DISC",
       "mil": "MIL / LIA Cognitivo",
-      "360": "Evaluación 360°"
+      "eval360": "Evaluación 360°"
     },
-    "search": "Buscar estudiantes...",
+    "searchPlaceholder": "Buscar estudiantes...",
+    "statusActive": "activo",
+    "viewReports": "Ver Informes →",
     "table": {
       "student": "Estudiante",
       "email": "Correo",
       "grade": "Grado",
-      "status": "Estado",
-      "viewReports": "Ver Informes →"
+      "status": "Estado"
     },
     "noStudents": "No se encontraron estudiantes",
-    "pagination": {
-      "page": "Página",
-      "of": "de"
-    },
-    "studentReports": "Informes de {{name}}"
+    "pagination": "Página {{page}} de {{total}}"
   },
   "messages": {
+    "label": "Comunicación",
+    "title": "Mensajes",
+    "subtitle": "Comunícate con tus orientadores, tutores y personal de la institución.",
     "tabs": {
       "messages": "Mensajes",
       "broadcast": "Difusión",
       "alerts": "Alertas y Notificaciones"
     },
-    "search": "Buscar conversaciones...",
-    "newMessage": "Nuevo Mensaje",
-    "searchContacts": "Buscar contactos...",
+    "conversations": "Conversaciones",
+    "searchConversations": "Buscar conversaciones...",
+    "searchContacts": "Buscar por nombre o correo...",
+    "searching": "Buscando...",
     "noContacts": "No se encontraron contactos",
-    "noConversations": "Aún no hay conversaciones",
-    "startFirst": "Inicia tu primera conversación",
-    "send": "Enviar",
+    "noConversations": "Aún no hay conversaciones.",
+    "noConversationsSearch": "Ninguna conversación coincide con tu búsqueda.",
+    "noMessagesYet": "Aún no hay mensajes",
+    "emptyThread": "Aún no hay mensajes. Envía uno para empezar.",
     "typeMessage": "Escribe un mensaje...",
-    "startVideo": "Iniciar videollamada",
-    "loadFailed": "Error al cargar las conversaciones.",
-    "messagesFailed": "Error al cargar los mensajes.",
+    "sendHint": "Presiona Enter para enviar, Shift+Enter para una nueva línea",
+    "selectConversation": "Selecciona una conversación",
+    "selectConversationHint": "Elige una conversación de la izquierda para ver y enviar mensajes.",
+    "conversationStarted": "Conversación iniciada",
+    "conversationFailed": "Error al iniciar la conversación",
     "sendFailed": "Error al enviar el mensaje.",
-    "conversationFailed": "Error al iniciar la conversación."
+    "videoCallFailed": "Error al iniciar la videollamada"
   },
   "academics": {
     "title": "Académico",
-    "subtitle": "Gestiona cursos, currículo, rutas, calificaciones y graduación",
+    "subtitle": "Gestiona tu catálogo de cursos, marcos curriculares y rutas de cursos",
     "tabs": {
       "courses": "Cursos",
-      "gradebook": "Libro de Calificaciones",
       "curriculum": "Currículo",
-      "pathways": "Rutas Académicas",
-      "gpa": "Configuración GPA",
-      "graduation": "Graduación",
-      "gaps": "Brechas Académicas"
+      "pathways": "Rutas"
     }
-  },
-  "common": {
-    "loading": "Cargando...",
-    "noData": "No hay datos disponibles",
-    "retry": "Reintentar",
-    "save": "Guardar",
-    "cancel": "Cancelar",
-    "close": "Cerrar",
-    "edit": "Editar",
-    "delete": "Eliminar",
-    "search": "Buscar",
-    "exportCsv": "Exportar CSV",
-    "viewAll": "Ver todo",
-    "gradeLevelN": "G{{level}}"
   }
 }
