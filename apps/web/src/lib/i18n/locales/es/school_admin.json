@@ -1,1 +1,370 @@
-{}
+{
+  "dashboard": {
+    "title": "Panel de la Institución",
+    "subtitle": "Vista en tiempo real del desempeño de tu institución y análisis con IA",
+    "aiBriefing": {
+      "title": "Informe Escolar con IA",
+      "subtitle": "Obtén un análisis generado por IA del estado actual, riesgos y recomendaciones para tu institución",
+      "generate": "Generar Informe",
+      "analyzing": "Analizando los datos de tu institución...",
+      "analyzingSubtitle": "Revisando estudiantes, evaluaciones, calificaciones y progreso de graduación",
+      "label": "Informe IA",
+      "fullAnalysis": "Análisis Completo",
+      "impactLabel": "impacto {{impact}}"
+    },
+    "atRisk": {
+      "title": "Requiere Atención",
+      "viewAll": "Ver todo",
+      "allOnTrack": "Todos los estudiantes al día",
+      "pcaMissing": "{{count}} PCA pendiente",
+      "milIncomplete": "· MIL incompleto",
+      "evalPending": "· 360 pendiente",
+      "moreStudents": "+{{count}} más"
+    },
+    "assessmentProgress": {
+      "title": "Progreso de Evaluaciones",
+      "completed": "Completado",
+      "inProgress": "En Progreso",
+      "notStarted": "Sin Iniciar"
+    },
+    "actionItems": {
+      "title": "Acciones Pendientes",
+      "allClear": "Todo en orden",
+      "criticalAlert_one": "{{count}} alerta crítica",
+      "criticalAlert_other": "{{count}} alertas críticas",
+      "highPriority": "{{count}} prioridad alta",
+      "newSinceLogin": "{{count}} nuevas desde el último acceso"
+    },
+    "recentStudents": {
+      "title": "Estudiantes Recientes",
+      "viewAll": "Ver todo",
+      "noStudents": "Aún no hay estudiantes"
+    },
+    "stats": {
+      "students": "Estudiantes",
+      "assessments": "Evaluaciones",
+      "avgExamScore": "Puntaje Prom. Examen",
+      "courses": "Cursos"
+    },
+    "quickNav": "Navegación Rápida",
+    "navCards": {
+      "students": { "label": "Estudiantes", "sub": "Listado, invitaciones, personal" },
+      "academics": { "label": "Académico", "sub": "Cursos, GPA, graduación" },
+      "assessments": { "label": "Evaluaciones", "sub": "Pipeline, horario, 360" },
+      "aiInsights": { "label": "Análisis IA", "sub": "Análisis institucional" }
+    }
+  },
+  "users": {
+    "title": "Usuarios",
+    "subtitle": "Gestiona estudiantes, orientadores, tutores y personal de tu institución",
+    "tabs": {
+      "roster": "Listado",
+      "onboard": "Invitar y Registrar",
+      "staff": "Personal y Roles",
+      "counselors": "Asignaciones de Orientadores"
+    },
+    "search": "Buscar estudiantes...",
+    "allStatus": "Todos los estados",
+    "status": {
+      "active": "Activo",
+      "pending": "Pendiente",
+      "inactive": "Inactivo"
+    },
+    "inviteStudent": "Invitar Estudiante",
+    "stats": {
+      "totalStudents": "Total Estudiantes",
+      "enrolledInSchool": "inscritos en la institución",
+      "activeStudents": "Estudiantes Activos",
+      "currentlyActive": "actualmente activos",
+      "assessmentsDone": "Evaluaciones Completadas",
+      "completedAssessments": "evaluaciones completadas",
+      "avgScore": "Puntaje Prom.",
+      "acrossAllStudents": "entre todos los estudiantes"
+    },
+    "bulkActions": {
+      "selected": "{{count}} seleccionado",
+      "copyEmails": "Copiar Correos",
+      "exportCsv": "Exportar CSV",
+      "emailCopied_one": "{{count}} correo copiado",
+      "emailCopied_other": "{{count}} correos copiados",
+      "exported": "{{count}} estudiantes exportados"
+    },
+    "table": {
+      "name": "Nombre",
+      "email": "Correo",
+      "role": "Rol",
+      "grade": "Grado",
+      "status": "Estado",
+      "joined": "Registro",
+      "actions": "Acciones"
+    },
+    "noStudents": "No se encontraron estudiantes",
+    "actions": {
+      "label": "Acciones",
+      "viewProfile": "Ver Perfil",
+      "copyEmail": "Copiar Correo",
+      "emailCopied": "Correo copiado"
+    },
+    "pagination": {
+      "page": "Página",
+      "of": "de",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    }
+  },
+  "analytics": {
+    "title": "Analítica e Insights",
+    "subtitle": "Inteligencia accionable sobre evaluaciones, calificaciones y preparación estudiantil",
+    "exportCsv": "Exportar CSV",
+    "exportedSuccess": "Analítica exportada",
+    "exportFailed": "Error al exportar",
+    "metrics": {
+      "atRisk": "Estudiantes en Riesgo",
+      "gpaBelow": "GPA menor a 2.0",
+      "noAtRisk": "Sin estudiantes en riesgo",
+      "counselorCoverage": "Cobertura de Orientadores",
+      "goodCoverage": "Buena cobertura",
+      "assignMore": "Asigna más estudiantes",
+      "fullyAssessed": "Evaluados al 100%",
+      "avgGpa": "GPA Promedio",
+      "weightedAvg": "Promedio ponderado",
+      "studentsOf": "{{done}} de {{total}} estudiantes",
+      "view": "Ver"
+    },
+    "completionByGrade": "Finalización de Evaluaciones por Grado",
+    "noAssessmentData": "Aún no hay datos de evaluación disponibles.",
+    "gradeLabel": "{{grade}} ({{count}} estudiantes)",
+    "gradeLabels": {
+      "0": "Sin asignar",
+      "9": "1.° año",
+      "10": "2.° año",
+      "11": "3.° año",
+      "12": "4.° año"
+    },
+    "students": "{{count}} estudiantes",
+    "pipelineSummary": "Resumen del Pipeline",
+    "pipeline": {
+      "pcaComplete": "PCA Completo",
+      "milComplete": "MIL/LIA Completo",
+      "eval360Complete": "360° Completo",
+      "fullyAssessed": "Evaluados Completamente"
+    },
+    "cognitiveProfile": "Perfil Cognitivo Institucional",
+    "topCareerInterests": "Principales Intereses Vocacionales",
+    "careerDataEmpty": "Los datos de carrera aparecerán tras el análisis de perfil.",
+    "aiInsights": "Insights IA",
+    "cached": "CACHÉ",
+    "discDistribution": "Distribución DISC",
+    "aiAnalysisEmpty": "El análisis de IA estará disponible una vez que suficientes estudiantes completen sus evaluaciones.",
+    "topPerformers": {
+      "title": "Mejores Desempeños",
+      "byGpa": "Por puntaje GPA",
+      "headers": {
+        "rank": "#",
+        "student": "Estudiante",
+        "grade": "Grado",
+        "gpa": "GPA",
+        "assessments": "Evaluaciones"
+      },
+      "gradeLabel": "Grado {{grade}}",
+      "noData": "Aún no hay datos de desempeño",
+      "statusNotStarted": "sin iniciar"
+    }
+  },
+  "assessments": {
+    "title": "Centro de Mando de Evaluaciones",
+    "subtitle": "Programa evaluaciones, monitorea el progreso, envía recordatorios y consulta insights con IA",
+    "tabs": {
+      "commandCenter": "Centro de Mando",
+      "evaluations": "Evaluaciones 360",
+      "results": "Resultados e Informes"
+    },
+    "insightsRefreshed": "Insights actualizados",
+    "insightsRefreshFailed": "Error al actualizar los insights",
+    "scheduleSaved": "Horario guardado",
+    "scheduleFailed": "Error al guardar el horario",
+    "remindersSent_one": "Recordatorio enviado a {{count}} estudiante",
+    "remindersSent_other": "Recordatorios enviados a {{count}} estudiantes",
+    "remindersFailed_count": "{{count}} correo(s) fallaron",
+    "remindersFailed": "Error al enviar recordatorios",
+    "setup360Success": "Configuración 360 completa: {{created}} grupos creados, {{emails}} invitaciones enviadas",
+    "setup360Skipped": "{{count}} ya existían",
+    "setup360Failed": "Error al configurar las evaluaciones 360"
+  },
+  "insights": {
+    "title": "Insights Escolares con IA",
+    "subtitle": "Análisis impulsado por IA de los datos, tendencias y recomendaciones de tu institución",
+    "regenerate": "Regenerar",
+    "checkProgress": "Verificar progreso",
+    "analyzing": "Analizando...",
+    "refreshing": "Actualizando...",
+    "regeneratedSuccess": "Insights regenerados",
+    "regenerateFailed": "Error al regenerar los insights",
+    "refreshFailed": "Error al actualizar",
+    "gateTitle": "Los insights de IA se activan al 90% de finalización de evaluaciones",
+    "gateSubtitle": "{{completed}}/{{total}} estudiantes han completado todas las evaluaciones ({{rate}}%). Los insights se generan automáticamente al 90% y 100%.",
+    "executiveSummary": "Resumen Ejecutivo",
+    "generatedAt": "Generado el {{date}}",
+    "metrics": {
+      "students": "Estudiantes",
+      "avgGpa": "GPA Promedio",
+      "milCompleted": "MIL Completado",
+      "milAvg": "Prom.: {{pct}}%",
+      "eval360Done": "360° Realizado"
+    },
+    "urgentActions": {
+      "title": "Acciones Urgentes",
+      "subtitle": "Elementos que requieren atención inmediata"
+    },
+    "keyInsights": {
+      "title": "Insights Clave",
+      "subtitle": "Observaciones basadas en datos",
+      "noInsights": "No hay insights disponibles"
+    },
+    "predictions": {
+      "title": "Predicciones",
+      "subtitle": "Resultados proyectados por IA",
+      "noPredictions": "No hay predicciones disponibles",
+      "confidence": "confianza {{level}}"
+    },
+    "recommendations": {
+      "title": "Recomendaciones Estratégicas",
+      "subtitle": "Mejoras sugeridas por IA para tu institución"
+    },
+    "dataSummary": {
+      "title": "Resumen de Datos",
+      "topCourses": "Cursos con Más Matrículas",
+      "byGrade": "Estudiantes por Grado",
+      "students": "{{count}} estudiantes",
+      "gradeLabel": "Grado {{grade}}"
+    }
+  },
+  "grades": {
+    "title": "Calificaciones y Progreso",
+    "subtitle": "Importa calificaciones, configura el GPA, monitorea el progreso de graduación e identifica brechas académicas",
+    "tabs": {
+      "grades": "Calificaciones y GPA",
+      "graduation": "Graduación",
+      "gaps": "Brechas Académicas"
+    }
+  },
+  "graduation": {
+    "stats": {
+      "totalStudents": "Total Estudiantes",
+      "onTrack": "Al Día",
+      "atRisk": "En Riesgo",
+      "offTrack": "Rezagado",
+      "avgProgress": "Progreso Prom."
+    },
+    "noRules": "Sin reglas configuradas — establece requisitos para monitorear el progreso",
+    "creditsRequired": "{{total}} créditos totales requeridos",
+    "editRules": "Editar Reglas",
+    "setupRules": "Configurar Reglas",
+    "table": {
+      "student": "Estudiante",
+      "grade": "Grado",
+      "credits": "Créditos",
+      "progress": "Progreso",
+      "status": "Estado"
+    },
+    "search": "Buscar estudiantes...",
+    "setupRulesFirst": "Configura las reglas de graduación para ver el progreso de los estudiantes",
+    "noStudents": "No se encontraron estudiantes",
+    "rulesSaved": "Reglas guardadas",
+    "rulesFailed": "Error al guardar",
+    "rulesCreated": "Reglas creadas",
+    "rulesCreateFailed": "Error al crear",
+    "requirement": "Requisito",
+    "gradeLabel": "Grado {{grade}}"
+  },
+  "academicGaps": {
+    "stats": {
+      "totalStudents": "Total Estudiantes",
+      "onTrack": "Al Día",
+      "atRisk": "En Riesgo",
+      "offTrack": "Rezagado",
+      "avgProgress": "Progreso Prom."
+    },
+    "search": "Buscar estudiantes...",
+    "table": {
+      "student": "Estudiante",
+      "grade": "Grado",
+      "credits": "Créditos",
+      "creditGap": "Déficit de Créditos",
+      "missingCourses": "Cursos Faltantes",
+      "status": "Estado"
+    },
+    "noRules": "Configura las reglas de graduación para monitorear brechas académicas",
+    "noStudents": "Ningún estudiante coincide con tus filtros"
+  },
+  "reports": {
+    "title": "Informes",
+    "subtitle": "Descarga informes de evaluación y exportaciones de datos por estudiante",
+    "tabs": {
+      "pca": "PCA / Perfil DISC",
+      "mil": "MIL / LIA Cognitivo",
+      "360": "Evaluación 360°"
+    },
+    "search": "Buscar estudiantes...",
+    "table": {
+      "student": "Estudiante",
+      "email": "Correo",
+      "grade": "Grado",
+      "status": "Estado",
+      "viewReports": "Ver Informes →"
+    },
+    "noStudents": "No se encontraron estudiantes",
+    "pagination": {
+      "page": "Página",
+      "of": "de"
+    },
+    "studentReports": "Informes de {{name}}"
+  },
+  "messages": {
+    "tabs": {
+      "messages": "Mensajes",
+      "broadcast": "Difusión",
+      "alerts": "Alertas y Notificaciones"
+    },
+    "search": "Buscar conversaciones...",
+    "newMessage": "Nuevo Mensaje",
+    "searchContacts": "Buscar contactos...",
+    "noContacts": "No se encontraron contactos",
+    "noConversations": "Aún no hay conversaciones",
+    "startFirst": "Inicia tu primera conversación",
+    "send": "Enviar",
+    "typeMessage": "Escribe un mensaje...",
+    "startVideo": "Iniciar videollamada",
+    "loadFailed": "Error al cargar las conversaciones.",
+    "messagesFailed": "Error al cargar los mensajes.",
+    "sendFailed": "Error al enviar el mensaje.",
+    "conversationFailed": "Error al iniciar la conversación."
+  },
+  "academics": {
+    "title": "Académico",
+    "subtitle": "Gestiona cursos, currículo, rutas, calificaciones y graduación",
+    "tabs": {
+      "courses": "Cursos",
+      "gradebook": "Libro de Calificaciones",
+      "curriculum": "Currículo",
+      "pathways": "Rutas Académicas",
+      "gpa": "Configuración GPA",
+      "graduation": "Graduación",
+      "gaps": "Brechas Académicas"
+    }
+  },
+  "common": {
+    "loading": "Cargando...",
+    "noData": "No hay datos disponibles",
+    "retry": "Reintentar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "search": "Buscar",
+    "exportCsv": "Exportar CSV",
+    "viewAll": "Ver todo",
+    "gradeLevelN": "G{{level}}"
+  }
+}

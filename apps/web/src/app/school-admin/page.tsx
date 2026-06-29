@@ -17,6 +17,7 @@ import { useState } from "react";
 
 // ─── AI BRIEFING ───
 function AIBriefing() {
+  const { t } = useTranslation("school_admin");
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["sa-ai-insights"],
     queryFn: async () => {
@@ -41,8 +42,8 @@ function AIBriefing() {
             <Sparkles style={{ width: 22, height: 22, color: "#8b5cf6" }} />
           </div>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--admin-font-primary)" }}>AI School Briefing</div>
-            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>Get an AI-generated analysis of your school's current state, risks, and recommendations</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--admin-font-primary)" }}>{t("dashboard.aiBriefing.title")}</div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{t("dashboard.aiBriefing.subtitle")}</div>
           </div>
         </div>
         <button onClick={() => refetch()} disabled={isFetching} style={{
@@ -51,7 +52,7 @@ function AIBriefing() {
           background: "linear-gradient(135deg, #8b5cf6, #065292)", color: "#fff",
           border: "none", cursor: "pointer", flexShrink: 0,
         }}>
-          <Sparkles style={{ width: 15, height: 15 }} /> Generate Briefing
+          <Sparkles style={{ width: 15, height: 15 }} /> {t("dashboard.aiBriefing.generate")}
         </button>
       </div>
     );
@@ -64,8 +65,8 @@ function AIBriefing() {
         background: "rgba(139,92,246,0.04)", border: "1px solid rgba(139,92,246,0.12)", textAlign: "center",
       }}>
         <Loader2 style={{ width: 24, height: 24, color: "#8b5cf6", margin: "0 auto 10px", animation: "spin 1s linear infinite" }} />
-        <div style={{ fontSize: 14, fontWeight: 600, color: "#8b5cf6" }}>Analyzing your school data...</div>
-        <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>Reviewing students, assessments, grades, and graduation progress</div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#8b5cf6" }}>{t("dashboard.aiBriefing.analyzing")}</div>
+        <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>{t("dashboard.aiBriefing.analyzingSubtitle")}</div>
       </div>
     );
   }
@@ -84,9 +85,9 @@ function AIBriefing() {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
             <Sparkles style={{ width: 14, height: 14, color: "#8b5cf6" }} />
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#8b5cf6" }}>AI Briefing</span>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#8b5cf6" }}>{t("dashboard.aiBriefing.label")}</span>
             <Link href="/school-admin/insights" style={{ marginLeft: "auto", fontSize: 11, color: "#8b5cf6", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
-              Full Analysis <ChevronRight style={{ width: 10, height: 10 }} />
+              {t("dashboard.aiBriefing.fullAnalysis")} <ChevronRight style={{ width: 10, height: 10 }} />
             </Link>
           </div>
           <div style={{ fontSize: 13, color: "var(--admin-font-primary)", lineHeight: 1.6 }}>{briefing}</div>
@@ -120,6 +121,7 @@ function AIBriefing() {
 
 // ─── AT-RISK STUDENTS ───
 function AtRiskWidget() {
+  const { t } = useTranslation("school_admin");
   const { data } = useQuery({
     queryKey: ["sa-pipeline-summary"],
     queryFn: async () => {
@@ -140,16 +142,16 @@ function AtRiskWidget() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <AlertTriangle style={{ width: 14, height: 14, color: "#ef4444" }} />
-          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#ef4444" }}>Needs Attention</span>
+          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#ef4444" }}>{t("dashboard.atRisk.title")}</span>
         </div>
         <Link href="/school-admin/assessments" style={{ fontSize: 11, color: "var(--admin-font-tertiary)", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
-          View all <ArrowRight style={{ width: 10, height: 10 }} />
+          {t("dashboard.atRisk.viewAll")} <ArrowRight style={{ width: 10, height: 10 }} />
         </Link>
       </div>
       {atRisk.length === 0 ? (
         <div style={{ textAlign: "center", padding: 20 }}>
           <CheckCircle2 style={{ width: 24, height: 24, color: "#10b981", margin: "0 auto 8px" }} />
-          <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>All students on track</p>
+          <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("dashboard.atRisk.allOnTrack")}</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -166,13 +168,13 @@ function AtRiskWidget() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{s.name}</div>
                   <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>
-                    {pcaMissing} PCA missing{s.mil !== "done" ? " · MIL incomplete" : ""}{s.eval360 !== "done" ? " · 360 pending" : ""}
+                    {pcaMissing} {t("dashboard.atRisk.pcaMissing", { count: pcaMissing })}{s.mil !== "done" ? ` ${t("dashboard.atRisk.milIncomplete")}` : ""}{s.eval360 !== "done" ? ` ${t("dashboard.atRisk.evalPending")}` : ""}
                   </div>
                 </div>
               </Link>
             );
           })}
-          {atRisk.length > 5 && <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", textAlign: "center", paddingTop: 4 }}>+{atRisk.length - 5} more</div>}
+          {atRisk.length > 5 && <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", textAlign: "center", paddingTop: 4 }}>{t("dashboard.atRisk.moreStudents", { count: atRisk.length - 5 })}</div>}
         </div>
       )}
     </div>
@@ -181,6 +183,7 @@ function AtRiskWidget() {
 
 // ─── ASSESSMENT PROGRESS ───
 function AssessmentProgress() {
+  const { t } = useTranslation("school_admin");
   const { data } = useQuery({
     queryKey: ["sa-assess-status"],
     queryFn: async () => { const res = await apiRequest("/api/v1/school-admin/assessments/status"); return res?.data ?? res ?? {}; },
@@ -189,9 +192,9 @@ function AssessmentProgress() {
   const d = data as any;
   const rate = d?.completionRate ?? 0;
   const bars = [
-    { label: "Completed", value: d?.completed ?? 0, color: "#10b981", pct: d?.totalStudents ? Math.round(((d?.completed ?? 0) / d.totalStudents) * 100) : 0 },
-    { label: "In Progress", value: d?.inProgress ?? 0, color: "#f59e0b", pct: d?.totalStudents ? Math.round(((d?.inProgress ?? 0) / d.totalStudents) * 100) : 0 },
-    { label: "Not Started", value: d?.notStarted ?? 0, color: "#6b7280", pct: d?.totalStudents ? Math.round(((d?.notStarted ?? 0) / d.totalStudents) * 100) : 0 },
+    { label: t("dashboard.assessmentProgress.completed"), value: d?.completed ?? 0, color: "#10b981", pct: d?.totalStudents ? Math.round(((d?.completed ?? 0) / d.totalStudents) * 100) : 0 },
+    { label: t("dashboard.assessmentProgress.inProgress"), value: d?.inProgress ?? 0, color: "#f59e0b", pct: d?.totalStudents ? Math.round(((d?.inProgress ?? 0) / d.totalStudents) * 100) : 0 },
+    { label: t("dashboard.assessmentProgress.notStarted"), value: d?.notStarted ?? 0, color: "#6b7280", pct: d?.totalStudents ? Math.round(((d?.notStarted ?? 0) / d.totalStudents) * 100) : 0 },
   ];
 
   return (
@@ -199,7 +202,7 @@ function AssessmentProgress() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Target style={{ width: 14, height: 14, color: "#8b5cf6" }} />
-          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)" }}>Assessment Progress</span>
+          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)" }}>{t("dashboard.assessmentProgress.title")}</span>
         </div>
         <span style={{ fontSize: 20, fontWeight: 700, color: rate >= 80 ? "#10b981" : rate >= 50 ? "#f59e0b" : "#ef4444" }}>{rate}%</span>
       </div>
@@ -223,6 +226,7 @@ function AssessmentProgress() {
 
 // ─── ACTION ITEMS ───
 function ActionItems() {
+  const { t } = useTranslation("school_admin");
   const { data: alertsData } = useQuery({
     queryKey: ["sa-alerts-summary"],
     queryFn: async () => { const res = await apiRequest("/api/v1/alerts/summary"); return res?.data ?? res ?? {}; },
@@ -230,21 +234,21 @@ function ActionItems() {
   });
   const alerts = alertsData as any;
   const items = [
-    alerts?.critical > 0 && { label: `${alerts.critical} critical alert${alerts.critical > 1 ? "s" : ""}`, color: "#ef4444", icon: AlertTriangle, href: "/school-admin/messages?tab=alerts" },
-    alerts?.high > 0 && { label: `${alerts.high} high priority`, color: "#f59e0b", icon: Bell, href: "/school-admin/messages?tab=alerts" },
-    alerts?.newSinceLogin > 0 && { label: `${alerts.newSinceLogin} new since login`, color: "#065292", icon: Activity, href: "/school-admin/messages?tab=alerts" },
+    alerts?.critical > 0 && { label: t("dashboard.actionItems.criticalAlert", { count: alerts.critical }), color: "#ef4444", icon: AlertTriangle, href: "/school-admin/messages?tab=alerts" },
+    alerts?.high > 0 && { label: t("dashboard.actionItems.highPriority", { count: alerts.high }), color: "#f59e0b", icon: Bell, href: "/school-admin/messages?tab=alerts" },
+    alerts?.newSinceLogin > 0 && { label: t("dashboard.actionItems.newSinceLogin", { count: alerts.newSinceLogin }), color: "#065292", icon: Activity, href: "/school-admin/messages?tab=alerts" },
   ].filter(Boolean);
 
   return (
     <div style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
         <ClipboardCheck style={{ width: 14, height: 14, color: "#065292" }} />
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)" }}>Action Items</span>
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)" }}>{t("dashboard.actionItems.title")}</span>
       </div>
       {items.length === 0 ? (
         <div style={{ textAlign: "center", padding: 16 }}>
           <CheckCircle2 style={{ width: 20, height: 20, color: "#10b981", margin: "0 auto 6px" }} />
-          <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>All clear</p>
+          <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("dashboard.actionItems.allClear")}</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -263,6 +267,7 @@ function ActionItems() {
 
 // ─── RECENT STUDENTS ───
 function RecentStudents() {
+  const { t } = useTranslation("school_admin");
   const { data } = useStudents({ limit: 20, sortBy: "createdAt", sortOrder: "desc" });
   const students = (data?.data || []).filter((s: any) => {
     const r = (s.role || s.roleName || "").toLowerCase();
@@ -274,9 +279,9 @@ function RecentStudents() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <UserPlus style={{ width: 14, height: 14, color: "#10b981" }} />
-          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)" }}>Recent Students</span>
+          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)" }}>{t("dashboard.recentStudents.title")}</span>
         </div>
-        <Link href="/school-admin/users" style={{ fontSize: 11, color: "var(--admin-font-tertiary)", textDecoration: "none" }}>View all</Link>
+        <Link href="/school-admin/users" style={{ fontSize: 11, color: "var(--admin-font-tertiary)", textDecoration: "none" }}>{t("dashboard.recentStudents.viewAll")}</Link>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {students.length > 0 ? students.map((s: any) => (
@@ -293,41 +298,40 @@ function RecentStudents() {
             <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{s.gradeLevel ? `G${s.gradeLevel}` : "—"}</span>
           </Link>
         )) : (
-          <div style={{ textAlign: "center", padding: 20, color: "var(--admin-font-tertiary)", fontSize: 12 }}>No students yet</div>
+          <div style={{ textAlign: "center", padding: 20, color: "var(--admin-font-tertiary)", fontSize: 12 }}>{t("dashboard.recentStudents.noStudents")}</div>
         )}
       </div>
     </div>
   );
 }
 
-// ─── NAV CARDS ───
-const navCards = [
-  { label: "Students", sub: "Roster, invites, staff", icon: Users, href: "/school-admin/users", color: "#065292" },
-  { label: "Academics", sub: "Courses, GPA, graduation", icon: BookOpen, href: "/school-admin/academics", color: "#10b981" },
-  { label: "Assessments", sub: "Pipeline, schedule, 360", icon: ClipboardCheck, href: "/school-admin/assessments", color: "#8b5cf6" },
-  { label: "AI Insights", sub: "School-wide analysis", icon: Sparkles, href: "/school-admin/insights", color: "#f59e0b" },
-];
-
 // ─── MAIN DASHBOARD ───
 export default function SchoolAdminDashboard() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("school_admin");
   const { data: stats } = useSchoolAdminStats();
+
+  const navCards = [
+    { label: t("dashboard.navCards.students.label"), sub: t("dashboard.navCards.students.sub"), icon: Users, href: "/school-admin/users", color: "#065292" },
+    { label: t("dashboard.navCards.academics.label"), sub: t("dashboard.navCards.academics.sub"), icon: BookOpen, href: "/school-admin/academics", color: "#10b981" },
+    { label: t("dashboard.navCards.assessments.label"), sub: t("dashboard.navCards.assessments.sub"), icon: ClipboardCheck, href: "/school-admin/assessments", color: "#8b5cf6" },
+    { label: t("dashboard.navCards.aiInsights.label"), sub: t("dashboard.navCards.aiInsights.sub"), icon: Sparkles, href: "/school-admin/insights", color: "#f59e0b" },
+  ];
 
   return (
     <ErrorBoundary>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, color: "var(--admin-font-primary)" }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--admin-font-primary)" }}>School Dashboard</h1>
-          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>Real-time overview of your school&apos;s performance and AI-powered insights</p>
+          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--admin-font-primary)" }}>{t("dashboard.title")}</h1>
+          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{t("dashboard.subtitle")}</p>
         </div>
 
         {/* Top Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
           {[
-            { label: "Students", value: stats?.totalStudents?.toLocaleString() || "—", icon: Users, color: "#065292" },
-            { label: "Assessments", value: stats?.completedAssessments?.toLocaleString() || "—", icon: ClipboardCheck, color: "#8b5cf6" },
-            { label: "Avg Exam Score", value: stats ? `${(stats.averageScore || 0).toFixed(0)}%` : "—", icon: TrendingUp, color: "#10b981" },
-            { label: "Courses", value: (stats as any)?.totalCourses?.toLocaleString() || "—", icon: GraduationCap, color: "#f59e0b" },
+            { label: t("dashboard.stats.students"), value: stats?.totalStudents?.toLocaleString() || "—", icon: Users, color: "#065292" },
+            { label: t("dashboard.stats.assessments"), value: stats?.completedAssessments?.toLocaleString() || "—", icon: ClipboardCheck, color: "#8b5cf6" },
+            { label: t("dashboard.stats.avgExamScore"), value: stats ? `${(stats.averageScore || 0).toFixed(0)}%` : "—", icon: TrendingUp, color: "#10b981" },
+            { label: t("dashboard.stats.courses"), value: (stats as any)?.totalCourses?.toLocaleString() || "—", icon: GraduationCap, color: "#f59e0b" },
           ].map((s) => (
             <motion.div key={s.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               style={{ padding: "14px 16px", borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
@@ -353,7 +357,7 @@ export default function SchoolAdminDashboard() {
         {/* Bottom: Quick Nav + Recent */}
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
           <div>
-            <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)", marginBottom: 8 }}>Quick Navigation</div>
+            <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)", marginBottom: 8 }}>{t("dashboard.quickNav")}</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               {navCards.map((c) => (
                 <Link key={c.href} href={c.href} style={{

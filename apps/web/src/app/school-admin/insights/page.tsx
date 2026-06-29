@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api/apiClient";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 
 export default function AIInsightsPage() {
+  const { t } = useTranslation("school_admin");
   const queryClient = useQueryClient();
   const [regenerating, setRegenerating] = useState(false);
   const { data, isLoading } = useQuery({
@@ -37,12 +39,12 @@ export default function AIInsightsPage() {
       if (eligible) {
         const res = await apiRequest("/api/v1/school-admin/ai-insights?refresh=true");
         queryClient.setQueryData(["sa-ai-insights-full"], res?.data ?? res);
-        toast.success("Insights regenerated");
+        toast.success(t("insights.regeneratedSuccess"));
       } else {
         await queryClient.invalidateQueries({ queryKey: ["sa-ai-insights-full"] });
       }
     } catch {
-      toast.error(eligible ? "Failed to regenerate insights" : "Failed to refresh");
+      toast.error(eligible ? t("insights.regenerateFailed") : t("insights.refreshFailed"));
     } finally {
       setRegenerating(false);
     }
@@ -63,10 +65,10 @@ export default function AIInsightsPage() {
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--admin-font-primary)", display: "flex", alignItems: "center", gap: 10 }}>
             <Sparkles style={{ width: 22, height: 22, color: "#8b5cf6" }} />
-            AI School Insights
+            {t("insights.title")}
           </h1>
           <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-            AI-powered analysis of your school's data, trends, and recommendations
+            {t("insights.subtitle")}
           </p>
         </div>
         <button onClick={handleHeaderAction} disabled={isLoading || isFetching}
@@ -82,7 +84,7 @@ export default function AIInsightsPage() {
           {isFetching ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
             : !eligible ? <Lock style={{ width: 14, height: 14 }} />
             : <RefreshCw style={{ width: 14, height: 14 }} />}
-          {isFetching ? (eligible ? "Analyzing..." : "Refreshing...") : eligible ? "Regenerate" : "Check progress"}
+          {isFetching ? (eligible ? t("insights.analyzing") : t("insights.refreshing")) : eligible ? t("insights.regenerate") : t("insights.checkProgress")}
         </button>
       </div>
 
@@ -97,11 +99,10 @@ export default function AIInsightsPage() {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-              AI insights unlock at 90% assessment completion
+              {t("insights.gateTitle")}
             </div>
             <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-              {gating.completed}/{gating.total} students have completed all assessments ({gating.completionRate}%).
-              Insights generate automatically at 90% and 100%.
+              {t("insights.gateSubtitle", { completed: gating.completed, total: gating.total, rate: gating.completionRate })}
             </div>
             <div style={{ marginTop: 8, height: 6, borderRadius: 3, background: "var(--admin-bg-hover)", overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${Math.min(100, gating.completionRate)}%`, background: "#d97706", borderRadius: 3 }} />
@@ -127,11 +128,11 @@ export default function AIInsightsPage() {
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                 <Sparkles style={{ width: 16, height: 16, color: "#8b5cf6" }} />
-                <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#8b5cf6" }}>Executive Summary</span>
+                <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#8b5cf6" }}>{t("insights.executiveSummary")}</span>
               </div>
               <div style={{ fontSize: 14, color: "var(--admin-font-primary)", lineHeight: 1.7 }}>{briefing}</div>
               {data?.generatedAt && (
-                <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 10 }}>Generated {new Date(data.generatedAt).toLocaleString()}</div>
+                <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 10 }}>{t("insights.generatedAt", { date: new Date(data.generatedAt).toLocaleString() })}</div>
               )}
             </div>
           )}
@@ -139,10 +140,10 @@ export default function AIInsightsPage() {
           {/* Key Metrics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: "Students", value: metrics.totalStudents || 0, icon: Users, color: "#065292" },
-              { label: "Avg GPA", value: metrics.avgGPA || "—", icon: GraduationCap, color: "#10b981" },
-              { label: "MIL Completed", value: `${metrics.milCompleted || 0}/${metrics.totalStudents || 0}`, icon: Brain, color: "#8b5cf6", sub: metrics.milAvg ? `Avg: ${metrics.milAvg}%` : undefined },
-              { label: "360° Done", value: `${metrics.evalCompleted || 0}/${metrics.totalStudents || 0}`, icon: Target, color: "#f59e0b" },
+              { label: t("insights.metrics.students"), value: metrics.totalStudents || 0, icon: Users, color: "#065292" },
+              { label: t("insights.metrics.avgGpa"), value: metrics.avgGPA || "—", icon: GraduationCap, color: "#10b981" },
+              { label: t("insights.metrics.milCompleted"), value: `${metrics.milCompleted || 0}/${metrics.totalStudents || 0}`, icon: Brain, color: "#8b5cf6", sub: metrics.milAvg ? t("insights.metrics.milAvg", { pct: metrics.milAvg }) : undefined },
+              { label: t("insights.metrics.eval360Done"), value: `${metrics.evalCompleted || 0}/${metrics.totalStudents || 0}`, icon: Target, color: "#f59e0b" },
             ].map((s) => (
               <div key={s.label} style={{ padding: 16, borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
@@ -163,8 +164,8 @@ export default function AIInsightsPage() {
                   <Zap style={{ width: 16, height: 16, color: "#ef4444" }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Urgent Actions</div>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Items requiring immediate attention</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("insights.urgentActions.title")}</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("insights.urgentActions.subtitle")}</div>
                 </div>
               </div>
               <div style={{ padding: 16 }} className="space-y-3">
@@ -194,13 +195,13 @@ export default function AIInsightsPage() {
                   <Lightbulb style={{ width: 16, height: 16, color: "#065292" }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Key Insights</div>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Data-driven observations</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("insights.keyInsights.title")}</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("insights.keyInsights.subtitle")}</div>
                 </div>
               </div>
               <div style={{ padding: 16 }} className="space-y-3">
                 {insights.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: 24, color: "var(--admin-font-tertiary)", fontSize: 12 }}>No insights available</div>
+                  <div style={{ textAlign: "center", padding: 24, color: "var(--admin-font-tertiary)", fontSize: 12 }}>{t("insights.keyInsights.noInsights")}</div>
                 ) : insights.map((ins: Record<string, unknown>, i: number) => {
                   const catColor: Record<string, string> = { academic: "#10b981", assessment: "#8b5cf6", graduation: "#065292", staffing: "#f59e0b", engagement: "#ef4444" };
                   const category = String(ins.category ?? "");
@@ -224,13 +225,13 @@ export default function AIInsightsPage() {
                   <TrendingUp style={{ width: 16, height: 16, color: "#f59e0b" }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Predictions</div>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>AI-projected outcomes</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("insights.predictions.title")}</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("insights.predictions.subtitle")}</div>
                 </div>
               </div>
               <div style={{ padding: 16 }} className="space-y-3">
                 {predictions.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: 24, color: "var(--admin-font-tertiary)", fontSize: 12 }}>No predictions available</div>
+                  <div style={{ textAlign: "center", padding: 24, color: "var(--admin-font-tertiary)", fontSize: 12 }}>{t("insights.predictions.noPredictions")}</div>
                 ) : predictions.map((pred: Record<string, unknown>, i: number) => {
                   const confidence = String(pred.confidence ?? "");
                   const confColor = confidence === "high" ? "#10b981" : confidence === "medium" ? "#f59e0b" : "#6b7280";
@@ -238,7 +239,7 @@ export default function AIInsightsPage() {
                     <div key={i} style={{ padding: "12px 14px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                         <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{String(pred.title ?? "")}</span>
-                        <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: `${confColor}15`, color: confColor }}>{confidence} confidence</span>
+                        <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: `${confColor}15`, color: confColor }}>{t("insights.predictions.confidence", { level: confidence })}</span>
                       </div>
                       <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.5 }}>{String(pred.description ?? "")}</div>
                     </div>
@@ -256,8 +257,8 @@ export default function AIInsightsPage() {
                   <CheckCircle2 style={{ width: 16, height: 16, color: "#10b981" }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Strategic Recommendations</div>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>AI-suggested improvements for your school</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("insights.recommendations.title")}</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("insights.recommendations.subtitle")}</div>
                 </div>
               </div>
               <div style={{ padding: 16 }} className="space-y-3">
@@ -287,28 +288,28 @@ export default function AIInsightsPage() {
             <div style={{ borderRadius: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
               <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", gap: 10 }}>
                 <BarChart3 style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
-                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Data Summary</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("insights.dataSummary.title")}</span>
               </div>
               <div style={{ padding: 16 }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>Top Enrolled Courses</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>{t("insights.dataSummary.topCourses")}</div>
                     <div className="space-y-2">
                       {metrics.topCourses.map((c: { name: string; count: number }, i: number) => (
                         <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 10px", borderRadius: 6, background: "var(--admin-bg-hover)" }}>
                           <span style={{ fontSize: 12, color: "var(--admin-font-primary)" }}>{c.name}</span>
-                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{c.count} students</span>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("insights.dataSummary.students", { count: c.count })}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>Students by Grade</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>{t("insights.dataSummary.byGrade")}</div>
                     <div className="space-y-2">
                       {Object.entries(metrics.byGrade || {}).sort(([a], [b]) => Number(a) - Number(b)).map(([grade, count]) => (
                         <div key={grade} style={{ display: "flex", justifyContent: "space-between", padding: "8px 10px", borderRadius: 6, background: "var(--admin-bg-hover)" }}>
-                          <span style={{ fontSize: 12, color: "var(--admin-font-primary)" }}>Grade {grade}</span>
-                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{count as number} students</span>
+                          <span style={{ fontSize: 12, color: "var(--admin-font-primary)" }}>{t("insights.dataSummary.gradeLabel", { grade })}</span>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("insights.dataSummary.students", { count: count as number })}</span>
                         </div>
                       ))}
                     </div>

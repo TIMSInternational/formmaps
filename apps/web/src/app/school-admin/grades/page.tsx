@@ -1,30 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Upload, Settings, Trophy, GraduationCap, TrendingDown } from "lucide-react";
+import { Trophy, GraduationCap, TrendingDown } from "lucide-react";
 import { AdminTabBar } from "../_components/AdminTabBar";
 
 const GpaPanel = dynamic(() => import("../academics/_components/GpaPanel").then(m => ({ default: m.GpaPanel })));
 const GraduationPanel = dynamic(() => import("../academics/_components/GraduationPanel").then(m => ({ default: m.GraduationPanel })));
 const AcademicGapsPanel = dynamic(() => import("../academics/_components/AcademicGapsPanel").then(m => ({ default: m.AcademicGapsPanel })));
 
-const TABS = [
-  { key: "grades", label: "Grades & GPA", icon: Trophy },
-  { key: "graduation", label: "Graduation", icon: GraduationCap },
-  { key: "gaps", label: "Academic Gaps", icon: TrendingDown },
-] as const;
-
-type TabKey = (typeof TABS)[number]["key"];
+type TabKey = "grades" | "graduation" | "gaps";
 
 export default function GradesPage() {
+  const { t } = useTranslation("school_admin");
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialTab = (searchParams.get("tab") as TabKey) || "grades";
-  const [activeTab, setActiveTab] = useState<string>(
-    TABS.some(t => t.key === initialTab) ? initialTab : "grades"
-  );
+  const rawTab = searchParams.get("tab") as TabKey | null;
+  const initialTab: TabKey = rawTab === "graduation" || rawTab === "gaps" ? rawTab : "grades";
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
 
   const handleTabChange = (key: string) => {
     setActiveTab(key);
@@ -35,11 +30,19 @@ export default function GradesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>Grades & Progress</h1>
-        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>Import grades, configure GPA, track graduation progress, and identify academic gaps</p>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>{t("grades.title")}</h1>
+        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{t("grades.subtitle")}</p>
       </div>
 
-      <AdminTabBar tabs={[...TABS]} activeTab={activeTab} onChange={handleTabChange} />
+      <AdminTabBar
+        tabs={[
+          { key: "grades", label: t("grades.tabs.grades"), icon: Trophy },
+          { key: "graduation", label: t("grades.tabs.graduation"), icon: GraduationCap },
+          { key: "gaps", label: t("grades.tabs.gaps"), icon: TrendingDown },
+        ]}
+        activeTab={activeTab}
+        onChange={handleTabChange}
+      />
 
       {activeTab === "grades" && <GpaPanel />}
       {activeTab === "graduation" && <GraduationPanel />}

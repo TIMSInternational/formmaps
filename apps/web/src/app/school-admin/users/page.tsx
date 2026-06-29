@@ -33,7 +33,7 @@ const InvitePanel = dynamic(() => import("./_components/InvitePanel").then(m => 
 
 export default function StudentsPage() {
   const [activeTab, setActiveTab] = useState("roster");
-  const { t } = useTranslation();
+  const { t } = useTranslation("school_admin");
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -67,12 +67,12 @@ export default function StudentsPage() {
   const handleBulkCopyEmails = () => {
     const emails = students.filter((s: any) => selected.has(s.id)).map((s: any) => s.email).join(", ");
     navigator.clipboard.writeText(emails);
-    toast.success(`${selected.size} email${selected.size > 1 ? "s" : ""} copied`);
+    toast.success(t("users.emailCopied", { count: selected.size }));
   };
 
   const handleBulkExportCSV = () => {
     const rows = students.filter((s: any) => selected.has(s.id));
-    const headers = ["Name", "Email", "Role", "Grade", "Status", "Joined"];
+    const headers = [t("users.table.name"), t("users.table.email"), t("users.table.role"), t("users.table.grade"), t("users.table.status"), t("users.table.joined")];
     const csv = [headers.join(","), ...rows.map((s: any) => [
       `"${s.name || ""}"`, s.email || "", s.roleName || "student", s.gradeLevel || "",
       s.status || "active", s.createdDate ? new Date(s.createdDate).toLocaleDateString() : "",
@@ -80,7 +80,7 @@ export default function StudentsPage() {
     const blob = new Blob([csv], { type: "text/csv" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
     a.download = `students-export-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
-    toast.success(`Exported ${rows.length} students`);
+    toast.success(t("users.exportedStudents", { count: rows.length }));
   };
 
   const { data: stats, isLoading: statsLoading } = useSchoolAdminStats();
@@ -101,24 +101,24 @@ export default function StudentsPage() {
 
   const statItems = [
     {
-      label: "Total Students",
+      label: t("users.stats.totalStudents"),
       value: statsLoading ? "—" : (stats?.totalStudents?.toLocaleString() || "0"),
-      icon: Users, trend: 0, sub: "enrolled in school",
+      icon: Users, trend: 0, sub: t("users.stats.totalStudentsSub"),
     },
     {
-      label: "Active Students",
+      label: t("users.stats.activeStudents"),
       value: statsLoading ? "—" : (stats?.activeStudents?.toLocaleString() || "0"),
-      icon: UserCheck, trend: 0, sub: "currently active",
+      icon: UserCheck, trend: 0, sub: t("users.stats.activeStudentsSub"),
     },
     {
-      label: "Assessments Done",
+      label: t("users.stats.assessmentsDone"),
       value: statsLoading ? "—" : (stats?.completedAssessments?.toLocaleString() || "0"),
-      icon: BookOpen, trend: 0, sub: "completed assessments",
+      icon: BookOpen, trend: 0, sub: t("users.stats.assessmentsDoneSub"),
     },
     {
-      label: "Avg. Score",
+      label: t("users.stats.avgScore"),
       value: statsLoading ? "—" : `${(stats?.averageScore || 0).toFixed(1)}%`,
-      icon: TrendingUp, trend: 0, sub: "across all students",
+      icon: TrendingUp, trend: 0, sub: t("users.stats.avgScoreSub"),
     },
   ];
 
@@ -127,20 +127,20 @@ export default function StudentsPage() {
       {/* Header */}
       <div>
         <h1 className="text-[20px] font-semibold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>
-          Users
+          {t("users.title")}
         </h1>
         <p className="text-[13px] mt-0.5" style={{ color: "var(--admin-font-light)" }}>
-          Manage students, counselors, coaches, and staff at your school
+          {t("users.subtitle")}
         </p>
       </div>
 
       {/* Tab Bar */}
       <AdminTabBar
         tabs={[
-          { key: "roster", label: "Roster", icon: Users, count: stats?.totalStudents },
-          { key: "onboard", label: "Invite & Onboard", icon: Upload },
-          { key: "staff", label: "Staff & Roles", icon: Shield },
-          { key: "counselors", label: "Counselor Assignments", icon: UserCog },
+          { key: "roster", label: t("users.tabs.roster"), icon: Users, count: stats?.totalStudents },
+          { key: "onboard", label: t("users.tabs.onboard"), icon: Upload },
+          { key: "staff", label: t("users.tabs.staff"), icon: Shield },
+          { key: "counselors", label: t("users.tabs.counselors"), icon: UserCog },
         ]}
         activeTab={activeTab}
         onChange={handleTabChange}
@@ -158,25 +158,25 @@ export default function StudentsPage() {
       <div className="flex flex-col sm:flex-row gap-3 w-full">
         <div className="relative w-full md:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--admin-font-light)" }} />
-          <Input placeholder="Search students..." className="pl-9 h-9 rounded-lg text-sm"
+          <Input placeholder={t("users.searchPlaceholder")} className="pl-9 h-9 rounded-lg text-sm"
             style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}
             value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
           <SelectTrigger className="w-[130px] h-9 rounded-lg text-sm"
             style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}>
-            <SelectValue placeholder="All Status" />
+            <SelectValue placeholder={t("users.filter.allStatus")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="all">{t("users.filter.allStatus")}</SelectItem>
+            <SelectItem value="active">{t("users.filter.active")}</SelectItem>
+            <SelectItem value="pending">{t("users.filter.pending")}</SelectItem>
+            <SelectItem value="inactive">{t("users.filter.inactive")}</SelectItem>
           </SelectContent>
         </Select>
         <Button className="h-9 rounded-lg text-sm" style={{ background: "var(--admin-accent-green, #10b981)", color: "#fff" }}
           onClick={() => router.push("/school-admin/users?invite=true")}>
-          <UserPlus className="mr-2 h-4 w-4" /> Invite Student
+          <UserPlus className="mr-2 h-4 w-4" /> {t("users.inviteStudent")}
         </Button>
       </div>
 
@@ -196,7 +196,7 @@ export default function StudentsPage() {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <CheckSquare style={{ width: 16, height: 16, color: "#065292" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#065292" }}>{selected.size} selected</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#065292" }}>{t("users.bulk.selected", { count: selected.size })}</span>
             <button onClick={clearSelection} style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }}>
               <X style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
             </button>
@@ -208,7 +208,7 @@ export default function StudentsPage() {
               background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
               color: "var(--admin-font-primary)", cursor: "pointer",
             }}>
-              <Mail style={{ width: 12, height: 12 }} /> Copy Emails
+              <Mail style={{ width: 12, height: 12 }} /> {t("users.bulk.copyEmails")}
             </button>
             <button onClick={handleBulkExportCSV} style={{
               height: 30, borderRadius: 6, padding: "0 12px", fontSize: 11, fontWeight: 600,
@@ -216,7 +216,7 @@ export default function StudentsPage() {
               background: "#065292", border: "none",
               color: "#fff", cursor: "pointer",
             }}>
-              <Download style={{ width: 12, height: 12 }} /> Export CSV
+              <Download style={{ width: 12, height: 12 }} /> {t("users.bulk.exportCsv")}
             </button>
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function StudentsPage() {
                 <input type="checkbox" checked={students.length > 0 && selected.size === students.length}
                   onChange={toggleAll} style={{ width: 15, height: 15, accentColor: "#065292", cursor: "pointer" }} />
               </TableHead>
-              {["Name", "Email", "Role", "Grade", "Status", "Joined", "Actions"].map((h) => (
+              {[t("users.table.name"), t("users.table.email"), t("users.table.role"), t("users.table.grade"), t("users.table.status"), t("users.table.joined"), t("users.table.actions")].map((h) => (
                 <TableHead key={h} className="py-3 px-4" style={{
                   fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
                   color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)",
@@ -251,7 +251,7 @@ export default function StudentsPage() {
               <TableRow>
                 <TableCell colSpan={8} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
                   <Users className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} />
-                  <p className="text-sm">No students found</p>
+                  <p className="text-sm">{t("users.noStudents")}</p>
                 </TableCell>
               </TableRow>
             ) : (
@@ -304,7 +304,7 @@ export default function StudentsPage() {
                       background: student.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(107,114,128,0.1)",
                       color: student.status === "active" ? "#10b981" : "#6b7280",
                     }}>
-                      {student.status || "active"}
+                      {student.status || t("users.filter.active")}
                     </Badge>
                   </TableCell>
                   <TableCell className="py-3 px-4" style={{ fontSize: 12, color: "var(--admin-font-light)" }}>
@@ -320,15 +320,15 @@ export default function StudentsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-[150px]">
-                        <DropdownMenuLabel className="text-xs" style={{ color: "var(--admin-font-light)" }}>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel className="text-xs" style={{ color: "var(--admin-font-light)" }}>{t("users.table.actions")}</DropdownMenuLabel>
                         <DropdownMenuItem className="text-sm cursor-pointer"
                           onClick={() => router.push(`/school-admin/users/${student.id}`)}>
-                          <Eye className="mr-2 h-3.5 w-3.5" /> View Profile
+                          <Eye className="mr-2 h-3.5 w-3.5" /> {t("users.actions.viewProfile")}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-sm cursor-pointer"
-                          onClick={() => { navigator.clipboard.writeText(student.email); toast.success("Email copied"); }}>
-                          <Mail className="mr-2 h-3.5 w-3.5" /> Copy Email
+                          onClick={() => { navigator.clipboard.writeText(student.email); toast.success(t("users.actions.emailCopied")); }}>
+                          <Mail className="mr-2 h-3.5 w-3.5" /> {t("users.actions.copyEmail")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

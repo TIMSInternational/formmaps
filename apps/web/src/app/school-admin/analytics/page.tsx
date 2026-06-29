@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -14,6 +15,7 @@ import { useSchoolAdminStats, useAnalyticsOverview, useTopPerformers } from "@/h
 import { getPipeline, getInsights, type PipelineStudent, type InsightsData } from "@/services/assessmentCommandService";
 
 export default function AnalyticsPage() {
+  const { t } = useTranslation("school_admin");
   const { data: stats, isLoading: statsLoading } = useSchoolAdminStats();
   const { data: overview, isLoading: overviewLoading } = useAnalyticsOverview("month");
   const { data: topPerformers } = useTopPerformers(10);
@@ -41,7 +43,13 @@ export default function AnalyticsPage() {
     if (st.mil === "done") gradeStats[g].milDone++;
     if (st.eval360 === "done") gradeStats[g].evalDone++;
   }
-  const gradeLabels: Record<number, string> = { 0: "Unassigned", 9: "Freshman", 10: "Sophomore", 11: "Junior", 12: "Senior" };
+  const gradeLabels: Record<number, string> = {
+    0: t("analytics.gradeLabels.0"),
+    9: t("analytics.gradeLabels.9"),
+    10: t("analytics.gradeLabels.10"),
+    11: t("analytics.gradeLabels.11"),
+    12: t("analytics.gradeLabels.12"),
+  };
 
   // Overall pipeline counts
   const pcaFullDone = students.filter(st => Object.values(st.pca).every(v => v === "done")).length;
@@ -84,8 +92,8 @@ export default function AnalyticsPage() {
       const a = document.createElement("a");
       a.href = url; a.download = `analytics-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click(); URL.revokeObjectURL(url);
-      toast.success("Analytics exported");
-    } catch { toast.error("Export failed"); }
+      toast.success(t("analytics.exportedSuccess"));
+    } catch { toast.error(t("analytics.exportFailed")); }
   }, [totalStudents, atRisk, counselorCoverage, completionRate, avgGpa, pcaFullDone, milDone, evalDone, fullyComplete]);
 
   if (statsLoading && overviewLoading) {
@@ -106,10 +114,10 @@ export default function AnalyticsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
-            Analytics & Insights
+            {t("analytics.title")}
           </h1>
           <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-            Actionable intelligence across assessments, grades, and student readiness
+            {t("analytics.subtitle")}
           </p>
         </div>
         <button onClick={handleExport} style={{
@@ -118,17 +126,17 @@ export default function AnalyticsPage() {
           background: "transparent", color: "var(--admin-font-primary)",
           border: "1px solid var(--admin-border-default)", cursor: "pointer",
         }}>
-          <Download style={{ width: 12, height: 12 }} /> Export CSV
+          <Download style={{ width: 12, height: 12 }} /> {t("analytics.exportCsv")}
         </button>
       </div>
 
       {/* Row 1: Action Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "At-Risk Students", value: atRisk, icon: ShieldAlert, color: "#ef4444", sub: atRisk > 0 ? "GPA below 2.0" : "No at-risk students" },
-          { label: "Counselor Coverage", value: `${Math.round(counselorCoverage)}%`, icon: UserCheck, color: counselorCoverage >= 80 ? "#10b981" : "#f59e0b", sub: counselorCoverage >= 80 ? "Good coverage" : "Assign more students" },
-          { label: "Fully Assessed", value: `${totalStudents > 0 ? Math.round((fullyComplete / totalStudents) * 100) : 0}%`, icon: Target, color: "#065292", sub: `${fullyComplete}/${totalStudents} students` },
-          { label: "Avg GPA", value: avgGpa, icon: GraduationCap, color: "#065292", sub: "Weighted average" },
+          { label: t("analytics.metrics.atRisk"), value: atRisk, icon: ShieldAlert, color: "#ef4444", sub: atRisk > 0 ? t("analytics.metrics.gpaBelow") : t("analytics.metrics.noAtRisk") },
+          { label: t("analytics.metrics.counselorCoverage"), value: `${Math.round(counselorCoverage)}%`, icon: UserCheck, color: counselorCoverage >= 80 ? "#10b981" : "#f59e0b", sub: counselorCoverage >= 80 ? t("analytics.metrics.goodCoverage") : t("analytics.metrics.assignMore") },
+          { label: t("analytics.metrics.fullyAssessed"), value: `${totalStudents > 0 ? Math.round((fullyComplete / totalStudents) * 100) : 0}%`, icon: Target, color: "#065292", sub: t("analytics.metrics.studentsOf", { done: fullyComplete, total: totalStudents }) },
+          { label: t("analytics.metrics.avgGpa"), value: avgGpa, icon: GraduationCap, color: "#065292", sub: t("analytics.metrics.weightedAvg") },
         ].map((stat) => (
           <div key={stat.label} style={{
             borderRadius: 8, border: "1px solid var(--admin-border-default)",
@@ -162,7 +170,7 @@ export default function AnalyticsPage() {
         }}>
           <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 8 }}>
             <BarChart3 style={{ width: 14, height: 14, color: "#065292" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Assessment Completion by Grade</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("analytics.completionByGrade")}</span>
           </div>
           <div style={{ padding: 16 }}>
             {Object.keys(gradeStats).length > 0 ? (
@@ -173,7 +181,7 @@ export default function AnalyticsPage() {
                     <div key={grade}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                          {gradeLabels[g] || `Grade ${grade}`} ({data.total} students)
+                          {gradeLabels[g] || t("analytics.topPerformers.gradeLabel", { grade })} ({t("analytics.students", { count: data.total })})
                         </span>
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
@@ -202,7 +210,7 @@ export default function AnalyticsPage() {
               </div>
             ) : (
               <div style={{ textAlign: "center", padding: 24, color: "var(--admin-font-tertiary)", fontSize: 12 }}>
-                No assessment data available yet.
+                {t("analytics.noAssessmentData")}
               </div>
             )}
           </div>
@@ -215,14 +223,14 @@ export default function AnalyticsPage() {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
             <Target style={{ width: 14, height: 14, color: "#14b8a6" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Pipeline Summary</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("analytics.pipelineSummary")}</span>
           </div>
           <div className="space-y-3">
             {[
-              { label: "PCA Complete", done: pcaFullDone, total: totalStudents, color: "#8b5cf6" },
-              { label: "MIL/LIA Complete", done: milDone, total: totalStudents, color: "#065292" },
-              { label: "360° Complete", done: evalDone, total: totalStudents, color: "#14b8a6" },
-              { label: "Fully Assessed", done: fullyComplete, total: totalStudents, color: "#10b981" },
+              { label: t("analytics.pipeline.pcaComplete"), done: pcaFullDone, total: totalStudents, color: "#8b5cf6" },
+              { label: t("analytics.pipeline.milComplete"), done: milDone, total: totalStudents, color: "#065292" },
+              { label: t("analytics.pipeline.eval360Complete"), done: evalDone, total: totalStudents, color: "#14b8a6" },
+              { label: t("analytics.pipeline.fullyAssessed"), done: fullyComplete, total: totalStudents, color: "#10b981" },
             ].map((item) => {
               const pct = item.total > 0 ? Math.round((item.done / item.total) * 100) : 0;
               return (
@@ -234,7 +242,7 @@ export default function AnalyticsPage() {
                   <div style={{ height: 6, borderRadius: 3, background: "var(--admin-bg-hover)", overflow: "hidden" }}>
                     <div style={{ height: "100%", width: `${pct}%`, borderRadius: 3, background: item.color, transition: "width 0.3s" }} />
                   </div>
-                  <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{item.done} of {item.total} students</div>
+                  <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{t("analytics.metrics.studentsOf", { done: item.done, total: item.total })}</div>
                 </div>
               );
             })}
@@ -249,7 +257,7 @@ export default function AnalyticsPage() {
           <div style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
             <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 8 }}>
               <Brain style={{ width: 14, height: 14, color: "#065292" }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>School Cognitive Profile</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("analytics.cognitiveProfile")}</span>
             </div>
             <div style={{ padding: 16 }} className="space-y-2">
               {agg.pcaAverages && Object.entries(agg.pcaAverages).map(([key, val]) => {
@@ -277,7 +285,7 @@ export default function AnalyticsPage() {
           <div style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
             <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 8 }}>
               <Compass style={{ width: 14, height: 14, color: "#f59e0b" }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Top Career Interests</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("analytics.topCareerInterests")}</span>
             </div>
             <div style={{ padding: 16 }} className="space-y-2">
               {agg.topCareerClusters?.length > 0 ? agg.topCareerClusters.map((cluster: any, i: number) => (
@@ -296,11 +304,11 @@ export default function AnalyticsPage() {
                     </span>
                     <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{cluster.name}</span>
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--admin-font-primary)" }}>{cluster.count} students</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--admin-font-primary)" }}>{t("analytics.students", { count: cluster.count })}</span>
                 </div>
               )) : (
                 <div style={{ textAlign: "center", padding: 16, color: "var(--admin-font-tertiary)", fontSize: 12 }}>
-                  Career data will appear after profile analysis.
+                  {t("analytics.careerDataEmpty")}
                 </div>
               )}
             </div>
@@ -310,8 +318,8 @@ export default function AnalyticsPage() {
           <div style={{ borderRadius: 8, border: "1px solid rgba(20,184,166,0.3)", background: "rgba(20,184,166,0.03)", overflow: "hidden" }}>
             <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(20,184,166,0.15)", display: "flex", alignItems: "center", gap: 8 }}>
               <Sparkles style={{ width: 14, height: 14, color: "#14b8a6" }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>AI Insights</span>
-              {insights?.cached && <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 3, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>CACHED</span>}
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("analytics.aiInsights")}</span>
+              {insights?.cached && <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 3, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>{t("analytics.cached")}</span>}
             </div>
             <div style={{ padding: 16 }}>
               {insights?.narrative ? (
@@ -341,12 +349,12 @@ export default function AnalyticsPage() {
                 </div>
               ) : (
                 <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-                  AI analysis will be available once enough students complete their assessments.
+                  {t("analytics.aiAnalysisEmpty")}
                 </p>
               )}
               {agg.discDistribution && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(20,184,166,0.15)" }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 6 }}>DISC Distribution</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 6 }}>{t("analytics.discDistribution")}</div>
                   <div style={{ display: "flex", gap: 6 }}>
                     {Object.entries(agg.discDistribution).map(([type, count]) => (
                       <div key={type} style={{
@@ -373,15 +381,15 @@ export default function AnalyticsPage() {
         <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Award style={{ width: 14, height: 14, color: "#f59e0b" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Top Performers</span>
-            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>By GPA score</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("analytics.topPerformers.title")}</span>
+            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("analytics.topPerformers.byGpa")}</span>
           </div>
         </div>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ background: "var(--admin-bg-hover)" }}>
-                {["#", "Student", "Grade", "GPA", "Assessments"].map(h => (
+                {[t("analytics.topPerformers.headers.rank"), t("analytics.topPerformers.headers.student"), t("analytics.topPerformers.headers.grade"), t("analytics.topPerformers.headers.gpa"), t("analytics.topPerformers.headers.assessments")].map(h => (
                   <th key={h} style={{ padding: "8px 14px", textAlign: h === "#" ? "center" : "left", fontWeight: 600, color: "var(--admin-font-tertiary)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.04em" }}>{h}</th>
                 ))}
               </tr>
@@ -404,7 +412,7 @@ export default function AnalyticsPage() {
                     <span style={{ fontWeight: 600, color: "var(--admin-accent-blue, #065292)" }}>{student.name}</span>
                   </td>
                   <td style={{ padding: "10px 14px", color: "var(--admin-font-tertiary)" }}>
-                    {student.gradeLevel ? `Grade ${student.gradeLevel}` : "\u2014"}
+                    {student.gradeLevel ? t("analytics.topPerformers.gradeLabel", { grade: student.gradeLevel }) : "\u2014"}
                   </td>
                   <td style={{ padding: "10px 14px" }}>
                     <span style={{ fontWeight: 700, color: student.progressScore > 0 ? "#10b981" : "var(--admin-font-tertiary)" }}>
@@ -417,7 +425,7 @@ export default function AnalyticsPage() {
                       background: student.assessmentStatus === "completed" ? "rgba(16,185,129,0.1)" : "rgba(107,114,128,0.1)",
                       color: student.assessmentStatus === "completed" ? "#10b981" : "#6b7280",
                     }}>
-                      {student.assessmentStatus || "not started"}
+                      {student.assessmentStatus || t("analytics.topPerformers.statusNotStarted")}
                     </span>
                   </td>
                 </tr>
@@ -426,7 +434,7 @@ export default function AnalyticsPage() {
                 <tr>
                   <td colSpan={5} style={{ padding: 32, textAlign: "center", color: "var(--admin-font-tertiary)" }}>
                     <Activity style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.4 }} />
-                    No performance data yet
+                    {t("analytics.topPerformers.noData")}
                   </td>
                 </tr>
               )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageCircle, Send, Search, Bell, Video, Megaphone } from "lucide-react";
@@ -26,13 +27,8 @@ import ModerationMenu from "@/components/messages/ModerationMenu";
 const AlertsPanel = dynamic(() => import("./_components/AlertsPanel"));
 const BroadcastPanel = dynamic(() => import("./_components/BroadcastPanel"));
 
-const TABS = [
-  { key: "messages", label: "Messages", icon: MessageCircle },
-  { key: "broadcast", label: "Broadcast", icon: Megaphone },
-  { key: "alerts", label: "Alerts & Notifications", icon: Bell },
-] as const;
-
 function MessagesContent() {
+  const { t } = useTranslation("school_admin");
   const router = useRouter();
   const userId = useGlobalStore((s) => s.user.id);
 
@@ -106,7 +102,7 @@ function MessagesContent() {
       router.push(`/school-admin/video/${session.id}`);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      toast.error(e?.response?.data?.message || "Failed to start video call");
+      toast.error(e?.response?.data?.message || t("messages.videoCallFailed"));
     } finally { setStartingCall(false); }
   };
 
@@ -114,12 +110,12 @@ function MessagesContent() {
   useEffect(() => {
     if (!showNewMessage) return;
     setContactsLoading(true);
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try { setContacts(await searchContacts(contactSearch || undefined)); }
       catch { setContacts([]); }
       finally { setContactsLoading(false); }
     }, 300);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [contactSearch, showNewMessage]);
 
   const handleNewConversation = async (recipientId: string) => {
@@ -129,10 +125,10 @@ function MessagesContent() {
       setContactSearch("");
       await fetchConversations();
       setSelectedId(conv.id);
-      toast.success("Conversation started");
+      toast.success(t("messages.conversationStarted"));
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      toast.error(e?.response?.data?.message || "Failed to start conversation");
+      toast.error(e?.response?.data?.message || t("messages.conversationFailed"));
     }
   };
 
@@ -150,7 +146,7 @@ function MessagesContent() {
       await fetchMessages(selectedId, true);
       await fetchConversations();
     } catch {
-      toast.error("Failed to send message.");
+      toast.error(t("messages.sendFailed"));
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
       setInputValue(content);
     } finally { setSending(false); inputRef.current?.focus(); }
@@ -167,13 +163,13 @@ function MessagesContent() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>
-          Communication
+          {t("messages.label")}
         </span>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>
-          Messages
+          {t("messages.title")}
         </h1>
         <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginTop: 4, maxWidth: 480 }}>
-          Communicate with your counselors, coaches, and school staff.
+          {t("messages.subtitle")}
         </p>
       </motion.div>
 
@@ -186,7 +182,7 @@ function MessagesContent() {
         <div style={{ width: 320, flexShrink: 0, display: "flex", flexDirection: "column", borderRight: "1px solid var(--admin-border-default)" }}>
           <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--admin-border-light)", display: "flex", flexDirection: "column", gap: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Conversations</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("messages.conversations")}</span>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 {totalUnread > 0 && (
                   <span style={{ minWidth: 20, height: 20, borderRadius: 10, padding: "0 6px", background: "var(--admin-accent-blue)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -205,7 +201,7 @@ function MessagesContent() {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-light)" }}>
               <Search style={{ width: 14, height: 14, color: "var(--admin-font-light)", flexShrink: 0 }} />
-              <input placeholder="Search conversations..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+              <input placeholder={t("messages.searchConversations")} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
                 style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
             </div>
           </div>
@@ -215,14 +211,14 @@ function MessagesContent() {
             <div style={{ borderBottom: "1px solid var(--admin-border-default)", padding: "8px 12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-accent-blue)", marginBottom: 8 }}>
                 <UserPlus style={{ width: 14, height: 14, color: "var(--admin-accent-blue)", flexShrink: 0 }} />
-                <input placeholder="Search by name or email..." value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} autoFocus
+                <input placeholder={t("messages.searchContacts")} value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} autoFocus
                   style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
               </div>
               <div style={{ maxHeight: 200, overflowY: "auto" }} className="space-y-1">
                 {contactsLoading ? (
-                  <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>Searching...</div>
+                  <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("messages.searching")}</div>
                 ) : contacts.length === 0 ? (
-                  <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No contacts found</div>
+                  <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("messages.noContacts")}</div>
                 ) : contacts.map((c) => (
                   <button key={c.id} onClick={() => handleNewConversation(c.id)} style={{
                     width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
@@ -255,7 +251,7 @@ function MessagesContent() {
                   <MessageCircle style={{ width: 22, height: 22, color: "var(--admin-font-light)" }} />
                 </div>
                 <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", textAlign: "center" }}>
-                  {searchTerm ? "No conversations match your search." : "No conversations yet."}
+                  {searchTerm ? t("messages.noConversationsSearch") : t("messages.noConversations")}
                 </p>
               </div>
             ) : (
@@ -279,7 +275,7 @@ function MessagesContent() {
                             <span style={{ fontSize: 10, color: "var(--admin-font-light)", flexShrink: 0 }}>{formatTime(conv.lastMessageAt)}</span>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, marginTop: 2 }}>
-                            <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conv.lastMessagePreview ?? "No messages yet"}</p>
+                            <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conv.lastMessagePreview ?? t("messages.noMessagesYet")}</p>
                             {conv.unreadCount > 0 && (
                               <span style={{ flexShrink: 0, minWidth: 18, height: 18, borderRadius: 9, padding: "0 5px", background: "var(--admin-accent-blue)", color: "#fff", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
                                 {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
@@ -335,7 +331,7 @@ function MessagesContent() {
                 ) : messages.length === 0 ? (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: 8 }}>
                     <MessageCircle style={{ width: 32, height: 32, color: "var(--admin-font-light)", opacity: 0.4 }} />
-                    <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>No messages yet. Send one to get started.</p>
+                    <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("messages.emptyThread")}</p>
                   </div>
                 ) : (
                   <AnimatePresence initial={false}>
@@ -361,7 +357,7 @@ function MessagesContent() {
               <div style={{ padding: "12px 16px", borderTop: "1px solid var(--admin-border-light)", flexShrink: 0 }}>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 8, borderRadius: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", padding: "8px 12px" }}>
                   <textarea ref={inputRef} value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={handleKeyDown}
-                    placeholder="Type a message..." rows={1} disabled={sending}
+                    placeholder={t("messages.typeMessage")} rows={1} disabled={sending}
                     style={{ flex: 1, resize: "none", border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit", lineHeight: 1.5, maxHeight: 120, overflowY: "auto", padding: "2px 0", fieldSizing: "content" } as React.CSSProperties} />
                   <button onClick={handleSend} disabled={!inputValue.trim() || sending}
                     style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: inputValue.trim() ? "#065292" : "var(--admin-bg-card)", color: inputValue.trim() ? "#fff" : "var(--admin-font-light)", border: "none", cursor: inputValue.trim() ? "pointer" : "default", transition: "all 0.15s" }}>
@@ -369,7 +365,7 @@ function MessagesContent() {
                   </button>
                 </div>
                 <p style={{ fontSize: 10, color: "var(--admin-font-light)", marginTop: 6, paddingLeft: 4 }}>
-                  Press <span style={{ fontFamily: "monospace" }}>Enter</span> to send, <span style={{ fontFamily: "monospace" }}>Shift+Enter</span> for new line
+                  {t("messages.sendHint")}
                 </p>
               </div>
             </>
@@ -380,8 +376,8 @@ function MessagesContent() {
                 <MessageCircle style={{ width: 28, height: 28, color: "var(--admin-font-light)" }} />
               </motion.div>
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} style={{ textAlign: "center" }}>
-                <p style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>Select a conversation</p>
-                <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 4, maxWidth: 280 }}>Choose a conversation from the left to view and send messages.</p>
+                <p style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("messages.selectConversation")}</p>
+                <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 4, maxWidth: 280 }}>{t("messages.selectConversationHint")}</p>
               </motion.div>
             </div>
           )}
@@ -392,6 +388,7 @@ function MessagesContent() {
 }
 
 export default function MessagesPage() {
+  const { t } = useTranslation("school_admin");
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialTab = searchParams.get("tab") || "messages";
@@ -405,7 +402,15 @@ export default function MessagesPage() {
 
   return (
     <div>
-      <AdminTabBar tabs={[...TABS]} activeTab={activeTab} onChange={handleTabChange} />
+      <AdminTabBar
+        tabs={[
+          { key: "messages", label: t("messages.tabs.messages"), icon: MessageCircle },
+          { key: "broadcast", label: t("messages.tabs.broadcast"), icon: Megaphone },
+          { key: "alerts", label: t("messages.tabs.alerts"), icon: Bell },
+        ]}
+        activeTab={activeTab}
+        onChange={handleTabChange}
+      />
       {activeTab === "messages" && <MessagesContent />}
       {activeTab === "broadcast" && <BroadcastPanel />}
       {activeTab === "alerts" && <AlertsPanel />}

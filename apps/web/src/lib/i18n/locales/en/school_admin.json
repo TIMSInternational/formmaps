@@ -1,1 +1,299 @@
-{}
+{
+  "dashboard": {
+    "title": "School Dashboard",
+    "subtitle": "Real-time overview of your school's performance and AI-powered insights",
+    "aiBriefing": {
+      "title": "AI School Briefing",
+      "subtitle": "Get an AI-generated analysis of your school's current state, risks, and recommendations",
+      "generate": "Generate Briefing",
+      "analyzing": "Analyzing your school data...",
+      "analyzingSubtitle": "Reviewing students, assessments, grades, and graduation progress",
+      "label": "AI Briefing",
+      "fullAnalysis": "Full Analysis"
+    },
+    "atRisk": {
+      "title": "Needs Attention",
+      "viewAll": "View all",
+      "allOnTrack": "All students on track",
+      "pcaMissing": "{{count}} PCA missing",
+      "milIncomplete": "· MIL incomplete",
+      "evalPending": "· 360 pending",
+      "moreStudents": "+{{count}} more"
+    },
+    "assessmentProgress": {
+      "title": "Assessment Progress",
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "notStarted": "Not Started"
+    },
+    "actionItems": {
+      "title": "Action Items",
+      "allClear": "All clear",
+      "criticalAlert_one": "{{count}} critical alert",
+      "criticalAlert_other": "{{count}} critical alerts",
+      "highPriority": "{{count}} high priority",
+      "newSinceLogin": "{{count}} new since login"
+    },
+    "recentStudents": {
+      "title": "Recent Students",
+      "viewAll": "View all",
+      "noStudents": "No students yet"
+    },
+    "stats": {
+      "students": "Students",
+      "assessments": "Assessments",
+      "avgExamScore": "Avg Exam Score",
+      "courses": "Courses"
+    },
+    "quickNav": "Quick Navigation",
+    "navCards": {
+      "students": { "label": "Students", "sub": "Roster, invites, staff" },
+      "academics": { "label": "Academics", "sub": "Courses, GPA, graduation" },
+      "assessments": { "label": "Assessments", "sub": "Pipeline, schedule, 360" },
+      "aiInsights": { "label": "AI Insights", "sub": "School-wide analysis" }
+    }
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Manage students, counselors, coaches, and staff at your school",
+    "tabs": {
+      "roster": "Roster",
+      "onboard": "Invite & Onboard",
+      "staff": "Staff & Roles",
+      "counselors": "Counselor Assignments"
+    },
+    "searchPlaceholder": "Search students...",
+    "inviteStudent": "Invite Student",
+    "emailCopied_one": "{{count}} email copied",
+    "emailCopied_other": "{{count}} emails copied",
+    "exportedStudents": "Exported {{count}} students",
+    "filter": {
+      "allStatus": "All Status",
+      "active": "Active",
+      "pending": "Pending",
+      "inactive": "Inactive"
+    },
+    "stats": {
+      "totalStudents": "Total Students",
+      "totalStudentsSub": "enrolled in school",
+      "activeStudents": "Active Students",
+      "activeStudentsSub": "currently active",
+      "assessmentsDone": "Assessments Done",
+      "assessmentsDoneSub": "completed assessments",
+      "avgScore": "Avg. Score",
+      "avgScoreSub": "across all students"
+    },
+    "bulk": {
+      "selected": "{{count}} selected",
+      "copyEmails": "Copy Emails",
+      "exportCsv": "Export CSV"
+    },
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "grade": "Grade",
+      "status": "Status",
+      "joined": "Joined",
+      "actions": "Actions"
+    },
+    "noStudents": "No students found",
+    "actions": {
+      "viewProfile": "View Profile",
+      "copyEmail": "Copy Email",
+      "emailCopied": "Email copied"
+    }
+  },
+  "analytics": {
+    "title": "Analytics & Insights",
+    "subtitle": "Actionable intelligence across assessments, grades, and student readiness",
+    "exportCsv": "Export CSV",
+    "exportedSuccess": "Analytics exported",
+    "exportFailed": "Export failed",
+    "metrics": {
+      "atRisk": "At-Risk Students",
+      "gpaBelow": "GPA below 2.0",
+      "noAtRisk": "No at-risk students",
+      "counselorCoverage": "Counselor Coverage",
+      "goodCoverage": "Good coverage",
+      "assignMore": "Assign more students",
+      "fullyAssessed": "Fully Assessed",
+      "avgGpa": "Avg GPA",
+      "weightedAvg": "Weighted average",
+      "studentsOf": "{{done}} of {{total}} students"
+    },
+    "completionByGrade": "Assessment Completion by Grade",
+    "noAssessmentData": "No assessment data available yet.",
+    "gradeLabels": {
+      "0": "Unassigned",
+      "9": "Freshman",
+      "10": "Sophomore",
+      "11": "Junior",
+      "12": "Senior"
+    },
+    "students": "{{count}} students",
+    "pipelineSummary": "Pipeline Summary",
+    "pipeline": {
+      "pcaComplete": "PCA Complete",
+      "milComplete": "MIL/LIA Complete",
+      "eval360Complete": "360° Complete",
+      "fullyAssessed": "Fully Assessed"
+    },
+    "cognitiveProfile": "School Cognitive Profile",
+    "topCareerInterests": "Top Career Interests",
+    "careerDataEmpty": "Career data will appear after profile analysis.",
+    "aiInsights": "AI Insights",
+    "cached": "CACHED",
+    "discDistribution": "DISC Distribution",
+    "aiAnalysisEmpty": "AI analysis will be available once enough students complete their assessments.",
+    "topPerformers": {
+      "title": "Top Performers",
+      "byGpa": "By GPA score",
+      "headers": {
+        "rank": "#",
+        "student": "Student",
+        "grade": "Grade",
+        "gpa": "GPA",
+        "assessments": "Assessments"
+      },
+      "gradeLabel": "Grade {{grade}}",
+      "noData": "No performance data yet",
+      "statusNotStarted": "not started"
+    }
+  },
+  "assessments": {
+    "title": "Assessment Command Center",
+    "subtitle": "Schedule assessments, track student progress, send reminders, and view AI-powered insights",
+    "tabs": {
+      "commandCenter": "Command Center",
+      "evaluations": "360 Evaluations",
+      "results": "Results & Reports"
+    },
+    "insightsRefreshed": "Insights refreshed",
+    "insightsRefreshFailed": "Failed to refresh insights",
+    "scheduleSaved": "Schedule saved",
+    "scheduleSaveFailed": "Failed to save schedule",
+    "remindersSent_one": "Reminders sent to {{count}} student",
+    "remindersSent_other": "Reminders sent to {{count}} students",
+    "remindersFailed_one": "{{count}} email failed",
+    "remindersFailed_other": "{{count}} emails failed",
+    "remindersError": "Failed to send reminders",
+    "setup360Success": "360 setup complete: {{created}} groups created, {{emails}} invites sent",
+    "setup360Skipped_one": "{{count}} already existed",
+    "setup360Skipped_other": "{{count}} already existed",
+    "setup360Error": "Failed to setup 360 evaluations"
+  },
+  "insights": {
+    "title": "AI School Insights",
+    "subtitle": "AI-powered analysis of your school's data, trends, and recommendations",
+    "regenerate": "Regenerate",
+    "checkProgress": "Check progress",
+    "analyzing": "Analyzing...",
+    "refreshing": "Refreshing...",
+    "regeneratedSuccess": "Insights regenerated",
+    "regenerateFailed": "Failed to regenerate insights",
+    "refreshFailed": "Failed to refresh",
+    "gateTitle": "AI insights unlock at 90% assessment completion",
+    "gateSubtitle": "{{completed}}/{{total}} students have completed all assessments ({{rate}}%). Insights generate automatically at 90% and 100%.",
+    "executiveSummary": "Executive Summary",
+    "generatedAt": "Generated {{date}}",
+    "metrics": {
+      "students": "Students",
+      "avgGpa": "Avg GPA",
+      "milCompleted": "MIL Completed",
+      "milAvg": "Avg: {{pct}}%",
+      "eval360Done": "360° Done"
+    },
+    "urgentActions": {
+      "title": "Urgent Actions",
+      "subtitle": "Items requiring immediate attention"
+    },
+    "keyInsights": {
+      "title": "Key Insights",
+      "subtitle": "Data-driven observations",
+      "noInsights": "No insights available"
+    },
+    "predictions": {
+      "title": "Predictions",
+      "subtitle": "AI-projected outcomes",
+      "noPredictions": "No predictions available",
+      "confidence": "{{level}} confidence"
+    },
+    "recommendations": {
+      "title": "Strategic Recommendations",
+      "subtitle": "AI-suggested improvements for your school"
+    },
+    "dataSummary": {
+      "title": "Data Summary",
+      "topCourses": "Top Enrolled Courses",
+      "byGrade": "Students by Grade",
+      "students": "{{count}} students",
+      "gradeLabel": "Grade {{grade}}"
+    }
+  },
+  "grades": {
+    "title": "Grades & Progress",
+    "subtitle": "Import grades, configure GPA, track graduation progress, and identify academic gaps",
+    "tabs": {
+      "grades": "Grades & GPA",
+      "graduation": "Graduation",
+      "gaps": "Academic Gaps"
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Download assessment reports and data exports per student",
+    "tabs": {
+      "pca": "PCA / DISC Profile",
+      "mil": "MIL / LIA Cognitive",
+      "eval360": "360° Evaluation"
+    },
+    "searchPlaceholder": "Search students...",
+    "statusActive": "active",
+    "viewReports": "View Reports →",
+    "table": {
+      "student": "Student",
+      "email": "Email",
+      "grade": "Grade",
+      "status": "Status"
+    },
+    "noStudents": "No students found",
+    "pagination": "Page {{page}} of {{total}}"
+  },
+  "messages": {
+    "label": "Communication",
+    "title": "Messages",
+    "subtitle": "Communicate with your counselors, coaches, and school staff.",
+    "tabs": {
+      "messages": "Messages",
+      "broadcast": "Broadcast",
+      "alerts": "Alerts & Notifications"
+    },
+    "conversations": "Conversations",
+    "searchConversations": "Search conversations...",
+    "searchContacts": "Search by name or email...",
+    "searching": "Searching...",
+    "noContacts": "No contacts found",
+    "noConversations": "No conversations yet.",
+    "noConversationsSearch": "No conversations match your search.",
+    "noMessagesYet": "No messages yet",
+    "emptyThread": "No messages yet. Send one to get started.",
+    "typeMessage": "Type a message...",
+    "sendHint": "Press Enter to send, Shift+Enter for new line",
+    "selectConversation": "Select a conversation",
+    "selectConversationHint": "Choose a conversation from the left to view and send messages.",
+    "conversationStarted": "Conversation started",
+    "conversationFailed": "Failed to start conversation",
+    "sendFailed": "Failed to send message.",
+    "videoCallFailed": "Failed to start video call"
+  },
+  "academics": {
+    "title": "Academics",
+    "subtitle": "Manage your course catalog, curriculum frameworks, and course pathways",
+    "tabs": {
+      "courses": "Courses",
+      "curriculum": "Curriculum",
+      "pathways": "Pathways"
+    }
+  }
+}

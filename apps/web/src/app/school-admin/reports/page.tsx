@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStudents } from "@/hooks/useSchoolAdmin";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ interface StudentRecord {
 }
 
 export default function ReportsPage() {
+  const { t } = useTranslation("school_admin");
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>("pca");
@@ -52,15 +54,15 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6" style={{ color: "var(--admin-font-primary)" }}>
       <div>
-        <h1 className="text-[20px] font-semibold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>Reports</h1>
-        <p className="text-[13px] mt-0.5" style={{ color: "var(--admin-font-light)" }}>Download assessment reports and data exports per student</p>
+        <h1 className="text-[20px] font-semibold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>{t("reports.title")}</h1>
+        <p className="text-[13px] mt-0.5" style={{ color: "var(--admin-font-light)" }}>{t("reports.subtitle")}</p>
       </div>
 
       <AdminTabBar
         tabs={[
-          { key: "pca", label: "PCA / DISC Profile", icon: Target },
-          { key: "mil", label: "MIL / LIA Cognitive", icon: Brain },
-          { key: "360", label: "360° Evaluation", icon: Users },
+          { key: "pca", label: t("reports.tabs.pca"), icon: Target },
+          { key: "mil", label: t("reports.tabs.mil"), icon: Brain },
+          { key: "360", label: t("reports.tabs.eval360"), icon: Users },
         ]}
         activeTab={activeTab}
         onChange={handleTabChange}
@@ -69,7 +71,7 @@ export default function ReportsPage() {
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--admin-font-light)" }} />
-          <Input placeholder="Search students..." className="pl-9 h-9 rounded-lg text-sm"
+          <Input placeholder={t("reports.searchPlaceholder")} className="pl-9 h-9 rounded-lg text-sm"
             style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}
             value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
         </div>
@@ -79,7 +81,7 @@ export default function ReportsPage() {
         <Table>
           <TableHeader>
             <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
-              {["Student", "Email", "Grade", "Status", ""].map((h) => (
+              {[t("reports.table.student"), t("reports.table.email"), t("reports.table.grade"), t("reports.table.status"), ""].map((h) => (
                 <TableHead key={h} className="py-3 px-4" style={{
                   fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
                   color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)",
@@ -99,7 +101,7 @@ export default function ReportsPage() {
             ) : students.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} style={{ textAlign: "center", color: "var(--admin-font-tertiary)", padding: "48px 0", fontSize: 12 }}>
-                  <FileText style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.3 }} /> No students found
+                  <FileText style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.3 }} /> {t("reports.noStudents")}
                 </TableCell>
               </TableRow>
             ) : students.map((student: StudentRecord) => (
@@ -122,10 +124,10 @@ export default function ReportsPage() {
                   <Badge className="text-xs font-medium shadow-none border-0" style={{
                     background: student.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(107,114,128,0.1)",
                     color: student.status === "active" ? "#10b981" : "#6b7280",
-                  }}>{student.status || "active"}</Badge>
+                  }}>{student.status || t("reports.statusActive")}</Badge>
                 </TableCell>
                 <TableCell className="py-3 px-4">
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-accent-blue, #065292)" }}>View Reports →</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-accent-blue, #065292)" }}>{t("reports.viewReports")}</span>
                 </TableCell>
               </TableRow>
             ))}
@@ -134,7 +136,7 @@ export default function ReportsPage() {
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between p-3" style={{ borderTop: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)" }}>
-            <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>Page {page} of {totalPages}</p>
+            <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>{t("reports.pagination", { page, total: totalPages })}</p>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md" disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}><ChevronLeft className="h-4 w-4" /></Button>
               <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}><ChevronRight className="h-4 w-4" /></Button>
