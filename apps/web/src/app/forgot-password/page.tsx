@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 
@@ -11,6 +12,7 @@ const API = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 type Step = "email" | "reset" | "success";
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const tokenFromUrl = searchParams.get("token");
@@ -42,10 +44,10 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.message || "Failed to send reset link"); return; }
+      if (!res.ok) { setError(data.message || t("auth.forgotPassword.errSendFailed")); return; }
       setSent(true);
     } catch {
-      setError("Network error. Please try again.");
+      setError(t("auth.forgotPassword.errNetwork"));
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +58,7 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("auth.forgotPassword.errMismatch"));
       return;
     }
 
@@ -68,10 +70,10 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ token, password: newPassword }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.message || "Failed to reset password."); return; }
+      if (!res.ok) { setError(data.message || t("auth.forgotPassword.errResetFailed")); return; }
       setStep("success");
     } catch {
-      setError("Network error. Please try again.");
+      setError(t("auth.forgotPassword.errNetwork"));
     } finally {
       setIsLoading(false);
     }
@@ -151,10 +153,10 @@ export default function ForgotPasswordPage() {
                   marginBottom: 8,
                 }}
               >
-                Reset your password
+                {t("auth.forgotPassword.resetTitle")}
               </h1>
               <p style={{ fontSize: 13, color: "#818181" }}>
-                Enter your email and we&apos;ll send you a reset link.
+                {t("auth.forgotPassword.resetSubtitle")}
               </p>
             </div>
 
@@ -168,11 +170,11 @@ export default function ForgotPasswordPage() {
                 <label
                   style={{ fontSize: 12, fontWeight: 500, color: "#b3b3b3" }}
                 >
-                  Email address
+                  {t("auth.forgotPassword.emailLabel")}
                 </label>
                 <input
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t("auth.forgotPassword.emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -206,7 +208,7 @@ export default function ForgotPasswordPage() {
                   transition: "opacity 0.15s",
                 }}
               >
-                {isLoading ? "Sending..." : "Send reset link"}
+                {isLoading ? t("auth.forgotPassword.sending") : t("auth.forgotPassword.sendLink")}
               </button>
             </form>
           </>
@@ -233,7 +235,7 @@ export default function ForgotPasswordPage() {
                 marginBottom: 8,
               }}
             >
-              Check your email
+              {t("auth.forgotPassword.checkEmailTitle")}
             </h1>
             <p
               style={{
@@ -242,7 +244,7 @@ export default function ForgotPasswordPage() {
                 marginBottom: 32,
               }}
             >
-              If an account exists for <span style={{ color: "#b3b3b3" }}>{email}</span>, we&apos;ve sent a password reset link. Check your inbox.
+              {t("auth.forgotPassword.checkEmailBefore")} <span style={{ color: "#b3b3b3" }}>{email}</span>{t("auth.forgotPassword.checkEmailAfter")}
             </p>
             <button
               onClick={() => { setSent(false); setError(null); }}
@@ -254,7 +256,7 @@ export default function ForgotPasswordPage() {
                 cursor: "pointer",
               }}
             >
-              Didn&apos;t receive it? Try again
+              {t("auth.forgotPassword.tryAgainLink")}
             </button>
           </div>
         )}
@@ -270,10 +272,10 @@ export default function ForgotPasswordPage() {
                   marginBottom: 8,
                 }}
               >
-                Set a new password
+                {t("auth.forgotPassword.setNewTitle")}
               </h1>
               <p style={{ fontSize: 13, color: "#818181" }}>
-                Enter your new password below.
+                {t("auth.forgotPassword.setNewSubtitle")}
               </p>
             </div>
 
@@ -287,11 +289,11 @@ export default function ForgotPasswordPage() {
                 <label
                   style={{ fontSize: 12, fontWeight: 500, color: "#b3b3b3" }}
                 >
-                  New password
+                  {t("auth.forgotPassword.newPasswordLabel")}
                 </label>
                 <input
                   type="password"
-                  placeholder="At least 8 characters"
+                  placeholder={t("auth.forgotPassword.newPasswordPlaceholder")}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
@@ -312,11 +314,11 @@ export default function ForgotPasswordPage() {
                 <label
                   style={{ fontSize: 12, fontWeight: 500, color: "#b3b3b3" }}
                 >
-                  Confirm new password
+                  {t("auth.forgotPassword.confirmNewLabel")}
                 </label>
                 <input
                   type="password"
-                  placeholder="Re-enter password"
+                  placeholder={t("auth.forgotPassword.confirmNewPlaceholder")}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
@@ -351,7 +353,7 @@ export default function ForgotPasswordPage() {
                   transition: "opacity 0.15s",
                 }}
               >
-                {isLoading ? "Resetting..." : "Reset password"}
+                {isLoading ? t("auth.forgotPassword.resetting") : t("auth.forgotPassword.resetButton")}
               </button>
             </form>
           </>
@@ -378,7 +380,7 @@ export default function ForgotPasswordPage() {
                 marginBottom: 8,
               }}
             >
-              Password reset successful
+              {t("auth.forgotPassword.successTitle")}
             </h1>
             <p
               style={{
@@ -387,8 +389,7 @@ export default function ForgotPasswordPage() {
                 marginBottom: 32,
               }}
             >
-              Your password has been updated. You can now sign in with your new
-              password.
+              {t("auth.forgotPassword.successText")}
             </p>
             <button
               onClick={() => router.push("/login")}
@@ -404,7 +405,7 @@ export default function ForgotPasswordPage() {
                 width: "100%",
               }}
             >
-              Back to login
+              {t("auth.forgotPassword.backToLogin")}
             </button>
           </div>
         )}
@@ -430,7 +431,7 @@ export default function ForgotPasswordPage() {
               }}
             >
               <ArrowLeft style={{ width: 14, height: 14 }} />
-              Back to login
+              {t("auth.forgotPassword.backToLogin")}
             </Link>
           </p>
         )}
