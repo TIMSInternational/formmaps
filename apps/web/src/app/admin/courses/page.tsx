@@ -19,7 +19,7 @@ import type { Course } from "@/types/course";
 export default function CoursesPage() {
     const router = useRouter();
     const { isAdmin, loading: authLoading } = useAdminAccess();
-    const { t } = useTranslation();
+    const { t } = useTranslation("platform_owner");
     const [searchTerm, setSearchTerm] = useState("");
 
     const { data: catalogData, isLoading: catalogLoading } = useQuery({
@@ -65,24 +65,24 @@ export default function CoursesPage() {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>Course Insights</h1>
+                    <h1 className="text-4xl font-bold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>{t("courses.title")}</h1>
                     <p className="text-base mt-1" style={{ color: "var(--admin-font-tertiary)" }}>
-                        Overview of the Coursera catalog powering student recommendations
+                        {t("courses.subtitle")}
                     </p>
                 </div>
                 <div className="relative w-full md:w-72">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input placeholder="Search catalog..." className="pl-9 h-10 rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                    <Input placeholder={t("courses.searchPlaceholder")} className="pl-9 h-10 rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                 </div>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                    { label: "Courses in Catalog", value: catalogLoading ? "..." : allCourses.length.toLocaleString(), icon: BookOpen },
-                    { label: "Categories", value: categories.length.toLocaleString(), icon: Layers },
-                    { label: "AI Recommended", value: recommendedCourses.length.toLocaleString(), icon: TrendingUp },
-                    { label: "Source", value: "Coursera", icon: GraduationCap },
+                    { label: t("courses.stats.inCatalog"), value: catalogLoading ? "..." : allCourses.length.toLocaleString(), icon: BookOpen },
+                    { label: t("courses.stats.categories"), value: categories.length.toLocaleString(), icon: Layers },
+                    { label: t("courses.stats.aiRecommended"), value: recommendedCourses.length.toLocaleString(), icon: TrendingUp },
+                    { label: t("courses.stats.source"), value: "Coursera", icon: GraduationCap },
                 ].map((stat, i) => (
                     <div key={i} style={{ ...s, padding: 16 }}>
                         <stat.icon style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)", marginBottom: 8 }} />
@@ -95,9 +95,9 @@ export default function CoursesPage() {
             {/* Search Results */}
             {searchTerm.trim() && (
                 <div style={{ ...s, padding: 20 }}>
-                    <h3 style={hdr}><Search style={{ width: 14, height: 14 }} /> Search Results — "{searchTerm}"</h3>
+                    <h3 style={hdr}><Search style={{ width: 14, height: 14 }} /> {t("courses.search.resultsFor", { term: searchTerm })}</h3>
                     {searchResults.length === 0 ? (
-                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No courses match your search</p>
+                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>{t("courses.search.noMatch")}</p>
                     ) : (
                         <div className="space-y-2">
                             {searchResults.map((c, i) => (
@@ -124,14 +124,14 @@ export default function CoursesPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* AI Recommended for Students */}
                 <div style={{ ...s, padding: 20 }}>
-                    <h3 style={hdr}><Award style={{ width: 14, height: 14, color: "#8b5cf6" }} /> AI-Recommended for Students</h3>
+                    <h3 style={hdr}><Award style={{ width: 14, height: 14, color: "#8b5cf6" }} /> {t("courses.aiRecommended.sectionTitle")}</h3>
                     <p className="text-[11px] mb-3" style={{ color: "var(--admin-font-tertiary)" }}>
-                        Courses the AI selects based on student career profiles from the full catalog
+                        {t("courses.aiRecommended.sectionDesc")}
                     </p>
                     {catalogLoading ? (
                         <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-14 rounded-lg" />)}</div>
                     ) : recommendedCourses.length === 0 ? (
-                        <p className="text-sm py-6 text-center" style={{ color: "var(--admin-font-tertiary)" }}>Recommendations generated when students complete assessments</p>
+                        <p className="text-sm py-6 text-center" style={{ color: "var(--admin-font-tertiary)" }}>{t("courses.aiRecommended.noRecommendations")}</p>
                     ) : (
                         <div className="space-y-2">
                             {recommendedCourses.slice(0, 8).map((c, i) => (
@@ -156,9 +156,9 @@ export default function CoursesPage() {
 
                 {/* Categories Breakdown */}
                 <div style={{ ...s, padding: 20 }}>
-                    <h3 style={hdr}><BarChart3 style={{ width: 14, height: 14, color: "#10b981" }} /> Categories Breakdown</h3>
+                    <h3 style={hdr}><BarChart3 style={{ width: 14, height: 14, color: "#10b981" }} /> {t("courses.categories.sectionTitle")}</h3>
                     <p className="text-[11px] mb-3" style={{ color: "var(--admin-font-tertiary)" }}>
-                        Distribution of {allCourses.length} courses across categories
+                        {t("courses.categories.sectionDesc", { count: allCourses.length })}
                     </p>
                     {catalogLoading ? (
                         <div className="space-y-2">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-10 rounded-lg" />)}</div>
@@ -185,9 +185,9 @@ export default function CoursesPage() {
 
             {/* Sample from Catalog */}
             <div style={{ ...s, padding: 20 }}>
-                <h3 style={hdr}><BookOpen style={{ width: 14, height: 14, color: "#065292" }} /> Sample from Catalog</h3>
+                <h3 style={hdr}><BookOpen style={{ width: 14, height: 14, color: "#065292" }} /> {t("courses.sample.sectionTitle")}</h3>
                 <p className="text-[11px] mb-3" style={{ color: "var(--admin-font-tertiary)" }}>
-                    A snapshot of courses available to students — all {allCourses.length} are used by the AI recommendation engine
+                    {t("courses.sample.sectionDesc", { count: allCourses.length })}
                 </p>
                 {catalogLoading ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">{[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-16 rounded-lg" />)}</div>

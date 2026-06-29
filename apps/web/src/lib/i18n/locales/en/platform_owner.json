@@ -1,1 +1,436 @@
-{}
+{
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Platform overview and quick actions",
+    "modulesLabel": "Modules",
+    "modules": {
+      "users": { "label": "Users", "description": "Manage all platform users" },
+      "schools": { "label": "Schools", "description": "School management" },
+      "coaches": { "label": "Coaches", "description": "Coach profiles & invites" },
+      "courses": { "label": "Courses", "description": "Learning content" },
+      "careers": { "label": "Careers", "description": "Career database" },
+      "questions": { "label": "360 Questions", "description": "Assessment questions" },
+      "plans": { "label": "Plans", "description": "Subscription tiers" },
+      "transactions": { "label": "Transactions", "description": "Payment history" },
+      "payouts": { "label": "Payouts", "description": "Coach payouts" },
+      "analytics": { "label": "Analytics", "description": "Platform metrics" },
+      "settings": { "label": "Settings", "description": "System configuration" }
+    }
+  },
+  "sidebar": {
+    "administratorRole": "Administrator"
+  },
+  "stats": {
+    "totalUsers": "Total Users",
+    "newThisMonth": "new this month",
+    "totalRevenue": "Total Revenue",
+    "collectedThisMonth": "collected this month",
+    "growth": "Growth",
+    "platformGrowthRate": "platform growth rate",
+    "fromLastMonth": "from last month"
+  },
+  "revenue": {
+    "trendTitle": "Revenue Trend (12 mo)",
+    "thisMonth": "This month",
+    "newUsers": "New users",
+    "noRevenue": "No revenue recorded yet",
+    "recentActivity": "Recent Activity"
+  },
+  "quickStats": {
+    "title": "Quick Stats",
+    "activeSchools": "Active Schools",
+    "totalCoaches": "Total Coaches",
+    "pendingInvites": "Pending Invites",
+    "totalStudents": "Total Students"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "Insights and performance metrics",
+    "unavailableTitle": "Analytics Unavailable",
+    "unavailableDesc": "Could not load data.",
+    "tryAgain": "Try Again",
+    "exportCsv": "Export CSV",
+    "period": {
+      "last7Days": "Last 7 Days",
+      "last30Days": "Last 30 Days",
+      "last12Months": "Last 12 Months"
+    },
+    "tabs": {
+      "performance": "Performance",
+      "userBehavior": "User Behavior"
+    },
+    "stats": {
+      "revenuePerUser": "Revenue / User",
+      "avgLifetimeValue": "avg lifetime value",
+      "avgTransaction": "Avg Transaction",
+      "totalTransactions": "{{count}} total transactions",
+      "coachRating": "Coach Rating",
+      "coachesCount": "{{count}} coaches",
+      "coachSessions": "Coach Sessions",
+      "totalSessionsDelivered": "total sessions delivered"
+    },
+    "charts": {
+      "revenueVsTransactions": "Revenue vs Transactions",
+      "monthlyComparison": "Monthly comparison",
+      "revenueSeriesLabel": "Revenue ($)",
+      "transactionsSeriesLabel": "Transactions",
+      "userGrowth": "User Growth",
+      "newRegistrations": "New registrations over time",
+      "newUsersSeriesLabel": "New Users",
+      "topCoaches": "Top Coaches",
+      "byRevenueAndRating": "By revenue & rating",
+      "coachSessions": "{{count}} sessions",
+      "noCoachData": "No coach data",
+      "topCourses": "Top Courses",
+      "courseEnrolled": "{{count}} enrolled",
+      "noCourseData": "No course enrollment data yet",
+      "transactionVolume": "Transaction Volume"
+    }
+  },
+  "telemetry": {
+    "unavailableTitle": "Telemetry data unavailable",
+    "unavailableDesc": "Backend telemetry API not yet configured. Events are being collected locally.",
+    "stats": {
+      "dailyUsers": "Daily Users",
+      "activeWithin24h": "Active within 24h",
+      "weeklyUsers": "Weekly Users",
+      "activePast7Days": "Active past 7 days",
+      "retentionRate": "Retention Rate",
+      "returningUsers": "Returning users",
+      "avgDuration": "Avg Duration",
+      "timeOnSite": "Time on site"
+    },
+    "engagement": {
+      "pageViews": "Page Views",
+      "pagesPerSession": "Pages/Session",
+      "bounceRate": "Bounce Rate",
+      "completion": "Completion",
+      "completionValue": "High"
+    },
+    "charts": {
+      "newVsReturning": "New vs Returning",
+      "totalUsersLabel": "Total Users",
+      "newLabel": "New: ",
+      "returningLabel": "Returning: ",
+      "topPages": "Top Pages",
+      "topPagesDesc": "Most visited pages by view count",
+      "noPageData": "No page view data available",
+      "eventBreakdown": "Event Breakdown",
+      "eventBreakdownDesc": "Distribution of user actions",
+      "noEventData": "No event data available",
+      "totalEventsLabel": "Events",
+      "completionRates": "Completion Rates",
+      "userJourneyMilestones": "User journey milestones",
+      "resumeBuilder": "Resume Builder",
+      "assessments": "Assessments",
+      "coachOnboarding": "Coach Onboarding",
+      "profileSetup": "Profile Setup",
+      "dauTrend": "Daily Active Users Trend",
+      "dauTrendDesc": "30-day active user history"
+    }
+  },
+  "schools": {
+    "searchPlaceholder": "Search schools...",
+    "loadingSchools": "Loading schools...",
+    "noSchoolsFound": "No schools found. Invite one to get started!",
+    "videoOnTitle": "Disable video calls",
+    "videoOffTitle": "Enable video calls",
+    "videoOn": "On",
+    "videoOff": "Off",
+    "resend": "Resend",
+    "table": {
+      "name": "Name",
+      "admin": "Admin",
+      "students": "Students",
+      "status": "Status",
+      "contractEnd": "Contract End",
+      "video": "Video",
+      "actions": "Actions"
+    },
+    "pagination": {
+      "pageOf": "Page {{page}} of {{total}}"
+    }
+  },
+  "users": {
+    "emailLabel": "Email Address",
+    "roleLabel": "Role",
+    "roleSelectPlaceholder": "Select role",
+    "roles": {
+      "student": "Student",
+      "coach": "Coach",
+      "admin": "Admin"
+    },
+    "creating": "Creating...",
+    "joinedOn": "Joined {{date}}",
+    "detailActions": "Actions",
+    "copyEmail": "Copy Email",
+    "deactivateUser": "Deactivate User",
+    "pagination": {
+      "showingPage": "Showing page {{page}} of {{total}}"
+    }
+  },
+  "courses": {
+    "title": "Course Insights",
+    "subtitle": "Overview of the Coursera catalog powering student recommendations",
+    "searchPlaceholder": "Search catalog...",
+    "stats": {
+      "inCatalog": "Courses in Catalog",
+      "categories": "Categories",
+      "aiRecommended": "AI Recommended",
+      "source": "Source"
+    },
+    "search": {
+      "resultsFor": "Search Results — \"{{term}}\"",
+      "noMatch": "No courses match your search"
+    },
+    "aiRecommended": {
+      "sectionTitle": "AI-Recommended for Students",
+      "sectionDesc": "Courses the AI selects based on student career profiles from the full catalog",
+      "noRecommendations": "Recommendations generated when students complete assessments"
+    },
+    "categories": {
+      "sectionTitle": "Categories Breakdown",
+      "sectionDesc": "Distribution of {{count}} courses across categories"
+    },
+    "sample": {
+      "sectionTitle": "Sample from Catalog",
+      "sectionDesc": "A snapshot of courses available to students — all {{count}} are used by the AI recommendation engine"
+    }
+  },
+  "careers": {
+    "title": "Career Insights",
+    "subtitle": "Career database used for AI-powered student career matching",
+    "searchPlaceholder": "Search careers...",
+    "stats": {
+      "total": "Total Careers",
+      "clusters": "Career Clusters",
+      "avgPerCluster": "Avg per Cluster",
+      "largestCluster": "Largest Cluster"
+    },
+    "search": {
+      "resultsFor": "Results for \"{{term}}\"",
+      "noMatch": "No careers match"
+    },
+    "clusters": {
+      "sectionTitle": "By Career Cluster",
+      "noData": "No cluster data"
+    },
+    "largest": {
+      "sectionTitle": "Largest Clusters",
+      "careersCount": "{{count}} careers"
+    },
+    "sample": {
+      "sectionTitle": "Sample from Database",
+      "sectionDesc": "All {{count}} careers are analyzed by the AI to match students based on their assessment profiles"
+    },
+    "remote": "Remote"
+  },
+  "questions": {
+    "title": "360° Questions",
+    "subtitle": "Manage evaluation questions for feedback cycles",
+    "addQuestion": "Add Question",
+    "allRelations": "All Relations",
+    "searchPlaceholder": "Search questions...",
+    "categoryPlaceholder": "Category",
+    "allCategories": "All Categories",
+    "noQuestionsTitle": "No questions found",
+    "noQuestionsDesc": "Try adjusting your search or filters, or add a new question.",
+    "pagination": {
+      "showingPage": "Showing page {{page}} of {{total}} ({{count}} total)"
+    },
+    "toast": {
+      "invalidDataFormat": "Received invalid data format",
+      "failedToLoad": "Failed to load questions",
+      "englishRequired": "English question text is required",
+      "updatedSuccess": "Question updated successfully",
+      "createdSuccess": "Question created successfully",
+      "deletedSuccess": "Question deleted successfully",
+      "deactivated": "Question deactivated",
+      "activated": "Question activated",
+      "failedToUpdateStatus": "Failed to update status",
+      "failedToUpdate": "Failed to update question",
+      "failedToCreate": "Failed to create question",
+      "failedToDelete": "Failed to delete question"
+    },
+    "confirm": {
+      "deleteTitle": "Delete Question",
+      "deleteDesc": "Are you sure you want to delete this question? This cannot be undone.",
+      "deleteLabel": "Delete"
+    },
+    "card": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "subQuestion": "Sub-Question",
+      "editButton": "Edit",
+      "moreOptions": "More Options",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "delete": "Delete"
+    },
+    "form": {
+      "editTitle": "Edit Question",
+      "addTitle": "Add New Question",
+      "formDesc": "Configure the evaluation question details and translations.",
+      "relationType": "Relation Type",
+      "category": "Category",
+      "englishText": "English Text",
+      "required": "*",
+      "englishPlaceholder": "e.g. How effectively does this person communicate?",
+      "spanishText": "Spanish Text (Optional)",
+      "spanishPlaceholder": "e.g. ¿Con qué eficacia se comunica esta persona?",
+      "questionNumber": "Question Number",
+      "type": "Type",
+      "mainQuestion": "Main Question",
+      "subQuestion": "Sub-Question",
+      "parentQuestion": "Parent Question",
+      "parentPlaceholder": "Select parent question",
+      "cancelButton": "Cancel",
+      "saveChanges": "Save Changes",
+      "createButton": "Create Question"
+    }
+  },
+  "plans": {
+    "title": "Plans & Pricing",
+    "subtitle": "Manage subscription tiers and billing options",
+    "createButton": "Create New Plan",
+    "emptyTitle": "No active plans",
+    "emptyDesc": "Create your first subscription plan to start accepting payments from users.",
+    "emptyCreateButton": "Create Plan",
+    "popular": "Popular",
+    "perPeriod": {
+      "once": "once",
+      "monthly": "mo",
+      "yearly": "yr"
+    },
+    "moreFeatures": "+ {{count}} more features",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "toast": {
+      "failedToLoad": "Failed to load subscription plans",
+      "validationError": "Please fill in valid name and price",
+      "updatedSuccess": "Plan updated successfully",
+      "createdSuccess": "Plan created successfully",
+      "deletedSuccess": "Plan deleted successfully",
+      "failedToUpdate": "Failed to update plan",
+      "failedToCreate": "Failed to create plan",
+      "failedToDelete": "Failed to delete plan"
+    },
+    "confirm": {
+      "deleteTitle": "Delete Plan",
+      "deleteDesc": "Are you sure you want to delete this plan? This cannot be undone.",
+      "deleteLabel": "Delete"
+    },
+    "form": {
+      "editTitle": "Edit Plan",
+      "createTitle": "Create Subscription Plan",
+      "editDesc": "Update details for this subscription tier.",
+      "createDesc": "Define a new pricing tier for your users.",
+      "planName": "Plan Name",
+      "planNamePlaceholder": "e.g. Pro Monthly",
+      "price": "Price",
+      "billingInterval": "Billing Interval",
+      "intervalMonthly": "Monthly",
+      "intervalYearly": "Yearly",
+      "intervalOneTime": "One-time",
+      "features": "Features",
+      "addFeature": "Add",
+      "featurePlaceholder": "e.g. Unlimited Access",
+      "cancelButton": "Cancel",
+      "saveChanges": "Save Changes",
+      "createButton": "Create Plan"
+    }
+  },
+  "transactions": {
+    "stats": {
+      "totalRevenue": "Total Revenue",
+      "totalTransactions": "Total Transactions",
+      "activeUsers": "Active Users",
+      "activeCoaches": "Active Coaches"
+    },
+    "tabs": {
+      "all": "All",
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed",
+      "refunded": "Refunded"
+    },
+    "pagination": {
+      "showingPage": "Showing page {{page}} of {{total}}"
+    },
+    "toast": {
+      "noTransactions": "No transactions to export",
+      "exportSuccess": "Transactions exported"
+    }
+  },
+  "payouts": {
+    "stats": {
+      "totalPaidOut": "Total Paid Out",
+      "totalPayouts": "Total Payouts",
+      "avgCommission": "Avg Commission",
+      "commissionRate": "Commission Rate"
+    },
+    "filter": {
+      "placeholder": "Filter by Status",
+      "allStatuses": "All Statuses",
+      "pending": "Pending",
+      "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "pagination": {
+      "showingPage": "Showing page {{page}} of {{total}}"
+    },
+    "rejectDialog": {
+      "title": "Reject Payout",
+      "reasonPlaceholder": "Enter a reason for rejection...",
+      "cancelButton": "Cancel",
+      "rejectButton": "Reject Payout"
+    }
+  },
+  "settings": {
+    "title": "Platform Settings",
+    "subtitle": "Manage global configuration, payments, and security protocols",
+    "saveButton": "Save Changes",
+    "toast": {
+      "savedSuccess": "Settings updated successfully",
+      "saveFailed": "Failed to save settings"
+    },
+    "general": {
+      "sectionTitle": "General Information",
+      "sectionDesc": "Basic platform details and branding",
+      "siteName": "Site Name",
+      "supportEmail": "Support Email",
+      "maintenanceMode": "Maintenance Mode",
+      "maintenanceModeDesc": "Temporarily disable access for all users except admins"
+    },
+    "legal": {
+      "sectionTitle": "Legal & Support",
+      "sectionDesc": "External links and policy configs",
+      "privacyUrl": "Privacy Policy URL",
+      "termsUrl": "Terms of Service URL",
+      "helpUrl": "Help Center URL"
+    },
+    "finance": {
+      "sectionTitle": "Finance",
+      "sectionDesc": "Fees & Payouts",
+      "platformFee": "Platform Fee (%)",
+      "platformFeeDesc": "Percentage taken from every transaction",
+      "currency": "Currency",
+      "payoutSchedule": "Payout Schedule",
+      "scheduleWeekly": "Weekly",
+      "scheduleBiweekly": "Bi-Weekly",
+      "scheduleMonthly": "Monthly"
+    },
+    "security": {
+      "sectionTitle": "Security",
+      "sectionDesc": "Access controls",
+      "sessionTimeout": "Session Timeout (Minutes)"
+    },
+    "system": {
+      "sectionTitle": "System",
+      "sectionDesc": "Storage & Limits",
+      "maxUpload": "Max Upload Size (MB)",
+      "maxUploadDesc": "Limit for user file uploads"
+    }
+  }
+}

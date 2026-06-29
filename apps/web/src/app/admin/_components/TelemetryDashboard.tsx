@@ -12,6 +12,7 @@ import {
   Heart,
   ArrowDownRight,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useTelemetryAnalytics } from "@/hooks/useTelemetryAnalytics";
 import { TelemetryCharts } from "./TelemetryCharts";
 
@@ -21,6 +22,7 @@ interface TelemetryDashboardProps {
 
 export const TelemetryDashboard = React.memo(function TelemetryDashboard({ period = "week" }: TelemetryDashboardProps) {
   const { data: analytics, isLoading, error } = useTelemetryAnalytics(period);
+  const { t } = useTranslation("platform_owner");
 
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ color: string; name: string; value: number }>; label?: string }) => {
     if (active && payload && payload.length) {
@@ -67,9 +69,9 @@ export const TelemetryDashboard = React.memo(function TelemetryDashboard({ perio
             <Eye className="h-5 w-5 text-amber-600" />
           </div>
           <div>
-            <p className="font-medium text-amber-800">Telemetry data unavailable</p>
+            <p className="font-medium text-amber-800">{t("telemetry.unavailableTitle")}</p>
             <p className="text-sm text-amber-600">
-              Backend telemetry API not yet configured. Events are being collected locally.
+              {t("telemetry.unavailableDesc")}
             </p>
           </div>
         </CardContent>
@@ -90,10 +92,10 @@ export const TelemetryDashboard = React.memo(function TelemetryDashboard({ perio
   const formatPercent = (value: number) => `${Math.round((value || 0) * 100)}%`;
 
   const telemetryStats = [
-    { label: "Daily Users", value: (metrics.dau || 0).toLocaleString(), subtext: "Active within 24h", icon: Users, color: "text-blue-600", bg: "bg-blue-50", blobColor: "bg-blue-500" },
-    { label: "Weekly Users", value: (metrics.wau || 0).toLocaleString(), subtext: "Active past 7 days", icon: Calendar, color: "text-emerald-600", bg: "bg-emerald-50", blobColor: "bg-emerald-500" },
-    { label: "Retention Rate", value: formatPercent(metrics.retentionRate || 0), subtext: "Returning users", icon: Heart, color: "text-rose-600", bg: "bg-rose-50", blobColor: "bg-rose-500" },
-    { label: "Avg Duration", value: formatDuration(metrics.avgSessionDuration || 0), subtext: "Time on site", icon: Clock, color: "text-amber-600", bg: "bg-amber-50", blobColor: "bg-amber-500" },
+    { label: t("telemetry.stats.dailyUsers"), value: (metrics.dau || 0).toLocaleString(), subtext: t("telemetry.stats.activeWithin24h"), icon: Users, color: "text-blue-600", bg: "bg-blue-50", blobColor: "bg-blue-500" },
+    { label: t("telemetry.stats.weeklyUsers"), value: (metrics.wau || 0).toLocaleString(), subtext: t("telemetry.stats.activePast7Days"), icon: Calendar, color: "text-emerald-600", bg: "bg-emerald-50", blobColor: "bg-emerald-500" },
+    { label: t("telemetry.stats.retentionRate"), value: formatPercent(metrics.retentionRate || 0), subtext: t("telemetry.stats.returningUsers"), icon: Heart, color: "text-rose-600", bg: "bg-rose-50", blobColor: "bg-rose-500" },
+    { label: t("telemetry.stats.avgDuration"), value: formatDuration(metrics.avgSessionDuration || 0), subtext: t("telemetry.stats.timeOnSite"), icon: Clock, color: "text-amber-600", bg: "bg-amber-50", blobColor: "bg-amber-500" },
   ];
 
   return (
@@ -119,10 +121,10 @@ export const TelemetryDashboard = React.memo(function TelemetryDashboard({ perio
       {/* Engagement Overview */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Page Views", value: (metrics.totalPageViews || 0).toLocaleString(), icon: Eye, bg: "bg-slate-100", text: "text-slate-600" },
-          { label: "Pages/Session", value: (metrics.pagesPerSession || 0).toFixed(1), icon: FileText, bg: "bg-indigo-50", text: "text-indigo-600" },
-          { label: "Bounce Rate", value: formatPercent(metrics.bounceRate || 0), icon: ArrowDownRight, bg: "bg-orange-50", text: "text-orange-600" },
-          { label: "Completion", value: "High", icon: CheckCircle, bg: "bg-green-50", text: "text-green-600" },
+          { label: t("telemetry.engagement.pageViews"), value: (metrics.totalPageViews || 0).toLocaleString(), icon: Eye, bg: "bg-slate-100", text: "text-slate-600" },
+          { label: t("telemetry.engagement.pagesPerSession"), value: (metrics.pagesPerSession || 0).toFixed(1), icon: FileText, bg: "bg-indigo-50", text: "text-indigo-600" },
+          { label: t("telemetry.engagement.bounceRate"), value: formatPercent(metrics.bounceRate || 0), icon: ArrowDownRight, bg: "bg-orange-50", text: "text-orange-600" },
+          { label: t("telemetry.engagement.completion"), value: t("telemetry.engagement.completionValue"), icon: CheckCircle, bg: "bg-green-50", text: "text-green-600" },
         ].map((item, i) => (
           <div key={i} className="flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-2xl  hover:shadow-md transition-shadow">
             <div className={`p-3 rounded-full ${item.bg} ${item.text}`}>

@@ -8,6 +8,7 @@ import {
   XCircle,
   MoreVertical,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,6 +27,8 @@ interface QuestionCardProps {
 }
 
 export function QuestionCard({ question, onEdit, onDelete, onToggleActive }: QuestionCardProps) {
+  const { t } = useTranslation("platform_owner");
+
   return (
     <motion.div
       key={question.id}
@@ -43,11 +46,11 @@ export function QuestionCard({ question, onEdit, onDelete, onToggleActive }: Que
           <div className="md:mt-2">
             {question.isActive ? (
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-                Active
+                {t("questions.card.active")}
               </span>
             ) : (
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                Inactive
+                {t("questions.card.inactive")}
               </span>
             )}
           </div>
@@ -64,7 +67,7 @@ export function QuestionCard({ question, onEdit, onDelete, onToggleActive }: Que
             </Badge>
             {question.isSubQuestion && (
               <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50 rounded-lg">
-                Sub-Question
+                {t("questions.card.subQuestion")}
               </Badge>
             )}
           </div>
@@ -96,14 +99,14 @@ export function QuestionCard({ question, onEdit, onDelete, onToggleActive }: Que
             onClick={() => onEdit(question)}
           >
             <Edit className="h-4 w-4 mr-2" />
-            Edit
+            {t("questions.card.editButton")}
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="w-full justify-start md:justify-center rounded-xl text-gray-400 hover:text-gray-600">
                 <MoreVertical className="h-4 w-4 mr-2 md:mr-0" />
-                <span className="md:hidden">More Options</span>
+                <span className="md:hidden">{t("questions.card.moreOptions")}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="rounded-xl p-2 w-48">
@@ -114,12 +117,12 @@ export function QuestionCard({ question, onEdit, onDelete, onToggleActive }: Que
                 {question.isActive ? (
                   <>
                     <XCircle className="h-4 w-4 mr-2 text-orange-500" />
-                    Deactivate
+                    {t("questions.card.deactivate")}
                   </>
                 ) : (
                   <>
                     <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                    Activate
+                    {t("questions.card.activate")}
                   </>
                 )}
               </DropdownMenuItem>
@@ -128,7 +131,7 @@ export function QuestionCard({ question, onEdit, onDelete, onToggleActive }: Que
                 className="rounded-lg text-red-600 focus:text-red-700 cursor-pointer"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+                {t("questions.card.delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

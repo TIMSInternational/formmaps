@@ -53,6 +53,7 @@ import { toast } from "sonner";
 
 export default function SchoolsPage() {
   const { t } = useTranslation();
+  const { t: tPO } = useTranslation("platform_owner");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
@@ -269,7 +270,7 @@ export default function SchoolsPage() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search schools..."
+              placeholder={tPO("schools.searchPlaceholder")}
               className="pl-10"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -282,13 +283,13 @@ export default function SchoolsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50/50">
-                <TableHead>Name</TableHead>
-                <TableHead>Admin</TableHead>
-                <TableHead>Students</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Contract End</TableHead>
-                <TableHead>Video</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{tPO("schools.table.name")}</TableHead>
+                <TableHead>{tPO("schools.table.admin")}</TableHead>
+                <TableHead>{tPO("schools.table.students")}</TableHead>
+                <TableHead>{tPO("schools.table.status")}</TableHead>
+                <TableHead>{tPO("schools.table.contractEnd")}</TableHead>
+                <TableHead>{tPO("schools.table.video")}</TableHead>
+                <TableHead className="text-right">{tPO("schools.table.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -297,7 +298,7 @@ export default function SchoolsPage() {
                   <TableCell colSpan={7} className="h-24 text-center">
                     <div className="flex justify-center items-center gap-2">
                       <Clock className="animate-spin h-5 w-5 text-gray-400" />
-                      <span className="text-gray-500">Loading schools...</span>
+                      <span className="text-gray-500">{tPO("schools.loadingSchools")}</span>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -307,7 +308,7 @@ export default function SchoolsPage() {
                     colSpan={7}
                     className="h-24 text-center text-gray-500"
                   >
-                    No schools found. Invite one to get started!
+                    {tPO("schools.noSchoolsFound")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -361,7 +362,7 @@ export default function SchoolsPage() {
                     <TableCell>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleToggleVideo(school); }}
-                        title={school.videoCallsEnabled ? "Disable video calls" : "Enable video calls"}
+                        title={school.videoCallsEnabled ? tPO("schools.videoOnTitle") : tPO("schools.videoOffTitle")}
                         className={cn(
                           "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors",
                           school.videoCallsEnabled
@@ -370,7 +371,7 @@ export default function SchoolsPage() {
                         )}
                       >
                         <Video className="h-3 w-3" />
-                        {school.videoCallsEnabled ? "On" : "Off"}
+                        {school.videoCallsEnabled ? tPO("schools.videoOn") : tPO("schools.videoOff")}
                       </button>
                     </TableCell>
                     <TableCell className="text-right">
@@ -382,7 +383,7 @@ export default function SchoolsPage() {
                           onClick={(e) => { e.stopPropagation(); handleResendInvite(school); }}
                         >
                           <Mail className="mr-1.5 h-3.5 w-3.5" />
-                          Resend
+                          {tPO("schools.resend")}
                         </Button>
                       )}
                     </TableCell>
@@ -404,7 +405,7 @@ export default function SchoolsPage() {
             {t("common.previous", "Previous")}
           </Button>
           <div className="text-sm text-gray-500">
-            Page {page} of {totalPages || 1}
+            {tPO("schools.pagination.pageOf", { page, total: totalPages || 1 })}
           </div>
           <Button
             variant="outline"
