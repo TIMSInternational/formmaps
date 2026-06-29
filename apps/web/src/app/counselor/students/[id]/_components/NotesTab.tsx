@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { MessageSquare, Send, Trash2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +31,7 @@ interface NotesTabProps {
 }
 
 export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabProps) {
+  const { t } = useTranslation("counselor");
   const [newNote, setNewNote] = useState("");
   const [noteType, setNoteType] = useState<NoteType>("general");
 
@@ -47,7 +49,7 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <MessageSquare className="h-4 w-4 text-emerald-600" />
-            Add Note
+            {t("notes.addNote", "Add Note")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -59,16 +61,16 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="general">General</SelectItem>
-              <SelectItem value="meeting">Meeting</SelectItem>
-              <SelectItem value="follow_up">Follow Up</SelectItem>
-              <SelectItem value="academic">Academic</SelectItem>
-              <SelectItem value="career">Career</SelectItem>
-              <SelectItem value="personal">Personal</SelectItem>
+              <SelectItem value="general">{t("notes.general", "General")}</SelectItem>
+              <SelectItem value="meeting">{t("notes.meeting", "Meeting")}</SelectItem>
+              <SelectItem value="follow_up">{t("notes.followUp", "Follow Up")}</SelectItem>
+              <SelectItem value="academic">{t("notes.academic", "Academic")}</SelectItem>
+              <SelectItem value="career">{t("notes.career", "Career")}</SelectItem>
+              <SelectItem value="personal">{t("notes.personal", "Personal")}</SelectItem>
             </SelectContent>
           </Select>
           <Textarea
-            placeholder="Type your note here..."
+            placeholder={t("notes.placeholder", "Type your note here...")}
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
             rows={3}
@@ -80,7 +82,7 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
             className="gap-2"
           >
             <Send className="h-4 w-4" />
-            {createNote.isPending ? "Saving\u2026" : "Save Note"}
+            {createNote.isPending ? t("notes.saving", "Saving…") : t("notes.saveNote", "Save Note")}
           </Button>
         </CardContent>
       </Card>
@@ -88,13 +90,13 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            Note History ({notes.length})
+            {t("notes.historyTitle", { n: notes.length })}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {notes.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-8">
-              No counselor notes yet for this student.
+              {t("notes.noNotes", "No counselor notes yet for this student.")}
             </p>
           ) : (
             <div className="space-y-3">
@@ -107,7 +109,7 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
                       </Badge>
                       {note.isPrivate && (
                         <Badge variant="secondary" className="bg-amber-100 text-amber-700 text-xs">
-                          Private
+                          {t("notes.private", "Private")}
                         </Badge>
                       )}
                     </div>
@@ -129,7 +131,7 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
                   {note.followUpDate && (
                     <p className="text-xs text-amber-600 flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      Follow-up: {format(new Date(note.followUpDate), "MMM d, yyyy")}
+                      {t("notes.followUpLabel", "Follow-up:")} {format(new Date(note.followUpDate), "MMM d, yyyy")}
                     </p>
                   )}
                 </div>

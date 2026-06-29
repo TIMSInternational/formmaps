@@ -59,7 +59,7 @@ interface NoteItem {
 interface BriefingResponse { data?: { briefing?: string; urgentActions?: { title: string; description: string; impact: string }[] } }
 
 export default function CounselorDashboardPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("counselor");
   const [rightTab, setRightTab] = useState<"followups" | "requests">("followups");
   const [upcomingSessions, setUpcomingSessions] = useState<CounselorSession[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
@@ -105,13 +105,13 @@ export default function CounselorDashboardPage() {
       {/* Page Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-          {t("counselor.dashboard.badge", "Counselor")}
+          {t("dashboard.badge", "Counselor")}
         </p>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mt-1">
-          {t("counselor.dashboard.title", "Counselor Overview")}
+          {t("dashboard.title", "Counselor Overview")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {t("counselor.dashboard.summary", "Your caseload summary and upcoming actions.")}
+          {t("dashboard.summary", "Your caseload summary and upcoming actions.")}
         </p>
       </motion.div>
 
@@ -134,10 +134,10 @@ export default function CounselorDashboardPage() {
         className="grid grid-cols-2 md:grid-cols-4 gap-3"
       >
         {[
-          { label: t("counselor.dashboard.myStudents", "My Students"), href: "/counselor/students", icon: Users, color: "text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100" },
-          { label: t("counselor.dashboard.academicGaps", "Academic Gaps"), href: "/counselor/academic-gaps", icon: TrendingDown, color: "text-orange-600 bg-orange-50 hover:bg-orange-100 border-orange-100" },
-          { label: t("counselor.dashboard.evaluations360", "360° Evaluations"), href: "/counselor/evaluations", icon: Radar, color: "text-purple-600 bg-purple-50 hover:bg-purple-100 border-purple-100" },
-          { label: t("counselor.dashboard.alerts", "Alerts"), href: "/counselor/alerts", icon: Bell, color: "text-red-600 bg-red-50 hover:bg-red-100 border-red-100" },
+          { label: t("dashboard.myStudents", "My Students"), href: "/counselor/students", icon: Users, color: "text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-100" },
+          { label: t("dashboard.academicGaps", "Academic Gaps"), href: "/counselor/academic-gaps", icon: TrendingDown, color: "text-orange-600 bg-orange-50 hover:bg-orange-100 border-orange-100" },
+          { label: t("dashboard.evaluations360", "360° Evaluations"), href: "/counselor/evaluations", icon: Radar, color: "text-purple-600 bg-purple-50 hover:bg-purple-100 border-purple-100" },
+          { label: t("dashboard.alerts", "Alerts"), href: "/counselor/alerts", icon: Bell, color: "text-red-600 bg-red-50 hover:bg-red-100 border-red-100" },
         ].map((item) => (
           <Link key={item.href} href={item.href}>
             <Card className={`border cursor-pointer transition-all hover:shadow-md ${item.color}`}>

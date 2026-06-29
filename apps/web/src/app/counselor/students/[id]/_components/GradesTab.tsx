@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { Award, BookOpen } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,8 @@ interface GradesTabProps {
 }
 
 export function GradesTab({ gpaData, transcriptData }: GradesTabProps) {
+  const { t } = useTranslation("counselor");
+
   return (
     <TabsContent value="grades" className="mt-6 space-y-5">
       {/* GPA Card */}
@@ -30,7 +33,7 @@ export function GradesTab({ gpaData, transcriptData }: GradesTabProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Award className="h-4 w-4 text-amber-600" />
-            GPA Summary
+            {t("grades.gpaSummary", "GPA Summary")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -38,20 +41,20 @@ export function GradesTab({ gpaData, transcriptData }: GradesTabProps) {
             <div className="space-y-3">
               <div className="flex gap-8">
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Weighted GPA</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("grades.weightedGpa", "Weighted GPA")}</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {gpaData.gpaWeighted?.toFixed(2) ?? "\u2014"}
+                    {gpaData.gpaWeighted?.toFixed(2) ?? "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Unweighted GPA</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("grades.unweightedGpa", "Unweighted GPA")}</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {gpaData.gpaUnweighted?.toFixed(2) ?? "\u2014"}
+                    {gpaData.gpaUnweighted?.toFixed(2) ?? "—"}
                   </p>
                 </div>
                 {gpaData.classRank && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Class Rank</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("grades.classRank", "Class Rank")}</p>
                     <p className="text-2xl font-bold text-gray-900 mt-1">
                       #{gpaData.classRank}{" "}
                       <span className="text-sm text-gray-400 font-normal">/ {gpaData.classSize}</span>
@@ -60,12 +63,12 @@ export function GradesTab({ gpaData, transcriptData }: GradesTabProps) {
                 )}
               </div>
               <p className="text-xs text-gray-400">
-                Total Credits: {gpaData.totalCredits}
-                {gpaData.computedAt && ` | Last computed: ${format(new Date(gpaData.computedAt), "MMM d, yyyy")}`}
+                {t("grades.totalCredits", "Total Credits:")} {gpaData.totalCredits}
+                {gpaData.computedAt && ` | ${t("grades.lastComputed", "Last computed:")} ${format(new Date(gpaData.computedAt), "MMM d, yyyy")}`}
               </p>
             </div>
           ) : (
-            <p className="text-sm text-gray-400 text-center py-6">No GPA data computed yet.</p>
+            <p className="text-sm text-gray-400 text-center py-6">{t("grades.noGpaData", "No GPA data computed yet.")}</p>
           )}
         </CardContent>
       </Card>
@@ -75,7 +78,7 @@ export function GradesTab({ gpaData, transcriptData }: GradesTabProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <BookOpen className="h-4 w-4 text-indigo-600" />
-            Transcript
+            {t("grades.transcript", "Transcript")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -92,11 +95,11 @@ export function GradesTab({ gpaData, transcriptData }: GradesTabProps) {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="text-xs text-gray-500 uppercase">
-                            <th className="text-left py-1.5 pr-3 font-medium">Code</th>
-                            <th className="text-left py-1.5 pr-3 font-medium">Course</th>
-                            <th className="text-center py-1.5 pr-3 font-medium">Credits</th>
-                            <th className="text-center py-1.5 pr-3 font-medium">Grade</th>
-                            <th className="text-center py-1.5 font-medium">Status</th>
+                            <th className="text-left py-1.5 pr-3 font-medium">{t("grades.colCode", "Code")}</th>
+                            <th className="text-left py-1.5 pr-3 font-medium">{t("grades.colCourse", "Course")}</th>
+                            <th className="text-center py-1.5 pr-3 font-medium">{t("grades.colCredits", "Credits")}</th>
+                            <th className="text-center py-1.5 pr-3 font-medium">{t("grades.colGrade", "Grade")}</th>
+                            <th className="text-center py-1.5 font-medium">{t("grades.colStatus", "Status")}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -111,7 +114,7 @@ export function GradesTab({ gpaData, transcriptData }: GradesTabProps) {
                                 c.grade === "B" || c.grade === "B+" || c.grade === "B-" ? "text-blue-600" :
                                 c.grade === "F" ? "text-red-600" : "text-gray-700"
                               )}>
-                                {c.grade || (c.status === "in_progress" ? "IP" : "\u2014")}
+                                {c.grade || (c.status === "in_progress" ? "IP" : "—")}
                               </td>
                               <td className="py-1.5 text-center">
                                 <Badge variant="secondary" className={cn(
@@ -133,7 +136,7 @@ export function GradesTab({ gpaData, transcriptData }: GradesTabProps) {
             </div>
           ) : (
             <p className="text-sm text-gray-400 text-center py-8">
-              No transcript data available for this student.
+              {t("grades.noTranscript", "No transcript data available for this student.")}
             </p>
           )}
         </CardContent>

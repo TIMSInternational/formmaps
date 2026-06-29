@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CalendarDays, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 
@@ -11,16 +12,17 @@ interface ExtendDeadlinePickerProps {
   onClose: () => void;
 }
 
-const presets = [
-  { label: "1 day", days: 1 },
-  { label: "3 days", days: 3 },
-  { label: "1 week", days: 7 },
-  { label: "2 weeks", days: 14 },
-];
-
 export function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClose }: ExtendDeadlinePickerProps) {
+  const { t } = useTranslation("counselor");
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+
+  const presets = [
+    { label: t("extendDeadline.preset1Day", "1 day"), days: 1 },
+    { label: t("extendDeadline.preset3Days", "3 days"), days: 3 },
+    { label: t("extendDeadline.preset1Week", "1 week"), days: 7 },
+    { label: t("extendDeadline.preset2Weeks", "2 weeks"), days: 14 },
+  ];
 
   const currentDate = currentExpiry ? new Date(currentExpiry) : new Date();
   const isExpired = currentDate < new Date();
@@ -45,13 +47,13 @@ export function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClo
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <CalendarDays style={{ width: 13, height: 13, color: "#065292" }} />
-          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-primary)" }}>Extend Deadline</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("extendDeadline.title", "Extend Deadline")}</span>
           <span style={{
             fontSize: 10, padding: "1px 6px", borderRadius: 3,
             background: isExpired ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.1)",
             color: isExpired ? "#ef4444" : "#065292", fontWeight: 600,
           }}>
-            {isExpired ? "EXPIRED" : `Due ${currentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
+            {isExpired ? t("extendDeadline.expired", "EXPIRED") : t("extendDeadline.due", { date: currentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }) })}
           </span>
         </div>
         <button onClick={onClose} style={{ width: 20, height: 20, borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -60,7 +62,7 @@ export function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClo
       </div>
 
       <div style={{ padding: "8px 12px", display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-        <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", fontWeight: 600 }}>Quick:</span>
+        <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", fontWeight: 600 }}>{t("extendDeadline.quick", "Quick:")}</span>
         {presets.map((p) => (
           <button key={p.days} disabled={isLoading}
             onClick={() => onExtend(p.days)}
@@ -83,7 +85,7 @@ export function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClo
             display: "flex", alignItems: "center", gap: 4,
           }}>
           <CalendarDays style={{ width: 11, height: 11 }} />
-          Pick date
+          {t("extendDeadline.pickDate", "Pick date")}
         </button>
       </div>
 

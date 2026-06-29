@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Users, Filter, Check, Minus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api/apiClient";
+import { useTranslation } from "react-i18next";
 
 interface PipelineStudent {
   id: string;
@@ -22,6 +23,7 @@ interface PipelineStudent {
 
 export function AssessmentPipeline() {
   const router = useRouter();
+  const { t } = useTranslation("counselor");
   const [pipelineGrade, setPipelineGrade] = useState<string>("");
   const [incompleteOnly, setIncompleteOnly] = useState(false);
 
@@ -46,11 +48,11 @@ export function AssessmentPipeline() {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base text-foreground">
             <Users className="h-4 w-4 text-indigo-600" />
-            Assessment Pipeline
+            {t("pipeline.title", "Assessment Pipeline")}
           </CardTitle>
           <Link href="/counselor/students">
             <Button variant="ghost" size="sm" className="text-xs text-indigo-600 hover:bg-indigo-50">
-              View All Students →
+              {t("pipeline.viewAll", "View All Students →")}
             </Button>
           </Link>
         </div>
@@ -62,9 +64,9 @@ export function AssessmentPipeline() {
               onChange={(e) => setPipelineGrade(e.target.value)}
               className="w-full pl-8 pr-3 h-8 text-xs border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-indigo-300"
             >
-              <option value="">All Grades</option>
+              <option value="">{t("pipeline.allGrades", "All Grades")}</option>
               {[7, 8, 9, 10, 11, 12].map((g) => (
-                <option key={g} value={String(g)}>Grade {g}</option>
+                <option key={g} value={String(g)}>{t("pipeline.grade", { n: g })}</option>
               ))}
             </select>
           </div>
@@ -74,7 +76,7 @@ export function AssessmentPipeline() {
             className={`h-8 text-xs ${incompleteOnly ? "bg-indigo-600 hover:bg-indigo-700 text-white" : ""}`}
             onClick={() => setIncompleteOnly(!incompleteOnly)}
           >
-            Incomplete Only
+            {t("pipeline.incompleteOnly", "Incomplete Only")}
           </Button>
         </div>
       </CardHeader>
@@ -88,7 +90,7 @@ export function AssessmentPipeline() {
         ) : !students.length ? (
           <div className="text-center py-12">
             <Users className="h-10 w-10 text-gray-200 mx-auto mb-2" />
-            <p className="text-gray-400 text-sm">No students found.</p>
+            <p className="text-gray-400 text-sm">{t("pipeline.noStudents", "No students found.")}</p>
           </div>
         ) : (
           <>
@@ -96,15 +98,15 @@ export function AssessmentPipeline() {
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-gray-50 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    <th className="pl-5 py-2.5 pr-2">Student</th>
-                    <th className="px-2 py-2.5 w-14">Grade</th>
-                    <th className="px-1.5 py-2.5 text-center w-12" title="Pattern Recognition">Pattern</th>
-                    <th className="px-1.5 py-2.5 text-center w-12" title="Verbal Reasoning">Verbal</th>
-                    <th className="px-1.5 py-2.5 text-center w-12" title="Working Memory">Memory</th>
-                    <th className="px-1.5 py-2.5 text-center w-14" title="Numeric Velocity">Numeric</th>
-                    <th className="px-1.5 py-2.5 text-center w-14" title="Visual Rotation">Rotation</th>
-                    <th className="px-1.5 py-2.5 text-center w-10">MIL</th>
-                    <th className="px-1.5 py-2.5 text-center w-10 pr-5">360°</th>
+                    <th className="pl-5 py-2.5 pr-2">{t("pipeline.colStudent", "Student")}</th>
+                    <th className="px-2 py-2.5 w-14">{t("pipeline.colGrade", "Grade")}</th>
+                    <th className="px-1.5 py-2.5 text-center w-12" title={t("assessments.examPattern", "Pattern Recognition")}>{t("pipeline.colPattern", "Pattern")}</th>
+                    <th className="px-1.5 py-2.5 text-center w-12" title={t("assessments.examVerbal", "Verbal Reasoning")}>{t("pipeline.colVerbal", "Verbal")}</th>
+                    <th className="px-1.5 py-2.5 text-center w-12" title={t("assessments.examMemory", "Working Memory")}>{t("pipeline.colMemory", "Memory")}</th>
+                    <th className="px-1.5 py-2.5 text-center w-14" title={t("assessments.examNumeric", "Numeric Velocity")}>{t("pipeline.colNumeric", "Numeric")}</th>
+                    <th className="px-1.5 py-2.5 text-center w-14" title={t("assessments.examRotation", "Visual Rotation")}>{t("pipeline.colRotation", "Rotation")}</th>
+                    <th className="px-1.5 py-2.5 text-center w-10">{t("pipeline.colMil", "MIL")}</th>
+                    <th className="px-1.5 py-2.5 text-center w-10 pr-5">{t("pipeline.col360", "360°")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -170,7 +172,7 @@ export function AssessmentPipeline() {
             {students.length > 10 && (
               <div className="px-5 py-3 border-t border-gray-100">
                 <Link href="/counselor/students" className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
-                  View All Students →
+                  {t("pipeline.viewAll", "View All Students →")}
                 </Link>
               </div>
             )}

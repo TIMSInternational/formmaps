@@ -26,13 +26,13 @@ export function DashboardStatCards({
   crLoading,
   onRequestsClick,
 }: DashboardStatCardsProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("counselor");
 
   const stats = [
-    { label: t("counselor.dashboard.assignedStudents", "Assigned Students"), value: totalStudents, loading: isLoading, icon: Users, iconColor: "text-indigo-500", iconBg: "bg-indigo-500/10", badge: t("counselor.dashboard.caseload", "Caseload") },
-    { label: t("counselor.dashboard.pendingFollowups", "Pending Follow-ups"), value: pendingFollowUps, loading: dashLoading, icon: CalendarClock, iconColor: "text-amber-500", iconBg: "bg-amber-500/10", badge: t("common.due", "Due") },
-    { label: t("counselor.dashboard.overdueFollowups", "Overdue Follow-ups"), value: overdueFollowUps, loading: dashLoading, icon: AlertTriangle, iconColor: "text-red-500", iconBg: "bg-red-500/10", badge: "Action" },
-    { label: t("counselor.dashboard.changeRequests", "Change Requests"), value: pendingCRCount, loading: crLoading, icon: Send, iconColor: "text-orange-500", iconBg: "bg-orange-500/10", badge: pendingCRCount > 0 ? `${pendingCRCount} pending` : undefined, onClick: onRequestsClick },
+    { label: t("dashboard.assignedStudents", "Assigned Students"), value: totalStudents, loading: isLoading, icon: Users, iconColor: "text-indigo-500", iconBg: "bg-indigo-500/10", badge: t("dashboard.caseload", "Caseload") },
+    { label: t("dashboard.pendingFollowups", "Pending Follow-ups"), value: pendingFollowUps, loading: dashLoading, icon: CalendarClock, iconColor: "text-amber-500", iconBg: "bg-amber-500/10", badge: t("common.due", "Due") },
+    { label: t("dashboard.overdueFollowups", "Overdue Follow-ups"), value: overdueFollowUps, loading: dashLoading, icon: AlertTriangle, iconColor: "text-red-500", iconBg: "bg-red-500/10", badge: t("dashboard.action", "Action") },
+    { label: t("dashboard.changeRequests", "Change Requests"), value: pendingCRCount, loading: crLoading, icon: Send, iconColor: "text-orange-500", iconBg: "bg-orange-500/10", badge: pendingCRCount > 0 ? t("dashboard.pending", { n: pendingCRCount }) : undefined, onClick: onRequestsClick },
   ];
 
   return (

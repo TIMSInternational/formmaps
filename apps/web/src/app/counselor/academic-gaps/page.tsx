@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import { Users, AlertTriangle, AlertCircle, CheckCircle2 } from "lucide-react";
 import {
@@ -17,6 +18,7 @@ import { StudentDetailView } from "./_components/StudentDetailView";
 const severityOrder: Record<string, number> = { off_track: 0, at_risk: 1, on_track: 2 };
 
 export default function AcademicGapsPage() {
+  const { t } = useTranslation("counselor");
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -59,10 +61,10 @@ export default function AcademicGapsPage() {
       {/* Summary Stat Cards */}
       {summary && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-          <StatCard label="Total Students" value={summary.summary?.totalStudents ?? 0} color="#065292" icon={Users} delay={0.05} />
-          <StatCard label="Off Track" value={summary.summary?.offTrack ?? 0} color="#ef4444" icon={AlertCircle} delay={0.1} />
-          <StatCard label="At Risk" value={summary.summary?.atRisk ?? 0} color="#f59e0b" icon={AlertTriangle} delay={0.15} />
-          <StatCard label="On Track" value={summary.summary?.onTrack ?? 0} color="#10b981" icon={CheckCircle2} delay={0.2} />
+          <StatCard label={t("academicGaps.totalStudents", "Total Students")} value={summary.summary?.totalStudents ?? 0} color="#065292" icon={Users} delay={0.05} />
+          <StatCard label={t("academicGaps.offTrack", "Off Track")} value={summary.summary?.offTrack ?? 0} color="#ef4444" icon={AlertCircle} delay={0.1} />
+          <StatCard label={t("academicGaps.atRisk", "At Risk")} value={summary.summary?.atRisk ?? 0} color="#f59e0b" icon={AlertTriangle} delay={0.15} />
+          <StatCard label={t("academicGaps.onTrack", "On Track")} value={summary.summary?.onTrack ?? 0} color="#10b981" icon={CheckCircle2} delay={0.2} />
         </div>
       )}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import { format } from "date-fns";
 import {
@@ -46,6 +47,7 @@ import {
 import type { CounselorSession } from "@/services/counselorSessionService";
 
 export default function CounselorSessionsPage() {
+  const { t } = useTranslation("counselor");
   const [sessions, setSessions] = useState<CounselorSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("upcoming");
@@ -76,7 +78,7 @@ export default function CounselorSessionsPage() {
         cancelled: res.cancelled,
       });
     } catch {
-      toast.error("Failed to load sessions");
+      toast.error(t("sessions.failedToLoad", "Failed to load sessions"));
     } finally {
       setIsLoading(false);
     }
@@ -91,11 +93,11 @@ export default function CounselorSessionsPage() {
     setIsProcessing(true);
     try {
       await completeCounselorSession(selected.id, counselorNotes);
-      toast.success("Session marked as completed");
+      toast.success(t("sessions.markedComplete", "Session marked as completed"));
       setCompleteOpen(false);
       fetchSessions();
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e: unknown) {
+      toast.error((e as Error).message);
     } finally {
       setIsProcessing(false);
     }
@@ -106,39 +108,39 @@ export default function CounselorSessionsPage() {
     setIsProcessing(true);
     try {
       await cancelCounselorSession(selected.id, cancelReason);
-      toast.success("Session cancelled");
+      toast.success(t("sessions.cancelled", "Session cancelled"));
       setCancelOpen(false);
       fetchSessions();
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e: unknown) {
+      toast.error((e as Error).message);
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleReschedule = async (sessionId: string) => {
-    if (!newDate || !newTime) { toast.error("Please select a date and time"); return; }
+    if (!newDate || !newTime) { toast.error(t("sessions.selectDateTime", "Please select a date and time")); return; }
     setIsProcessing(true);
     try {
       const startTime = new Date(`${newDate}T${newTime}`);
       const endTime = new Date(startTime.getTime() + 30 * 60000);
       await rescheduleCounselorSession(sessionId, startTime.toISOString(), endTime.toISOString());
-      toast.success("Session rescheduled");
+      toast.success(t("sessions.rescheduled", "Session rescheduled"));
       setRescheduleId(null);
       setNewDate("");
       setNewTime("");
       fetchSessions();
-    } catch (e: any) {
-      toast.error(e.message || "Failed to reschedule");
+    } catch (e: unknown) {
+      toast.error((e as Error).message || t("sessions.failedToReschedule", "Failed to reschedule"));
     } finally {
       setIsProcessing(false);
     }
   };
 
   const StatusBadge = ({ status }: { status: string }) => {
-    if (status === "confirmed") return <Badge className="bg-emerald-100 text-emerald-700 border-0"><CheckCircle2 className="h-3 w-3 mr-1" />Upcoming</Badge>;
-    if (status === "completed") return <Badge className="bg-blue-100 text-blue-700 border-0"><CheckCircle2 className="h-3 w-3 mr-1" />Completed</Badge>;
-    if (status === "cancelled") return <Badge className="bg-red-100 text-red-700 border-0"><XCircle className="h-3 w-3 mr-1" />Cancelled</Badge>;
+    if (status === "confirmed") return <Badge className="bg-emerald-100 text-emerald-700 border-0"><CheckCircle2 className="h-3 w-3 mr-1" />{t("sessions.statusUpcoming", "Upcoming")}</Badge>;
+    if (status === "completed") return <Badge className="bg-blue-100 text-blue-700 border-0"><CheckCircle2 className="h-3 w-3 mr-1" />{t("sessions.statusCompleted", "Completed")}</Badge>;
+    if (status === "cancelled") return <Badge className="bg-red-100 text-red-700 border-0"><XCircle className="h-3 w-3 mr-1" />{t("sessions.statusCancelled", "Cancelled")}</Badge>;
     return <Badge variant="secondary">{status}</Badge>;
   };
 
@@ -152,27 +154,29 @@ export default function CounselorSessionsPage() {
     } catch { return { date: "TBD", time: "TBD" }; }
   };
 
+  const statItems = [
+    { labelKey: "sessions.statTotal", fallback: "Total", value: stats.total, icon: CalendarDays, iconColor: "text-slate-500", iconBg: "bg-slate-500/10" },
+    { labelKey: "sessions.statUpcoming", fallback: "Upcoming", value: stats.upcoming, icon: Clock, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
+    { labelKey: "sessions.statCompleted", fallback: "Completed", value: stats.completed, icon: CheckCircle2, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
+    { labelKey: "sessions.statCancelled", fallback: "Cancelled", value: stats.cancelled, icon: XCircle, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
+  ];
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Scheduling</p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mt-1">My Sessions</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage counseling sessions with your students</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("sessions.scheduling", "Scheduling")}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mt-1">{t("sessions.title", "My Sessions")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("sessions.subtitle", "Manage counseling sessions with your students")}</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Total", value: stats.total, icon: CalendarDays, iconColor: "text-slate-500", iconBg: "bg-slate-500/10" },
-          { label: "Upcoming", value: stats.upcoming, icon: Clock, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
-          { label: "Completed", value: stats.completed, icon: CheckCircle2, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
-          { label: "Cancelled", value: stats.cancelled, icon: XCircle, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
-        ].map((stat, i) => (
+        {statItems.map((stat, i) => (
           <motion.div
-            key={stat.label}
+            key={stat.labelKey}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
@@ -182,7 +186,7 @@ export default function CounselorSessionsPage() {
               <div className={`h-9 w-9 rounded-lg ${stat.iconBg} flex items-center justify-center`}>
                 <stat.icon className={`h-4 w-4 ${stat.iconColor}`} strokeWidth={1.8} />
               </div>
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t(stat.labelKey, stat.fallback)}</span>
             </div>
             <p className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</p>
           </motion.div>
@@ -192,10 +196,14 @@ export default function CounselorSessionsPage() {
       {/* Sessions List */}
       <div className="dash-card overflow-hidden">
         <div className="px-5 py-4 border-b border-[var(--border)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <span className="text-sm font-semibold text-foreground">Session List</span>
+          <span className="text-sm font-semibold text-foreground">{t("sessions.list", "Session List")}</span>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="p-1 rounded-xl">
-              {[["upcoming", `Upcoming (${upcoming.length})`], ["past", `Past (${past.length})`], ["all", `All (${sessions.length})`]].map(([val, label]) => (
+              {[
+                ["upcoming", t("sessions.tabUpcoming", { n: upcoming.length })],
+                ["past", t("sessions.tabPast", { n: past.length })],
+                ["all", t("sessions.tabAll", { n: sessions.length })],
+              ].map(([val, label]) => (
                 <TabsTrigger key={val} value={val} className="rounded-lg px-3 py-1.5 text-sm font-medium">
                   {label}
                 </TabsTrigger>
@@ -212,9 +220,9 @@ export default function CounselorSessionsPage() {
           ) : displayed.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4">
               <Calendar className="h-10 w-10 text-muted-foreground mb-4 opacity-40" />
-              <h3 className="text-base font-semibold text-foreground mb-1">No {activeTab} sessions</h3>
+              <h3 className="text-base font-semibold text-foreground mb-1">{t("sessions.noSessions", { tab: activeTab })}</h3>
               <p className="text-muted-foreground text-center max-w-sm text-sm">
-                {activeTab === "upcoming" ? "No upcoming counseling sessions scheduled." : "No sessions in this category."}
+                {activeTab === "upcoming" ? t("sessions.noUpcoming", "No upcoming counseling sessions scheduled.") : t("sessions.noneInCategory", "No sessions in this category.")}
               </p>
             </div>
           ) : (
@@ -236,7 +244,7 @@ export default function CounselorSessionsPage() {
                             {session.studentName?.charAt(0) || "S"}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="font-semibold text-foreground truncate">{session.studentName || "Student"}</h3>
+                            <h3 className="font-semibold text-foreground truncate">{session.studentName || t("sessions.student", "Student")}</h3>
                             <p className="text-xs text-muted-foreground truncate">{session.studentEmail}</p>
                             <div className="flex items-center gap-2 mt-1">
                               <Badge variant="secondary" className="text-xs">{session.topic}</Badge>
@@ -262,7 +270,7 @@ export default function CounselorSessionsPage() {
                               {session.meetingLink && (
                                 <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 px-3 text-xs rounded-lg" asChild>
                                   <a href={session.meetingLink} target="_blank" rel="noopener noreferrer">
-                                    <Video className="h-3.5 w-3.5 mr-1" />Join
+                                    <Video className="h-3.5 w-3.5 mr-1" />{t("sessions.join", "Join")}
                                   </a>
                                 </Button>
                               )}
@@ -273,7 +281,7 @@ export default function CounselorSessionsPage() {
                                 onClick={() => { setSelected(session); setCounselorNotes(""); setCompleteOpen(true); }}
                               >
                                 <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                                Complete
+                                {t("sessions.complete", "Complete")}
                               </Button>
                               <Button
                                 size="sm"
@@ -290,7 +298,7 @@ export default function CounselorSessionsPage() {
                                 }}
                               >
                                 <CalendarClock className="h-3.5 w-3.5 mr-1" />
-                                Reschedule
+                                {t("sessions.reschedule", "Reschedule")}
                               </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -303,7 +311,7 @@ export default function CounselorSessionsPage() {
                                     className="text-red-600 focus:bg-red-50 cursor-pointer text-sm"
                                     onClick={() => { setSelected(session); setCancelReason(""); setCancelOpen(true); }}
                                   >
-                                    <X className="h-3.5 w-3.5 mr-2" />Cancel Session
+                                    <X className="h-3.5 w-3.5 mr-2" />{t("sessions.cancelSession", "Cancel Session")}
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -317,14 +325,14 @@ export default function CounselorSessionsPage() {
                           {session.notes && (
                             <div className="pl-3 border-l-2 border-[var(--border)]">
                               <p className="text-xs text-muted-foreground">
-                                <span className="font-medium text-foreground">Student notes: </span>{session.notes}
+                                <span className="font-medium text-foreground">{t("sessions.studentNotes", "Student notes:")} </span>{session.notes}
                               </p>
                             </div>
                           )}
                           {session.counselorNotes && (
                             <div className="pl-3 border-l-2 border-blue-300">
                               <p className="text-xs text-muted-foreground">
-                                <span className="font-medium text-blue-600">Your notes: </span>{session.counselorNotes}
+                                <span className="font-medium text-blue-600">{t("sessions.yourNotes", "Your notes:")} </span>{session.counselorNotes}
                               </p>
                             </div>
                           )}
@@ -333,7 +341,7 @@ export default function CounselorSessionsPage() {
 
                       {rescheduleId === session.id && (
                         <div className="mt-3 ml-[3.75rem] p-3 rounded-lg border border-[var(--border)] bg-[var(--admin-bg-hover,rgba(0,0,0,0.02))]">
-                          <p className="text-xs font-medium text-foreground mb-2">Reschedule to:</p>
+                          <p className="text-xs font-medium text-foreground mb-2">{t("sessions.rescheduleTo", "Reschedule to:")}</p>
                           <div className="flex items-center gap-2 flex-wrap">
                             <Input
                               type="date"
@@ -354,7 +362,7 @@ export default function CounselorSessionsPage() {
                               onClick={() => handleReschedule(session.id)}
                             >
                               {isProcessing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <CalendarClock className="h-3 w-3 mr-1" />}
-                              Confirm
+                              {t("sessions.confirm", "Confirm")}
                             </Button>
                             <Button
                               size="sm"
@@ -362,7 +370,7 @@ export default function CounselorSessionsPage() {
                               className="h-8 px-2 text-xs rounded-lg"
                               onClick={() => setRescheduleId(null)}
                             >
-                              Cancel
+                              {t("sessions.cancelAction", "Cancel")}
                             </Button>
                           </div>
                         </div>
@@ -380,16 +388,16 @@ export default function CounselorSessionsPage() {
       <Dialog open={completeOpen} onOpenChange={setCompleteOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Mark Session as Completed</DialogTitle>
-            <DialogDescription>Add any post-session notes for {selected?.studentName}.</DialogDescription>
+            <DialogTitle>{t("sessions.completeDialogTitle", "Mark Session as Completed")}</DialogTitle>
+            <DialogDescription>{t("sessions.completeDialogDesc", { name: selected?.studentName })}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Label className="mb-2 block text-sm font-medium flex items-center gap-1.5">
               <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-              Counselor Notes (optional)
+              {t("sessions.counselorNotesLabel", "Counselor Notes (optional)")}
             </Label>
             <Textarea
-              placeholder="Session summary, action items, follow-ups..."
+              placeholder={t("sessions.counselorNotesPlaceholder", "Session summary, action items, follow-ups...")}
               value={counselorNotes}
               onChange={e => setCounselorNotes(e.target.value)}
               rows={4}
@@ -397,10 +405,10 @@ export default function CounselorSessionsPage() {
             />
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setCompleteOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setCompleteOpen(false)}>{t("sessions.cancelAction", "Cancel")}</Button>
             <Button onClick={handleComplete} disabled={isProcessing} className="bg-blue-600 hover:bg-blue-700 text-white">
               {isProcessing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-              Mark Complete
+              {t("sessions.markComplete", "Mark Complete")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -410,13 +418,13 @@ export default function CounselorSessionsPage() {
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Cancel Session</DialogTitle>
-            <DialogDescription>Cancel session with <span className="font-medium">{selected?.studentName}</span>?</DialogDescription>
+            <DialogTitle>{t("sessions.cancelDialogTitle", "Cancel Session")}</DialogTitle>
+            <DialogDescription>{t("sessions.cancelDialogDesc", { name: selected?.studentName })}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Label className="mb-2 block text-sm font-medium">Reason for Cancellation</Label>
+            <Label className="mb-2 block text-sm font-medium">{t("sessions.cancelReasonLabel", "Reason for Cancellation")}</Label>
             <Textarea
-              placeholder="Please let the student know why you're cancelling..."
+              placeholder={t("sessions.cancelReasonPlaceholder", "Please let the student know why you're cancelling...")}
               value={cancelReason}
               onChange={e => setCancelReason(e.target.value)}
               rows={3}
@@ -424,9 +432,9 @@ export default function CounselorSessionsPage() {
             />
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setCancelOpen(false)}>Keep Session</Button>
+            <Button variant="outline" onClick={() => setCancelOpen(false)}>{t("sessions.keepSession", "Keep Session")}</Button>
             <Button variant="destructive" onClick={handleCancel} disabled={isProcessing}>
-              {isProcessing ? "Cancelling..." : "Cancel Session"}
+              {isProcessing ? t("sessions.cancelling", "Cancelling...") : t("sessions.cancelSession", "Cancel Session")}
             </Button>
           </DialogFooter>
         </DialogContent>
