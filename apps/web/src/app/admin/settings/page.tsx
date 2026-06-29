@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +57,7 @@ interface AdminSettings {
 export default function AdminSettingsPage() {
   const router = useRouter();
   const { isAdmin, loading: authLoading } = useAdminAccess();
+  const { t } = useTranslation("platform_owner");
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -102,9 +104,9 @@ export default function AdminSettingsPage() {
         method: "PUT",
         data: settings,
       });
-      toast.success("Settings updated successfully");
+      toast.success(t("settings.toast.savedSuccess"));
     } catch (error: any) {
-      toast.error(error?.message || "Failed to save settings");
+      toast.error(error?.message || t("settings.toast.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -131,10 +133,10 @@ export default function AdminSettingsPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
             <h1 className="text-4xl font-bold tracking-tight text-gray-900">
-              Platform Settings
+              {t("settings.title")}
             </h1>
             <p className="text-lg text-gray-500 font-medium">
-              Manage global configuration, payments, and security protocols
+              {t("settings.subtitle")}
             </p>
           </div>
           <Button
@@ -143,7 +145,7 @@ export default function AdminSettingsPage() {
             className="hidden md:flex bg-gray-900 hover:bg-gray-800 text-white rounded-xl shadow-sm px-6 h-12"
           >
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Save Changes
+            {t("settings.saveButton")}
           </Button>
         </div>
 
@@ -159,15 +161,15 @@ export default function AdminSettingsPage() {
                   <Globe className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">General Information</h2>
-                  <p className="text-sm text-gray-500">Basic platform details and branding</p>
+                  <h2 className="text-xl font-bold text-gray-900">{t("settings.general.sectionTitle")}</h2>
+                  <p className="text-sm text-gray-500">{t("settings.general.sectionDesc")}</p>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-gray-700 font-medium">Site Name</Label>
+                    <Label className="text-gray-700 font-medium">{t("settings.general.siteName")}</Label>
                     <Input
                       value={settings.general.siteName}
                       onChange={(e) => updateSetting('general', 'siteName', e.target.value)}
@@ -175,7 +177,7 @@ export default function AdminSettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-gray-700 font-medium">Support Email</Label>
+                    <Label className="text-gray-700 font-medium">{t("settings.general.supportEmail")}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
@@ -190,8 +192,8 @@ export default function AdminSettingsPage() {
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <div className="space-y-0.5">
-                    <Label className="text-base font-semibold text-gray-900">Maintenance Mode</Label>
-                    <p className="text-sm text-gray-500">Temporarily disable access for all users except admins</p>
+                    <Label className="text-base font-semibold text-gray-900">{t("settings.general.maintenanceMode")}</Label>
+                    <p className="text-sm text-gray-500">{t("settings.general.maintenanceModeDesc")}</p>
                   </div>
                   <Switch
                     checked={settings.general.maintenanceMode}
@@ -208,14 +210,14 @@ export default function AdminSettingsPage() {
                   <FileText className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Legal & Support</h2>
-                  <p className="text-sm text-gray-500">External links and policy configs</p>
+                  <h2 className="text-xl font-bold text-gray-900">{t("settings.legal.sectionTitle")}</h2>
+                  <p className="text-sm text-gray-500">{t("settings.legal.sectionDesc")}</p>
                 </div>
               </div>
 
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <Label className="text-gray-700 font-medium">Privacy Policy URL</Label>
+                  <Label className="text-gray-700 font-medium">{t("settings.legal.privacyUrl")}</Label>
                   <Input
                     value={settings.legal.privacyUrl}
                     onChange={(e) => updateSetting('legal', 'privacyUrl', e.target.value)}
@@ -224,7 +226,7 @@ export default function AdminSettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-gray-700 font-medium">Terms of Service URL</Label>
+                  <Label className="text-gray-700 font-medium">{t("settings.legal.termsUrl")}</Label>
                   <Input
                     value={settings.legal.termsUrl}
                     onChange={(e) => updateSetting('legal', 'termsUrl', e.target.value)}
@@ -234,7 +236,7 @@ export default function AdminSettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-gray-700 font-medium">Help Center URL</Label>
+                    <Label className="text-gray-700 font-medium">{t("settings.legal.helpUrl")}</Label>
                     <HelpCircle className="h-4 w-4 text-gray-400" />
                   </div>
                   <Input
@@ -259,14 +261,14 @@ export default function AdminSettingsPage() {
                   <CreditCard className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Finance</h2>
-                  <p className="text-sm text-gray-500">Fees & Payouts</p>
+                  <h2 className="text-xl font-bold text-gray-900">{t("settings.finance.sectionTitle")}</h2>
+                  <p className="text-sm text-gray-500">{t("settings.finance.sectionDesc")}</p>
                 </div>
               </div>
 
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <Label className="text-gray-700">Platform Fee (%)</Label>
+                  <Label className="text-gray-700">{t("settings.finance.platformFee")}</Label>
                   <div className="relative">
                     <Input
                       type="number"
@@ -278,13 +280,13 @@ export default function AdminSettingsPage() {
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">%</span>
                   </div>
-                  <p className="text-xs text-gray-500">Percentage taken from every transaction</p>
+                  <p className="text-xs text-gray-500">{t("settings.finance.platformFeeDesc")}</p>
                 </div>
 
                 <Separator />
 
                 <div className="space-y-2">
-                  <Label className="text-gray-700">Currency</Label>
+                  <Label className="text-gray-700">{t("settings.finance.currency")}</Label>
                   <Select
                     value={settings.finance.currency}
                     onValueChange={(v) => updateSetting('finance', 'currency', v)}
@@ -301,7 +303,7 @@ export default function AdminSettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-gray-700">Payout Schedule</Label>
+                  <Label className="text-gray-700">{t("settings.finance.payoutSchedule")}</Label>
                   <Select
                     value={settings.finance.payoutSchedule}
                     onValueChange={(v) => updateSetting('finance', 'payoutSchedule', v)}
@@ -310,9 +312,9 @@ export default function AdminSettingsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="biweekly">Bi-Weekly</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="weekly">{t("settings.finance.scheduleWeekly")}</SelectItem>
+                      <SelectItem value="biweekly">{t("settings.finance.scheduleBiweekly")}</SelectItem>
+                      <SelectItem value="monthly">{t("settings.finance.scheduleMonthly")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -326,14 +328,14 @@ export default function AdminSettingsPage() {
                   <Shield className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Security</h2>
-                  <p className="text-sm text-gray-500">Access controls</p>
+                  <h2 className="text-xl font-bold text-gray-900">{t("settings.security.sectionTitle")}</h2>
+                  <p className="text-sm text-gray-500">{t("settings.security.sectionDesc")}</p>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label className="text-gray-700">Session Timeout (Minutes)</Label>
+                  <Label className="text-gray-700">{t("settings.security.sessionTimeout")}</Label>
                   <Input
                     type="number"
                     min="1"
@@ -352,14 +354,14 @@ export default function AdminSettingsPage() {
                   <HardDrive className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">System</h2>
-                  <p className="text-sm text-gray-500">Storage & Limits</p>
+                  <h2 className="text-xl font-bold text-gray-900">{t("settings.system.sectionTitle")}</h2>
+                  <p className="text-sm text-gray-500">{t("settings.system.sectionDesc")}</p>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label className="text-gray-700">Max Upload Size (MB)</Label>
+                  <Label className="text-gray-700">{t("settings.system.maxUpload")}</Label>
                   <div className="relative">
                     <Input
                       type="number"
@@ -371,7 +373,7 @@ export default function AdminSettingsPage() {
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">MB</span>
                   </div>
-                  <p className="text-xs text-gray-500">Limit for user file uploads</p>
+                  <p className="text-xs text-gray-500">{t("settings.system.maxUploadDesc")}</p>
                 </div>
               </div>
             </div>

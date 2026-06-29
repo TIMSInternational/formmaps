@@ -21,6 +21,7 @@ import {
 import { DollarSign, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { useTranslation } from "react-i18next";
 import type { Coach } from "@/types/coach";
 
 interface PricingSettingsTabProps {
@@ -34,6 +35,7 @@ export function PricingSettingsTab({
   isLoading: isParentLoading,
   onUpdated,
 }: PricingSettingsTabProps) {
+  const { t } = useTranslation();
   const { user, platformFee, fetchSettings } = useGlobalStore();
   const [hourlyRate, setHourlyRate] = useState<number>(0);
   const currency = "USD";
@@ -95,9 +97,9 @@ export function PricingSettingsTab({
       } catch (e) {
         // swallow: best-effort refresh
       }
-      toast.success("Pricing updated successfully");
+      toast.success(t("coach:settings.pricing.success"));
     } catch (error) {
-      toast.error("Failed to update pricing");
+      toast.error(t("coach:settings.pricing.error"));
     } finally {
       setIsSaving(false);
     }
@@ -111,7 +113,7 @@ export function PricingSettingsTab({
   if (isParentLoading || isLoading) {
     return (
       <div className="p-12 text-center text-gray-500">
-        Loading pricing settings...
+        {t("coach:settings.pricing.loading")}
       </div>
     );
   }
@@ -122,16 +124,16 @@ export function PricingSettingsTab({
         {/* Left Column: Inputs */}
         <div className="space-y-6">
           <div className="space-y-1">
-            <h2 className="text-xl font-semibold text-gray-900">Session Pricing</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{t("coach:settings.pricing.title")}</h2>
             <p className="text-sm text-gray-500">
-              Set your hourly rate for 1:1 coaching sessions.
+              {t("coach:settings.pricing.subtitle")}
             </p>
           </div>
 
           <Card className="border-gray-200 shadow-sm bg-white">
             <CardContent className="p-6 space-y-6">
               <div className="space-y-3">
-                <Label htmlFor="currency" className="text-sm font-medium text-gray-700">Currency</Label>
+                <Label htmlFor="currency" className="text-sm font-medium text-gray-700">{t("coach:settings.pricing.currency")}</Label>
                 <Select value="USD" disabled>
                   <SelectTrigger className="h-11 rounded-lg bg-gray-50/50 border-gray-200">
                     <SelectValue placeholder="Select currency" />
@@ -143,7 +145,7 @@ export function PricingSettingsTab({
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="rate" className="text-sm font-medium text-gray-700">Hourly Rate</Label>
+                <Label htmlFor="rate" className="text-sm font-medium text-gray-700">{t("coach:settings.pricing.hourlyRate")}</Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <span className="text-gray-500 sm:text-sm">$</span>
@@ -159,11 +161,11 @@ export function PricingSettingsTab({
                     onChange={(e) => setHourlyRate(parseFloat(e.target.value) || 0)}
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500 sm:text-sm">/ hr</span>
+                    <span className="text-gray-500 sm:text-sm">{t("coach:settings.pricing.perHour")}</span>
                   </div>
                 </div>
                 <p className="text-xs text-gray-500">
-                  Clients will see this price when booking sessions.
+                  {t("coach:settings.pricing.clientPays")}
                 </p>
               </div>
             </CardContent>
@@ -174,16 +176,16 @@ export function PricingSettingsTab({
             disabled={isSaving}
             className="w-full sm:w-auto h-11 px-8 rounded-xl font-semibold bg-gray-900 text-white hover:bg-gray-800 shadow-sm"
           >
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? t("coach:settings.pricing.saving") : t("coach:settings.pricing.save")}
           </Button>
         </div>
 
         {/* Right Column: Preview/Breakdown */}
         <div className="space-y-6">
           <div className="space-y-1">
-            <h2 className="text-xl font-semibold text-gray-900">Earnings Breakdown</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{t("coach:settings.pricing.breakdown.title")}</h2>
             <p className="text-sm text-gray-500">
-              Breakdown of what you earn per session after fees.
+              {t("coach:settings.pricing.breakdown.subtitle")}
             </p>
           </div>
 
@@ -191,7 +193,7 @@ export function PricingSettingsTab({
             <CardContent className="p-6 space-y-6">
               <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Client Pays</p>
+                  <p className="text-sm font-medium text-gray-500">{t("coach:settings.pricing.breakdown.clientPays")}</p>
                   <p className="text-2xl font-bold text-gray-900">${hourlyRate.toFixed(2)}</p>
                 </div>
                 <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
@@ -201,14 +203,14 @@ export function PricingSettingsTab({
 
               <div className="relative pl-6 space-y-4 border-l-2 border-dashed border-gray-200 ml-6 pb-2">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-500">Platform Fee ({effectiveFee}%)</span>
+                  <span className="text-gray-500">{t("coach:settings.pricing.breakdown.platformFee", { fee: effectiveFee })}</span>
                   <span className="font-medium text-red-500">-${feeAmount.toFixed(2)}</span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between p-5 bg-emerald-600 text-white rounded-xl shadow-md shadow-emerald-200">
                 <div>
-                  <p className="text-sm font-medium text-emerald-100 mb-1">Your Net Earnings</p>
+                  <p className="text-sm font-medium text-emerald-100 mb-1">{t("coach:settings.pricing.breakdown.netEarnings")}</p>
                   <p className="text-3xl font-bold">${yourEarnings.toFixed(2)}</p>
                 </div>
                 <div className="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
@@ -216,7 +218,7 @@ export function PricingSettingsTab({
                 </div>
               </div>
               <p className="text-xs text-center text-gray-400">
-                Net earnings are transferred to your payout account.
+                {t("coach:settings.pricing.breakdown.netNote")}
               </p>
             </CardContent>
           </Card>

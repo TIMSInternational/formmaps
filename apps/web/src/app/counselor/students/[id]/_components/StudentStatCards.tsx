@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { Award, BookOpen, Clock, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,11 +24,12 @@ interface StudentStatCardsProps {
 }
 
 export function StudentStatCards({ student }: StudentStatCardsProps) {
+  const { t } = useTranslation("counselor");
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-gray-600">GPA</CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-600">{t("statCards.gpa", "GPA")}</CardTitle>
           <Award className="h-4 w-4 text-amber-600" />
         </CardHeader>
         <CardContent>
@@ -37,7 +39,7 @@ export function StudentStatCards({ student }: StudentStatCardsProps) {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-gray-600">Credits</CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-600">{t("statCards.credits", "Credits")}</CardTitle>
           <BookOpen className="h-4 w-4 text-indigo-600" />
         </CardHeader>
         <CardContent>
@@ -55,21 +57,21 @@ export function StudentStatCards({ student }: StudentStatCardsProps) {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-gray-600">Last Active</CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-600">{t("statCards.lastActive", "Last Active")}</CardTitle>
           <Clock className="h-4 w-4 text-blue-600" />
         </CardHeader>
         <CardContent>
           <div className="text-lg font-bold">
             {student.lastActive
               ? format(new Date(student.lastActive), "MMM d")
-              : "Never"}
+              : t("statCards.never", "Never")}
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-gray-600">Assessments</CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-600">{t("statCards.assessments", "Assessments")}</CardTitle>
           <TrendingUp className="h-4 w-4 text-teal-600" />
         </CardHeader>
         <CardContent>

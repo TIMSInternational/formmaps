@@ -34,7 +34,7 @@ const assessmentStatusColors: Record<string, string> = {
 };
 
 export default function CounselorStudentsPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("counselor");
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -57,12 +57,12 @@ export default function CounselorStudentsPage() {
   return (
     <div className="space-y-8">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="space-y-1">
-        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Caseload</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("students.badge", "Caseload")}</p>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-          {t("counselor.students.title", "My Students")}
+          {t("students.title", "My Students")}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {t("counselor.students.subtitle", "View and manage your assigned students.")}
+          {t("students.subtitle", "View and manage your assigned students.")}
         </p>
       </motion.div>
 
@@ -70,24 +70,23 @@ export default function CounselorStudentsPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search students..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-10" />
+          <Input placeholder={t("students.searchPlaceholder", "Search students...")} value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-10" />
         </div>
         <Select value={status} onValueChange={(v) => { setStatus(v === "all" ? "" : v); setPage(1); }}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="All Status" /></SelectTrigger>
+          <SelectTrigger className="w-[140px]"><SelectValue placeholder={t("students.allStatus", "All Status")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="at_risk">At Risk</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="all">{t("students.allStatus", "All Status")}</SelectItem>
+            <SelectItem value="active">{t("students.active", "Active")}</SelectItem>
+            <SelectItem value="at_risk">{t("students.atRisk", "At Risk")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="name">Name</SelectItem>
-            <SelectItem value="gpa">GPA</SelectItem>
-            <SelectItem value="alertCount">Alerts</SelectItem>
-            <SelectItem value="gradeLevel">Grade</SelectItem>
+            <SelectItem value="name">{t("students.sortName", "Name")}</SelectItem>
+            <SelectItem value="gpa">{t("students.sortGpa", "GPA")}</SelectItem>
+            <SelectItem value="alertCount">{t("students.sortAlerts", "Alerts")}</SelectItem>
+            <SelectItem value="gradeLevel">{t("students.sortGrade", "Grade")}</SelectItem>
           </SelectContent>
         </Select>
       </motion.div>
@@ -97,20 +96,20 @@ export default function CounselorStudentsPage() {
         <div className="dash-card overflow-hidden">
           <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2">
             <Users className="h-4 w-4 text-indigo-500" />
-            <span className="text-sm font-semibold text-foreground">Students</span>
+            <span className="text-sm font-semibold text-foreground">{t("students.tableTitle", "Students")}</span>
             {data && <Badge variant="secondary">{data.total}</Badge>}
           </div>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Grade</TableHead>
-                <TableHead>GPA</TableHead>
-                <TableHead>Credit Progress</TableHead>
-                <TableHead>Assessments</TableHead>
-                <TableHead>Career Path</TableHead>
-                <TableHead>Alerts</TableHead>
-                <TableHead>Last Active</TableHead>
+                <TableHead>{t("students.colStudent", "Student")}</TableHead>
+                <TableHead>{t("students.colGrade", "Grade")}</TableHead>
+                <TableHead>{t("students.colGpa", "GPA")}</TableHead>
+                <TableHead>{t("students.colCreditProgress", "Credit Progress")}</TableHead>
+                <TableHead>{t("students.colAssessments", "Assessments")}</TableHead>
+                <TableHead>{t("students.colCareerPath", "Career Path")}</TableHead>
+                <TableHead>{t("students.colAlerts", "Alerts")}</TableHead>
+                <TableHead>{t("students.colLastActive", "Last Active")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -163,7 +162,7 @@ export default function CounselorStudentsPage() {
               {(!data?.data || data.data.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
-                    No students assigned to you yet
+                    {t("students.noStudents", "No students assigned to you yet")}
                   </TableCell>
                 </TableRow>
               )}
@@ -176,7 +175,7 @@ export default function CounselorStudentsPage() {
       {data && data.total > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between px-2 py-4 gap-4">
           <div className="text-sm text-muted-foreground text-center sm:text-left">
-            Displaying <span className="font-bold text-foreground">{((page - 1) * 10) + (data.data.length > 0 ? 1 : 0)}</span> – <span className="font-bold text-foreground">{Math.min(page * 10, data.total)}</span> of <span className="font-bold text-foreground">{data.total}</span> students
+            {t("students.displayingOf", { from: ((page - 1) * 10) + (data.data.length > 0 ? 1 : 0), to: Math.min(page * 10, data.total), total: data.total })}
           </div>
           <div className="flex items-center gap-1.5 w-full justify-center sm:w-auto sm:justify-end">
             <Button
@@ -187,7 +186,7 @@ export default function CounselorStudentsPage() {
               className="h-8 rounded-lg px-3"
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
-              {t("common.pagination.previous", "Previous")}
+              {t("common:common.previous", "Previous")}
             </Button>
             <div className="flex items-center px-2">
               <span className="text-sm font-semibold text-foreground">{page}</span>
@@ -201,7 +200,7 @@ export default function CounselorStudentsPage() {
               disabled={page >= (data.totalPages || 1)}
               className="h-8 rounded-lg px-3"
             >
-              {t("common.pagination.next", "Next")}
+              {t("common:common.next", "Next")}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>

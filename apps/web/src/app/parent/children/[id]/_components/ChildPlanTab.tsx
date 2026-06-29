@@ -14,7 +14,7 @@ interface ChildPlanTabProps {
 // Read-only compact view of the child's graduation goal + approved plan.
 // Deliberately NOT the SequenceBuilder — parents get a summary, not an editor.
 export function ChildPlanTab({ studentId }: ChildPlanTabProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("parent");
   const { data, isLoading } = useChildCoursePlan(studentId);
   // Grades default open — parents should see the plan at a glance.
   const [closedGrades, setClosedGrades] = useState<number[]>([]);
@@ -55,12 +55,12 @@ export function ChildPlanTab({ studentId }: ChildPlanTabProps) {
             <Target className="h-4 w-4 text-[#065292] shrink-0" />
             {data?.target ? (
               <p className="text-sm text-foreground">
-                <span className="font-semibold">{t("parent.plan.goal", "Goal")}:</span>{" "}
+                <span className="font-semibold">{t("plan.goal")}:</span>{" "}
                 {[data.target.universityName, data.target.major].filter(Boolean).join(" · ")}
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                {t("parent.plan.noGoal", "No graduation goal set yet.")}
+                {t("plan.noGoal")}
               </p>
             )}
           </div>
@@ -70,21 +70,21 @@ export function ChildPlanTab({ studentId }: ChildPlanTabProps) {
             <div className="flex items-center gap-2 mb-2">
               <BookOpen className="h-4 w-4 text-[#065292]" />
               <h3 className="text-sm font-semibold text-foreground">
-                {t("parent.plan.thisYear", "This Year")}
+                {t("plan.thisYear")}
               </h3>
             </div>
             {data?.currentCourses && data.currentCourses.length > 0 ? (
               <p className="text-sm text-muted-foreground">
                 {data.currentCourses.length}{" "}
                 {data.currentCourses.length === 1
-                  ? t("parent.plan.courseThisYear", "course this year")
-                  : t("parent.plan.coursesThisYear", "courses this year")}
+                  ? t("plan.courseThisYear")
+                  : t("plan.coursesThisYear")}
                 {statusCounts.length > 0 &&
                   ` — ${statusCounts.map(([s, n]) => `${n} ${s.replace("_", " ")}`).join(", ")}`}
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                {t("parent.plan.noCourses", "No courses planned this year yet.")}
+                {t("plan.noCourses")}
               </p>
             )}
           </div>
@@ -94,21 +94,18 @@ export function ChildPlanTab({ studentId }: ChildPlanTabProps) {
             <div className="flex items-center gap-2 mb-3">
               <GraduationCap className="h-4 w-4 text-[#065292]" />
               <h3 className="text-sm font-semibold text-foreground">
-                {t("parent.plan.approvedPlan", "Approved Graduation Plan")}
+                {t("plan.approvedPlan")}
               </h3>
               {data?.approvedPlan?.approvedAt && (
                 <span className="text-xs text-muted-foreground">
-                  {t("parent.plan.approvedOn", "approved")}{" "}
+                  {t("plan.approvedOn")}{" "}
                   {new Date(data.approvedPlan.approvedAt).toLocaleDateString()}
                 </span>
               )}
             </div>
             {itemsByGrade.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {t(
-                  "parent.plan.noApprovedPlan",
-                  "No approved graduation plan yet — your student can build one from their Course Plan page.",
-                )}
+                {t("plan.noApprovedPlan")}
               </p>
             ) : (
               <div className="space-y-2">
@@ -125,10 +122,10 @@ export function ChildPlanTab({ studentId }: ChildPlanTabProps) {
                         ) : (
                           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                         )}
-                        {t("parent.plan.grade", "Grade")} {grade}
+                        {t("plan.grade")} {grade}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {items.length} {items.length === 1 ? "course" : "courses"}
+                        {items.length} {items.length === 1 ? t("plan.course") : t("plan.courses")}
                       </span>
                     </button>
                     {isGradeOpen(grade) && (

@@ -34,6 +34,7 @@ export default function AdminTransactionsPage() {
   const router = useRouter();
   const { isAdmin, loading: authLoading } = useAdminAccess();
   const { t } = useTranslation();
+  const { t: tPO } = useTranslation("platform_owner");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -59,7 +60,7 @@ export default function AdminTransactionsPage() {
   // Stats Configuration
   const statsCards = [
     {
-      label: "Total Revenue",
+      label: tPO("transactions.stats.totalRevenue"),
       value: formatCurrency(analyticsData?.stats.totalRevenue || 0),
       growth: analyticsData?.stats.monthlyGrowth.revenue || 0,
       icon: CreditCard,
@@ -69,7 +70,7 @@ export default function AdminTransactionsPage() {
       blobColor: "bg-emerald-500"
     },
     {
-      label: "Total Transactions",
+      label: tPO("transactions.stats.totalTransactions"),
       value: data?.total?.toLocaleString() || "0",
       growth: null,
       icon: Receipt,
@@ -79,7 +80,7 @@ export default function AdminTransactionsPage() {
       blobColor: "bg-blue-500"
     },
     {
-      label: "Active Users",
+      label: tPO("transactions.stats.activeUsers"),
       value: analyticsData?.stats.totalUsers?.toLocaleString() || "0",
       growth: analyticsData?.stats.monthlyGrowth.users || 0,
       icon: Clock,
@@ -89,7 +90,7 @@ export default function AdminTransactionsPage() {
       blobColor: "bg-amber-500"
     },
     {
-      label: "Active Coaches",
+      label: tPO("transactions.stats.activeCoaches"),
       value: (analyticsData?.stats as any)?.activeCoaches?.toLocaleString() || "0",
       growth: null,
       icon: AlertCircle,
@@ -102,7 +103,7 @@ export default function AdminTransactionsPage() {
 
   const handleExport = () => {
     if (!transactions.length) {
-      toast.error("No transactions to export");
+      toast.error(tPO("transactions.toast.noTransactions"));
       return;
     }
     const headers = ["ID", "Date", "Amount", "Currency", "Status", "Description"];
@@ -117,7 +118,7 @@ export default function AdminTransactionsPage() {
     a.download = `transactions_${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Transactions exported");
+    toast.success(tPO("transactions.toast.exportSuccess"));
   };
 
   // Handle admin access check
@@ -170,19 +171,19 @@ export default function AdminTransactionsPage() {
           <Tabs defaultValue="all" value={statusFilter} onValueChange={setStatusFilter} className="w-full">
             <TabsList className="bg-white border border-gray-200 p-1 h-12 rounded-xl w-full md:w-auto justify-start overflow-x-auto">
               <TabsTrigger value="all" className="rounded-lg px-4 h-9 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900">
-                All
+                {tPO("transactions.tabs.all")}
               </TabsTrigger>
               <TabsTrigger value="completed" className="rounded-lg px-4 h-9 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700">
-                Completed
+                {tPO("transactions.tabs.completed")}
               </TabsTrigger>
               <TabsTrigger value="pending" className="rounded-lg px-4 h-9 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700">
-                Pending
+                {tPO("transactions.tabs.pending")}
               </TabsTrigger>
               <TabsTrigger value="failed" className="rounded-lg px-4 h-9 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">
-                Failed
+                {tPO("transactions.tabs.failed")}
               </TabsTrigger>
               <TabsTrigger value="refunded" className="rounded-lg px-4 h-9 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-700">
-                Refunded
+                {tPO("transactions.tabs.refunded")}
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -328,7 +329,7 @@ export default function AdminTransactionsPage() {
           {/* Pagination inside Card */}
           <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/30">
             <p className="text-sm text-gray-500">
-              Showing page <span className="font-semibold text-gray-900">{page}</span> of <span className="font-semibold text-gray-900">{totalPages || 1}</span>
+              {tPO("transactions.pagination.showingPage", { page, total: totalPages || 1 })}
             </p>
             <div className="flex items-center gap-2">
               <Button

@@ -47,26 +47,22 @@ export function CancelSessionDialog({
             <AlertCircle className="h-8 w-8 text-red-500" />
           </div>
           <h3 className="text-2xl font-bold text-foreground mb-2">
-            Cancel Session?
+            {t("coach:sessionsPage.cancel.title")}
           </h3>
           <p className="text-muted-foreground text-center mb-8 leading-relaxed">
-            Are you sure you want to cancel the session with{" "}
-            <span className="font-semibold text-foreground">
-              {session?.studentName}
-            </span>
-            ? This action cannot be undone.
+            {t("coach:sessionsPage.cancel.confirmText", { name: session?.studentName })}
           </p>
 
           <div className="flex flex-col gap-3 w-full">
             <Button variant="destructive" className="w-full" onClick={handleCancel}>
-              Yes, Cancel Session
+              {t("coach:sessionsPage.cancel.confirm")}
             </Button>
             <Button
               variant="ghost"
               className="w-full h-12 rounded-xl text-muted-foreground font-semibold hover:bg-gray-100"
               onClick={() => onOpenChange(false)}
             >
-              Keep Session
+              {t("coach:sessionsPage.cancel.keep")}
             </Button>
           </div>
         </div>

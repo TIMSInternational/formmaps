@@ -23,7 +23,7 @@ import { useChildProgress } from "@/hooks/useParentPortalQueries";
 import { ChildPlanTab } from "./_components/ChildPlanTab";
 
 export default function ChildProgressPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("parent");
   const router = useRouter();
   const params = useParams();
   const studentId = params.id as string;
@@ -50,10 +50,10 @@ export default function ChildProgressPage() {
       <div className="text-center py-16 space-y-4">
         <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto" />
         <h2 className="text-2xl font-bold text-foreground">
-          {t("parent.childNotFound", "Child not found")}
+          {t("progress.childNotFound")}
         </h2>
         <Button onClick={() => router.push("/parent")}>
-          {t("parent.backToDashboard", "Back to Dashboard")}
+          {t("progress.backToDashboard")}
         </Button>
       </div>
     );
@@ -75,17 +75,17 @@ export default function ChildProgressPage() {
           className="mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          {t("parent.backToDashboard", "Back to Dashboard")}
+          {t("progress.backToDashboard")}
         </Button>
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Parent</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("progress.badge")}</p>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
               {progress.studentName}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {t("parent.grade", "Grade")} {progress.gradeLevel}
+              {t("progress.grade")} {progress.gradeLevel}
             </p>
           </div>
           <Badge
@@ -97,8 +97,8 @@ export default function ChildProgressPage() {
             }
           >
             {progress.isOnTrack
-              ? t("parent.onTrackStatus", "On Track")
-              : t("parent.atRiskStatus", "Needs Attention")}
+              ? t("progress.onTrack")
+              : t("progress.atRisk")}
           </Badge>
         </div>
       </motion.div>
@@ -110,7 +110,7 @@ export default function ChildProgressPage() {
             <div className="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center">
               <TrendingUp className="h-4 w-4 text-indigo-500" strokeWidth={1.8} />
             </div>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("parent.gpa", "GPA")}</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("progress.gpa")}</span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">
             {progress.gpa?.toFixed(2) || "N/A"}
@@ -122,7 +122,7 @@ export default function ChildProgressPage() {
             <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
               <GraduationCap className="h-4 w-4 text-emerald-500" strokeWidth={1.8} />
             </div>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("parent.credits", "Credits")}</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("progress.credits")}</span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">
             {progress.creditsEarned}/{progress.creditsRequired}
@@ -134,10 +134,10 @@ export default function ChildProgressPage() {
             <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
               <Target className="h-4 w-4 text-amber-500" strokeWidth={1.8} />
             </div>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("parent.careerPath", "Career Path")}</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("progress.careerPath")}</span>
           </div>
           <p className="text-lg font-bold text-foreground tracking-tight truncate">
-            {progress.careerPath || "Not Set"}
+            {progress.careerPath || t("progress.careerPathNotSet")}
           </p>
         </div>
 
@@ -146,12 +146,12 @@ export default function ChildProgressPage() {
             <div className="h-9 w-9 rounded-lg bg-purple-500/10 flex items-center justify-center">
               <Award className="h-4 w-4 text-purple-500" strokeWidth={1.8} />
             </div>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("parent.assessments", "Assessments")}</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("progress.assessments")}</span>
           </div>
           <p className="text-lg font-bold text-foreground tracking-tight">
             {typeof progress.assessmentStatus === "object"
               ? `${progress.assessmentStatus.completed}/${progress.assessmentStatus.total}`
-              : progress.assessmentStatus || "Pending"}
+              : progress.assessmentStatus || t("progress.assessmentPending")}
           </p>
         </div>
       </div>
@@ -160,20 +160,20 @@ export default function ChildProgressPage() {
       <div className="dash-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <GraduationCap className="h-5 w-5 text-indigo-500" />
-          <h3 className="font-semibold text-foreground">{t("parent.graduationProgress", "Graduation Progress")}</h3>
+          <h3 className="font-semibold text-foreground">{t("progress.graduationProgress")}</h3>
         </div>
         <div className="space-y-4">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
-              {t("parent.creditsCompleted", "Credits Completed")}
+              {t("progress.creditsCompleted")}
             </span>
             <span className="font-medium text-foreground">{creditPercent}%</span>
           </div>
           <Progress value={creditPercent} className="h-3" />
           <p className="text-sm text-muted-foreground">
             {progress.creditsEarned}{" "}
-            {t("parent.of", "of")} {progress.creditsRequired}{" "}
-            {t("parent.creditsRequired", "credits required for graduation")}
+            {t("progress.of")} {progress.creditsRequired}{" "}
+            {t("progress.creditsRequired")}
           </p>
         </div>
       </div>
@@ -182,13 +182,13 @@ export default function ChildProgressPage() {
       <Tabs defaultValue="activity">
         <TabsList>
           <TabsTrigger value="activity">
-            {t("parent.recentActivity", "Recent Activity")}
+            {t("progress.recentActivity")}
           </TabsTrigger>
           <TabsTrigger value="actions">
-            {t("parent.pendingActions", "Pending Actions")}
+            {t("progress.pendingActions")}
           </TabsTrigger>
           <TabsTrigger value="course-plan">
-            {t("parent.coursePlan", "Course Plan")}
+            {t("progress.coursePlan")}
           </TabsTrigger>
         </TabsList>
 
@@ -225,7 +225,7 @@ export default function ChildProgressPage() {
               </div>
             ) : (
               <p className="text-muted-foreground text-center py-8">
-                {t("parent.noActivity", "No recent activity")}
+                {t("progress.noActivity")}
               </p>
             )}
           </div>
@@ -252,7 +252,7 @@ export default function ChildProgressPage() {
                           </p>
                           {action.deadline && (
                             <p className="text-xs text-muted-foreground">
-                              {t("parent.dueBy", "Due by")}:{" "}
+                              {t("progress.dueBy")}:{" "}
                               {new Date(action.deadline).toLocaleDateString()}
                             </p>
                           )}
@@ -264,7 +264,7 @@ export default function ChildProgressPage() {
                           variant="outline"
                           onClick={() => router.push(action.actionUrl!)}
                         >
-                          {t("common.action", "Action")}
+                          {t("progress.action")}
                         </Button>
                       )}
                     </div>
@@ -273,7 +273,7 @@ export default function ChildProgressPage() {
               </div>
             ) : (
               <p className="text-muted-foreground text-center py-8">
-                {t("parent.noActions", "No pending actions")}
+                {t("progress.noActions")}
               </p>
             )}
           </div>

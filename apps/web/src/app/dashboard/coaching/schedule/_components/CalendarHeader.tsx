@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 interface CalendarHeaderProps {
   currentDate: Date;
@@ -20,6 +21,7 @@ export function CalendarHeader({
   view,
   onViewChange,
 }: CalendarHeaderProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
       <div className="flex items-center gap-2">
@@ -42,7 +44,7 @@ export function CalendarHeader({
             onClick={onToday}
             className="h-9 px-3 text-sm font-medium text-gray-600 hover:text-gray-900"
           >
-            Today
+            {t("coach:schedule.calendarHeader.today")}
           </Button>
           <div className="w-px h-6 bg-gray-200" />
           <Button
@@ -65,7 +67,7 @@ export function CalendarHeader({
               }`}
             onClick={() => onViewChange("month")}
           >
-            Month
+            {t("coach:schedule.calendarHeader.month")}
           </button>
           <button
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${view === "week"
@@ -74,7 +76,7 @@ export function CalendarHeader({
               }`}
             onClick={() => onViewChange("week")}
           >
-            Week
+            {t("coach:schedule.calendarHeader.week")}
           </button>
         </div>
       </div>

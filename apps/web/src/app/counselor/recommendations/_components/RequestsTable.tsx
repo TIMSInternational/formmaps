@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import {
   FileText, Calendar, User, Users, CheckCircle2,
@@ -20,6 +21,8 @@ export function RequestsTable({
   myRequestIds: Set<string>;
   onAction: () => void;
 }) {
+  const { t } = useTranslation("counselor");
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -45,7 +48,7 @@ export function RequestsTable({
       >
         <Users style={{ width: 14, height: 14, color: "#065292" }} />
         <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-          All Requests
+          {t("recommendations.allRequests", "All Requests")}
         </span>
         <span style={{
           fontSize: 11, fontWeight: 600, padding: "1px 6px", borderRadius: 10,
@@ -59,10 +62,10 @@ export function RequestsTable({
         <div style={{ textAlign: "center", padding: "48px 16px" }}>
           <FileText style={{ width: 32, height: 32, color: "var(--admin-font-tertiary)", margin: "0 auto 12px", opacity: 0.4 }} />
           <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 4 }}>
-            No Requests
+            {t("recommendations.noRequests", "No Requests")}
           </div>
           <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", maxWidth: 300, margin: "0 auto" }}>
-            No recommendation requests have been made in your school yet.
+            {t("recommendations.noRequestsDesc", "No recommendation requests have been made in your school yet.")}
           </div>
         </div>
       ) : (
@@ -70,19 +73,19 @@ export function RequestsTable({
           <TableHeader>
             <TableRow>
               <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Student
+                {t("recommendations.colStudent", "Student")}
               </TableHead>
               <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Recommender
+                {t("recommendations.colRecommender", "Recommender")}
               </TableHead>
               <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Status
+                {t("recommendations.colStatus", "Status")}
               </TableHead>
               <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Due
+                {t("recommendations.colDue", "Due")}
               </TableHead>
               <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Submitted
+                {t("recommendations.colSubmitted", "Submitted")}
               </TableHead>
               <TableHead />
             </TableRow>
@@ -106,7 +109,7 @@ export function RequestsTable({
                       </div>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                          {req.student?.name ?? "\u2014"}
+                          {req.student?.name ?? "—"}
                         </div>
                         <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
                           {req.student?.email ?? ""}
@@ -116,14 +119,14 @@ export function RequestsTable({
                   </TableCell>
                   <TableCell>
                     <div style={{ fontSize: 13, color: "var(--admin-font-primary)", fontWeight: isMe ? 600 : 400 }}>
-                      {req.recommender?.name ?? "\u2014"}
+                      {req.recommender?.name ?? "—"}
                       {isMe && (
                         <span style={{
                           marginLeft: 6, fontSize: 10, fontWeight: 600,
                           padding: "1px 5px", borderRadius: 3,
                           background: "#06529215", color: "#065292",
                         }}>
-                          You
+                          {t("recommendations.you", "You")}
                         </span>
                       )}
                     </div>
@@ -138,7 +141,7 @@ export function RequestsTable({
                         {new Date(req.dueDate).toLocaleDateString()}
                       </div>
                     ) : (
-                      <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{"\u2014"}</span>
+                      <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{"—"}</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -148,7 +151,7 @@ export function RequestsTable({
                         {new Date(req.submittedAt).toLocaleDateString()}
                       </div>
                     ) : (
-                      <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{"\u2014"}</span>
+                      <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{"—"}</span>
                     )}
                   </TableCell>
                   <TableCell>

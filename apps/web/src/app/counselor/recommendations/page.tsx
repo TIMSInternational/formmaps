@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { Clock, CheckCircle2, Loader2 } from "lucide-react";
@@ -13,6 +14,7 @@ import {
 import { RequestsTable } from "./_components/RequestsTable";
 
 export default function CounselorRecommendationsPage() {
+  const { t } = useTranslation("counselor");
   const [dashboard, setDashboard] = useState<{
     total: number;
     countByStatus: Record<string, number>;
@@ -30,11 +32,11 @@ export default function CounselorRecommendationsPage() {
       setDashboard(dash);
       setMyRequests(Array.isArray(received) ? received : []);
     } catch {
-      toast.error("Failed to load recommendation data");
+      toast.error(t("recommendations.failedToLoad", "Failed to load recommendation data"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     load();
@@ -60,10 +62,10 @@ export default function CounselorRecommendationsPage() {
   const countByStatus = dashboard?.countByStatus ?? {};
 
   const summaryStats = [
-    { label: "Requested", value: countByStatus.requested ?? 0, color: "#065292", icon: Clock },
-    { label: "Accepted", value: countByStatus.accepted ?? 0, color: "#f59e0b", icon: CheckCircle2 },
-    { label: "In Progress", value: countByStatus.in_progress ?? 0, color: "#f97316", icon: Loader2 },
-    { label: "Submitted", value: countByStatus.submitted ?? 0, color: "#10b981", icon: CheckCircle2 },
+    { labelKey: "recommendations.statRequested", fallback: "Requested", value: countByStatus.requested ?? 0, color: "#065292", icon: Clock },
+    { labelKey: "recommendations.statAccepted", fallback: "Accepted", value: countByStatus.accepted ?? 0, color: "#f59e0b", icon: CheckCircle2 },
+    { labelKey: "recommendations.statInProgress", fallback: "In Progress", value: countByStatus.in_progress ?? 0, color: "#f97316", icon: Loader2 },
+    { labelKey: "recommendations.statSubmitted", fallback: "Submitted", value: countByStatus.submitted ?? 0, color: "#10b981", icon: CheckCircle2 },
   ];
 
   return (
@@ -75,13 +77,13 @@ export default function CounselorRecommendationsPage() {
         className="flex flex-col gap-1"
       >
         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-          Counselor
+          {t("dashboard.badge", "Counselor")}
         </span>
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-none">
-          Recommendation Dashboard
+          {t("recommendations.title", "Recommendation Dashboard")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Track and respond to letters of recommendation across your school.
+          {t("recommendations.subtitle", "Track and respond to letters of recommendation across your school.")}
         </p>
       </motion.div>
 
@@ -94,7 +96,7 @@ export default function CounselorRecommendationsPage() {
       >
         {summaryStats.map((stat, i) => (
           <motion.div
-            key={stat.label}
+            key={stat.labelKey}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 + i * 0.05 }}
@@ -123,7 +125,7 @@ export default function CounselorRecommendationsPage() {
               fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)",
               textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2,
             }}>
-              {stat.label}
+              {t(stat.labelKey, stat.fallback)}
             </div>
           </motion.div>
         ))}

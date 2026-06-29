@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import {
   Brain,
   BookOpen,
@@ -19,14 +20,6 @@ const ASSESSMENT_COLORS: Record<string, string> = {
   completed: "bg-emerald-100 text-emerald-700",
   in_progress: "bg-amber-100 text-amber-700",
   not_started: "bg-gray-100 text-gray-500",
-};
-
-const PCA_EXAM_NAMES: Record<string, string> = {
-  PatternRecognition: "Pattern Recognition",
-  VerbalReasoning: "Verbal Reasoning",
-  WorkingMemory: "Working Memory",
-  NumericVelocity: "Numeric Velocity",
-  VisualRotation: "Visual Rotation",
 };
 
 const PCA_EXAM_KEYS = [
@@ -51,12 +44,13 @@ interface AssessmentsTabProps {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation("counselor");
   const statusLabel =
     status === "completed"
-      ? "Completed"
+      ? t("assessments.statusCompleted", "Completed")
       : status === "in_progress"
-        ? "In Progress"
-        : "Not Started";
+        ? t("assessments.statusInProgress", "In Progress")
+        : t("assessments.statusNotStarted", "Not Started");
   return (
     <Badge
       variant="secondary"
@@ -68,6 +62,16 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, evalGroups }: AssessmentsTabProps) {
+  const { t } = useTranslation("counselor");
+
+  const PCA_EXAM_NAMES: Record<string, string> = {
+    PatternRecognition: t("assessments.examPattern", "Pattern Recognition"),
+    VerbalReasoning: t("assessments.examVerbal", "Verbal Reasoning"),
+    WorkingMemory: t("assessments.examMemory", "Working Memory"),
+    NumericVelocity: t("assessments.examNumeric", "Numeric Velocity"),
+    VisualRotation: t("assessments.examRotation", "Visual Rotation"),
+  };
+
   return (
     <TabsContent value="assessments" className="mt-6 space-y-5">
       {isLoading ? (
@@ -84,7 +88,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Brain className="h-4 w-4 text-violet-600" />
-                Overall Assessment Completion
+                {t("assessments.overallCompletion", "Overall Assessment Completion")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -95,7 +99,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
                 return (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">{completed}/{total} assessments completed</span>
+                      <span className="text-gray-600">{t("assessments.assessmentsCompleted", { completed, total })}</span>
                       <span className="font-semibold text-gray-900">{pct}%</span>
                     </div>
                     <Progress value={pct} className="h-2.5" />
@@ -111,7 +115,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
               <CardTitle className="flex items-center justify-between text-base">
                 <div className="flex items-center gap-2">
                   <Brain className="h-4 w-4 text-indigo-600" />
-                  PCA Cognitive Assessment
+                  {t("assessments.pcaTitle", "PCA Cognitive Assessment")}
                 </div>
                 {(() => {
                   const examStatuses = milHistory?.examStatus ?? [];
@@ -120,7 +124,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
                   ).length;
                   return (
                     <span className="text-sm font-normal text-gray-500">
-                      {completedCount}/5 completed
+                      {t("assessments.pcaCompleted", { n: completedCount })}
                     </span>
                   );
                 })()}
@@ -133,16 +137,16 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
                   const examStatuses = milHistory?.examStatus ?? [];
                   const match = examStatuses.find(
                     (e: ExamStatus) =>
-                      e.examName === displayName ||
+                      e.examName === PCA_EXAM_NAMES[examKey] ||
                       e.examName?.replace(/\s+/g, "") === examKey
                   );
                   const status: string = match?.status ?? "not_started";
                   const statusLabel =
                     status === "completed"
-                      ? "Completed"
+                      ? t("assessments.statusCompleted", "Completed")
                       : status === "in_progress"
-                        ? "In Progress"
-                        : "Not Started";
+                        ? t("assessments.statusInProgress", "In Progress")
+                        : t("assessments.statusNotStarted", "Not Started");
                   const StatusIcon =
                     status === "completed"
                       ? CheckCircle2
@@ -189,7 +193,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
               <CardTitle className="flex items-center justify-between text-base">
                 <div className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4 text-teal-600" />
-                  MIL / LIA Assessment
+                  {t("assessments.milTitle", "MIL / LIA Assessment")}
                 </div>
                 <StatusBadge status={assessmentProgress?.milAssessment?.status ?? "not_started"} />
               </CardTitle>
@@ -201,7 +205,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
                 if (!mil || mil.status === "not_started") {
                   return (
                     <p className="text-sm text-gray-400 text-center py-4">
-                      Student has not started the MIL/LIA assessment.
+                      {t("assessments.milNotStarted", "Student has not started the MIL/LIA assessment.")}
                     </p>
                   );
                 }
@@ -210,13 +214,13 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
                     {enhanced && (
                       <>
                         <div>
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Exams</p>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("assessments.colExams", "Exams")}</p>
                           <p className="text-lg font-bold text-gray-900 mt-0.5">
                             {enhanced.completedExams}/{enhanced.totalExams}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Completion</p>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("assessments.colCompletion", "Completion")}</p>
                           <p className="text-lg font-bold text-gray-900 mt-0.5">
                             {Math.round(enhanced.completionPercentage)}%
                           </p>
@@ -225,7 +229,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
                     )}
                     {(mil.progress?.averageScore ?? 0) > 0 && (
                       <div>
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Avg Score</p>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("assessments.colAvgScore", "Avg Score")}</p>
                         <p className="text-lg font-bold text-gray-900 mt-0.5">
                           {Math.round(mil.progress?.averageScore ?? 0)}%
                         </p>
@@ -243,7 +247,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
               <CardTitle className="flex items-center justify-between text-base">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-blue-600" />
-                  360° Evaluation
+                  {t("assessments.eval360Title", "360° Evaluation")}
                 </div>
                 <StatusBadge status={assessmentProgress?.evaluationAssessment?.status ?? "not_started"} />
               </CardTitle>
@@ -255,7 +259,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
                 if (!groups.length) {
                   return (
                     <p className="text-sm text-gray-400 text-center py-4">
-                      No evaluators have been added yet.
+                      {t("assessments.noEvaluators", "No evaluators have been added yet.")}
                     </p>
                   );
                 }
@@ -265,13 +269,13 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
                 return (
                   <div className="flex items-center gap-6 text-sm">
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Evaluators</p>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("assessments.colEvaluators", "Evaluators")}</p>
                       <p className="text-lg font-bold text-gray-900 mt-0.5">
                         {completedCount}/{groups.length} completed
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Response Rate</p>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("assessments.colResponseRate", "Response Rate")}</p>
                       <p className="text-lg font-bold text-gray-900 mt-0.5">
                         {groups.length > 0
                           ? Math.round((completedCount / groups.length) * 100)

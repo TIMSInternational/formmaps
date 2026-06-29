@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { CalendarIntegrationPanel } from "@/components/shared/CalendarIntegrationPanel";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -40,6 +41,7 @@ interface DaySchedule {
 }
 
 export default function CounselorSettingsPage() {
+  const { t } = useTranslation("counselor");
   const { user } = useGlobalStore();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -48,15 +50,15 @@ export default function CounselorSettingsPage() {
 
   const handleChangePassword = async () => {
     if (!currentPassword) {
-      toast.error("Enter your current password");
+      toast.error(t("settings.enterCurrentPassword", "Enter your current password"));
       return;
     }
     if (!newPassword || newPassword.length < 8) {
-      toast.error("Password must be at least 8 characters");
+      toast.error(t("settings.passwordMinLength", "Password must be at least 8 characters"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t("settings.passwordsNoMatch", "Passwords do not match"));
       return;
     }
     setChangingPassword(true);
@@ -65,12 +67,12 @@ export default function CounselorSettingsPage() {
         method: "PUT",
         data: { email: user.email, password: newPassword, oldPassword: currentPassword },
       });
-      toast.success("Password changed successfully");
+      toast.success(t("settings.passwordChanged", "Password changed successfully"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (e: any) {
-      toast.error(e?.message || "Failed to change password");
+    } catch (e: unknown) {
+      toast.error((e as Error)?.message || t("settings.failedToChangePassword", "Failed to change password"));
     } finally {
       setChangingPassword(false);
     }
@@ -91,7 +93,7 @@ export default function CounselorSettingsPage() {
           setSchedule(
             DAYS.map(day => {
               const existing = data.weeklySchedule.find(
-                (d: any) => d.day.toLowerCase() === day.toLowerCase()
+                (d: { day: string }) => d.day.toLowerCase() === day.toLowerCase()
               );
               return existing
                 ? { day, enabled: existing.enabled, timeSlots: existing.timeSlots?.length ? existing.timeSlots : [{ start: "09:00", end: "17:00" }] }
@@ -120,9 +122,9 @@ export default function CounselorSettingsPage() {
     setSaving(true);
     try {
       await updateCounselorAvailability({ timezone, weeklySchedule: schedule });
-      toast.success("Availability saved successfully!");
-    } catch (e: any) {
-      toast.error(e.message || "Failed to save availability");
+      toast.success(t("settings.availabilitySaved", "Availability saved successfully!"));
+    } catch (e: unknown) {
+      toast.error((e as Error).message || t("settings.failedToSave", "Failed to save availability"));
     } finally {
       setSaving(false);
     }
@@ -138,10 +140,10 @@ export default function CounselorSettingsPage() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-foreground">
-              Counselor Settings
+              {t("settings.title", "Counselor Settings")}
             </h1>
             <p className="text-muted-foreground text-xs mt-0.5">
-              Manage integrations and availability
+              {t("settings.subtitle", "Manage integrations and availability")}
             </p>
           </div>
         </div>
@@ -151,7 +153,7 @@ export default function CounselorSettingsPage() {
           className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm rounded-lg px-4 h-9 text-sm"
         >
           {saving ? <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-2" />}
-          Save Changes
+          {t("settings.saveChanges", "Save Changes")}
         </Button>
       </div>
 
@@ -163,54 +165,54 @@ export default function CounselorSettingsPage() {
               <User className="h-4 w-4 text-violet-500" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-foreground">Profile</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Your account information</p>
+              <h2 className="text-sm font-semibold text-foreground">{t("settings.profileTitle", "Profile")}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("settings.profileSubtitle", "Your account information")}</p>
             </div>
           </div>
         </div>
         <div className="p-4 md:p-5 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Name</Label>
-              <p className="text-sm font-medium text-foreground mt-1">{user.name || "\u2014"}</p>
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("settings.name", "Name")}</Label>
+              <p className="text-sm font-medium text-foreground mt-1">{user.name || "—"}</p>
             </div>
             <div>
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Email</Label>
-              <p className="text-sm font-medium text-foreground mt-1">{user.email || "\u2014"}</p>
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("settings.email", "Email")}</Label>
+              <p className="text-sm font-medium text-foreground mt-1">{user.email || "—"}</p>
             </div>
           </div>
 
           <div className="border-t border-[var(--border)] pt-5">
             <div className="flex items-center gap-2 mb-4">
               <Lock className="h-4 w-4 text-amber-500" />
-              <h3 className="text-sm font-semibold text-foreground">Change Password</h3>
+              <h3 className="text-sm font-semibold text-foreground">{t("settings.changePassword", "Change Password")}</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-lg">
               <div className="md:col-span-2">
-                <Label className="text-xs text-muted-foreground mb-1 block">Current Password</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">{t("settings.currentPassword", "Current Password")}</Label>
                 <Input
                   type="password"
-                  placeholder="Enter current password"
+                  placeholder={t("settings.currentPasswordPlaceholder", "Enter current password")}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   className="h-9 text-sm rounded-lg"
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground mb-1 block">New Password</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">{t("settings.newPassword", "New Password")}</Label>
                 <Input
                   type="password"
-                  placeholder="Min. 8 characters"
+                  placeholder={t("settings.newPasswordPlaceholder", "Min. 8 characters")}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="h-9 text-sm rounded-lg"
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground mb-1 block">Confirm Password</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">{t("settings.confirmPassword", "Confirm Password")}</Label>
                 <Input
                   type="password"
-                  placeholder="Re-enter password"
+                  placeholder={t("settings.confirmPasswordPlaceholder", "Re-enter password")}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="h-9 text-sm rounded-lg"
@@ -223,7 +225,7 @@ export default function CounselorSettingsPage() {
               className="mt-3 bg-amber-600 hover:bg-amber-700 text-white shadow-sm rounded-lg px-4 h-9 text-sm"
             >
               {changingPassword ? <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> : <Lock className="h-3.5 w-3.5 mr-2" />}
-              Update Password
+              {t("settings.updatePassword", "Update Password")}
             </Button>
           </div>
         </div>
@@ -243,8 +245,8 @@ export default function CounselorSettingsPage() {
                 <CalendarDays className="h-4 w-4 text-blue-500" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-foreground">Session Availability</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Set weekly booking schedule.</p>
+                <h2 className="text-sm font-semibold text-foreground">{t("settings.availabilityTitle", "Session Availability")}</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">{t("settings.availabilitySubtitle", "Set weekly booking schedule.")}</p>
               </div>
             </div>
           </div>
@@ -254,7 +256,7 @@ export default function CounselorSettingsPage() {
             <div className="flex items-center justify-between p-3 bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] border border-[var(--border)] rounded-xl">
               <div className="flex items-center gap-2">
                 <Globe className="h-4 w-4 text-indigo-500" />
-                <Label className="text-sm font-medium text-foreground">Timezone</Label>
+                <Label className="text-sm font-medium text-foreground">{t("settings.timezone", "Timezone")}</Label>
               </div>
               <Select value={timezone} onValueChange={setTimezone}>
                 <SelectTrigger className="w-[180px] md:w-[240px] rounded-lg h-8 text-sm">
@@ -273,7 +275,7 @@ export default function CounselorSettingsPage() {
             {loading ? (
               <div className="flex flex-col items-center justify-center py-8 space-y-3">
                 <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
-                <p className="text-xs text-muted-foreground">Loading schedule...</p>
+                <p className="text-xs text-muted-foreground">{t("settings.loadingSchedule", "Loading schedule...")}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -301,7 +303,7 @@ export default function CounselorSettingsPage() {
                       <div className="flex-1 flex flex-wrap items-center gap-2 min-h-[32px]">
                         {!enabled ? (
                           <span className="text-xs text-muted-foreground px-2 py-1 bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] rounded-md">
-                            Unavailable
+                            {t("settings.unavailable", "Unavailable")}
                           </span>
                         ) : (
                           <>
@@ -312,7 +314,7 @@ export default function CounselorSettingsPage() {
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent className="max-h-[250px] min-w-[5rem]">
-                                    {TIME_OPTIONS.map(t => <SelectItem key={`start-${t}`} value={t} className="text-xs py-1">{t}</SelectItem>)}
+                                    {TIME_OPTIONS.map(opt => <SelectItem key={`start-${opt}`} value={opt} className="text-xs py-1">{opt}</SelectItem>)}
                                   </SelectContent>
                                 </Select>
                                 <span className="text-muted-foreground text-xs">—</span>
@@ -321,7 +323,7 @@ export default function CounselorSettingsPage() {
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent className="max-h-[250px] min-w-[5rem]">
-                                    {TIME_OPTIONS.map(t => <SelectItem key={`end-${t}`} value={t} className="text-xs py-1">{t}</SelectItem>)}
+                                    {TIME_OPTIONS.map(opt => <SelectItem key={`end-${opt}`} value={opt} className="text-xs py-1">{opt}</SelectItem>)}
                                   </SelectContent>
                                 </Select>
                                 <Button
@@ -344,7 +346,7 @@ export default function CounselorSettingsPage() {
                               className="h-7 px-2 text-xs text-indigo-600 hover:bg-indigo-50 ml-1"
                             >
                               <Plus className="h-3 w-3 mr-1" />
-                              Add
+                              {t("settings.add", "Add")}
                             </Button>
                           </>
                         )}

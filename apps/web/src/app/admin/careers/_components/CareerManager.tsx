@@ -38,7 +38,7 @@ function getCategory(c: RawCareer): string {
 }
 
 export function CareerManager() {
-    const { t } = useTranslation();
+    const { t } = useTranslation("platform_owner");
     const [careers, setCareers] = useState<RawCareer[]>([]);
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
@@ -88,24 +88,24 @@ export function CareerManager() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>Career Insights</h1>
+                    <h1 className="text-4xl font-bold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>{t("careers.title")}</h1>
                     <p className="text-base mt-1" style={{ color: "var(--admin-font-tertiary)" }}>
-                        Career database used for AI-powered student career matching
+                        {t("careers.subtitle")}
                     </p>
                 </div>
                 <div className="relative w-full md:w-72">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input placeholder="Search careers..." className="pl-9 h-10 rounded-xl" value={search} onChange={(e) => setSearch(e.target.value)} />
+                    <Input placeholder={t("careers.searchPlaceholder")} className="pl-9 h-10 rounded-xl" value={search} onChange={(e) => setSearch(e.target.value)} />
                 </div>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                    { label: "Total Careers", value: loading ? "..." : careers.length.toLocaleString(), icon: Briefcase },
-                    { label: "Career Clusters", value: clusters.length.toLocaleString(), icon: Layers },
-                    { label: "Avg per Cluster", value: avgPerCluster.toLocaleString(), icon: BarChart3 },
-                    { label: "Largest Cluster", value: largestCluster ? largestCluster[0].replace(/_/g, " ") : "—", icon: TrendingUp },
+                    { label: t("careers.stats.total"), value: loading ? "..." : careers.length.toLocaleString(), icon: Briefcase },
+                    { label: t("careers.stats.clusters"), value: clusters.length.toLocaleString(), icon: Layers },
+                    { label: t("careers.stats.avgPerCluster"), value: avgPerCluster.toLocaleString(), icon: BarChart3 },
+                    { label: t("careers.stats.largestCluster"), value: largestCluster ? largestCluster[0].replace(/_/g, " ") : "—", icon: TrendingUp },
                 ].map((stat, i) => (
                     <div key={i} style={{ ...s, padding: 16 }}>
                         <stat.icon style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)", marginBottom: 8 }} />
@@ -118,9 +118,9 @@ export function CareerManager() {
             {/* Search Results */}
             {search.trim() && (
                 <div style={{ ...s, padding: 20 }}>
-                    <h3 style={hdr}><Search style={{ width: 14, height: 14 }} /> Results for "{search}"</h3>
+                    <h3 style={hdr}><Search style={{ width: 14, height: 14 }} /> {t("careers.search.resultsFor", { term: search })}</h3>
                     {searchResults.length === 0 ? (
-                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No careers match</p>
+                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>{t("careers.search.noMatch")}</p>
                     ) : (
                         <div className="space-y-2">
                             {searchResults.map((c, i) => (
@@ -129,7 +129,7 @@ export function CareerManager() {
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-semibold truncate" style={{ color: "var(--admin-font-primary)" }}>{getTitle(c)}</p>
                                         <p className="text-[11px]" style={{ color: "var(--admin-font-tertiary)" }}>
-                                            {getCategory(c)} {c.educationLevel ? `· ${c.educationLevel}` : ""} {c.remoteEligible ? "· Remote" : ""}
+                                            {getCategory(c)} {c.educationLevel ? `· ${c.educationLevel}` : ""} {c.remoteEligible ? `· ${t("careers.remote")}` : ""}
                                         </p>
                                     </div>
                                     {c.salaryRange?.median && (
@@ -147,11 +147,11 @@ export function CareerManager() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Cluster Breakdown */}
                 <div style={{ ...s, padding: 20 }}>
-                    <h3 style={hdr}><BarChart3 style={{ width: 14, height: 14, color: "#065292" }} /> By Career Cluster</h3>
+                    <h3 style={hdr}><BarChart3 style={{ width: 14, height: 14, color: "#065292" }} /> {t("careers.clusters.sectionTitle")}</h3>
                     {loading ? (
                         <div className="space-y-2">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-10 rounded-lg" />)}</div>
                     ) : clusters.length === 0 ? (
-                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>No cluster data</p>
+                        <p className="text-sm py-4 text-center" style={{ color: "var(--admin-font-tertiary)" }}>{t("careers.clusters.noData")}</p>
                     ) : (
                         <div className="space-y-1.5">
                             {clusters.slice(0, 10).map(([name, count]) => {
@@ -172,7 +172,7 @@ export function CareerManager() {
 
                 {/* Careers per Cluster — top 5 */}
                 <div style={{ ...s, padding: 20 }}>
-                    <h3 style={hdr}><Briefcase style={{ width: 14, height: 14, color: "#8b5cf6" }} /> Largest Clusters</h3>
+                    <h3 style={hdr}><Briefcase style={{ width: 14, height: 14, color: "#8b5cf6" }} /> {t("careers.largest.sectionTitle")}</h3>
                     {loading ? (
                         <div className="space-y-2">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-12 rounded-lg" />)}</div>
                     ) : (
@@ -183,7 +183,7 @@ export function CareerManager() {
                                     <div className="flex-1">
                                         <p className="text-sm font-semibold" style={{ color: "var(--admin-font-primary)" }}>{name.replace(/_/g, " ")}</p>
                                     </div>
-                                    <span className="text-sm font-semibold" style={{ color: "var(--admin-font-tertiary)" }}>{count} careers</span>
+                                    <span className="text-sm font-semibold" style={{ color: "var(--admin-font-tertiary)" }}>{t("careers.largest.careersCount", { count })}</span>
                                 </div>
                             ))}
                         </div>
@@ -193,9 +193,9 @@ export function CareerManager() {
 
             {/* Sample Careers */}
             <div style={{ ...s, padding: 20 }}>
-                <h3 style={hdr}><Briefcase style={{ width: 14, height: 14, color: "#065292" }} /> Sample from Database</h3>
+                <h3 style={hdr}><Briefcase style={{ width: 14, height: 14, color: "#065292" }} /> {t("careers.sample.sectionTitle")}</h3>
                 <p className="text-[11px] mb-3" style={{ color: "var(--admin-font-tertiary)" }}>
-                    All {careers.length} careers are analyzed by the AI to match students based on their assessment profiles
+                    {t("careers.sample.sectionDesc", { count: careers.length })}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {(loading ? [] : careers.slice(0, 9)).map((c, i) => (
@@ -205,7 +205,7 @@ export function CareerManager() {
                                 <p className="text-xs font-semibold line-clamp-2" style={{ color: "var(--admin-font-primary)" }}>{getTitle(c)}</p>
                                 <p className="text-[10px] mt-0.5" style={{ color: "var(--admin-font-tertiary)" }}>
                                     {getCategory(c)}
-                                    {c.remoteEligible ? " · Remote" : ""}
+                                    {c.remoteEligible ? ` · ${t("careers.remote")}` : ""}
                                 </p>
                             </div>
                         </div>

@@ -35,6 +35,7 @@ interface UsersTableProps {
 
 export function UsersTable({ users, loading, page, totalPages, onPageChange, onViewProfile }: UsersTableProps) {
   const { t } = useTranslation();
+  const { t: tPO } = useTranslation("platform_owner");
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
@@ -120,7 +121,7 @@ export function UsersTable({ users, loading, page, totalPages, onPageChange, onV
       {/* Pagination inside Card */}
       <div className="flex items-center justify-between border-t border-gray-100 p-4 bg-gray-50/30">
         <p className="text-sm text-gray-500">
-          Showing page <span className="font-semibold text-gray-900">{page}</span> of <span className="font-semibold text-gray-900">{totalPages || 1}</span>
+          {tPO("users.pagination.showingPage", { page, total: totalPages || 1 })}
         </p>
         <div className="flex items-center gap-2">
           <Button

@@ -1,6 +1,7 @@
 "use client";
 
 import { School, UserPlus, Users, GraduationCap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAdminAnalyticsSummary } from "@/hooks/useAdminAnalytics";
 
 interface StatRow {
@@ -12,30 +13,31 @@ interface StatRow {
 
 export function QuickStatsCard() {
   const { data: analytics } = useAdminAnalyticsSummary("month");
+  const { t } = useTranslation("platform_owner");
   const stats = analytics?.stats ?? (analytics as any)?.Stats;
 
   const s = stats as any;
   const rows: StatRow[] = [
     {
-      label: "Active Schools",
+      label: t("quickStats.activeSchools"),
       value: (s?.activeSchools ?? s?.ActiveSchools)?.toLocaleString() || "—",
       icon: School,
       color: "#065292",
     },
     {
-      label: "Total Coaches",
+      label: t("quickStats.totalCoaches"),
       value: (s?.activeCoaches ?? s?.ActiveCoaches)?.toLocaleString() || "—",
       icon: GraduationCap,
       color: "#8b5cf6",
     },
     {
-      label: "Pending Invites",
+      label: t("quickStats.pendingInvites"),
       value: (s?.pendingInvites ?? s?.PendingInvites)?.toLocaleString() || "—",
       icon: UserPlus,
       color: "#f59e0b",
     },
     {
-      label: "Total Students",
+      label: t("quickStats.totalStudents"),
       // totalStudents, not totalUsers — the card used to overcount by every
       // staff/coach/parent account on the platform.
       value: (s?.totalStudents ?? s?.TotalStudents)?.toLocaleString() || "—",
@@ -67,7 +69,7 @@ export function QuickStatsCard() {
             color: "var(--admin-font-tertiary, #818181)",
           }}
         >
-          Quick Stats
+          {t("quickStats.title")}
         </span>
       </div>
 

@@ -22,6 +22,7 @@ import {
   Activity,
   CheckCircle,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const COLORS = ["#065292", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
@@ -66,6 +67,8 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
   dailyActiveUsersTrend,
   CustomTooltip,
 }: TelemetryChartsProps) {
+  const { t } = useTranslation("platform_owner");
+
   return (
     <>
       {/* Charts Section */}
@@ -75,7 +78,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
           <CardHeader className="border-b border-gray-50 bg-gray-50/30 py-5">
             <CardTitle className="text-base font-semibold text-gray-800 flex items-center gap-1.5">
               <UserPlus className="h-4 w-4 text-blue-500" />
-              New vs Returning
+              {t("telemetry.charts.newVsReturning")}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -85,8 +88,8 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
                   <PieChart>
                     <Pie
                       data={[
-                        { name: 'New Users', value: newUsers, color: '#065292' },
-                        { name: 'Returning', value: returningUsers, color: '#10b981' }
+                        { name: t("telemetry.charts.newLabel").replace(": ", ""), value: newUsers, color: '#065292' },
+                        { name: t("telemetry.charts.returningLabel").replace(": ", ""), value: returningUsers, color: '#10b981' }
                       ]}
                       cx="50%"
                       cy="50%"
@@ -106,7 +109,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
                   <span className="text-2xl font-bold text-gray-900">
                     {(newUsers + returningUsers).toLocaleString()}
                   </span>
-                  <span className="text-xs text-gray-500">Total Users</span>
+                  <span className="text-xs text-gray-500">{t("telemetry.charts.totalUsersLabel")}</span>
                 </div>
               </div>
 
@@ -114,14 +117,14 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-blue-500" />
                   <div className="text-sm">
-                    <span className="text-gray-500">New: </span>
+                    <span className="text-gray-500">{t("telemetry.charts.newLabel")}</span>
                     <span className="font-semibold text-gray-900">{newUsers.toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-emerald-500" />
                   <div className="text-sm">
-                    <span className="text-gray-500">Returning: </span>
+                    <span className="text-gray-500">{t("telemetry.charts.returningLabel")}</span>
                     <span className="font-semibold text-gray-900">{returningUsers.toLocaleString()}</span>
                   </div>
                 </div>
@@ -135,9 +138,9 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
           <CardHeader className="border-b border-gray-50 bg-gray-50/30 py-5">
             <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-1.5">
               <TrendingUp className="h-5 w-5 text-emerald-500" />
-              Top Pages
+              {t("telemetry.charts.topPages")}
             </CardTitle>
-            <CardDescription>Most visited pages by view count</CardDescription>
+            <CardDescription>{t("telemetry.charts.topPagesDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
             {topPages.length > 0 ? (
@@ -164,7 +167,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-[250px] text-gray-400 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
-                No page view data available
+                {t("telemetry.charts.noPageData")}
               </div>
             )}
           </CardContent>
@@ -178,9 +181,9 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
            <CardHeader className="border-b border-gray-50 bg-gray-50/30 py-5">
             <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-1.5">
               <Activity className="h-5 w-5 text-violet-500" />
-              Event Breakdown
+              {t("telemetry.charts.eventBreakdown")}
             </CardTitle>
-            <CardDescription>Distribution of user actions</CardDescription>
+            <CardDescription>{t("telemetry.charts.eventBreakdownDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
              {eventChartData.length > 0 ? (
@@ -206,7 +209,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
                         </ResponsiveContainer>
                         <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
                             <span className="text-2xl font-bold text-gray-900">{eventChartData.reduce((a,b) => a + b.value, 0)}</span>
-                            <span className="text-xs text-gray-500">Events</span>
+                            <span className="text-xs text-gray-500">{t("telemetry.charts.totalEventsLabel")}</span>
                         </div>
                     </div>
                     <div className="space-y-3">
@@ -223,7 +226,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
                 </div>
              ) : (
                 <div className="flex items-center justify-center h-[200px] text-gray-400 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
-                  No event data available
+                  {t("telemetry.charts.noEventData")}
                 </div>
              )}
           </CardContent>
@@ -234,21 +237,21 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
           <CardHeader className="border-b border-gray-50 bg-gray-50/30 py-5">
             <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-1.5">
               <CheckCircle className="h-5 w-5 text-emerald-500" />
-              Completion Rates
+              {t("telemetry.charts.completionRates")}
             </CardTitle>
-            <CardDescription>User journey milestones</CardDescription>
+            <CardDescription>{t("telemetry.charts.userJourneyMilestones")}</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-6 mt-2">
               {[
-                  { label: "Resume Builder", key: "resumeBuilder" as const, color: "bg-blue-500" },
-                  { label: "Assessments", key: "assessments" as const, color: "bg-emerald-500" },
-                  { label: "Coach Onboarding", key: "coachOnboarding" as const, color: "bg-violet-500" },
-                  { label: "Profile Setup", key: "profileSetup" as const, color: "bg-orange-500" },
+                  { labelKey: "telemetry.charts.resumeBuilder", key: "resumeBuilder" as const, color: "bg-blue-500" },
+                  { labelKey: "telemetry.charts.assessments", key: "assessments" as const, color: "bg-emerald-500" },
+                  { labelKey: "telemetry.charts.coachOnboarding", key: "coachOnboarding" as const, color: "bg-violet-500" },
+                  { labelKey: "telemetry.charts.profileSetup", key: "profileSetup" as const, color: "bg-orange-500" },
               ].map((item) => (
                <div key={item.key} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                  <span className="text-sm font-medium text-gray-700">{t(item.labelKey)}</span>
                   <span className="font-bold text-gray-900">
                     {Math.round((completionRates[item.key] || 0) * 100)}%
                   </span>
@@ -272,9 +275,9 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
           <CardHeader className="border-b border-gray-50 bg-gray-50/30 py-5">
             <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-1.5">
               <TrendingUp className="h-5 w-5 text-blue-500" />
-              Daily Active Users Trend
+              {t("telemetry.charts.dauTrend")}
             </CardTitle>
-            <CardDescription>30-day active user history</CardDescription>
+            <CardDescription>{t("telemetry.charts.dauTrendDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
             <ResponsiveContainer width="100%" height={300}>

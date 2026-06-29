@@ -30,14 +30,14 @@ import {
 
 type ThemeMode = "dark" | "light" | "system";
 
-const getNavSections = (t: (key: string, fallback: string) => string) => [
+const getNavSections = (t: (key: string, fallback?: string) => string) => [
   {
     label: t("nav.main", "Main"),
     items: [
-      { label: t("parent.nav.dashboard", "Dashboard"), href: "/parent", icon: Home },
-      { label: t("parent.nav.myChildren", "My Children"), href: "/parent/children", icon: Users },
-      { label: t("parent.nav.evaluations", "Evaluations"), href: "/parent/evaluations", icon: FileCheck },
-      { label: t("parent.nav.notifications", "Notifications"), href: "/parent/notifications", icon: Bell },
+      { label: t("nav.dashboard"), href: "/parent", icon: Home },
+      { label: t("nav.myChildren"), href: "/parent/children", icon: Users },
+      { label: t("nav.evaluations"), href: "/parent/evaluations", icon: FileCheck },
+      { label: t("nav.notifications"), href: "/parent/notifications", icon: Bell },
     ],
   },
 ];
@@ -88,7 +88,7 @@ function TabBtn({ icon: Icon, active, onClick, title }: {
 }
 
 export function ParentSidebar() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("parent");
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useGlobalStore();
@@ -113,7 +113,7 @@ export function ParentSidebar() {
     openChatInPanel(thread.id);
   };
 
-  const NAV_SECTIONS = getNavSections(t);
+  const NAV_SECTIONS = getNavSections((k: string, f?: string) => (f === undefined ? t(k) : t(k, f)));
   const chatGroups = groupThreadsByDate(threads);
 
   const C = {
@@ -303,7 +303,7 @@ export function ParentSidebar() {
           {!collapsed && <>
             <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
               <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name || "Parent"}</div>
-              <div style={{ fontSize: 10, color: C.fontTertiary }}>Parent</div>
+              <div style={{ fontSize: 10, color: C.fontTertiary }}>{t("role")}</div>
             </div>
             <ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} />
           </>}

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
 import { LiveFeed, type FeedItem } from "@/components/ui/live-feed";
 
@@ -25,6 +26,7 @@ function mapActivityToFeed(activities: any[]): FeedItem[] {
 export function RevenueOverviewCard() {
   const { data: analytics } = useAdminAnalytics("month");
   const shouldReduceMotion = useReducedMotion();
+  const { t } = useTranslation("platform_owner");
 
   const revenue = analytics?.stats?.totalRevenue ?? 0;
   const revenueThisMonth = analytics?.stats?.monthlyGrowth?.revenue ?? 0;
@@ -49,7 +51,7 @@ export function RevenueOverviewCard() {
       >
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
           <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--admin-font-light, #555)" }}>
-            Revenue Trend (12 mo)
+            {t("revenue.trendTitle")}
           </div>
           <div style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)", letterSpacing: "-0.03em" }}>
             ${revenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
@@ -75,7 +77,7 @@ export function RevenueOverviewCard() {
           ))}
           {series.length === 0 && (
             <div style={{ width: "100%", textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)", alignSelf: "center" }}>
-              No revenue recorded yet
+              {t("revenue.noRevenue")}
             </div>
           )}
         </div>
@@ -84,14 +86,14 @@ export function RevenueOverviewCard() {
         <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <div style={{ width: 3, height: 12, borderRadius: 2, background: "#065292" }} />
-            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>This month</span>
+            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("revenue.thisMonth")}</span>
             <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-accent-green)" }}>
               ${revenueThisMonth.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <div style={{ width: 3, height: 12, borderRadius: 2, background: "#10b981" }} />
-            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>New users</span>
+            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("revenue.newUsers")}</span>
             <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-accent-green)" }}>
               +{usersThisMonth.toLocaleString()}
             </span>
@@ -102,7 +104,7 @@ export function RevenueOverviewCard() {
       {/* Right — Live Feed */}
       <LiveFeed
         items={mapActivityToFeed(recentActivity)}
-        title="Recent Activity"
+        title={t("revenue.recentActivity")}
         autoScroll={recentActivity.length > 5}
         maxVisible={5}
       />

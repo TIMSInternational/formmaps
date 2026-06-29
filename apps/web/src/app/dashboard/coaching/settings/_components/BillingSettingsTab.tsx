@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Loader2, Download, Receipt, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { TableRowsSkeleton } from "@/components/skeletons/TableSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -48,6 +49,7 @@ export function BillingSettingsTab({
   billingHistory: billingHistoryProp,
   isLoading: parentLoading,
 }: BillingSettingsTabProps) {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
   const [currentPeriod, setCurrentPeriod] = useState<BillingPeriod | null>(null);
   const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
@@ -84,7 +86,7 @@ export function BillingSettingsTab({
       }
 
     } catch (error) {
-      toast.error("Failed to load billing data");
+      toast.error(t("coach:settings.billing.loadError"));
     } finally {
       setIsLoading(false);
     }
@@ -99,12 +101,12 @@ export function BillingSettingsTab({
 
   const downloadInvoice = async (billingId: string) => {
     try {
-      toast.info("Invoice download starting...");
+      toast.info(t("coach:settings.billing.downloading"));
       const { downloadInvoice } = await import("@/services/coachService");
       await downloadInvoice(billingId);
-      toast.success("Invoice downloaded");
+      toast.success(t("coach:settings.billing.downloadSuccess"));
     } catch (error) {
-      toast.error("Failed to download invoice");
+      toast.error(t("coach:settings.billing.downloadError"));
     }
   };
 
@@ -122,7 +124,7 @@ export function BillingSettingsTab({
   };
 
   if (parentLoading && !currentPeriod) {
-    return <div className="p-12 text-center text-gray-500">Loading billing data...</div>;
+    return <div className="p-12 text-center text-gray-500">{t("coach:settings.billing.loading")}</div>;
   }
 
   return (
@@ -132,15 +134,15 @@ export function BillingSettingsTab({
       <section className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start gap-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 leading-tight">Current Billing Period</h2>
+            <h2 className="text-xl font-bold text-gray-900 leading-tight">{t("coach:settings.billing.title")}</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Overview of your bookings and fees for the current cycle.
+              {t("coach:settings.billing.subtitle")}
             </p>
           </div>
           {currentPeriod?.period && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm">
               <Skeleton className="w-2 h-2 rounded-full" variant="circle" />
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Cycle:</span>
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("coach:settings.billing.cycle")}</span>
               <span className="text-sm font-semibold text-gray-900">{currentPeriod.period}</span>
             </div>
           )}
@@ -151,14 +153,14 @@ export function BillingSettingsTab({
           <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-medium text-gray-500">Total Revenue</p>
+                <p className="text-sm font-medium text-gray-500">{t("coach:settings.billing.totalRevenue")}</p>
                 <div className="h-8 w-8 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center">
                   <Wallet className="h-4 w-4 text-gray-600" />
                 </div>
               </div>
               <div>
                 <p className="text-3xl font-bold text-gray-900 tracking-tight">${currentPeriod?.totalRevenue?.toFixed(2) || "0.00"}</p>
-                <p className="text-xs text-gray-500 mt-1 font-medium">{currentPeriod?.totalBookings || 0} bookings processed</p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">{t("coach:settings.billing.bookingsProcessed", { count: currentPeriod?.totalBookings || 0 })}</p>
               </div>
             </CardContent>
           </Card>
@@ -168,12 +170,12 @@ export function BillingSettingsTab({
             <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-full -mr-10 -mt-10 opacity-50" />
             <CardContent className="p-6 relative z-10">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-medium text-gray-500">Platform Fees</p>
-                <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50/50">15% Fee</Badge>
+                <p className="text-sm font-medium text-gray-500">{t("coach:settings.billing.platformFees")}</p>
+                <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50/50">{t("coach:settings.billing.feePercent")}</Badge>
               </div>
               <div>
                 <p className="text-3xl font-bold text-gray-900 tracking-tight">${currentPeriod?.platformFeeAmount?.toFixed(2) || "0.00"}</p>
-                <p className="text-xs text-gray-500 mt-1 font-medium">Deducted automatically</p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">{t("coach:settings.billing.feeDeducted")}</p>
               </div>
             </CardContent>
           </Card>
@@ -182,7 +184,7 @@ export function BillingSettingsTab({
           <Card className="border-gray-200 shadow-sm bg-gray-50/30 hover:shadow-md transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-medium text-gray-500">Next Invoice</p>
+                <p className="text-sm font-medium text-gray-500">{t("coach:settings.billing.nextInvoice")}</p>
                 <Receipt className="h-4 w-4 text-gray-400" />
               </div>
               <div>
@@ -194,7 +196,7 @@ export function BillingSettingsTab({
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 mt-2 font-medium">Auto-generated on due date</p>
+                <p className="text-xs text-gray-500 mt-2 font-medium">{t("coach:settings.billing.autoGenerated")}</p>
               </div>
             </CardContent>
           </Card>
@@ -205,9 +207,9 @@ export function BillingSettingsTab({
       <section className="space-y-6 pt-2">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 leading-tight">Invoice History</h2>
+            <h2 className="text-xl font-bold text-gray-900 leading-tight">{t("coach:settings.billing.historyTitle")}</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Download past invoices and statements.
+              {t("coach:settings.billing.historySubtitle")}
             </p>
           </div>
         </div>
@@ -216,11 +218,11 @@ export function BillingSettingsTab({
           <Table>
             <TableHeader className="bg-gray-50/50 border-b border-gray-100">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[30%] pl-6 font-semibold text-gray-600 text-xs uppercase tracking-wider h-12">Period</TableHead>
-                <TableHead className="w-[20%] font-semibold text-gray-600 text-xs uppercase tracking-wider h-12">Revenue</TableHead>
-                <TableHead className="w-[20%] font-semibold text-gray-600 text-xs uppercase tracking-wider h-12">Fees</TableHead>
-                <TableHead className="w-[15%] font-semibold text-gray-600 text-xs uppercase tracking-wider h-12">Status</TableHead>
-                <TableHead className="w-[15%] pr-6 text-right font-semibold text-gray-600 text-xs uppercase tracking-wider h-12">Action</TableHead>
+                <TableHead className="w-[30%] pl-6 font-semibold text-gray-600 text-xs uppercase tracking-wider h-12">{t("coach:settings.billing.tableHeaders.period")}</TableHead>
+                <TableHead className="w-[20%] font-semibold text-gray-600 text-xs uppercase tracking-wider h-12">{t("coach:settings.billing.tableHeaders.revenue")}</TableHead>
+                <TableHead className="w-[20%] font-semibold text-gray-600 text-xs uppercase tracking-wider h-12">{t("coach:settings.billing.tableHeaders.fees")}</TableHead>
+                <TableHead className="w-[15%] font-semibold text-gray-600 text-xs uppercase tracking-wider h-12">{t("coach:settings.billing.tableHeaders.status")}</TableHead>
+                <TableHead className="w-[15%] pr-6 text-right font-semibold text-gray-600 text-xs uppercase tracking-wider h-12">{t("coach:settings.billing.tableHeaders.action")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -233,8 +235,8 @@ export function BillingSettingsTab({
                       <div className="h-12 w-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
                         <Receipt className="h-6 w-6 text-gray-300" />
                       </div>
-                      <p className="font-medium text-gray-900">No invoices found</p>
-                      <p className="text-sm">Invoices will appear here once generated.</p>
+                      <p className="font-medium text-gray-900">{t("coach:settings.billing.noInvoices")}</p>
+                      <p className="text-sm">{t("coach:settings.billing.invoicesNote")}</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -269,7 +271,7 @@ export function BillingSettingsTab({
           {billingHistory.length > 0 && (
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/30">
               <p className="text-sm text-gray-500">
-                Showing page <span className="font-medium text-gray-900">{page}</span> of <span className="font-medium text-gray-900">{totalPages}</span>
+                {t("coach:settings.billing.pagination.showing", { page, total: totalPages })}
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -279,7 +281,7 @@ export function BillingSettingsTab({
                   disabled={page <= 1 || isLoading}
                   className="h-8 px-3 text-xs font-medium border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50"
                 >
-                  Previous
+                  {t("coach:settings.billing.pagination.previous")}
                 </Button>
                 <Button
                   variant="outline"
@@ -288,7 +290,7 @@ export function BillingSettingsTab({
                   disabled={page >= totalPages || isLoading}
                   className="h-8 px-3 text-xs font-medium border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50"
                 >
-                  Next
+                  {t("coach:settings.billing.pagination.next")}
                 </Button>
               </div>
             </div>

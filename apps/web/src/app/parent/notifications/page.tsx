@@ -35,7 +35,7 @@ const TYPE_CONFIG: Record<
 };
 
 export default function ParentNotificationsPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("parent");
   const { data: notifications, isLoading } = useParentNotifications();
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
@@ -52,14 +52,14 @@ export default function ParentNotificationsPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Parent</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("notifications.badge")}</p>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-            {t("parent.notifications.title", "Notifications")}
+            {t("notifications.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {unreadCount > 0
-              ? `${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`
-              : "All caught up!"}
+              ? t("notifications.unread", { count: unreadCount })
+              : t("notifications.allCaughtUp")}
           </p>
         </div>
 
@@ -72,7 +72,7 @@ export default function ParentNotificationsPage() {
             disabled={markAll.isPending}
           >
             <CheckCheck className="h-4 w-4" />
-            Mark All Read
+            {t("notifications.markAllRead")}
           </Button>
         )}
       </motion.div>
@@ -87,9 +87,9 @@ export default function ParentNotificationsPage() {
       ) : list.length === 0 ? (
         <div className="text-center py-20 dash-card border-dashed">
           <BellOff className="h-14 w-14 text-muted-foreground mx-auto mb-4" />
-          <p className="text-lg font-semibold text-foreground">No notifications yet</p>
+          <p className="text-lg font-semibold text-foreground">{t("notifications.empty")}</p>
           <p className="text-sm text-muted-foreground mt-1">
-            You'll be notified about evaluations, grades, and important updates here.
+            {t("notifications.emptyDesc")}
           </p>
         </div>
       ) : (
@@ -145,7 +145,7 @@ export default function ParentNotificationsPage() {
                       onClick={() => markRead.mutate(notif.id)}
                       disabled={markRead.isPending}
                     >
-                      Mark read
+                      {t("notifications.markRead")}
                     </Button>
                   )}
                 </div>

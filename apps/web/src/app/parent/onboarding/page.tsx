@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
 };
 
 function ParentOnboardingContent() {
+  const { t } = useTranslation("parent");
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token") ?? "";
@@ -64,15 +66,15 @@ function ParentOnboardingContent() {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast.error("Please enter your full name");
+      toast.error(t("onboarding.validation.nameRequired"));
       return;
     }
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters");
+      toast.error(t("onboarding.validation.passwordTooShort"));
       return;
     }
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t("onboarding.validation.passwordMismatch"));
       return;
     }
 
@@ -98,7 +100,7 @@ function ParentOnboardingContent() {
           setTimeout(() => router.push("/parent"), 2000);
         },
         onError: (err: Error) =>
-          toast.error(err.message || "Account setup failed. Please try again."),
+          toast.error(err.message || t("onboarding.validation.nameRequired")),
       }
     );
   };
@@ -111,14 +113,13 @@ function ParentOnboardingContent() {
           <CardContent className="pt-10 pb-8 text-center">
             <AlertTriangle className="h-12 w-12 text-orange-400 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-gray-900 mb-2">
-              Invalid Invitation Link
+              {t("onboarding.noToken.heading")}
             </h2>
             <p className="text-gray-500 text-sm">
-              This invitation link is missing a token. Please check the email
-              you received or contact your school.
+              {t("onboarding.noToken.desc")}
             </p>
             <Link href="/login" className="mt-6 inline-block">
-              <Button variant="outline">Go to Login</Button>
+              <Button variant="outline">{t("onboarding.goToLogin")}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -132,7 +133,7 @@ function ParentOnboardingContent() {
       <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50 flex items-center justify-center p-4">
         <div className="space-y-4 text-center">
           <Loader2 className="h-10 w-10 text-violet-500 mx-auto animate-spin" />
-          <p className="text-gray-500">Verifying your invitation…</p>
+          <p className="text-gray-500">{t("onboarding.verifying")}</p>
         </div>
       </div>
     );
@@ -146,14 +147,13 @@ function ParentOnboardingContent() {
           <CardContent className="pt-10 pb-8 text-center">
             <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-gray-900 mb-2">
-              Invitation Expired or Invalid
+              {t("onboarding.expired.heading")}
             </h2>
             <p className="text-gray-500 text-sm mb-6">
-              {(tokenError as Error)?.message ??
-                "This invitation link has expired or is no longer valid. Please contact the school for a new invitation."}
+              {(tokenError as Error)?.message ?? t("onboarding.expired.descFallback")}
             </p>
             <Link href="/login">
-              <Button variant="outline">Go to Login</Button>
+              <Button variant="outline">{t("onboarding.goToLogin")}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -179,10 +179,10 @@ function ParentOnboardingContent() {
                 <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
               </motion.div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Welcome!
+                {t("onboarding.success.heading")}
               </h2>
               <p className="text-gray-500 text-sm">
-                Your parent account is ready. Redirecting to your portal…
+                {t("onboarding.success.desc")}
               </p>
             </CardContent>
           </Card>
@@ -204,10 +204,10 @@ function ParentOnboardingContent() {
             <Heart className="h-7 w-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Set Up Your Parent Portal Account
+            {t("onboarding.title")}
           </h1>
           <p className="text-gray-500 text-sm">
-            You've been invited to track your child's academic journey
+            {t("onboarding.subtitle")}
           </p>
         </div>
 
@@ -225,7 +225,7 @@ function ParentOnboardingContent() {
                     <Users className="h-4 w-4 text-violet-500" />
                     <div>
                       <p className="text-[10px] text-gray-500 uppercase tracking-wide">
-                        Student
+                        {t("onboarding.invite.student")}
                       </p>
                       <p className="text-sm font-semibold text-gray-800">
                         {tokenData.studentName}
@@ -237,7 +237,7 @@ function ParentOnboardingContent() {
                     <User className="h-4 w-4 text-violet-500" />
                     <div>
                       <p className="text-[10px] text-gray-500 uppercase tracking-wide">
-                        Your Role
+                        {t("onboarding.invite.yourRole")}
                       </p>
                       <p className="text-sm font-semibold text-gray-800">
                         {RELATIONSHIP_LABELS[tokenData.relationship] ??
@@ -250,7 +250,7 @@ function ParentOnboardingContent() {
                     <School className="h-4 w-4 text-violet-500" />
                     <div>
                       <p className="text-[10px] text-gray-500 uppercase tracking-wide">
-                        School
+                        {t("onboarding.invite.school")}
                       </p>
                       <p className="text-sm font-semibold text-gray-800">
                         {tokenData.schoolName}
@@ -270,9 +270,9 @@ function ParentOnboardingContent() {
         {/* Form */}
         <Card className="border-0 shadow-xl">
           <CardHeader>
-            <CardTitle className="text-lg">Create your account</CardTitle>
+            <CardTitle className="text-lg">{t("onboarding.form.title")}</CardTitle>
             <CardDescription>
-              Set up your credentials to access the parent portal
+              {t("onboarding.form.desc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -280,14 +280,14 @@ function ParentOnboardingContent() {
               {/* Full Name */}
               <div className="space-y-2">
                 <Label htmlFor="name">
-                  Full Name <span className="text-red-500">*</span>
+                  {t("onboarding.form.fullName")} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Your full name"
+                  placeholder={t("onboarding.form.namePlaceholder")}
                   required
                 />
               </div>
@@ -295,7 +295,7 @@ function ParentOnboardingContent() {
               {/* Password */}
               <div className="space-y-2">
                 <Label htmlFor="password">
-                  Password <span className="text-red-500">*</span>
+                  {t("onboarding.form.password")} <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <Input
@@ -303,7 +303,7 @@ function ParentOnboardingContent() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 8 characters"
+                    placeholder={t("onboarding.form.passwordPlaceholder")}
                     required
                     minLength={8}
                     className="pr-10"
@@ -325,7 +325,7 @@ function ParentOnboardingContent() {
               {/* Confirm Password */}
               <div className="space-y-2">
                 <Label htmlFor="confirm">
-                  Confirm Password <span className="text-red-500">*</span>
+                  {t("onboarding.form.confirmPassword")} <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <Input
@@ -333,7 +333,7 @@ function ParentOnboardingContent() {
                     type={showConfirm ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Repeat your password"
+                    placeholder={t("onboarding.form.confirmPlaceholder")}
                     required
                     className="pr-10"
                   />
@@ -351,7 +351,7 @@ function ParentOnboardingContent() {
                 </div>
                 {confirmPassword && password !== confirmPassword && (
                   <p className="text-xs text-red-500">
-                    Passwords do not match
+                    {t("onboarding.form.passwordMismatch")}
                   </p>
                 )}
               </div>
@@ -372,13 +372,13 @@ function ParentOnboardingContent() {
                 ) : (
                   <CheckCircle2 className="h-4 w-4 mr-2" />
                 )}
-                Activate My Account
+                {t("onboarding.form.submit")}
               </Button>
 
               <p className="text-xs text-center text-gray-400 pt-1">
-                Already have an account?{" "}
+                {t("onboarding.form.alreadyHaveAccount")}{" "}
                 <Link href="/login" className="text-violet-600 hover:underline">
-                  Sign in here
+                  {t("onboarding.form.signIn")}
                 </Link>
               </p>
             </form>

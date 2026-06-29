@@ -20,6 +20,7 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 import { QueryStateBoundary } from "@/components/QueryStateBoundary";
 import {
   getTranscript,
@@ -53,6 +54,7 @@ function formatGpa(val: number | null | undefined): string {
 }
 
 export default function TranscriptPage() {
+  const { t } = useTranslation("student");
   const [data, setData] = useState<TranscriptData | null>(null);
   const [gpaRecord, setGpaRecord] = useState<StudentGpa | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,7 @@ export default function TranscriptPage() {
       setGpaRecord(gpa);
     } catch {
       setError(true);
-      toast.error("Failed to load transcript.");
+      toast.error(t("transcript.failedToLoad"));
     } finally {
       setLoading(false);
     }
@@ -124,10 +126,9 @@ export default function TranscriptPage() {
       <div className="w-14 h-14 mx-auto mb-4 bg-secondary rounded-xl border border-border flex items-center justify-center">
         <BookOpen className="h-7 w-7 text-muted-foreground" />
       </div>
-      <h3 className="text-sm font-bold text-foreground mb-1">No Courses Yet</h3>
+      <h3 className="text-sm font-bold text-foreground mb-1">{t("transcript.noCoursesTitle")}</h3>
       <p className="text-xs text-muted-foreground max-w-md mx-auto">
-        Your transcript will populate once course grades have been entered by
-        your school.
+        {t("transcript.noCoursesBody")}
       </p>
     </motion.div>
   );
@@ -150,13 +151,13 @@ export default function TranscriptPage() {
         >
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-              Academic Record
+              {t("transcript.badge")}
             </p>
             <h1 className="text-2xl font-bold tracking-tight text-foreground mb-1">
-              My Transcript
+              {t("transcript.title")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              A full view of your academic history, GPA, and credit progress.
+              {t("transcript.subtitle")}
             </p>
           </div>
         </motion.div>
@@ -175,7 +176,7 @@ export default function TranscriptPage() {
                 <GraduationCap className="w-4 h-4 text-indigo-600" />
               </div>
               <p className="text-xs font-medium text-muted-foreground">
-                Unweighted GPA
+                {t("transcript.unweightedGpa")}
               </p>
             </div>
             <p
@@ -196,7 +197,7 @@ export default function TranscriptPage() {
                 <Award className="w-4 h-4 text-purple-600" />
               </div>
               <p className="text-xs font-medium text-muted-foreground">
-                Weighted GPA
+                {t("transcript.weightedGpa")}
               </p>
             </div>
             <p
@@ -217,7 +218,7 @@ export default function TranscriptPage() {
                 <Hash className="w-4 h-4 text-amber-600" />
               </div>
               <p className="text-xs font-medium text-muted-foreground">
-                Class Rank
+                {t("transcript.classRank")}
               </p>
             </div>
             <p
@@ -237,7 +238,7 @@ export default function TranscriptPage() {
                 <CreditCard className="w-4 h-4 text-emerald-600" />
               </div>
               <p className="text-xs font-medium text-muted-foreground">
-                Total Credits
+                {t("transcript.totalCredits")}
               </p>
             </div>
             <p
@@ -266,7 +267,7 @@ export default function TranscriptPage() {
                 <BookOpen className="w-4 h-4 text-[#065292]" />
               </div>
               <p className="text-xs font-medium text-muted-foreground">
-                Course Rigor
+                {t("transcript.courseRigor")}
               </p>
             </div>
             <p
@@ -284,7 +285,7 @@ export default function TranscriptPage() {
                 <TrendingUp className="w-4 h-4 text-[#065292]" />
               </div>
               <p className="text-xs font-medium text-muted-foreground">
-                GPA Trend
+                {t("transcript.gpaTrend")}
               </p>
             </div>
             {gpaTrend.length > 1 ? (
@@ -308,7 +309,7 @@ export default function TranscriptPage() {
               </ResponsiveContainer>
             ) : (
               <p className="text-xs text-muted-foreground">
-                {gpaTrend.length === 1 ? "More years needed for trend" : "—"}
+                {gpaTrend.length === 1 ? t("transcript.moreYearsNeeded") : "—"}
               </p>
             )}
           </div>
@@ -320,7 +321,7 @@ export default function TranscriptPage() {
                 <Trophy className="w-4 h-4 text-amber-600" />
               </div>
               <p className="text-xs font-medium text-muted-foreground">
-                Class Standing
+                {t("transcript.classStanding")}
               </p>
             </div>
             <p
@@ -363,19 +364,19 @@ export default function TranscriptPage() {
                   {yearGpa && (
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>
-                        Unweighted:{" "}
+                        {t("transcript.table.unweighted")}{" "}
                         <span className="font-semibold text-foreground">
                           {formatGpa(yearGpa.gpaUnweighted)}
                         </span>
                       </span>
                       <span>
-                        Weighted:{" "}
+                        {t("transcript.table.weighted")}{" "}
                         <span className="font-semibold text-foreground">
                           {formatGpa(yearGpa.gpaWeighted)}
                         </span>
                       </span>
                       <span>
-                        Credits:{" "}
+                        {t("transcript.table.creditsLabel")}{" "}
                         <span className="font-semibold text-foreground">
                           {Number(yearGpa.totalCredits)}
                         </span>
@@ -390,19 +391,19 @@ export default function TranscriptPage() {
                     <thead>
                       <tr className="border-b border-border">
                         <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Course Code
+                          {t("transcript.table.courseCode")}
                         </th>
                         <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Grade
+                          {t("transcript.table.grade")}
                         </th>
                         <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Credits
+                          {t("transcript.table.credits")}
                         </th>
                         <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Level
+                          {t("transcript.table.level")}
                         </th>
                         <th className="text-left px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Semester
+                          {t("transcript.table.semester")}
                         </th>
                       </tr>
                     </thead>

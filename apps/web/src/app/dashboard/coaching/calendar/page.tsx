@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, CalendarDays, X, Clock, User } from "lucide-
 import { getCoachSessions } from "@/services/coachService";
 import { Booking } from "@/types/coach";
 import { formatTimeOfDay } from "@/lib/dateUtils";
+import { useTranslation } from "react-i18next";
 
 function getDaysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate(); }
 function getFirstDayOfMonth(y: number, m: number) { return new Date(y, m, 1).getDay(); }
@@ -21,6 +22,7 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export default function CoachCalendarPage() {
+  const { t } = useTranslation();
   const [sessions, setSessions] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMonth, setViewMonth] = useState(new Date().getMonth());
@@ -78,10 +80,10 @@ export default function CoachCalendarPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>Scheduling</span>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>Session Calendar</h1>
+        <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>{t("coach:calendar.sectionLabel")}</span>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>{t("coach:calendar.title")}</h1>
         <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
-          Monthly view of your coaching sessions
+          {t("coach:calendar.subtitle")}
         </p>
       </motion.div>
 
@@ -102,7 +104,7 @@ export default function CoachCalendarPage() {
 
           {/* Day headers */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid var(--admin-border-default)" }}>
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+            {[t("common:days.sun","Sun"), t("common:days.mon","Mon"), t("common:days.tue","Tue"), t("common:days.wed","Wed"), t("common:days.thu","Thu"), t("common:days.fri","Fri"), t("common:days.sat","Sat")].map(d => (
               <div key={d} style={{ padding: "8px 0", textAlign: "center", fontSize: 11, fontWeight: 600, color: "var(--admin-font-light)" }}>{d}</div>
             ))}
           </div>
@@ -198,19 +200,19 @@ export default function CoachCalendarPage() {
             <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
               {selectedDay
                 ? new Date(selectedDay + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
-                : "Select a day"}
+                : t("coach:calendar.selectDay")}
             </span>
           </div>
           <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8, maxHeight: 500, overflowY: "auto" }}>
             {!selectedDay && (
               <div style={{ padding: "32px 16px", textAlign: "center" }}>
                 <CalendarDays style={{ width: 32, height: 32, color: "var(--admin-font-light)", margin: "0 auto 8px" }} />
-                <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>Click a day to view sessions</p>
+                <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("coach:calendar.clickDay")}</p>
               </div>
             )}
             {selectedDay && selectedSessions.length === 0 && (
               <div style={{ padding: "32px 16px", textAlign: "center" }}>
-                <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>No sessions on this day</p>
+                <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("coach:calendar.noSessions")}</p>
               </div>
             )}
             {selectedSessions.map((s) => {
@@ -266,10 +268,10 @@ export default function CoachCalendarPage() {
       {/* Legend */}
       <div style={{ display: "flex", gap: 16, alignItems: "center", padding: "0 4px" }}>
         {[
-          { label: "Confirmed", color: "#065292" },
-          { label: "Completed", color: "#059669" },
-          { label: "Cancelled", color: "#dc2626" },
-          { label: "Rescheduled", color: "#d97706" },
+          { label: t("coach:calendar.legend.confirmed"), color: "#065292" },
+          { label: t("coach:calendar.legend.completed"), color: "#059669" },
+          { label: t("coach:calendar.legend.cancelled"), color: "#dc2626" },
+          { label: t("coach:calendar.legend.rescheduled"), color: "#d97706" },
         ].map((item) => (
           <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ width: 8, height: 8, borderRadius: 2, background: item.color }} />

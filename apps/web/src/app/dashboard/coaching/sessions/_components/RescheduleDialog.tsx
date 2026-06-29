@@ -138,10 +138,10 @@ export function RescheduleDialog({
           <div className="flex-1 p-6 sm:p-8 border-r border-[var(--border)] flex flex-col">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-foreground mb-1">
-                Reschedule Session
+                {t("coach:sessionsPage.reschedule.title")}
               </h2>
               <p className="text-muted-foreground text-sm">
-                Select a new date and time for {session?.studentName}
+                {t("coach:sessionsPage.reschedule.selectDateFor", { name: session?.studentName })}
               </p>
             </div>
 
@@ -241,7 +241,7 @@ export function RescheduleDialog({
             <div className="flex-1 p-6 flex flex-col min-h-[300px]">
               <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-blue-500" />
-                Available Times
+                {t("coach:sessionsPage.reschedule.availableTimes")}
                 {rescheduleDate && (
                   <span className="text-muted-foreground font-normal ml-auto text-xs">
                     {format(rescheduleDate, "MMM d")}
@@ -253,12 +253,12 @@ export function RescheduleDialog({
                 {isLoadingSlots ? (
                   <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-3">
                     <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <p className="text-xs">Checking availability...</p>
+                    <p className="text-xs">{t("coach:sessionsPage.reschedule.checking")}</p>
                   </div>
                 ) : !rescheduleDate ? (
                   <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-center p-4">
                     <CalendarDays className="h-10 w-10 mb-3 opacity-20" />
-                    <p className="text-sm">Select a date to see times</p>
+                    <p className="text-sm">{t("coach:sessionsPage.reschedule.selectDate")}</p>
                   </div>
                 ) : availableSlots.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-center p-4">
@@ -266,9 +266,9 @@ export function RescheduleDialog({
                       <Clock className="h-5 w-5 opacity-30" />
                     </div>
                     <p className="text-sm font-medium text-muted-foreground mb-1">
-                      No slots available
+                      {t("coach:sessionsPage.reschedule.noSlots")}
                     </p>
-                    <p className="text-xs">Try selecting another date</p>
+                    <p className="text-xs">{t("coach:sessionsPage.reschedule.tryAnother")}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
@@ -298,14 +298,14 @@ export function RescheduleDialog({
                   onClick={() => onOpenChange(false)}
                   className="flex-1 h-11 rounded-xl font-semibold border-gray-200 hover:bg-gray-50"
                 >
-                  Cancel
+                  {t("coach:sessionsPage.reschedule.cancel")}
                 </Button>
                 <Button
                   onClick={confirmReschedule}
                   disabled={!selectedTime || isLoadingSlots}
                   className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white h-11 rounded-xl font-semibold disabled:opacity-50"
                 >
-                  Confirm
+                  {t("coach:sessionsPage.reschedule.confirm")}
                 </Button>
               </div>
             </div>

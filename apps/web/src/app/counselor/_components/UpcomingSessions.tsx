@@ -16,7 +16,7 @@ interface UpcomingSessionsProps {
 }
 
 export function UpcomingSessions({ sessions, isLoading }: UpcomingSessionsProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("counselor");
 
   if (!sessions.length && !isLoading) return null;
 
@@ -30,11 +30,11 @@ export function UpcomingSessions({ sessions, isLoading }: UpcomingSessionsProps)
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base text-foreground">
             <CalendarClock className="h-4 w-4 text-blue-600" />
-            {t("counselor.dashboard.upcomingSessions", "Upcoming Counseling Sessions")}
+            {t("dashboard.upcomingSessions", "Upcoming Counseling Sessions")}
           </CardTitle>
           <Link href="/counselor/sessions">
             <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:bg-blue-50">
-              {t("counselor.dashboard.manageSessions", "Manage Sessions")} →
+              {t("dashboard.manageSessions", "Manage Sessions")} →
             </Button>
           </Link>
         </CardHeader>

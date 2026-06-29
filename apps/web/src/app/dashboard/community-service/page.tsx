@@ -27,6 +27,7 @@ import {
 } from "@/hooks/useCommunityServiceQueries";
 import type { CommunityServiceEntry } from "@/types/communityService";
 import { ServiceEntryCard } from "./_components/ServiceEntryCard";
+import { useTranslation } from "react-i18next";
 
 // ─── Shared form state type ──────────────────────────────────────────────────
 
@@ -51,6 +52,7 @@ const emptyForm: FormState = {
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function CommunityServicePage() {
+  const { t } = useTranslation("student");
   const { data, isLoading, isError, refetch } = useMyCommunityService();
   const logMutation = useLogCommunityService();
   const updateMutation = useUpdateCommunityService();
@@ -105,7 +107,7 @@ export default function CommunityServicePage() {
   };
 
   const handleDelete = (entryId: string) => {
-    if (!window.confirm("Delete this entry? This cannot be undone.")) return;
+    if (!window.confirm(t("communityService.deleteConfirm"))) return;
     setDeletingId(entryId);
     deleteMutation.mutate(entryId, {
       onSettled: () => setDeletingId(null),
@@ -126,16 +128,16 @@ export default function CommunityServicePage() {
       <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center mx-auto mb-3">
         <Heart className="h-6 w-6 text-muted-foreground" />
       </div>
-      <p className="text-sm font-semibold text-foreground">No service hours logged yet</p>
+      <p className="text-sm font-semibold text-foreground">{t("communityService.noHoursTitle")}</p>
       <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-        Click &ldquo;Log Hours&rdquo; above to start tracking your community service.
+        {t("communityService.noHoursBody")}
       </p>
       <Button
         variant="outline"
         onClick={openAddForm}
         className="mt-4 border border-border text-foreground hover:bg-secondary text-xs"
       >
-        Start Logging
+        {t("communityService.startLogging")}
       </Button>
     </div>
   );
@@ -150,13 +152,13 @@ export default function CommunityServicePage() {
       >
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-            Graduation Requirement
+            {t("communityService.badge")}
           </p>
           <h1 className="text-2xl font-bold tracking-tight text-foreground mb-1">
-            Community Service Hours
+            {t("communityService.title")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Track your volunteer hours and see your progress towards graduation.
+            {t("communityService.subtitle")}
           </p>
         </div>
 
@@ -166,7 +168,7 @@ export default function CommunityServicePage() {
             className="bg-foreground text-background hover:bg-foreground/90"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Log Hours
+            {t("communityService.logHours")}
           </Button>
         </div>
       </motion.div>
@@ -183,7 +185,7 @@ export default function CommunityServicePage() {
             <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             </div>
-            <p className="text-xs font-medium text-muted-foreground">Verified</p>
+            <p className="text-xs font-medium text-muted-foreground">{t("communityService.verified")}</p>
           </div>
           <p className="text-2xl font-bold text-foreground">
             {totalVerified}<span className="text-sm text-muted-foreground font-medium ml-1">hrs</span>
@@ -195,7 +197,7 @@ export default function CommunityServicePage() {
             <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
               <Clock className="w-4 h-4 text-amber-600" />
             </div>
-            <p className="text-xs font-medium text-muted-foreground">Pending</p>
+            <p className="text-xs font-medium text-muted-foreground">{t("communityService.pending")}</p>
           </div>
           <p className="text-2xl font-bold text-foreground">
             {totalPending}<span className="text-sm text-muted-foreground font-medium ml-1">hrs</span>
@@ -207,7 +209,7 @@ export default function CommunityServicePage() {
             <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center">
               <Zap className="w-4 h-4 text-rose-600" />
             </div>
-            <p className="text-xs font-medium text-muted-foreground">Remaining</p>
+            <p className="text-xs font-medium text-muted-foreground">{t("communityService.remaining")}</p>
           </div>
           <p className="text-2xl font-bold text-foreground">
             {remaining}<span className="text-sm text-muted-foreground font-medium ml-1">hrs</span>
@@ -219,7 +221,7 @@ export default function CommunityServicePage() {
             <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
               <Heart className="w-4 h-4 text-indigo-600" />
             </div>
-            <p className="text-xs font-medium text-muted-foreground">Progress</p>
+            <p className="text-xs font-medium text-muted-foreground">{t("communityService.progress")}</p>
           </div>
           <p className="text-2xl font-bold text-foreground mb-2">
             {Math.round(progress)}%
@@ -251,16 +253,16 @@ export default function CommunityServicePage() {
                   <Heart className="h-4 w-4 text-rose-600" />
                 </div>
                 <h3 className="font-semibold text-sm text-foreground">
-                  {editingId ? "Edit Service Entry" : "Log New Service Hours"}
+                  {editingId ? t("communityService.form.editTitle") : t("communityService.form.newTitle")}
                 </h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Organization *</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("communityService.form.organization")}</Label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="e.g. Red Cross"
+                      placeholder={t("communityService.form.organizationPlaceholder")}
                       className="pl-9 h-10 bg-secondary border-border"
                       value={form.organization}
                       onChange={(e) => setForm({ ...form, organization: e.target.value })}
@@ -268,7 +270,7 @@ export default function CommunityServicePage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date *</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("communityService.form.date")}</Label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -280,14 +282,14 @@ export default function CommunityServicePage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Hours *</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("communityService.form.hours")}</Label>
                   <div className="relative">
                     <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="number"
                       min="0.5"
                       step="0.5"
-                      placeholder="e.g. 4"
+                      placeholder={t("communityService.form.hoursPlaceholder")}
                       className="pl-9 h-10 bg-secondary border-border"
                       value={form.hours}
                       onChange={(e) => setForm({ ...form, hours: e.target.value })}
@@ -295,11 +297,11 @@ export default function CommunityServicePage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Supervisor Name</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("communityService.form.supervisorName")}</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="e.g. Maria Gonzalez"
+                      placeholder={t("communityService.form.supervisorNamePlaceholder")}
                       className="pl-9 h-10 bg-secondary border-border"
                       value={form.supervisorName}
                       onChange={(e) => setForm({ ...form, supervisorName: e.target.value })}
@@ -307,12 +309,12 @@ export default function CommunityServicePage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Supervisor Email</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("communityService.form.supervisorEmail")}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="email"
-                      placeholder="supervisor@org.com"
+                      placeholder={t("communityService.form.supervisorEmailPlaceholder")}
                       className="pl-9 h-10 bg-secondary border-border"
                       value={form.supervisorEmail}
                       onChange={(e) => setForm({ ...form, supervisorEmail: e.target.value })}
@@ -321,9 +323,9 @@ export default function CommunityServicePage() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</Label>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("communityService.form.description")}</Label>
                 <Textarea
-                  placeholder="Briefly describe what you did..."
+                  placeholder={t("communityService.form.descriptionPlaceholder")}
                   className="h-20 bg-secondary border-border resize-none"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -331,7 +333,7 @@ export default function CommunityServicePage() {
               </div>
               <div className="flex justify-end gap-3 pt-1">
                 <Button variant="ghost" onClick={closeForm}>
-                  Cancel
+                  {t("communityService.form.cancel")}
                 </Button>
                 <Button
                   onClick={handleSubmit}
@@ -339,7 +341,7 @@ export default function CommunityServicePage() {
                   className="bg-foreground text-background hover:bg-foreground/90 px-6"
                 >
                   {isMutating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  {editingId ? "Save Changes" : "Submit Hours"}
+                  {editingId ? t("communityService.form.saveChanges") : t("communityService.form.submitHours")}
                 </Button>
               </div>
             </div>
@@ -360,13 +362,13 @@ export default function CommunityServicePage() {
               <Building2 className="w-4 h-4 text-foreground" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm text-foreground">Service Log</h3>
-              <p className="text-xs text-muted-foreground">History of your volunteer work</p>
+              <h3 className="font-semibold text-sm text-foreground">{t("communityService.serviceLog.title")}</h3>
+              <p className="text-xs text-muted-foreground">{t("communityService.serviceLog.history")}</p>
             </div>
           </div>
           {data?.entries?.length ? (
             <p className="text-xs font-medium text-muted-foreground">
-              {data.entries.length} entries
+              {data.entries.length} {t("communityService.serviceLog.entries")}
             </p>
           ) : null}
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,15 +59,17 @@ export function QuestionFormDialog({
   categoryOptions,
   parentQuestions,
 }: QuestionFormDialogProps) {
+  const { t } = useTranslation("platform_owner");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl rounded-3xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
         <DialogHeader className="p-8 pb-4 shrink-0">
           <DialogTitle className="text-2xl font-bold text-gray-900">
-            {editingQuestion ? "Edit Question" : "Add New Question"}
+            {editingQuestion ? t("questions.form.editTitle") : t("questions.form.addTitle")}
           </DialogTitle>
           <DialogDescription className="text-base text-gray-500">
-            Configure the evaluation question details and translations.
+            {t("questions.form.formDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -74,7 +77,7 @@ export function QuestionFormDialog({
           {/* Classification */}
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-gray-700 font-medium">Relation Type</Label>
+              <Label className="text-gray-700 font-medium">{t("questions.form.relationType")}</Label>
               <Select
                 value={formData.relationType}
                 onValueChange={(v: "Parent" | "Teacher" | "Other" | "Self") =>
@@ -92,7 +95,7 @@ export function QuestionFormDialog({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-gray-700 font-medium">Category</Label>
+              <Label className="text-gray-700 font-medium">{t("questions.form.category")}</Label>
               <Select
                 value={formData.category}
                 onValueChange={(v) => onFormDataChange({ ...formData, category: v })}
@@ -114,25 +117,25 @@ export function QuestionFormDialog({
             <div className="space-y-2">
               <Label className="text-gray-700 font-medium flex items-center gap-2">
                 <Globe className="h-4 w-4 text-blue-500" />
-                English Text <span className="text-red-500">*</span>
+                {t("questions.form.englishText")} <span className="text-red-500">{t("questions.form.required")}</span>
               </Label>
               <Textarea
                 value={formData.questionEnglishText}
                 onChange={(e) => onFormDataChange({ ...formData, questionEnglishText: e.target.value })}
                 className="min-h-[80px] rounded-xl border-gray-200 resize-none focus:ring-2 focus:ring-primary/20"
-                placeholder="e.g. How effectively does this person communicate?"
+                placeholder={t("questions.form.englishPlaceholder")}
               />
             </div>
             <div className="space-y-2">
               <Label className="text-gray-700 font-medium flex items-center gap-2">
                 <Globe className="h-4 w-4 text-orange-500" />
-                Spanish Text (Optional)
+                {t("questions.form.spanishText")}
               </Label>
               <Textarea
                 value={formData.questionSpanishText}
                 onChange={(e) => onFormDataChange({ ...formData, questionSpanishText: e.target.value })}
                 className="min-h-[80px] rounded-xl border-gray-200 resize-none focus:ring-2 focus:ring-orange-500/20"
-                placeholder="e.g. ¿Con qué eficacia se comunica esta persona?"
+                placeholder={t("questions.form.spanishPlaceholder")}
               />
             </div>
           </div>
@@ -140,7 +143,7 @@ export function QuestionFormDialog({
           {/* Metadata */}
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-gray-700 font-medium">Question Number</Label>
+              <Label className="text-gray-700 font-medium">{t("questions.form.questionNumber")}</Label>
               <Input
                 type="number"
                 min="1"
@@ -150,7 +153,7 @@ export function QuestionFormDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-gray-700 font-medium">Type</Label>
+              <Label className="text-gray-700 font-medium">{t("questions.form.type")}</Label>
               <Select
                 value={formData.isSubQuestion ? "sub" : "main"}
                 onValueChange={(v) => {
@@ -166,8 +169,8 @@ export function QuestionFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="main">Main Question</SelectItem>
-                  <SelectItem value="sub">Sub-Question</SelectItem>
+                  <SelectItem value="main">{t("questions.form.mainQuestion")}</SelectItem>
+                  <SelectItem value="sub">{t("questions.form.subQuestion")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -175,13 +178,13 @@ export function QuestionFormDialog({
 
           {formData.isSubQuestion && (
             <div className="space-y-2">
-              <Label className="text-gray-700 font-medium">Parent Question</Label>
+              <Label className="text-gray-700 font-medium">{t("questions.form.parentQuestion")}</Label>
               <Select
                 value={formData.parentQuestionId}
                 onValueChange={(v) => onFormDataChange({ ...formData, parentQuestionId: v })}
               >
                 <SelectTrigger className="h-11 rounded-xl border-gray-200">
-                  <SelectValue placeholder="Select parent question" />
+                  <SelectValue placeholder={t("questions.form.parentPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {parentQuestions.map(q => (
@@ -197,11 +200,11 @@ export function QuestionFormDialog({
 
         <DialogFooter className="p-8 pt-4 bg-gray-50/50 shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl h-11 border-gray-200 text-gray-700">
-            Cancel
+            {t("questions.form.cancelButton")}
           </Button>
           <Button onClick={onSave} disabled={isSaving} className="rounded-xl h-11 bg-gray-900 text-white hover:bg-gray-800">
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            {editingQuestion ? "Save Changes" : "Create Question"}
+            {editingQuestion ? t("questions.form.saveChanges") : t("questions.form.createButton")}
           </Button>
         </DialogFooter>
       </DialogContent>
