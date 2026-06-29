@@ -2178,5 +2178,26 @@
       "viewNotes": "View Notes",
       "confirmReschedule": "Confirm Reschedule"
     }
+  },
+  "shell": {
+    "collapseSidebar": "Contraer barra lateral",
+    "expandSidebar": "Expandir barra lateral",
+    "navigationTab": "Navegación",
+    "chatHistoryTab": "Historial de chat",
+    "newChat": "Nuevo chat",
+    "signOut": "Cerrar sesión",
+    "settings": "Configuración",
+    "noChatsYet": "Aún no hay chats",
+    "startChat": "Iniciar un chat",
+    "searchShortcut": "Buscar (Cmd+K)",
+    "workspace": "Área de trabajo",
+    "askAi": "Preguntar a la IA",
+    "notifications": "Notificaciones",
+    "markAllRead": "Marcar todo como leído",
+    "noNotifications": "Sin notificaciones",
+    "theme": "Tema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "themeSystem": "Sistema"
   }
 }
