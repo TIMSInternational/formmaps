@@ -81,7 +81,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
       } else {
         await resendEvaluationEmail(groupId);
       }
-      toast.success(action === "extend" ? t("dialog360.extendToast", { n: days || 7 }, `Extended by ${days || 7} day(s)`) : t("dialog360.resendToast", "Email resent"));
+      toast.success(action === "extend" ? t("dialog360.extendToast", { n: days || 7 }) : t("dialog360.resendToast", "Email resent"));
       await refreshGroups();
     } catch {
       toast.error(`Failed to ${action}`);
@@ -192,7 +192,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                   border: "1px solid rgba(59,130,246,0.3)", cursor: "pointer",
                 }}>
                 {actionLoading === "send-all" ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 12, height: 12 }} />}
-                {t("dialog360.sendAllInvitations", { n: unsent }, `Send All Invitations (${unsent})`)}
+                {t("dialog360.sendAllInvitations", { n: unsent })}
               </button>
             )}
           </div>
@@ -266,11 +266,11 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
           ) : (
             <div className="space-y-2">
               <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                {t("dialog360.evaluatorsCount", { n: groups.length }, `Evaluators (${groups.length})`)}
+                {t("dialog360.evaluatorsCount", { n: groups.length })}
               </div>
               {groups.map((g) => {
                 const isComplete = g.isEvaluationCompleted;
-                const isExpired = g.tokenExpiryDate && new Date(g.tokenExpiryDate) < new Date() && !isComplete;
+                const isExpired = !!(g.tokenExpiryDate && new Date(g.tokenExpiryDate) < new Date() && !isComplete);
                 return (
                   <div key={g.id} style={{
                     padding: "10px 14px", borderRadius: 6,

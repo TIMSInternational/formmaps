@@ -72,7 +72,7 @@ export function StudentProfileHeader({ student, onBack }: StudentProfileHeaderPr
             </div>
             <div className="flex items-center gap-1.5">
               <GraduationCap className="h-3.5 w-3.5 text-gray-400" />
-              {t("studentDetail.gradeN", { n: student.gradeLevel }, `Grade ${student.gradeLevel}`)}
+              {t("studentDetail.gradeN", { n: student.gradeLevel })}
             </div>
             {student.careerPath && (
               <div className="flex items-center gap-1.5">

@@ -53,7 +53,7 @@ export function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClo
             background: isExpired ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.1)",
             color: isExpired ? "#ef4444" : "#065292", fontWeight: 600,
           }}>
-            {isExpired ? t("extendDeadline.expired", "EXPIRED") : t("extendDeadline.due", { date: currentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }) }, `Due ${currentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`)}
+            {isExpired ? t("extendDeadline.expired", "EXPIRED") : t("extendDeadline.due", { date: currentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }) })}
           </span>
         </div>
         <button onClick={onClose} style={{ width: 20, height: 20, borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>

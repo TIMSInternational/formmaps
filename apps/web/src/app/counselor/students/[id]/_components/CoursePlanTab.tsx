@@ -75,7 +75,7 @@ export function CoursePlanTab({
           <CardHeader>
             <CardTitle className="text-sm font-semibold text-amber-800 flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              {t("coursePlan.changeRequests", { n: pendingRequests.length }, `Student Change Requests (${pendingRequests.length} pending)`)}
+              {t("coursePlan.changeRequests", { n: pendingRequests.length })}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">

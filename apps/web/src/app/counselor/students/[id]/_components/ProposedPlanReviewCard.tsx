@@ -110,7 +110,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
               key={grade}
               className="text-xs px-2.5 py-1 rounded-full bg-white border border-blue-100 text-gray-700"
             >
-              {t("studentDetail.gradeN", { n: grade }, `Grade ${grade}`)}: {t(agg.count === 1 ? "planReview.courseCount_one" : "planReview.courseCount_other", { count: agg.count }, `${agg.count} courses`)} · {agg.credits} cr
+              {t("studentDetail.gradeN", { n: grade })}: {t(agg.count === 1 ? "planReview.courseCount_one" : "planReview.courseCount_other", { count: agg.count })} · {agg.credits} cr
             </span>
           ))}
           <span className="text-xs px-2.5 py-1 rounded-full bg-white border border-blue-100 text-gray-500">

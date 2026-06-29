@@ -200,9 +200,9 @@ export default function CounselorSessionsPage() {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="p-1 rounded-xl">
               {[
-                ["upcoming", t("sessions.tabUpcoming", { n: upcoming.length }, `Upcoming (${upcoming.length})`)],
-                ["past", t("sessions.tabPast", { n: past.length }, `Past (${past.length})`)],
-                ["all", t("sessions.tabAll", { n: sessions.length }, `All (${sessions.length})`)],
+                ["upcoming", t("sessions.tabUpcoming", { n: upcoming.length })],
+                ["past", t("sessions.tabPast", { n: past.length })],
+                ["all", t("sessions.tabAll", { n: sessions.length })],
               ].map(([val, label]) => (
                 <TabsTrigger key={val} value={val} className="rounded-lg px-3 py-1.5 text-sm font-medium">
                   {label}
@@ -220,7 +220,7 @@ export default function CounselorSessionsPage() {
           ) : displayed.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4">
               <Calendar className="h-10 w-10 text-muted-foreground mb-4 opacity-40" />
-              <h3 className="text-base font-semibold text-foreground mb-1">{t("sessions.noSessions", { tab: activeTab }, `No ${activeTab} sessions`)}</h3>
+              <h3 className="text-base font-semibold text-foreground mb-1">{t("sessions.noSessions", { tab: activeTab })}</h3>
               <p className="text-muted-foreground text-center max-w-sm text-sm">
                 {activeTab === "upcoming" ? t("sessions.noUpcoming", "No upcoming counseling sessions scheduled.") : t("sessions.noneInCategory", "No sessions in this category.")}
               </p>
@@ -389,7 +389,7 @@ export default function CounselorSessionsPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("sessions.completeDialogTitle", "Mark Session as Completed")}</DialogTitle>
-            <DialogDescription>{t("sessions.completeDialogDesc", { name: selected?.studentName }, `Add any post-session notes for ${selected?.studentName}.`)}</DialogDescription>
+            <DialogDescription>{t("sessions.completeDialogDesc", { name: selected?.studentName })}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Label className="mb-2 block text-sm font-medium flex items-center gap-1.5">
@@ -419,7 +419,7 @@ export default function CounselorSessionsPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("sessions.cancelDialogTitle", "Cancel Session")}</DialogTitle>
-            <DialogDescription>{t("sessions.cancelDialogDesc", { name: selected?.studentName }, `Cancel session with ${selected?.studentName}?`)}</DialogDescription>
+            <DialogDescription>{t("sessions.cancelDialogDesc", { name: selected?.studentName })}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Label className="mb-2 block text-sm font-medium">{t("sessions.cancelReasonLabel", "Reason for Cancellation")}</Label>

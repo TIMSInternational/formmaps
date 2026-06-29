@@ -170,7 +170,7 @@ export default function AlertsPage() {
         </Select>
         {selected.length > 0 && (
           <Button variant="outline" onClick={handleBulkDismiss} disabled={bulk.isPending}>
-            <CheckCheck className="h-4 w-4 mr-1" />{t("alerts.dismiss", { n: selected.length }, `Dismiss (${selected.length})`)}
+            <CheckCheck className="h-4 w-4 mr-1" />{t("alerts.dismiss", { n: selected.length })}
           </Button>
         )}
       </motion.div>

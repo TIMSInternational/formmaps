@@ -99,7 +99,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
                 return (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">{t("assessments.assessmentsCompleted", { completed, total }, `${completed}/${total} assessments completed`)}</span>
+                      <span className="text-gray-600">{t("assessments.assessmentsCompleted", { completed, total })}</span>
                       <span className="font-semibold text-gray-900">{pct}%</span>
                     </div>
                     <Progress value={pct} className="h-2.5" />
@@ -124,7 +124,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
                   ).length;
                   return (
                     <span className="text-sm font-normal text-gray-500">
-                      {t("assessments.pcaCompleted", { n: completedCount }, `${completedCount}/5 completed`)}
+                      {t("assessments.pcaCompleted", { n: completedCount })}
                     </span>
                   );
                 })()}

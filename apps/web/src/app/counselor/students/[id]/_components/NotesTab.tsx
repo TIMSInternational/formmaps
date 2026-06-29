@@ -90,7 +90,7 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            {t("notes.historyTitle", { n: notes.length }, `Note History (${notes.length})`)}
+            {t("notes.historyTitle", { n: notes.length })}
           </CardTitle>
         </CardHeader>
         <CardContent>

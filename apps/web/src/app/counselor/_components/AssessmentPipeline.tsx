@@ -66,7 +66,7 @@ export function AssessmentPipeline() {
             >
               <option value="">{t("pipeline.allGrades", "All Grades")}</option>
               {[7, 8, 9, 10, 11, 12].map((g) => (
-                <option key={g} value={String(g)}>{t("pipeline.grade", { n: g }, `Grade ${g}`)}</option>
+                <option key={g} value={String(g)}>{t("pipeline.grade", { n: g })}</option>
               ))}
             </select>
           </div>

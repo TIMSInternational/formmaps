@@ -170,7 +170,7 @@ export default function CounselorEvaluationsPage() {
                   <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 1 }}>{s.email}</p>
                 </div>
                 <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
-                  {s.gradeLevel ? t("evaluations.gradeN", { n: s.gradeLevel }, `Grade ${s.gradeLevel}`) : "—"}
+                  {s.gradeLevel ? t("evaluations.gradeN", { n: s.gradeLevel }) : "—"}
                 </span>
                 <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
                   {s.completedEvaluators}/{s.totalEvaluators}
