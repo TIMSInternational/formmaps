@@ -1678,7 +1678,37 @@
   },
   "careers": {
     "title": "Careers",
-    "subtitle": "Explore career paths and role information"
+    "subtitle": "Explore career paths and role information",
+    "details": {
+      "loading": "Loading career details...",
+      "notFoundTitle": "Career Not Found",
+      "notFoundBody": "The career you are looking for does not exist.",
+      "goBack": "Go Back",
+      "careerFallback": "Career",
+      "backToCareers": "Back to Careers",
+      "match": "Match",
+      "matchExcellent": "Excellent Match",
+      "matchStrong": "Strong Match",
+      "matchGood": "Good Match",
+      "barPersonality": "Personality",
+      "barCognitive": "Cognitive",
+      "barInterests": "Interests",
+      "barMotivators": "Motivators",
+      "whyFits": "Why this fits you",
+      "aboutTitle": "About this Career",
+      "whatYouDo": "What You'd Do",
+      "dayInLife": "A Day in the Life",
+      "keyStrengths": "Key Strengths",
+      "noProfileFallback": "{{title}} is part of the {{cluster}} cluster. Detailed guidance for this career is being prepared.",
+      "salaryRange": "Typical Salary Range",
+      "jobOutlook": "Job Outlook",
+      "educationPathways": "Education Pathways",
+      "relatedCareers": "Related Careers",
+      "careerProfile": "Career Profile",
+      "interests": "Interests",
+      "motivators": "Motivators",
+      "preparationPath": "Preparation Path"
+    }
   },
   "compare": {
     "selectedCount": "{{count}} selected",
