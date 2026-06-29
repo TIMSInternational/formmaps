@@ -6,9 +6,15 @@ import { getRoleByName } from "@/services/roleService";
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (_k: string, d?: string) => d ?? _k }),
-}));
+jest.mock("react-i18next", () => {
+  // Resolve real English copy so placeholder/text queries match what users see.
+  const en = require("@/lib/i18n/locales/en/common.json");
+  const get = (k: string) =>
+    k.split(".").reduce((o: unknown, p: string) => (o == null ? o : (o as Record<string, unknown>)[p]), en);
+  return {
+    useTranslation: () => ({ t: (k: string, d?: string) => (get(k) as string) ?? d ?? k }),
+  };
+});
 jest.mock("@/services/authService", () => ({
   signUp: jest.fn(),
   login: jest.fn(),
