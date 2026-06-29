@@ -18,7 +18,7 @@ import { useTeacherPendingEvaluations } from "@/hooks/useTeacherPortalQueries";
 import { format, differenceInDays, isPast } from "date-fns";
 
 export default function TeacherEvaluationsPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("teacher");
   const router = useRouter();
   const { data: evaluations, isLoading } = useTeacherPendingEvaluations();
 
@@ -35,25 +35,22 @@ export default function TeacherEvaluationsPage() {
 
   function urgencyLabel(deadline: string) {
     const days = differenceInDays(new Date(deadline), new Date());
-    if (days < 0) return "Overdue";
-    if (days === 0) return "Due today";
-    if (days === 1) return "Due tomorrow";
-    return `${days} days left`;
+    if (days < 0) return t("evaluations.card.urgency.overdue");
+    if (days === 0) return t("evaluations.card.urgency.dueToday");
+    if (days === 1) return t("evaluations.card.urgency.dueTomorrow");
+    return t("evaluations.card.urgency.daysLeft", { count: days });
   }
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Teacher</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("evaluations.badge")}</p>
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-          {t("teacher.evaluations.title", "360° Evaluations")}
+          {t("evaluations.title")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {t(
-            "teacher.evaluations.subtitle",
-            "Complete the evaluations the school has requested to support student development."
-          )}
+          {t("evaluations.subtitle")}
         </p>
       </motion.div>
 
@@ -63,19 +60,19 @@ export default function TeacherEvaluationsPage() {
           <p className="text-3xl font-bold text-foreground tracking-tight">
             {isLoading ? "…" : list.length}
           </p>
-          <p className="text-sm text-muted-foreground mt-1">Pending</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("evaluations.stats.pending")}</p>
         </div>
         <div className="dash-card p-5 text-center">
           <p className="text-3xl font-bold text-red-500 tracking-tight">
             {isLoading ? "…" : overdue.length}
           </p>
-          <p className="text-sm text-muted-foreground mt-1">Overdue</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("evaluations.stats.overdue")}</p>
         </div>
         <div className="dash-card p-5 text-center">
           <p className="text-3xl font-bold text-emerald-500 tracking-tight">
             {isLoading ? "…" : upcoming.length}
           </p>
-          <p className="text-sm text-muted-foreground mt-1">Upcoming</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("evaluations.stats.upcoming")}</p>
         </div>
       </div>
 
@@ -89,9 +86,9 @@ export default function TeacherEvaluationsPage() {
       ) : list.length === 0 ? (
         <div className="text-center py-20 dash-card border-dashed">
           <CheckCircle2 className="h-14 w-14 text-emerald-500 mx-auto mb-4" />
-          <p className="text-lg font-semibold text-foreground">All done!</p>
+          <p className="text-lg font-semibold text-foreground">{t("evaluations.allDone")}</p>
           <p className="text-sm text-muted-foreground mt-1">
-            You have no pending evaluations right now.
+            {t("evaluations.noEvals")}
           </p>
         </div>
       ) : (
@@ -100,7 +97,7 @@ export default function TeacherEvaluationsPage() {
             <div>
               <h3 className="text-sm font-semibold text-red-600 uppercase tracking-wide mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
-                Overdue ({overdue.length})
+                {t("evaluations.overdueSection")} ({overdue.length})
               </h3>
               <div className="space-y-3">
                 {overdue.map((ev, idx) => (
@@ -110,6 +107,7 @@ export default function TeacherEvaluationsPage() {
                     idx={idx}
                     urgencyColor={urgencyColor}
                     urgencyLabel={urgencyLabel}
+                    t={t}
                     onComplete={() =>
                       router.push(`/evaluation/evaluator?token=${ev.token}`)
                     }
@@ -123,7 +121,7 @@ export default function TeacherEvaluationsPage() {
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                Upcoming ({upcoming.length})
+                {t("evaluations.upcomingSection")} ({upcoming.length})
               </h3>
               <div className="space-y-3">
                 {upcoming.map((ev, idx) => (
@@ -133,6 +131,7 @@ export default function TeacherEvaluationsPage() {
                     idx={idx}
                     urgencyColor={urgencyColor}
                     urgencyLabel={urgencyLabel}
+                    t={t}
                     onComplete={() =>
                       router.push(`/evaluation/evaluator?token=${ev.token}`)
                     }
@@ -152,12 +151,14 @@ function EvaluationCard({
   idx,
   urgencyColor,
   urgencyLabel,
+  t,
   onComplete,
 }: {
   ev: { evaluationId: string; studentName: string; deadline: string; token: string };
   idx: number;
   urgencyColor: (d: string) => string;
   urgencyLabel: (d: string) => string;
+  t: (key: string, opts?: Record<string, unknown>) => string;
   onComplete: () => void;
 }) {
   return (
@@ -173,13 +174,13 @@ function EvaluationCard({
           </div>
           <div>
             <p className="font-semibold text-foreground">
-              360° Evaluation for{" "}
+              {t("evaluations.card.evaluationFor")}{" "}
               <span style={{ color: "#065292" }}>{ev.studentName}</span>
             </p>
             <div className="flex items-center gap-2 mt-1">
               <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">
-                Due: {format(new Date(ev.deadline), "MMMM d, yyyy")}
+                {t("evaluations.card.due")} {format(new Date(ev.deadline), "MMMM d, yyyy")}
               </span>
               <Badge
                 variant="secondary"
@@ -193,7 +194,7 @@ function EvaluationCard({
 
         <Button onClick={onComplete} className="gap-2 shrink-0" size="sm">
           <ExternalLink className="h-4 w-4" />
-          Complete Now
+          {t("evaluations.card.completeNow")}
         </Button>
       </div>
     </motion.div>
