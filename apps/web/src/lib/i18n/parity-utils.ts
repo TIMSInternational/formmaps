@@ -56,56 +56,56 @@ export function keysDiffer(
 
 /** Interpolation placeholders like {{amount}} — language-neutral. */
 const PLACEHOLDER_RE = /\{\{[^}]*\}\}/g;
+/** A whole value that is just an email address (e.g. a placeholder). */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** A whole value that is just a URL or URL placeholder (e.g. "https://..."). */
+const URL_RE = /^https?:\/\/\S*$/;
 
 /**
- * Brand names, product names, and acronyms that are intentionally identical in
- * English and Spanish. Compared case-sensitively against the whole stripped value.
+ * Values that are intentionally identical in English and Spanish, so an es leaf
+ * equal to its en counterpart is NOT a translation gap. Compared (case-sensitive)
+ * against the whole stripped value AND its punctuation-trimmed core. Grouped by
+ * why each is acceptable, to keep the list auditable as it grows.
  */
 export const ACCEPTABLE_IDENTICAL_TOKENS = new Set<string>([
-  "FormMaps",
-  "FORMMAPS",
-  "FORM",
-  "MAPS",
-  "PCA",
-  "MIL",
-  "LIA",
-  "DISC",
-  "JCA",
-  "GPA",
-  "AI",
-  "PDF",
-  "URL",
-  "ID",
-  "OK",
-  "SMS",
-  "FAQ",
-  "CSV",
-  "API",
-  "SAT",
-  "ACT",
-  "IB",
-  "AP",
-  "STEM",
-  "TOEFL",
-  "IELTS",
-  "Email",
-  "email",
-  "e-mail",
+  // Brand / product
+  "FormMaps", "FORMMAPS", "FORM", "MAPS",
+  // Assessment & education acronyms
+  "PCA", "MIL", "LIA", "DISC", "JCA", "GPA", "SAT", "ACT", "IB", "AP", "STEM", "TOEFL", "IELTS",
+  // Generic tech acronyms
+  "AI", "PDF", "URL", "ID", "OK", "SMS", "FAQ", "CSV", "API",
+  // Email
+  "Email", "email", "e-mail",
+  // Loanwords used verbatim in Spanish product/business context
+  "Coach", "Coaches", "coaches", "Coaching", "Marketing",
+  // Proper nouns / tech labels
+  "React", "Frontend", "Backend", "Stripe", "Google", "Outlook",
+  // English words spelled & used identically in Spanish
+  "Error", "Total", "total", "General", "Personal", "Popular", "Video",
+  "Verbal", "Instructor", "Control", "Premium", "Pro", "Starter", "Enterprise",
+  // Short units / sort labels
+  "min", "Min", "hr", "h", "A-Z", "Gr",
 ]);
 
 /**
  * Whether an identical en/es value is acceptable (NOT a translation gap).
  * Acceptable when, after stripping interpolation placeholders and surrounding
- * whitespace, the value is empty, contains no letters at all (numbers /
- * punctuation / symbols), is a known brand-or-acronym token, or is a short
- * all-caps/numeric acronym (≤ 4 chars).
+ * whitespace, the value is empty, contains no letters (numbers / punctuation /
+ * symbols), is a standalone email/URL, is a known brand-or-loanword token (whole
+ * value or its punctuation/number-trimmed core, e.g. "ID: {{id}}" → "ID",
+ * "30 min" → "min"), or is a short all-caps/numeric acronym (≤ 4 chars).
  */
 export function isAcceptableIdentical(value: string): boolean {
   const stripped = value.replace(PLACEHOLDER_RE, "").trim();
   if (!stripped) return true; // empty or pure interpolation, e.g. "{{count}}"
   if (!/\p{L}/u.test(stripped)) return true; // no letters → language-neutral
-  if (ACCEPTABLE_IDENTICAL_TOKENS.has(stripped)) return true;
-  if (/^[A-Z0-9]{1,4}$/.test(stripped)) return true; // short acronym e.g. "MBTI"
+  if (EMAIL_RE.test(stripped)) return true; // bare email address / placeholder
+  if (URL_RE.test(stripped)) return true; // bare URL / URL placeholder
+  // Reduce to a core token by trimming surrounding numbers/punctuation so that
+  // labels like "ID: {{id}}" and "30 min" match their token ("ID" / "min").
+  const core = stripped.replace(/^[\s\d.,:;/]+/, "").replace(/[\s.,:;!?]+$/, "");
+  if (ACCEPTABLE_IDENTICAL_TOKENS.has(stripped) || ACCEPTABLE_IDENTICAL_TOKENS.has(core)) return true;
+  if (/^[A-Z0-9]{1,4}$/.test(stripped) || /^[A-Z0-9]{1,4}$/.test(core)) return true;
   return false;
 }
 

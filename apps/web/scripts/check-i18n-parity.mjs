@@ -58,19 +58,40 @@ function keysDiffer(enKeys, esKeys) {
 // are legitimately identical across languages (brand/acronym/placeholder/number).
 // REPORT-ONLY: printed as a warning, never changes the exit code.
 
+// NOTE: keep this block byte-for-byte in sync with src/lib/i18n/parity-utils.ts
+// (this .mjs inlines the helpers because it can't import TypeScript at runtime).
 const PLACEHOLDER_RE = /\{\{[^}]*\}\}/g;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const URL_RE = /^https?:\/\/\S*$/;
 const ACCEPTABLE_IDENTICAL_TOKENS = new Set([
-  "FormMaps", "FORMMAPS", "FORM", "MAPS", "PCA", "MIL", "LIA", "DISC", "JCA",
-  "GPA", "AI", "PDF", "URL", "ID", "OK", "SMS", "FAQ", "CSV", "API", "SAT",
-  "ACT", "IB", "AP", "STEM", "TOEFL", "IELTS", "Email", "email", "e-mail",
+  // Brand / product
+  "FormMaps", "FORMMAPS", "FORM", "MAPS",
+  // Assessment & education acronyms
+  "PCA", "MIL", "LIA", "DISC", "JCA", "GPA", "SAT", "ACT", "IB", "AP", "STEM", "TOEFL", "IELTS",
+  // Generic tech acronyms
+  "AI", "PDF", "URL", "ID", "OK", "SMS", "FAQ", "CSV", "API",
+  // Email
+  "Email", "email", "e-mail",
+  // Loanwords used verbatim in Spanish product/business context
+  "Coach", "Coaches", "coaches", "Coaching", "Marketing",
+  // Proper nouns / tech labels
+  "React", "Frontend", "Backend", "Stripe", "Google", "Outlook",
+  // English words spelled & used identically in Spanish
+  "Error", "Total", "total", "General", "Personal", "Popular", "Video",
+  "Verbal", "Instructor", "Control", "Premium", "Pro", "Starter", "Enterprise",
+  // Short units / sort labels
+  "min", "Min", "hr", "h", "A-Z", "Gr",
 ]);
 
 function isAcceptableIdentical(value) {
   const stripped = value.replace(PLACEHOLDER_RE, "").trim();
   if (!stripped) return true;
   if (!/\p{L}/u.test(stripped)) return true;
-  if (ACCEPTABLE_IDENTICAL_TOKENS.has(stripped)) return true;
-  if (/^[A-Z0-9]{1,4}$/.test(stripped)) return true;
+  if (EMAIL_RE.test(stripped)) return true;
+  if (URL_RE.test(stripped)) return true;
+  const core = stripped.replace(/^[\s\d.,:;/]+/, "").replace(/[\s.,:;!?]+$/, "");
+  if (ACCEPTABLE_IDENTICAL_TOKENS.has(stripped) || ACCEPTABLE_IDENTICAL_TOKENS.has(core)) return true;
+  if (/^[A-Z0-9]{1,4}$/.test(stripped) || /^[A-Z0-9]{1,4}$/.test(core)) return true;
   return false;
 }
 
