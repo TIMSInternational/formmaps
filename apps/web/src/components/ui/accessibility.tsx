@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 /**
  * Skip to Main Content Link
@@ -12,6 +13,7 @@ import { useEffect, useRef } from "react";
  */
 export function SkipToMain({ mainId = "main-content" }: { mainId?: string }) {
   const linkRef = useRef<HTMLAnchorElement>(null);
+  const { t } = useTranslation();
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -29,7 +31,7 @@ export function SkipToMain({ mainId = "main-content" }: { mainId?: string }) {
       onClick={handleClick}
       className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded-md focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-600"
     >
-      Skip to main content
+      {t("accessibility.skipToContent")}
     </a>
   );
 }

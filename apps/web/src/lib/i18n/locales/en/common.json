@@ -91,7 +91,8 @@
     "inProgress": "IN PROGRESS",
     "notStarted": "NOT STARTED",
     "male": "Male",
-    "female": "Female"
+    "female": "Female",
+    "to": "to"
   },
   "error": {
     "somethingWentWrong": "Something went wrong",
@@ -360,7 +361,13 @@
         "ensureBaseUrl": "Ensure NEXT_PUBLIC_API_BASE_URL is set correctly",
         "includeProtocol": "Make sure the domain includes https:// protocol",
         "verifyDeployment": "Verify your deployment URL is accessible"
-      }
+      },
+      "urlGenerationFailed": "URL Generation Failed",
+      "ifUrlsInvalidLabel": "If URLs are invalid:",
+      "fix1": "Check that you're running on a proper domain (not localhost for production)",
+      "fix2": "Ensure NEXT_PUBLIC_API_BASE_URL is set correctly",
+      "fix3": "Make sure the domain includes https:// protocol",
+      "fix4": "Verify your deployment URL is accessible"
     },
     "plans": {
       "editTitle": "Edit Plan",
@@ -527,7 +534,8 @@
         "contractPeriod": "Contract Period",
         "contractStatus": "Contract Status",
         "students": "Students",
-        "actions": "Actions"
+        "actions": "Actions",
+        "platformFee": "Platform Fee"
       },
       "studentsActive": "active",
       "actions": {
@@ -1936,5 +1944,264 @@
     "booked": "Session Booked!",
     "confirmationMessage": "Your counselor session has been confirmed.",
     "backToDashboard": "Back to Dashboard"
+  },
+  "schoolAdmin": {
+    "title": "School Administration Portal",
+    "role": "School Admin",
+    "nav": {
+      "dashboard": "Dashboard",
+      "students": "Students",
+      "analytics": "Analytics",
+      "results": "Results",
+      "settings": "Settings"
+    },
+    "dashboard": {
+      "title": "School Dashboard",
+      "subtitle": "Welcome back! Here is your school's summary.",
+      "inviteStudent": "Invite Student",
+      "quickActions": "Quick Actions",
+      "recentStudents": "Recent Students",
+      "performance": "Performance Summary",
+      "viewAll": "View all",
+      "viewDetails": "View details"
+    },
+    "stats": {
+      "totalStudents": "Total Students",
+      "pendingInvites": "Pending Invites",
+      "activeStudents": "Active Students",
+      "avgScore": "Avg. Score",
+      "studentsInSchool": "Students in your school",
+      "awaitingAcceptance": "Awaiting acceptance",
+      "currentlyActive": "Currently active",
+      "averageAssessmentScore": "Average assessment score"
+    },
+    "quickActions": {
+      "inviteStudents": {
+        "title": "Invite Students",
+        "desc": "Add new students to your school"
+      },
+      "viewAnalytics": {
+        "title": "View Analytics",
+        "desc": "Track student performance and trends"
+      },
+      "viewResults": {
+        "title": "Student Results",
+        "desc": "Review assessments and scores"
+      },
+      "manageStudents": {
+        "title": "Manage Students",
+        "desc": "View and manage all students"
+      }
+    },
+    "students": {
+      "title": "Student Management",
+      "subtitle": "Invite and manage students in your school",
+      "inviteStudent": "Invite Student",
+      "searchPlaceholder": "Search students...",
+      "allStatuses": "All Statuses",
+      "noStudents": "No students yet",
+      "noStudentsDesc": "Invite your first student to get started",
+      "inviteFirst": "Invite First Student",
+      "table": {
+        "student": "Student",
+        "status": "Status",
+        "progress": "Progress",
+        "avgScore": "Avg. Score",
+        "lastActive": "Last Active",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "inactive": "Inactive"
+      },
+      "actions": {
+        "resendInvite": "Resend Invitation",
+        "removeStudent": "Remove Student",
+        "viewDetails": "View Details"
+      },
+      "invite": {
+        "title": "Invite Student",
+        "singleInvite": "Single Invite",
+        "bulkInvite": "Bulk Invite",
+        "name": "Student Name",
+        "namePlaceholder": "Enter student name",
+        "email": "Email Address",
+        "emailPlaceholder": "Enter email address",
+        "sendInvite": "Send Invitation",
+        "sending": "Sending...",
+        "bulkDescription": "Enter one student per line in format: Name, Email",
+        "bulkPlaceholder": "John Doe, john@example.com\nJane Smith, jane@example.com",
+        "inviteAll": "Invite All",
+        "studentsToInvite": "{{count}} student(s) to invite",
+        "success": "Invitation sent successfully",
+        "error": "Failed to send invitation",
+        "bulkSuccess": "{{count}} students invited successfully",
+        "bulkError": "Failed to invite students"
+      },
+      "resendSuccess": "Invitation resent successfully",
+      "resendError": "Failed to resend invitation",
+      "removeSuccess": "Student removed successfully",
+      "removeError": "Failed to remove student",
+      "neverActive": "Never"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "subtitle": "Track performance and engagement across your school",
+      "period": {
+        "week": "This Week",
+        "month": "This Month",
+        "quarter": "This Quarter",
+        "year": "This Year"
+      },
+      "engagement": {
+        "title": "Student Engagement",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "completion": {
+        "title": "Assessment Completion",
+        "completed": "Completed",
+        "inProgress": "In Progress",
+        "notStarted": "Not Started",
+        "rate": "Completion Rate"
+      },
+      "performance": {
+        "title": "Average Performance",
+        "score": "Average Score",
+        "trend": "Trend"
+      },
+      "timeSpent": {
+        "title": "Time Spent",
+        "average": "Average Hours",
+        "total": "Total Hours"
+      },
+      "trends": {
+        "title": "Performance Trends",
+        "metric": {
+          "score": "Average Score",
+          "completion": "Completion Rate",
+          "time": "Time Spent"
+        }
+      },
+      "topPerformers": {
+        "title": "Top Students",
+        "rank": "Rank",
+        "student": "Student",
+        "score": "Score",
+        "assessments": "Assessments"
+      },
+      "noData": "No data available for the selected period"
+    },
+    "results": {
+      "title": "Student Results",
+      "subtitle": "View and export assessment results",
+      "export": "Export",
+      "exportCSV": "Export CSV",
+      "exportPDF": "Export PDF",
+      "allAssessments": "All Assessments",
+      "noResults": "No results found",
+      "noResultsDesc": "Assessment results will appear here",
+      "table": {
+        "student": "Student",
+        "assessment": "Assessment",
+        "type": "Type",
+        "score": "Score",
+        "completedAt": "Completed",
+        "duration": "Duration",
+        "actions": "Actions"
+      },
+      "detail": {
+        "title": "Student Details",
+        "summary": "Performance Summary",
+        "totalAssessments": "Total Assessments",
+        "averageScore": "Average Score",
+        "totalTime": "Total Time",
+        "strongAreas": "Strong Areas",
+        "improvementAreas": "Areas for Improvement",
+        "assessmentHistory": "Assessment History",
+        "noAssessments": "No assessments completed yet"
+      },
+      "exportSuccess": "Results exported successfully",
+      "exportError": "Failed to export results",
+      "minutes": "min"
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Manage your account and school settings",
+      "schoolInfo": {
+        "title": "School Information",
+        "subtitle": "Your school details and contract information",
+        "name": "School Name",
+        "adminEmail": "Admin Email",
+        "maxStudents": "Student Capacity",
+        "contractStart": "Contract Start",
+        "contractEnd": "Contract End",
+        "contractPeriod": "Contract Period",
+        "loadError": "Unable to load school info"
+      },
+      "profile": {
+        "title": "Profile Settings",
+        "subtitle": "Update your profile information",
+        "name": "Name",
+        "namePlaceholder": "Your name",
+        "phone": "Phone",
+        "phonePlaceholder": "+1 234 567 8900",
+        "update": "Update Profile",
+        "updating": "Saving...",
+        "fillRequired": "Please fill in at least one field",
+        "success": "Profile updated successfully",
+        "error": "Failed to update profile"
+      },
+      "password": {
+        "title": "Change Password",
+        "subtitle": "Keep your account secure by using a strong password",
+        "current": "Current Password",
+        "currentPlaceholder": "Enter current password",
+        "new": "New Password",
+        "newPlaceholder": "Enter new password",
+        "confirm": "Confirm New Password",
+        "confirmPlaceholder": "Confirm new password",
+        "change": "Change Password",
+        "changing": "Changing...",
+        "fillRequired": "Please fill in all password fields",
+        "minLength": "Password must be at least 8 characters",
+        "success": "Password changed successfully",
+        "error": "Failed to change password",
+        "mismatch": "New passwords do not match"
+      }
+    },
+    "common": {
+      "loading": "Loading...",
+      "error": "An error occurred",
+      "retry": "Retry",
+      "close": "Close",
+      "save": "Save",
+      "cancel": "Cancel",
+      "go": "Go",
+      "viewAll": "View all"
+    }
+  },
+  "shell": {
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
+    "navigationTab": "Navigation",
+    "chatHistoryTab": "Chat history",
+    "newChat": "New chat",
+    "signOut": "Sign Out",
+    "settings": "Settings",
+    "noChatsYet": "No chats yet",
+    "startChat": "Start a chat",
+    "searchShortcut": "Search (Cmd+K)",
+    "workspace": "Workspace",
+    "askAi": "Ask AI",
+    "notifications": "Notifications",
+    "markAllRead": "Mark all read",
+    "noNotifications": "No notifications",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
   }
 }

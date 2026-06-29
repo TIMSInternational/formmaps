@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Bell,
@@ -93,6 +94,7 @@ function generateNotifications(): Notification[] {
 }
 
 export function NotificationCenter() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -149,7 +151,7 @@ export function NotificationCenter() {
         onClick={() => setOpen((o) => !o)}
         className="relative flex items-center justify-center rounded-md p-1.5 transition-colors"
         style={{ color: "var(--admin-font-tertiary)" }}
-        aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+        aria-label={`${t("shell.notifications")}${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
@@ -183,7 +185,7 @@ export function NotificationCenter() {
                 className="text-xs font-bold uppercase tracking-wider"
                 style={{ color: "var(--admin-font-tertiary)" }}
               >
-                Notifications
+                {t("shell.notifications")}
               </span>
               {unreadCount > 0 && (
                 <button
@@ -192,7 +194,7 @@ export function NotificationCenter() {
                   style={{ color: "var(--admin-accent-blue)" }}
                 >
                   <CheckCheck className="h-3 w-3" />
-                  Mark all read
+                  {t("shell.markAllRead")}
                 </button>
               )}
             </div>
@@ -203,7 +205,7 @@ export function NotificationCenter() {
                 <div className="py-8 text-center">
                   <Bell className="h-5 w-5 mx-auto mb-2" style={{ color: "var(--admin-font-tertiary)" }} />
                   <span className="text-xs" style={{ color: "var(--admin-font-tertiary)" }}>
-                    No notifications
+                    {t("shell.noNotifications")}
                   </span>
                 </div>
               ) : (

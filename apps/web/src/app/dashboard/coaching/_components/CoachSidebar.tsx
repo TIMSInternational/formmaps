@@ -126,7 +126,7 @@ export function CoachSidebar() {
 
   const openChatInPanel = (threadId?: string) => {
     if (threadId) selectThread(threadId);
-    openPanel({ title: "Ask AI", content: <AIChatSidePanel /> });
+    openPanel({ title: t("shell.askAi"), content: <AIChatSidePanel /> });
   };
 
   const handleNewChat = () => {
@@ -153,7 +153,7 @@ export function CoachSidebar() {
     setDropdownOpen(false);
   };
 
-  const themeLabel = mode === "dark" ? "Dark" : mode === "light" ? "Light" : "System";
+  const themeLabel = mode === "dark" ? t("shell.themeDark") : mode === "light" ? t("shell.themeLight") : t("shell.themeSystem");
 
   const isActive = (href: string) => {
     if (href === "/dashboard/coaching") return pathname === href;
@@ -186,7 +186,7 @@ export function CoachSidebar() {
           </span>
         )}
         {!collapsed && (
-          <button onClick={() => setCollapsed(true)} title="Collapse sidebar" style={{
+          <button onClick={() => setCollapsed(true)} title={t("shell.collapseSidebar")} style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: 28, height: 28, borderRadius: 4,
             color: C.fontTertiary, border: "none", background: "transparent",
@@ -198,7 +198,7 @@ export function CoachSidebar() {
           </button>
         )}
         {collapsed && (
-          <button onClick={() => setCollapsed(false)} title="Expand sidebar" style={{
+          <button onClick={() => setCollapsed(false)} title={t("shell.expandSidebar")} style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: 28, height: 28, borderRadius: 4,
             color: C.fontTertiary, border: "none", background: "transparent",
@@ -215,8 +215,8 @@ export function CoachSidebar() {
       {!collapsed && (
         <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 4px", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 2, padding: 2, borderRadius: 6, background: "var(--admin-bg-card-hover)" }}>
-            <TabBtn icon={Home} active={activeTab === "home"} onClick={() => setActiveTab("home")} title="Navigation" />
-            <TabBtn icon={MessageCircle} active={activeTab === "chat"} onClick={() => setActiveTab("chat")} title="Chat history" />
+            <TabBtn icon={Home} active={activeTab === "home"} onClick={() => setActiveTab("home")} title={t("shell.navigationTab")} />
+            <TabBtn icon={MessageCircle} active={activeTab === "chat"} onClick={() => setActiveTab("chat")} title={t("shell.chatHistoryTab")} />
           </div>
           <button onClick={handleNewChat} style={{
             display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 10px 0 8px",
@@ -229,7 +229,7 @@ export function CoachSidebar() {
           onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-card-hover)"; }}
           >
             <MessageCirclePlus style={{ width: 14, height: 14 }} />
-            <span>New chat</span>
+            <span>{t("shell.newChat")}</span>
           </button>
         </div>
       )}
@@ -256,14 +256,14 @@ export function CoachSidebar() {
         {chatGroups.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: 8, padding: 24 }}>
             <MessageCircle style={{ width: 24, height: 24, color: "var(--admin-font-light)" }} />
-            <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>No chats yet</span>
+            <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("shell.noChatsYet")}</span>
             <button onClick={handleNewChat} style={{
               display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 12px",
               borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 500,
               fontFamily: "inherit", marginTop: 4, background: "var(--admin-accent-blue)", color: "#fff",
             }}>
               <MessageCirclePlus style={{ width: 14, height: 14 }} />
-              Start a chat
+              {t("shell.startChat")}
             </button>
           </div>
         ) : (
@@ -351,7 +351,7 @@ export function CoachSidebar() {
             onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
               <Settings style={{ width: 14, height: 14, color: C.fontTertiary }} />
-              <span>Settings</span>
+              <span>{t("shell.settings")}</span>
             </Link>
             <button onClick={() => { logout(); router.push("/login"); }} style={{
               display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 8px",
@@ -362,7 +362,7 @@ export function CoachSidebar() {
             onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
               <LogOut style={{ width: 14, height: 14, color: C.fontTertiary }} />
-              <span>Sign Out</span>
+              <span>{t("shell.signOut")}</span>
             </button>
           </div>
         )}
@@ -393,7 +393,7 @@ export function CoachSidebar() {
                   onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
                     <Moon style={{ width: 16, height: 16, color: C.fontTertiary, flexShrink: 0 }} />
-                    <span style={{ flex: 1 }}>Theme · {themeLabel}</span>
+                    <span style={{ flex: 1 }}>{t("shell.theme")} · {themeLabel}</span>
                     <ChevronRight style={{ width: 12, height: 12, color: C.fontLight }} />
                   </button>
                 ) : (
@@ -407,26 +407,26 @@ export function CoachSidebar() {
                     onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
                       <ChevronDown style={{ width: 12, height: 12, transform: "rotate(90deg)", color: C.fontLight }} />
-                      <span>Theme</span>
+                      <span>{t("shell.theme")}</span>
                     </button>
                     <div style={{ height: 1, background: themeColors.border.hover, margin: "2px 6px" }} />
                     {([
-                      { mode: "light" as ThemeMode, label: "Light", icon: Sun },
-                      { mode: "dark" as ThemeMode, label: "Dark", icon: Moon },
-                      { mode: "system" as ThemeMode, label: "System", icon: Monitor },
-                    ]).map((t) => (
-                      <button key={t.mode} onClick={() => changeTheme(t.mode)} style={{
+                      { mode: "light" as ThemeMode, label: t("shell.themeLight"), icon: Sun },
+                      { mode: "dark" as ThemeMode, label: t("shell.themeDark"), icon: Moon },
+                      { mode: "system" as ThemeMode, label: t("shell.themeSystem"), icon: Monitor },
+                    ]).map((themeOption) => (
+                      <button key={themeOption.mode} onClick={() => changeTheme(themeOption.mode)} style={{
                         display: "flex", alignItems: "center", gap: 12, width: "100%",
                         padding: "8px 10px", borderRadius: 4, border: "none", background: "transparent",
-                        color: mode === t.mode ? C.fontPrimary : C.fontSecondary,
+                        color: mode === themeOption.mode ? C.fontPrimary : C.fontSecondary,
                         fontSize: 13, cursor: "pointer", fontFamily: "inherit",
                         transition: "background 0.1s", textAlign: "left",
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                        <t.icon style={{ width: 16, height: 16, color: mode === t.mode ? C.fontPrimary : C.fontTertiary, flexShrink: 0 }} />
-                        <span style={{ flex: 1 }}>{t.label}</span>
-                        {mode === t.mode && <span style={{ color: C.fontTertiary, fontSize: 14 }}>✓</span>}
+                        <themeOption.icon style={{ width: 16, height: 16, color: mode === themeOption.mode ? C.fontPrimary : C.fontTertiary, flexShrink: 0 }} />
+                        <span style={{ flex: 1 }}>{themeOption.label}</span>
+                        {mode === themeOption.mode && <span style={{ color: C.fontTertiary, fontSize: 14 }}>✓</span>}
                       </button>
                     ))}
                   </>
