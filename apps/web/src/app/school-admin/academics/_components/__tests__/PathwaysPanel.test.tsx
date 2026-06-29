@@ -7,6 +7,10 @@ import {
   updatePrerequisites,
 } from "@/services/curriculumService";
 
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: jest.fn() }),
+}));
+
 jest.mock("@/services/curriculumService", () => ({
   getCoursePathways: jest.fn(),
   getSchoolCourses: jest.fn(),

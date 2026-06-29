@@ -7,9 +7,20 @@ import { getChildCoursePlan } from "@/services/graduationPlanService";
 jest.mock("@/services/graduationPlanService", () => ({
   getChildCoursePlan: jest.fn(),
 }));
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (_k: string, d: string) => d }),
-}));
+jest.mock("react-i18next", () => {
+  // Resolve real English copy (ChildPlanTab uses the "parent" namespace with
+  // keyless t() calls) so text queries match what users see.
+  const parent = require("@/lib/i18n/locales/en/parent.json");
+  const get = (k: string) =>
+    k.split(".").reduce((o: unknown, p: string) => (o == null ? o : (o as Record<string, unknown>)[p]), parent);
+  return {
+    useTranslation: () => ({ t: (k: string, d?: string) => (get(k) as string) ?? d ?? k }),
+    // The component transitively imports the real i18n init (via authService →
+    // useSetLanguage), which calls i18n.use(initReactI18next); provide a no-op
+    // plugin so the mock satisfies that call instead of passing undefined.
+    initReactI18next: { type: "3rdParty", init: () => {} },
+  };
+});
 
 const mockGet = getChildCoursePlan as jest.Mock;
 

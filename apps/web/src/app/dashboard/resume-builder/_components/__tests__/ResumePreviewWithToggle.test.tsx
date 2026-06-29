@@ -43,7 +43,7 @@ describe("ResumePreviewWithToggle", () => {
     const { rerender } = render(
       <ResumePreviewWithToggle hasOriginal loadOriginalUrl={loadUrl} edited={<div>EDITED CONTENT</div>} />,
     );
-    fireEvent.click(screen.getByRole("tab", { name: /edited/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /preview/i }));
     expect(screen.getByText("EDITED CONTENT")).toBeInTheDocument();
 
     // An unrelated re-render toggles hasOriginal; the manual pick must stick.
@@ -56,7 +56,7 @@ describe("ResumePreviewWithToggle", () => {
     render(
       <ResumePreviewWithToggle hasOriginal loadOriginalUrl={jest.fn().mockResolvedValue("https://signed.example/x.pdf")} edited={<div>EDITED CONTENT</div>} />,
     );
-    fireEvent.click(screen.getByRole("tab", { name: /edited/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /preview/i }));
     expect(screen.getByText("EDITED CONTENT")).toBeInTheDocument();
   });
 
