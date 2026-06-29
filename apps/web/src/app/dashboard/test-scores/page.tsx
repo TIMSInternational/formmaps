@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "motion/react";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { QueryStateBoundary } from "@/components/QueryStateBoundary";
@@ -30,6 +31,7 @@ import { ScoreList } from "./_components/score-list";
 import { CollegeFitCard } from "./_components/college-fit-card";
 
 export default function TestScoresPage() {
+  const { t } = useTranslation("student");
   const [scores, setScores] = useState<TestScore[]>([]);
   const [superScore, setSuperScore] = useState<SuperScore | null>(null);
   const [collegeFit, setCollegeFit] = useState<CollegeFitResult | null>(null);
@@ -50,7 +52,7 @@ export default function TestScoresPage() {
       setCollegeFit(cf);
     } catch {
       setError(true);
-      toast.error("Failed to load test scores");
+      toast.error(t("testScores.failedToLoad"));
     } finally {
       setLoading(false);
     }
@@ -112,15 +114,15 @@ export default function TestScoresPage() {
     try {
       if (editingId) {
         await updateTestScore(editingId, payload);
-        toast.success("Score updated");
+        toast.success(t("testScores.scoreUpdated"));
       } else {
         await addTestScore(payload);
-        toast.success("Score added");
+        toast.success(t("testScores.scoreAdded"));
       }
       closeForm();
       await fetchAll();
     } catch {
-      toast.error("Failed to save score");
+      toast.error(t("testScores.failedToSave"));
     } finally {
       setSaving(false);
     }
@@ -130,10 +132,10 @@ export default function TestScoresPage() {
     setDeleting(id);
     try {
       await deleteTestScore(id);
-      toast.success("Score deleted");
+      toast.success(t("testScores.scoreDeleted"));
       await fetchAll();
     } catch {
-      toast.error("Failed to delete score");
+      toast.error(t("testScores.failedToDelete"));
     } finally {
       setDeleting(null);
     }
@@ -149,13 +151,13 @@ export default function TestScoresPage() {
       >
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-            Academic Profile
+            {t("testScores.badge")}
           </p>
           <h1 className="text-2xl font-bold tracking-tight text-foreground mb-1">
-            Test Scores
+            {t("testScores.title")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Track your SAT, ACT, AP, and other standardized test results.
+            {t("testScores.subtitle")}
           </p>
         </div>
         <Button
@@ -163,7 +165,7 @@ export default function TestScoresPage() {
           className="bg-foreground text-background hover:bg-foreground/90 shrink-0"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Score
+          {t("testScores.addScore")}
         </Button>
       </motion.div>
 

@@ -4,8 +4,10 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { ApplicationTracker } from "@/components/kanban/ApplicationTracker";
 import { CalendarDays } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function ApplicationsPage() {
+  const { t } = useTranslation("student");
   return (
     <div className="space-y-5">
       <motion.div
@@ -14,11 +16,11 @@ export default function ApplicationsPage() {
         className="flex flex-col gap-2"
       >
         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-          Application Tracker
+          {t("applications.badge")}
         </span>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
-            Track Your Applications
+            {t("applications.title")}
           </h1>
           <Link
             href="/dashboard/applications/calendar"
@@ -26,11 +28,11 @@ export default function ApplicationsPage() {
             style={{ background: "#065292" }}
           >
             <CalendarDays className="h-3.5 w-3.5" />
-            Deadline Calendar
+            {t("applications.deadlineCalendar")}
           </Link>
         </div>
         <p className="max-w-2xl text-base text-muted-foreground">
-          Organize your university applications from research to acceptance. Click a card to open its workspace — essays, checklist, and AI review.
+          {t("applications.subtitle")}
         </p>
       </motion.div>
 
