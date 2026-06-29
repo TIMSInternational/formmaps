@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ import {
 } from "@/services/assessmentCommandService";
 
 export default function AssessmentCommandCenter() {
+  const { t } = useTranslation("school_admin");
   const searchParams = useSearchParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("command-center");
@@ -47,36 +49,36 @@ export default function AssessmentCommandCenter() {
     mutationFn: () => getInsights(true),
     onSuccess: () => {
       insightsQuery.refetch();
-      toast.success("Insights refreshed");
+      toast.success(t("assessments.insightsRefreshed"));
     },
-    onError: () => toast.error("Failed to refresh insights"),
+    onError: () => toast.error(t("assessments.insightsRefreshFailed")),
   });
 
   const saveSchedulesMut = useMutation({
     mutationFn: (s: ScheduleSaveItem[]) => saveSchedules(s),
-    onSuccess: () => { schedulesQuery.refetch(); toast.success("Schedule saved"); },
-    onError: () => toast.error("Failed to save schedule"),
+    onSuccess: () => { schedulesQuery.refetch(); toast.success(t("assessments.scheduleSaved")); },
+    onError: () => toast.error(t("assessments.scheduleSaveFailed")),
   });
 
   const remindersMut = useMutation({
     mutationFn: ({ ids, types }: { ids: string[]; types: string[] }) => sendReminders(ids, types),
     onSuccess: (data: { sent: number; failed: number }) => {
-      toast.success(`Reminders sent to ${data.sent} student${data.sent !== 1 ? "s" : ""}`);
-      if (data.failed > 0) toast.warning(`${data.failed} email(s) failed`);
+      toast.success(t("assessments.remindersSent", { count: data.sent }));
+      if (data.failed > 0) toast.warning(t("assessments.remindersFailed", { count: data.failed }));
     },
-    onError: () => toast.error("Failed to send reminders"),
+    onError: () => toast.error(t("assessments.remindersError")),
   });
 
   const setup360Mut = useMutation({
     mutationFn: (ids: string[]) => setup360(ids),
     onSuccess: (data: { created: number; emailsSent: number; skipped: number }) => {
-      toast.success(`360 setup complete: ${data.created} groups created, ${data.emailsSent} invites sent`);
-      if (data.skipped > 0) toast.info(`${data.skipped} already existed`);
+      toast.success(t("assessments.setup360Success", { created: data.created, emails: data.emailsSent }));
+      if (data.skipped > 0) toast.info(t("assessments.setup360Skipped", { count: data.skipped }));
       pipelineQuery.refetch();
       // New 360 groups can drop students below allDone → re-evaluate the insights gate.
       insightsQuery.refetch();
     },
-    onError: () => toast.error("Failed to setup 360 evaluations"),
+    onError: () => toast.error(t("assessments.setup360Error")),
   });
 
   const isLoading = insightsQuery.isLoading || schedulesQuery.isLoading || pipelineQuery.isLoading;
@@ -97,18 +99,18 @@ export default function AssessmentCommandCenter() {
       {/* Header */}
       <div>
         <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
-          Assessment Command Center
+          {t("assessments.title")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-          Schedule assessments, track student progress, send reminders, and view AI-powered insights
+          {t("assessments.subtitle")}
         </p>
       </div>
 
       <AdminTabBar
         tabs={[
-          { key: "command-center", label: "Command Center", icon: ClipboardCheck },
-          { key: "evaluations", label: "360 Evaluations", icon: RotateCcw },
-          { key: "results", label: "Results & Reports", icon: FileText },
+          { key: "command-center", label: t("assessments.tabs.commandCenter"), icon: ClipboardCheck },
+          { key: "evaluations", label: t("assessments.tabs.evaluations"), icon: RotateCcw },
+          { key: "results", label: t("assessments.tabs.results"), icon: FileText },
         ]}
         activeTab={activeTab}
         onChange={handleTabChange}
