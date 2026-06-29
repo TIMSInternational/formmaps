@@ -40,17 +40,17 @@ import {
 type ThemeMode = "dark" | "light" | "system";
 
 const WORKSPACE_NAV = [
-  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { label: "Users", href: "/admin/users", icon: Users },
-  { label: "Schools", href: "/admin/schools", icon: School },
-  { label: "Coaches", href: "/admin/coaches", icon: GraduationCap },
-  { label: "Courses", href: "/admin/courses", icon: BookOpen },
-  { label: "Careers", href: "/admin/careers", icon: Briefcase },
-  { label: "360 Questions", href: "/admin/questions", icon: HelpCircle },
-  { label: "Transactions", href: "/admin/transactions", icon: Receipt },
-  { label: "Payouts", href: "/admin/payouts", icon: Wallet },
-  { label: "Plans", href: "/admin/plans", icon: CreditCard },
-  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { label: "nav.dashboard", href: "/admin", icon: LayoutDashboard },
+  { label: "nav.users", href: "/admin/users", icon: Users },
+  { label: "nav.schools", href: "/admin/schools", icon: School },
+  { label: "nav.coaches", href: "/admin/coaches", icon: GraduationCap },
+  { label: "nav.courses", href: "/admin/courses", icon: BookOpen },
+  { label: "nav.careers", href: "/admin/careers", icon: Briefcase },
+  { label: "nav.questions", href: "/admin/questions", icon: HelpCircle },
+  { label: "nav.transactions", href: "/admin/transactions", icon: Receipt },
+  { label: "nav.payouts", href: "/admin/payouts", icon: Wallet },
+  { label: "nav.plans", href: "/admin/plans", icon: CreditCard },
+  { label: "nav.analytics", href: "/admin/analytics", icon: BarChart3 },
 ];
 
 function NavItem({ href, icon: Icon, label, active, collapsed, colors }: {
@@ -239,7 +239,7 @@ export function AdminSidebar() {
           }}>{tCommon("shell.workspace")}</div>}
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {WORKSPACE_NAV.map((item) => (
-              <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} colors={C} />
+              <NavItem key={item.href} {...item} label={t(item.label)} active={isActive(item.href)} collapsed={collapsed} colors={C} />
             ))}
           </div>
         </div>

@@ -1,4 +1,17 @@
 {
+  "nav": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "schools": "Schools",
+    "coaches": "Coaches",
+    "courses": "Courses",
+    "careers": "Careers",
+    "questions": "360 Questions",
+    "transactions": "Transactions",
+    "payouts": "Payouts",
+    "plans": "Plans",
+    "analytics": "Analytics"
+  },
   "dashboard": {
     "title": "Dashboard",
     "subtitle": "Platform overview and quick actions",

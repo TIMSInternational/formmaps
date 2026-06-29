@@ -7,7 +7,6 @@ import { QueryProvider } from "@/components/QueryProvider";
 import { AssessmentCacheProvider } from "@/contexts/AssessmentCacheContext";
 import { I18nProvider } from "@/components/I18nProvider";
 import { TelemetryProvider } from "@/components/TelemetryProvider";
-import { SkipToMain } from "@/components/ui/accessibility";
 import { Toaster } from "sonner";
 import { validateEnv } from "@/lib/env";
 
@@ -68,7 +67,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} font-sans bg-background text-foreground antialiased`}
       >
-        <SkipToMain mainId="main-content" />
         <ErrorBoundary>
           <QueryProvider>
             <AssessmentCacheProvider>
