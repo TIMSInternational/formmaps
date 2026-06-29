@@ -27,7 +27,7 @@ const RELATIONSHIP_COLORS: Record<string, string> = {
 };
 
 export default function ParentChildrenPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("parent");
   const router = useRouter();
   const { data: profile, isLoading } = useParentProfile();
   const children: ParentChildLink[] = profile?.children || [];
@@ -36,15 +36,12 @@ export default function ParentChildrenPage() {
     <div className="space-y-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Parent</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("children.badge")}</p>
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-          {t("parent.children.title", "My Children")}
+          {t("children.title")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {t(
-            "parent.children.subtitle",
-            "View progress and academic details for each of your linked children."
-          )}
+          {t("children.subtitle")}
         </p>
       </motion.div>
 
@@ -55,7 +52,7 @@ export default function ParentChildrenPage() {
             <div className="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center">
               <Users className="h-4 w-4 text-indigo-500" strokeWidth={1.8} />
             </div>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Children</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("children.totalChildren")}</span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">{isLoading ? "…" : children.length}</p>
         </div>
@@ -64,7 +61,7 @@ export default function ParentChildrenPage() {
             <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
               <TrendingUp className="h-4 w-4 text-emerald-500" strokeWidth={1.8} />
             </div>
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Enrolled</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("children.enrolled")}</span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">{isLoading ? "…" : children.length}</p>
         </div>
@@ -81,13 +78,10 @@ export default function ParentChildrenPage() {
         <div className="text-center py-20 dash-card border-dashed">
           <Users className="h-14 w-14 text-muted-foreground mx-auto mb-4" />
           <p className="text-lg font-semibold text-foreground">
-            {t("parent.children.none", "No children linked yet")}
+            {t("children.none")}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            {t(
-              "parent.children.noneDesc",
-              "Your school counselor or admin will send you a portal invite."
-            )}
+            {t("children.noneDesc")}
           </p>
         </div>
       ) : (
@@ -130,7 +124,7 @@ export default function ParentChildrenPage() {
                         </div>
                         <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
                           <GraduationCap className="h-3.5 w-3.5" />
-                          <span>Grade {child.gradeLevel}</span>
+                          <span>{t("children.grade")} {child.gradeLevel}</span>
                         </div>
                       </div>
                     </div>
@@ -140,7 +134,7 @@ export default function ParentChildrenPage() {
                     {/* Placeholder progress until real data loads */}
                     <div>
                       <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                        <span>Graduation Progress</span>
+                        <span>{t("children.graduationProgress")}</span>
                         <span>—</span>
                       </div>
                       <Progress value={0} className="h-2" />
@@ -153,7 +147,7 @@ export default function ParentChildrenPage() {
                         router.push(`/parent/children/${child.studentId}`)
                       }
                     >
-                      View Academic Progress
+                      {t("children.viewAcademicProgress")}
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
