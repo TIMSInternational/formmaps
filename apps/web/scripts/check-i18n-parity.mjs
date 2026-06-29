@@ -52,6 +52,56 @@ function keysDiffer(enKeys, esKeys) {
   return { onlyInA, onlyInB };
 }
 
+// ─── Value-language smoke check (mirrors src/lib/i18n/parity-utils.ts) ───────────
+// Parity proves the key SETS match; it cannot prove the es VALUES are actually
+// translated. These flag es leaves byte-identical to en, excluding values that
+// are legitimately identical across languages (brand/acronym/placeholder/number).
+// REPORT-ONLY: printed as a warning, never changes the exit code.
+
+const PLACEHOLDER_RE = /\{\{[^}]*\}\}/g;
+const ACCEPTABLE_IDENTICAL_TOKENS = new Set([
+  "FormMaps", "FORMMAPS", "FORM", "MAPS", "PCA", "MIL", "LIA", "DISC", "JCA",
+  "GPA", "AI", "PDF", "URL", "ID", "OK", "SMS", "FAQ", "CSV", "API", "SAT",
+  "ACT", "IB", "AP", "STEM", "TOEFL", "IELTS", "Email", "email", "e-mail",
+]);
+
+function isAcceptableIdentical(value) {
+  const stripped = value.replace(PLACEHOLDER_RE, "").trim();
+  if (!stripped) return true;
+  if (!/\p{L}/u.test(stripped)) return true;
+  if (ACCEPTABLE_IDENTICAL_TOKENS.has(stripped)) return true;
+  if (/^[A-Z0-9]{1,4}$/.test(stripped)) return true;
+  return false;
+}
+
+function flattenEntries(obj, prefix = "", out = {}) {
+  for (const [k, v] of Object.entries(obj)) {
+    const path = prefix ? `${prefix}.${k}` : k;
+    if (v !== null && typeof v === "object" && !Array.isArray(v)) {
+      flattenEntries(v, path, out);
+    } else {
+      out[path] = v;
+    }
+  }
+  return out;
+}
+
+/** Return sorted [{ key, value }] for likely-untranslated es leaves. */
+function valueLanguageMatches(enObj, esObj) {
+  const enFlat = flattenEntries(enObj);
+  const esFlat = flattenEntries(esObj);
+  const hits = [];
+  for (const [key, enVal] of Object.entries(enFlat)) {
+    if (typeof enVal !== "string") continue;
+    const esVal = esFlat[key];
+    if (typeof esVal !== "string") continue;
+    if (enVal.trim() !== esVal.trim()) continue;
+    if (isAcceptableIdentical(enVal)) continue;
+    hits.push({ key, value: enVal });
+  }
+  return hits.sort((a, b) => a.key.localeCompare(b.key));
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 const __filename = fileURLToPath(import.meta.url);
@@ -88,6 +138,8 @@ function main() {
 
   let hasFailure = false;
   const report = [];
+  const valueReport = [];
+  let totalUntranslated = 0;
 
   for (const ns of namespaces) {
     const enPath = join(LOCALES_DIR, "en", `${ns}.json`);
@@ -133,12 +185,38 @@ function main() {
         if (onlyInB.length > 20) report.push(`        … and ${onlyInB.length - 20} more`);
       }
     }
+
+    // Value-language smoke check (report-only — does not affect hasFailure).
+    const untranslated = valueLanguageMatches(enObj, esObj);
+    if (untranslated.length) {
+      totalUntranslated += untranslated.length;
+      valueReport.push(`  ⚠ ${ns} — ${untranslated.length} untranslated candidate(s):`);
+      untranslated.slice(0, 15).forEach(({ key, value }) =>
+        valueReport.push(`        - ${key} = "${value.slice(0, 60)}"`)
+      );
+      if (untranslated.length > 15)
+        valueReport.push(`        … and ${untranslated.length - 15} more`);
+    }
   }
 
   const status = hasFailure ? "FAILED" : "PASSED";
   console.log(`\n[i18n-parity] Checked ${namespaces.length} namespaces — ${status}\n`);
   report.forEach((line) => console.log(line));
   console.log();
+
+  // ─── Value-language report (smoke check, never gates) ───────────────────────
+  console.log(
+    `[i18n-values] Untranslated candidates (es value identical to en): ${totalUntranslated}`
+  );
+  if (totalUntranslated > 0) {
+    valueReport.forEach((line) => console.log(line));
+    console.log(
+      "\n[i18n-values] REPORT-ONLY — these es leaves match en verbatim and may need\n" +
+        "             translation. Brand names/acronyms/placeholders are auto-excluded.\n"
+    );
+  } else {
+    console.log("[i18n-values] ✓ No untranslated candidates.\n");
+  }
 
   if (hasFailure) {
     console.error(
