@@ -9,7 +9,8 @@
       "analyzing": "Analyzing your school data...",
       "analyzingSubtitle": "Reviewing students, assessments, grades, and graduation progress",
       "label": "AI Briefing",
-      "fullAnalysis": "Full Analysis"
+      "fullAnalysis": "Full Analysis",
+      "impactLabel": "{{impact}} impact"
     },
     "atRisk": {
       "title": "Needs Attention",
@@ -62,8 +63,15 @@
       "staff": "Staff & Roles",
       "counselors": "Counselor Assignments"
     },
+    "search": "Search students...",
     "searchPlaceholder": "Search students...",
+    "allStatus": "All Status",
     "inviteStudent": "Invite Student",
+    "status": {
+      "active": "Active",
+      "pending": "Pending",
+      "inactive": "Inactive"
+    },
     "emailCopied_one": "{{count}} email copied",
     "emailCopied_other": "{{count}} emails copied",
     "exportedStudents": "Exported {{count}} students",
@@ -76,17 +84,29 @@
     "stats": {
       "totalStudents": "Total Students",
       "totalStudentsSub": "enrolled in school",
+      "enrolledInSchool": "enrolled in school",
       "activeStudents": "Active Students",
       "activeStudentsSub": "currently active",
+      "currentlyActive": "currently active",
       "assessmentsDone": "Assessments Done",
       "assessmentsDoneSub": "completed assessments",
+      "completedAssessments": "completed assessments",
       "avgScore": "Avg. Score",
-      "avgScoreSub": "across all students"
+      "avgScoreSub": "across all students",
+      "acrossAllStudents": "across all students"
     },
     "bulk": {
       "selected": "{{count}} selected",
       "copyEmails": "Copy Emails",
       "exportCsv": "Export CSV"
+    },
+    "bulkActions": {
+      "selected": "{{count}} selected",
+      "copyEmails": "Copy Emails",
+      "exportCsv": "Export CSV",
+      "emailCopied_one": "{{count}} email copied",
+      "emailCopied_other": "{{count}} emails copied",
+      "exported": "Exported {{count}} students"
     },
     "table": {
       "name": "Name",
@@ -99,9 +119,16 @@
     },
     "noStudents": "No students found",
     "actions": {
+      "label": "Actions",
       "viewProfile": "View Profile",
       "copyEmail": "Copy Email",
       "emailCopied": "Email copied"
+    },
+    "pagination": {
+      "page": "Page",
+      "of": "of",
+      "previous": "Previous",
+      "next": "Next"
     }
   },
   "analytics": {
@@ -120,10 +147,12 @@
       "fullyAssessed": "Fully Assessed",
       "avgGpa": "Avg GPA",
       "weightedAvg": "Weighted average",
-      "studentsOf": "{{done}} of {{total}} students"
+      "studentsOf": "{{done}} of {{total}} students",
+      "view": "View"
     },
     "completionByGrade": "Assessment Completion by Grade",
     "noAssessmentData": "No assessment data available yet.",
+    "gradeLabel": "{{grade}} ({{count}} students)",
     "gradeLabels": {
       "0": "Unassigned",
       "9": "Freshman",
@@ -173,15 +202,20 @@
     "insightsRefreshFailed": "Failed to refresh insights",
     "scheduleSaved": "Schedule saved",
     "scheduleSaveFailed": "Failed to save schedule",
+    "scheduleFailed": "Failed to save schedule",
     "remindersSent_one": "Reminders sent to {{count}} student",
     "remindersSent_other": "Reminders sent to {{count}} students",
     "remindersFailed_one": "{{count}} email failed",
     "remindersFailed_other": "{{count}} emails failed",
+    "remindersFailed_count": "{{count}} email(s) failed",
+    "remindersFailed": "Failed to send reminders",
     "remindersError": "Failed to send reminders",
     "setup360Success": "360 setup complete: {{created}} groups created, {{emails}} invites sent",
     "setup360Skipped_one": "{{count}} already existed",
     "setup360Skipped_other": "{{count}} already existed",
-    "setup360Error": "Failed to setup 360 evaluations"
+    "setup360Skipped": "{{count}} already existed",
+    "setup360Error": "Failed to setup 360 evaluations",
+    "setup360Failed": "Failed to setup 360 evaluations"
   },
   "insights": {
     "title": "AI School Insights",
@@ -240,14 +274,65 @@
       "gaps": "Academic Gaps"
     }
   },
+  "graduation": {
+    "stats": {
+      "totalStudents": "Total Students",
+      "onTrack": "On Track",
+      "atRisk": "At Risk",
+      "offTrack": "Off Track",
+      "avgProgress": "Avg Progress"
+    },
+    "noRules": "No rules configured — set requirements to track progress",
+    "creditsRequired": "{{total}} total credits required",
+    "editRules": "Edit Rules",
+    "setupRules": "Setup Rules",
+    "table": {
+      "student": "Student",
+      "grade": "Grade",
+      "credits": "Credits",
+      "progress": "Progress",
+      "status": "Status"
+    },
+    "search": "Search students...",
+    "setupRulesFirst": "Set up graduation rules to see student progress",
+    "noStudents": "No students found",
+    "rulesSaved": "Rules saved",
+    "rulesFailed": "Failed to save",
+    "rulesCreated": "Rules created",
+    "rulesCreateFailed": "Failed to create",
+    "requirement": "Requirement",
+    "gradeLabel": "Grade {{grade}}"
+  },
+  "academicGaps": {
+    "stats": {
+      "totalStudents": "Total Students",
+      "onTrack": "On Track",
+      "atRisk": "At Risk",
+      "offTrack": "Off Track",
+      "avgProgress": "Avg Progress"
+    },
+    "search": "Search students...",
+    "table": {
+      "student": "Student",
+      "grade": "Grade",
+      "credits": "Credits",
+      "creditGap": "Credit Gap",
+      "missingCourses": "Missing Courses",
+      "status": "Status"
+    },
+    "noRules": "Set up graduation rules to track academic gaps",
+    "noStudents": "No students match your filters"
+  },
   "reports": {
     "title": "Reports",
     "subtitle": "Download assessment reports and data exports per student",
     "tabs": {
       "pca": "PCA / DISC Profile",
       "mil": "MIL / LIA Cognitive",
-      "eval360": "360° Evaluation"
+      "eval360": "360° Evaluation",
+      "360": "360° Evaluation"
     },
+    "search": "Search students...",
     "searchPlaceholder": "Search students...",
     "statusActive": "active",
     "viewReports": "View Reports →",
@@ -255,10 +340,16 @@
       "student": "Student",
       "email": "Email",
       "grade": "Grade",
-      "status": "Status"
+      "status": "Status",
+      "viewReports": "View Reports →"
     },
     "noStudents": "No students found",
-    "pagination": "Page {{page}} of {{total}}"
+    "pagination": "Page {{page}} of {{total}}",
+    "studentReports": "Reports for {{name}}",
+    "pagination_nested": {
+      "page": "Page",
+      "of": "of"
+    }
   },
   "messages": {
     "label": "Communication",
@@ -270,8 +361,10 @@
       "alerts": "Alerts & Notifications"
     },
     "conversations": "Conversations",
+    "search": "Search conversations...",
     "searchConversations": "Search conversations...",
     "searchContacts": "Search by name or email...",
+    "newMessage": "New Message",
     "searching": "Searching...",
     "noContacts": "No contacts found",
     "noConversations": "No conversations yet.",
@@ -280,11 +373,16 @@
     "emptyThread": "No messages yet. Send one to get started.",
     "typeMessage": "Type a message...",
     "sendHint": "Press Enter to send, Shift+Enter for new line",
+    "send": "Send",
+    "startFirst": "Start your first conversation",
+    "startVideo": "Start video call",
     "selectConversation": "Select a conversation",
     "selectConversationHint": "Choose a conversation from the left to view and send messages.",
     "conversationStarted": "Conversation started",
     "conversationFailed": "Failed to start conversation",
     "sendFailed": "Failed to send message.",
+    "loadFailed": "Failed to load conversations.",
+    "messagesFailed": "Failed to load messages.",
     "videoCallFailed": "Failed to start video call"
   },
   "academics": {
@@ -293,7 +391,25 @@
     "tabs": {
       "courses": "Courses",
       "curriculum": "Curriculum",
-      "pathways": "Pathways"
+      "pathways": "Pathways",
+      "gradebook": "Gradebook",
+      "gpa": "GPA Settings",
+      "graduation": "Graduation",
+      "gaps": "Academic Gaps"
     }
+  },
+  "common": {
+    "loading": "Loading...",
+    "noData": "No data available",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "exportCsv": "Export CSV",
+    "viewAll": "View all",
+    "gradeLevelN": "G{{level}}"
   }
 }
