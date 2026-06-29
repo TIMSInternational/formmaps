@@ -302,17 +302,17 @@ export default function SessionsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Scheduling</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("coach:sessionsPage.sectionLabel")}</p>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-2">
-              Sessions History
+              {t("coach:sessionsPage.title")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Manage your coaching journey and session details
+              {t("coach:sessionsPage.subtitle")}
             </p>
           </div>
           <Button variant="outline" className="gap-2">
             <CalendarIcon className="h-4 w-4" />
-            Sync Calendar
+            {t("coach:sessionsPage.syncCalendar")}
           </Button>
         </div>
 
@@ -343,11 +343,11 @@ export default function SessionsPage() {
               <div className="h-20 w-20 bg-blue-50 rounded-full flex items-center justify-center mb-6 ring-8 ring-blue-50/50">
                 <CalendarDays className="h-10 w-10 text-blue-500" strokeWidth={1.5} />
               </div>
-              <h3 className="text-xl font-bold text-foreground mb-2">No sessions found</h3>
+              <h3 className="text-xl font-bold text-foreground mb-2">{t("coach:sessionsPage.noSessionsTitle")}</h3>
               <p className="text-muted-foreground max-w-sm mx-auto">
                 {searchQuery
-                  ? "Try adjusting your filters or search query."
-                  : "Looks like you haven't scheduled any sessions yet."}
+                  ? t("coach:sessionsPage.noSessionsSearch")
+                  : t("coach:sessionsPage.noSessionsEmpty")}
               </p>
               {searchQuery && (
                 <Button
@@ -355,7 +355,7 @@ export default function SessionsPage() {
                   onClick={() => { setSearchQuery(""); setStatusFilter(null); }}
                   className="mt-4 text-blue-600"
                 >
-                  Clear filters
+                  {t("coach:sessionsPage.clearFilters")}
                 </Button>
               )}
             </div>

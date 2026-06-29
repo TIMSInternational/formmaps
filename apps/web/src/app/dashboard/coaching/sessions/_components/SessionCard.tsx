@@ -21,27 +21,28 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import type { FormattedSession } from "./session-types";
 
-function getStatusBadge(status: string) {
+function getStatusBadge(status: string, t: (k: string) => string) {
   switch (status) {
     case "confirmed":
     case "rescheduled":
       return (
         <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
-          Upcoming
+          {t("coach:sessionsPage.statusBadge.upcoming")}
         </Badge>
       );
     case "completed":
       return (
         <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
-          Completed
+          {t("coach:sessionsPage.statusBadge.completed")}
         </Badge>
       );
     case "cancelled":
       return (
         <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200">
-          Cancelled
+          {t("coach:sessionsPage.statusBadge.cancelled")}
         </Badge>
       );
     default:
@@ -66,6 +67,7 @@ export function SessionCard({
   onReschedule,
   onCancelSession,
 }: SessionCardProps) {
+  const { t } = useTranslation();
   const isActive = session.status === "confirmed" || session.status === "rescheduled";
 
   return (
@@ -92,7 +94,7 @@ export function SessionCard({
               <h3 className="font-semibold text-foreground truncate">{session.studentName}</h3>
               <div className="flex items-center gap-2 mt-0.5">
                 <Badge variant="secondary" className="text-xs">{session.topic?.replace(/-/g, " ")}</Badge>
-                {getStatusBadge(session.status)}
+                {getStatusBadge(session.status, t)}
               </div>
             </div>
           </div>
@@ -112,12 +114,12 @@ export function SessionCard({
             {isActive && session.meetingLink && (
               <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 px-3 text-xs rounded-lg" asChild>
                 <a href={session.meetingLink} target="_blank" rel="noreferrer">
-                  <Video className="w-3.5 h-3.5 mr-1" /> Join
+                  <Video className="w-3.5 h-3.5 mr-1" /> {t("coach:sessionsPage.card.join")}
                 </a>
               </Button>
             )}
             <Button variant="outline" size="sm" className="h-8 px-3 text-xs rounded-lg" onClick={() => onViewNotes(session)}>
-              <FileText className="w-3.5 h-3.5 mr-1" /> Notes
+              <FileText className="w-3.5 h-3.5 mr-1" /> {t("coach:sessionsPage.card.notes")}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -127,19 +129,19 @@ export function SessionCard({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => onViewProfile(session.studentId || "")} className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4 text-muted-foreground" /> Profile
+                  <User className="mr-2 h-4 w-4 text-muted-foreground" /> {t("coach:sessionsPage.card.profile")}
                 </DropdownMenuItem>
                 {isActive && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => onReschedule(session)} className="cursor-pointer">
-                      <CalendarDays className="mr-2 h-4 w-4 text-orange-400" /> Reschedule
+                      <CalendarDays className="mr-2 h-4 w-4 text-orange-400" /> {t("coach:sessionsPage.card.reschedule")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => onCancelSession(session)}
                       className="cursor-pointer text-red-600 focus:text-red-600"
                     >
-                      <XCircle className="mr-2 h-4 w-4" /> Cancel Session
+                      <XCircle className="mr-2 h-4 w-4" /> {t("coach:sessionsPage.card.cancelSession")}
                     </DropdownMenuItem>
                   </>
                 )}

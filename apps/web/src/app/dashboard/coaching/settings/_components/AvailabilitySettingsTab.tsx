@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Globe } from "lucide-react";
 import { toast } from "sonner";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { useTranslation } from "react-i18next";
 import { CalendarIntegrationSection } from "./CalendarIntegrationSection";
 import { WeeklyScheduleGrid } from "./WeeklyScheduleGrid";
 
@@ -53,6 +54,7 @@ export function AvailabilitySettingsTab({
   isLoading: parentLoading,
   onUpdated,
 }: AvailabilitySettingsTabProps) {
+  const { t } = useTranslation();
   const { user } = useGlobalStore();
   const [timezone, setTimezone] = useState("UTC");
   const [schedule, setSchedule] = useState<DaySchedule[]>(DEFAULT_SCHEDULE);
@@ -138,7 +140,7 @@ export function AvailabilitySettingsTab({
       const { getCalendarAuthUrl } = await import("@/services/calendarService");
       const res = await getCalendarAuthUrl(provider);
       if (!res.configured || !res.url) {
-        toast.error("Calendar sync isn't enabled on this server yet.");
+        toast.error(t("coach:settings.calendar.notConfigured"));
         setIsConnectingCalendar(false);
         return;
       }
@@ -156,9 +158,9 @@ export function AvailabilitySettingsTab({
       const { disconnectCalendar } = await import("@/services/calendarService");
       await disconnectCalendar(calendarConnection.provider);
       setCalendarConnection({ connected: false, provider: null });
-      toast.success("Calendar disconnected successfully");
+      toast.success(t("coach:settings.calendar.disconnectSuccess"));
     } catch (error) {
-      toast.error("Failed to disconnect calendar");
+      toast.error(t("coach:settings.calendar.disconnectError"));
     } finally {
       setIsConnectingCalendar(false);
     }
@@ -199,9 +201,9 @@ export function AvailabilitySettingsTab({
       const { updateAvailability } = await import("@/services/coachService");
       await updateAvailability({ timezone, weeklySchedule: schedule });
       if (onUpdated) onUpdated({ timezone, weeklySchedule: schedule });
-      toast.success("Availability updated successfully");
+      toast.success(t("coach:settings.availability.success"));
     } catch (error) {
-      toast.error("Failed to update availability");
+      toast.error(t("coach:settings.availability.error"));
     } finally {
       setIsSaving(false);
     }
@@ -210,7 +212,7 @@ export function AvailabilitySettingsTab({
   if (parentLoading || isLoading) {
     return (
       <div className="p-12 text-center text-gray-500">
-        Loading availability...
+        {t("coach:settings.availability.loading")}
       </div>
     );
   }
@@ -219,14 +221,14 @@ export function AvailabilitySettingsTab({
     <div className="space-y-6 pt-2">
       <div className="flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Weekly Schedule</h2>
-          <p className="text-gray-500 text-sm mt-1">Define when you are available for sessions.</p>
+          <h2 className="text-xl font-semibold text-gray-900">{t("coach:settings.availability.title")}</h2>
+          <p className="text-gray-500 text-sm mt-1">{t("coach:settings.availability.subtitle")}</p>
         </div>
         <div className="flex items-center gap-3 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
           <Globe className="w-4 h-4 text-gray-500 ml-2" />
           <Select value={timezone} onValueChange={setTimezone}>
             <SelectTrigger className="w-[280px] h-9 border-0 bg-transparent focus:ring-0 shadow-none text-sm font-medium">
-              <SelectValue placeholder="Select timezone" />
+              <SelectValue placeholder={t("coach:settings.availability.timezone")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="UTC">UTC (Universal Time)</SelectItem>
@@ -268,7 +270,7 @@ export function AvailabilitySettingsTab({
           disabled={isSaving}
           className="w-full sm:w-auto h-11 px-8 rounded-xl font-semibold bg-gray-900 text-white hover:bg-gray-800 shadow-sm"
         >
-          {isSaving ? "Saving..." : "Save Changes"}
+          {isSaving ? t("coach:settings.availability.saving") : t("coach:settings.availability.save")}
         </Button>
       </div>
     </div>

@@ -64,12 +64,12 @@ export default function CoachSettingsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Configuration</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("coach:settings.sectionLabel")}</p>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-              Settings
+              {t("coach:settings.title")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Manage your coaching profile, pricing, availability, and payments.
+              {t("coach:settings.subtitle")}
             </p>
           </div>
         </div>
@@ -85,25 +85,25 @@ export default function CoachSettingsPage() {
                 value="pricing" 
                 className="rounded-none border-b-2 border-transparent px-2 py-3 data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none font-medium text-muted-foreground hover:text-foreground transition-all"
               >
-                Pricing
+                {t("coach:settings.tabs.pricing")}
               </TabsTrigger>
-              <TabsTrigger 
-                value="availability" 
+              <TabsTrigger
+                value="availability"
                 className="rounded-none border-b-2 border-transparent px-2 py-3 data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none font-medium text-muted-foreground hover:text-foreground transition-all"
               >
-                Availability
+                {t("coach:settings.tabs.availability")}
               </TabsTrigger>
-              <TabsTrigger 
-                value="payments" 
+              <TabsTrigger
+                value="payments"
                 className="rounded-none border-b-2 border-transparent px-2 py-3 data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none font-medium text-muted-foreground hover:text-foreground transition-all"
               >
-                Payments
+                {t("coach:settings.tabs.payments")}
               </TabsTrigger>
-              <TabsTrigger 
-                value="billing" 
+              <TabsTrigger
+                value="billing"
                 className="rounded-none border-b-2 border-transparent px-2 py-3 data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none font-medium text-muted-foreground hover:text-foreground transition-all"
               >
-                Billing
+                {t("coach:settings.tabs.billing")}
               </TabsTrigger>
             </TabsList>
           </div>

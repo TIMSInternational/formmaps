@@ -157,9 +157,9 @@ export default function CoachSchedulePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Scheduling</p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mt-1">My Schedule</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your coaching sessions</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("coach:schedule.sectionLabel")}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mt-1">{t("coach:schedule.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("coach:schedule.subtitle")}</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -169,7 +169,7 @@ export default function CoachSchedulePage() {
             className="gap-2"
           >
             <LayoutList className="h-4 w-4" />
-            List
+            {t("coach:schedule.listView")}
           </Button>
           <Button
             variant={viewMode === "calendar" ? "default" : "outline"}
@@ -178,7 +178,7 @@ export default function CoachSchedulePage() {
             className="gap-2"
           >
             <Calendar className="h-4 w-4" />
-            Calendar
+            {t("coach:schedule.calendarView")}
           </Button>
         </div>
       </div>
@@ -186,10 +186,10 @@ export default function CoachSchedulePage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total", value: sessions.length, icon: CalendarDays, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
-          { label: "Upcoming", value: upcomingSessions.length, icon: Clock, iconColor: "text-purple-500", iconBg: "bg-purple-500/10" },
-          { label: "Completed", value: pastSessions.filter(s => s.status === "completed").length, icon: CheckCircle2, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
-          { label: "Cancelled", value: sessions.filter(s => s.status === "cancelled").length, icon: XCircle, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
+          { label: t("coach:schedule.stats.total"), value: sessions.length, icon: CalendarDays, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
+          { label: t("coach:schedule.stats.upcoming"), value: upcomingSessions.length, icon: Clock, iconColor: "text-purple-500", iconBg: "bg-purple-500/10" },
+          { label: t("coach:schedule.stats.completed"), value: pastSessions.filter(s => s.status === "completed").length, icon: CheckCircle2, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
+          { label: t("coach:schedule.stats.cancelled"), value: sessions.filter(s => s.status === "cancelled").length, icon: XCircle, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -217,14 +217,14 @@ export default function CoachSchedulePage() {
       ) : (
         <div className="dash-card overflow-hidden">
           <div className="px-5 py-4 border-b border-[var(--border)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <span className="text-sm font-semibold text-foreground">Sessions</span>
+            <span className="text-sm font-semibold text-foreground">{t("coach:schedule.sessions")}</span>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="p-1 rounded-xl">
                 <TabsTrigger value="upcoming" className="rounded-lg px-3 py-1.5 text-sm font-medium">
-                  Upcoming ({upcomingSessions.length})
+                  {t("coach:schedule.stats.upcoming")} ({upcomingSessions.length})
                 </TabsTrigger>
                 <TabsTrigger value="past" className="rounded-lg px-3 py-1.5 text-sm font-medium">
-                  Past ({pastSessions.length})
+                  {t("coach:sessionsPage.filters.tab.past")} ({pastSessions.length})
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -299,10 +299,10 @@ export default function CoachSchedulePage() {
                                 </Button>
                               )}
                               <Button variant="outline" size="sm" className="h-8 px-3 text-xs rounded-lg" onClick={() => handleRescheduleClick(session)}>
-                                Reschedule
+                                {t("coach:schedule.reschedule")}
                               </Button>
                               <Button variant="outline" size="sm" className="h-8 px-3 text-xs rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleCancelClick(session)}>
-                                Cancel
+                                {t("coach:schedule.cancel")}
                               </Button>
                             </>
                           )}
@@ -316,12 +316,12 @@ export default function CoachSchedulePage() {
               <div className="flex flex-col items-center justify-center py-16 px-4">
                 <Calendar className="h-10 w-10 text-muted-foreground mb-4 opacity-40" />
                 <h3 className="text-base font-semibold text-foreground mb-1">
-                  No {activeTab} sessions
+                  {t("coach:schedule.noSessions", { tab: activeTab })}
                 </h3>
                 <p className="text-muted-foreground text-center max-w-sm text-sm">
                   {activeTab === "upcoming"
-                    ? "Your upcoming coaching sessions will appear here"
-                    : "Your completed sessions will appear here"}
+                    ? t("coach:schedule.noUpcoming")
+                    : t("coach:schedule.noCompleted")}
                 </p>
               </div>
             )}
@@ -333,22 +333,22 @@ export default function CoachSchedulePage() {
       <Dialog open={isRescheduleOpen} onOpenChange={setIsRescheduleOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Reschedule Session</DialogTitle>
-            <DialogDescription>Pick a new date and time for {selectedSession?.studentName}.</DialogDescription>
+            <DialogTitle>{t("coach:schedule.reschedule.title")}</DialogTitle>
+            <DialogDescription>{t("coach:schedule.reschedule.description", { name: selectedSession?.studentName })}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>New Date</Label>
+              <Label>{t("coach:schedule.reschedule.newDate")}</Label>
               <Input type="date" value={rescheduleDate} onChange={(e) => setRescheduleDate(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>New Time</Label>
+              <Label>{t("coach:schedule.reschedule.newTime")}</Label>
               <Input type="time" value={rescheduleTime} onChange={(e) => setRescheduleTime(e.target.value)} />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsRescheduleOpen(false)}>Cancel</Button>
-            <Button onClick={confirmReschedule}>Confirm</Button>
+            <Button variant="outline" onClick={() => setIsRescheduleOpen(false)}>{t("coach:schedule.reschedule.cancel")}</Button>
+            <Button onClick={confirmReschedule}>{t("coach:schedule.reschedule.confirm")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -357,23 +357,23 @@ export default function CoachSchedulePage() {
       <Dialog open={isCancelOpen} onOpenChange={setIsCancelOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Cancel Session</DialogTitle>
+            <DialogTitle>{t("coach:schedule.cancelDialog.title")}</DialogTitle>
             <DialogDescription>
-              Cancel session with <span className="font-medium">{selectedSession?.studentName}</span>? This cannot be undone.
+              {t("coach:schedule.cancelDialog.description", { name: selectedSession?.studentName })}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Label>Reason (Optional)</Label>
+            <Label>{t("coach:schedule.cancelDialog.reason")}</Label>
             <Input
-              placeholder="e.g. Unexpected conflict"
+              placeholder={t("coach:schedule.cancelDialog.reasonPlaceholder")}
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
               className="mt-2"
             />
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsCancelOpen(false)}>Keep Session</Button>
-            <Button variant="destructive" onClick={confirmCancel}>Confirm Cancellation</Button>
+            <Button variant="outline" onClick={() => setIsCancelOpen(false)}>{t("coach:schedule.cancelDialog.keep")}</Button>
+            <Button variant="destructive" onClick={confirmCancel}>{t("coach:schedule.cancelDialog.confirm")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

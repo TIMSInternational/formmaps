@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { DynamicBookingModal } from "@/lib/dynamic-imports";
+import { useTranslation } from "react-i18next";
 import type { Coach } from "@/types/coach";
 import type { Session } from "./coaching-sessions-list";
 import type { CounselorSession } from "@/services/counselorSessionService";
@@ -38,22 +39,22 @@ export function CancelSessionDialog({
   onConfirm,
   isProcessing,
 }: CancelDialogProps) {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl">Cancel Session</DialogTitle>
+          <DialogTitle className="text-xl">{t("coach:mySessions.cancel.title")}</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Are you sure you want to cancel this session with{" "}
-            <span className="font-medium text-foreground">{session?.coachName}</span>?
+            {t("coach:mySessions.cancel.description", { name: session?.coachName })}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
           <label className="text-sm font-medium text-foreground mb-2 block">
-            Reason for cancellation
+            {t("coach:mySessions.cancel.reasonLabel")}
           </label>
           <Textarea
-            placeholder="Please let us know why you're cancelling..."
+            placeholder={t("coach:mySessions.cancel.reasonPlaceholder")}
             value={cancelReason}
             onChange={(e) => onCancelReasonChange(e.target.value)}
             rows={3}
@@ -62,10 +63,10 @@ export function CancelSessionDialog({
         </div>
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-lg">
-            Keep Session
+            {t("coach:mySessions.cancel.keepSession")}
           </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={isProcessing} className="rounded-lg">
-            {isProcessing ? "Cancelling..." : "Cancel Session"}
+            {isProcessing ? t("coach:mySessions.cancel.cancelling") : t("coach:mySessions.cancel.confirmCancel")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -98,14 +99,14 @@ export function ReviewSessionDialog({
   onConfirm,
   isProcessing,
 }: ReviewDialogProps) {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl">Leave a Review</DialogTitle>
+          <DialogTitle className="text-xl">{t("coach:mySessions.review.title")}</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            How was your session with{" "}
-            <span className="font-medium text-foreground">{session?.coachName}</span>?
+            {t("coach:mySessions.review.description", { name: session?.coachName })}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-6">
@@ -125,11 +126,11 @@ export function ReviewSessionDialog({
             ))}
           </div>
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">Comment</Label>
+            <Label className="text-sm font-medium text-foreground">{t("coach:mySessions.review.commentLabel")}</Label>
             <Textarea
               value={comment}
               onChange={(e) => onCommentChange(e.target.value)}
-              placeholder="Share your experience..."
+              placeholder={t("coach:mySessions.review.commentPlaceholder")}
               rows={4}
               className="resize-none rounded-xl border-border"
             />
@@ -137,14 +138,14 @@ export function ReviewSessionDialog({
         </div>
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-lg">
-            Cancel
+            {t("coach:mySessions.review.cancel")}
           </Button>
           <Button
             onClick={onConfirm}
             disabled={isProcessing}
             className="bg-foreground text-background hover:bg-foreground/90 rounded-lg"
           >
-            {isProcessing ? "Submitting..." : "Submit Review"}
+            {isProcessing ? t("coach:mySessions.review.submitting") : t("coach:mySessions.review.submit")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -171,22 +172,22 @@ export function CancelCounselorDialog({
   onReasonChange,
   onConfirm,
 }: CancelCounselorDialogProps) {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl">Cancel Counselor Session</DialogTitle>
+          <DialogTitle className="text-xl">{t("coach:mySessions.cancelCounselor.title")}</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Are you sure you want to cancel your session with{" "}
-            <span className="font-medium text-foreground">{session?.counselorName}</span>?
+            {t("coach:mySessions.cancelCounselor.description", { name: session?.counselorName })}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
           <label className="text-sm font-medium text-foreground mb-2 block">
-            Reason for cancellation
+            {t("coach:mySessions.cancelCounselor.reasonLabel")}
           </label>
           <Textarea
-            placeholder="Please let your counselor know why you&apos;re cancelling..."
+            placeholder={t("coach:mySessions.cancelCounselor.reasonPlaceholder")}
             value={reason}
             onChange={(e) => onReasonChange(e.target.value)}
             rows={3}
@@ -195,10 +196,10 @@ export function CancelCounselorDialog({
         </div>
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-lg">
-            Keep Session
+            {t("coach:mySessions.cancelCounselor.keep")}
           </Button>
           <Button variant="destructive" onClick={onConfirm} className="rounded-lg">
-            Cancel Session
+            {t("coach:mySessions.cancelCounselor.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>
