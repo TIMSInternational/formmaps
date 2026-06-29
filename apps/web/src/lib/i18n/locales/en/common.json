@@ -1,4 +1,22 @@
 {
+  "cookieConsent": {
+    "title": "We value your privacy",
+    "description": "We use cookies and similar technologies to improve your experience, analyze traffic, and personalize content.",
+    "consentNote": "By clicking \"Accept All\", you consent to our use of cookies.",
+    "privacyPolicy": "Privacy Policy",
+    "acceptAll": "Accept All",
+    "necessaryOnly": "Necessary Only",
+    "customize": "Customize",
+    "savePreferences": "Save Preferences",
+    "necessaryTitle": "Necessary",
+    "necessaryDesc": "Required for the site to function. Cannot be disabled.",
+    "alwaysOn": "Always On",
+    "analyticsTitle": "Analytics",
+    "analyticsDesc": "Help us understand how you use the platform so we can improve it.",
+    "marketingTitle": "Marketing",
+    "marketingDesc": "We don't currently use marketing or third-party advertising cookies.",
+    "notUsed": "Not used"
+  },
   "nav": {
     "main": "Main",
     "explore": "Explore",

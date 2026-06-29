@@ -1,113 +1,202 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useConsent } from "@/hooks/useConsent";
-import { Cookie, Settings, Shield } from "lucide-react";
-import { useState } from "react";
+import { Switch } from "@/components/ui/switch";
+import { Cookie, Settings, ShieldCheck, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 
+const BRAND = "#065292";
+const BRAND_DARK = "#04406f";
+
 /**
- * GDPR-compliant cookie consent banner
- * Shows at bottom of screen until user makes a choice
+ * GDPR cookie consent — centered, blocking modal pop-up (FormMaps brand).
+ * Stays mounted over a dimmed/blurred backdrop until the user makes a choice.
+ * Bilingual via i18n; all consent logic lives in useConsent.
  */
 export function CookieConsentBanner() {
-  const { showBanner, acceptAll, acceptNecessaryOnly, consent } = useConsent();
+  const { t } = useTranslation();
+  const { showBanner, acceptAll, acceptNecessaryOnly, setConsent, consent } = useConsent();
   const [showDetails, setShowDetails] = useState(false);
+  const [analytics, setAnalytics] = useState(true);
+  const acceptRef = useRef<HTMLButtonElement>(null);
+
+  // Move focus into the dialog when it appears (a11y).
+  useEffect(() => {
+    if (showBanner) acceptRef.current?.focus();
+  }, [showBanner]);
 
   if (!showBanner || consent) return null;
 
-  return (
-    <div
-      className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 bg-white border-t border-gray-200 shadow-2xl animate-in slide-in-from-bottom duration-300"
-      role="dialog"
-      aria-labelledby="cookie-banner-title"
-      aria-describedby="cookie-banner-description"
-    >
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-          {/* Icon */}
-          <div className="flex-shrink-0 p-3 bg-indigo-50 rounded-xl">
-            <Cookie className="h-6 w-6 text-indigo-600" aria-hidden="true" />
-          </div>
+  const savePreferences = () =>
+    setConsent({ necessary: true, analytics, marketing: false });
 
-          {/* Content */}
-          <div className="flex-1">
-            <h2 id="cookie-banner-title" className="text-lg font-semibold text-gray-900 mb-1">
-              We value your privacy
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cookie-modal-title"
+        aria-describedby="cookie-modal-desc"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+      >
+        {/* Dimmed, blurred backdrop — non-dismissible (must choose) */}
+        <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" aria-hidden="true" />
+
+        <motion.div
+          className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+          initial={{ opacity: 0, scale: 0.96, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 320, damping: 26 }}
+        >
+          {/* Yellow brand accent strip */}
+          <div className="h-1.5 w-full" style={{ backgroundColor: "#FFD600" }} />
+
+          <div className="px-6 pb-6 pt-7 sm:px-8">
+            {/* Icon */}
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg"
+              style={{ background: `linear-gradient(135deg, ${BRAND}, ${BRAND_DARK})` }}>
+              <Cookie className="h-7 w-7 text-white" aria-hidden="true" />
+            </div>
+
+            <h2 id="cookie-modal-title" className="text-center text-xl font-bold text-[#111111]">
+              {t("cookieConsent.title", "We value your privacy")}
             </h2>
-            <p id="cookie-banner-description" className="text-sm text-gray-600">
-              We use cookies and similar technologies to improve your experience, analyze traffic, 
-              and personalize content. By clicking "Accept All", you consent to our use of cookies.{" "}
-              <Link href="/privacy" className="text-indigo-600 hover:underline">
-                Privacy Policy
+            <p id="cookie-modal-desc" className="mt-2 text-center text-sm leading-relaxed text-gray-600">
+              {t(
+                "cookieConsent.description",
+                "We use cookies and similar technologies to improve your experience, analyze traffic, and personalize content.",
+              )}{" "}
+              <Link href="/privacy" className="font-medium hover:underline" style={{ color: BRAND }}>
+                {t("cookieConsent.privacyPolicy", "Privacy Policy")}
               </Link>
             </p>
-          </div>
 
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center gap-2"
-            >
-              <Settings className="h-4 w-4" aria-hidden="true" />
-              Customize
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={acceptNecessaryOnly}
-            >
-              Necessary Only
-            </Button>
-            <Button
-              size="sm"
-              onClick={acceptAll}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              Accept All
-            </Button>
-          </div>
-        </div>
+            {/* Customize panel */}
+            <AnimatePresence initial={false}>
+              {showDetails && (
+                <motion.div
+                  className="mt-5 space-y-2.5 overflow-hidden"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {/* Necessary — always on */}
+                  <CategoryRow
+                    icon={<ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />}
+                    title={t("cookieConsent.necessaryTitle", "Necessary")}
+                    desc={t("cookieConsent.necessaryDesc", "Required for the site to function. Cannot be disabled.")}
+                    badge={t("cookieConsent.alwaysOn", "Always On")}
+                  />
+                  {/* Analytics — toggleable */}
+                  <CategoryRow
+                    icon={<Sparkles className="h-4 w-4" style={{ color: BRAND }} aria-hidden="true" />}
+                    title={t("cookieConsent.analyticsTitle", "Analytics")}
+                    desc={t("cookieConsent.analyticsDesc", "Help us understand how you use the platform so we can improve it.")}
+                    control={
+                      <Switch
+                        checked={analytics}
+                        onCheckedChange={setAnalytics}
+                        aria-label={t("cookieConsent.analyticsTitle", "Analytics")}
+                        className="data-[state=checked]:bg-[#065292]"
+                      />
+                    }
+                  />
+                  {/* Marketing — not used */}
+                  <CategoryRow
+                    icon={<Cookie className="h-4 w-4 text-gray-400" aria-hidden="true" />}
+                    title={t("cookieConsent.marketingTitle", "Marketing")}
+                    desc={t("cookieConsent.marketingDesc", "We don't currently use marketing or third-party advertising cookies.")}
+                    badge={t("cookieConsent.notUsed", "Not used")}
+                    muted
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-        {/* Details Panel */}
-        {showDetails && (
-          <div className="mt-4 pt-4 border-t border-gray-100 animate-in fade-in duration-200">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Shield className="h-4 w-4 text-green-600" aria-hidden="true" />
-                  <span className="font-medium text-gray-900">Necessary</span>
-                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Always On</span>
-                </div>
-                <p className="text-xs text-gray-500">
-                  Required for the website to function. Cannot be disabled.
-                </p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Cookie className="h-4 w-4 text-indigo-600" aria-hidden="true" />
-                  <span className="font-medium text-gray-900">Analytics</span>
-                </div>
-                <p className="text-xs text-gray-500">
-                  Help us understand how you use our platform to improve user experience.
-                </p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg opacity-50">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="font-medium text-gray-900">Marketing</span>
-                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Not Used</span>
-                </div>
-                <p className="text-xs text-gray-500">
-                  We don&apos;t currently use marketing cookies or third-party ads.
-                </p>
+            {/* Actions */}
+            <div className="mt-6 space-y-2.5">
+              <button
+                ref={acceptRef}
+                onClick={acceptAll}
+                className="w-full rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors"
+                style={{ backgroundColor: BRAND }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = BRAND_DARK)}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = BRAND)}
+              >
+                {t("cookieConsent.acceptAll", "Accept All")}
+              </button>
+
+              <div className="flex gap-2.5">
+                {showDetails ? (
+                  <button
+                    onClick={savePreferences}
+                    className="flex-1 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50"
+                    style={{ borderColor: BRAND, color: BRAND }}
+                  >
+                    {t("cookieConsent.savePreferences", "Save Preferences")}
+                  </button>
+                ) : (
+                  <button
+                    onClick={acceptNecessaryOnly}
+                    className="flex-1 rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-slate-50"
+                  >
+                    {t("cookieConsent.necessaryOnly", "Necessary Only")}
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowDetails((v) => !v)}
+                  aria-expanded={showDetails}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-slate-50"
+                >
+                  <Settings className="h-4 w-4" aria-hidden="true" />
+                  {t("cookieConsent.customize", "Customize")}
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function CategoryRow({
+  icon,
+  title,
+  desc,
+  badge,
+  control,
+  muted,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  badge?: string;
+  control?: React.ReactNode;
+  muted?: boolean;
+}) {
+  return (
+    <div className={`flex items-start gap-3 rounded-xl bg-slate-50 p-3 ${muted ? "opacity-60" : ""}`}>
+      <div className="mt-0.5 flex-shrink-0">{icon}</div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-gray-900">{title}</span>
+          {badge && (
+            <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+              {badge}
+            </span>
+          )}
+        </div>
+        <p className="mt-0.5 text-xs leading-snug text-gray-500">{desc}</p>
       </div>
+      {control && <div className="flex-shrink-0 self-center">{control}</div>}
     </div>
   );
 }
