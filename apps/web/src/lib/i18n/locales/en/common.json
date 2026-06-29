@@ -1710,6 +1710,88 @@
       "preparationPath": "Preparation Path"
     }
   },
+  "onboarding": {
+    "loading": "Loading...",
+    "steps": {
+      "setPasswordTitle": "Set Password",
+      "setPasswordDesc": "Secure your account with a password."
+    },
+    "toast": {
+      "completed": "Onboarding completed successfully!",
+      "submitFailed": "Failed to submit onboarding data. Please try again.",
+      "verifyFailed": "Failed to verify invitation. Please try again.",
+      "noToken": "No token provided"
+    },
+    "error": {
+      "invalidLink": "This invitation link is invalid or has expired."
+    },
+    "student": {
+      "redirectInvalid": "Invalid onboarding link. Please check your email for the correct link.",
+      "nameFallback": "Student",
+      "invalidTokenMsg": "Invalid invitation link",
+      "idNotFound": "Student ID not found. Please refresh the page.",
+      "activatedRedirect": "Account activated successfully!",
+      "activatedLogin": "Account activated! Please log in.",
+      "activationFailed": "Activation failed",
+      "activationError": "Failed to activate account",
+      "invalidHeading": "Invalid Invitation",
+      "backToLogin": "Back to Login",
+      "welcomeTo": "Welcome to",
+      "subtitle": "Set up your account to access personalized college counseling, career guidance, and AI-powered insights.",
+      "bullet1": "Discover your strengths with assessments",
+      "bullet2": "Get AI-powered career recommendations",
+      "bullet3": "Track college applications & scholarships",
+      "bullet4": "Connect with counselors & coaches",
+      "welcomeUser": "Welcome, {{name}}!",
+      "createPassword": "Create a password to activate your student account",
+      "passwordLabel": "Password",
+      "confirmLabel": "Confirm Password",
+      "passwordPlaceholder": "Create a strong password",
+      "confirmPlaceholder": "Re-enter your password",
+      "requirements": "Password must contain:",
+      "req8": "8+ characters",
+      "reqUpper": "Uppercase letter",
+      "reqLower": "Lowercase letter",
+      "reqNumber": "Number",
+      "activating": "Activating...",
+      "activateAccount": "Activate Account",
+      "alreadyHaveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "validation": {
+        "passwordMin": "Password must be at least 8 characters",
+        "passwordUpper": "Must contain at least one uppercase letter",
+        "passwordLower": "Must contain at least one lowercase letter",
+        "passwordNumber": "Must contain at least one number",
+        "passwordsMatch": "Passwords do not match"
+      }
+    },
+    "counselor": {
+      "infoTitle": "Counselor Information",
+      "infoDesc": "Tell us about yourself to set up your profile."
+    },
+    "coach": {
+      "personalTitle": "Personal Information",
+      "personalDesc": "Tell us about yourself and your coaching expertise.",
+      "pricingTitle": "Pricing",
+      "pricingDesc": "Set your hourly rate and currency.",
+      "availabilityTitle": "Availability",
+      "availabilityDesc": "Set your weekly schedule and timezone.",
+      "calendarTitle": "Calendar Sync",
+      "calendarDesc": "Connect your calendar to avoid double bookings.",
+      "calendarFailed": "Calendar connection failed. You can retry or skip this step.",
+      "calendarConnected": "{{provider}} Calendar connected successfully!",
+      "calendarVerifyFailed": "Failed to verify the calendar connection. Please try again.",
+      "calendarError": "An error occurred while connecting the calendar.",
+      "invitationUnverified": "Invitation could not be verified"
+    },
+    "school": {
+      "adminTitle": "Admin Information",
+      "adminDesc": "Tell us about yourself as the school administrator.",
+      "settingsTitle": "School Settings",
+      "settingsDesc": "Configure notification preferences for your school.",
+      "alreadyCompleted": "You have already completed onboarding."
+    }
+  },
   "compare": {
     "selectedCount": "{{count}} selected",
     "compareButton": "Compare"

@@ -1,7 +1,9 @@
 "use client";
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -22,22 +24,23 @@ import {
 import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
-const passwordSchema = z
-  .object({
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Must contain at least one uppercase letter")
-      .regex(/[a-z]/, "Must contain at least one lowercase letter")
-      .regex(/[0-9]/, "Must contain at least one number"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+const makePasswordSchema = (t: TFunction) =>
+  z
+    .object({
+      password: z
+        .string()
+        .min(8, t("onboarding.student.validation.passwordMin"))
+        .regex(/[A-Z]/, t("onboarding.student.validation.passwordUpper"))
+        .regex(/[a-z]/, t("onboarding.student.validation.passwordLower"))
+        .regex(/[0-9]/, t("onboarding.student.validation.passwordNumber")),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("onboarding.student.validation.passwordsMatch"),
+      path: ["confirmPassword"],
+    });
 
-type PasswordFormData = z.infer<typeof passwordSchema>;
+type PasswordFormData = z.infer<ReturnType<typeof makePasswordSchema>>;
 
 export default function StudentOnboardingPage({
   params,
@@ -45,8 +48,10 @@ export default function StudentOnboardingPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = use(params);
+  const { t } = useTranslation();
   const router = useRouter();
   const { setUser } = useGlobalStore();
+  const passwordSchema = useMemo(() => makePasswordSchema(t), [t]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isValid, setIsValid] = useState(false);
@@ -71,15 +76,15 @@ export default function StudentOnboardingPage({
         const isValidToken = result.isValid === true || result.isValid === "true";
         if (isValidToken) {
           setIsValid(true);
-          setStudentName(result.student?.name || "Student");
+          setStudentName(result.student?.name || t("onboarding.student.nameFallback"));
           setUserId(result.student?.id || "");
         } else {
           setIsValid(false);
-          setErrorObj(result.message || "Invalid invitation link");
+          setErrorObj(result.message || t("onboarding.student.invalidTokenMsg"));
         }
       } catch {
         setIsValid(false);
-        setErrorObj("Failed to verify invitation. Please try again.");
+        setErrorObj(t("onboarding.toast.verifyFailed"));
       } finally {
         setIsLoading(false);
       }
@@ -90,7 +95,7 @@ export default function StudentOnboardingPage({
   const onSubmit = async (data: PasswordFormData) => {
     setIsSubmitting(true);
     try {
-      if (!userId) throw new Error("Student ID not found. Please refresh the page.");
+      if (!userId) throw new Error(t("onboarding.student.idNotFound"));
       const result = await completeStudentOnboarding(token, data.password, data.confirmPassword, userId);
       if (result.success) {
         if (result.token) {
@@ -102,17 +107,17 @@ export default function StudentOnboardingPage({
             accessToken: result.token,
             isAuthenticated: true,
           });
-          toast.success("Account activated successfully!");
+          toast.success(t("onboarding.student.activatedRedirect"));
           setTimeout(() => { router.push("/dashboard"); }, 1500);
         } else {
-          toast.success("Account activated! Please log in.");
+          toast.success(t("onboarding.student.activatedLogin"));
           setTimeout(() => { router.push("/login"); }, 2000);
         }
       } else {
-        throw new Error(result.message || "Activation failed");
+        throw new Error(result.message || t("onboarding.student.activationFailed"));
       }
     } catch (err: unknown) {
-      toast.error((err as Error).message || "Failed to activate account");
+      toast.error((err as Error).message || t("onboarding.student.activationError"));
       setIsSubmitting(false);
     }
   };
@@ -160,16 +165,16 @@ export default function StudentOnboardingPage({
             <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-5">
               <AlertCircle className="w-7 h-7 text-red-500" />
             </div>
-            <h2 className="text-xl font-semibold mb-2" style={{ color: "#111" }}>Invalid Invitation</h2>
+            <h2 className="text-xl font-semibold mb-2" style={{ color: "#111" }}>{t("onboarding.student.invalidHeading")}</h2>
             <p className="text-sm mb-6" style={{ color: "#666" }}>
-              {errorObj || "This invitation link is invalid or has expired."}
+              {errorObj || t("onboarding.error.invalidLink")}
             </p>
             <button
               onClick={() => router.push("/login")}
               className="w-full h-11 rounded-lg text-sm font-semibold text-white transition-colors"
               style={{ background: "#065292" }}
             >
-              Back to Login
+              {t("onboarding.student.backToLogin")}
             </button>
           </div>
         </div>
@@ -200,19 +205,19 @@ export default function StudentOnboardingPage({
           </div>
 
           <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-            Welcome to<br />
+            {t("onboarding.student.welcomeTo")}<br />
             <span style={{ color: "#FFD600" }}>Country Day School.</span>
           </h1>
           <p className="text-base mb-10" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 420, lineHeight: 1.7 }}>
-            Set up your account to access personalized college counseling, career guidance, and AI-powered insights.
+            {t("onboarding.student.subtitle")}
           </p>
 
           <div className="flex flex-col gap-4">
             {[
-              "Discover your strengths with assessments",
-              "Get AI-powered career recommendations",
-              "Track college applications & scholarships",
-              "Connect with counselors & coaches",
+              t("onboarding.student.bullet1"),
+              t("onboarding.student.bullet2"),
+              t("onboarding.student.bullet3"),
+              t("onboarding.student.bullet4"),
             ].map((text, i) => (
               <motion.div
                 key={i}
@@ -251,10 +256,10 @@ export default function StudentOnboardingPage({
 
           <div className="text-center mb-8">
             <h1 className="text-2xl font-semibold mb-2" style={{ color: "#111111" }}>
-              Welcome, {studentName.split(" ")[0]}!
+              {t("onboarding.student.welcomeUser", { name: studentName.split(" ")[0] })}
             </h1>
             <p className="text-sm" style={{ color: "#666" }}>
-              Create a password to activate your student account
+              {t("onboarding.student.createPassword")}
             </p>
           </div>
 
@@ -266,13 +271,13 @@ export default function StudentOnboardingPage({
                 render={({ field }) => (
                   <FormItem className="flex flex-col gap-1.5">
                     <FormLabel className="text-xs font-medium" style={{ color: "#333" }}>
-                      Password
+                      {t("onboarding.student.passwordLabel")}
                     </FormLabel>
                     <div className="relative">
                       <FormControl>
                         <input
                           type={showPassword ? "text" : "password"}
-                          placeholder="Create a strong password"
+                          placeholder={t("onboarding.student.passwordPlaceholder")}
                           {...field}
                           className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
                           style={{ background: "#F8F9FA", borderColor: errors.password ? "#dc2626" : "#E0E0E0", color: "#111" }}
@@ -295,13 +300,13 @@ export default function StudentOnboardingPage({
                 render={({ field }) => (
                   <FormItem className="flex flex-col gap-1.5">
                     <FormLabel className="text-xs font-medium" style={{ color: "#333" }}>
-                      Confirm Password
+                      {t("onboarding.student.confirmLabel")}
                     </FormLabel>
                     <div className="relative">
                       <FormControl>
                         <input
                           type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Re-enter your password"
+                          placeholder={t("onboarding.student.confirmPlaceholder")}
                           {...field}
                           className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
                           style={{ background: "#F8F9FA", borderColor: errors.confirmPassword ? "#dc2626" : "#E0E0E0", color: "#111" }}
@@ -320,12 +325,12 @@ export default function StudentOnboardingPage({
 
               {/* Password requirements hint */}
               <div className="text-[11px] space-y-1" style={{ color: "#999" }}>
-                <p>Password must contain:</p>
+                <p>{t("onboarding.student.requirements")}</p>
                 <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-                  <span>• 8+ characters</span>
-                  <span>• Uppercase letter</span>
-                  <span>• Lowercase letter</span>
-                  <span>• Number</span>
+                  <span>• {t("onboarding.student.req8")}</span>
+                  <span>• {t("onboarding.student.reqUpper")}</span>
+                  <span>• {t("onboarding.student.reqLower")}</span>
+                  <span>• {t("onboarding.student.reqNumber")}</span>
                 </div>
               </div>
 
@@ -336,17 +341,17 @@ export default function StudentOnboardingPage({
                 style={{ background: "#065292" }}
               >
                 {isSubmitting ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Activating...</>
+                  <><Loader2 className="w-4 h-4 animate-spin" /> {t("onboarding.student.activating")}</>
                 ) : (
-                  <><CheckCircle2 className="w-4 h-4" /> Activate Account</>
+                  <><CheckCircle2 className="w-4 h-4" /> {t("onboarding.student.activateAccount")}</>
                 )}
               </button>
             </form>
           </Form>
 
           <p className="text-center mt-6 text-xs" style={{ color: "#999" }}>
-            Already have an account?{" "}
-            <a href="/login" className="font-medium" style={{ color: "#065292" }}>Sign in</a>
+            {t("onboarding.student.alreadyHaveAccount")}{" "}
+            <a href="/login" className="font-medium" style={{ color: "#065292" }}>{t("onboarding.student.signIn")}</a>
           </p>
         </motion.div>
       </div>
