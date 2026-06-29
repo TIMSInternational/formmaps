@@ -121,6 +121,35 @@ describe("isAcceptableIdentical", () => {
   test("acronym embedded in prose is NOT acceptable", () => {
     expect(isAcceptableIdentical("Your PCA results are ready")).toBe(false);
   });
+
+  test("loanwords / words identical in Spanish are acceptable", () => {
+    expect(isAcceptableIdentical("Coaching")).toBe(true);
+    expect(isAcceptableIdentical("Coach")).toBe(true);
+    expect(isAcceptableIdentical("Marketing")).toBe(true);
+    expect(isAcceptableIdentical("Error")).toBe(true);
+    expect(isAcceptableIdentical("Total")).toBe(true);
+    expect(isAcceptableIdentical("Instructor")).toBe(true);
+    expect(isAcceptableIdentical("Premium")).toBe(true);
+  });
+
+  test("bare email / URL placeholders are acceptable", () => {
+    expect(isAcceptableIdentical("supervisor@org.com")).toBe(true);
+    expect(isAcceptableIdentical("https://...")).toBe(true);
+    expect(isAcceptableIdentical("https://github.com/...")).toBe(true);
+  });
+
+  test("punctuation/number-wrapped tokens reduce to their core", () => {
+    expect(isAcceptableIdentical("ID: {{id}}")).toBe(true); // → "ID"
+    expect(isAcceptableIdentical("30 min")).toBe(true); // → "min"
+    expect(isAcceptableIdentical("/ hr")).toBe(true); // → "hr"
+    expect(isAcceptableIdentical("{{count}} coaches")).toBe(true); // → "coaches" loanword
+  });
+
+  test("real multi-word prose is still NOT acceptable after the new rules", () => {
+    expect(isAcceptableIdentical("Add New User")).toBe(false);
+    expect(isAcceptableIdentical("Create User")).toBe(false);
+    expect(isAcceptableIdentical("Coaching sessions this week")).toBe(false);
+  });
 });
 
 // ─── valueLanguageMatches ───────────────────────────────────────────────────────
