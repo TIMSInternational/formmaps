@@ -1,11 +1,13 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/command-palette/CommandPalette";
 import { Search } from "lucide-react";
 
 // Twenty PageHeader: min-height 32px, padding 12px vertical, 16px left, 12px right
 export function PageTopBar() {
+  const { t } = useTranslation();
   return (
     <div
       className="flex items-center justify-end shrink-0"
@@ -18,7 +20,7 @@ export function PageTopBar() {
         <button
           className="flex items-center gap-2 px-2 py-1 rounded-md transition-colors"
           style={{ color: "var(--admin-font-tertiary, #818181)" }}
-          title="Search (Cmd+K)"
+          title={t("shell.searchShortcut")}
           onClick={() => window.dispatchEvent(new CustomEvent(OPEN_COMMAND_PALETTE_EVENT))}
         >
           <Search className="h-4 w-4" />

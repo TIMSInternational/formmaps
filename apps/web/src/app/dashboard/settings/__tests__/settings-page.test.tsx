@@ -12,6 +12,32 @@ jest.mock("@/services/userService", () => ({
 }));
 jest.mock("@/lib/api/apiClient", () => ({ apiRequest: jest.fn() }));
 
+// applyLanguage (imported by settings/page.tsx) uses useGlobalStore.getState()
+// and the i18n instance directly — stub both so the helper is a no-op in tests.
+jest.mock("@/store/useGlobalStore", () => {
+  const state = {
+    language: "english",
+    setLanguage: jest.fn(),
+    user: { name: "Test User", email: "test@formmaps.dev", role: "student", isAuthenticated: true },
+  };
+  // The page calls useGlobalStore with different selectors (user, setLanguage, etc.)
+  // so we return the full store state and let each selector extract what it needs.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hook = (selector: (s: typeof state) => unknown) => selector(state);
+  hook.getState = () => state;
+  return { useGlobalStore: hook };
+});
+jest.mock("@/lib/i18n", () => ({
+  __esModule: true,
+  default: { changeLanguage: jest.fn().mockResolvedValue(undefined), language: "en" },
+}));
+// useSetLanguage (used by the language picker onChange) also needs react-i18next.
+jest.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    i18n: { changeLanguage: jest.fn().mockResolvedValue(undefined), language: "en" },
+  }),
+}));
+
 const mockGet = getUserSettings as jest.Mock;
 const mockUpdate = updateUserSettings as jest.Mock;
 const mockApiRequest = apiRequest as jest.Mock;
@@ -37,6 +63,17 @@ describe("Student settings page — real persistence", () => {
     await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(1));
     const pushSwitch = await screen.findByRole("switch", { name: /push notifications/i });
     expect(pushSwitch).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("hydration on mount does NOT PUT to the backend (no redundant write)", async () => {
+    render(<StudentSettingsPage />);
+    // Wait for settings to load and hydration to complete.
+    await screen.findByRole("switch", { name: /push notifications/i });
+    // applyLanguage (not useSetLanguage) was called — no PUT should have fired.
+    expect(mockApiRequest).not.toHaveBeenCalledWith(
+      "/api/v1/user/settings",
+      expect.objectContaining({ method: "PUT" })
+    );
   });
 
   it("Save Settings persists toggles via PUT /user/settings with backend field names", async () => {

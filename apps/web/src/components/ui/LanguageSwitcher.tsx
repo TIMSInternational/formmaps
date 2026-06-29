@@ -3,12 +3,12 @@
 import { useTranslation } from "react-i18next";
 import { FiGlobe } from "react-icons/fi";
 import { useState } from "react";
+import { useSetLanguage } from "@/lib/i18n/useSetLanguage";
 
 export function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
+  const setLanguage = useSetLanguage();
   const [isOpen, setIsOpen] = useState(false);
-
-  // Debug logging
 
   const languages = [
     { code: "en", name: t("language.english"), flag: "🇺🇸" },
@@ -19,7 +19,7 @@ export function LanguageSwitcher() {
     languages.find((lang) => lang.code === i18n.language) || languages[0];
 
   const handleLanguageChange = (languageCode: string) => {
-    i18n.changeLanguage(languageCode);
+    setLanguage(languageCode as "en" | "es");
     setIsOpen(false);
   };
 

@@ -1,5 +1,5 @@
-import en from "../locales/en.json";
-import es from "../locales/es.json";
+import en from "../locales/en/common.json";
+import es from "../locales/es/common.json";
 
 // Pre-rebrand product names must never appear in user-facing copy.
 const FORBIDDEN = [/timscare/i, /univ\.?365/i];
