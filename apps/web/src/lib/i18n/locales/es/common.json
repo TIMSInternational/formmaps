@@ -2059,6 +2059,7 @@
         "maxStudents": "Capacidad de Estudiantes",
         "contractStart": "Inicio del Contrato",
         "contractEnd": "Fin del Contrato",
+        "contractPeriod": "Período de Contrato",
         "loadError": "No se pudo cargar la información de la escuela"
       },
       "profile": {
@@ -2069,7 +2070,8 @@
         "phone": "Teléfono",
         "phonePlaceholder": "+52 123 456 7890",
         "update": "Actualizar Perfil",
-        "updating": "Actualizando...",
+        "updating": "Guardando...",
+        "fillRequired": "Por favor completa al menos un campo",
         "success": "Perfil actualizado exitosamente",
         "error": "Error al actualizar el perfil"
       },
@@ -2084,6 +2086,8 @@
         "confirmPlaceholder": "Confirma la nueva contraseña",
         "change": "Cambiar Contraseña",
         "changing": "Cambiando...",
+        "fillRequired": "Por favor completa todos los campos de contraseña",
+        "minLength": "La contraseña debe tener al menos 8 caracteres",
         "success": "Contraseña cambiada exitosamente",
         "error": "Error al cambiar la contraseña",
         "mismatch": "Las contraseñas no coinciden"
