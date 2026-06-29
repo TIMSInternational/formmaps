@@ -163,33 +163,33 @@ export default function DashboardPage() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <AdminTimeline
-            title="Your Journey"
+            title={t("dashboard.journey.title")}
             items={[
               {
                 id: "1",
-                title: "Complete Assessments",
-                description: "Take PCA and MIL evaluations to discover your strengths",
+                title: t("dashboard.journey.assessmentsTitle"),
+                description: t("dashboard.journey.assessmentsDesc"),
                 status: allAssessmentsComplete ? "completed" : "active",
                 icon: <FileText style={{ width: 12, height: 12 }} />,
               },
               {
                 id: "2",
-                title: "Explore Career Paths",
-                description: "Browse careers matched to your profile and interests",
+                title: t("dashboard.journey.careersTitle"),
+                description: t("dashboard.journey.careersDesc"),
                 status: dashboardData?.aiSummary ? "completed" : "pending",
                 icon: <Target style={{ width: 12, height: 12 }} />,
               },
               {
                 id: "3",
-                title: "Start Learning",
-                description: "Enroll in courses to build skills for your target career",
+                title: t("dashboard.journey.learningTitle"),
+                description: t("dashboard.journey.learningDesc"),
                 status: (dashboardData?.activeCourses ?? 0) > 0 ? "completed" : "pending",
                 icon: <BookOpen style={{ width: 12, height: 12 }} />,
               },
               {
                 id: "4",
-                title: "Build Your Portfolio",
-                description: "Create your resume and showcase your achievements",
+                title: t("dashboard.journey.portfolioTitle"),
+                description: t("dashboard.journey.portfolioDesc"),
                 status: (dashboardData?.portfolioItems ?? 0) > 0 ? "completed" : "pending",
                 icon: <GraduationCap style={{ width: 12, height: 12 }} />,
               },
