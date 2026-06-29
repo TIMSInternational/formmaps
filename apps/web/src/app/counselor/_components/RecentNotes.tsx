@@ -19,7 +19,7 @@ interface RecentNotesProps {
 }
 
 export function RecentNotes({ notes }: RecentNotesProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("counselor");
 
   if (!notes.length) return null;
 
@@ -33,7 +33,7 @@ export function RecentNotes({ notes }: RecentNotesProps) {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <FileText className="h-4 w-4 text-teal-600" />
-            {t("counselor.dashboard.recentNotes", "Recent Notes")}
+            {t("dashboard.recentNotes", "Recent Notes")}
           </CardTitle>
         </CardHeader>
         <CardContent>

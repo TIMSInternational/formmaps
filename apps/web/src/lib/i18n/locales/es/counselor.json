@@ -22,7 +22,8 @@
     "manageSessions": "Gestionar Sesiones",
     "upcomingSessions": "Próximas Sesiones",
     "action": "Acción",
-    "pending": "{{n}} pendientes"
+    "pending": "{{n}} pendientes",
+    "due": "Pendiente"
   },
   "nav": {
     "overview": "Vista General",
@@ -316,7 +317,20 @@
     "cancelReasonLabel": "Motivo de Cancelación",
     "cancelReasonPlaceholder": "Infórmale al estudiante por qué estás cancelando...",
     "keepSession": "Mantener Sesión",
-    "cancelSessionBtn": "Cancelar Sesión"
+    "cancelSessionBtn": "Cancelar Sesión",
+    "cancelSession": "Cancelar sesión",
+    "cancelled": "Sesión cancelada",
+    "cancelling": "Cancelando...",
+    "complete": "Completar",
+    "failedToLoad": "No se pudieron cargar las sesiones",
+    "failedToReschedule": "No se pudo reprogramar",
+    "join": "Unirse",
+    "markedComplete": "Sesión marcada como completada",
+    "reschedule": "Reprogramar",
+    "rescheduled": "Sesión reprogramada",
+    "scheduling": "Programación",
+    "selectDateTime": "Por favor selecciona una fecha y hora",
+    "student": "Estudiante"
   },
   "settings": {
     "title": "Configuración del Consejero",
@@ -339,7 +353,17 @@
     "timezone": "Zona Horaria",
     "loadingSchedule": "Cargando horario...",
     "unavailable": "No disponible",
-    "addSlot": "Agregar"
+    "addSlot": "Agregar",
+    "add": "Agregar",
+    "availabilitySaved": "¡Disponibilidad guardada correctamente!",
+    "email": "Correo electrónico",
+    "enterCurrentPassword": "Ingresa tu contraseña actual",
+    "failedToChangePassword": "No se pudo cambiar la contraseña",
+    "failedToSave": "No se pudo guardar la disponibilidad",
+    "name": "Nombre",
+    "passwordChanged": "Contraseña cambiada correctamente",
+    "passwordMinLength": "La contraseña debe tener al menos 8 caracteres",
+    "passwordsNoMatch": "Las contraseñas no coinciden"
   },
   "recommendations": {
     "badge": "Consejero",
@@ -362,7 +386,10 @@
     "statusAccepted": "Aceptada",
     "statusInProgress": "En Progreso",
     "statusSubmitted": "Enviada",
-    "statusDeclined": "Rechazada"
+    "statusDeclined": "Rechazada",
+    "allRequests": "Todas las solicitudes",
+    "failedToLoad": "No se pudieron cargar los datos de recomendaciones",
+    "you": "Tú"
   },
   "academicGaps": {
     "totalStudents": "Total de Estudiantes",

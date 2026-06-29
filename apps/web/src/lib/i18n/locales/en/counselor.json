@@ -22,7 +22,8 @@
     "manageSessions": "Manage Sessions",
     "upcomingSessions": "Upcoming Sessions",
     "action": "Action",
-    "pending": "{{n}} pending"
+    "pending": "{{n}} pending",
+    "due": "Due"
   },
   "nav": {
     "overview": "Overview",
@@ -316,7 +317,20 @@
     "cancelReasonLabel": "Reason for Cancellation",
     "cancelReasonPlaceholder": "Please let the student know why you're cancelling...",
     "keepSession": "Keep Session",
-    "cancelSessionBtn": "Cancel Session"
+    "cancelSessionBtn": "Cancel Session",
+    "cancelSession": "Cancel Session",
+    "cancelled": "Session cancelled",
+    "cancelling": "Cancelling...",
+    "complete": "Complete",
+    "failedToLoad": "Failed to load sessions",
+    "failedToReschedule": "Failed to reschedule",
+    "join": "Join",
+    "markedComplete": "Session marked as completed",
+    "reschedule": "Reschedule",
+    "rescheduled": "Session rescheduled",
+    "scheduling": "Scheduling",
+    "selectDateTime": "Please select a date and time",
+    "student": "Student"
   },
   "settings": {
     "title": "Counselor Settings",
@@ -339,7 +353,17 @@
     "timezone": "Timezone",
     "loadingSchedule": "Loading schedule...",
     "unavailable": "Unavailable",
-    "addSlot": "Add"
+    "addSlot": "Add",
+    "add": "Add",
+    "availabilitySaved": "Availability saved successfully!",
+    "email": "Email",
+    "enterCurrentPassword": "Enter your current password",
+    "failedToChangePassword": "Failed to change password",
+    "failedToSave": "Failed to save availability",
+    "name": "Name",
+    "passwordChanged": "Password changed successfully",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "passwordsNoMatch": "Passwords do not match"
   },
   "recommendations": {
     "badge": "Counselor",
@@ -362,7 +386,10 @@
     "statusAccepted": "Accepted",
     "statusInProgress": "In Progress",
     "statusSubmitted": "Submitted",
-    "statusDeclined": "Declined"
+    "statusDeclined": "Declined",
+    "allRequests": "All Requests",
+    "failedToLoad": "Failed to load recommendation data",
+    "you": "You"
   },
   "academicGaps": {
     "totalStudents": "Total Students",
