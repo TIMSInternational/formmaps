@@ -110,7 +110,7 @@ export function TeacherSidebar() {
     openChatInPanel(thread.id);
   };
 
-  const NAV_SECTIONS = getNavSections(t);
+  const NAV_SECTIONS = getNavSections((k: string, f?: string) => (f === undefined ? t(k) : t(k, f)));
   const chatGroups = groupThreadsByDate(threads);
 
   const C = {
