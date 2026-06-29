@@ -18,6 +18,7 @@ import { Loader2, Mail, Calendar, Clock, Star, MessageSquare } from "lucide-reac
 import { format } from "date-fns";
 import { getCoachStudentDetails } from "@/services/coachService";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface StudentDetailsSheetProps {
   studentId: string | null;
@@ -30,19 +31,20 @@ export function StudentDetailsSheet({
   isOpen,
   onClose,
 }: StudentDetailsSheetProps) {
+  const { t } = useTranslation();
   const [student, setStudent] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
       if (!studentId || !isOpen) return;
-      
+
       try {
         setIsLoading(true);
         const data = await getCoachStudentDetails(studentId);
         setStudent(data);
       } catch (error) {
-        toast.error("Failed to load student details");
+        toast.error(t("coach:studentDetails.failedToLoad"));
         setStudent(null);
       } finally {
         setIsLoading(false);
@@ -50,7 +52,7 @@ export function StudentDetailsSheet({
     };
 
     fetchDetails();
-  }, [studentId, isOpen]);
+  }, [studentId, isOpen, t]);
 
   if (!studentId) return null;
 
@@ -58,9 +60,9 @@ export function StudentDetailsSheet({
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
         <SheetHeader className="mb-6">
-          <SheetTitle>Student Profile</SheetTitle>
+          <SheetTitle>{t("coach:studentDetails.title")}</SheetTitle>
           <SheetDescription>
-            Detailed information and session history.
+            {t("coach:studentDetails.subtitle")}
           </SheetDescription>
         </SheetHeader>
 
@@ -89,13 +91,13 @@ export function StudentDetailsSheet({
             <div className="grid grid-cols-2 gap-4">
               <Card>
                 <CardContent className="p-4 flex flex-col items-center">
-                  <span className="text-sm text-gray-500 mb-1">Total Sessions</span>
+                  <span className="text-sm text-gray-500 mb-1">{t("coach:studentDetails.totalSessions")}</span>
                   <span className="text-2xl font-bold text-gray-900">{student.totalSessions || 0}</span>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 flex flex-col items-center">
-                  <span className="text-sm text-gray-500 mb-1">Completed</span>
+                  <span className="text-sm text-gray-500 mb-1">{t("coach:studentDetails.completed")}</span>
                   <span className="text-2xl font-bold text-green-600">{student.completedSessions || 0}</span>
                 </CardContent>
               </Card>
@@ -105,7 +107,7 @@ export function StudentDetailsSheet({
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-600" />
-                Run History
+                {t("coach:studentDetails.runHistory")}
               </h3>
               <div className="space-y-3">
                 {student.sessions && student.sessions.length > 0 ? (
@@ -119,7 +121,7 @@ export function StudentDetailsSheet({
                           <Clock className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{session.topic || "Coaching Session"}</p>
+                          <p className="font-medium text-gray-900">{session.topic || t("coach:studentDetails.coachingSession")}</p>
                           <p className="text-xs text-gray-500">
                             {format(new Date(session.startTime), "PPp")}
                           </p>
@@ -132,7 +134,7 @@ export function StudentDetailsSheet({
                   ))
                 ) : (
                   <p className="text-gray-500 text-sm text-center py-4 bg-gray-50 rounded-xl">
-                    No session history found.
+                    {t("coach:studentDetails.noHistory")}
                   </p>
                 )}
               </div>
@@ -142,17 +144,17 @@ export function StudentDetailsSheet({
              <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-purple-600" />
-                Shared Notes
+                {t("coach:studentDetails.sharedNotes")}
               </h3>
                <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-100 text-sm text-yellow-800">
-                 {student.notes || "No notes shared for this student."}
+                 {student.notes || t("coach:studentDetails.noNotes")}
                </div>
             </div>
 
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-500">Student not found.</p>
+            <p className="text-gray-500">{t("coach:studentDetails.notFound")}</p>
           </div>
         )}
       </SheetContent>

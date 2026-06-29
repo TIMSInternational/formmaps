@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import type { SubscriptionPlan } from "@/services/subscriptionStatusService";
 import { openBillingPortal } from "@/services/subscriptionService";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 // Fallback plans used only if backend returns nothing
 const FALLBACK_PLANS = [
@@ -78,6 +79,7 @@ function getPlanStyle(planId: string) {
 }
 
 export default function SubscriptionsPage() {
+  const { t } = useTranslation();
   const { user } = useGlobalStore();
   const router = useRouter();
   const { data: subStatus, isLoading: statusLoading } = useSubscriptionStatus();
@@ -116,7 +118,7 @@ export default function SubscriptionsPage() {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "50vh", gap: 8 }}>
         <Loader2 style={{ width: 20, height: 20, animation: "spin 1s linear infinite", color: "var(--admin-font-tertiary)" }} />
-        <span style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>Loading plans...</span>
+        <span style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("coach:subscriptions.loading")}</span>
       </div>
     );
   }
@@ -134,13 +136,13 @@ export default function SubscriptionsPage() {
           }}
         >
           <ArrowLeft style={{ width: 12, height: 12 }} />
-          Dashboard
+          {t("coach:subscriptions.back")}
         </Link>
         <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", marginTop: 4 }}>
-          Subscriptions
+          {t("coach:subscriptions.title")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
-          Manage your plan and billing
+          {t("coach:subscriptions.subtitle")}
         </p>
       </div>
 
@@ -160,16 +162,14 @@ export default function SubscriptionsPage() {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-              Active Subscription
+              {t("coach:subscriptions.active.title")}
             </div>
             <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-              You&apos;re on the <strong style={{ color: "var(--admin-font-primary)" }}>
-                {plans.find(p => p.id === currentPlanId)?.name || currentPlanId}
-              </strong> plan.
+              {t("coach:subscriptions.active.onPlan", { plan: plans.find(p => p.id === currentPlanId)?.name || currentPlanId })}
               {subStatus?.expiryDate && (
                 subStatus.cancelAtPeriodEnd
-                  ? <> Cancels {new Date(subStatus.expiryDate).toLocaleDateString()} — access until then</>
-                  : <> Renews {new Date(subStatus.expiryDate).toLocaleDateString()}</>
+                  ? <> {t("coach:subscriptions.active.cancels", { date: new Date(subStatus.expiryDate).toLocaleDateString() })}</>
+                  : <> {t("coach:subscriptions.active.renews", { date: new Date(subStatus.expiryDate).toLocaleDateString() })}</>
               )}
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function SubscriptionsPage() {
               marginRight: 8, opacity: portalLoading ? 0.7 : 1,
             }}
           >
-            {portalLoading ? "Opening…" : "Manage Billing"}
+            {portalLoading ? t("coach:subscriptions.active.opening") : t("coach:subscriptions.active.manageBilling")}
           </button>
           {!subStatus?.cancelAtPeriodEnd && (
             <button
@@ -195,7 +195,7 @@ export default function SubscriptionsPage() {
                 marginRight: 8,
               }}
             >
-              Cancel Plan
+              {t("coach:subscriptions.active.cancelPlan")}
             </button>
           )}
           <Badge style={{
@@ -204,7 +204,7 @@ export default function SubscriptionsPage() {
             border: "1px solid var(--admin-accent-border-green)",
             fontSize: 11, fontWeight: 600,
           }}>
-            {subStatus?.cancelAtPeriodEnd ? "Ending" : "Active"}
+            {subStatus?.cancelAtPeriodEnd ? t("coach:subscriptions.active.ending") : t("coach:subscriptions.active.active")}
           </Badge>
         </div>
       )}
@@ -221,11 +221,10 @@ export default function SubscriptionsPage() {
             maxWidth: 400, width: "90%", border: "1px solid var(--admin-border-default)",
           }}>
             <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 8 }}>
-              Cancel Subscription?
+              {t("coach:subscriptions.cancel.title")}
             </h3>
             <p style={{ fontSize: 13, color: "var(--admin-font-secondary)", marginBottom: 20, lineHeight: 1.5 }}>
-              Your subscription will be cancelled at the end of the current billing period.
-              You will retain access until then.
+              {t("coach:subscriptions.cancel.body")}
             </p>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button
@@ -237,7 +236,7 @@ export default function SubscriptionsPage() {
                   border: "1px solid var(--admin-border-default)", cursor: "pointer",
                 }}
               >
-                Keep Plan
+                {t("coach:subscriptions.cancel.keepPlan")}
               </button>
               <button
                 onClick={() => {
@@ -258,7 +257,7 @@ export default function SubscriptionsPage() {
                   opacity: cancelMutation.isPending ? 0.6 : 1,
                 }}
               >
-                {cancelMutation.isPending ? "Cancelling..." : "Yes, Cancel"}
+                {cancelMutation.isPending ? t("coach:subscriptions.cancel.yesCancelPending") : t("coach:subscriptions.cancel.yesCancel")}
               </button>
             </div>
           </div>
@@ -274,7 +273,7 @@ export default function SubscriptionsPage() {
         }}>
           <AlertCircle style={{ width: 18, height: 18, color: "var(--admin-accent-amber)", flexShrink: 0 }} />
           <div style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
-            You don&apos;t have an active subscription. Choose a plan below to get started.
+            {t("coach:subscriptions.noSubscription")}
           </div>
         </div>
       )}
@@ -305,7 +304,7 @@ export default function SubscriptionsPage() {
                   background: "var(--admin-accent-blue)", color: "#fff",
                   fontSize: 10, fontWeight: 600, letterSpacing: "0.03em",
                 }}>
-                  Most Popular
+                  {t("coach:subscriptions.plan.mostPopular")}
                 </div>
               )}
 
@@ -317,7 +316,7 @@ export default function SubscriptionsPage() {
                   background: "var(--admin-accent-green)", color: "#fff",
                   fontSize: 10, fontWeight: 600, letterSpacing: "0.03em",
                 }}>
-                  Current Plan
+                  {t("coach:subscriptions.plan.currentPlan")}
                 </div>
               )}
 
@@ -342,7 +341,7 @@ export default function SubscriptionsPage() {
                     ${plan.price}
                   </span>
                   <span style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>
-                    /{plan.interval === "yearly" ? "year" : "month"}
+                    {plan.interval === "yearly" ? t("coach:subscriptions.plan.perYear") : t("coach:subscriptions.plan.perMonth")}
                   </span>
                 </div>
 
@@ -355,7 +354,7 @@ export default function SubscriptionsPage() {
                     fontSize: 13, fontWeight: 500, border: "1px solid var(--admin-border-default)",
                   }}>
                     <CheckCircle2 style={{ width: 14, height: 14, marginRight: 6, color: "var(--admin-accent-green)" }} />
-                    Current Plan
+                    {t("coach:subscriptions.plan.currentPlanLabel")}
                   </div>
                 ) : hasActive ? (
                   <button
@@ -368,7 +367,7 @@ export default function SubscriptionsPage() {
                       cursor: "pointer",
                     }}
                   >
-                    Switch Plan
+                    {t("coach:subscriptions.plan.switchPlan")}
                   </button>
                 ) : (
                   <StripeCheckout
@@ -397,9 +396,9 @@ export default function SubscriptionsPage() {
                       }}
                     >
                       {processingPlan === plan.id ? (
-                        <><Loader2 style={{ width: 14, height: 14, marginRight: 6, animation: "spin 1s linear infinite" }} /> Processing...</>
+                        <><Loader2 style={{ width: 14, height: 14, marginRight: 6, animation: "spin 1s linear infinite" }} /> {t("coach:subscriptions.plan.processing")}</>
                       ) : (
-                        `Get ${plan.name}`
+                        t("coach:subscriptions.plan.get", { plan: plan.name })
                       )}
                     </button>
                   </StripeCheckout>

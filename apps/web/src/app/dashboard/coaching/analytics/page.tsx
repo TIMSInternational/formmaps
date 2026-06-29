@@ -156,7 +156,7 @@ export default function AnalyticsPage() {
       document.body.removeChild(link);
       toast.success(t("coaching.dashboard.reportDownloaded"));
     } catch {
-      toast.error("Failed to download report");
+      toast.error(t("coach:analytics.chart.earningsTooltip"));
     }
   };
 
@@ -173,19 +173,25 @@ export default function AnalyticsPage() {
   }
 
   const totalRevenue = chartData.reduce((s, d) => s + (d.amount || 0), 0);
-  const dateRangeLabel = dateRange === "7d" ? "Last 7 Days" : dateRange === "30d" ? "Last 30 Days" : dateRange === "3m" ? "Last 3 Months" : "Year to Date";
+  const dateRangeLabelMap: Record<string, string> = {
+    "7d": t("coach:analytics.dateRange.7d"),
+    "30d": t("coach:analytics.dateRange.30d"),
+    "3m": t("coach:analytics.dateRange.3m"),
+    "ytd": t("coach:analytics.dateRange.ytd"),
+  };
+  const dateRangeLabel = dateRangeLabelMap[dateRange] ?? dateRange;
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Performance</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("coach:analytics.sectionLabel")}</p>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mt-1">
-            Analytics
+            {t("coach:analytics.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Track your growth, earnings, and student engagement
+            {t("coach:analytics.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -195,15 +201,15 @@ export default function AnalyticsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7d">Last 7 Days</SelectItem>
-              <SelectItem value="30d">Last 30 Days</SelectItem>
-              <SelectItem value="3m">Last 3 Months</SelectItem>
-              <SelectItem value="ytd">Year to Date</SelectItem>
+              <SelectItem value="7d">{t("coach:analytics.dateRange.7d")}</SelectItem>
+              <SelectItem value="30d">{t("coach:analytics.dateRange.30d")}</SelectItem>
+              <SelectItem value="3m">{t("coach:analytics.dateRange.3m")}</SelectItem>
+              <SelectItem value="ytd">{t("coach:analytics.dateRange.ytd")}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" className="gap-2" onClick={handleDownloadReport}>
             <Download className="h-4 w-4" />
-            Export
+            {t("coach:analytics.export")}
           </Button>
         </div>
       </div>
@@ -211,10 +217,10 @@ export default function AnalyticsPage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Earnings", value: `$${stats.totalEarnings.toLocaleString()}`, icon: Wallet, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
-          { label: "Total Sessions", value: stats.totalSessions, icon: Clock, iconColor: "text-purple-500", iconBg: "bg-purple-500/10" },
-          { label: "Avg Rating", value: stats.averageRating?.toFixed ? stats.averageRating.toFixed(1) : stats.averageRating, icon: Star, iconColor: "text-amber-500", iconBg: "bg-amber-500/10" },
-          { label: "Active Students", value: stats.clientCount, icon: Users, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
+          { label: t("coach:analytics.stats.totalEarnings"), value: `$${stats.totalEarnings.toLocaleString()}`, icon: Wallet, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
+          { label: t("coach:analytics.stats.totalSessions"), value: stats.totalSessions, icon: Clock, iconColor: "text-purple-500", iconBg: "bg-purple-500/10" },
+          { label: t("coach:analytics.stats.avgRating"), value: stats.averageRating?.toFixed ? stats.averageRating.toFixed(1) : stats.averageRating, icon: Star, iconColor: "text-amber-500", iconBg: "bg-amber-500/10" },
+          { label: t("coach:analytics.stats.activeStudents"), value: stats.clientCount, icon: Users, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -238,8 +244,8 @@ export default function AnalyticsPage() {
       <div className="dash-card overflow-hidden">
         <div className="px-5 py-4 border-b border-[var(--border)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <span className="text-sm font-semibold text-foreground">Earnings Overview</span>
-            <p className="text-xs text-muted-foreground mt-0.5">Financial performance over time</p>
+            <span className="text-sm font-semibold text-foreground">{t("coach:analytics.chart.title")}</span>
+            <p className="text-xs text-muted-foreground mt-0.5">{t("coach:analytics.chart.subtitle")}</p>
           </div>
           <div className="flex items-center gap-6 text-right">
             <div>
@@ -247,11 +253,11 @@ export default function AnalyticsPage() {
               <p className="text-xl font-bold text-foreground">${totalRevenue.toLocaleString()}</p>
             </div>
             <div className="hidden sm:block">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Sessions</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("coach:analytics.chart.sessions")}</p>
               <p className="text-xl font-bold text-foreground">{stats.totalSessions}</p>
             </div>
             <div className="hidden md:block">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Avg Rating</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("coach:analytics.chart.avgRating")}</p>
               <p className="text-xl font-bold text-foreground flex items-center justify-end gap-1">
                 {stats.averageRating?.toFixed ? stats.averageRating.toFixed(1) : stats.averageRating}
                 <Star className="h-3.5 w-3.5 text-amber-400 fill-current" />
@@ -275,7 +281,7 @@ export default function AnalyticsPage() {
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#6B7280", fontSize: 12, fontWeight: 500 }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} tick={{ fill: "#6B7280", fontSize: 12, fontWeight: 500 }} />
                   <Tooltip
-                    formatter={(value) => [`$${value}`, "Earnings"]}
+                    formatter={(value) => [`$${value}`, t("coach:analytics.chart.earningsTooltip")]}
                     contentStyle={{ backgroundColor: "var(--card, #fff)", borderRadius: "12px", border: "1px solid var(--border, #e5e7eb)", padding: "12px", fontWeight: 600, color: "var(--foreground, #1F2937)" }}
                     cursor={{ stroke: "#3B82F6", strokeWidth: 2, strokeDasharray: "5 5" }}
                   />
@@ -284,7 +290,7 @@ export default function AnalyticsPage() {
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-                No earnings data available for this period.
+                {t("coach:analytics.chart.noData")}
               </div>
             )}
           </div>
@@ -295,14 +301,14 @@ export default function AnalyticsPage() {
       {chartData.length > 0 && (
         <div className="dash-card overflow-hidden">
           <div className="px-5 py-4 border-b border-[var(--border)]">
-            <span className="text-sm font-semibold text-foreground">Monthly Breakdown</span>
+            <span className="text-sm font-semibold text-foreground">{t("coach:analytics.breakdown.title")}</span>
           </div>
           <div className="divide-y divide-[var(--border)]">
             {chartData.map((month, i) => (
               <div key={i} className="px-5 py-3 flex items-center justify-between hover:bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] transition-colors">
                 <span className="text-sm font-medium text-foreground">{month.name}</span>
                 <div className="flex items-center gap-6">
-                  <span className="text-sm text-muted-foreground">{month.sessions} sessions</span>
+                  <span className="text-sm text-muted-foreground">{month.sessions} {t("coach:analytics.chart.sessions_label")}</span>
                   <span className="text-sm font-bold text-emerald-600">${month.amount.toLocaleString()}</span>
                 </div>
               </div>

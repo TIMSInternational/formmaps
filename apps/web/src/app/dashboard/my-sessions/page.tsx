@@ -227,16 +227,16 @@ export default function MySessionsPage() {
   // --- Stats ---
 
   const coachingStats = [
-    { label: "Total Sessions", value: sessions.length, icon: CalendarDays, color: "text-muted-foreground" },
-    { label: "Upcoming", value: upcomingSessions.length, icon: Clock, color: "text-emerald-600" },
-    { label: "Completed", value: sessions.filter((s) => s.status === "completed").length, icon: CheckCircle2, color: "text-blue-600" },
-    { label: "Cancelled", value: sessions.filter((s) => s.status === "cancelled").length, icon: XCircle, color: "text-red-500" },
+    { label: t("coach:mySessions.stats.total"), value: sessions.length, icon: CalendarDays, color: "text-muted-foreground" },
+    { label: t("coach:mySessions.stats.upcoming"), value: upcomingSessions.length, icon: Clock, color: "text-emerald-600" },
+    { label: t("coach:mySessions.stats.completed"), value: sessions.filter((s) => s.status === "completed").length, icon: CheckCircle2, color: "text-blue-600" },
+    { label: t("coach:mySessions.stats.cancelled"), value: sessions.filter((s) => s.status === "cancelled").length, icon: XCircle, color: "text-red-500" },
   ];
 
   const counselorStats = [
-    { label: "Total", value: counselorSessions.length, icon: CalendarDays, color: "text-muted-foreground" },
-    { label: "Upcoming", value: upcomingCounselorSessions.length, icon: Clock, color: "text-emerald-600" },
-    { label: "Completed", value: counselorSessions.filter((s) => s.status === "completed").length, icon: CheckCircle2, color: "text-blue-600" },
+    { label: t("coach:mySessions.stats.total"), value: counselorSessions.length, icon: CalendarDays, color: "text-muted-foreground" },
+    { label: t("coach:mySessions.stats.upcoming"), value: upcomingCounselorSessions.length, icon: Clock, color: "text-emerald-600" },
+    { label: t("coach:mySessions.stats.completed"), value: counselorSessions.filter((s) => s.status === "completed").length, icon: CheckCircle2, color: "text-blue-600" },
   ];
 
   const stats = mainTab === "coaching" ? coachingStats : counselorStats;
@@ -261,7 +261,7 @@ export default function MySessionsPage() {
           <Button asChild variant="outline" className="h-10 px-5 rounded-xl border-border text-foreground hover:bg-secondary">
             <Link href="/dashboard/book-counselor">
               <User className="h-4 w-4 mr-2" />
-              Book Counselor Session
+              {t("coach:mySessions.bookCounselor")}
             </Link>
           </Button>
           <Button asChild className="bg-foreground text-background hover:bg-foreground/90 h-10 px-6 rounded-xl">
@@ -284,7 +284,7 @@ export default function MySessionsPage() {
           }`}
         >
           <Users className="h-4 w-4 inline mr-1.5" />
-          Coaching Sessions
+          {t("coach:mySessions.tabs.coaching")}
         </button>
         <button
           onClick={() => setMainTab("counselor")}
@@ -295,9 +295,9 @@ export default function MySessionsPage() {
           }`}
         >
           <User className="h-4 w-4 inline mr-1.5" />
-          Counselor Sessions
+          {t("coach:mySessions.tabs.counselor")}
           <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-emerald-200 bg-emerald-50 text-emerald-700 ml-1.5">
-            FREE
+            {t("coach:mySessions.tabs.free")}
           </span>
         </button>
       </div>

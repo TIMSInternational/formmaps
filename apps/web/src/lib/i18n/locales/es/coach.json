@@ -1,1 +1,552 @@
-{}
+{
+  "nav": {
+    "main": "Principal",
+    "coaching": "Coaching",
+    "account": "Cuenta",
+    "dashboard": "Panel",
+    "students": "Estudiantes",
+    "sessions": "Sesiones",
+    "messages": "Mensajes",
+    "schedule": "Horario",
+    "calendar": "Calendario",
+    "earnings": "Ingresos",
+    "analytics": "Analíticas",
+    "recommendations": "Recomendaciones",
+    "profile": "Perfil",
+    "settings": "Configuración"
+  },
+  "portal": "Portal del Coach",
+  "defaultName": "Coach",
+  "greeting": {
+    "morning": "Buenos días",
+    "afternoon": "Buenas tardes",
+    "evening": "Buenas noches"
+  },
+  "upcomingSessions": "Tienes {{count}} sesión próxima",
+  "upcomingSessions_plural": "Tienes {{count}} sesiones próximas",
+  "manageAvailability": "Gestionar disponibilidad",
+  "editAvailability": "Editar disponibilidad",
+  "stats": {
+    "totalSessions": "Sesiones totales",
+    "activeStudents": "Estudiantes activos"
+  },
+  "sessions": {
+    "title": "Sesiones",
+    "description": "Revisa y gestiona tus sesiones programadas",
+    "upcoming": "Próximas",
+    "completed": "Completadas",
+    "noUpcomingTitle": "Sin sesiones próximas",
+    "noScheduled": "Aún no tienes sesiones de coaching programadas. Tus sesiones próximas aparecerán aquí.",
+    "noPastTitle": "Sin sesiones pasadas",
+    "historyPlaceholder": "Las sesiones completadas y canceladas aparecerán aquí.",
+    "rescheduleTitle": "Reprogramar sesión",
+    "rescheduleDescription": "Selecciona nueva fecha y hora para {{name}}",
+    "availableTimes": "Horarios disponibles",
+    "noAvailableSlots": "No hay horarios disponibles para este día."
+  },
+  "actions": {
+    "reschedule": "Reprogramar",
+    "joinCall": "Unirse a la llamada",
+    "viewNotes": "Ver notas",
+    "confirmReschedule": "Confirmar reprogramación",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "export": "Exportar",
+    "saveChanges": "Guardar cambios",
+    "saving": "Guardando..."
+  },
+  "dashboard": {
+    "failedToLoad": "Error al cargar las sesiones",
+    "availabilityUpdated": "Disponibilidad actualizada correctamente",
+    "failedToUpdateAvailability": "Error al actualizar la disponibilidad",
+    "failedToLoadSlots": "Error al cargar los horarios disponibles",
+    "selectDateTime": "Por favor selecciona una fecha y hora",
+    "rescheduleSuccess": "Sesión reprogramada correctamente",
+    "rescheduleFailed": "Error al reprogramar la sesión",
+    "sessionCancelled": "Sesión cancelada correctamente",
+    "cancelFailed": "Error al cancelar la sesión",
+    "studentProfileNotFound": "Perfil del estudiante no encontrado",
+    "reportDownloaded": "Reporte descargado correctamente"
+  },
+  "sessionsPage": {
+    "sectionLabel": "Programación",
+    "title": "Historial de sesiones",
+    "subtitle": "Gestiona tu trayectoria de coaching y los detalles de tus sesiones",
+    "syncCalendar": "Sincronizar calendario",
+    "noSessionsTitle": "No se encontraron sesiones",
+    "noSessionsSearch": "Intenta ajustar tus filtros o tu búsqueda.",
+    "noSessionsEmpty": "Parece que aún no has programado ninguna sesión.",
+    "clearFilters": "Limpiar filtros",
+    "statusBadge": {
+      "upcoming": "Próxima",
+      "completed": "Completada",
+      "cancelled": "Cancelada"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar estudiante, tema...",
+      "allStatus": "Todos los estados",
+      "rescheduled": "Reprogramada",
+      "upcomingFirst": "Próximas primero",
+      "newestFirst": "Más recientes primero",
+      "oldestFirst": "Más antiguas primero",
+      "tab": {
+        "all": "Todas",
+        "upcoming": "Próximas",
+        "past": "Pasadas",
+        "cancelled": "Canceladas"
+      }
+    },
+    "stats": {
+      "total": "Sesiones totales",
+      "upcoming": "Próximas",
+      "completed": "Completadas",
+      "cancelled": "Canceladas"
+    },
+    "card": {
+      "join": "Unirse",
+      "notes": "Notas",
+      "profile": "Perfil",
+      "reschedule": "Reprogramar",
+      "cancelSession": "Cancelar sesión"
+    },
+    "notes": {
+      "title": "Notas de la sesión",
+      "privateNote": "Estas notas son privadas y solo tú puedes verlas.",
+      "noNotes": "No hay notas disponibles para esta sesión.",
+      "close": "Cerrar"
+    },
+    "cancel": {
+      "title": "¿Cancelar sesión?",
+      "confirmText": "¿Estás seguro de que deseas cancelar la sesión con {{name}}? Esta acción no se puede deshacer.",
+      "confirm": "Sí, cancelar sesión",
+      "keep": "Mantener sesión"
+    },
+    "reschedule": {
+      "title": "Reprogramar sesión",
+      "selectDateFor": "Selecciona nueva fecha y hora para {{name}}",
+      "availableTimes": "Horarios disponibles",
+      "checking": "Verificando disponibilidad...",
+      "selectDate": "Selecciona una fecha para ver los horarios",
+      "noSlots": "Sin horarios disponibles",
+      "tryAnother": "Prueba con otra fecha",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar"
+    }
+  },
+  "studentDetails": {
+    "title": "Perfil del estudiante",
+    "subtitle": "Información detallada e historial de sesiones.",
+    "totalSessions": "Sesiones totales",
+    "completed": "Completadas",
+    "runHistory": "Historial de sesiones",
+    "coachingSession": "Sesión de coaching",
+    "noHistory": "No se encontró historial de sesiones.",
+    "sharedNotes": "Notas compartidas",
+    "noNotes": "No hay notas compartidas para este estudiante.",
+    "notFound": "Estudiante no encontrado.",
+    "failedToLoad": "Error al cargar los detalles del estudiante"
+  },
+  "schedule": {
+    "sectionLabel": "Programación",
+    "title": "Mi horario",
+    "subtitle": "Gestiona tus sesiones de coaching",
+    "listView": "Lista",
+    "calendarView": "Calendario",
+    "stats": {
+      "total": "Total",
+      "upcoming": "Próximas",
+      "completed": "Completadas",
+      "cancelled": "Canceladas"
+    },
+    "sessions": "Sesiones",
+    "noSessions": "Sin sesiones {{tab}}",
+    "noUpcoming": "Tus sesiones de coaching próximas aparecerán aquí",
+    "noCompleted": "Tus sesiones completadas aparecerán aquí",
+    "reschedule": {
+      "title": "Reprogramar sesión",
+      "description": "Elige nueva fecha y hora para {{name}}.",
+      "newDate": "Nueva fecha",
+      "newTime": "Nueva hora",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar"
+    },
+    "cancelDialog": {
+      "title": "Cancelar sesión",
+      "description": "¿Cancelar la sesión con {{name}}? Esta acción no se puede deshacer.",
+      "reason": "Motivo (opcional)",
+      "reasonPlaceholder": "Ej. Conflicto inesperado",
+      "keep": "Mantener sesión",
+      "confirm": "Confirmar cancelación"
+    },
+    "calendarHeader": {
+      "today": "Hoy",
+      "month": "Mes",
+      "week": "Semana"
+    }
+  },
+  "calendar": {
+    "sectionLabel": "Programación",
+    "title": "Calendario de sesiones",
+    "subtitle": "Vista mensual de tus sesiones de coaching",
+    "selectDay": "Selecciona un día",
+    "clickDay": "Haz clic en un día para ver las sesiones",
+    "noSessions": "Sin sesiones este día",
+    "legend": {
+      "confirmed": "Confirmada",
+      "completed": "Completada",
+      "cancelled": "Cancelada",
+      "rescheduled": "Reprogramada"
+    }
+  },
+  "analytics": {
+    "sectionLabel": "Rendimiento",
+    "title": "Analíticas",
+    "subtitle": "Sigue tu crecimiento, ingresos y engagement de estudiantes",
+    "export": "Exportar",
+    "stats": {
+      "totalEarnings": "Ingresos totales",
+      "totalSessions": "Sesiones totales",
+      "avgRating": "Calificación promedio",
+      "activeStudents": "Estudiantes activos"
+    },
+    "dateRange": {
+      "7d": "Últimos 7 días",
+      "30d": "Últimos 30 días",
+      "3m": "Últimos 3 meses",
+      "ytd": "Año hasta la fecha"
+    },
+    "chart": {
+      "title": "Resumen de ingresos",
+      "subtitle": "Rendimiento financiero a lo largo del tiempo",
+      "sessions": "Sesiones",
+      "avgRating": "Calificación prom.",
+      "earningsTooltip": "Ingresos",
+      "noData": "No hay datos de ingresos disponibles para este período.",
+      "sessions_label": "sesiones"
+    },
+    "breakdown": {
+      "title": "Desglose mensual"
+    }
+  },
+  "earnings": {
+    "sectionLabel": "Finanzas",
+    "title": "Ingresos",
+    "subtitle": "Seguimiento de tus ingresos e historial de pagos",
+    "export": "Exportar reporte",
+    "exporting": "Exportando...",
+    "stats": {
+      "totalEarnings": "Ingresos totales",
+      "thisMonth": "Este mes",
+      "sessionsCompleted": "Sesiones completadas",
+      "commission": "Comisión: {{rate}}%",
+      "currency": "Moneda: {{currency}}",
+      "completedSessions": "{{count}} sesiones completadas"
+    },
+    "history": {
+      "title": "Historial de ingresos",
+      "noHistory": "No se encontró historial de ingresos.",
+      "student": "Estudiante",
+      "date": "Fecha",
+      "gross": "Bruto",
+      "fee": "Comisión plataforma",
+      "net": "Neto",
+      "status": "Estado"
+    },
+    "pagination": {
+      "showing": "Mostrando {{count}} de {{total}}",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    },
+    "error": {
+      "title": "Error al cargar datos de ingresos",
+      "tryAgain": "Intentar de nuevo"
+    }
+  },
+  "students": {
+    "sectionLabel": "Clientes",
+    "title": "Estudiantes",
+    "subtitle": "Gestiona tu lista de estudiantes e historial de sesiones",
+    "searchPlaceholder": "Buscar estudiantes...",
+    "noStudents": "No se encontraron estudiantes",
+    "noStudentsEmpty": "Tus estudiantes aparecerán aquí una vez reserven una sesión.",
+    "viewProfile": "Ver perfil",
+    "bookSession": "Reservar sesión",
+    "sessions": "sesiones",
+    "rating": "Calificación"
+  },
+  "messages": {
+    "sectionLabel": "Comunicación",
+    "title": "Mensajes",
+    "subtitle": "Chatea con tus estudiantes",
+    "noMessages": "Aún no hay mensajes",
+    "startConversation": "Inicia una conversación con un estudiante",
+    "typePlaceholder": "Escribe un mensaje...",
+    "send": "Enviar"
+  },
+  "profile": {
+    "sectionLabel": "Cuenta",
+    "title": "Perfil del coach",
+    "subtitle": "Gestiona tu perfil público y especializaciones",
+    "save": "Guardar perfil",
+    "saving": "Guardando...",
+    "bio": "Biografía",
+    "specialization": "Especialización",
+    "experience": "Años de experiencia",
+    "hourlyRate": "Tarifa por hora",
+    "location": "Ubicación",
+    "tags": "Etiquetas"
+  },
+  "recommendations": {
+    "sectionLabel": "Perspectivas",
+    "title": "Recomendaciones",
+    "subtitle": "Recomendaciones personalizadas para tus estudiantes",
+    "noRecommendations": "No hay recomendaciones disponibles",
+    "for": "Para"
+  },
+  "settings": {
+    "sectionLabel": "Configuración",
+    "title": "Configuración",
+    "subtitle": "Gestiona tu perfil de coach, precios, disponibilidad y pagos.",
+    "tabs": {
+      "pricing": "Precios",
+      "availability": "Disponibilidad",
+      "payments": "Pagos",
+      "billing": "Facturación"
+    },
+    "pricing": {
+      "title": "Precios de sesión",
+      "subtitle": "Establece tu tarifa por hora para sesiones de coaching 1:1.",
+      "currency": "Moneda",
+      "hourlyRate": "Tarifa por hora",
+      "clientPays": "Los clientes verán este precio al reservar sesiones.",
+      "perHour": "/ hr",
+      "breakdown": {
+        "title": "Desglose de ingresos",
+        "subtitle": "Desglose de lo que ganas por sesión después de comisiones.",
+        "clientPays": "El cliente paga",
+        "platformFee": "Comisión plataforma ({{fee}}%)",
+        "netEarnings": "Tus ingresos netos",
+        "netNote": "Los ingresos netos se transfieren a tu cuenta de pago."
+      },
+      "save": "Guardar cambios",
+      "saving": "Guardando...",
+      "success": "Precios actualizados correctamente",
+      "error": "Error al actualizar los precios",
+      "loading": "Cargando configuración de precios..."
+    },
+    "availability": {
+      "title": "Horario semanal",
+      "subtitle": "Define cuándo estás disponible para sesiones.",
+      "save": "Guardar cambios",
+      "saving": "Guardando...",
+      "success": "Disponibilidad actualizada correctamente",
+      "error": "Error al actualizar la disponibilidad",
+      "loading": "Cargando disponibilidad...",
+      "timezone": "Seleccionar zona horaria"
+    },
+    "payments": {
+      "title": "Pagos y cobros",
+      "subtitle": "Gestiona tu conexión con Stripe y visualiza el historial de cobros.",
+      "loading": "Error al cargar la configuración de pagos"
+    },
+    "billing": {
+      "title": "Período de facturación actual",
+      "subtitle": "Resumen de tus reservas y comisiones del ciclo actual.",
+      "cycle": "Ciclo:",
+      "totalRevenue": "Ingresos totales",
+      "platformFees": "Comisiones de plataforma",
+      "feePercent": "Comisión 15%",
+      "feeDeducted": "Deducida automáticamente",
+      "nextInvoice": "Próxima factura",
+      "autoGenerated": "Generada automáticamente en la fecha de vencimiento",
+      "bookingsProcessed": "{{count}} reservas procesadas",
+      "historyTitle": "Historial de facturas",
+      "historySubtitle": "Descarga facturas y estados de cuenta anteriores.",
+      "tableHeaders": {
+        "period": "Período",
+        "revenue": "Ingresos",
+        "fees": "Comisiones",
+        "status": "Estado",
+        "action": "Acción"
+      },
+      "noInvoices": "No se encontraron facturas",
+      "invoicesNote": "Las facturas aparecerán aquí una vez generadas.",
+      "downloading": "Iniciando descarga de factura...",
+      "downloadSuccess": "Factura descargada",
+      "downloadError": "Error al descargar la factura",
+      "loadError": "Error al cargar datos de facturación",
+      "loading": "Cargando datos de facturación...",
+      "pagination": {
+        "showing": "Mostrando página {{page}} de {{total}}",
+        "previous": "Anterior",
+        "next": "Siguiente"
+      }
+    },
+    "calendar": {
+      "notConfigured": "La sincronización de calendario aún no está habilitada en este servidor.",
+      "disconnectSuccess": "Calendario desconectado correctamente",
+      "disconnectError": "Error al desconectar el calendario"
+    }
+  },
+  "accessDenied": {
+    "title": "Acceso denegado",
+    "subtitle": "Contrato vencido",
+    "body": "Tu contrato de coaching ha vencido. Ya no tienes acceso al panel del coach.",
+    "note": "Si crees que esto es un error o deseas renovar tu contrato, comunícate con la administración.",
+    "contactSupport": "Contactar soporte",
+    "returnHome": "Volver al inicio"
+  },
+  "find": {
+    "title": "Encuentra un coach",
+    "subtitle": "Reserva una sesión con un coach experto para impulsar tu carrera",
+    "searchPlaceholder": "Buscar coaches...",
+    "fetchError": "Error al cargar los coaches. Por favor intenta de nuevo.",
+    "retry": "Reintentar",
+    "new": "Nuevo",
+    "remote": "Remoto",
+    "viewProfileBook": "Ver perfil y reservar",
+    "noCoachesFound": "No se encontraron coaches",
+    "tryAdjusting": "Intenta ajustar tu búsqueda."
+  },
+  "booking": {
+    "title": "Reservar una sesión",
+    "subtitle": "Programa tu sesión",
+    "selectSlot": "Selecciona un horario",
+    "confirm": "Confirmar reserva"
+  },
+  "mySessions": {
+    "title": "Mis sesiones",
+    "subtitle": "Gestiona tus sesiones de coaching y orientación",
+    "bookNew": "Reservar un coach",
+    "bookCounselor": "Reservar sesión de orientación",
+    "tabs": {
+      "coaching": "Sesiones de coaching",
+      "counselor": "Sesiones de orientación",
+      "free": "GRATIS"
+    },
+    "stats": {
+      "total": "Sesiones totales",
+      "upcoming": "Próximas",
+      "completed": "Completadas",
+      "cancelled": "Canceladas"
+    },
+    "loading": "Cargando tus sesiones...",
+    "noSessions": "Sin sesiones {{tab}}",
+    "noUpcoming": "No tienes sesiones de coaching próximas. ¡Reserva una sesión con un coach experto para impulsar tu carrera!",
+    "noCompleted": "Aún no has completado ninguna sesión de coaching.",
+    "findCoach": "Encontrar un coach",
+    "notes": "Notas:",
+    "joinCall": "Unirse a la llamada",
+    "reschedule": "Reprogramar",
+    "cancelSession": "Cancelar sesión",
+    "review": "Calificar",
+    "messages": {
+      "failedToLoad": "Error al cargar las sesiones",
+      "cancelReasonRequired": "Por favor indica el motivo de la cancelación",
+      "cancelSuccess": "Sesión cancelada correctamente",
+      "failedToCancel": "Error al cancelar la sesión",
+      "reviewSubmitted": "Calificación enviada correctamente",
+      "failedToSubmitReview": "Error al enviar la calificación"
+    },
+    "cancel": {
+      "title": "Cancelar sesión",
+      "description": "¿Estás seguro de que deseas cancelar esta sesión con {{name}}?",
+      "reasonLabel": "Motivo de cancelación",
+      "reasonPlaceholder": "Por favor indícanos por qué estás cancelando...",
+      "keepSession": "Mantener sesión",
+      "confirmCancel": "Cancelar sesión",
+      "cancelling": "Cancelando..."
+    },
+    "review": {
+      "title": "Dejar una calificación",
+      "description": "¿Cómo estuvo tu sesión con {{name}}?",
+      "commentLabel": "Comentario",
+      "commentPlaceholder": "Comparte tu experiencia...",
+      "cancel": "Cancelar",
+      "submit": "Enviar calificación",
+      "submitting": "Enviando..."
+    },
+    "cancelCounselor": {
+      "title": "Cancelar sesión de orientación",
+      "description": "¿Estás seguro de que deseas cancelar tu sesión con {{name}}?",
+      "reasonLabel": "Motivo de cancelación",
+      "reasonPlaceholder": "Por favor informa a tu orientador por qué estás cancelando...",
+      "keep": "Mantener sesión",
+      "confirm": "Cancelar sesión"
+    }
+  },
+  "subscriptions": {
+    "back": "Panel",
+    "title": "Suscripciones",
+    "subtitle": "Gestiona tu plan y facturación",
+    "loading": "Cargando planes...",
+    "active": {
+      "title": "Suscripción activa",
+      "onPlan": "Estás en el plan {{plan}}.",
+      "cancels": "Se cancela el {{date}} — acceso hasta entonces",
+      "renews": "Se renueva el {{date}}",
+      "manageBilling": "Gestionar facturación",
+      "cancelPlan": "Cancelar plan",
+      "opening": "Abriendo…",
+      "ending": "Finalizando",
+      "active": "Activa"
+    },
+    "cancel": {
+      "title": "¿Cancelar suscripción?",
+      "body": "Tu suscripción se cancelará al final del período de facturación actual. Conservarás el acceso hasta entonces.",
+      "keepPlan": "Mantener plan",
+      "yesCancelPending": "Cancelando...",
+      "yesCancel": "Sí, cancelar"
+    },
+    "noSubscription": "No tienes una suscripción activa. Elige un plan a continuación para comenzar.",
+    "plan": {
+      "mostPopular": "Más popular",
+      "currentPlan": "Plan actual",
+      "perMonth": "/mes",
+      "perYear": "/año",
+      "currentPlanLabel": "Plan actual",
+      "switchPlan": "Cambiar plan",
+      "get": "Obtener {{plan}}",
+      "processing": "Procesando..."
+    }
+  },
+  "transactions": {
+    "title": "Transacciones",
+    "subtitle": "Ver y gestionar tu historial de pagos",
+    "sectionLabel": "Facturación",
+    "exportCSV": "Exportar CSV",
+    "exporting": "Exportando...",
+    "fetchFailed": "Error al cargar las transacciones",
+    "exportSuccess": "Transacciones exportadas correctamente",
+    "exportFailed": "Error al exportar las transacciones",
+    "totalSpent": "Total gastado",
+    "invoices": "Facturas",
+    "lastUsedMethod": "Último método usado",
+    "searchPlaceholder": "Buscar transacciones...",
+    "noTransactions": "No se encontraron transacciones",
+    "tabs": {
+      "all": "Todas",
+      "completed": "Completadas",
+      "pending": "Pendientes",
+      "failed": "Fallidas",
+      "refunded": "Reembolsadas"
+    },
+    "table": {
+      "id": "ID de transacción",
+      "description": "Descripción",
+      "date": "Fecha",
+      "method": "Método",
+      "status": "Estado",
+      "amount": "Monto",
+      "actions": "Acciones",
+      "viewDetails": "Ver detalles",
+      "downloadInvoice": "Descargar factura",
+      "reportIssue": "Reportar problema"
+    },
+    "pagination": {
+      "page": "Mostrando página {{page}} de {{total}}",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    }
+  }
+}

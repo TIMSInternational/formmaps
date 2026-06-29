@@ -155,7 +155,7 @@ export default function TransactionsPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-2">
             <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-              Billing
+              {t("coach:transactions.sectionLabel")}
             </p>
             <h1 className="text-3xl font-bold text-foreground tracking-tight">
               {t("transactions.title")}
@@ -170,7 +170,7 @@ export default function TransactionsPage() {
             disabled={isExporting}
           >
             <Download className="w-4 h-4" />
-            {isExporting ? "Exporting..." : t("transactions.exportCSV")}
+            {isExporting ? t("coach:transactions.exporting") : t("transactions.exportCSV")}
           </Button>
         </div>
 
@@ -205,19 +205,19 @@ export default function TransactionsPage() {
           <Tabs defaultValue="all" value={statusFilter} onValueChange={setStatusFilter} className="w-full">
             <TabsList className="bg-card border border-border p-1 h-12 rounded-xl w-full md:w-auto justify-start overflow-x-auto">
               <TabsTrigger value="all" className="rounded-lg px-4 h-9 data-[state=active]:bg-secondary data-[state=active]:text-foreground">
-                All
+                {t("coach:transactions.tabs.all")}
               </TabsTrigger>
               <TabsTrigger value="completed" className="rounded-lg px-4 h-9 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600">
-                Completed
+                {t("coach:transactions.tabs.completed")}
               </TabsTrigger>
               <TabsTrigger value="pending" className="rounded-lg px-4 h-9 data-[state=active]:bg-amber-500/10 data-[state=active]:text-amber-600">
-                Pending
+                {t("coach:transactions.tabs.pending")}
               </TabsTrigger>
               <TabsTrigger value="failed" className="rounded-lg px-4 h-9 data-[state=active]:bg-red-500/10 data-[state=active]:text-red-600">
-                Failed
+                {t("coach:transactions.tabs.failed")}
               </TabsTrigger>
               <TabsTrigger value="refunded" className="rounded-lg px-4 h-9 data-[state=active]:bg-secondary data-[state=active]:text-muted-foreground">
-                Refunded
+                {t("coach:transactions.tabs.refunded")}
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -237,12 +237,12 @@ export default function TransactionsPage() {
             <Table>
               <TableHeader className="bg-secondary">
                 <TableRow className="border-border hover:bg-secondary">
-                  <TableHead className="py-4 font-semibold text-muted-foreground pl-6">Transaction ID</TableHead>
-                  <TableHead className="py-4 font-semibold text-muted-foreground">Description</TableHead>
-                  <TableHead className="py-4 font-semibold text-muted-foreground">Date</TableHead>
-                  <TableHead className="py-4 font-semibold text-muted-foreground">Method</TableHead>
-                  <TableHead className="py-4 font-semibold text-muted-foreground">Status</TableHead>
-                  <TableHead className="py-4 font-semibold text-muted-foreground text-right pr-6">Amount</TableHead>
+                  <TableHead className="py-4 font-semibold text-muted-foreground pl-6">{t("coach:transactions.table.id")}</TableHead>
+                  <TableHead className="py-4 font-semibold text-muted-foreground">{t("coach:transactions.table.description")}</TableHead>
+                  <TableHead className="py-4 font-semibold text-muted-foreground">{t("coach:transactions.table.date")}</TableHead>
+                  <TableHead className="py-4 font-semibold text-muted-foreground">{t("coach:transactions.table.method")}</TableHead>
+                  <TableHead className="py-4 font-semibold text-muted-foreground">{t("coach:transactions.table.status")}</TableHead>
+                  <TableHead className="py-4 font-semibold text-muted-foreground text-right pr-6">{t("coach:transactions.table.amount")}</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -322,12 +322,12 @@ export default function TransactionsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-xl">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>Download Invoice</DropdownMenuItem>
+                          <DropdownMenuLabel>{t("coach:transactions.table.actions")}</DropdownMenuLabel>
+                          <DropdownMenuItem>{t("coach:transactions.table.viewDetails")}</DropdownMenuItem>
+                          <DropdownMenuItem>{t("coach:transactions.table.downloadInvoice")}</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-red-600">
-                            Report Issue
+                            {t("coach:transactions.table.reportIssue")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -340,7 +340,7 @@ export default function TransactionsPage() {
             {/* Pagination */}
             <div className="flex items-center justify-between border-t border-border p-4 bg-secondary">
               <p className="text-sm text-muted-foreground">
-                Showing page <span className="font-semibold text-foreground">{page}</span> of <span className="font-semibold text-foreground">{totalPages || 1}</span>
+                {t("coach:transactions.pagination.page", { page, total: totalPages || 1 })}
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -350,7 +350,7 @@ export default function TransactionsPage() {
                   disabled={page === 1 || isLoading}
                   className="rounded-lg border-border h-8 text-muted-foreground"
                 >
-                  {t("common.previous") || "Previous"}
+                  {t("coach:transactions.pagination.previous")}
                 </Button>
                 <Button
                   variant="outline"
@@ -359,7 +359,7 @@ export default function TransactionsPage() {
                   disabled={page === totalPages || isLoading}
                   className="rounded-lg border-border h-8 text-muted-foreground"
                 >
-                  {t("common.next") || "Next"}
+                  {t("coach:transactions.pagination.next")}
                 </Button>
               </div>
             </div>

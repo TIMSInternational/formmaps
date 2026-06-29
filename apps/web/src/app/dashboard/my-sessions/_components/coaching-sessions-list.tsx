@@ -103,7 +103,7 @@ export function CoachingSessionsList({
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-foreground"></div>
-            <p className="text-muted-foreground mt-4">Loading your sessions...</p>
+            <p className="text-muted-foreground mt-4">{t("coach:mySessions.loading")}</p>
           </div>
         ) : sessions.length > 0 ? (
           <div className="divide-y divide-border">
@@ -170,7 +170,7 @@ export function CoachingSessionsList({
                             >
                               <a href={session.meetingLink} target="_blank" rel="noopener noreferrer">
                                 <Video className="h-4 w-4 mr-1.5" />
-                                Join Call
+                                {t("coach:mySessions.joinCall")}
                               </a>
                             </Button>
                           )}
@@ -180,7 +180,7 @@ export function CoachingSessionsList({
                             onClick={() => onRescheduleClick(session)}
                             className="h-9 px-4 rounded-lg border-border hover:bg-secondary"
                           >
-                            Reschedule
+                            {t("coach:mySessions.reschedule")}
                           </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -194,7 +194,7 @@ export function CoachingSessionsList({
                                 onClick={() => onCancelClick(session)}
                               >
                                 <X className="h-4 w-4 mr-2" />
-                                Cancel Session
+                                {t("coach:mySessions.cancelSession")}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -207,7 +207,7 @@ export function CoachingSessionsList({
                           onClick={() => onReviewClick(session)}
                         >
                           <Star className="h-4 w-4 mr-1.5 text-yellow-500" />
-                          Review
+                          {t("coach:mySessions.review")}
                         </Button>
                       ) : null}
 
@@ -222,7 +222,7 @@ export function CoachingSessionsList({
                   {session.notes && (
                     <div className="mt-4 ml-[4.5rem] pl-4 border-l-2 border-border">
                       <p className="text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">Notes: </span>
+                        <span className="font-medium text-foreground">{t("coach:mySessions.notes")} </span>
                         {session.notes}
                       </p>
                     </div>
@@ -237,18 +237,18 @@ export function CoachingSessionsList({
               <Calendar className="h-10 w-10 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">
-              No {activeTab} sessions
+              {t("coach:mySessions.noSessions", { tab: activeTab })}
             </h3>
             <p className="text-muted-foreground text-center max-w-sm mb-5">
               {activeTab === "upcoming"
-                ? "You don't have any upcoming coaching sessions. Book a session with an expert coach to accelerate your career!"
-                : "You haven't completed any coaching sessions yet."}
+                ? t("coach:mySessions.noUpcoming")
+                : t("coach:mySessions.noCompleted")}
             </p>
             {activeTab === "upcoming" && (
               <Button asChild className="bg-foreground text-background hover:bg-foreground/90 h-11 px-6 rounded-xl">
                 <Link href="/dashboard/book-coach">
                   <Users className="h-4 w-4 mr-2" />
-                  Find a Coach
+                  {t("coach:mySessions.findCoach")}
                 </Link>
               </Button>
             )}
