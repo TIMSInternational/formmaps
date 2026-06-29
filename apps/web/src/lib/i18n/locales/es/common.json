@@ -975,7 +975,8 @@
       "submit": "Iniciar sesión",
       "submitting": "Iniciando sesión...",
       "noAccountText": "¿No tienes una cuenta?",
-      "signUp": "Regístrate gratis"
+      "signUp": "Regístrate gratis",
+      "forgotPassword": "¿Olvidaste tu contraseña?"
     },
     "signup": {
       "title": "Crear cuenta",
@@ -986,7 +987,82 @@
       "submit": "Crear cuenta",
       "creating": "Creando cuenta...",
       "haveAccountText": "¿Ya tienes una cuenta?",
-      "signIn": "Iniciar sesión"
+      "signIn": "Iniciar sesión",
+      "firstNameLabel": "Nombre",
+      "lastNameLabel": "Apellido",
+      "emailLabel": "Correo electrónico",
+      "dobLabel": "Fecha de nacimiento",
+      "ageNotice": "Debes tener al menos 13 años para crear una cuenta. Los estudiantes más jóvenes se unen a través de su institución.",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Crea una contraseña segura",
+      "confirmPasswordLabel": "Confirmar contraseña",
+      "confirmPasswordPlaceholder": "Confirma tu contraseña",
+      "agreePrefix": "Acepto los",
+      "termsOfService": "Términos del Servicio",
+      "and": "y la",
+      "privacyPolicy": "Política de Privacidad",
+      "marketingOptIn": "Me gustaría recibir consejos de carrera y novedades del producto por correo electrónico"
+    },
+    "password": {
+      "show": "Mostrar contraseña",
+      "hide": "Ocultar contraseña",
+      "strengthLabel": "Seguridad de la contraseña:",
+      "strength": {
+        "veryWeak": "Muy débil",
+        "weak": "Débil",
+        "fair": "Aceptable",
+        "good": "Buena",
+        "strong": "Fuerte"
+      }
+    },
+    "forgotPassword": {
+      "resetTitle": "Restablece tu contraseña",
+      "resetSubtitle": "Ingresa tu correo y te enviaremos un enlace para restablecerla.",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "sending": "Enviando...",
+      "sendLink": "Enviar enlace",
+      "checkEmailTitle": "Revisa tu correo",
+      "checkEmailBefore": "Si existe una cuenta para",
+      "checkEmailAfter": ", te enviamos un enlace para restablecer la contraseña. Revisa tu bandeja de entrada.",
+      "tryAgainLink": "¿No lo recibiste? Inténtalo de nuevo",
+      "setNewTitle": "Crea una nueva contraseña",
+      "setNewSubtitle": "Ingresa tu nueva contraseña abajo.",
+      "newPasswordLabel": "Nueva contraseña",
+      "newPasswordPlaceholder": "Al menos 8 caracteres",
+      "confirmNewLabel": "Confirma la nueva contraseña",
+      "confirmNewPlaceholder": "Vuelve a ingresar la contraseña",
+      "resetting": "Restableciendo...",
+      "resetButton": "Restablecer contraseña",
+      "successTitle": "Contraseña restablecida",
+      "successText": "Tu contraseña se actualizó. Ya puedes iniciar sesión con tu nueva contraseña.",
+      "backToLogin": "Volver a iniciar sesión",
+      "errSendFailed": "No se pudo enviar el enlace",
+      "errNetwork": "Error de red. Inténtalo de nuevo.",
+      "errMismatch": "Las contraseñas no coinciden.",
+      "errResetFailed": "No se pudo restablecer la contraseña."
+    },
+    "validation": {
+      "firstNameRequired": "El nombre es obligatorio",
+      "firstNameMin": "El nombre debe tener al menos 2 caracteres",
+      "lastNameRequired": "El apellido es obligatorio",
+      "lastNameMin": "El apellido debe tener al menos 2 caracteres",
+      "emailRequired": "El correo electrónico es obligatorio",
+      "emailInvalid": "Ingresa un correo electrónico válido",
+      "passwordMin": "La contraseña debe tener al menos 8 caracteres",
+      "passwordUpper": "La contraseña debe contener al menos una letra mayúscula",
+      "passwordLower": "La contraseña debe contener al menos una letra minúscula",
+      "passwordNumber": "La contraseña debe contener al menos un número",
+      "confirmRequired": "Confirma tu contraseña",
+      "dobRequired": "La fecha de nacimiento es obligatoria",
+      "dobAge": "Debes tener al menos 13 años para registrarte. Pide a tu institución que te invite.",
+      "acceptTerms": "Debes aceptar los términos y condiciones",
+      "passwordsMatch": "Las contraseñas no coinciden"
+    },
+    "errors": {
+      "loginFailed": "El inicio de sesión falló. Inténtalo de nuevo.",
+      "registrationFailed": "El registro falló. Inténtalo de nuevo.",
+      "genericSignup": "Ocurrió un error durante el registro. Inténtalo de nuevo."
     }
   },
   "transactions": {
@@ -1520,7 +1596,62 @@
     "upgradeTitle": "Mejora tu experiencia",
     "upgradeSubtitle": "Elige el plan perfecto para desbloquear funciones exclusivas y llevar tu trayectoria al siguiente nivel.",
     "paymentSuccessful": "¡Pago exitoso!",
-    "subscriptionActive": "Tu suscripción está activa. ¡Disfruta de tus funciones premium!"
+    "subscriptionActive": "Tu suscripción está activa. ¡Disfruta de tus funciones premium!",
+    "chooseBadge": "Elige tu plan",
+    "heading": "Invierte en tu futuro",
+    "subheading": "Desbloquea herramientas de carrera con IA, evaluaciones y orientación personalizada para acelerar tu trayectoria profesional.",
+    "trialNote": "Comienza con una prueba gratuita de 7 días. Sin cargos hasta que termine tu prueba.",
+    "processing": "Procesando...",
+    "successToastTitle": "¡Pago exitoso!",
+    "successToastText": "Redirigiendo al panel...",
+    "bottomNote": "Cancela cuando quieras. Pagos seguros con Stripe.",
+    "perMonth": "mes",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "Comienza tu trayectoria profesional",
+        "ctaText": "Comenzar",
+        "features": [
+          "Evaluaciones PCA y MIL",
+          "Emparejamiento de carreras (top 10)",
+          "Constructor de currículum básico",
+          "Acceso al catálogo de cursos",
+          "Soporte por correo"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Acceso completo a la plataforma",
+        "badge": "Más popular",
+        "ctaText": "Empezar Pro",
+        "features": [
+          "Todo lo de Starter",
+          "Sistema de evaluación 360°",
+          "Emparejamiento completo de carreras (370+ carreras)",
+          "Constructor de currículum con IA",
+          "Recomendaciones universitarias",
+          "Constructor de plan de cursos",
+          "Constructor de portafolio",
+          "1 sesión de coaching / mes",
+          "Soporte prioritario"
+        ]
+      },
+      "premium": {
+        "name": "Premium",
+        "description": "Todo ilimitado",
+        "ctaText": "Hazte Premium",
+        "features": [
+          "Todo lo de Pro",
+          "Sesiones de coaching ilimitadas",
+          "Informes narrativos de carrera con IA",
+          "Reserva de sesiones con consejero",
+          "Seguimiento de servicio comunitario",
+          "Apoyo para proyecto final",
+          "Seguimiento de certificaciones",
+          "Soporte dedicado"
+        ]
+      }
+    }
   },
   "career": {
     "match": "Coincidencia",

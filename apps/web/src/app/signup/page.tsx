@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
@@ -17,7 +17,7 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { signupSchema, type SignupFormData } from "./_components/signupSchema";
+import { makeSignupSchema, type SignupFormData } from "./_components/signupSchema";
 import { PasswordInput } from "./_components/PasswordInput";
 import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
 
@@ -27,6 +27,7 @@ const focusOff = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.st
 
 export default function SignupPage() {
   const { t } = useTranslation();
+  const signupSchema = useMemo(() => makeSignupSchema(t), [t]);
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -100,7 +101,7 @@ export default function SignupPage() {
               break;
             case "roleid":
               form.setError("email", {
-                message: "Registration failed. Please try again.",
+                message: t("auth.errors.registrationFailed"),
               });
               break;
             default:
@@ -112,7 +113,7 @@ export default function SignupPage() {
       } else {
         form.setError("email", {
           message:
-            error.message || "An error occurred during signup. Please try again.",
+            error.message || t("auth.errors.genericSignup"),
         });
       }
     }
@@ -158,7 +159,7 @@ export default function SignupPage() {
                   name="firstName"
                   render={({ field }) => (
                     <FormItem className="flex flex-col gap-1.5">
-                      <FormLabel htmlFor="firstName" className="text-xs font-medium" style={{ color: "#333" }}>First name</FormLabel>
+                      <FormLabel htmlFor="firstName" className="text-xs font-medium" style={{ color: "#333" }}>{t("auth.signup.firstNameLabel")}</FormLabel>
                       <FormControl>
                         <input id="firstName" type="text" {...field} placeholder={t("auth.signup.firstNamePlaceholder")}
                           className="h-11 px-3 text-sm rounded-lg border outline-none transition-colors w-full"
@@ -173,7 +174,7 @@ export default function SignupPage() {
                   name="lastName"
                   render={({ field }) => (
                     <FormItem className="flex flex-col gap-1.5">
-                      <FormLabel htmlFor="lastName" className="text-xs font-medium" style={{ color: "#333" }}>Last name</FormLabel>
+                      <FormLabel htmlFor="lastName" className="text-xs font-medium" style={{ color: "#333" }}>{t("auth.signup.lastNameLabel")}</FormLabel>
                       <FormControl>
                         <input id="lastName" type="text" {...field} placeholder={t("auth.signup.lastNamePlaceholder")}
                           className="h-11 px-3 text-sm rounded-lg border outline-none transition-colors w-full"
@@ -191,7 +192,7 @@ export default function SignupPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem className="flex flex-col gap-1.5">
-                    <FormLabel htmlFor="email" className="text-xs font-medium" style={{ color: "#333" }}>Email address</FormLabel>
+                    <FormLabel htmlFor="email" className="text-xs font-medium" style={{ color: "#333" }}>{t("auth.signup.emailLabel")}</FormLabel>
                     <FormControl>
                       <input id="email" type="email" {...field} placeholder={t("auth.signup.emailPlaceholder")}
                         className="h-11 px-3 text-sm rounded-lg border outline-none transition-colors w-full"
@@ -208,25 +209,25 @@ export default function SignupPage() {
                 name="dateOfBirth"
                 render={({ field }) => (
                   <FormItem className="flex flex-col gap-1.5">
-                    <FormLabel htmlFor="dateOfBirth" className="text-xs font-medium" style={{ color: "#333" }}>Date of birth</FormLabel>
+                    <FormLabel htmlFor="dateOfBirth" className="text-xs font-medium" style={{ color: "#333" }}>{t("auth.signup.dobLabel")}</FormLabel>
                     <FormControl>
                       <input id="dateOfBirth" type="date" {...field} max={new Date().toISOString().split("T")[0]}
                         className="h-11 px-3 text-sm rounded-lg border outline-none transition-colors w-full"
                         style={inputStyle} onFocus={focusOn} onBlur={focusOff} />
                     </FormControl>
-                    <p className="text-[11px]" style={{ color: "#999" }}>You must be at least 13 to create an account. Younger students join through their school.</p>
+                    <p className="text-[11px]" style={{ color: "#999" }}>{t("auth.signup.ageNotice")}</p>
                     <FormMessage className="text-xs text-red-500" />
                   </FormItem>
                 )}
               />
 
               {/* Password */}
-              <PasswordInput control={control} name="password" label="Password"
-                placeholder="Create a strong password" showStrength currentPassword={password} />
+              <PasswordInput control={control} name="password" label={t("auth.signup.passwordLabel")}
+                placeholder={t("auth.signup.passwordPlaceholder")} showStrength currentPassword={password} />
 
               {/* Confirm Password */}
-              <PasswordInput control={control} name="confirmPassword" label="Confirm password"
-                placeholder="Confirm your password" />
+              <PasswordInput control={control} name="confirmPassword" label={t("auth.signup.confirmPasswordLabel")}
+                placeholder={t("auth.signup.confirmPasswordPlaceholder")} />
 
               {/* Terms */}
               <div className="flex flex-col gap-3">
@@ -234,10 +235,10 @@ export default function SignupPage() {
                   <input id="terms" type="checkbox" {...form.register("acceptTerms")}
                     className="w-3.5 h-3.5 mt-0.5" style={{ accentColor: "#065292" }} />
                   <label htmlFor="terms" className="text-xs leading-5" style={{ color: "#666" }}>
-                    I agree to the{" "}
-                    <Link href="/terms" className="font-medium no-underline" style={{ color: "#065292" }}>Terms of Service</Link>{" "}
-                    and{" "}
-                    <Link href="/privacy" className="font-medium no-underline" style={{ color: "#065292" }}>Privacy Policy</Link>
+                    {t("auth.signup.agreePrefix")}{" "}
+                    <Link href="/terms" className="font-medium no-underline" style={{ color: "#065292" }}>{t("auth.signup.termsOfService")}</Link>{" "}
+                    {t("auth.signup.and")}{" "}
+                    <Link href="/privacy" className="font-medium no-underline" style={{ color: "#065292" }}>{t("auth.signup.privacyPolicy")}</Link>
                   </label>
                 </div>
                 {errors.acceptTerms && (
@@ -247,7 +248,7 @@ export default function SignupPage() {
                   <input id="marketing" type="checkbox" {...form.register("acceptMarketing")}
                     className="w-3.5 h-3.5 mt-0.5" style={{ accentColor: "#065292" }} />
                   <label htmlFor="marketing" className="text-xs leading-5" style={{ color: "#666" }}>
-                    I&apos;d like to receive career tips and product updates via email
+                    {t("auth.signup.marketingOptIn")}
                   </label>
                 </div>
               </div>

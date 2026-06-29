@@ -1475,7 +1475,8 @@
       "submit": "Sign in",
       "submitting": "Signing in...",
       "noAccountText": "Don't have an account?",
-      "signUp": "Sign up for free"
+      "signUp": "Sign up for free",
+      "forgotPassword": "Forgot password?"
     },
     "signup": {
       "title": "Create account",
@@ -1486,7 +1487,82 @@
       "submit": "Create account",
       "creating": "Creating account...",
       "haveAccountText": "Already have an account?",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "firstNameLabel": "First name",
+      "lastNameLabel": "Last name",
+      "emailLabel": "Email address",
+      "dobLabel": "Date of birth",
+      "ageNotice": "You must be at least 13 to create an account. Younger students join through their school.",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Create a strong password",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "agreePrefix": "I agree to the",
+      "termsOfService": "Terms of Service",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy",
+      "marketingOptIn": "I'd like to receive career tips and product updates via email"
+    },
+    "password": {
+      "show": "Show password",
+      "hide": "Hide password",
+      "strengthLabel": "Password strength:",
+      "strength": {
+        "veryWeak": "Very Weak",
+        "weak": "Weak",
+        "fair": "Fair",
+        "good": "Good",
+        "strong": "Strong"
+      }
+    },
+    "forgotPassword": {
+      "resetTitle": "Reset your password",
+      "resetSubtitle": "Enter your email and we'll send you a reset link.",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "you@example.com",
+      "sending": "Sending...",
+      "sendLink": "Send reset link",
+      "checkEmailTitle": "Check your email",
+      "checkEmailBefore": "If an account exists for",
+      "checkEmailAfter": ", we've sent a password reset link. Check your inbox.",
+      "tryAgainLink": "Didn't receive it? Try again",
+      "setNewTitle": "Set a new password",
+      "setNewSubtitle": "Enter your new password below.",
+      "newPasswordLabel": "New password",
+      "newPasswordPlaceholder": "At least 8 characters",
+      "confirmNewLabel": "Confirm new password",
+      "confirmNewPlaceholder": "Re-enter password",
+      "resetting": "Resetting...",
+      "resetButton": "Reset password",
+      "successTitle": "Password reset successful",
+      "successText": "Your password has been updated. You can now sign in with your new password.",
+      "backToLogin": "Back to login",
+      "errSendFailed": "Failed to send reset link",
+      "errNetwork": "Network error. Please try again.",
+      "errMismatch": "Passwords do not match.",
+      "errResetFailed": "Failed to reset password."
+    },
+    "validation": {
+      "firstNameRequired": "First name is required",
+      "firstNameMin": "First name must be at least 2 characters",
+      "lastNameRequired": "Last name is required",
+      "lastNameMin": "Last name must be at least 2 characters",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address",
+      "passwordMin": "Password must be at least 8 characters",
+      "passwordUpper": "Password must contain at least one uppercase letter",
+      "passwordLower": "Password must contain at least one lowercase letter",
+      "passwordNumber": "Password must contain at least one number",
+      "confirmRequired": "Please confirm your password",
+      "dobRequired": "Date of birth is required",
+      "dobAge": "You must be at least 13 years old to sign up. Ask your school to invite you.",
+      "acceptTerms": "You must accept the terms and conditions",
+      "passwordsMatch": "Passwords do not match"
+    },
+    "errors": {
+      "loginFailed": "Login failed. Please try again.",
+      "registrationFailed": "Registration failed. Please try again.",
+      "genericSignup": "An error occurred during signup. Please try again."
     }
   },
   "transactions": {
@@ -1520,7 +1596,62 @@
     "upgradeTitle": "Upgrade Your Experience",
     "upgradeSubtitle": "Choose the perfect plan to unlock exclusive features and take your journey to the next level.",
     "paymentSuccessful": "Payment Successful!",
-    "subscriptionActive": "Your subscription is now active. Enjoy your premium features!"
+    "subscriptionActive": "Your subscription is now active. Enjoy your premium features!",
+    "chooseBadge": "Choose Your Plan",
+    "heading": "Invest in Your Future",
+    "subheading": "Unlock AI-powered career tools, assessments, and personalized guidance to accelerate your professional journey.",
+    "trialNote": "Start with a 7-day free trial. No charge until your trial ends.",
+    "processing": "Processing...",
+    "successToastTitle": "Payment successful!",
+    "successToastText": "Redirecting to dashboard...",
+    "bottomNote": "Cancel anytime. Secure payments via Stripe.",
+    "perMonth": "month",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "Begin your career journey",
+        "ctaText": "Get Started",
+        "features": [
+          "PCA & MIL Assessments",
+          "Career matching (top 10)",
+          "Basic resume builder",
+          "Course catalog access",
+          "Email support"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Full platform access",
+        "badge": "Most Popular",
+        "ctaText": "Start Pro",
+        "features": [
+          "Everything in Starter",
+          "360° Evaluation system",
+          "Full career matching (370+ careers)",
+          "AI-powered resume builder",
+          "University recommendations",
+          "Course plan builder",
+          "Portfolio builder",
+          "1 coaching session / month",
+          "Priority support"
+        ]
+      },
+      "premium": {
+        "name": "Premium",
+        "description": "Everything unlimited",
+        "ctaText": "Go Premium",
+        "features": [
+          "Everything in Pro",
+          "Unlimited coaching sessions",
+          "AI career narrative reports",
+          "Counselor session booking",
+          "Community service tracking",
+          "Senior project support",
+          "Certification tracking",
+          "Dedicated support"
+        ]
+      }
+    }
   },
   "career": {
     "match": "Match",
