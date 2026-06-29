@@ -28,13 +28,13 @@ import {
 
 type ThemeMode = "dark" | "light" | "system";
 
-const getNavSections = (t: (key: string, fallback: string) => string) => [
+const getNavSections = (t: (key: string, fallback?: string) => string) => [
   {
     label: t("nav.main", "Main"),
     items: [
-      { label: t("teacher.nav.dashboard", "Dashboard"), href: "/teacher", icon: Home },
-      { label: t("teacher.nav.evaluations", "Evaluations"), href: "/teacher/evaluations", icon: FileCheck },
-      { label: t("teacher.nav.recommendations", "Recommendations"), href: "/teacher/recommendations", icon: FileText },
+      { label: t("nav.dashboard"), href: "/teacher", icon: Home },
+      { label: t("nav.evaluations"), href: "/teacher/evaluations", icon: FileCheck },
+      { label: t("nav.recommendations"), href: "/teacher/recommendations", icon: FileText },
     ],
   },
 ];
@@ -85,7 +85,7 @@ function TabBtn({ icon: Icon, active, onClick, title }: {
 }
 
 export function TeacherSidebar() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("teacher");
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useGlobalStore();
@@ -110,7 +110,7 @@ export function TeacherSidebar() {
     openChatInPanel(thread.id);
   };
 
-  const NAV_SECTIONS = getNavSections(t);
+  const NAV_SECTIONS = getNavSections((k: string, f?: string) => (f === undefined ? t(k) : t(k, f)));
   const chatGroups = groupThreadsByDate(threads);
 
   const C = {
@@ -299,8 +299,8 @@ export function TeacherSidebar() {
           }}>{user.name?.charAt(0)?.toUpperCase() || "T"}</div>
           {!collapsed && <>
             <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-              <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name || "Teacher"}</div>
-              <div style={{ fontSize: 10, color: C.fontTertiary }}>Teacher</div>
+              <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name || t("role")}</div>
+              <div style={{ fontSize: 10, color: C.fontTertiary }}>{t("role")}</div>
             </div>
             <ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} />
           </>}

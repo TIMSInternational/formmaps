@@ -15,7 +15,7 @@ import { useTeacherProfile, useTeacherPendingEvaluations } from "@/hooks/useTeac
 import { isPast } from "date-fns";
 
 export default function TeacherDashboard() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("teacher");
   const router = useRouter();
 
   const { data: profile, isLoading: loadingProfile } = useTeacherProfile();
@@ -45,13 +45,13 @@ export default function TeacherDashboard() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Teacher</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("dashboard.badge")}</p>
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-          {t("teacher.welcome", "Welcome back")},{" "}
-          <span style={{ color: "#065292" }}>{profile?.name || "Teacher"}</span>
+          {t("dashboard.welcome")},{" "}
+          <span style={{ color: "#065292" }}>{profile?.name || t("role")}</span>
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {t("teacher.dashboardSubtitle", "Complete the 360° evaluations the school has asked you to fill out.")}
+          {t("dashboard.subtitle")}
         </p>
       </motion.div>
 
@@ -63,7 +63,7 @@ export default function TeacherDashboard() {
               <FileCheck className="h-4 w-4" style={{ color: "#065292" }} strokeWidth={1.8} />
             </div>
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {t("teacher.pendingEvaluations", "Pending Evaluations")}
+              {t("dashboard.pendingEvaluations")}
             </span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">
@@ -77,7 +77,7 @@ export default function TeacherDashboard() {
               <AlertTriangle className="h-4 w-4 text-red-500" strokeWidth={1.8} />
             </div>
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {t("teacher.overdue", "Overdue")}
+              {t("dashboard.overdue")}
             </span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">
@@ -91,7 +91,7 @@ export default function TeacherDashboard() {
               <Clock className="h-4 w-4 text-emerald-500" strokeWidth={1.8} />
             </div>
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {t("teacher.upcoming", "Upcoming")}
+              {t("dashboard.upcoming")}
             </span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">
@@ -104,11 +104,11 @@ export default function TeacherDashboard() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-foreground">
-            {t("teacher.pendingEvals", "Pending 360° Evaluations")}
+            {t("dashboard.pendingEvalsTitle")}
           </h2>
           {list.length > 0 && (
             <Button variant="ghost" size="sm" onClick={() => router.push("/teacher/evaluations")}>
-              {t("teacher.viewAll", "View all")}
+              {t("dashboard.viewAll")}
             </Button>
           )}
         </div>
@@ -116,10 +116,10 @@ export default function TeacherDashboard() {
           <div className="dash-card py-12 text-center">
             <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
             <p className="text-base font-semibold text-foreground">
-              {t("teacher.allDone", "All caught up")}
+              {t("dashboard.allDone")}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              {t("teacher.noEvals", "You have no pending evaluations right now.")}
+              {t("dashboard.noEvals")}
             </p>
           </div>
         ) : (
@@ -128,11 +128,11 @@ export default function TeacherDashboard() {
               <div key={evaluation.evaluationId} className="dash-card p-4 flex items-center justify-between">
                 <div>
                   <p className="font-medium text-foreground">
-                    {t("teacher.evaluationFor", "360° Evaluation for")}{" "}
+                    {t("dashboard.evaluationFor")}{" "}
                     <span style={{ color: "#065292" }}>{evaluation.studentName}</span>
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {t("teacher.dueBy", "Due by")}:{" "}
+                    {t("dashboard.dueBy")}:{" "}
                     {new Date(evaluation.deadline).toLocaleDateString()}
                   </p>
                 </div>
@@ -142,7 +142,7 @@ export default function TeacherDashboard() {
                   }
                   size="sm"
                 >
-                  {t("teacher.completeEvaluation", "Complete Evaluation")}
+                  {t("dashboard.completeEvaluation")}
                 </Button>
               </div>
             ))}

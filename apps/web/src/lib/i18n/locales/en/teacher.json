@@ -1,1 +1,102 @@
-{}
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "evaluations": "Evaluations",
+    "recommendations": "Recommendations"
+  },
+  "role": "Teacher",
+  "dashboard": {
+    "badge": "Teacher",
+    "welcome": "Welcome back",
+    "subtitle": "Complete the 360° evaluations the school has asked you to fill out.",
+    "pendingEvaluations": "Pending Evaluations",
+    "overdue": "Overdue",
+    "upcoming": "Upcoming",
+    "pendingEvalsTitle": "Pending 360° Evaluations",
+    "viewAll": "View all",
+    "allDone": "All caught up",
+    "noEvals": "You have no pending evaluations right now.",
+    "evaluationFor": "360° Evaluation for",
+    "dueBy": "Due by",
+    "completeEvaluation": "Complete Evaluation"
+  },
+  "evaluations": {
+    "badge": "Teacher",
+    "title": "360° Evaluations",
+    "subtitle": "Complete the evaluations the school has requested to support student development.",
+    "stats": {
+      "pending": "Pending",
+      "overdue": "Overdue",
+      "upcoming": "Upcoming"
+    },
+    "allDone": "All done!",
+    "noEvals": "You have no pending evaluations right now.",
+    "overdueSection": "Overdue",
+    "upcomingSection": "Upcoming",
+    "card": {
+      "evaluationFor": "360° Evaluation for",
+      "due": "Due:",
+      "completeNow": "Complete Now",
+      "urgency": {
+        "overdue": "Overdue",
+        "dueToday": "Due today",
+        "dueTomorrow": "Due tomorrow",
+        "daysLeft": "{{count}} days left"
+      }
+    }
+  },
+  "onboarding": {
+    "title": "Set Up Your Teacher Portal Account",
+    "subtitle": "You've been invited to join your school on FormMaps",
+    "inviteDetails": {
+      "schoolLabel": "School",
+      "schoolFallback": "Your school"
+    },
+    "form": {
+      "cardTitle": "Create your account",
+      "cardDescription": "Set up your credentials to access the teacher portal",
+      "fullName": {
+        "label": "Full Name",
+        "placeholder": "Your full name"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "At least 8 characters"
+      },
+      "confirmPassword": {
+        "label": "Confirm Password",
+        "placeholder": "Repeat your password",
+        "mismatch": "Passwords do not match"
+      },
+      "submit": "Activate My Account",
+      "signInPrompt": "Already have an account?",
+      "signInLink": "Sign in here"
+    },
+    "validation": {
+      "nameRequired": "Please enter your full name",
+      "passwordTooShort": "Password must be at least 8 characters",
+      "passwordMismatch": "Passwords do not match",
+      "setupFailed": "Account setup failed. Please try again."
+    },
+    "states": {
+      "noToken": {
+        "title": "Invalid Invitation Link",
+        "message": "This invitation link is missing a token. Please check the email you received or contact your school.",
+        "goToLogin": "Go to Login"
+      },
+      "verifying": "Verifying your invitation…",
+      "expired": {
+        "title": "Invitation Expired or Invalid",
+        "fallbackMessage": "This invitation link has expired or is no longer valid. Please contact the school for a new invitation.",
+        "goToLogin": "Go to Login"
+      },
+      "success": {
+        "title": "Welcome!",
+        "message": "Your teacher account is ready. Redirecting to your portal…"
+      }
+    }
+  },
+  "recommendations": {
+    "roleLabel": "Teacher"
+  }
+}
