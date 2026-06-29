@@ -5,17 +5,19 @@ import { usePathname } from "next/navigation";
 import { Home, Compass, GraduationCap, FileText, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { StudentSidebar } from "./StudentSidebar";
 
 const navItems = [
-  { href: "/dashboard", icon: Home, label: "Home" },
-  { href: "/dashboard/career-paths", icon: Compass, label: "Careers" },
-  { href: "/dashboard/university", icon: GraduationCap, label: "Universities" },
-  { href: "/dashboard/assessments", icon: FileText, label: "Assessments" },
+  { href: "/dashboard", icon: Home, label: "nav.home" },
+  { href: "/dashboard/career-paths", icon: Compass, label: "nav.careers" },
+  { href: "/dashboard/university", icon: GraduationCap, label: "nav.universities" },
+  { href: "/dashboard/assessments", icon: FileText, label: "nav.assessments" },
 ];
 
 export function MobileNav() {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -35,7 +37,7 @@ export function MobileNav() {
                 )}
               >
                 <item.icon className="h-5 w-5" />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-[10px] font-medium">{t(item.label)}</span>
               </Link>
             );
           })}
@@ -44,7 +46,7 @@ export function MobileNav() {
             className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-[var(--admin-font-tertiary)]"
           >
             <Menu className="h-5 w-5" />
-            <span className="text-[10px] font-medium">More</span>
+            <span className="text-[10px] font-medium">{t("nav.more")}</span>
           </button>
         </div>
       </nav>

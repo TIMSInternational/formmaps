@@ -60,13 +60,13 @@ interface NavSection {
 
 const NAV_SECTIONS: NavSection[] = [
   {
-    label: "Main",
+    label: "nav.main",
     items: [
       { label: "nav.dashboard", href: "/dashboard", icon: LayoutDashboard },
     ],
   },
   {
-    label: "Explore",
+    label: "nav.explore",
     items: [
       {
         label: "dashboard.assessments", href: "/dashboard/assessments", icon: FileText,
@@ -95,39 +95,39 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    label: "Tools",
+    label: "nav.tools",
     items: [
       { label: "dashboard.resumeBuilder", href: "/dashboard/resumes", icon: ClipboardList },
       { label: "dashboard.portfolio", href: "/dashboard/portfolio", icon: FolderOpen },
-      { label: "Applications", href: "/dashboard/applications", icon: Target },
-      { label: "Test Scores", href: "/dashboard/test-scores", icon: FileText },
-      { label: "Transcript", href: "/dashboard/transcript", icon: BookOpen },
-      { label: "Recommendations", href: "/dashboard/recommendations", icon: Award },
-      { label: "Community Service", href: "/dashboard/community-service", icon: HeartHandshake },
+      { label: "nav.applications", href: "/dashboard/applications", icon: Target },
+      { label: "nav.testScores", href: "/dashboard/test-scores", icon: FileText },
+      { label: "nav.transcript", href: "/dashboard/transcript", icon: BookOpen },
+      { label: "nav.recommendations", href: "/dashboard/recommendations", icon: Award },
+      { label: "nav.communityService", href: "/dashboard/community-service", icon: HeartHandshake },
     ],
   },
   {
-    label: "Sessions",
+    label: "nav.sessions",
     items: [
       {
-        label: "Counseling & Coaching", href: "/dashboard/my-sessions", icon: Users,
+        label: "nav.counselingCoaching", href: "/dashboard/my-sessions", icon: Users,
         sub: [
-          { label: "My Sessions", href: "/dashboard/my-sessions", icon: Calendar },
-          { label: "Book Counselor", href: "/dashboard/book-counselor", icon: UserCheck },
-          { label: "Find Coach", href: "/dashboard/book-coach", icon: Search },
+          { label: "nav.mySessions", href: "/dashboard/my-sessions", icon: Calendar },
+          { label: "nav.bookCounselor", href: "/dashboard/book-counselor", icon: UserCheck },
+          { label: "nav.findCoach", href: "/dashboard/book-coach", icon: Search },
         ],
       },
     ],
   },
   {
-    label: "Communication",
+    label: "nav.communication",
     items: [
-      { label: "Messages", href: "/dashboard/messages", icon: MessageCircle },
-      { label: "Video Calls", href: "/dashboard/video", icon: Video },
+      { label: "nav.messages", href: "/dashboard/messages", icon: MessageCircle },
+      { label: "nav.videoCalls", href: "/dashboard/video", icon: Video },
     ],
   },
   {
-    label: "Account",
+    label: "nav.account",
     items: [
       { label: "dashboard.subscriptions", href: "/dashboard/subscriptions", icon: CreditCard },
     ],
@@ -357,14 +357,14 @@ export function StudentSidebar() {
           flex: 1, overflowY: "auto",
           padding: collapsed ? "4px 6px 8px 6px" : "4px 8px 8px 8px",
         }}>
-          {NAV_SECTIONS.filter(s => !(s.label === "Account" && isSchoolStudent)).map((section) => (
+          {NAV_SECTIONS.filter(s => !(s.label === "nav.account" && isSchoolStudent)).map((section) => (
             <div key={section.label} style={{ marginBottom: 8 }}>
               {!collapsed && (
                 <div style={{
                   padding: "8px 8px 6px 8px", fontSize: 10, fontWeight: 600,
                   textTransform: "uppercase", letterSpacing: "0.06em", color: C.fontLight,
                 }}>
-                  {section.label}
+                  {resolveLabel(section.label)}
                 </div>
               )}
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>

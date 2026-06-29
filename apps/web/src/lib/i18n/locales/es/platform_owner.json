@@ -1,4 +1,17 @@
 {
+  "nav": {
+    "dashboard": "Panel",
+    "users": "Usuarios",
+    "schools": "Escuelas",
+    "coaches": "Coaches",
+    "courses": "Cursos",
+    "careers": "Carreras",
+    "questions": "Preguntas 360",
+    "transactions": "Transacciones",
+    "payouts": "Pagos",
+    "plans": "Planes",
+    "analytics": "Análisis"
+  },
   "dashboard": {
     "title": "Panel de control",
     "subtitle": "Vista general de la plataforma y accesos rápidos",
