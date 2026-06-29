@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useCareerDetails } from "@/hooks/useCareerQueries";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "motion/react";
@@ -55,6 +56,7 @@ interface CareerDetailData {
 const looksLikeId = (s: string) => /^[A-Z]{2,5}-?\d{2,4}$/.test(s.trim());
 
 export default function CareerDetails() {
+  const { t } = useTranslation();
   const params = useParams();
   const id = Array.isArray(params?.id) ? params?.id[0] : params?.id ?? "";
   const { data: rawData, isLoading } = useCareerDetails(id);
@@ -68,7 +70,7 @@ export default function CareerDetails() {
             className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
             style={{ borderColor: BRAND_BLUE }}
           />
-          <p className="text-gray-600 font-medium">Loading career details...</p>
+          <p className="text-gray-600 font-medium">{t("careers.details.loading")}</p>
         </div>
       </div>
     );
@@ -81,20 +83,20 @@ export default function CareerDetails() {
   if (!career) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Career Not Found</h2>
-        <p className="text-gray-600 mb-6">The career you are looking for does not exist.</p>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">{t("careers.details.notFoundTitle")}</h2>
+        <p className="text-gray-600 mb-6">{t("careers.details.notFoundBody")}</p>
         <button
           onClick={() => router.back()}
           className="px-4 py-2 text-white rounded-lg"
           style={{ backgroundColor: BRAND_BLUE }}
         >
-          Go Back
+          {t("careers.details.goBack")}
         </button>
       </div>
     );
   }
 
-  const title = (career.programTitle as string) || "Career";
+  const title = (career.programTitle as string) || t("careers.details.careerFallback");
   const cluster = ((career.cluster as string) || "").replace(/_/g, " ");
   const interests = (career.interest_fit as string[]) || [];
   const motivators = (career.motivator_fit as string[]) || [];
@@ -105,12 +107,12 @@ export default function CareerDetails() {
   const confidence = studentMatch?.confidence ?? "";
   const confLabel =
     confidence === "high"
-      ? "Excellent Match"
+      ? t("careers.details.matchExcellent")
       : confidence === "good"
-        ? "Strong Match"
+        ? t("careers.details.matchStrong")
         : confidence === "moderate"
-          ? "Good Match"
-          : "Match";
+          ? t("careers.details.matchGood")
+          : t("careers.details.match");
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-gray-50 pb-12">
@@ -121,7 +123,7 @@ export default function CareerDetails() {
             onClick={() => router.back()}
             className="flex items-center text-white/80 hover:text-white transition-colors mb-5 text-sm font-medium"
           >
-            <ArrowLeft className="w-4 h-4 mr-1" /> Back to Careers
+            <ArrowLeft className="w-4 h-4 mr-1" /> {t("careers.details.backToCareers")}
           </button>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
@@ -150,10 +152,10 @@ export default function CareerDetails() {
                   <>
                     <div className="h-12 w-px bg-white/20" />
                     <div className="space-y-1.5 w-44">
-                      <MatchBar label="Personality" value={breakdown.discScore} />
-                      <MatchBar label="Cognitive" value={breakdown.milScore} />
-                      <MatchBar label="Interests" value={breakdown.interestsScore} />
-                      <MatchBar label="Motivators" value={breakdown.motivatorsScore} />
+                      <MatchBar label={t("careers.details.barPersonality")} value={breakdown.discScore} />
+                      <MatchBar label={t("careers.details.barCognitive")} value={breakdown.milScore} />
+                      <MatchBar label={t("careers.details.barInterests")} value={breakdown.interestsScore} />
+                      <MatchBar label={t("careers.details.barMotivators")} value={breakdown.motivatorsScore} />
                     </div>
                   </>
                 )}
@@ -174,7 +176,7 @@ export default function CareerDetails() {
                 style={{ backgroundColor: "rgba(6,82,146,0.04)", borderColor: "rgba(6,82,146,0.2)" }}
               >
                 <h2 className="text-base font-bold mb-2 flex items-center gap-2" style={{ color: BRAND_BLUE }}>
-                  <Sparkles className="w-5 h-5" /> Why this fits you
+                  <Sparkles className="w-5 h-5" /> {t("careers.details.whyFits")}
                 </h2>
                 <p className="text-gray-700 leading-relaxed text-sm">{studentMatch.aiInsight}</p>
               </div>
@@ -182,14 +184,14 @@ export default function CareerDetails() {
 
             {/* Overview */}
             {profile?.overview && (
-              <Section icon={<BookOpen />} title="About this Career">
+              <Section icon={<BookOpen />} title={t("careers.details.aboutTitle")}>
                 <p className="text-gray-600 leading-relaxed">{profile.overview}</p>
               </Section>
             )}
 
             {/* What You'd Do */}
             {profile?.whatYouDo && profile.whatYouDo.length > 0 && (
-              <Section icon={<Target />} title="What You'd Do">
+              <Section icon={<Target />} title={t("careers.details.whatYouDo")}>
                 <ul className="space-y-3">
                   {profile.whatYouDo.map((r, i) => (
                     <li key={i} className="flex items-start gap-3">
@@ -203,14 +205,14 @@ export default function CareerDetails() {
 
             {/* Day in the Life */}
             {profile?.dayInLife && (
-              <Section icon={<Compass />} title="A Day in the Life">
+              <Section icon={<Compass />} title={t("careers.details.dayInLife")}>
                 <p className="text-gray-600 leading-relaxed">{profile.dayInLife}</p>
               </Section>
             )}
 
             {/* Key Strengths */}
             {profile?.keyStrengths && profile.keyStrengths.length > 0 && (
-              <Section icon={<Zap />} title="Key Strengths">
+              <Section icon={<Zap />} title={t("careers.details.keyStrengths")}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {profile.keyStrengths.map((s, i) => (
                     <div key={i} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
@@ -224,9 +226,9 @@ export default function CareerDetails() {
 
             {/* No profile fallback — show catalog basics */}
             {!profile && (
-              <Section icon={<BookOpen />} title="About this Career">
+              <Section icon={<BookOpen />} title={t("careers.details.aboutTitle")}>
                 <p className="text-gray-600 leading-relaxed">
-                  {title} is part of the {cluster} cluster. Detailed guidance for this career is being prepared.
+                  {t("careers.details.noProfileFallback", { title, cluster })}
                 </p>
               </Section>
             )}
@@ -236,7 +238,7 @@ export default function CareerDetails() {
           <div className="space-y-6">
             {/* Salary */}
             {profile?.typicalSalaryRange && (
-              <SideCard icon={<DollarSign className="w-4 h-4" />} title="Typical Salary Range">
+              <SideCard icon={<DollarSign className="w-4 h-4" />} title={t("careers.details.salaryRange")}>
                 <p className="text-sm font-semibold" style={{ color: BRAND_BLUE }}>
                   {profile.typicalSalaryRange}
                 </p>
@@ -245,14 +247,14 @@ export default function CareerDetails() {
 
             {/* Job Outlook */}
             {profile?.jobOutlook && (
-              <SideCard icon={<TrendingUp className="w-4 h-4" />} title="Job Outlook">
+              <SideCard icon={<TrendingUp className="w-4 h-4" />} title={t("careers.details.jobOutlook")}>
                 <p className="text-sm text-gray-700 leading-relaxed">{profile.jobOutlook}</p>
               </SideCard>
             )}
 
             {/* Education Pathways */}
             {profile?.educationPathways && profile.educationPathways.length > 0 && (
-              <SideCard icon={<GraduationCap className="w-4 h-4" />} title="Education Pathways">
+              <SideCard icon={<GraduationCap className="w-4 h-4" />} title={t("careers.details.educationPathways")}>
                 <div className="space-y-2">
                   {profile.educationPathways.map((p, i) => (
                     <div key={i} className="flex items-start gap-2 text-sm text-gray-700">
@@ -266,7 +268,7 @@ export default function CareerDetails() {
 
             {/* Related Careers */}
             {profile?.relatedCareers && profile.relatedCareers.length > 0 && (
-              <SideCard icon={<Users className="w-4 h-4" />} title="Related Careers">
+              <SideCard icon={<Users className="w-4 h-4" />} title={t("careers.details.relatedCareers")}>
                 <div className="flex flex-wrap gap-1.5">
                   {profile.relatedCareers.map((rc) =>
                     looksLikeId(rc) ? (
@@ -294,11 +296,11 @@ export default function CareerDetails() {
 
             {/* Catalog profile (interests / motivators / preparation) */}
             {(interests.length > 0 || motivators.length > 0) && (
-              <SideCard icon={<Sparkles className="w-4 h-4" />} title="Career Profile">
+              <SideCard icon={<Sparkles className="w-4 h-4" />} title={t("careers.details.careerProfile")}>
                 <div className="space-y-4">
                   {interests.length > 0 && (
                     <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Interests</p>
+                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">{t("careers.details.interests")}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {interests.map((i) => (
                           <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full capitalize">
@@ -310,7 +312,7 @@ export default function CareerDetails() {
                   )}
                   {motivators.length > 0 && (
                     <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Motivators</p>
+                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">{t("careers.details.motivators")}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {motivators.map((m) => (
                           <span key={m} className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded-full capitalize">
@@ -326,7 +328,7 @@ export default function CareerDetails() {
 
             {/* Preparation path from catalog bridging_paths */}
             {bridgingPaths && (
-              <SideCard icon={<GraduationCap className="w-4 h-4" />} title="Preparation Path">
+              <SideCard icon={<GraduationCap className="w-4 h-4" />} title={t("careers.details.preparationPath")}>
                 <div className="space-y-2">
                   {bridgingPaths.split(";").map((path, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-gray-700">

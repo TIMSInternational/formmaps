@@ -1678,7 +1678,37 @@
   },
   "careers": {
     "title": "Carreras",
-    "subtitle": "Explora rutas profesionales e información sobre roles"
+    "subtitle": "Explora rutas profesionales e información sobre roles",
+    "details": {
+      "loading": "Cargando detalles de la carrera...",
+      "notFoundTitle": "Carrera no encontrada",
+      "notFoundBody": "La carrera que buscas no existe.",
+      "goBack": "Volver",
+      "careerFallback": "Carrera",
+      "backToCareers": "Volver a Carreras",
+      "match": "Coincidencia",
+      "matchExcellent": "Coincidencia excelente",
+      "matchStrong": "Coincidencia fuerte",
+      "matchGood": "Buena coincidencia",
+      "barPersonality": "Personalidad",
+      "barCognitive": "Cognitivo",
+      "barInterests": "Intereses",
+      "barMotivators": "Motivadores",
+      "whyFits": "Por qué encaja contigo",
+      "aboutTitle": "Acerca de esta carrera",
+      "whatYouDo": "Lo que harías",
+      "dayInLife": "Un día en la vida",
+      "keyStrengths": "Fortalezas clave",
+      "noProfileFallback": "{{title}} forma parte del grupo {{cluster}}. Estamos preparando una guía detallada para esta carrera.",
+      "salaryRange": "Rango salarial típico",
+      "jobOutlook": "Perspectiva laboral",
+      "educationPathways": "Rutas educativas",
+      "relatedCareers": "Carreras relacionadas",
+      "careerProfile": "Perfil de carrera",
+      "interests": "Intereses",
+      "motivators": "Motivadores",
+      "preparationPath": "Ruta de preparación"
+    }
   },
   "compare": {
     "selectedCount": "{{count}} seleccionadas",
