@@ -335,7 +335,30 @@
       }
     }
   },
+  "notifications": {
+    "seed": {
+      "welcomeTitle": "Te damos la bienvenida a FORMMAPS",
+      "welcomeDesc": "Completa tus evaluaciones para desbloquear recomendaciones personalizadas de carrera y universidad.",
+      "careersTitle": "Explora rutas profesionales",
+      "careersDesc": "Tus 10 mejores coincidencias de carrera están listas. Revisa el Explorador de Carreras para ver tus resultados.",
+      "universityTitle": "Recomendaciones de universidades",
+      "universityDesc": "Encontramos universidades que coinciden con tu perfil. Visita el Buscador de Universidades para explorar.",
+      "resumeTitle": "Construye tu currículum",
+      "resumeDesc": "Usa nuestro generador de currículum con IA para crear un currículum profesional para tu carrera objetivo."
+    }
+  },
   "dashboard": {
+    "journey": {
+      "title": "Tu trayecto",
+      "assessmentsTitle": "Completa las evaluaciones",
+      "assessmentsDesc": "Realiza las evaluaciones PCA y MIL para descubrir tus fortalezas",
+      "careersTitle": "Explora rutas profesionales",
+      "careersDesc": "Explora carreras que coinciden con tu perfil e intereses",
+      "learningTitle": "Empieza a aprender",
+      "learningDesc": "Inscríbete en cursos para desarrollar habilidades para tu carrera objetivo",
+      "portfolioTitle": "Construye tu portafolio",
+      "portfolioDesc": "Crea tu currículum y muestra tus logros"
+    },
     "title": "Panel de Control",
     "welcome": "Bienvenido a tu panel de control",
     "studentPortal": "Portal Estudiantil",

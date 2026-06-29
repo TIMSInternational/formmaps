@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Bell,
@@ -54,37 +55,37 @@ function getDismissedIds(): Set<string> {
 }
 
 // Generate contextual notifications based on what data is available
-function generateNotifications(): Notification[] {
+function generateNotifications(t: TFunction): Notification[] {
   const now = new Date().toISOString();
   const notifications: Notification[] = [
     {
       id: "welcome",
-      title: "Welcome to FORMMAPS",
-      description: "Complete your assessments to unlock personalized career and university recommendations.",
+      title: t("notifications.seed.welcomeTitle"),
+      description: t("notifications.seed.welcomeDesc"),
       type: "system",
       read: false,
       createdAt: now,
     },
     {
       id: "explore-careers",
-      title: "Explore Career Paths",
-      description: "Your top 10 career matches are ready. Check the Career Explorer to see your results.",
+      title: t("notifications.seed.careersTitle"),
+      description: t("notifications.seed.careersDesc"),
       type: "career",
       read: false,
       createdAt: now,
     },
     {
       id: "university-finder",
-      title: "University Recommendations",
-      description: "We found universities matching your profile. Visit the University Finder to explore.",
+      title: t("notifications.seed.universityTitle"),
+      description: t("notifications.seed.universityDesc"),
       type: "university",
       read: false,
       createdAt: now,
     },
     {
       id: "build-resume",
-      title: "Build Your Resume",
-      description: "Use our AI-powered resume builder to create a professional resume for your target career.",
+      title: t("notifications.seed.resumeTitle"),
+      description: t("notifications.seed.resumeDesc"),
       type: "course",
       read: false,
       createdAt: now,
@@ -105,11 +106,11 @@ export function NotificationCenter() {
     if (stored.length > 0) {
       setNotifications(stored.filter((n) => !dismissed.has(n.id)));
     } else {
-      const generated = generateNotifications();
+      const generated = generateNotifications(t);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(generated));
       setNotifications(generated);
     }
-  }, []);
+  }, [t]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
