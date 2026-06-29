@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
@@ -27,17 +27,21 @@ import { AuthErrorMessage } from "@/components/ui/error-message";
 import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
 import { Eye, EyeOff } from "lucide-react";
 
-const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormData = { email: string; password: string };
 
 export default function LoginPage() {
   const { t } = useTranslation();
+  const loginSchema = useMemo(
+    () =>
+      z.object({
+        email: z
+          .string()
+          .min(1, t("auth.validation.emailRequired"))
+          .email(t("auth.validation.emailInvalid")),
+        password: z.string().min(8, t("auth.validation.passwordMin")),
+      }),
+    [t],
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -87,7 +91,7 @@ export default function LoginPage() {
       const message =
         err.response?.data?.message ||
         err.message ||
-        "Login failed. Please try again.";
+        t("auth.errors.loginFailed");
       setApiError(message);
     }
   };
@@ -159,7 +163,7 @@ export default function LoginPage() {
                         {t("auth.login.passwordLabel")}
                       </FormLabel>
                       <Link href="/forgot-password" className="text-xs no-underline" style={{ color: "#065292" }}>
-                        Forgot password?
+                        {t("auth.login.forgotPassword")}
                       </Link>
                     </div>
                     <div className="relative">
@@ -179,7 +183,7 @@ export default function LoginPage() {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer flex items-center"
                         style={{ color: "#999" }}
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-label={showPassword ? t("auth.password.hide") : t("auth.password.show")}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
