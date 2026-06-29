@@ -1256,13 +1256,13 @@
       "successUrlLabel": "URL de éxito",
       "cancelUrlLabel": "URL de cancelación",
       "baseUrlLabel": "URL base",
-      "urlGenerationFailedTitle": "❌ URL Generation Failed",
-      "quickFixesIfInvalid": "If URLs are invalid",
+      "urlGenerationFailedTitle": "❌ Fallo al generar URLs",
+      "quickFixesIfInvalid": "Si las URLs son inválidas",
       "quickFixes": {
-        "checkDomain": "Check that you're running on a proper domain (not localhost for production)",
-        "ensureBaseUrl": "Ensure NEXT_PUBLIC_API_BASE_URL is set correctly",
-        "includeProtocol": "Make sure the domain includes https:// protocol",
-        "verifyDeployment": "Verify your deployment URL is accessible"
+        "checkDomain": "Verifica que estés ejecutando en un dominio apropiado (no localhost en producción)",
+        "ensureBaseUrl": "Asegúrate de que NEXT_PUBLIC_API_BASE_URL esté configurado correctamente",
+        "includeProtocol": "Asegúrate de que el dominio incluya el protocolo https://",
+        "verifyDeployment": "Verifica que la URL de despliegue sea accesible"
       }
     },
     "plans": {
@@ -1314,7 +1314,7 @@
       "headerTitle": "Panel de Administración",
       "userDashboard": "Panel de Usuario",
       "logout": "Cerrar sesión",
-      "superAdmin": "Super Admin",
+      "superAdmin": "Super Administrador",
       "nav": {
         "dashboard": "Panel",
         "plans": "Planes de Suscripción",
@@ -1435,7 +1435,7 @@
       "singleTitle": "Invitar coach individual",
       "singleDescription": "Envía una invitación por correo a un nuevo coach.",
       "fullName": "Nombre completo",
-      "namePlaceholder": "John Doe",
+      "namePlaceholder": "Juan Pérez",
       "email": "Correo electrónico",
       "emailPlaceholder": "coach@ejemplo.com",
       "contractStart": "Fecha Inicio de Contrato",
@@ -1469,7 +1469,7 @@
         "all": "Todos los roles",
         "student": "Estudiante",
         "coach": "Coach",
-        "admin": "Admin"
+        "admin": "Administrador"
       },
       "status": {
         "all": "Todos",
@@ -1496,20 +1496,20 @@
         "editDetails": "Editar detalles",
         "deactivateUser": "Desactivar usuario"
       },
-      "dialogTitle": "Add New User",
-      "dialogDescription": "Create a new user account. They will receive their login credentials.",
-      "nameLabel": "Full Name *",
-      "namePlaceholder": "Enter full name",
-      "emailPlaceholder": "Enter email address",
-      "passwordLabel": "Password *",
-      "passwordPlaceholder": "Enter password",
-      "passwordHint": "Password must be at least 6 characters with uppercase, lowercase, and number.",
-      "creating": "Creating...",
-      "createUser": "Create User",
-      "fillRequired": "Please fill in all required fields",
-      "success": "User created successfully!",
-      "error": "Failed to create user",
-      "openMenu": "Open menu"
+      "dialogTitle": "Agregar nuevo usuario",
+      "dialogDescription": "Crea una nueva cuenta de usuario. Recibirá sus credenciales de acceso.",
+      "nameLabel": "Nombre completo *",
+      "namePlaceholder": "Ingresa el nombre completo",
+      "emailPlaceholder": "Ingresa el correo electrónico",
+      "passwordLabel": "Contraseña *",
+      "passwordPlaceholder": "Ingresa la contraseña",
+      "passwordHint": "La contraseña debe tener al menos 6 caracteres con mayúscula, minúscula y número.",
+      "creating": "Creando...",
+      "createUser": "Crear usuario",
+      "fillRequired": "Por favor completa todos los campos obligatorios",
+      "success": "¡Usuario creado con éxito!",
+      "error": "No se pudo crear el usuario",
+      "openMenu": "Abrir menú"
     },
     "careers": {
       "title": "Carreras",
@@ -1937,7 +1937,7 @@
     "invalidUrl": "Por favor ingresa una URL válida",
     "success": "Trabajo de importación iniciado. Verifica el estado en breve.",
     "failure": "No se pudo iniciar la importación. Intenta de nuevo.",
-    "started": "Import job started ({{jobId}}). Check status in a moment."
+    "started": "Trabajo de importación iniciado ({{jobId}}). Revisa el estado en un momento."
   },
   "profile": {
     "personalInfoTitle": "Información personal",
