@@ -1,5 +1,6 @@
 // Auth service — powered by FormMaps API (Node.js + Prisma backend)
 import { storeTokens, clearTokens } from "@/services/tokenRefreshService";
+import { applyLanguage } from "@/lib/i18n/useSetLanguage";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
@@ -62,7 +63,12 @@ export async function login(email: string, password: string): Promise<LoginRespo
     throw new Error(result.message || "Login failed");
   }
 
-  const { token, refreshToken, user } = result.data;
+  const { token, refreshToken, user, language } = result.data;
+
+  // Apply the user's preferred language immediately on login (write-free — no PUT back).
+  if (language === "en" || language === "es") {
+    applyLanguage(language);
+  }
 
   // Store tokens for auto-refresh
   if (refreshToken) {

@@ -108,7 +108,27 @@
     "securityNotice": "Su información de pago está segura y cifrada",
     "initializing": "Inicializando...",
     "payWithCard": "Pagar con Tarjeta",
-    "cardElementNotFound": "Elemento de tarjeta no encontrado"
+    "cardElementNotFound": "Elemento de tarjeta no encontrado",
+    "verifying": "Verifying Payment...",
+    "pleaseWait": "Please wait while we confirm your payment.",
+    "successTitle": "Payment Successful! 🎉",
+    "successSubscription": "Thank you for your payment. Your subscription is now active.",
+    "successSession": "Thank you for your payment. Your coaching session has been booked.",
+    "details": "Payment Details",
+    "amount": "Amount:",
+    "description": "Description:",
+    "date": "Date:",
+    "continueToDashboard": "Continue to Dashboard",
+    "viewMySessions": "View My Sessions",
+    "failedTitle": "Payment Failed",
+    "failedText": "There was an issue with your payment. Please try again.",
+    "tryAgain": "Try Again",
+    "backToDashboard": "Back to Dashboard",
+    "cancelledTitle": "Payment Cancelled",
+    "cancelledText": "Your payment was cancelled. No charges were made to your account. You can try again anytime.",
+    "errorTitle": "Verification Error",
+    "errorText": "Unable to verify payment status. Please contact support if you were charged.",
+    "freeTrial": "Free trial started — no charge today. Cancel anytime before it ends."
   },
   "evaluation": {
     "noReportData": "Datos del informe no disponibles",
@@ -1050,7 +1070,15 @@
       "fix4": "Verifica que la URL de despliegue sea accesible",
       "successUrlLabel": "URL de éxito",
       "cancelUrlLabel": "URL de cancelación",
-      "baseUrlLabel": "URL base"
+      "baseUrlLabel": "URL base",
+      "urlGenerationFailedTitle": "❌ URL Generation Failed",
+      "quickFixesIfInvalid": "If URLs are invalid",
+      "quickFixes": {
+        "checkDomain": "Check that you're running on a proper domain (not localhost for production)",
+        "ensureBaseUrl": "Ensure NEXT_PUBLIC_API_BASE_URL is set correctly",
+        "includeProtocol": "Make sure the domain includes https:// protocol",
+        "verifyDeployment": "Verify your deployment URL is accessible"
+      }
     },
     "plans": {
       "editTitle": "Editar plan",
@@ -1282,7 +1310,21 @@
         "viewProfile": "Ver perfil",
         "editDetails": "Editar detalles",
         "deactivateUser": "Desactivar usuario"
-      }
+      },
+      "dialogTitle": "Add New User",
+      "dialogDescription": "Create a new user account. They will receive their login credentials.",
+      "nameLabel": "Full Name *",
+      "namePlaceholder": "Enter full name",
+      "emailPlaceholder": "Enter email address",
+      "passwordLabel": "Password *",
+      "passwordPlaceholder": "Enter password",
+      "passwordHint": "Password must be at least 6 characters with uppercase, lowercase, and number.",
+      "creating": "Creating...",
+      "createUser": "Create User",
+      "fillRequired": "Please fill in all required fields",
+      "success": "User created successfully!",
+      "error": "Failed to create user",
+      "openMenu": "Open menu"
     },
     "careers": {
       "title": "Carreras",
@@ -1542,7 +1584,8 @@
     "importing": "Importando...",
     "invalidUrl": "Por favor ingresa una URL válida",
     "success": "Trabajo de importación iniciado. Verifica el estado en breve.",
-    "failure": "No se pudo iniciar la importación. Intenta de nuevo."
+    "failure": "No se pudo iniciar la importación. Intenta de nuevo.",
+    "started": "Import job started ({{jobId}}). Check status in a moment."
   },
   "profile": {
     "personalInfoTitle": "Información personal",
@@ -2016,6 +2059,7 @@
         "maxStudents": "Capacidad de Estudiantes",
         "contractStart": "Inicio del Contrato",
         "contractEnd": "Fin del Contrato",
+        "contractPeriod": "Período de Contrato",
         "loadError": "No se pudo cargar la información de la escuela"
       },
       "profile": {
@@ -2026,7 +2070,8 @@
         "phone": "Teléfono",
         "phonePlaceholder": "+52 123 456 7890",
         "update": "Actualizar Perfil",
-        "updating": "Actualizando...",
+        "updating": "Guardando...",
+        "fillRequired": "Por favor completa al menos un campo",
         "success": "Perfil actualizado exitosamente",
         "error": "Error al actualizar el perfil"
       },
@@ -2041,6 +2086,8 @@
         "confirmPlaceholder": "Confirma la nueva contraseña",
         "change": "Cambiar Contraseña",
         "changing": "Cambiando...",
+        "fillRequired": "Por favor completa todos los campos de contraseña",
+        "minLength": "La contraseña debe tener al menos 8 caracteres",
         "success": "Contraseña cambiada exitosamente",
         "error": "Error al cambiar la contraseña",
         "mismatch": "Las contraseñas no coinciden"
@@ -2091,5 +2138,70 @@
     "booked": "¡Sesión Reservada!",
     "confirmationMessage": "Tu sesión con el consejero ha sido confirmada.",
     "backToDashboard": "Volver al Panel"
+  },
+  "coach": {
+    "greeting": {
+      "morning": "Good Morning",
+      "afternoon": "Good Afternoon",
+      "evening": "Good Evening"
+    },
+    "defaultName": "Coach",
+    "upcomingSessions": "You have {{count}} upcoming sessions",
+    "manageAvailability": "Manage Availability",
+    "editAvailability": "Edit Availability",
+    "stats": {
+      "totalSessions": "Total Sessions",
+      "activeStudents": "Active Students",
+      "sessions": "sessions",
+      "students": "students"
+    },
+    "sessions": {
+      "title": "Your Sessions",
+      "description": "Manage your coaching schedule",
+      "upcoming": "Upcoming",
+      "nextSession": "next session soon",
+      "noSessions": "no sessions",
+      "completed": "Completed",
+      "lifetime": "lifetime",
+      "date": "Date",
+      "time": "Time",
+      "noUpcomingTitle": "No upcoming sessions",
+      "noScheduled": "You don't have any scheduled sessions yet.",
+      "takeABreak": "Time to take a break!",
+      "noPastTitle": "No past sessions",
+      "historyPlaceholder": "Your history will appear here.",
+      "availableTimes": "Available Times",
+      "noAvailableSlots": "No available slots for this date",
+      "rescheduleTitle": "Reschedule Session",
+      "rescheduleDescription": "Select a new date and time for {{name}}",
+      "confirmed": "Confirmed"
+    },
+    "actions": {
+      "reschedule": "Reschedule",
+      "joinCall": "Join Call",
+      "viewNotes": "View Notes",
+      "confirmReschedule": "Confirm Reschedule"
+    }
+  },
+  "shell": {
+    "collapseSidebar": "Contraer barra lateral",
+    "expandSidebar": "Expandir barra lateral",
+    "navigationTab": "Navegación",
+    "chatHistoryTab": "Historial de chat",
+    "newChat": "Nuevo chat",
+    "signOut": "Cerrar sesión",
+    "settings": "Configuración",
+    "noChatsYet": "Aún no hay chats",
+    "startChat": "Iniciar un chat",
+    "searchShortcut": "Buscar (Cmd+K)",
+    "workspace": "Área de trabajo",
+    "askAi": "Preguntar a la IA",
+    "notifications": "Notificaciones",
+    "markAllRead": "Marcar todo como leído",
+    "noNotifications": "Sin notificaciones",
+    "theme": "Tema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "themeSystem": "Sistema"
   }
 }

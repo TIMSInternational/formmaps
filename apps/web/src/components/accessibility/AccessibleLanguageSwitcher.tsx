@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { FiGlobe, FiCheck } from "react-icons/fi";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useSetLanguage } from "@/lib/i18n/useSetLanguage";
 
 /**
  * AccessibleLanguageSwitcher - WCAG AA compliant language selector
@@ -15,6 +16,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
  */
 export function AccessibleLanguageSwitcher() {
   const { i18n, t } = useTranslation();
+  const setLanguage = useSetLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -65,10 +67,10 @@ export function AccessibleLanguageSwitcher() {
   }, [isOpen, currentIndex]);
 
   const handleLanguageChange = useCallback((languageCode: string) => {
-    i18n.changeLanguage(languageCode);
+    setLanguage(languageCode as "en" | "es");
     setIsOpen(false);
     buttonRef.current?.focus();
-  }, [i18n]);
+  }, [setLanguage]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) {
