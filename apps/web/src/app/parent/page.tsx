@@ -19,7 +19,7 @@ import type { ParentChildLink, ParentProfile } from "@/types/parentPortal";
 
 
 export default function ParentDashboard() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("parent");
   const router = useRouter();
 
   const { data: profile, isLoading: loadingProfile } = useParentProfile();
@@ -52,13 +52,13 @@ export default function ParentDashboard() {
         className="flex items-start justify-between gap-4"
       >
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Parent</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("dashboard.badge")}</p>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-            {t("parent.welcome", "Welcome back")},{" "}
+            {t("dashboard.welcome")},{" "}
             <span className="text-indigo-500">{profile?.name || "Parent"}</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {t("parent.dashboardSubtitle", "Track your children's academic progress and upcoming tasks.")}
+            {t("dashboard.subtitle")}
           </p>
         </div>
 
@@ -72,7 +72,7 @@ export default function ParentDashboard() {
               <Users className="h-4 w-4 text-indigo-500" strokeWidth={1.8} />
             </div>
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {t("parent.children", "Children")}
+              {t("dashboard.children")}
             </span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">{children.length}</p>
@@ -84,7 +84,7 @@ export default function ParentDashboard() {
               <FileCheck className="h-4 w-4 text-amber-500" strokeWidth={1.8} />
             </div>
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {t("parent.pendingEvaluations", "Pending Evaluations")}
+              {t("dashboard.pendingEvaluations")}
             </span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">
@@ -98,7 +98,7 @@ export default function ParentDashboard() {
               <TrendingUp className="h-4 w-4 text-emerald-500" strokeWidth={1.8} />
             </div>
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {t("parent.enrolled", "Enrolled")}
+              {t("dashboard.enrolled")}
             </span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">{children.length}</p>
@@ -110,7 +110,7 @@ export default function ParentDashboard() {
               <AlertTriangle className="h-4 w-4 text-red-500" strokeWidth={1.8} />
             </div>
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              {t("parent.needsAttention", "Needs Attention")}
+              {t("dashboard.needsAttention")}
             </span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">
@@ -122,12 +122,12 @@ export default function ParentDashboard() {
       {/* Children Overview */}
       <div>
         <h2 className="text-xl font-semibold text-foreground mb-4">
-          {t("parent.childrenOverview", "Children Overview")}
+          {t("dashboard.childrenOverview")}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {children.length === 0 ? (
             <div className="col-span-2 dash-card py-12 text-center text-muted-foreground">
-              {t("parent.noChildren", "No children linked to your account yet.")}
+              {t("dashboard.noChildren")}
             </div>
           ) : (
             children.map((child) => (
@@ -155,13 +155,13 @@ export default function ParentDashboard() {
                       <div className="flex items-center gap-2">
                         <GraduationCap className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">
-                          {t("parent.grade", "Grade")} {child.gradeLevel || "-"}
+                          {t("dashboard.grade")} {child.gradeLevel || "-"}
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center text-sm text-indigo-500 font-medium pt-1">
-                      {t("parent.viewDetails", "View Details")}
+                      {t("dashboard.viewDetails")}
                       <ChevronRight className="h-4 w-4 ml-1" />
                     </div>
                   </div>
@@ -176,7 +176,7 @@ export default function ParentDashboard() {
       {pendingEvals && pendingEvals.length > 0 && (
         <div>
           <h2 className="text-xl font-semibold text-foreground mb-4">
-            {t("parent.pendingEvals", "Pending 360° Evaluations")}
+            {t("dashboard.pendingEvalsTitle")}
           </h2>
           <div className="space-y-3">
             {pendingEvals.map(
@@ -184,11 +184,11 @@ export default function ParentDashboard() {
                 <div key={evaluation.evaluationId} className="dash-card p-4 flex items-center justify-between">
                   <div>
                     <p className="font-medium text-foreground">
-                      {t("parent.evaluationFor", "360° Evaluation for")}{" "}
+                      {t("dashboard.evaluationFor")}{" "}
                       {evaluation.studentName}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {t("parent.dueBy", "Due by")}:{" "}
+                      {t("dashboard.dueBy")}:{" "}
                       {new Date(evaluation.deadline).toLocaleDateString()}
                     </p>
                   </div>
@@ -200,7 +200,7 @@ export default function ParentDashboard() {
                     }
                     size="sm"
                   >
-                    {t("parent.completeEvaluation", "Complete Evaluation")}
+                    {t("dashboard.completeEvaluation")}
                   </Button>
                 </div>
               )
