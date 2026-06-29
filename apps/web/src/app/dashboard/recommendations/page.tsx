@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -13,6 +14,7 @@ import RecommendationRequestForm from "./_components/RecommendationRequestForm";
 import RecommendationList from "./_components/RecommendationList";
 
 export default function RecommendationsPage() {
+  const { t } = useTranslation("student");
   const [requests, setRequests] = useState<RecommendationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -22,7 +24,7 @@ export default function RecommendationsPage() {
       const data = await listMyRecommendations();
       setRequests(Array.isArray(data) ? data : []);
     } catch {
-      toast.error("Failed to load recommendation requests");
+      toast.error(t("recommendations.failedToLoad"));
     } finally {
       setLoading(false);
     }
@@ -64,13 +66,13 @@ export default function RecommendationsPage() {
       >
         <div className="flex flex-col gap-1">
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-            Applications
+            {t("recommendations.badge")}
           </span>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-none">
-            Letters of Recommendation
+            {t("recommendations.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Request and track letters from your counselors and teachers.
+            {t("recommendations.subtitle")}
           </p>
         </div>
         <button
@@ -92,7 +94,7 @@ export default function RecommendationsPage() {
           }}
         >
           <Plus style={{ width: 14, height: 14 }} />
-          Request Letter
+          {t("recommendations.requestLetter")}
         </button>
       </motion.div>
 
