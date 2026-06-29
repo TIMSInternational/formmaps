@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { getVocationalForm, submitVocationalAnswers, VocationalForm, VocationalQuestionItem, VocationalSubmitAnswer } from "@/services/vocationalTakeService";
 import { VocationalQuestionCard, VocationalAnswerValue } from "./VocationalQuestionCard";
 
@@ -14,6 +15,7 @@ function toAnswer(q: VocationalQuestionItem, v: VocationalAnswerValue): Vocation
 }
 
 export function VocationalEvaluator({ token }: { token: string; language?: string }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState<VocationalForm | null>(null);
   const [responses, setResponses] = useState<Record<number, VocationalAnswerValue>>({});
   const [loading, setLoading] = useState(true);
@@ -39,9 +41,9 @@ export function VocationalEvaluator({ token }: { token: string; language?: strin
 
   useEffect(() => { load(); }, [load]);
 
-  if (loading) return <div className="p-8 text-center text-muted-foreground" role="status">Loading…</div>;
-  if (error) return <div className="p-8 text-center" role="alert">Couldn&apos;t load this evaluation.</div>;
-  if (form?.completed || done) return <div className="p-8 text-center"><h2 className="text-lg font-bold text-foreground">Already submitted</h2><p className="text-sm text-muted-foreground">Thank you — this evaluation is complete.</p></div>;
+  if (loading) return <div className="p-8 text-center text-muted-foreground" role="status">{t("evaluation.vocational.loading")}</div>;
+  if (error) return <div className="p-8 text-center" role="alert">{t("evaluation.vocational.loadError")}</div>;
+  if (form?.completed || done) return <div className="p-8 text-center"><h2 className="text-lg font-bold text-foreground">{t("evaluation.vocational.alreadyTitle")}</h2><p className="text-sm text-muted-foreground">{t("evaluation.vocational.alreadyBody")}</p></div>;
 
   const questions = form?.questions ?? [];
   const setResp = (n: number, v: VocationalAnswerValue) => setResponses((p) => ({ ...p, [n]: v }));
@@ -52,18 +54,18 @@ export function VocationalEvaluator({ token }: { token: string; language?: strin
     try {
       await submitVocationalAnswers(token, answers);
       setDone(true);
-      toast.success("Evaluation submitted");
+      toast.success(t("evaluation.vocational.submitted"));
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Submit failed");
+      toast.error(e instanceof Error ? e.message : t("evaluation.vocational.submitFailed"));
     } finally { setSubmitting(false); }
   };
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
       <header className="space-y-1">
-        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Vocational 360</span>
-        <h1 className="text-2xl font-bold text-foreground">Evaluación de Orientación Vocacional</h1>
-        {form?.studentName && <p className="text-sm text-muted-foreground">Sobre: {form.studentName}</p>}
+        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("evaluation.vocational.label")}</span>
+        <h1 className="text-2xl font-bold text-foreground">{t("evaluation.vocational.title")}</h1>
+        {form?.studentName && <p className="text-sm text-muted-foreground">{t("evaluation.vocational.about", { name: form.studentName })}</p>}
       </header>
       {questions.map((q) => (
         <div key={q.number} className="dash-card p-4 space-y-3" style={{ background: "var(--admin-bg-card)" }}>
@@ -74,7 +76,7 @@ export function VocationalEvaluator({ token }: { token: string; language?: strin
       <button type="button" onClick={handleSubmit} disabled={submitting}
         className="w-full h-11 rounded-lg font-semibold text-white disabled:opacity-60"
         style={{ background: "#065292" }}>
-        {submitting ? "Enviando…" : "Enviar / Submit"}
+        {submitting ? t("evaluation.vocational.submitting") : t("evaluation.vocational.submit")}
       </button>
     </div>
   );
