@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Star, BookOpen, Clock, PartyPopper, Trash2, Plus, X } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
@@ -18,10 +19,12 @@ function formatShort(d: string) { return new Date(d).toLocaleDateString("en-US",
 function getDaysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate(); }
 function getFirstDayOfMonth(y: number, m: number) { return new Date(y, m, 1).getDay(); }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const TYPE_COLORS: Record<string, string> = { holiday: "#ef4444", break: "#f59e0b", professional_development: "#065292", exam: "#8b5cf6", event: "#10b981" };
+const TYPE_KEYS: Record<string, string> = { holiday: "holiday", break: "break", professional_development: "professionalDevelopment", exam: "exam", event: "event" };
+const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
 export default function AcademicCalendarPage() {
+  const { t } = useTranslation("school_admin");
   const [years, setYears] = useState<AcademicYear[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [assessments, setAssessments] = useState<AssessmentPeriod[]>([]);
@@ -71,27 +74,27 @@ export default function AcademicCalendarPage() {
 
   const handleAddHoliday = async (name: string, date: string, type: string, endDate?: string) => {
     if (!name || !date) return;
-    if (endDate && endDate < date) { toast.error("End date must be after the start date"); return; }
+    if (endDate && endDate < date) { toast.error(t("calendar.toast.endAfterStart")); return; }
     setSavingHoliday(true);
     try {
       const holiday: { name: string; date: string; type: string; endDate?: string } = { name, date, type };
       if (endDate && endDate > date) holiday.endDate = endDate;
       await apiRequest("/api/v1/school-admin/calendar/holidays", { method: "POST", data: { holidays: [holiday] } });
-      toast.success("Holiday added");
+      toast.success(t("calendar.toast.holidayAdded"));
       setHolidayName(""); setHolidayDate(""); setHolidayEndDate(""); setHolidayType("holiday");
       setShowHolidayForm(false);
       setQuickAddDate(null); setQuickAddName(""); setQuickAddType("holiday");
       refetch();
-    } catch { toast.error("Failed to add holiday"); }
+    } catch { toast.error(t("calendar.toast.holidayAddFailed")); }
     setSavingHoliday(false);
   };
 
   const handleDeleteHoliday = async (id: string) => {
     try {
       await apiRequest(`/api/v1/school-admin/calendar/holidays/${id}`, { method: "DELETE" });
-      toast.success("Holiday deleted");
+      toast.success(t("calendar.toast.holidayDeleted"));
       refetch();
-    } catch { toast.error("Failed to delete holiday"); }
+    } catch { toast.error(t("calendar.toast.holidayDeleteFailed")); }
   };
 
   const handleAddAssessment = async () => {
@@ -102,20 +105,20 @@ export default function AcademicCalendarPage() {
       const termId = currentAY?.terms?.[0]?.id || "";
       const name = `${assessmentType} — Grade ${assessmentGrade}`;
       await apiRequest("/api/v1/school-admin/calendar/assessment-periods", { method: "POST", data: { name, termId, assessmentTypes: [assessmentType], startDate: assessmentStart, endDate: assessmentEnd } });
-      toast.success("Assessment window added");
+      toast.success(t("calendar.toast.windowAdded"));
       setAssessmentType("PCA"); setAssessmentGrade("9"); setAssessmentStart(""); setAssessmentEnd("");
       setShowAssessmentForm(false);
       refetch();
-    } catch { toast.error("Failed to add assessment window"); }
+    } catch { toast.error(t("calendar.toast.windowAddFailed")); }
     setSavingAssessment(false);
   };
 
   const handleDeleteAssessment = async (id: string) => {
     try {
       await apiRequest(`/api/v1/school-admin/calendar/assessment-periods/${id}`, { method: "DELETE" });
-      toast.success("Assessment window deleted");
+      toast.success(t("calendar.toast.windowDeleted"));
       refetch();
-    } catch { toast.error("Failed to delete assessment window"); }
+    } catch { toast.error(t("calendar.toast.windowDeleteFailed")); }
   };
 
   const currentYear = years.find(y => y.isCurrent);
@@ -144,7 +147,7 @@ export default function AcademicCalendarPage() {
     spanEvents.push({ id: `term-${t.id}`, label: t.name, color: "#065292", startDate: new Date(t.startDate).toISOString().slice(0, 10), endDate: new Date(t.endDate).toISOString().slice(0, 10) });
   }
   for (const a of assessments) {
-    spanEvents.push({ id: `ap-${a.id}`, label: a.name || a.assessmentTypes?.join(", ") || "Assessment", color: "#8b5cf6", startDate: new Date(a.startDate).toISOString().slice(0, 10), endDate: new Date(a.endDate).toISOString().slice(0, 10) });
+    spanEvents.push({ id: `ap-${a.id}`, label: a.name || a.assessmentTypes?.join(", ") || t("calendar.assessmentsSection.fallback"), color: "#8b5cf6", startDate: new Date(a.startDate).toISOString().slice(0, 10), endDate: new Date(a.endDate).toISOString().slice(0, 10) });
   }
   for (const h of holidays) {
     if (!isMultiDay(h)) continue;
@@ -199,19 +202,19 @@ export default function AcademicCalendarPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>Academics</span>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>Academic Calendar</h1>
+        <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>{t("calendar.label")}</span>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>{t("calendar.title")}</h1>
         <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
-          {currentYear ? `${currentYear.name} — ${formatDate(currentYear.startDate)} to ${formatDate(currentYear.endDate)}` : "No academic year configured"}
+          {currentYear ? t("calendar.yearRange", { name: currentYear.name, start: formatDate(currentYear.startDate), end: formatDate(currentYear.endDate) }) : t("calendar.noYear")}
         </p>
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
         {[
-          { label: "Academic Year", value: currentYear?.name || "—", icon: Star, color: "#065292" },
-          { label: "Terms", value: allTerms.length.toString(), icon: BookOpen, color: "#10b981" },
-          { label: "Holidays", value: holidays.length.toString(), icon: PartyPopper, color: "#ef4444" },
-          { label: "Assessment Windows", value: assessments.length.toString(), icon: Clock, color: "#8b5cf6" },
+          { label: t("calendar.stats.academicYear"), value: currentYear?.name || "—", icon: Star, color: "#065292" },
+          { label: t("calendar.stats.terms"), value: allTerms.length.toString(), icon: BookOpen, color: "#10b981" },
+          { label: t("calendar.stats.holidays"), value: holidays.length.toString(), icon: PartyPopper, color: "#ef4444" },
+          { label: t("calendar.stats.assessmentWindows"), value: assessments.length.toString(), icon: Clock, color: "#8b5cf6" },
         ].map((s) => (
           <div key={s.label} style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", padding: 16 }}>
             <s.icon style={{ width: 16, height: 16, color: s.color, marginBottom: 8 }} />
@@ -229,14 +232,14 @@ export default function AcademicCalendarPage() {
             <button onClick={prevMonth} style={{ width: 32, height: 32, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <ChevronLeft style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
             </button>
-            <span style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>{MONTHS[viewMonth]} {viewYear}</span>
+            <span style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t(`calendar.months.${viewMonth}`)} {viewYear}</span>
             <button onClick={nextMonth} style={{ width: 32, height: 32, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <ChevronRight style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
             </button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid var(--admin-border-default)" }}>
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-              <div key={d} style={{ padding: "8px 0", textAlign: "center", fontSize: 11, fontWeight: 600, color: "var(--admin-font-light)" }}>{d}</div>
+            {WEEKDAY_KEYS.map(d => (
+              <div key={d} style={{ padding: "8px 0", textAlign: "center", fontSize: 11, fontWeight: 600, color: "var(--admin-font-light)" }}>{t(`calendar.weekdays.${d}`)}</div>
             ))}
           </div>
           <div style={{ position: "relative" }}>
@@ -255,12 +258,12 @@ export default function AcademicCalendarPage() {
                     <div style={{ fontSize: 12, fontWeight: isToday ? 700 : 400, color: isToday ? "#065292" : "var(--admin-font-secondary)", marginBottom: 2 }}>{day}</div>
                     {isQuickAdd ? (
                       <div style={{ display: "flex", flexDirection: "column", gap: 2 }} onClick={e => e.stopPropagation()}>
-                        <input value={quickAddName} onChange={e => setQuickAddName(e.target.value)} placeholder="Name" style={{ fontSize: 10, padding: "2px 4px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", width: "100%", outline: "none" }} />
+                        <input value={quickAddName} onChange={e => setQuickAddName(e.target.value)} placeholder={t("calendar.namePlaceholder")} style={{ fontSize: 10, padding: "2px 4px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", width: "100%", outline: "none" }} />
                         <select value={quickAddType} onChange={e => setQuickAddType(e.target.value)} style={{ fontSize: 9, padding: "1px 2px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)" }}>
-                          {["holiday","break","professional_development","exam","event"].map(t => <option key={t} value={t}>{t}</option>)}
+                          {["holiday","break","professional_development","exam","event"].map(tp => <option key={tp} value={tp}>{t(`calendar.types.${TYPE_KEYS[tp]}`)}</option>)}
                         </select>
                         <div style={{ display: "flex", gap: 2 }}>
-                          <button onClick={() => handleAddHoliday(quickAddName, dateStr, quickAddType)} disabled={!quickAddName || savingHoliday} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, border: "none", background: "#065292", color: "#fff", cursor: "pointer", opacity: !quickAddName ? 0.5 : 1 }}>Add</button>
+                          <button onClick={() => handleAddHoliday(quickAddName, dateStr, quickAddType)} disabled={!quickAddName || savingHoliday} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, border: "none", background: "#065292", color: "#fff", cursor: "pointer", opacity: !quickAddName ? 0.5 : 1 }}>{t("calendar.add")}</button>
                           <button onClick={() => setQuickAddDate(null)} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", cursor: "pointer" }}>
                             <X style={{ width: 8, height: 8 }} />
                           </button>
@@ -318,13 +321,13 @@ export default function AcademicCalendarPage() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
             <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 6 }}>
-              <BookOpen style={{ width: 13, height: 13, color: "#065292" }} /><span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Terms</span>
+              <BookOpen style={{ width: 13, height: 13, color: "#065292" }} /><span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("calendar.terms.title")}</span>
             </div>
             <div style={{ padding: 8 }}>
-              {allTerms.length === 0 ? <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No terms configured</div> : allTerms.map(t => (
-                <div key={t.id} style={{ padding: "8px 10px", borderRadius: 6, marginBottom: 4, border: "1px solid var(--admin-border-default)" }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t.name}</div>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{formatShort(t.startDate)} — {formatShort(t.endDate)}</div>
+              {allTerms.length === 0 ? <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("calendar.terms.empty")}</div> : allTerms.map(term => (
+                <div key={term.id} style={{ padding: "8px 10px", borderRadius: 6, marginBottom: 4, border: "1px solid var(--admin-border-default)" }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{term.name}</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{formatShort(term.startDate)} — {formatShort(term.endDate)}</div>
                 </div>
               ))}
             </div>
@@ -332,7 +335,7 @@ export default function AcademicCalendarPage() {
           <div style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
             <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <PartyPopper style={{ width: 13, height: 13, color: "#ef4444" }} /><span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Holidays & Breaks</span>
+                <PartyPopper style={{ width: 13, height: 13, color: "#ef4444" }} /><span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("calendar.holidaysSection.title")}</span>
               </div>
               <button onClick={() => setShowHolidayForm(!showHolidayForm)} style={{ width: 22, height: 22, borderRadius: 4, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {showHolidayForm ? <X style={{ width: 11, height: 11, color: "var(--admin-font-tertiary)" }} /> : <Plus style={{ width: 11, height: 11, color: "var(--admin-font-tertiary)" }} />}
@@ -340,29 +343,29 @@ export default function AcademicCalendarPage() {
             </div>
             {showHolidayForm && (
               <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", flexDirection: "column", gap: 6 }}>
-                <input value={holidayName} onChange={e => setHolidayName(e.target.value)} placeholder="Holiday name" style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }} />
+                <input value={holidayName} onChange={e => setHolidayName(e.target.value)} placeholder={t("calendar.holidaysSection.namePlaceholder")} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }} />
                 <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-light)" }}>Start date</label>
+                  <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-light)" }}>{t("calendar.holidaysSection.startDate")}</label>
                   <input type="date" value={holidayDate} onChange={e => setHolidayDate(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }} />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-light)" }}>End date <span style={{ fontWeight: 400, color: "var(--admin-font-tertiary)" }}>(optional — for multi-day)</span></label>
+                  <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-light)" }}>{t("calendar.holidaysSection.endDate")} <span style={{ fontWeight: 400, color: "var(--admin-font-tertiary)" }}>{t("calendar.holidaysSection.endDateHint")}</span></label>
                   <input type="date" value={holidayEndDate} min={holidayDate || undefined} onChange={e => setHolidayEndDate(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }} />
                 </div>
                 <select value={holidayType} onChange={e => setHolidayType(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }}>
-                  {["holiday","break","professional_development","exam","event"].map(t => <option key={t} value={t}>{t.replace("_", " ")}</option>)}
+                  {["holiday","break","professional_development","exam","event"].map(tp => <option key={tp} value={tp}>{t(`calendar.types.${TYPE_KEYS[tp]}`)}</option>)}
                 </select>
                 <button onClick={() => handleAddHoliday(holidayName, holidayDate, holidayType, holidayEndDate)} disabled={!holidayName || !holidayDate || savingHoliday} style={{ fontSize: 12, fontWeight: 600, padding: "5px 0", borderRadius: 5, border: "none", background: "#ef4444", color: "#fff", cursor: "pointer", opacity: (!holidayName || !holidayDate || savingHoliday) ? 0.5 : 1 }}>
-                  {savingHoliday ? "Adding..." : "Add Holiday"}
+                  {savingHoliday ? t("calendar.holidaysSection.adding") : t("calendar.holidaysSection.addHoliday")}
                 </button>
               </div>
             )}
             <div style={{ padding: 8, maxHeight: 200, overflowY: "auto" }}>
-              {holidays.length === 0 ? <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No holidays added</div> : holidays.map(h => (
+              {holidays.length === 0 ? <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("calendar.holidaysSection.empty")}</div> : holidays.map(h => (
                 <div key={h.id} className="group" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 10px", borderRadius: 4, marginBottom: 2, position: "relative" }}>
                   <div><div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{h.name}</div><div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{h.endDate ? `${formatShort(h.date)} — ${formatShort(h.endDate)}` : formatShort(h.date)}</div></div>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: `${TYPE_COLORS[h.type] || "#6b7280"}15`, color: TYPE_COLORS[h.type] || "#6b7280", fontWeight: 600, textTransform: "capitalize" }}>{h.type}</span>
+                    <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, background: `${TYPE_COLORS[h.type] || "#6b7280"}15`, color: TYPE_COLORS[h.type] || "#6b7280", fontWeight: 600, textTransform: "capitalize" }}>{TYPE_KEYS[h.type] ? t(`calendar.types.${TYPE_KEYS[h.type]}`) : h.type}</span>
                     <button onClick={() => handleDeleteHoliday(h.id)} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ width: 18, height: 18, borderRadius: 3, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <Trash2 style={{ width: 11, height: 11, color: "#ef4444" }} />
                     </button>
@@ -374,7 +377,7 @@ export default function AcademicCalendarPage() {
           <div style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
             <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <Clock style={{ width: 13, height: 13, color: "#8b5cf6" }} /><span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Assessment Windows</span>
+                <Clock style={{ width: 13, height: 13, color: "#8b5cf6" }} /><span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("calendar.assessmentsSection.title")}</span>
               </div>
               <button onClick={() => setShowAssessmentForm(!showAssessmentForm)} style={{ width: 22, height: 22, borderRadius: 4, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {showAssessmentForm ? <X style={{ width: 11, height: 11, color: "var(--admin-font-tertiary)" }} /> : <Plus style={{ width: 11, height: 11, color: "var(--admin-font-tertiary)" }} />}
@@ -386,22 +389,22 @@ export default function AcademicCalendarPage() {
                   {["PCA","MIL","360"].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
                 <select value={assessmentGrade} onChange={e => setAssessmentGrade(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }}>
-                  {["9","10","11","12"].map(g => <option key={g} value={g}>Grade {g}</option>)}
+                  {["9","10","11","12"].map(g => <option key={g} value={g}>{t("calendar.assessmentsSection.gradeOption", { grade: g })}</option>)}
                 </select>
                 <div style={{ display: "flex", gap: 4 }}>
                   <input type="date" value={assessmentStart} onChange={e => setAssessmentStart(e.target.value)} placeholder="Start" style={{ fontSize: 11, padding: "5px 6px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none", flex: 1 }} />
                   <input type="date" value={assessmentEnd} onChange={e => setAssessmentEnd(e.target.value)} placeholder="End" style={{ fontSize: 11, padding: "5px 6px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none", flex: 1 }} />
                 </div>
                 <button onClick={handleAddAssessment} disabled={!assessmentStart || !assessmentEnd || savingAssessment} style={{ fontSize: 12, fontWeight: 600, padding: "5px 0", borderRadius: 5, border: "none", background: "#8b5cf6", color: "#fff", cursor: "pointer", opacity: (!assessmentStart || !assessmentEnd || savingAssessment) ? 0.5 : 1 }}>
-                  {savingAssessment ? "Adding..." : "Add Window"}
+                  {savingAssessment ? t("calendar.assessmentsSection.adding") : t("calendar.assessmentsSection.addWindow")}
                 </button>
               </div>
             )}
             <div style={{ padding: 8, maxHeight: 200, overflowY: "auto" }}>
-              {assessments.length === 0 ? <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No assessment windows</div> : assessments.map(a => (
+              {assessments.length === 0 ? <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("calendar.assessmentsSection.empty")}</div> : assessments.map(a => (
                 <div key={a.id} className="group" style={{ padding: "6px 10px", borderRadius: 4, marginBottom: 2, border: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{a.name || a.assessmentTypes?.join(", ") || "Assessment"}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{a.name || a.assessmentTypes?.join(", ") || t("calendar.assessmentsSection.fallback")}</div>
                     <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{formatShort(a.startDate)} — {formatShort(a.endDate)}</div>
                   </div>
                   <button onClick={() => handleDeleteAssessment(a.id)} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ width: 18, height: 18, borderRadius: 3, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>

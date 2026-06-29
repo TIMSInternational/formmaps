@@ -15,6 +15,7 @@ import { AdminStatCard } from "@/app/admin/_components/AdminStatCard";
 import { TableRowsSkeleton } from "@/components/skeletons/TableSkeleton";
 import { motion } from "motion/react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface ParentRow {
   id: string;
@@ -48,6 +49,7 @@ function useParents(params: { page: number; limit: number; search: string }) {
 }
 
 export default function ParentsPage() {
+  const { t } = useTranslation("school_admin");
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -88,10 +90,10 @@ export default function ParentsPage() {
         method: "POST",
         data: { studentId: selectedStudent.id, parentEmail: inviteForm.parentEmail.trim(), parentName: inviteForm.parentName.trim() },
       });
-      toast.success("Parent invitation sent");
+      toast.success(t("parents.toast.invited"));
       setShowInvite(false); setInviteForm({ studentSearch: "", parentEmail: "", parentName: "" }); setSelectedStudent(null);
       refetch();
-    } catch (err: unknown) { const e = err as { data?: { message?: string } }; toast.error(e?.data?.message || "Failed to invite parent"); }
+    } catch (err: unknown) { const e = err as { data?: { message?: string } }; toast.error(e?.data?.message || t("parents.toast.inviteFailed")); }
     finally { setInviting(false); }
   };
 
@@ -99,17 +101,17 @@ export default function ParentsPage() {
     e.stopPropagation();
     try {
       await apiRequest(`/api/v1/school-admin/parents/${linkId}/resend`, { method: "POST" });
-      toast.success("Invitation resent");
-    } catch { toast.error("Failed to resend"); }
+      toast.success(t("parents.toast.resent"));
+    } catch { toast.error(t("parents.toast.resendFailed")); }
   };
 
   const handleUnlink = async (linkId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
       await apiRequest(`/api/v1/school-admin/parents/${linkId}`, { method: "DELETE" });
-      toast.success("Parent unlinked");
+      toast.success(t("parents.toast.unlinked"));
       refetch();
-    } catch { toast.error("Failed to unlink"); }
+    } catch { toast.error(t("parents.toast.unlinkFailed")); }
   };
 
   const parents = data?.data || [];
@@ -118,19 +120,19 @@ export default function ParentsPage() {
 
   const statItems = [
     {
-      label: "Total Parents",
+      label: t("parents.stats.totalParents"),
       value: isLoading ? "\u2014" : (stats?.totalParents?.toLocaleString() || "0"),
-      icon: Users, trend: 0, sub: "linked to students",
+      icon: Users, trend: 0, sub: t("parents.stats.totalParentsSub"),
     },
     {
-      label: "Linked Students",
+      label: t("parents.stats.linkedStudents"),
       value: isLoading ? "\u2014" : (stats?.linkedStudents?.toLocaleString() || "0"),
-      icon: UserCheck, trend: 0, sub: "with parent links",
+      icon: UserCheck, trend: 0, sub: t("parents.stats.linkedStudentsSub"),
     },
     {
-      label: "Pending Invites",
+      label: t("parents.stats.pendingInvites"),
       value: isLoading ? "\u2014" : (stats?.pendingInvites?.toLocaleString() || "0"),
-      icon: Clock, trend: 0, sub: "awaiting acceptance",
+      icon: Clock, trend: 0, sub: t("parents.stats.pendingInvitesSub"),
     },
   ];
 
@@ -139,10 +141,10 @@ export default function ParentsPage() {
       {/* Header */}
       <div>
         <h1 className="text-[20px] font-semibold tracking-tight" style={{ color: "var(--admin-font-primary)" }}>
-          Parents
+          {t("parents.title")}
         </h1>
         <p className="text-[13px] mt-0.5" style={{ color: "var(--admin-font-light)" }}>
-          View all parent-student links across your school
+          {t("parents.subtitle")}
         </p>
       </div>
 
@@ -151,12 +153,12 @@ export default function ParentsPage() {
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
           style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", padding: 20, overflow: "hidden" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Invite Parent</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("parents.inviteForm.title")}</span>
             <button onClick={() => setShowInvite(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--admin-font-tertiary)" }}><X style={{ width: 16, height: 16 }} /></button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Student</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{t("parents.inviteForm.student")}</label>
               {selectedStudent ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", marginTop: 4 }}>
                   <span style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)", flex: 1 }}>{selectedStudent.name}</span>
@@ -164,7 +166,7 @@ export default function ParentsPage() {
                 </div>
               ) : (
                 <div style={{ marginTop: 4 }}>
-                  <Input placeholder="Search student..." value={inviteForm.studentSearch} onChange={(e) => setInviteForm(f => ({ ...f, studentSearch: e.target.value }))}
+                  <Input placeholder={t("parents.inviteForm.searchStudent")} value={inviteForm.studentSearch} onChange={(e) => setInviteForm(f => ({ ...f, studentSearch: e.target.value }))}
                     className="h-9 text-sm" style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }} />
                   {studentResults.length > 0 && (
                     <div style={{ border: "1px solid var(--admin-border-default)", borderRadius: 6, marginTop: 4, maxHeight: 150, overflowY: "auto", background: "var(--admin-bg-card)" }}>
@@ -183,13 +185,13 @@ export default function ParentsPage() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Parent Email</label>
-                <Input placeholder="parent@email.com" value={inviteForm.parentEmail} onChange={(e) => setInviteForm(f => ({ ...f, parentEmail: e.target.value }))}
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{t("parents.inviteForm.parentEmail")}</label>
+                <Input placeholder={t("parents.inviteForm.parentEmailPlaceholder")} value={inviteForm.parentEmail} onChange={(e) => setInviteForm(f => ({ ...f, parentEmail: e.target.value }))}
                   className="h-9 text-sm mt-1" style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }} />
               </div>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Parent Name (optional)</label>
-                <Input placeholder="Jane Doe" value={inviteForm.parentName} onChange={(e) => setInviteForm(f => ({ ...f, parentName: e.target.value }))}
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{t("parents.inviteForm.parentName")}</label>
+                <Input placeholder={t("parents.inviteForm.parentNamePlaceholder")} value={inviteForm.parentName} onChange={(e) => setInviteForm(f => ({ ...f, parentName: e.target.value }))}
                   className="h-9 text-sm mt-1" style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }} />
               </div>
             </div>
@@ -197,7 +199,7 @@ export default function ParentsPage() {
           <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
             <Button onClick={handleInvite} disabled={!selectedStudent || !inviteForm.parentEmail.trim() || inviting}
               className="h-9 rounded-lg text-sm" style={{ background: "var(--admin-accent-blue, #065292)", color: "#fff", border: "none" }}>
-              <Mail className="w-3.5 h-3.5 mr-2" />{inviting ? "Sending..." : "Send Invitation"}
+              <Mail className="w-3.5 h-3.5 mr-2" />{inviting ? t("parents.inviteForm.sending") : t("parents.inviteForm.sendInvitation")}
             </Button>
           </div>
         </motion.div>
@@ -208,7 +210,7 @@ export default function ParentsPage() {
         <div className="relative w-full md:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--admin-font-light)" }} />
           <Input
-            placeholder="Search by name or email..."
+            placeholder={t("parents.searchPlaceholder")}
             className="pl-9 h-9 rounded-lg text-sm"
             style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}
             value={searchTerm}
@@ -217,7 +219,7 @@ export default function ParentsPage() {
         </div>
         <Button onClick={() => setShowInvite(!showInvite)}
           className="h-9 rounded-lg text-sm" style={{ background: showInvite ? "var(--admin-bg-hover)" : "var(--admin-accent-blue, #065292)", color: showInvite ? "var(--admin-font-primary)" : "#fff", border: "1px solid var(--admin-border-default)" }}>
-          {showInvite ? <><X className="w-3.5 h-3.5 mr-2" />Cancel</> : <><Plus className="w-3.5 h-3.5 mr-2" />Invite Parent</>}
+          {showInvite ? <><X className="w-3.5 h-3.5 mr-2" />{t("parents.cancel")}</> : <><Plus className="w-3.5 h-3.5 mr-2" />{t("parents.invite")}</>}
         </Button>
       </div>
 
@@ -241,12 +243,12 @@ export default function ParentsPage() {
         <Table>
           <TableHeader>
             <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
-              {["Parent Name", "Parent Email", "Linked Student(s)", "Status", "Joined Date", "Actions"].map((h) => (
+              {["parentName", "parentEmail", "linkedStudents", "status", "joinedDate", "actions"].map((h) => (
                 <TableHead key={h} className="py-3 px-4" style={{
                   fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
                   color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)",
                 }}>
-                  {h}
+                  {t(`parents.table.${h}`)}
                 </TableHead>
               ))}
             </TableRow>
@@ -258,7 +260,7 @@ export default function ParentsPage() {
               <TableRow>
                 <TableCell colSpan={6} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
                   <Users className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} />
-                  <p className="text-sm">No parents found</p>
+                  <p className="text-sm">{t("parents.noParents")}</p>
                 </TableCell>
               </TableRow>
             ) : (
@@ -284,7 +286,7 @@ export default function ParentsPage() {
                         {parent.parentName?.charAt(0)?.toUpperCase() || "P"}
                       </div>
                       <span style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>
-                        {parent.parentName || "Unnamed"}
+                        {parent.parentName || t("parents.unnamed")}
                       </span>
                     </div>
                   </TableCell>
@@ -314,7 +316,7 @@ export default function ParentsPage() {
                       background: parent.isAccepted ? "rgba(16,185,129,0.1)" : "rgba(234,179,8,0.1)",
                       color: parent.isAccepted ? "#10b981" : "#eab308",
                     }}>
-                      {parent.isAccepted ? "Active" : "Pending"}
+                      {parent.isAccepted ? t("parents.statusActive") : t("parents.statusPending")}
                     </Badge>
                   </TableCell>
                   <TableCell className="py-3 px-4" style={{ fontSize: 12, color: "var(--admin-font-light)" }}>
@@ -323,14 +325,14 @@ export default function ParentsPage() {
                   <TableCell className="py-3 px-4">
                     <div style={{ display: "flex", gap: 4 }}>
                       {!parent.isAccepted && (
-                        <button onClick={(e) => handleResend(parent.id, e)} title="Resend invite"
+                        <button onClick={(e) => handleResend(parent.id, e)} title={t("parents.resendInvite")}
                           style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", cursor: "pointer", transition: "all 0.15s" }}
                           onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(59,130,246,0.1)"; e.currentTarget.style.borderColor = "#065292"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}>
                           <Mail style={{ width: 12, height: 12, color: "#065292" }} />
                         </button>
                       )}
-                      <button onClick={(e) => handleUnlink(parent.id, e)} title="Unlink parent"
+                      <button onClick={(e) => handleUnlink(parent.id, e)} title={t("parents.unlinkParent")}
                         style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", cursor: "pointer", transition: "all 0.15s" }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.borderColor = "#ef4444"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}>
@@ -349,19 +351,18 @@ export default function ParentsPage() {
           borderTop: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)",
         }}>
           <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>
-            Page <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{page}</span> of{" "}
-            <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{totalPages}</span>
+            {t("parents.pagination", { page, total: totalPages })}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1} className="h-7 rounded-md text-xs"
               style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>
-              Previous
+              {t("parents.previous")}
             </Button>
             <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages} className="h-7 rounded-md text-xs"
               style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>
-              Next
+              {t("parents.next")}
             </Button>
           </div>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/apiClient";
@@ -34,6 +35,7 @@ export function ReassignDropdown({
   counselors: CounselorWorkload[];
   onSuccess: () => void;
 }) {
+  const { t } = useTranslation("school_admin");
   const [open, setOpen] = useState(false);
   const [reassigning, setReassigning] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -60,11 +62,11 @@ export function ReassignDropdown({
         data: { studentIds: [studentId] },
       });
       const target = counselors.find((c) => c.id === newCounselorId);
-      toast.success(`Reassigned ${studentName} to ${target?.name ?? "new counselor"}`);
+      toast.success(t("counselorWorkload.reassign.success", { name: studentName, counselor: target?.name ?? t("counselorWorkload.reassign.fallbackCounselor") }));
       onSuccess();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : undefined;
-      toast.error("Failed to reassign student", { description: message });
+      toast.error(t("counselorWorkload.reassign.failed"), { description: message });
     } finally {
       setReassigning(false);
       setOpen(false);
@@ -92,7 +94,7 @@ export function ReassignDropdown({
     <div ref={ref} style={{ position: "relative" }}>
       <button
         ref={btnRef}
-        title="Reassign to another counselor"
+        title={t("counselorWorkload.reassign.tooltip")}
         onClick={handleOpen}
         disabled={reassigning}
         style={{
@@ -111,7 +113,7 @@ export function ReassignDropdown({
           padding: 4,
         }}>
           <div style={{ padding: "6px 10px", fontSize: 11, color: "var(--admin-font-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            Reassign to
+            {t("counselorWorkload.reassign.to")}
           </div>
           {otherCounselors.map((c) => (
             <button
@@ -126,7 +128,7 @@ export function ReassignDropdown({
               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               <div style={{ fontWeight: 500 }}>{c.name}</div>
-              <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{c.studentCount} students</div>
+              <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("counselorWorkload.reassign.studentCount", { count: c.studentCount })}</div>
             </button>
           ))}
         </div>

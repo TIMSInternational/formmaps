@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Users, Mail, CalendarCheck, FileText, ChevronDown, ChevronUp,
@@ -29,6 +30,7 @@ export function CounselorCard({
   allCounselors: CounselorWorkload[];
   onRefetch: () => void;
 }) {
+  const { t } = useTranslation("school_admin");
   const [expanded, setExpanded] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [confirmUnassign, setConfirmUnassign] = useState<string | null>(null);
@@ -42,11 +44,11 @@ export function CounselorCard({
         data: { studentIds: [studentId] },
       });
       const student = counselor.assignedStudents.find((s) => s.id === studentId);
-      toast.success(`Unassigned ${student?.name ?? "student"} from ${counselor.name}`);
+      toast.success(t("counselorWorkload.card.unassigned", { name: student?.name ?? t("counselorWorkload.card.studentFallback"), counselor: counselor.name }));
       onRefetch();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : undefined;
-      toast.error("Failed to unassign student", { description: message });
+      toast.error(t("counselorWorkload.card.unassignFailed"), { description: message });
     } finally {
       setUnassigning(false);
       setConfirmUnassign(null);
@@ -93,16 +95,16 @@ export function CounselorCard({
             }}
           >
             <Plus style={{ width: 13, height: 13 }} />
-            Assign Students
+            {t("counselorWorkload.card.assignStudents")}
           </button>
         </div>
 
         {/* Stats row */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
           {[
-            { icon: Users, label: "Students", value: counselor.studentCount, color: "#065292" },
-            { icon: CalendarCheck, label: "Sessions", value: counselor.sessionCount, color: "#14b8a6" },
-            { icon: FileText, label: "Notes", value: counselor.noteCount, color: "#f59e0b" },
+            { icon: Users, label: t("counselorWorkload.card.students"), value: counselor.studentCount, color: "#065292" },
+            { icon: CalendarCheck, label: t("counselorWorkload.card.sessions"), value: counselor.sessionCount, color: "#14b8a6" },
+            { icon: FileText, label: t("counselorWorkload.card.notes"), value: counselor.noteCount, color: "#f59e0b" },
           ].map((stat) => (
             <div key={stat.label} style={{
               padding: "10px 12px", borderRadius: 8,
@@ -121,7 +123,7 @@ export function CounselorCard({
         {/* Load bar */}
         <div>
           <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            Student Load
+            {t("counselorWorkload.card.studentLoad")}
           </div>
           <LoadBar current={counselor.studentCount} max={MAX_STUDENT_LOAD} />
         </div>
@@ -137,7 +139,7 @@ export function CounselorCard({
             }}
           >
             {expanded ? <ChevronUp style={{ width: 14, height: 14 }} /> : <ChevronDown style={{ width: 14, height: 14 }} />}
-            {expanded ? "Hide" : "Show"} assigned students ({counselor.assignedStudents.length})
+            {expanded ? t("counselorWorkload.card.hideStudents", { count: counselor.assignedStudents.length }) : t("counselorWorkload.card.showStudents", { count: counselor.assignedStudents.length })}
           </button>
         )}
       </div>
@@ -208,7 +210,7 @@ export function CounselorCard({
                             opacity: unassigning ? 0.5 : 1,
                           }}
                         >
-                          {unassigning ? "..." : "Confirm"}
+                          {unassigning ? "..." : t("counselorWorkload.card.confirm")}
                         </button>
                         <button
                           onClick={() => setConfirmUnassign(null)}
@@ -218,12 +220,12 @@ export function CounselorCard({
                             border: "none", cursor: "pointer", fontFamily: "inherit",
                           }}
                         >
-                          Cancel
+                          {t("counselorWorkload.card.cancel")}
                         </button>
                       </div>
                     ) : (
                       <button
-                        title="Unassign student"
+                        title={t("counselorWorkload.card.unassignStudent")}
                         onClick={() => setConfirmUnassign(student.id)}
                         style={{
                           background: "none", border: "none", cursor: "pointer", padding: 4,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api/apiClient";
@@ -12,15 +13,7 @@ import {
   StickyNote, Clock,
 } from "lucide-react";
 
-const NOTE_TYPES = [
-  { value: "", label: "All Types" },
-  { value: "general", label: "General" },
-  { value: "meeting", label: "Meeting" },
-  { value: "follow_up", label: "Follow-up" },
-  { value: "academic", label: "Academic" },
-  { value: "career", label: "Career" },
-  { value: "personal", label: "Personal" },
-];
+const NOTE_TYPE_VALUES = ["", "general", "meeting", "follow_up", "academic", "career", "personal"];
 
 const TYPE_COLORS: Record<string, { bg: string; color: string }> = {
   general: { bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
@@ -59,6 +52,7 @@ function isNotesPayload(value: NotesResponse): value is NotesPayload {
 }
 
 export default function SessionNotesPage() {
+  const { t } = useTranslation("school_admin");
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -107,10 +101,10 @@ export default function SessionNotesPage() {
           color: "var(--admin-font-primary)", display: "flex", alignItems: "center", gap: 10,
         }}>
           <FileText style={{ width: 22, height: 22, color: "#065292" }} />
-          Session Notes
+          {t("notes.title")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-          All counselor session notes across students in your school
+          {t("notes.subtitle")}
         </p>
       </div>
 
@@ -126,7 +120,7 @@ export default function SessionNotesPage() {
           <Search style={{ width: 15, height: 15, color: "var(--admin-font-tertiary)", flexShrink: 0 }} />
           <input
             type="text"
-            placeholder="Search by student name or note content..."
+            placeholder={t("notes.searchPlaceholder")}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             style={{
@@ -148,8 +142,8 @@ export default function SessionNotesPage() {
               WebkitAppearance: "none",
             }}
           >
-            {NOTE_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
+            {NOTE_TYPE_VALUES.map((val) => (
+              <option key={val} value={val}>{t(`notes.types.${val || "all"}`)}</option>
             ))}
           </select>
           <Filter style={{
@@ -161,15 +155,15 @@ export default function SessionNotesPage() {
 
         <div style={{ fontSize: 13, color: "var(--admin-font-tertiary)", display: "flex", alignItems: "center", gap: 4 }}>
           <StickyNote style={{ width: 14, height: 14 }} />
-          {total} note{total !== 1 ? "s" : ""}
+          {t("notes.noteCount", { count: total })}
         </div>
 
         {/* Group by toggle */}
         <div style={{ display: "flex", alignItems: "center", gap: 2, background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", borderRadius: 8, padding: 2 }}>
           {([
-            { value: "none", label: "Timeline" },
-            { value: "student", label: "By Student" },
-            { value: "type", label: "By Type" },
+            { value: "none", label: t("notes.groupBy.timeline") },
+            { value: "student", label: t("notes.groupBy.byStudent") },
+            { value: "type", label: t("notes.groupBy.byType") },
           ] as const).map((opt) => (
             <button key={opt.value} onClick={() => setGroupBy(opt.value)}
               style={{
@@ -198,9 +192,9 @@ export default function SessionNotesPage() {
           padding: 60, gap: 12, color: "var(--admin-font-tertiary)",
         }}>
           <FileText style={{ width: 40, height: 40, opacity: 0.3 }} />
-          <span style={{ fontSize: 15, fontWeight: 500 }}>No notes found</span>
+          <span style={{ fontSize: 15, fontWeight: 500 }}>{t("notes.empty")}</span>
           <span style={{ fontSize: 13 }}>
-            {search || typeFilter ? "Try adjusting your search or filter" : "No counselor notes have been created yet"}
+            {search || typeFilter ? t("notes.emptyFiltered") : t("notes.emptyDefault")}
           </span>
         </div>
       ) : (() => {
@@ -223,7 +217,7 @@ export default function SessionNotesPage() {
             byType.get(n.type)!.push(n);
           }
           for (const [key, items] of byType) {
-            groups.push({ label: key.replace("_", " "), key, notes: items });
+            groups.push({ label: t(`notes.types.${key}`), key, notes: items });
           }
         } else {
           groups.push({ label: "", key: "all", notes });
@@ -303,7 +297,7 @@ export default function SessionNotesPage() {
                       </span>
 
                       <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-                        by {note.author.name || note.author.email}
+                        {t("notes.by", { name: note.author.name || note.author.email })}
                       </span>
 
                       {/* Type badge */}
@@ -311,7 +305,7 @@ export default function SessionNotesPage() {
                         fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
                         background: tc.bg, color: tc.color, textTransform: "capitalize",
                       }}>
-                        {note.type.replace("_", " ")}
+                        {t(`notes.types.${note.type}`)}
                       </span>
 
                       {/* Date — pushed right */}
@@ -320,7 +314,7 @@ export default function SessionNotesPage() {
                         display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
                       }}>
                         <Calendar style={{ width: 12, height: 12 }} />
-                        {formatDate(note.createdDate)} at {formatTime(note.createdDate)}
+                        {t("notes.atTime", { date: formatDate(note.createdDate), time: formatTime(note.createdDate) })}
                       </span>
                     </div>
 
@@ -357,8 +351,8 @@ export default function SessionNotesPage() {
                           color: note.followUpCompleted ? "#10b981" : "#f59e0b",
                         }}>
                           <Clock style={{ width: 12, height: 12 }} />
-                          Follow-up: {formatDate(note.followUpDate)}
-                          {note.followUpCompleted && " (completed)"}
+                          {t("notes.followUp", { date: formatDate(note.followUpDate) })}
+                          {note.followUpCompleted && ` ${t("notes.followUpCompleted")}`}
                         </span>
                       )}
 
@@ -396,10 +390,10 @@ export default function SessionNotesPage() {
               cursor: page <= 1 ? "not-allowed" : "pointer", fontFamily: "inherit",
             }}
           >
-            Previous
+            {t("notes.previous")}
           </button>
           <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
-            Page {page} of {totalPages}
+            {t("notes.pagination", { page, total: totalPages })}
           </span>
           <button
             disabled={page >= totalPages}
@@ -411,7 +405,7 @@ export default function SessionNotesPage() {
               cursor: page >= totalPages ? "not-allowed" : "pointer", fontFamily: "inherit",
             }}
           >
-            Next
+            {t("notes.next")}
           </button>
         </div>
       )}

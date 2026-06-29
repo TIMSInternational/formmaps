@@ -49,7 +49,7 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
 }
 
 export default function ProfilePanel() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("school_admin");
   const { data: profile, isLoading } = useSchoolProfile();
   const updateProfile = useUpdateSchoolProfile();
   const uploadLogo = useUploadSchoolLogo();
@@ -77,18 +77,18 @@ export default function ProfilePanel() {
       email: form.email, website: form.website || undefined, timezone: form.timezone || undefined,
       address: { street: form.street, city: form.city, state: form.state, country: form.country, postalCode: form.postalCode },
     }, {
-      onSuccess: () => toast.success("Profile updated"),
-      onError: () => toast.error("Failed to update profile"),
+      onSuccess: () => toast.success(t("settings.profilePanel.updated")),
+      onError: () => toast.error(t("settings.profilePanel.updateFailed")),
     });
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast.error("Max 2MB"); e.target.value = ""; return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error(t("settings.profilePanel.maxSize")); e.target.value = ""; return; }
     uploadLogo.mutate(file, {
-      onSuccess: () => toast.success("Logo uploaded"),
-      onError: () => toast.error("Failed to upload logo"),
+      onSuccess: () => toast.success(t("settings.profilePanel.logoUploaded")),
+      onError: () => toast.error(t("settings.profilePanel.logoUploadFailed")),
     });
   };
 
@@ -114,10 +114,10 @@ export default function ProfilePanel() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
-            School Profile
+            {t("settings.profilePanel.title")}
           </h1>
           <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-            Manage your school information and branding
+            {t("settings.profilePanel.subtitle")}
           </p>
         </div>
         <button onClick={handleSave} disabled={updateProfile.isPending}
@@ -129,7 +129,7 @@ export default function ProfilePanel() {
             opacity: updateProfile.isPending ? 0.7 : 1,
           }}>
           {updateProfile.isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Save style={{ width: 14, height: 14 }} />}
-          Save Changes
+          {t("settings.profilePanel.saveChanges")}
         </button>
       </div>
 
@@ -138,10 +138,10 @@ export default function ProfilePanel() {
         <div className="lg:col-span-2 space-y-4">
           {/* Contract Status */}
           {profile && (
-            <SectionCard icon={Shield} title="Contract Status" subtitle="Subscription and enrollment info" color="#065292">
+            <SectionCard icon={Shield} title={t("settings.profilePanel.contractStatus")} subtitle={t("settings.profilePanel.contractStatusSub")} color="#065292">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div style={{ padding: "12px 16px", borderRadius: 8, background: "var(--admin-bg-hover)" }}>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 4 }}>Status</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 4 }}>{t("settings.profilePanel.status")}</div>
                   <div style={{
                     fontSize: 14, fontWeight: 600,
                     color: profile.status === "active" ? "#10b981" : "#ef4444",
@@ -151,13 +151,13 @@ export default function ProfilePanel() {
                   </div>
                 </div>
                 <div style={{ padding: "12px 16px", borderRadius: 8, background: "var(--admin-bg-hover)" }}>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 4 }}>Students</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 4 }}>{t("settings.profilePanel.students")}</div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
                     {profile.currentStudents || 0} / {profile.maxStudents || "\u221e"}
                   </div>
                 </div>
                 <div style={{ padding: "12px 16px", borderRadius: 8, background: "var(--admin-bg-hover)" }}>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 4 }}>Contract</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 4 }}>{t("settings.profilePanel.contract")}</div>
                   <div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>
                     {profile.contractStart ? new Date(profile.contractStart).toLocaleDateString() : "\u2014"} \u2014 {profile.contractEnd ? new Date(profile.contractEnd).toLocaleDateString() : "\u2014"}
                   </div>
@@ -167,24 +167,24 @@ export default function ProfilePanel() {
           )}
 
           {/* Basic Info */}
-          <SectionCard icon={Building2} title="Basic Information" subtitle="School name, contact, and website" color="#14b8a6">
+          <SectionCard icon={Building2} title={t("settings.profilePanel.basicInfo")} subtitle={t("settings.profilePanel.basicInfoSub")} color="#14b8a6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="School Name">
+              <FormField label={t("settings.profilePanel.schoolName")}>
                 <Input value={form.name} onChange={(e) => update("name", e.target.value)} style={inputStyle} />
               </FormField>
-              <FormField label="Phone">
+              <FormField label={t("settings.profilePanel.phone")}>
                 <Input value={form.phone} onChange={(e) => update("phone", e.target.value)} style={inputStyle} />
               </FormField>
-              <FormField label="Contact Email">
+              <FormField label={t("settings.profilePanel.contactEmail")}>
                 <Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} style={inputStyle} />
               </FormField>
-              <FormField label="Website">
+              <FormField label={t("settings.profilePanel.website")}>
                 <Input value={form.website} onChange={(e) => update("website", e.target.value)} style={inputStyle} />
               </FormField>
-              <FormField label="Timezone">
+              <FormField label={t("settings.profilePanel.timezone")}>
                 <Select value={form.timezone || ""} onValueChange={(v) => update("timezone", v)}>
                   <SelectTrigger style={{ ...inputStyle, display: "flex" }}>
-                    <SelectValue placeholder="Select timezone" />
+                    <SelectValue placeholder={t("settings.profilePanel.selectTimezone")} />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
                     {["America/New_York","America/Chicago","America/Denver","America/Los_Angeles","America/Mexico_City","America/Bogota","America/Lima","America/Sao_Paulo","America/Buenos_Aires","America/Santiago","Europe/London","Europe/Paris","Europe/Berlin","Europe/Madrid","Asia/Dubai","Asia/Kolkata","Asia/Singapore","Asia/Tokyo","Australia/Sydney","UTC"].map((tz) => (
@@ -197,23 +197,23 @@ export default function ProfilePanel() {
           </SectionCard>
 
           {/* Address */}
-          <SectionCard icon={MapPin} title="Address" subtitle="Physical location" color="#f59e0b">
+          <SectionCard icon={MapPin} title={t("settings.profilePanel.address")} subtitle={t("settings.profilePanel.addressSub")} color="#f59e0b">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <FormField label="Street">
+                <FormField label={t("settings.profilePanel.street")}>
                   <Input value={form.street} onChange={(e) => update("street", e.target.value)} style={inputStyle} />
                 </FormField>
               </div>
-              <FormField label="City">
+              <FormField label={t("settings.profilePanel.city")}>
                 <Input value={form.city} onChange={(e) => update("city", e.target.value)} style={inputStyle} />
               </FormField>
-              <FormField label="State / Province">
+              <FormField label={t("settings.profilePanel.stateProvince")}>
                 <Input value={form.state} onChange={(e) => update("state", e.target.value)} style={inputStyle} />
               </FormField>
-              <FormField label="Country">
+              <FormField label={t("settings.profilePanel.country")}>
                 <Input value={form.country} onChange={(e) => update("country", e.target.value)} style={inputStyle} />
               </FormField>
-              <FormField label="Postal Code">
+              <FormField label={t("settings.profilePanel.postalCode")}>
                 <Input value={form.postalCode} onChange={(e) => update("postalCode", e.target.value)} style={inputStyle} />
               </FormField>
             </div>
@@ -223,7 +223,7 @@ export default function ProfilePanel() {
         {/* Right Column */}
         <div className="space-y-4">
           {/* Logo */}
-          <SectionCard icon={Upload} title="School Logo" subtitle="Brand identity" color="#8b5cf6">
+          <SectionCard icon={Upload} title={t("settings.profilePanel.logo")} subtitle={t("settings.profilePanel.logoSub")} color="#8b5cf6">
             <div className="flex flex-col items-center gap-4">
               {(profile?.logoUrl || profile?.logo) ? (
                 <img src={profile.logoUrl || profile.logo || ""} alt="Logo" loading="lazy"
@@ -239,7 +239,7 @@ export default function ProfilePanel() {
               <div style={{ width: "100%" }}>
                 <Input type="file" accept="image/*" onChange={handleLogoUpload}
                   style={{ ...inputStyle, padding: "6px 8px", height: "auto" }} />
-                <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 4 }}>PNG, JPG up to 2MB</p>
+                <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 4 }}>{t("settings.profilePanel.logoFormats")}</p>
               </div>
             </div>
           </SectionCard>
@@ -252,17 +252,17 @@ export default function ProfilePanel() {
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#14b8a6" }} />
               <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--admin-font-tertiary)" }}>
-                School Info
+                {t("settings.profilePanel.schoolInfo")}
               </span>
             </div>
             <div className="space-y-3">
               {[
-                { icon: Building2, label: "Name", value: form.name || "\u2014" },
-                { icon: Mail, label: "Email", value: form.email || "\u2014" },
-                { icon: Phone, label: "Phone", value: form.phone || "\u2014" },
-                { icon: Globe, label: "Website", value: form.website || "\u2014" },
-                { icon: MapPin, label: "Location", value: [form.city, form.state, form.country].filter(Boolean).join(", ") || "\u2014" },
-                { icon: Calendar, label: "Timezone", value: form.timezone?.replace(/_/g, " ") || "\u2014" },
+                { icon: Building2, label: t("settings.profilePanel.name"), value: form.name || "\u2014" },
+                { icon: Mail, label: t("settings.profilePanel.email"), value: form.email || "\u2014" },
+                { icon: Phone, label: t("settings.profilePanel.phone"), value: form.phone || "\u2014" },
+                { icon: Globe, label: t("settings.profilePanel.website"), value: form.website || "\u2014" },
+                { icon: MapPin, label: t("settings.profilePanel.location"), value: [form.city, form.state, form.country].filter(Boolean).join(", ") || "\u2014" },
+                { icon: Calendar, label: t("settings.profilePanel.timezone"), value: form.timezone?.replace(/_/g, " ") || "\u2014" },
               ].map((row) => (
                 <div key={row.label} style={{
                   display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 6,

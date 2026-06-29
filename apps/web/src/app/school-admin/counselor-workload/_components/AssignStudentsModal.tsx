@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/apiClient";
@@ -25,6 +26,7 @@ export function AssignStudentsModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { t } = useTranslation("school_admin");
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<SearchStudent[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -66,12 +68,12 @@ export function AssignStudentsModal({
         method: "POST",
         data: { studentIds: Array.from(selected) },
       });
-      toast.success(`Assigned ${selected.size} student(s) to ${counselorName}`);
+      toast.success(t("counselorWorkload.assignModal.assignSuccess", { count: selected.size, name: counselorName }));
       onSuccess();
       onClose();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : undefined;
-      toast.error("Failed to assign students", { description: message });
+      toast.error(t("counselorWorkload.assignModal.assignFailed"), { description: message });
     } finally {
       setAssigning(false);
     }
@@ -100,8 +102,8 @@ export function AssignStudentsModal({
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: "var(--admin-font-primary)" }}>Assign Students</div>
-            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>to {counselorName}</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("counselorWorkload.assignModal.title")}</div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{t("counselorWorkload.assignModal.to", { name: counselorName })}</div>
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
             <X style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
@@ -112,7 +114,7 @@ export function AssignStudentsModal({
         <div style={{ padding: "12px 20px" }}>
           <input
             type="text"
-            placeholder="Search students by name or email..."
+            placeholder={t("counselorWorkload.assignModal.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             autoFocus
@@ -127,10 +129,10 @@ export function AssignStudentsModal({
         {/* Results */}
         <div style={{ flex: 1, overflowY: "auto", padding: "0 12px 12px" }}>
           {loading ? (
-            <div style={{ padding: 20, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>Loading students...</div>
+            <div style={{ padding: 20, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("counselorWorkload.assignModal.loading")}</div>
           ) : results.length === 0 ? (
             <div style={{ padding: 20, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>
-              {search.trim() ? "No students match your search" : "No students in this school"}
+              {search.trim() ? t("counselorWorkload.assignModal.noMatch") : t("counselorWorkload.assignModal.noStudents")}
             </div>
           ) : (
             results.map((s) => {
@@ -158,12 +160,12 @@ export function AssignStudentsModal({
                   </div>
                   {alreadyAssigned && (
                     <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(16,185,129,0.1)", color: "#10b981" }}>
-                      Assigned
+                      {t("counselorWorkload.assignModal.assigned")}
                     </span>
                   )}
                   {s.gradeLevel && (
                     <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)" }}>
-                      Gr {s.gradeLevel}
+                      {t("counselorWorkload.assignModal.gradeShort", { grade: s.gradeLevel })}
                     </span>
                   )}
                 </label>
@@ -178,7 +180,7 @@ export function AssignStudentsModal({
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-            {selected.size} selected
+            {t("counselorWorkload.assignModal.selected", { count: selected.size })}
           </span>
           <button
             onClick={handleAssign}
@@ -191,7 +193,7 @@ export function AssignStudentsModal({
               fontFamily: "inherit",
             }}
           >
-            {assigning ? "Assigning..." : "Assign Selected"}
+            {assigning ? t("counselorWorkload.assignModal.assigning") : t("counselorWorkload.assignModal.assignSelected")}
           </button>
         </div>
       </div>

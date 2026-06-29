@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import { Video, VideoOff, Plus, UserPlus, X, Calendar, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ import { getInitials, getMinDatetime } from "@/components/video/VideoHelpers";
 import { SessionsList } from "@/components/video/SessionsList";
 
 export default function VideoCallsPage() {
+  const { t } = useTranslation("school_admin");
   const router = useRouter();
   const userId = useGlobalStore((s) => s.user.id);
 
@@ -70,7 +72,7 @@ export default function VideoCallsPage() {
       const session = await createVideoSession(participantId);
       router.push(`/school-admin/video/${session.id}`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to start video call";
+      const msg = err instanceof Error ? err.message : t("video.toast.callFailed");
       toast.error(msg);
     } finally { setStartingCall(false); }
   };
@@ -80,7 +82,7 @@ export default function VideoCallsPage() {
     setScheduling(true);
     try {
       await scheduleVideoSession(scheduleParticipant.id, scheduleDate, scheduleDuration, scheduleNotes);
-      toast.success(`Call scheduled with ${scheduleParticipant.name}`);
+      toast.success(t("video.toast.scheduled", { name: scheduleParticipant.name }));
       setShowNewCall(false);
       setScheduleParticipant(null);
       setScheduleDate("");
@@ -88,7 +90,7 @@ export default function VideoCallsPage() {
       setScheduleDuration(60);
       await refreshSessions();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to schedule call";
+      const msg = err instanceof Error ? err.message : t("video.toast.scheduleFailed");
       toast.error(msg);
     } finally { setScheduling(false); }
   };
@@ -98,7 +100,7 @@ export default function VideoCallsPage() {
       await startScheduledSession(sessionId);
       router.push(`/school-admin/video/${sessionId}`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to start session";
+      const msg = err instanceof Error ? err.message : t("video.toast.startFailed");
       toast.error(msg);
     }
   };
@@ -106,10 +108,10 @@ export default function VideoCallsPage() {
   const handleCancelScheduled = async (sessionId: string) => {
     try {
       await cancelVideoSession(sessionId);
-      toast.success("Scheduled call cancelled");
+      toast.success(t("video.toast.cancelled"));
       await refreshSessions();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to cancel";
+      const msg = err instanceof Error ? err.message : t("video.toast.cancelFailed");
       toast.error(msg);
     }
   };
@@ -129,16 +131,16 @@ export default function VideoCallsPage() {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-          <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>Communication</span>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>Video Calls</h1>
+          <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>{t("video.label")}</span>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>{t("video.title")}</h1>
         </motion.div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 64, gap: 16 }}>
           <div style={{ width: 64, height: 64, borderRadius: 32, background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <VideoOff style={{ width: 28, height: 28, color: "var(--admin-font-light)" }} />
           </div>
-          <p style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>Video Calls Not Available</p>
+          <p style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("video.notAvailable")}</p>
           <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", maxWidth: 360, textAlign: "center" }}>
-            Video calling is not enabled for your school. Contact your administrator to enable this feature.
+            {t("video.notAvailableHint")}
           </p>
         </div>
       </div>
@@ -150,14 +152,14 @@ export default function VideoCallsPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
-          <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>Communication</span>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>Video Calls</h1>
-          <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginTop: 4 }}>Start or schedule 1:1 video calls with students and staff.</p>
+          <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>{t("video.label")}</span>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>{t("video.title")}</h1>
+          <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginTop: 4 }}>{t("video.subtitle")}</p>
         </div>
         <button onClick={() => { setShowNewCall(!showNewCall); setMode("call"); setScheduleParticipant(null); }}
           style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 10, background: showNewCall ? "var(--admin-bg-hover)" : "#065292", color: showNewCall ? "var(--admin-font-primary)" : "#fff", border: "1px solid var(--admin-border-default)", cursor: "pointer", fontSize: 13, fontWeight: 600, transition: "all 0.15s" }}>
           {showNewCall ? <X style={{ width: 16, height: 16 }} /> : <Plus style={{ width: 16, height: 16 }} />}
-          {showNewCall ? "Cancel" : "New Call"}
+          {showNewCall ? t("video.cancel") : t("video.newCall")}
         </button>
       </motion.div>
 
@@ -172,12 +174,12 @@ export default function VideoCallsPage() {
                 <button onClick={() => { setMode("call"); setScheduleParticipant(null); }}
                   style={{ flex: 1, padding: "7px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", background: mode === "call" ? "#065292" : "transparent", color: mode === "call" ? "#fff" : "var(--admin-font-tertiary)", transition: "all 0.15s" }}>
                   <Video style={{ width: 14, height: 14, display: "inline", verticalAlign: -2, marginRight: 6 }} />
-                  Call Now
+                  {t("video.callNow")}
                 </button>
                 <button onClick={() => setMode("schedule")}
                   style={{ flex: 1, padding: "7px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", background: mode === "schedule" ? "#065292" : "transparent", color: mode === "schedule" ? "#fff" : "var(--admin-font-tertiary)", transition: "all 0.15s" }}>
                   <Calendar style={{ width: 14, height: 14, display: "inline", verticalAlign: -2, marginRight: 6 }} />
-                  Schedule
+                  {t("video.schedule")}
                 </button>
               </div>
 
@@ -186,15 +188,15 @@ export default function VideoCallsPage() {
                 <>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-accent-blue)", marginBottom: 12 }}>
                     <UserPlus style={{ width: 16, height: 16, color: "var(--admin-accent-blue)", flexShrink: 0 }} />
-                    <input placeholder={mode === "call" ? "Search by name or email to start a call..." : "Search for a contact to schedule with..."}
+                    <input placeholder={mode === "call" ? t("video.searchCall") : t("video.searchSchedule")}
                       value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} autoFocus
                       style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 14, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
                   </div>
                   <div style={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
                     {contactsLoading ? (
-                      <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>Searching...</div>
+                      <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("video.searching")}</div>
                     ) : contacts.length === 0 ? (
-                      <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>No contacts found</div>
+                      <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("video.noContacts")}</div>
                     ) : contacts.map((c) => (
                       <button key={c.id}
                         onClick={() => mode === "call" ? handleStartCall(c.id) : setScheduleParticipant({ id: c.id, name: c.name })}
@@ -211,7 +213,7 @@ export default function VideoCallsPage() {
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 6, background: mode === "call" ? "linear-gradient(135deg, #22c55e, #16a34a)" : "#065292", color: "#fff", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
                           {mode === "call" ? <Video style={{ width: 14, height: 14 }} /> : <Calendar style={{ width: 14, height: 14 }} />}
-                          {mode === "call" ? "Call" : "Select"}
+                          {mode === "call" ? t("video.call") : t("video.select")}
                         </div>
                       </button>
                     ))}
@@ -228,7 +230,7 @@ export default function VideoCallsPage() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{scheduleParticipant.name}</div>
-                      <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Scheduling video call</div>
+                      <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("video.schedulingCall")}</div>
                     </div>
                     <button onClick={() => setScheduleParticipant(null)}
                       style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--admin-font-tertiary)", padding: 4 }}>
@@ -236,32 +238,32 @@ export default function VideoCallsPage() {
                     </button>
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>Date & Time</label>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>{t("video.dateTime")}</label>
                     <input type="datetime-local" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} min={getMinDatetime()}
                       style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>Duration</label>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>{t("video.duration")}</label>
                     <select value={scheduleDuration} onChange={(e) => setScheduleDuration(Number(e.target.value))}
                       style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", fontSize: 14, fontFamily: "inherit", outline: "none" }}>
-                      <option value={15}>15 minutes</option>
-                      <option value={30}>30 minutes</option>
-                      <option value={45}>45 minutes</option>
-                      <option value={60}>1 hour</option>
-                      <option value={90}>1.5 hours</option>
-                      <option value={120}>2 hours</option>
+                      <option value={15}>{t("video.minutes", { count: 15 })}</option>
+                      <option value={30}>{t("video.minutes", { count: 30 })}</option>
+                      <option value={45}>{t("video.minutes", { count: 45 })}</option>
+                      <option value={60}>{t("video.oneHour")}</option>
+                      <option value={90}>{t("video.ninetyMin")}</option>
+                      <option value={120}>{t("video.twoHours")}</option>
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>Notes (optional)</label>
-                    <textarea value={scheduleNotes} onChange={(e) => setScheduleNotes(e.target.value)} placeholder="Agenda or topics to discuss..."
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>{t("video.notesOptional")}</label>
+                    <textarea value={scheduleNotes} onChange={(e) => setScheduleNotes(e.target.value)} placeholder={t("video.notesPlaceholder")}
                       rows={2} maxLength={500}
                       style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", fontSize: 14, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} />
                   </div>
                   <button onClick={handleSchedule} disabled={!scheduleDate || scheduling}
                     style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 20px", borderRadius: 10, border: "none", background: !scheduleDate ? "var(--admin-bg-hover)" : "#065292", color: !scheduleDate ? "var(--admin-font-tertiary)" : "#fff", cursor: !scheduleDate || scheduling ? "default" : "pointer", fontSize: 14, fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s" }}>
                     <CalendarClock style={{ width: 16, height: 16 }} />
-                    {scheduling ? "Scheduling..." : "Schedule Call"}
+                    {scheduling ? t("video.scheduling") : t("video.scheduleCall")}
                   </button>
                 </div>
               )}
