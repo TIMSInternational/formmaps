@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { Card, CardHeader, PCAChartImage } from "./shared-ui";
 import { getPcaReportBlob, type PcaReportType } from "@/services/pcaImageService";
+import { getCareerInformeBlob } from "@/services/careerInformeService";
 import type { PCADISCResult } from "@/hooks/useStudentDetailData";
 import type { MILResultsData } from "@/services/milService";
 import type { PCAAssessmentResponse } from "@/services/pcaService";
@@ -52,6 +53,20 @@ export function AssessmentsTab({
       URL.revokeObjectURL(url);
       toast.success(t("pca.reports.downloaded"));
     } catch { toast.error(t("pca.reports.downloadFailed")); }
+    setReportLoading(null);
+  };
+
+  const downloadInforme = async () => {
+    setReportLoading("informe");
+    try {
+      const lang = i18n.language?.startsWith("es") ? "es" : "en";
+      const blob = await getCareerInformeBlob(student.id, lang);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url;
+      a.download = `Informe-Orientacion-${(student.name || "student").replace(/\s+/g, "-")}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t("informe.downloaded"));
+    } catch { toast.error(t("informe.downloadFailed")); }
     setReportLoading(null);
   };
 
@@ -227,6 +242,23 @@ export function AssessmentsTab({
                         {r.label}
                       </button>
                     ))}
+                    <button
+                      onClick={downloadInforme}
+                      disabled={reportLoading !== null}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 6,
+                        height: 32, borderRadius: 6, padding: "0 12px", fontSize: 12, fontWeight: 600,
+                        background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)",
+                        border: "1px solid var(--admin-border-default)",
+                        cursor: reportLoading !== null ? "wait" : "pointer",
+                        opacity: reportLoading !== null ? 0.7 : 1,
+                      }}
+                    >
+                      {reportLoading === "informe"
+                        ? <Loader2 style={{ width: 13, height: 13, animation: "spin 1s linear infinite" }} />
+                        : <Download style={{ width: 13, height: 13 }} />}
+                      {t("informe.download")}
+                    </button>
                   </div>
                 </div>
               )}
