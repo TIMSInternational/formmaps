@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "@/lib/api/apiClient";
 import { openPrintableReport, escapeHtml } from "@/lib/printableReport";
-import { getPcaChartBlob } from "@/services/pcaImageService";
+import { getPcaChartBlob, getPcaReportBlob, type PcaReportType } from "@/services/pcaImageService";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -80,6 +81,7 @@ export function StudentReportPanel({ student, type }: { student: StudentRecord; 
 
 // ── PCA Reports ──
 function PCAReports({ student }: { student: StudentRecord }) {
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState<string | null>(null);
   const [pcaData, setPcaData] = useState<Record<string, unknown> | null>(null);
   const [competences, setCompetences] = useState<Record<string, unknown> | null>(null);
@@ -122,6 +124,22 @@ function PCAReports({ student }: { student: StudentRecord }) {
       URL.revokeObjectURL(url);
       toast.success("DISC chart downloaded");
     } catch { toast.error("Failed to download chart"); }
+    setLoading(null);
+  };
+
+  // Official TIMS PCA report PDFs (Informe PCA / Guía de Desarrollo / Coaching).
+  const downloadTimsReport = async (type: PcaReportType, slug: string) => {
+    if (!d?.pcaCod) return;
+    setLoading(type);
+    try {
+      const lang = i18n.language?.startsWith("es") ? "es" : "en";
+      const blob = await getPcaReportBlob(String(d.pcaCod), type, lang);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url;
+      a.download = `${slug}-${student.name.replace(/\s+/g, "-")}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t("pca.reports.downloaded"));
+    } catch { toast.error(t("pca.reports.downloadFailed")); }
     setLoading(null);
   };
 
@@ -174,6 +192,9 @@ function PCAReports({ student }: { student: StudentRecord }) {
         ) : (
           <>
             <ReportRow icon={Image} label="DISC Chart Image" desc="Visual chart of D/I/S/C profile across 3 graphs" format="PNG" loading={loading === "chart"} onDownload={downloadChart} />
+            <ReportRow icon={FileText} label={t("pca.reports.informePca")} desc={t("pca.reports.informePcaDesc")} format="PDF" loading={loading === "pca"} onDownload={() => downloadTimsReport("pca", "Informe-PCA")} />
+            <ReportRow icon={FileText} label={t("pca.reports.guiaDesarrollo")} desc={t("pca.reports.guiaDesarrolloDesc")} format="PDF" loading={loading === "gd"} onDownload={() => downloadTimsReport("gd", "Guia-Desarrollo")} />
+            <ReportRow icon={FileText} label={t("pca.reports.coaching")} desc={t("pca.reports.coachingDesc")} format="PDF" loading={loading === "coaching"} onDownload={() => downloadTimsReport("coaching", "PCA-Coaching")} />
             <ReportRow icon={FileText} label="Full PCA Report" desc="DISC scores, competences, and completion data" format="JSON" loading={loading === "full"} onDownload={downloadFullReport}
               onPrint={() => {
                 if (!d) return;
