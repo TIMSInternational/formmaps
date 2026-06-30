@@ -1,19 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import { apiRequest } from "@/lib/api/apiClient";
-import { getPcaChartBlob } from "@/services/pcaImageService";
+import { getPcaChartBlob, getPcaReportBlob, type PcaReportType } from "@/services/pcaImageService";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Target, Loader2, Download, Image, Briefcase, CheckCircle2, XCircle,
+  Target, Loader2, Download, Image, FileText, Briefcase, CheckCircle2, XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ScoreBar, StudentInfoHeader, type ReportStudent } from "./ReportShared";
 
 export function PCAReports({ student }: { student: ReportStudent }) {
+  const { t, i18n } = useTranslation();
   const [downloading, setDownloading] = useState<string | null>(null);
   const [pcaData, setPcaData] = useState<Record<string, unknown> | null>(null);
   const [careerData, setCareerData] = useState<Record<string, unknown> | null>(null);
@@ -55,6 +57,22 @@ export function PCAReports({ student }: { student: ReportStudent }) {
       URL.revokeObjectURL(url);
       toast.success("DISC chart downloaded");
     } catch { toast.error("Failed to download chart"); }
+    setDownloading(null);
+  };
+
+  // Official TIMS PCA report PDFs (Informe PCA / Guía de Desarrollo / Coaching).
+  const downloadTimsReport = async (type: PcaReportType, slug: string) => {
+    if (!pcaData?.pcaCod) return;
+    setDownloading(type);
+    try {
+      const lang = i18n.language?.startsWith("es") ? "es" : "en";
+      const blob = await getPcaReportBlob(String(pcaData.pcaCod), type, lang);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url;
+      a.download = `${slug}-${student.name.replace(/\s+/g, "-")}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t("pca.reports.downloaded"));
+    } catch { toast.error(t("pca.reports.downloadFailed")); }
     setDownloading(null);
   };
 
@@ -205,6 +223,23 @@ export function PCAReports({ student }: { student: ReportStudent }) {
                   Download Chart
                 </Button>
               )}
+              {Boolean(pcaData.pcaCod) && ([
+                { type: "pca" as const, label: t("pca.reports.informePca"), slug: "Informe-PCA" },
+                { type: "gd" as const, label: t("pca.reports.guiaDesarrollo"), slug: "Guia-Desarrollo" },
+                { type: "coaching" as const, label: t("pca.reports.coaching"), slug: "PCA-Coaching" },
+              ]).map(({ type, label, slug }) => (
+                <Button
+                  key={type}
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-3 text-xs gap-1.5"
+                  disabled={downloading === type}
+                  onClick={() => downloadTimsReport(type, slug)}
+                >
+                  {downloading === type ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+                  {label}
+                </Button>
+              ))}
               <Button
                 variant="outline"
                 size="sm"
