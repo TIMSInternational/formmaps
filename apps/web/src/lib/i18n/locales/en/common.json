@@ -2286,6 +2286,17 @@
     "visualRotation": "Visual Rotation"
   },
   "pca": {
+    "reports": {
+      "title": "PCA Reports",
+      "informePca": "Full PCA Report",
+      "informePcaDesc": "Complete PCA competency analysis (PDF)",
+      "guiaDesarrollo": "Development Guide",
+      "guiaDesarrolloDesc": "DISC profile and development recommendations (PDF)",
+      "coaching": "PCA Coaching",
+      "coachingDesc": "Coaching-oriented PCA report (PDF)",
+      "downloaded": "Report downloaded",
+      "downloadFailed": "Failed to download report"
+    },
     "dominance": "Dominance",
     "influence": "Influence",
     "steadiness": "Solidity",
