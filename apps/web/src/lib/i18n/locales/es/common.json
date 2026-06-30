@@ -2597,5 +2597,12 @@
     "themeLight": "Claro",
     "themeDark": "Oscuro",
     "themeSystem": "Sistema"
+  },
+  "informe": {
+    "title": "Informe Completo",
+    "desc": "Descargar informe completo de orientación (PDF)",
+    "download": "Descargar informe",
+    "downloaded": "Informe descargado",
+    "downloadFailed": "No se pudo descargar el informe"
   }
 }

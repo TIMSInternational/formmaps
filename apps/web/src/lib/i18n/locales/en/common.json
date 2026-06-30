@@ -2597,5 +2597,12 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System"
+  },
+  "informe": {
+    "title": "Career & University Report",
+    "desc": "Download the complete career guidance report (PDF)",
+    "download": "Download report",
+    "downloaded": "Report downloaded",
+    "downloadFailed": "Failed to download the report"
   }
 }
