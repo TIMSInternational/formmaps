@@ -5,9 +5,13 @@ import {
   getPCACompetences,
   getPCAVsJCAAnalysis,
 } from "@/services/pcaService";
+import { getCareerInformeBlob } from "@/services/careerInformeService";
 
 jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (_k: string, d?: string) => d ?? _k }),
+  useTranslation: () => ({
+    t: (_k: string, d?: string) => d ?? _k,
+    i18n: { language: "es" },
+  }),
 }));
 jest.mock("@/services/pcaService", () => ({
   ...jest.requireActual("@/services/pcaService"),
@@ -15,6 +19,12 @@ jest.mock("@/services/pcaService", () => ({
   getPCACompetences: jest.fn(),
   getPCAVsJCAAnalysis: jest.fn(),
 }));
+jest.mock("@/services/careerInformeService", () => ({
+  getCareerInformeBlob: jest.fn(),
+}));
+jest.mock("sonner", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
+
+const mockGetCareerInformeBlob = getCareerInformeBlob as jest.Mock;
 
 const mockResult = getPCAResult as jest.Mock;
 const mockCompetences = getPCACompetences as jest.Mock;
@@ -68,5 +78,60 @@ describe("PCAResultsPanel", () => {
     expect(await screen.findByText(/45%/)).toBeInTheDocument();
     expect(document.querySelector("pre")).toBeNull();
     expect(document.body.innerHTML).not.toContain("SECRET-COKEY");
+  });
+
+  describe("Career Informe download button", () => {
+    it("renders the informe download button when results are loaded (completion signal)", async () => {
+      render(<PCAResultsPanel pcaCod="pca-1" userId="u1" onClose={() => {}} />);
+      await screen.findByText("Test Student");
+      // Button should appear once results data is present
+      expect(await screen.findByText("informe.download")).toBeInTheDocument();
+    });
+
+    it("calls getCareerInformeBlob with userId and lang, toasts success on click", async () => {
+      const fakeBlob = new Blob(["pdf"], { type: "application/pdf" });
+      mockGetCareerInformeBlob.mockResolvedValue(fakeBlob);
+
+      // Mock URL.createObjectURL / revokeObjectURL
+      const mockCreate = jest.fn(() => "blob:fake-url");
+      const mockRevoke = jest.fn();
+      const origCreate = global.URL.createObjectURL;
+      const origRevoke = global.URL.revokeObjectURL;
+      global.URL.createObjectURL = mockCreate;
+      global.URL.revokeObjectURL = mockRevoke;
+
+      // Mock anchor click without recursive document.createElement call
+      const mockClick = jest.fn();
+      const mockAnchor = { href: "", download: "", click: mockClick } as unknown as HTMLAnchorElement;
+      const origCreateElement = document.createElement.bind(document);
+      const createSpy = jest.spyOn(document, "createElement").mockImplementation((tag: string, ...rest) => {
+        if (tag === "a") return mockAnchor;
+        return origCreateElement(tag, ...rest as [ElementCreationOptions?]);
+      });
+
+      const { toast } = await import("sonner");
+
+      render(<PCAResultsPanel pcaCod="pca-1" userId="u1" onClose={() => {}} />);
+      await screen.findByText("Test Student");
+
+      const btn = await screen.findByText("informe.download");
+      fireEvent.click(btn);
+
+      await waitFor(() => expect(mockGetCareerInformeBlob).toHaveBeenCalledWith("u1", "es"));
+      await waitFor(() => expect(toast.success).toHaveBeenCalledWith("informe.downloaded"));
+      expect(mockClick).toHaveBeenCalled();
+      expect(mockRevoke).toHaveBeenCalledWith("blob:fake-url");
+
+      createSpy.mockRestore();
+      global.URL.createObjectURL = origCreate;
+      global.URL.revokeObjectURL = origRevoke;
+    });
+
+    it("is not rendered when results have not loaded yet", () => {
+      // Hang the getPCAResult promise — results will never arrive
+      mockResult.mockReturnValue(new Promise(() => {}));
+      render(<PCAResultsPanel pcaCod="pca-1" userId="u1" onClose={() => {}} />);
+      expect(screen.queryByText("informe.download")).toBeNull();
+    });
   });
 });

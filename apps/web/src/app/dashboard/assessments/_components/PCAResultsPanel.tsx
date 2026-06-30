@@ -17,6 +17,7 @@ import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ModalSkeleton } from "@/components/ui/skeletons";
 import { getPcaChartBlob, getPcaReportBlob, type PcaReportType } from "@/services/pcaImageService";
+import { getCareerInformeBlob } from "@/services/careerInformeService";
 import { toast } from "sonner";
 
 interface PCAResultsPanelProps {
@@ -101,6 +102,21 @@ export default function PCAResultsPanel({
       URL.revokeObjectURL(url);
       toast.success(t("pca.reports.downloaded"));
     } catch { toast.error(t("pca.reports.downloadFailed")); }
+    setReportLoading(null);
+  };
+
+  const downloadInforme = async () => {
+    if (!results) return;
+    setReportLoading("informe");
+    try {
+      const lang = i18n.language?.startsWith("es") ? "es" : "en";
+      const blob = await getCareerInformeBlob(userId, lang);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url;
+      a.download = `Informe-Orientacion-${userId}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t("informe.downloaded"));
+    } catch { toast.error(t("informe.downloadFailed")); }
     setReportLoading(null);
   };
 
@@ -418,6 +434,20 @@ export default function PCAResultsPanel({
                           {label}
                         </button>
                       ))}
+                      <button
+                        onClick={downloadInforme}
+                        disabled={reportLoading !== null}
+                        className="inline-flex items-center justify-center px-4 py-3 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors font-medium border border-blue-100 disabled:opacity-60"
+                      >
+                        {reportLoading === "informe" ? (
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        ) : (
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        )}
+                        {t("informe.download")}
+                      </button>
                     </div>
                   </div>
                 </div>

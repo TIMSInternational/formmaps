@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { apiRequest } from "@/lib/api/apiClient";
 import { openPrintableReport, escapeHtml } from "@/lib/printableReport";
 import { getPcaChartBlob, getPcaReportBlob, type PcaReportType } from "@/services/pcaImageService";
+import { getCareerInformeBlob } from "@/services/careerInformeService";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -143,6 +144,20 @@ function PCAReports({ student }: { student: StudentRecord }) {
     setLoading(null);
   };
 
+  const downloadInforme = async () => {
+    setLoading("informe");
+    try {
+      const lang = i18n.language?.startsWith("es") ? "es" : "en";
+      const blob = await getCareerInformeBlob(student.id, lang);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url;
+      a.download = `Informe-Orientacion-${student.name.replace(/\s+/g, "-")}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t("informe.downloaded"));
+    } catch { toast.error(t("informe.downloadFailed")); }
+    setLoading(null);
+  };
+
   const downloadFullReport = async () => {
     setLoading("full");
     try {
@@ -195,6 +210,7 @@ function PCAReports({ student }: { student: StudentRecord }) {
             <ReportRow icon={FileText} label={t("pca.reports.informePca")} desc={t("pca.reports.informePcaDesc")} format="PDF" loading={loading === "pca"} onDownload={() => downloadTimsReport("pca", "Informe-PCA")} />
             <ReportRow icon={FileText} label={t("pca.reports.guiaDesarrollo")} desc={t("pca.reports.guiaDesarrolloDesc")} format="PDF" loading={loading === "gd"} onDownload={() => downloadTimsReport("gd", "Guia-Desarrollo")} />
             <ReportRow icon={FileText} label={t("pca.reports.coaching")} desc={t("pca.reports.coachingDesc")} format="PDF" loading={loading === "coaching"} onDownload={() => downloadTimsReport("coaching", "PCA-Coaching")} />
+            <ReportRow icon={FileText} label={t("informe.download")} desc={t("informe.desc")} format="PDF" loading={loading === "informe"} onDownload={downloadInforme} />
             <ReportRow icon={FileText} label="Full PCA Report" desc="DISC scores, competences, and completion data" format="JSON" loading={loading === "full"} onDownload={downloadFullReport}
               onPrint={() => {
                 if (!d) return;

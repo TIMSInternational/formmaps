@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import { apiRequest } from "@/lib/api/apiClient";
 import { getPcaChartBlob, getPcaReportBlob, type PcaReportType } from "@/services/pcaImageService";
+import { getCareerInformeBlob } from "@/services/careerInformeService";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,6 +74,20 @@ export function PCAReports({ student }: { student: ReportStudent }) {
       URL.revokeObjectURL(url);
       toast.success(t("pca.reports.downloaded"));
     } catch { toast.error(t("pca.reports.downloadFailed")); }
+    setDownloading(null);
+  };
+
+  const downloadInforme = async () => {
+    setDownloading("informe");
+    try {
+      const lang = i18n.language?.startsWith("es") ? "es" : "en";
+      const blob = await getCareerInformeBlob(student.id, lang);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url;
+      a.download = `Informe-Orientacion-${student.name.replace(/\s+/g, "-")}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t("informe.downloaded"));
+    } catch { toast.error(t("informe.downloadFailed")); }
     setDownloading(null);
   };
 
@@ -249,6 +264,16 @@ export function PCAReports({ student }: { student: ReportStudent }) {
               >
                 {downloading === "full" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
                 Download Full Report
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-xs gap-1.5"
+                disabled={downloading !== null}
+                onClick={downloadInforme}
+              >
+                {downloading === "informe" ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+                {t("informe.download")}
               </Button>
             </motion.div>
           </>
