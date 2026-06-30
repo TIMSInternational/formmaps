@@ -1,13 +1,18 @@
 "use client";
 
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Brain,
   Target,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Card, CardHeader, PCAChartImage } from "./shared-ui";
+import { getPcaReportBlob, type PcaReportType } from "@/services/pcaImageService";
 import type { PCADISCResult } from "@/hooks/useStudentDetailData";
 import type { MILResultsData } from "@/services/milService";
 import type { PCAAssessmentResponse } from "@/services/pcaService";
@@ -28,6 +33,28 @@ export function AssessmentsTab({
   registerPCA,
   student,
 }: AssessmentsTabProps) {
+  const { t, i18n } = useTranslation();
+  const [reportLoading, setReportLoading] = useState<string | null>(null);
+
+  // Official TIMS PCA report PDFs (Informe PCA / Guía de Desarrollo / Coaching).
+  // Backend /report-pdf enforces IDOR + the authoritative completion gate; school_admin
+  // is authorized for same-school students, so we surface the buttons when DISC data exists.
+  const downloadTimsReport = async (type: PcaReportType, slug: string) => {
+    const pcaCod = pcaDISC?.pcaCod;
+    if (!pcaCod) return;
+    setReportLoading(type);
+    try {
+      const lang = i18n.language?.startsWith("es") ? "es" : "en";
+      const blob = await getPcaReportBlob(String(pcaCod), type, lang);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url;
+      a.download = `${slug}-${(student.name || "student").replace(/\s+/g, "-")}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t("pca.reports.downloaded"));
+    } catch { toast.error(t("pca.reports.downloadFailed")); }
+    setReportLoading(null);
+  };
+
   return (
     <div className="space-y-4">
       {/* MIL / LIA Results */}
@@ -168,6 +195,41 @@ export function AssessmentsTab({
                 </div>
               ))}
               <PCAChartImage pcaCod={pcaDISC.pcaCod} />
+
+              {/* Official TIMS PCA report PDFs */}
+              {pcaDISC.pcaCod && (
+                <div style={{ borderTop: "1px solid var(--admin-border-default)", paddingTop: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>
+                    {t("pca.reports.title")}
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {([
+                      { type: "pca" as const, slug: "Informe-PCA", label: t("pca.reports.informePca") },
+                      { type: "gd" as const, slug: "Guia-Desarrollo", label: t("pca.reports.guiaDesarrollo") },
+                      { type: "coaching" as const, slug: "PCA-Coaching", label: t("pca.reports.coaching") },
+                    ]).map((r) => (
+                      <button
+                        key={r.type}
+                        onClick={() => downloadTimsReport(r.type, r.slug)}
+                        disabled={reportLoading === r.type}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 6,
+                          height: 32, borderRadius: 6, padding: "0 12px", fontSize: 12, fontWeight: 600,
+                          background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)",
+                          border: "1px solid var(--admin-border-default)",
+                          cursor: reportLoading === r.type ? "wait" : "pointer",
+                          opacity: reportLoading === r.type ? 0.7 : 1,
+                        }}
+                      >
+                        {reportLoading === r.type
+                          ? <Loader2 style={{ width: 13, height: 13, animation: "spin 1s linear infinite" }} />
+                          : <Download style={{ width: 13, height: 13 }} />}
+                        {r.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div style={{ textAlign: "center", padding: "24px 0" }}>
