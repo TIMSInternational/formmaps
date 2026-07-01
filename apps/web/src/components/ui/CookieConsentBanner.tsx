@@ -126,9 +126,9 @@ export function CookieConsentBanner() {
                 ref={acceptRef}
                 onClick={acceptAll}
                 className="w-full rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors"
-                style={{ backgroundColor: BRAND }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = BRAND_DARK)}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = BRAND)}
+                style={{ backgroundColor: "#102B47" }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1c3c5e")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#102B47")}
               >
                 {t("cookieConsent.acceptAll", "Accept All")}
               </button>

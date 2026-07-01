@@ -18,13 +18,9 @@ export function AuthBrandingPanel() {
         className="flex flex-col justify-center px-16 relative z-10"
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 mb-12">
+        <div className="mb-12">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/fm-icon.png" alt="FormMaps" className="w-12 h-12" style={{ filter: "brightness(0) invert(1)" }} />
-          <div>
-            <span className="text-2xl font-bold text-white tracking-tight">FORM</span>
-            <span className="text-2xl font-bold tracking-tight" style={{ color: "#FFD23F" }}>MAPS</span>
-          </div>
+          <img src="/fm-full-white.png" alt="FormMaps" style={{ height: 40 }} />
         </div>
 
         <h1 className="text-4xl font-bold text-white leading-tight mb-4">
