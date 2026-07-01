@@ -179,7 +179,7 @@ export function CoachSidebar() {
         gap: 8,
       }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/fm-icon.png" alt="FormMaps" style={{ width: 24, height: 24, flexShrink: 0 }} />
+        <img src="/fm-icon.png" alt="FormMaps" style={{ height: 24, width: "auto", flexShrink: 0 }} />
         {!collapsed && (
           <span style={{ fontSize: 15, fontWeight: 700, color: C.fontPrimary, letterSpacing: "-0.02em", flex: 1 }}>
             <span style={{ color: "#102B47" }}>FORM</span><span style={{ color: "#2E9098" }}>MAPS</span>

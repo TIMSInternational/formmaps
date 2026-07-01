@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { normalizeRole } from "@/lib/roleUtils";
 import { resolveLoginRedirect } from "@/lib/routePermissions";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { resetClientState } from "@/lib/resetClientState";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login as loginApi } from "@/services/authService";
 import { useForm } from "react-hook-form";
@@ -66,6 +67,10 @@ export default function LoginPage() {
       const response = await loginApi(data.email, data.password);
       if (!response.token) throw new Error("No token received from server");
 
+      // Clear any previous account's cached state BEFORE hydrating this user,
+      // so a shared browser never carries one user's data into another.
+      resetClientState();
+
       const roleName = response.user?.roleName || response.user?.role?.name || null;
 
       setUser({
@@ -111,7 +116,7 @@ export default function LoginPage() {
         >
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-10">
-            <img src="/fm-icon.png" alt="FormMaps" className="w-10 h-10" />
+            <img src="/fm-icon.png" alt="FormMaps" className="h-10 w-auto" />
             <div>
               <span className="text-xl font-bold" style={{ color: "#102B47" }}>FORM</span>
               <span className="text-xl font-bold" style={{ color: "#2E9098" }}>MAPS</span>

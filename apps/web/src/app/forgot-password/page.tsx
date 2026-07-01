@@ -134,7 +134,7 @@ export default function ForgotPasswordPage() {
             <img
               src="/fm-icon.png"
               alt="FormMaps"
-              style={{ width: 20, height: 20, filter: "brightness(0) invert(1)" }}
+              style={{ height: 20, width: "auto", filter: "brightness(0) invert(1)" }}
             />
           </div>
           <span style={{ fontSize: 20, fontWeight: 700, color: "#ebebeb" }}>

@@ -195,14 +195,14 @@ export function SchoolAdminSidebar() {
       }}>
         {!collapsed ? (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <img src="/fm-icon.png" alt="FormMaps" style={{ width: 28, height: 28 }} />
+            <img src="/fm-icon.png" alt="FormMaps" style={{ height: 28, width: "auto" }} />
             <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em" }}>
               <span style={{ color: C.fontPrimary }}>FORM</span>
               <span style={{ color: "#2E9098" }}>MAPS</span>
             </span>
           </div>
         ) : (
-          <img src="/fm-icon.png" alt="FormMaps" style={{ width: 24, height: 24, margin: "0 auto" }} />
+          <img src="/fm-icon.png" alt="FormMaps" style={{ height: 24, width: "auto", margin: "0 auto" }} />
         )}
         {!collapsed && (
           <button onClick={() => setCollapsed(true)} title={t("shell.collapseSidebar")} style={{

@@ -153,7 +153,7 @@ export default function SubscribePage() {
       <div className="max-w-6xl mx-auto px-4 py-8 md:py-10">
         {/* Brand mark */}
         <div className="flex items-center justify-center gap-2 mb-5">
-          <img src="/fm-icon.png" alt="FormMaps" className="w-8 h-8" />
+          <img src="/fm-icon.png" alt="FormMaps" className="h-8 w-auto" />
           <div className="flex items-center">
             <span className="text-lg font-bold tracking-tight" style={{ color: "#102B47" }}>FORM</span>
             <span className="text-lg font-bold tracking-tight" style={{ color: "#2E9098" }}>MAPS</span>

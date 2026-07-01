@@ -148,7 +148,7 @@ export default function StudentOnboardingPage({
         <div className="hidden lg:flex lg:w-[48%] items-center justify-center" style={{ background: "#102B47" }}>
           <div className="px-16">
             <div className="flex items-center gap-3 mb-8">
-              <img src="/fm-icon.png" alt="FormMaps" className="w-12 h-12" style={{ filter: "brightness(0) invert(1)" }} />
+              <img src="/fm-icon.png" alt="FormMaps" className="h-12 w-auto" style={{ filter: "brightness(0) invert(1)" }} />
               <div>
                 <span className="text-2xl font-bold text-white">FORM</span>
                 <span className="text-2xl font-bold" style={{ color: "#FFD23F" }}>MAPS</span>
@@ -197,7 +197,7 @@ export default function StudentOnboardingPage({
           className="flex flex-col justify-center px-16 relative z-10"
         >
           <div className="flex items-center gap-3 mb-12">
-            <img src="/fm-icon.png" alt="FormMaps" className="w-12 h-12" style={{ filter: "brightness(0) invert(1)" }} />
+            <img src="/fm-icon.png" alt="FormMaps" className="h-12 w-auto" style={{ filter: "brightness(0) invert(1)" }} />
             <div>
               <span className="text-2xl font-bold text-white tracking-tight">FORM</span>
               <span className="text-2xl font-bold tracking-tight" style={{ color: "#FFD23F" }}>MAPS</span>
@@ -247,7 +247,7 @@ export default function StudentOnboardingPage({
         >
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-10">
-            <img src="/fm-icon.png" alt="FormMaps" className="w-10 h-10" />
+            <img src="/fm-icon.png" alt="FormMaps" className="h-10 w-auto" />
             <div>
               <span className="text-xl font-bold" style={{ color: "#102B47" }}>FORM</span>
               <span className="text-xl font-bold" style={{ color: "#2E9098" }}>MAPS</span>

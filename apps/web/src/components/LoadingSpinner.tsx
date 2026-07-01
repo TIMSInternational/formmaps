@@ -16,8 +16,9 @@ export function LoadingSpinner({
       aria-label={label || "Loading"}
     >
       <div className="flex flex-col items-center gap-5">
+        {/* Small FormMaps icon mark for the loading/splash frame. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/fm-full.png" alt="FormMaps" className="h-9 w-auto" />
+        <img src="/fm-icon.png" alt="FormMaps" className="h-12 w-auto" />
         <div
           className="w-8 h-8 border-[3px] rounded-full animate-spin"
           style={{ borderColor: "#E5EAF0", borderTopColor: "#2E9098" }}

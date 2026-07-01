@@ -5,7 +5,7 @@ import { updateResume, getResumeById } from "@/services/resumeService";
 import { toApiResume } from "@/services/resumeSerialization";
 import { telemetry } from "@/services/telemetryService";
 import { logout as apiLogout } from "@/services/authService";
-import { getQueryClient } from "@/components/QueryProvider";
+import { resetClientState } from "@/lib/resetClientState";
 
 // Resume Builder Types
 interface PersonalInfo {
@@ -256,8 +256,11 @@ export const useGlobalStore = create<GlobalState>()(
           telemetry.trackAuth("logout");
           // Sign out + clear tokens (httpOnly cookies cleared by backend)
           apiLogout().catch(() => {});
-          // Clear React Query cache to prevent data leak on shared devices
-          getQueryClient()?.clear();
+          // Wipe ALL user-scoped client state (React Query cache + every
+          // non-allowlisted localStorage/sessionStorage key, including the
+          // persisted store's stale identity) so nothing leaks into the next
+          // account on a shared browser.
+          resetClientState();
           // Reset user state
           set({
             user: {

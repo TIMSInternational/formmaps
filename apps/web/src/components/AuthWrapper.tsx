@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { Fragment, useEffect, useState, useMemo, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { LoadingSpinner } from "./LoadingSpinner";
@@ -183,7 +183,11 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   return (
     <>
       {redirectTarget && <LoadingSpinner overlay />}
-      {children}
+      {/* Key the authenticated subtree by user id: when the signed-in user
+          changes (login / signup / logout), React remounts everything below,
+          discarding any in-memory state (e.g. a prior student's assessment
+          scores held in useState) that would otherwise leak across accounts. */}
+      <Fragment key={user.id ?? "anon"}>{children}</Fragment>
     </>
   );
 }

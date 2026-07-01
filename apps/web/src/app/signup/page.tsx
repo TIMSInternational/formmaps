@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { resetClientState } from "@/lib/resetClientState";
 import { signUp as signUpApi, login as loginApi } from "@/services/authService";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -69,6 +70,12 @@ export default function SignupPage() {
       );
 
       const loginRes = await loginApi(data.email, data.password);
+
+      // Clear any previous account's cached state BEFORE hydrating this brand-new
+      // user — otherwise a prior test/login on this browser bleeds into the new
+      // account (the "new account shows 3/3 / old matches" bug).
+      resetClientState();
+
       const roleName = loginRes.user?.role?.name || null;
 
       setUser({
@@ -136,7 +143,7 @@ export default function SignupPage() {
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/fm-icon.png" alt="FormMaps" className="w-10 h-10" />
+            <img src="/fm-icon.png" alt="FormMaps" className="h-10 w-auto" />
             <div>
               <span className="text-xl font-bold" style={{ color: "#102B47" }}>FORM</span>
               <span className="text-xl font-bold" style={{ color: "#2E9098" }}>MAPS</span>
