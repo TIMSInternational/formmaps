@@ -87,7 +87,7 @@ export function PersonalInfoEditor({
       transition={{ delay: 0.1 }}
       className={`bg-card rounded-xl border shadow-sm overflow-hidden transition-colors ${
         expandedSection === "personalInfo"
-          ? "border-[#065292]/30"
+          ? "border-[#2E9098]/30"
           : "border-border"
       }`}
     >
@@ -96,11 +96,11 @@ export function PersonalInfoEditor({
         onClick={() => toggleSection("personalInfo")}
         className={`w-full flex items-center gap-3 p-4 transition-colors ${
           expandedSection === "personalInfo"
-            ? "bg-[#065292]/5"
+            ? "bg-[#102B47]/5"
             : "hover:bg-secondary/50"
         }`}
       >
-        <User className="w-5 h-5 text-[#065292] flex-shrink-0" />
+        <User className="w-5 h-5 text-[#2E9098] flex-shrink-0" />
         <span className="font-semibold text-foreground flex-1 text-left">
           Personal Information
         </span>
@@ -118,7 +118,7 @@ export function PersonalInfoEditor({
               setShowManageFieldsModal(true);
             }
           }}
-          className="flex items-center gap-1 px-2 py-1 text-xs border border-border rounded-lg hover:border-[#065292]/40 hover:text-[#065292] transition-colors"
+          className="flex items-center gap-1 px-2 py-1 text-xs border border-border rounded-lg hover:border-[#2E9098]/40 hover:text-[#2E9098] transition-colors"
         >
           <Settings className="w-3 h-3" />
           Manage Fields
@@ -132,7 +132,7 @@ export function PersonalInfoEditor({
           <ChevronDown
             className={`w-5 h-5 ${
               expandedSection === "personalInfo"
-                ? "text-[#065292]"
+                ? "text-[#2E9098]"
                 : "text-muted-foreground"
             }`}
           />
@@ -167,7 +167,7 @@ export function PersonalInfoEditor({
                       }
                       onBlur={triggerSave}
                       placeholder="John Doe"
-                      className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                      className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                     />
                   </div>
 
@@ -187,7 +187,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="Software Engineer"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -212,7 +212,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="john@example.com"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -234,7 +234,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="+1 (555) 123-4567"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -259,7 +259,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="San Francisco, CA"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -281,7 +281,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="linkedin.com/in/johndoe"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -306,7 +306,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="https://johndoe.com"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -328,7 +328,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="github.com/johndoe"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -353,7 +353,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="twitter.com/johndoe"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -374,7 +374,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="January 1, 1990"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -398,7 +398,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="American"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -419,7 +419,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="English, Spanish"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -440,7 +440,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="Single, Married, etc."
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -461,7 +461,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="Class A, B, C, etc."
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -482,7 +482,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="Branch, Rank, Years"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -503,7 +503,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="Work Permit, H1B, etc."
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -524,7 +524,7 @@ export function PersonalInfoEditor({
                         }
                         onBlur={triggerSave}
                         placeholder="he/him, she/her, they/them"
-                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                        className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                       />
                     </div>
                   )}
@@ -575,7 +575,7 @@ export function PersonalInfoEditor({
                       onBlur={triggerSave}
                       placeholder="Brief professional summary..."
                       rows={3}
-                      className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all resize-none"
+                      className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all resize-none"
                     />
                   </div>
                 )}
@@ -597,7 +597,7 @@ export function PersonalInfoEditor({
                       onBlur={triggerSave}
                       placeholder="Your career objective..."
                       rows={3}
-                      className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all resize-none"
+                      className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all resize-none"
                     />
                   </div>
                 )}
@@ -624,7 +624,7 @@ export function PersonalInfoEditor({
                           }
                           onBlur={triggerSave}
                           placeholder={`Enter ${field.name.toLowerCase()}...`}
-                          className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                          className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                         />
                       ) : (
                         <textarea
@@ -640,7 +640,7 @@ export function PersonalInfoEditor({
                           onBlur={triggerSave}
                           placeholder={`Enter ${field.name.toLowerCase()}...`}
                           rows={3}
-                          className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all resize-none"
+                          className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all resize-none"
                         />
                       )}
                     </div>

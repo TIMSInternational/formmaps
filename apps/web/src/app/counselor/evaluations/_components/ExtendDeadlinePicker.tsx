@@ -46,12 +46,12 @@ export function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClo
         borderBottom: "1px solid rgba(59,130,246,0.1)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <CalendarDays style={{ width: 13, height: 13, color: "#065292" }} />
+          <CalendarDays style={{ width: 13, height: 13, color: "#2E9098" }} />
           <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("extendDeadline.title", "Extend Deadline")}</span>
           <span style={{
             fontSize: 10, padding: "1px 6px", borderRadius: 3,
             background: isExpired ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.1)",
-            color: isExpired ? "#ef4444" : "#065292", fontWeight: 600,
+            color: isExpired ? "#ef4444" : "#2E9098", fontWeight: 600,
           }}>
             {isExpired ? t("extendDeadline.expired", "EXPIRED") : t("extendDeadline.due", { date: currentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }) })}
           </span>
@@ -68,7 +68,7 @@ export function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClo
             onClick={() => onExtend(p.days)}
             style={{
               height: 26, borderRadius: 5, padding: "0 10px", fontSize: 11, fontWeight: 600,
-              background: "var(--admin-bg-hover)", color: "#065292",
+              background: "var(--admin-bg-hover)", color: "#2E9098",
               border: "1px solid var(--admin-border-default)", cursor: "pointer",
               opacity: isLoading ? 0.5 : 1,
             }}>
@@ -79,7 +79,7 @@ export function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClo
           onClick={() => setShowCalendar(!showCalendar)}
           style={{
             height: 26, borderRadius: 5, padding: "0 10px", fontSize: 11, fontWeight: 600,
-            background: showCalendar ? "#065292" : "var(--admin-bg-hover)",
+            background: showCalendar ? "#2E9098" : "var(--admin-bg-hover)",
             color: showCalendar ? "#fff" : "var(--admin-font-primary)",
             border: "1px solid var(--admin-border-default)", cursor: "pointer",
             display: "flex", alignItems: "center", gap: 4,

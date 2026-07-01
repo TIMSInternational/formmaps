@@ -88,7 +88,7 @@ export function CatalogSection({
               key={s.id}
               type="button"
               onClick={() => setSearch(s.title)}
-              className="text-[11px] px-2 py-1 rounded-full border border-[#065292]/30 text-[#065292] hover:bg-blue-50"
+              className="text-[11px] px-2 py-1 rounded-full border border-[#2E9098]/30 text-[#2E9098] hover:bg-blue-50"
               title={`${s.matchScore}% match — search the catalog for this`}
             >
               {s.title}
@@ -109,7 +109,7 @@ export function CatalogSection({
                 <p className="text-sm font-medium truncate" style={{ color: "var(--admin-font-primary)" }}>
                   {c.name}
                   {c.isHonors && (
-                    <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "#FFD600", color: "#111" }}>
+                    <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "#FFD23F", color: "#111" }}>
                       HONORS
                     </span>
                   )}
@@ -136,7 +136,7 @@ export function CatalogSection({
                 disabled={busyId === c.id}
                 onClick={() => onAdd(c, term)}
                 className="shrink-0 flex items-center gap-1 px-3 h-8 rounded-md text-xs font-semibold"
-                style={{ background: "var(--admin-accent-blue, #065292)", color: "#fff", opacity: busyId === c.id ? 0.6 : 1 }}
+                style={{ background: "var(--admin-accent-blue, #2E9098)", color: "#fff", opacity: busyId === c.id ? 0.6 : 1 }}
               >
                 {busyId === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
                 Add

@@ -61,7 +61,7 @@ export function ScheduleGrid({ schedules, onSave, isSaving }: {
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Calendar style={{ width: 16, height: 16, color: "#065292" }} />
+          <Calendar style={{ width: 16, height: 16, color: "#2E9098" }} />
           <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Assessment Schedule</span>
         </div>
         <button
@@ -69,7 +69,7 @@ export function ScheduleGrid({ schedules, onSave, isSaving }: {
           disabled={isSaving || !dirty}
           style={{
             height: 30, borderRadius: 6, padding: "0 14px", fontSize: 11, fontWeight: 600,
-            background: dirty ? "#065292" : "var(--admin-bg-hover)",
+            background: dirty ? "#2E9098" : "var(--admin-bg-hover)",
             color: dirty ? "#fff" : "var(--admin-font-tertiary)",
             border: dirty ? "none" : "1px solid var(--admin-border-default)",
             cursor: dirty ? "pointer" : "default",

@@ -40,7 +40,7 @@ export function PCAReports({ student }: { student: ReportStudent }) {
 
   const discScores = hasPCA ? [
     { label: "Dominance (D)", value: pcaData.pcaD1 as number, color: "#ef4444" },
-    { label: "Influence (I)", value: pcaData.pcaI1 as number, color: "#065292" },
+    { label: "Influence (I)", value: pcaData.pcaI1 as number, color: "#2E9098" },
     { label: "Solidity (S)", value: pcaData.pcaS1 as number, color: "#22c55e" },
     { label: "Control (C)", value: pcaData.pcaC1 as number, color: "#eab308" },
   ] : [];
@@ -165,7 +165,7 @@ export function PCAReports({ student }: { student: ReportStudent }) {
                       { label: "D", value: pcaData.pcaD2 as number, color: "#ef4444" },
                       { label: "I", value: pcaData.pcaI2 as number, color: "#eab308" },
                       { label: "S", value: pcaData.pcaS2 as number, color: "#22c55e" },
-                      { label: "C", value: pcaData.pcaC2 as number, color: "#065292" },
+                      { label: "C", value: pcaData.pcaC2 as number, color: "#2E9098" },
                     ].map((s) => (
                       <ScoreBar key={s.label} label={s.label} value={s.value} color={s.color} />
                     ))}
@@ -178,7 +178,7 @@ export function PCAReports({ student }: { student: ReportStudent }) {
                       { label: "D", value: pcaData.pcaD3 as number, color: "#ef4444" },
                       { label: "I", value: pcaData.pcaI3 as number, color: "#eab308" },
                       { label: "S", value: pcaData.pcaS3 as number, color: "#22c55e" },
-                      { label: "C", value: pcaData.pcaC3 as number, color: "#065292" },
+                      { label: "C", value: pcaData.pcaC3 as number, color: "#2E9098" },
                     ].map((s) => (
                       <ScoreBar key={s.label} label={s.label} value={s.value} color={s.color} />
                     ))}

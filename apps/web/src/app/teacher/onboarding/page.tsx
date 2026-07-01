@@ -122,7 +122,7 @@ function TeacherOnboardingContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 flex items-center justify-center p-4">
         <div className="space-y-4 text-center">
-          <Loader2 className="h-10 w-10 mx-auto animate-spin" style={{ color: "#065292" }} />
+          <Loader2 className="h-10 w-10 mx-auto animate-spin" style={{ color: "#2E9098" }} />
           <p className="text-gray-500">{t("onboarding.states.verifying")}</p>
         </div>
       </div>
@@ -191,7 +191,7 @@ function TeacherOnboardingContent() {
       >
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto shadow-lg" style={{ background: "#065292" }}>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto shadow-lg" style={{ background: "#102B47" }}>
             <BookOpen className="h-7 w-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
@@ -209,11 +209,11 @@ function TeacherOnboardingContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card className="border shadow-md" style={{ borderColor: "rgba(6,82,146,0.20)", background: "rgba(6,82,146,0.04)" }}>
+            <Card className="border shadow-md" style={{ borderColor: "rgba(46,144,152,0.20)", background: "rgba(46,144,152,0.04)" }}>
               <CardContent className="pt-4 pb-4">
                 <div className="flex flex-wrap gap-x-6 gap-y-3 items-center">
                   <div className="flex items-center gap-2">
-                    <School className="h-4 w-4" style={{ color: "#065292" }} />
+                    <School className="h-4 w-4" style={{ color: "#2E9098" }} />
                     <div>
                       <p className="text-[10px] text-gray-500 uppercase tracking-wide">
                         {t("onboarding.inviteDetails.schoolLabel")}
@@ -225,7 +225,7 @@ function TeacherOnboardingContent() {
                   </div>
 
                   {tokenData.email && (
-                    <Badge className="self-center" style={{ background: "rgba(6,82,146,0.12)", color: "#065292", borderColor: "rgba(6,82,146,0.20)" }}>
+                    <Badge className="self-center" style={{ background: "rgba(46,144,152,0.12)", color: "#2E9098", borderColor: "rgba(46,144,152,0.20)" }}>
                       {tokenData.email}
                     </Badge>
                   )}
@@ -334,7 +334,7 @@ function TeacherOnboardingContent() {
                   password !== confirmPassword
                 }
                 className="w-full text-white h-11 mt-2"
-                style={{ background: "#065292" }}
+                style={{ background: "#102B47" }}
               >
                 {complete.isPending ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -346,7 +346,7 @@ function TeacherOnboardingContent() {
 
               <p className="text-xs text-center text-gray-400 pt-1">
                 {t("onboarding.form.signInPrompt")}{" "}
-                <Link href="/login" style={{ color: "#065292" }} className="hover:underline">
+                <Link href="/login" style={{ color: "#2E9098" }} className="hover:underline">
                   {t("onboarding.form.signInLink")}
                 </Link>
               </p>
@@ -363,7 +363,7 @@ export default function TeacherOnboardingPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#065292" }} />
+          <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#2E9098" }} />
         </div>
       }
     >

@@ -124,7 +124,7 @@ export default function ForgotPasswordPage() {
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: "#065292",
+              background: "#102B47",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -132,7 +132,7 @@ export default function ForgotPasswordPage() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo-icon.svg"
+              src="/fm-icon.png"
               alt="FormMaps"
               style={{ width: 20, height: 20, filter: "brightness(0) invert(1)" }}
             />

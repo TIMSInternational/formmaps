@@ -32,8 +32,8 @@ function ExamIcon({ examId }: { examId: string }) {
   switch (examId) {
     case MIL_EXAMS.FEATURE_DETECTION:
       return (
-        <div className="w-16 h-16 bg-[#065292]/10 rounded-full flex items-center justify-center">
-          <svg {...iconProps} className="text-[#065292]">
+        <div className="w-16 h-16 bg-[#102B47]/10 rounded-full flex items-center justify-center">
+          <svg {...iconProps} className="text-[#2E9098]">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -163,8 +163,8 @@ export default function MILInstructions({
             </p>
           </div>
 
-          <div className="bg-[#065292]/5 border-2 border-[#065292]/20 rounded-xl p-4 mb-6 text-center">
-            <p className="text-base font-semibold text-[#065292]">
+          <div className="bg-[#102B47]/5 border-2 border-[#2E9098]/20 rounded-xl p-4 mb-6 text-center">
+            <p className="text-base font-semibold text-[#2E9098]">
               {t("dashboard.examConfirmConcentrate", {
                 minutes: exam.timeLimitMinutes,
                 questions: exam.totalQuestions,
@@ -177,7 +177,7 @@ export default function MILInstructions({
               type="checkbox"
               checked={understood}
               onChange={(e) => setUnderstood(e.target.checked)}
-              className="mt-0.5 w-5 h-5 accent-[#065292] cursor-pointer shrink-0"
+              className="mt-0.5 w-5 h-5 accent-[#102B47] cursor-pointer shrink-0"
             />
             <span className="text-sm text-foreground">
               {t("dashboard.examConfirmUnderstood")}
@@ -194,7 +194,7 @@ export default function MILInstructions({
             <button
               onClick={() => setCurrentStep("test")}
               disabled={!understood}
-              className="flex-1 px-6 py-3 bg-[#065292] text-white rounded-xl font-semibold hover:bg-[#054a83] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+              className="flex-1 px-6 py-3 bg-[#102B47] text-white rounded-xl font-semibold hover:bg-[#0b1f33] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               {t("dashboard.examConfirmBegin")}
             </button>
@@ -222,7 +222,7 @@ export default function MILInstructions({
               </p>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold text-[#065292]">
+              <div className="text-lg font-semibold text-[#2E9098]">
                 {exam.timeLimitMinutes} {t("dashboard.minutes")}
               </div>
               <div className="text-sm text-muted-foreground">
@@ -270,7 +270,7 @@ export default function MILInstructions({
             <div className="mb-8">
               {loading ? (
                 <div className="text-center py-8">
-                  <div className="w-6 h-6 border-2 border-[#065292] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <div className="w-6 h-6 border-2 border-[#2E9098] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                   <p className="text-muted-foreground">
                     {t("dashboard.loadingInstructions")}
                   </p>
@@ -305,7 +305,7 @@ export default function MILInstructions({
               </button>
               <button
                 onClick={() => setCurrentStep("practice")}
-                className="px-8 py-3 bg-[#065292] text-white rounded-lg font-medium hover:bg-[#054a83] transition-colors"
+                className="px-8 py-3 bg-[#102B47] text-white rounded-lg font-medium hover:bg-[#0b1f33] transition-colors"
               >
                 {t("dashboard.continueToPractice")}
               </button>

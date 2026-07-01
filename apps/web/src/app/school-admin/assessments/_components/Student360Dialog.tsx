@@ -88,12 +88,12 @@ function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClose }: {
         borderBottom: "1px solid rgba(59,130,246,0.1)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <CalendarDays style={{ width: 13, height: 13, color: "#065292" }} />
+          <CalendarDays style={{ width: 13, height: 13, color: "#2E9098" }} />
           <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-primary)" }}>Extend Deadline</span>
           <span style={{
             fontSize: 10, padding: "1px 6px", borderRadius: 3,
             background: isExpired ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.1)",
-            color: isExpired ? "#ef4444" : "#065292", fontWeight: 600,
+            color: isExpired ? "#ef4444" : "#2E9098", fontWeight: 600,
           }}>
             {isExpired ? "EXPIRED" : `Due ${currentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
           </span>
@@ -110,7 +110,7 @@ function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClose }: {
             onClick={() => onExtend(p.days)}
             style={{
               height: 26, borderRadius: 5, padding: "0 10px", fontSize: 11, fontWeight: 600,
-              background: "var(--admin-bg-hover)", color: "#065292",
+              background: "var(--admin-bg-hover)", color: "#2E9098",
               border: "1px solid var(--admin-border-default)", cursor: "pointer",
               opacity: isLoading ? 0.5 : 1,
             }}>
@@ -121,7 +121,7 @@ function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClose }: {
           onClick={() => setShowCalendar(!showCalendar)}
           style={{
             height: 26, borderRadius: 5, padding: "0 10px", fontSize: 11, fontWeight: 600,
-            background: showCalendar ? "#065292" : "var(--admin-bg-hover)",
+            background: showCalendar ? "#2E9098" : "var(--admin-bg-hover)",
             color: showCalendar ? "#fff" : "var(--admin-font-primary)",
             border: "1px solid var(--admin-border-default)", cursor: "pointer",
             display: "flex", alignItems: "center", gap: 4,
@@ -305,7 +305,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                 style={{
                   height: 32, borderRadius: 6, padding: "0 12px", fontSize: 11, fontWeight: 600,
                   display: "flex", alignItems: "center", gap: 4,
-                  background: "transparent", color: "#065292",
+                  background: "transparent", color: "#2E9098",
                   border: "1px solid rgba(59,130,246,0.3)", cursor: "pointer",
                 }}>
                 {actionLoading === "send-all" ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 12, height: 12 }} />}
@@ -448,8 +448,8 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                           <div style={{ display: "flex", gap: 2 }}>
                             <button title="Extend deadline" disabled={!!actionLoading}
                               onClick={() => setExtendingGroupId(extendingGroupId === g.id ? null : g.id)}
-                              style={{ width: 26, height: 26, borderRadius: 4, border: extendingGroupId === g.id ? "1px solid #065292" : "1px solid var(--admin-border-default)", background: extendingGroupId === g.id ? "rgba(59,130,246,0.05)" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              <TimerReset style={{ width: 11, height: 11, color: "#065292" }} />
+                              style={{ width: 26, height: 26, borderRadius: 4, border: extendingGroupId === g.id ? "1px solid #2E9098" : "1px solid var(--admin-border-default)", background: extendingGroupId === g.id ? "rgba(59,130,246,0.05)" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <TimerReset style={{ width: 11, height: 11, color: "#2E9098" }} />
                             </button>
                             <button title="Resend invitation" disabled={!!actionLoading}
                               onClick={() => handleAction(g.id, "resend")}
@@ -488,7 +488,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
             Close
           </button>
           <a href={`/school-admin/users/${student.id}`}
-            style={{ height: 36, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "var(--admin-accent-blue, #065292)", color: "#fff", textDecoration: "none" }}>
+            style={{ height: 36, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "var(--admin-accent-blue, #2E9098)", color: "#fff", textDecoration: "none" }}>
             View Full Profile
           </a>
         </div>

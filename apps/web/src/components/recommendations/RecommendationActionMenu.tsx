@@ -168,14 +168,14 @@ export function RecommendationActionMenu({
               {canUpload && (
                 <MenuButton
                   label="Upload Letter"
-                  color="#065292"
+                  color="#2E9098"
                   onClick={() => { setOpen(false); setUploadOpen(true); }}
                 />
               )}
               {canDownload && (
                 <MenuButton
                   label="Download Letter"
-                  color="#065292"
+                  color="#2E9098"
                   onClick={() =>
                     handle(async () => {
                       const { url } = await getRecommendationLetterUrl(req.id);

@@ -169,13 +169,13 @@ function EvaluationCard({
     >
       <div className="dash-card p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(6,82,146,0.10)" }}>
-            <FileCheck className="h-4 w-4" style={{ color: "#065292" }} strokeWidth={1.8} />
+          <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(46,144,152,0.10)" }}>
+            <FileCheck className="h-4 w-4" style={{ color: "#2E9098" }} strokeWidth={1.8} />
           </div>
           <div>
             <p className="font-semibold text-foreground">
               {t("evaluations.card.evaluationFor")}{" "}
-              <span style={{ color: "#065292" }}>{ev.studentName}</span>
+              <span style={{ color: "#2E9098" }}>{ev.studentName}</span>
             </p>
             <div className="flex items-center gap-2 mt-1">
               <Calendar className="h-3.5 w-3.5 text-muted-foreground" />

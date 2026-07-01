@@ -127,7 +127,7 @@ export default function ReportsPage() {
                   }}>{student.status || t("reports.statusActive")}</Badge>
                 </TableCell>
                 <TableCell className="py-3 px-4">
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-accent-blue, #065292)" }}>{t("reports.viewReports")}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-accent-blue, #2E9098)" }}>{t("reports.viewReports")}</span>
                 </TableCell>
               </TableRow>
             ))}

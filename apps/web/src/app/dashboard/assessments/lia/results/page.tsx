@@ -80,7 +80,7 @@ interface SubtestBand {
 }
 
 // Readable foreground for a band badge: dark text on light band colors (e.g. the
-// yellow Adecuado #FFD600), white otherwise. Keeps WCAG contrast on every band.
+// yellow Adecuado #FFD23F), white otherwise. Keeps WCAG contrast on every band.
 function bandTextColor(hex: string): string {
   const c = hex.replace("#", "");
   if (c.length < 6) return "#ffffff";
@@ -88,7 +88,7 @@ function bandTextColor(hex: string): string {
   const g = parseInt(c.slice(2, 4), 16);
   const b = parseInt(c.slice(4, 6), 16);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.6 ? "#111111" : "#ffffff";
+  return luminance > 0.6 ? "#102B47" : "#ffffff";
 }
 
 interface SubtestResult {
@@ -109,9 +109,9 @@ interface SubtestResult {
 const ScoreBar = ({ test, index }: { test: SubtestResult; index: number }) => {
   const isHigh = test.score >= 80;
   const isMed = test.score >= 60;
-  const fallbackFill = isHigh ? "#10b981" : isMed ? "#065292" : "#f59e0b";
+  const fallbackFill = isHigh ? "#10b981" : isMed ? "#2E9098" : "#f59e0b";
   const fillColor = test.band?.color ?? fallbackFill;
-  const labelColor = isHigh ? "text-emerald-700" : isMed ? "text-[#065292]" : "text-amber-700";
+  const labelColor = isHigh ? "text-emerald-700" : isMed ? "text-[#2E9098]" : "text-amber-700";
 
   return (
     <div className="space-y-1.5">
@@ -256,7 +256,7 @@ export default function MILResultsPage() {
                 liaData={liaReportData}
                 label={t("dashboard.downloadPDFReport") || "Download Report"}
                 variant="outline"
-                className="h-10 gap-2 rounded-xl bg-[#065292] text-white border-transparent hover:bg-[#054a83] shadow-sm"
+                className="h-10 gap-2 rounded-xl bg-[#102B47] text-white border-transparent hover:bg-[#0b1f33] shadow-sm"
                 size="md"
               />
           </div>
@@ -374,7 +374,7 @@ export default function MILResultsPage() {
            <div className="lg:col-span-2 space-y-6">
               <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
                 <div className="flex items-center gap-2 mb-5">
-                  <Activity className="w-5 h-5 text-[#065292]" />
+                  <Activity className="w-5 h-5 text-[#2E9098]" />
                   <h2 className="text-lg font-semibold text-foreground">
                     {t("dashboard.cognitiveAptitudeScores", "Cognitive Aptitude Scores")}
                   </h2>
@@ -408,14 +408,14 @@ export default function MILResultsPage() {
                       <Radar
                         name="Score"
                         dataKey="A"
-                        stroke="#065292"
+                        stroke="#2E9098"
                         strokeWidth={3}
-                        fill="#065292"
+                        fill="#2E9098"
                         fillOpacity={0.2}
                       />
                       <RechartsTooltip
                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                        itemStyle={{ color: '#065292', fontWeight: 600 }}
+                        itemStyle={{ color: '#2E9098', fontWeight: 600 }}
                       />
                     </RadarChart>
                   </ResponsiveContainer>

@@ -50,7 +50,7 @@ export function PasswordInput({
                 placeholder={placeholder}
                 className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
                 style={{ background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = "#E0E0E0"; }}
               />
             </FormControl>

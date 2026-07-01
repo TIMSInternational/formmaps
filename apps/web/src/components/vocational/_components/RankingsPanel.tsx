@@ -34,7 +34,7 @@ export function RankingsPanel({ rankings }: { rankings: Rankings }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">In their words</p>
           <ul className="space-y-2">
             {rankings.openInsights.map((o, idx) => (
-              <li key={idx} className="text-sm text-gray-600 border-l-2 pl-3" style={{ borderColor: "#065292" }}>
+              <li key={idx} className="text-sm text-gray-600 border-l-2 pl-3" style={{ borderColor: "#2E9098" }}>
                 <span className="capitalize text-gray-400 text-xs mr-2">{o.group}:</span>{o.text}
               </li>
             ))}

@@ -29,7 +29,7 @@ export function MILReports({ student }: { student: ReportStudent }) {
 
   const cognitiveScores = hasMIL ? [
     { label: "Reasoning", key: "reasoning", color: "#8b5cf6" },
-    { label: "Detection", key: "detection", color: "#065292" },
+    { label: "Detection", key: "detection", color: "#2E9098" },
     { label: "Numeric", key: "numeric", color: "#14b8a6" },
     { label: "Memory", key: "memory", color: "#f59e0b" },
     { label: "Orientation", key: "orientation", color: "#ef4444" },
@@ -74,7 +74,7 @@ export function MILReports({ student }: { student: ReportStudent }) {
 
   return (
     <div>
-      <StudentInfoHeader student={student} icon={Brain} iconColor="#065292" subtitle="MIL / LIA Cognitive Assessment" />
+      <StudentInfoHeader student={student} icon={Brain} iconColor="#2E9098" subtitle="MIL / LIA Cognitive Assessment" />
       <div className="p-5 space-y-5">
         {!fetched ? (
           <div className="space-y-3">

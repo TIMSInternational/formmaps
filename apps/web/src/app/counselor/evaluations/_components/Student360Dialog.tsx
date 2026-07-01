@@ -188,7 +188,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                 style={{
                   height: 32, borderRadius: 6, padding: "0 12px", fontSize: 11, fontWeight: 600,
                   display: "flex", alignItems: "center", gap: 4,
-                  background: "transparent", color: "#065292",
+                  background: "transparent", color: "#2E9098",
                   border: "1px solid rgba(59,130,246,0.3)", cursor: "pointer",
                 }}>
                 {actionLoading === "send-all" ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 12, height: 12 }} />}
@@ -311,8 +311,8 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                           <div style={{ display: "flex", gap: 2 }}>
                             <button title="Extend deadline" disabled={!!actionLoading}
                               onClick={() => setExtendingGroupId(extendingGroupId === g.id ? null : g.id)}
-                              style={{ width: 26, height: 26, borderRadius: 4, border: extendingGroupId === g.id ? "1px solid #065292" : "1px solid var(--admin-border-default)", background: extendingGroupId === g.id ? "rgba(59,130,246,0.05)" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              <TimerReset style={{ width: 11, height: 11, color: "#065292" }} />
+                              style={{ width: 26, height: 26, borderRadius: 4, border: extendingGroupId === g.id ? "1px solid #2E9098" : "1px solid var(--admin-border-default)", background: extendingGroupId === g.id ? "rgba(59,130,246,0.05)" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <TimerReset style={{ width: 11, height: 11, color: "#2E9098" }} />
                             </button>
                             <button title="Resend invitation" disabled={!!actionLoading}
                               onClick={() => handleAction(g.id, "resend")}

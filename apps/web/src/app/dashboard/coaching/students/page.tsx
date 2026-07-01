@@ -64,7 +64,7 @@ export default function CoachStudentsPage() {
           onClick={() => setSearch("")}
           style={{
             padding: "8px 16px", borderRadius: 6, border: "none",
-            background: "#065292", color: "#fff", fontSize: 13,
+            background: "#102B47", color: "#fff", fontSize: 13,
             fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
           }}
         >
@@ -156,7 +156,7 @@ export default function CoachStudentsPage() {
               {/* Student info row */}
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{
-                  width: 44, height: 44, borderRadius: "50%", background: "#065292",
+                  width: 44, height: 44, borderRadius: "50%", background: "#102B47",
                   color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 15, fontWeight: 700, flexShrink: 0,
                 }}>
@@ -176,7 +176,7 @@ export default function CoachStudentsPage() {
               <div style={{ display: "flex", gap: 16 }}>
                 <div>
                   <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", margin: 0 }}>Sessions</p>
-                  <p style={{ fontSize: 16, fontWeight: 600, color: "#065292", margin: 0 }}>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: "#2E9098", margin: 0 }}>
                     {student.totalSessions ?? 0}
                   </p>
                 </div>
@@ -208,7 +208,7 @@ export default function CoachStudentsPage() {
                   style={{
                     display: "flex", alignItems: "center", gap: 6,
                     padding: "6px 12px", borderRadius: 6, border: "none",
-                    background: "#065292", color: "#fff",
+                    background: "#102B47", color: "#fff",
                     fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
                     transition: "opacity 0.1s",
                   }}

@@ -215,7 +215,7 @@ export default function ResumeBuilderPage() {
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] bg-[#065292] text-white px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-sm"
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] bg-[#102B47] text-white px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-sm"
           >
             <Check className="w-4 h-4" />
             Saved
@@ -266,8 +266,8 @@ export default function ResumeBuilderPage() {
                       className={cn(
                         "p-3 rounded-xl border text-left transition-all text-xs",
                         resumeBuilder.data.template === template.id
-                          ? "border-[#065292] bg-[#065292]/5 text-[#065292] font-semibold"
-                          : "border-border hover:border-[#065292]/30"
+                          ? "border-[#2E9098] bg-[#102B47]/5 text-[#2E9098] font-semibold"
+                          : "border-border hover:border-[#2E9098]/30"
                       )}
                     >
                       {template.name}
@@ -282,7 +282,7 @@ export default function ResumeBuilderPage() {
           <div className="border-t border-border p-3 shrink-0 bg-white dark:bg-card">
             <button
               onClick={handleDownloadPDF}
-              className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#065292] text-white rounded-lg text-sm font-medium hover:bg-[#054473] transition-colors shadow-sm"
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#102B47] text-white rounded-lg text-sm font-medium hover:bg-[#0b1f33] transition-colors shadow-sm"
             >
               <Download className="w-4 h-4" />
               Download Resume

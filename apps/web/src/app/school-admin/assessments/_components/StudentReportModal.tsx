@@ -112,7 +112,7 @@ export function StudentReportModal({ studentId, open, onOpenChange }: {
       }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ color: "var(--admin-font-primary)" }}>
-            <Award style={{ width: 18, height: 18, color: "#065292" }} />
+            <Award style={{ width: 18, height: 18, color: "#2E9098" }} />
             Student Assessment Report
           </DialogTitle>
           <DialogDescription style={{ color: "var(--admin-font-tertiary)" }}>
@@ -134,7 +134,7 @@ export function StudentReportModal({ studentId, open, onOpenChange }: {
             {/* Student header */}
             <div className="flex items-center gap-4 p-4 rounded-lg" style={{ background: "var(--admin-bg-hover)" }}>
               <div style={{
-                width: 48, height: 48, borderRadius: "50%", background: "#065292",
+                width: 48, height: 48, borderRadius: "50%", background: "#102B47",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 color: "#fff", fontSize: 18, fontWeight: 700,
               }}>
@@ -167,7 +167,7 @@ export function StudentReportModal({ studentId, open, onOpenChange }: {
 
             {/* Cognitive (MIL) */}
             <div>
-              <SectionHeading icon={Brain} color="#065292" title="Cognitive Exams"
+              <SectionHeading icon={Brain} color="#2E9098" title="Cognitive Exams"
                 sub={`avg ${report.mil.averageScore}% · ${report.mil.completedCount} completed`} />
               {report.mil.sessions.length === 0 ? (
                 <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", padding: "8px 0" }}>No cognitive exam sessions yet.</div>
@@ -235,7 +235,7 @@ export function StudentReportModal({ studentId, open, onOpenChange }: {
               <button onClick={downloadJson} style={{
                 height: 34, borderRadius: 6, padding: "0 16px", fontSize: 12, fontWeight: 600,
                 display: "flex", alignItems: "center", gap: 6,
-                background: "#065292", color: "#fff", border: "none", cursor: "pointer",
+                background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
               }}>
                 <Download style={{ width: 13, height: 13 }} /> Download JSON
               </button>

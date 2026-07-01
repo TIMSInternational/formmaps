@@ -170,7 +170,7 @@ export function CoursesPanel() {
           </button>
           <button onClick={() => aiFileRef.current?.click()} disabled={aiImporting} style={{
             height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
-            background: "linear-gradient(135deg, #8b5cf6, #065292)", color: "#fff", border: "none", cursor: aiImporting ? "wait" : "pointer",
+            background: "linear-gradient(135deg, #8b5cf6, #2E9098)", color: "#fff", border: "none", cursor: aiImporting ? "wait" : "pointer",
             opacity: aiImporting ? 0.7 : 1,
           }}>
             {aiImporting ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Sparkles style={{ width: 14, height: 14 }} />}
@@ -178,7 +178,7 @@ export function CoursesPanel() {
           </button>
           <button onClick={() => setPrereqDialogOpen(true)} style={{
             height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
-            background: "#065292", color: "#fff", border: "none", cursor: "pointer",
+            background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
           }}>
             <Network style={{ width: 14, height: 14 }} />
             Analyze prerequisites
@@ -266,7 +266,7 @@ export function CoursesPanel() {
                 <TableCell className="py-3 px-4"><Badge variant="outline" className="text-xs" style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)" }}>{c.department || "\u2014"}</Badge></TableCell>
                 <TableCell className="py-3 px-4 text-center" style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{c.credits}</TableCell>
                 <TableCell className="py-3 px-4">
-                  {c.frameworkType ? <Badge className="text-xs" style={{ background: "rgba(59,130,246,0.1)", color: "#065292", border: "none" }}>{c.frameworkType}</Badge> : <span style={{ color: "var(--admin-font-tertiary)" }}>{"\u2014"}</span>}
+                  {c.frameworkType ? <Badge className="text-xs" style={{ background: "rgba(59,130,246,0.1)", color: "#2E9098", border: "none" }}>{c.frameworkType}</Badge> : <span style={{ color: "var(--admin-font-tertiary)" }}>{"\u2014"}</span>}
                 </TableCell>
                 <TableCell className="py-3 px-4">
                   <Badge className="text-xs font-medium shadow-none border-0" style={{ background: c.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(107,114,128,0.1)", color: c.status === "active" ? "#10b981" : "#6b7280" }}>{c.status || "active"}</Badge>

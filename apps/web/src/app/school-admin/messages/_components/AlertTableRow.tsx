@@ -17,13 +17,13 @@ const priorityBadge: Record<AlertPriority, { bg: string; color: string }> = {
   critical: { bg: "rgba(239,68,68,0.1)", color: "#ef4444" },
   high: { bg: "rgba(245,158,11,0.1)", color: "#f59e0b" },
   medium: { bg: "rgba(234,179,8,0.1)", color: "#eab308" },
-  low: { bg: "rgba(59,130,246,0.1)", color: "#065292" },
+  low: { bg: "rgba(59,130,246,0.1)", color: "#2E9098" },
 };
 
 const typeIcons: Record<AlertType, React.ReactNode> = {
   grade_drop: <TrendingDown className="h-3.5 w-3.5" style={{ color: "#ef4444" }} />,
   missing_assessment: <AlertCircle className="h-3.5 w-3.5" style={{ color: "#f59e0b" }} />,
-  credit_gap: <MapPin className="h-3.5 w-3.5" style={{ color: "#065292" }} />,
+  credit_gap: <MapPin className="h-3.5 w-3.5" style={{ color: "#2E9098" }} />,
   no_career_path: <AlertTriangle className="h-3.5 w-3.5" style={{ color: "#eab308" }} />,
   inactive: <Info className="h-3.5 w-3.5" style={{ color: "var(--admin-font-tertiary)" }} />,
 };
@@ -103,7 +103,7 @@ export function AlertTableRow({ alert, isSelected, onToggleSelect, onMarkRead, o
         {alert.status === "active" ? (
           <span style={{
             fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
-            background: "rgba(99,102,241,0.1)", color: "#065292",
+            background: "rgba(99,102,241,0.1)", color: "#2E9098",
           }}>
             Action Req.
           </span>

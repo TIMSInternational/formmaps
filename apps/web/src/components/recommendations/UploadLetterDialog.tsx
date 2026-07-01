@@ -78,7 +78,7 @@ export function UploadLetterDialog({
           <button
             onClick={handleUpload}
             disabled={!file || uploading}
-            style={{ height: 34, padding: "0 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, background: "#065292", color: "#fff", border: "none", cursor: !file || uploading ? "not-allowed" : "pointer", opacity: !file || uploading ? 0.6 : 1, display: "flex", alignItems: "center", gap: 6 }}
+            style={{ height: 34, padding: "0 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, background: "#102B47", color: "#fff", border: "none", cursor: !file || uploading ? "not-allowed" : "pointer", opacity: !file || uploading ? 0.6 : 1, display: "flex", alignItems: "center", gap: 6 }}
           >
             {uploading ? <Loader2 style={{ width: 14, height: 14 }} className="animate-spin" /> : <UploadCloud style={{ width: 14, height: 14 }} />}
             Upload

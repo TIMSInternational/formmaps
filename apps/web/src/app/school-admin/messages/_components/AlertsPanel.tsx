@@ -157,7 +157,7 @@ export default function AlertsPanel() {
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)" }}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3" style={{ marginBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Bell style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #065292)" }} />
+              <Bell style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #2E9098)" }} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Alert Inbox</div>
                 <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Manage and resolve system-detected issues and warnings.</div>
@@ -289,7 +289,7 @@ export default function AlertsPanel() {
                     style={{
                       width: 28, height: 28, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: 11, fontWeight: 600, cursor: "pointer",
-                      background: page === pageNum ? "var(--admin-accent-blue, #065292)" : "var(--admin-bg-card)",
+                      background: page === pageNum ? "var(--admin-accent-blue, #2E9098)" : "var(--admin-bg-card)",
                       color: page === pageNum ? "#fff" : "var(--admin-font-primary)",
                       border: page === pageNum ? "none" : "1px solid var(--admin-border-default)",
                     }}>

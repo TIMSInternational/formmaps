@@ -7,7 +7,7 @@ export const careerFields = [
     name: 'Technology & Software',
     description: 'Software development, IT, cybersecurity, data science',
     icon: Code,
-    color: '#065292',
+    color: '#2E9098',
     templates: ['modern', 'minimal'],
     skills: {
       technical: ['JavaScript', 'Python', 'React', 'Node.js', 'SQL', 'Git', 'AWS', 'Docker'],
@@ -160,7 +160,7 @@ export const resumeTemplates = [
     name: "Modern Professional",
     description: "Clean, professional design with modern typography and subtle colors",
     preview: "/templates/modern-preview.jpg",
-    color: "#065292",
+    color: "#2E9098",
     category: "professional",
     suitableFor: ["technology", "business", "engineering", "general"]
   },

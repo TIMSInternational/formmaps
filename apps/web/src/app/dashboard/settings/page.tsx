@@ -63,7 +63,7 @@ function SectionCard({
           background: "var(--admin-bg-hover)",
         }}
       >
-        <Icon className="h-4 w-4" style={{ color: "var(--admin-accent-blue, #065292)" }} />
+        <Icon className="h-4 w-4" style={{ color: "var(--admin-accent-blue, #2E9098)" }} />
         <div>
           <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
             {title}
@@ -149,22 +149,22 @@ function ThemeOption({
         padding: "14px 12px",
         borderRadius: 8,
         border: active
-          ? "2px solid var(--admin-accent-blue, #065292)"
+          ? "2px solid var(--admin-accent-blue, #2E9098)"
           : "1px solid var(--admin-border-default)",
-        background: active ? "rgba(6,82,146,0.06)" : "var(--admin-bg-card)",
+        background: active ? "rgba(46,144,152,0.06)" : "var(--admin-bg-card)",
         cursor: "pointer",
         transition: "all 0.15s ease",
       }}
     >
       <Icon
         className="h-5 w-5"
-        style={{ color: active ? "var(--admin-accent-blue, #065292)" : "var(--admin-font-tertiary)" }}
+        style={{ color: active ? "var(--admin-accent-blue, #2E9098)" : "var(--admin-font-tertiary)" }}
       />
       <span
         style={{
           fontSize: 12,
           fontWeight: active ? 600 : 400,
-          color: active ? "var(--admin-accent-blue, #065292)" : "var(--admin-font-primary)",
+          color: active ? "var(--admin-accent-blue, #2E9098)" : "var(--admin-font-primary)",
         }}
       >
         {label}
@@ -300,7 +300,7 @@ export default function StudentSettingsPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
         <div className="flex items-center gap-2">
-          <Settings className="h-5 w-5" style={{ color: "var(--admin-accent-blue, #065292)" }} />
+          <Settings className="h-5 w-5" style={{ color: "var(--admin-accent-blue, #2E9098)" }} />
           <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
             Settings
           </h1>
@@ -331,7 +331,7 @@ export default function StudentSettingsPage() {
               style={{
                 fontSize: 12,
                 fontWeight: 600,
-                color: "var(--admin-accent-blue, #065292)",
+                color: "var(--admin-accent-blue, #2E9098)",
                 marginTop: 2,
                 textTransform: "capitalize",
               }}
@@ -405,11 +405,11 @@ export default function StudentSettingsPage() {
                 fontSize: 13,
                 fontWeight: language === lang.value ? 600 : 400,
                 border: language === lang.value
-                  ? "2px solid var(--admin-accent-blue, #065292)"
+                  ? "2px solid var(--admin-accent-blue, #2E9098)"
                   : "1px solid var(--admin-border-default)",
-                background: language === lang.value ? "rgba(6,82,146,0.06)" : "transparent",
+                background: language === lang.value ? "rgba(46,144,152,0.06)" : "transparent",
                 color: language === lang.value
-                  ? "var(--admin-accent-blue, #065292)"
+                  ? "var(--admin-accent-blue, #2E9098)"
                   : "var(--admin-font-primary)",
                 cursor: "pointer",
                 transition: "all 0.15s ease",
@@ -497,7 +497,7 @@ export default function StudentSettingsPage() {
               padding: "0 16px",
               fontSize: 13,
               fontWeight: 600,
-              background: "var(--admin-accent-blue, #065292)",
+              background: "var(--admin-accent-blue, #2E9098)",
               color: "#fff",
               border: "none",
               cursor: changingPassword ? "not-allowed" : "pointer",
@@ -530,7 +530,7 @@ export default function StudentSettingsPage() {
             display: "flex",
             alignItems: "center",
             gap: 6,
-            background: "var(--admin-accent-blue, #065292)",
+            background: "var(--admin-accent-blue, #2E9098)",
             color: "#fff",
             border: "none",
             cursor: saving ? "not-allowed" : "pointer",

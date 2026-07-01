@@ -50,7 +50,7 @@ export function GapReportPanel({ gaps, warnings = [], linkToSupplemental }: GapR
       {linkToSupplemental && gaps.length > 0 && (
         <a
           href="#supplemental-rail"
-          className="inline-block mt-3 text-xs font-semibold text-[#065292] hover:underline"
+          className="inline-block mt-3 text-xs font-semibold text-[#2E9098] hover:underline"
         >
           See online courses that fill these gaps ↓
         </a>

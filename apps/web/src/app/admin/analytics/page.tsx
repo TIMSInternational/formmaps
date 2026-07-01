@@ -152,7 +152,7 @@ export default function AnalyticsPage() {
                 transactions: d.transactions,
               }))}
               series={[
-                { key: "revenue", name: t("analytics.charts.revenueSeriesLabel"), color: "#065292" },
+                { key: "revenue", name: t("analytics.charts.revenueSeriesLabel"), color: "#2E9098" },
                 { key: "transactions", name: t("analytics.charts.transactionsSeriesLabel"), color: "#10b981" },
               ]}
             />

@@ -19,7 +19,7 @@ export function ResumeTabSwitcher({ activeTab, setActiveTab }: ResumeTabSwitcher
           className={cn(
             "flex-1 py-2.5 text-xs font-medium transition-colors text-center",
             activeTab === tab
-              ? "text-[#065292] font-semibold border-b-2 border-[#065292] bg-white dark:bg-card"
+              ? "text-[#2E9098] font-semibold border-b-2 border-[#2E9098] bg-white dark:bg-card"
               : "text-muted-foreground hover:text-foreground"
           )}
         >

@@ -76,7 +76,7 @@ function NavItem({ href, icon: Icon, label, active, collapsed, colors }: {
         gap: collapsed ? 0 : 8, height: 28,
         padding: collapsed ? "0 4px" : "0 8px", borderRadius: 4,
         fontSize: 13, color: active ? "#fff" : colors.fontSecondary,
-        background: active ? "#065292" : "transparent",
+        background: active ? "#2E9098" : "transparent",
         textDecoration: "none", transition: "background 0.1s ease", cursor: "pointer",
       }}
       onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = colors.hoverBg; }}
@@ -144,7 +144,7 @@ export function CoachSidebar() {
     fontTertiary: themeColors.font.tertiary,
     fontLight: themeColors.font.sectionLabel,
     hoverBg: themeColors.bg.hover,
-    activeBg: "#065292",
+    activeBg: "#2E9098",
   };
 
   const changeTheme = (newMode: ThemeMode) => {
@@ -179,10 +179,10 @@ export function CoachSidebar() {
         gap: 8,
       }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-icon.svg" alt="FormMaps" style={{ width: 24, height: 24, flexShrink: 0 }} />
+        <img src="/fm-icon.png" alt="FormMaps" style={{ width: 24, height: 24, flexShrink: 0 }} />
         {!collapsed && (
           <span style={{ fontSize: 15, fontWeight: 700, color: C.fontPrimary, letterSpacing: "-0.02em", flex: 1 }}>
-            <span style={{ color: "#111111" }}>FORM</span><span style={{ color: "#065292" }}>MAPS</span>
+            <span style={{ color: "#102B47" }}>FORM</span><span style={{ color: "#2E9098" }}>MAPS</span>
           </span>
         )}
         {!collapsed && (
@@ -326,7 +326,7 @@ export function CoachSidebar() {
         >
           <div style={{
             width: collapsed ? 24 : 28, height: collapsed ? 24 : 28, borderRadius: 7,
-            background: "#065292", color: "#fff",
+            background: "#102B47", color: "#fff",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 11, fontWeight: 700, flexShrink: 0,
           }}>{user.name?.charAt(0)?.toUpperCase() || "C"}</div>

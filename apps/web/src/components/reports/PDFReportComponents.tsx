@@ -130,19 +130,19 @@ export const sharedStyles = StyleSheet.create({
 
 // Color palette for charts
 export const chartColors = {
-  primary: '#065292',
+  primary: '#2E9098',
   secondary: '#8b5cf6',
   success: '#22c55e',
   warning: '#f59e0b',
   danger: '#ef4444',
-  info: '#065292',
+  info: '#2E9098',
   purple: '#a855f7',
   cyan: '#06b6d4',
   pink: '#ec4899',
   orange: '#f97316',
   // DISC colors — canonical TIMS PCA mapping: D red, I blue, S green, C gold
   dominance: '#ef4444',
-  influence: '#065292',
+  influence: '#2E9098',
   steadiness: '#22c55e',
   conscientiousness: '#eab308',
 };
@@ -161,7 +161,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
   subtitle,
   userName,
   reportDate,
-  accentColor = '#065292',
+  accentColor = '#2E9098',
 }) => (
   <View style={sharedStyles.header}>
     <View style={{ marginBottom: 15 }}>

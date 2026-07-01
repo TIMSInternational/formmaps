@@ -17,10 +17,10 @@ export function LoadingSpinner({
     >
       <div className="flex flex-col items-center gap-5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-full.svg" alt="FormMaps" className="h-9 w-auto" />
+        <img src="/fm-full.png" alt="FormMaps" className="h-9 w-auto" />
         <div
           className="w-8 h-8 border-[3px] rounded-full animate-spin"
-          style={{ borderColor: "#E5EAF0", borderTopColor: "#065292" }}
+          style={{ borderColor: "#E5EAF0", borderTopColor: "#2E9098" }}
           aria-hidden="true"
         />
         {label && (

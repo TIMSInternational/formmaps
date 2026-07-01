@@ -198,7 +198,7 @@ export default function CounselorActivitiesPage() {
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <button onClick={() => { setShowForm(!showForm); if (showForm) resetForm(); }}
-              style={{ height: 36, borderRadius: 8, padding: "0 16px", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "#065292", color: "#fff", border: "none", cursor: "pointer" }}>
+              style={{ height: 36, borderRadius: 8, padding: "0 16px", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "#102B47", color: "#fff", border: "none", cursor: "pointer" }}>
               <Plus style={{ width: 14, height: 14 }} /> Add Activity
             </button>
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginLeft: "auto" }}>

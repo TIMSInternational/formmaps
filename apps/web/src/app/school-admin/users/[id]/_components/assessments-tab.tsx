@@ -74,9 +74,9 @@ export function AssessmentsTab({
     <div className="space-y-4">
       {/* MIL / LIA Results */}
       <Card>
-        <CardHeader icon={Brain} color="#065292" title="MIL / LIA Cognitive Assessment" badge={
+        <CardHeader icon={Brain} color="#2E9098" title="MIL / LIA Cognitive Assessment" badge={
           milData ? (
-            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(99,102,241,0.1)", color: "#065292", marginLeft: 4 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(99,102,241,0.1)", color: "#2E9098", marginLeft: 4 }}>
               {milData.completedExams}/{milData.totalExams} complete
             </span>
           ) : null
@@ -87,7 +87,7 @@ export function AssessmentsTab({
               {/* Overall Score */}
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
                 <div style={{ padding: "12px 16px", borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", textAlign: "center", minWidth: 100 }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "#065292", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Overall Score</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "#2E9098", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Overall Score</div>
                   <div style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)" }}>{milData.overallScore?.toFixed(0) ?? "\u2014"}%</div>
                 </div>
                 {milData.overallPercentile != null && (
@@ -110,7 +110,7 @@ export function AssessmentsTab({
                             {key.replace(/([A-Z])/g, " $1").trim()}
                           </div>
                           <div style={{ height: 4, borderRadius: 2, background: "var(--admin-bg-hover)", marginTop: 4, overflow: "hidden" }}>
-                            <div style={{ height: "100%", width: `${Math.min(Number(value) || 0, 100)}%`, borderRadius: 2, background: "#065292" }} />
+                            <div style={{ height: "100%", width: `${Math.min(Number(value) || 0, 100)}%`, borderRadius: 2, background: "#102B47" }} />
                           </div>
                         </div>
                         <span style={{ fontSize: 13, fontWeight: 700, color: "var(--admin-font-primary)", minWidth: 35, textAlign: "right" }}>{Number(value)?.toFixed(0) ?? "\u2014"}</span>
@@ -144,7 +144,7 @@ export function AssessmentsTab({
                         <span style={{
                           fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase",
                           background: exam.status === "completed" ? "rgba(16,185,129,0.1)" : exam.status === "in_progress" ? "rgba(59,130,246,0.1)" : "rgba(107,114,128,0.1)",
-                          color: exam.status === "completed" ? "#10b981" : exam.status === "in_progress" ? "#065292" : "#6b7280",
+                          color: exam.status === "completed" ? "#10b981" : exam.status === "in_progress" ? "#2E9098" : "#6b7280",
                         }}>
                           {exam.status?.replace("_", " ")}
                         </span>
@@ -192,7 +192,7 @@ export function AssessmentsTab({
                       { label: "D", value: graph.d, color: "#ef4444" },
                       { label: "I", value: graph.i, color: "#f59e0b" },
                       { label: "S", value: graph.s, color: "#10b981" },
-                      { label: "C", value: graph.c, color: "#065292" },
+                      { label: "C", value: graph.c, color: "#2E9098" },
                     ].map((dim) => (
                       <div key={dim.label} style={{ textAlign: "center" }}>
                         <div style={{ height: 48, position: "relative", background: "var(--admin-bg-hover)", borderRadius: 4, overflow: "hidden" }}>

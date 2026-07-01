@@ -174,7 +174,7 @@ export function AcademicReports({ student }: { student: ReportStudent }) {
                         color: (g.grade === "A" || g.grade === "A+" || g.grade === "A-" || (typeof g.grade === "number" && g.grade >= 90))
                           ? "#10b981"
                           : (g.grade === "B" || g.grade === "B+" || g.grade === "B-" || (typeof g.grade === "number" && g.grade >= 80))
-                            ? "#065292"
+                            ? "#2E9098"
                             : (g.grade === "C" || g.grade === "C+" || g.grade === "C-" || (typeof g.grade === "number" && g.grade >= 70))
                               ? "#f59e0b"
                               : "#ef4444",

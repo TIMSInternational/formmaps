@@ -161,7 +161,7 @@ function NavItem({ href, icon: Icon, label, active, hasSub, expanded, onToggle, 
         display: "flex", alignItems: "center", gap: 8, height: 28, padding: "0 8px",
         borderRadius: 4, fontSize: 13, fontWeight: 500, textDecoration: "none", cursor: "pointer",
         color: active && !hasSub ? "#fff" : colors.fontSecondary,
-        background: active && !hasSub ? "#065292" : "transparent",
+        background: active && !hasSub ? "#2E9098" : "transparent",
         transition: "background 0.1s ease",
       }}
       onMouseEnter={(e) => { if (!(active && !hasSub)) e.currentTarget.style.background = colors.hoverBg; }}
@@ -280,14 +280,14 @@ export function StudentSidebar() {
       }}>
         {!collapsed ? (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <img src="/logo-icon.svg" alt="FormMaps" style={{ width: 28, height: 28 }} />
+            <img src="/fm-icon.png" alt="FormMaps" style={{ width: 28, height: 28 }} />
             <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em" }}>
               <span style={{ color: C.fontPrimary }}>FORM</span>
-              <span style={{ color: "#065292" }}>MAPS</span>
+              <span style={{ color: "#2E9098" }}>MAPS</span>
             </span>
           </div>
         ) : (
-          <img src="/logo-icon.svg" alt="FormMaps" style={{ width: 24, height: 24, margin: "0 auto" }} />
+          <img src="/fm-icon.png" alt="FormMaps" style={{ width: 24, height: 24, margin: "0 auto" }} />
         )}
         {!collapsed && (
           <button onClick={() => setCollapsed(true)} title={t("shell.collapseSidebar")} style={{
@@ -382,7 +382,7 @@ export function StudentSidebar() {
                           style={{
                             display: "flex", alignItems: "center", justifyContent: "center",
                             height: 28, borderRadius: 4,
-                            background: itemActive ? "#065292" : "transparent", textDecoration: "none",
+                            background: itemActive ? "#2E9098" : "transparent", textDecoration: "none",
                           }}
                           onMouseEnter={(e) => { if (!itemActive) e.currentTarget.style.background = C.hoverBg; }}
                           onMouseLeave={(e) => { if (!itemActive) e.currentTarget.style.background = "transparent"; }}
@@ -411,7 +411,7 @@ export function StudentSidebar() {
                                   padding: "0 4px 0 0", borderRadius: 4, fontSize: 13, fontWeight: 500,
                                   textDecoration: "none", transition: "background 0.1s",
                                   color: subActive ? "#fff" : C.fontSecondary,
-                                  background: subActive ? "#065292" : "transparent",
+                                  background: subActive ? "#2E9098" : "transparent",
                                 }}
                                 onMouseEnter={(e) => { if (!subActive) e.currentTarget.style.background = C.hoverBg; }}
                                 onMouseLeave={(e) => { if (!subActive) e.currentTarget.style.background = "transparent"; }}
@@ -535,7 +535,7 @@ export function StudentSidebar() {
         >
           <div style={{
             width: collapsed ? 24 : 28, height: collapsed ? 24 : 28, borderRadius: 7,
-            background: "#065292", color: "#fff",
+            background: "#102B47", color: "#fff",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 11, fontWeight: 700, flexShrink: 0,
           }}>{user.name?.charAt(0)?.toUpperCase() || "S"}</div>

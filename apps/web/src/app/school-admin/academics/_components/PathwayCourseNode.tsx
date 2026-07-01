@@ -19,7 +19,7 @@ function getDeptIcon(dept?: string) {
 }
 
 const gradeColors: Record<number, string> = {
-  9: "#065292", 10: "#8b5cf6", 11: "#f59e0b", 12: "#10b981",
+  9: "#2E9098", 10: "#8b5cf6", 11: "#f59e0b", 12: "#10b981",
 };
 
 // Node data shape (set by PathwayEditorDialog)

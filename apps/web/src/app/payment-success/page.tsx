@@ -76,18 +76,18 @@ export default function PaymentSuccess() {
     <div className="min-h-screen bg-gradient-to-b from-[#f5f8fc] to-white flex flex-col items-center justify-center p-4">
       {/* Brand mark */}
       <div className="flex items-center justify-center gap-2 mb-6">
-        <img src="/logo-icon.svg" alt="FormMaps" className="w-8 h-8" />
+        <img src="/fm-icon.png" alt="FormMaps" className="w-8 h-8" />
         <div className="flex items-center">
-          <span className="text-lg font-bold tracking-tight" style={{ color: "#111111" }}>FORM</span>
-          <span className="text-lg font-bold tracking-tight" style={{ color: "#065292" }}>MAPS</span>
+          <span className="text-lg font-bold tracking-tight" style={{ color: "#102B47" }}>FORM</span>
+          <span className="text-lg font-bold tracking-tight" style={{ color: "#2E9098" }}>MAPS</span>
         </div>
       </div>
 
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8" style={{ border: "1px solid rgba(6,82,146,0.1)" }}>
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8" style={{ border: "1px solid rgba(46,144,152,0.1)" }}>
         {status === "loading" && (
           <div className="text-center">
-            <div className="w-16 h-16 border-4 rounded-full animate-spin mx-auto mb-4" style={{ borderColor: "rgba(6,82,146,0.2)", borderTopColor: "#065292" }}></div>
-            <h2 className="text-xl font-semibold mb-2" style={{ color: "#111111" }}>
+            <div className="w-16 h-16 border-4 rounded-full animate-spin mx-auto mb-4" style={{ borderColor: "rgba(46,144,152,0.2)", borderTopColor: "#2E9098" }}></div>
+            <h2 className="text-xl font-semibold mb-2" style={{ color: "#102B47" }}>
               {t("payments.verifying")}
             </h2>
             <p className="text-gray-500">{t("payments.pleaseWait")}</p>
@@ -112,7 +112,7 @@ export default function PaymentSuccess() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold mb-2" style={{ color: "#111111" }}>
+            <h2 className="text-2xl font-bold mb-2" style={{ color: "#102B47" }}>
               {t("payments.successTitle")}
             </h2>
             <p className="text-gray-500 mb-6">
@@ -124,8 +124,8 @@ export default function PaymentSuccess() {
             </p>
 
             {paymentDetails && (
-              <div className="rounded-lg p-4 mb-6 text-left" style={{ background: "#f5f8fc", border: "1px solid rgba(6,82,146,0.1)" }}>
-                <h3 className="font-semibold mb-2" style={{ color: "#111111" }}>
+              <div className="rounded-lg p-4 mb-6 text-left" style={{ background: "#f5f8fc", border: "1px solid rgba(46,144,152,0.1)" }}>
+                <h3 className="font-semibold mb-2" style={{ color: "#102B47" }}>
                   {t("payments.details")}
                 </h3>
                 {paymentDetails.amount > 0 ? (
@@ -156,7 +156,7 @@ export default function PaymentSuccess() {
             <button
               onClick={handleContinue}
               className="w-full text-white py-3 px-4 rounded-xl font-semibold transition-colors hover:opacity-95"
-              style={{ background: "#065292" }}
+              style={{ background: "#102B47" }}
             >
               {paymentDetails?.description
                 ?.toLowerCase()
@@ -185,7 +185,7 @@ export default function PaymentSuccess() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold mb-2" style={{ color: "#111111" }}>
+            <h2 className="text-2xl font-bold mb-2" style={{ color: "#102B47" }}>
               {t("payments.failedTitle")}
             </h2>
             <p className="text-gray-500 mb-6">{t("payments.failedText")}</p>
@@ -199,14 +199,14 @@ export default function PaymentSuccess() {
                     : "/dashboard/subscriptions"
                 }
                 className="block w-full text-white py-3 px-4 rounded-xl font-semibold transition-colors hover:opacity-95 text-center"
-                style={{ background: "#065292" }}
+                style={{ background: "#102B47" }}
               >
                 {t("payments.tryAgain")}
               </Link>
               <button
                 onClick={handleContinue}
                 className="w-full py-3 px-4 rounded-xl font-semibold transition-colors hover:bg-gray-50"
-                style={{ border: "1px solid #065292", color: "#065292" }}
+                style={{ border: "1px solid #2E9098", color: "#2E9098" }}
               >
                 {t("payments.backToDashboard")}
               </button>
@@ -232,14 +232,14 @@ export default function PaymentSuccess() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold mb-2" style={{ color: "#111111" }}>
+            <h2 className="text-2xl font-bold mb-2" style={{ color: "#102B47" }}>
               {t("payments.errorTitle")}
             </h2>
             <p className="text-gray-500 mb-6">{t("payments.errorText")}</p>
             <button
               onClick={handleContinue}
               className="w-full text-white py-3 px-4 rounded-xl font-semibold transition-colors hover:opacity-95"
-              style={{ background: "#065292" }}
+              style={{ background: "#102B47" }}
             >
               {t("payments.continueToDashboard")}
             </button>

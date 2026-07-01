@@ -14,8 +14,8 @@ describe("LoadingSpinner", () => {
     const { container } = render(<LoadingSpinner />);
     const spinner = container.querySelector(".animate-spin") as HTMLElement;
     expect(spinner).not.toBeNull();
-    // jsdom normalizes #065292 to rgb(6, 82, 146)
-    expect(spinner.style.borderTopColor).toBe("rgb(6, 82, 146)");
+    // jsdom normalizes #2E9098 to rgb(46, 144, 152)
+    expect(spinner.style.borderTopColor).toBe("rgb(46, 144, 152)");
   });
 
   it("renders as a fixed overlay when overlay is set (AuthWrapper redirect)", () => {

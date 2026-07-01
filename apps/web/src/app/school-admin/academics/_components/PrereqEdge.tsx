@@ -52,7 +52,7 @@ function PrereqEdgeComponent({
   });
 
   const stroke = selected
-    ? "var(--admin-accent-blue, #065292)"
+    ? "var(--admin-accent-blue, #2E9098)"
     : isHovered ? "var(--admin-font-light, #555)" : "var(--admin-border-default)";
 
   const enter = useCallback(() => setIsHovered(true), []);

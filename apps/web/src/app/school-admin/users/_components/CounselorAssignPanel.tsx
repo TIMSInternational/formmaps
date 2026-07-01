@@ -78,9 +78,9 @@ export function CounselorAssignPanel() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         {[
-          { label: "Counselors", value: allCounselors.length, icon: UserCheck, color: "#065292" },
+          { label: "Counselors", value: allCounselors.length, icon: UserCheck, color: "#2E9098" },
           { label: "Total Students", value: totalStudents, icon: Users, color: "#6b7280" },
-          { label: "Avg Caseload", value: allCounselors.length > 0 ? Math.round(totalStudents / allCounselors.length) : 0, icon: BarChart3, color: "#065292" },
+          { label: "Avg Caseload", value: allCounselors.length > 0 ? Math.round(totalStudents / allCounselors.length) : 0, icon: BarChart3, color: "#2E9098" },
           { label: "Unassigned", value: "\u2014", sub: "Expand rows to view", icon: SortAsc, color: "#f59e0b" },
         ].map((stat) => (
           <div key={stat.label} style={{
@@ -117,7 +117,7 @@ export function CounselorAssignPanel() {
           flexWrap: "wrap",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Users style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #065292)" }} />
+            <Users style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #2E9098)" }} />
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Counseling Department</div>
               <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Expand a counselor to view caseload. Click student names to view profiles. Hover for reassign/remove.</div>

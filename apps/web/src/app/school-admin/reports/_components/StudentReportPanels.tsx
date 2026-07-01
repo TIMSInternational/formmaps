@@ -61,7 +61,7 @@ function ReportRow({ icon: Icon, label, desc, format, loading, onDownload, onPri
         <button onClick={onDownload} disabled={loading} style={{
           height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600,
           display: "flex", alignItems: "center", gap: 6,
-          background: "var(--admin-accent-blue, #065292)", color: "#fff",
+          background: "var(--admin-accent-blue, #2E9098)", color: "#fff",
           border: "none", cursor: loading ? "wait" : "pointer",
           opacity: loading ? 0.7 : 1,
         }}>
@@ -295,7 +295,7 @@ function MILReports({ student }: { student: StudentRecord }) {
     <div>
       <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Brain style={{ width: 20, height: 20, color: "#065292" }} />
+          <Brain style={{ width: 20, height: 20, color: "#2E9098" }} />
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary)" }}>{student.name}</div>
             <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>MIL / LIA Cognitive Assessment Reports</div>

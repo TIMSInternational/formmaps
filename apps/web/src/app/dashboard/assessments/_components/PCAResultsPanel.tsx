@@ -478,7 +478,7 @@ export default function PCAResultsPanel({
                                 <span
                                   key={n}
                                   className="inline-block w-6 h-2 rounded-full"
-                                  style={{ background: n <= level ? "#065292" : "#e5e7eb" }}
+                                  style={{ background: n <= level ? "#2E9098" : "#e5e7eb" }}
                                 />
                               ))}
                             </div>
@@ -531,13 +531,13 @@ export default function PCAResultsPanel({
                   <p className="text-sm text-gray-500 mb-2">
                     Competency match with {JCA_CODES[selectedJCA]}
                   </p>
-                  <p className="text-5xl font-bold" style={{ color: "#065292" }}>
+                  <p className="text-5xl font-bold" style={{ color: "#2E9098" }}>
                     {Number(analysis.val) || 0}%
                   </p>
                   <div className="mt-4 mx-auto max-w-sm h-2.5 rounded-full bg-gray-200 overflow-hidden">
                     <div
                       className="h-full rounded-full"
-                      style={{ width: `${Math.max(0, Math.min(100, Number(analysis.val) || 0))}%`, background: "#065292" }}
+                      style={{ width: `${Math.max(0, Math.min(100, Number(analysis.val) || 0))}%`, background: "#102B47" }}
                     />
                   </div>
                   <p className="text-xs text-gray-400 mt-4">

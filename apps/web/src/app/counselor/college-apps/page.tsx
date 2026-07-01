@@ -124,7 +124,7 @@ export default function CollegeAppsPage() {
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
         {[
           { label: "TOTAL APPLICATIONS", value: totalApps, icon: GraduationCap, color: "var(--admin-font-primary)" },
-          { label: "SUBMITTED", value: submittedCount, icon: Send, color: "#065292" },
+          { label: "SUBMITTED", value: submittedCount, icon: Send, color: "#2E9098" },
           { label: "ACCEPTED", value: acceptedCount, icon: CheckCircle2, color: "#10b981" },
           { label: "PENDING", value: pendingCount, icon: Clock, color: "#f59e0b" },
         ].map((stat) => (
@@ -158,7 +158,7 @@ export default function CollegeAppsPage() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
             <button onClick={() => setShowAddForm(!showAddForm)}
-              style={{ height: 34, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "#065292", color: "#fff", border: "none", cursor: "pointer" }}>
+              style={{ height: 34, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "#102B47", color: "#fff", border: "none", cursor: "pointer" }}>
               <Plus style={{ width: 14, height: 14 }} /> Add Application
             </button>
           </div>

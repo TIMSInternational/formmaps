@@ -139,7 +139,7 @@ function CreditSummaryCard({ gaps }: { gaps: GapData }) {
         )}
       </div>
       {(gaps.creditsRequired ?? 0) > 0 && (
-        <MiniBar earned={gaps.creditsEarned ?? 0} required={gaps.creditsRequired ?? 1} color="#065292" height={8} />
+        <MiniBar earned={gaps.creditsEarned ?? 0} required={gaps.creditsRequired ?? 1} color="#2E9098" height={8} />
       )}
       {((gaps.creditsRequired ?? 0) - (gaps.creditsEarned ?? 0)) > 0 && (
         <p style={{ fontSize: 11, fontWeight: 600, color: "#ef4444", margin: "6px 0 0" }}>
@@ -383,7 +383,7 @@ function RecommendedCoursesCard({ allRecs, recsLoading }: { allRecs: CourseRecom
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                   <span style={{
-                    fontSize: 10, fontWeight: 700, color: "#065292",
+                    fontSize: 10, fontWeight: 700, color: "#2E9098",
                     background: "rgba(99,102,241,0.1)", padding: "2px 7px", borderRadius: 4,
                   }}>
                     {r.credits} cr

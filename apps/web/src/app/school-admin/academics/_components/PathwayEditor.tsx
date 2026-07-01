@@ -246,7 +246,7 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
       {/* Header */}
       <div className="flex flex-row items-center gap-3 px-5 py-3" style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
         <div className="flex items-center gap-2 mr-auto" style={{ color: "var(--admin-font-primary)", fontSize: 15, fontWeight: 600 }}>
-          <GitBranch style={{ width: 17, height: 17, color: "#065292" }} />
+          <GitBranch style={{ width: 17, height: 17, color: "#2E9098" }} />
           {rootCourse ? `Pathway: ${rootCourse.code} · ${rootCourse.name}` : "Pathway editor"}
         </div>
         <span className="sr-only">Drag between courses to set prerequisites. Pathways are derived from these edges.</span>
@@ -274,7 +274,7 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
           style={{
             height: 32, borderRadius: 6, padding: "0 18px", fontSize: 13, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 8, border: "none",
-            background: !dirty || readOnly ? "var(--admin-bg-hover)" : "#065292",
+            background: !dirty || readOnly ? "var(--admin-bg-hover)" : "#2E9098",
             color: !dirty || readOnly ? "var(--admin-font-tertiary)" : "#fff",
             cursor: !dirty || readOnly || saving ? "not-allowed" : "pointer",
             opacity: saving ? 0.7 : 1,
@@ -288,7 +288,7 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
       {/* Body */}
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 style={{ width: 26, height: 26, color: "#065292", animation: "spin 1s linear infinite" }} />
+          <Loader2 style={{ width: 26, height: 26, color: "#2E9098", animation: "spin 1s linear infinite" }} />
         </div>
       ) : isError ? (
         <div className="flex-1 flex items-center justify-center">

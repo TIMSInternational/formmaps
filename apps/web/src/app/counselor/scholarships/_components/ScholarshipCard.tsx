@@ -14,7 +14,7 @@ interface Scholarship {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  researching: { label: "Researching", color: "#065292", bg: "rgba(59,130,246,0.1)" },
+  researching: { label: "Researching", color: "#2E9098", bg: "rgba(59,130,246,0.1)" },
   applying: { label: "Applying", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   submitted: { label: "Submitted", color: "#8b5cf6", bg: "rgba(139,92,246,0.1)" },
   awarded: { label: "Awarded", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
@@ -50,7 +50,7 @@ export function ScholarshipCard({ scholarship: s, onStatusChange, onDelete }: Sc
         </div>
         <span style={{
           fontSize: 13, fontWeight: 700, padding: "4px 10px", borderRadius: 6,
-          background: "rgba(59,130,246,0.1)", color: "#065292", whiteSpace: "nowrap",
+          background: "rgba(59,130,246,0.1)", color: "#2E9098", whiteSpace: "nowrap",
         }}>
           {formatCurrency(s.amount || 0)}
         </span>
@@ -91,7 +91,7 @@ export function ScholarshipCard({ scholarship: s, onStatusChange, onDelete }: Sc
         </select>
         {s.url && (
           <a href={s.url} target="_blank" rel="noopener noreferrer"
-            style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#065292", textDecoration: "none" }}>
+            style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#2E9098", textDecoration: "none" }}>
             <ExternalLink style={{ width: 12, height: 12 }} /> Link
           </a>
         )}

@@ -29,7 +29,7 @@ const typeIcons: Record<string, React.ElementType> = {
 
 const typeDotColors: Record<string, string> = {
   transaction: "var(--admin-accent-green, #10b981)",
-  user: "var(--admin-accent-blue, #065292)",
+  user: "var(--admin-accent-blue, #2E9098)",
   course: "#8b5cf6",
   session: "#f59e0b",
   alert: "var(--admin-accent-red, #ef4444)",

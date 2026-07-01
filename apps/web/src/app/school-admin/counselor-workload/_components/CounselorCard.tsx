@@ -72,7 +72,7 @@ export function CounselorCard({
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
           <div style={{
             width: 44, height: 44, borderRadius: 22, flexShrink: 0,
-            background: "#065292",
+            background: "#102B47",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 14, fontWeight: 700, color: "#fff",
           }}>
@@ -90,7 +90,7 @@ export function CounselorCard({
             style={{
               display: "flex", alignItems: "center", gap: 6,
               padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-              background: "#065292", color: "#fff",
+              background: "#102B47", color: "#fff",
               border: "none", cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
             }}
           >
@@ -102,7 +102,7 @@ export function CounselorCard({
         {/* Stats row */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
           {[
-            { icon: Users, label: t("counselorWorkload.card.students"), value: counselor.studentCount, color: "#065292" },
+            { icon: Users, label: t("counselorWorkload.card.students"), value: counselor.studentCount, color: "#2E9098" },
             { icon: CalendarCheck, label: t("counselorWorkload.card.sessions"), value: counselor.sessionCount, color: "#14b8a6" },
             { icon: FileText, label: t("counselorWorkload.card.notes"), value: counselor.noteCount, color: "#f59e0b" },
           ].map((stat) => (
@@ -134,7 +134,7 @@ export function CounselorCard({
             onClick={() => setExpanded(!expanded)}
             style={{
               display: "flex", alignItems: "center", gap: 6, marginTop: 14,
-              fontSize: 12, fontWeight: 600, color: "var(--admin-accent-blue, #065292)",
+              fontSize: 12, fontWeight: 600, color: "var(--admin-accent-blue, #2E9098)",
               background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit",
             }}
           >

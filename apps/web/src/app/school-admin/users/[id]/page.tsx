@@ -120,7 +120,7 @@ export default function StudentDetailsPage() {
             height: 36, borderRadius: 6, padding: "0 16px",
             fontSize: 12, fontWeight: 600,
             display: "inline-flex", alignItems: "center", gap: 6,
-            background: "var(--admin-accent-blue, #065292)", color: "#fff",
+            background: "var(--admin-accent-blue, #2E9098)", color: "#fff",
             border: "none", cursor: "pointer",
           }}
         >
@@ -135,7 +135,7 @@ export default function StudentDetailsPage() {
     const styles: Record<string, { bg: string; color: string }> = {
       active: { bg: "rgba(16,185,129,0.1)", color: "#10b981" },
       pending: { bg: "rgba(245,158,11,0.1)", color: "#f59e0b" },
-      accepted: { bg: "rgba(59,130,246,0.1)", color: "#065292" },
+      accepted: { bg: "rgba(59,130,246,0.1)", color: "#2E9098" },
       inactive: { bg: "rgba(107,114,128,0.1)", color: "#6b7280" },
     };
     const s = styles[status] || styles.inactive;
@@ -175,7 +175,7 @@ export default function StudentDetailsPage() {
           cursor: "pointer",
         }}
       >
-        <ArrowLeft style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #065292)" }} />
+        <ArrowLeft style={{ width: 14, height: 14, color: "var(--admin-accent-blue, #2E9098)" }} />
         {t("schoolAdmin.students.backToList", "Back to Student Roster")}
       </button>
 
@@ -187,7 +187,7 @@ export default function StudentDetailsPage() {
       }}>
         <Avatar className="h-28 w-28" style={{ borderRadius: "50%", border: "3px solid var(--admin-border-default)" }}>
           <AvatarImage src={student.avatar || ""} className="object-cover" />
-          <AvatarFallback style={{ borderRadius: "50%", background: "#065292", color: "#fff", fontSize: 36, fontWeight: 600 }}>
+          <AvatarFallback style={{ borderRadius: "50%", background: "#102B47", color: "#fff", fontSize: 36, fontWeight: 600 }}>
             {getInitials(student.name)}
           </AvatarFallback>
         </Avatar>
@@ -239,9 +239,9 @@ export default function StudentDetailsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "GPA", value: gpaData?.gpaWeighted?.toFixed(2) ?? gpaData?.gpaUnweighted?.toFixed(2) ?? "\u2014", icon: Award, color: "#f59e0b" },
-          { label: "Credits", value: `${plan?.graduationProgress?.totalCreditsEarned ?? gpaData?.totalCredits ?? "0"} / ${plan?.graduationProgress?.totalCreditsRequired ?? "0"}`, icon: GraduationCap, color: "#065292" },
+          { label: "Credits", value: `${plan?.graduationProgress?.totalCreditsEarned ?? gpaData?.totalCredits ?? "0"} / ${plan?.graduationProgress?.totalCreditsRequired ?? "0"}`, icon: GraduationCap, color: "#2E9098" },
           { label: "Assessments", value: `${milCompleted + pcaCompleted + evalCompleted} / ${milTotal + pcaTotal + evalTotal}`, icon: FileText, color: "#14b8a6" },
-          { label: "Last Seen", value: student.lastActive ? format(new Date(student.lastActive), "MMM do") : "Never", icon: Activity, color: "#065292" },
+          { label: "Last Seen", value: student.lastActive ? format(new Date(student.lastActive), "MMM do") : "Never", icon: Activity, color: "#2E9098" },
         ].map((stat) => (
           <div key={stat.label} style={{
             borderRadius: 8, border: "1px solid var(--admin-border-default)",

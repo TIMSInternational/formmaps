@@ -25,7 +25,7 @@ export default function ApplicationsPage() {
           <Link
             href="/dashboard/applications/calendar"
             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-white"
-            style={{ background: "#065292" }}
+            style={{ background: "#102B47" }}
           >
             <CalendarDays className="h-3.5 w-3.5" />
             {t("applications.deadlineCalendar")}

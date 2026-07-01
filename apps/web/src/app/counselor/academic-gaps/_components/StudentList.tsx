@@ -41,7 +41,7 @@ export function StudentList({
       {/* Header + search */}
       <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid var(--admin-border-default, rgba(0,0,0,0.08))" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-          <Layers style={{ width: 14, height: 14, color: "#065292" }} />
+          <Layers style={{ width: 14, height: 14, color: "#2E9098" }} />
           <span style={{ fontSize: 12, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>Needs Review</span>
           <span style={{
             fontSize: 10, fontWeight: 600, marginLeft: "auto",
@@ -99,7 +99,7 @@ export function StudentList({
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{
                     width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-                    background: isSelected ? "#065292" : "var(--admin-bg-hover, rgba(0,0,0,0.05))",
+                    background: isSelected ? "#2E9098" : "var(--admin-bg-hover, rgba(0,0,0,0.05))",
                     color: isSelected ? "#fff" : "var(--admin-font-primary, #111)",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 10, fontWeight: 700,
@@ -109,7 +109,7 @@ export function StudentList({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{
                       fontSize: 12, fontWeight: 600, margin: 0,
-                      color: isSelected ? "#065292" : "var(--admin-font-primary, #111)",
+                      color: isSelected ? "#2E9098" : "var(--admin-font-primary, #111)",
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const,
                     }}>
                       {s.studentName}

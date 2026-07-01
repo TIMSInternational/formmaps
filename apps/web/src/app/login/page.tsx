@@ -111,15 +111,15 @@ export default function LoginPage() {
         >
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-10">
-            <img src="/logo-icon.svg" alt="FormMaps" className="w-10 h-10" />
+            <img src="/fm-icon.png" alt="FormMaps" className="w-10 h-10" />
             <div>
-              <span className="text-xl font-bold" style={{ color: "#111111" }}>FORM</span>
-              <span className="text-xl font-bold" style={{ color: "#065292" }}>MAPS</span>
+              <span className="text-xl font-bold" style={{ color: "#102B47" }}>FORM</span>
+              <span className="text-xl font-bold" style={{ color: "#2E9098" }}>MAPS</span>
             </div>
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold mb-2" style={{ color: "#111111" }}>
+            <h1 className="text-2xl font-semibold mb-2" style={{ color: "#102B47" }}>
               {t("auth.login.title")}
             </h1>
             <p className="text-sm" style={{ color: "#666" }}>{t("auth.login.subtitle")}</p>
@@ -143,7 +143,7 @@ export default function LoginPage() {
                         {...field}
                         className="h-11 px-3 text-sm rounded-lg border outline-none transition-colors w-full"
                         style={{ background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" }}
-                        onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
                         onBlur={(e) => { e.currentTarget.style.borderColor = "#E0E0E0"; }}
                       />
                     </FormControl>
@@ -162,7 +162,7 @@ export default function LoginPage() {
                       <FormLabel className="text-xs font-medium" style={{ color: "#333" }}>
                         {t("auth.login.passwordLabel")}
                       </FormLabel>
-                      <Link href="/forgot-password" className="text-xs no-underline" style={{ color: "#065292" }}>
+                      <Link href="/forgot-password" className="text-xs no-underline" style={{ color: "#2E9098" }}>
                         {t("auth.login.forgotPassword")}
                       </Link>
                     </div>
@@ -174,7 +174,7 @@ export default function LoginPage() {
                           {...field}
                           className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
                           style={{ background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" }}
-                          onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
                           onBlur={(e) => { e.currentTarget.style.borderColor = "#E0E0E0"; }}
                         />
                       </FormControl>
@@ -199,7 +199,7 @@ export default function LoginPage() {
                   id="remember"
                   type="checkbox"
                   className="w-3.5 h-3.5"
-                  style={{ accentColor: "#065292" }}
+                  style={{ accentColor: "#102B47" }}
                 />
                 <label htmlFor="remember" className="text-xs" style={{ color: "#666" }}>
                   {t("auth.login.remember")}
@@ -213,7 +213,7 @@ export default function LoginPage() {
                 disabled={isSubmitting}
                 className="h-11 rounded-lg border-none text-sm font-semibold cursor-pointer transition-all"
                 style={{
-                  background: "#065292", color: "#FFFFFF",
+                  background: "#102B47", color: "#FFFFFF",
                   opacity: isSubmitting ? 0.6 : 1,
                 }}
               >
@@ -231,7 +231,7 @@ export default function LoginPage() {
 
           <p className="mt-8 text-center text-sm" style={{ color: "#666" }}>
             {t("auth.login.noAccountText")}{" "}
-            <Link href="/signup" className="font-medium no-underline" style={{ color: "#065292" }}>
+            <Link href="/signup" className="font-medium no-underline" style={{ color: "#2E9098" }}>
               {t("auth.login.signUp")}
             </Link>
           </p>

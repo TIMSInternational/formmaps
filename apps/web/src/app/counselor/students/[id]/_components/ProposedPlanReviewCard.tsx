@@ -71,7 +71,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
     <Card className="border-blue-200 bg-blue-50/40">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle className="text-sm font-semibold text-[#065292] flex items-center gap-2">
+          <CardTitle className="text-sm font-semibold text-[#2E9098] flex items-center gap-2">
             <GraduationCap className="h-4 w-4" />
             {t("planReview.title", "Proposed Graduation Plan")}
             {target && (
@@ -121,7 +121,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
         <button
           type="button"
           onClick={() => setExpanded((e) => !e)}
-          className="flex items-center gap-1 text-xs font-semibold text-[#065292] hover:underline"
+          className="flex items-center gap-1 text-xs font-semibold text-[#2E9098] hover:underline"
         >
           {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
           {t("planReview.viewFullPlan", "View full plan")}

@@ -60,7 +60,7 @@ export function CurriculumPanel() {
       <div style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
         <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(59,130,246,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Settings2 style={{ width: 16, height: 16, color: "#065292" }} />
+            <Settings2 style={{ width: 16, height: 16, color: "#2E9098" }} />
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Framework Configuration</div>
@@ -73,7 +73,7 @@ export function CurriculumPanel() {
               <div key={fw.type} onClick={() => { setSelectedType(fw.type); setCoursePage(1); setCourseSearch(""); }}
                 style={{
                   padding: 16, borderRadius: 8, cursor: "pointer", transition: "all 0.15s",
-                  border: selectedType === fw.type ? "1px solid #065292" : "1px solid var(--admin-border-default)",
+                  border: selectedType === fw.type ? "1px solid #2E9098" : "1px solid var(--admin-border-default)",
                   background: selectedType === fw.type ? "rgba(59,130,246,0.05)" : "var(--admin-bg-hover)",
                 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -81,12 +81,12 @@ export function CurriculumPanel() {
                     width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
                     background: fw.enabled ? "rgba(59,130,246,0.1)" : "var(--admin-bg-icon-box)",
                   }}>
-                    <Layers style={{ width: 16, height: 16, color: fw.enabled ? "#065292" : "var(--admin-font-tertiary)" }} />
+                    <Layers style={{ width: 16, height: 16, color: fw.enabled ? "#2E9098" : "var(--admin-font-tertiary)" }} />
                   </div>
                   <Switch checked={fw.enabled} onCheckedChange={() => handleToggle(fw)} onClick={(e) => e.stopPropagation()} />
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 2 }}>{fw.label || fw.type}</div>
-                <div style={{ fontSize: 12, color: fw.enabled ? "#065292" : "var(--admin-font-tertiary)" }}>{fw.courseCount || 0} courses</div>
+                <div style={{ fontSize: 12, color: fw.enabled ? "#2E9098" : "var(--admin-font-tertiary)" }}>{fw.courseCount || 0} courses</div>
               </div>
             ))}
           </div>

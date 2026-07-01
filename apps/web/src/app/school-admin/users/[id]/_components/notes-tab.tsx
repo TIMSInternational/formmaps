@@ -89,7 +89,7 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
               width: "100%", height: 36, borderRadius: 6,
               fontSize: 12, fontWeight: 600,
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              background: "var(--admin-accent-blue, #065292)", color: "#fff",
+              background: "var(--admin-accent-blue, #2E9098)", color: "#fff",
               border: "none", cursor: "pointer",
               opacity: (!newNote.trim() || createNote.isPending) ? 0.6 : 1,
             }}

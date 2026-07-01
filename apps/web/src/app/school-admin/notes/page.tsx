@@ -17,7 +17,7 @@ const NOTE_TYPE_VALUES = ["", "general", "meeting", "follow_up", "academic", "ca
 
 const TYPE_COLORS: Record<string, { bg: string; color: string }> = {
   general: { bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
-  meeting: { bg: "rgba(59,130,246,0.12)", color: "#065292" },
+  meeting: { bg: "rgba(59,130,246,0.12)", color: "#2E9098" },
   follow_up: { bg: "rgba(245,158,11,0.12)", color: "#f59e0b" },
   academic: { bg: "rgba(16,185,129,0.12)", color: "#10b981" },
   career: { bg: "rgba(139,92,246,0.12)", color: "#8b5cf6" },
@@ -100,7 +100,7 @@ export default function SessionNotesPage() {
           fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em",
           color: "var(--admin-font-primary)", display: "flex", alignItems: "center", gap: 10,
         }}>
-          <FileText style={{ width: 22, height: 22, color: "#065292" }} />
+          <FileText style={{ width: 22, height: 22, color: "#2E9098" }} />
           {t("notes.title")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
@@ -169,7 +169,7 @@ export default function SessionNotesPage() {
               style={{
                 height: 32, padding: "0 12px", borderRadius: 6, fontSize: 12, fontWeight: 600,
                 border: "none", cursor: "pointer", fontFamily: "inherit",
-                background: groupBy === opt.value ? "var(--admin-accent-blue, #065292)" : "transparent",
+                background: groupBy === opt.value ? "var(--admin-accent-blue, #2E9098)" : "transparent",
                 color: groupBy === opt.value ? "#fff" : "var(--admin-font-tertiary)",
                 transition: "all 0.15s",
               }}>
@@ -232,7 +232,7 @@ export default function SessionNotesPage() {
                   {groupBy === "student" && (
                     <span onClick={() => router.push(`/school-admin/users/${group.key}`)}
                       style={{ fontSize: 15, fontWeight: 700, color: "var(--admin-font-primary)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLSpanElement).style.color = "#065292"; }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLSpanElement).style.color = "#2E9098"; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLSpanElement).style.color = "var(--admin-font-primary)"; }}>
                       <User style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
                       {group.label}
@@ -289,7 +289,7 @@ export default function SessionNotesPage() {
                           fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)",
                           cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
                         }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLSpanElement).style.color = "#065292"; }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLSpanElement).style.color = "#2E9098"; }}
                         onMouseLeave={(e) => { (e.currentTarget as HTMLSpanElement).style.color = "var(--admin-font-primary)"; }}
                       >
                         <User style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />

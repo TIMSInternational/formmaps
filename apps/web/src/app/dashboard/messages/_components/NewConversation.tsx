@@ -72,7 +72,7 @@ export default function NewConversation({ onCreated }: NewConversationProps) {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="New conversation"
-        style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 8, border: "1px solid var(--admin-border-light)", background: "#065292", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+        style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 8, border: "1px solid var(--admin-border-light)", background: "#102B47", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
       >
         <Plus style={{ width: 13, height: 13 }} />
         New

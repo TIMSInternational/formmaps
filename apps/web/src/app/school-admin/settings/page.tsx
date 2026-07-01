@@ -147,7 +147,7 @@ function GeneralSettings() {
           display: "flex", alignItems: "center", gap: 8,
           background: "var(--admin-bg-hover)",
         }}>
-          <School className="h-4 w-4" style={{ color: "var(--admin-accent-blue, #065292)" }} />
+          <School className="h-4 w-4" style={{ color: "var(--admin-accent-blue, #2E9098)" }} />
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
               {t("schoolAdmin.settings.schoolInfo.title", "School Information")}
@@ -190,7 +190,7 @@ function GeneralSettings() {
                     background: "rgba(59,130,246,0.1)",
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
-                    <Users className="w-4 h-4" style={{ color: "var(--admin-accent-blue, #065292)" }} />
+                    <Users className="w-4 h-4" style={{ color: "var(--admin-accent-blue, #2E9098)" }} />
                   </div>
                   <div>
                     <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("schoolAdmin.settings.schoolInfo.maxStudents", "Student Capacity")}</p>
@@ -237,7 +237,7 @@ function GeneralSettings() {
           display: "flex", alignItems: "center", gap: 8,
           background: "var(--admin-bg-hover)",
         }}>
-          <User className="h-4 w-4" style={{ color: "var(--admin-accent-blue, #065292)" }} />
+          <User className="h-4 w-4" style={{ color: "var(--admin-accent-blue, #2E9098)" }} />
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
               {t("schoolAdmin.settings.profile.title", "Profile Settings")}
@@ -275,7 +275,7 @@ function GeneralSettings() {
               height: 36, borderRadius: 6, padding: "0 14px",
               fontSize: 12, fontWeight: 600,
               display: "flex", alignItems: "center", gap: 6,
-              background: "var(--admin-accent-blue, #065292)", color: "#fff",
+              background: "var(--admin-accent-blue, #2E9098)", color: "#fff",
               border: "none", cursor: "pointer",
               opacity: profileLoading ? 0.6 : 1,
             }}
@@ -305,7 +305,7 @@ function GeneralSettings() {
           display: "flex", alignItems: "center", gap: 8,
           background: "var(--admin-bg-hover)",
         }}>
-          <Lock className="h-4 w-4" style={{ color: "var(--admin-accent-blue, #065292)" }} />
+          <Lock className="h-4 w-4" style={{ color: "var(--admin-accent-blue, #2E9098)" }} />
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
               {t("schoolAdmin.settings.password.title", "Change Password")}

@@ -195,8 +195,8 @@ export default function StudentsPage() {
           background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <CheckSquare style={{ width: 16, height: 16, color: "#065292" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#065292" }}>{t("users.bulk.selected", { count: selected.size })}</span>
+            <CheckSquare style={{ width: 16, height: 16, color: "#2E9098" }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#2E9098" }}>{t("users.bulk.selected", { count: selected.size })}</span>
             <button onClick={clearSelection} style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }}>
               <X style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
             </button>
@@ -213,7 +213,7 @@ export default function StudentsPage() {
             <button onClick={handleBulkExportCSV} style={{
               height: 30, borderRadius: 6, padding: "0 12px", fontSize: 11, fontWeight: 600,
               display: "flex", alignItems: "center", gap: 5,
-              background: "#065292", border: "none",
+              background: "#102B47", border: "none",
               color: "#fff", cursor: "pointer",
             }}>
               <Download style={{ width: 12, height: 12 }} /> {t("users.bulk.exportCsv")}
@@ -232,7 +232,7 @@ export default function StudentsPage() {
             <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
               <TableHead className="py-3 px-2 w-10" style={{ background: "var(--admin-bg-hover)" }}>
                 <input type="checkbox" checked={students.length > 0 && selected.size === students.length}
-                  onChange={toggleAll} style={{ width: 15, height: 15, accentColor: "#065292", cursor: "pointer" }} />
+                  onChange={toggleAll} style={{ width: 15, height: 15, accentColor: "#102B47", cursor: "pointer" }} />
               </TableHead>
               {[t("users.table.name"), t("users.table.email"), t("users.table.role"), t("users.table.grade"), t("users.table.status"), t("users.table.joined"), t("users.table.actions")].map((h) => (
                 <TableHead key={h} className="py-3 px-4" style={{
@@ -268,7 +268,7 @@ export default function StudentsPage() {
                   <TableCell className="py-3 px-2 w-10">
                     <input type="checkbox" checked={selected.has(student.id)}
                       onChange={() => {}} onClick={(e) => toggleSelect(student.id, e)}
-                      style={{ width: 15, height: 15, accentColor: "#065292", cursor: "pointer" }} />
+                      style={{ width: 15, height: 15, accentColor: "#102B47", cursor: "pointer" }} />
                   </TableCell>
                   <TableCell className="py-3 px-4">
                     <div className="flex items-center gap-3">

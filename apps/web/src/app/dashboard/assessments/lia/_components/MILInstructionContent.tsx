@@ -394,13 +394,13 @@ function VerbalReasoningExample({
 
   return (
     <div className="space-y-4 mb-6">
-      <div className="bg-[#065292]/10 dark:bg-[#065292]/20 border border-[#065292]/30 rounded-lg p-4">
-        <h4 className="font-semibold text-[#065292] mb-2">
+      <div className="bg-[#102B47]/10 dark:bg-[#102B47]/20 border border-[#2E9098]/30 rounded-lg p-4">
+        <h4 className="font-semibold text-[#2E9098] mb-2">
           {t("dashboard.statements")}:
         </h4>
         <ul className="space-y-1">
           {example.statements!.map((statement: string, index: number) => (
-            <li key={index} className="text-[#054a83]">
+            <li key={index} className="text-[#0b1f33]">
               {statement}
             </li>
           ))}
@@ -429,7 +429,7 @@ function VerbalReasoningExample({
                 key={index}
                 className="flex items-center p-2 bg-card border border-border rounded text-sm"
               >
-                <span className="font-bold text-[#065292] mr-2">
+                <span className="font-bold text-[#2E9098] mr-2">
                   {String.fromCharCode(65 + index)}.
                 </span>
                 <span className="text-foreground">{option}</span>
@@ -522,11 +522,11 @@ export default function MILInstructionContent({
   if (typeof instructions === "string") {
     return (
       <div className="space-y-6">
-        <div className="bg-[#065292]/10 dark:bg-[#065292]/20 border border-[#065292]/30 rounded-lg p-4 mb-6">
-          <h3 className="text-lg font-semibold text-[#065292] mb-2">
+        <div className="bg-[#102B47]/10 dark:bg-[#102B47]/20 border border-[#2E9098]/30 rounded-lg p-4 mb-6">
+          <h3 className="text-lg font-semibold text-[#2E9098] mb-2">
             {t("dashboard.testInstructions")}
           </h3>
-          <div className="text-[#054a83]">
+          <div className="text-[#0b1f33]">
             <p>{instructions}</p>
           </div>
         </div>
@@ -536,11 +536,11 @@ export default function MILInstructionContent({
 
   return (
     <div className="space-y-6">
-      <div className="bg-[#065292]/10 dark:bg-[#065292]/20 border border-[#065292]/30 rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-semibold text-[#065292] mb-2">
+      <div className="bg-[#102B47]/10 dark:bg-[#102B47]/20 border border-[#2E9098]/30 rounded-lg p-4 mb-6">
+        <h3 className="text-lg font-semibold text-[#2E9098] mb-2">
           {t("dashboard.testInstructions")}
         </h3>
-        <div className="text-[#054a83]">
+        <div className="text-[#0b1f33]">
           <div>
             {instructions.title && (
               <h4 className="font-semibold mb-2">{instructions.title}</h4>

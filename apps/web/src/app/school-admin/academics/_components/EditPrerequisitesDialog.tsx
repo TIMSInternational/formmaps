@@ -18,12 +18,12 @@ const BTN_GHOST: React.CSSProperties = {
 const BTN_PRIMARY: React.CSSProperties = {
   height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600,
   display: "flex", alignItems: "center", gap: 8, border: "none",
-  background: "#065292", color: "#fff", cursor: "pointer",
+  background: "#102B47", color: "#fff", cursor: "pointer",
 };
 const CHIP: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 8px",
   borderRadius: 6, fontSize: 12, fontFamily: "monospace", fontWeight: 600,
-  background: "rgba(6,82,146,0.08)", color: "#065292", border: "1px solid rgba(6,82,146,0.2)",
+  background: "rgba(46,144,152,0.08)", color: "#2E9098", border: "1px solid rgba(46,144,152,0.2)",
 };
 
 const norm = (code: string) => code.trim().toUpperCase();
@@ -114,7 +114,7 @@ export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDi
 
         {catalogLoading ? (
           <div className="flex justify-center py-10">
-            <Loader2 style={{ width: 24, height: 24, color: "#065292", animation: "spin 1s linear infinite" }} />
+            <Loader2 style={{ width: 24, height: 24, color: "#2E9098", animation: "spin 1s linear infinite" }} />
           </div>
         ) : (
           <div className="space-y-4">

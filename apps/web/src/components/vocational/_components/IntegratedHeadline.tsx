@@ -7,7 +7,7 @@ function Bar({ label, value }: { label: string; value: number }) {
     <div className="space-y-1">
       <div className="flex justify-between text-xs text-gray-600"><span>{label}</span><span>{Math.round(value)}</span></div>
       <div className="h-2 rounded-full bg-gray-100">
-        <div className="h-2 rounded-full" style={{ width: `${Math.max(0, Math.min(100, value))}%`, background: "#065292" }} />
+        <div className="h-2 rounded-full" style={{ width: `${Math.max(0, Math.min(100, value))}%`, background: "#102B47" }} />
       </div>
     </div>
   );
@@ -26,7 +26,7 @@ export function IntegratedHeadline({ integrated }: { integrated: IntegratedOutco
     <div className={CARD}>
       <p className="text-sm font-medium text-gray-700">Integrated vocational score</p>
       <div className="flex items-baseline gap-3 mt-1">
-        <span className="text-4xl font-bold" style={{ color: "#065292" }}>{integrated.integratedComposite.toFixed(1)}</span>
+        <span className="text-4xl font-bold" style={{ color: "#2E9098" }}>{integrated.integratedComposite.toFixed(1)}</span>
         <span className="text-sm font-semibold uppercase tracking-wide text-gray-500">{integrated.band}</span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">

@@ -65,8 +65,8 @@ function ConfidenceChip({ level }: { level: PrereqSuggestion["confidence"] }) {
 // ── Source chip ────────────────────────────────────────────────────────────────
 function SourceChip({ source }: { source: PrereqSuggestion["source"] }) {
   return source === "pattern"
-    ? <span style={{ ...CHIP_BASE, border: "1px solid #065292", color: "#065292", background: "transparent" }}>Pattern</span>
-    : <span style={{ ...CHIP_BASE, background: "#FFD600", color: "#111111", border: "none" }}>AI</span>;
+    ? <span style={{ ...CHIP_BASE, border: "1px solid #2E9098", color: "#2E9098", background: "transparent" }}>Pattern</span>
+    : <span style={{ ...CHIP_BASE, background: "#FFD23F", color: "#102B47", border: "none" }}>AI</span>;
 }
 
 // ── Main dialog ────────────────────────────────────────────────────────────────
@@ -136,7 +136,7 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
   function renderBody() {
     if (analyze.isPending) {
       return (
-        <CenteredState icon={<Loader2 style={{ width: 28, height: 28, color: "#065292", animation: "spin 1s linear infinite" }} />}>
+        <CenteredState icon={<Loader2 style={{ width: 28, height: 28, color: "#2E9098", animation: "spin 1s linear infinite" }} />}>
           <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>Analyzing your catalog&hellip;</p>
         </CenteredState>
       );
@@ -199,7 +199,7 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
                     <TableCell className="py-2 px-3">
                       <input type="checkbox" checked={checked.has(key)} onChange={() => toggleRow(key)}
                         aria-label={`Toggle ${s.courseCode} needs ${s.prerequisiteCode}`}
-                        style={{ width: 14, height: 14, cursor: "pointer", accentColor: "#065292" }} />
+                        style={{ width: 14, height: 14, cursor: "pointer", accentColor: "#102B47" }} />
                     </TableCell>
                     <TableCell className="py-2 px-3">
                       <span style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{s.courseCode}</span>
@@ -228,7 +228,7 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
         style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", width: "90vw" }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ color: "var(--admin-font-primary)" }}>
-            <Network style={{ width: 18, height: 18, color: "#065292" }} />
+            <Network style={{ width: 18, height: 18, color: "#2E9098" }} />
             Analyze Prerequisites
           </DialogTitle>
         </DialogHeader>
@@ -241,7 +241,7 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
             <button onClick={handleApply} disabled={selectedCount === 0 || apply.isPending}
               style={{
                 ...BTN_PRIMARY,
-                background: selectedCount === 0 ? "var(--admin-bg-hover)" : "#065292",
+                background: selectedCount === 0 ? "var(--admin-bg-hover)" : "#2E9098",
                 color: selectedCount === 0 ? "var(--admin-font-tertiary)" : "#fff",
                 border: selectedCount === 0 ? "1px solid var(--admin-border-default)" : "none",
                 cursor: selectedCount === 0 || apply.isPending ? "not-allowed" : "pointer",

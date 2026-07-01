@@ -75,7 +75,7 @@ export function VocationalEvaluator({ token }: { token: string; language?: strin
       ))}
       <button type="button" onClick={handleSubmit} disabled={submitting}
         className="w-full h-11 rounded-lg font-semibold text-white disabled:opacity-60"
-        style={{ background: "#065292" }}>
+        style={{ background: "#102B47" }}>
         {submitting ? t("evaluation.vocational.submitting") : t("evaluation.vocational.submit")}
       </button>
     </div>

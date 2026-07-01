@@ -162,7 +162,7 @@ export default function CoursePlanPage() {
           type="button"
           onClick={() => planQuery.refetch()}
           className="px-4 py-2 rounded-md text-sm font-semibold"
-          style={{ background: "var(--admin-accent-blue, #065292)", color: "#fff" }}
+          style={{ background: "var(--admin-accent-blue, #2E9098)", color: "#fff" }}
         >
           Retry
         </button>
@@ -174,7 +174,7 @@ export default function CoursePlanPage() {
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5" style={{ color: "var(--admin-accent-blue, #065292)" }} />
+          <BookOpen className="h-5 w-5" style={{ color: "var(--admin-accent-blue, #2E9098)" }} />
           <h1 className="text-xl font-bold" style={{ color: "var(--admin-font-primary)" }}>
             Course Plan
           </h1>

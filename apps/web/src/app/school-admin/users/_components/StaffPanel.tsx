@@ -97,7 +97,7 @@ export function StaffPanel() {
   const roleColor = (role: string) => {
     const r = role.toLowerCase().replace(/_/g, " ");
     if (r.includes("admin")) return { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6" };
-    if (r.includes("counselor")) return { bg: "rgba(59,130,246,0.1)", color: "#065292" };
+    if (r.includes("counselor")) return { bg: "rgba(59,130,246,0.1)", color: "#2E9098" };
     if (r.includes("coach")) return { bg: "rgba(245,158,11,0.1)", color: "#f59e0b" };
     return { bg: "rgba(107,114,128,0.1)", color: "#6b7280" };
   };

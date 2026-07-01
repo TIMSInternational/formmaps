@@ -22,7 +22,7 @@ export function QuickStatsCard() {
       label: t("quickStats.activeSchools"),
       value: (s?.activeSchools ?? s?.ActiveSchools)?.toLocaleString() || "—",
       icon: School,
-      color: "#065292",
+      color: "#2E9098",
     },
     {
       label: t("quickStats.totalCoaches"),
@@ -59,7 +59,7 @@ export function QuickStatsCard() {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
-        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#065292" }} />
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#102B47" }} />
         <span
           style={{
             fontSize: 10,

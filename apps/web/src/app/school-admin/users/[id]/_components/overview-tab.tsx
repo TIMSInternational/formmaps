@@ -45,7 +45,7 @@ export function OverviewTab({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Graduation Progress */}
       <Card>
-        <CardHeader icon={GraduationCap} color="#065292" title="Graduation Pathway" />
+        <CardHeader icon={GraduationCap} color="#2E9098" title="Graduation Pathway" />
         <div style={{ padding: 16 }}>
           {graduationProgress ? (
             <div className="space-y-4">
@@ -122,7 +122,7 @@ export function OverviewTab({
         <CardHeader icon={TrendingUp} color="#14b8a6" title="Assessment Completion" />
         <div style={{ padding: 16 }} className="space-y-3">
           {[
-            { label: "MIL / LIA", completed: milCompleted, total: milTotal, color: "#065292" },
+            { label: "MIL / LIA", completed: milCompleted, total: milTotal, color: "#2E9098" },
             { label: "PCA Exams", completed: pcaCompleted, total: pcaTotal || 1, color: "#8b5cf6" },
             { label: "360 Evaluations", completed: evalCompleted, total: evalTotal || 1, color: "#14b8a6" },
           ].map((item) => {
@@ -167,7 +167,7 @@ export function OverviewTab({
                   <span style={{
                     fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
                     background: g.isEvaluationCompleted ? "rgba(16,185,129,0.1)" : g.isTokenUsed ? "rgba(59,130,246,0.1)" : "rgba(245,158,11,0.1)",
-                    color: g.isEvaluationCompleted ? "#10b981" : g.isTokenUsed ? "#065292" : "#f59e0b",
+                    color: g.isEvaluationCompleted ? "#10b981" : g.isTokenUsed ? "#2E9098" : "#f59e0b",
                     textTransform: "uppercase",
                   }}>
                     {g.isEvaluationCompleted ? "Completed" : g.isTokenUsed ? "In Progress" : "Pending"}

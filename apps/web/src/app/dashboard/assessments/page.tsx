@@ -249,7 +249,7 @@ export default function AssessmentsPage() {
               <p className="text-sm font-semibold text-foreground">Vocational 360 Report</p>
               <p className="text-[11px] text-muted-foreground mt-0.5">Your personalized vocational profile and recommendations</p>
             </div>
-            <Link href="/dashboard/assessments/vocational" className="inline-flex items-center gap-2 text-sm font-medium" style={{ color: "#065292" }}>
+            <Link href="/dashboard/assessments/vocational" className="inline-flex items-center gap-2 text-sm font-medium" style={{ color: "#2E9098" }}>
               View my Vocational 360 report →
             </Link>
           </div>

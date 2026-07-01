@@ -49,7 +49,7 @@ function AIBriefing() {
         <button onClick={() => refetch()} disabled={isFetching} style={{
           height: 40, borderRadius: 8, padding: "0 24px", fontSize: 13, fontWeight: 600,
           display: "flex", alignItems: "center", gap: 8,
-          background: "linear-gradient(135deg, #8b5cf6, #065292)", color: "#fff",
+          background: "linear-gradient(135deg, #8b5cf6, #2E9098)", color: "#fff",
           border: "none", cursor: "pointer", flexShrink: 0,
         }}>
           <Sparkles style={{ width: 15, height: 15 }} /> {t("dashboard.aiBriefing.generate")}
@@ -98,7 +98,7 @@ function AIBriefing() {
       {urgentActions.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(urgentActions.length, 3)}, 1fr)`, gap: 10 }}>
           {urgentActions.slice(0, 3).map((action: any, i: number) => {
-            const color = action.impact === "high" ? "#ef4444" : action.impact === "medium" ? "#f59e0b" : "#065292";
+            const color = action.impact === "high" ? "#ef4444" : action.impact === "medium" ? "#f59e0b" : "#2E9098";
             return (
               <div key={i} style={{
                 padding: "14px 16px", borderRadius: 8, borderLeft: `3px solid ${color}`,
@@ -236,13 +236,13 @@ function ActionItems() {
   const items = [
     alerts?.critical > 0 && { label: t("dashboard.actionItems.criticalAlert", { count: alerts.critical }), color: "#ef4444", icon: AlertTriangle, href: "/school-admin/messages?tab=alerts" },
     alerts?.high > 0 && { label: t("dashboard.actionItems.highPriority", { count: alerts.high }), color: "#f59e0b", icon: Bell, href: "/school-admin/messages?tab=alerts" },
-    alerts?.newSinceLogin > 0 && { label: t("dashboard.actionItems.newSinceLogin", { count: alerts.newSinceLogin }), color: "#065292", icon: Activity, href: "/school-admin/messages?tab=alerts" },
+    alerts?.newSinceLogin > 0 && { label: t("dashboard.actionItems.newSinceLogin", { count: alerts.newSinceLogin }), color: "#2E9098", icon: Activity, href: "/school-admin/messages?tab=alerts" },
   ].filter(Boolean);
 
   return (
     <div style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-        <ClipboardCheck style={{ width: 14, height: 14, color: "#065292" }} />
+        <ClipboardCheck style={{ width: 14, height: 14, color: "#2E9098" }} />
         <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)" }}>{t("dashboard.actionItems.title")}</span>
       </div>
       {items.length === 0 ? (
@@ -311,7 +311,7 @@ export default function SchoolAdminDashboard() {
   const { data: stats } = useSchoolAdminStats();
 
   const navCards = [
-    { label: t("dashboard.navCards.students.label"), sub: t("dashboard.navCards.students.sub"), icon: Users, href: "/school-admin/users", color: "#065292" },
+    { label: t("dashboard.navCards.students.label"), sub: t("dashboard.navCards.students.sub"), icon: Users, href: "/school-admin/users", color: "#2E9098" },
     { label: t("dashboard.navCards.academics.label"), sub: t("dashboard.navCards.academics.sub"), icon: BookOpen, href: "/school-admin/academics", color: "#10b981" },
     { label: t("dashboard.navCards.assessments.label"), sub: t("dashboard.navCards.assessments.sub"), icon: ClipboardCheck, href: "/school-admin/assessments", color: "#8b5cf6" },
     { label: t("dashboard.navCards.aiInsights.label"), sub: t("dashboard.navCards.aiInsights.sub"), icon: Sparkles, href: "/school-admin/insights", color: "#f59e0b" },
@@ -328,7 +328,7 @@ export default function SchoolAdminDashboard() {
         {/* Top Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
           {[
-            { label: t("dashboard.stats.students"), value: stats?.totalStudents?.toLocaleString() || "—", icon: Users, color: "#065292" },
+            { label: t("dashboard.stats.students"), value: stats?.totalStudents?.toLocaleString() || "—", icon: Users, color: "#2E9098" },
             { label: t("dashboard.stats.assessments"), value: stats?.completedAssessments?.toLocaleString() || "—", icon: ClipboardCheck, color: "#8b5cf6" },
             { label: t("dashboard.stats.avgExamScore"), value: stats ? `${(stats.averageScore || 0).toFixed(0)}%` : "—", icon: TrendingUp, color: "#10b981" },
             { label: t("dashboard.stats.courses"), value: (stats as any)?.totalCourses?.toLocaleString() || "—", icon: GraduationCap, color: "#f59e0b" },

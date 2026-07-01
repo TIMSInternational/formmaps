@@ -62,7 +62,7 @@ export function ReassignDialog({
         <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--admin-border-default)" }}>
           <DialogHeader>
             <DialogTitle style={{ fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-              <ArrowRightLeft style={{ width: 18, height: 18, color: "var(--admin-accent-blue, #065292)" }} />
+              <ArrowRightLeft style={{ width: 18, height: 18, color: "var(--admin-accent-blue, #2E9098)" }} />
               Reassign Student
             </DialogTitle>
             <DialogDescription style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
@@ -86,7 +86,7 @@ export function ReassignDialog({
                 style={{
                   display: "flex", alignItems: "center", gap: 10,
                   padding: "8px 10px", borderRadius: 6, cursor: "pointer",
-                  border: targetId === c.id ? "1px solid var(--admin-accent-blue, #065292)" : "1px solid transparent",
+                  border: targetId === c.id ? "1px solid var(--admin-accent-blue, #2E9098)" : "1px solid transparent",
                   background: targetId === c.id ? "rgba(59,130,246,0.05)" : "transparent",
                 }}
                 onClick={() => setTargetId(c.id)}
@@ -95,7 +95,7 @@ export function ReassignDialog({
                   width: 28, height: 28, borderRadius: "50%",
                   background: targetId === c.id ? "rgba(59,130,246,0.15)" : "var(--admin-bg-hover)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 10, fontWeight: 700, color: targetId === c.id ? "var(--admin-accent-blue, #065292)" : "var(--admin-font-primary)",
+                  fontSize: 10, fontWeight: 700, color: targetId === c.id ? "var(--admin-accent-blue, #2E9098)" : "var(--admin-font-primary)",
                 }}>
                   {c.name?.slice(0, 2).toUpperCase()}
                 </div>
@@ -132,7 +132,7 @@ export function ReassignDialog({
               height: 36, borderRadius: 6, padding: "0 14px",
               fontSize: 12, fontWeight: 600,
               display: "flex", alignItems: "center", gap: 6,
-              background: "var(--admin-accent-blue, #065292)", color: "#fff",
+              background: "var(--admin-accent-blue, #2E9098)", color: "#fff",
               border: "none", cursor: "pointer",
               opacity: (!targetId || loading) ? 0.6 : 1,
             }}

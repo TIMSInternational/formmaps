@@ -98,7 +98,7 @@ export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate
 
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center">
-          <span className="opacity-0 group-hover:opacity-100 px-3 py-1.5 bg-[#065292] text-white rounded-xl text-xs font-medium transition-opacity">
+          <span className="opacity-0 group-hover:opacity-100 px-3 py-1.5 bg-[#102B47] text-white rounded-xl text-xs font-medium transition-opacity">
             Edit Resume
           </span>
         </div>
@@ -111,7 +111,7 @@ export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate
             {resume.name}
           </h3>
           {resume.hasOriginal && (
-            <span className="rounded-full bg-[#FFD600] px-2 py-0.5 text-[10px] font-semibold text-[#111111] shrink-0">
+            <span className="rounded-full bg-[#FFD23F] px-2 py-0.5 text-[10px] font-semibold text-[#102B47] shrink-0">
               Original
             </span>
           )}

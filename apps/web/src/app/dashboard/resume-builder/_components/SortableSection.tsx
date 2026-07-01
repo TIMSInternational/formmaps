@@ -90,16 +90,16 @@ export function SortableSection({
       className={cn(
         "bg-card rounded-xl border shadow-sm overflow-hidden transition-all duration-200",
         isDragging
-          ? "border-[#065292]/40 shadow-lg scale-[1.02]"
+          ? "border-[#2E9098]/40 shadow-lg scale-[1.02]"
           : section.isExpanded
-            ? "border-[#065292]/30 hover:border-[#065292]/40"
-            : "border-border hover:border-[#065292]/30"
+            ? "border-[#2E9098]/30 hover:border-[#2E9098]/40"
+            : "border-border hover:border-[#2E9098]/30"
       )}
     >
       <div
         className={cn(
           "group w-full flex items-center gap-3 px-4 py-3.5 transition-colors",
-          section.isExpanded ? "bg-[#065292]/5" : "hover:bg-secondary/50"
+          section.isExpanded ? "bg-[#102B47]/5" : "hover:bg-secondary/50"
         )}
       >
         {/* Drag Handle */}
@@ -108,9 +108,9 @@ export function SortableSection({
           {...listeners}
           className={cn(
             "cursor-grab active:cursor-grabbing p-2 rounded transition-all",
-            "hover:bg-[#065292]/10 hover:text-[#065292]",
-            "focus:outline-none focus:ring-2 focus:ring-[#065292]/50",
-            isDragging && "cursor-grabbing bg-[#065292]/20"
+            "hover:bg-[#102B47]/10 hover:text-[#2E9098]",
+            "focus:outline-none focus:ring-2 focus:ring-[#2E9098]/50",
+            isDragging && "cursor-grabbing bg-[#102B47]/20"
           )}
           title="Drag to reorder"
         >
@@ -120,7 +120,7 @@ export function SortableSection({
         {/* Section Header */}
         {editingSectionTitle === section.id ? (
           <div className="flex-1 flex items-center gap-2">
-            <section.icon className="w-5 h-5 text-[#065292] flex-shrink-0" />
+            <section.icon className="w-5 h-5 text-[#2E9098] flex-shrink-0" />
             <input
               type="text"
               value={sectionTitleForm}
@@ -132,7 +132,7 @@ export function SortableSection({
                   onCancelEditTitle?.();
                 }
               }}
-              className="flex-1 px-2 py-1 text-sm font-semibold bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#065292] focus:border-[#065292]"
+              className="flex-1 px-2 py-1 text-sm font-semibold bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098]"
               autoFocus
               onClick={(e) => e.stopPropagation()}
             />
@@ -164,10 +164,10 @@ export function SortableSection({
             aria-expanded={section.isExpanded}
             onClick={handleSectionToggle}
             onKeyDown={handleHeaderKeyDown}
-            className="flex-1 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#065292] rounded-md"
+            className="flex-1 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E9098] rounded-md"
           >
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <section.icon className="w-5 h-5 text-[#065292] flex-shrink-0" />
+              <section.icon className="w-5 h-5 text-[#2E9098] flex-shrink-0" />
               <span className="font-semibold text-foreground text-left truncate">
                 {section.title}
               </span>
@@ -190,7 +190,7 @@ export function SortableSection({
               ) : null}
             </div>
             {section.isExpanded ? (
-              <ChevronUp className="w-5 h-5 text-[#065292]" />
+              <ChevronUp className="w-5 h-5 text-[#2E9098]" />
             ) : (
               <ChevronDown className="w-5 h-5 text-muted-foreground" />
             )}

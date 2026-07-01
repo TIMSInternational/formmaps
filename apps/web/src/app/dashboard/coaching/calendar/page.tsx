@@ -14,7 +14,7 @@ function getFirstDayOfMonth(y: number, m: number) { return new Date(y, m, 1).get
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  confirmed: { bg: "rgba(6,82,146,0.12)", text: "#065292" },
+  confirmed: { bg: "rgba(46,144,152,0.12)", text: "#2E9098" },
   completed: { bg: "rgba(5,150,105,0.12)", text: "#059669" },
   cancelled: { bg: "rgba(220,38,38,0.12)", text: "#dc2626" },
   rescheduled: { bg: "rgba(217,119,6,0.12)", text: "#d97706" },
@@ -128,20 +128,20 @@ export default function CoachCalendarPage() {
                     minHeight: 90, padding: "4px 6px", cursor: "pointer",
                     borderRight: "1px solid var(--admin-border-light)",
                     borderBottom: "1px solid var(--admin-border-light)",
-                    background: isSelected ? "rgba(6,82,146,0.08)" : isToday ? "rgba(6,82,146,0.04)" : "transparent",
+                    background: isSelected ? "rgba(46,144,152,0.08)" : isToday ? "rgba(46,144,152,0.04)" : "transparent",
                     transition: "background 0.15s",
                   }}
                 >
                   <div style={{
                     fontSize: 12, fontWeight: isToday ? 700 : 400,
-                    color: isToday ? "#065292" : "var(--admin-font-secondary)",
+                    color: isToday ? "#2E9098" : "var(--admin-font-secondary)",
                     marginBottom: 2,
                     display: "flex", alignItems: "center", gap: 4,
                   }}>
                     <span style={{
                       width: isToday ? 22 : "auto", height: isToday ? 22 : "auto",
                       borderRadius: isToday ? "50%" : 0,
-                      background: isToday ? "#065292" : "transparent",
+                      background: isToday ? "#2E9098" : "transparent",
                       color: isToday ? "#fff" : "inherit",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: 11,
@@ -149,7 +149,7 @@ export default function CoachCalendarPage() {
                     {daySessions.length > 0 && (
                       <span style={{
                         fontSize: 9, fontWeight: 600, padding: "1px 5px",
-                        borderRadius: 8, background: "#FFD600", color: "#111",
+                        borderRadius: 8, background: "#FFD23F", color: "#111",
                       }}>{daySessions.length}</span>
                     )}
                   </div>
@@ -196,7 +196,7 @@ export default function CoachCalendarPage() {
             padding: "14px 16px", borderBottom: "1px solid var(--admin-border-default)",
             display: "flex", alignItems: "center", gap: 8,
           }}>
-            <CalendarDays style={{ width: 16, height: 16, color: "#065292" }} />
+            <CalendarDays style={{ width: 16, height: 16, color: "#2E9098" }} />
             <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
               {selectedDay
                 ? new Date(selectedDay + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
@@ -233,7 +233,7 @@ export default function CoachCalendarPage() {
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <User style={{ width: 14, height: 14, color: "#065292" }} />
+                      <User style={{ width: 14, height: 14, color: "#2E9098" }} />
                       <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
                         {s.studentName || "Student"}
                       </span>
@@ -268,7 +268,7 @@ export default function CoachCalendarPage() {
       {/* Legend */}
       <div style={{ display: "flex", gap: 16, alignItems: "center", padding: "0 4px" }}>
         {[
-          { label: t("coach:calendar.legend.confirmed"), color: "#065292" },
+          { label: t("coach:calendar.legend.confirmed"), color: "#2E9098" },
           { label: t("coach:calendar.legend.completed"), color: "#059669" },
           { label: t("coach:calendar.legend.cancelled"), color: "#dc2626" },
           { label: t("coach:calendar.legend.rescheduled"), color: "#d97706" },

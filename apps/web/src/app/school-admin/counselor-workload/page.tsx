@@ -33,7 +33,7 @@ export default function CounselorWorkloadPage() {
           {t("counselorWorkload.label")}
         </span>
         <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--admin-font-primary)", display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
-          <Users style={{ width: 22, height: 22, color: "#065292" }} />
+          <Users style={{ width: 22, height: 22, color: "#2E9098" }} />
           {t("counselorWorkload.title")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
@@ -47,7 +47,7 @@ export default function CounselorWorkloadPage() {
         style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}
       >
         {[
-          { label: t("counselorWorkload.stats.counselors"), value: counselors.length, color: "#065292" },
+          { label: t("counselorWorkload.stats.counselors"), value: counselors.length, color: "#2E9098" },
           { label: t("counselorWorkload.stats.totalStudents"), value: totalStudents, color: "#14b8a6" },
           { label: t("counselorWorkload.stats.totalSessions"), value: totalSessions, color: "#f59e0b" },
         ].map((s) => (

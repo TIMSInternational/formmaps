@@ -61,7 +61,7 @@ export default function MILTestButton() {
         <button
           onClick={handlePopulateData}
           disabled={loading}
-          className="bg-[#065292] text-white px-3 py-1.5 rounded text-sm hover:bg-[#054a83] transition-colors disabled:opacity-50"
+          className="bg-[#102B47] text-white px-3 py-1.5 rounded text-sm hover:bg-[#0b1f33] transition-colors disabled:opacity-50"
         >
           {loading ? t('common.loading') : t('dev.mil.populateButton')}
         </button>

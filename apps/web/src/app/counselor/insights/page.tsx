@@ -50,7 +50,7 @@ export default function CounselorInsightsPage() {
   // GPA distribution config
   const gpaRanges = [
     { key: "4.0+", label: "4.0+", color: "#10b981" },
-    { key: "3.5-3.9", label: "3.5 - 3.9", color: "#065292" },
+    { key: "3.5-3.9", label: "3.5 - 3.9", color: "#2E9098" },
     { key: "3.0-3.4", label: "3.0 - 3.4", color: "#f59e0b" },
     { key: "2.5-2.9", label: "2.5 - 2.9", color: "#f97316" },
     { key: "below2.5", label: "Below 2.5", color: "#ef4444" },
@@ -89,10 +89,10 @@ export default function CounselorInsightsPage() {
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}
           >
             {[
-              { label: "TOTAL STUDENTS", value: total, icon: Users, color: "#065292" },
+              { label: "TOTAL STUDENTS", value: total, icon: Users, color: "#2E9098" },
               { label: "AVERAGE GPA", value: metrics.avgGPA != null ? Number(metrics.avgGPA).toFixed(2) : "--", icon: GraduationCap, color: "#10b981" },
               { label: "AT-RISK STUDENTS", value: metrics.atRiskCount || 0, icon: AlertTriangle, color: "#ef4444" },
-              { label: "ASSESSMENT COMPLETION", value: `${assessmentRate}%`, icon: ClipboardCheck, color: "#065292" },
+              { label: "ASSESSMENT COMPLETION", value: `${assessmentRate}%`, icon: ClipboardCheck, color: "#2E9098" },
             ].map((stat) => (
               <div key={stat.label} style={{ padding: 16, borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
@@ -113,13 +113,13 @@ export default function CounselorInsightsPage() {
             }}>
               <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Sparkles style={{ width: 16, height: 16, color: "#065292" }} />
-                  <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#065292" }}>AI Briefing</span>
+                  <Sparkles style={{ width: 16, height: 16, color: "#2E9098" }} />
+                  <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#2E9098" }}>AI Briefing</span>
                 </div>
                 <button onClick={() => refetchBriefing()} disabled={briefingFetching} style={{
                   height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600,
                   display: "flex", alignItems: "center", gap: 6,
-                  background: briefingFetching ? "var(--admin-bg-hover)" : "#065292",
+                  background: briefingFetching ? "var(--admin-bg-hover)" : "#2E9098",
                   color: briefingFetching ? "var(--admin-font-tertiary)" : "#fff",
                   border: briefingFetching ? "1px solid var(--admin-border-default)" : "none",
                   cursor: briefingFetching ? "wait" : "pointer",
@@ -149,7 +149,7 @@ export default function CounselorInsightsPage() {
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {urgentActions.map((a: any, i: number) => {
-                      const impactColor = a.impact === "high" ? "#ef4444" : a.impact === "medium" ? "#f59e0b" : "#065292";
+                      const impactColor = a.impact === "high" ? "#ef4444" : a.impact === "medium" ? "#f59e0b" : "#2E9098";
                       return (
                         <div key={i} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid var(--admin-border-default)" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -208,7 +208,7 @@ export default function CounselorInsightsPage() {
           >
             {[
               { label: "PCA Complete", complete: pcaComplete, color: "#8b5cf6" },
-              { label: "MIL Complete", complete: milComplete, color: "#065292" },
+              { label: "MIL Complete", complete: milComplete, color: "#2E9098" },
               { label: "360° Complete", complete: eval360Complete, color: "#14b8a6" },
             ].map((item) => {
               const pct = total > 0 ? Math.round((item.complete / total) * 100) : 0;

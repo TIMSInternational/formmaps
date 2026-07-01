@@ -135,7 +135,7 @@ export function CareerMatches({ className }: CareerMatchesProps) {
                           ? "#10b981"
                           : match.progress > 60
                             ? "#f59e0b"
-                            : "#065292"
+                            : "#2E9098"
                       }
                       strokeWidth="3"
                       strokeDasharray={`${2 * Math.PI * 16}`}

@@ -216,7 +216,7 @@ export default function CollegeListPage() {
                             <option value="reach">Reach</option><option value="match">Match</option><option value="safety">Safety</option>
                           </select>
                           <button onClick={() => addToList.mutate({ collegeId: c.id, classification: effectiveClassification })} disabled={addToList.isPending}
-                            style={{ height: 28, borderRadius: 5, padding: "0 10px", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, background: "#065292", color: "#fff", border: "none", cursor: "pointer" }}>
+                            style={{ height: 28, borderRadius: 5, padding: "0 10px", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, background: "#102B47", color: "#fff", border: "none", cursor: "pointer" }}>
                             <Plus style={{ width: 12, height: 12 }} /> Add
                           </button>
                         </div>

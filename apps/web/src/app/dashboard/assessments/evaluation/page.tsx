@@ -102,8 +102,8 @@ export default function EvaluatorsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-card rounded-xl border shadow-sm p-8 text-center"
         >
-          <div className="w-16 h-16 bg-[#065292]/10 rounded-full flex items-center justify-center mx-auto mb-5">
-            <ClipboardList className="w-8 h-8 text-[#065292]" />
+          <div className="w-16 h-16 bg-[#102B47]/10 rounded-full flex items-center justify-center mx-auto mb-5">
+            <ClipboardList className="w-8 h-8 text-[#2E9098]" />
           </div>
 
           <h1 className="text-xl font-bold text-foreground mb-2">
@@ -116,7 +116,7 @@ export default function EvaluatorsPage() {
           <button
             onClick={handleStartSelfEval}
             disabled={starting}
-            className="w-full bg-[#065292] text-white py-3 px-6 rounded-lg hover:bg-[#054a83] transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-60"
+            className="w-full bg-[#102B47] text-white py-3 px-6 rounded-lg hover:bg-[#0b1f33] transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-60"
           >
             {starting ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Starting...</>

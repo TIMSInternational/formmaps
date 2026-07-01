@@ -59,7 +59,7 @@ export function SuccessScreen({ returnHref }: { returnHref?: string }) {
         {returnHref && (
           <a
             href={returnHref}
-            className="inline-block mt-5 px-5 py-2.5 rounded-lg bg-[#065292] text-white text-sm font-medium hover:bg-[#054a83] transition-colors"
+            className="inline-block mt-5 px-5 py-2.5 rounded-lg bg-[#102B47] text-white text-sm font-medium hover:bg-[#0b1f33] transition-colors"
           >
             {t("evaluation.evaluator.returnDashboard")}
           </a>

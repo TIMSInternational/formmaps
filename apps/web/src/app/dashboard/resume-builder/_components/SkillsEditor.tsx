@@ -50,22 +50,22 @@ export function SkillsEditor({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
       className={`bg-card rounded-xl border shadow-sm overflow-hidden transition-colors ${
-        expandedSection === "skills" ? "border-[#065292]/30" : "border-border"
+        expandedSection === "skills" ? "border-[#2E9098]/30" : "border-border"
       }`}
     >
       <button
         onClick={() => toggleSection("skills")}
         className={`w-full flex items-center gap-3 p-4 transition-colors ${
           expandedSection === "skills"
-            ? "bg-[#065292]/5"
+            ? "bg-[#102B47]/5"
             : "hover:bg-secondary/50"
         }`}
       >
-        <Award className="w-5 h-5 text-[#065292] flex-shrink-0" />
+        <Award className="w-5 h-5 text-[#2E9098] flex-shrink-0" />
         <span className="font-semibold text-foreground flex-1 text-left">
           Skills
         </span>
-        <span className="px-2 py-0.5 text-xs font-semibold bg-[#FFD600] text-[#111111] rounded-full">
+        <span className="px-2 py-0.5 text-xs font-semibold bg-[#FFD23F] text-[#102B47] rounded-full">
           {skills.length} skills
         </span>
         <motion.div
@@ -77,7 +77,7 @@ export function SkillsEditor({
           <ChevronDown
             className={`w-5 h-5 ${
               expandedSection === "skills"
-                ? "text-[#065292]"
+                ? "text-[#2E9098]"
                 : "text-muted-foreground"
             }`}
           />
@@ -100,7 +100,7 @@ export function SkillsEditor({
                   {skills.map((skill) => (
                     <div
                       key={skill.id}
-                      className="group relative px-3 py-1.5 bg-[#065292]/10 text-[#065292] rounded-full text-sm font-medium border border-[#065292]/20 hover:bg-[#065292]/20 transition-colors"
+                      className="group relative px-3 py-1.5 bg-[#102B47]/10 text-[#2E9098] rounded-full text-sm font-medium border border-[#2E9098]/20 hover:bg-[#102B47]/20 transition-colors"
                     >
                       {skill.name}
                       <button
@@ -131,11 +131,11 @@ export function SkillsEditor({
                       }
                     }}
                     placeholder="Type a skill and press Enter"
-                    className="flex-1 px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#065292] focus:border-[#065292] outline-none transition-all"
+                    className="flex-1 px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                   />
                   <button
                     onClick={handleAddSkill}
-                    className="px-4 py-2 bg-[#065292] text-white rounded-lg hover:bg-[#054473] transition-colors"
+                    className="px-4 py-2 bg-[#102B47] text-white rounded-lg hover:bg-[#0b1f33] transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>

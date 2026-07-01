@@ -70,7 +70,7 @@ export function CounselorTabBar({ tabs, activeTab, onChange }: CounselorTabBarPr
                 fontWeight: 600,
                 padding: "1px 6px",
                 borderRadius: 10,
-                background: isActive ? "var(--admin-accent-blue, #065292)" : "var(--admin-bg-hover)",
+                background: isActive ? "var(--admin-accent-blue, #2E9098)" : "var(--admin-bg-hover)",
                 color: isActive ? "#fff" : "var(--admin-font-tertiary)",
               }}>
                 {tab.count}

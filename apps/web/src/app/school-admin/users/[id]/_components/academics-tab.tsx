@@ -161,7 +161,7 @@ export function AcademicsTab({
                   <span style={{
                     fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase",
                     background: gap.severity === "critical" ? "rgba(239,68,68,0.1)" : gap.severity === "warning" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
-                    color: gap.severity === "critical" ? "#ef4444" : gap.severity === "warning" ? "#f59e0b" : "#065292",
+                    color: gap.severity === "critical" ? "#ef4444" : gap.severity === "warning" ? "#f59e0b" : "#2E9098",
                   }}>
                     {gap.severity}
                   </span>
@@ -196,7 +196,7 @@ export function AcademicsTab({
                         <span style={{
                           fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase",
                           background: rec.priority === "high" ? "rgba(239,68,68,0.1)" : rec.priority === "medium" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
-                          color: rec.priority === "high" ? "#ef4444" : rec.priority === "medium" ? "#f59e0b" : "#065292",
+                          color: rec.priority === "high" ? "#ef4444" : rec.priority === "medium" ? "#f59e0b" : "#2E9098",
                         }}>
                           {rec.priority}
                         </span>
@@ -232,7 +232,7 @@ export function AcademicsTab({
       {/* Transcript */}
       {transcriptData?.byYear && Object.keys(transcriptData.byYear).length > 0 && (
         <Card>
-          <CardHeader icon={FileText} color="#065292" title="Transcript" />
+          <CardHeader icon={FileText} color="#2E9098" title="Transcript" />
           <div style={{ padding: 16 }} className="space-y-4">
             {Object.entries(transcriptData.byYear).sort(([a], [b]) => b.localeCompare(a)).map(([year, courses]) => (
               <div key={year}>
@@ -248,7 +248,7 @@ export function AcademicsTab({
                       <span style={{
                         fontWeight: 600,
                         color: c.grade === "A" || c.grade === "A+" || c.grade === "A-" ? "#10b981" :
-                          c.grade === "B" || c.grade === "B+" || c.grade === "B-" ? "#065292" :
+                          c.grade === "B" || c.grade === "B+" || c.grade === "B-" ? "#2E9098" :
                           c.grade === "F" ? "#ef4444" : "var(--admin-font-primary)",
                       }}>
                         {c.grade || (c.status === "in_progress" ? "IP" : "\u2014")}

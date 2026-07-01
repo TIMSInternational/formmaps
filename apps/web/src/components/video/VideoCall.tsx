@@ -363,7 +363,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
               {/* Large avatar (OSF: 120px) */}
               <div style={{
                 width: 90, height: 90, borderRadius: "50%", flexShrink: 0,
-                background: "#065292",
+                background: "#102B47",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 32, fontWeight: 600, color: "#fff",
               }}>
@@ -552,7 +552,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                               <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
                                 <span style={{
                                   width: 6, height: 6, borderRadius: 3, flexShrink: 0,
-                                  background: c.status === "completed" ? "#10b981" : c.status === "in_progress" ? "#065292" : "#9ca3af",
+                                  background: c.status === "completed" ? "#10b981" : c.status === "in_progress" ? "#2E9098" : "#9ca3af",
                                 }} />
                                 <span style={{ fontWeight: 500, color: "var(--admin-font-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.courseName}</span>
                               </div>
@@ -583,7 +583,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                   </div>
                   <div style={{ width: "100%", height: 6, borderRadius: 3, background: "var(--admin-border-default)" }}>
                     <div style={{
-                      height: 6, borderRadius: 3, background: "linear-gradient(90deg, #065292, #065292)",
+                      height: 6, borderRadius: 3, background: "linear-gradient(90deg, #2E9098, #2E9098)",
                       width: `${coursePlanData.plan.graduationProgress.totalCreditsRequired > 0
                         ? Math.min((coursePlanData.plan.graduationProgress.totalCreditsEarned / coursePlanData.plan.graduationProgress.totalCreditsRequired) * 100, 100) : 0}%`,
                     }} />
@@ -739,9 +739,9 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
 
           {/* Course Plan */}
           {isPrivilegedRole && (
-            <button style={{ width: 40, height: 40, borderRadius: 8, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background 0.2s", backgroundColor: showCoursePlan ? "#065292" : "#333" }}
+            <button style={{ width: 40, height: 40, borderRadius: 8, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background 0.2s", backgroundColor: showCoursePlan ? "#2E9098" : "#333" }}
               onMouseEnter={(e) => { if (!showCoursePlan) e.currentTarget.style.backgroundColor = "#444"; }}
-              onMouseLeave={(e) => { if (!showCoursePlan) e.currentTarget.style.backgroundColor = showCoursePlan ? "#065292" : "#333"; }}
+              onMouseLeave={(e) => { if (!showCoursePlan) e.currentTarget.style.backgroundColor = showCoursePlan ? "#2E9098" : "#333"; }}
               onClick={() => { setShowCoursePlan(!showCoursePlan); if (isExpanded) setIsExpanded(false); }} title="Course plan & recommendations">
               <BookOpen style={{ width: 18, height: 18, color: "#fff" }} />
             </button>

@@ -8,8 +8,8 @@ import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 
-const BRAND = "#065292";
-const BRAND_DARK = "#04406f";
+const BRAND = "#2E9098";
+const BRAND_DARK = "#0b1f33";
 
 /**
  * GDPR cookie consent — centered, blocking modal pop-up (FormMaps brand).
@@ -55,7 +55,7 @@ export function CookieConsentBanner() {
           transition={{ type: "spring", stiffness: 320, damping: 26 }}
         >
           {/* Yellow brand accent strip */}
-          <div className="h-1.5 w-full" style={{ backgroundColor: "#FFD600" }} />
+          <div className="h-1.5 w-full" style={{ backgroundColor: "#FFD23F" }} />
 
           <div className="px-6 pb-6 pt-7 sm:px-8">
             {/* Icon */}
@@ -64,7 +64,7 @@ export function CookieConsentBanner() {
               <Cookie className="h-7 w-7 text-white" aria-hidden="true" />
             </div>
 
-            <h2 id="cookie-modal-title" className="text-center text-xl font-bold text-[#111111]">
+            <h2 id="cookie-modal-title" className="text-center text-xl font-bold text-[#102B47]">
               {t("cookieConsent.title", "We value your privacy")}
             </h2>
             <p id="cookie-modal-desc" className="mt-2 text-center text-sm leading-relaxed text-gray-600">
@@ -104,7 +104,7 @@ export function CookieConsentBanner() {
                         checked={analytics}
                         onCheckedChange={setAnalytics}
                         aria-label={t("cookieConsent.analyticsTitle", "Analytics")}
-                        className="data-[state=checked]:bg-[#065292]"
+                        className="data-[state=checked]:bg-[#102B47]"
                       />
                     }
                   />

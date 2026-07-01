@@ -19,8 +19,8 @@ import {
   Users,
 } from "lucide-react";
 
-const BRAND_BLUE = "#065292";
-const BRAND_YELLOW = "#FFD600";
+const BRAND_BLUE = "#2E9098";
+const BRAND_YELLOW = "#FFD23F";
 
 interface CareerProfile {
   overview: string;
@@ -130,7 +130,7 @@ export default function CareerDetails() {
             <div className="flex items-start gap-4">
               <div
                 className="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold shrink-0"
-                style={{ backgroundColor: BRAND_YELLOW, color: "#111111" }}
+                style={{ backgroundColor: BRAND_YELLOW, color: "#102B47" }}
               >
                 {title.charAt(0)}
               </div>
@@ -173,7 +173,7 @@ export default function CareerDetails() {
             {studentMatch?.aiInsight && (
               <div
                 className="rounded-xl p-6 border"
-                style={{ backgroundColor: "rgba(6,82,146,0.04)", borderColor: "rgba(6,82,146,0.2)" }}
+                style={{ backgroundColor: "rgba(46,144,152,0.04)", borderColor: "rgba(46,144,152,0.2)" }}
               >
                 <h2 className="text-base font-bold mb-2 flex items-center gap-2" style={{ color: BRAND_BLUE }}>
                   <Sparkles className="w-5 h-5" /> {t("careers.details.whyFits")}
@@ -276,7 +276,7 @@ export default function CareerDetails() {
                         key={rc}
                         href={`/careers/${rc.trim()}`}
                         className="text-xs px-2 py-1 rounded-full hover:opacity-80"
-                        style={{ backgroundColor: "rgba(6,82,146,0.08)", color: BRAND_BLUE }}
+                        style={{ backgroundColor: "rgba(46,144,152,0.08)", color: BRAND_BLUE }}
                       >
                         {rc}
                       </a>
@@ -284,7 +284,7 @@ export default function CareerDetails() {
                       <span
                         key={rc}
                         className="text-xs px-2 py-1 rounded-full"
-                        style={{ backgroundColor: "rgba(6,82,146,0.08)", color: BRAND_BLUE }}
+                        style={{ backgroundColor: "rgba(46,144,152,0.08)", color: BRAND_BLUE }}
                       >
                         {rc}
                       </span>

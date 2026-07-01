@@ -62,7 +62,7 @@ export function RecommendationsPanel({ evaluatedUserId }: { evaluatedUserId: str
             {careerMatches.map((c) => (
               <li key={c.programId} className="flex items-center justify-between text-sm">
                 <span className="text-gray-700">{c.programTitle} <span className="text-gray-400">· {c.cluster}</span></span>
-                <span className="font-semibold" style={{ color: "#065292" }}>{Math.round(c.totalScore)}%</span>
+                <span className="font-semibold" style={{ color: "#2E9098" }}>{Math.round(c.totalScore)}%</span>
               </li>
             ))}
           </ul>
@@ -80,7 +80,7 @@ export function RecommendationsPanel({ evaluatedUserId }: { evaluatedUserId: str
         </div>
       )}
 
-      <Link href="/dashboard/university" className="text-sm font-medium" style={{ color: "#065292" }}>Explore matching universities →</Link>
+      <Link href="/dashboard/university" className="text-sm font-medium" style={{ color: "#2E9098" }}>Explore matching universities →</Link>
     </div>
   );
 }

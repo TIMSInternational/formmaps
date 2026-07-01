@@ -126,7 +126,7 @@ export default function StudentOnboardingPage({
   if (isLoading) {
     return (
       <div className="min-h-screen flex" style={{ background: "#FFFFFF" }}>
-        <div className="hidden lg:flex lg:w-[48%]" style={{ background: "#065292" }} />
+        <div className="hidden lg:flex lg:w-[48%]" style={{ background: "#102B47" }} />
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="w-full max-w-sm space-y-6">
             <Skeleton className="h-10 w-10 mx-auto rounded-lg" />
@@ -145,18 +145,18 @@ export default function StudentOnboardingPage({
   if (!isValid) {
     return (
       <div className="min-h-screen flex" style={{ background: "#FFFFFF" }}>
-        <div className="hidden lg:flex lg:w-[48%] items-center justify-center" style={{ background: "#065292" }}>
+        <div className="hidden lg:flex lg:w-[48%] items-center justify-center" style={{ background: "#102B47" }}>
           <div className="px-16">
             <div className="flex items-center gap-3 mb-8">
-              <img src="/logo-icon.svg" alt="FormMaps" className="w-12 h-12" style={{ filter: "brightness(0) invert(1)" }} />
+              <img src="/fm-icon.png" alt="FormMaps" className="w-12 h-12" style={{ filter: "brightness(0) invert(1)" }} />
               <div>
                 <span className="text-2xl font-bold text-white">FORM</span>
-                <span className="text-2xl font-bold" style={{ color: "#FFD600" }}>MAPS</span>
+                <span className="text-2xl font-bold" style={{ color: "#FFD23F" }}>MAPS</span>
               </div>
             </div>
             <h2 className="text-3xl font-bold text-white leading-tight">
               Find your path.<br />
-              <span style={{ color: "#FFD600" }}>Shape your future.</span>
+              <span style={{ color: "#FFD23F" }}>Shape your future.</span>
             </h2>
           </div>
         </div>
@@ -172,7 +172,7 @@ export default function StudentOnboardingPage({
             <button
               onClick={() => router.push("/login")}
               className="w-full h-11 rounded-lg text-sm font-semibold text-white transition-colors"
-              style={{ background: "#065292" }}
+              style={{ background: "#102B47" }}
             >
               {t("onboarding.student.backToLogin")}
             </button>
@@ -188,7 +188,7 @@ export default function StudentOnboardingPage({
       {/* Left Panel — Branding */}
       <div
         className="hidden lg:flex lg:w-[48%] relative overflow-hidden"
-        style={{ background: "#065292" }}
+        style={{ background: "#102B47" }}
       >
         <motion.div
           initial={{ opacity: 0, x: -30 }}
@@ -197,16 +197,16 @@ export default function StudentOnboardingPage({
           className="flex flex-col justify-center px-16 relative z-10"
         >
           <div className="flex items-center gap-3 mb-12">
-            <img src="/logo-icon.svg" alt="FormMaps" className="w-12 h-12" style={{ filter: "brightness(0) invert(1)" }} />
+            <img src="/fm-icon.png" alt="FormMaps" className="w-12 h-12" style={{ filter: "brightness(0) invert(1)" }} />
             <div>
               <span className="text-2xl font-bold text-white tracking-tight">FORM</span>
-              <span className="text-2xl font-bold tracking-tight" style={{ color: "#FFD600" }}>MAPS</span>
+              <span className="text-2xl font-bold tracking-tight" style={{ color: "#FFD23F" }}>MAPS</span>
             </div>
           </div>
 
           <h1 className="text-4xl font-bold text-white leading-tight mb-4">
             {t("onboarding.student.welcomeTo")}<br />
-            <span style={{ color: "#FFD600" }}>Country Day School.</span>
+            <span style={{ color: "#FFD23F" }}>Country Day School.</span>
           </h1>
           <p className="text-base mb-10" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 420, lineHeight: 1.7 }}>
             {t("onboarding.student.subtitle")}
@@ -226,7 +226,7 @@ export default function StudentOnboardingPage({
                 transition={{ delay: 0.3 + i * 0.1 }}
                 className="flex items-center gap-3"
               >
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#FFD600" }} />
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#FFD23F" }} />
                 <span className="text-sm" style={{ color: "rgba(255,255,255,0.85)" }}>{text}</span>
               </motion.div>
             ))}
@@ -247,15 +247,15 @@ export default function StudentOnboardingPage({
         >
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-10">
-            <img src="/logo-icon.svg" alt="FormMaps" className="w-10 h-10" />
+            <img src="/fm-icon.png" alt="FormMaps" className="w-10 h-10" />
             <div>
-              <span className="text-xl font-bold" style={{ color: "#111111" }}>FORM</span>
-              <span className="text-xl font-bold" style={{ color: "#065292" }}>MAPS</span>
+              <span className="text-xl font-bold" style={{ color: "#102B47" }}>FORM</span>
+              <span className="text-xl font-bold" style={{ color: "#2E9098" }}>MAPS</span>
             </div>
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold mb-2" style={{ color: "#111111" }}>
+            <h1 className="text-2xl font-semibold mb-2" style={{ color: "#102B47" }}>
               {t("onboarding.student.welcomeUser", { name: studentName.split(" ")[0] })}
             </h1>
             <p className="text-sm" style={{ color: "#666" }}>
@@ -281,7 +281,7 @@ export default function StudentOnboardingPage({
                           {...field}
                           className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
                           style={{ background: "#F8F9FA", borderColor: errors.password ? "#dc2626" : "#E0E0E0", color: "#111" }}
-                          onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
                           onBlur={(e) => { e.currentTarget.style.borderColor = errors.password ? "#dc2626" : "#E0E0E0"; }}
                         />
                       </FormControl>
@@ -310,7 +310,7 @@ export default function StudentOnboardingPage({
                           {...field}
                           className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
                           style={{ background: "#F8F9FA", borderColor: errors.confirmPassword ? "#dc2626" : "#E0E0E0", color: "#111" }}
-                          onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
                           onBlur={(e) => { e.currentTarget.style.borderColor = errors.confirmPassword ? "#dc2626" : "#E0E0E0"; }}
                         />
                       </FormControl>
@@ -338,7 +338,7 @@ export default function StudentOnboardingPage({
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full h-11 rounded-lg text-sm font-semibold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                style={{ background: "#065292" }}
+                style={{ background: "#102B47" }}
               >
                 {isSubmitting ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> {t("onboarding.student.activating")}</>
@@ -351,7 +351,7 @@ export default function StudentOnboardingPage({
 
           <p className="text-center mt-6 text-xs" style={{ color: "#999" }}>
             {t("onboarding.student.alreadyHaveAccount")}{" "}
-            <a href="/login" className="font-medium" style={{ color: "#065292" }}>{t("onboarding.student.signIn")}</a>
+            <a href="/login" className="font-medium" style={{ color: "#2E9098" }}>{t("onboarding.student.signIn")}</a>
           </p>
         </motion.div>
       </div>

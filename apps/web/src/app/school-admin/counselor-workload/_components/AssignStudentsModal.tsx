@@ -152,7 +152,7 @@ export function AssignStudentsModal({
                     checked={selected.has(s.id)}
                     onChange={() => { if (!alreadyAssigned) toggleStudent(s.id); }}
                     disabled={alreadyAssigned}
-                    style={{ accentColor: "#065292" }}
+                    style={{ accentColor: "#102B47" }}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{s.name}</div>
@@ -187,7 +187,7 @@ export function AssignStudentsModal({
             disabled={selected.size === 0 || assigning}
             style={{
               padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-              background: selected.size === 0 || assigning ? "var(--admin-bg-hover)" : "#065292",
+              background: selected.size === 0 || assigning ? "var(--admin-bg-hover)" : "#2E9098",
               color: selected.size === 0 || assigning ? "var(--admin-font-tertiary)" : "#fff",
               border: "none", cursor: selected.size === 0 || assigning ? "not-allowed" : "pointer",
               fontFamily: "inherit",

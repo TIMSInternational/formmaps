@@ -142,7 +142,7 @@ export default function SubscribePage() {
             <div className="bg-white shadow-2xl rounded-2xl px-6 py-4 border border-[#059669]/20 flex items-center gap-3">
               <CheckCircle2 className="w-6 h-6" style={{ color: "#059669" }} />
               <div>
-                <p className="font-semibold" style={{ color: "#111111" }}>Payment successful!</p>
+                <p className="font-semibold" style={{ color: "#102B47" }}>Payment successful!</p>
                 <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
               </div>
             </div>
@@ -153,10 +153,10 @@ export default function SubscribePage() {
       <div className="max-w-6xl mx-auto px-4 py-8 md:py-10">
         {/* Brand mark */}
         <div className="flex items-center justify-center gap-2 mb-5">
-          <img src="/logo-icon.svg" alt="FormMaps" className="w-8 h-8" />
+          <img src="/fm-icon.png" alt="FormMaps" className="w-8 h-8" />
           <div className="flex items-center">
-            <span className="text-lg font-bold tracking-tight" style={{ color: "#111111" }}>FORM</span>
-            <span className="text-lg font-bold tracking-tight" style={{ color: "#065292" }}>MAPS</span>
+            <span className="text-lg font-bold tracking-tight" style={{ color: "#102B47" }}>FORM</span>
+            <span className="text-lg font-bold tracking-tight" style={{ color: "#2E9098" }}>MAPS</span>
           </div>
         </div>
 
@@ -166,16 +166,16 @@ export default function SubscribePage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <Badge className="mb-3 border-0 px-4 py-1.5 font-semibold" style={{ background: "rgba(6,82,146,0.1)", color: "#065292" }}>
+          <Badge className="mb-3 border-0 px-4 py-1.5 font-semibold" style={{ background: "rgba(46,144,152,0.1)", color: "#2E9098" }}>
             Choose Your Plan
           </Badge>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2" style={{ color: "#111111" }}>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2" style={{ color: "#102B47" }}>
             Invest in Your Future
           </h1>
           <p className="text-base text-gray-500 max-w-xl mx-auto">
             Unlock AI-powered career tools, assessments, and personalized guidance to accelerate your professional journey.
           </p>
-          <p className="text-sm font-semibold mt-2" style={{ color: "#065292" }}>
+          <p className="text-sm font-semibold mt-2" style={{ color: "#2E9098" }}>
             Start with a 7-day free trial. No charge until your trial ends.
           </p>
         </motion.div>
@@ -195,11 +195,11 @@ export default function SubscribePage() {
                     ? "shadow-lg scale-[1.02]"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
-                style={plan.popular ? { borderColor: "#065292", boxShadow: "0 10px 30px rgba(6,82,146,0.15)" } : undefined}
+                style={plan.popular ? { borderColor: "#2E9098", boxShadow: "0 10px 30px rgba(46,144,152,0.15)" } : undefined}
               >
                 {plan.badge && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <Badge className="text-white border-0 px-4 py-1 shadow-lg" style={{ background: "#065292" }}>
+                    <Badge className="text-white border-0 px-4 py-1 shadow-lg" style={{ background: "#102B47" }}>
                       <Sparkles className="w-3 h-3 mr-1" />
                       {plan.badge}
                     </Badge>
@@ -209,18 +209,18 @@ export default function SubscribePage() {
                 <div className="p-6">
                   {/* Icon + Name */}
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#065292" }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#102B47" }}>
                       <Icon className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold" style={{ color: "#111111" }}>{plan.name}</h3>
+                      <h3 className="text-lg font-bold" style={{ color: "#102B47" }}>{plan.name}</h3>
                       <p className="text-sm text-gray-500">{plan.description}</p>
                     </div>
                   </div>
 
                   {/* Price */}
                   <div className="flex items-baseline gap-1 mb-4">
-                    <span className="text-3xl font-bold" style={{ color: "#111111" }}>${plan.price}</span>
+                    <span className="text-3xl font-bold" style={{ color: "#102B47" }}>${plan.price}</span>
                     <span className="text-gray-400 font-medium">/{plan.period}</span>
                   </div>
 
@@ -243,8 +243,8 @@ export default function SubscribePage() {
                       className="w-full h-11 rounded-xl font-semibold text-base transition-all shadow-sm hover:shadow-md"
                       style={
                         plan.popular
-                          ? { background: "#065292", color: "#fff" }
-                          : { background: "#fff", color: "#065292", border: "1px solid #065292" }
+                          ? { background: "#102B47", color: "#fff" }
+                          : { background: "#fff", color: "#2E9098", border: "1px solid #2E9098" }
                       }
                       disabled={processingPlan !== null}
                     >
@@ -260,8 +260,8 @@ export default function SubscribePage() {
                   <div className="space-y-2">
                     {plan.features.map((feature, j) => (
                       <div key={j} className="flex items-start gap-3">
-                        <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: feature.highlighted ? "#065292" : "#9ca3af" }} />
-                        <span className={`text-sm ${feature.highlighted ? "font-medium" : ""}`} style={{ color: feature.highlighted ? "#111111" : "#4b5563" }}>
+                        <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: feature.highlighted ? "#2E9098" : "#9ca3af" }} />
+                        <span className={`text-sm ${feature.highlighted ? "font-medium" : ""}`} style={{ color: feature.highlighted ? "#102B47" : "#4b5563" }}>
                           {feature.text}
                         </span>
                       </div>

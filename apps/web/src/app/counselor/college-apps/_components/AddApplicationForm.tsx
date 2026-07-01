@@ -105,7 +105,7 @@ export function AddApplicationForm({ onSubmit, isPending }: AddApplicationFormPr
           style={{
             height: 34, borderRadius: 6, padding: "0 16px", fontSize: 12, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 4,
-            background: "#065292", color: "#fff", border: "none", cursor: "pointer",
+            background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
             opacity: (isPending || !newApp.collegeName || !newApp.deadlineDate) ? 0.5 : 1,
           }}>
           {isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : "Add"}

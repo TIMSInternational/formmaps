@@ -13,7 +13,7 @@ import type { PathwayCourse } from "@/types/curriculum";
 const BTN_EDITOR: React.CSSProperties = {
   height: 34, borderRadius: 6, padding: "0 14px", fontSize: 13, fontWeight: 600,
   display: "inline-flex", alignItems: "center", gap: 7,
-  background: "#065292", color: "#fff", border: "none", cursor: "pointer",
+  background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
 };
 
 const NODE_BTN: React.CSSProperties = {
@@ -31,9 +31,9 @@ const BTN_SECONDARY: React.CSSProperties = {
 function CourseNode({ course, onClick }: { course: PathwayCourse; onClick: () => void }) {
   return (
     <button onClick={(e) => { e.stopPropagation(); onClick(); }} title={`${course.name} — click to edit prerequisites`} style={NODE_BTN}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}
-      onFocus={(e) => { e.currentTarget.style.borderColor = "#065292"; }}
+      onFocus={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
       onBlur={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}>
       <span style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{course.code}</span>
       <span className="hidden md:inline" style={{ fontSize: 11, color: "var(--admin-font-tertiary)", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course.name}</span>
@@ -134,7 +134,7 @@ export function PathwaysPanel() {
                   </span>
                 ))}
                 <span className="ml-auto opacity-0 group-hover:opacity-100 flex items-center gap-1"
-                  style={{ fontSize: 12, fontWeight: 600, color: "#065292", transition: "opacity 0.15s" }}>
+                  style={{ fontSize: 12, fontWeight: 600, color: "#2E9098", transition: "opacity 0.15s" }}>
                   Open editor <ArrowRight style={{ width: 13, height: 13 }} />
                 </span>
               </div>

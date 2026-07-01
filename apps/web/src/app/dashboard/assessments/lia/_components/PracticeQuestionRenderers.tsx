@@ -24,7 +24,7 @@ export function renderLetterPairs(question: MILQuestion) {
 
   return (
     <div className="max-w-sm sm:max-w-md md:max-w-xl mx-auto mb-4 sm:mb-6">
-      <div className="bg-card border-2 border-[#065292]/40 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-sm">
+      <div className="bg-card border-2 border-[#2E9098]/40 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 shadow-sm">
         {/* Top Row */}
         <div className="grid grid-cols-4 gap-2 sm:gap-4 md:gap-6 mb-3 sm:mb-4 md:mb-6">
           {question.data.letterPairs.map((pair, index) => (
@@ -201,8 +201,8 @@ export function renderAnswerOptions(
         disabled={disabled}
         className={`px-3 py-2 sm:px-4 sm:py-3 rounded-xl font-medium text-xs sm:text-sm transition-all duration-100 min-w-[100px] sm:min-w-[120px] max-w-[180px] sm:max-w-[200px] text-center ${
           selectedAnswer === index
-            ? "bg-[#065292]/12 text-[#065292] border-2 border-[#065292] shadow-lg transform scale-105"
-            : "bg-[#065292]/12 text-[#065292] border-2 border-[#065292] hover:bg-[#065292]/20 hover:shadow-md"
+            ? "bg-[#102B47]/12 text-[#2E9098] border-2 border-[#2E9098] shadow-lg transform scale-105"
+            : "bg-[#102B47]/12 text-[#2E9098] border-2 border-[#2E9098] hover:bg-[#102B47]/20 hover:shadow-md"
         } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       >
         <span className="block leading-tight">{option}</span>
@@ -222,8 +222,8 @@ export function renderAnswerOptions(
         disabled={disabled}
         className={`w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl sm:rounded-2xl font-bold text-xl sm:text-2xl md:text-3xl transition-all duration-100 ${
           selectedAnswer === index
-            ? "bg-[#065292]/12 text-[#065292] border-2 border-[#065292] shadow-2xl transform scale-105 sm:scale-110 ring-2 sm:ring-4 ring-[#065292]/30"
-            : "bg-card border-2 border-border text-foreground hover:border-[#065292]/40 hover:bg-[#065292]/5 shadow-lg hover:shadow-xl"
+            ? "bg-[#102B47]/12 text-[#2E9098] border-2 border-[#2E9098] shadow-2xl transform scale-105 sm:scale-110 ring-2 sm:ring-4 ring-[#2E9098]/30"
+            : "bg-card border-2 border-border text-foreground hover:border-[#2E9098]/40 hover:bg-[#102B47]/5 shadow-lg hover:shadow-xl"
         } font-mono ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       >
         {letter}
@@ -272,8 +272,8 @@ export function renderAnswerOptions(
         disabled={disabled}
         className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg font-bold text-base sm:text-lg md:text-xl transition-all ${
           selectedAnswer === option
-            ? "bg-[#054a83] text-white shadow-lg transform scale-105"
-            : "bg-[#065292]/12 text-[#065292] border-2 border-[#065292] hover:bg-[#065292]/20 hover:shadow-md"
+            ? "bg-[#0b1f33] text-white shadow-lg transform scale-105"
+            : "bg-[#102B47]/12 text-[#2E9098] border-2 border-[#2E9098] hover:bg-[#102B47]/20 hover:shadow-md"
         } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       >
         {option}
@@ -289,8 +289,8 @@ export function renderAnswerOptions(
       disabled={disabled}
       className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg font-bold text-base sm:text-lg md:text-xl transition-all ${
         selectedAnswer === option
-          ? "bg-[#065292]/12 text-[#065292] border-2 border-[#065292] shadow-lg transform scale-105"
-          : "bg-[#065292]/12 text-[#065292] border-2 border-[#065292] hover:bg-[#065292]/20 hover:shadow-md"
+          ? "bg-[#102B47]/12 text-[#2E9098] border-2 border-[#2E9098] shadow-lg transform scale-105"
+          : "bg-[#102B47]/12 text-[#2E9098] border-2 border-[#2E9098] hover:bg-[#102B47]/20 hover:shadow-md"
       } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
     >
       {option}

@@ -34,9 +34,9 @@ export function DraftPlanSection({
     <section className="rounded-xl p-4 space-y-4 bg-[var(--admin-bg-panel)] border border-[var(--admin-border-default)]">
       {/* ── Status strip ────────────────────────────────────────────────── */}
       {plan.status === "draft" && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#FFD600] bg-yellow-50 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#FFD23F] bg-yellow-50 px-4 py-3">
           <div className="flex items-center gap-2 text-xs text-gray-900">
-            <Sparkles className="h-4 w-4 text-[#065292]" />
+            <Sparkles className="h-4 w-4 text-[#2E9098]" />
             <span>
               <span className="font-semibold">Draft plan ready</span> —{" "}
               {plan.items.length} proposed courses ({plan.totalPlannedCredits} credits).
@@ -66,7 +66,7 @@ export function DraftPlanSection({
               type="button"
               onClick={onSubmit}
               disabled={busy}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-bold bg-[#065292] text-white hover:opacity-90 disabled:opacity-60"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-bold bg-[#102B47] text-white hover:opacity-90 disabled:opacity-60"
             >
               {isSubmitting ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
               Submit to counselor
@@ -76,8 +76,8 @@ export function DraftPlanSection({
       )}
 
       {plan.status === "proposed" && (
-        <div className="flex items-center gap-2 rounded-lg border border-[#065292]/30 bg-blue-50 px-4 py-3 text-xs text-gray-900">
-          <Send className="h-4 w-4 text-[#065292]" />
+        <div className="flex items-center gap-2 rounded-lg border border-[#2E9098]/30 bg-blue-50 px-4 py-3 text-xs text-gray-900">
+          <Send className="h-4 w-4 text-[#2E9098]" />
           <span>
             <span className="font-semibold">Submitted</span> — your counselor is
             reviewing this plan. You&apos;ll be notified when it&apos;s approved.
@@ -98,7 +98,7 @@ export function DraftPlanSection({
             type="button"
             onClick={onRegenerate}
             disabled={busy}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-bold bg-[#065292] text-white hover:opacity-90 disabled:opacity-60"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-bold bg-[#102B47] text-white hover:opacity-90 disabled:opacity-60"
           >
             {isRegenerating ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
             Revise &amp; regenerate

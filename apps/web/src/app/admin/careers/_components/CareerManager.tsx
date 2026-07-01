@@ -147,7 +147,7 @@ export function CareerManager() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Cluster Breakdown */}
                 <div style={{ ...s, padding: 20 }}>
-                    <h3 style={hdr}><BarChart3 style={{ width: 14, height: 14, color: "#065292" }} /> {t("careers.clusters.sectionTitle")}</h3>
+                    <h3 style={hdr}><BarChart3 style={{ width: 14, height: 14, color: "#2E9098" }} /> {t("careers.clusters.sectionTitle")}</h3>
                     {loading ? (
                         <div className="space-y-2">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-10 rounded-lg" />)}</div>
                     ) : clusters.length === 0 ? (
@@ -193,7 +193,7 @@ export function CareerManager() {
 
             {/* Sample Careers */}
             <div style={{ ...s, padding: 20 }}>
-                <h3 style={hdr}><Briefcase style={{ width: 14, height: 14, color: "#065292" }} /> {t("careers.sample.sectionTitle")}</h3>
+                <h3 style={hdr}><Briefcase style={{ width: 14, height: 14, color: "#2E9098" }} /> {t("careers.sample.sectionTitle")}</h3>
                 <p className="text-[11px] mb-3" style={{ color: "var(--admin-font-tertiary)" }}>
                     {t("careers.sample.sectionDesc", { count: careers.length })}
                 </p>

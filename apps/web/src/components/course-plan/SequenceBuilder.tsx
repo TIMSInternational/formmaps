@@ -125,7 +125,7 @@ const STATUS_COLORS: Record<string, string> = {
   dropped: "bg-red-100 text-red-600 border-red-200",
   pending_add: "bg-amber-100 text-amber-700 border-amber-200",
   pending_remove: "bg-orange-100 text-orange-700 border-orange-200",
-  draft_proposed: "bg-yellow-50 text-gray-900 border-[#FFD600]",
+  draft_proposed: "bg-yellow-50 text-gray-900 border-[#FFD23F]",
 };
 
 const STATUS_ICONS: Record<string, typeof CheckCircle2> = {
@@ -189,7 +189,7 @@ function CourseCell({
                 <p className="font-medium truncate leading-tight">
                   {c.courseName}
                   {c.status === "draft_proposed" && (
-                    <span className="ml-1.5 inline-block align-middle text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#FFD600] text-[#111111]">
+                    <span className="ml-1.5 inline-block align-middle text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#FFD23F] text-[#102B47]">
                       Proposed
                     </span>
                   )}

@@ -62,7 +62,7 @@ export default function CounselorRecommendationsPage() {
   const countByStatus = dashboard?.countByStatus ?? {};
 
   const summaryStats = [
-    { labelKey: "recommendations.statRequested", fallback: "Requested", value: countByStatus.requested ?? 0, color: "#065292", icon: Clock },
+    { labelKey: "recommendations.statRequested", fallback: "Requested", value: countByStatus.requested ?? 0, color: "#2E9098", icon: Clock },
     { labelKey: "recommendations.statAccepted", fallback: "Accepted", value: countByStatus.accepted ?? 0, color: "#f59e0b", icon: CheckCircle2 },
     { labelKey: "recommendations.statInProgress", fallback: "In Progress", value: countByStatus.in_progress ?? 0, color: "#f97316", icon: Loader2 },
     { labelKey: "recommendations.statSubmitted", fallback: "Submitted", value: countByStatus.submitted ?? 0, color: "#10b981", icon: CheckCircle2 },

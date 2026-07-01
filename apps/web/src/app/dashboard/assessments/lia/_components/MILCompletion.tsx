@@ -86,10 +86,10 @@ export default function MILCompletion({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="bg-[#065292]/5 border border-[#065292]/30 rounded-lg p-5 mb-6 text-left"
+            className="bg-[#102B47]/5 border border-[#2E9098]/30 rounded-lg p-5 mb-6 text-left"
           >
-            <p className="text-sm font-semibold text-[#065292] mb-1">Next Step</p>
-            <p className="text-sm text-[#065292]">
+            <p className="text-sm font-semibold text-[#2E9098] mb-1">Next Step</p>
+            <p className="text-sm text-[#2E9098]">
               Complete the <strong>360° Evaluation</strong> — start by evaluating yourself, then invite peers, parents, and teachers to evaluate you.
             </p>
           </motion.div>
@@ -103,7 +103,7 @@ export default function MILCompletion({
             <button
               onClick={handleStart360}
               disabled={starting}
-              className="w-full bg-[#065292] text-white py-3 px-6 rounded-lg hover:bg-[#054a83] transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full bg-[#102B47] text-white py-3 px-6 rounded-lg hover:bg-[#0b1f33] transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {starting ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Starting...</>

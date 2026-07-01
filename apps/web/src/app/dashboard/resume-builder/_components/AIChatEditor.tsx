@@ -101,15 +101,15 @@ export function AIChatEditor({ resumeId, onResumeUpdated }: AIChatEditorProps) {
             >
               {msg.role === "assistant" ? (
                 <div className="flex items-start gap-2 max-w-[85%]">
-                  <div className="w-7 h-7 rounded-lg bg-[#065292]/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#065292]" />
+                  <div className="w-7 h-7 rounded-lg bg-[#102B47]/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#2E9098]" />
                   </div>
                   <div className="rounded-2xl rounded-tl-sm bg-secondary/60 border border-border px-3.5 py-2.5 text-sm text-foreground leading-relaxed">
                     {msg.text}
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl rounded-tr-sm bg-[#065292] text-white px-3.5 py-2.5 text-sm leading-relaxed max-w-[85%]">
+                <div className="rounded-2xl rounded-tr-sm bg-[#102B47] text-white px-3.5 py-2.5 text-sm leading-relaxed max-w-[85%]">
                   {msg.text}
                 </div>
               )}
@@ -119,8 +119,8 @@ export function AIChatEditor({ resumeId, onResumeUpdated }: AIChatEditorProps) {
 
         {isLoading && (
           <div className="flex items-start gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#065292]/10 flex items-center justify-center shrink-0 mt-0.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#065292] animate-pulse" />
+            <div className="w-7 h-7 rounded-lg bg-[#102B47]/10 flex items-center justify-center shrink-0 mt-0.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#2E9098] animate-pulse" />
             </div>
             <div className="rounded-2xl rounded-tl-sm bg-secondary/60 border border-border px-3.5 py-2.5 text-sm text-muted-foreground">
               Editing your resume…

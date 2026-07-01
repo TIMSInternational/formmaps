@@ -68,7 +68,7 @@ export function RevenueOverviewCard() {
                 title={`${m.month}: $${m.revenue.toLocaleString()}`}
                 style={{
                   width: "100%", borderRadius: 3,
-                  background: m.revenue > 0 ? "#065292" : "var(--admin-bg-hover)",
+                  background: m.revenue > 0 ? "#2E9098" : "var(--admin-bg-hover)",
                   minHeight: 3,
                 }}
               />
@@ -85,7 +85,7 @@ export function RevenueOverviewCard() {
         {/* This-month facts (real values, correctly labeled) */}
         <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 3, height: 12, borderRadius: 2, background: "#065292" }} />
+            <div style={{ width: 3, height: 12, borderRadius: 2, background: "#102B47" }} />
             <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("revenue.thisMonth")}</span>
             <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-accent-green)" }}>
               ${revenueThisMonth.toLocaleString(undefined, { maximumFractionDigits: 0 })}

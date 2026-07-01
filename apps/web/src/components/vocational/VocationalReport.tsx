@@ -38,7 +38,7 @@ export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserI
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center" role="alert">
         <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-3" />
         <p className="text-gray-700 font-medium mb-4">Couldn&apos;t load this report.</p>
-        <button type="button" onClick={load} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium" style={{ background: "#065292" }}>
+        <button type="button" onClick={load} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium" style={{ background: "#102B47" }}>
           <RefreshCw className="h-4 w-4" /> Try again
         </button>
       </div>

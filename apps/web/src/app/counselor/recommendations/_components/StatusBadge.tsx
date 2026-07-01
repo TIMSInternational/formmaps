@@ -6,7 +6,7 @@ import { Clock, CheckCircle2, Loader2, XCircle } from "lucide-react";
 type StatusMeta = { color: string; bg: string; icon: React.ElementType };
 
 const STATUS_META: Record<string, StatusMeta> = {
-  requested:   { color: "#065292", bg: "#06529210", icon: Clock },
+  requested:   { color: "#2E9098", bg: "#2E909810", icon: Clock },
   accepted:    { color: "#f59e0b", bg: "#f59e0b10", icon: CheckCircle2 },
   in_progress: { color: "#f97316", bg: "#f9731610", icon: Loader2 },
   submitted:   { color: "#10b981", bg: "#10b98110", icon: CheckCircle2 },

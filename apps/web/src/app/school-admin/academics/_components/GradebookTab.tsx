@@ -17,7 +17,7 @@ interface StudentRow { id: string; name?: string; email?: string; gradeLevel?: n
 function gradeColor(g: string | null): { bg: string; fg: string } {
   if (!g) return { bg: "var(--admin-bg-hover)", fg: "var(--admin-font-tertiary)" };
   if (g.startsWith("A")) return { bg: "rgba(16,185,129,0.1)", fg: "#10b981" };
-  if (g.startsWith("B")) return { bg: "rgba(6,82,146,0.1)", fg: "#065292" };
+  if (g.startsWith("B")) return { bg: "rgba(46,144,152,0.1)", fg: "#2E9098" };
   if (g.startsWith("F")) return { bg: "rgba(239,68,68,0.1)", fg: "#ef4444" };
   return { bg: "rgba(245,158,11,0.1)", fg: "#f59e0b" };
 }
@@ -57,7 +57,7 @@ export function GradebookTab() {
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => setImportOpen(true)} style={{
             height: 36, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
-            background: "#065292", color: "#fff", border: "none", cursor: "pointer",
+            background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
           }}><Upload style={{ width: 14, height: 14 }} /> Import CSV</button>
           <button disabled title="iSAMS integration coming soon" style={{
             height: 36, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
@@ -87,7 +87,7 @@ export function GradebookTab() {
                 <button key={s.id} onClick={() => setSelectedId(s.id)} style={{
                   width: "100%", textAlign: "left", padding: "10px 12px", border: "none", cursor: "pointer",
                   borderBottom: "1px solid var(--admin-border-default)",
-                  background: active ? "#065292" : "transparent",
+                  background: active ? "#2E9098" : "transparent",
                 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: active ? "#fff" : "var(--admin-font-primary)" }}>{s.name || s.email}</div>
                   <div style={{ fontSize: 11, color: active ? "rgba(255,255,255,0.8)" : "var(--admin-font-tertiary)" }}>{s.gradeLevel ? `Grade ${s.gradeLevel} · ` : ""}{s.email}</div>
@@ -118,7 +118,7 @@ export function GradebookTab() {
                 </div>
                 <button onClick={() => openAdd(years[0])} style={{
                   height: 34, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
-                  background: "#FFD600", color: "#111", border: "none", cursor: "pointer",
+                  background: "#FFD23F", color: "#111", border: "none", cursor: "pointer",
                 }}><Plus style={{ width: 14, height: 14 }} /> Add grade</button>
               </div>
 
@@ -130,7 +130,7 @@ export function GradebookTab() {
                 <div key={year} style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
                   <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{year}</span>
-                    <button onClick={() => openAdd(year)} style={{ fontSize: 11, fontWeight: 600, color: "#065292", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                    <button onClick={() => openAdd(year)} style={{ fontSize: 11, fontWeight: 600, color: "#2E9098", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
                       <Plus style={{ width: 12, height: 12 }} /> Add
                     </button>
                   </div>

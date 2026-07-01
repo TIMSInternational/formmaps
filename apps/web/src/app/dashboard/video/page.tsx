@@ -116,7 +116,7 @@ export default function VideoCallsPage() {
         </div>
         {isStaff && (
           <button onClick={() => setShowNewCall(!showNewCall)}
-            style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 10, background: showNewCall ? "var(--admin-bg-hover)" : "#065292", color: showNewCall ? "var(--admin-font-primary)" : "#fff", border: "1px solid var(--admin-border-default)", cursor: "pointer", fontSize: 13, fontWeight: 600, transition: "all 0.15s" }}>
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 10, background: showNewCall ? "var(--admin-bg-hover)" : "#2E9098", color: showNewCall ? "var(--admin-font-primary)" : "#fff", border: "1px solid var(--admin-border-default)", cursor: "pointer", fontSize: 13, fontWeight: 600, transition: "all 0.15s" }}>
             {showNewCall ? <X style={{ width: 16, height: 16 }} /> : <Plus style={{ width: 16, height: 16 }} />}
             {showNewCall ? "Cancel" : "New Call"}
           </button>
@@ -143,7 +143,7 @@ export default function VideoCallsPage() {
                     style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, border: "none", background: "transparent", cursor: startingCall ? "default" : "pointer", fontFamily: "inherit", textAlign: "left", color: "var(--admin-font-primary)", transition: "background 0.1s" }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#065292", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#102B47", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
                       {c.name?.charAt(0)?.toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>

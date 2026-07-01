@@ -105,7 +105,7 @@ export function AiImportReviewDialog({ data, onClose, onConfirmed }: AiImportRev
                       <TableCell style={{ fontSize: 12, color: c.maxEnrollment ? "var(--admin-font-primary)" : "var(--admin-font-tertiary)", textAlign: "center" }}>{c.maxEnrollment || "\u2014"}</TableCell>
                       <TableCell>
                         {c.frameworkType ? (
-                          <Badge style={{ fontSize: 10, background: c.frameworkType === "AP" ? "#06529220" : c.frameworkType === "IB" ? "#8b5cf620" : "#14b8a620", color: c.frameworkType === "AP" ? "#065292" : c.frameworkType === "IB" ? "#8b5cf6" : "#14b8a6", border: "none" }}>
+                          <Badge style={{ fontSize: 10, background: c.frameworkType === "AP" ? "#2E909820" : c.frameworkType === "IB" ? "#8b5cf620" : "#14b8a620", color: c.frameworkType === "AP" ? "#2E9098" : c.frameworkType === "IB" ? "#8b5cf6" : "#14b8a6", border: "none" }}>
                             {c.frameworkType}
                           </Badge>
                         ) : (

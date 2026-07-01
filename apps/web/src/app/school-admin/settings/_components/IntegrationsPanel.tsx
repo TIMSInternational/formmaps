@@ -121,7 +121,7 @@ export default function IntegrationsPanel() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: t("settings.integrationsPanel.connection"), value: connected === null ? t("settings.integrationsPanel.unknown") : connected ? t("settings.integrationsPanel.connected") : t("settings.integrationsPanel.disconnected"), icon: connected ? Wifi : WifiOff, color: connected ? "#10b981" : connected === false ? "#ef4444" : "#6b7280" },
-          { label: t("settings.integrationsPanel.lastSync"), value: lastSync ? new Date(lastSync).toLocaleDateString() : t("settings.integrationsPanel.never"), icon: Clock, color: "#065292" },
+          { label: t("settings.integrationsPanel.lastSync"), value: lastSync ? new Date(lastSync).toLocaleDateString() : t("settings.integrationsPanel.never"), icon: Clock, color: "#2E9098" },
           { label: t("settings.integrationsPanel.integrationsStat"), value: "1", icon: Plug, color: "#8b5cf6" },
           { label: t("settings.integrationsPanel.dataSource"), value: "iSAMS", icon: Database, color: "#f59e0b" },
         ].map((stat) => (
@@ -139,8 +139,8 @@ export default function IntegrationsPanel() {
       <div style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
         <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--admin-bg-hover)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 8, background: "#06529215", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Database style={{ width: 18, height: 18, color: "#065292" }} />
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: "#102B4715", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Database style={{ width: 18, height: 18, color: "#2E9098" }} />
             </div>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -198,7 +198,7 @@ export default function IntegrationsPanel() {
               <button onClick={handleSave} disabled={loading || !hasChanges} style={{
                 height: 36, borderRadius: 6, padding: "0 16px", fontSize: 12, fontWeight: 600,
                 display: "flex", alignItems: "center", gap: 6,
-                background: hasChanges ? "var(--admin-accent-blue, #065292)" : "var(--admin-bg-hover)",
+                background: hasChanges ? "var(--admin-accent-blue, #2E9098)" : "var(--admin-bg-hover)",
                 color: hasChanges ? "#fff" : "var(--admin-font-tertiary)",
                 border: hasChanges ? "none" : "1px solid var(--admin-border-default)",
                 cursor: hasChanges ? "pointer" : "default", opacity: loading ? 0.7 : 1, transition: "all 0.15s",

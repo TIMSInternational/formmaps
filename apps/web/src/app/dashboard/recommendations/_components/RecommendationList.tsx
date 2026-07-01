@@ -31,7 +31,7 @@ function StatusTimeline({ status }: { status: string }) {
       {TIMELINE_STEPS.map((step, i) => {
         const reached = currentIndex >= 0 && i <= currentIndex;
         const isLast = i === TIMELINE_STEPS.length - 1;
-        const dotColor = reached ? "#065292" : "var(--admin-border-default)";
+        const dotColor = reached ? "#2E9098" : "var(--admin-border-default)";
         return (
           <div
             key={step.key}
@@ -57,7 +57,7 @@ function StatusTimeline({ status }: { status: string }) {
                 style={{
                   fontSize: 9,
                   fontWeight: reached ? 600 : 500,
-                  color: reached ? "#065292" : "var(--admin-font-tertiary)",
+                  color: reached ? "#2E9098" : "var(--admin-font-tertiary)",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -71,7 +71,7 @@ function StatusTimeline({ status }: { status: string }) {
                   height: 2,
                   margin: "0 4px",
                   marginBottom: 16,
-                  background: i < currentIndex ? "#065292" : "var(--admin-border-default)",
+                  background: i < currentIndex ? "#2E9098" : "var(--admin-border-default)",
                 }}
               />
             )}
@@ -125,7 +125,7 @@ export default function RecommendationList({ requests }: RecommendationListProps
           background: "var(--admin-bg-hover)",
         }}
       >
-        <FileText style={{ width: 14, height: 14, color: "#065292" }} />
+        <FileText style={{ width: 14, height: 14, color: "#2E9098" }} />
         <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
           My Requests
         </span>
@@ -199,14 +199,14 @@ export default function RecommendationList({ requests }: RecommendationListProps
                       width: 32,
                       height: 32,
                       borderRadius: 8,
-                      background: "#06529215",
+                      background: "#102B4715",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       flexShrink: 0,
                     }}
                   >
-                    <User style={{ width: 14, height: 14, color: "#065292" }} />
+                    <User style={{ width: 14, height: 14, color: "#2E9098" }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
@@ -266,7 +266,7 @@ export default function RecommendationList({ requests }: RecommendationListProps
                         fontWeight: 600,
                         borderRadius: 6,
                         border: "none",
-                        background: "#065292",
+                        background: "#102B47",
                         color: "#fff",
                         cursor: downloadingId === req.id ? "wait" : "pointer",
                         opacity: downloadingId === req.id ? 0.7 : 1,

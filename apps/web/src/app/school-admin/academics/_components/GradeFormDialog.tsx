@@ -125,7 +125,7 @@ export function GradeFormDialog({ open, onClose, studentId, existing, defaultYea
           <button onClick={onClose} style={{ height: 36, borderRadius: 6, padding: "0 16px", fontSize: 13, fontWeight: 500, background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)", cursor: "pointer" }}>Cancel</button>
           <button onClick={handleSave} disabled={saving || (!isEdit && !courseId)} style={{
             height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600,
-            background: "#065292", color: "#fff", border: "none", cursor: "pointer",
+            background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
             opacity: saving || (!isEdit && !courseId) ? 0.6 : 1,
           }}>{saving ? "Saving…" : isEdit ? "Save changes" : "Add grade"}</button>
         </div>

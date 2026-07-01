@@ -1,5 +1,5 @@
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  requested: { label: "Requested", color: "#065292" },
+  requested: { label: "Requested", color: "#2E9098" },
   accepted: { label: "Accepted", color: "#f59e0b" },
   in_progress: { label: "In Progress", color: "#f97316" },
   submitted: { label: "Submitted", color: "#10b981" },

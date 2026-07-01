@@ -9,7 +9,7 @@ const CARD = "bg-white rounded-xl shadow-sm border border-gray-100 p-5";
 function bar(value: number) {
   return (
     <div className="h-2 rounded-full bg-gray-100 flex-1">
-      <div className="h-2 rounded-full" style={{ width: `${Math.max(0, Math.min(100, value))}%`, background: "#065292" }} />
+      <div className="h-2 rounded-full" style={{ width: `${Math.max(0, Math.min(100, value))}%`, background: "#102B47" }} />
     </div>
   );
 }

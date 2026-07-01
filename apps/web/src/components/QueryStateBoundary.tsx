@@ -38,7 +38,7 @@ export function QueryStateBoundary({
         </div>
         <h3 className="text-sm font-bold text-foreground mb-1">Something went wrong</h3>
         <p className="text-xs text-muted-foreground max-w-md mx-auto mb-4">We couldn&apos;t load this data. This is a temporary problem, not an empty record.</p>
-        {onRetry && (<Button onClick={onRetry} className="bg-[#065292] text-white hover:bg-[#065292]/90"><RefreshCw className="h-4 w-4 mr-2" />Try again</Button>)}
+        {onRetry && (<Button onClick={onRetry} className="bg-[#102B47] text-white hover:bg-[#102B47]/90"><RefreshCw className="h-4 w-4 mr-2" />Try again</Button>)}
       </div>
     );
   }

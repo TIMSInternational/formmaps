@@ -56,7 +56,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
         <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--admin-border-default)" }}>
           <DialogHeader>
             <DialogTitle style={{ fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-              <Brain style={{ width: 18, height: 18, color: "#065292" }} />
+              <Brain style={{ width: 18, height: 18, color: "#2E9098" }} />
               {student.name}
             </DialogTitle>
             <DialogDescription style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
@@ -73,7 +73,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
               <span style={{ fontSize: 12, fontWeight: 700, color: overallPct === 100 ? "#10b981" : "var(--admin-font-primary)" }}>{overallPct}%</span>
             </div>
             <div style={{ height: 6, borderRadius: 3, background: "var(--admin-bg-card)", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${overallPct}%`, borderRadius: 3, background: overallPct === 100 ? "#10b981" : "#065292", transition: "width 0.3s" }} />
+              <div style={{ height: "100%", width: `${overallPct}%`, borderRadius: 3, background: overallPct === 100 ? "#10b981" : "#2E9098", transition: "width 0.3s" }} />
             </div>
           </div>
 
@@ -159,7 +159,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
               height: 36, borderRadius: 6, padding: "0 14px",
               fontSize: 12, fontWeight: 600,
               display: "flex", alignItems: "center", gap: 6,
-              background: "var(--admin-accent-blue, #065292)", color: "#fff",
+              background: "var(--admin-accent-blue, #2E9098)", color: "#fff",
               border: "none", cursor: "pointer", textDecoration: "none",
             }}
           >
@@ -279,7 +279,7 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
                 style={{
                   height: 30, borderRadius: 6, padding: "0 12px", fontSize: 11, fontWeight: 600,
                   display: "flex", alignItems: "center", gap: 4,
-                  background: "#065292", color: "#fff", border: "none", cursor: "pointer",
+                  background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
                 }}
               >
                 {isSendingReminders ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 12, height: 12 }} />}
@@ -312,7 +312,7 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
                   type="checkbox"
                   checked={filtered.length > 0 && selected.size === filtered.length}
                   onChange={toggleAll}
-                  style={{ accentColor: "#065292" }}
+                  style={{ accentColor: "#102B47" }}
                 />
               </th>
               <th style={{ ...thStyle, textAlign: "left" }}>Student</th>
@@ -338,11 +338,11 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
                     type="checkbox"
                     checked={selected.has(s.id)}
                     onChange={() => toggle(s.id)}
-                    style={{ accentColor: "#065292" }}
+                    style={{ accentColor: "#102B47" }}
                   />
                 </td>
                 <td style={{ padding: "6px 10px" }}>
-                  <div style={{ fontWeight: 500, color: "var(--admin-accent-blue, #065292)" }}>{s.name}</div>
+                  <div style={{ fontWeight: 500, color: "var(--admin-accent-blue, #2E9098)" }}>{s.name}</div>
                   <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{s.email}</div>
                 </td>
                 <td style={{ padding: "6px 10px", textAlign: "center", color: "var(--admin-font-secondary)" }}>

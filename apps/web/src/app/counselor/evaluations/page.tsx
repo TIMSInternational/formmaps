@@ -166,7 +166,7 @@ export default function CounselorEvaluationsPage() {
               onClick={() => setDetailStudent(s)}
               >
                 <div>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-accent-blue, #065292)" }}>{s.name}</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-accent-blue, #2E9098)" }}>{s.name}</p>
                   <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 1 }}>{s.email}</p>
                 </div>
                 <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>

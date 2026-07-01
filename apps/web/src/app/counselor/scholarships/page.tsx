@@ -145,7 +145,7 @@ export default function CounselorScholarshipsPage() {
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
             {[
               { label: "TOTAL SCHOLARSHIPS", value: String(schols.length), color: "var(--admin-font-primary)" },
-              { label: "TOTAL POTENTIAL", value: formatCurrency(totalPotential), color: "#065292" },
+              { label: "TOTAL POTENTIAL", value: formatCurrency(totalPotential), color: "#2E9098" },
               { label: "AWARDED AMOUNT", value: formatCurrency(awardedAmount), color: "#10b981" },
               { label: "PENDING", value: String(pendingCount), color: "#f59e0b" },
             ].map((stat) => (

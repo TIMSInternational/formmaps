@@ -12,7 +12,7 @@ interface Integration {
 }
 
 const INTEGRATIONS: Integration[] = [
-  { id: "isams", name: "iSAMS", descKey: "isams", icon: Database, status: "available", color: "#065292", href: "/school-admin/integrations/isams" },
+  { id: "isams", name: "iSAMS", descKey: "isams", icon: Database, status: "available", color: "#2E9098", href: "/school-admin/integrations/isams" },
   { id: "tims", name: "TIMS PCA", descKey: "tims", icon: Shield, status: "connected", color: "#10b981" },
   { id: "google", name: "Google Workspace", descKey: "google", icon: Globe, status: "coming_soon", color: "#f59e0b" },
   { id: "canvas", name: "Canvas LMS", descKey: "canvas", icon: Database, status: "coming_soon", color: "#ef4444" },
@@ -21,7 +21,7 @@ const INTEGRATIONS: Integration[] = [
 
 const STATUS_STYLES: Record<string, { key: string; bg: string; color: string }> = {
   connected: { key: "connected", bg: "rgba(16,185,129,0.1)", color: "#10b981" },
-  available: { key: "available", bg: "rgba(59,130,246,0.1)", color: "#065292" },
+  available: { key: "available", bg: "rgba(59,130,246,0.1)", color: "#2E9098" },
   coming_soon: { key: "comingSoon", bg: "rgba(107,114,128,0.1)", color: "#6b7280" },
 };
 
@@ -43,8 +43,8 @@ export default function IntegrationsPage() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
         {[
           { label: t("integrations.stats.connected"), value: connected.toString(), icon: CheckCircle2, color: "#10b981" },
-          { label: t("integrations.stats.available"), value: available.toString(), icon: Plug, color: "#065292" },
-          { label: t("integrations.stats.total"), value: INTEGRATIONS.length.toString(), icon: Settings, color: "#065292" },
+          { label: t("integrations.stats.available"), value: available.toString(), icon: Plug, color: "#2E9098" },
+          { label: t("integrations.stats.total"), value: INTEGRATIONS.length.toString(), icon: Settings, color: "#2E9098" },
         ].map((s) => (
           <div key={s.label} style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", padding: 16 }}>
             <s.icon style={{ width: 16, height: 16, color: s.color, marginBottom: 8 }} />

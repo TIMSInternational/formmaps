@@ -11,7 +11,7 @@ import type {
 
 const STATUS_CHIP: Record<string, { label: string; className: string }> = {
   draft: { label: "Draft plan", className: "bg-gray-100 text-gray-700" },
-  proposed: { label: "Awaiting counselor", className: "bg-[#FFD600] text-[#111111]" },
+  proposed: { label: "Awaiting counselor", className: "bg-[#FFD23F] text-[#102B47]" },
   approved: { label: "Plan approved", className: "bg-emerald-100 text-emerald-700" },
   rejected: { label: "Needs revision", className: "bg-red-100 text-red-700" },
 };
@@ -55,10 +55,10 @@ export function GraduationTargetCard({
         parts.push(`360° ${completion.evalCompleted}/${completion.evalTotal}`);
     }
     return (
-      <section className="rounded-xl p-5 bg-[#065292] text-white">
+      <section className="rounded-xl p-5 bg-[#102B47] text-white">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-start gap-3 min-w-0">
-            <Lock className="h-5 w-5 mt-0.5 shrink-0 text-[#FFD600]" />
+            <Lock className="h-5 w-5 mt-0.5 shrink-0 text-[#FFD23F]" />
             <div className="min-w-0">
               <h2 className="text-sm font-semibold">
                 Unlock your personalized graduation plan
@@ -78,7 +78,7 @@ export function GraduationTargetCard({
           </div>
           <Link
             href="/dashboard/assessments"
-            className="shrink-0 px-4 py-2 rounded-md text-xs font-bold bg-[#FFD600] text-[#111111] hover:opacity-90"
+            className="shrink-0 px-4 py-2 rounded-md text-xs font-bold bg-[#FFD23F] text-[#102B47] hover:opacity-90"
           >
             Go to assessments
           </Link>
@@ -93,7 +93,7 @@ export function GraduationTargetCard({
       <section className="rounded-xl p-5 bg-[var(--admin-bg-panel)] border border-[var(--admin-border-default)]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-start gap-3 min-w-0">
-            <Target className="h-5 w-5 mt-0.5 shrink-0 text-[#065292]" />
+            <Target className="h-5 w-5 mt-0.5 shrink-0 text-[#2E9098]" />
             <div className="min-w-0">
               <h2 className="text-sm font-semibold text-[var(--admin-font-primary)]">
                 Where do you want to graduate to?
@@ -108,7 +108,7 @@ export function GraduationTargetCard({
           <button
             type="button"
             onClick={onChooseGoal}
-            className="shrink-0 px-4 py-2 rounded-md text-xs font-semibold bg-[#065292] text-white hover:opacity-90"
+            className="shrink-0 px-4 py-2 rounded-md text-xs font-semibold bg-[#102B47] text-white hover:opacity-90"
           >
             Choose your goal
           </button>
@@ -123,7 +123,7 @@ export function GraduationTargetCard({
     <section className="rounded-xl p-5 bg-[var(--admin-bg-panel)] border border-[var(--admin-border-default)]">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-start gap-3 min-w-0">
-          <GraduationCap className="h-5 w-5 mt-0.5 shrink-0 text-[#065292]" />
+          <GraduationCap className="h-5 w-5 mt-0.5 shrink-0 text-[#2E9098]" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-sm font-semibold text-[var(--admin-font-primary)]">
@@ -157,7 +157,7 @@ export function GraduationTargetCard({
               type="button"
               onClick={onGenerate}
               disabled={isGenerating}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-bold bg-[#FFD600] text-[#111111] hover:opacity-90 disabled:opacity-60"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-bold bg-[#FFD23F] text-[#102B47] hover:opacity-90 disabled:opacity-60"
             >
               {isGenerating ? (
                 <LoaderCircle className="h-3.5 w-3.5 animate-spin" />

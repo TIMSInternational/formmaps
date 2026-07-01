@@ -135,8 +135,8 @@ export default function AnalyticsPage() {
         {[
           { label: t("analytics.metrics.atRisk"), value: atRisk, icon: ShieldAlert, color: "#ef4444", sub: atRisk > 0 ? t("analytics.metrics.gpaBelow") : t("analytics.metrics.noAtRisk") },
           { label: t("analytics.metrics.counselorCoverage"), value: `${Math.round(counselorCoverage)}%`, icon: UserCheck, color: counselorCoverage >= 80 ? "#10b981" : "#f59e0b", sub: counselorCoverage >= 80 ? t("analytics.metrics.goodCoverage") : t("analytics.metrics.assignMore") },
-          { label: t("analytics.metrics.fullyAssessed"), value: `${totalStudents > 0 ? Math.round((fullyComplete / totalStudents) * 100) : 0}%`, icon: Target, color: "#065292", sub: t("analytics.metrics.studentsOf", { done: fullyComplete, total: totalStudents }) },
-          { label: t("analytics.metrics.avgGpa"), value: avgGpa, icon: GraduationCap, color: "#065292", sub: t("analytics.metrics.weightedAvg") },
+          { label: t("analytics.metrics.fullyAssessed"), value: `${totalStudents > 0 ? Math.round((fullyComplete / totalStudents) * 100) : 0}%`, icon: Target, color: "#2E9098", sub: t("analytics.metrics.studentsOf", { done: fullyComplete, total: totalStudents }) },
+          { label: t("analytics.metrics.avgGpa"), value: avgGpa, icon: GraduationCap, color: "#2E9098", sub: t("analytics.metrics.weightedAvg") },
         ].map((stat) => (
           <div key={stat.label} style={{
             borderRadius: 8, border: "1px solid var(--admin-border-default)",
@@ -169,7 +169,7 @@ export default function AnalyticsPage() {
           background: "var(--admin-bg-card)", overflow: "hidden",
         }}>
           <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 8 }}>
-            <BarChart3 style={{ width: 14, height: 14, color: "#065292" }} />
+            <BarChart3 style={{ width: 14, height: 14, color: "#2E9098" }} />
             <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("analytics.completionByGrade")}</span>
           </div>
           <div style={{ padding: 16 }}>
@@ -187,7 +187,7 @@ export default function AnalyticsPage() {
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                         {[
                           { label: "PCA", done: data.pcaDone, color: "#8b5cf6" },
-                          { label: "MIL/LIA", done: data.milDone, color: "#065292" },
+                          { label: "MIL/LIA", done: data.milDone, color: "#2E9098" },
                           { label: "360°", done: data.evalDone, color: "#14b8a6" },
                         ].map((a) => {
                           const pct = data.total > 0 ? Math.round((a.done / data.total) * 100) : 0;
@@ -228,7 +228,7 @@ export default function AnalyticsPage() {
           <div className="space-y-3">
             {[
               { label: t("analytics.pipeline.pcaComplete"), done: pcaFullDone, total: totalStudents, color: "#8b5cf6" },
-              { label: t("analytics.pipeline.milComplete"), done: milDone, total: totalStudents, color: "#065292" },
+              { label: t("analytics.pipeline.milComplete"), done: milDone, total: totalStudents, color: "#2E9098" },
               { label: t("analytics.pipeline.eval360Complete"), done: evalDone, total: totalStudents, color: "#14b8a6" },
               { label: t("analytics.pipeline.fullyAssessed"), done: fullyComplete, total: totalStudents, color: "#10b981" },
             ].map((item) => {
@@ -256,7 +256,7 @@ export default function AnalyticsPage() {
           {/* Cognitive Strengths */}
           <div style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
             <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 8 }}>
-              <Brain style={{ width: 14, height: 14, color: "#065292" }} />
+              <Brain style={{ width: 14, height: 14, color: "#2E9098" }} />
               <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("analytics.cognitiveProfile")}</span>
             </div>
             <div style={{ padding: 16 }} className="space-y-2">
@@ -270,7 +270,7 @@ export default function AnalyticsPage() {
                       {key.replace(/([A-Z])/g, " $1").trim()}
                     </div>
                     <div style={{ flex: 1, height: 6, borderRadius: 3, background: "var(--admin-bg-hover)", overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${v}%`, borderRadius: 3, background: isWeak ? "#ef4444" : isStrong ? "#10b981" : "#065292" }} />
+                      <div style={{ height: "100%", width: `${v}%`, borderRadius: 3, background: isWeak ? "#ef4444" : isStrong ? "#10b981" : "#2E9098" }} />
                     </div>
                     <span style={{ fontSize: 12, fontWeight: 700, color: isWeak ? "#ef4444" : isStrong ? "#10b981" : "var(--admin-font-primary)", width: 35, textAlign: "right" }}>
                       {v.toFixed(0)}
@@ -409,7 +409,7 @@ export default function AnalyticsPage() {
                     </span>
                   </td>
                   <td style={{ padding: "10px 14px" }}>
-                    <span style={{ fontWeight: 600, color: "var(--admin-accent-blue, #065292)" }}>{student.name}</span>
+                    <span style={{ fontWeight: 600, color: "var(--admin-accent-blue, #2E9098)" }}>{student.name}</span>
                   </td>
                   <td style={{ padding: "10px 14px", color: "var(--admin-font-tertiary)" }}>
                     {student.gradeLevel ? t("analytics.topPerformers.gradeLabel", { grade: student.gradeLevel }) : "\u2014"}

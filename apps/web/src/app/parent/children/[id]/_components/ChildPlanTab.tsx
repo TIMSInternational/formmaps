@@ -52,7 +52,7 @@ export function ChildPlanTab({ studentId }: ChildPlanTabProps) {
         <>
           {/* Goal */}
           <div className="dash-card p-4 flex items-center gap-3">
-            <Target className="h-4 w-4 text-[#065292] shrink-0" />
+            <Target className="h-4 w-4 text-[#2E9098] shrink-0" />
             {data?.target ? (
               <p className="text-sm text-foreground">
                 <span className="font-semibold">{t("plan.goal")}:</span>{" "}
@@ -68,7 +68,7 @@ export function ChildPlanTab({ studentId }: ChildPlanTabProps) {
           {/* Current courses */}
           <div className="dash-card p-4">
             <div className="flex items-center gap-2 mb-2">
-              <BookOpen className="h-4 w-4 text-[#065292]" />
+              <BookOpen className="h-4 w-4 text-[#2E9098]" />
               <h3 className="text-sm font-semibold text-foreground">
                 {t("plan.thisYear")}
               </h3>
@@ -92,7 +92,7 @@ export function ChildPlanTab({ studentId }: ChildPlanTabProps) {
           {/* Approved multi-year plan */}
           <div className="dash-card p-4">
             <div className="flex items-center gap-2 mb-3">
-              <GraduationCap className="h-4 w-4 text-[#065292]" />
+              <GraduationCap className="h-4 w-4 text-[#2E9098]" />
               <h3 className="text-sm font-semibold text-foreground">
                 {t("plan.approvedPlan")}
               </h3>

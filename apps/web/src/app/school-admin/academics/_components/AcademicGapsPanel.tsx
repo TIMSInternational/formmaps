@@ -69,7 +69,7 @@ export function AcademicGapsPanel() {
           { label: "On Track", value: summary?.onTrack ?? 0, icon: CheckCircle2, color: "#10b981" },
           { label: "At Risk", value: summary?.atRisk ?? 0, icon: AlertTriangle, color: "#f59e0b" },
           { label: "Off Track", value: summary?.offTrack ?? 0, icon: XCircle, color: "#ef4444" },
-          { label: "Avg Progress", value: `${avgProgress}%`, icon: Target, color: "#065292" },
+          { label: "Avg Progress", value: `${avgProgress}%`, icon: Target, color: "#2E9098" },
         ].map((stat) => (
           <div key={stat.label} style={{ padding: 16, borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
             <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>

@@ -26,9 +26,9 @@ interface InviteRow {
 }
 
 const roleConfig: Record<InviteRole, { label: string; color: string; icon: any; description: string }> = {
-  student: { label: "Students", color: "#065292", icon: GraduationCap, description: "Invite students individually or use CSV bulk onboard for larger groups." },
+  student: { label: "Students", color: "#2E9098", icon: GraduationCap, description: "Invite students individually or use CSV bulk onboard for larger groups." },
   counselor: { label: "Counselors", color: "#10b981", icon: UserCheck, description: "Invite counselors who will be assigned student caseloads." },
-  teacher: { label: "Teachers", color: "#065292", icon: BookOpen, description: "Invite teachers to complete 360° evaluations and respond to recommendation requests." },
+  teacher: { label: "Teachers", color: "#2E9098", icon: BookOpen, description: "Invite teachers to complete 360° evaluations and respond to recommendation requests." },
   coach: { label: "Coaches", color: "#8b5cf6", icon: Users, description: "Invite career coaches to guide students through their career journey." },
   staff: { label: "Staff", color: "#f59e0b", icon: Shield, description: "Invite administrative staff members to help manage your school." },
 };

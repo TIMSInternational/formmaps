@@ -17,8 +17,8 @@ interface BatchPrediction {
 
 const PREDICTION_COLORS: Record<string, { bg: string; text: string }> = {
   safety: { bg: "rgba(16,185,129,0.1)", text: "#10b981" },
-  likely: { bg: "rgba(59,130,246,0.1)", text: "#065292" },
-  match: { bg: "rgba(99,102,241,0.1)", text: "#065292" },
+  likely: { bg: "rgba(59,130,246,0.1)", text: "#2E9098" },
+  match: { bg: "rgba(99,102,241,0.1)", text: "#2E9098" },
   competitive: { bg: "rgba(245,158,11,0.1)", text: "#f59e0b" },
   reach: { bg: "rgba(249,115,22,0.1)", text: "#f97316" },
   high_reach: { bg: "rgba(239,68,68,0.1)", text: "#ef4444" },

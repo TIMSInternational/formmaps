@@ -75,7 +75,7 @@ describe("buildLIAReportData", () => {
         labelEn: "Exceeds",
         color: "#059669",
         perDomain: [
-          { type: "PatternRecognition", percent: 85, weight: 20, band: "Excepcional", labelEn: "Exceptional", color: "#065292" },
+          { type: "PatternRecognition", percent: 85, weight: 20, band: "Excepcional", labelEn: "Exceptional", color: "#2E9098" },
           { type: "VerbalReasoning", percent: 61, weight: 40, band: "Excede", labelEn: "Exceeds", color: "#059669" },
         ],
       },

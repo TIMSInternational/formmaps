@@ -13,8 +13,8 @@ const STATUS_META: Record<
 > = {
   requested: {
     label: "Requested",
-    color: "#065292",
-    bg: "#06529210",
+    color: "#2E9098",
+    bg: "#2E909810",
     icon: Clock,
   },
   accepted: {

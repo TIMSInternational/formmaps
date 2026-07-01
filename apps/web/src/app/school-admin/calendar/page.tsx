@@ -19,7 +19,7 @@ function formatShort(d: string) { return new Date(d).toLocaleDateString("en-US",
 function getDaysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate(); }
 function getFirstDayOfMonth(y: number, m: number) { return new Date(y, m, 1).getDay(); }
 
-const TYPE_COLORS: Record<string, string> = { holiday: "#ef4444", break: "#f59e0b", professional_development: "#065292", exam: "#8b5cf6", event: "#10b981" };
+const TYPE_COLORS: Record<string, string> = { holiday: "#ef4444", break: "#f59e0b", professional_development: "#2E9098", exam: "#8b5cf6", event: "#10b981" };
 const TYPE_KEYS: Record<string, string> = { holiday: "holiday", break: "break", professional_development: "professionalDevelopment", exam: "exam", event: "event" };
 const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
@@ -144,7 +144,7 @@ export default function AcademicCalendarPage() {
   interface SpanEvent { id: string; label: string; color: string; startDate: string; endDate: string; }
   const spanEvents: SpanEvent[] = [];
   for (const t of allTerms) {
-    spanEvents.push({ id: `term-${t.id}`, label: t.name, color: "#065292", startDate: new Date(t.startDate).toISOString().slice(0, 10), endDate: new Date(t.endDate).toISOString().slice(0, 10) });
+    spanEvents.push({ id: `term-${t.id}`, label: t.name, color: "#2E9098", startDate: new Date(t.startDate).toISOString().slice(0, 10), endDate: new Date(t.endDate).toISOString().slice(0, 10) });
   }
   for (const a of assessments) {
     spanEvents.push({ id: `ap-${a.id}`, label: a.name || a.assessmentTypes?.join(", ") || t("calendar.assessmentsSection.fallback"), color: "#8b5cf6", startDate: new Date(a.startDate).toISOString().slice(0, 10), endDate: new Date(a.endDate).toISOString().slice(0, 10) });
@@ -211,7 +211,7 @@ export default function AcademicCalendarPage() {
 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
         {[
-          { label: t("calendar.stats.academicYear"), value: currentYear?.name || "—", icon: Star, color: "#065292" },
+          { label: t("calendar.stats.academicYear"), value: currentYear?.name || "—", icon: Star, color: "#2E9098" },
           { label: t("calendar.stats.terms"), value: allTerms.length.toString(), icon: BookOpen, color: "#10b981" },
           { label: t("calendar.stats.holidays"), value: holidays.length.toString(), icon: PartyPopper, color: "#ef4444" },
           { label: t("calendar.stats.assessmentWindows"), value: assessments.length.toString(), icon: Clock, color: "#8b5cf6" },
@@ -255,7 +255,7 @@ export default function AcademicCalendarPage() {
                   <div key={day}
                     onClick={() => { if (!isQuickAdd && events.length === 0) { setQuickAddDate(dateStr); setQuickAddName(""); setQuickAddType("holiday"); } }}
                     style={{ minHeight: 80, padding: "4px 6px", borderRight: "1px solid var(--admin-border-light)", borderBottom: "1px solid var(--admin-border-light)", background: isQuickAdd ? "rgba(99,102,241,0.10)" : isToday ? "rgba(99,102,241,0.06)" : "transparent", cursor: events.length === 0 && !isQuickAdd ? "pointer" : "default", position: "relative" }}>
-                    <div style={{ fontSize: 12, fontWeight: isToday ? 700 : 400, color: isToday ? "#065292" : "var(--admin-font-secondary)", marginBottom: 2 }}>{day}</div>
+                    <div style={{ fontSize: 12, fontWeight: isToday ? 700 : 400, color: isToday ? "#2E9098" : "var(--admin-font-secondary)", marginBottom: 2 }}>{day}</div>
                     {isQuickAdd ? (
                       <div style={{ display: "flex", flexDirection: "column", gap: 2 }} onClick={e => e.stopPropagation()}>
                         <input value={quickAddName} onChange={e => setQuickAddName(e.target.value)} placeholder={t("calendar.namePlaceholder")} style={{ fontSize: 10, padding: "2px 4px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", width: "100%", outline: "none" }} />
@@ -263,7 +263,7 @@ export default function AcademicCalendarPage() {
                           {["holiday","break","professional_development","exam","event"].map(tp => <option key={tp} value={tp}>{t(`calendar.types.${TYPE_KEYS[tp]}`)}</option>)}
                         </select>
                         <div style={{ display: "flex", gap: 2 }}>
-                          <button onClick={() => handleAddHoliday(quickAddName, dateStr, quickAddType)} disabled={!quickAddName || savingHoliday} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, border: "none", background: "#065292", color: "#fff", cursor: "pointer", opacity: !quickAddName ? 0.5 : 1 }}>{t("calendar.add")}</button>
+                          <button onClick={() => handleAddHoliday(quickAddName, dateStr, quickAddType)} disabled={!quickAddName || savingHoliday} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, border: "none", background: "#102B47", color: "#fff", cursor: "pointer", opacity: !quickAddName ? 0.5 : 1 }}>{t("calendar.add")}</button>
                           <button onClick={() => setQuickAddDate(null)} style={{ fontSize: 9, padding: "1px 4px", borderRadius: 3, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", cursor: "pointer" }}>
                             <X style={{ width: 8, height: 8 }} />
                           </button>
@@ -321,7 +321,7 @@ export default function AcademicCalendarPage() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
             <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 6 }}>
-              <BookOpen style={{ width: 13, height: 13, color: "#065292" }} /><span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("calendar.terms.title")}</span>
+              <BookOpen style={{ width: 13, height: 13, color: "#2E9098" }} /><span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("calendar.terms.title")}</span>
             </div>
             <div style={{ padding: 8 }}>
               {allTerms.length === 0 ? <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("calendar.terms.empty")}</div> : allTerms.map(term => (

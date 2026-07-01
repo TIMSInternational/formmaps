@@ -18,14 +18,14 @@ export function SupplementalRail({ enabled }: { enabled: boolean }) {
     >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
-          <Globe className="h-4 w-4 text-[#065292]" />
+          <Globe className="h-4 w-4 text-[#2E9098]" />
           <h2 className="text-sm font-semibold text-[var(--admin-font-primary)]">
             Go beyond your school
           </h2>
         </div>
         <Link
           href="/dashboard/learning"
-          className="text-xs font-medium text-[#065292] hover:underline"
+          className="text-xs font-medium text-[#2E9098] hover:underline"
         >
           Browse the Learning Hub →
         </Link>
@@ -50,7 +50,7 @@ export function SupplementalRail({ enabled }: { enabled: boolean }) {
               )}
             </p>
             {c.fillsGap && (
-              <span className="inline-block mt-1.5 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#FFD600] text-[#111111]">
+              <span className="inline-block mt-1.5 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#FFD23F] text-[#102B47]">
                 Fills: {c.fillsGap} gap
               </span>
             )}

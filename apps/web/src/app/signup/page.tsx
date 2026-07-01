@@ -22,7 +22,7 @@ import { PasswordInput } from "./_components/PasswordInput";
 import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
 
 const inputStyle = { background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" } as const;
-const focusOn = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = "#065292"; };
+const focusOn = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = "#2E9098"; };
 const focusOff = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = "#E0E0E0"; };
 
 export default function SignupPage() {
@@ -136,15 +136,15 @@ export default function SignupPage() {
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-icon.svg" alt="FormMaps" className="w-10 h-10" />
+            <img src="/fm-icon.png" alt="FormMaps" className="w-10 h-10" />
             <div>
-              <span className="text-xl font-bold" style={{ color: "#111111" }}>FORM</span>
-              <span className="text-xl font-bold" style={{ color: "#065292" }}>MAPS</span>
+              <span className="text-xl font-bold" style={{ color: "#102B47" }}>FORM</span>
+              <span className="text-xl font-bold" style={{ color: "#2E9098" }}>MAPS</span>
             </div>
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold mb-2" style={{ color: "#111111" }}>
+            <h1 className="text-2xl font-semibold mb-2" style={{ color: "#102B47" }}>
               {t("auth.signup.title")}
             </h1>
             <p className="text-sm" style={{ color: "#666" }}>{t("auth.signup.subtitle")}</p>
@@ -233,12 +233,12 @@ export default function SignupPage() {
               <div className="flex flex-col gap-3">
                 <div className="flex items-start gap-2">
                   <input id="terms" type="checkbox" {...form.register("acceptTerms")}
-                    className="w-3.5 h-3.5 mt-0.5" style={{ accentColor: "#065292" }} />
+                    className="w-3.5 h-3.5 mt-0.5" style={{ accentColor: "#102B47" }} />
                   <label htmlFor="terms" className="text-xs leading-5" style={{ color: "#666" }}>
                     {t("auth.signup.agreePrefix")}{" "}
-                    <Link href="/terms" className="font-medium no-underline" style={{ color: "#065292" }}>{t("auth.signup.termsOfService")}</Link>{" "}
+                    <Link href="/terms" className="font-medium no-underline" style={{ color: "#2E9098" }}>{t("auth.signup.termsOfService")}</Link>{" "}
                     {t("auth.signup.and")}{" "}
-                    <Link href="/privacy" className="font-medium no-underline" style={{ color: "#065292" }}>{t("auth.signup.privacyPolicy")}</Link>
+                    <Link href="/privacy" className="font-medium no-underline" style={{ color: "#2E9098" }}>{t("auth.signup.privacyPolicy")}</Link>
                   </label>
                 </div>
                 {errors.acceptTerms && (
@@ -246,7 +246,7 @@ export default function SignupPage() {
                 )}
                 <div className="flex items-start gap-2">
                   <input id="marketing" type="checkbox" {...form.register("acceptMarketing")}
-                    className="w-3.5 h-3.5 mt-0.5" style={{ accentColor: "#065292" }} />
+                    className="w-3.5 h-3.5 mt-0.5" style={{ accentColor: "#102B47" }} />
                   <label htmlFor="marketing" className="text-xs leading-5" style={{ color: "#666" }}>
                     {t("auth.signup.marketingOptIn")}
                   </label>
@@ -257,7 +257,7 @@ export default function SignupPage() {
                 type="submit"
                 disabled={isLoading}
                 className="h-11 rounded-lg border-none text-sm font-semibold cursor-pointer transition-all"
-                style={{ background: "#065292", color: "#FFFFFF", opacity: isLoading ? 0.6 : 1 }}
+                style={{ background: "#102B47", color: "#FFFFFF", opacity: isLoading ? 0.6 : 1 }}
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -273,7 +273,7 @@ export default function SignupPage() {
 
           <p className="mt-8 text-center text-sm" style={{ color: "#666" }}>
             {t("auth.signup.haveAccountText")}{" "}
-            <Link href="/login" className="font-medium no-underline" style={{ color: "#065292" }}>
+            <Link href="/login" className="font-medium no-underline" style={{ color: "#2E9098" }}>
               {t("auth.signup.signIn")}
             </Link>
           </p>

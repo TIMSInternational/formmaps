@@ -117,7 +117,7 @@ export function ActivityForm({ form, setForm, editingId, isMutating, onSubmit, o
           <button onClick={onSubmit} disabled={isMutating}
             style={{
               height: 36, borderRadius: 6, padding: "0 16px", fontSize: 13, fontWeight: 600,
-              background: "#065292", color: "#fff", border: "none", cursor: "pointer",
+              background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
               display: "flex", alignItems: "center", gap: 6,
               opacity: isMutating ? 0.6 : 1,
             }}>

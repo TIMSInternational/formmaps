@@ -59,7 +59,7 @@ export function ResumePreviewWithToggle({ hasOriginal, loadOriginalUrl, edited }
         setTab(key);
       }}
       className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-        tab === key ? "bg-[#065292] text-white" : "bg-secondary text-foreground"
+        tab === key ? "bg-[#102B47] text-white" : "bg-secondary text-foreground"
       }`}
     >
       {label}

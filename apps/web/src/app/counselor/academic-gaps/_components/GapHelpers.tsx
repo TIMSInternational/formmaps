@@ -14,7 +14,7 @@ export function GapSkeleton({ width, height, radius = 10 }: { width?: string | n
   );
 }
 
-export function MiniBar({ earned, required, color = "#065292", height = 4 }: {
+export function MiniBar({ earned, required, color = "#2E9098", height = 4 }: {
   earned: number; required: number; color?: string; height?: number;
 }) {
   const pct = required > 0 ? Math.min(100, (earned / required) * 100) : 0;
@@ -91,7 +91,7 @@ export function GapCategoryCard({ gap, recommendations, index }: {
                 onClick={() => setExpanded(!expanded)}
                 style={{
                   marginTop: 10, display: "flex", alignItems: "center", gap: 4,
-                  fontSize: 11, fontWeight: 600, color: "#065292",
+                  fontSize: 11, fontWeight: 600, color: "#2E9098",
                   background: "none", border: "none", cursor: "pointer", padding: 0,
                 }}
               >
@@ -115,7 +115,7 @@ export function GapCategoryCard({ gap, recommendations, index }: {
                           background: "var(--admin-bg-hover, rgba(0,0,0,0.03))",
                           border: "1px solid var(--admin-border-default, rgba(0,0,0,0.06))",
                         }}>
-                          <BookOpen style={{ width: 13, height: 13, color: "#065292", flexShrink: 0 }} />
+                          <BookOpen style={{ width: 13, height: 13, color: "#2E9098", flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary, #111)" }}>
                               {r.courseName}
@@ -125,7 +125,7 @@ export function GapCategoryCard({ gap, recommendations, index }: {
                             </span>
                           </div>
                           <span style={{
-                            fontSize: 10, fontWeight: 700, color: "#065292",
+                            fontSize: 10, fontWeight: 700, color: "#2E9098",
                             background: "rgba(99,102,241,0.1)", padding: "2px 6px", borderRadius: 4,
                             flexShrink: 0,
                           }}>

@@ -87,7 +87,7 @@ export function GradeImportPanel({ onImported }: { onImported?: () => void }) {
           <button onClick={() => fileRef.current?.click()} style={{
             height: 36, borderRadius: 6, padding: "0 16px", fontSize: 12, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 6,
-            background: "#065292", color: "#fff", border: "none", cursor: "pointer",
+            background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
           }}>
             <Upload style={{ width: 14, height: 14 }} /> Choose CSV
           </button>
@@ -109,7 +109,7 @@ export function GradeImportPanel({ onImported }: { onImported?: () => void }) {
         <div style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
           <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <FileText style={{ width: 14, height: 14, color: "#065292" }} />
+              <FileText style={{ width: 14, height: 14, color: "#2E9098" }} />
               <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Preview: {preview.length} records</span>
               <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>from {fileName}</span>
             </div>
@@ -143,7 +143,7 @@ export function GradeImportPanel({ onImported }: { onImported?: () => void }) {
                   <TableRow key={i} style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
                     <TableCell style={{ fontSize: 12, color: "var(--admin-font-light)" }}>{r.email || r.studentId}</TableCell>
                     <TableCell style={{ fontSize: 12, fontFamily: "monospace", color: "var(--admin-font-primary)" }}>{r.courseCode}</TableCell>
-                    <TableCell><Badge style={{ fontSize: 11, background: r.grade?.startsWith("A") ? "rgba(16,185,129,0.1)" : r.grade?.startsWith("B") ? "rgba(59,130,246,0.1)" : r.grade?.startsWith("F") ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)", color: r.grade?.startsWith("A") ? "#10b981" : r.grade?.startsWith("B") ? "#065292" : r.grade?.startsWith("F") ? "#ef4444" : "#f59e0b", border: "none" }}>{r.grade}</Badge></TableCell>
+                    <TableCell><Badge style={{ fontSize: 11, background: r.grade?.startsWith("A") ? "rgba(16,185,129,0.1)" : r.grade?.startsWith("B") ? "rgba(59,130,246,0.1)" : r.grade?.startsWith("F") ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)", color: r.grade?.startsWith("A") ? "#10b981" : r.grade?.startsWith("B") ? "#2E9098" : r.grade?.startsWith("F") ? "#ef4444" : "#f59e0b", border: "none" }}>{r.grade}</Badge></TableCell>
                     <TableCell style={{ fontSize: 12, color: "var(--admin-font-primary)" }}>{r.credits || "—"}</TableCell>
                     <TableCell style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{r.semester || "—"}</TableCell>
                   </TableRow>

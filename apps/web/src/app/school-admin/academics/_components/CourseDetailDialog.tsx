@@ -163,7 +163,7 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
             }}>Cancel</button>
             <button onClick={handleSave} disabled={updateCourse.isPending} style={{
               height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600,
-              background: "#065292", color: "#fff", border: "none", cursor: "pointer",
+              background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
               display: "flex", alignItems: "center", gap: 6,
               opacity: updateCourse.isPending ? 0.6 : 1,
             }}>
@@ -183,11 +183,11 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
         <DialogTitle className="sr-only">{course.name}</DialogTitle>
 
         {/* Hero header — FormMaps brand */}
-        <div style={{ padding: "24px 28px 20px", background: "#065292", borderBottom: "1px solid var(--admin-border-default)" }}>
+        <div style={{ padding: "24px 28px 20px", background: "#102B47", borderBottom: "1px solid var(--admin-border-default)" }}>
           <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
             <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.15)", color: "#fff" }}>{course.code}</span>
             {course.frameworkType && <Badge style={{ fontSize: 10, background: "rgba(255,255,255,0.18)", color: "#fff", border: "none" }}>{course.frameworkType}</Badge>}
-            {course.isHonors && <Badge style={{ fontSize: 10, background: "#FFD600", color: "#111", border: "none" }}>Honors</Badge>}
+            {course.isHonors && <Badge style={{ fontSize: 10, background: "#FFD23F", color: "#111", border: "none" }}>Honors</Badge>}
             <Badge style={{ fontSize: 10, background: course.status === "active" ? "rgba(5,150,105,0.95)" : "rgba(255,255,255,0.18)", color: "#fff", border: "none" }}>{course.status || "active"}</Badge>
           </div>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1.3, margin: 0 }}>{course.name}</h2>
@@ -275,7 +275,7 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
                               </div>
                               <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                                 {p.isHonors && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>Honors</span>}
-                                {p.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "#065292" }}>{p.frameworkType}</span>}
+                                {p.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "#2E9098" }}>{p.frameworkType}</span>}
                                 {Number(p.credits) > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>{p.credits} cr</span>}
                               </div>
                             </div>
@@ -312,7 +312,7 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
           <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
             <button onClick={openEdit} style={{
               flex: 1, height: 40, borderRadius: 8, fontSize: 13, fontWeight: 600,
-              background: "var(--admin-accent-blue, #065292)", color: "#fff", border: "none", cursor: "pointer",
+              background: "var(--admin-accent-blue, #2E9098)", color: "#fff", border: "none", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
             }}>
               <Save style={{ width: 14, height: 14 }} /> Edit Course

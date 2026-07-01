@@ -18,12 +18,12 @@ interface Activity {
 }
 
 const CATEGORY_COLORS: Record<string, { color: string; bg: string }> = {
-  academic: { color: "#065292", bg: "rgba(59,130,246,0.1)" },
+  academic: { color: "#2E9098", bg: "rgba(59,130,246,0.1)" },
   athletic: { color: "#10b981", bg: "rgba(16,185,129,0.1)" },
   arts: { color: "#8b5cf6", bg: "rgba(139,92,246,0.1)" },
   community_service: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   work: { color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
-  leadership: { color: "#065292", bg: "rgba(99,102,241,0.1)" },
+  leadership: { color: "#2E9098", bg: "rgba(99,102,241,0.1)" },
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -102,7 +102,7 @@ export function ActivityCard({ activity: a, onEdit, onDelete }: ActivityCardProp
               border: "1px solid var(--admin-border-default)", background: "transparent",
               cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-            <Pencil style={{ width: 12, height: 12, color: "#065292" }} />
+            <Pencil style={{ width: 12, height: 12, color: "#2E9098" }} />
           </button>
           <button onClick={() => onDelete(a.id)} title="Delete"
             style={{

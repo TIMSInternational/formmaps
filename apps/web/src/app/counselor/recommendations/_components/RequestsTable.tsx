@@ -46,7 +46,7 @@ export function RequestsTable({
           background: "var(--admin-bg-hover)",
         }}
       >
-        <Users style={{ width: 14, height: 14, color: "#065292" }} />
+        <Users style={{ width: 14, height: 14, color: "#2E9098" }} />
         <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
           {t("recommendations.allRequests", "All Requests")}
         </span>
@@ -96,16 +96,16 @@ export function RequestsTable({
               return (
                 <TableRow
                   key={req.id}
-                  style={{ background: isMe ? "var(--admin-accent-blue, #065292)08" : undefined }}
+                  style={{ background: isMe ? "var(--admin-accent-blue, #2E9098)08" : undefined }}
                 >
                   <TableCell>
                     <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                       <div style={{
                         width: 26, height: 26, borderRadius: 6,
-                        background: "#06529215",
+                        background: "#102B4715",
                         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                       }}>
-                        <User style={{ width: 12, height: 12, color: "#065292" }} />
+                        <User style={{ width: 12, height: 12, color: "#2E9098" }} />
                       </div>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
@@ -124,7 +124,7 @@ export function RequestsTable({
                         <span style={{
                           marginLeft: 6, fontSize: 10, fontWeight: 600,
                           padding: "1px 5px", borderRadius: 3,
-                          background: "#06529215", color: "#065292",
+                          background: "#102B4715", color: "#2E9098",
                         }}>
                           {t("recommendations.you", "You")}
                         </span>

@@ -154,7 +154,7 @@ function EvaluatorCard({
         );
       } else if (apiEvaluator.isEmailSent) {
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#065292]/10 text-[#065292]">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#102B47]/10 text-[#2E9098]">
             Sent
           </span>
         );
@@ -284,7 +284,7 @@ function EvaluatorCard({
           <div className="flex items-center justify-between mt-2">
             <div className="flex items-center gap-2">
               {evaluator.relationship && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#065292]/10 text-[#065292]">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#102B47]/10 text-[#2E9098]">
                   {evaluator.relationship}
                 </span>
               )}

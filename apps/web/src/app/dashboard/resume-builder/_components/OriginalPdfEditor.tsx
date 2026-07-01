@@ -413,7 +413,7 @@ export function OriginalPdfEditor({
             type="button"
             onClick={handleDownload}
             disabled={downloading}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#065292] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#054473] disabled:opacity-60"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#102B47] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#0b1f33] disabled:opacity-60"
           >
             {downloading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />

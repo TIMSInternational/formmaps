@@ -45,13 +45,13 @@ export function SessionsList({
               const other = s.caller?.id === userId ? s.participant : s.caller;
               const isReady = new Date(s.startTime).getTime() - Date.now() < 10 * 60000;
               return (
-                <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 10, border: `1px solid ${isReady ? "#065292" : "var(--admin-border-default)"}`, background: "var(--admin-bg-card)", width: "100%" }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 20, background: "#065292", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
+                <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 10, border: `1px solid ${isReady ? "#2E9098" : "var(--admin-border-default)"}`, background: "var(--admin-bg-card)", width: "100%" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 20, background: "#102B47", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
                     {getInitials(other?.name || "?")}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{other?.name}</div>
-                    <div style={{ fontSize: 12, color: isReady ? "#065292" : "var(--admin-font-tertiary)", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
+                    <div style={{ fontSize: 12, color: isReady ? "#2E9098" : "var(--admin-font-tertiary)", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
                       <CalendarClock style={{ width: 12, height: 12 }} />
                       {formatScheduledTime(s.startTime)}
                     </div>

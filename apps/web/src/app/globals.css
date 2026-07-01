@@ -87,10 +87,10 @@
   --card-foreground: #0A0A0A;
   --popover: #FFFFFF;
   --popover-foreground: #0A0A0A;
-  --primary: #065292;
+  --primary: #102B47;
   --primary-foreground: #FFFFFF;
   --secondary: #F0F0F3;
-  --secondary-foreground: #111111;
+  --secondary-foreground: #102B47;
   --muted: #F0F0F3;
   --muted-foreground: #71717A;
   --accent: #F0F0F3;
@@ -98,23 +98,23 @@
   --destructive: #EF4444;
   --border: #D4D4D8;
   --input: #D4D4D8;
-  --ring: #065292;
-  --chart-1: #065292;
+  --ring: #2E9098;
+  --chart-1: #2E9098;
   --chart-2: #10B981;
-  --chart-3: #FFD600;
+  --chart-3: #FFD23F;
   --chart-4: #EF4444;
-  --chart-5: #111111;
+  --chart-5: #102B47;
   --sidebar: #FAFAFA;
-  --sidebar-foreground: #111111;
-  --sidebar-primary: #065292;
+  --sidebar-foreground: #102B47;
+  --sidebar-primary: #102B47;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #F0F0F3;
-  --sidebar-accent-foreground: #111111;
+  --sidebar-accent-foreground: #102B47;
   --sidebar-border: #D4D4D8;
-  --sidebar-ring: #065292;
-  --brand-blue: #065292;
-  --brand-yellow: #FFD600;
-  --brand-black: #111111;
+  --sidebar-ring: #2E9098;
+  --brand-blue: #2E9098;
+  --brand-yellow: #FFD23F;
+  --brand-black: #102B47;
   --brand-white: #FFFFFF;
 }
 
@@ -137,12 +137,12 @@
 
   /* Enhanced focus styles for keyboard accessibility */
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-[#065292];
+    @apply outline-2 outline-offset-2 outline-[#2E9098];
   }
 
   /* Skip to main link styles */
   [href="#main-content"]:focus {
-    @apply not-sr-only fixed top-4 left-4 z-[9999] px-4 py-2 bg-[#065292] text-white rounded-md;
+    @apply not-sr-only fixed top-4 left-4 z-[9999] px-4 py-2 bg-[#102B47] text-white rounded-md;
   }
 
   /* Reduced motion preference */
@@ -219,7 +219,7 @@
   background: var(--admin-bg-hover, rgba(255,255,255,0.06));
 }
 [cmdk-input] {
-  caret-color: var(--admin-accent-blue, #065292);
+  caret-color: var(--admin-accent-blue, #2E9098);
 }
 [cmdk-input]::placeholder {
   color: var(--admin-font-light, #555);
@@ -268,7 +268,7 @@
    No outline — it should read as the real document, not a patch. */
 .pdf-edit-layer span.pdf-edited,
 .pdf-edit-layer span:focus {
-  color: var(--pdf-fg, #111111);
+  color: var(--pdf-fg, #102B47);
   background: var(--pdf-bg, #ffffff);
 }
 /* Sit the editable text layer above the (pointer-events-none) page canvas. */

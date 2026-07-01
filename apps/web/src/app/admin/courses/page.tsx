@@ -185,7 +185,7 @@ export default function CoursesPage() {
 
             {/* Sample from Catalog */}
             <div style={{ ...s, padding: 20 }}>
-                <h3 style={hdr}><BookOpen style={{ width: 14, height: 14, color: "#065292" }} /> {t("courses.sample.sectionTitle")}</h3>
+                <h3 style={hdr}><BookOpen style={{ width: 14, height: 14, color: "#2E9098" }} /> {t("courses.sample.sectionTitle")}</h3>
                 <p className="text-[11px] mb-3" style={{ color: "var(--admin-font-tertiary)" }}>
                     {t("courses.sample.sectionDesc", { count: allCourses.length })}
                 </p>
