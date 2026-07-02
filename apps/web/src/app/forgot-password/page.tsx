@@ -6,10 +6,26 @@ import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 type Step = "email" | "reset" | "success";
+
+// Shared light input styling (matches login/signup).
+const inputClass =
+  "h-11 px-3 text-sm rounded-lg border outline-none transition-colors w-full";
+const inputStyle: React.CSSProperties = {
+  background: "#F8F9FA",
+  borderColor: "#E0E0E0",
+  color: "#111",
+};
+const onFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+  e.currentTarget.style.borderColor = "#2E9098";
+};
+const onBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  e.currentTarget.style.borderColor = "#E0E0E0";
+};
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation();
@@ -79,363 +95,190 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    height: 40,
-    padding: "0 12px",
-    fontSize: 13,
-    background: "#1e1e1e",
-    border: "1px solid #2a2a2a",
-    borderRadius: 6,
-    color: "#ebebeb",
-    outline: "none",
-    width: "100%",
-  };
+  const submitButton = (label: string, busyLabel: string) => (
+    <button
+      type="submit"
+      disabled={isLoading}
+      className="h-11 rounded-lg border-none text-sm font-semibold cursor-pointer transition-all w-full"
+      style={{ background: "#102B47", color: "#FFFFFF", opacity: isLoading ? 0.6 : 1 }}
+    >
+      {isLoading ? (
+        <span className="flex items-center justify-center gap-2">
+          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          {busyLabel}
+        </span>
+      ) : (
+        label
+      )}
+    </button>
+  );
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#1d1d1d",
-        fontFamily: "Inter, -apple-system, system-ui, sans-serif",
-        padding: "48px 24px",
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        style={{ width: "100%", maxWidth: 400 }}
-      >
-        {/* Logo */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            marginBottom: 40,
-          }}
+    <div className="min-h-dvh flex" style={{ fontFamily: "var(--font-poppins), Poppins, sans-serif" }}>
+      {/* Left Panel — Branding (shared with login/signup) */}
+      <AuthBrandingPanel />
+
+      {/* Right Panel — Form */}
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12" style={{ background: "#FFFFFF" }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-sm"
         >
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: "#102B47",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex items-center justify-center gap-2 mb-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/fm-icon.png"
-              alt="FormMaps"
-              style={{ height: 20, width: "auto", filter: "brightness(0) invert(1)" }}
-            />
+            <img src="/fm-icon.png" alt="FormMaps" className="h-10 w-auto" />
+            <div>
+              <span className="text-xl font-bold" style={{ color: "#102B47" }}>FORM</span>
+              <span className="text-xl font-bold" style={{ color: "#2E9098" }}>MAPS</span>
+            </div>
           </div>
-          <span style={{ fontSize: 20, fontWeight: 700, color: "#ebebeb" }}>
-            FormMaps
-          </span>
-        </div>
 
-        {step === "email" && !sent && (
-          <>
-            <div style={{ textAlign: "center", marginBottom: 32 }}>
-              <h1
-                style={{
-                  fontSize: 24,
-                  fontWeight: 600,
-                  color: "#ebebeb",
-                  marginBottom: 8,
-                }}
-              >
-                {t("auth.forgotPassword.resetTitle")}
+          {step === "email" && !sent && (
+            <>
+              <div className="text-center mb-8">
+                <h1 className="text-2xl font-semibold mb-2" style={{ color: "#102B47" }}>
+                  {t("auth.forgotPassword.resetTitle")}
+                </h1>
+                <p className="text-sm" style={{ color: "#666" }}>{t("auth.forgotPassword.resetSubtitle")}</p>
+              </div>
+
+              <form onSubmit={handleSendLink} className="flex flex-col gap-5">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium" style={{ color: "#333" }}>
+                    {t("auth.forgotPassword.emailLabel")}
+                  </label>
+                  <input
+                    type="email"
+                    placeholder={t("auth.forgotPassword.emailPlaceholder")}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className={inputClass}
+                    style={inputStyle}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                  />
+                </div>
+
+                {error && <p className="text-xs text-red-500">{error}</p>}
+
+                {submitButton(t("auth.forgotPassword.sendLink"), t("auth.forgotPassword.sending"))}
+              </form>
+            </>
+          )}
+
+          {step === "email" && sent && (
+            <div className="text-center">
+              <div className="flex justify-center mb-4">
+                <CheckCircle2 className="w-12 h-12" style={{ color: "#059669" }} />
+              </div>
+              <h1 className="text-2xl font-semibold mb-2" style={{ color: "#102B47" }}>
+                {t("auth.forgotPassword.checkEmailTitle")}
               </h1>
-              <p style={{ fontSize: 13, color: "#818181" }}>
-                {t("auth.forgotPassword.resetSubtitle")}
+              <p className="text-sm mb-8" style={{ color: "#666" }}>
+                {t("auth.forgotPassword.checkEmailBefore")}{" "}
+                <span style={{ color: "#102B47", fontWeight: 500 }}>{email}</span>
+                {t("auth.forgotPassword.checkEmailAfter")}
               </p>
-            </div>
-
-            <form
-              onSubmit={handleSendLink}
-              style={{ display: "flex", flexDirection: "column", gap: 20 }}
-            >
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 6 }}
+              <button
+                onClick={() => { setSent(false); setError(null); }}
+                className="text-sm cursor-pointer bg-transparent border-none"
+                style={{ color: "#2E9098", fontWeight: 500 }}
               >
-                <label
-                  style={{ fontSize: 12, fontWeight: 500, color: "#b3b3b3" }}
-                >
-                  {t("auth.forgotPassword.emailLabel")}
-                </label>
-                <input
-                  type="email"
-                  placeholder={t("auth.forgotPassword.emailPlaceholder")}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  style={inputStyle}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#555";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#2a2a2a";
-                  }}
-                />
+                {t("auth.forgotPassword.tryAgainLink")}
+              </button>
+            </div>
+          )}
+
+          {step === "reset" && (
+            <>
+              <div className="text-center mb-8">
+                <h1 className="text-2xl font-semibold mb-2" style={{ color: "#102B47" }}>
+                  {t("auth.forgotPassword.setNewTitle")}
+                </h1>
+                <p className="text-sm" style={{ color: "#666" }}>{t("auth.forgotPassword.setNewSubtitle")}</p>
               </div>
 
-              {error && (
-                <p style={{ fontSize: 12, color: "#ef4444" }}>{error}</p>
-              )}
+              <form onSubmit={handleResetPassword} className="flex flex-col gap-5">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium" style={{ color: "#333" }}>
+                    {t("auth.forgotPassword.newPasswordLabel")}
+                  </label>
+                  <input
+                    type="password"
+                    placeholder={t("auth.forgotPassword.newPasswordPlaceholder")}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={8}
+                    className={inputClass}
+                    style={inputStyle}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                  />
+                </div>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                style={{
-                  height: 40,
-                  borderRadius: 6,
-                  border: "none",
-                  background: "#ebebeb",
-                  color: "#171717",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  opacity: isLoading ? 0.5 : 1,
-                  transition: "opacity 0.15s",
-                }}
-              >
-                {isLoading ? t("auth.forgotPassword.sending") : t("auth.forgotPassword.sendLink")}
-              </button>
-            </form>
-          </>
-        )}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium" style={{ color: "#333" }}>
+                    {t("auth.forgotPassword.confirmNewLabel")}
+                  </label>
+                  <input
+                    type="password"
+                    placeholder={t("auth.forgotPassword.confirmNewPlaceholder")}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={8}
+                    className={inputClass}
+                    style={inputStyle}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                  />
+                </div>
 
-        {step === "email" && sent && (
-          <div style={{ textAlign: "center" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                marginBottom: 16,
-              }}
-            >
-              <CheckCircle2
-                style={{ width: 48, height: 48, color: "#22c55e" }}
-              />
-            </div>
-            <h1
-              style={{
-                fontSize: 24,
-                fontWeight: 600,
-                color: "#ebebeb",
-                marginBottom: 8,
-              }}
-            >
-              {t("auth.forgotPassword.checkEmailTitle")}
-            </h1>
-            <p
-              style={{
-                fontSize: 13,
-                color: "#818181",
-                marginBottom: 32,
-              }}
-            >
-              {t("auth.forgotPassword.checkEmailBefore")} <span style={{ color: "#b3b3b3" }}>{email}</span>{t("auth.forgotPassword.checkEmailAfter")}
-            </p>
-            <button
-              onClick={() => { setSent(false); setError(null); }}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#818181",
-                fontSize: 12,
-                cursor: "pointer",
-              }}
-            >
-              {t("auth.forgotPassword.tryAgainLink")}
-            </button>
-          </div>
-        )}
+                {error && <p className="text-xs text-red-500">{error}</p>}
 
-        {step === "reset" && (
-          <>
-            <div style={{ textAlign: "center", marginBottom: 32 }}>
-              <h1
-                style={{
-                  fontSize: 24,
-                  fontWeight: 600,
-                  color: "#ebebeb",
-                  marginBottom: 8,
-                }}
-              >
-                {t("auth.forgotPassword.setNewTitle")}
+                {submitButton(t("auth.forgotPassword.resetButton"), t("auth.forgotPassword.resetting"))}
+              </form>
+            </>
+          )}
+
+          {step === "success" && (
+            <div className="text-center">
+              <div className="flex justify-center mb-4">
+                <CheckCircle2 className="w-12 h-12" style={{ color: "#059669" }} />
+              </div>
+              <h1 className="text-2xl font-semibold mb-2" style={{ color: "#102B47" }}>
+                {t("auth.forgotPassword.successTitle")}
               </h1>
-              <p style={{ fontSize: 13, color: "#818181" }}>
-                {t("auth.forgotPassword.setNewSubtitle")}
-              </p>
-            </div>
-
-            <form
-              onSubmit={handleResetPassword}
-              style={{ display: "flex", flexDirection: "column", gap: 20 }}
-            >
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 6 }}
-              >
-                <label
-                  style={{ fontSize: 12, fontWeight: 500, color: "#b3b3b3" }}
-                >
-                  {t("auth.forgotPassword.newPasswordLabel")}
-                </label>
-                <input
-                  type="password"
-                  placeholder={t("auth.forgotPassword.newPasswordPlaceholder")}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={8}
-                  style={inputStyle}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#555";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#2a2a2a";
-                  }}
-                />
-              </div>
-
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 6 }}
-              >
-                <label
-                  style={{ fontSize: 12, fontWeight: 500, color: "#b3b3b3" }}
-                >
-                  {t("auth.forgotPassword.confirmNewLabel")}
-                </label>
-                <input
-                  type="password"
-                  placeholder={t("auth.forgotPassword.confirmNewPlaceholder")}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={8}
-                  style={inputStyle}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#555";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#2a2a2a";
-                  }}
-                />
-              </div>
-
-              {error && (
-                <p style={{ fontSize: 12, color: "#ef4444" }}>{error}</p>
-              )}
-
+              <p className="text-sm mb-8" style={{ color: "#666" }}>{t("auth.forgotPassword.successText")}</p>
               <button
-                type="submit"
-                disabled={isLoading}
-                style={{
-                  height: 40,
-                  borderRadius: 6,
-                  border: "none",
-                  background: "#ebebeb",
-                  color: "#171717",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  opacity: isLoading ? 0.5 : 1,
-                  transition: "opacity 0.15s",
-                }}
+                onClick={() => router.push("/login")}
+                className="h-11 rounded-lg border-none text-sm font-semibold cursor-pointer transition-all w-full"
+                style={{ background: "#102B47", color: "#FFFFFF" }}
               >
-                {isLoading ? t("auth.forgotPassword.resetting") : t("auth.forgotPassword.resetButton")}
+                {t("auth.forgotPassword.backToLogin")}
               </button>
-            </form>
-          </>
-        )}
-
-        {step === "success" && (
-          <div style={{ textAlign: "center" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                marginBottom: 16,
-              }}
-            >
-              <CheckCircle2
-                style={{ width: 48, height: 48, color: "#22c55e" }}
-              />
             </div>
-            <h1
-              style={{
-                fontSize: 24,
-                fontWeight: 600,
-                color: "#ebebeb",
-                marginBottom: 8,
-              }}
-            >
-              {t("auth.forgotPassword.successTitle")}
-            </h1>
-            <p
-              style={{
-                fontSize: 13,
-                color: "#818181",
-                marginBottom: 32,
-              }}
-            >
-              {t("auth.forgotPassword.successText")}
-            </p>
-            <button
-              onClick={() => router.push("/login")}
-              style={{
-                height: 40,
-                borderRadius: 6,
-                border: "none",
-                background: "#ebebeb",
-                color: "#171717",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-                width: "100%",
-              }}
-            >
-              {t("auth.forgotPassword.backToLogin")}
-            </button>
-          </div>
-        )}
+          )}
 
-        {step !== "success" && !sent && (
-          <p
-            style={{
-              marginTop: 32,
-              textAlign: "center",
-              fontSize: 13,
-              color: "#818181",
-            }}
-          >
-            <Link
-              href="/login"
-              style={{
-                color: "#ebebeb",
-                fontWeight: 500,
-                textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
-              <ArrowLeft style={{ width: 14, height: 14 }} />
-              {t("auth.forgotPassword.backToLogin")}
-            </Link>
-          </p>
-        )}
-      </motion.div>
+          {step !== "success" && !sent && (
+            <p className="mt-8 text-center text-sm" style={{ color: "#666" }}>
+              <Link
+                href="/login"
+                className="font-medium no-underline inline-flex items-center gap-1"
+                style={{ color: "#2E9098" }}
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                {t("auth.forgotPassword.backToLogin")}
+              </Link>
+            </p>
+          )}
+        </motion.div>
+      </div>
     </div>
   );
 }
