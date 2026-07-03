@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { Download, Eye, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -10,6 +12,7 @@ import { ATSCheck } from "./ATSCheck";
 // ATSCheck removed: resume builder step disabled in current flow
 
 export function ResumePreview() {
+  const { t } = useTranslation();
   const { resumeBuilder } = useGlobalStore();
   const [isClient, setIsClient] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -26,6 +29,19 @@ export function ResumePreview() {
     });
     return unsub;
   }, []);
+
+  // Warn the user when an autosave fails — otherwise the failure is silent and
+  // they may leave believing their edits were saved.
+  useEffect(() => {
+    let prev = useGlobalStore.getState().resumeSaveError;
+    const unsub = useGlobalStore.subscribe((state) => {
+      if (state.resumeSaveError && !prev) {
+        toast.error(t("resume.saveFailed", "Couldn't save your changes. Check your connection and try again."));
+      }
+      prev = state.resumeSaveError;
+    });
+    return unsub;
+  }, [t]);
 
   useEffect(() => {
     setIsClient(true);

@@ -2605,5 +2605,8 @@
     "download": "Download report",
     "downloaded": "Report downloaded",
     "downloadFailed": "Failed to download the report"
+  },
+  "resume": {
+    "saveFailed": "Couldn't save your changes. Check your connection and try again."
   }
 }
