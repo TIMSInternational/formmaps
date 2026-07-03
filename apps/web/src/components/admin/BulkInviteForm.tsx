@@ -47,13 +47,33 @@ export function BulkInviteForm() {
     }
   };
 
-  const generatePassword = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
-    let password = "";
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+  // CSPRNG with rejection sampling — Math.random() is predictable, and these
+  // are real initial credentials for coach accounts. The special-char set
+  // mirrors the backend's validatePasswordStrength alphabet (auth.ts) so the
+  // client and server agree on the policy; redraws until all four required
+  // classes are present.
+  const generatePassword = (): string => {
+    const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const lower = "abcdefghijklmnopqrstuvwxyz";
+    const digits = "0123456789";
+    // Exact backend validatePasswordStrength special set (auth.ts) — no drift.
+    const special = "!@#$%^&*()_-+=[]{};:'\",.<>?/\\|`~";
+    const chars = upper + lower + digits + special;
+    const limit = 256 - (256 % chars.length); // reject values that would bias the modulo
+    const specialRe = /[!@#$%^&*()_\-+=[\]{};:'",.<>?/\\|`~]/;
+    for (;;) {
+      let password = "";
+      while (password.length < 16) {
+        const bytes = new Uint8Array(32);
+        crypto.getRandomValues(bytes);
+        for (const b of bytes) {
+          if (b < limit && password.length < 16) password += chars[b % chars.length];
+        }
+      }
+      if (/[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password) && specialRe.test(password)) {
+        return password;
+      }
     }
-    return password;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

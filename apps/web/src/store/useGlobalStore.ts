@@ -792,7 +792,11 @@ export const useGlobalStore = create<GlobalState>()(
         partialize: (state) => ({
           theme: state.theme,
           language: state.language,
-          user: state.user,
+          // NEVER persist the access token: localStorage is readable by any
+          // injected script (XSS), which would defeat the httpOnly-cookie
+          // design. The in-memory copy still serves the same-session Bearer
+          // fallback; after a reload the httpOnly cookie carries the session.
+          user: { ...state.user, accessToken: null },
           // NOTE: Do NOT persist resumeBuilder.data — it's always loaded
           // fresh from the API via getResumeById. Persisting it causes a
           // race condition where rehydration overwrites API data.
