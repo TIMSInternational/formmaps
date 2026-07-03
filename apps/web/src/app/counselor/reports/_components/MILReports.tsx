@@ -5,14 +5,16 @@ import { motion } from "motion/react";
 import { apiRequest } from "@/lib/api/apiClient";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Brain, Loader2, Download, XCircle } from "lucide-react";
+import { Brain, Loader2, Download, XCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { ScoreBar, StudentInfoHeader, type ReportStudent } from "./ReportShared";
+import { LiaResultsPanel } from "./LiaResultsPanel";
 
 export function MILReports({ student }: { student: ReportStudent }) {
   const [downloading, setDownloading] = useState<string | null>(null);
   const [milData, setMilData] = useState<Record<string, unknown> | null>(null);
   const [fetched, setFetched] = useState(false);
+  const [showFullReport, setShowFullReport] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -158,7 +160,23 @@ export function MILReports({ student }: { student: ReportStudent }) {
                 {downloading === "history" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
                 Download Exam History
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-xs gap-1.5"
+                onClick={() => setShowFullReport((v) => !v)}
+              >
+                <FileText className="h-3 w-3" />
+                {showFullReport ? "Hide Full Report" : "View Full Report"}
+              </Button>
             </motion.div>
+
+            {/* Full tims-parity LIA report (percentiles, bands, narrative) */}
+            {showFullReport && (
+              <div className="pt-4 border-t">
+                <LiaResultsPanel studentId={student.id} />
+              </div>
+            )}
           </>
         )}
       </div>
