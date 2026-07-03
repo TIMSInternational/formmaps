@@ -87,7 +87,10 @@
   --card-foreground: #0A0A0A;
   --popover: #FFFFFF;
   --popover-foreground: #0A0A0A;
-  --primary: #102B47;
+  /* Brand teal for all primary interactive elements (CTAs, switches, toggles).
+     Navy #102B47 stays for text/headings via --brand-black — buttons rendering
+     near-black read as off-brand (audit 2026-07-02). */
+  --primary: #2E9098;
   --primary-foreground: #FFFFFF;
   --secondary: #F0F0F3;
   --secondary-foreground: #102B47;

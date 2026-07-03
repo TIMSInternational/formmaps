@@ -269,7 +269,7 @@ export default function AssessmentsPage() {
                 <div className="flex gap-2">
                   <Link
                     href="/dashboard/assessments/evaluation"
-                    className="flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-semibold bg-card border border-orange-200 text-orange-700 hover:bg-orange-50 transition-colors"
+                    className="flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-semibold bg-card border border-[var(--brand-yellow)] text-[var(--brand-black)] hover:bg-yellow-50 transition-colors"
                   >
                     <Users className="w-3.5 h-3.5" />
                     {t("dashboard.inviteEvaluators")}

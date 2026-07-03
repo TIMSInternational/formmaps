@@ -84,8 +84,8 @@ describe("PCAResultsPanel", () => {
     it("renders the informe download button when results are loaded (completion signal)", async () => {
       render(<PCAResultsPanel pcaCod="pca-1" userId="u1" onClose={() => {}} />);
       await screen.findByText("Test Student");
-      // Button should appear once results data is present
-      expect(await screen.findByText("informe.download")).toBeInTheDocument();
+      // The promoted informe CTA (title + desc) appears once results are present.
+      expect(await screen.findByText("informe.title")).toBeInTheDocument();
     });
 
     it("calls getCareerInformeBlob with userId and lang, toasts success on click", async () => {
@@ -114,7 +114,7 @@ describe("PCAResultsPanel", () => {
       render(<PCAResultsPanel pcaCod="pca-1" userId="u1" onClose={() => {}} />);
       await screen.findByText("Test Student");
 
-      const btn = await screen.findByText("informe.download");
+      const btn = await screen.findByText("informe.title");
       fireEvent.click(btn);
 
       await waitFor(() => expect(mockGetCareerInformeBlob).toHaveBeenCalledWith("u1", "es"));

@@ -2493,7 +2493,8 @@
     "dominance": "Dominancia",
     "influence": "Influencia",
     "steadiness": "Solidez",
-    "conscientiousness": "Control"
+    "conscientiousness": "Control",
+    "resultsTitle": "Resultados PCA"
   },
   "counselorBooking": {
     "title": "Reservar Sesión con Consejero",

@@ -2300,7 +2300,8 @@
     "dominance": "Dominance",
     "influence": "Influence",
     "steadiness": "Solidity",
-    "conscientiousness": "Control"
+    "conscientiousness": "Control",
+    "resultsTitle": "PCA Results"
   },
   "counselorBooking": {
     "title": "Book a Counselor Session",
