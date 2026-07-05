@@ -29,12 +29,13 @@ export function MILReports({ student }: { student: ReportStudent }) {
   const cognitiveProfile = milData?.cognitiveProfile as Record<string, number> | undefined;
   const hasMIL = cognitiveProfile && Object.keys(cognitiveProfile).length > 0;
 
+  // API keys are the canonical ExamType names; older payloads used lowercase.
   const cognitiveScores = hasMIL ? [
-    { label: "Reasoning", key: "reasoning", color: "#8b5cf6" },
-    { label: "Detection", key: "detection", color: "#2E9098" },
-    { label: "Numeric", key: "numeric", color: "#14b8a6" },
-    { label: "Memory", key: "memory", color: "#f59e0b" },
-    { label: "Orientation", key: "orientation", color: "#ef4444" },
+    { label: "Reasoning", key: "VerbalReasoning", legacyKey: "reasoning", color: "#8b5cf6" },
+    { label: "Detection", key: "PatternRecognition", legacyKey: "detection", color: "#2E9098" },
+    { label: "Numeric", key: "NumericVelocity", legacyKey: "numeric", color: "#14b8a6" },
+    { label: "Memory", key: "WorkingMemory", legacyKey: "memory", color: "#f59e0b" },
+    { label: "Orientation", key: "VisualRotation", legacyKey: "orientation", color: "#ef4444" },
   ] : [];
 
   const completedExams = (milData?.completedExams as number) ?? 0;
@@ -127,7 +128,7 @@ export function MILReports({ student }: { student: ReportStudent }) {
               </div>
               <div className="space-y-2.5">
                 {cognitiveScores.map((s) => {
-                  const val = cognitiveProfile![s.key] ?? cognitiveProfile![s.label.toLowerCase()] ?? 0;
+                  const val = cognitiveProfile![s.key] ?? cognitiveProfile![s.legacyKey] ?? cognitiveProfile![s.label.toLowerCase()] ?? 0;
                   return <ScoreBar key={s.key} label={s.label} value={val} color={s.color} />;
                 })}
               </div>

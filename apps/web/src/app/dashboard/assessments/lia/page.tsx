@@ -94,7 +94,7 @@ export default function LIAAssessmentPage() {
   }
 
   if (flow.phase === "overview") {
-    return <OverviewCard language={language} resuming={false} onBegin={flow.begin} />;
+    return <OverviewCard language={language} resuming={flow.hasResumableSession} onBegin={flow.begin} />;
   }
 
   if (flow.phase === "completed") {

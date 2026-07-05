@@ -28,6 +28,7 @@ export type LiaPhase =
 export interface LiaFlow {
   phase: LiaPhase;
   sessionId: string | null;
+  hasResumableSession: boolean;
   sessionError: string | null;
   currentSubtest: LIASubtest;
   currentSubtestIndex: number;
@@ -59,6 +60,7 @@ interface FlowCallbacks {
 export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViolations }: FlowCallbacks): LiaFlow {
   const [phase, setPhase] = useState<LiaPhase>("loading");
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [hasResumableSession, setHasResumableSession] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [currentSubtest, setCurrentSubtest] = useState<LIASubtest>("pattern_recognition");
   const [practiceQuestions, setPracticeQuestions] = useState<LIAQuestion[]>([]);
@@ -74,6 +76,7 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
       .checkAccess()
       .then((access) => {
         if (cancelled) return;
+        setHasResumableSession(!!access.existing_session_id && !access.has_completed);
         setPhase(access.has_completed ? "already-completed" : "overview");
       })
       .catch(() => {
@@ -216,6 +219,7 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
   return {
     phase,
     sessionId,
+    hasResumableSession,
     sessionError,
     currentSubtest,
     currentSubtestIndex: SUBTEST_ORDER.indexOf(currentSubtest),
