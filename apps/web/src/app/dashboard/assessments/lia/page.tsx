@@ -1,429 +1,221 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "motion/react";
-import { useTranslation } from "react-i18next";
+/**
+ * LIA / MIL assessment — tims-suite parity flow.
+ *
+ * Phases: overview → general-instructions → subtest-intro → practice →
+ * assessment (per subtest; later subtests skip the intro) → completed.
+ * Runs under lockdown-lite (fullscreen + violation capture); face
+ * verification is stubbed behind NEXT_PUBLIC_LIA_FACE_VERIFY.
+ */
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import {
-  getAllMILExams,
-  MILExamMetadata,
-  getMILResults,
-  MILResultsData,
-  UserProgressSummary,
-  retryPendingSubmissions,
-} from "@/services/milService";
+  SUBTEST_ORDER,
+  type PatternRecognitionData,
+  type VerbalReasoningData,
+  type NumericalSpeedData,
+  type WorkingMemoryData,
+  type VisualRotationData,
+} from "@/services/liaService";
 import {
-  getUserEvaluationGroups,
-  EvaluationGroupProgress,
-} from "@/services/evaluationService";
-import MILInstructions from "./_components/MILInstructions";
-import MILExamRunner from "./_components/MILExamRunner";
+  LIAGeneralInstructions,
+  LIASubtestIntro,
+  LIAPractice,
+  TimerWarningToast,
+  PatternRecognitionItem,
+  VerbalReasoningItem,
+  NumericalSpeedItem,
+  WorkingMemoryItem,
+  VisualRotationItem,
+} from "./_tims";
+import { useLiaFlow } from "./_tims/useLiaFlow";
+import { useLockdown } from "./_tims/useLockdown";
+import { FullscreenOverlay, LockdownBar, ErrorScreen, ProgressHeader, OverviewCard } from "./_tims/FlowScreens";
 import MILCompletion from "./_components/MILCompletion";
-import MILSubtestCompletion from "./_components/MILSubtestCompletion";
-import Link from "next/link";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  HelpCircle,
-} from "lucide-react";
 
-type AssessmentType = "mil" | "360-evaluation";
-type AssessmentStep =
-  | "selection"
-  | "overview"
-  | "instructions"
-  | "exam"
-  | "subtest-completed"
-  | "completed"
-  | "evaluator-management"
-  | "evaluation-form"
-  | "evaluation-completed";
+export default function LIAAssessmentPage() {
+  const router = useRouter();
+  const { language: storeLanguage, setAssessmentActive } = useGlobalStore();
+  const language: "es" | "en" = storeLanguage === "english" ? "en" : "es";
 
-export default function MILAssessmentPage() {
-  const { t } = useTranslation();
-  const { user, language } = useGlobalStore();
-  const [assessmentType, setAssessmentType] = useState<AssessmentType>("mil");
-  const [currentStep, setCurrentStep] = useState<AssessmentStep>("overview");
-  const [exams, setExams] = useState<MILExamMetadata[]>([]);
-  const [currentExamIndex, setCurrentExamIndex] = useState(0);
-  const [completedExams, setCompletedExams] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const lockdown = useLockdown();
+  const flow = useLiaFlow({
+    language,
+    onLockdownBegin: lockdown.begin,
+    onLockdownEnd: lockdown.end,
+    drainViolations: lockdown.drainViolations,
+  });
+  const [timerWarning, setTimerWarning] = useState<number | null>(null);
 
-  // Progress data states
-  const [liaProgress, setLiaProgress] = useState<UserProgressSummary | null>(
-    null
-  );
-  const [evaluationProgress, setEvaluationProgress] = useState<
-    EvaluationGroupProgress[]
-  >([]);
-  const [progressLoading, setProgressLoading] = useState(true);
-
-  // Get current user ID from global store
-  const getCurrentUserId = (): string => {
-    if (user?.id) return user.id;
-    return "unknown";
-  };
-
-  const loadProgressData = async () => {
-    try {
-      setProgressLoading(true);
-      const userId = getCurrentUserId();
-
-      // Load LIA progress from /api/v1/mil/results/{userId} — single source of truth
-      const milResults = await getMILResults(userId);
-
-      if (milResults && milResults.examResults?.length > 0) {
-        const completed = milResults.examResults.filter(
-          (e) => e.status === "completed"
-        );
-
-        setLiaProgress({
-          totalAttempts: milResults.completedExams,
-          completedExams: completed.length,
-          averageScore: milResults.overallScore,
-          bestScore:
-            completed.length > 0
-              ? Math.max(...completed.map((e) => e.scorePercentage ?? 0))
-              : 0,
-          examResults: [],
-          examTypes: {},
-        });
-
-        // API is the source of truth — always sync localStorage to match
-        const completedIds = completed.map((e) => e.examId);
-        localStorage.setItem(
-          "mil_completed_exams",
-          JSON.stringify(completedIds)
-        );
-        setCompletedExams(completedIds);
-      } else {
-        setLiaProgress({
-          totalAttempts: 0,
-          completedExams: 0,
-          averageScore: 0,
-          bestScore: 0,
-          examResults: [],
-          examTypes: {},
-        });
-      }
-
-      // Load 360° Evaluation progress
-      const evaluationGroups = await getUserEvaluationGroups(userId, language);
-      setEvaluationProgress(evaluationGroups);
-    } catch (error) {
-      // error handled silently
-    } finally {
-      setProgressLoading(false);
-    }
-  };
-
+  // Block the AI chat while the exam is live (existing FormMaps behavior).
   useEffect(() => {
-    retryPendingSubmissions().catch(() => {});
-  }, []);
+    const examLive = flow.phase === "practice" || flow.phase === "assessment";
+    setAssessmentActive(examLive);
+    return () => setAssessmentActive(false);
+  }, [flow.phase, setAssessmentActive]);
 
-  useEffect(() => {
-    loadExams();
-    loadProgress();
-    loadProgressData();
-  }, [language]);
+  const handleTimerWarning = useCallback((secondsLeft: number) => setTimerWarning(secondsLeft), []);
 
-  const loadExams = async () => {
-    try {
-      setLoading(true);
-      const examData = await getAllMILExams(language);
-      setExams(examData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load exams");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (flow.sessionError) {
+    return <ErrorScreen language={language} onRetry={flow.retry} />;
+  }
 
-  const loadProgress = () => {
-    const saved = localStorage.getItem("mil_completed_exams");
-    if (saved) {
-      setCompletedExams(JSON.parse(saved));
-    }
-  };
-
-  const saveProgress = (examId: string) => {
-    const updated = [...completedExams, examId];
-    setCompletedExams(updated);
-    localStorage.setItem("mil_completed_exams", JSON.stringify(updated));
-  };
-
-  const handleStartExam = (examIndex: number) => {
-    setCurrentExamIndex(examIndex);
-    setCurrentStep("instructions");
-  };
-
-  const handleStartTest = () => {
-    setCurrentStep("exam");
-  };
-
-  const handleExamComplete = () => {
-    const currentExam = exams[currentExamIndex];
-    saveProgress(currentExam.id);
-
-    // Always go to subtest completion screen first
-    setCurrentStep("subtest-completed");
-  };
-
-  const handleContinueToNext = () => {
-    // Find the next incomplete exam after the current one
-    const nextIncomplete = exams.findIndex(
-      (e, i) => i > currentExamIndex && !completedExams.includes(e.id)
-    );
-    if (nextIncomplete >= 0) {
-      setCurrentExamIndex(nextIncomplete);
-      setCurrentStep("instructions");
-    } else {
-      // All exams done — check if truly all complete
-      const allDone = exams.every(e => completedExams.includes(e.id));
-      if (allDone) {
-        setCurrentStep("completed");
-      } else {
-        // Some earlier exam still not done — go back to overview
-        setCurrentStep("overview");
-      }
-    }
-  };
-
-  const handleViewResults = () => {
-    window.location.href = "/dashboard/assessments/lia/results";
-  };
-
-  const handleReturnToDashboard = () => {
-    window.location.href = "/dashboard";
-  };
-
-  const handleReturnToDashboardFromSubtest = () => {
-    // Progress is already saved, just navigate
-    window.location.href = "/dashboard";
-  };
-
-  const handleBackToOverview = () => {
-    setCurrentStep("overview");
-  };
-
-  if (loading && assessmentType === "mil") {
+  if (flow.phase === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Loading LIA Assessment...</p>
-        </div>
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#102B47] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (error && assessmentType === "mil") {
+  if (flow.phase === "already-completed") {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-6 h-6 text-red-600" />
-          </div>
-          <h3 className="text-lg font-medium text-foreground mb-2">
-            Failed to Load Assessment
-          </h3>
-          <p className="text-muted-foreground mb-4">{error}</p>
+      <div className="min-h-[60vh] flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center bg-white rounded-2xl shadow-sm p-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            {language === "es" ? "Evaluación Completada" : "Assessment Completed"}
+          </h2>
+          <p className="text-gray-600 mb-6">
+            {language === "es"
+              ? "Ya completaste la evaluación MIL. Puedes revisar tus resultados."
+              : "You already completed the LIA assessment. You can review your results."}
+          </p>
           <button
-            onClick={loadExams}
-            className="bg-foreground text-background hover:bg-foreground/90 rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+            onClick={() => router.push("/dashboard/assessments/lia/results")}
+            className="w-full py-3 bg-[#102B47] text-white rounded-xl font-semibold hover:bg-[#0b1f33] transition-colors"
           >
-            Try Again
+            {language === "es" ? "Ver Resultados" : "View Results"}
           </button>
         </div>
       </div>
     );
   }
 
-  // MIL Assessment Overview Screen
-  if (currentStep === "overview") {
-    const allComplete = exams.length > 0 && exams.every(e => completedExams.includes(e.id));
+  if (flow.phase === "overview") {
+    return <OverviewCard language={language} resuming={flow.hasResumableSession} onBegin={flow.begin} />;
+  }
 
+  if (flow.phase === "completed") {
     return (
-      <div className="max-w-4xl mx-auto py-6">
-        {/* Back link */}
-        <Link
-          href="/dashboard/assessments"
-          className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4 transition-colors"
-        >
-          <ArrowLeft className="w-3 h-3" />
-          {t("dashboard.assessments", "Assessments")}
-        </Link>
+      <MILCompletion
+        onViewResults={() => router.push("/dashboard/assessments/lia/results")}
+        onReturnToDashboard={() => router.push("/dashboard")}
+      />
+    );
+  }
 
-        {/* Header row */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-start justify-between gap-4 mb-6"
-        >
-          <div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">
-              {t("dashboard.liaTitle")}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1 max-w-md">
-              {t("dashboard.liaAssessmentDescription")}
-            </p>
-          </div>
-          {allComplete && (
-            <div className="px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 flex items-center gap-1.5 shrink-0">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-[11px] font-semibold text-emerald-700">
-                {t("dashboard.allComplete", "All Complete")}
-              </span>
-            </div>
-          )}
-        </motion.div>
+  const lockdownChrome = (
+    <>
+      {lockdown.active && lockdown.needsFullscreenPrompt && (
+        <FullscreenOverlay language={language} onEnter={lockdown.enterFullscreen} />
+      )}
+      {lockdown.active && <LockdownBar language={language} elapsedTime={lockdown.elapsedTime} />}
+    </>
+  );
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="space-y-4"
-        >
-          {/* Progress bar inline */}
-          <div className="dash-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-foreground">Progress</span>
-              <span className="text-xs text-muted-foreground tabular-nums">
-                {completedExams.length}/{exams.length} subtests
-              </span>
-            </div>
-            <div className="w-full bg-secondary rounded-full h-1.5">
-              <div
-                className="bg-[#102B47] h-1.5 rounded-full transition-all duration-300"
-                style={{
-                  width: `${exams.length > 0 ? (completedExams.length / exams.length) * 100 : 0}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Subtests — compact grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {exams.map((exam, index) => {
-              const isDone = completedExams.includes(exam.id);
-              const isNext = !isDone && !completedExams.includes(exam.id);
-
-              return (
-                <div
-                  key={exam.id}
-                  className={`p-3.5 rounded-xl border-2 transition-all ${
-                    isDone
-                      ? "border-emerald-200 bg-emerald-50/50"
-                      : isNext
-                      ? "border-[#2E9098]/30 bg-[#102B47]/5"
-                      : "border-border bg-secondary/50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-sm font-semibold text-foreground">{exam.name}</h3>
-                    {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2 mb-2">
-                    {exam.description}
-                  </p>
-                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {exam.timeLimitMinutes} min
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <HelpCircle className="w-3 h-3" />
-                      {exam.totalQuestions} q
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Action */}
-          {allComplete ? (
-            <div className="dash-card p-4 flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-foreground">Assessment Complete!</h3>
-                <p className="text-xs text-muted-foreground">All 5 cognitive subtests completed.</p>
-              </div>
-              <Link
-                href="/dashboard/assessments/lia/results"
-                className="bg-foreground text-background hover:bg-foreground/90 rounded-xl px-4 py-2 text-xs font-semibold transition-colors shrink-0"
-              >
-                View Results
-              </Link>
-            </div>
-          ) : (
-            <button
-              onClick={() => {
-                const nextIndex = exams.findIndex(e => !completedExams.includes(e.id));
-                handleStartExam(nextIndex >= 0 ? nextIndex : 0);
-              }}
-              className="w-full bg-foreground text-background hover:bg-foreground/90 rounded-xl px-6 py-2.5 font-semibold text-sm transition-colors flex items-center justify-center gap-2"
-            >
-              {completedExams.length === 0
-                ? t("dashboard.startAssessment")
-                : t("dashboard.continueAssessment")}
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          )}
-        </motion.div>
+  if (flow.phase === "general-instructions") {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {lockdownChrome}
+        <LIAGeneralInstructions onContinue={flow.continueToIntro} language={language} />
       </div>
     );
   }
 
-  // Instructions Screen
-  if (currentStep === "instructions" && exams[currentExamIndex]) {
+  if (flow.phase === "subtest-intro") {
     return (
-      <MILInstructions
-        exam={exams[currentExamIndex]}
-        onStart={handleStartTest}
-        onBack={() => setCurrentStep("overview")}
-      />
+      <div className="min-h-screen bg-gray-50">
+        {lockdownChrome}
+        <LIASubtestIntro
+          subtest={flow.currentSubtest}
+          subtestNumber={flow.currentSubtestIndex + 1}
+          onStartPractice={flow.startPractice}
+          language={language}
+        />
+      </div>
     );
   }
 
-  // Exam Screen
-  if (currentStep === "exam" && exams[currentExamIndex]) {
+  if (flow.phase === "practice") {
     return (
-      <MILExamRunner
-        examId={exams[currentExamIndex].id as any}
-        onComplete={handleExamComplete}
-        onBack={() => setCurrentStep("overview")}
-      />
+      <div className="min-h-screen bg-gray-50">
+        {lockdownChrome}
+        <LIAPractice
+          subtest={flow.currentSubtest}
+          questions={flow.practiceQuestions}
+          onComplete={flow.startAssessment}
+          onSubmitAnswer={flow.submitPracticeAnswer}
+          language={language}
+        />
+      </div>
     );
   }
 
-  // Subtest Completion Screen
-  if (currentStep === "subtest-completed" && exams[currentExamIndex]) {
-    return (
-      <MILSubtestCompletion
-        completedExam={exams[currentExamIndex]}
-        currentIndex={currentExamIndex}
-        totalExams={exams.length}
-        onContinue={handleContinueToNext}
-        onReturnToDashboard={handleReturnToDashboardFromSubtest}
-      />
-    );
-  }
+  if (flow.phase === "assessment" && flow.subtestStartTime) {
+    const question = flow.assessmentQuestions[flow.currentQuestionIndex];
+    const data = question?.question_data;
 
-  // Final Completion Screen
-  if (currentStep === "completed") {
     return (
-      <MILCompletion
-        onViewResults={handleViewResults}
-        onReturnToDashboard={handleReturnToDashboard}
-      />
+      <div className="min-h-screen bg-gray-50">
+        {lockdownChrome}
+        {timerWarning !== null && <TimerWarningToast secondsLeft={timerWarning} onClose={() => setTimerWarning(null)} />}
+        <ProgressHeader
+          language={language}
+          currentSubtest={flow.currentSubtest}
+          currentSubtestIndex={flow.currentSubtestIndex}
+          currentQuestionIndex={flow.currentQuestionIndex}
+          lockdownActive={lockdown.active}
+          subtestStartTime={flow.subtestStartTime}
+          timeLimitSeconds={flow.timeLimitSeconds}
+          onTimeout={flow.handleTimeout}
+          onWarning={handleTimerWarning}
+        />
+        <main className="max-w-3xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-xl shadow-sm p-8">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm text-gray-500">
+                {language === "es"
+                  ? `Sección ${flow.currentSubtestIndex + 1} de ${SUBTEST_ORDER.length}`
+                  : `Section ${flow.currentSubtestIndex + 1} of ${SUBTEST_ORDER.length}`}
+              </span>
+            </div>
+            <div className="mb-8">
+              {data ? (
+                flow.currentSubtest === "pattern_recognition" ? (
+                  <PatternRecognitionItem data={data as PatternRecognitionData} onAnswer={flow.submitAssessmentAnswer} />
+                ) : flow.currentSubtest === "verbal_reasoning" ? (
+                  <VerbalReasoningItem data={data as VerbalReasoningData} onAnswer={flow.submitAssessmentAnswer} />
+                ) : flow.currentSubtest === "numerical_speed" ? (
+                  <NumericalSpeedItem data={data as NumericalSpeedData} onAnswer={flow.submitAssessmentAnswer} />
+                ) : flow.currentSubtest === "working_memory" ? (
+                  <WorkingMemoryItem data={data as WorkingMemoryData} onAnswer={flow.submitAssessmentAnswer} />
+                ) : (
+                  <VisualRotationItem data={data as VisualRotationData} onAnswer={flow.submitAssessmentAnswer} />
+                )
+              ) : (
+                <div className="flex items-center justify-center p-8">
+                  <p className="text-gray-500">{language === "es" ? "Cargando pregunta..." : "Loading question..."}</p>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => flow.submitAssessmentAnswer(undefined)}
+                className="px-6 py-3 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                {language === "es" ? "Omitir →" : "Skip →"}
+              </button>
+            </div>
+          </div>
+          <p className="text-center text-sm text-gray-500 mt-4">
+            {language === "es"
+              ? "Esta sección es cronometrada. Responde lo más rápido y preciso que puedas."
+              : "This section is timed. Answer as quickly and accurately as you can."}
+          </p>
+        </main>
+      </div>
     );
   }
 
