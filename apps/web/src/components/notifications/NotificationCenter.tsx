@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Bell,
@@ -16,15 +15,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useGlobalStore } from "@/store/useGlobalStore";
+import { normalizeRole } from "@/lib/roleUtils";
+import { Roles } from "@/lib/permissions";
+import { useDashboardAssessmentSummary } from "@/hooks/useAssessmentQueries";
+import { buildSeedNotifications, type SeedNotification } from "./notificationSeeds";
 
-interface Notification {
-  id: string;
-  title: string;
-  description: string;
-  type: "career" | "university" | "assessment" | "course" | "coaching" | "system";
-  read: boolean;
-  createdAt: string;
-}
+type Notification = SeedNotification;
 
 const ICON_MAP: Record<string, React.ElementType> = {
   career: TrendingUp,
@@ -35,101 +32,59 @@ const ICON_MAP: Record<string, React.ElementType> = {
   system: AlertCircle,
 };
 
-const STORAGE_KEY = "formmaps_notifications";
 const DISMISSED_KEY = "formmaps_notifications_dismissed";
+const READ_KEY = "formmaps_notifications_read";
 
-function getStoredNotifications(): Notification[] {
+function getIdSet(key: string): Set<string> {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function getDismissedIds(): Set<string> {
-  try {
-    return new Set(JSON.parse(localStorage.getItem(DISMISSED_KEY) || "[]"));
+    return new Set(JSON.parse(localStorage.getItem(key) || "[]"));
   } catch {
     return new Set();
   }
 }
 
-// Generate contextual notifications based on what data is available
-function generateNotifications(t: TFunction): Notification[] {
-  const now = new Date().toISOString();
-  const notifications: Notification[] = [
-    {
-      id: "welcome",
-      title: t("notifications.seed.welcomeTitle"),
-      description: t("notifications.seed.welcomeDesc"),
-      type: "system",
-      read: false,
-      createdAt: now,
-    },
-    {
-      id: "explore-careers",
-      title: t("notifications.seed.careersTitle"),
-      description: t("notifications.seed.careersDesc"),
-      type: "career",
-      read: false,
-      createdAt: now,
-    },
-    {
-      id: "university-finder",
-      title: t("notifications.seed.universityTitle"),
-      description: t("notifications.seed.universityDesc"),
-      type: "university",
-      read: false,
-      createdAt: now,
-    },
-    {
-      id: "build-resume",
-      title: t("notifications.seed.resumeTitle"),
-      description: t("notifications.seed.resumeDesc"),
-      type: "course",
-      read: false,
-      createdAt: now,
-    },
-  ];
-  return notifications;
-}
-
 export function NotificationCenter() {
   const { t } = useTranslation();
+  const user = useGlobalStore((s) => s.user);
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  const isStudent = normalizeRole(user.role) === Roles.STUDENT;
+  // Only students have assessments; the query stays disabled for other roles.
+  const { data: summary } = useDashboardAssessmentSummary(isStudent ? user.id ?? "" : "");
+  const assessmentsComplete =
+    !!summary && summary.totalAssessments > 0 && summary.completedAssessments >= summary.totalAssessments;
+
+  // Derive the list from REAL state each render, applying persisted read/dismiss
+  // flags. Seeds are never stored, so completing assessments (or a role that
+  // has none) is reflected immediately — no stale "results ready" claims.
   useEffect(() => {
-    const stored = getStoredNotifications();
-    const dismissed = getDismissedIds();
-    if (stored.length > 0) {
-      setNotifications(stored.filter((n) => !dismissed.has(n.id)));
-    } else {
-      const generated = generateNotifications(t);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(generated));
-      setNotifications(generated);
-    }
-  }, [t]);
+    const dismissed = getIdSet(DISMISSED_KEY);
+    const read = getIdSet(READ_KEY);
+    const seeds = buildSeedNotifications(t, isStudent, assessmentsComplete)
+      .filter((n) => !dismissed.has(n.id))
+      .map((n) => ({ ...n, read: read.has(n.id) }));
+    setNotifications(seeds);
+  }, [t, isStudent, assessmentsComplete]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const markAllRead = useCallback(() => {
     setNotifications((prev) => {
-      const updated = prev.map((n) => ({ ...n, read: true }));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
+      const read = getIdSet(READ_KEY);
+      prev.forEach((n) => read.add(n.id));
+      localStorage.setItem(READ_KEY, JSON.stringify([...read]));
+      return prev.map((n) => ({ ...n, read: true }));
     });
   }, []);
 
   const dismissNotification = useCallback((id: string) => {
     setNotifications((prev) => {
-      const updated = prev.filter((n) => n.id !== id);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      const dismissed = getDismissedIds();
+      const dismissed = getIdSet(DISMISSED_KEY);
       dismissed.add(id);
       localStorage.setItem(DISMISSED_KEY, JSON.stringify([...dismissed]));
-      return updated;
+      return prev.filter((n) => n.id !== id);
     });
   }, []);
 
@@ -156,7 +111,10 @@ export function NotificationCenter() {
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white bg-blue-500">
+          <span
+            className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white"
+            style={{ background: "var(--admin-accent-blue, #2E9098)" }}
+          >
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}

@@ -2300,7 +2300,8 @@
     "dominance": "Dominance",
     "influence": "Influence",
     "steadiness": "Solidity",
-    "conscientiousness": "Control"
+    "conscientiousness": "Control",
+    "resultsTitle": "PCA Results"
   },
   "counselorBooking": {
     "title": "Book a Counselor Session",
@@ -2604,5 +2605,8 @@
     "download": "Download report",
     "downloaded": "Report downloaded",
     "downloadFailed": "Failed to download the report"
+  },
+  "resume": {
+    "saveFailed": "Couldn't save your changes. Check your connection and try again."
   }
 }

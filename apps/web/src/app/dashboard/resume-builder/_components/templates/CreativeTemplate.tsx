@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     color: "#6b7280",
   },
   summaryBox: {
-    backgroundColor: "red",
+    backgroundColor: "#f5f3ff", // subtle violet tint matching the accent border (was a debug "red")
     padding: 15,
     borderRadius: 10,
     borderWidth: 2,

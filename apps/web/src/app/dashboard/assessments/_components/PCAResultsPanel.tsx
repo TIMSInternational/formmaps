@@ -215,7 +215,7 @@ export default function PCAResultsPanel({
       <DialogContent className="max-w-[2000px] w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
         <DialogHeader className="p-6 border-b shrink-0">
           <DialogTitle className="text-xl font-bold">
-            PCA Results - {pcaCod.slice(0, 8)}...
+            {t("pca.resultsTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -407,6 +407,30 @@ export default function PCAResultsPanel({
                   {/* DISC Profile Graph — served same-origin via the backend proxy */}
                   <DiscChartImage pcaCod={pcaCod} />
 
+                  {/* Flagship: the complete Career & University informe — promoted
+                      to a distinct primary CTA so it isn't lost among the raw
+                      PCA report exports below. */}
+                  <button
+                    onClick={downloadInforme}
+                    disabled={reportLoading !== null}
+                    className="w-full flex items-center gap-4 text-left px-5 py-4 rounded-xl transition-colors disabled:opacity-60"
+                    style={{ background: "var(--brand-blue, #2E9098)", color: "#fff" }}
+                  >
+                    <span className="flex items-center justify-center rounded-lg shrink-0 bg-white/15" style={{ width: 44, height: 44 }}>
+                      {reportLoading === "informe" ? (
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                      ) : (
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      )}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block font-semibold">{t("informe.title")}</span>
+                      <span className="block text-sm text-white/85">{t("informe.desc")}</span>
+                    </span>
+                  </button>
+
                   {/* Assessment Details */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -434,20 +458,6 @@ export default function PCAResultsPanel({
                           {label}
                         </button>
                       ))}
-                      <button
-                        onClick={downloadInforme}
-                        disabled={reportLoading !== null}
-                        className="inline-flex items-center justify-center px-4 py-3 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors font-medium border border-blue-100 disabled:opacity-60"
-                      >
-                        {reportLoading === "informe" ? (
-                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        ) : (
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                        )}
-                        {t("informe.download")}
-                      </button>
                     </div>
                   </div>
                 </div>

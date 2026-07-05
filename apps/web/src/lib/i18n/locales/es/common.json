@@ -2493,7 +2493,8 @@
     "dominance": "Dominancia",
     "influence": "Influencia",
     "steadiness": "Solidez",
-    "conscientiousness": "Control"
+    "conscientiousness": "Control",
+    "resultsTitle": "Resultados PCA"
   },
   "counselorBooking": {
     "title": "Reservar Sesión con Consejero",
@@ -2604,5 +2605,8 @@
     "download": "Descargar informe",
     "downloaded": "Informe descargado",
     "downloadFailed": "No se pudo descargar el informe"
+  },
+  "resume": {
+    "saveFailed": "No pudimos guardar tus cambios. Revisa tu conexión e inténtalo de nuevo."
   }
 }

@@ -110,7 +110,7 @@ export function CourseFormDialog({
         </DialogHeader>
 
         <div className="px-6 py-4 overflow-y-auto flex-1">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form id="course-form" onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -352,13 +352,10 @@ export function CourseFormDialog({
           <Button type="button" variant="outline" onClick={onClose}>
             {t("admin.courses.form.cancel")}
           </Button>
-          <Button
-            type="submit"
-            // allow the form submit handler (onSubmit) to call onSave
-            onClick={(e) => {
-              // nothing here — onSubmit will handle
-            }}
-          >
+          {/* The button lives outside the <form> (fixed footer), so it must
+              target it by id — without this, submit never fires and Save
+              silently does nothing. */}
+          <Button type="submit" form="course-form">
             {isCreating
               ? t("admin.courses.form.titleCreate")
               : t("admin.courses.form.save")}

@@ -146,6 +146,9 @@ interface GlobalState {
     isLoading: boolean;
     isDirty: boolean;
   };
+  // True when the last autosave to the API failed — the UI surfaces a "not
+  // saved" warning so edits aren't silently lost.
+  resumeSaveError: boolean;
   currentResumeId: string | null;
   setCurrentResumeId: (id: string | null) => void;
   loadResume: (data: ResumeData) => void;
@@ -314,6 +317,7 @@ export const useGlobalStore = create<GlobalState>()(
           isLoading: false,
           isDirty: false,
         },
+        resumeSaveError: false,
         currentResumeId: null,
         setCurrentResumeId: (id) => set({ currentResumeId: id }),
         loadResume: (data) =>
@@ -328,12 +332,16 @@ export const useGlobalStore = create<GlobalState>()(
               // matches the backend column contract (personalInfo + flat skills).
               const apiData = toApiResume(state.resumeBuilder.data);
               await updateResume(state.currentResumeId, apiData);
-              // Mark as not dirty once saved
+              // Mark as not dirty once saved; clear any prior save error.
               set((state) => ({
                 resumeBuilder: { ...state.resumeBuilder, isDirty: false },
+                resumeSaveError: false,
               }));
             } catch (error) {
+              // Keep isDirty true and flag the failure so the UI can warn the
+              // user their edits were NOT persisted (was a silent console.error).
               console.error("Failed to save resume to API", error);
+              set({ resumeSaveError: true });
             }
           }
         },
@@ -792,7 +800,11 @@ export const useGlobalStore = create<GlobalState>()(
         partialize: (state) => ({
           theme: state.theme,
           language: state.language,
-          user: state.user,
+          // NEVER persist the access token: localStorage is readable by any
+          // injected script (XSS), which would defeat the httpOnly-cookie
+          // design. The in-memory copy still serves the same-session Bearer
+          // fallback; after a reload the httpOnly cookie carries the session.
+          user: { ...state.user, accessToken: null },
           // NOTE: Do NOT persist resumeBuilder.data — it's always loaded
           // fresh from the API via getResumeById. Persisting it causes a
           // race condition where rehydration overwrites API data.

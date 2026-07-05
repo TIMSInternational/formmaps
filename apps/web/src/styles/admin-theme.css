@@ -23,8 +23,11 @@
   --card-foreground: var(--admin-font-primary);
   --popover: var(--admin-bg-card);
   --popover-foreground: var(--admin-font-primary);
-  --primary: var(--admin-font-primary);
-  --primary-foreground: var(--admin-bg-panel);
+  /* Primary interactive color = brand teal (theme-independent), NOT the near-black
+     font color — otherwise every CTA/switch/toggle inside the app shell renders
+     black. --primary-foreground stays panel-white for legible text on teal. */
+  --primary: var(--admin-accent-blue);
+  --primary-foreground: #ffffff;
   --secondary: var(--admin-bg-card-hover);
   --secondary-foreground: var(--admin-font-secondary);
   --muted: var(--admin-bg-card-hover);
