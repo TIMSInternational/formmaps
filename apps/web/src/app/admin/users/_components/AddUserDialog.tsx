@@ -53,6 +53,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
         name: newUser.name,
         email: newUser.email,
         password: newUser.password,
+        role: newUser.role as "student" | "coach" | "admin",
       });
       toast.success(t('admin.users.success'));
       setIsOpen(false);

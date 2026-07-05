@@ -29,7 +29,7 @@ export interface CreateUserData {
   name: string;
   email: string;
   password: string;
-  roleId?: string;
+  role: "student" | "coach" | "admin";
 }
 
 /**
@@ -55,44 +55,15 @@ export async function getAdminUsers(
 }
 
 /**
- * Create a new user (Admin only)
+ * Create a new user with an explicit role (Admin only).
+ * Uses the admin endpoint (authed) — NOT public signup — so the selected role
+ * is actually applied. apiRequest throws on non-2xx with the server message.
  */
 export async function createUser(data: CreateUserData): Promise<AdminUser> {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const response = await fetch(`${API_BASE_URL}/authapi/signup`, {
+  const response = await apiRequest("/api/v1/admin/users", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
+    data,
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    try {
-      const errorJson = JSON.parse(errorText);
-      // Handle ASP.NET validation errors format
-      if (errorJson.errors) {
-        const errorMessages = Object.entries(errorJson.errors)
-          .map(([field, messages]) => {
-            if (Array.isArray(messages)) {
-              return messages.join(", ");
-            }
-            return String(messages);
-          })
-          .join("; ");
-        throw new Error(errorMessages || "Validation failed");
-      }
-      throw new Error(errorJson.message || errorJson.title || "Failed to create user");
-    } catch (e) {
-      if (e instanceof Error && e.message !== errorText) {
-        throw e;
-      }
-      throw new Error(errorText || "Failed to create user");
-    }
-  }
-
-  const result = await response.json();
-  return result.data || result;
+  return response?.data ?? response;
 }
 

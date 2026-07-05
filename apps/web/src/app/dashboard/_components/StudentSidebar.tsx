@@ -158,7 +158,7 @@ function NavItem({ href, icon: Icon, label, active, hasSub, expanded, onToggle, 
       href={hasSub ? "#" : href}
       onClick={(e) => { if (hasSub && onToggle) { e.preventDefault(); onToggle(); } }}
       style={{
-        display: "flex", alignItems: "center", gap: 8, height: 28, padding: "0 8px",
+        display: "flex", alignItems: "center", gap: 8, minHeight: 28, padding: "4px 8px",
         borderRadius: 4, fontSize: 13, fontWeight: 500, textDecoration: "none", cursor: "pointer",
         color: active && !hasSub ? "#fff" : colors.fontSecondary,
         background: active && !hasSub ? "#2E9098" : "transparent",
@@ -168,7 +168,8 @@ function NavItem({ href, icon: Icon, label, active, hasSub, expanded, onToggle, 
       onMouseLeave={(e) => { if (!(active && !hasSub)) e.currentTarget.style.background = "transparent"; }}
     >
       <Icon style={{ width: 16, height: 16, color: active && !hasSub ? "#fff" : colors.fontTertiary, flexShrink: 0 }} />
-      <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+      {/* Wrap long labels (e.g. "Counseling & Coaching") instead of truncating; title gives a fallback. */}
+      <span title={label} style={{ flex: 1, minWidth: 0, lineHeight: 1.25, wordBreak: "break-word" }}>{label}</span>
       {hasSub && (
         <ChevronRight style={{
           width: 12, height: 12, color: colors.fontTertiary,
