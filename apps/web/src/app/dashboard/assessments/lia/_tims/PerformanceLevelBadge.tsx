@@ -25,17 +25,17 @@ const LEVEL_CONFIG: Record<
   acceptable: {
     color: 'text-yellow-700 dark:text-yellow-300',
     bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
-    label: { es: 'Aceptable', en: 'Acceptable' },
+    label: { es: 'Adecuado', en: 'Acceptable' },
   },
   high: {
     color: 'text-green-700 dark:text-green-300',
     bgColor: 'bg-green-100 dark:bg-green-900/30',
-    label: { es: 'Alto', en: 'High' },
+    label: { es: 'Excede', en: 'Exceeds' },
   },
   outstanding: {
     color: 'text-blue-700 dark:text-blue-300',
     bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-    label: { es: 'Sobresaliente', en: 'Outstanding' },
+    label: { es: 'Excepcional', en: 'Outstanding' },
   },
 };
 
