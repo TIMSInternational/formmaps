@@ -58,6 +58,17 @@ export default function LIAAssessmentPage() {
 
   const handleTimerWarning = useCallback((secondsLeft: number) => setTimerWarning(secondsLeft), []);
 
+  // A ≤10s/≤30s warning from the PREVIOUS subtest can outlive its toast (the
+  // toast unmounts on the phase change before its auto-close fires), which
+  // made the red "¡10 segundos!" banner appear at the start of the next
+  // subtest. Every entry into the assessment phase goes through here, so
+  // clearing now guarantees each subtest starts warning-free.
+  const { startAssessment } = flow;
+  const handlePracticeComplete = useCallback(() => {
+    setTimerWarning(null);
+    void startAssessment();
+  }, [startAssessment]);
+
   if (flow.sessionError) {
     return <ErrorScreen language={language} onRetry={flow.retry} />;
   }
@@ -145,7 +156,7 @@ export default function LIAAssessmentPage() {
         <LIAPractice
           subtest={flow.currentSubtest}
           questions={flow.practiceQuestions}
-          onComplete={flow.startAssessment}
+          onComplete={handlePracticeComplete}
           onSubmitAnswer={flow.submitPracticeAnswer}
           language={language}
         />

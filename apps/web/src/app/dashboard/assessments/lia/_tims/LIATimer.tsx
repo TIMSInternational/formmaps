@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Clock } from 'lucide-react';
 
 interface LIATimerProps {
@@ -16,8 +16,16 @@ export function LIATimer({ totalSeconds, startedAt, onTimeout, onWarning }: LIAT
     return Math.max(0, totalSeconds - elapsed);
   });
 
-  const [warned30, setWarned30] = useState(false);
-  const [warned10, setWarned10] = useState(false);
+  // Callbacks live in refs so the ticking interval never restarts when the
+  // parent re-renders (answering a question hands us fresh function
+  // identities on every render — restarting a 1s interval faster than once
+  // per second means it never fires and the clock freezes on screen).
+  const onTimeoutRef = useRef(onTimeout);
+  const onWarningRef = useRef(onWarning);
+  useEffect(() => {
+    onTimeoutRef.current = onTimeout;
+    onWarningRef.current = onWarning;
+  });
 
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -25,31 +33,50 @@ export function LIATimer({ totalSeconds, startedAt, onTimeout, onWarning }: LIAT
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
+  // Which subtest (keyed by its start timestamp) already fired onTimeout.
+  // A ref (not an effect-local) so StrictMode's dev-only effect remount can't
+  // double-fire onTimeout when mounting onto an already-expired subtest;
+  // a new subtest gets a new startedAt and is allowed to fire again.
+  const timedOutForRef = useRef<number | null>(null);
+
   useEffect(() => {
-    const interval = setInterval(() => {
+    // Single stable interval per subtest, anchored to the server-provided
+    // start timestamp. Warned flags are locals of this effect run: they
+    // reset only when the subtest itself changes.
+    let warned30 = false;
+    let warned10 = false;
+    const timeoutKey = startedAt.getTime();
+
+    const tick = () => {
       const elapsed = Math.floor((Date.now() - startedAt.getTime()) / 1000);
       const remaining = Math.max(0, totalSeconds - elapsed);
       setSecondsRemaining(remaining);
 
-      // Check warnings
       if (remaining <= 30 && remaining > 10 && !warned30) {
-        setWarned30(true);
-        onWarning?.(30);
+        warned30 = true;
+        onWarningRef.current?.(30);
       }
       if (remaining <= 10 && remaining > 0 && !warned10) {
-        setWarned10(true);
-        onWarning?.(10);
+        warned10 = true;
+        onWarningRef.current?.(10);
       }
 
-      // Check timeout
       if (remaining === 0) {
         clearInterval(interval);
-        onTimeout();
+        if (timedOutForRef.current !== timeoutKey) {
+          timedOutForRef.current = timeoutKey;
+          onTimeoutRef.current();
+        }
       }
-    }, 1000);
+    };
+
+    // 250ms keeps the displayed second accurate against wall-clock drift;
+    // React bails out of re-rendering when the computed value is unchanged.
+    const interval = setInterval(tick, 250);
+    tick();
 
     return () => clearInterval(interval);
-  }, [startedAt, totalSeconds, onTimeout, onWarning, warned30, warned10]);
+  }, [startedAt, totalSeconds]);
 
   // Determine color based on time remaining
   const getTimerColor = () => {
@@ -83,10 +110,18 @@ interface TimerWarningToastProps {
 }
 
 export function TimerWarningToast({ secondsLeft, onClose }: TimerWarningToastProps) {
+  // onClose via ref: parents pass inline arrows, and re-creating the timeout
+  // on every parent re-render would keep the toast alive indefinitely while
+  // the candidate answers quickly.
+  const onCloseRef = useRef(onClose);
   useEffect(() => {
-    const timeout = setTimeout(onClose, 3000);
+    onCloseRef.current = onClose;
+  });
+
+  useEffect(() => {
+    const timeout = setTimeout(() => onCloseRef.current(), 3000);
     return () => clearTimeout(timeout);
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
