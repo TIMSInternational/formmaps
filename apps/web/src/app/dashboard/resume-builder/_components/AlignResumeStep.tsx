@@ -107,13 +107,11 @@ export function AlignResumeStep({
   }, []);
 
   const toggleSelectAll = useCallback(() => {
-    setSelectedKeywords((prev) => {
-      if (prev.size === missingKeywords.length) {
-        return new Set();
-      }
-      return new Set(missingKeywords);
-    });
-  }, [missingKeywords]);
+    // "Select all" covers custom keywords too — resetting to only the job's
+    // missing keywords silently dropped anything the user typed in.
+    const all = [...missingKeywords, ...config.additionalKeywords];
+    setSelectedKeywords((prev) => (prev.size === all.length ? new Set() : new Set(all)));
+  }, [missingKeywords, config.additionalKeywords]);
 
   const addCustomKeyword = useCallback(() => {
     const trimmed = customInput.trim();

@@ -52,7 +52,7 @@ export function CourseManager() {
     } else if (courseQuery.data?.courses?.length) {
       setCourses(courseQuery.data.courses);
     }
-  }, [courseQuery.data?.courses]);
+  }, [adminQuery.data?.courses, courseQuery.data?.courses]);
   const filteredCourses = courses.filter(
     (course) =>
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

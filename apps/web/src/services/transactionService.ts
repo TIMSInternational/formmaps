@@ -22,13 +22,21 @@ export interface TransactionResponse {
 import { apiRequest } from "@/lib/api/apiClient";
 
 // The API returns Payment rows (createdDate, nullable description, no `method`).
-// Map them to the Transaction shape the UI renders.
+// Map them to the Transaction shape the UI renders. Stripe writes status
+// "succeeded" — the UI's tabs/badges/totals all speak "completed", so without
+// this normalization no real payment ever matched a "completed" filter.
+function normalizeStatus(status: string): Transaction["status"] {
+  if (status === "succeeded" || status === "completed") return "completed";
+  if (status === "failed" || status === "refunded") return status;
+  return "pending";
+}
+
 function mapTransaction(p: any): Transaction {
   return {
     id: p.id,
     amount: Number(p.amount ?? 0),
     currency: p.currency ?? "USD",
-    status: p.status,
+    status: normalizeStatus(p.status ?? ""),
     date: p.date ?? p.createdDate,
     description: p.description ?? "Payment",
     method: p.method ?? undefined,
@@ -59,6 +67,24 @@ export async function getUserTransactions(params?: {
     page: pagination.page ?? params?.page ?? 1,
     limit: pagination.limit ?? params?.limit ?? rows.length,
     totalPages: pagination.totalPages ?? 1,
+  };
+}
+
+export interface TransactionStats {
+  totalSpent: number;
+  monthlySpent: number;
+  totalTransactions: number;
+}
+
+/** Whole-history spend stats (succeeded payments only) — the paginated list
+ *  must never be used to derive totals, it only holds the current page. */
+export async function getTransactionStats(): Promise<TransactionStats> {
+  const res = await apiRequest(`/api/v1/user/transactions/stats`);
+  const data = res?.data ?? res ?? {};
+  return {
+    totalSpent: Number(data.totalSpent ?? 0),
+    monthlySpent: Number(data.monthlySpent ?? 0),
+    totalTransactions: Number(data.totalTransactions ?? 0),
   };
 }
 

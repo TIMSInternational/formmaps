@@ -150,11 +150,11 @@ export function validateEducation(education: any[]): ValidationResult {
     });
   }
 
-  const completionPercentage = education.length >= requiredFields[4].minItems ? 100 :
-    (education.length / requiredFields[4].minItems) * 100;
+  const completionPercentage = education.length >= requiredFields[5].minItems ? 100 :
+    (education.length / requiredFields[5].minItems) * 100;
 
   return {
-    isValid: missing.length === 0 && education.length >= requiredFields[4].minItems,
+    isValid: missing.length === 0 && education.length >= requiredFields[5].minItems,
     missingFields: missing,
     completionPercentage
   };
@@ -163,15 +163,15 @@ export function validateEducation(education: any[]): ValidationResult {
 export function validateSkills(skills: any[]): ValidationResult {
   const missing: string[] = [];
   
-  if (!skills || skills.length < requiredFields[5].minItems) {
-    missing.push(`at least ${requiredFields[5].minItems} skills`);
+  if (!skills || skills.length < requiredFields[6].minItems) {
+    missing.push(`at least ${requiredFields[6].minItems} skills`);
   }
 
-  const completionPercentage = skills.length >= requiredFields[5].minItems ? 100 :
-    (skills.length / requiredFields[5].minItems) * 100;
+  const completionPercentage = skills.length >= requiredFields[6].minItems ? 100 :
+    (skills.length / requiredFields[6].minItems) * 100;
 
   return {
-    isValid: skills.length >= requiredFields[5].minItems,
+    isValid: skills.length >= requiredFields[6].minItems,
     missingFields: missing,
     completionPercentage
   };

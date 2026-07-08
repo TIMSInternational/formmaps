@@ -33,7 +33,9 @@ import {
 import { cn } from "@/lib/utils";
 import {
   getUserTransactions,
+  getTransactionStats,
   Transaction,
+  TransactionStats,
 } from "@/services/transactionService";
 import { useExportTransactions } from "@/hooks/useTransactionDashboard";
 import { toast } from "sonner";
@@ -61,6 +63,7 @@ export default function TransactionsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState<TransactionStats | null>(null);
   const limit = 10;
 
   const { mutate: exportTransactions, isPending: isExporting } =
@@ -69,6 +72,10 @@ export default function TransactionsPage() {
   useEffect(() => {
     fetchTransactions();
   }, [page]);
+
+  useEffect(() => {
+    getTransactionStats().then(setStats).catch(() => setStats(null));
+  }, []);
 
   const fetchTransactions = async () => {
     setIsLoading(true);
@@ -113,14 +120,10 @@ export default function TransactionsPage() {
     );
   };
 
-  // Calculate stats
-  const totalSpent = transactions
-    .filter((t) => t.status === "completed")
-    .reduce((acc, curr) => acc + curr.amount, 0);
-
-  const invoiceCount = transactions.filter(
-    (t) => t.status === "completed"
-  ).length;
+  // Whole-history stats from /transactions/stats — deriving them from
+  // `transactions` (the current page) undercounted for anyone past page 1.
+  const totalSpent = stats?.totalSpent ?? 0;
+  const invoiceCount = stats?.totalTransactions ?? 0;
 
   const activeMethod =
     transactions.length > 0 ? transactions[0].method : "No active method";

@@ -107,10 +107,16 @@ export default function AdminTransactionsPage() {
       return;
     }
     const headers = ["ID", "Date", "Amount", "Currency", "Status", "Description"];
+    // Quote every cell and neutralize leading =+-@ (CSV formula injection —
+    // descriptions are user-influenced text).
+    const cell = (v: unknown) => {
+      const s = String(v ?? "");
+      return `"${(/^[=+\-@\t\r]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"`;
+    };
     const rows = transactions.map((t: any) => [
       t.id, t.date || t.createdDate, (t.amount / 100).toFixed(2), t.currency || "USD", t.status, t.description || ""
     ]);
-    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+    const csv = [headers, ...rows].map((r) => r.map(cell).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
