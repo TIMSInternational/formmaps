@@ -37,7 +37,7 @@ export function CareerMatches() {
             className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#2E9098] to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white text-sm font-bold">
                   {match.title.charAt(0)}
                 </span>
@@ -97,7 +97,7 @@ export function CareerMatches() {
         ))}
       </div>
       
-      <button className="text-sm text-blue-600 hover:text-blue-700 mt-4">
+      <button className="text-sm text-[#2E9098] hover:text-[#2E9098] mt-4">
         Show more
       </button>
     </motion.div>

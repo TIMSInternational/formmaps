@@ -29,7 +29,7 @@ function getStatusBadge(status: string, t: (k: string) => string) {
     case "confirmed":
     case "rescheduled":
       return (
-        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">
+        <Badge className="bg-[#2E9098]/10 text-[#2E9098] hover:bg-[#2E9098]/10 border-[#2E9098]/20">
           {t("coach:sessionsPage.statusBadge.upcoming")}
         </Badge>
       );
@@ -86,7 +86,7 @@ export function SessionCard({
           >
             <Avatar className="h-10 w-10 border border-[var(--border)]">
               <AvatarImage src={session.studentAvatar} />
-              <AvatarFallback className="text-sm bg-blue-500/10 text-blue-600 font-semibold">
+              <AvatarFallback className="text-sm bg-[#2E9098]/10 text-[#2E9098] font-semibold">
                 {session.studentName?.charAt(0)}
               </AvatarFallback>
             </Avatar>
@@ -112,7 +112,7 @@ export function SessionCard({
 
           <div className="flex items-center gap-2 flex-shrink-0">
             {isActive && session.meetingLink && (
-              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 px-3 text-xs rounded-lg" asChild>
+              <Button size="sm" className="bg-[#2E9098] hover:bg-[#2E9098] text-white h-8 px-3 text-xs rounded-lg" asChild>
                 <a href={session.meetingLink} target="_blank" rel="noreferrer">
                   <Video className="w-3.5 h-3.5 mr-1" /> {t("coach:sessionsPage.card.join")}
                 </a>

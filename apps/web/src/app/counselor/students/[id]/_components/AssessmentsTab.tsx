@@ -246,7 +246,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
             <CardHeader>
               <CardTitle className="flex items-center justify-between text-base">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-blue-600" />
+                  <Users className="h-4 w-4 text-[#2E9098]" />
                   {t("assessments.eval360Title", "360° Evaluation")}
                 </div>
                 <StatusBadge status={assessmentProgress?.evaluationAssessment?.status ?? "not_started"} />

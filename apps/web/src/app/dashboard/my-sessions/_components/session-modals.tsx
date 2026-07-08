@@ -119,7 +119,7 @@ export function ReviewSessionDialog({
               >
                 <Star
                   className={`h-10 w-10 ${
-                    star <= rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                    star <= rating ? "fill-[#FFD23F] text-[#FFD23F]" : "text-muted-foreground"
                   }`}
                 />
               </button>

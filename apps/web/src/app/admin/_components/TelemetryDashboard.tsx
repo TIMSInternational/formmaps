@@ -92,7 +92,7 @@ export const TelemetryDashboard = React.memo(function TelemetryDashboard({ perio
   const formatPercent = (value: number) => `${Math.round((value || 0) * 100)}%`;
 
   const telemetryStats = [
-    { label: t("telemetry.stats.dailyUsers"), value: (metrics.dau || 0).toLocaleString(), subtext: t("telemetry.stats.activeWithin24h"), icon: Users, color: "text-blue-600", bg: "bg-blue-50", blobColor: "bg-blue-500" },
+    { label: t("telemetry.stats.dailyUsers"), value: (metrics.dau || 0).toLocaleString(), subtext: t("telemetry.stats.activeWithin24h"), icon: Users, color: "text-[#2E9098]", bg: "bg-[#2E9098]/10", blobColor: "bg-[#2E9098]" },
     { label: t("telemetry.stats.weeklyUsers"), value: (metrics.wau || 0).toLocaleString(), subtext: t("telemetry.stats.activePast7Days"), icon: Calendar, color: "text-emerald-600", bg: "bg-emerald-50", blobColor: "bg-emerald-500" },
     { label: t("telemetry.stats.retentionRate"), value: formatPercent(metrics.retentionRate || 0), subtext: t("telemetry.stats.returningUsers"), icon: Heart, color: "text-rose-600", bg: "bg-rose-50", blobColor: "bg-rose-500" },
     { label: t("telemetry.stats.avgDuration"), value: formatDuration(metrics.avgSessionDuration || 0), subtext: t("telemetry.stats.timeOnSite"), icon: Clock, color: "text-amber-600", bg: "bg-amber-50", blobColor: "bg-amber-500" },

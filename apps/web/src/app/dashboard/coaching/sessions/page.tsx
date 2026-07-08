@@ -340,8 +340,8 @@ export default function SessionsPage() {
             </div>
           ) : sortedSessions.length === 0 ? (
             <div className="dash-card text-center py-20 sm:py-32 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center">
-              <div className="h-20 w-20 bg-blue-50 rounded-full flex items-center justify-center mb-6 ring-8 ring-blue-50/50">
-                <CalendarDays className="h-10 w-10 text-blue-500" strokeWidth={1.5} />
+              <div className="h-20 w-20 bg-[#2E9098]/10 rounded-full flex items-center justify-center mb-6 ring-8 ring-[#2E9098]/10">
+                <CalendarDays className="h-10 w-10 text-[#2E9098]" strokeWidth={1.5} />
               </div>
               <h3 className="text-xl font-bold text-foreground mb-2">{t("coach:sessionsPage.noSessionsTitle")}</h3>
               <p className="text-muted-foreground max-w-sm mx-auto">
@@ -353,7 +353,7 @@ export default function SessionsPage() {
                 <Button
                   variant="link"
                   onClick={() => { setSearchQuery(""); setStatusFilter(null); }}
-                  className="mt-4 text-blue-600"
+                  className="mt-4 text-[#2E9098]"
                 >
                   {t("coach:sessionsPage.clearFilters")}
                 </Button>

@@ -58,7 +58,7 @@ export function StudentStatCards({ student }: StudentStatCardsProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-gray-600">{t("statCards.lastActive", "Last Active")}</CardTitle>
-          <Clock className="h-4 w-4 text-blue-600" />
+          <Clock className="h-4 w-4 text-[#2E9098]" />
         </CardHeader>
         <CardContent>
           <div className="text-lg font-bold">

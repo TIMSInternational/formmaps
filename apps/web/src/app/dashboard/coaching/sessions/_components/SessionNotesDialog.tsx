@@ -26,8 +26,8 @@ export function SessionNotesDialog({ open, onOpenChange, session }: SessionNotes
       <DialogContent className="max-w-2xl p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-2xl font-bold flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
-              <FileText className="h-5 w-5 text-blue-600" />
+            <div className="h-10 w-10 rounded-full bg-[#2E9098]/10 flex items-center justify-center">
+              <FileText className="h-5 w-5 text-[#2E9098]" />
             </div>
             {t("coach:sessionsPage.notes.title")}
           </DialogTitle>

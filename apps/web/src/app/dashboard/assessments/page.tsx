@@ -80,8 +80,8 @@ export default function AssessmentsPage() {
     {
       key: "pca",
       icon: Brain,
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-600",
+      iconBg: "bg-[#2E9098]/10",
+      iconColor: "text-[#2E9098]",
       title: t("dashboard.pcaTitle"),
       description: t("dashboard.pcaDescription"),
       status: pcaStatus,

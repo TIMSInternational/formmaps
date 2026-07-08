@@ -186,7 +186,7 @@ export default function CoachSchedulePage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: t("coach:schedule.stats.total"), value: sessions.length, icon: CalendarDays, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
+          { label: t("coach:schedule.stats.total"), value: sessions.length, icon: CalendarDays, iconColor: "text-[#2E9098]", iconBg: "bg-[#2E9098]/10" },
           { label: t("coach:schedule.stats.upcoming"), value: upcomingSessions.length, icon: Clock, iconColor: "text-purple-500", iconBg: "bg-purple-500/10" },
           { label: t("coach:schedule.stats.completed"), value: pastSessions.filter(s => s.status === "completed").length, icon: CheckCircle2, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
           { label: t("coach:schedule.stats.cancelled"), value: sessions.filter(s => s.status === "cancelled").length, icon: XCircle, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
@@ -250,7 +250,7 @@ export default function CoachSchedulePage() {
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <Avatar className="h-10 w-10 border border-[var(--border)]">
                             <AvatarImage src={session.studentImage} />
-                            <AvatarFallback className="bg-blue-500/10 text-blue-600 font-semibold text-sm">
+                            <AvatarFallback className="bg-[#2E9098]/10 text-[#2E9098] font-semibold text-sm">
                               {session.studentName?.charAt(0) || "S"}
                             </AvatarFallback>
                           </Avatar>

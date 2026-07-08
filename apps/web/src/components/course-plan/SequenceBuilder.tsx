@@ -125,7 +125,7 @@ const STATUS_COLORS: Record<string, string> = {
   dropped: "bg-red-100 text-red-600 border-red-200",
   pending_add: "bg-amber-100 text-amber-700 border-amber-200",
   pending_remove: "bg-orange-100 text-orange-700 border-orange-200",
-  draft_proposed: "bg-yellow-50 text-gray-900 border-[#FFD23F]",
+  draft_proposed: "bg-[#FFD23F]/10 text-gray-900 border-[#FFD23F]",
 };
 
 const STATUS_ICONS: Record<string, typeof CheckCircle2> = {

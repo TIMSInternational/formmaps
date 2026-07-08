@@ -61,14 +61,14 @@ export function TemplatePreviewStep() {
       </div>
 
       {/* Completion Progress */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
+      <div className="bg-gradient-to-r from-[#2E9098]/10 to-[#102B47]/10 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-medium text-gray-900">Resume Completion</h3>
-          <span className="text-sm font-medium text-indigo-600">{Math.round(completionPercentage)}% Complete</span>
+          <span className="text-sm font-medium text-[#2E9098]">{Math.round(completionPercentage)}% Complete</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
           <div 
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-300"
+            className="bg-gradient-to-r from-[#2E9098] to-[#102B47] h-2 rounded-full transition-all duration-300"
             style={{ width: `${completionPercentage}%` }}
           />
         </div>
@@ -84,7 +84,7 @@ export function TemplatePreviewStep() {
         {/* Career Field */}
         <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
           <div className="flex items-center space-x-3">
-            <Target className="w-5 h-5 text-blue-600" />
+            <Target className="w-5 h-5 text-[#2E9098]" />
             <div>
               <h4 className="font-medium text-gray-900">Career Field</h4>
               <p className="text-sm text-gray-600">
@@ -107,7 +107,7 @@ export function TemplatePreviewStep() {
         {/* Personal Information */}
         <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
           <div className="flex items-center space-x-3">
-            <User className="w-5 h-5 text-blue-600" />
+            <User className="w-5 h-5 text-[#2E9098]" />
             <div>
               <h4 className="font-medium text-gray-900">Personal Information</h4>
               <p className="text-sm text-gray-600">
@@ -127,7 +127,7 @@ export function TemplatePreviewStep() {
         {/* Experience */}
         <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
           <div className="flex items-center space-x-3">
-            <Briefcase className="w-5 h-5 text-blue-600" />
+            <Briefcase className="w-5 h-5 text-[#2E9098]" />
             <div>
               <h4 className="font-medium text-gray-900">Work Experience</h4>
               <p className="text-sm text-gray-600">
@@ -147,7 +147,7 @@ export function TemplatePreviewStep() {
         {/* Education */}
         <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
           <div className="flex items-center space-x-3">
-            <GraduationCap className="w-5 h-5 text-blue-600" />
+            <GraduationCap className="w-5 h-5 text-[#2E9098]" />
             <div>
               <h4 className="font-medium text-gray-900">Education</h4>
               <p className="text-sm text-gray-600">
@@ -167,7 +167,7 @@ export function TemplatePreviewStep() {
         {/* Skills */}
         <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
           <div className="flex items-center space-x-3">
-            <Zap className="w-5 h-5 text-blue-600" />
+            <Zap className="w-5 h-5 text-[#2E9098]" />
             <div>
               <h4 className="font-medium text-gray-900">Skills</h4>
               <p className="text-sm text-gray-600">

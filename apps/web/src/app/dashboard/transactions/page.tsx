@@ -137,8 +137,8 @@ export default function TransactionsPage() {
       label: t("transactions.invoices"),
       value: invoiceCount.toString(),
       icon: Receipt,
-      accentColor: "text-blue-600",
-      accentBg: "bg-blue-500/10",
+      accentColor: "text-[#2E9098]",
+      accentBg: "bg-[#2E9098]/10",
     },
     {
       label: t("transactions.lastUsedMethod"),

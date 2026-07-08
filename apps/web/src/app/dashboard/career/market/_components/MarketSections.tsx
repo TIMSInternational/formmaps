@@ -101,13 +101,13 @@ export function HiringVolumeCard({ hoveredRole, setHoveredRole }: { hoveredRole:
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
       className="md:col-span-4 bg-white border border-slate-200/60 rounded-[2rem] p-6 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-slate-200/60 transition-all relative overflow-hidden"
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full blur-3xl -mr-10 -mt-10" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#2E9098]/10 rounded-full blur-3xl -mr-10 -mt-10" />
       <div className="relative z-10 flex flex-col h-full justify-between">
         <div>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-blue-50 rounded-xl border border-blue-100">
-                <Search className="w-5 h-5 text-blue-600" />
+              <div className="p-2.5 bg-[#2E9098]/10 rounded-xl border border-[#2E9098]/20">
+                <Search className="w-5 h-5 text-[#2E9098]" />
               </div>
               <span className="font-bold text-slate-700">Open Roles</span>
             </div>

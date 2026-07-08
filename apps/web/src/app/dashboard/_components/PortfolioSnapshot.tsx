@@ -72,7 +72,7 @@ export function PortfolioSnapshot({ className }: { className?: string }) {
           </p>
           <Link
             href="/dashboard/portfolio"
-            className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 mt-3"
+            className="inline-flex items-center gap-1 text-sm font-medium text-[#2E9098] hover:text-[#2E9098]/80 mt-3"
           >
             <Plus className="w-4 h-4" /> Add your first item
           </Link>
@@ -111,7 +111,7 @@ export function PortfolioSnapshot({ className }: { className?: string }) {
 
           <Link
             href="/dashboard/portfolio"
-            className="inline-flex items-center justify-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 mt-3"
+            className="inline-flex items-center justify-center gap-1 text-xs font-medium text-[#2E9098] hover:text-[#2E9098]/80 mt-3"
           >
             <Plus className="w-3.5 h-3.5" /> Add to Portfolio
           </Link>

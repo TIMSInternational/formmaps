@@ -88,7 +88,7 @@ function ParentRow({ parent }: { parent: StudentParentLink }) {
       className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 bg-white hover:bg-gray-50 transition-colors"
     >
       <Avatar className="h-10 w-10">
-        <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold text-sm">
+        <AvatarFallback className="bg-[#2E9098]/10 text-[#2E9098] font-semibold text-sm">
           {initials}
         </AvatarFallback>
       </Avatar>
@@ -119,7 +119,7 @@ function ParentRow({ parent }: { parent: StudentParentLink }) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-gray-400 hover:text-blue-600"
+            className="h-7 w-7 text-gray-400 hover:text-[#2E9098]"
             title="Resend invite"
             disabled={resend.isPending}
             onClick={() => resend.mutate(parent.id)}
@@ -178,7 +178,7 @@ export function StudentInviteParentPanel() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <Users className="h-4 w-4 text-blue-500" />
+            <Users className="h-4 w-4 text-[#2E9098]" />
             Parents & Guardians
           </h3>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -188,7 +188,7 @@ export function StudentInviteParentPanel() {
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+            <Button size="sm" className="gap-2 bg-[#2E9098] hover:bg-[#2E9098]/90 text-white">
               <UserPlus className="h-4 w-4" />
               Invite Parent
             </Button>
@@ -267,7 +267,7 @@ export function StudentInviteParentPanel() {
               <Button
                 onClick={handleInvite}
                 disabled={!name.trim() || !email.trim() || invite.isPending}
-                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                className="gap-2 bg-[#2E9098] hover:bg-[#2E9098]/90 text-white"
               >
                 <Send className="h-4 w-4" />
                 {invite.isPending ? "Sending…" : "Send Invite"}

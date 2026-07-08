@@ -247,7 +247,7 @@ export function CourseManager() {
                       {course.provider}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-[#2E9098]/10 text-[#2E9098]">
                         {course.category}
                       </span>
                     </td>

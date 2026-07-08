@@ -130,7 +130,7 @@ export function StepIndicator() {
                             ? "cursor-pointer"
                             : "cursor-not-allowed opacity-50",
                           isCurrent
-                            ? "bg-indigo-600 text-white shadow-lg ring-2 ring-indigo-200"
+                            ? "bg-[#2E9098] text-white shadow-lg ring-2 ring-[#2E9098]/30"
                             : isCompleted && stepValidation.isValid
                             ? "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
                             : isCompleted && !stepValidation.isValid
@@ -226,7 +226,7 @@ export function StepIndicator() {
           <div className="mt-3 px-2">
             <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full"
+                className="h-full bg-gradient-to-r from-[#2E9098] to-[#102B47] rounded-full"
                 initial={{ width: 0 }}
                 animate={{
                   width: `${(currentStep / resumeSteps.length) * 100}%`,
@@ -254,7 +254,7 @@ export function StepIndicator() {
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-1.5 mb-3">
             <motion.div
-              className="bg-gradient-to-r from-indigo-600 to-blue-600 h-1.5 rounded-full"
+              className="bg-gradient-to-r from-[#2E9098] to-[#102B47] h-1.5 rounded-full"
               initial={{ width: 0 }}
               animate={{
                 width: `${(currentStep / resumeSteps.length) * 100}%`,
@@ -284,7 +284,7 @@ export function StepIndicator() {
                       ? "cursor-pointer"
                       : "cursor-not-allowed opacity-50",
                     isCurrent
-                      ? "bg-indigo-600 text-white shadow-md"
+                      ? "bg-[#2E9098] text-white shadow-md"
                       : isCompleted && stepValidation.isValid
                       ? "bg-green-100 text-green-700 border border-green-200"
                       : isCompleted && !stepValidation.isValid
@@ -371,7 +371,7 @@ export function StepIndicator() {
               "flex items-center space-x-1 px-3 py-2 rounded-lg text-xs font-medium transition-all",
               currentStep === resumeSteps.length
                 ? "text-gray-400 cursor-not-allowed"
-                : "text-indigo-600 hover:bg-indigo-50"
+                : "text-[#2E9098] hover:bg-[#2E9098]/10"
             )}
           >
             <span>Next</span>

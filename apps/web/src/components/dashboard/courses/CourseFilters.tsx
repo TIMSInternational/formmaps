@@ -108,11 +108,11 @@ export function CourseFilters({
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className={`h-[50px] rounded-xl border-gray-200 bg-white text-gray-700 font-medium hover:bg-gray-50 justify-between min-w-[160px] ${count > 0 ? 'border-blue-200 bg-blue-50/50 text-blue-700' : ''}`}>
+          <Button variant="outline" className={`h-[50px] rounded-xl border-gray-200 bg-white text-gray-700 font-medium hover:bg-gray-50 justify-between min-w-[160px] ${count > 0 ? 'border-[#2E9098]/30 bg-[#2E9098]/10 text-[#2E9098]' : ''}`}>
             <span className="flex items-center gap-2">
               {title}
               {count > 0 && (
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 h-5 px-1.5 text-[10px]">
+                <Badge variant="secondary" className="bg-[#2E9098]/10 text-[#2E9098] hover:bg-[#2E9098]/10 h-5 px-1.5 text-[10px]">
                   {count}
                 </Badge>
               )}
@@ -128,7 +128,7 @@ export function CourseFilters({
                   id={`${filterKey}-${option}`} 
                   checked={selectedValues?.includes(option)}
                   onCheckedChange={() => handleFilterChange(filterKey, option)}
-                  className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                  className="border-gray-300 data-[state=checked]:bg-[#2E9098] data-[state=checked]:border-[#2E9098]"
                 />
                 <label
                   htmlFor={`${filterKey}-${option}`}
@@ -161,12 +161,12 @@ export function CourseFilters({
           {/* Search Bar */}
           <div className="flex-1 relative group z-20">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+              <Search className="h-5 w-5 text-gray-400 group-focus-within:text-[#2E9098] transition-colors" />
             </div>
             <input
               type="text"
               placeholder={t("courses.searchCourses")}
-              className="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-base"
+              className="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2E9098]/20 focus:border-[#2E9098] transition-all text-base"
               value={filters.search || ""}
               onChange={(e) => handleSearchChange(e.target.value)}
             />
@@ -195,7 +195,7 @@ export function CourseFilters({
           {/* Sort Dropdown */}
           <div className="min-w-[200px]">
             <Select value={sortBy} onValueChange={onSortChange}>
-              <SelectTrigger className="w-full h-[50px] rounded-xl border-gray-200 bg-white text-gray-700 font-medium focus:ring-blue-500/20 focus:border-blue-500 hover:bg-gray-50">
+              <SelectTrigger className="w-full h-[50px] rounded-xl border-gray-200 bg-white text-gray-700 font-medium focus:ring-[#2E9098]/20 focus:border-[#2E9098] hover:bg-gray-50">
                 <SelectValue placeholder={t("courses.sortBy")} />
               </SelectTrigger>
               <SelectContent>

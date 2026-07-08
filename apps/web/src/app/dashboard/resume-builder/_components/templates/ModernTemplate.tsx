@@ -552,7 +552,7 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
   return (
     <div className="w-full h-full bg-white p-6 text-xs overflow-hidden">
       {/* Header */}
-      <div className="border-b-2 border-blue-500 pb-3 mb-4">
+      <div className="border-b-2 border-[#2E9098] pb-3 mb-4">
         <h1 className="text-2xl font-bold text-gray-800 mb-1">
           {data.personalInfo.fullName}
         </h1>
@@ -645,7 +645,7 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
                   <h3 className="font-bold text-gray-800 text-xs">
                     {exp.jobTitle}
                   </h3>
-                  <p className="text-blue-600 text-xs font-medium">
+                  <p className="text-[#2E9098] text-xs font-medium">
                     {exp.company}
                   </p>
                 </div>
@@ -697,7 +697,7 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
               {data.skills.slice(0, 6).map((skill) => (
                 <span
                   key={skill.id}
-                  className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                  className="bg-[#2E9098]/10 text-[#102B47] text-xs px-2 py-1 rounded"
                 >
                   {skill.name}
                 </span>
@@ -739,7 +739,7 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
                         {entry.title || entry.name}
                       </h3>
                       {entry.technologies && (
-                        <p className="text-blue-600 text-xs">
+                        <p className="text-[#2E9098] text-xs">
                           {entry.technologies}
                         </p>
                       )}
@@ -751,7 +751,7 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
                         {entry.name || entry.title}
                       </h3>
                       {entry.issuer && (
-                        <p className="text-blue-600 text-xs">{entry.issuer}</p>
+                        <p className="text-[#2E9098] text-xs">{entry.issuer}</p>
                       )}
                     </>
                   )}
@@ -773,12 +773,12 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
                         {entry.title || entry.name}
                       </h3>
                       {entry.authors && (
-                        <p className="text-blue-600 text-xs">
+                        <p className="text-[#2E9098] text-xs">
                           Authors: {entry.authors}
                         </p>
                       )}
                       {entry.publisher && (
-                        <p className="text-blue-600 text-xs">
+                        <p className="text-[#2E9098] text-xs">
                           Publisher: {entry.publisher}
                         </p>
                       )}

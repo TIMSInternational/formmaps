@@ -83,7 +83,7 @@ export default function PrivacyPolicyPage() {
 
         <section>
           <h2 className="text-xl font-semibold mt-6 mb-2">8. Contact</h2>
-          <p>For privacy-related inquiries, contact us at <a href="mailto:privacy@formmaps.ai" className="text-blue-600 underline">privacy@formmaps.ai</a>.</p>
+          <p>For privacy-related inquiries, contact us at <a href="mailto:privacy@formmaps.ai" className="text-[#2E9098] underline">privacy@formmaps.ai</a>.</p>
         </section>
       </div>
     </main>

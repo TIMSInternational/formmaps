@@ -164,10 +164,10 @@ export default function AdminPayoutsPage() {
       label: tPO("payouts.stats.totalPayouts"),
       value: (statsData?.totalPayouts || 0).toLocaleString(),
       icon: CheckCircle,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-[#2E9098]",
+      bg: "bg-[#2E9098]/10",
       border: "border-blue-100",
-      blobColor: "bg-blue-500"
+      blobColor: "bg-[#2E9098]"
     },
     {
       label: tPO("payouts.stats.avgCommission"),

@@ -292,7 +292,7 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
 
                 <Link
                   href="/dashboard/career-paths"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-blue-400 hover:text-blue-300 mt-4"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-[#2E9098] hover:text-[#2E9098]/80 mt-4"
                 >
                   View in Career Explorer <ArrowRight className="w-4 h-4" />
                 </Link>

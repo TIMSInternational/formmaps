@@ -64,7 +64,7 @@ export const CourseCard = React.memo(function CourseCard({
         aria-labelledby={`course-${course.id}-title`}
       >
         {/* Hover Gradient Overlay */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500 transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#2E9098] to-[#102B47] transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
 
         {/* Thumbnail & Badges */}
         <div className="relative h-40 w-full rounded-2xl overflow-hidden mb-5">
@@ -79,7 +79,7 @@ export const CourseCard = React.memo(function CourseCard({
           
           <div className="absolute top-3 left-3 flex flex-col gap-2">
             {isRecommended && (
-              <Badge className="bg-blue-600 hover:bg-blue-700 text-white border-none shadow-sm backdrop-blur-sm">
+              <Badge className="bg-[#2E9098] hover:bg-[#2E9098]/90 text-white border-none shadow-sm backdrop-blur-sm">
                 {t("courses.recommended")}
               </Badge>
             )}
@@ -101,7 +101,7 @@ export const CourseCard = React.memo(function CourseCard({
         <div className="flex flex-col flex-grow">
           <div className="flex items-start justify-between mb-3">
             <div>
-              <h3 id={`course-${course.id}-title`} className="font-bold text-lg text-gray-900 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2 mb-1">
+              <h3 id={`course-${course.id}-title`} className="font-bold text-lg text-gray-900 leading-tight group-hover:text-[#2E9098] transition-colors line-clamp-2 mb-1">
                 {course.title}
               </h3>
               <p className="text-sm font-medium text-gray-500 flex items-center gap-1.5">
@@ -139,7 +139,7 @@ export const CourseCard = React.memo(function CourseCard({
               className={`rounded-xl px-5 font-medium shadow-sm transition-all ${
                 enrollmentStatus === "completed" 
                   ? "bg-gray-100 text-gray-900 hover:bg-gray-200" 
-                  : "bg-gray-900 text-white hover:bg-blue-600 hover:shadow-blue-200"
+                  : "bg-gray-900 text-white hover:bg-[#2E9098] hover:shadow-[#2E9098]/20"
               }`}
             >
               {enrollmentStatus === "completed"
@@ -165,7 +165,7 @@ export const CourseCard = React.memo(function CourseCard({
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-9 w-9 text-gray-300 group-hover:text-blue-500 transition-colors rounded-full hover:bg-blue-50"
+                className="h-9 w-9 text-gray-300 group-hover:text-[#2E9098] transition-colors rounded-full hover:bg-[#2E9098]/10"
                 aria-label={`View ${course.title} details`}
               >
                 <ArrowUpRight className="h-5 w-5" aria-hidden="true" />

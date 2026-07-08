@@ -202,13 +202,13 @@ export default function CoachProfilePage() {
               <div className="w-full mt-6 pt-4 border-t border-[var(--border)]">
                 <div className="flex justify-between text-xs mb-2">
                   <span className="text-muted-foreground font-medium">Profile Strength</span>
-                  <span className={completionPercentage === 100 ? "text-emerald-500 font-bold" : "text-blue-500 font-bold"}>
+                  <span className={completionPercentage === 100 ? "text-emerald-500 font-bold" : "text-[#2E9098] font-bold"}>
                     {completionPercentage}%
                   </span>
                 </div>
                 <div className="h-1.5 w-full bg-[var(--admin-bg-hover)] rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-700 ${completionPercentage === 100 ? "bg-emerald-500" : "bg-blue-500"}`}
+                    className={`h-full rounded-full transition-all duration-700 ${completionPercentage === 100 ? "bg-emerald-500" : "bg-[#2E9098]"}`}
                     style={{ width: `${completionPercentage}%` }}
                   />
                 </div>
@@ -222,8 +222,8 @@ export default function CoachProfilePage() {
           {/* Personal Details */}
           <div className="dash-card overflow-hidden">
             <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <User className="h-4 w-4 text-blue-500" />
+              <div className="h-8 w-8 rounded-lg bg-[#2E9098]/10 flex items-center justify-center">
+                <User className="h-4 w-4 text-[#2E9098]" />
               </div>
               <div>
                 <span className="text-sm font-semibold text-foreground">Personal Details</span>

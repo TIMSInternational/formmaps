@@ -217,7 +217,7 @@ export default function AnalyticsPage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: t("coach:analytics.stats.totalEarnings"), value: `$${stats.totalEarnings.toLocaleString()}`, icon: Wallet, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
+          { label: t("coach:analytics.stats.totalEarnings"), value: `$${stats.totalEarnings.toLocaleString()}`, icon: Wallet, iconColor: "text-[#2E9098]", iconBg: "bg-[#2E9098]/10" },
           { label: t("coach:analytics.stats.totalSessions"), value: stats.totalSessions, icon: Clock, iconColor: "text-purple-500", iconBg: "bg-purple-500/10" },
           { label: t("coach:analytics.stats.avgRating"), value: stats.averageRating?.toFixed ? stats.averageRating.toFixed(1) : stats.averageRating, icon: Star, iconColor: "text-amber-500", iconBg: "bg-amber-500/10" },
           { label: t("coach:analytics.stats.activeStudents"), value: stats.clientCount, icon: Users, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },

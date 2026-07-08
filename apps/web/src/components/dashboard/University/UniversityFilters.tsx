@@ -38,7 +38,7 @@ function Chip({
       className={cn(
         "inline-flex items-center rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all duration-200",
         active
-          ? "border-blue-200 bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-200"
+          ? "border-[#2E9098]/30 bg-[#2E9098]/10 text-[#2E9098] shadow-sm ring-1 ring-[#2E9098]/30"
           : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300"
       )}
     >
@@ -139,7 +139,7 @@ export function UniversityFilters({
             )}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 pl-8 text-xs bg-gray-50 border-gray-200 focus:bg-white focus:border-blue-200 transition-all rounded-lg"
+            className="h-9 pl-8 text-xs bg-gray-50 border-gray-200 focus:bg-white focus:border-[#2E9098] transition-all rounded-lg"
           />
         </div>
       </div>
@@ -222,7 +222,7 @@ export function UniversityFilters({
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400">$</span>
             <Input
               type="number"
-              className="h-8 pl-6 pr-2 text-xs bg-white border-gray-200 focus:border-blue-200 rounded-lg"
+              className="h-8 pl-6 pr-2 text-xs bg-white border-gray-200 focus:border-[#2E9098] rounded-lg"
               value={tuitionMin}
               onChange={(e) =>
                 handleTuitionChange(Number(e.target.value) || 0, "min")
@@ -234,7 +234,7 @@ export function UniversityFilters({
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400">$</span>
             <Input
               type="number"
-              className="h-8 pl-6 pr-2 text-xs bg-white border-gray-200 focus:border-blue-200 rounded-lg"
+              className="h-8 pl-6 pr-2 text-xs bg-white border-gray-200 focus:border-[#2E9098] rounded-lg"
               value={tuitionMax}
               onChange={(e) =>
                 handleTuitionChange(Number(e.target.value) || 0, "max")
@@ -257,7 +257,7 @@ export function UniversityFilters({
             onCheckedChange={(val) =>
               onFiltersChange({ ...filters, hasFinancialAid: val || undefined })
             }
-            className="scale-75 data-[state=checked]:bg-blue-600"
+            className="scale-75 data-[state=checked]:bg-[#2E9098]"
           />
         </div>
         <div className="flex items-center justify-between gap-2 py-1">
@@ -271,7 +271,7 @@ export function UniversityFilters({
             onCheckedChange={(val) =>
               onFiltersChange({ ...filters, hasHousing: val || undefined })
             }
-            className="scale-75 data-[state=checked]:bg-blue-600"
+            className="scale-75 data-[state=checked]:bg-[#2E9098]"
           />
         </div>
       </div>

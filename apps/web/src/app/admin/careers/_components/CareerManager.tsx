@@ -160,7 +160,7 @@ export function CareerManager() {
                                     <div key={name} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={row}>
                                         <p className="flex-1 text-xs font-medium truncate" style={{ color: "var(--admin-font-primary)" }}>{name}</p>
                                         <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--admin-border-default)" }}>
-                                            <div className="h-full rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
+                                            <div className="h-full rounded-full bg-[#2E9098]" style={{ width: `${pct}%` }} />
                                         </div>
                                         <span className="text-[11px] font-semibold w-8 text-right" style={{ color: "var(--admin-font-tertiary)" }}>{count}</span>
                                     </div>

@@ -39,7 +39,7 @@ class PDFErrorBoundary extends React.Component<
             </p>
             <button
               onClick={() => this.setState({ hasError: false })}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+              className="bg-[#2E9098] hover:bg-[#2E9098]/90 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
             >
               Try Again
             </button>
@@ -234,7 +234,7 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
             <FileText size={18} className="text-gray-600" />
             <h3 className="text-sm font-medium text-gray-900">Live Preview</h3>
             {isDataChanging && (
-              <div className="flex items-center space-x-1 text-xs text-blue-600">
+              <div className="flex items-center space-x-1 text-xs text-[#2E9098]">
                 <Loader2 size={12} className="animate-spin" />
                 <span>Updating...</span>
               </div>
@@ -257,7 +257,7 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
             <div className="text-center">
               <Loader2
                 size={32}
-                className="animate-spin text-blue-600 mx-auto mb-3"
+                className="animate-spin text-[#2E9098] mx-auto mb-3"
               />
               <p className="text-sm text-gray-600">Loading PDF preview...</p>
             </div>
@@ -277,7 +277,7 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
                   setPdfError(null);
                   setPdfComponents(null);
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                className="bg-[#2E9098] hover:bg-[#2E9098]/90 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
               >
                 Retry
               </button>

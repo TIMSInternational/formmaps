@@ -213,14 +213,14 @@ export function TimelineFilters({
       <div className="flex flex-col gap-4">
         {/* Search Input */}
         <div className="relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-hover:text-[#2E9098] transition-colors" />
           <Input
             placeholder={
               language === "spanish" ? "Buscar eventos..." : "Search events..."
             }
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
-            className="pl-9 h-10 bg-gray-50/50 border-gray-200 focus:bg-white focus:border-blue-200 transition-all rounded-lg"
+            className="pl-9 h-10 bg-gray-50/50 border-gray-200 focus:bg-white focus:border-[#2E9098] transition-all rounded-lg"
           />
         </div>
 
@@ -230,8 +230,8 @@ export function TimelineFilters({
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-between px-3 h-10 font-normal border-gray-200 hover:bg-gray-50 hover:text-blue-600 transition-colors rounded-lg",
-                (date?.from || date?.to) && "bg-blue-50 text-blue-700 border-blue-200"
+                "w-full justify-between px-3 h-10 font-normal border-gray-200 hover:bg-gray-50 hover:text-[#2E9098] transition-colors rounded-lg",
+                (date?.from || date?.to) && "bg-[#2E9098]/10 text-[#2E9098] border-[#2E9098]/30"
               )}
             >
               <div className="flex items-center gap-2">
@@ -380,7 +380,7 @@ export function TimelineFiltersCompact({
           <Filter className="h-4 w-4" />
           {language === "spanish" ? "Filtros" : "Filters"}
           {activeFilterCount > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs text-white font-bold">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2E9098] text-xs text-white font-bold">
               {activeFilterCount}
             </span>
           )}
@@ -399,7 +399,7 @@ export function TimelineFiltersCompact({
                 search: e.target.value || undefined,
               })
             }
-            className="pl-9 h-9 bg-white border-gray-200 focus:border-blue-200 rounded-lg"
+            className="pl-9 h-9 bg-white border-gray-200 focus:border-[#2E9098] rounded-lg"
           />
         </div>
       </div>

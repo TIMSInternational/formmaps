@@ -303,7 +303,7 @@ export default function CareerDetails() {
                       <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">{t("careers.details.interests")}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {interests.map((i) => (
-                          <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full capitalize">
+                          <span key={i} className="text-xs bg-[#2E9098]/10 text-[#2E9098] px-2 py-1 rounded-full capitalize">
                             {i.replace(/_/g, " ")}
                           </span>
                         ))}

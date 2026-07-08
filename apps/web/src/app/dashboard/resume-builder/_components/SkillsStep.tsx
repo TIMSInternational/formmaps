@@ -144,7 +144,7 @@ export function SkillsStep() {
                 id="category"
                 value={formData.category}
                 onChange={(e) => handleInputChange('category', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#2E9098]"
               >
                 {skillCategories.map((category) => (
                   <option key={category.value} value={category.value}>
@@ -160,7 +160,7 @@ export function SkillsStep() {
                 id="level"
                 value={formData.level}
                 onChange={(e) => handleInputChange('level', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#2E9098]"
               >
                 {skillLevels.map((level) => (
                   <option key={level.value} value={level.value}>

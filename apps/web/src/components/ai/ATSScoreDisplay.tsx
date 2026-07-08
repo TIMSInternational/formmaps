@@ -130,12 +130,12 @@ export function ATSScoreDisplay({
 
         {/* Keywords Count */}
         {keywordsIncluded && keywordsIncluded.length > 0 && (
-          <div className="p-3 rounded-lg border border-blue-200 bg-blue-50">
+          <div className="p-3 rounded-lg border border-[#2E9098]/30 bg-[#2E9098]/10">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-medium text-gray-700">
                 {t("ai.ats.keywords", "Keywords")}
               </span>
-              <Zap className="w-4 h-4 text-blue-600" aria-hidden="true" />
+              <Zap className="w-4 h-4 text-[#2E9098]" aria-hidden="true" />
             </div>
             <p className="text-sm font-semibold text-gray-900">
               {keywordsIncluded.length}
@@ -157,7 +157,7 @@ export function ATSScoreDisplay({
             {keywordsIncluded.slice(0, 8).map((keyword, idx) => (
               <span
                 key={idx}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-300"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#2E9098]/10 text-[#2E9098] border border-[#2E9098]/30"
               >
                 <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
                 {keyword}

@@ -116,7 +116,7 @@ export function QuestionFormDialog({
           <div className="space-y-4 p-4 bg-gray-50/50 rounded-2xl border border-gray-100">
             <div className="space-y-2">
               <Label className="text-gray-700 font-medium flex items-center gap-2">
-                <Globe className="h-4 w-4 text-blue-500" />
+                <Globe className="h-4 w-4 text-[#2E9098]" />
                 {t("questions.form.englishText")} <span className="text-red-500">{t("questions.form.required")}</span>
               </Label>
               <Textarea

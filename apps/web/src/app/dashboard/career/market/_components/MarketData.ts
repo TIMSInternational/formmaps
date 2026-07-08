@@ -6,7 +6,7 @@ export const marketStats = {
 };
 
 export const topCompanies = [
-  { name: "TechCorp", roles: 12, logo: "TC", industry: "SaaS", color: "bg-blue-100 text-blue-600" },
+  { name: "TechCorp", roles: 12, logo: "TC", industry: "SaaS", color: "bg-[#2E9098]/10 text-[#2E9098]" },
   { name: "InnovateInc", roles: 8, logo: "II", industry: "FinTech", color: "bg-purple-100 text-purple-600" },
   { name: "GlobalSol", roles: 15, logo: "GS", industry: "Enterprise", color: "bg-orange-100 text-orange-600" },
   { name: "DataFlow", roles: 5, logo: "DF", industry: "AI/ML", color: "bg-emerald-100 text-emerald-600" },

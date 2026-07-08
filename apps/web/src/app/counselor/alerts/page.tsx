@@ -118,7 +118,7 @@ export default function AlertsPage() {
               { label: t("alerts.statTotal", "Total"), value: summary.total ?? 0, icon: Bell, iconColor: "text-indigo-500", iconBg: "bg-indigo-500/10" },
               { label: t("alerts.critical", "Critical"), value: summary.byPriority?.critical ?? 0, icon: ShieldAlert, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
               { label: t("alerts.high", "High"), value: summary.byPriority?.high ?? 0, icon: AlertTriangle, iconColor: "text-orange-500", iconBg: "bg-orange-500/10" },
-              { label: t("alerts.statNew", "New"), value: summary.newSinceLastLogin ?? 0, icon: Sparkles, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
+              { label: t("alerts.statNew", "New"), value: summary.newSinceLastLogin ?? 0, icon: Sparkles, iconColor: "text-[#2E9098]", iconBg: "bg-[#2E9098]/10" },
               { label: t("alerts.low", "Low"), value: summary.byPriority?.low ?? 0, icon: Info, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
             ].map((stat, i) => (
               <motion.div
@@ -214,7 +214,7 @@ export default function AlertsPage() {
                   <TableCell className="text-sm text-foreground">
                     {a.studentId ? (
                       <span
-                        className="cursor-pointer hover:text-blue-600 transition-colors"
+                        className="cursor-pointer hover:text-[#2E9098] transition-colors"
                         onClick={(e) => { e.stopPropagation(); router.push(`/counselor/students/${a.studentId}`); }}
                       >
                         {a.studentName || "—"}

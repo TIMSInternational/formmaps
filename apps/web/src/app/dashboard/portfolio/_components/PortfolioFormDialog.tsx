@@ -155,7 +155,7 @@ export function PortfolioFormDialog({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-6 px-2 text-xs text-[#2E9098] hover:text-[#2E9098] hover:bg-blue-50 gap-1"
+                  className="h-6 px-2 text-xs text-[#2E9098] hover:text-[#2E9098] hover:bg-[#2E9098]/10 gap-1"
                   disabled={polishing || !(formData.description ?? "").trim()}
                   onClick={handlePolish}
                 >

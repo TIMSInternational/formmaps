@@ -87,8 +87,8 @@ export default function CertificationsPage() {
           <div className="dash-card p-4">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <BookOpen className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 rounded-lg bg-[#2E9098]/10 flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-[#2E9098]" />
                 </div>
                 <div>
                   <p className="text-lg font-bold text-foreground tabular-nums">{enrolledCourses.length}</p>

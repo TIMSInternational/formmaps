@@ -123,7 +123,7 @@ export function MILReports({ student }: { student: ReportStudent }) {
               className="rounded-lg border bg-card p-4 space-y-3"
             >
               <div className="text-sm font-semibold flex items-center gap-2">
-                <Brain className="h-4 w-4 text-blue-500" />
+                <Brain className="h-4 w-4 text-[#2E9098]" />
                 Cognitive Profile
               </div>
               <div className="space-y-2.5">

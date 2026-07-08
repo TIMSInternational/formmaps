@@ -24,7 +24,7 @@ export function SessionStatsGrid({ counts }: SessionStatsGridProps) {
   const { t } = useTranslation();
 
   const STATS_CONFIG = [
-    { key: "all" as const, label: t("coach:sessionsPage.stats.total"), icon: CalendarIcon, iconColor: "text-blue-500", iconBg: "bg-blue-500/10" },
+    { key: "all" as const, label: t("coach:sessionsPage.stats.total"), icon: CalendarIcon, iconColor: "text-[#2E9098]", iconBg: "bg-[#2E9098]/10" },
     { key: "upcoming" as const, label: t("coach:sessionsPage.stats.upcoming"), icon: Clock, iconColor: "text-purple-500", iconBg: "bg-purple-500/10" },
     { key: "past" as const, label: t("coach:sessionsPage.stats.completed"), icon: CheckCircle2, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
     { key: "cancelled" as const, label: t("coach:sessionsPage.stats.cancelled"), icon: XCircle, iconColor: "text-red-500", iconBg: "bg-red-500/10" },

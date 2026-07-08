@@ -88,7 +88,7 @@ export function CatalogSection({
               key={s.id}
               type="button"
               onClick={() => setSearch(s.title)}
-              className="text-[11px] px-2 py-1 rounded-full border border-[#2E9098]/30 text-[#2E9098] hover:bg-blue-50"
+              className="text-[11px] px-2 py-1 rounded-full border border-[#2E9098]/30 text-[#2E9098] hover:bg-[#2E9098]/10"
               title={`${s.matchScore}% match — search the catalog for this`}
             >
               {s.title}

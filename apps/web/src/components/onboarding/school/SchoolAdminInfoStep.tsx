@@ -62,11 +62,11 @@ export function SchoolAdminInfoStep({
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* School Info (Read-only) - Card Style */}
       <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100 shadow-sm relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/50 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-110 duration-500 ease-out"></div>
+        <div className="absolute top-0 right-0 w-24 h-24 bg-[#2E9098]/10 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-110 duration-500 ease-out"></div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-5 relative z-10">
           <div className="h-12 w-12 bg-white rounded-xl border border-gray-200 shadow-sm flex items-center justify-center shrink-0">
-            <Building2 className="h-6 w-6 text-blue-600" />
+            <Building2 className="h-6 w-6 text-[#2E9098]" />
           </div>
 
           <div className="flex-1 space-y-1">
@@ -120,7 +120,7 @@ export function SchoolAdminInfoStep({
               }}
               onFocus={() => handleFocus("name")}
               onBlur={handleBlur}
-              className={`pl-11 h-12 transition-all duration-200 border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 ${errors.name ? "border-red-300 focus:border-red-500 focus:ring-red-500/10" : ""}`}
+              className={`pl-11 h-12 transition-all duration-200 border-gray-200 hover:border-[#2E9098]/40 focus:border-[#2E9098] focus:ring-4 focus:ring-[#2E9098]/10 ${errors.name ? "border-red-300 focus:border-red-500 focus:ring-red-500/10" : ""}`}
             />
             {formData.name && !errors.name && (
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none animate-in fade-in zoom-in duration-200">
@@ -168,7 +168,7 @@ export function SchoolAdminInfoStep({
                 }
                 onFocus={() => handleFocus("position")}
                 onBlur={handleBlur}
-                className="pl-11 h-12 transition-all duration-200 border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                className="pl-11 h-12 transition-all duration-200 border-gray-200 hover:border-[#2E9098]/40 focus:border-[#2E9098] focus:ring-4 focus:ring-[#2E9098]/10"
               />
             </div>
           </div>
@@ -201,7 +201,7 @@ export function SchoolAdminInfoStep({
                 }
                 onFocus={() => handleFocus("phone")}
                 onBlur={handleBlur}
-                className="pl-11 h-12 transition-all duration-200 border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                className="pl-11 h-12 transition-all duration-200 border-gray-200 hover:border-[#2E9098]/40 focus:border-[#2E9098] focus:ring-4 focus:ring-[#2E9098]/10"
               />
             </div>
           </div>

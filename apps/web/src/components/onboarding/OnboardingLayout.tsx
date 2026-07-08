@@ -61,7 +61,7 @@ export function OnboardingLayout({
       {/* Right Panel - Form */}
       <div className="flex-1 flex flex-col h-full overflow-y-auto overflow-x-hidden bg-gray-50/30 relative">
         {/* Decorative Graphic */}
-        <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-gradient-to-br from-blue-100/40 to-purple-100/40 rounded-full blur-3xl pointer-events-none" aria-hidden="true"></div>
+        <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-gradient-to-br from-[#2E9098]/20 to-purple-100/40 rounded-full blur-3xl pointer-events-none" aria-hidden="true"></div>
         
         <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 min-h-min">
           <div className="mx-auto w-full max-w-2xl relative z-10">

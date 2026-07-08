@@ -284,7 +284,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
       {loadingPDF ? (
         <div className="flex items-center justify-center h-full bg-gray-50">
           <div className="text-center">
-            <Loader2 size={24} className="animate-spin text-blue-600 mx-auto mb-2" />
+            <Loader2 size={24} className="animate-spin text-[#2E9098] mx-auto mb-2" />
             <p className="text-xs text-gray-600">Loading PDF preview...</p>
           </div>
         </div>

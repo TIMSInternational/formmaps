@@ -279,7 +279,7 @@ export function ProfileForm() {
               />
               <div className="flex flex-wrap gap-2 min-h-[100px] content-start" role="list" aria-label="Skills list">
                 {currentSkills.map((skill) => (
-                  <Badge key={skill} variant="secondary" className="px-3 py-1 text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300" role="listitem">
+                  <Badge key={skill} variant="secondary" className="px-3 py-1 text-sm bg-[#2E9098]/10 text-[#2E9098] hover:bg-[#2E9098]/20 dark:bg-[#2E9098]/20 dark:text-[#2E9098]" role="listitem">
                     {skill}
                     <button type="button" onClick={() => removeSkill(skill)} className="ml-2 hover:text-red-500" aria-label={`Remove skill ${skill}`}>×</button>
                   </Badge>
@@ -334,7 +334,7 @@ export function ProfileForm() {
 
         {/* Save Actions */}
         <div className="flex justify-end pt-4 pb-12">
-          <Button type="submit" size="lg" className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-200 dark:shadow-none" disabled={isSubmitting}>
+          <Button type="submit" size="lg" className="w-full md:w-auto bg-[#2E9098] hover:bg-[#2E9098]/90 shadow-xl shadow-[#2E9098]/20 dark:shadow-none" disabled={isSubmitting}>
             {isSubmitting ? (
               "Saving Changes..."
             ) : (

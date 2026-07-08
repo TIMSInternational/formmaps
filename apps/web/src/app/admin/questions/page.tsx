@@ -225,7 +225,7 @@ export default function AdminQuestionsPage() {
           <TabsList className="bg-white border border-gray-200 p-1 h-12 rounded-xl w-full justify-start overflow-x-auto">
             <TabsTrigger value="all" className="rounded-lg px-4 h-9 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900">{t("questions.allRelations")}</TabsTrigger>
             {RELATION_TYPE_OPTIONS.map(opt => (
-              <TabsTrigger key={opt.value} value={opt.value} className="rounded-lg px-4 h-9 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">{opt.label}</TabsTrigger>
+              <TabsTrigger key={opt.value} value={opt.value} className="rounded-lg px-4 h-9 data-[state=active]:bg-[#2E9098]/10 data-[state=active]:text-[#2E9098]">{opt.label}</TabsTrigger>
             ))}
           </TabsList>
         </Tabs>

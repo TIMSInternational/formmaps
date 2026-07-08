@@ -20,7 +20,7 @@ export default function FavoriteButton({
       aria-pressed={isFavorite}
       className={`px-2 py-1 rounded ${
         isFavorite
-          ? "bg-yellow-400 text-yellow-800"
+          ? "bg-[#FFD23F] text-[#102B47]"
           : "bg-gray-100 text-gray-800"
       } text-sm ${className ?? ""}`}
       onClick={(e) => {

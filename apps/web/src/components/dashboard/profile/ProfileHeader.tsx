@@ -138,7 +138,7 @@ export function ProfileHeader() {
         {coverUrl ? (
           <img src={coverUrl} alt="Cover" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-blue-900" />
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-[#102B47]" />
         )}
         {/* Animated mesh gradient overlay effect */}
         <div className="absolute inset-0 opacity-40 mix-blend-overlay">
@@ -184,7 +184,7 @@ export function ProfileHeader() {
               </Avatar>
             </div>
             <button
-              className="absolute bottom-4 right-4 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all border-2 border-white dark:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute bottom-4 right-4 p-3 bg-[#2E9098] text-white rounded-full shadow-lg hover:bg-[#2E9098]/90 transition-all border-2 border-white dark:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Change profile picture"
               onClick={() => avatarInputRef.current?.click()}
               disabled={isUploadingAvatar}

@@ -68,7 +68,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
   };
 
   return (
-    <Card className="border-blue-200 bg-blue-50/40">
+    <Card className="border-[#2E9098]/30 bg-[#2E9098]/5">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <CardTitle className="text-sm font-semibold text-[#2E9098] flex items-center gap-2">
@@ -108,12 +108,12 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
           {byGrade.map(([grade, agg]) => (
             <span
               key={grade}
-              className="text-xs px-2.5 py-1 rounded-full bg-white border border-blue-100 text-gray-700"
+              className="text-xs px-2.5 py-1 rounded-full bg-white border border-[#2E9098]/20 text-gray-700"
             >
               {t("studentDetail.gradeN", { n: grade })}: {t(agg.count === 1 ? "planReview.courseCount_one" : "planReview.courseCount_other", { count: agg.count })} · {agg.credits} cr
             </span>
           ))}
-          <span className="text-xs px-2.5 py-1 rounded-full bg-white border border-blue-100 text-gray-500">
+          <span className="text-xs px-2.5 py-1 rounded-full bg-white border border-[#2E9098]/20 text-gray-500">
             {plan.totalPlannedCredits} {t("planReview.creditsTotal", "credits total")}
           </span>
         </div>

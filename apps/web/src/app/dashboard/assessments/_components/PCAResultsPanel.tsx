@@ -231,7 +231,7 @@ export default function PCAResultsPanel({
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as "results" | "competences" | "analysis")}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
-                  ? "border-blue-500 text-blue-600"
+                  ? "border-[#2E9098] text-[#2E9098]"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
               >
@@ -257,7 +257,7 @@ export default function PCAResultsPanel({
                   else if (activeTab === "competences") loadCompetences();
                   else if (activeTab === "analysis") loadAnalysis();
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#2E9098] text-white rounded-lg hover:bg-[#2E9098]/90 transition-colors text-sm font-medium"
               >
                 <RefreshCw className="h-4 w-4" />
                 Retry
@@ -446,7 +446,7 @@ export default function PCAResultsPanel({
                           key={type}
                           onClick={() => downloadReport(type, slug)}
                           disabled={reportLoading !== null}
-                          className="inline-flex items-center justify-center px-4 py-3 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors font-medium border border-blue-100 disabled:opacity-60"
+                          className="inline-flex items-center justify-center px-4 py-3 bg-[#2E9098]/10 text-[#2E9098] rounded-xl hover:bg-[#2E9098]/20 transition-colors font-medium border border-[#2E9098]/20 disabled:opacity-60"
                         >
                           {reportLoading === type ? (
                             <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -524,7 +524,7 @@ export default function PCAResultsPanel({
                     setAnalysis(null); // clear the old result…
                     loadAnalysis(jca); // …and immediately re-fetch for the new job (else it sticks on "Analysing…")
                   }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 bg-gray-50 focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none"
                 >
                   {Object.entries(JCA_CODES).map(([code, name]) => (
                     <option key={code} value={code}>

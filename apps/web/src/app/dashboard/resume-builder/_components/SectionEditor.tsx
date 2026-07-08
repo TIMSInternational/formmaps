@@ -524,7 +524,7 @@ export const SectionEditor = React.memo(
             >
               <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-[#2E9098]/10">
                   <div className="flex items-center space-x-3">
                     <motion.button
                       onClick={onClose}

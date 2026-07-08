@@ -87,7 +87,7 @@ export default function TermsOfServicePage() {
 
         <section>
           <h2 className="text-xl font-semibold mt-6 mb-2">11. Contact</h2>
-          <p>Questions about these Terms? Contact us at <a href="mailto:legal@formmaps.ai" className="text-blue-600 underline">legal@formmaps.ai</a>.</p>
+          <p>Questions about these Terms? Contact us at <a href="mailto:legal@formmaps.ai" className="text-[#2E9098] underline">legal@formmaps.ai</a>.</p>
         </section>
       </div>
     </main>

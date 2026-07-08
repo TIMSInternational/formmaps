@@ -259,7 +259,7 @@ export default function AdminPlansPage() {
                                     {/* Active Badge */}
                                     {plan.popular && (
                                         <div className="absolute top-0 right-0 p-4">
-                                            <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 shadow-sm rounded-lg px-2 py-1">
+                                            <Badge className="bg-gradient-to-r from-[#2E9098] to-indigo-600 text-white border-0 shadow-sm rounded-lg px-2 py-1">
                                                 {t("plans.popular")}
                                             </Badge>
                                         </div>

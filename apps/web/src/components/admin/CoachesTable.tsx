@@ -137,7 +137,7 @@ export function CoachesTable({ onEdit }: CoachesTableProps) {
       <div className="sticky top-4 z-20 bg-white/80 backdrop-blur-xl border border-gray-200/50 shadow-sm rounded-2xl p-2 flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-2 w-full md:w-auto">
           <Select value={contractFilter} onValueChange={setContractFilter}>
-            <SelectTrigger className="w-full md:w-[200px] h-11 bg-gray-50/50 border-transparent focus:bg-white focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/10 rounded-xl transition-all">
+            <SelectTrigger className="w-full md:w-[200px] h-11 bg-gray-50/50 border-transparent focus:bg-white focus:border-[#2E9098]/20 focus:ring-4 focus:ring-[#2E9098]/10 rounded-xl transition-all">
               <SelectValue placeholder={t("admin.coaches.filterByContract")} />
             </SelectTrigger>
             <SelectContent>
@@ -158,10 +158,10 @@ export function CoachesTable({ onEdit }: CoachesTableProps) {
         </div>
 
         <div className="relative w-full md:w-80 group">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-[#2E9098] transition-colors" />
           <Input
             placeholder={t("admin.coaches.searchPlaceholder")}
-            className="pl-10 h-11 bg-gray-50/50 border-transparent focus:bg-white focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/10 rounded-xl transition-all"
+            className="pl-10 h-11 bg-gray-50/50 border-transparent focus:bg-white focus:border-[#2E9098]/20 focus:ring-4 focus:ring-[#2E9098]/10 rounded-xl transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -201,7 +201,7 @@ export function CoachesTable({ onEdit }: CoachesTableProps) {
               <TableRow>
                 <TableCell colSpan={7} className="h-32 text-center">
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                    <Loader2 className="h-8 w-8 animate-spin text-[#2E9098]" />
                     <p className="text-sm text-gray-500">
                       {t("admin.coaches.loading")}
                     </p>
@@ -356,7 +356,7 @@ export function CoachesTable({ onEdit }: CoachesTableProps) {
                           </DropdownMenuItem>
                           {coach.status === "invited" && (
                             <DropdownMenuItem
-                              className="rounded-lg cursor-pointer text-blue-600 focus:text-blue-700 focus:bg-blue-50"
+                              className="rounded-lg cursor-pointer text-[#2E9098] focus:text-[#102B47] focus:bg-[#2E9098]/10"
                               onClick={async () => {
                                 if (!coach.email) return;
                                 try {

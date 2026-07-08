@@ -277,7 +277,7 @@ export const SectionCard = React.memo(
                   {/* For sections with editors, show button to open full editor */}
                   {["personalInfo", "experience"].includes(section.id) && (
                     <button
-                      className="ml-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                      className="ml-2 px-4 py-2 bg-[#2E9098] text-white rounded-lg hover:bg-[#2E9098]/90 transition-colors duration-200 text-sm font-medium"
                       onClick={onEdit}
                     >
                       Open Full Editor

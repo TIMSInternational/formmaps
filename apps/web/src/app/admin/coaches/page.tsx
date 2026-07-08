@@ -78,9 +78,9 @@ export default function CoachesPage() {
       label: "Total Coaches",
       value: isLoadingStats ? "—" : stats.totalCoaches.toString(),
       icon: Users,
-      color: "text-blue-600",
-      bg: "bg-blue-50/50",
-      border: "border-blue-100",
+      color: "text-[#2E9098]",
+      bg: "bg-[#2E9098]/10",
+      border: "border-[#2E9098]/20",
     },
     {
       labelKey: "admin.coaches.activeNow",

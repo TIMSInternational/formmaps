@@ -263,7 +263,7 @@ export default function TranscriptPage() {
           {/* Rigor Card */}
           <div className="dash-card p-5" style={{ background: "var(--admin-bg-card)" }}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-[#2E9098]/10 flex items-center justify-center">
                 <BookOpen className="w-4 h-4 text-[#2E9098]" />
               </div>
               <p className="text-xs font-medium text-muted-foreground">
@@ -281,7 +281,7 @@ export default function TranscriptPage() {
           {/* GPA Trend Sparkline */}
           <div className="dash-card p-5" style={{ background: "var(--admin-bg-card)" }}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-[#2E9098]/10 flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-[#2E9098]" />
               </div>
               <p className="text-xs font-medium text-muted-foreground">
@@ -317,7 +317,7 @@ export default function TranscriptPage() {
           {/* Rank Percentile */}
           <div className="dash-card p-5" style={{ background: "var(--admin-bg-card)" }}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-[#FFD23F]/20 flex items-center justify-center">
                 <Trophy className="w-4 h-4 text-amber-600" />
               </div>
               <p className="text-xs font-medium text-muted-foreground">

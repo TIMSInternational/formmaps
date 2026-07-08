@@ -117,7 +117,7 @@ export function TemplateDebugPage({ onClose }: TemplateDebugPageProps) {
           <div className="flex items-center space-x-3">
             <button
               onClick={handleRefresh}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-[#2E9098] hover:bg-[#2E9098]/90 text-white rounded-lg transition-colors"
             >
               <RefreshCw size={16} />
               <span>Refresh</span>
@@ -146,7 +146,7 @@ export function TemplateDebugPage({ onClose }: TemplateDebugPageProps) {
                   </div>
                   <button
                     onClick={() => handleTemplateClick(template.id)}
-                    className="flex items-center space-x-1 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md transition-colors text-sm"
+                    className="flex items-center space-x-1 px-3 py-1 bg-[#2E9098]/10 hover:bg-[#2E9098]/20 text-[#2E9098] rounded-md transition-colors text-sm"
                   >
                     <Eye size={14} />
                     <span>Focus</span>

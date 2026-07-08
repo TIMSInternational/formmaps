@@ -35,7 +35,7 @@ export function Breadcrumb({ items, className, showHome = true }: BreadcrumbProp
               {item.href && !isLast ? (
                 <Link
                   href={item.href}
-                  className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+                  className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-[#2E9098] transition-colors"
                 >
                   {item.icon && <span className="mr-2">{item.icon}</span>}
                   {item.label}
@@ -46,7 +46,7 @@ export function Breadcrumb({ items, className, showHome = true }: BreadcrumbProp
                     "inline-flex items-center text-sm font-medium",
                     isLast
                       ? "text-gray-900"
-                      : "text-gray-700 hover:text-blue-600 cursor-pointer transition-colors"
+                      : "text-gray-700 hover:text-[#2E9098] cursor-pointer transition-colors"
                   )}
                 >
                   {item.icon && <span className="mr-2">{item.icon}</span>}

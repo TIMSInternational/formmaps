@@ -174,8 +174,8 @@ function UniversityCardInner({
             className={cn(
               "h-7 w-7 rounded-full flex items-center justify-center transition-colors",
               compared
-                ? "text-blue-400 bg-blue-500/10 hover:bg-blue-500/20"
-                : "text-[var(--admin-font-tertiary)] hover:text-blue-400 hover:bg-blue-500/10 disabled:opacity-30"
+                ? "text-[#2E9098] bg-[#2E9098]/10 hover:bg-[#2E9098]/20"
+                : "text-[var(--admin-font-tertiary)] hover:text-[#2E9098] hover:bg-[#2E9098]/10 disabled:opacity-30"
             )}
             aria-label={compared ? "Remove from compare" : "Add to compare"}
           >

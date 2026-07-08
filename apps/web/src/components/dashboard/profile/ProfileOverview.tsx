@@ -103,7 +103,7 @@ export function ProfileOverview() {
         {/* About Me Card - Hero Style */}
         <motion.div variants={item}>
           <Card className="border-none shadow-lg bg-white dark:bg-gray-900 rounded-3xl overflow-hidden relative group glass-card">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 dark:bg-blue-900/20 rounded-bl-full transition-all group-hover:scale-110" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#2E9098]/10 dark:bg-[#2E9098]/20 rounded-bl-full transition-all group-hover:scale-110" />
 
             <CardHeader className="relative px-8 pt-8 pb-4 glass-card">
               <CardTitle className="text-2xl font-bold flex items-center gap-2 glass-card">
@@ -136,7 +136,7 @@ export function ProfileOverview() {
 
               {skills.length === 0 && bio && (
                 <div className="mt-6">
-                  <p className="text-sm text-gray-400 italic">No skills added yet. <Link href="/dashboard/profile?tab=edit" className="text-blue-600 hover:underline">Add skills</Link></p>
+                  <p className="text-sm text-gray-400 italic">No skills added yet. <Link href="/dashboard/profile?tab=edit" className="text-[#2E9098] hover:underline">Add skills</Link></p>
                 </div>
               )}
             </CardContent>
@@ -195,7 +195,7 @@ export function ProfileOverview() {
                           <Icon size={14} aria-hidden="true" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600 transition-colors">
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-[#2E9098] transition-colors">
                             {activity.description}
                           </h4>
                           <p className="text-xs text-gray-500 truncate">{activity.type.replace(/_/g, " ")}</p>

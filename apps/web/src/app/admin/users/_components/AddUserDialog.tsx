@@ -77,7 +77,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] rounded-2xl border-gray-100 shadow-2xl p-0 overflow-hidden">
         <div className="bg-gray-50/50 p-6 border-b border-gray-100 flex flex-col items-center text-center">
-          <div className="h-12 w-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-4 ring-4 ring-white shadow-sm">
+          <div className="h-12 w-12 rounded-full bg-[#2E9098]/10 text-[#2E9098] flex items-center justify-center mb-4 ring-4 ring-white shadow-sm">
             <UserPlus className="h-6 w-6" />
           </div>
           <DialogTitle className="text-xl font-bold text-gray-900">{t('admin.users.dialogTitle')}</DialogTitle>
@@ -94,7 +94,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
               placeholder={t('admin.users.namePlaceholder')}
               value={newUser.name}
               onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-              className="h-11 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-100 transition-all"
+              className="h-11 rounded-xl border-gray-200 focus:border-[#2E9098] focus:ring-[#2E9098]/20 transition-all"
             />
           </div>
           <div className="space-y-2">
@@ -105,7 +105,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
               placeholder={t('admin.users.emailPlaceholder')}
               value={newUser.email}
               onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-              className="h-11 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-100 transition-all"
+              className="h-11 rounded-xl border-gray-200 focus:border-[#2E9098] focus:ring-[#2E9098]/20 transition-all"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -115,7 +115,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
                 value={newUser.role}
                 onValueChange={(value) => setNewUser({ ...newUser, role: value })}
               >
-                <SelectTrigger className="h-11 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-100 transition-all text-gray-600">
+                <SelectTrigger className="h-11 rounded-xl border-gray-200 focus:border-[#2E9098] focus:ring-[#2E9098]/20 transition-all text-gray-600">
                   <SelectValue placeholder={tPO("users.roleSelectPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -133,7 +133,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
                 placeholder={t('admin.users.passwordPlaceholder')}
                 value={newUser.password}
                 onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                className="h-11 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-100 transition-all"
+                className="h-11 rounded-xl border-gray-200 focus:border-[#2E9098] focus:ring-[#2E9098]/20 transition-all"
               />
             </div>
           </div>

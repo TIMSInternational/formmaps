@@ -39,7 +39,7 @@ class PDFErrorBoundary extends React.Component<
             </p>
             <button
               onClick={() => this.setState({ hasError: false })}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+              className="bg-[#2E9098] hover:bg-[#2E9098]/90 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
             >
               Try Again
             </button>
@@ -358,7 +358,7 @@ export function LivePreview() {
         {loadingPDF ? (
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
-              <Loader2 size={48} className="animate-spin text-blue-600 mx-auto mb-4" />
+              <Loader2 size={48} className="animate-spin text-[#2E9098] mx-auto mb-4" />
               <p className="text-gray-600">Loading preview...</p>
             </div>
           </div>
@@ -373,7 +373,7 @@ export function LivePreview() {
                 exit={{ opacity: 0 }}
               >
                 <div className="text-center">
-                  <Loader2 size={32} className="animate-spin text-blue-600 mx-auto mb-2" />
+                  <Loader2 size={32} className="animate-spin text-[#2E9098] mx-auto mb-2" />
                   <p className="text-sm text-gray-600">Updating preview...</p>
                 </div>
               </motion.div>

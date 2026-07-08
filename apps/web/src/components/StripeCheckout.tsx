@@ -74,7 +74,7 @@ export default function StripeCheckout({
     >
       {loading ? (
         <div className="flex items-center justify-center space-x-2 py-3" role="status">
-          <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+          <div className="w-4 h-4 border-2 border-[#2E9098] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
           <span className="text-sm text-gray-600">Redirecting to Stripe...</span>
         </div>
       ) : (

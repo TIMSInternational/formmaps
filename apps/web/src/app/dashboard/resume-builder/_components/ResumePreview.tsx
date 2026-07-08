@@ -106,7 +106,7 @@ export function ResumePreview() {
       <div className="flex items-center space-x-2">
         <button
           onClick={() => setShowPreview(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+          className="bg-[#2E9098] hover:bg-[#2E9098]/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
         >
           <Eye size={16} />
           Preview
@@ -162,7 +162,7 @@ export function ResumePreview() {
                       </button>
                       <button
                         onClick={() => setShowATS(true)}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        className="bg-[#FFD23F] hover:bg-[#FFD23F]/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                       >
                         ATS Check
                       </button>

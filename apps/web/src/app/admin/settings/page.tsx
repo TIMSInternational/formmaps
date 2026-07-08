@@ -157,7 +157,7 @@ export default function AdminSettingsPage() {
             {/* General Settings */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 bg-blue-50 rounded-xl text-blue-600">
+                <div className="p-2.5 bg-[#2E9098]/10 rounded-xl text-[#2E9098]">
                   <Globe className="h-6 w-6" />
                 </div>
                 <div>
@@ -173,7 +173,7 @@ export default function AdminSettingsPage() {
                     <Input
                       value={settings.general.siteName}
                       onChange={(e) => updateSetting('general', 'siteName', e.target.value)}
-                      className="h-11 rounded-xl border-gray-200 focus:ring-blue-100 focus:border-blue-500"
+                      className="h-11 rounded-xl border-gray-200 focus:ring-[#2E9098]/20 focus:border-[#2E9098]"
                     />
                   </div>
                   <div className="space-y-2">
@@ -184,7 +184,7 @@ export default function AdminSettingsPage() {
                         type="email"
                         value={settings.general.supportEmail}
                         onChange={(e) => updateSetting('general', 'supportEmail', e.target.value)}
-                        className="h-11 pl-9 rounded-xl border-gray-200 focus:ring-blue-100 focus:border-blue-500"
+                        className="h-11 pl-9 rounded-xl border-gray-200 focus:ring-[#2E9098]/20 focus:border-[#2E9098]"
                       />
                     </div>
                   </div>

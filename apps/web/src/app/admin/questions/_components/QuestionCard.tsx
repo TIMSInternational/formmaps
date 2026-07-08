@@ -35,7 +35,7 @@ export function QuestionCard({ question, onEdit, onDelete, onToggleActive }: Que
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.99 }}
-      className={`group bg-white rounded-2xl border ${question.isActive ? 'border-gray-100' : 'border-gray-200 bg-gray-50/50'} p-6 transition-all hover:shadow-md hover:border-blue-100`}
+      className={`group bg-white rounded-2xl border ${question.isActive ? 'border-gray-100' : 'border-gray-200 bg-gray-50/50'} p-6 transition-all hover:shadow-md hover:border-[#2E9098]/20`}
     >
       <div className="flex flex-col md:flex-row gap-6">
         {/* Status & Number */}
@@ -59,7 +59,7 @@ export function QuestionCard({ question, onEdit, onDelete, onToggleActive }: Que
         {/* Content */}
         <div className="flex-1 space-y-3">
           <div className="flex flex-wrap gap-2 mb-1">
-            <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-0 rounded-lg px-2.5 py-0.5 font-medium">
+            <Badge className="bg-[#2E9098]/10 text-[#2E9098] hover:bg-[#2E9098]/20 border-0 rounded-lg px-2.5 py-0.5 font-medium">
               {question.relationType}
             </Badge>
             <Badge className="bg-purple-50 text-purple-700 hover:bg-purple-100 border-0 rounded-lg px-2.5 py-0.5 font-medium">

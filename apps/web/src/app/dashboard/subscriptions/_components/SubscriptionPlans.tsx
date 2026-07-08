@@ -160,7 +160,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
         animate={{ opacity: 1, y: 0 }}
         className="text-center space-y-4"
       >
-        <Badge variant="secondary" className="px-4 py-1.5 text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100">
+        <Badge variant="secondary" className="px-4 py-1.5 text-sm font-medium bg-[#2E9098]/10 text-[#2E9098] hover:bg-[#2E9098]/20 border-[#2E9098]/20">
           Upgrade Your Experience
         </Badge>
         <h2 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
@@ -185,13 +185,13 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
               className={cn(
                 "flex flex-col w-full relative transition-all duration-300 hover:border-foreground/20",
                 option.popular
-                  ? "border-blue-500 scale-105 z-10"
+                  ? "border-[#2E9098] scale-105 z-10"
                   : "border-border"
               )}
             >
               {option.popular && (
                 <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                  <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg border-0 px-4 py-1 h-auto text-sm gap-1.5">
+                  <Badge className="bg-gradient-to-r from-[#2E9098] to-[#102B47] text-white shadow-lg border-0 px-4 py-1 h-auto text-sm gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 fill-current" />
                     Most Popular
                   </Badge>
@@ -231,8 +231,8 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                 <div className="w-full space-y-4">
                   {option.features.map((feature, i) => (
                     <div key={i} className="flex items-start gap-3">
-                      <div className="mt-1 bg-blue-50 rounded-full p-1">
-                        <Check className="w-3.5 h-3.5 text-blue-600" />
+                      <div className="mt-1 bg-[#2E9098]/10 rounded-full p-1">
+                        <Check className="w-3.5 h-3.5 text-[#2E9098]" />
                       </div>
                       <span className="text-muted-foreground text-sm leading-relaxed">
                         {feature}
@@ -268,7 +268,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                       className={cn(
                         "w-full h-12 text-base rounded-xl font-medium transition-all",
                         option.popular
-                          ? "bg-blue-600 hover:bg-blue-700 text-white"
+                          ? "bg-[#2E9098] hover:bg-[#2E9098]/90 text-white"
                           : "bg-foreground hover:bg-foreground/90 text-white"
                       )}
                       disabled={processingPayment !== null}

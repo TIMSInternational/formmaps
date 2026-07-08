@@ -34,7 +34,7 @@ export default function PaymentCancelled() {
         <div className="space-y-3">
           <Link
             href="/subscribe"
-            className="block w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            className="block w-full bg-[#2E9098] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#256F76] transition-colors"
           >
             {t("payments.tryAgain")}
           </Link>

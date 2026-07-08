@@ -143,9 +143,9 @@ export default function SchoolsPage() {
       label: t("admin.schools.totalSchools", "Total Schools"),
       value: isLoading ? "..." : stats.totalSchools.toString(),
       icon: SchoolIcon,
-      color: "text-blue-600",
-      bg: "bg-blue-50/50",
-      border: "border-blue-100",
+      color: "text-[#2E9098]",
+      bg: "bg-[#2E9098]/10",
+      border: "border-[#2E9098]/20",
     },
     {
       label: t("admin.schools.active", "Active Schools"),
@@ -328,7 +328,7 @@ export default function SchoolsPage() {
                       <div className="flex items-center gap-2">
                         <div className="w-full bg-gray-100 rounded-full h-2 max-w-[100px]">
                           <div
-                            className="bg-blue-600 h-2 rounded-full"
+                            className="bg-[#2E9098] h-2 rounded-full"
                             style={{
                               width: `${school.maxStudents > 0 ? Math.min(((school.studentCount || 0) / school.maxStudents) * 100, 100) : 0}%`,
                             }}
@@ -379,7 +379,7 @@ export default function SchoolsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          className="h-8 text-xs text-[#2E9098] hover:text-[#102B47] hover:bg-[#2E9098]/10"
                           onClick={(e) => { e.stopPropagation(); handleResendInvite(school); }}
                         >
                           <Mail className="mr-1.5 h-3.5 w-3.5" />

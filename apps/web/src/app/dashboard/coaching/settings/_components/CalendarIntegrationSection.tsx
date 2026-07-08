@@ -28,7 +28,7 @@ export function CalendarIntegrationSection({
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-indigo-600" />
+            <Calendar className="w-5 h-5 text-[#2E9098]" />
             Calendar Integration
           </h3>
           <p className="text-sm text-gray-500 mt-1">

@@ -98,7 +98,7 @@ function TeacherOnboardingContent() {
   // No token
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[#2E9098]/10 flex items-center justify-center p-4">
         <Card className="max-w-md w-full border-0 shadow-xl">
           <CardContent className="pt-10 pb-8 text-center">
             <AlertTriangle className="h-12 w-12 text-orange-400 mx-auto mb-4" />
@@ -120,7 +120,7 @@ function TeacherOnboardingContent() {
   // Verifying
   if (verifying) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[#2E9098]/10 flex items-center justify-center p-4">
         <div className="space-y-4 text-center">
           <Loader2 className="h-10 w-10 mx-auto animate-spin" style={{ color: "#2E9098" }} />
           <p className="text-gray-500">{t("onboarding.states.verifying")}</p>
@@ -132,7 +132,7 @@ function TeacherOnboardingContent() {
   // Token invalid or expired
   if (tokenInvalid) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[#2E9098]/10 flex items-center justify-center p-4">
         <Card className="max-w-md w-full border-0 shadow-xl">
           <CardContent className="pt-10 pb-8 text-center">
             <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
@@ -155,7 +155,7 @@ function TeacherOnboardingContent() {
   // Success
   if (done) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[#2E9098]/10 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -183,7 +183,7 @@ function TeacherOnboardingContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[#2E9098]/10 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -362,7 +362,7 @@ export default function TeacherOnboardingPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[#2E9098]/10 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#2E9098" }} />
         </div>
       }

@@ -170,7 +170,7 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
           {/* Left: Title and Progress */}
           <div className="flex-1">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-[#2E9098] rounded-xl flex items-center justify-center shadow-lg">
                 <FileText className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -186,7 +186,7 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
             {/* Progress Bar */}
             <div className="mt-3 w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full"
+                className="h-full bg-gradient-to-r from-indigo-600 to-[#2E9098] rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${completionPercentage}%` }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
@@ -298,7 +298,7 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
 
           {/* Add Optional Sections */}
           <motion.div
-            className="mt-8 p-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-100"
+            className="mt-8 p-6 bg-gradient-to-r from-indigo-50 to-[#2E9098]/10 rounded-xl border border-indigo-100"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
