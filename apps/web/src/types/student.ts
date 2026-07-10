@@ -54,6 +54,18 @@ export interface AssessmentCompletion {
   completionRate: number;
 }
 
+// Shape the school-admin analytics API actually returns (schoolService
+// getAnalyticsOverview). The legacy AnalyticsOverview below never matched it,
+// which zeroed the whole analytics page — see fix/broken-pages.
+export interface SchoolAnalyticsOverview {
+  totalStudents: number;
+  activeStudents: number;
+  assessmentCompletionRate: number;
+  averageProgressScore: number;
+  studentsAtRisk: number;
+  counselorCoverage: number;
+}
+
 export interface AnalyticsOverview {
   studentEngagement: StudentEngagement;
   assessmentCompletion: AssessmentCompletion;

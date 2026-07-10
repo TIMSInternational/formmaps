@@ -212,8 +212,10 @@ export interface StudentSummary {
   name: string;
   email?: string;
   image?: string;
-  lastBookedAt?: string;
+  // API field is lastSessionDate (coachBookingsService.getCoachStudents).
+  lastSessionDate?: string;
   totalSessions?: number;
+  completedSessions?: number;
 }
 
 export interface StudentDetails extends StudentSummary {

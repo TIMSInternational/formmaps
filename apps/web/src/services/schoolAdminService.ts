@@ -4,7 +4,7 @@ import {
   StudentInvitePayload,
   BulkStudentInvitePayload,
   StudentsResponse,
-  AnalyticsOverview,
+  SchoolAnalyticsOverview,
   PerformanceTrendData,
   TopPerformer,
   StudentResultsResponse,
@@ -145,32 +145,22 @@ export async function removeStudent(
 
 export async function getAnalyticsOverview(
   period: "week" | "month" | "quarter" | "year" = "month"
-): Promise<AnalyticsOverview> {
-  const defaultData: AnalyticsOverview = {
-    studentEngagement: { active: 0, inactive: 0, trend: 0 },
-    assessmentCompletion: {
-      completed: 0,
-      inProgress: 0,
-      notStarted: 0,
-      completionRate: 0,
-    },
-    averagePerformance: { score: 0, trend: 0 },
-    timeSpent: { averageHours: 0, totalHours: 0, trend: 0 },
+): Promise<SchoolAnalyticsOverview> {
+  // Pass the real API fields straight through. The previous version remapped
+  // the response into a legacy shape that dropped every field the page reads
+  // (studentsAtRisk / counselorCoverage / assessmentCompletionRate /
+  // averageProgressScore) → At-Risk 0, Coverage "0% Assign more students",
+  // Avg GPA "—" regardless of real data.
+  const res = await apiRequest(`/api/v1/school-admin/analytics/overview${buildQueryString({ period })}`);
+  const data = toCamel<Partial<SchoolAnalyticsOverview>>(res.data || res);
+  return {
+    totalStudents: data.totalStudents ?? 0,
+    activeStudents: data.activeStudents ?? 0,
+    assessmentCompletionRate: data.assessmentCompletionRate ?? 0,
+    averageProgressScore: data.averageProgressScore ?? 0,
+    studentsAtRisk: data.studentsAtRisk ?? 0,
+    counselorCoverage: data.counselorCoverage ?? 0,
   };
-
-  try {
-    const res = await apiRequest(`/api/v1/school-admin/analytics/overview${buildQueryString({ period })}`);
-    const data = toCamel<Partial<AnalyticsOverview>>(res.data || res);
-
-    return {
-      studentEngagement: { ...defaultData.studentEngagement, ...(data.studentEngagement || {}) },
-      assessmentCompletion: { ...defaultData.assessmentCompletion, ...(data.assessmentCompletion || {}) },
-      averagePerformance: { ...defaultData.averagePerformance, ...(data.averagePerformance || {}) },
-      timeSpent: { ...defaultData.timeSpent, ...(data.timeSpent || {}) },
-    };
-  } catch (error) {
-    throw error;
-  }
 }
 
 export async function getPerformanceTrends(

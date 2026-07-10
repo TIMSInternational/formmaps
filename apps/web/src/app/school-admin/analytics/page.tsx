@@ -31,7 +31,7 @@ export default function AnalyticsPage() {
   const atRisk = o?.studentsAtRisk ?? 0;
   const counselorCoverage = o?.counselorCoverage ?? 0;
   const completionRate = o?.assessmentCompletionRate ?? 0;
-  const avgGpa = o?.averageProgressScore > 0 ? (o.averageProgressScore / 25).toFixed(2) : "\u2014";
+  const avgGpa = (o?.averageProgressScore ?? 0) > 0 ? ((o!.averageProgressScore) / 25).toFixed(2) : "\u2014";
 
   // Pipeline analysis by grade
   const gradeStats: Record<number, { total: number; pcaDone: number; milDone: number; evalDone: number }> = {};

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { ChevronLeft, ChevronRight, CalendarDays, X, Clock, User } from "lucide-react";
 import { getCoachSessions } from "@/services/coachService";
+import { unwrapList } from "@/lib/unwrapList";
 import { Booking } from "@/types/coach";
 import { formatTimeOfDay } from "@/lib/dateUtils";
 import { useTranslation } from "react-i18next";
@@ -33,8 +34,9 @@ export default function CoachCalendarPage() {
     (async () => {
       try {
         const res = await getCoachSessions("all");
-        const data = res?.data ?? [];
-        setSessions(Array.isArray(data) ? data : []);
+        // Response is { data: { sessions: [...] } } — the old `res?.data ?? []`
+        // grabbed the wrapper object (not an array) → calendar was always empty.
+        setSessions(unwrapList(res, "sessions") as Booking[]);
       } catch { /* empty */ }
       setLoading(false);
     })();

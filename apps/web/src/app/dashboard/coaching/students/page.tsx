@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Search, Users, MessageCircle, CalendarPlus, AlertCircle } from "lucide-react";
 import { getCoachStudents } from "@/services/coachService";
+import { unwrapList } from "@/lib/unwrapList";
 import type { StudentSummary } from "@/types/coach";
 import { getInitials } from "@/lib/stringUtils";
 
@@ -19,8 +20,9 @@ export default function CoachStudentsPage() {
       setError(null);
       try {
         const res = await getCoachStudents({ search: search || undefined });
-        const items = res?.data ?? res ?? [];
-        setStudents(Array.isArray(items) ? items : []);
+        // res is { data: { students, total } }; the old `res?.data ?? res`
+        // grabbed the { students, total } object (not an array) → always empty.
+        setStudents(unwrapList(res, "students") as StudentSummary[]);
       } catch {
         setError("Failed to load students");
         setStudents([]);
@@ -183,7 +185,7 @@ export default function CoachStudentsPage() {
                 <div>
                   <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", margin: 0 }}>Last Session</p>
                   <p style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-secondary)", margin: 0 }}>
-                    {formatDate(student.lastBookedAt ?? null)}
+                    {formatDate(student.lastSessionDate ?? null)}
                   </p>
                 </div>
               </div>

@@ -6,7 +6,7 @@ export interface ChildProgressSummary {
   studentId: string;
   studentName: string;
   gradeLevel: number;
-  gpa: number;
+  gpa: number | null;
   isOnTrack: boolean;
   creditsEarned: number;
   creditsRequired: number;

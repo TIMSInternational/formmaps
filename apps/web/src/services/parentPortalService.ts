@@ -22,14 +22,46 @@ export async function getParentProfile(): Promise<ParentProfile> {
   return res.data ?? res;
 }
 
-// Child progress summary
+// Child progress summary.
+// The API returns a nested shape ({ student, creditProgress, assessments });
+// flatten it to the summary the page renders. Without this map the page read
+// undefined for name/credits/isOnTrack → blank title + permanent "At Risk".
 export async function getChildProgress(
   studentId: string
 ): Promise<ChildProgressSummary> {
   const res = await apiRequest(
     `/api/v1/parent/children/${studentId}/progress`
   );
-  return res.data ?? res;
+  const d = (res.data ?? res) as {
+    student?: { id?: string; name?: string; gradeLevel?: number };
+    gpa?: number | null;
+    isOnTrack?: boolean;
+    creditProgress?: { earned?: number; required?: number; percentage?: number };
+    assessments?: {
+      pca?: { completed?: boolean };
+      mil?: { completed?: number; total?: number };
+      evaluation360?: { completed?: number; total?: number };
+    };
+  };
+  const a = d.assessments ?? {};
+  const completedCount =
+    (a.pca?.completed ? 1 : 0) +
+    ((a.mil?.completed ?? 0) >= (a.mil?.total ?? 5) ? 1 : 0) +
+    ((a.evaluation360?.total ?? 0) > 0 && (a.evaluation360?.completed ?? 0) >= (a.evaluation360?.total ?? 0) ? 1 : 0);
+  return {
+    studentId: d.student?.id ?? studentId,
+    studentName: d.student?.name ?? "",
+    gradeLevel: d.student?.gradeLevel ?? 0,
+    gpa: d.gpa ?? null, // keep null so the page shows "N/A", not a fake "0.00"
+    isOnTrack: d.isOnTrack ?? true,
+    creditsEarned: d.creditProgress?.earned ?? 0,
+    creditsRequired: d.creditProgress?.required ?? 0,
+    creditPercentage: d.creditProgress?.percentage ?? 0,
+    assessmentStatus: { completed: completedCount, total: 3 },
+    careerPath: "",
+    recentActivity: [],
+    pendingActions: [],
+  };
 }
 
 // Get pending 360 evaluations for parent

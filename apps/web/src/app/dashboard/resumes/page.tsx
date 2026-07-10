@@ -26,19 +26,20 @@ export default function MyResumesPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const fetchResumes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getAllResumes();
+      setResumes(data);
+    } catch {
+      setError("Failed to load resumes. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchResumes = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getAllResumes();
-        setResumes(data);
-      } catch {
-        setError("Failed to load resumes. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchResumes();
   }, []);
 
@@ -109,16 +110,32 @@ export default function MyResumesPage() {
     }
   };
 
-  const handleDuplicateResume = (resume: Resume) => {
-    const newResume: Resume = {
-      ...resume,
-      _id: `${resume._id}_copy_${Date.now()}`,
-      name: `${resume.name} (Copy)`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setResumes([newResume, ...resumes]);
+  const handleDuplicateResume = async (resume: Resume) => {
     setShowMenu(null);
+    try {
+      // Fetch the full stored resume, then POST a real copy — the old version
+      // fabricated a client-only object with a fake id that vanished on refresh
+      // and whose Edit/Delete pointed at nothing.
+      const raw = (await apiRequest(`/api/resume/${resume._id}`)).data as Record<string, unknown>;
+      await apiRequest("/api/resume", {
+        method: "POST",
+        data: {
+          name: `${resume.name} (Copy)`,
+          template: raw.template ?? "classic",
+          careerField: raw.careerField ?? "",
+          personalInfo: raw.personalInfo ?? {},
+          experience: raw.experience ?? [],
+          education: raw.education ?? [],
+          skills: raw.skills ?? [],
+          sections: raw.sections ?? [],
+          fieldVisibility: raw.fieldVisibility ?? {},
+          customFields: raw.customFields ?? [],
+        },
+      });
+      await fetchResumes();
+    } catch {
+      alert("Failed to duplicate resume. Please try again.");
+    }
   };
 
   return (

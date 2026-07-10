@@ -146,7 +146,7 @@
       "assignMore": "Assign more students",
       "fullyAssessed": "Fully Assessed",
       "avgGpa": "Avg GPA",
-      "weightedAvg": "Weighted average",
+      "weightedAvg": "Unweighted average",
       "studentsOf": "{{done}} of {{total}} students",
       "view": "View"
     },

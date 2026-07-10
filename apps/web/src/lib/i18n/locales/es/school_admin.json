@@ -146,7 +146,7 @@
       "assignMore": "Asigna más estudiantes",
       "fullyAssessed": "Evaluados al 100%",
       "avgGpa": "GPA Promedio",
-      "weightedAvg": "Promedio ponderado",
+      "weightedAvg": "Promedio no ponderado",
       "studentsOf": "{{done}} de {{total}} estudiantes",
       "view": "Ver"
     },

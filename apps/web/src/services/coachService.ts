@@ -293,9 +293,12 @@ export async function rescheduleSession(
   bookingId: string,
   newSlot: { start: string; end: string },
 ): Promise<BookingResponse> {
+  // The route reads req.body.startTime / endTime (rescheduleBooking). Sending
+  // { newSlot } left both undefined → new Date(undefined) → 500 on every
+  // reschedule. Map the slot to the field names the route expects.
   return apiRequest(`/api/v1/bookings/${bookingId}/reschedule`, {
     method: "PUT",
-    data: { newSlot },
+    data: { startTime: newSlot.start, endTime: newSlot.end },
   });
 }
 
@@ -453,20 +456,22 @@ export async function uploadProfileImage(file: File): Promise<Coach> {
   });
 }
 
+// Returns the full { success, data: { students, total } } envelope so callers
+// can extract with unwrapList(res, "students") — consistent with
+// getCoachSessions. (Previously returned res.data = { students, total }, on
+// which unwrapList looked for a nonexistent .data and yielded [] — the coach
+// students page AND CoachDashboard both silently rendered empty.)
 export async function getCoachStudents(params?: {
   page?: number;
   limit?: number;
   search?: string;
-}): Promise<{ data: StudentSummary[]; total: number }> {
+}): Promise<{ data: { students: StudentSummary[]; total: number } }> {
   const query = new URLSearchParams();
   if (params?.page) query.append("page", params.page.toString());
   if (params?.limit) query.append("limit", params.limit.toString());
   if (params?.search) query.append("search", params.search);
 
-  const res = await apiRequest(
-    `/api/v1/coach/me/students?${query.toString()}`,
-  );
-  return res.data;
+  return apiRequest(`/api/v1/coach/me/students?${query.toString()}`);
 }
 
 export async function getCoachStudentDetails(studentId: string): Promise<StudentDetails> {
