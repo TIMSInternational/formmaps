@@ -1,19 +1,27 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
-import { Plug, Database, Globe, Shield, CheckCircle2, XCircle, ArrowRight, Settings } from "lucide-react";
+import { Plug, Database, Globe, Shield, CheckCircle2, ArrowRight, Settings } from "lucide-react";
+import { getIsamsStatus } from "@/services/isamsService";
+import { useSchoolAdminAccess } from "@/hooks/useSchoolAdminAccess";
+
+type IntegrationStatus = "connected" | "available" | "coming_soon" | "platform";
 
 interface Integration {
-  id: string; name: string; descKey: string; icon: typeof Plug; status: "connected" | "available" | "coming_soon";
+  id: string; name: string; descKey: string; icon: typeof Plug; status: IntegrationStatus;
   color: string; href?: string;
 }
 
+// Statuses here are DEFAULTS only; anything checkable is overridden with the
+// real integration state at render time (iSAMS below). "platform" = bundled
+// with FormMaps (TIMS PCA serves every school via platform credentials) — an
+// honest label, not a fabricated per-school "connected".
 const INTEGRATIONS: Integration[] = [
   { id: "isams", name: "iSAMS", descKey: "isams", icon: Database, status: "available", color: "#2E9098", href: "/school-admin/integrations/isams" },
-  { id: "tims", name: "TIMS PCA", descKey: "tims", icon: Shield, status: "connected", color: "#10b981" },
+  { id: "tims", name: "TIMS PCA", descKey: "tims", icon: Shield, status: "platform", color: "#10b981" },
   { id: "google", name: "Google Workspace", descKey: "google", icon: Globe, status: "coming_soon", color: "#f59e0b" },
   { id: "canvas", name: "Canvas LMS", descKey: "canvas", icon: Database, status: "coming_soon", color: "#ef4444" },
   { id: "powerschool", name: "PowerSchool", descKey: "powerschool", icon: Database, status: "coming_soon", color: "#8b5cf6" },
@@ -23,14 +31,27 @@ const STATUS_STYLES: Record<string, { key: string; bg: string; color: string }> 
   connected: { key: "connected", bg: "rgba(16,185,129,0.1)", color: "#10b981" },
   available: { key: "available", bg: "rgba(59,130,246,0.1)", color: "#2E9098" },
   coming_soon: { key: "comingSoon", bg: "rgba(107,114,128,0.1)", color: "#6b7280" },
+  platform: { key: "included", bg: "rgba(16,185,129,0.1)", color: "#10b981" },
 };
 
 export default function IntegrationsPage() {
   const { t } = useTranslation("school_admin");
   const router = useRouter();
+  const { schoolId } = useSchoolAdminAccess();
 
-  const connected = INTEGRATIONS.filter(i => i.status === "connected").length;
-  const available = INTEGRATIONS.filter(i => i.status === "available").length;
+  const { data: isamsStatus } = useQuery({
+    queryKey: ["isams-status", schoolId],
+    queryFn: () => getIsamsStatus(schoolId!),
+    enabled: !!schoolId,
+    staleTime: 60 * 1000,
+  });
+
+  const integrations: Integration[] = INTEGRATIONS.map((i) =>
+    i.id === "isams" ? { ...i, status: isamsStatus?.connected ? "connected" : "available" } : i
+  );
+
+  const connected = integrations.filter(i => i.status === "connected").length;
+  const available = integrations.filter(i => i.status === "available").length;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -44,7 +65,7 @@ export default function IntegrationsPage() {
         {[
           { label: t("integrations.stats.connected"), value: connected.toString(), icon: CheckCircle2, color: "#10b981" },
           { label: t("integrations.stats.available"), value: available.toString(), icon: Plug, color: "#2E9098" },
-          { label: t("integrations.stats.total"), value: INTEGRATIONS.length.toString(), icon: Settings, color: "#2E9098" },
+          { label: t("integrations.stats.total"), value: integrations.length.toString(), icon: Settings, color: "#2E9098" },
         ].map((s) => (
           <div key={s.label} style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", padding: 16 }}>
             <s.icon style={{ width: 16, height: 16, color: s.color, marginBottom: 8 }} />
@@ -56,7 +77,7 @@ export default function IntegrationsPage() {
 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
-        {INTEGRATIONS.map((integration) => {
+        {integrations.map((integration) => {
           const s = STATUS_STYLES[integration.status];
           return (
             <div key={integration.id}
