@@ -43,7 +43,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newEval, setNewEval] = useState({ name: "", email: "", relation: "Parent", groupType: "parent", instrument: "generic" });
+  const [newEval, setNewEval] = useState({ name: "", email: "", relation: "Parent", groupType: "parent", instrument: "vocational" });
   const [instrumentVersion, setInstrumentVersion] = useState<string | undefined>(undefined);
   const [addLoading, setAddLoading] = useState(false);
   const [extendingGroupId, setExtendingGroupId] = useState<string | null>(null);
@@ -65,7 +65,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
     if (!student || !open) return;
     setLoading(true);
     setShowAddForm(false);
-    setNewEval({ name: "", email: "", relation: "Parent", groupType: "parent", instrument: "generic" });
+    setNewEval({ name: "", email: "", relation: "Parent", groupType: "parent", instrument: "vocational" });
     setInstrumentVersion(undefined);
     refreshGroups().finally(() => setLoading(false));
   }, [student?.studentId, open]);
@@ -103,13 +103,16 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
           relation: newEval.relation,
           groupType: newEval.groupType,
           evaluatedUserId: student.studentId,
-          ...(isVocational ? { instrument: "vocational", ...(instrumentVersion ? { instrumentVersion } : {}) } : {}),
+          // Always send the chosen instrument so "Generic 360" is honored — the
+          // backend now defaults an omitted instrument to vocational.
+          instrument: newEval.instrument,
+          ...(isVocational && instrumentVersion ? { instrumentVersion } : {}),
         },
       });
       toast.success(res?.data?.emailSent === false
         ? `${newEval.name} added — couldn't email the invitation, use Resend`
         : `Invitation sent to ${newEval.name}`);
-      setNewEval({ name: "", email: "", relation: "Parent", groupType: "parent", instrument: "generic" });
+      setNewEval({ name: "", email: "", relation: "Parent", groupType: "parent", instrument: "vocational" });
       setInstrumentVersion(undefined);
       setShowAddForm(false);
       await refreshGroups();
