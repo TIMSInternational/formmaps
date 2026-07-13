@@ -88,7 +88,7 @@ describe("useLiaFlow", () => {
       time_limit_seconds: 180,
       started_at: new Date().toISOString(),
     });
-    api.submitAnswer.mockResolvedValue({ subtest_complete: false, assessment_complete: false });
+    api.submitAnswer.mockResolvedValue({ subtest_complete: false, assessment_complete: false, items_completed: 1 });
     const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
     await waitFor(() => expect(result.current.phase).toBe("overview"));
     await act(() => result.current.begin());
@@ -97,6 +97,65 @@ describe("useLiaFlow", () => {
     expect(result.current.timeLimitSeconds).toBe(180);
     await act(() => result.current.submitAssessmentAnswer("3"));
     expect(result.current.currentQuestionIndex).toBe(1);
+  });
+
+  it("indexes from the server's items_completed, not a client i+1 (dedup-safe; prevents the 51/50 freeze)", async () => {
+    api.start.mockResolvedValue({ session_id: "s1", current_subtest: "pattern_recognition", practice_questions: [] });
+    api.startSubtest.mockResolvedValue({
+      session_id: "s1",
+      subtest: "pattern_recognition",
+      questions: Array.from({ length: 6 }, (_, i) => Q(`a${i + 1}`)),
+      time_limit_seconds: 180,
+      started_at: new Date().toISOString(),
+    });
+    // Server reports 5 distinct items completed (e.g. a duplicate was deduped
+    // server-side); the client must follow the server, never drift past it.
+    api.submitAnswer.mockResolvedValue({ subtest_complete: false, assessment_complete: false, items_completed: 5 });
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    await act(() => result.current.startAssessment());
+    await act(() => result.current.submitAssessmentAnswer("3"));
+    expect(result.current.currentQuestionIndex).toBe(5);
+  });
+
+  it("ignores a concurrent duplicate submit for the same question (in-flight guard)", async () => {
+    api.start.mockResolvedValue({ session_id: "s1", current_subtest: "pattern_recognition", practice_questions: [] });
+    api.startSubtest.mockResolvedValue({
+      session_id: "s1",
+      subtest: "pattern_recognition",
+      questions: [Q("a1"), Q("a2")],
+      time_limit_seconds: 180,
+      started_at: new Date().toISOString(),
+    });
+    let resolveSubmit: (v: unknown) => void = () => {};
+    api.submitAnswer.mockImplementation(() => new Promise((r) => { resolveSubmit = r; }));
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    await act(() => result.current.startAssessment());
+    await act(async () => {
+      // Two rapid taps before the first request resolves.
+      void result.current.submitAssessmentAnswer("1");
+      void result.current.submitAssessmentAnswer("2");
+      resolveSubmit({ subtest_complete: false, assessment_complete: false, items_completed: 1 });
+    });
+    expect(api.submitAnswer).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns an honest error (never the user's own answer) when a practice submit fails", async () => {
+    api.start.mockResolvedValue({ session_id: "s1", current_subtest: "pattern_recognition", practice_questions: [] });
+    api.submitPracticeAnswer.mockRejectedValue(new Error("not_in_practice"));
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    let res: { is_correct: boolean; correct_answer: string; practice_complete: boolean; error?: boolean } | undefined;
+    await act(async () => {
+      res = await result.current.submitPracticeAnswer("qX", "B");
+    });
+    expect(res?.correct_answer).toBe("");
+    expect(res?.correct_answer).not.toBe("B");
+    expect(res?.error).toBe(true);
   });
 
   it("subtest completion goes straight to the NEXT subtest's practice (intro skipped)", async () => {

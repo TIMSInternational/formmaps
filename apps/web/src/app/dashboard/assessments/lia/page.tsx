@@ -10,9 +10,11 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import {
   SUBTEST_ORDER,
+  resolveContentLanguage,
   type PatternRecognitionData,
   type VerbalReasoningData,
   type NumericalSpeedData,
@@ -37,8 +39,12 @@ import MILCompletion from "./_components/MILCompletion";
 
 export default function LIAAssessmentPage() {
   const router = useRouter();
-  const { language: storeLanguage, setAssessmentActive } = useGlobalStore();
-  const language: "es" | "en" = storeLanguage === "english" ? "en" : "es";
+  const { i18n } = useTranslation();
+  const { setAssessmentActive } = useGlobalStore();
+  // Content language follows the RESOLVED UI locale (i18next), not the store's
+  // English default — otherwise a Spanish user's session was created in English
+  // and switched to English items at Verbal Reasoning.
+  const language: "es" | "en" = resolveContentLanguage(i18n.language);
 
   const lockdown = useLockdown();
   const flow = useLiaFlow({
@@ -195,15 +201,15 @@ export default function LIAAssessmentPage() {
             <div className="mb-8">
               {data ? (
                 flow.currentSubtest === "pattern_recognition" ? (
-                  <PatternRecognitionItem data={data as PatternRecognitionData} onAnswer={flow.submitAssessmentAnswer} />
+                  <PatternRecognitionItem data={data as PatternRecognitionData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} />
                 ) : flow.currentSubtest === "verbal_reasoning" ? (
-                  <VerbalReasoningItem data={data as VerbalReasoningData} onAnswer={flow.submitAssessmentAnswer} />
+                  <VerbalReasoningItem data={data as VerbalReasoningData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} />
                 ) : flow.currentSubtest === "numerical_speed" ? (
-                  <NumericalSpeedItem data={data as NumericalSpeedData} onAnswer={flow.submitAssessmentAnswer} />
+                  <NumericalSpeedItem data={data as NumericalSpeedData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} />
                 ) : flow.currentSubtest === "working_memory" ? (
-                  <WorkingMemoryItem data={data as WorkingMemoryData} onAnswer={flow.submitAssessmentAnswer} />
+                  <WorkingMemoryItem data={data as WorkingMemoryData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} />
                 ) : (
-                  <VisualRotationItem data={data as VisualRotationData} onAnswer={flow.submitAssessmentAnswer} />
+                  <VisualRotationItem data={data as VisualRotationData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} />
                 )
               ) : (
                 <div className="flex items-center justify-center p-8">
@@ -214,7 +220,8 @@ export default function LIAAssessmentPage() {
             <div className="flex justify-end">
               <button
                 onClick={() => flow.submitAssessmentAnswer(undefined)}
-                className="px-6 py-3 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                disabled={flow.isSubmitting}
+                className="px-6 py-3 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:pointer-events-none"
               >
                 {language === "es" ? "Omitir →" : "Skip →"}
               </button>

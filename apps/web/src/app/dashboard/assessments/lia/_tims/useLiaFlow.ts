@@ -37,13 +37,14 @@ export interface LiaFlow {
   currentQuestionIndex: number;
   subtestStartTime: Date | null;
   timeLimitSeconds: number;
+  isSubmitting: boolean;
   begin: () => Promise<void>;
   continueToIntro: () => void;
   startPractice: () => void;
   submitPracticeAnswer: (
     questionId: string,
     answer: string,
-  ) => Promise<{ is_correct: boolean; correct_answer: string; practice_complete: boolean }>;
+  ) => Promise<{ is_correct: boolean; correct_answer: string; practice_complete: boolean; error?: boolean }>;
   startAssessment: () => Promise<void>;
   submitAssessmentAnswer: (answer?: string) => Promise<void>;
   handleTimeout: () => Promise<void>;
@@ -68,7 +69,11 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [subtestStartTime, setSubtestStartTime] = useState<Date | null>(null);
   const [timeLimitSeconds, setTimeLimitSeconds] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const questionStartTimeRef = useRef<number>(Date.now());
+  // Guards against a double-tap / answer-then-Omitir firing two POSTs for the
+  // same item — the desync that over-advanced the client into the freeze.
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,8 +122,10 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
       try {
         return await liaAssessmentApi.submitPracticeAnswer(sessionId, { question_id: questionId, answer });
       } catch {
-        // Fallback mirrors tims: never trap the user in practice on a network blip.
-        return { is_correct: false, correct_answer: answer, practice_complete: false };
+        // NEVER echo the user's own answer back as "the correct answer" — that
+        // fabricated a rotating key and trapped users in practice. Surface an
+        // honest error flag so the UI shows a retry, not a false correct answer.
+        return { is_correct: false, correct_answer: "", practice_complete: false, error: true };
       }
     },
     [sessionId],
@@ -170,6 +177,9 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
   const submitAssessmentAnswer = useCallback(
     async (answer?: string) => {
       if (!sessionId || !assessmentQuestions[currentQuestionIndex]) return;
+      if (submittingRef.current) return; // in-flight: ignore duplicate taps for this item
+      submittingRef.current = true;
+      setIsSubmitting(true);
       const question = assessmentQuestions[currentQuestionIndex];
       const timeSpentMs = Date.now() - questionStartTimeRef.current;
       try {
@@ -182,11 +192,20 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
           if (result.assessment_complete) await finishAssessment();
           else if (result.next_subtest) await advanceToNextSubtest(result.next_subtest);
         } else {
-          setCurrentQuestionIndex((i) => i + 1);
+          // Server-authoritative position: items_completed = distinct answered =
+          // the next index. Following the server (not a client i+1) means a
+          // deduped/duplicate submit can never drift the client past the served
+          // array into a permanent "Cargando pregunta..." freeze.
+          setCurrentQuestionIndex((prev) =>
+            typeof result.items_completed === "number" ? result.items_completed : prev + 1,
+          );
           questionStartTimeRef.current = Date.now();
         }
       } catch {
         // tims behavior: swallow and let the user retry the same item.
+      } finally {
+        submittingRef.current = false;
+        setIsSubmitting(false);
       }
     },
     [sessionId, assessmentQuestions, currentQuestionIndex, finishAssessment, advanceToNextSubtest],
@@ -228,6 +247,7 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
     currentQuestionIndex,
     subtestStartTime,
     timeLimitSeconds,
+    isSubmitting,
     begin,
     continueToIntro,
     startPractice,
