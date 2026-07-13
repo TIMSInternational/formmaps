@@ -213,6 +213,8 @@
       "submitFailed": "Submit failed",
       "submitting": "Submitting…",
       "submit": "Submit",
+      "answerAll": "Please answer every question before submitting.",
+      "progress": "{{done}} of {{total}} answered",
       "answerPlaceholder": "Write your answer…",
       "moveUp": "move {{label}} up",
       "moveDown": "move {{label}} down"

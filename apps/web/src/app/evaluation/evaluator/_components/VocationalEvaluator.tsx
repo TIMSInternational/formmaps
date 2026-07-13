@@ -48,7 +48,20 @@ export function VocationalEvaluator({ token }: { token: string; language?: strin
   const questions = form?.questions ?? [];
   const setResp = (n: number, v: VocationalAnswerValue) => setResponses((p) => ({ ...p, [n]: v }));
 
+  const isAnswered = (q: VocationalQuestionItem) => toAnswer(q, responses[q.number] ?? {}) !== null;
+  const answeredCount = questions.filter(isAnswered).length;
+  const allAnswered = questions.length > 0 && answeredCount === questions.length;
+
   const handleSubmit = async () => {
+    // Every question is required — never silently drop unanswered items.
+    if (!allAnswered) {
+      toast.error(t("evaluation.vocational.answerAll"));
+      const firstMissing = questions.find((q) => !isAnswered(q));
+      if (firstMissing && typeof document !== "undefined") {
+        document.getElementById(`voc-q-${firstMissing.number}`)?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
     const answers = questions.map((q) => toAnswer(q, responses[q.number] ?? {})).filter((a): a is VocationalSubmitAnswer => a !== null);
     setSubmitting(true);
     try {
@@ -61,23 +74,33 @@ export function VocationalEvaluator({ token }: { token: string; language?: strin
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-6">
-      <header className="space-y-1">
-        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("evaluation.vocational.label")}</span>
-        <h1 className="text-2xl font-bold text-foreground">{t("evaluation.vocational.title")}</h1>
-        {form?.studentName && <p className="text-sm text-muted-foreground">{t("evaluation.vocational.about", { name: form.studentName })}</p>}
-      </header>
-      {questions.map((q) => (
-        <div key={q.number} className="dash-card p-4 space-y-3" style={{ background: "var(--admin-bg-card)" }}>
-          <p className="text-sm font-semibold text-foreground"><span aria-hidden="true">{q.number}.&nbsp;</span><span>{q.text}</span></p>
-          <VocationalQuestionCard question={q} value={responses[q.number]} onChange={(v) => setResp(q.number, v)} />
+    // Own scroll region: the standalone evaluator route renders under
+    // body{overflow:hidden} (no AppShell), so a long form would otherwise clip
+    // the questions + Submit off-screen unless the browser was zoomed out.
+    <div className="h-dvh overflow-y-auto">
+      <div className="max-w-2xl mx-auto p-4 space-y-6">
+        <header className="space-y-1">
+          <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("evaluation.vocational.label")}</span>
+          <h1 className="text-2xl font-bold text-foreground">{t("evaluation.vocational.title")}</h1>
+          {form?.studentName && <p className="text-sm text-muted-foreground">{t("evaluation.vocational.about", { name: form.studentName })}</p>}
+        </header>
+        {questions.map((q) => (
+          <div key={q.number} id={`voc-q-${q.number}`} className="dash-card p-4 space-y-3" style={{ background: "var(--admin-bg-card)" }}>
+            <p className="text-sm font-semibold text-foreground"><span aria-hidden="true">{q.number}.&nbsp;</span><span>{q.text}</span></p>
+            <VocationalQuestionCard question={q} value={responses[q.number]} onChange={(v) => setResp(q.number, v)} />
+          </div>
+        ))}
+        <div className="space-y-2">
+          <p className="text-xs text-center text-muted-foreground">
+            {t("evaluation.vocational.progress", { done: answeredCount, total: questions.length })}
+          </p>
+          <button type="button" onClick={handleSubmit} disabled={submitting}
+            className="w-full h-11 rounded-lg font-semibold text-white disabled:opacity-60"
+            style={{ background: "#102B47" }}>
+            {submitting ? t("evaluation.vocational.submitting") : t("evaluation.vocational.submit")}
+          </button>
         </div>
-      ))}
-      <button type="button" onClick={handleSubmit} disabled={submitting}
-        className="w-full h-11 rounded-lg font-semibold text-white disabled:opacity-60"
-        style={{ background: "#102B47" }}>
-        {submitting ? t("evaluation.vocational.submitting") : t("evaluation.vocational.submit")}
-      </button>
+      </div>
     </div>
   );
 }

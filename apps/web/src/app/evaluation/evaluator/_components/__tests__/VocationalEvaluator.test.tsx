@@ -37,6 +37,20 @@ it("shows the already-completed state", async () => {
   await waitFor(() => expect(screen.getByText(/already|completado|submitted/i)).toBeInTheDocument());
 });
 
+it("blocks submit until every question is answered", async () => {
+  getForm.mockResolvedValue({ group: "teacher", questions: [
+    { number: 1, type: "open", scaleAnchors: null, options: null, text: "Q1", block: "open", area: null, dimensionKey: null },
+    { number: 2, type: "open", scaleAnchors: null, options: null, text: "Q2", block: "open", area: null, dimensionKey: null },
+  ] });
+  render(<VocationalEvaluator token="tok" language="english" />);
+  await waitFor(() => screen.getByText("Q1"));
+  const boxes = screen.getAllByRole("textbox");
+  fireEvent.change(boxes[0], { target: { value: "only one answered" } });
+  fireEvent.click(screen.getByRole("button", { name: /submit|enviar|finish/i }));
+  await new Promise((r) => setTimeout(r, 0));
+  expect(submit).not.toHaveBeenCalled();
+});
+
 it("submits answered questions as typed answers", async () => {
   getForm.mockResolvedValue({ group: "teacher", questions: [
     { number: 1, type: "open", scaleAnchors: null, options: null, text: "Tell us", block: "open", area: null, dimensionKey: null } ] });
