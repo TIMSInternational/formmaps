@@ -174,6 +174,21 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
     [sessionId],
   );
 
+  const handleTimeout = useCallback(async () => {
+    if (!sessionId) return;
+    const unansweredIds = assessmentQuestions.slice(currentQuestionIndex).map((q) => q.id);
+    try {
+      const result = await liaAssessmentApi.handleTimeout(sessionId, {
+        subtest: currentSubtest,
+        unanswered_question_ids: unansweredIds,
+      });
+      if (result.assessment_complete) await finishAssessment();
+      else if (result.next_subtest) await advanceToNextSubtest(result.next_subtest);
+    } catch {
+      setSessionError("timeout_failed");
+    }
+  }, [sessionId, assessmentQuestions, currentQuestionIndex, currentSubtest, finishAssessment, advanceToNextSubtest]);
+
   const submitAssessmentAnswer = useCallback(
     async (answer?: string) => {
       if (!sessionId || !assessmentQuestions[currentQuestionIndex]) return;
@@ -196,10 +211,17 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
           // the next index. Following the server (not a client i+1) means a
           // deduped/duplicate submit can never drift the client past the served
           // array into a permanent "Cargando pregunta..." freeze.
-          setCurrentQuestionIndex((prev) =>
-            typeof result.items_completed === "number" ? result.items_completed : prev + 1,
-          );
-          questionStartTimeRef.current = Date.now();
+          const nextIndex =
+            typeof result.items_completed === "number" ? result.items_completed : currentQuestionIndex + 1;
+          if (nextIndex >= assessmentQuestions.length) {
+            // Server expects more items than were served (short/misconfigured
+            // bank): converge via the timeout path instead of rendering a
+            // permanent "Cargando pregunta...".
+            await handleTimeout();
+          } else {
+            setCurrentQuestionIndex(nextIndex);
+            questionStartTimeRef.current = Date.now();
+          }
         }
       } catch {
         // tims behavior: swallow and let the user retry the same item.
@@ -208,23 +230,8 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
         setIsSubmitting(false);
       }
     },
-    [sessionId, assessmentQuestions, currentQuestionIndex, finishAssessment, advanceToNextSubtest],
+    [sessionId, assessmentQuestions, currentQuestionIndex, finishAssessment, advanceToNextSubtest, handleTimeout],
   );
-
-  const handleTimeout = useCallback(async () => {
-    if (!sessionId) return;
-    const unansweredIds = assessmentQuestions.slice(currentQuestionIndex).map((q) => q.id);
-    try {
-      const result = await liaAssessmentApi.handleTimeout(sessionId, {
-        subtest: currentSubtest,
-        unanswered_question_ids: unansweredIds,
-      });
-      if (result.assessment_complete) await finishAssessment();
-      else if (result.next_subtest) await advanceToNextSubtest(result.next_subtest);
-    } catch {
-      setSessionError("timeout_failed");
-    }
-  }, [sessionId, assessmentQuestions, currentQuestionIndex, currentSubtest, finishAssessment, advanceToNextSubtest]);
 
   const retry = useCallback(() => {
     setSessionError(null);

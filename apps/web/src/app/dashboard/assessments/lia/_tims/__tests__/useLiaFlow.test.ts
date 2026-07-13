@@ -119,6 +119,28 @@ describe("useLiaFlow", () => {
     expect(result.current.currentQuestionIndex).toBe(5);
   });
 
+  it("converges via timeout instead of freezing when the server wants more items than were served (short bank)", async () => {
+    api.start.mockResolvedValue({ session_id: "s1", current_subtest: "pattern_recognition", practice_questions: [] });
+    api.startSubtest.mockResolvedValue({
+      session_id: "s1",
+      subtest: "pattern_recognition",
+      questions: [Q("a1"), Q("a2")],
+      time_limit_seconds: 180,
+      started_at: new Date().toISOString(),
+    });
+    // Server reports 2 completed (== served length) yet not subtest_complete —
+    // a short/misconfigured bank. The client must NOT index out of range.
+    api.submitAnswer.mockResolvedValue({ subtest_complete: false, assessment_complete: false, items_completed: 2 });
+    api.handleTimeout.mockResolvedValue({ subtest_complete: true, assessment_complete: false, next_subtest: "verbal_reasoning" });
+    api.getPracticeQuestions.mockResolvedValue([]);
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    await act(() => result.current.startAssessment());
+    await act(() => result.current.submitAssessmentAnswer("3"));
+    expect(api.handleTimeout).toHaveBeenCalled();
+  });
+
   it("ignores a concurrent duplicate submit for the same question (in-flight guard)", async () => {
     api.start.mockResolvedValue({ session_id: "s1", current_subtest: "pattern_recognition", practice_questions: [] });
     api.startSubtest.mockResolvedValue({
