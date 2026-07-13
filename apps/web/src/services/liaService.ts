@@ -21,11 +21,10 @@ export type LIASessionStatus = "not_started" | "practice" | "in_progress" | "com
 
 export type LIAPerformanceLevel = "insufficient" | "low" | "acceptable" | "high" | "outstanding";
 
-export interface LockdownViolation {
-  type: string;
-  timestamp: string;
-  details?: string;
-}
+// Promoted to the shared proctoring layer; imported + re-exported here for
+// back-compat so existing `@/services/liaService` importers keep working.
+import type { LockdownViolation } from "@/components/proctoring/types";
+export type { LockdownViolation };
 
 export interface DeviceInfo {
   userAgent?: string;
