@@ -119,8 +119,36 @@ export default function LIAAssessmentPage() {
 
   const lockdownChrome = (
     <>
-      {lockdown.active && lockdown.needsFullscreenPrompt && (
+      {lockdown.active && lockdown.multiDisplay && (
+        <div className="fixed inset-0 z-[60] bg-[#0F172A] text-white flex items-center justify-center p-8 text-center">
+          <div className="max-w-md">
+            <h2 className="text-2xl font-bold mb-2">
+              {language === "es" ? "Desconecta las pantallas adicionales" : "Disconnect additional displays"}
+            </h2>
+            <p className="text-white/80">
+              {language === "es"
+                ? "Detectamos un segundo monitor. Desconéctalo para continuar con la evaluación."
+                : "A second monitor was detected. Disconnect it to continue the assessment."}
+            </p>
+          </div>
+        </div>
+      )}
+      {lockdown.active && lockdown.needsFullscreenPrompt && !lockdown.multiDisplay && (
         <FullscreenOverlay language={language} onEnter={lockdown.enterFullscreen} />
+      )}
+      {lockdown.active && lockdown.focusLost && !lockdown.needsFullscreenPrompt && !lockdown.multiDisplay && (
+        <div className="fixed inset-0 z-[60] bg-[#0F172A] text-white flex items-center justify-center p-8 text-center">
+          <div className="max-w-md">
+            <h2 className="text-2xl font-bold mb-2">
+              {language === "es" ? "Regresa a la evaluación" : "Return to the assessment"}
+            </h2>
+            <p className="text-white/80">
+              {language === "es"
+                ? "Saliste de la pestaña de la evaluación. Vuelve a esta ventana para continuar; la actividad quedó registrada."
+                : "You left the assessment tab. Return to this window to continue; the activity was recorded."}
+            </p>
+          </div>
+        </div>
       )}
       {lockdown.active && <LockdownBar language={language} elapsedTime={lockdown.elapsedTime} />}
     </>

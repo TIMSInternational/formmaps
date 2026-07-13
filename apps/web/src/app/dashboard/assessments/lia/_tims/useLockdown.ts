@@ -18,11 +18,24 @@ export interface Lockdown {
   active: boolean;
   elapsedTime: string;
   needsFullscreenPrompt: boolean;
+  /** The window/tab lost focus (tab switch, alt-tab, clicked another window/display). */
+  focusLost: boolean;
+  /** A second/extended display is connected (Chromium `screen.isExtended`). */
+  multiDisplay: boolean;
   enterFullscreen: () => void;
   begin: () => void;
   end: () => void;
   violations: React.MutableRefObject<LockdownViolation[]>;
   drainViolations: () => LockdownViolation[];
+}
+
+/** Chromium-only: true when an extended/second display is attached. */
+function isExtendedDisplay(): boolean {
+  try {
+    return typeof window !== "undefined" && (window.screen as Screen & { isExtended?: boolean })?.isExtended === true;
+  } catch {
+    return false;
+  }
 }
 
 function formatElapsed(startMs: number): string {
@@ -37,6 +50,8 @@ export function useLockdown(): Lockdown {
   const [active, setActive] = useState(false);
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
   const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
+  const [focusLost, setFocusLost] = useState(false);
+  const [multiDisplay, setMultiDisplay] = useState(false);
   const startRef = useRef<number>(0);
   const violations = useRef<LockdownViolation[]>([]);
 
@@ -51,12 +66,18 @@ export function useLockdown(): Lockdown {
   const begin = useCallback(() => {
     startRef.current = Date.now();
     setActive(true);
+    setFocusLost(false);
+    const extended = isExtendedDisplay();
+    setMultiDisplay(extended);
+    if (extended) recordViolation("multi_display");
     enterFullscreen();
-  }, [enterFullscreen]);
+  }, [enterFullscreen, recordViolation]);
 
   const end = useCallback(() => {
     setActive(false);
     setNeedsFullscreenPrompt(false);
+    setFocusLost(false);
+    setMultiDisplay(false);
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   }, []);
 
@@ -83,10 +104,19 @@ export function useLockdown(): Lockdown {
   // Violation listeners
   useEffect(() => {
     if (!active) return;
-    const onVisibility = () => {
-      if (document.hidden) recordViolation("tab_switch");
+    const recheckDisplays = () => {
+      const extended = isExtendedDisplay();
+      setMultiDisplay((prev) => {
+        if (extended && !prev) recordViolation("multi_display");
+        return extended;
+      });
     };
-    const onBlur = () => recordViolation("window_blur");
+    const onVisibility = () => {
+      if (document.hidden) { setFocusLost(true); recordViolation("tab_switch"); }
+      else { setFocusLost(false); recheckDisplays(); }
+    };
+    const onBlur = () => { setFocusLost(true); recordViolation("window_blur"); };
+    const onFocus = () => { setFocusLost(false); recheckDisplays(); };
     const onCopy = (e: ClipboardEvent) => {
       e.preventDefault();
       recordViolation("copy_attempt");
@@ -112,16 +142,20 @@ export function useLockdown(): Lockdown {
         recordViolation("blocked_shortcut", e.key.toLowerCase());
       }
     };
+    const displayPoll = setInterval(recheckDisplays, 3000);
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
     document.addEventListener("copy", onCopy);
     document.addEventListener("paste", onPaste);
     document.addEventListener("cut", onCut);
     document.addEventListener("contextmenu", onContextMenu);
     document.addEventListener("keydown", onKeyDown, true);
     return () => {
+      clearInterval(displayPoll);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
       document.removeEventListener("copy", onCopy);
       document.removeEventListener("paste", onPaste);
       document.removeEventListener("cut", onCut);
@@ -136,5 +170,5 @@ export function useLockdown(): Lockdown {
     return drained;
   }, []);
 
-  return { active, elapsedTime, needsFullscreenPrompt, enterFullscreen, begin, end, violations, drainViolations };
+  return { active, elapsedTime, needsFullscreenPrompt, focusLost, multiDisplay, enterFullscreen, begin, end, violations, drainViolations };
 }
