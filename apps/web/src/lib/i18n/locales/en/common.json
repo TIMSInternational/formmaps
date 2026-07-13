@@ -2608,5 +2608,18 @@
   },
   "resume": {
     "saveFailed": "Couldn't save your changes. Check your connection and try again."
+  },
+  "proctoring": {
+    "multiDisplayTitle": "Disconnect additional displays",
+    "multiDisplayBody": "A second monitor was detected. Disconnect it to continue the assessment.",
+    "fullscreenTitle": "Return to fullscreen",
+    "fullscreenBody": "To ensure assessment integrity, you must stay in fullscreen mode.",
+    "fullscreenButton": "Enter fullscreen",
+    "focusLostTitle": "Return to the assessment",
+    "focusLostBody": "You left the assessment tab. Return to this window to continue; the activity was recorded.",
+    "requireChromiumTitle": "Chrome or Edge required",
+    "requireChromiumBody": "This proctored assessment requires Google Chrome or Microsoft Edge. Please reopen this page in one of those browsers.",
+    "timerLabel": "Secure Mode",
+    "iframeClipboardNote": "This assessment runs in an embedded survey. Fullscreen, tab-switch, and second-monitor rules apply, but copy/paste inside the survey cannot be blocked and is not monitored."
   }
 }
