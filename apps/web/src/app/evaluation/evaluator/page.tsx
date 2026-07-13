@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { AlertCircle, ChevronDown, Users } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -11,8 +11,12 @@ import { QuestionCard } from "./_components/QuestionCard";
 import { EvaluatorNavigation } from "./_components/EvaluatorNavigation";
 import type { EvaluationQuestion, ApiQuestion, ApiEvaluatorData, ApiResponse, EvaluationData, QuestionResponse } from "./_components/types";
 import { DEFAULT_RESPONSE_SCALE } from "./_components/types";
-import { validateEvaluationToken } from "@/services/evaluationService";
+import { validateEvaluationToken, sendEvaluatorViolations } from "@/services/evaluationService";
 import { VocationalEvaluator } from "./_components/VocationalEvaluator";
+import { RequireChromium } from "@/components/proctoring/RequireChromium";
+import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
+import { useProctoring } from "@/components/proctoring/useProctoring";
+import { installViolationFlush, flushViolations } from "@/components/proctoring/flushViolations";
 
 export default function EvaluatorPage() {
   const searchParams = useSearchParams();
@@ -41,6 +45,40 @@ export default function EvaluatorPage() {
   const [invitationToken, setInvitationToken] = useState<string>("");
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+
+  // Proctoring: the evaluator flow is unauthenticated (token-scoped), so
+  // violations flush to the token endpoint via sendBeacon, which survives a
+  // killed tab and needs no auth header.
+  const proctoring = useProctoring();
+  const startedRef = useRef(false);
+  const violationsUrl = token ? `${API_BASE_URL}/evaluation/vocational/${token}/violations` : "";
+
+  // Begin proctoring once the interactive runner is reachable; end on
+  // completion or unmount.
+  const interactive =
+    (instrument === "vocational" && !!token) ||
+    (!!evaluationData && !alreadySubmitted && !success);
+  useEffect(() => {
+    if (interactive && !startedRef.current) {
+      startedRef.current = true;
+      proctoring.begin();
+    }
+  }, [interactive, proctoring]);
+  useEffect(() => {
+    if (success || alreadySubmitted) proctoring.end();
+  }, [success, alreadySubmitted, proctoring]);
+
+  // Incremental flush that survives a killed tab; flush + cleanup on unmount.
+  useEffect(() => {
+    if (!violationsUrl) return;
+    const cfg = { url: violationsUrl, transport: "beacon" as const, drain: proctoring.drainViolations };
+    const cleanup = installViolationFlush(cfg);
+    return () => {
+      flushViolations(cfg);
+      cleanup();
+      proctoring.end();
+    };
+  }, [violationsUrl, proctoring]);
 
   useEffect(() => {
     if (!token) {
@@ -208,6 +246,9 @@ export default function EvaluatorPage() {
       }
 
       setSuccess(true);
+      // Flush any recorded proctoring violations on successful submission.
+      const drained = proctoring.drainViolations();
+      if (token && drained.length) void sendEvaluatorViolations(token, drained);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("evaluation.evaluator.errSubmitRetry"));
     } finally {
@@ -215,11 +256,18 @@ export default function EvaluatorPage() {
     }
   };
 
+  // Wrap an interactive runner in the browser gate + proctoring chrome.
+  const proctored = (node: ReactNode) => (
+    <RequireChromium>
+      <ProctoredShell proctoring={proctoring}>{node}</ProctoredShell>
+    </RequireChromium>
+  );
+
   // --- RENDER STATES ---
   if (isLoading || isValidating) return <LoadingScreen />;
   // instrument branch: early-return before generic 360 body
   if (instrument === undefined) return <LoadingScreen />;
-  if (instrument === "vocational" && token) return <VocationalEvaluator token={token} />;
+  if (instrument === "vocational" && token) return proctored(<VocationalEvaluator token={token} />);
   if (error && !evaluationData) return <ErrorScreen error={error} />;
 
   if (success) {
@@ -233,7 +281,7 @@ export default function EvaluatorPage() {
 
   const currentQuestion = evaluationData.questions[currentStep];
 
-  return (
+  return proctored(
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-8">
         {/* Header */}
@@ -339,3 +387,4 @@ export default function EvaluatorPage() {
     </div>
   );
 }
+

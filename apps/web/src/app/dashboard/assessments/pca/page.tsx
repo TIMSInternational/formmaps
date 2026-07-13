@@ -12,6 +12,9 @@ import {
 import PCAResultsPanel from "../_components/PCAResultsPanel";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { RequireChromium } from "@/components/proctoring/RequireChromium";
+import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
+import { useProctoring } from "@/components/proctoring/useProctoring";
 import {
   Brain,
   CheckCircle2,
@@ -54,6 +57,17 @@ export default function PCAAssessmentPage() {
     setAssessmentActive(!!assessmentUrl);
     return () => setAssessmentActive(false);
   }, [assessmentUrl, setAssessmentActive]);
+
+  // Proctoring for the embedded survey. Honest limit: the survey is a
+  // cross-origin iframe, so DOM clipboard/key listeners cannot reach inside it —
+  // only fullscreen, tab-switch (visibility), window blur, and second-monitor
+  // detection apply. The external survey exposes no local PCAExamSession id, so
+  // there is no session to flush violations to from this page (documented).
+  const proctoring = useProctoring();
+  useEffect(() => {
+    if (assessmentUrl) proctoring.begin();
+    else proctoring.end();
+  }, [assessmentUrl, proctoring]);
 
   const handleStartAssessment = async () => {
     if (!user?.id || !user?.name || !user?.email) {
@@ -110,36 +124,43 @@ export default function PCAAssessmentPage() {
   // Embedded assessment mode — PcaLink from TIMS loads the assessment directly (no login)
   if (assessmentUrl) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="bg-card border-b border-border px-4 py-3">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => { setAssessmentUrl(null); refreshPCAData(); }}
-                className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                {t("dashboard.backToConfiguration", "Back to Configuration")}
-              </button>
-              <span className="text-border">|</span>
-              <span className="text-sm font-semibold text-foreground">
-                {t("dashboard.pcaTitle", "Personal Competence Analysis (PCA)")}
-              </span>
+      <RequireChromium>
+        <ProctoredShell proctoring={proctoring}>
+          <div className="min-h-screen bg-background">
+            <div className="bg-card border-b border-border px-4 py-3">
+              <div className="max-w-7xl mx-auto flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => { setAssessmentUrl(null); refreshPCAData(); }}
+                    className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    {t("dashboard.backToConfiguration", "Back to Configuration")}
+                  </button>
+                  <span className="text-border">|</span>
+                  <span className="text-sm font-semibold text-foreground">
+                    {t("dashboard.pcaTitle", "Personal Competence Analysis (PCA)")}
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-secondary px-2.5 py-1 rounded-md border border-border">
+                  {t("dashboard.assessmentInProgress", "Assessment In Progress")}
+                </span>
+              </div>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-secondary px-2.5 py-1 rounded-md border border-border">
-              {t("dashboard.assessmentInProgress", "Assessment In Progress")}
-            </span>
+            <p className="max-w-7xl mx-auto px-4 py-2 text-[11px] text-muted-foreground">
+              {t("proctoring.iframeClipboardNote")}
+            </p>
+            <div className="h-[calc(100vh-93px)]">
+              <iframe
+                src={assessmentUrl}
+                className="w-full h-full border-0"
+                title="PCA Assessment"
+                allow="fullscreen"
+              />
+            </div>
           </div>
-        </div>
-        <div className="h-[calc(100vh-53px)]">
-          <iframe
-            src={assessmentUrl}
-            className="w-full h-full border-0"
-            title="PCA Assessment"
-            allow="fullscreen"
-          />
-        </div>
-      </div>
+        </ProctoredShell>
+      </RequireChromium>
     );
   }
 

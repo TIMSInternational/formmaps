@@ -1,6 +1,7 @@
 // 360-Degree Evaluation Service - Educational/Vocational Assessment
 
 import { apiRequest } from "@/lib/api/apiClient";
+import type { LockdownViolation } from "@/components/proctoring/types";
 
 interface ApiError extends Error {
   status?: number;
@@ -946,6 +947,25 @@ export async function validateEvaluationToken(
       isValid: false,
       error: "Failed to validate token",
     };
+  }
+}
+
+/**
+ * Flush proctoring violations for a token-scoped evaluator session. Public
+ * (token is the credential); best-effort — never throws into the exam flow.
+ */
+export async function sendEvaluatorViolations(
+  token: string,
+  violations: LockdownViolation[]
+): Promise<void> {
+  if (!violations.length) return;
+  try {
+    await apiRequest(`/evaluation/vocational/${token}/violations`, {
+      method: "POST",
+      data: { violations },
+    });
+  } catch {
+    /* best-effort: proctoring must never break submission */
   }
 }
 
