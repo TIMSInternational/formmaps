@@ -17,6 +17,7 @@ import { RequireChromium } from "@/components/proctoring/RequireChromium";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
 import { useProctoring } from "@/components/proctoring/useProctoring";
 import { installViolationFlush, flushViolations } from "@/components/proctoring/flushViolations";
+import type { LockdownViolation } from "@/components/proctoring/types";
 
 export default function EvaluatorPage() {
   const searchParams = useSearchParams();
@@ -50,6 +51,11 @@ export default function EvaluatorPage() {
   // violations flush to the token endpoint via sendBeacon, which survives a
   // killed tab and needs no auth header.
   const proctoring = useProctoring();
+  // Destructure the individually-stable callbacks/ref. Depending on the whole
+  // `proctoring` object would churn these effects every render (its elapsed
+  // clock ticks each second), re-firing begin()/tearing down and disabling
+  // proctoring mid-exam.
+  const { begin: beginProctoring, end: endProctoring, drainViolations, violations: violationsRef } = proctoring;
   const startedRef = useRef(false);
   const violationsUrl = token ? `${API_BASE_URL}/evaluation/vocational/${token}/violations` : "";
 
@@ -61,24 +67,29 @@ export default function EvaluatorPage() {
   useEffect(() => {
     if (interactive && !startedRef.current) {
       startedRef.current = true;
-      proctoring.begin();
+      beginProctoring();
     }
-  }, [interactive, proctoring]);
+  }, [interactive, beginProctoring]);
   useEffect(() => {
-    if (success || alreadySubmitted) proctoring.end();
-  }, [success, alreadySubmitted, proctoring]);
+    if (success || alreadySubmitted) endProctoring();
+  }, [success, alreadySubmitted, endProctoring]);
 
   // Incremental flush that survives a killed tab; flush + cleanup on unmount.
   useEffect(() => {
     if (!violationsUrl) return;
-    const cfg = { url: violationsUrl, transport: "beacon" as const, drain: proctoring.drainViolations };
+    const cfg = {
+      url: violationsUrl,
+      transport: "beacon" as const,
+      drain: drainViolations,
+      requeue: (v: LockdownViolation[]) => { violationsRef.current.unshift(...v); },
+    };
     const cleanup = installViolationFlush(cfg);
     return () => {
       flushViolations(cfg);
       cleanup();
-      proctoring.end();
+      endProctoring();
     };
-  }, [violationsUrl, proctoring]);
+  }, [violationsUrl, drainViolations, endProctoring, violationsRef]);
 
   useEffect(() => {
     if (!token) {

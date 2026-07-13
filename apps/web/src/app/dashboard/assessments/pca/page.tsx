@@ -64,10 +64,14 @@ export default function PCAAssessmentPage() {
   // detection apply. The external survey exposes no local PCAExamSession id, so
   // there is no session to flush violations to from this page (documented).
   const proctoring = useProctoring();
+  // Depend on the individually-stable callbacks (not the whole `proctoring`
+  // object, which changes reference every render as its elapsed clock ticks) so
+  // this effect fires only when the assessment actually starts/stops.
+  const { begin: beginProctoring, end: endProctoring } = proctoring;
   useEffect(() => {
-    if (assessmentUrl) proctoring.begin();
-    else proctoring.end();
-  }, [assessmentUrl, proctoring]);
+    if (assessmentUrl) beginProctoring();
+    else endProctoring();
+  }, [assessmentUrl, beginProctoring, endProctoring]);
 
   const handleStartAssessment = async () => {
     if (!user?.id || !user?.name || !user?.email) {

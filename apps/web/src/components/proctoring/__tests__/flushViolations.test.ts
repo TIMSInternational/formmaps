@@ -40,6 +40,23 @@ describe("flushViolations", () => {
     expect(JSON.parse(init.body)).toEqual({ violations: V });
   });
 
+  it("falls back to keepalive fetch when sendBeacon refuses (returns false)", () => {
+    sendBeacon.mockReturnValue(false);
+    const sent = flushViolations({ url: "/evaluation/vocational/tok/violations", transport: "beacon", drain: () => V });
+    expect(sent).toBe(true);
+    expect(sendBeacon).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // fell back
+  });
+
+  it("requeues the drained violations when the keepalive send is rejected", async () => {
+    fetchMock.mockReturnValue(Promise.reject(new Error("network")));
+    const requeue = jest.fn();
+    flushViolations({ url: "/api/pcaexam/session/s1/violations", transport: "keepalive", drain: () => V, requeue });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(requeue).toHaveBeenCalledWith(V);
+  });
+
   it("sends nothing when the buffer is empty", () => {
     const sent = flushViolations({ url: "/x", transport: "beacon", drain: () => [] });
     expect(sent).toBe(false);

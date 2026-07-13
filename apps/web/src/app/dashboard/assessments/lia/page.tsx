@@ -8,7 +8,7 @@
  * Runs under lockdown-lite (fullscreen + violation capture); face
  * verification is stubbed behind NEXT_PUBLIC_LIA_FACE_VERIFY.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import {
@@ -34,6 +34,9 @@ import { useLiaFlow } from "./_tims/useLiaFlow";
 import { useLockdown } from "./_tims/useLockdown";
 import { ErrorScreen, ProgressHeader, OverviewCard } from "./_tims/FlowScreens";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
+import { RequireChromium } from "@/components/proctoring/RequireChromium";
+import { installViolationFlush } from "@/components/proctoring/flushViolations";
+import type { LockdownViolation } from "@/components/proctoring/types";
 import MILCompletion from "./_components/MILCompletion";
 
 export default function LIAAssessmentPage() {
@@ -56,6 +59,29 @@ export default function LIAAssessmentPage() {
     setAssessmentActive(examLive);
     return () => setAssessmentActive(false);
   }, [flow.phase, setAssessmentActive]);
+
+  // Incremental violation flush that survives a killed tab (keepalive fetch,
+  // cookie + Bearer authed). The completion path drains too; this covers a
+  // student closing/killing the tab mid-exam so flag_for_review still lands.
+  const { sessionId } = flow;
+  const { drainViolations: drainLockdown, violations: lockdownViolations } = lockdown;
+  useEffect(() => {
+    if (!sessionId) return;
+    return installViolationFlush({
+      url: `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/lia/session/${sessionId}/violations`,
+      transport: "keepalive",
+      drain: drainLockdown,
+      token: () => useGlobalStore.getState().user.accessToken,
+      requeue: (v: LockdownViolation[]) => { lockdownViolations.current.unshift(...v); },
+    });
+  }, [sessionId, drainLockdown, lockdownViolations]);
+
+  // Wrap a live exam phase in the browser gate + proctoring chrome.
+  const proctored = (node: ReactNode) => (
+    <RequireChromium>
+      <ProctoredShell proctoring={lockdown}>{node}</ProctoredShell>
+    </RequireChromium>
+  );
 
   const handleTimerWarning = useCallback((secondsLeft: number) => setTimerWarning(secondsLeft), []);
 
@@ -121,9 +147,7 @@ export default function LIAAssessmentPage() {
   if (flow.phase === "general-instructions") {
     return (
       <div className="min-h-screen bg-gray-50">
-        <ProctoredShell proctoring={lockdown}>
-          <LIAGeneralInstructions onContinue={flow.continueToIntro} language={language} />
-        </ProctoredShell>
+        {proctored(<LIAGeneralInstructions onContinue={flow.continueToIntro} language={language} />)}
       </div>
     );
   }
@@ -131,14 +155,14 @@ export default function LIAAssessmentPage() {
   if (flow.phase === "subtest-intro") {
     return (
       <div className="min-h-screen bg-gray-50">
-        <ProctoredShell proctoring={lockdown}>
+        {proctored(
           <LIASubtestIntro
             subtest={flow.currentSubtest}
             subtestNumber={flow.currentSubtestIndex + 1}
             onStartPractice={flow.startPractice}
             language={language}
           />
-        </ProctoredShell>
+        )}
       </div>
     );
   }
@@ -146,7 +170,7 @@ export default function LIAAssessmentPage() {
   if (flow.phase === "practice") {
     return (
       <div className="min-h-screen bg-gray-50">
-        <ProctoredShell proctoring={lockdown}>
+        {proctored(
           <LIAPractice
             subtest={flow.currentSubtest}
             questions={flow.practiceQuestions}
@@ -154,7 +178,7 @@ export default function LIAAssessmentPage() {
             onSubmitAnswer={flow.submitPracticeAnswer}
             language={language}
           />
-        </ProctoredShell>
+        )}
       </div>
     );
   }
@@ -165,7 +189,8 @@ export default function LIAAssessmentPage() {
 
     return (
       <div className="min-h-screen bg-gray-50">
-        <ProctoredShell proctoring={lockdown}>
+        {proctored(
+        <>
         {timerWarning !== null && <TimerWarningToast secondsLeft={timerWarning} onClose={() => setTimerWarning(null)} />}
         <ProgressHeader
           language={language}
@@ -221,7 +246,8 @@ export default function LIAAssessmentPage() {
               : "This section is timed. Answer as quickly and accurately as you can."}
           </p>
         </main>
-        </ProctoredShell>
+        </>
+        )}
       </div>
     );
   }
