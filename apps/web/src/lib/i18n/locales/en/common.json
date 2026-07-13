@@ -204,6 +204,9 @@
     "vocational": {
       "loading": "Loading…",
       "loadError": "Couldn't load this evaluation.",
+      "loadErrorTitle": "This link isn't available",
+      "expiredTitle": "This evaluation link has expired",
+      "expiredBody": "Please ask the student for a new invitation link.",
       "alreadyTitle": "Already submitted",
       "alreadyBody": "Thank you — this evaluation is complete.",
       "label": "Vocational 360",

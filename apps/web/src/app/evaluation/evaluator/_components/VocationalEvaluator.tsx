@@ -20,11 +20,12 @@ export function VocationalEvaluator({ token }: { token: string; language?: strin
   const [responses, setResponses] = useState<Record<number, VocationalAnswerValue>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [errorReason, setErrorReason] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true); setError(false);
+    setLoading(true); setError(false); setErrorReason(null);
     try {
       const f = await getVocationalForm(token);
       setForm(f);
@@ -36,13 +37,28 @@ export function VocationalEvaluator({ token }: { token: string; language?: strin
         }
       }
       setResponses(seed);
-    } catch { setError(true); } finally { setLoading(false); }
+    } catch (e) {
+      setError(true);
+      setErrorReason((e as { reason?: string })?.reason ?? null);
+    } finally { setLoading(false); }
   }, [token]);
 
   useEffect(() => { load(); }, [load]);
 
   if (loading) return <div className="p-8 text-center text-muted-foreground" role="status">{t("evaluation.vocational.loading")}</div>;
-  if (error) return <div className="p-8 text-center" role="alert">{t("evaluation.vocational.loadError")}</div>;
+  if (error) {
+    const expired = errorReason === "expired";
+    return (
+      <div className="p-8 text-center max-w-md mx-auto" role="alert">
+        <h2 className="text-lg font-bold text-foreground mb-1">
+          {t(expired ? "evaluation.vocational.expiredTitle" : "evaluation.vocational.loadErrorTitle")}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {t(expired ? "evaluation.vocational.expiredBody" : "evaluation.vocational.loadError")}
+        </p>
+      </div>
+    );
+  }
   if (form?.completed || done) return <div className="p-8 text-center"><h2 className="text-lg font-bold text-foreground">{t("evaluation.vocational.alreadyTitle")}</h2><p className="text-sm text-muted-foreground">{t("evaluation.vocational.alreadyBody")}</p></div>;
 
   const questions = form?.questions ?? [];

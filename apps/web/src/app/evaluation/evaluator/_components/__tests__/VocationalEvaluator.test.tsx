@@ -31,6 +31,13 @@ it("loads the questionnaire and renders the first question", async () => {
   await waitFor(() => expect(screen.getByText("Q1")).toBeInTheDocument());
 });
 
+it("shows an actionable message when the link has expired (not a bare error)", async () => {
+  getForm.mockRejectedValue(Object.assign(new Error("This evaluation link has expired."), { reason: "expired" }));
+  render(<VocationalEvaluator token="tok" language="english" />);
+  await waitFor(() => expect(screen.getByText(/expired/i)).toBeInTheDocument());
+  expect(screen.getByText(/new invitation link/i)).toBeInTheDocument();
+});
+
 it("shows the already-completed state", async () => {
   getForm.mockResolvedValue({ completed: true, questions: [] });
   render(<VocationalEvaluator token="tok" language="english" />);
