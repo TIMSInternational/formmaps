@@ -32,7 +32,8 @@ import {
 } from "./_tims";
 import { useLiaFlow } from "./_tims/useLiaFlow";
 import { useLockdown } from "./_tims/useLockdown";
-import { FullscreenOverlay, LockdownBar, ErrorScreen, ProgressHeader, OverviewCard } from "./_tims/FlowScreens";
+import { ErrorScreen, ProgressHeader, OverviewCard } from "./_tims/FlowScreens";
+import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
 import MILCompletion from "./_components/MILCompletion";
 
 export default function LIAAssessmentPage() {
@@ -117,48 +118,12 @@ export default function LIAAssessmentPage() {
     );
   }
 
-  const lockdownChrome = (
-    <>
-      {lockdown.active && lockdown.multiDisplay && (
-        <div className="fixed inset-0 z-[60] bg-[#0F172A] text-white flex items-center justify-center p-8 text-center">
-          <div className="max-w-md">
-            <h2 className="text-2xl font-bold mb-2">
-              {language === "es" ? "Desconecta las pantallas adicionales" : "Disconnect additional displays"}
-            </h2>
-            <p className="text-white/80">
-              {language === "es"
-                ? "Detectamos un segundo monitor. Desconéctalo para continuar con la evaluación."
-                : "A second monitor was detected. Disconnect it to continue the assessment."}
-            </p>
-          </div>
-        </div>
-      )}
-      {lockdown.active && lockdown.needsFullscreenPrompt && !lockdown.multiDisplay && (
-        <FullscreenOverlay language={language} onEnter={lockdown.enterFullscreen} />
-      )}
-      {lockdown.active && lockdown.focusLost && !lockdown.needsFullscreenPrompt && !lockdown.multiDisplay && (
-        <div className="fixed inset-0 z-[60] bg-[#0F172A] text-white flex items-center justify-center p-8 text-center">
-          <div className="max-w-md">
-            <h2 className="text-2xl font-bold mb-2">
-              {language === "es" ? "Regresa a la evaluación" : "Return to the assessment"}
-            </h2>
-            <p className="text-white/80">
-              {language === "es"
-                ? "Saliste de la pestaña de la evaluación. Vuelve a esta ventana para continuar; la actividad quedó registrada."
-                : "You left the assessment tab. Return to this window to continue; the activity was recorded."}
-            </p>
-          </div>
-        </div>
-      )}
-      {lockdown.active && <LockdownBar language={language} elapsedTime={lockdown.elapsedTime} />}
-    </>
-  );
-
   if (flow.phase === "general-instructions") {
     return (
       <div className="min-h-screen bg-gray-50">
-        {lockdownChrome}
-        <LIAGeneralInstructions onContinue={flow.continueToIntro} language={language} />
+        <ProctoredShell proctoring={lockdown}>
+          <LIAGeneralInstructions onContinue={flow.continueToIntro} language={language} />
+        </ProctoredShell>
       </div>
     );
   }
@@ -166,13 +131,14 @@ export default function LIAAssessmentPage() {
   if (flow.phase === "subtest-intro") {
     return (
       <div className="min-h-screen bg-gray-50">
-        {lockdownChrome}
-        <LIASubtestIntro
-          subtest={flow.currentSubtest}
-          subtestNumber={flow.currentSubtestIndex + 1}
-          onStartPractice={flow.startPractice}
-          language={language}
-        />
+        <ProctoredShell proctoring={lockdown}>
+          <LIASubtestIntro
+            subtest={flow.currentSubtest}
+            subtestNumber={flow.currentSubtestIndex + 1}
+            onStartPractice={flow.startPractice}
+            language={language}
+          />
+        </ProctoredShell>
       </div>
     );
   }
@@ -180,14 +146,15 @@ export default function LIAAssessmentPage() {
   if (flow.phase === "practice") {
     return (
       <div className="min-h-screen bg-gray-50">
-        {lockdownChrome}
-        <LIAPractice
-          subtest={flow.currentSubtest}
-          questions={flow.practiceQuestions}
-          onComplete={handlePracticeComplete}
-          onSubmitAnswer={flow.submitPracticeAnswer}
-          language={language}
-        />
+        <ProctoredShell proctoring={lockdown}>
+          <LIAPractice
+            subtest={flow.currentSubtest}
+            questions={flow.practiceQuestions}
+            onComplete={handlePracticeComplete}
+            onSubmitAnswer={flow.submitPracticeAnswer}
+            language={language}
+          />
+        </ProctoredShell>
       </div>
     );
   }
@@ -198,7 +165,7 @@ export default function LIAAssessmentPage() {
 
     return (
       <div className="min-h-screen bg-gray-50">
-        {lockdownChrome}
+        <ProctoredShell proctoring={lockdown}>
         {timerWarning !== null && <TimerWarningToast secondsLeft={timerWarning} onClose={() => setTimerWarning(null)} />}
         <ProgressHeader
           language={language}
@@ -254,6 +221,7 @@ export default function LIAAssessmentPage() {
               : "This section is timed. Answer as quickly and accurately as you can."}
           </p>
         </main>
+        </ProctoredShell>
       </div>
     );
   }
