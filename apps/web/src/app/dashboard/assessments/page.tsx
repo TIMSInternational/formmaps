@@ -16,11 +16,13 @@ import {
   Brain,
   Target,
   Users,
+  Sparkles,
   CheckCircle2,
   Circle,
   ArrowRight,
   Activity,
 } from "lucide-react";
+import { personalityApi } from "@/services/personalityService";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,8 +37,28 @@ export default function AssessmentsPage() {
   const { invalidateSpecificAssessment } = useAssessmentCache();
   const [isStartingEvaluation, setIsStartingEvaluation] = useState(false);
 
+  const [personalityStatus, setPersonalityStatus] = useState<"not_started" | "in_progress" | "completed">("not_started");
+
   useEffect(() => {
     retryPendingSubmissions().catch(() => {});
+  }, []);
+
+  // Lightweight access probe for the personality card (not in the dashboard
+  // summary): completed → results, in-progress session → resume, else start.
+  useEffect(() => {
+    let cancelled = false;
+    personalityApi
+      .getAccess()
+      .then((access) => {
+        if (cancelled) return;
+        if (access.has_completed) setPersonalityStatus("completed");
+        else if (access.existing_session_id) setPersonalityStatus("in_progress");
+        else setPersonalityStatus("not_started");
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const {
@@ -117,6 +139,24 @@ export default function AssessmentsPage() {
         : t("dashboard.inviteEvaluators"),
       isLink: true,
     },
+    {
+      key: "personality",
+      icon: Sparkles,
+      iconBg: "bg-[#065292]/10",
+      iconColor: "text-[#065292]",
+      title: t("dashboard.personalityTitle"),
+      description: t("dashboard.personalityDescription"),
+      status: personalityStatus,
+      href: personalityStatus === "completed"
+        ? "/dashboard/assessments/personality/results"
+        : "/dashboard/assessments/personality",
+      actionLabel: personalityStatus === "completed"
+        ? t("dashboard.viewResults")
+        : personalityStatus === "in_progress"
+        ? t("dashboard.continuePersonality")
+        : t("dashboard.startPersonality"),
+      isLink: true,
+    },
   ];
 
   const completedCount = assessments.filter((a) => a.status === "completed").length;
@@ -160,11 +200,11 @@ export default function AssessmentsPage() {
                 {t("dashboard.overallProgress", "Overall Progress")}
               </span>
               <span className="text-xs text-muted-foreground tabular-nums">
-                {completedCount}/3 {t("dashboard.completed")}
+                {completedCount}/{assessments.length} {t("dashboard.completed")}
               </span>
             </div>
             <div className="flex gap-1.5">
-              {[0, 1, 2].map((i) => (
+              {assessments.map((_, i) => (
                 <div
                   key={i}
                   className={cn(

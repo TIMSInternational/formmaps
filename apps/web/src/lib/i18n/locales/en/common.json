@@ -1322,7 +1322,11 @@
     "aiInsight": "AI Insight",
     "aiInsightMIL": "Your strongest area is {{area}} ({{score}}%). This suggests strong aptitude for careers requiring this cognitive skill.",
     "assessmentStarted": "Assessment started. Complete it below.",
-    "failedToCreateAssessment": "Failed to create assessment. Please try again."
+    "failedToCreateAssessment": "Failed to create assessment. Please try again.",
+    "personalityTitle": "Personality Assessment",
+    "personalityDescription": "A binary A/B instrument that resolves your 4-letter personality type and a tailored development profile.",
+    "startPersonality": "Start Personality Assessment",
+    "continuePersonality": "Continue Personality Assessment"
   },
   "coaching": {
     "featuredCoaches": "Featured Coaches",
@@ -2626,5 +2630,40 @@
     "requireChromiumBody": "This proctored assessment requires Google Chrome or Microsoft Edge. Please reopen this page in one of those browsers.",
     "timerLabel": "Secure Mode",
     "iframeClipboardNote": "This assessment runs in an embedded survey. Fullscreen, tab-switch, and second-monitor rules apply, but copy/paste inside the survey cannot be blocked and is not monitored."
+  },
+  "personality": {
+    "errorTitle": "Couldn't load the assessment",
+    "errorBody": "Something went wrong starting your personality assessment. Please try again.",
+    "retry": "Try Again",
+    "completedTitle": "Assessment Completed",
+    "completedBody": "You already completed the personality assessment. You can review your results.",
+    "viewResults": "View Results",
+    "itemLabel": "Item {{current}} of {{total}}",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "finishing": "Calculating your results...",
+    "answerError": "Couldn't save that answer. Please choose again.",
+    "finishError": "Some answers didn't save. We've marked what's missing — please complete them.",
+    "runnerHint": "There are no right or wrong answers. Choose the option that best describes you.",
+    "noResultsTitle": "No Results",
+    "noResultsBody": "You have not completed the personality assessment yet.",
+    "goToAssessment": "Go to Assessment",
+    "print": "Print",
+    "balanced": "Balanced",
+    "dimensionProfile": "Dimension Profile",
+    "intensityByDimension": "Intensity by Dimension",
+    "sectionDescription": "Overview",
+    "sectionStrengths": "Strengths",
+    "sectionWeaknesses": "Watch-outs",
+    "sectionImprovementAreas": "Areas to Improve",
+    "sectionHowToDevelop": "How to Develop",
+    "sectionMotivation": "What Motivates You",
+    "sectionHowToWorkWith": "How to Work With You",
+    "sectionCommunication": "Communication Style",
+    "sectionPotential": "Potential",
+    "potentialSocial": "Social",
+    "potentialLaboral": "Professional",
+    "sectionCoachingStrategy": "Coaching Strategy"
   }
 }
