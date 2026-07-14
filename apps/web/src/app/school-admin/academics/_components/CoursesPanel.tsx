@@ -185,7 +185,7 @@ export function CoursesPanel() {
           </button>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <button style={{ height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "#14b8a6", color: "#fff", border: "none", cursor: "pointer" }}>
+              <button style={{ height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "#2E9098", color: "#fff", border: "none", cursor: "pointer" }}>
                 <Plus style={{ width: 14, height: 14 }} /> Add Course
               </button>
             </DialogTrigger>
@@ -211,7 +211,7 @@ export function CoursesPanel() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setAddOpen(false)} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>Cancel</Button>
-                <button onClick={handleCreate} disabled={createCourse.isPending} style={{ height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600, background: "#14b8a6", color: "#fff", border: "none", cursor: "pointer" }}>
+                <button onClick={handleCreate} disabled={createCourse.isPending} style={{ height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600, background: "#2E9098", color: "#fff", border: "none", cursor: "pointer" }}>
                   {createCourse.isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : "Create"}
                 </button>
               </DialogFooter>

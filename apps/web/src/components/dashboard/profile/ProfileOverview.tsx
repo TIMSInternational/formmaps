@@ -158,7 +158,7 @@ export function ProfileOverview() {
               <div className="relative z-10 flex justify-between items-start">
                 <div>
                   <p className={cn("text-xs font-semibold uppercase tracking-wider mb-1", stat.text)}>{stat.label}</p>
-                  <h3 className="text-3xl font-extrabold">{stat.value}</h3>
+                  <h3 className="text-3xl font-extrabold text-white">{stat.value}</h3>
                 </div>
                 <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-xl">
                   <stat.icon size={20} className="text-white" aria-hidden="true" />

@@ -33,9 +33,12 @@ export function ProfileView() {
                             value={tab}
                             className={cn(
                                 "rounded-xl px-6 py-2.5 text-sm font-medium transition-all duration-300",
-                                "data-[state=active]:bg-gray-900 data-[state=active]:text-white dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-900",
-                                "data-[state=active]:shadow-md hover:bg-gray-50 dark:hover:bg-gray-800/50",
-                                "text-gray-500 dark:text-gray-400 capitalize"
+                                // Token base color — NOT text-gray-500: the admin-theme legacy remap
+                                // is !important and beats the active-state variant, which left dark
+                                // text on the dark active pill.
+                                "text-[color:var(--admin-font-secondary)] capitalize",
+                                "data-[state=active]:bg-[#102B47] data-[state=active]:text-white data-[state=active]:shadow-md",
+                                "hover:bg-[var(--admin-bg-hover)]"
                             )}
                         >
                             {tab}

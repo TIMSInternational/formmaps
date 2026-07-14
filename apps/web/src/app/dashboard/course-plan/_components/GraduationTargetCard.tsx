@@ -60,7 +60,7 @@ export function GraduationTargetCard({
           <div className="flex items-start gap-3 min-w-0">
             <Lock className="h-5 w-5 mt-0.5 shrink-0 text-[#FFD23F]" />
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold">
+              <h2 className="text-sm font-semibold text-white">
                 Unlock your personalized graduation plan
               </h2>
               <p className="text-xs mt-1 text-white/80">

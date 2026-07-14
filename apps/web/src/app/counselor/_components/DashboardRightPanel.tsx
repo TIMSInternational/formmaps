@@ -105,13 +105,13 @@ export function DashboardRightPanel({
           <button
             onClick={() => setRightTab("followups")}
             className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 px-2 rounded-md transition-all ${
-              rightTab === "followups" ? "bg-white shadow-sm text-[#FFD23F]" : "text-gray-500 hover:text-gray-700"
+              rightTab === "followups" ? "bg-white shadow-sm text-amber-700" : "text-gray-500 hover:text-gray-700"
             }`}
           >
             <Clock className="h-3.5 w-3.5" />
             {t("dashboard.followUps", "Follow-ups")}
             {pendingFollowUps > 0 && (
-              <span className="bg-[#FFD23F] text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+              <span className="bg-[#FFD23F] text-[#102B47] text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {pendingFollowUps}
               </span>
             )}
@@ -144,11 +144,11 @@ export function DashboardRightPanel({
             <div className="space-y-3">
               {followUpsList.map((item) => (
                 <div key={item.id} className="flex items-start gap-3 p-3 bg-[#FFD23F]/10 border border-[#FFD23F]/20 rounded-lg">
-                  <CalendarClock className="h-4 w-4 text-[#FFD23F] mt-0.5 shrink-0" />
+                  <CalendarClock className="h-4 w-4 text-amber-700 mt-0.5 shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-gray-800 truncate">{item.studentName}</p>
                     <p className="text-xs text-gray-600 line-clamp-1">{item.content}</p>
-                    <p className="text-[10px] text-[#FFD23F] mt-0.5">
+                    <p className="text-[10px] text-amber-700 mt-0.5">
                       {"\uD83D\uDCC5"} {item.followUpDate}
                     </p>
                   </div>
