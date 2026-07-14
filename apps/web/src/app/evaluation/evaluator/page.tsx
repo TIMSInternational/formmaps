@@ -293,7 +293,10 @@ export default function EvaluatorPage() {
   const currentQuestion = evaluationData.questions[currentStep];
 
   return proctored(
-    <div className="min-h-screen bg-background">
+    // Own scroll region — the standalone evaluator route renders under
+    // body{overflow:hidden} (no AppShell), so content/nav clipped off-screen
+    // unless zoomed out. h-dvh + overflow makes the page scrollable at any zoom.
+    <div className="h-dvh overflow-y-auto bg-background">
       <div className="max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-8">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6">

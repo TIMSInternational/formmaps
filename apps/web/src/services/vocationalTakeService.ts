@@ -21,7 +21,9 @@ export type VocationalSubmitAnswer =
 async function unwrap(res: Response) {
   const body = await res.json().catch(() => ({}));
   if (!res.ok || body?.success === false) {
-    throw new Error(body?.message || `Request failed (${res.status})`);
+    const err = new Error(body?.message || `Request failed (${res.status})`) as Error & { reason?: string };
+    err.reason = body?.reason;
+    throw err;
   }
   return body?.data ?? body;
 }

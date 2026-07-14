@@ -204,6 +204,9 @@
     "vocational": {
       "loading": "Cargando…",
       "loadError": "No se pudo cargar esta evaluación.",
+      "loadErrorTitle": "Este enlace no está disponible",
+      "expiredTitle": "Este enlace de evaluación ha expirado",
+      "expiredBody": "Pídele al estudiante un nuevo enlace de invitación.",
       "alreadyTitle": "Ya enviada",
       "alreadyBody": "Gracias; esta evaluación está completa.",
       "label": "Vocacional 360",
@@ -213,6 +216,8 @@
       "submitFailed": "Error al enviar",
       "submitting": "Enviando…",
       "submit": "Enviar",
+      "answerAll": "Responde todas las preguntas antes de enviar.",
+      "progress": "{{done}} de {{total}} respondidas",
       "answerPlaceholder": "Escribe tu respuesta…",
       "moveUp": "subir {{label}}",
       "moveDown": "bajar {{label}}"
