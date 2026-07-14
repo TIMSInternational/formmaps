@@ -1,6 +1,27 @@
 // PCA Assessment Service — All calls go through backend proxy (no external API keys in frontend)
 
 import { apiRequest } from "@/lib/api/apiClient";
+import type { LockdownViolation } from "@/components/proctoring/types";
+
+/**
+ * Flush proctoring violations for an authed PCA exam session. Best-effort —
+ * never throws into the exam flow. Requires a PCAExamSession id (the internal
+ * PCA exam-engine runner; the external TIMS survey iframe has no such id).
+ */
+export async function savePCAViolations(
+  sessionId: string,
+  violations: LockdownViolation[]
+): Promise<void> {
+  if (!violations.length) return;
+  try {
+    await apiRequest(`/api/pcaexam/session/${sessionId}/violations`, {
+      method: "POST",
+      data: { violations },
+    });
+  } catch {
+    /* best-effort: proctoring must never break the exam */
+  }
+}
 
 export interface PCAAssessmentRequest {
   PerNom: string;

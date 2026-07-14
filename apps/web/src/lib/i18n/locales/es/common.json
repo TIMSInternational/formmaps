@@ -2613,5 +2613,18 @@
   },
   "resume": {
     "saveFailed": "No pudimos guardar tus cambios. Revisa tu conexión e inténtalo de nuevo."
+  },
+  "proctoring": {
+    "multiDisplayTitle": "Desconecta las pantallas adicionales",
+    "multiDisplayBody": "Detectamos un segundo monitor. Desconéctalo para continuar con la evaluación.",
+    "fullscreenTitle": "Regresa a pantalla completa",
+    "fullscreenBody": "Para garantizar la integridad de la evaluación, debes permanecer en modo de pantalla completa.",
+    "fullscreenButton": "Entrar en pantalla completa",
+    "focusLostTitle": "Regresa a la evaluación",
+    "focusLostBody": "Saliste de la pestaña de la evaluación. Vuelve a esta ventana para continuar; la actividad quedó registrada.",
+    "requireChromiumTitle": "Se requiere Chrome o Edge",
+    "requireChromiumBody": "Esta evaluación supervisada requiere Google Chrome o Microsoft Edge. Vuelve a abrir esta página en uno de esos navegadores.",
+    "timerLabel": "Modo Seguro",
+    "iframeClipboardNote": "Esta evaluación se realiza en una encuesta integrada. Se aplican las reglas de pantalla completa, cambio de pestaña y segundo monitor, pero no es posible bloquear ni monitorear copiar/pegar dentro de la encuesta."
   }
 }
