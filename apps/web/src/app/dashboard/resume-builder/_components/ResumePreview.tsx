@@ -162,7 +162,7 @@ export function ResumePreview() {
                       </button>
                       <button
                         onClick={() => setShowATS(true)}
-                        className="bg-[#FFD23F] hover:bg-[#FFD23F]/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        className="bg-[#FFD23F] hover:bg-[#FFD23F]/90 text-[#102B47] px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                       >
                         ATS Check
                       </button>

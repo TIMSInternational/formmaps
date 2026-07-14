@@ -605,7 +605,7 @@ export function BookingModal({
                       {t('common.cancel')}
                     </Button>
                     <Button
-                      className="h-11 px-8 bg-black text-white hover:bg-gray-800"
+                      className="h-11 px-8 bg-gray-900 text-white hover:bg-gray-800"
                       onClick={handleBook}
                       disabled={isBooking}
                     >

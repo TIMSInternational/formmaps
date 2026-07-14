@@ -8,7 +8,15 @@
  * All --admin-* vars are set dynamically by the TS token system.
  *
  * Apply: wrap admin pages in .admin-twenty class
+ *
+ * CASCADE CONTRACT: everything below lives in @layer components so that
+ * Tailwind utilities (a later layer) can always override the theme's
+ * non-!important defaults (h1-h4, p, table, ...). Previously these rules were
+ * unlayered, which silently beat EVERY utility — e.g. text-white/80 on a navy
+ * banner rendered dark. The !important legacy remaps (gray/white classes →
+ * theme tokens) still win over utilities by importance, which is their job.
  */
+@layer components {
 
 /* ── Theme Scope ── */
 .admin-twenty {
@@ -57,7 +65,10 @@
 .admin-twenty .text-gray-500 { color: var(--admin-font-secondary) !important; }
 .admin-twenty .text-gray-400,
 .admin-twenty .text-gray-300 { color: var(--admin-font-tertiary) !important; }
-.admin-twenty .text-white { color: var(--admin-font-primary) !important; }
+/* NOTE: `.text-white` is deliberately NOT remapped. White text sits on
+   intentionally-dark brand surfaces (navy CTAs, lock banners, hero cards)
+   that stay dark in both themes — remapping it to the theme font color
+   rendered all of them near-black-on-navy in light mode. */
 
 /* Borders */
 .admin-twenty .border-gray-50,
@@ -286,10 +297,10 @@
   -webkit-backdrop-filter: none !important;
 }
 
-/* ── Gradients — flatten to theme colors ── */
-.admin-twenty [class*="bg-gradient-to"] {
-  background-image: none !important;
-}
+/* NOTE: gradients are deliberately NOT flattened. Gradient surfaces carry
+   authored light text (text-white, text-blue-50, ...) — stripping only the
+   background-image left white text floating on the light panel (invisible).
+   Brand gradients are theme-independent, like the navy surfaces. */
 
 /* ── Border White — dark theme fix ── */
 .admin-twenty .border-white,
@@ -344,9 +355,9 @@
 /* ── Background fixes for specific patterns ── */
 .admin-twenty .bg-black { background: var(--admin-font-primary) !important; }
 .admin-twenty .hover\:bg-black:hover { background: var(--admin-font-secondary) !important; }
-.admin-twenty .bg-white\/5,
-.admin-twenty .bg-white\/10,
-.admin-twenty .bg-white\/15 { background: var(--admin-bg-hover) !important; }
+/* NOTE: translucent `bg-white/5|10|15` glass surfaces are deliberately NOT
+   remapped — they always sit on dark heroes/cards and must stay translucent;
+   flattening them to the light hover token broke white text on top of them. */
 
 /* ── Avatar borders ── */
 .admin-twenty .border-\[3px\].border-white { border-color: var(--admin-bg-card) !important; }
@@ -366,3 +377,5 @@
 .admin-twenty .bg-green-500 { background: var(--admin-accent-green) !important; }
 .admin-twenty .bg-red-500 { background: var(--admin-accent-red) !important; }
 .admin-twenty .bg-blue-500 { background: var(--admin-accent-blue) !important; }
+
+} /* end @layer components */

@@ -152,7 +152,7 @@ export function ProfileHeader() {
         <Button
           variant="secondary"
           size="sm"
-          className="absolute top-6 right-6 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border-white/20 border transition-all rounded-full px-4"
+          className="absolute top-6 right-6 bg-black/30 hover:bg-black/40 text-white backdrop-blur-md border-white/20 border transition-all rounded-full px-4"
           onClick={() => coverInputRef.current?.click()}
           disabled={isUploadingCover}
         >

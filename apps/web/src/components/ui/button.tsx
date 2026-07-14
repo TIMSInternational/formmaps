@@ -13,12 +13,14 @@ const buttonVariants = cva(
           "bg-indigo-600 text-white hover:bg-indigo-700",
         destructive:
           "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600/20",
+        // Token-based, NOT hardcoded slate: slate-900 text is invisible on the
+        // dark theme's panels (slate isn't remapped by admin-theme.css).
         outline:
-          "border border-slate-200 bg-transparent hover:bg-slate-50 text-slate-900",
+          "border border-border bg-transparent hover:bg-accent text-foreground",
         secondary:
-          "bg-slate-100 text-slate-900 hover:bg-slate-200",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:
-          "hover:bg-slate-100 text-slate-900",
+          "hover:bg-accent text-foreground",
         link: "text-indigo-600 underline-offset-4 hover:underline",
       },
       size: {
