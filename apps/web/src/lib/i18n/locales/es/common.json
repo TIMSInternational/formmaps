@@ -2638,6 +2638,8 @@
     "next": "Siguiente",
     "finish": "Finalizar",
     "finishing": "Calculando tus resultados...",
+    "answerError": "No se pudo guardar esa respuesta. Por favor, elige de nuevo.",
+    "finishError": "Algunas respuestas no se guardaron. Marcamos las que faltan; por favor complétalas.",
     "runnerHint": "No hay respuestas correctas ni incorrectas. Elige la opción que mejor te describa.",
     "noResultsTitle": "Sin Resultados",
     "noResultsBody": "Aún no has completado la evaluación de personalidad.",

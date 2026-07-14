@@ -2638,6 +2638,8 @@
     "next": "Next",
     "finish": "Finish",
     "finishing": "Calculating your results...",
+    "answerError": "Couldn't save that answer. Please choose again.",
+    "finishError": "Some answers didn't save. We've marked what's missing — please complete them.",
     "runnerHint": "There are no right or wrong answers. Choose the option that best describes you.",
     "noResultsTitle": "No Results",
     "noResultsBody": "You have not completed the personality assessment yet.",

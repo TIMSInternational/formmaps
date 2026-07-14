@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import {
@@ -45,12 +46,14 @@ export default function PersonalityAssessmentPage() {
   // clock ticks each second), re-firing begin()/tearing down mid-exam.
   const { begin, end, drainViolations, violations } = proctoring;
   const startedRef = useRef(false);
-  const initRef = useRef(false);
 
-  // Start or resume the session on mount.
+  // Start or resume the session on mount. No persistent ref-guard: under React
+  // StrictMode (dev) the effect mounts→cleanup→remounts, and a ref-guard would
+  // let the cleanup cancel mount #1's fetch while blocking mount #2's — leaving
+  // `phase` stuck on "loading" forever. The per-invocation `cancelled` flag is
+  // the StrictMode-safe idiom (mirrors useLiaFlow); the harmless dev double-fetch
+  // resolves to a single in-progress session server-side (start resumes it).
   useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
     let cancelled = false;
     (async () => {
       try {
@@ -129,11 +132,17 @@ export default function PersonalityAssessmentPage() {
       try {
         await personalityApi.answer(sessionId, itemNumber, choice);
       } catch {
-        // Non-fatal: the answer is upserted idempotently; a later retry (or the
-        // completion coverage check) surfaces any gap. Keep the runner responsive.
+        // The optimistic mark is now ahead of the server. Roll it back so the
+        // Finish gate can't be satisfied on an unsaved item, and tell the user.
+        setAnsweredNumbers((prev) => {
+          const next = new Set(prev);
+          next.delete(itemNumber);
+          return next;
+        });
+        toast.error(t("personality.answerError"));
       }
     },
-    [sessionId, currentItem, items.length],
+    [sessionId, currentItem, items.length, t],
   );
 
   const goBack = useCallback(() => setCurrentIndex((idx) => Math.max(0, idx - 1)), []);
@@ -150,9 +159,23 @@ export default function PersonalityAssessmentPage() {
       end();
       router.push("/dashboard/assessments/personality/results");
     } catch {
+      // Complete failed (most likely a coverage gap from an answer that never
+      // saved). Re-sync answered state from the server so the Finish gate
+      // reflects reality and jump to the first still-unanswered item.
+      toast.error(t("personality.finishError"));
+      try {
+        const resynced = await personalityApi.start({ language });
+        setItems(resynced.items);
+        const restored = new Set(resynced.answered_item_numbers);
+        setAnsweredNumbers(restored);
+        const firstUnanswered = resynced.items.findIndex((it) => !restored.has(it.n));
+        if (firstUnanswered !== -1) setCurrentIndex(firstUnanswered);
+      } catch {
+        /* leave state as-is; the user can retry or reload */
+      }
       setPhase("running");
     }
-  }, [sessionId, allAnswered, end, router]);
+  }, [sessionId, allAnswered, end, router, language, t]);
 
   const progressPct = useMemo(() => (total > 0 ? Math.round((answeredCount / total) * 100) : 0), [answeredCount, total]);
 
