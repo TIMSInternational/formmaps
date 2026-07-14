@@ -31,10 +31,31 @@ it("loads the questionnaire and renders the first question", async () => {
   await waitFor(() => expect(screen.getByText("Q1")).toBeInTheDocument());
 });
 
+it("shows an actionable message when the link has expired (not a bare error)", async () => {
+  getForm.mockRejectedValue(Object.assign(new Error("This evaluation link has expired."), { reason: "expired" }));
+  render(<VocationalEvaluator token="tok" language="english" />);
+  await waitFor(() => expect(screen.getByText(/expired/i)).toBeInTheDocument());
+  expect(screen.getByText(/new invitation link/i)).toBeInTheDocument();
+});
+
 it("shows the already-completed state", async () => {
   getForm.mockResolvedValue({ completed: true, questions: [] });
   render(<VocationalEvaluator token="tok" language="english" />);
   await waitFor(() => expect(screen.getByText(/already|completado|submitted/i)).toBeInTheDocument());
+});
+
+it("blocks submit until every question is answered", async () => {
+  getForm.mockResolvedValue({ group: "teacher", questions: [
+    { number: 1, type: "open", scaleAnchors: null, options: null, text: "Q1", block: "open", area: null, dimensionKey: null },
+    { number: 2, type: "open", scaleAnchors: null, options: null, text: "Q2", block: "open", area: null, dimensionKey: null },
+  ] });
+  render(<VocationalEvaluator token="tok" language="english" />);
+  await waitFor(() => screen.getByText("Q1"));
+  const boxes = screen.getAllByRole("textbox");
+  fireEvent.change(boxes[0], { target: { value: "only one answered" } });
+  fireEvent.click(screen.getByRole("button", { name: /submit|enviar|finish/i }));
+  await new Promise((r) => setTimeout(r, 0));
+  expect(submit).not.toHaveBeenCalled();
 });
 
 it("submits answered questions as typed answers", async () => {

@@ -55,13 +55,13 @@ function renderDialog() {
 }
 
 describe("Student360Dialog — instrument selector", () => {
-  it("defaults to generic instrument (no instrument field in POST body)", async () => {
+  it("defaults to the vocational instrument (sends instrument: 'vocational')", async () => {
     renderDialog();
 
     // Open the add form
     fireEvent.click(screen.getByRole("button", { name: /add evaluator/i }));
 
-    // Fill name and email
+    // Fill name and email (leave the instrument on its default)
     fireEvent.change(screen.getByPlaceholderText(/full name/i), { target: { value: "Alice" } });
     fireEvent.change(screen.getByPlaceholderText(/email address/i), { target: { value: "alice@test.com" } });
 
@@ -72,9 +72,27 @@ describe("Student360Dialog — instrument selector", () => {
       const createCall = mockApiRequest.mock.calls.find((c: string[]) => c[0] === "/evaluation/create-group");
       expect(createCall).toBeDefined();
       const payload = createCall![1].data;
-      // Generic: instrument must be absent (undefined)
-      expect(payload.instrument).toBeUndefined();
-      expect(payload.instrumentVersion).toBeUndefined();
+      // New default: the real Vocational 360.
+      expect(payload.instrument).toBe("vocational");
+    });
+  });
+
+  it("sends instrument: 'generic' when the counselor explicitly opts out", async () => {
+    renderDialog();
+    fireEvent.click(screen.getByRole("button", { name: /add evaluator/i }));
+
+    const instrumentSelect = screen.getByRole("combobox", { name: /instrument/i });
+    fireEvent.change(instrumentSelect, { target: { value: "generic" } });
+
+    fireEvent.change(screen.getByPlaceholderText(/full name/i), { target: { value: "Dana" } });
+    fireEvent.change(screen.getByPlaceholderText(/email address/i), { target: { value: "dana@test.com" } });
+    fireEvent.click(screen.getByRole("button", { name: /^add$/i }));
+
+    await waitFor(() => {
+      const createCall = mockApiRequest.mock.calls.find((c: string[]) => c[0] === "/evaluation/create-group");
+      expect(createCall).toBeDefined();
+      const payload = createCall![1].data;
+      expect(payload.instrument).toBe("generic");
     });
   });
 
