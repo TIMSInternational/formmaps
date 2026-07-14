@@ -64,7 +64,7 @@ export function ProctoredShell({
             <p className="text-white/70 mb-8 text-lg">{t("proctoring.fullscreenBody")}</p>
             <button
               onClick={enterFullscreen}
-              className="w-full py-4 px-6 bg-[#10B981] text-white rounded-xl font-semibold text-lg hover:bg-[#059669] transition-colors flex items-center justify-center gap-3"
+              className="w-full py-4 px-6 bg-emerald-700 text-white rounded-xl font-semibold text-lg hover:bg-emerald-800 transition-colors flex items-center justify-center gap-3"
             >
               <Maximize2 className="w-6 h-6" />
               {t("proctoring.fullscreenButton")}
