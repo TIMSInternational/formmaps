@@ -817,7 +817,11 @@
     "aiInsight": "Perspectiva de IA",
     "aiInsightMIL": "Tu área más fuerte es {{area}} ({{score}}%). Esto sugiere una gran aptitud para carreras que requieren esta habilidad cognitiva.",
     "assessmentStarted": "Evaluación iniciada. Complétala a continuación.",
-    "failedToCreateAssessment": "No se pudo crear la evaluación. Inténtalo de nuevo."
+    "failedToCreateAssessment": "No se pudo crear la evaluación. Inténtalo de nuevo.",
+    "personalityTitle": "Evaluación de Personalidad",
+    "personalityDescription": "Un instrumento binario A/B que determina tu tipo de personalidad de 4 letras y un perfil de desarrollo personalizado.",
+    "startPersonality": "Iniciar Evaluación de Personalidad",
+    "continuePersonality": "Continuar Evaluación de Personalidad"
   },
   "coaching": {
     "featuredCoaches": "Coaches Destacados",
@@ -2621,5 +2625,38 @@
     "requireChromiumBody": "Esta evaluación supervisada requiere Google Chrome o Microsoft Edge. Vuelve a abrir esta página en uno de esos navegadores.",
     "timerLabel": "Modo Seguro",
     "iframeClipboardNote": "Esta evaluación se realiza en una encuesta integrada. Se aplican las reglas de pantalla completa, cambio de pestaña y segundo monitor, pero no es posible bloquear ni monitorear copiar/pegar dentro de la encuesta."
+  },
+  "personality": {
+    "errorTitle": "No se pudo cargar la evaluación",
+    "errorBody": "Ocurrió un error al iniciar tu evaluación de personalidad. Inténtalo de nuevo.",
+    "retry": "Reintentar",
+    "completedTitle": "Evaluación Completada",
+    "completedBody": "Ya completaste la evaluación de personalidad. Puedes revisar tus resultados.",
+    "viewResults": "Ver Resultados",
+    "itemLabel": "Ítem {{current}} de {{total}}",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "finish": "Finalizar",
+    "finishing": "Calculando tus resultados...",
+    "runnerHint": "No hay respuestas correctas ni incorrectas. Elige la opción que mejor te describa.",
+    "noResultsTitle": "Sin Resultados",
+    "noResultsBody": "Aún no has completado la evaluación de personalidad.",
+    "goToAssessment": "Ir a la Evaluación",
+    "print": "Imprimir",
+    "balanced": "Equilibrado",
+    "dimensionProfile": "Perfil por Dimensiones",
+    "intensityByDimension": "Intensidad por Dimensión",
+    "sectionDescription": "Descripción General",
+    "sectionStrengths": "Fortalezas",
+    "sectionWeaknesses": "Aspectos a Cuidar",
+    "sectionImprovementAreas": "Áreas de Mejora",
+    "sectionHowToDevelop": "Cómo Desarrollarte",
+    "sectionMotivation": "Qué te Motiva",
+    "sectionHowToWorkWith": "Cómo Trabajar Contigo",
+    "sectionCommunication": "Estilo de Comunicación",
+    "sectionPotential": "Potencial",
+    "potentialSocial": "Social",
+    "potentialLaboral": "Profesional",
+    "sectionCoachingStrategy": "Estrategia de Coaching"
   }
 }
