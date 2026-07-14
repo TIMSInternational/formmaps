@@ -28,6 +28,7 @@ interface LIAPracticeProps {
     is_correct: boolean;
     correct_answer: string;
     practice_complete: boolean;
+    error?: boolean;
   }>;
   language?: 'es' | 'en';
 }
@@ -43,6 +44,7 @@ export function LIAPractice({
   const [feedback, setFeedback] = useState<{
     isCorrect: boolean;
     correctAnswer: string;
+    error?: boolean;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [practiceComplete, setPracticeComplete] = useState(false);
@@ -57,22 +59,18 @@ export function LIAPractice({
     setIsSubmitting(true);
     try {
       const result = await onSubmitAnswer(currentQuestion.id, answer);
-      console.log('Practice answer result:', result);
       setFeedback({
         isCorrect: result.is_correct,
         correctAnswer: result.correct_answer,
+        error: result.error,
       });
 
       if (result.practice_complete) {
         setPracticeComplete(true);
       }
-    } catch (error) {
-      console.error('Error submitting practice answer:', error);
-      // Show error feedback so user can retry
-      setFeedback({
-        isCorrect: false,
-        correctAnswer: 'Error - please try again',
-      });
+    } catch {
+      // Honest error state — never present a fabricated "correct answer".
+      setFeedback({ isCorrect: false, correctAnswer: '', error: true });
     } finally {
       setIsSubmitting(false);
     }
@@ -251,6 +249,24 @@ export function LIAPractice({
                 >
                   {language === 'es' ? 'Continuar' : 'Continue'}
                   <ArrowRight className="w-5 h-5" />
+                </button>
+              </>
+            ) : feedback.error ? (
+              <>
+                <XCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-center text-gray-900 mb-2">
+                  {language === 'es' ? 'Hubo un problema' : 'Something went wrong'}
+                </h3>
+                <p className="text-center text-gray-600 mb-6 text-sm">
+                  {language === 'es'
+                    ? 'No pudimos verificar tu respuesta. Intenta de nuevo.'
+                    : "We couldn't check your answer. Please try again."}
+                </p>
+                <button
+                  onClick={handleRetry}
+                  className="w-full py-3 px-6 bg-[#102B47] hover:bg-[#0b1f33] text-white font-medium rounded-lg transition-colors"
+                >
+                  {language === 'es' ? 'Intentar de nuevo' : 'Try again'}
                 </button>
               </>
             ) : (

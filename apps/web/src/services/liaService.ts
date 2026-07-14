@@ -241,6 +241,17 @@ export const liaAssessmentApi = {
 // CONSTANTS (tims-suite parity)
 // ============================================
 
+/**
+ * Resolve the assessment CONTENT language from the resolved UI locale (i18next
+ * `i18n.language`). This must be the single source of truth so a Spanish user
+ * never gets English items mid-test: deriving it from a persisted store default
+ * (which defaults to English) let the session start in the wrong language.
+ */
+export function resolveContentLanguage(i18nLanguage: string | undefined): "es" | "en" {
+  const l = (i18nLanguage ?? "").toLowerCase();
+  return l.startsWith("es") || l === "spanish" ? "es" : "en";
+}
+
 export const SUBTEST_ORDER: LIASubtest[] = [
   "pattern_recognition",
   "verbal_reasoning",
@@ -270,7 +281,10 @@ export const SUBTEST_CONFIG: Record<LIASubtest, {
     displayName: { es: "Velocidad Numérica", en: "Numerical Speed" },
   },
   working_memory: {
-    itemCount: 72,
+    // The official Working Memory instrument is 60 items (the 72-item form is
+    // retired). The backend serves 60; keep this in sync so progress never
+    // targets a count the served bank can't reach.
+    itemCount: 60,
     timeSeconds: 4 * 60,
     displayName: { es: "Memoria de Trabajo", en: "Working Memory" },
   },
