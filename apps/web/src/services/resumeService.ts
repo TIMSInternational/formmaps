@@ -1,5 +1,15 @@
-import { apiRequest } from "@/lib/api/apiClient";
-import { fromApiResume, type ApiResumePayload, type OriginalFileType } from "@/services/resumeSerialization";
+import { apiRequest, unwrapApiData, type ApiEnvelope } from "@/lib/api/apiClient";
+import {
+  fromApiResume,
+  type ApiResumePayload,
+  type OriginalFileType,
+  type RawResumeEntity,
+} from "@/services/resumeSerialization";
+import type {
+  ExtractedJobData,
+  TailorResumePayload,
+  TailoredResume,
+} from "@/types/resume";
 
 export interface ResumePersonal {
   fullName: string;
@@ -57,42 +67,50 @@ export interface Resume {
 // Writers MUST emit the backend column contract (see resumeSerialization).
 export type CreateResumePayload = ApiResumePayload;
 export type UpdateResumePayload = Partial<ApiResumePayload>;
+type ResumeApiResponse = ApiEnvelope<RawResumeEntity> | RawResumeEntity;
+type ResumeListApiResponse = ApiEnvelope<RawResumeEntity[]> | RawResumeEntity[];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object";
+}
 
 export async function createResume(
   payload: CreateResumePayload
 ): Promise<Resume> {
-  return apiRequest("/api/resume", {
+  const response = await apiRequest<ResumeApiResponse>("/api/resume", {
     method: "POST",
     data: payload,
   });
+  return fromApiResume(unwrapApiData(response));
 }
 
 export async function updateResume(
   resumeId: string,
   payload: UpdateResumePayload
 ): Promise<Resume> {
-  return apiRequest(`/api/resume/${resumeId}`, {
+  const response = await apiRequest<ResumeApiResponse>(`/api/resume/${resumeId}`, {
     method: "PUT",
     data: payload,
   });
+  return fromApiResume(unwrapApiData(response));
 }
 
 export async function getAllResumes(): Promise<Resume[]> {
-  const response = await apiRequest("/api/resume", { method: "GET" });
-  const raw = response.data?.data || response.data || [];
+  const response = await apiRequest<ResumeListApiResponse>("/api/resume", { method: "GET" });
+  const raw = unwrapApiData(response) || [];
   return (Array.isArray(raw) ? raw : []).map(fromApiResume);
 }
 
 export async function getResumeById(resumeId: string): Promise<Resume> {
-  const response = await apiRequest(`/api/resume/${resumeId}`, {
+  const response = await apiRequest<ResumeApiResponse>(`/api/resume/${resumeId}`, {
     method: "GET",
   });
-  const raw = response.data || response;
+  const raw = unwrapApiData(response);
   return fromApiResume({ ...raw, id: raw?.ID || raw?._id || raw?.id || resumeId });
 }
 
 export async function deleteResume(resumeId: string): Promise<void> {
-  return apiRequest(`/api/resume/${resumeId}`, { method: "DELETE" });
+  await apiRequest<ApiEnvelope<unknown>>(`/api/resume/${resumeId}`, { method: "DELETE" });
 }
 
 export interface AiEditResult {
@@ -111,16 +129,16 @@ export async function aiEditResume(
   resumeId: string,
   instruction: string
 ): Promise<AiEditResult> {
-  const response = await apiRequest(`/api/resume/${resumeId}/ai-edit`, {
-    method: "POST",
-    data: { instruction },
-  });
-  const data = (response?.data ?? response) as {
+  const response = await apiRequest<ApiEnvelope<{
     applied?: boolean;
     message?: string;
     changeSummary?: string;
-    resume?: unknown;
-  };
+    resume?: RawResumeEntity;
+  }>>(`/api/resume/${resumeId}/ai-edit`, {
+    method: "POST",
+    data: { instruction },
+  });
+  const data = unwrapApiData(response);
   return {
     applied: Boolean(data?.applied),
     message: data?.message,
@@ -136,8 +154,11 @@ export async function aiEditResume(
 
 export async function getOriginalUrl(resumeId: string): Promise<string | null> {
   try {
-    const res = await apiRequest(`/api/resume/${resumeId}/original`, { method: "GET" });
-    return res?.data?.url ?? res?.url ?? null;
+    const res = await apiRequest<ApiEnvelope<{ url?: string }> | { url?: string }>(
+      `/api/resume/${resumeId}/original`,
+      { method: "GET" },
+    );
+    return unwrapApiData(res)?.url ?? null;
   } catch (e) {
     console.error("getOriginalUrl failed", e);
     return null;
@@ -261,52 +282,59 @@ export async function generateAIContent(
   prompt: string
 ): Promise<AIGenerationResponse> {
   try {
-    const response = await apiRequest("/api/resume/ask", {
+    type AiGeneratedContent = string | string[];
+    type AiAskResponse = AiGeneratedContent | {
+      generated_content?: AiGeneratedContent;
+      message?: string;
+      data?: AiGeneratedContent | { generated_content?: AiGeneratedContent };
+    };
+    const response = await apiRequest<ApiEnvelope<AiAskResponse> | AiAskResponse>("/api/resume/ask", {
       method: "POST",
       data: {
         Prompt: prompt,
       },
     });
+    const payload = unwrapApiData(response);
 
     // Normalize the various shapes the backend may return so callers
     // always receive either a string or an array of strings.
     let generated: string | string[] = "";
 
-    if (typeof response === "string") {
-      generated = response;
-    } else if (response == null) {
+    if (typeof payload === "string" || Array.isArray(payload)) {
+      generated = payload;
+    } else if (payload == null) {
       generated = "";
-    } else if (typeof response === "object") {
+    } else if (isRecord(payload)) {
       // Common patterns:
       // { data: "..." }
       // { generated_content: "..." }
       // { data: { generated_content: "..." } }
       if (
-        typeof response.generated_content === "string" ||
-        Array.isArray(response.generated_content)
+        typeof payload.generated_content === "string" ||
+        Array.isArray(payload.generated_content)
       ) {
-        generated = response.generated_content;
-      } else if (typeof response.data === "string") {
-        generated = response.data;
+        generated = payload.generated_content;
+      } else if (typeof payload.data === "string" || Array.isArray(payload.data)) {
+        generated = payload.data;
       } else if (
-        response.data &&
-        (typeof response.data.generated_content === "string" ||
-          Array.isArray(response.data.generated_content))
+        isRecord(payload.data) &&
+        (typeof payload.data.generated_content === "string" ||
+          Array.isArray(payload.data.generated_content))
       ) {
-        generated = response.data.generated_content;
-      } else if (typeof response.message === "string") {
+        generated = payload.data.generated_content;
+      } else if (typeof payload.message === "string") {
         // As a fallback, use a textual message field if present
-        generated = response.message;
+        generated = payload.message;
       } else {
         // Last resort: stringify the object so React renders a string
         try {
-          generated = JSON.stringify(response);
+          generated = JSON.stringify(payload);
         } catch (e) {
-          generated = String(response);
+          generated = String(payload);
         }
       }
     } else {
-      generated = String(response);
+      generated = String(payload);
     }
 
     return {
@@ -328,17 +356,11 @@ export async function generateAIContent(
 }
 
 export async function getDefaultResume(): Promise<Resume> {
-  const response = await apiRequest("/api/resume/default", { method: "GET" });
-  return response.data || response;
+  const response = await apiRequest<ResumeApiResponse>("/api/resume/default", { method: "GET" });
+  return fromApiResume(unwrapApiData(response));
 }
 
 // --- AI Resume Tailoring Functions ---
-
-import type {
-  ExtractedJobData,
-  TailorResumePayload,
-  TailoredResume,
-} from "@/types/resume";
 
 /**
  * Send a job posting text to the backend for AI extraction of key requirements.
@@ -347,11 +369,32 @@ export async function extractJobPosting(
   jobPostingText: string,
   purpose: string
 ): Promise<ExtractedJobData> {
-  const response = await apiRequest("/api/resume/extract-job-posting", {
+  type ExtractJobPostingResponse = {
+    title?: string;
+    company?: string;
+    location?: string;
+    requirements?: string[];
+    skills?: string[];
+    description?: string;
+  };
+  const response = await apiRequest<ApiEnvelope<ExtractJobPostingResponse>>("/api/resume/extract-job-posting", {
     method: "POST",
-    data: { jobPostingText, purpose },
+    data: { text: jobPostingText, purpose },
   });
-  return response.data || response;
+  const data = unwrapApiData(response);
+  return {
+    jobTitle: data.title ?? "",
+    company: data.company ?? "",
+    location: data.location ?? "",
+    employmentType: "",
+    requiredSkills: data.skills ?? [],
+    preferredSkills: [],
+    requiredQualifications: data.requirements ?? [],
+    keyResponsibilities: data.requirements ?? [],
+    industryKeywords: data.skills ?? [],
+    experienceLevel: "",
+    summary: data.description ?? "",
+  };
 }
 
 /**
@@ -360,9 +403,9 @@ export async function extractJobPosting(
 export async function tailorResume(
   payload: TailorResumePayload
 ): Promise<TailoredResume> {
-  const response = await apiRequest("/api/resume/tailor", {
+  const response = await apiRequest<ApiEnvelope<TailoredResume> | TailoredResume>("/api/resume/tailor", {
     method: "POST",
     data: payload,
   });
-  return response.data || response;
+  return unwrapApiData(response);
 }

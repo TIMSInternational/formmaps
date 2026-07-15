@@ -104,6 +104,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "i18n:check-parity": "node scripts/check-i18n-parity.mjs",
-    "i18n:check-hardcoded": "node scripts/check-hardcoded-strings.mjs"
+    "i18n:check-hardcoded": "node scripts/check-hardcoded-strings.mjs",
+    "i18n:check-hardcoded:ci": "node scripts/check-hardcoded-strings.mjs --fail-on-new"
   }
 }

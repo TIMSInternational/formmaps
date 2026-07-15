@@ -1,16 +1,12 @@
 /**
  * check-hardcoded-strings.mjs
  *
- * REPORT-ONLY heuristic scanner (always exits 0).
+ * Heuristic scanner for likely user-facing hardcoded strings.
  *
  * Walks frontend/src/app/** and flags likely user-facing hardcoded text
  * in JSX that is NOT wrapped in t(...).  Writes current findings to a
- * committed baseline file (scripts/i18n-hardcoded-baseline.json) so
- * that future runs can detect NEW additions.
- *
- * Phase V note: flip to exit(1) on new-additions by comparing against
- * the baseline count/fingerprints.  For now this is a guide, not a gate —
- * false positives on heuristic matches would block unrelated work.
+ * committed baseline file (scripts/i18n-hardcoded-baseline.json). CI should
+ * use --fail-on-new to reject additions not already present in the baseline.
  *
  * Heuristic (conservative — prefer false negatives):
  *   1. JSX text node: a line of JSX that contains a quoted string or bare
@@ -23,11 +19,12 @@
  * Files excluded: *.test.tsx, *.spec.tsx, *.d.ts, __tests__/
  *
  * Usage:
- *   node scripts/check-hardcoded-strings.mjs            # write baseline (default)
- *   node scripts/check-hardcoded-strings.mjs --dry-run  # print count only, no write (CI)
+ *   node scripts/check-hardcoded-strings.mjs               # write baseline (default)
+ *   node scripts/check-hardcoded-strings.mjs --dry-run     # print count only, no write
+ *   node scripts/check-hardcoded-strings.mjs --fail-on-new # exit 1 on new findings
  */
 
-import { readFileSync, writeFileSync, readdirSync, statSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from "fs";
 import { join, dirname, relative } from "path";
 import { fileURLToPath } from "url";
 
@@ -66,6 +63,18 @@ function isLikelyHardcoded(line) {
   return BARE_JSX_TEXT_RE.test(trimmed) || ATTR_RE.test(trimmed);
 }
 
+function fingerprint(finding) {
+  return `${finding.file}::${finding.text.replace(/\s+/g, " ").trim()}`;
+}
+
+function loadBaseline() {
+  if (!existsSync(BASELINE_PATH)) {
+    throw new Error(`Missing baseline: ${BASELINE_PATH}`);
+  }
+  const parsed = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
+  return Array.isArray(parsed.findings) ? parsed.findings : [];
+}
+
 // ─── File walker ──────────────────────────────────────────────────────────────
 
 function walk(dir, results = []) {
@@ -93,6 +102,7 @@ function walk(dir, results = []) {
 
 function main() {
   const dryRun = process.argv.includes("--dry-run");
+  const failOnNew = process.argv.includes("--fail-on-new") || process.argv.includes("--ci");
 
   const files = walk(APP_DIR);
   const findings = [];
@@ -118,24 +128,53 @@ function main() {
   console.log(`[i18n-hardcoded] Scanned ${files.length} files in src/app/**`);
   console.log(`[i18n-hardcoded] Likely hardcoded strings found: ${findings.length}`);
 
-  if (dryRun) {
+  if (failOnNew) {
+    let baselineFindings;
+    try {
+      baselineFindings = loadBaseline();
+    } catch (err) {
+      console.error(`[i18n-hardcoded] ERROR: ${err.message}`);
+      process.exit(1);
+    }
+
+    const baselineFingerprints = new Set(baselineFindings.map(fingerprint));
+    const currentFingerprints = new Set(findings.map(fingerprint));
+    const newFindings = findings.filter((finding) => !baselineFingerprints.has(fingerprint(finding)));
+    const resolvedCount = baselineFindings.filter((finding) => !currentFingerprints.has(fingerprint(finding))).length;
+
+    console.log(`[i18n-hardcoded] Baseline findings: ${baselineFindings.length}`);
+    console.log(`[i18n-hardcoded] New findings: ${newFindings.length}`);
+    console.log(`[i18n-hardcoded] Resolved baseline findings: ${resolvedCount}`);
+
+    if (newFindings.length > 0) {
+      console.error("[i18n-hardcoded] ERROR: New hardcoded strings found. Wrap them in t(...) or update the baseline intentionally.");
+      for (const finding of newFindings.slice(0, 25)) {
+        console.error(`  - ${finding.file}:${finding.line} "${finding.text}"`);
+      }
+      if (newFindings.length > 25) {
+        console.error(`  ...and ${newFindings.length - 25} more`);
+      }
+      process.exit(1);
+    }
+
+    console.log("[i18n-hardcoded] No new hardcoded strings found.");
+  } else if (dryRun) {
     console.log(`[i18n-hardcoded] Mode: DRY-RUN — baseline NOT written (pass without --dry-run to update).`);
   } else {
     const baseline = {
       generatedAt: new Date().toISOString(),
       totalFindings: findings.length,
       note:
-        "REPORT-ONLY. Phase V will flip to error-on-new-additions by comparing new runs against this baseline.",
+        "Baseline for --fail-on-new. Existing findings are tolerated; new file/text fingerprints fail CI.",
       findings,
     };
 
     writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + "\n", "utf8");
 
     console.log(`[i18n-hardcoded] Baseline written to: scripts/i18n-hardcoded-baseline.json`);
-    console.log(`[i18n-hardcoded] Mode: REPORT-ONLY (exit 0). Phase V flips to gate mode.`);
+    console.log(`[i18n-hardcoded] Mode: BASELINE UPDATE (exit 0). Use --fail-on-new in CI.`);
   }
 
-  // Always exit 0 — this is a report, not a gate.
   process.exit(0);
 }
 

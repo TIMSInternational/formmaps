@@ -3,6 +3,19 @@ import { toast } from '@/hooks/useToast';
 import { refreshAccessToken, isLoggedIn } from '@/services/tokenRefreshService';
 import { forceLogout } from '@/utils/tokenUtils';
 
+export type ApiEnvelope<T> = {
+  success?: boolean;
+  data?: T;
+  message?: string;
+};
+
+export function unwrapApiData<T>(response: ApiEnvelope<T> | T): T {
+  if (response && typeof response === 'object' && 'data' in response) {
+    return (response as ApiEnvelope<T>).data as T;
+  }
+  return response as T;
+}
+
 // Create an Axios instance with base URL and default headers
 export const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
