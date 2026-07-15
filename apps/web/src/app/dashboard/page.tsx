@@ -20,10 +20,12 @@ import { Roles } from "@/lib/permissions";
 import { useAssessmentProgress } from "@/hooks/useAssessmentQueries";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
+import { isCareerJourneyComplete } from "./_components/journeyStatus";
 
 interface DashboardData {
   activeCourses?: number;
   portfolioItems?: number;
+  careerProfileComplete?: boolean;
   pcaResults?: unknown;
   aiSummary?: string;
   AiSummary?: string;
@@ -176,7 +178,7 @@ export default function DashboardPage() {
                 id: "2",
                 title: t("dashboard.journey.careersTitle"),
                 description: t("dashboard.journey.careersDesc"),
-                status: dashboardData?.aiSummary ? "completed" : "pending",
+                status: isCareerJourneyComplete(dashboardData) ? "completed" : "pending",
                 icon: <Target style={{ width: 12, height: 12 }} />,
               },
               {
