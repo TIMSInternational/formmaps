@@ -13,6 +13,8 @@
     "api:test": "dotnet test services/api/FormMaps.slnx",
     "api:dev": "dotnet run --project services/api/src/FormMaps.Api",
     "api:docker:build": "docker build -f services/api/Dockerfile services/api",
-    "api:staging-canary": "node services/api/scripts/staging-canary.mjs"
+    "api:staging-canary": "node services/api/scripts/staging-canary.mjs",
+    "infra:staging:validate": "aws cloudformation validate-template --template-body file://infra/aws/formmaps-api-staging-bootstrap.yml && aws cloudformation validate-template --template-body file://infra/aws/formmaps-api-staging-service.yml",
+    "infra:staging:deploy-bootstrap": "aws cloudformation deploy --stack-name formmaps-api-staging-bootstrap --template-file infra/aws/formmaps-api-staging-bootstrap.yml --capabilities CAPABILITY_NAMED_IAM --parameter-overrides GitHubRepository=TIMSInternational/formmaps GitHubBranch=main"
   }
 }

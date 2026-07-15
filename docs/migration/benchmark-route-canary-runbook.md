@@ -54,6 +54,29 @@ The API returns `X-FormMaps-Service: formmaps-api` on every response. The
 staging canary uses this header to distinguish the .NET route from the legacy
 Node route without logging tokens or secrets.
 
+## Same-Repo AWS Infrastructure
+
+The staging API infrastructure lives in this repository under `infra/aws`.
+
+One-time bootstrap:
+
+```bash
+npm run infra:staging:validate
+npm run infra:staging:deploy-bootstrap
+```
+
+Then create the GitHub `staging` environment and configure:
+
+```text
+AWS_ACCOUNT_ID=<aws-account-id>
+FORMMAPS_STAGING_WEB_ORIGIN=https://<staging-web-host>
+FORMMAPS_STAGING_JWT_SECRET_ARN=<secrets-manager-arn-containing-jwt-secret>
+FORMMAPS_STAGING_DATABASE_URL_SECRET_ARN=<secrets-manager-arn-containing-database-url>
+```
+
+The `formmaps-api-staging-deploy` workflow builds and pushes the image, deploys
+the App Runner service, and runs the health canary automatically.
+
 ## Staging Database Smoke
 
 The smoke test is disabled during normal CI. Run it only against staging or a

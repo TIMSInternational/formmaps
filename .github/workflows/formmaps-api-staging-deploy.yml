@@ -1,0 +1,142 @@
+name: formmaps-api-staging-deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+  BOOTSTRAP_STACK_NAME: formmaps-api-staging-bootstrap
+  SERVICE_STACK_NAME: formmaps-api-staging
+  SERVICE_NAME: formmaps-api-staging
+
+jobs:
+  deploy:
+    name: Deploy staging API
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Test API
+        run: npm run api:test
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/formmaps-github-deploy-staging
+
+      - name: Read bootstrap outputs
+        id: bootstrap
+        run: |
+          set -euo pipefail
+          ECR_REPOSITORY_URI="$(aws cloudformation describe-stacks \
+            --stack-name "$BOOTSTRAP_STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='EcrRepositoryUri'].OutputValue | [0]" \
+            --output text)"
+          ECR_ACCESS_ROLE_ARN="$(aws cloudformation describe-stacks \
+            --stack-name "$BOOTSTRAP_STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='AppRunnerEcrAccessRoleArn'].OutputValue | [0]" \
+            --output text)"
+          if [ -z "$ECR_REPOSITORY_URI" ] || [ "$ECR_REPOSITORY_URI" = "None" ]; then
+            echo "Missing EcrRepositoryUri output from $BOOTSTRAP_STACK_NAME" >&2
+            exit 1
+          fi
+          if [ -z "$ECR_ACCESS_ROLE_ARN" ] || [ "$ECR_ACCESS_ROLE_ARN" = "None" ]; then
+            echo "Missing AppRunnerEcrAccessRoleArn output from $BOOTSTRAP_STACK_NAME" >&2
+            exit 1
+          fi
+          ECR_REGISTRY="${ECR_REPOSITORY_URI%/*}"
+          {
+            echo "ecr_repository_uri=$ECR_REPOSITORY_URI"
+            echo "ecr_registry=$ECR_REGISTRY"
+            echo "ecr_access_role_arn=$ECR_ACCESS_ROLE_ARN"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Login to ECR
+        run: |
+          set -euo pipefail
+          aws ecr get-login-password --region "$AWS_REGION" \
+            | docker login --username AWS --password-stdin "${{ steps.bootstrap.outputs.ecr_registry }}"
+
+      - name: Build and push API image
+        id: image
+        run: |
+          set -euo pipefail
+          IMAGE_TAG="staging-${GITHUB_SHA}"
+          IMAGE_URI="${{ steps.bootstrap.outputs.ecr_repository_uri }}:${IMAGE_TAG}"
+          docker build -f services/api/Dockerfile -t "$IMAGE_URI" services/api
+          docker tag "$IMAGE_URI" "${{ steps.bootstrap.outputs.ecr_repository_uri }}:staging-latest"
+          docker push "$IMAGE_URI"
+          docker push "${{ steps.bootstrap.outputs.ecr_repository_uri }}:staging-latest"
+          echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy App Runner service stack
+        env:
+          JWT_SECRET_ARN: ${{ secrets.FORMMAPS_STAGING_JWT_SECRET_ARN }}
+          DATABASE_URL_SECRET_ARN: ${{ secrets.FORMMAPS_STAGING_DATABASE_URL_SECRET_ARN }}
+          STAGING_WEB_ORIGIN: ${{ vars.FORMMAPS_STAGING_WEB_ORIGIN }}
+        run: |
+          set -euo pipefail
+          : "${JWT_SECRET_ARN:?Set FORMMAPS_STAGING_JWT_SECRET_ARN in the staging environment.}"
+          : "${DATABASE_URL_SECRET_ARN:?Set FORMMAPS_STAGING_DATABASE_URL_SECRET_ARN in the staging environment.}"
+          : "${STAGING_WEB_ORIGIN:?Set FORMMAPS_STAGING_WEB_ORIGIN in the staging environment.}"
+          aws cloudformation deploy \
+            --stack-name "$SERVICE_STACK_NAME" \
+            --template-file infra/aws/formmaps-api-staging-service.yml \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              ServiceName="$SERVICE_NAME" \
+              ImageIdentifier="${{ steps.image.outputs.image_uri }}" \
+              EcrAccessRoleArn="${{ steps.bootstrap.outputs.ecr_access_role_arn }}" \
+              JwtSecretArn="$JWT_SECRET_ARN" \
+              DatabaseUrlSecretArn="$DATABASE_URL_SECRET_ARN" \
+              StagingWebOrigin="$STAGING_WEB_ORIGIN"
+
+      - name: Read App Runner URL
+        id: service
+        run: |
+          set -euo pipefail
+          SERVICE_URL="$(aws cloudformation describe-stacks \
+            --stack-name "$SERVICE_STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='ServiceUrl'].OutputValue | [0]" \
+            --output text)"
+          if [ -z "$SERVICE_URL" ] || [ "$SERVICE_URL" = "None" ]; then
+            echo "Missing ServiceUrl output from $SERVICE_STACK_NAME" >&2
+            exit 1
+          fi
+          echo "base_url=https://$SERVICE_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Run health canary
+        env:
+          FORMMAPS_STAGING_DOTNET_API_BASE_URL: ${{ steps.service.outputs.base_url }}
+        run: npm run api:staging-canary -- --health-only
+
+      - name: Run authenticated benchmark canary
+        env:
+          FORMMAPS_STAGING_DOTNET_API_BASE_URL: ${{ steps.service.outputs.base_url }}
+          FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN: ${{ secrets.FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN:-}" ]; then
+            echo "Skipping authenticated benchmark canary; FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN is not set."
+            exit 0
+          fi
+          npm run api:staging-canary

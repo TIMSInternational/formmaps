@@ -276,11 +276,15 @@
         "services/api/tests/FormMaps.IntegrationTests/Reports/BenchmarkReportDatabaseSmokeTests.cs",
         "services/api/src/FormMaps.Api/appsettings.json",
         ".github/workflows/formmaps-api-ci.yml",
+        ".github/workflows/formmaps-api-staging-deploy.yml",
+        "infra/aws",
         "package.json"
       ],
       "ownedPaths": [
         ".github/workflows/formmaps-api-ci.yml",
+        ".github/workflows/formmaps-api-staging-deploy.yml",
         "docs/migration",
+        "infra/aws",
         "services/api",
         "apps/web",
         "package.json"
@@ -288,6 +292,8 @@
       "outputs": [
         "production API Dockerfile",
         "staging canary command runner",
+        "same-repo AWS staging infrastructure as code",
+        "GitHub Actions staging deploy workflow",
         "staging .NET API environment checklist",
         "staging infrastructure discovery/status report",
         "benchmark DB smoke result",
@@ -304,14 +310,16 @@
         "npm run api:build",
         "npm run web:build",
         "npm run api:docker:build",
+        "npm run infra:staging:validate",
         "FORMMAPS_STAGING_DOTNET_API_BASE_URL=... npm run api:staging-canary -- --health-only",
         "FORMMAPS_RUN_BENCHMARK_DB_SMOKE=1 ... npm run api:test -- --filter FullyQualifiedName~BenchmarkReportDatabaseSmokeTests",
         "staging browser request to /api/v1/reports/benchmark returns the .NET envelope",
         "staging rollback flag returns the route to Node"
       ],
       "notes": [
-        "The deployment harness is being added before real staging execution.",
-        "Completion still requires staging hostnames, DATABASE_URL, JWT_SECRET, and a short-lived authorized school user token or cookie."
+        "The same-repo staging infra and manual deploy workflow are being added before real staging execution.",
+        "The bootstrap stack has been deployed, creating ECR and the deploy/App Runner access roles.",
+        "Completion still requires adding GitHub staging web origin and secret ARNs, creating AWS Secrets Manager secret values, and running the live canary."
       ]
     }
   ]

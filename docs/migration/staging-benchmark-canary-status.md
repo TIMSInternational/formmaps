@@ -13,12 +13,16 @@ first route-level staging canary:
 - container context hygiene: `services/api/.dockerignore`
 - direct/API/web canary runner: `services/api/scripts/staging-canary.mjs`
 - route-owner signal: `X-FormMaps-Service: formmaps-api`
+- same-repo AWS infrastructure: `infra/aws`
+- staging deploy workflow: `.github/workflows/formmaps-api-staging-deploy.yml`
 - runbook: `docs/migration/benchmark-route-canary-runbook.md`
 
 ## Validation Completed
 
 - `node --check services/api/scripts/staging-canary.mjs` passed.
 - `git diff --check` passed.
+- `npm run infra:staging:validate` passed.
+- `npm run infra:staging:deploy-bootstrap` passed.
 - `npm run api:test` passed:
   - 21 unit tests
   - 1 contract test
@@ -32,20 +36,25 @@ first route-level staging canary:
 
 GitHub repository state:
 
-- no GitHub Environments exist for `TIMSInternational/formmaps`
-- no GitHub Actions secrets exist for `TIMSInternational/formmaps`
+- GitHub Environment `staging` exists for `TIMSInternational/formmaps`
+- environment variable `AWS_ACCOUNT_ID=747814092517` is set
+- no GitHub Actions staging secrets exist yet
 
 AWS `us-east-1` state:
 
 - App Runner has only `nexa-api`
-- ECR has only `nexa-api`
+- ECR has `nexa-api` and `formmaps-api`
 - no FormMaps .NET staging API service exists yet
-- no FormMaps API image repository exists yet
+- the GitHub Actions OIDC provider already exists in AWS
+- bootstrap stack `formmaps-api-staging-bootstrap` exists
+- ECR repository URI: `747814092517.dkr.ecr.us-east-1.amazonaws.com/formmaps-api`
+- App Runner ECR access role: `formmaps-apprunner-ecr-access-staging`
+- GitHub deploy role: `formmaps-github-deploy-staging`
 
 ## Not Yet Executed
 
 The live staging checks are not executed yet because the project does not yet
-have a FormMaps staging API host, image repository, or secret set:
+have a deployed FormMaps staging API host or secret set:
 
 - `JWT_SECRET`
 - `DATABASE_URL`
@@ -55,7 +64,17 @@ have a FormMaps staging API host, image repository, or secret set:
 
 ## Next Required Action
 
-Create the staging infrastructure and secrets, then run:
+Create the AWS Secrets Manager secret values and configure the remaining GitHub
+`staging` environment values:
+
+```text
+FORMMAPS_STAGING_WEB_ORIGIN
+FORMMAPS_STAGING_JWT_SECRET_ARN
+FORMMAPS_STAGING_DATABASE_URL_SECRET_ARN
+FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN optional
+```
+
+Then run the `formmaps-api-staging-deploy` workflow manually and execute:
 
 ```bash
 FORMMAPS_STAGING_DOTNET_API_BASE_URL=https://<dotnet-api-host> \

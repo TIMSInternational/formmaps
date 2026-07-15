@@ -1,0 +1,205 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Bootstrap resources for the FormMaps .NET API staging deployment.
+
+Parameters:
+  RepositoryName:
+    Type: String
+    Default: formmaps-api
+    Description: ECR repository name for FormMaps API images.
+  GitHubRepository:
+    Type: String
+    Default: TIMSInternational/formmaps
+    Description: GitHub owner/repository allowed to assume the staging deploy role.
+  GitHubBranch:
+    Type: String
+    Default: main
+    Description: GitHub branch allowed to assume the staging deploy role.
+
+Resources:
+  FormMapsApiRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref RepositoryName
+      ImageTagMutability: MUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Expire untagged images after 7 days",
+                "selection": {
+                  "tagStatus": "untagged",
+                  "countType": "sinceImagePushed",
+                  "countUnit": "days",
+                  "countNumber": 7
+                },
+                "action": {
+                  "type": "expire"
+                }
+              },
+              {
+                "rulePriority": 2,
+                "description": "Keep the most recent 40 staging images",
+                "selection": {
+                  "tagStatus": "tagged",
+                  "tagPrefixList": ["staging-"],
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 40
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+      Tags:
+        - Key: Project
+          Value: formmaps
+        - Key: Environment
+          Value: staging
+
+  AppRunnerEcrAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: formmaps-apprunner-ecr-access-staging
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: build.apprunner.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess
+      Tags:
+        - Key: Project
+          Value: formmaps
+        - Key: Environment
+          Value: staging
+
+  GitHubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: formmaps-github-deploy-staging
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubRepository}:ref:refs/heads/${GitHubBranch}
+      Policies:
+        - PolicyName: formmaps-staging-deploy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadBootstrapOutputs
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:GetTemplate
+                Resource:
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/formmaps-api-staging-bootstrap/*
+              - Sid: ManageServiceStack
+                Effect: Allow
+                Action:
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:CreateStack
+                  - cloudformation:DeleteChangeSet
+                  - cloudformation:DescribeChangeSet
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DescribeStacks
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:GetTemplate
+                  - cloudformation:UpdateStack
+                  - cloudformation:ValidateTemplate
+                Resource:
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/formmaps-api-staging/*
+              - Sid: PushApiImages
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:CompleteLayerUpload
+                  - ecr:DescribeImages
+                  - ecr:DescribeRepositories
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource: !GetAtt FormMapsApiRepository.Arn
+              - Sid: GetEcrAuthorizationToken
+                Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              - Sid: ManageAppRunnerService
+                Effect: Allow
+                Action:
+                  - apprunner:CreateService
+                  - apprunner:DeleteService
+                  - apprunner:DescribeService
+                  - apprunner:ListOperations
+                  - apprunner:ListTagsForResource
+                  - apprunner:StartDeployment
+                  - apprunner:TagResource
+                  - apprunner:UntagResource
+                  - apprunner:UpdateService
+                Resource: "*"
+              - Sid: ManageAppRunnerInstanceRole
+                Effect: Allow
+                Action:
+                  - iam:CreateRole
+                  - iam:DeleteRole
+                  - iam:DeleteRolePolicy
+                  - iam:GetRole
+                  - iam:GetRolePolicy
+                  - iam:ListRolePolicies
+                  - iam:PutRolePolicy
+                  - iam:TagRole
+                  - iam:UntagRole
+                  - iam:UpdateAssumeRolePolicy
+                Resource:
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/formmaps-api-staging-instance
+              - Sid: PassAppRunnerRoles
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !GetAtt AppRunnerEcrAccessRole.Arn
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/formmaps-api-staging-instance
+                Condition:
+                  StringEquals:
+                    iam:PassedToService:
+                      - build.apprunner.amazonaws.com
+                      - tasks.apprunner.amazonaws.com
+      Tags:
+        - Key: Project
+          Value: formmaps
+        - Key: Environment
+          Value: staging
+
+Outputs:
+  EcrRepositoryName:
+    Description: ECR repository name.
+    Value: !Ref FormMapsApiRepository
+  EcrRepositoryUri:
+    Description: ECR repository URI.
+    Value: !GetAtt FormMapsApiRepository.RepositoryUri
+  AppRunnerEcrAccessRoleArn:
+    Description: Role App Runner uses to pull private ECR images.
+    Value: !GetAtt AppRunnerEcrAccessRole.Arn
+  GitHubDeployRoleArn:
+    Description: Role GitHub Actions assumes through OIDC for staging deploys.
+    Value: !GetAtt GitHubDeployRole.Arn
