@@ -701,14 +701,16 @@ export const useGlobalStore = create<GlobalState>()(
             },
           })),
 
-        setResumeTemplate: (template) =>
+        setResumeTemplate: (template) => {
           set((state) => ({
             resumeBuilder: {
               ...state.resumeBuilder,
               data: { ...state.resumeBuilder.data, template },
               isDirty: true,
             },
-          })),
+          }));
+          get().saveResumeToAPI();
+        },
 
         setResumeLoading: (loading) =>
           set((state) => ({
