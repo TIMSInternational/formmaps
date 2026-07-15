@@ -111,13 +111,14 @@ RLS behavior:
 .NET implementation status:
 
 - `TenantGucPlanResolver` mirrors the legacy `resolveGucPlan` decision rules.
-- Database code must translate the resolver output into:
+- `RlsSessionCommandBuilder` translates the resolver output into:
   - bypass: `set_config('app.bypass_rls', 'on', true)`
   - deny: `set_config('app.bypass_rls', 'off', true)`
   - identity: `set_config('app.current_school_id', schoolId, true)` and
     `set_config('app.current_user_id', userId, true)`
-- No EF Core/Dapper query should run against RLS-protected tables until this
-  GUC application layer exists and is tested.
+- `NpgsqlFormMapsDatabaseSessionFactory` opens transaction-bound read-only
+  sessions and applies the RLS GUC plan before callers can run queries.
+- Future write sessions must add `WITH CHECK`-equivalent tests before shipping.
 
 ## API Security Middleware Parity
 

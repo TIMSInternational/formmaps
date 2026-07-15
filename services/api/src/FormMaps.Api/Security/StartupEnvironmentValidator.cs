@@ -23,6 +23,16 @@ public static class StartupEnvironmentValidator
             errors.Add($"JWT_SECRET must be at least {MinimumJwtSecretLength} characters in Production.");
         }
 
+        var databaseUrl =
+            configuration.GetConnectionString("FormMaps") ??
+            configuration["Database:ConnectionString"] ??
+            configuration["DATABASE_URL"];
+
+        if (string.IsNullOrWhiteSpace(databaseUrl))
+        {
+            errors.Add("ConnectionStrings:FormMaps, Database:ConnectionString, or DATABASE_URL is required in Production.");
+        }
+
         if (errors.Count > 0)
         {
             throw new InvalidOperationException(

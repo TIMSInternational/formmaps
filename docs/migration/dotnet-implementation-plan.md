@@ -137,6 +137,10 @@ Exit criteria:
 - tenant context is applied before data access.
 - tests prove missing context fails closed.
 
+Status: read-only Npgsql session factory, connection-string resolution, and
+RLS GUC command generation are implemented and tested. A live database
+integration smoke should be added once staging credentials exist.
+
 ### Slice 5: First Product Endpoint
 
 Start with a read-only reporting/dashboard endpoint.

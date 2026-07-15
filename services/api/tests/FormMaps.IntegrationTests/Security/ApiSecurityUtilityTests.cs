@@ -24,6 +24,40 @@ public class ApiSecurityUtilityTests
     }
 
     [Fact]
+    public void Startup_validation_rejects_missing_database_connection_in_production()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["JWT_SECRET"] = "formmaps-production-secret-at-least-32-bytes"
+            })
+            .Build();
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            StartupEnvironmentValidator.Validate(
+                configuration,
+                new TestHostEnvironment(Environments.Production)));
+
+        Assert.Contains("DATABASE_URL", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Startup_validation_accepts_required_production_secrets()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["JWT_SECRET"] = "formmaps-production-secret-at-least-32-bytes",
+                ["DATABASE_URL"] = "Host=localhost;Database=formmaps;Username=user;Password=pass"
+            })
+            .Build();
+
+        StartupEnvironmentValidator.Validate(
+            configuration,
+            new TestHostEnvironment(Environments.Production));
+    }
+
+    [Fact]
     public void Startup_validation_allows_missing_jwt_secret_outside_production()
     {
         var configuration = new ConfigurationBuilder().Build();

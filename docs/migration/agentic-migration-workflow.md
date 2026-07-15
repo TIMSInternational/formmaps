@@ -49,9 +49,10 @@ Before implementing a task, an agent must:
 ## Current Active Slice
 
 ```text
-FM-DOTNET-005-rls-safe-database-context
+FM-DOTNET-006-first-reporting-read-endpoint
 ```
 
 The request-context, JWT/RLS-decision foundation, and production security
-middleware parity are implemented. The next agentic slice adds database
-connectivity with tested RLS GUC application before product endpoints begin.
+middleware parity are implemented. The RLS-safe Npgsql read session layer is
+also implemented. The next agentic slice migrates the first read-only product
+endpoint through that session layer.
