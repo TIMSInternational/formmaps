@@ -119,6 +119,8 @@ Exit criteria:
 - production configuration cannot boot with missing required secrets.
 - local development remains usable without spoofing production settings.
 
+Status: implemented locally in the .NET API and covered by integration tests.
+
 ### Slice 4: Database Connectivity
 
 Build:

@@ -116,7 +116,7 @@
     },
     {
       "id": "FM-DOTNET-004-security-middleware-parity",
-      "status": "planned",
+      "status": "completed",
       "goal": "Port production API security middleware parity before .NET owns real product traffic.",
       "dependsOn": [
         "FM-DOTNET-003-jwt-validation"
@@ -139,6 +139,7 @@
         "mutation content-type enforcement",
         "request size and timeout policy",
         "redacted logging policy",
+        "JSON body sanitization policy",
         "API/auth/sensitive/AI rate limit policy"
       ],
       "guardrails": [
@@ -153,10 +154,38 @@
     },
     {
       "id": "FM-DOTNET-005-rls-safe-database-context",
-      "status": "planned",
+      "status": "in_progress",
       "goal": "Add database connectivity and a safe strategy for setting app.current_school_id/app.current_user_id before queries.",
       "dependsOn": [
         "FM-DOTNET-004-security-middleware-parity"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/lib/prisma.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/prismaRls.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/rls",
+        "docs/migration/auth-tenant-context-contract.md"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Infrastructure",
+        "services/api/src/FormMaps.Application/Auth",
+        "services/api/tests/FormMaps.IntegrationTests",
+        "docs/migration"
+      ],
+      "outputs": [
+        "PostgreSQL connectivity configuration",
+        "RLS session GUC applier",
+        "system bypass, deny, and identity database-context tests",
+        "read-only legacy-table access policy"
+      ],
+      "guardrails": [
+        "Do not grant the application role DDL privileges.",
+        "Do not run queries against RLS-protected tables without applying TenantGucPlanResolver.",
+        "Do not let .NET and Prisma both own schema migrations for the same table.",
+        "No write endpoint may ship before WITH CHECK-equivalent tenant tests exist."
+      ],
+      "validation": [
+        "npm run api:test",
+        "dotnet build services/api/FormMaps.slnx"
       ]
     },
     {

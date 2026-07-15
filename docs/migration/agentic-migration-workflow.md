@@ -49,9 +49,9 @@ Before implementing a task, an agent must:
 ## Current Active Slice
 
 ```text
-FM-DOTNET-004-security-middleware-parity
+FM-DOTNET-005-rls-safe-database-context
 ```
 
-The request-context and JWT/RLS-decision foundation is implemented. The next
-agentic slice ports production API security middleware parity before database
-connectivity and product endpoints begin.
+The request-context, JWT/RLS-decision foundation, and production security
+middleware parity are implemented. The next agentic slice adds database
+connectivity with tested RLS GUC application before product endpoints begin.

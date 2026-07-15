@@ -139,6 +139,27 @@ The current Node API has production hardening that must be ported before the
 - request timeout
 - graceful shutdown and cleanup/background job policy
 
+.NET implementation status:
+
+- Production startup validation now fails fast when `JWT_SECRET` is missing or
+  too short.
+- Forwarded headers trust one upstream proxy, matching the current App
+  Runner/ALB posture.
+- Credentialed CORS uses the baked-in FormMaps origins plus configured
+  `ApiSecurity:AllowedOrigins`, `CORS_ORIGINS`, and `CORS_ALLOWED_ORIGINS`.
+- Security/no-store headers are applied globally.
+- Mutation requests reject unsupported content types before endpoint handling.
+- JSON body size is enforced by config and middleware.
+- JSON request-body sanitization strips HTML from strings while preserving
+  password/token/secret fields.
+- Sensitive query values are redacted before request logging.
+- Global and named `auth`, `sensitive`, and `ai` rate-limit policies are
+  registered.
+- Request timeout middleware returns `504` when downstream code observes
+  cancellation.
+- Sentry-specific capture and Stripe raw-body handling remain deferred until
+  those domains are migrated.
+
 ## Public/System Context Flows
 
 These legacy flows may need system context because they run before normal auth:
