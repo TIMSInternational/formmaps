@@ -57,7 +57,11 @@ middleware parity are implemented. The RLS-safe Npgsql read session layer is
 also implemented, and `/api/v1/reports/benchmark` is the first read-only
 product endpoint. The benchmark route now has an opt-in .NET web rewrite,
 documented rollback path, a gated real-database smoke test, a production API
-container, and a staging canary runner. The active gate is now external:
-deploy/point staging at the .NET API, run the smoke with real staging
-credentials, verify the route canary, and prove rollback before production
-traffic moves to .NET.
+container, a staging canary runner, and a deployed staging App Runner service:
+`https://zsmkrbkhc7.us-east-1.awsapprunner.com`.
+
+The health-only staging deployment gate has passed. The active gate is now
+product-data validation: rotate the copied staging database credential, generate
+a real staging school analytics token, run the authenticated benchmark canary,
+run the gated staging database smoke, verify staging web route ownership, and
+prove rollback before production traffic moves to .NET.

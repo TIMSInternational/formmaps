@@ -317,9 +317,14 @@
         "staging rollback flag returns the route to Node"
       ],
       "notes": [
-        "The same-repo staging infra and manual deploy workflow are being added before real staging execution.",
+        "The same-repo staging infra and manual deploy workflow are in place.",
         "The bootstrap stack has been deployed, creating ECR and the deploy/App Runner access roles.",
-        "Completion still requires adding GitHub staging web origin and secret ARNs, creating AWS Secrets Manager secret values, and running the live canary."
+        "The service stack has been deployed, creating the App Runner staging API at https://zsmkrbkhc7.us-east-1.awsapprunner.com.",
+        "GitHub Actions run 29451159278 passed on commit 81e53eed0d37dc850a30c952dc29d5c371e86e15.",
+        "The health-only staging canary passed and an unauthenticated benchmark request correctly returns 401.",
+        "The authenticated benchmark canary is still pending because FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN is not configured.",
+        "Before broader testing, rotate the copied staging database credential because a pre-fix deployment exposed it in CloudWatch logs.",
+        "Completion still requires authenticated benchmark data, gated staging DB smoke evidence, staging web route verification, and route-level rollback verification."
       ]
     }
   ]
