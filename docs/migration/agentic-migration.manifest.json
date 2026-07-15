@@ -264,24 +264,32 @@
     },
     {
       "id": "FM-DOTNET-008-staging-benchmark-canary",
-      "status": "planned",
+      "status": "in_progress",
       "goal": "Deploy the .NET API to staging, run the benchmark DB smoke with real staging credentials, and verify the web route flag canary/rollback path.",
       "dependsOn": [
         "FM-DOTNET-007-live-db-smoke-and-route-flag"
       ],
       "inputs": [
         "docs/migration/benchmark-route-canary-runbook.md",
+        "docs/migration/staging-benchmark-canary-status.md",
         "apps/web/next.config.ts",
         "services/api/tests/FormMaps.IntegrationTests/Reports/BenchmarkReportDatabaseSmokeTests.cs",
-        "services/api/src/FormMaps.Api/appsettings.json"
+        "services/api/src/FormMaps.Api/appsettings.json",
+        ".github/workflows/formmaps-api-ci.yml",
+        "package.json"
       ],
       "ownedPaths": [
+        ".github/workflows/formmaps-api-ci.yml",
         "docs/migration",
         "services/api",
-        "apps/web"
+        "apps/web",
+        "package.json"
       ],
       "outputs": [
+        "production API Dockerfile",
+        "staging canary command runner",
         "staging .NET API environment checklist",
+        "staging infrastructure discovery/status report",
         "benchmark DB smoke result",
         "staging web route canary result",
         "verified rollback evidence"
@@ -293,10 +301,17 @@
       ],
       "validation": [
         "npm run api:test",
+        "npm run api:build",
         "npm run web:build",
+        "npm run api:docker:build",
+        "FORMMAPS_STAGING_DOTNET_API_BASE_URL=... npm run api:staging-canary -- --health-only",
         "FORMMAPS_RUN_BENCHMARK_DB_SMOKE=1 ... npm run api:test -- --filter FullyQualifiedName~BenchmarkReportDatabaseSmokeTests",
         "staging browser request to /api/v1/reports/benchmark returns the .NET envelope",
         "staging rollback flag returns the route to Node"
+      ],
+      "notes": [
+        "The deployment harness is being added before real staging execution.",
+        "Completion still requires staging hostnames, DATABASE_URL, JWT_SECRET, and a short-lived authorized school user token or cookie."
       ]
     }
   ]

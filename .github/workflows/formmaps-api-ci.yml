@@ -27,3 +27,6 @@ jobs:
 
       - name: Test
         run: dotnet test services/api/FormMaps.slnx --no-build --verbosity normal
+
+      - name: Build API container
+        run: docker build -f services/api/Dockerfile services/api

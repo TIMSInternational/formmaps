@@ -19,6 +19,7 @@ public class ApiSecurityMiddlewareTests
         var response = await client.GetAsync("/health");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        AssertHeader(response, "X-FormMaps-Service", "formmaps-api");
         AssertHeader(response, "Strict-Transport-Security", "max-age=31536000; includeSubDomains");
         AssertHeader(response, "Referrer-Policy", "strict-origin-when-cross-origin");
         AssertHeader(response, "X-Content-Type-Options", "nosniff");

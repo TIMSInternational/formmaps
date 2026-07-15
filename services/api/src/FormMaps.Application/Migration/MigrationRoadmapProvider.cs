@@ -32,7 +32,7 @@ public sealed class MigrationRoadmapProvider : IMigrationRoadmapProvider
             Domain: "reports-and-dashboards",
             CurrentOwner: "legacy-node-api",
             TargetOwner: ".NET",
-            FirstMove: "GET /api/v1/reports/benchmark is implemented; staging DB smoke and route flag are next.",
+            FirstMove: "GET /api/v1/reports/benchmark is implemented; route flag and canary harness are ready; staging smoke is the active gate.",
             Risk: "medium",
             Status: "started"),
 

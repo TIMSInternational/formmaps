@@ -8,6 +8,7 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next)
         {
             var headers = httpContext.Response.Headers;
 
+            headers["X-FormMaps-Service"] = "formmaps-api";
             headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
             headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
             headers["X-Content-Type-Options"] = "nosniff";

@@ -23,6 +23,7 @@ If either value is absent, `/api/v1/reports/benchmark` continues through
 
 - The .NET API is deployed with `JWT_SECRET`, `DATABASE_URL`, and the production
   CORS origin allowlist configured.
+- The .NET API image is built from `services/api/Dockerfile`.
 - The database user has read access only to legacy-owned tables needed by the
   benchmark query.
 - RLS policies and the application GUC contract are enabled in the target
@@ -30,6 +31,28 @@ If either value is absent, `/api/v1/reports/benchmark` continues through
 - A staging school user exists with `analytics:school` permission.
 - No production web traffic is pointed at the .NET route before the smoke below
   passes.
+
+## Container Build
+
+Build the deployable .NET API image from the service context:
+
+```bash
+npm run api:docker:build
+```
+
+The container listens on `8080` and must run with:
+
+```text
+ASPNETCORE_ENVIRONMENT=Production
+ASPNETCORE_URLS=http://+:8080
+JWT_SECRET=<32+ character legacy-compatible signing secret>
+DATABASE_URL=<staging postgres connection string>
+CORS_ORIGINS=https://<staging-web-host>
+```
+
+The API returns `X-FormMaps-Service: formmaps-api` on every response. The
+staging canary uses this header to distinguish the .NET route from the legacy
+Node route without logging tokens or secrets.
 
 ## Staging Database Smoke
 
@@ -60,18 +83,43 @@ auth integration tests.
 
 1. Deploy the .NET API to staging with `DATABASE_URL` and `JWT_SECRET`.
 2. Run the staging database smoke.
-3. Build the staging web app with:
+3. Run the direct API canary against the deployed .NET host:
+
+   ```bash
+   FORMMAPS_STAGING_DOTNET_API_BASE_URL=https://<dotnet-api-host> \
+   FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN='<short-lived-access-token>' \
+   npm run api:staging-canary
+   ```
+
+   If credentials are not ready yet, the deploy/health-only check is:
+
+   ```bash
+   FORMMAPS_STAGING_DOTNET_API_BASE_URL=https://<dotnet-api-host> \
+   npm run api:staging-canary -- --health-only
+   ```
+
+4. Build the staging web app with:
 
    ```text
    FORMMAPS_DOTNET_API_BASE_URL=https://<dotnet-api-host>
    FORMMAPS_ROUTE_BENCHMARK_REPORT_TO_DOTNET=true
    ```
 
-4. Log in as a school admin or counselor user with `analytics:school`.
-5. Load the report/dashboard view that calls `/api/v1/reports/benchmark`.
-6. Confirm the browser still calls the same relative path and the response body
+5. Verify the staging web rewrite is owned by .NET:
+
+   ```bash
+   FORMMAPS_STAGING_DOTNET_API_BASE_URL=https://<dotnet-api-host> \
+   FORMMAPS_STAGING_WEB_BASE_URL=https://<staging-web-host> \
+   FORMMAPS_EXPECT_WEB_BENCHMARK_OWNER=dotnet \
+   FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN='<short-lived-access-token>' \
+   npm run api:staging-canary
+   ```
+
+6. Log in as a school admin or counselor user with `analytics:school`.
+7. Load the report/dashboard view that calls `/api/v1/reports/benchmark`.
+8. Confirm the browser still calls the same relative path and the response body
    matches the .NET envelope.
-7. Monitor .NET API logs for 401, 403, 429, 5xx, timeout, and database errors.
+9. Monitor .NET API logs for 401, 403, 429, 5xx, timeout, and database errors.
 
 ## Rollback
 
@@ -87,12 +135,22 @@ After rollback, the generic `/api/:path*` rewrite sends the benchmark route back
 to `API_PROXY_TARGET` on the Node backend. No database migration rollback is
 required because this slice is read-only.
 
+Verify rollback from staging web:
+
+```bash
+FORMMAPS_STAGING_DOTNET_API_BASE_URL=https://<dotnet-api-host> \
+FORMMAPS_STAGING_WEB_BASE_URL=https://<staging-web-host> \
+FORMMAPS_EXPECT_WEB_BENCHMARK_OWNER=node \
+npm run api:staging-canary -- --health-only
+```
+
 ## Production Gate
 
 Do not enable the production web flag until:
 
 - `npm run api:test` passes.
 - `npm run web:build` passes.
+- `npm run api:docker:build` passes.
 - The staging database smoke passes.
 - A staging web canary has returned real data for at least one school.
 - The rollback setting has been verified in staging.

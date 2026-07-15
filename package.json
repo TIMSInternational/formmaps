@@ -11,6 +11,8 @@
     "api:restore": "dotnet restore services/api/FormMaps.slnx",
     "api:build": "dotnet build services/api/FormMaps.slnx",
     "api:test": "dotnet test services/api/FormMaps.slnx",
-    "api:dev": "dotnet run --project services/api/src/FormMaps.Api"
+    "api:dev": "dotnet run --project services/api/src/FormMaps.Api",
+    "api:docker:build": "docker build -f services/api/Dockerfile services/api",
+    "api:staging-canary": "node services/api/scripts/staging-canary.mjs"
   }
 }

@@ -15,6 +15,17 @@ dotnet test FormMaps.slnx
 dotnet run --project src/FormMaps.Api
 ```
 
+From the repository root:
+
+```bash
+npm run api:docker:build
+npm run api:staging-canary -- --health-only
+```
+
+The production container listens on port `8080` and requires `JWT_SECRET` and a
+FormMaps database connection string (`DATABASE_URL`, `Database:ConnectionString`,
+or `ConnectionStrings:FormMaps`) when `ASPNETCORE_ENVIRONMENT=Production`.
+
 See:
 
 - `docs/api/architecture.md`
