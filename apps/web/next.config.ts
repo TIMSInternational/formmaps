@@ -1,5 +1,20 @@
 import type { NextConfig } from "next";
 
+const legacyApiProxyTarget =
+  process.env.API_PROXY_TARGET || "https://5t8ch34ijm.us-east-1.awsapprunner.com";
+const dotnetApiBaseUrl = process.env.FORMMAPS_DOTNET_API_BASE_URL?.replace(/\/+$/, "");
+
+function isEnabled(value: string | undefined) {
+  return value === "1" || value?.toLowerCase() === "true";
+}
+
+function shouldRouteBenchmarkReportToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_BENCHMARK_REPORT_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -76,13 +91,22 @@ const nextConfig: NextConfig = {
    * http://localhost:3001 (direct, same-site) and never hits this rewrite.
    */
   async rewrites() {
-    const target = process.env.API_PROXY_TARGET || "https://5t8ch34ijm.us-east-1.awsapprunner.com";
+    const afterFiles = [
+      ...(shouldRouteBenchmarkReportToDotnet()
+        ? [
+            {
+              source: "/api/v1/reports/benchmark",
+              destination: `${dotnetApiBaseUrl}/api/v1/reports/benchmark`,
+            },
+          ]
+        : []),
+      { source: "/api/:path*", destination: `${legacyApiProxyTarget}/api/:path*` },
+      { source: "/authapi/:path*", destination: `${legacyApiProxyTarget}/authapi/:path*` },
+      { source: "/evaluation/:path*", destination: `${legacyApiProxyTarget}/evaluation/:path*` },
+    ];
+
     return {
-      afterFiles: [
-        { source: "/api/:path*", destination: `${target}/api/:path*` },
-        { source: "/authapi/:path*", destination: `${target}/authapi/:path*` },
-        { source: "/evaluation/:path*", destination: `${target}/evaluation/:path*` },
-      ],
+      afterFiles,
     };
   },
 

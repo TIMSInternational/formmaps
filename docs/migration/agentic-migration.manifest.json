@@ -225,7 +225,7 @@
     },
     {
       "id": "FM-DOTNET-007-live-db-smoke-and-route-flag",
-      "status": "planned",
+      "status": "completed",
       "goal": "Add staging database smoke coverage for the benchmark endpoint and define frontend/API routing feature flag before canary traffic.",
       "dependsOn": [
         "FM-DOTNET-006-first-reporting-read-endpoint"
@@ -242,7 +242,8 @@
         "docs/migration"
       ],
       "outputs": [
-        "staging database smoke test or documented manual runbook",
+        "gated staging database smoke test",
+        "documented staging canary runbook",
         "frontend route feature flag for reports benchmark",
         "rollback notes"
       ],
@@ -253,7 +254,49 @@
       ],
       "validation": [
         "npm run api:test",
-        "npm run web:build"
+        "npm run web:build",
+        "FORMMAPS_RUN_BENCHMARK_DB_SMOKE=1 ... npm run api:test -- --filter FullyQualifiedName~BenchmarkReportDatabaseSmokeTests"
+      ],
+      "notes": [
+        "The database smoke is intentionally opt-in and requires staging DATABASE_URL, school id, and user id.",
+        "Production traffic must stay on Node until the runbook smoke and staging web canary pass."
+      ]
+    },
+    {
+      "id": "FM-DOTNET-008-staging-benchmark-canary",
+      "status": "planned",
+      "goal": "Deploy the .NET API to staging, run the benchmark DB smoke with real staging credentials, and verify the web route flag canary/rollback path.",
+      "dependsOn": [
+        "FM-DOTNET-007-live-db-smoke-and-route-flag"
+      ],
+      "inputs": [
+        "docs/migration/benchmark-route-canary-runbook.md",
+        "apps/web/next.config.ts",
+        "services/api/tests/FormMaps.IntegrationTests/Reports/BenchmarkReportDatabaseSmokeTests.cs",
+        "services/api/src/FormMaps.Api/appsettings.json"
+      ],
+      "ownedPaths": [
+        "docs/migration",
+        "services/api",
+        "apps/web"
+      ],
+      "outputs": [
+        "staging .NET API environment checklist",
+        "benchmark DB smoke result",
+        "staging web route canary result",
+        "verified rollback evidence"
+      ],
+      "guardrails": [
+        "Do not enable the production web route flag before staging canary and rollback verification pass.",
+        "Do not expose staging JWT_SECRET, DATABASE_URL, or bearer/cookie values in git or logs.",
+        "Keep the canary scoped to /api/v1/reports/benchmark only."
+      ],
+      "validation": [
+        "npm run api:test",
+        "npm run web:build",
+        "FORMMAPS_RUN_BENCHMARK_DB_SMOKE=1 ... npm run api:test -- --filter FullyQualifiedName~BenchmarkReportDatabaseSmokeTests",
+        "staging browser request to /api/v1/reports/benchmark returns the .NET envelope",
+        "staging rollback flag returns the route to Node"
       ]
     }
   ]

@@ -49,11 +49,14 @@ Before implementing a task, an agent must:
 ## Current Active Slice
 
 ```text
-FM-DOTNET-007-live-db-smoke-and-route-flag
+FM-DOTNET-008-staging-benchmark-canary
 ```
 
 The request-context, JWT/RLS-decision foundation, and production security
 middleware parity are implemented. The RLS-safe Npgsql read session layer is
 also implemented, and `/api/v1/reports/benchmark` is the first read-only
-product endpoint. The next agentic slice should add a staging database smoke and
-feature-flag routing plan before frontend traffic moves to .NET.
+product endpoint. The benchmark route now has an opt-in .NET web rewrite,
+documented rollback path, and a gated real-database smoke test. The next
+agentic slice should deploy/point staging at the .NET API, run the smoke with
+real staging credentials, verify the route canary, and prove rollback before
+production traffic moves to .NET.
