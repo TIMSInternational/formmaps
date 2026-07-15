@@ -1,0 +1,115 @@
+{
+  "applications": {
+    "badge": "Seguimiento de Solicitudes",
+    "title": "Seguimiento de Tus Solicitudes",
+    "deadlineCalendar": "Calendario de Fechas Límite",
+    "subtitle": "Organiza tus solicitudes universitarias desde la investigación hasta la aceptación. Haz clic en una tarjeta para abrir su espacio de trabajo: ensayos, lista de verificación y revisión con IA."
+  },
+  "transcript": {
+    "badge": "Expediente Académico",
+    "title": "Mi Expediente",
+    "subtitle": "Una vista completa de tu historial académico, promedio y progreso de créditos.",
+    "failedToLoad": "Error al cargar el expediente.",
+    "noCoursesTitle": "Aún No Hay Materias",
+    "noCoursesBody": "Tu expediente se llenará una vez que tu escuela haya ingresado las calificaciones.",
+    "unweightedGpa": "Promedio Sin Ponderar",
+    "weightedGpa": "Promedio Ponderado",
+    "classRank": "Posición en la Clase",
+    "totalCredits": "Créditos Totales",
+    "courseRigor": "Nivel de Rigor Académico",
+    "gpaTrend": "Tendencia del Promedio",
+    "classStanding": "Posición en la Clase",
+    "moreYearsNeeded": "Se necesitan más años para ver la tendencia",
+    "table": {
+      "courseCode": "Código de Materia",
+      "grade": "Calificación",
+      "credits": "Créditos",
+      "level": "Nivel",
+      "semester": "Semestre",
+      "unweighted": "Sin ponderar:",
+      "weighted": "Ponderado:",
+      "creditsLabel": "Créditos:"
+    }
+  },
+  "testScores": {
+    "badge": "Perfil Académico",
+    "title": "Resultados de Exámenes",
+    "subtitle": "Registra tus resultados del SAT, ACT, AP y otros exámenes estandarizados.",
+    "addScore": "Agregar Resultado",
+    "failedToLoad": "Error al cargar los resultados",
+    "scoreUpdated": "Resultado actualizado",
+    "scoreAdded": "Resultado agregado",
+    "scoreDeleted": "Resultado eliminado",
+    "failedToSave": "Error al guardar el resultado",
+    "failedToDelete": "Error al eliminar el resultado"
+  },
+  "communityService": {
+    "badge": "Requisito de Graduación",
+    "title": "Horas de Servicio Comunitario",
+    "subtitle": "Registra tus horas de voluntariado y ve tu progreso hacia la graduación.",
+    "logHours": "Registrar Horas",
+    "startLogging": "Comenzar a Registrar",
+    "verified": "Verificadas",
+    "pending": "Pendientes",
+    "remaining": "Restantes",
+    "progress": "Progreso",
+    "noHoursTitle": "Aún no hay horas registradas",
+    "noHoursBody": "Haz clic en \"Registrar Horas\" para comenzar a rastrear tu servicio comunitario.",
+    "deleteConfirm": "¿Eliminar esta entrada? Esta acción no se puede deshacer.",
+    "form": {
+      "editTitle": "Editar Entrada de Servicio",
+      "newTitle": "Registrar Nuevas Horas de Servicio",
+      "organization": "Organización *",
+      "organizationPlaceholder": "p. ej. Cruz Roja",
+      "date": "Fecha *",
+      "hours": "Horas *",
+      "hoursPlaceholder": "p. ej. 4",
+      "supervisorName": "Nombre del Supervisor",
+      "supervisorNamePlaceholder": "p. ej. María González",
+      "supervisorEmail": "Correo del Supervisor",
+      "supervisorEmailPlaceholder": "supervisor@org.com",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Describe brevemente lo que hiciste...",
+      "cancel": "Cancelar",
+      "saveChanges": "Guardar Cambios",
+      "submitHours": "Enviar Horas"
+    },
+    "serviceLog": {
+      "title": "Registro de Servicio",
+      "history": "Historial de tu trabajo voluntario",
+      "entries": "entradas"
+    }
+  },
+  "portfolio": {
+    "badge": "Portafolio Estudiantil",
+    "title": "Mi Portafolio de Logros",
+    "subtitle": "Organiza tus actividades extracurriculares, proyectos y experiencias en un solo lugar.",
+    "addItem": "Agregar Nueva Experiencia",
+    "totalItems": "Total de Elementos",
+    "totalHours": "Horas de Voluntariado",
+    "awards": "Premios Obtenidos",
+    "categories": "Categorías",
+    "noItemsTitle": "Construye Tu Portafolio",
+    "noItems": "Muestra tus logros, proyectos y experiencias para destacarte. Comienza a agregar elementos para construir tu perfil profesional."
+  },
+  "recommendations": {
+    "badge": "Solicitudes",
+    "title": "Cartas de Recomendación",
+    "subtitle": "Solicita y da seguimiento a cartas de tus consejeros y maestros.",
+    "requestLetter": "Solicitar Carta",
+    "failedToLoad": "Error al cargar las solicitudes de recomendación"
+  },
+  "university": {
+    "failedToLoad": "Error al cargar las universidades"
+  },
+  "career": {
+    "market": {
+      "liveData": "Datos del Mercado en Vivo",
+      "title": "Pulso del",
+      "titleAccent": "Mercado",
+      "subtitle": "Información en tiempo real sobre salarios, tendencias de contratación y habilidades demandadas.",
+      "lastUpdated": "Última actualización: Ahora mismo",
+      "backToDashboard": "Volver al Panel"
+    }
+  }
+}

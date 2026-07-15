@@ -1,4 +1,9 @@
+using FormMaps.Api;
+using FormMaps.Api.Endpoints;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddFormMapsApplication();
 
 var app = builder.Build();
 
@@ -14,6 +19,8 @@ app.MapGet("/version", () => Results.Ok(new VersionResponse(
     Service: "formmaps-api",
     Runtime: Environment.Version.ToString(),
     Environment: app.Environment.EnvironmentName)));
+
+app.MapMigrationEndpoints();
 
 app.Run();
 

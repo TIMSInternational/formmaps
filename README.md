@@ -36,6 +36,18 @@ docs/migration/           # product-level migration plans and inventories
 docs/interop/             # FormMaps side of TIMS ATS interop
 ```
 
+## Root Commands
+
+```bash
+npm run web:dev
+npm run web:build
+npm run web:test
+npm run api:restore
+npm run api:build
+npm run api:test
+npm run api:dev
+```
+
 ## Migration Strategy
 
 The existing production FormMaps platform remains the source of truth until a
@@ -73,15 +85,16 @@ GET /version
 
 ## Frontend
 
-The frontend code has not been moved into this repo yet. The target location is:
+The current FormMaps frontend has been moved into:
 
 ```text
 apps/web
 ```
 
-Expected workflow after the current FormMaps frontend is migrated:
+Workflow:
 
 ```bash
+cd apps/web
 npm install
 npm run dev
 npm run lint

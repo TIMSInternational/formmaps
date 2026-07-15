@@ -1,0 +1,552 @@
+{
+  "nav": {
+    "main": "Main",
+    "coaching": "Coaching",
+    "account": "Account",
+    "dashboard": "Dashboard",
+    "students": "Students",
+    "sessions": "Sessions",
+    "messages": "Messages",
+    "schedule": "Schedule",
+    "calendar": "Calendar",
+    "earnings": "Earnings",
+    "analytics": "Analytics",
+    "recommendations": "Recommendations",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "portal": "Coach Portal",
+  "defaultName": "Coach",
+  "greeting": {
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening"
+  },
+  "upcomingSessions": "You have {{count}} upcoming session",
+  "upcomingSessions_plural": "You have {{count}} upcoming sessions",
+  "manageAvailability": "Manage Availability",
+  "editAvailability": "Edit Availability",
+  "stats": {
+    "totalSessions": "Total Sessions",
+    "activeStudents": "Active Students"
+  },
+  "sessions": {
+    "title": "Sessions",
+    "description": "Review and manage your scheduled sessions",
+    "upcoming": "Upcoming",
+    "completed": "Completed",
+    "noUpcomingTitle": "No upcoming sessions",
+    "noScheduled": "No coaching sessions scheduled yet. Your upcoming sessions will appear here.",
+    "noPastTitle": "No past sessions",
+    "historyPlaceholder": "Completed and cancelled sessions will show here.",
+    "rescheduleTitle": "Reschedule Session",
+    "rescheduleDescription": "Select a new date and time for {{name}}",
+    "availableTimes": "Available Times",
+    "noAvailableSlots": "No slots available for this day."
+  },
+  "actions": {
+    "reschedule": "Reschedule",
+    "joinCall": "Join Call",
+    "viewNotes": "View Notes",
+    "confirmReschedule": "Confirm Reschedule",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "export": "Export",
+    "saveChanges": "Save Changes",
+    "saving": "Saving..."
+  },
+  "dashboard": {
+    "failedToLoad": "Failed to load sessions",
+    "availabilityUpdated": "Availability updated successfully",
+    "failedToUpdateAvailability": "Failed to update availability",
+    "failedToLoadSlots": "Failed to load available slots",
+    "selectDateTime": "Please select a date and time",
+    "rescheduleSuccess": "Session rescheduled successfully",
+    "rescheduleFailed": "Failed to reschedule session",
+    "sessionCancelled": "Session cancelled successfully",
+    "cancelFailed": "Failed to cancel session",
+    "studentProfileNotFound": "Student profile not found",
+    "reportDownloaded": "Report downloaded successfully"
+  },
+  "sessionsPage": {
+    "sectionLabel": "Scheduling",
+    "title": "Sessions History",
+    "subtitle": "Manage your coaching journey and session details",
+    "syncCalendar": "Sync Calendar",
+    "noSessionsTitle": "No sessions found",
+    "noSessionsSearch": "Try adjusting your filters or search query.",
+    "noSessionsEmpty": "Looks like you haven't scheduled any sessions yet.",
+    "clearFilters": "Clear filters",
+    "statusBadge": {
+      "upcoming": "Upcoming",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "filters": {
+      "searchPlaceholder": "Search student, topic...",
+      "allStatus": "All Status",
+      "rescheduled": "Rescheduled",
+      "upcomingFirst": "Upcoming First",
+      "newestFirst": "Newest First",
+      "oldestFirst": "Oldest First",
+      "tab": {
+        "all": "All",
+        "upcoming": "Upcoming",
+        "past": "Past",
+        "cancelled": "Cancelled"
+      }
+    },
+    "stats": {
+      "total": "Total Sessions",
+      "upcoming": "Upcoming",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "card": {
+      "join": "Join",
+      "notes": "Notes",
+      "profile": "Profile",
+      "reschedule": "Reschedule",
+      "cancelSession": "Cancel Session"
+    },
+    "notes": {
+      "title": "Session Notes",
+      "privateNote": "These notes are private and only visible to you.",
+      "noNotes": "No notes available for this session.",
+      "close": "Close"
+    },
+    "cancel": {
+      "title": "Cancel Session?",
+      "confirmText": "Are you sure you want to cancel the session with {{name}}? This action cannot be undone.",
+      "confirm": "Yes, Cancel Session",
+      "keep": "Keep Session"
+    },
+    "reschedule": {
+      "title": "Reschedule Session",
+      "selectDateFor": "Select a new date and time for {{name}}",
+      "availableTimes": "Available Times",
+      "checking": "Checking availability...",
+      "selectDate": "Select a date to see times",
+      "noSlots": "No slots available",
+      "tryAnother": "Try selecting another date",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    }
+  },
+  "studentDetails": {
+    "title": "Student Profile",
+    "subtitle": "Detailed information and session history.",
+    "totalSessions": "Total Sessions",
+    "completed": "Completed",
+    "runHistory": "Run History",
+    "coachingSession": "Coaching Session",
+    "noHistory": "No session history found.",
+    "sharedNotes": "Shared Notes",
+    "noNotes": "No notes shared for this student.",
+    "notFound": "Student not found.",
+    "failedToLoad": "Failed to load student details"
+  },
+  "schedule": {
+    "sectionLabel": "Scheduling",
+    "title": "My Schedule",
+    "subtitle": "Manage your coaching sessions",
+    "listView": "List",
+    "calendarView": "Calendar",
+    "stats": {
+      "total": "Total",
+      "upcoming": "Upcoming",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "sessions": "Sessions",
+    "noSessions": "No {{tab}} sessions",
+    "noUpcoming": "Your upcoming coaching sessions will appear here",
+    "noCompleted": "Your completed sessions will appear here",
+    "reschedule": {
+      "title": "Reschedule Session",
+      "description": "Pick a new date and time for {{name}}.",
+      "newDate": "New Date",
+      "newTime": "New Time",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "cancelDialog": {
+      "title": "Cancel Session",
+      "description": "Cancel session with {{name}}? This cannot be undone.",
+      "reason": "Reason (Optional)",
+      "reasonPlaceholder": "e.g. Unexpected conflict",
+      "keep": "Keep Session",
+      "confirm": "Confirm Cancellation"
+    },
+    "calendarHeader": {
+      "today": "Today",
+      "month": "Month",
+      "week": "Week"
+    }
+  },
+  "calendar": {
+    "sectionLabel": "Scheduling",
+    "title": "Session Calendar",
+    "subtitle": "Monthly view of your coaching sessions",
+    "selectDay": "Select a day",
+    "clickDay": "Click a day to view sessions",
+    "noSessions": "No sessions on this day",
+    "legend": {
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "rescheduled": "Rescheduled"
+    }
+  },
+  "analytics": {
+    "sectionLabel": "Performance",
+    "title": "Analytics",
+    "subtitle": "Track your growth, earnings, and student engagement",
+    "export": "Export",
+    "stats": {
+      "totalEarnings": "Total Earnings",
+      "totalSessions": "Total Sessions",
+      "avgRating": "Avg Rating",
+      "activeStudents": "Active Students"
+    },
+    "dateRange": {
+      "7d": "Last 7 Days",
+      "30d": "Last 30 Days",
+      "3m": "Last 3 Months",
+      "ytd": "Year to Date"
+    },
+    "chart": {
+      "title": "Earnings Overview",
+      "subtitle": "Financial performance over time",
+      "sessions": "Sessions",
+      "avgRating": "Avg Rating",
+      "earningsTooltip": "Earnings",
+      "noData": "No earnings data available for this period.",
+      "sessions_label": "sessions"
+    },
+    "breakdown": {
+      "title": "Monthly Breakdown"
+    }
+  },
+  "earnings": {
+    "sectionLabel": "Financials",
+    "title": "Earnings",
+    "subtitle": "Track your income and payment history",
+    "export": "Export Report",
+    "exporting": "Exporting...",
+    "stats": {
+      "totalEarnings": "Total Earnings",
+      "thisMonth": "This Month",
+      "sessionsCompleted": "Sessions Completed",
+      "commission": "Commission: {{rate}}%",
+      "currency": "Currency: {{currency}}",
+      "completedSessions": "{{count}} completed sessions"
+    },
+    "history": {
+      "title": "Earnings History",
+      "noHistory": "No earnings history found.",
+      "student": "Student",
+      "date": "Date",
+      "gross": "Gross",
+      "fee": "Platform Fee",
+      "net": "Net",
+      "status": "Status"
+    },
+    "pagination": {
+      "showing": "Showing {{count}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "error": {
+      "title": "Error loading earnings data",
+      "tryAgain": "Try Again"
+    }
+  },
+  "students": {
+    "sectionLabel": "Clients",
+    "title": "Students",
+    "subtitle": "Manage your student roster and session history",
+    "searchPlaceholder": "Search students...",
+    "noStudents": "No students found",
+    "noStudentsEmpty": "Your students will appear here once they book a session.",
+    "viewProfile": "View Profile",
+    "bookSession": "Book Session",
+    "sessions": "sessions",
+    "rating": "Rating"
+  },
+  "messages": {
+    "sectionLabel": "Communication",
+    "title": "Messages",
+    "subtitle": "Chat with your students",
+    "noMessages": "No messages yet",
+    "startConversation": "Start a conversation with a student",
+    "typePlaceholder": "Type a message...",
+    "send": "Send"
+  },
+  "profile": {
+    "sectionLabel": "Account",
+    "title": "Coach Profile",
+    "subtitle": "Manage your public profile and specializations",
+    "save": "Save Profile",
+    "saving": "Saving...",
+    "bio": "Bio",
+    "specialization": "Specialization",
+    "experience": "Years of Experience",
+    "hourlyRate": "Hourly Rate",
+    "location": "Location",
+    "tags": "Tags"
+  },
+  "recommendations": {
+    "sectionLabel": "Insights",
+    "title": "Recommendations",
+    "subtitle": "Personalized recommendations for your students",
+    "noRecommendations": "No recommendations available",
+    "for": "For"
+  },
+  "settings": {
+    "sectionLabel": "Configuration",
+    "title": "Settings",
+    "subtitle": "Manage your coaching profile, pricing, availability, and payments.",
+    "tabs": {
+      "pricing": "Pricing",
+      "availability": "Availability",
+      "payments": "Payments",
+      "billing": "Billing"
+    },
+    "pricing": {
+      "title": "Session Pricing",
+      "subtitle": "Set your hourly rate for 1:1 coaching sessions.",
+      "currency": "Currency",
+      "hourlyRate": "Hourly Rate",
+      "clientPays": "Clients will see this price when booking sessions.",
+      "perHour": "/ hr",
+      "breakdown": {
+        "title": "Earnings Breakdown",
+        "subtitle": "Breakdown of what you earn per session after fees.",
+        "clientPays": "Client Pays",
+        "platformFee": "Platform Fee ({{fee}}%)",
+        "netEarnings": "Your Net Earnings",
+        "netNote": "Net earnings are transferred to your payout account."
+      },
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "success": "Pricing updated successfully",
+      "error": "Failed to update pricing",
+      "loading": "Loading pricing settings..."
+    },
+    "availability": {
+      "title": "Weekly Schedule",
+      "subtitle": "Define when you are available for sessions.",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "success": "Availability updated successfully",
+      "error": "Failed to update availability",
+      "loading": "Loading availability...",
+      "timezone": "Select timezone"
+    },
+    "payments": {
+      "title": "Payments & Payouts",
+      "subtitle": "Manage your Stripe connection and view payout history.",
+      "loading": "Failed to load payment settings"
+    },
+    "billing": {
+      "title": "Current Billing Period",
+      "subtitle": "Overview of your bookings and fees for the current cycle.",
+      "cycle": "Cycle:",
+      "totalRevenue": "Total Revenue",
+      "platformFees": "Platform Fees",
+      "feePercent": "15% Fee",
+      "feeDeducted": "Deducted automatically",
+      "nextInvoice": "Next Invoice",
+      "autoGenerated": "Auto-generated on due date",
+      "bookingsProcessed": "{{count}} bookings processed",
+      "historyTitle": "Invoice History",
+      "historySubtitle": "Download past invoices and statements.",
+      "tableHeaders": {
+        "period": "Period",
+        "revenue": "Revenue",
+        "fees": "Fees",
+        "status": "Status",
+        "action": "Action"
+      },
+      "noInvoices": "No invoices found",
+      "invoicesNote": "Invoices will appear here once generated.",
+      "downloading": "Invoice download starting...",
+      "downloadSuccess": "Invoice downloaded",
+      "downloadError": "Failed to download invoice",
+      "loadError": "Failed to load billing data",
+      "loading": "Loading billing data...",
+      "pagination": {
+        "showing": "Showing page {{page}} of {{total}}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "calendar": {
+      "notConfigured": "Calendar sync isn't enabled on this server yet.",
+      "disconnectSuccess": "Calendar disconnected successfully",
+      "disconnectError": "Failed to disconnect calendar"
+    }
+  },
+  "accessDenied": {
+    "title": "Access Denied",
+    "subtitle": "Contract Expired",
+    "body": "Your coaching contract has expired. You no longer have access to the coach dashboard.",
+    "note": "If you believe this is an error or would like to renew your contract, please contact the administration.",
+    "contactSupport": "Contact Support",
+    "returnHome": "Return to Home"
+  },
+  "find": {
+    "title": "Find a Coach",
+    "subtitle": "Book a session with an expert coach to accelerate your career",
+    "searchPlaceholder": "Search coaches...",
+    "fetchError": "Failed to load coaches. Please try again.",
+    "retry": "Retry",
+    "new": "New",
+    "remote": "Remote",
+    "viewProfileBook": "View Profile & Book",
+    "noCoachesFound": "No coaches found",
+    "tryAdjusting": "Try adjusting your search query."
+  },
+  "booking": {
+    "title": "Book a Session",
+    "subtitle": "Schedule your session",
+    "selectSlot": "Select a time slot",
+    "confirm": "Confirm Booking"
+  },
+  "mySessions": {
+    "title": "My Sessions",
+    "subtitle": "Manage your coaching and counselor sessions",
+    "bookNew": "Book a Coach",
+    "bookCounselor": "Book Counselor Session",
+    "tabs": {
+      "coaching": "Coaching Sessions",
+      "counselor": "Counselor Sessions",
+      "free": "FREE"
+    },
+    "stats": {
+      "total": "Total Sessions",
+      "upcoming": "Upcoming",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "loading": "Loading your sessions...",
+    "noSessions": "No {{tab}} sessions",
+    "noUpcoming": "You don't have any upcoming coaching sessions. Book a session with an expert coach to accelerate your career!",
+    "noCompleted": "You haven't completed any coaching sessions yet.",
+    "findCoach": "Find a Coach",
+    "notes": "Notes:",
+    "joinCall": "Join Call",
+    "reschedule": "Reschedule",
+    "cancelSession": "Cancel Session",
+    "review": "Review",
+    "messages": {
+      "failedToLoad": "Failed to load sessions",
+      "cancelReasonRequired": "Please provide a reason for cancellation",
+      "cancelSuccess": "Session cancelled successfully",
+      "failedToCancel": "Failed to cancel session",
+      "reviewSubmitted": "Review submitted successfully",
+      "failedToSubmitReview": "Failed to submit review"
+    },
+    "cancel": {
+      "title": "Cancel Session",
+      "description": "Are you sure you want to cancel this session with {{name}}?",
+      "reasonLabel": "Reason for cancellation",
+      "reasonPlaceholder": "Please let us know why you're cancelling...",
+      "keepSession": "Keep Session",
+      "confirmCancel": "Cancel Session",
+      "cancelling": "Cancelling..."
+    },
+    "review": {
+      "title": "Leave a Review",
+      "description": "How was your session with {{name}}?",
+      "commentLabel": "Comment",
+      "commentPlaceholder": "Share your experience...",
+      "cancel": "Cancel",
+      "submit": "Submit Review",
+      "submitting": "Submitting..."
+    },
+    "cancelCounselor": {
+      "title": "Cancel Counselor Session",
+      "description": "Are you sure you want to cancel your session with {{name}}?",
+      "reasonLabel": "Reason for cancellation",
+      "reasonPlaceholder": "Please let your counselor know why you're cancelling...",
+      "keep": "Keep Session",
+      "confirm": "Cancel Session"
+    }
+  },
+  "subscriptions": {
+    "back": "Dashboard",
+    "title": "Subscriptions",
+    "subtitle": "Manage your plan and billing",
+    "loading": "Loading plans...",
+    "active": {
+      "title": "Active Subscription",
+      "onPlan": "You're on the {{plan}} plan.",
+      "cancels": "Cancels {{date}} — access until then",
+      "renews": "Renews {{date}}",
+      "manageBilling": "Manage Billing",
+      "cancelPlan": "Cancel Plan",
+      "opening": "Opening…",
+      "ending": "Ending",
+      "active": "Active"
+    },
+    "cancel": {
+      "title": "Cancel Subscription?",
+      "body": "Your subscription will be cancelled at the end of the current billing period. You will retain access until then.",
+      "keepPlan": "Keep Plan",
+      "yesCancelPending": "Cancelling...",
+      "yesCancel": "Yes, Cancel"
+    },
+    "noSubscription": "You don't have an active subscription. Choose a plan below to get started.",
+    "plan": {
+      "mostPopular": "Most Popular",
+      "currentPlan": "Current Plan",
+      "perMonth": "/month",
+      "perYear": "/year",
+      "currentPlanLabel": "Current Plan",
+      "switchPlan": "Switch Plan",
+      "get": "Get {{plan}}",
+      "processing": "Processing..."
+    }
+  },
+  "transactions": {
+    "title": "Transactions",
+    "subtitle": "View and manage your payment history",
+    "sectionLabel": "Billing",
+    "exportCSV": "Export CSV",
+    "exporting": "Exporting...",
+    "fetchFailed": "Failed to load transactions",
+    "exportSuccess": "Transactions exported successfully",
+    "exportFailed": "Failed to export transactions",
+    "totalSpent": "Total Spent",
+    "invoices": "Invoices",
+    "lastUsedMethod": "Last Used Method",
+    "searchPlaceholder": "Search transactions...",
+    "noTransactions": "No transactions found",
+    "tabs": {
+      "all": "All",
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed",
+      "refunded": "Refunded"
+    },
+    "table": {
+      "id": "Transaction ID",
+      "description": "Description",
+      "date": "Date",
+      "method": "Method",
+      "status": "Status",
+      "amount": "Amount",
+      "actions": "Actions",
+      "viewDetails": "View Details",
+      "downloadInvoice": "Download Invoice",
+      "reportIssue": "Report Issue"
+    },
+    "pagination": {
+      "page": "Showing page {{page}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  }
+}

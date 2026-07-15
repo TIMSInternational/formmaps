@@ -3,7 +3,7 @@
 ## Phase 1: Move The Current Frontend
 
 1. Inventory current FormMaps frontend routes and environment variables.
-2. Move `formmaps-platform/frontend` into `apps/web`.
+2. Move `formmaps-platform/frontend` into `apps/web`. **Done.**
 3. Preserve current production behavior.
 4. Add CI for lint, typecheck, tests, and build.
 5. Centralize backend calls in `packages/api-client`.

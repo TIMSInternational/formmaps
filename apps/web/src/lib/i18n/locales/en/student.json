@@ -1,0 +1,115 @@
+{
+  "applications": {
+    "badge": "Application Tracker",
+    "title": "Track Your Applications",
+    "deadlineCalendar": "Deadline Calendar",
+    "subtitle": "Organize your university applications from research to acceptance. Click a card to open its workspace — essays, checklist, and AI review."
+  },
+  "transcript": {
+    "badge": "Academic Record",
+    "title": "My Transcript",
+    "subtitle": "A full view of your academic history, GPA, and credit progress.",
+    "failedToLoad": "Failed to load transcript.",
+    "noCoursesTitle": "No Courses Yet",
+    "noCoursesBody": "Your transcript will populate once course grades have been entered by your school.",
+    "unweightedGpa": "Unweighted GPA",
+    "weightedGpa": "Weighted GPA",
+    "classRank": "Class Rank",
+    "totalCredits": "Total Credits",
+    "courseRigor": "Course Rigor",
+    "gpaTrend": "GPA Trend",
+    "classStanding": "Class Standing",
+    "moreYearsNeeded": "More years needed for trend",
+    "table": {
+      "courseCode": "Course Code",
+      "grade": "Grade",
+      "credits": "Credits",
+      "level": "Level",
+      "semester": "Semester",
+      "unweighted": "Unweighted:",
+      "weighted": "Weighted:",
+      "creditsLabel": "Credits:"
+    }
+  },
+  "testScores": {
+    "badge": "Academic Profile",
+    "title": "Test Scores",
+    "subtitle": "Track your SAT, ACT, AP, and other standardized test results.",
+    "addScore": "Add Score",
+    "failedToLoad": "Failed to load test scores",
+    "scoreUpdated": "Score updated",
+    "scoreAdded": "Score added",
+    "scoreDeleted": "Score deleted",
+    "failedToSave": "Failed to save score",
+    "failedToDelete": "Failed to delete score"
+  },
+  "communityService": {
+    "badge": "Graduation Requirement",
+    "title": "Community Service Hours",
+    "subtitle": "Track your volunteer hours and see your progress towards graduation.",
+    "logHours": "Log Hours",
+    "startLogging": "Start Logging",
+    "verified": "Verified",
+    "pending": "Pending",
+    "remaining": "Remaining",
+    "progress": "Progress",
+    "noHoursTitle": "No service hours logged yet",
+    "noHoursBody": "Click \"Log Hours\" above to start tracking your community service.",
+    "deleteConfirm": "Delete this entry? This cannot be undone.",
+    "form": {
+      "editTitle": "Edit Service Entry",
+      "newTitle": "Log New Service Hours",
+      "organization": "Organization *",
+      "organizationPlaceholder": "e.g. Red Cross",
+      "date": "Date *",
+      "hours": "Hours *",
+      "hoursPlaceholder": "e.g. 4",
+      "supervisorName": "Supervisor Name",
+      "supervisorNamePlaceholder": "e.g. Maria Gonzalez",
+      "supervisorEmail": "Supervisor Email",
+      "supervisorEmailPlaceholder": "supervisor@org.com",
+      "description": "Description",
+      "descriptionPlaceholder": "Briefly describe what you did...",
+      "cancel": "Cancel",
+      "saveChanges": "Save Changes",
+      "submitHours": "Submit Hours"
+    },
+    "serviceLog": {
+      "title": "Service Log",
+      "history": "History of your volunteer work",
+      "entries": "entries"
+    }
+  },
+  "portfolio": {
+    "badge": "Student Portfolio",
+    "title": "My Achievement Portfolio",
+    "subtitle": "Curate your extracurriculars, projects, and experiences in one beautiful space.",
+    "addItem": "Add New Experience",
+    "totalItems": "Total Items",
+    "totalHours": "Volunteer Hours",
+    "awards": "Awards Won",
+    "categories": "Categories",
+    "noItemsTitle": "Build Your Portfolio",
+    "noItems": "Showcase your achievements, projects, and experiences to stand out. Start adding items to build your professional profile."
+  },
+  "recommendations": {
+    "badge": "Applications",
+    "title": "Letters of Recommendation",
+    "subtitle": "Request and track letters from your counselors and teachers.",
+    "requestLetter": "Request Letter",
+    "failedToLoad": "Failed to load recommendation requests"
+  },
+  "university": {
+    "failedToLoad": "Failed to load universities"
+  },
+  "career": {
+    "market": {
+      "liveData": "Live Market Data",
+      "title": "Market",
+      "titleAccent": "Pulse",
+      "subtitle": "Real-time insights on salaries, hiring trends, and in-demand skills.",
+      "lastUpdated": "Last updated: Just now",
+      "backToDashboard": "Back to Dashboard"
+    }
+  }
+}
