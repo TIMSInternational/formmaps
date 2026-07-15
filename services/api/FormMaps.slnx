@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FormMaps.Api/FormMaps.Api.csproj" />
+    <Project Path="src/FormMaps.Application/FormMaps.Application.csproj" />
+    <Project Path="src/FormMaps.Domain/FormMaps.Domain.csproj" />
+    <Project Path="src/FormMaps.Infrastructure/FormMaps.Infrastructure.csproj" />
+    <Project Path="src/FormMaps.Workers/FormMaps.Workers.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FormMaps.ContractTests/FormMaps.ContractTests.csproj" />
+    <Project Path="tests/FormMaps.IntegrationTests/FormMaps.IntegrationTests.csproj" />
+    <Project Path="tests/FormMaps.UnitTests/FormMaps.UnitTests.csproj" />
+  </Folder>
+</Solution>
