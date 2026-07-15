@@ -158,6 +158,11 @@ Exit criteria:
 - frontend feature flag can switch one screen to .NET
 - production rollback is route-level, not deploy-level
 
+Status: `/api/v1/reports/benchmark` is implemented as the first read-only
+product endpoint. The API contract and auth/tenant behavior are integration
+tested with a fake reader; a live staging database smoke is still required
+before routing frontend traffic to the .NET endpoint.
+
 ## Domain Migration Order
 
 1. platform health, context, audit

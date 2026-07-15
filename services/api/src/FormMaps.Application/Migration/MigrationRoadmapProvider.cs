@@ -16,9 +16,9 @@ public sealed class MigrationRoadmapProvider : IMigrationRoadmapProvider
             Domain: "request-context-and-tenant",
             CurrentOwner: "legacy-node-api",
             TargetOwner: ".NET",
-            FirstMove: "Build auth-compatible request context and fail-closed tenant guard.",
+            FirstMove: "JWT-compatible request context, fail-closed tenant guard, security middleware, and RLS-safe database sessions are in place.",
             Risk: "high",
-            Status: "planned"),
+            Status: "completed"),
 
         new(
             Domain: "audit-events",
@@ -32,9 +32,9 @@ public sealed class MigrationRoadmapProvider : IMigrationRoadmapProvider
             Domain: "reports-and-dashboards",
             CurrentOwner: "legacy-node-api",
             TargetOwner: ".NET",
-            FirstMove: "Implement one read-only reporting endpoint with tenant/role parity tests.",
+            FirstMove: "GET /api/v1/reports/benchmark is implemented; staging DB smoke and route flag are next.",
             Risk: "medium",
-            Status: "planned"),
+            Status: "started"),
 
         new(
             Domain: "assessments-and-readiness",

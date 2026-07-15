@@ -190,7 +190,7 @@
     },
     {
       "id": "FM-DOTNET-006-first-reporting-read-endpoint",
-      "status": "in_progress",
+      "status": "completed",
       "goal": "Migrate one read-only reporting/dashboard endpoint with role and tenant parity tests.",
       "dependsOn": [
         "FM-DOTNET-005-rls-safe-database-context"
@@ -209,7 +209,7 @@
         "docs/migration"
       ],
       "outputs": [
-        "one read-only dashboard/reporting endpoint",
+        "GET /api/v1/reports/benchmark",
         "tenant/role parity tests",
         "feature-flag-ready route contract"
       ],
@@ -221,6 +221,39 @@
       "validation": [
         "npm run api:test",
         "dotnet build services/api/FormMaps.slnx"
+      ]
+    },
+    {
+      "id": "FM-DOTNET-007-live-db-smoke-and-route-flag",
+      "status": "planned",
+      "goal": "Add staging database smoke coverage for the benchmark endpoint and define frontend/API routing feature flag before canary traffic.",
+      "dependsOn": [
+        "FM-DOTNET-006-first-reporting-read-endpoint"
+      ],
+      "inputs": [
+        "services/api/src/FormMaps.Api/Endpoints/ReportEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/Reports/SchoolBenchmarkReportReader.cs",
+        "apps/web/src/lib/api/apiClient.ts",
+        "docs/migration/auth-tenant-context-contract.md"
+      ],
+      "ownedPaths": [
+        "services/api/tests/FormMaps.IntegrationTests",
+        "apps/web",
+        "docs/migration"
+      ],
+      "outputs": [
+        "staging database smoke test or documented manual runbook",
+        "frontend route feature flag for reports benchmark",
+        "rollback notes"
+      ],
+      "guardrails": [
+        "Do not point production frontend traffic at .NET until staging DB smoke passes.",
+        "Do not weaken RLS or use system context for school benchmark data.",
+        "Keep rollback route-level."
+      ],
+      "validation": [
+        "npm run api:test",
+        "npm run web:build"
       ]
     }
   ]

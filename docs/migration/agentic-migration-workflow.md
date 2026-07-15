@@ -49,10 +49,11 @@ Before implementing a task, an agent must:
 ## Current Active Slice
 
 ```text
-FM-DOTNET-006-first-reporting-read-endpoint
+FM-DOTNET-007-live-db-smoke-and-route-flag
 ```
 
 The request-context, JWT/RLS-decision foundation, and production security
 middleware parity are implemented. The RLS-safe Npgsql read session layer is
-also implemented. The next agentic slice migrates the first read-only product
-endpoint through that session layer.
+also implemented, and `/api/v1/reports/benchmark` is the first read-only
+product endpoint. The next agentic slice should add a staging database smoke and
+feature-flag routing plan before frontend traffic moves to .NET.

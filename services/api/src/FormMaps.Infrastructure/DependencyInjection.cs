@@ -1,5 +1,7 @@
 using FormMaps.Application.Data;
+using FormMaps.Application.Reports;
 using FormMaps.Infrastructure.Data;
+using FormMaps.Infrastructure.Reports;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -25,6 +27,7 @@ public static class DependencyInjection
 
         services.AddSingleton<RlsSessionContextApplier>();
         services.AddScoped<IFormMapsDatabaseSessionFactory, NpgsqlFormMapsDatabaseSessionFactory>();
+        services.AddScoped<ISchoolBenchmarkReportReader, SchoolBenchmarkReportReader>();
 
         return services;
     }
