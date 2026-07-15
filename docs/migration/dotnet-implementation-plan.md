@@ -61,12 +61,15 @@ Exit criteria:
 
 Build:
 
-- JWT validation configuration
 - cookie/bearer extraction compatible with existing frontend behavior
 - tenant resolver
 - role/permission model
 - fail-closed tenant guard for protected routes
 - integration tests for anonymous, student, counselor, school admin, parent
+
+Development-only headers may be used for local smoke testing and must be
+ignored outside Development. This slice is now paired with Slice 2.5, so
+bearer/cookie tokens are only accepted after cryptographic JWT validation.
 
 Exit criteria:
 
@@ -74,7 +77,49 @@ Exit criteria:
 - protected test endpoint denies missing tenant context.
 - behavior matches current Node auth assumptions.
 
-### Slice 3: Database Connectivity
+### Slice 2.5: JWT Validation
+
+Build:
+
+- HS256 validation with `JWT_SECRET`
+- issuer default `formmaps-api`
+- audience default `formmaps-frontend`
+- cookie-first `access_token` lookup
+- bearer fallback only when no access cookie exists
+- claim mapping for `sub`, `name`, `email`, `role`, `schoolId`, `permissions`
+- RLS GUC plan resolver matching the legacy Node `resolveGucPlan`
+
+Exit criteria:
+
+- missing token returns `401`.
+- invalid or expired token returns `401`.
+- bad cookie does not fall back to a good bearer token.
+- valid cookie and valid bearer establish the same request context.
+- system/super-admin/identity/deny RLS decisions are unit tested.
+
+Status: implemented locally in the .NET API and covered by unit/integration
+tests.
+
+### Slice 3: API Security Middleware Parity
+
+Build:
+
+- startup environment validation
+- credentialed CORS allowlist
+- HSTS/referrer/no-store/security headers
+- mutation content-type enforcement
+- JSON size limit and sanitization policy
+- redacted request logging
+- API/auth/sensitive/AI rate limits
+- request timeout and graceful shutdown policy
+
+Exit criteria:
+
+- security middleware behavior has integration tests.
+- production configuration cannot boot with missing required secrets.
+- local development remains usable without spoofing production settings.
+
+### Slice 4: Database Connectivity
 
 Build:
 
@@ -90,7 +135,7 @@ Exit criteria:
 - tenant context is applied before data access.
 - tests prove missing context fails closed.
 
-### Slice 4: First Product Endpoint
+### Slice 5: First Product Endpoint
 
 Start with a read-only reporting/dashboard endpoint.
 

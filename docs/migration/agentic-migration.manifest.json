@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "project": "formmaps",
+  "activeRepository": "TIMSInternational/formmaps",
+  "strategy": "strangler-migration",
+  "sourceOfTruth": {
+    "legacyRepositoryPath": "/Users/federicotafur/formmaps-platform",
+    "legacyBackend": "api",
+    "frontend": "apps/web",
+    "newBackend": "services/api"
+  },
+  "globalGuardrails": [
+    "Keep the existing production platform running during migration.",
+    "Use the legacy Node backend as the behavioral specification.",
+    "Preserve RLS and fail-closed tenant behavior.",
+    "Do not trust development headers outside Development.",
+    "Do not allow Prisma and EF Core to freely mutate the same table.",
+    "Use tims-interop for product-to-product contracts."
+  ],
+  "tasks": [
+    {
+      "id": "FM-DOTNET-001-platform-shell",
+      "status": "completed",
+      "goal": "Create the .NET 10 API shell with health, version, roadmap endpoint, CI, and tests.",
+      "ownedPaths": [
+        "services/api",
+        "docs/migration"
+      ],
+      "validation": [
+        "npm run api:test",
+        "curl /health",
+        "curl /version",
+        "curl /api/v1/migration/roadmap"
+      ]
+    },
+    {
+      "id": "FM-DOTNET-002-request-context",
+      "status": "completed",
+      "goal": "Implement auth-compatible request context primitives, role normalization, tenant guard, and protected smoke endpoint.",
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/middleware/authenticate.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/auth.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/requestContext.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/prismaRls.ts",
+        "apps/web/src/lib/api/apiClient.ts",
+        "docs/migration/auth-tenant-context-contract.md"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Domain/Auth",
+        "services/api/src/FormMaps.Application/Auth",
+        "services/api/src/FormMaps.Api/Auth",
+        "services/api/src/FormMaps.Api/Endpoints/RequestContextEndpoints.cs",
+        "services/api/tests/FormMaps.UnitTests/Auth",
+        "docs/migration/agentic-migration.manifest.json",
+        "docs/migration/agentic-migration-workflow.md",
+        "docs/migration/auth-tenant-context-contract.md"
+      ],
+      "outputs": [
+        "RequestContext model",
+        "role normalization parity",
+        "tenant fail-closed guard",
+        "development-only request context decoder",
+        "GET /api/v1/context/current",
+        "GET /api/v1/context/protected-smoke"
+      ],
+      "guardrails": [
+        "Development headers must be ignored outside Development.",
+        "Protected smoke endpoint must deny anonymous requests."
+      ],
+      "validation": [
+        "npm run api:test",
+        "curl /api/v1/context/current",
+        "curl /api/v1/context/protected-smoke without headers returns 401",
+        "curl /api/v1/context/protected-smoke with development headers returns 200"
+      ]
+    },
+    {
+      "id": "FM-DOTNET-003-jwt-validation",
+      "status": "completed",
+      "goal": "Validate legacy-compatible HS256 JWTs from access_token cookie first, then Authorization bearer fallback, and lock the RLS GUC decision contract.",
+      "dependsOn": [
+        "FM-DOTNET-002-request-context"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/lib/auth.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/middleware/authenticate.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/requestContext.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/prismaRls.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/authCookies.ts",
+        "docs/migration/auth-tenant-context-contract.md"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Auth",
+        "services/api/src/FormMaps.Application/Auth",
+        "services/api/src/FormMaps.Api/appsettings.json",
+        "services/api/tests/FormMaps.IntegrationTests/Auth",
+        "services/api/tests/FormMaps.UnitTests/Auth",
+        "docs/migration"
+      ],
+      "outputs": [
+        "LegacyJwtRequestContextFactory",
+        "HS256 issuer/audience/lifetime/signing-key validation",
+        "cookie-first token precedence with no bad-cookie bearer fallback",
+        "development header fallback only when no real token exists",
+        "TenantGucPlanResolver for system/super-admin/identity/deny decisions"
+      ],
+      "guardrails": [
+        "Use issuer formmaps-api unless environment overrides it.",
+        "Use audience formmaps-frontend unless environment overrides it.",
+        "No protected endpoint may accept unsigned or unverified claims.",
+        "No database query may run against RLS-protected tables until the GUC application layer exists."
+      ],
+      "validation": [
+        "npm run api:test"
+      ]
+    },
+    {
+      "id": "FM-DOTNET-004-security-middleware-parity",
+      "status": "planned",
+      "goal": "Port production API security middleware parity before .NET owns real product traffic.",
+      "dependsOn": [
+        "FM-DOTNET-003-jwt-validation"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/index.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/middleware/rateLimiter.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/env.ts",
+        "docs/migration/auth-tenant-context-contract.md"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api",
+        "services/api/tests/FormMaps.IntegrationTests",
+        "docs/migration"
+      ],
+      "outputs": [
+        "startup environment validation",
+        "credentialed CORS allowlist",
+        "security/no-store headers",
+        "mutation content-type enforcement",
+        "request size and timeout policy",
+        "redacted logging policy",
+        "API/auth/sensitive/AI rate limit policy"
+      ],
+      "guardrails": [
+        "Production must fail fast when required secrets are missing.",
+        "Do not weaken local development ergonomics to fake production config.",
+        "Do not port Stripe raw-body handling until the Stripe route is being migrated."
+      ],
+      "validation": [
+        "npm run api:test",
+        "dotnet build services/api/FormMaps.slnx"
+      ]
+    },
+    {
+      "id": "FM-DOTNET-005-rls-safe-database-context",
+      "status": "planned",
+      "goal": "Add database connectivity and a safe strategy for setting app.current_school_id/app.current_user_id before queries.",
+      "dependsOn": [
+        "FM-DOTNET-004-security-middleware-parity"
+      ]
+    },
+    {
+      "id": "FM-DOTNET-006-first-reporting-read-endpoint",
+      "status": "planned",
+      "goal": "Migrate one read-only reporting/dashboard endpoint with role and tenant parity tests.",
+      "dependsOn": [
+        "FM-DOTNET-005-rls-safe-database-context"
+      ]
+    }
+  ]
+}
