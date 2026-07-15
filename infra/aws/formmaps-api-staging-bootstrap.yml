@@ -10,6 +10,10 @@ Parameters:
     Type: String
     Default: TIMSInternational/formmaps
     Description: GitHub owner/repository allowed to assume the staging deploy role.
+  GitHubRepositorySubject:
+    Type: String
+    Default: TIMSInternational@305569681/formmaps@1301900742
+    Description: Immutable GitHub OIDC repository subject allowed to assume the staging deploy role.
   GitHubBranch:
     Type: String
     Default: main
@@ -97,7 +101,11 @@ Resources:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
               StringLike:
-                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubRepository}:ref:refs/heads/${GitHubBranch}
+                token.actions.githubusercontent.com:sub:
+                  - !Sub repo:${GitHubRepository}:ref:refs/heads/${GitHubBranch}
+                  - !Sub repo:${GitHubRepository}:environment:staging
+                  - !Sub repo:${GitHubRepositorySubject}:ref:refs/heads/${GitHubBranch}
+                  - !Sub repo:${GitHubRepositorySubject}:environment:staging
       Policies:
         - PolicyName: formmaps-staging-deploy
           PolicyDocument:
@@ -179,11 +187,6 @@ Resources:
                 Resource:
                   - !GetAtt AppRunnerEcrAccessRole.Arn
                   - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/formmaps-api-staging-instance
-                Condition:
-                  StringEquals:
-                    iam:PassedToService:
-                      - build.apprunner.amazonaws.com
-                      - tasks.apprunner.amazonaws.com
       Tags:
         - Key: Project
           Value: formmaps
