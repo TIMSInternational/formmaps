@@ -123,6 +123,9 @@ public class ExamEndpointsTests
         Assert.True(data.TryGetProperty("flagForReview", out _));
         // violations jsonb passthrough (array here).
         Assert.Equal(JsonValueKind.Array, data.GetProperty("violations").ValueKind);
+        // Timestamps are Node-style ISO-Z strings, NOT DateTimeOffset (+00:00).
+        Assert.Equal("2026-06-01T00:00:00.000Z", data.GetProperty("startTime").GetString());
+        Assert.Equal("2026-06-01T00:20:00.000Z", data.GetProperty("updatedAt").GetString());
     }
 
     [Fact]
@@ -161,6 +164,9 @@ public class ExamEndpointsTests
         Assert.Equal(3, data.GetProperty("sessions").GetArrayLength());
         Assert.Equal(2, data.GetProperty("uniqueCompleted").GetArrayLength());
         Assert.Equal(2, data.GetProperty("count").GetInt32());
+        // Subset-row timestamps are Node-style ISO-Z strings, NOT DateTimeOffset (+00:00).
+        Assert.Equal("2026-06-01T00:00:00.000Z", data.GetProperty("sessions")[0].GetProperty("startTime").GetString());
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("sessions")[0].GetProperty("endTime").ValueKind);
     }
 
     private static HttpRequestMessage BuildRequest(string path, string role, string? schoolId)
@@ -241,23 +247,23 @@ public class ExamEndpointsTests
 
         public int CompletedCallCount { get; private set; }
 
-        public Task<ExamSession?> GetSessionAsync(RequestContext context, string sessionId, CancellationToken cancellationToken = default)
+        public Task<PcaHistorySession?> GetSessionAsync(RequestContext context, string sessionId, CancellationToken cancellationToken = default)
         {
             SessionCallCount++;
             if (SessionMissing)
             {
-                return Task.FromResult<ExamSession?>(null);
+                return Task.FromResult<PcaHistorySession?>(null);
             }
 
             using var violations = JsonDocument.Parse("""[{"type":"tab_switch"}]""");
-            var session = new ExamSession(
+            var session = new PcaHistorySession(
                 Id: sessionId,
                 ExamId: "exam-1",
                 UserId: OwnerUserId,
                 ExamName: "Pattern Recognition",
                 ExamType: "PatternRecognition",
-                StartTime: new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero),
-                EndTime: new DateTimeOffset(2026, 6, 1, 0, 20, 0, TimeSpan.Zero),
+                StartTime: "2026-06-01T00:00:00.000Z",
+                EndTime: "2026-06-01T00:20:00.000Z",
                 TotalTimeSpent: 1200,
                 TotalQuestions: 30,
                 QuestionsAnswered: 30,
@@ -274,17 +280,17 @@ public class ExamEndpointsTests
                 FlagForReview: false,
                 IsActive: true,
                 CreatedBy: null,
-                CreatedDate: new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero),
+                CreatedDate: "2026-06-01T00:00:00.000Z",
                 UpdatedBy: null,
-                UpdatedAt: new DateTimeOffset(2026, 6, 1, 0, 20, 0, TimeSpan.Zero));
+                UpdatedAt: "2026-06-01T00:20:00.000Z");
 
-            return Task.FromResult<ExamSession?>(session);
+            return Task.FromResult<PcaHistorySession?>(session);
         }
 
         public Task<CompletedExams> GetCompletedExamsAsync(RequestContext context, string userId, CancellationToken cancellationToken = default)
         {
             CompletedCallCount++;
-            var start = new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero);
+            const string start = "2026-06-01T00:00:00.000Z";
             var sessions = new List<CompletedExamRow>
             {
                 new("s1", "examA", "A", "PatternRecognition", 90, start, null),

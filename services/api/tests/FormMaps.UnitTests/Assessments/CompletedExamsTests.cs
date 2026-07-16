@@ -6,7 +6,7 @@ public class CompletedExamsTests
 {
     private static CompletedExamRow Row(string id, string examId, double score) =>
         new(Id: id, ExamId: examId, ExamName: examId, ExamType: "PatternRecognition",
-            ScorePercentage: score, StartTime: new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero), EndTime: null);
+            ScorePercentage: score, StartTime: "2026-06-01T00:00:00.000Z", EndTime: null);
 
     [Fact]
     public void Dedups_by_exam_id_keeping_first_occurrence()
