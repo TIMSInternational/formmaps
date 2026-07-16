@@ -138,4 +138,25 @@ public class PersonalityResultsAssemblerTests
         Assert.Null(result.StartedAt);
         Assert.Null(result.CompletedAt);
     }
+
+    [Fact]
+    public void Score_dimensions_passes_through_non_object_verbatim()
+    {
+        // Legacy `session.dimensionScores ?? {}` only coalesces null — an array jsonb stays an array
+        // in score.dimensions (NOT coerced to {}). dimension_scores lookups then find nothing -> [].
+        var result = Build(dimensionScores: Json("[]"));
+        Assert.Equal(JsonValueKind.Array, result.Score.Dimensions.ValueKind);
+        Assert.Empty(result.DimensionScores);
+    }
+
+    [Fact]
+    public void DimensionScores_drops_falsy_values_like_filter_boolean()
+    {
+        // Legacy DIMENSIONS.map(d=>storedDims[d]).filter(Boolean): null/false/0 are falsy and dropped;
+        // only the JP object survives.
+        var stored = Json($$"""{"EI":null,"SN":false,"TF":0,"JP":{{Dim("JP", "P")}}}""");
+        var result = Build(dimensionScores: stored);
+        Assert.Single(result.DimensionScores);
+        Assert.Equal("JP", result.DimensionScores[0].GetProperty("dimension").GetString());
+    }
 }

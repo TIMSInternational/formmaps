@@ -32,16 +32,23 @@ public static class PersonalityResultsAssembler
         var language = sessionLanguage == "en" ? "en" : "es";
         var type = resolvedType ?? "";
 
-        // session.dimensionScores ?? {} — a non-object (null/jsonb-null) yields an empty object.
-        var storedDims = dimensionScores.ValueKind == JsonValueKind.Object ? dimensionScores : EmptyObject;
+        // session.dimensionScores ?? {} — only null/undefined coalesces; any other jsonb (incl. an
+        // array) passes through verbatim to score.dimensions.
+        var storedDims = dimensionScores.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
+            ? EmptyObject
+            : dimensionScores;
 
-        // DIMENSIONS.map(d => storedDims[d]).filter(Boolean) — canonical order, missing dropped.
+        // DIMENSIONS.map(d => storedDims[d]).filter(Boolean) — canonical order; missing keys and falsy
+        // values (null/false/0/"") are dropped. A non-object storedDims yields nothing (no throw).
         var dimensionScoreList = new List<JsonElement>(DimensionOrder.Length);
-        foreach (var dimension in DimensionOrder)
+        if (storedDims.ValueKind == JsonValueKind.Object)
         {
-            if (storedDims.TryGetProperty(dimension, out var entry))
+            foreach (var dimension in DimensionOrder)
             {
-                dimensionScoreList.Add(entry);
+                if (storedDims.TryGetProperty(dimension, out var entry) && IsTruthy(entry))
+                {
+                    dimensionScoreList.Add(entry);
+                }
             }
         }
 
@@ -67,6 +74,15 @@ public static class PersonalityResultsAssembler
             ViolationCount: violationCount,
             FlagForReview: flagForReview);
     }
+
+    // JS truthiness (for filter(Boolean)): null/false/0/"" are falsy; objects/arrays/non-empty are truthy.
+    private static bool IsTruthy(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.Null or JsonValueKind.Undefined or JsonValueKind.False => false,
+        JsonValueKind.Number => value.GetDouble() != 0,
+        JsonValueKind.String => value.GetString()?.Length > 0,
+        _ => true,
+    };
 
     private static readonly JsonElement EmptyObject = ParseClone("{}");
 
