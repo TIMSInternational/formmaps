@@ -19,6 +19,14 @@ public class PcaExamPaginationTests
     [InlineData(" 7 ", 7)]        // leading whitespace skipped
     [InlineData("-5", -5)]
     [InlineData("+8", 8)]
+    [InlineData("0x2", 2)]      // bare parseInt: 0x prefix -> hex
+    [InlineData("0x10", 16)]
+    [InlineData("0X1F", 31)]
+    [InlineData("-0x10", -16)]  // sign then 0x
+    [InlineData("0x1g", 1)]     // stops at first non-hex digit
+    [InlineData("0x", null)]    // no hex digits after prefix -> NaN
+    [InlineData("0xg", null)]
+    [InlineData("010", 10)]     // leading 0 is NOT octal in modern JS
     public void JsParseInt_matches_js(string? input, int? expected)
     {
         Assert.Equal(expected, PcaExamPagination.JsParseInt(input));

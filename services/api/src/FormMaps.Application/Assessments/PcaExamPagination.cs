@@ -23,8 +23,10 @@ public sealed record PcaExamPagination(int Page, int Limit, long Skip)
         parsed is null or 0 ? fallback : parsed.Value;
 
     /// <summary>
-    /// JS <c>parseInt(s, 10)</c>: skip leading whitespace, optional sign, consume decimal digits until
-    /// a non-digit; no digits =&gt; NaN (null). Saturates at int range instead of overflowing.
+    /// JS bare <c>parseInt(s)</c> (radix undefined, as legacy calls it): skip leading whitespace,
+    /// optional sign, then a <c>0x</c>/<c>0X</c> prefix selects radix 16 (else radix 10); consume
+    /// digits valid for that radix until an invalid char; no digits =&gt; NaN (null). Saturates at int
+    /// range instead of overflowing. (Modern JS does NOT treat a leading 0 as octal — only 0x is special.)
     /// </summary>
     public static int? JsParseInt(string? s)
     {
@@ -51,14 +53,27 @@ public sealed record PcaExamPagination(int Page, int Limit, long Skip)
             i++;
         }
 
+        var radix = 10;
+        if (i + 1 < n && s[i] == '0' && (s[i + 1] == 'x' || s[i + 1] == 'X'))
+        {
+            radix = 16;
+            i += 2;
+        }
+
         var start = i;
         long value = 0;
         var saturated = false;
-        while (i < n && s[i] >= '0' && s[i] <= '9')
+        while (i < n)
         {
+            var digit = DigitValue(s[i]);
+            if (digit < 0 || digit >= radix)
+            {
+                break;
+            }
+
             if (!saturated)
             {
-                value = (value * 10) + (s[i] - '0');
+                value = (value * radix) + digit;
                 if (value > int.MaxValue)
                 {
                     value = int.MaxValue;
@@ -76,4 +91,12 @@ public sealed record PcaExamPagination(int Page, int Limit, long Skip)
 
         return (int)(sign * value);
     }
+
+    private static int DigitValue(char c) => c switch
+    {
+        >= '0' and <= '9' => c - '0',
+        >= 'a' and <= 'f' => c - 'a' + 10,
+        >= 'A' and <= 'F' => c - 'A' + 10,
+        _ => -1,
+    };
 }
