@@ -30,6 +30,7 @@ app.MapMigrationEndpoints();
 app.MapRequestContextEndpoints();
 app.MapReportEndpoints();
 app.MapExamEndpoints();
+app.MapLiaEndpoints();
 
 app.Run();
 
