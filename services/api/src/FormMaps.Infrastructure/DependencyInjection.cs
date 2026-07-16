@@ -8,6 +8,7 @@ using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Reports;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
 
@@ -47,7 +48,10 @@ public static class DependencyInjection
             ? parsedGrace
             : SubscriptionAccess.DefaultGraceDays;
         services.AddScoped<ISubscriptionGuard>(sp =>
-            new SubscriptionGuard(sp.GetRequiredService<IFormMapsDatabaseSessionFactory>(), graceDays));
+            new SubscriptionGuard(
+                sp.GetRequiredService<IFormMapsDatabaseSessionFactory>(),
+                sp.GetRequiredService<ILogger<SubscriptionGuard>>(),
+                graceDays));
 
         return services;
     }

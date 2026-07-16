@@ -1,6 +1,7 @@
 using System.Data.Common;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
+using Microsoft.Extensions.Logging;
 
 namespace FormMaps.Infrastructure.Auth;
 
@@ -13,6 +14,7 @@ namespace FormMaps.Infrastructure.Auth;
 /// </summary>
 public sealed class SubscriptionGuard(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
+    ILogger<SubscriptionGuard> logger,
     int graceDays) : ISubscriptionGuard
 {
     private static readonly string[] StudentRoles = ["student", "Student"];
@@ -40,6 +42,25 @@ public sealed class SubscriptionGuard(
             return GuardDecision.Deny(401, "missing_identity", "Authenticated identity is required.");
         }
 
+        try
+        {
+            return await EvaluateAsync(context, userId, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Legacy requireSubscription catches its own errors and returns 503 (transient), NOT the
+            // 500 the global handler would emit — fail-closed either way, but 503 is the retryable
+            // status contract clients/LBs expect from the entitlement gate.
+            logger.LogError(ex, "Subscription check failed");
+            return GuardDecision.Deny(503, "service_unavailable", "Service temporarily unavailable");
+        }
+    }
+
+    private async Task<GuardDecision> EvaluateAsync(
+        RequestContext context,
+        string userId,
+        CancellationToken cancellationToken)
+    {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
         string? roleName;
