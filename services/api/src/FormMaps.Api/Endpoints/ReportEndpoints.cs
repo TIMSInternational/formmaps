@@ -17,6 +17,7 @@ public static class ReportEndpoints
         group.MapGet("/lia/{userId}", GetLiaReportAsync);
         group.MapGet("/timeline/{userId}", GetTimelineReportAsync);
         group.MapGet("/coaching/{userId}", GetCoachingReportAsync);
+        group.MapGet("/evaluation/{sessionId}", GetEvaluationReportAsync);
 
         return app;
     }
@@ -314,6 +315,74 @@ public static class ReportEndpoints
                 // CoachingSession records expose only id/coachName/coachSpecialization/date/
                 // status/amount — sensitive booking and coach columns were never selected.
                 sessions = report.Sessions,
+                generatedAt = report.GeneratedAt
+            }
+        });
+    }
+
+    private static async Task<IResult> GetEvaluationReportAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IUserAccessGuard userAccessGuard,
+        IEvaluationReportReader reportReader,
+        string sessionId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var guardDecision = protectedRequestGuard.RequireIdentity(context);
+        if (!guardDecision.Allowed)
+        {
+            return Results.Json(
+                new
+                {
+                    success = false,
+                    code = guardDecision.Code,
+                    message = guardDecision.Message
+                },
+                statusCode: guardDecision.StatusCode);
+        }
+
+        // Resolve the group first (by id, no isActive filter). A missing group returns the SAME
+        // uniform 404 as an access denial: legacy leaks existence via distinct messages
+        // ("Evaluation group not found" vs "Not found"); the uniform 404 closes that leak.
+        var group = await reportReader.ResolveGroupAsync(context, sessionId, cancellationToken);
+        if (group is null)
+        {
+            return NotFound();
+        }
+
+        // Access is gated on the group's evaluatedUserId via canAccessUser (NOT session ownership).
+        if (!await userAccessGuard.CanAccessUserAsync(context, group.EvaluatedUserId, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var report = await reportReader.ReadReportAsync(context, group, cancellationToken);
+
+        return Results.Ok(new
+        {
+            success = true,
+            data = new
+            {
+                groupId = report.GroupId,
+                studentId = report.StudentId,
+                studentName = report.StudentName,
+                evaluatorName = report.EvaluatorName,
+                groupType = report.GroupType,
+                relation = report.Relation,
+                isCompleted = report.IsCompleted,
+                completedDate = report.CompletedDate,
+                // averageRating is a JSON string (Prisma Decimal? -> decimal.js toString) or null;
+                // feedbackItems is raw jsonb passed through verbatim; evaluatorEmail is never selected.
+                feedback = report.Feedback.Select(entry => new
+                {
+                    id = entry.Id,
+                    averageRating = entry.AverageRating,
+                    totalQuestions = entry.TotalQuestions,
+                    answeredQuestions = entry.AnsweredQuestions,
+                    feedbackItems = entry.FeedbackItems,
+                    completedAt = entry.CompletedAt
+                }),
                 generatedAt = report.GeneratedAt
             }
         });

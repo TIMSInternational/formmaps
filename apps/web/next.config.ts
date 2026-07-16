@@ -49,6 +49,13 @@ function shouldRouteCoachingReportToDotnet() {
   );
 }
 
+function shouldRouteEvaluationReportToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_EVALUATION_REPORT_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -171,6 +178,14 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/reports/coaching/:userId",
               destination: `${dotnetApiBaseUrl}/api/v1/reports/coaching/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteEvaluationReportToDotnet()
+        ? [
+            {
+              source: "/api/v1/reports/evaluation/:sessionId",
+              destination: `${dotnetApiBaseUrl}/api/v1/reports/evaluation/:sessionId`,
             },
           ]
         : []),
