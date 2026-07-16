@@ -89,6 +89,18 @@ public class AssessmentTimelineTests
     }
 
     [Fact]
+    public void Large_page_returns_empty_not_first_page()
+    {
+        // Legacy slice((page-1)*limit, page*limit) returns [] past the end; a naive int32
+        // (page-1)*limit would overflow negative and wrongly return the first page.
+        var pca = new[] { new PcaTimelineRow("p", "P", "PatternRecognition", false, 10, D(5)) };
+        // (30000000-1)*100 ≈ 3e9 overflows int32; BuildTimeline must compute the offset in long.
+        var result = AssessmentTimeline.BuildTimeline(pca, [], [], page: 30000000, limit: 100);
+        Assert.Empty(result.Events);
+        Assert.Equal(1, result.Total);
+    }
+
+    [Fact]
     public void Stats_uses_hardcoded_pca_total_of_5()
     {
         var pca = new[]

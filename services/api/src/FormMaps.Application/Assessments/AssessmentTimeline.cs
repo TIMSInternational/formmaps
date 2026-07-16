@@ -109,7 +109,12 @@ public static class AssessmentTimeline
 
         // Stable sort by date DESC (OrderByDescending is stable, matching JS Array.sort).
         var sorted = items.OrderByDescending(i => i.Date).Select(i => i.Event).ToList();
-        var paged = sorted.Skip((page - 1) * limit).Take(limit).ToList();
+        // 64-bit offset: page saturates at int.MaxValue, so an int32 (page-1)*limit could overflow
+        // negative and wrongly return the first page. Past the end -> empty, matching JS slice.
+        var skip = (long)(page - 1) * limit;
+        var paged = skip >= sorted.Count
+            ? new List<TimelineEvent>()
+            : sorted.Skip((int)skip).Take(limit).ToList();
         var totalPages = (int)Math.Ceiling((double)sorted.Count / limit);
 
         return new TimelineResult(
