@@ -1,0 +1,2082 @@
+[
+  {
+    "type": "ISTP",
+    "merged_from": [
+      "El Técnico Resolutivo",
+      "El Solucionador Técnico"
+    ],
+    "alias": "El Técnico Resolutivo",
+    "alias_en": "The Resolute Technician",
+    "tagline": "Práctico, orientado a resultados, autónomo.",
+    "tagline_en": "Practical, results-oriented, autonomous.",
+    "description_es": "“El nombre” es resolutivo, autónomo, observador y lógico. Tiende a enfocarse en los hechos y en lo que puede arreglar o mejorar con sus propias manos. Es analítico, rápido al actuar y se siente más cómodo en entornos donde puede tomar decisiones por sí mismo sin intervenciones externas innecesarias. Experto en resolver problemas con lógica y precisión; se adapta bien a lo inesperado y actúa con eficiencia en entornos concretos y prácticos.",
+    "description_en": "“The name” is resolute, autonomous, observant and logical. He tends to focus on facts and on what he can fix or improve with his own hands. He is analytical, quick to act and most comfortable in environments where he can make decisions on his own without unnecessary external intervention. An expert at solving problems with logic and precision; he adapts well to the unexpected and acts efficiently in concrete, practical settings.",
+    "strengths_es": [
+      "Gran capacidad para resolver problemas prácticos.",
+      "Pensamiento analítico, lógico y objetivo.",
+      "Adaptabilidad a situaciones nuevas y cambio.",
+      "Serenidad bajo presión.",
+      "Fuerte independencia y autosuficiencia."
+    ],
+    "strengths_en": [
+      "Great ability to solve practical problems.",
+      "Analytical, logical and objective thinking.",
+      "Adaptability to new situations and change.",
+      "Calm under pressure.",
+      "Strong independence and self-sufficiency."
+    ],
+    "weaknesses_es": [
+      "Puede ser emocionalmente distante.",
+      "Su estilo directo puede parecer frío o desinteresado.",
+      "Desafía normas si las considera innecesarias.",
+      "Actitudes impulsivas o poco estructuradas."
+    ],
+    "weaknesses_en": [
+      "He can be emotionally distant.",
+      "His direct style may come across as cold or uninterested.",
+      "He challenges rules if he considers them unnecessary.",
+      "Impulsive or unstructured attitudes."
+    ],
+    "improvementAreas_es": [
+      "Desarrollar habilidades sociales y expresivas.",
+      "Fomentar la planificación a largo plazo.",
+      "Mantener conexión emocional con colegas.",
+      "Aceptar apoyo sin sentirse vulnerable."
+    ],
+    "improvementAreas_en": [
+      "Develop social and expressive skills.",
+      "Foster long-term planning.",
+      "Maintain emotional connection with colleagues.",
+      "Accept support without feeling vulnerable."
+    ],
+    "howToDevelop_es": [
+      "Participación en dinámicas grupales de comunicación.",
+      "Coaching individual para expresar emociones.",
+      "Mentoría en planificación estratégica y organización.",
+      "Asignación de espacios donde conserve su autonomía sin aislarse del equipo.",
+      "Actividades grupales con enfoque en comunicación.",
+      "Entrenamiento en planificación estratégica y seguimiento."
+    ],
+    "howToDevelop_en": [
+      "Participation in group communication dynamics.",
+      "Individual coaching to express emotions.",
+      "Mentoring in strategic planning and organization.",
+      "Assignment of spaces where he keeps his autonomy without isolating himself from the team.",
+      "Group activities focused on communication.",
+      "Training in strategic planning and follow-up."
+    ],
+    "motivation_es": [
+      "Libertad para tomar decisiones a su modo.",
+      "Tareas prácticas con resultados tangibles.",
+      "Reconocimiento por solucionar problemas técnicos.",
+      "Entornos laborales flexibles y sin burocracia.",
+      "Proyectos prácticos con impacto inmediato.",
+      "Reconocimiento por su capacidad de “arreglar” problemas."
+    ],
+    "motivation_en": [
+      "Freedom to make decisions his own way.",
+      "Practical tasks with tangible results.",
+      "Recognition for solving technical problems.",
+      "Flexible work environments without bureaucracy.",
+      "Practical projects with immediate impact.",
+      "Recognition for his ability to “fix” problems."
+    ],
+    "howToWorkWith_es": [
+      "Sé claro, práctico y directo.",
+      "No lo obligues a socializar si no es necesario.",
+      "Asigna tareas que impliquen lógica, reparación o diseño técnico.",
+      "Evita excesiva supervisión: valora su pensamiento independiente.",
+      "Valora su lógica, aunque sea poco expresiva."
+    ],
+    "howToWorkWith_en": [
+      "Be clear, practical and direct.",
+      "Don't force him to socialize if it isn't necessary.",
+      "Assign tasks that involve logic, repair or technical design.",
+      "Avoid excessive supervision: value his independent thinking.",
+      "Value his logic, even if it is not very expressive."
+    ],
+    "communication_es": [
+      "Usa datos, hechos y lenguaje concreto.",
+      "Permite pausas o silencios en las conversaciones.",
+      "Evita el lenguaje emocional exagerado.",
+      "Dale autonomía para actuar a su manera.",
+      "Respeta sus silencios; habla cuando tiene algo importante que decir."
+    ],
+    "communication_en": [
+      "Use data, facts and concrete language.",
+      "Allow pauses or silences in conversations.",
+      "Avoid exaggerated emotional language.",
+      "Give him autonomy to act his own way.",
+      "Respect his silences; speak when there is something important to say."
+    ],
+    "potential_es": {
+      "social": "Buen observador, útil en momentos de crisis o emergencias.",
+      "laboral": "Excelente en roles como ingeniería, mecánica, TI, mantenimiento, logística, investigación aplicada, seguridad o producción técnica."
+    },
+    "potential_en": {
+      "social": "A good observer, useful in moments of crisis or emergency.",
+      "laboral": "Excellent in roles such as engineering, mechanics, IT, maintenance, logistics, applied research, security or technical production."
+    },
+    "coachingStrategy_es": {
+      "objective": "Integrar sus fortalezas técnicas con una mayor sensibilidad emocional y efectividad interpersonal.",
+      "practices": [
+        "Ejercicios moderados de comunicación emocional.",
+        "Espacios de participación en equipo sin presión social.",
+        "Coaching para liderar proyectos multidisciplinarios.",
+        "Retroalimentación enfocada en cómo colaborar sin perder autonomía."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Integrate his technical strengths with greater emotional sensitivity and interpersonal effectiveness.",
+      "practices": [
+        "Moderate emotional communication exercises.",
+        "Team participation spaces without social pressure.",
+        "Coaching to lead multidisciplinary projects.",
+        "Feedback focused on how to collaborate without losing autonomy."
+      ]
+    }
+  },
+  {
+    "type": "INTJ",
+    "alias": "El Visionario Estratégico",
+    "alias_en": "The Strategic Visionary",
+    "tagline": "El Arquitecto del Futuro",
+    "tagline_en": "The Architect of the Future",
+    "description_es": "Dotado de una mente lógica, analítica y orientada al largo plazo, el INTJ destaca por su capacidad de diseñar estrategias sólidas y anticipar escenarios futuros. Su enfoque se basa en la planificación rigurosa, la innovación estructurada y la búsqueda constante de eficiencia.",
+    "description_en": "Endowed with a logical, analytical and long-term-oriented mind, the INTJ stands out for his ability to design solid strategies and anticipate future scenarios. His approach is based on rigorous planning, structured innovation and the constant pursuit of efficiency.",
+    "strengths_es": [
+      "Visión clara a largo plazo.",
+      "Pensamiento lógico y estratégico altamente desarrollado.",
+      "Alto nivel de autoexigencia y aprendizaje autodirigido.",
+      "Independencia y orientación a la innovación."
+    ],
+    "strengths_en": [
+      "Clear long-term vision.",
+      "Highly developed logical and strategic thinking.",
+      "High level of self-demand and self-directed learning.",
+      "Independence and orientation toward innovation."
+    ],
+    "weaknesses_es": [
+      "Dificultades para conectar emocionalmente con otros.",
+      "Puede proyectar una imagen de frialdad o arrogancia.",
+      "Baja tolerancia a la incompetencia o a la improvisación.",
+      "Prefiere planificar antes que ejecutar de forma inmediata."
+    ],
+    "weaknesses_en": [
+      "Difficulties connecting emotionally with others.",
+      "May project an image of coldness or arrogance.",
+      "Low tolerance for incompetence or improvisation.",
+      "Prefers to plan rather than execute immediately."
+    ],
+    "improvementAreas_es": [
+      "Desarrollar empatía en entornos colaborativos.",
+      "Aceptar el error como parte del proceso de mejora.",
+      "Equilibrar el perfeccionismo con el progreso tangible.",
+      "Abrirse a perspectivas distintas a la racionalidad pura."
+    ],
+    "improvementAreas_en": [
+      "Develop empathy in collaborative environments.",
+      "Accept error as part of the improvement process.",
+      "Balance perfectionism with tangible progress.",
+      "Open up to perspectives beyond pure rationality."
+    ],
+    "howToDevelop_es": [
+      "Participar en dinámicas de empatía y cambio de perspectiva.",
+      "Practicar el reconocimiento emocional y la expresión interpersonal.",
+      "Coaching orientado a liderazgo con enfoque humano.",
+      "Entrenamiento en trabajo colaborativo con equipos diversos."
+    ],
+    "howToDevelop_en": [
+      "Participate in empathy and perspective-shift dynamics.",
+      "Practice emotional recognition and interpersonal expression.",
+      "Coaching oriented toward leadership with a human focus.",
+      "Training in collaborative work with diverse teams."
+    ],
+    "motivation_es": [
+      "Brindarle autonomía para diseñar y mejorar sistemas.",
+      "Proponer desafíos intelectuales de alta complejidad.",
+      "Asegurar que su trabajo tenga impacto real y medible.",
+      "Evitar entornos con política interna o emocionalidad excesiva."
+    ],
+    "motivation_en": [
+      "Give him autonomy to design and improve systems.",
+      "Propose intellectual challenges of high complexity.",
+      "Ensure that his work has real, measurable impact.",
+      "Avoid environments with internal politics or excessive emotionality."
+    ],
+    "howToWorkWith_es": [
+      "Razona tus propuestas: necesita lógica, no imposición.",
+      "Evita distracciones con asuntos triviales o sin sustento.",
+      "Respeta su visión, aunque inicialmente parezca distante.",
+      "Confía en su proceso: irá del diseño al resultado con precisión."
+    ],
+    "howToWorkWith_en": [
+      "Reason out your proposals: he needs logic, not imposition.",
+      "Avoid distractions with trivial or unfounded matters.",
+      "Respect his vision, even if it seems distant at first.",
+      "Trust his process: he will move from design to result with precision."
+    ],
+    "communication_es": [
+      "Sé claro, directo y estructurado.",
+      "Apóyate en datos, hechos y análisis lógico.",
+      "Comprende que su estilo es más analítico que emocional.",
+      "Evita la superficialidad o la repetición innecesaria."
+    ],
+    "communication_en": [
+      "Be clear, direct and structured.",
+      "Rely on data, facts and logical analysis.",
+      "Understand that his style is more analytical than emotional.",
+      "Avoid superficiality or unnecessary repetition."
+    ],
+    "potential_es": {
+      "social": "Inspira con ideas sólidas y claridad de visión.",
+      "laboral": "Destacado en estrategia, consultoría, innovación tecnológica, investigación, arquitectura, gestión de proyectos complejos."
+    },
+    "potential_en": {
+      "social": "Inspires with solid ideas and clarity of vision.",
+      "laboral": "Outstanding in strategy, consulting, technological innovation, research, architecture, management of complex projects."
+    },
+    "coachingStrategy_es": {
+      "objective": "Integrar su pensamiento estratégico con habilidades de liderazgo empático y ejecución efectiva.",
+      "practices": [
+        "Prácticas de escucha activa y validación emocional.",
+        "Participación en equipos multidisciplinarios con retroalimentación constante.",
+        "Desarrollo de habilidades blandas sin sacrificar su rigor lógico.",
+        "Actividades que lo vinculen directamente con la acción y el impacto humano."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Integrate his strategic thinking with empathetic leadership skills and effective execution.",
+      "practices": [
+        "Active listening and emotional validation practices.",
+        "Participation in multidisciplinary teams with constant feedback.",
+        "Development of soft skills without sacrificing his logical rigor.",
+        "Activities that link him directly to action and human impact."
+      ]
+    }
+  },
+  {
+    "type": "INFP",
+    "alias": "El Idealista Auténtico",
+    "alias_en": "The Authentic Idealist",
+    "tagline": "El Soñador con Propósito",
+    "tagline_en": "The Dreamer with Purpose",
+    "description_es": "Motivado por valores profundos y una necesidad de autenticidad, el INFP busca darle sentido a todo lo que hace. Empático, reflexivo y creativo, conecta desde lo emocional y aspira a vivir en coherencia con sus ideales personales. Tiene una rica vida interior y una poderosa brújula moral.",
+    "description_en": "Driven by deep values and a need for authenticity, the INFP seeks to give meaning to everything he does. Empathetic, reflective and creative, he connects emotionally and aspires to live in coherence with his personal ideals. He has a rich inner life and a powerful moral compass.",
+    "strengths_es": [
+      "Alta empatía y sensibilidad emocional.",
+      "Fuerte sentido del propósito y la integridad.",
+      "Creatividad profunda e imaginación fértil.",
+      "Lealtad firme, aunque muchas veces silenciosa."
+    ],
+    "strengths_en": [
+      "High empathy and emotional sensitivity.",
+      "Strong sense of purpose and integrity.",
+      "Deep creativity and fertile imagination.",
+      "Firm loyalty, though often silent."
+    ],
+    "weaknesses_es": [
+      "Tiende a postergar sus propias necesidades por los demás.",
+      "Evita el conflicto, incluso cuando es necesario afrontarlo.",
+      "Puede desconectarse de la realidad al refugiarse en su mundo ideal.",
+      "Dificultades para concretar sus ideas y llevarlas a la acción."
+    ],
+    "weaknesses_en": [
+      "Tends to postpone his own needs for others.",
+      "Avoids conflict, even when it needs to be faced.",
+      "May disconnect from reality by taking refuge in his ideal world.",
+      "Difficulties in materializing his ideas and putting them into action."
+    ],
+    "improvementAreas_es": [
+      "Traducir sus ideas en planes y acciones tangibles.",
+      "Establecer límites personales con claridad y seguridad.",
+      "Reconocer que puede generar impacto sin renunciar a su esencia.",
+      "Fortalecer su seguridad emocional frente al juicio externo."
+    ],
+    "improvementAreas_en": [
+      "Translate his ideas into tangible plans and actions.",
+      "Set personal boundaries with clarity and confidence.",
+      "Recognize that he can make an impact without giving up his essence.",
+      "Strengthen his emotional security in the face of external judgment."
+    ],
+    "howToDevelop_es": [
+      "Técnicas de planificación y concreción de objetivos.",
+      "Procesos de autoestima desvinculada del reconocimiento ajeno.",
+      "Coaching con foco en toma de decisiones alineadas con su propósito.",
+      "Entrenamiento en influencia asertiva desde la empatía, no la imposición."
+    ],
+    "howToDevelop_en": [
+      "Techniques for planning and materializing objectives.",
+      "Self-esteem processes decoupled from others' recognition.",
+      "Coaching focused on decision-making aligned with his purpose.",
+      "Training in assertive influence from empathy, not imposition."
+    ],
+    "motivation_es": [
+      "Proyectos con impacto social y ético real.",
+      "Espacios libres para crear con flexibilidad y autenticidad.",
+      "Libertad para explorar ideas a su propio ritmo.",
+      "Validación emocional desde la horizontalidad, no desde la autoridad."
+    ],
+    "motivation_en": [
+      "Projects with real social and ethical impact.",
+      "Free spaces to create with flexibility and authenticity.",
+      "Freedom to explore ideas at his own pace.",
+      "Emotional validation from equality, not from authority."
+    ],
+    "howToWorkWith_es": [
+      "Sé respetuoso y sensible; evita imponerle presión directa.",
+      "Crea estructuras que permitan su expresión personal.",
+      "Si necesitas corregir, hazlo desde la comprensión y la empatía.",
+      "Involúcralo en tareas que tengan un significado profundo."
+    ],
+    "howToWorkWith_en": [
+      "Be respectful and sensitive; avoid putting direct pressure on him.",
+      "Create structures that allow his personal expression.",
+      "If you need to correct him, do so from understanding and empathy.",
+      "Involve him in tasks that have deep meaning."
+    ],
+    "communication_es": [
+      "Escucha con atención, incluso lo que no se dice explícitamente.",
+      "Conecta desde lo humano, no solo desde lo racional o lógico.",
+      "Comunica con delicadeza cuando se requiera orientación o corrección.",
+      "Motívalo vinculando tu mensaje con sus valores e ideales."
+    ],
+    "communication_en": [
+      "Listen carefully, even to what is not explicitly said.",
+      "Connect on a human level, not just a rational or logical one.",
+      "Communicate delicately when guidance or correction is required.",
+      "Motivate him by linking your message to his values and ideals."
+    ],
+    "potential_es": {
+      "social": "Actúa como un puente emocional entre personas y equipos; ideal para mediar y sanar.",
+      "laboral": "Destacado en psicología, literatura, trabajo social, diseño, educación, ONGs y cualquier entorno que promueva la empatía y el sentido humano."
+    },
+    "potential_en": {
+      "social": "Acts as an emotional bridge between people and teams; ideal for mediating and healing.",
+      "laboral": "Outstanding in psychology, literature, social work, design, education, NGOs and any setting that promotes empathy and human meaning."
+    },
+    "coachingStrategy_es": {
+      "objective": "Llevar sus valores al plano concreto, convirtiendo su idealismo en acción transformadora.",
+      "practices": [
+        "Coaching para convertir visión en acción realista.",
+        "Acompañamiento estructurado para la concreción de ideas.",
+        "Espacios seguros donde expresar su autenticidad sin temor.",
+        "Validación como líder empático y coherente, no tradicional."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Bring his values to the concrete level, turning his idealism into transformative action.",
+      "practices": [
+        "Coaching to turn vision into realistic action.",
+        "Structured support for materializing ideas.",
+        "Safe spaces to express his authenticity without fear.",
+        "Validation as an empathetic and coherent leader, not a traditional one."
+      ]
+    }
+  },
+  {
+    "type": "ISFJ",
+    "alias": "El Protector Responsable",
+    "alias_en": "The Responsible Protector",
+    "tagline": "El Cuidador Confiable",
+    "tagline_en": "The Reliable Caregiver",
+    "description_es": "Con una mezcla de sensibilidad y compromiso, el ISFJ es el guardián silencioso del bienestar ajeno. Leal, detallista y atento, protege a su entorno desde la acción concreta y la discreción. Sabe leer las necesidades de los demás y actúa sin esperar reconocimiento, guiado por un profundo sentido del deber.",
+    "description_en": "With a blend of sensitivity and commitment, the ISFJ is the silent guardian of others' well-being. Loyal, detail-oriented and attentive, he protects his environment through concrete action and discretion. He knows how to read others' needs and acts without expecting recognition, guided by a deep sense of duty.",
+    "strengths_es": [
+      "Fuerte sentido de responsabilidad y compromiso.",
+      "Capacidad excepcional para recordar detalles significativos.",
+      "Gran empatía y cuidado por los demás.",
+      "Lealtad genuina hacia personas y valores.",
+      "Constancia, discreción y fiabilidad en sus acciones."
+    ],
+    "strengths_en": [
+      "Strong sense of responsibility and commitment.",
+      "Exceptional ability to remember significant details.",
+      "Great empathy and care for others.",
+      "Genuine loyalty toward people and values.",
+      "Consistency, discretion and reliability in his actions."
+    ],
+    "weaknesses_es": [
+      "Dificultad para confrontar o establecer límites.",
+      "Tendencia a sobrecargarse al priorizar a otros.",
+      "Evita el conflicto aun cuando es necesario.",
+      "Resistencia a cambios inesperados o improvisaciones."
+    ],
+    "weaknesses_en": [
+      "Difficulty confronting or setting boundaries.",
+      "Tendency to overload himself by prioritizing others.",
+      "Avoids conflict even when it is necessary.",
+      "Resistance to unexpected changes or improvisation."
+    ],
+    "improvementAreas_es": [
+      "Aprender a decir “no” sin culpa.",
+      "Desarrollar habilidades de comunicación asertiva.",
+      "Adoptar mayor flexibilidad frente a la incertidumbre.",
+      "Practicar el autocuidado con la misma devoción con que cuida a otros."
+    ],
+    "improvementAreas_en": [
+      "Learn to say “no” without guilt.",
+      "Develop assertive communication skills.",
+      "Adopt greater flexibility in the face of uncertainty.",
+      "Practice self-care with the same devotion with which he cares for others."
+    ],
+    "howToDevelop_es": [
+      "Talleres de comunicación asertiva y gestión emocional.",
+      "Programas de balance vida-trabajo enfocados en su bienestar.",
+      "Asignación de responsabilidades compartidas para evitar sobrecarga.",
+      "Espacios seguros para expresar sus propias necesidades y emociones."
+    ],
+    "howToDevelop_en": [
+      "Workshops on assertive communication and emotional management.",
+      "Work-life balance programs focused on his well-being.",
+      "Assignment of shared responsibilities to avoid overload.",
+      "Safe spaces to express his own needs and emotions."
+    ],
+    "motivation_es": [
+      "Reconocimiento auténtico y personalizado por su ayuda.",
+      "Ambientes de trabajo estables, armónicos y estructurados.",
+      "Tareas con impacto directo en el bienestar de otros.",
+      "Relaciones laborales basadas en respeto y cercanía."
+    ],
+    "motivation_en": [
+      "Authentic and personalized recognition for his help.",
+      "Stable, harmonious and structured work environments.",
+      "Tasks with a direct impact on the well-being of others.",
+      "Work relationships based on respect and closeness."
+    ],
+    "howToWorkWith_es": [
+      "Sé respetuoso y considerado con su sensibilidad.",
+      "Clarifica expectativas de forma anticipada y realista.",
+      "No lo expongas públicamente a críticas o presión innecesaria.",
+      "Ofrece retroalimentación amable y constructiva en privado."
+    ],
+    "howToWorkWith_en": [
+      "Be respectful and considerate of his sensitivity.",
+      "Clarify expectations in advance and realistically.",
+      "Don't expose him publicly to criticism or unnecessary pressure.",
+      "Offer kind, constructive feedback in private."
+    ],
+    "communication_es": [
+      "Usa un tono empático, claro y paciente.",
+      "Sé concreto, pero con cuidado emocional.",
+      "Reconoce sus logros, aunque él no los destaque.",
+      "Crea un ambiente donde se sienta escuchado y valorado."
+    ],
+    "communication_en": [
+      "Use an empathetic, clear and patient tone.",
+      "Be concrete, but with emotional care.",
+      "Acknowledge his achievements, even if he doesn't highlight them.",
+      "Create an environment where he feels heard and valued."
+    ],
+    "potential_es": {
+      "social": "Pilar emocional en grupos; su presencia brinda seguridad y contención.",
+      "laboral": "Excelente en salud, educación, servicio al cliente, administración y funciones sociales."
+    },
+    "potential_en": {
+      "social": "An emotional pillar in groups; his presence provides security and support.",
+      "laboral": "Excellent in healthcare, education, customer service, administration and social roles."
+    },
+    "coachingStrategy_es": {
+      "objective": "Reforzar su equilibrio personal desarrollando límites sanos y empoderando su voz sin perder su esencia servicial.",
+      "practices": [
+        "Coaching centrado en el autocuidado y autoestima.",
+        "Role playing para situaciones de confrontación positiva.",
+        "Definición conjunta de límites y prioridades personales.",
+        "Entrenamiento en negociación y expresión directa de necesidades."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Reinforce his personal balance by developing healthy boundaries and empowering his voice without losing his service-oriented essence.",
+      "practices": [
+        "Coaching centered on self-care and self-esteem.",
+        "Role playing for positive confrontation situations.",
+        "Joint definition of personal boundaries and priorities.",
+        "Training in negotiation and direct expression of needs."
+      ]
+    }
+  },
+  {
+    "type": "ISFP",
+    "alias": "El Artista Discreto",
+    "alias_en": "The Discreet Artist",
+    "tagline": "El Creativo Reservado",
+    "tagline_en": "The Reserved Creative",
+    "description_es": "Sensible, intuitivo y de expresión sutil, el ISFP vive el presente con una conexión estética y emocional única. Auténtico sin necesidad de palabras, prefiere actuar que hablar, y suele impactar con gestos silenciosos, pero profundamente significativos. Valora la armonía, la libertad creativa y el respeto mutuo.",
+    "description_en": "Sensitive, intuitive and subtle in expression, the ISFP lives in the present with a unique aesthetic and emotional connection. Authentic without needing words, he prefers to act rather than speak, and often makes an impact with silent yet deeply meaningful gestures. He values harmony, creative freedom and mutual respect.",
+    "strengths_es": [
+      "Gran creatividad con una mirada estética única.",
+      "Sensibilidad emocional profunda y compasiva.",
+      "Flexibilidad y adaptabilidad práctica ante lo inesperado.",
+      "Actitud tolerante, respetuosa y sin juicios hacia los demás.",
+      "Compromiso genuino y discreto con su entorno."
+    ],
+    "strengths_en": [
+      "Great creativity with a unique aesthetic eye.",
+      "Deep and compassionate emotional sensitivity.",
+      "Practical flexibility and adaptability in the face of the unexpected.",
+      "Tolerant, respectful and non-judgmental attitude toward others.",
+      "Genuine and discreet commitment to his environment."
+    ],
+    "weaknesses_es": [
+      "Le cuesta verbalizar sus emociones y necesidades.",
+      "Tiende a evitar conflictos incluso si son necesarios.",
+      "Puede evadir compromisos formales o prolongados.",
+      "Dificultad para sostener estructuras a largo plazo."
+    ],
+    "weaknesses_en": [
+      "He struggles to verbalize his emotions and needs.",
+      "Tends to avoid conflicts even if they are necessary.",
+      "May avoid formal or prolonged commitments.",
+      "Difficulty sustaining long-term structures."
+    ],
+    "improvementAreas_es": [
+      "Fortalecer su organización y seguimiento de procesos.",
+      "Mejorar su expresión verbal en contextos importantes.",
+      "Definir metas claras con tiempos realistas.",
+      "Comprometerse de manera más constante en proyectos clave."
+    ],
+    "improvementAreas_en": [
+      "Strengthen his organization and process follow-up.",
+      "Improve his verbal expression in important contexts.",
+      "Define clear goals with realistic timelines.",
+      "Commit more consistently to key projects."
+    ],
+    "howToDevelop_es": [
+      "Coaching en habilidades comunicativas sin presión.",
+      "Apoyo en la planificación y seguimiento de tareas.",
+      "Acompañamiento en la concreción de ideas creativas.",
+      "Espacios libres de juicio para facilitar su participación."
+    ],
+    "howToDevelop_en": [
+      "Coaching in communication skills without pressure.",
+      "Support in planning and following up on tasks.",
+      "Support in materializing creative ideas.",
+      "Judgment-free spaces to facilitate his participation."
+    ],
+    "motivation_es": [
+      "Libertad para crear, explorar y trabajar a su ritmo.",
+      "Ambientes cálidos, estéticos y emocionalmente seguros.",
+      "Reconocimiento sutil, basado en lo auténtico.",
+      "Contacto con lo natural, artístico o profundamente humano."
+    ],
+    "motivation_en": [
+      "Freedom to create, explore and work at his own pace.",
+      "Warm, aesthetic and emotionally safe environments.",
+      "Subtle recognition, based on authenticity.",
+      "Contact with the natural, artistic or deeply human."
+    ],
+    "howToWorkWith_es": [
+      "Respeta su necesidad de espacio y autonomía.",
+      "Evita imponerle estructuras rígidas o presión excesiva.",
+      "Proporciónale acompañamiento amable y guía flexible.",
+      "Reconoce sus logros aunque no busque protagonismo."
+    ],
+    "howToWorkWith_en": [
+      "Respect his need for space and autonomy.",
+      "Avoid imposing rigid structures or excessive pressure on him.",
+      "Provide him with kind support and flexible guidance.",
+      "Acknowledge his achievements even if he doesn't seek the spotlight."
+    ],
+    "communication_es": [
+      "Usa un tono suave, empático y no invasivo.",
+      "Escucha activamente sin interrumpir o juzgar.",
+      "Da espacio para que se exprese con sus tiempos.",
+      "Sé auténtico: los ISFP valoran la coherencia emocional."
+    ],
+    "communication_en": [
+      "Use a soft, empathetic and non-invasive tone.",
+      "Listen actively without interrupting or judging.",
+      "Give him space to express himself in his own time.",
+      "Be authentic: ISFPs value emotional coherence."
+    ],
+    "potential_es": {
+      "social": "Aporta paz, belleza y conexión emocional a los equipos.",
+      "laboral": "Destacado en arte, diseño, fotografía, trabajo social, bienestar y asistencia directa."
+    },
+    "potential_en": {
+      "social": "Brings peace, beauty and emotional connection to teams.",
+      "laboral": "Outstanding in art, design, photography, social work, wellness and direct assistance."
+    },
+    "coachingStrategy_es": {
+      "objective": "Impulsar su expresividad, organización y compromiso desde un enfoque que respete su autenticidad y sensibilidad.",
+      "practices": [
+        "Coaching creativo que combine planificación con libertad.",
+        "Prácticas de comunicación emocional y autoafirmación.",
+        "Rutinas adaptables que fortalezcan su estructura sin asfixiar.",
+        "Feedback respetuoso que estimule sin forzar."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Boost his expressiveness, organization and commitment through an approach that respects his authenticity and sensitivity.",
+      "practices": [
+        "Creative coaching that combines planning with freedom.",
+        "Emotional communication and self-affirmation practices.",
+        "Adaptable routines that strengthen his structure without suffocating him.",
+        "Respectful feedback that stimulates without forcing."
+      ]
+    }
+  },
+  {
+    "type": "INFJ",
+    "alias": "El Consejero Visionario",
+    "alias_en": "The Visionary Counselor",
+    "tagline": "El Inspirador Profundo",
+    "tagline_en": "The Profound Inspirer",
+    "description_es": "Reflexivo, empático y enfocado en el propósito. Busca comprender lo invisible y aportar al crecimiento de los demás. Suele ser reservado, pero con una visión transformadora y profunda de las personas y del mundo.",
+    "description_en": "Reflective, empathetic and purpose-focused. He seeks to understand the invisible and contribute to the growth of others. He tends to be reserved, but with a transformative and profound vision of people and the world.",
+    "strengths_es": [
+      "Gran intuición para entender personas y procesos.",
+      "Idealismo comprometido con la mejora social.",
+      "Profundidad emocional y capacidad de guía.",
+      "Alta empatía con análisis complejo.",
+      "Persistente en metas significativas."
+    ],
+    "strengths_en": [
+      "Great intuition for understanding people and processes.",
+      "Idealism committed to social improvement.",
+      "Emotional depth and capacity for guidance.",
+      "High empathy combined with complex analysis.",
+      "Persistent in meaningful goals."
+    ],
+    "weaknesses_es": [
+      "Tiende a sobrecargarse emocionalmente.",
+      "Perfeccionismo silencioso que agota.",
+      "Dificultad para delegar.",
+      "A veces se desconecta del presente por enfocarse en el futuro."
+    ],
+    "weaknesses_en": [
+      "Tends to become emotionally overloaded.",
+      "Silent perfectionism that exhausts him.",
+      "Difficulty delegating.",
+      "Sometimes disconnects from the present by focusing on the future."
+    ],
+    "improvementAreas_es": [
+      "Establecer límites emocionales claros.",
+      "Equilibrar el perfeccionismo con realismo.",
+      "Confiar más en otros y delegar.",
+      "Centrarse en acciones concretas en el presente."
+    ],
+    "improvementAreas_en": [
+      "Set clear emotional boundaries.",
+      "Balance perfectionism with realism.",
+      "Trust others more and delegate.",
+      "Focus on concrete actions in the present."
+    ],
+    "howToDevelop_es": [
+      "Coaching en equilibrio entre visión y acción.",
+      "Acompañamiento en establecimiento de límites.",
+      "Espacios de autoconocimiento con práctica concreta.",
+      "Planificación de pequeños logros visibles."
+    ],
+    "howToDevelop_en": [
+      "Coaching on balance between vision and action.",
+      "Support in setting boundaries.",
+      "Self-knowledge spaces with concrete practice.",
+      "Planning of small, visible achievements."
+    ],
+    "motivation_es": [
+      "Proyectos con impacto social o espiritual.",
+      "Ambientes armónicos y de propósito.",
+      "Libertad para pensar y crear en profundidad.",
+      "Reconocimiento auténtico y no superficial."
+    ],
+    "motivation_en": [
+      "Projects with social or spiritual impact.",
+      "Harmonious and purpose-driven environments.",
+      "Freedom to think and create in depth.",
+      "Authentic, non-superficial recognition."
+    ],
+    "howToWorkWith_es": [
+      "Sé transparente, profundo y coherente.",
+      "Escucha sus ideas aunque parezcan abstractas.",
+      "No lo apures a decidir sin meditar.",
+      "Crea un entorno donde se respeten sus valores."
+    ],
+    "howToWorkWith_en": [
+      "Be transparent, profound and coherent.",
+      "Listen to his ideas even if they seem abstract.",
+      "Don't rush him to decide without reflection.",
+      "Create an environment where his values are respected."
+    ],
+    "communication_es": [
+      "Usa lenguaje simbólico y reflexivo.",
+      "Sé honesto emocionalmente.",
+      "Valida su visión y sensibilidad.",
+      "Evita el tono superficial o excesivamente racional."
+    ],
+    "communication_en": [
+      "Use symbolic and reflective language.",
+      "Be emotionally honest.",
+      "Validate his vision and sensitivity.",
+      "Avoid a superficial or excessively rational tone."
+    ],
+    "potential_es": {
+      "social": "Mentor, guía emocional, líder silencioso del cambio.",
+      "laboral": "Psicología, desarrollo humano, escritura, educación, arte, trabajo comunitario."
+    },
+    "potential_en": {
+      "social": "Mentor, emotional guide, silent leader of change.",
+      "laboral": "Psychology, human development, writing, education, art, community work."
+    },
+    "coachingStrategy_es": {
+      "objective": "Integrar su propósito con hábitos concretos que le den forma en la realidad.",
+      "practices": [
+        "Coaching basado en visión aplicada.",
+        "Prácticas de mindfulness y autocuidado.",
+        "Planes de acción enfocados en impacto social visible.",
+        "Fortalecer redes de apoyo confiables."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Integrate his purpose with concrete habits that give it form in reality.",
+      "practices": [
+        "Coaching based on applied vision.",
+        "Mindfulness and self-care practices.",
+        "Action plans focused on visible social impact.",
+        "Strengthening reliable support networks."
+      ]
+    }
+  },
+  {
+    "type": "INTP",
+    "alias": "El Analista Independiente",
+    "alias_en": "The Independent Analyst",
+    "tagline": "El Pensador Estratégico",
+    "tagline_en": "The Strategic Thinker",
+    "description_es": "Intelectual, lógico y autónomo. Ama explorar ideas complejas, teorías y sistemas. Curioso por naturaleza, valora la libertad para analizar y crear sin interrupciones o estructuras rígidas.",
+    "description_en": "Intellectual, logical and autonomous. He loves to explore complex ideas, theories and systems. Curious by nature, he values the freedom to analyze and create without interruptions or rigid structures.",
+    "strengths_es": [
+      "Capacidad analítica superior.",
+      "Pensamiento abstracto y estratégico.",
+      "Curiosidad intelectual constante.",
+      "Independencia de criterio.",
+      "Capacidad para resolver problemas complejos."
+    ],
+    "strengths_en": [
+      "Superior analytical ability.",
+      "Abstract and strategic thinking.",
+      "Constant intellectual curiosity.",
+      "Independence of judgment.",
+      "Ability to solve complex problems."
+    ],
+    "weaknesses_es": [
+      "Dificultad para ejecutar ideas a largo plazo.",
+      "Desconexión emocional en relaciones laborales.",
+      "Poca tolerancia a reglas externas.",
+      "Procrastinación o perfeccionismo paralizante."
+    ],
+    "weaknesses_en": [
+      "Difficulty executing ideas over the long term.",
+      "Emotional disconnection in work relationships.",
+      "Low tolerance for external rules.",
+      "Procrastination or paralyzing perfectionism."
+    ],
+    "improvementAreas_es": [
+      "Aprender a traducir ideas en acciones.",
+      "Desarrollo de habilidades de comunicación interpersonal.",
+      "Compromiso con procesos y entregables.",
+      "Manejo del tiempo y priorización."
+    ],
+    "improvementAreas_en": [
+      "Learn to translate ideas into actions.",
+      "Development of interpersonal communication skills.",
+      "Commitment to processes and deliverables.",
+      "Time management and prioritization."
+    ],
+    "howToDevelop_es": [
+      "Coaching orientado a resultados medibles.",
+      "Dinámicas para socializar ideas de forma clara.",
+      "Herramientas de gestión del tiempo y seguimiento.",
+      "Apoyo para evaluar cuándo “lo suficientemente bueno” es suficiente."
+    ],
+    "howToDevelop_en": [
+      "Coaching oriented toward measurable results.",
+      "Dynamics to socialize ideas clearly.",
+      "Time management and follow-up tools.",
+      "Support in evaluating when “good enough” is enough."
+    ],
+    "motivation_es": [
+      "Retos mentales complejos.",
+      "Libertad de análisis y método.",
+      "Reconocimiento por ideas originales.",
+      "Ambientes de mínima supervisión y máxima lógica."
+    ],
+    "motivation_en": [
+      "Complex mental challenges.",
+      "Freedom of analysis and method.",
+      "Recognition for original ideas.",
+      "Environments of minimal supervision and maximum logic."
+    ],
+    "howToWorkWith_es": [
+      "Sé estructurado y lógico.",
+      "No lo obligues a interactuar más de lo necesario.",
+      "Ofrécele problemas interesantes para resolver.",
+      "Sé paciente con sus tiempos de reflexión."
+    ],
+    "howToWorkWith_en": [
+      "Be structured and logical.",
+      "Don't force him to interact more than necessary.",
+      "Offer him interesting problems to solve.",
+      "Be patient with his reflection time."
+    ],
+    "communication_es": [
+      "Habla con datos, teoría y lógica.",
+      "No apeles a la emoción como argumento.",
+      "Deja espacio para su análisis antes de responder.",
+      "Sé directo sin rodeos innecesarios."
+    ],
+    "communication_en": [
+      "Speak with data, theory and logic.",
+      "Don't appeal to emotion as an argument.",
+      "Leave space for his analysis before responding.",
+      "Be direct without unnecessary detours."
+    ],
+    "potential_es": {
+      "social": "Brinda profundidad y claridad analítica en los equipos.",
+      "laboral": "Ciencia, tecnología, análisis de datos, estrategia, arquitectura de sistemas."
+    },
+    "potential_en": {
+      "social": "Provides depth and analytical clarity in teams.",
+      "laboral": "Science, technology, data analysis, strategy, systems architecture."
+    },
+    "coachingStrategy_es": {
+      "objective": "Transformar su pensamiento en acción con apoyo estructurado.",
+      "practices": [
+        "Coaching en ejecución estratégica.",
+        "Uso de tableros visuales y metodologías ágiles.",
+        "Mentores que desafíen sus ideas sin imponer.",
+        "Entrenamiento en comunicación de impacto."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Transform his thinking into action with structured support.",
+      "practices": [
+        "Coaching in strategic execution.",
+        "Use of visual boards and agile methodologies.",
+        "Mentors who challenge his ideas without imposing.",
+        "Training in high-impact communication."
+      ]
+    }
+  },
+  {
+    "type": "ESTP",
+    "alias": "El Agente Dinámico",
+    "alias_en": "The Dynamic Agent",
+    "tagline": "El Solucionador Audaz",
+    "tagline_en": "The Bold Problem-Solver",
+    "description_es": "Energético, orientado a la acción y amante del riesgo. Se desenvuelve con habilidad en entornos cambiantes, resuelve problemas con rapidez y se siente cómodo tomando decisiones en el momento.",
+    "description_en": "Energetic, action-oriented and a risk-lover. He operates skillfully in changing environments, solves problems quickly and feels comfortable making decisions on the spot.",
+    "strengths_es": [
+      "Resolución rápida de problemas prácticos.",
+      "Gran capacidad para improvisar y adaptarse.",
+      "Seguridad personal y presencia carismática.",
+      "Toma decisiones bajo presión.",
+      "Orientado a resultados inmediatos."
+    ],
+    "strengths_en": [
+      "Quick resolution of practical problems.",
+      "Great ability to improvise and adapt.",
+      "Self-confidence and charismatic presence.",
+      "Makes decisions under pressure.",
+      "Oriented toward immediate results."
+    ],
+    "weaknesses_es": [
+      "Impulsividad excesiva.",
+      "Tiende a evitar la planificación a largo plazo.",
+      "Puede pasar por alto consecuencias futuras.",
+      "Dificultad con estructuras rígidas o jerarquías estrictas."
+    ],
+    "weaknesses_en": [
+      "Excessive impulsiveness.",
+      "Tends to avoid long-term planning.",
+      "May overlook future consequences.",
+      "Difficulty with rigid structures or strict hierarchies."
+    ],
+    "improvementAreas_es": [
+      "Aprender a prever consecuencias.",
+      "Desarrollar disciplina estratégica.",
+      "Practicar la escucha activa.",
+      "Fortalecer el compromiso con tareas de seguimiento."
+    ],
+    "improvementAreas_en": [
+      "Learn to anticipate consequences.",
+      "Develop strategic discipline.",
+      "Practice active listening.",
+      "Strengthen commitment to follow-up tasks."
+    ],
+    "howToDevelop_es": [
+      "Coaching en reflexión previa a la acción.",
+      "Dinámicas de planificación paso a paso.",
+      "Ejercicios de liderazgo compartido.",
+      "Retroalimentación clara con indicadores visibles."
+    ],
+    "howToDevelop_en": [
+      "Coaching in reflection prior to action.",
+      "Step-by-step planning dynamics.",
+      "Shared leadership exercises.",
+      "Clear feedback with visible indicators."
+    ],
+    "motivation_es": [
+      "Retos físicos, competitivos o dinámicos.",
+      "Libertad para actuar sin burocracia.",
+      "Reconocimiento por logros inmediatos.",
+      "Entornos de alta energía y variedad."
+    ],
+    "motivation_en": [
+      "Physical, competitive or dynamic challenges.",
+      "Freedom to act without bureaucracy.",
+      "Recognition for immediate achievements.",
+      "High-energy environments with variety."
+    ],
+    "howToWorkWith_es": [
+      "Sé concreto y breve.",
+      "Brinda oportunidades para mostrar resultados rápidos.",
+      "Usa métricas claras y visibles.",
+      "No lo limites con procesos innecesarios."
+    ],
+    "howToWorkWith_en": [
+      "Be concrete and brief.",
+      "Provide opportunities to show quick results.",
+      "Use clear, visible metrics.",
+      "Don't limit him with unnecessary processes."
+    ],
+    "communication_es": [
+      "Sé directo, claro y orientado a la acción.",
+      "Habla desde la utilidad práctica.",
+      "No te extiendas en teorías o detalles abstractos.",
+      "Muestra entusiasmo por sus logros."
+    ],
+    "communication_en": [
+      "Be direct, clear and action-oriented.",
+      "Speak from practical usefulness.",
+      "Don't dwell on theories or abstract details.",
+      "Show enthusiasm for his achievements."
+    ],
+    "potential_es": {
+      "social": "Motivador, animador de grupos, rompe el hielo.",
+      "laboral": "Ventas, deportes, seguridad, eventos, urgencias, negociación directa."
+    },
+    "potential_en": {
+      "social": "Motivator, group energizer, ice-breaker.",
+      "laboral": "Sales, sports, security, events, emergencies, direct negotiation."
+    },
+    "coachingStrategy_es": {
+      "objective": "Equilibrar su acción rápida con reflexión y continuidad.",
+      "practices": [
+        "Dinámicas que combinen acción con análisis posterior.",
+        "Tableros visuales de progreso.",
+        "Apoyo en definición de metas sostenidas.",
+        "Espacios para aprender del error sin juicio."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Balance his rapid action with reflection and continuity.",
+      "practices": [
+        "Dynamics that combine action with subsequent analysis.",
+        "Visual progress boards.",
+        "Support in defining sustained goals.",
+        "Spaces to learn from mistakes without judgment."
+      ]
+    }
+  },
+  {
+    "type": "ESFP",
+    "alias": "El Animador Entusiasta",
+    "alias_en": "The Enthusiastic Entertainer",
+    "tagline": "El Comunicador Expresivo",
+    "tagline_en": "The Expressive Communicator",
+    "description_es": "Alegre, espontáneo y centrado en el disfrute del presente. Aporta energía positiva al grupo, conecta con otros fácilmente y tiene una fuerte sensibilidad estética y social.",
+    "description_en": "Cheerful, spontaneous and focused on enjoying the present. He brings positive energy to the group, connects with others easily and has a strong aesthetic and social sensitivity.",
+    "strengths_es": [
+      "Alta sociabilidad y carisma.",
+      "Disfruta ayudar y animar a otros.",
+      "Expresividad emocional genuina.",
+      "Flexibilidad y adaptabilidad.",
+      "Capacidad de vivir intensamente el presente."
+    ],
+    "strengths_en": [
+      "High sociability and charisma.",
+      "Enjoys helping and encouraging others.",
+      "Genuine emotional expressiveness.",
+      "Flexibility and adaptability.",
+      "Ability to live the present intensely."
+    ],
+    "weaknesses_es": [
+      "Evita compromisos a largo plazo.",
+      "Dificultad para la estructura y rutina.",
+      "Tiende a procrastinar.",
+      "Sensibilidad excesiva a la crítica."
+    ],
+    "weaknesses_en": [
+      "Avoids long-term commitments.",
+      "Difficulty with structure and routine.",
+      "Tends to procrastinate.",
+      "Excessive sensitivity to criticism."
+    ],
+    "improvementAreas_es": [
+      "Establecer metas claras y sostenidas.",
+      "Aprender a recibir retroalimentación con objetividad.",
+      "Fortalecer la autodisciplina.",
+      "Disminuir la necesidad constante de aprobación."
+    ],
+    "improvementAreas_en": [
+      "Set clear, sustained goals.",
+      "Learn to receive feedback objectively.",
+      "Strengthen self-discipline.",
+      "Reduce the constant need for approval."
+    ],
+    "howToDevelop_es": [
+      "Coaching en planificación y seguimiento.",
+      "Espacios de autorreflexión guiada.",
+      "Feedback positivo con orientación al crecimiento.",
+      "Trabajo con rutinas ligeras pero constantes."
+    ],
+    "howToDevelop_en": [
+      "Coaching in planning and follow-up.",
+      "Guided self-reflection spaces.",
+      "Positive feedback oriented toward growth.",
+      "Work with light but consistent routines."
+    ],
+    "motivation_es": [
+      "Ambientes alegres y humanos.",
+      "Tareas con impacto visual o emocional.",
+      "Participación en grupos activos.",
+      "Reconocimiento visible y afectivo."
+    ],
+    "motivation_en": [
+      "Cheerful, human environments.",
+      "Tasks with visual or emotional impact.",
+      "Participation in active groups.",
+      "Visible and affectionate recognition."
+    ],
+    "howToWorkWith_es": [
+      "Sé positivo y enfocado en lo humano.",
+      "Brinda espacio para expresarse.",
+      "No lo presiones con estructuras estrictas.",
+      "Valora su espontaneidad y sentido estético."
+    ],
+    "howToWorkWith_en": [
+      "Be positive and focused on the human element.",
+      "Provide space for him to express himself.",
+      "Don't pressure him with strict structures.",
+      "Value his spontaneity and aesthetic sense."
+    ],
+    "communication_es": [
+      "Usa ejemplos reales y visuales.",
+      "Sé cálido y empático.",
+      "Evita el tono crítico o autoritario.",
+      "Dale tiempo para hablar de su experiencia."
+    ],
+    "communication_en": [
+      "Use real, visual examples.",
+      "Be warm and empathetic.",
+      "Avoid a critical or authoritarian tone.",
+      "Give him time to talk about his experience."
+    ],
+    "potential_es": {
+      "social": "Centro emocional del grupo, crea ambientes positivos.",
+      "laboral": "Artes, entretenimiento, relaciones públicas, atención al cliente, moda, turismo."
+    },
+    "potential_en": {
+      "social": "Emotional center of the group, creates positive environments.",
+      "laboral": "Arts, entertainment, public relations, customer service, fashion, tourism."
+    },
+    "coachingStrategy_es": {
+      "objective": "Desarrollar constancia, foco y tolerancia a la crítica.",
+      "practices": [
+        "Coaching visual y emocional.",
+        "Técnicas de manejo del tiempo.",
+        "Refuerzo en logro de metas personales.",
+        "Retroalimentación suave pero firme."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Develop consistency, focus and tolerance for criticism.",
+      "practices": [
+        "Visual and emotional coaching.",
+        "Time management techniques.",
+        "Reinforcement in achieving personal goals.",
+        "Gentle but firm feedback."
+      ]
+    }
+  },
+  {
+    "type": "ESTJ",
+    "alias": "El Director Ejecutivo",
+    "alias_en": "The Executive Director",
+    "tagline": "El Organizador Eficiente",
+    "tagline_en": "The Efficient Organizer",
+    "description_es": "Estructurado, determinado y confiable. Valora la eficiencia, la autoridad y los resultados tangibles. Tiene una fuerte orientación al orden y la lógica aplicada al liderazgo.",
+    "description_en": "Structured, determined and reliable. He values efficiency, authority and tangible results. He has a strong orientation toward order and logic applied to leadership.",
+    "strengths_es": [
+      "Alto sentido de responsabilidad y liderazgo.",
+      "Gran capacidad organizativa.",
+      "Determinación frente a objetivos.",
+      "Claridad para tomar decisiones difíciles.",
+      "Foco en el cumplimiento y resultados."
+    ],
+    "strengths_en": [
+      "High sense of responsibility and leadership.",
+      "Great organizational ability.",
+      "Determination in the face of objectives.",
+      "Clarity in making difficult decisions.",
+      "Focus on compliance and results."
+    ],
+    "weaknesses_es": [
+      "Rigidez ante lo nuevo o diferente.",
+      "Puede imponer su punto de vista.",
+      "Poca apertura emocional.",
+      "Dificultad para tolerar errores."
+    ],
+    "weaknesses_en": [
+      "Rigidity toward what is new or different.",
+      "May impose his point of view.",
+      "Little emotional openness.",
+      "Difficulty tolerating mistakes."
+    ],
+    "improvementAreas_es": [
+      "Mayor flexibilidad con ideas no tradicionales.",
+      "Escucha activa y empática.",
+      "Promover el aprendizaje colaborativo.",
+      "Balancear control con delegación."
+    ],
+    "improvementAreas_en": [
+      "Greater flexibility with non-traditional ideas.",
+      "Active and empathetic listening.",
+      "Promote collaborative learning.",
+      "Balance control with delegation."
+    ],
+    "howToDevelop_es": [
+      "Coaching en liderazgo empático.",
+      "Talleres de gestión emocional.",
+      "Prácticas de escucha y feedback reflexivo.",
+      "Apoyo en adaptación al cambio."
+    ],
+    "howToDevelop_en": [
+      "Coaching in empathetic leadership.",
+      "Emotional management workshops.",
+      "Listening and reflective feedback practices.",
+      "Support in adapting to change."
+    ],
+    "motivation_es": [
+      "Objetivos claros y medibles.",
+      "Reconocimiento a su efectividad.",
+      "Estructura jerárquica definida.",
+      "Tareas donde pueda liderar y tomar decisiones."
+    ],
+    "motivation_en": [
+      "Clear, measurable objectives.",
+      "Recognition of his effectiveness.",
+      "A defined hierarchical structure.",
+      "Tasks where he can lead and make decisions."
+    ],
+    "howToWorkWith_es": [
+      "Sé puntual, claro y directo.",
+      "No improvises frente a él.",
+      "Aporta resultados y no solo ideas.",
+      "Valora su eficiencia y disciplina."
+    ],
+    "howToWorkWith_en": [
+      "Be punctual, clear and direct.",
+      "Don't improvise in front of him.",
+      "Deliver results, not just ideas.",
+      "Value his efficiency and discipline."
+    ],
+    "communication_es": [
+      "Usa lenguaje técnico y directo.",
+      "Justifica con datos y evidencias.",
+      "Sé respetuoso de su autoridad.",
+      "Acepta sus críticas como constructivas."
+    ],
+    "communication_en": [
+      "Use technical and direct language.",
+      "Justify with data and evidence.",
+      "Be respectful of his authority.",
+      "Accept his criticism as constructive."
+    ],
+    "potential_es": {
+      "social": "Líder natural, orientado a la ejecución.",
+      "laboral": "Administración, logística, finanzas, operaciones, cargos públicos."
+    },
+    "potential_en": {
+      "social": "A natural leader, oriented toward execution.",
+      "laboral": "Administration, logistics, finance, operations, public office."
+    },
+    "coachingStrategy_es": {
+      "objective": "Humanizar su liderazgo manteniendo su enfoque organizativo.",
+      "practices": [
+        "Role playing con perfiles emocionales.",
+        "Talleres sobre motivación no transaccional.",
+        "Acompañamiento en cultura de innovación.",
+        "Dinámicas sobre confianza y flexibilidad."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Humanize his leadership while maintaining his organizational focus.",
+      "practices": [
+        "Role playing with emotional profiles.",
+        "Workshops on non-transactional motivation.",
+        "Support in a culture of innovation.",
+        "Dynamics on trust and flexibility."
+      ]
+    }
+  },
+  {
+    "type": "ESFJ",
+    "alias": "El Facilitador Cuidadoso",
+    "alias_en": "The Caring Facilitator",
+    "tagline": "El Coordinador de la Armonía",
+    "tagline_en": "The Coordinator of Harmony",
+    "description_es": "Sociable, responsable y protector. Valora la colaboración, cuida el ambiente emocional y trabaja para que todos se sientan incluidos y apoyados. Excelente anfitrión en cualquier entorno.",
+    "description_en": "Sociable, responsible and protective. He values collaboration, takes care of the emotional atmosphere and works so that everyone feels included and supported. An excellent host in any setting.",
+    "strengths_es": [
+      "Gran capacidad de cuidado interpersonal.",
+      "Fuerte sentido del deber y la organización.",
+      "Habilidad para detectar necesidades emocionales.",
+      "Promueve la armonía grupal.",
+      "Detallista y comprometido con el equipo."
+    ],
+    "strengths_en": [
+      "Great capacity for interpersonal care.",
+      "Strong sense of duty and organization.",
+      "Ability to detect emotional needs.",
+      "Promotes group harmony.",
+      "Detail-oriented and committed to the team."
+    ],
+    "weaknesses_es": [
+      "Dificultad para decir “no”.",
+      "Dependencia del reconocimiento externo.",
+      "Sensibilidad alta a la crítica.",
+      "Puede ser controlador en nombre del cuidado."
+    ],
+    "weaknesses_en": [
+      "Difficulty saying “no”.",
+      "Dependence on external recognition.",
+      "High sensitivity to criticism.",
+      "May become controlling in the name of care."
+    ],
+    "improvementAreas_es": [
+      "Establecer límites personales saludables.",
+      "Aceptar opiniones disonantes sin tomarlas personal.",
+      "Delegar responsabilidades.",
+      "Valorar el autocuidado sin culpa."
+    ],
+    "improvementAreas_en": [
+      "Set healthy personal boundaries.",
+      "Accept dissenting opinions without taking them personally.",
+      "Delegate responsibilities.",
+      "Value self-care without guilt."
+    ],
+    "howToDevelop_es": [
+      "Coaching en asertividad y límites.",
+      "Espacios de autoafirmación.",
+      "Feedback reflexivo con respeto emocional.",
+      "Red de apoyo para liberar tensiones."
+    ],
+    "howToDevelop_en": [
+      "Coaching in assertiveness and boundaries.",
+      "Self-affirmation spaces.",
+      "Reflective feedback with emotional respect.",
+      "A support network to release tension."
+    ],
+    "motivation_es": [
+      "Reconocimiento por su aporte al grupo.",
+      "Ambientes afectivos y estructurados.",
+      "Claridad en sus responsabilidades.",
+      "Sentido de pertenencia y equipo."
+    ],
+    "motivation_en": [
+      "Recognition for his contribution to the group.",
+      "Affectionate and structured environments.",
+      "Clarity in his responsibilities.",
+      "A sense of belonging and team."
+    ],
+    "howToWorkWith_es": [
+      "Sé agradecido y respetuoso.",
+      "Valida su entrega y esfuerzo.",
+      "Evita la crítica pública.",
+      "Asigna tareas con sentido humano."
+    ],
+    "howToWorkWith_en": [
+      "Be grateful and respectful.",
+      "Validate his dedication and effort.",
+      "Avoid public criticism.",
+      "Assign tasks with a human meaning."
+    ],
+    "communication_es": [
+      "Usa un tono amable y empático.",
+      "Sé transparente y considerado.",
+      "No ignores sus emociones.",
+      "Demuestra aprecio de forma clara."
+    ],
+    "communication_en": [
+      "Use a kind and empathetic tone.",
+      "Be transparent and considerate.",
+      "Don't ignore his emotions.",
+      "Show appreciation clearly."
+    ],
+    "potential_es": {
+      "social": "Mediador de conflictos, anfitrión social, ejemplo de apoyo.",
+      "laboral": "Recursos humanos, enseñanza, salud, servicio al cliente, coordinación de eventos."
+    },
+    "potential_en": {
+      "social": "Conflict mediator, social host, example of support.",
+      "laboral": "Human resources, teaching, healthcare, customer service, event coordination."
+    },
+    "coachingStrategy_es": {
+      "objective": "Fortalecer su autonomía emocional y empoderar su cuidado hacia los demás sin perderse a sí mismo.",
+      "practices": [
+        "Actividades de desarrollo personal.",
+        "Coaching en toma de decisiones no dependiente.",
+        "Talleres de feedback y liderazgo emocional.",
+        "Reforzamiento de autoestima desde lo interno."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Strengthen his emotional autonomy and empower his care for others without losing himself.",
+      "practices": [
+        "Personal development activities.",
+        "Coaching in non-dependent decision-making.",
+        "Workshops on feedback and emotional leadership.",
+        "Reinforcement of self-esteem from within."
+      ]
+    }
+  },
+  {
+    "type": "ISTJ",
+    "alias": "El Estructurador Confiable",
+    "alias_en": "The Reliable Organizer",
+    "tagline": "El Organizador Responsable",
+    "tagline_en": "The Responsible Organizer",
+    "description_es": "Metódico, responsable y leal. Fuerte sentido del deber y compromiso con la organización. Cumple lo que promete y espera lo mismo de los demás.",
+    "description_en": "Methodical, responsible and loyal. A strong sense of duty and commitment to the organization. He delivers on his promises and expects the same from others.",
+    "strengths_es": [
+      "Organizado, lógico y detallista.",
+      "Muy comprometido y confiable.",
+      "Cumplimiento constante de normas y procedimientos.",
+      "Buen juicio y memoria.",
+      "Persistente en sus objetivos."
+    ],
+    "strengths_en": [
+      "Organized, logical and detail-oriented.",
+      "Highly committed and reliable.",
+      "Consistent compliance with rules and procedures.",
+      "Good judgment and memory.",
+      "Persistent in his objectives."
+    ],
+    "weaknesses_es": [
+      "Resistencia al cambio.",
+      "Puede parecer rígido o poco flexible.",
+      "Falta de espontaneidad.",
+      "Dificultad para entender perspectivas emocionales."
+    ],
+    "weaknesses_en": [
+      "Resistance to change.",
+      "May seem rigid or inflexible.",
+      "Lack of spontaneity.",
+      "Difficulty understanding emotional perspectives."
+    ],
+    "improvementAreas_es": [
+      "Desarrollar tolerancia a la ambigüedad.",
+      "Practicar la escucha activa en contextos emocionales.",
+      "Explorar enfoques más creativos.",
+      "Abrirse a nuevas metodologías o ideas."
+    ],
+    "improvementAreas_en": [
+      "Develop tolerance for ambiguity.",
+      "Practice active listening in emotional contexts.",
+      "Explore more creative approaches.",
+      "Open up to new methodologies or ideas."
+    ],
+    "howToDevelop_es": [
+      "Coaching en apertura al cambio.",
+      "Participación en equipos diversos y creativos.",
+      "Actividades de improvisación o resolución ágil.",
+      "Retroalimentación constructiva con foco en flexibilidad."
+    ],
+    "howToDevelop_en": [
+      "Coaching in openness to change.",
+      "Participation in diverse and creative teams.",
+      "Improvisation or agile problem-solving activities.",
+      "Constructive feedback focused on flexibility."
+    ],
+    "motivation_es": [
+      "Claridad en roles, tareas y tiempos.",
+      "Recompensas por eficiencia y cumplimiento.",
+      "Ambientes estructurados.",
+      "Seguridad en el trabajo y procedimientos definidos."
+    ],
+    "motivation_en": [
+      "Clarity in roles, tasks and timelines.",
+      "Rewards for efficiency and compliance.",
+      "Structured environments.",
+      "Job security and defined procedures."
+    ],
+    "howToWorkWith_es": [
+      "Establece expectativas claras desde el inicio.",
+      "Respeta sus tiempos y procesos.",
+      "No lo enfrentes con cambios bruscos sin justificación.",
+      "Valora su experiencia práctica."
+    ],
+    "howToWorkWith_en": [
+      "Set clear expectations from the start.",
+      "Respect his timelines and processes.",
+      "Don't confront him with abrupt changes without justification.",
+      "Value his practical experience."
+    ],
+    "communication_es": [
+      "Sé preciso y organizado.",
+      "Usa datos verificables.",
+      "Evita improvisaciones o mensajes confusos.",
+      "Refuerza la confianza con consistencia."
+    ],
+    "communication_en": [
+      "Be precise and organized.",
+      "Use verifiable data.",
+      "Avoid improvisation or confusing messages.",
+      "Reinforce trust with consistency."
+    ],
+    "potential_es": {
+      "social": "Soporte firme, fuente de seguridad y orden.",
+      "laboral": "Finanzas, administración, cumplimiento, legal, logística."
+    },
+    "potential_en": {
+      "social": "A firm support, a source of security and order.",
+      "laboral": "Finance, administration, compliance, legal, logistics."
+    },
+    "coachingStrategy_es": {
+      "objective": "Promover adaptabilidad sin perder estructura.",
+      "practices": [
+        "Entrenamiento en pensamiento lateral.",
+        "Exposición a nuevos escenarios con acompañamiento.",
+        "Tareas con grados progresivos de ambigüedad.",
+        "Sesiones de reflexión sobre impacto emocional."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Promote adaptability without losing structure.",
+      "practices": [
+        "Training in lateral thinking.",
+        "Exposure to new scenarios with support.",
+        "Tasks with progressive degrees of ambiguity.",
+        "Reflection sessions on emotional impact."
+      ]
+    }
+  },
+  {
+    "type": "ENFP",
+    "merged_from": [
+      "El Inspirador Creativo",
+      "El Motivador Creativo"
+    ],
+    "alias": "El Inspirador Creativo",
+    "alias_en": "The Creative Inspirer",
+    "tagline": "El Motivador Entusiasta",
+    "tagline_en": "The Enthusiastic Motivator",
+    "description_es": "Energético, empático y lleno de ideas. Inspirador natural que busca sentido en todo lo que hace, fomenta conexiones profundas y se mueve bien en entornos dinámicos y cambiantes. Entusiasta, empático y espontáneo, conecta emocionalmente con los demás, tiene gran creatividad y busca experiencias con propósito. Inspira desde su autenticidad y optimismo.",
+    "description_en": "Energetic, empathetic and full of ideas. A natural inspirer who seeks meaning in everything he does, fosters deep connections and thrives in dynamic, changing environments. Enthusiastic, empathetic and spontaneous, he connects emotionally with others, has great creativity and seeks purposeful experiences. He inspires through his authenticity and optimism.",
+    "strengths_es": [
+      "Altamente creativo e imaginativo.",
+      "Empático y con gran inteligencia emocional.",
+      "Energía positiva y motivadora para otros.",
+      "Gran capacidad de adaptación.",
+      "Comunicador persuasivo y natural.",
+      "Carisma natural y conexión emocional.",
+      "Capacidad para motivar e inspirar.",
+      "Curiosidad y apertura al cambio."
+    ],
+    "strengths_en": [
+      "Highly creative and imaginative.",
+      "Empathetic and with great emotional intelligence.",
+      "Positive, motivating energy for others.",
+      "Great capacity for adaptation.",
+      "A persuasive and natural communicator.",
+      "Natural charisma and emotional connection.",
+      "Ability to motivate and inspire.",
+      "Curiosity and openness to change."
+    ],
+    "weaknesses_es": [
+      "Dificultad para mantener el foco a largo plazo.",
+      "Impulsivo en la toma de decisiones.",
+      "Puede evitar estructuras rígidas o normas formales.",
+      "Se frustra si no hay espacio para expresión personal.",
+      "Puede idealizar personas o situaciones.",
+      "Toma decisiones emocionales apresuradas.",
+      "Se frustra fácilmente con la monotonía."
+    ],
+    "weaknesses_en": [
+      "Difficulty maintaining long-term focus.",
+      "Impulsive in decision-making.",
+      "May avoid rigid structures or formal rules.",
+      "Becomes frustrated if there is no room for personal expression.",
+      "May idealize people or situations.",
+      "Makes hasty emotional decisions.",
+      "Becomes easily frustrated with monotony."
+    ],
+    "improvementAreas_es": [
+      "Establecer prioridades claras y sostenidas.",
+      "Tolerar la estructura como parte del proceso.",
+      "Regular la energía para evitar dispersión.",
+      "Aceptar la crítica como herramienta de crecimiento.",
+      "Estabilidad emocional y enfoque sostenido.",
+      "Mayor disciplina en la ejecución.",
+      "Aceptación del conflicto como parte del proceso.",
+      "Profundizar en proyectos antes de saltar al siguiente."
+    ],
+    "improvementAreas_en": [
+      "Set clear, sustained priorities.",
+      "Tolerate structure as part of the process.",
+      "Regulate energy to avoid dispersion.",
+      "Accept criticism as a growth tool.",
+      "Emotional stability and sustained focus.",
+      "Greater discipline in execution.",
+      "Acceptance of conflict as part of the process.",
+      "Go deeper into projects before jumping to the next one."
+    ],
+    "howToDevelop_es": [
+      "Coaching para concreción de ideas.",
+      "Herramientas de planificación visual.",
+      "Retroalimentación regular pero empática.",
+      "Actividades de cierre y disciplina progresiva.",
+      "Coaching estructurado con acompañamiento emocional.",
+      "Seguimiento a compromisos con retroalimentación positiva.",
+      "Planificación flexible con objetivos intermedios.",
+      "Validación constante de su impacto real."
+    ],
+    "howToDevelop_en": [
+      "Coaching to materialize ideas.",
+      "Visual planning tools.",
+      "Regular but empathetic feedback.",
+      "Closure activities and progressive discipline.",
+      "Structured coaching with emotional support.",
+      "Follow-up on commitments with positive feedback.",
+      "Flexible planning with intermediate objectives.",
+      "Constant validation of his real impact."
+    ],
+    "motivation_es": [
+      "Proyectos con propósito personal o social.",
+      "Espacios para innovar y proponer.",
+      "Flexibilidad en el estilo de trabajo.",
+      "Reconocimiento auténtico a su energía y creatividad.",
+      "Ambientes humanos y con propósito.",
+      "Proyectos creativos y significativos.",
+      "Espacios donde pueda expresar ideas libremente.",
+      "Reconocimiento emocional y auténtico."
+    ],
+    "motivation_en": [
+      "Projects with personal or social purpose.",
+      "Spaces to innovate and propose.",
+      "Flexibility in work style.",
+      "Authentic recognition of his energy and creativity.",
+      "Human, purpose-driven environments.",
+      "Creative and meaningful projects.",
+      "Spaces where he can express ideas freely.",
+      "Emotional and authentic recognition."
+    ],
+    "howToWorkWith_es": [
+      "Escucha sus ideas sin juzgar de inmediato.",
+      "Ayúdalo a dar estructura sin limitar su espontaneidad.",
+      "Evita imponer normas sin sentido.",
+      "Refuerza su impacto positivo en el grupo.",
+      "Sé entusiasta, abierto y sincero.",
+      "Acompáñalo en momentos de dispersión.",
+      "Refuerza su compromiso con pequeños logros visibles."
+    ],
+    "howToWorkWith_en": [
+      "Listen to his ideas without judging immediately.",
+      "Help him give structure without limiting his spontaneity.",
+      "Avoid imposing meaningless rules.",
+      "Reinforce his positive impact on the group.",
+      "Be enthusiastic, open and sincere.",
+      "Support him in moments of dispersion.",
+      "Reinforce his commitment through small, visible achievements."
+    ],
+    "communication_es": [
+      "Habla desde la emoción y la posibilidad.",
+      "Usa metáforas, visión y ejemplos.",
+      "Sé abierto a lo no convencional.",
+      "Ofrece guía sin reprimir su creatividad.",
+      "Usa lenguaje emocional y motivador.",
+      "Haz preguntas que despierten su reflexión.",
+      "No cortes su entusiasmo con rigidez.",
+      "Sé honesto, pero cuida el tono emocional."
+    ],
+    "communication_en": [
+      "Speak from emotion and possibility.",
+      "Use metaphors, vision and examples.",
+      "Be open to the unconventional.",
+      "Offer guidance without suppressing his creativity.",
+      "Use emotional and motivating language.",
+      "Ask questions that awaken his reflection.",
+      "Don't cut off his enthusiasm with rigidity.",
+      "Be honest, but take care of the emotional tone."
+    ],
+    "potential_es": {
+      "social": "Conector emocional, catalizador de entusiasmo. Inspira, conecta y genera armonía.",
+      "laboral": "Innovación social, educación, comunicación, publicidad, diseño, relaciones públicas, liderazgo creativo, desarrollo social."
+    },
+    "potential_en": {
+      "social": "An emotional connector, a catalyst for enthusiasm. He inspires, connects and generates harmony.",
+      "laboral": "Social innovation, education, communication, advertising, design, public relations, creative leadership, social development."
+    },
+    "coachingStrategy_es": {
+      "objective": "Convertir su creatividad emocional en proyectos sostenibles y con impacto real, alineando su creatividad y emoción con constancia y planificación.",
+      "practices": [
+        "Metodologías ágiles con enfoque emocional.",
+        "Mentoring estructurado para ejecución.",
+        "Reflexión guiada sobre sus motivaciones profundas.",
+        "Actividades de impacto a corto y mediano plazo.",
+        "Espacios creativos con metas realistas.",
+        "Seguimiento con feedback emocional y práctico.",
+        "Ejercicios de tolerancia a la estructura.",
+        "Entrenamiento en toma de decisiones racional-emocional."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Turn his emotional creativity into sustainable projects with real impact, aligning his creativity and emotion with consistency and planning.",
+      "practices": [
+        "Agile methodologies with an emotional focus.",
+        "Structured mentoring for execution.",
+        "Guided reflection on his deep motivations.",
+        "Short- and medium-term impact activities.",
+        "Creative spaces with realistic goals.",
+        "Follow-up with emotional and practical feedback.",
+        "Tolerance-for-structure exercises.",
+        "Training in rational-emotional decision-making."
+      ]
+    }
+  },
+  {
+    "type": "ENTP",
+    "merged_from": [
+      "El Innovador Persuasivo",
+      "El Innovador Estratega"
+    ],
+    "alias": "El Innovador Persuasivo",
+    "alias_en": "The Persuasive Innovator",
+    "tagline": "El Estratega Creativo",
+    "tagline_en": "The Creative Strategist",
+    "description_es": "Ingenioso, ágil mentalmente y provocador positivo. Encuentra posibilidades en cada obstáculo, desafía lo establecido y lidera con carisma. Disfruta del debate y del cambio constante. Rápido, creativo y argumentativo, le apasiona explorar ideas nuevas, desafiar el status quo y encontrar caminos alternativos para resolver problemas. Energético, versátil y de pensamiento divergente.",
+    "description_en": "Ingenious, mentally agile and a positive provocateur. He finds possibilities in every obstacle, challenges the established order and leads with charisma. He enjoys debate and constant change. Quick, creative and argumentative, he is passionate about exploring new ideas, challenging the status quo and finding alternative paths to solve problems. Energetic, versatile and of divergent thinking.",
+    "strengths_es": [
+      "Alta capacidad para generar ideas innovadoras.",
+      "Gran habilidad verbal y argumentativa.",
+      "Enfrenta desafíos con entusiasmo.",
+      "Rápido para adaptarse y responder.",
+      "Estimula el pensamiento crítico en otros.",
+      "Habilidad para ver oportunidades donde otros ven obstáculos.",
+      "Adaptabilidad y pensamiento estratégico.",
+      "Energía contagiosa y sentido del humor agudo."
+    ],
+    "strengths_en": [
+      "High capacity to generate innovative ideas.",
+      "Great verbal and argumentative skill.",
+      "Faces challenges with enthusiasm.",
+      "Quick to adapt and respond.",
+      "Stimulates critical thinking in others.",
+      "Ability to see opportunities where others see obstacles.",
+      "Adaptability and strategic thinking.",
+      "Contagious energy and a sharp sense of humor."
+    ],
+    "weaknesses_es": [
+      "Impaciente con procesos prolongados.",
+      "Puede parecer confrontativo o disruptivo.",
+      "Tiende a aburrirse con la rutina.",
+      "Dificultad para terminar lo que comienza.",
+      "Puede perder el foco y dispersarse.",
+      "Tiende a debatir por el mero reto intelectual.",
+      "A veces deja proyectos sin terminar."
+    ],
+    "weaknesses_en": [
+      "Impatient with prolonged processes.",
+      "May come across as confrontational or disruptive.",
+      "Tends to get bored with routine.",
+      "Difficulty finishing what he starts.",
+      "May lose focus and become scattered.",
+      "Tends to debate for the mere intellectual challenge.",
+      "Sometimes leaves projects unfinished."
+    ],
+    "improvementAreas_es": [
+      "Sostener ideas más allá del entusiasmo inicial.",
+      "Regular el deseo de debate constante.",
+      "Priorizar metas en lugar de multiplicar frentes.",
+      "Desarrollar más estructura en sus procesos.",
+      "Enfoque sostenido en proyectos concretos.",
+      "Aterrizar ideas en planes viables.",
+      "Respetar límites y tiempos de otros.",
+      "Escuchar más y debatir menos."
+    ],
+    "improvementAreas_en": [
+      "Sustain ideas beyond the initial enthusiasm.",
+      "Regulate the desire for constant debate.",
+      "Prioritize goals instead of multiplying fronts.",
+      "Develop more structure in his processes.",
+      "Sustained focus on concrete projects.",
+      "Ground ideas into viable plans.",
+      "Respect others' limits and timelines.",
+      "Listen more and debate less."
+    ],
+    "howToDevelop_es": [
+      "Herramientas de priorización y ejecución.",
+      "Coaching para compromiso con la continuidad.",
+      "Feedback orientado a resultados concretos.",
+      "Trabajo en dupla con perfiles ejecutores.",
+      "Metodologías ágiles para mantener ritmo y foco.",
+      "Coaching en gestión del tiempo y seguimiento.",
+      "Feedback estructurado con énfasis en resultados.",
+      "Entornos con flexibilidad, pero objetivos claros."
+    ],
+    "howToDevelop_en": [
+      "Prioritization and execution tools.",
+      "Coaching for commitment to continuity.",
+      "Feedback oriented toward concrete results.",
+      "Working in pairs with execution-oriented profiles.",
+      "Agile methodologies to maintain pace and focus.",
+      "Coaching in time management and follow-up.",
+      "Structured feedback with an emphasis on results.",
+      "Environments with flexibility but clear objectives."
+    ],
+    "motivation_es": [
+      "Espacio para explorar y desafiar ideas.",
+      "Retos intelectuales y estratégicos.",
+      "Flexibilidad para innovar.",
+      "Reconocimiento a su visión e ingenio.",
+      "Proyectos creativos y con libertad de acción.",
+      "Espacios para innovar y desafiar paradigmas.",
+      "Reconocimiento a sus ideas y originalidad.",
+      "Interacción constante y dinámica."
+    ],
+    "motivation_en": [
+      "Space to explore and challenge ideas.",
+      "Intellectual and strategic challenges.",
+      "Flexibility to innovate.",
+      "Recognition of his vision and ingenuity.",
+      "Creative projects with freedom of action.",
+      "Spaces to innovate and challenge paradigms.",
+      "Recognition of his ideas and originality.",
+      "Constant, dynamic interaction."
+    ],
+    "howToWorkWith_es": [
+      "Plantea preguntas y no afirmaciones rígidas.",
+      "No lo frenes con estructuras innecesarias.",
+      "Aprovecha su creatividad para desbloquear al equipo.",
+      "Refuerza el seguimiento y cierre de proyectos.",
+      "Sé flexible, rápido y abierto a nuevas ideas.",
+      "No intentes encasillarlo en rutinas rígidas.",
+      "Aprecia su energía sin tomarlo como superficial.",
+      "Refuerza su compromiso con objetivos claros."
+    ],
+    "howToWorkWith_en": [
+      "Pose questions rather than rigid statements.",
+      "Don't hold him back with unnecessary structures.",
+      "Leverage his creativity to unblock the team.",
+      "Reinforce follow-up and closure of projects.",
+      "Be flexible, fast and open to new ideas.",
+      "Don't try to pigeonhole him into rigid routines.",
+      "Appreciate his energy without taking it as superficial.",
+      "Reinforce his commitment with clear objectives."
+    ],
+    "communication_es": [
+      "Usa humor, desafío intelectual y curiosidad.",
+      "Presenta problemas como oportunidades.",
+      "Evita el tono autoritario o monótono.",
+      "Reconoce sus aportes disruptivos.",
+      "Sé directo pero abierto a explorar ideas.",
+      "Usa el humor y ejemplos novedosos.",
+      "Deja que cuestione y proponga alternativas.",
+      "Valida sus ideas, incluso si no se implementan."
+    ],
+    "communication_en": [
+      "Use humor, intellectual challenge and curiosity.",
+      "Present problems as opportunities.",
+      "Avoid an authoritarian or monotonous tone.",
+      "Acknowledge his disruptive contributions.",
+      "Be direct but open to exploring ideas.",
+      "Use humor and novel examples.",
+      "Let him question and propose alternatives.",
+      "Validate his ideas, even if they are not implemented."
+    ],
+    "potential_es": {
+      "social": "Estimulador del pensamiento, agente de cambio. Conector natural, rompe barreras, inspira cambios.",
+      "laboral": "Startups, estrategia, consultoría, ventas, tecnología, innovación, política, emprendimiento, marketing."
+    },
+    "potential_en": {
+      "social": "A stimulator of thought, an agent of change. A natural connector, he breaks barriers and inspires change.",
+      "laboral": "Startups, strategy, consulting, sales, technology, innovation, politics, entrepreneurship, marketing."
+    },
+    "coachingStrategy_es": {
+      "objective": "Canalizar su energía innovadora hacia logros concretos y sostenibles, dirigiendo su creatividad hacia impacto real y sostenido.",
+      "practices": [
+        "Coaching basado en accountability y entrega.",
+        "Mentores que lo reten intelectualmente.",
+        "Seguimiento sistemático de avances.",
+        "Espacios donde sus ideas se materialicen en resultados.",
+        "Planificación por etapas con metas breves.",
+        "Espacios de exploración creativa con entrega final.",
+        "Feedback estructurado y desafiante.",
+        "Trabajo en equipo con perfiles ejecutores."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Channel his innovative energy toward concrete, sustainable achievements, directing his creativity toward real and lasting impact.",
+      "practices": [
+        "Coaching based on accountability and delivery.",
+        "Mentors who challenge him intellectually.",
+        "Systematic tracking of progress.",
+        "Spaces where his ideas materialize into results.",
+        "Stage-based planning with short goals.",
+        "Creative exploration spaces with a final deliverable.",
+        "Structured and challenging feedback.",
+        "Teamwork with execution-oriented profiles."
+      ]
+    }
+  },
+  {
+    "type": "ENFJ",
+    "authored": true,
+    "alias": "El Protagonista",
+    "alias_en": "The Protagonist",
+    "tagline": "El Mentor Inspirador",
+    "tagline_en": "The Inspiring Mentor",
+    "description_es": "Cálido, carismático y profundamente orientado a las personas, el ENFJ es un líder natural que inspira a otros a crecer y a dar lo mejor de sí. Con una empatía excepcional y una visión clara del potencial humano, moviliza equipos desde el propósito compartido y la conexión emocional. Sabe leer las necesidades del grupo y actúa como guía, motivador y catalizador del cambio positivo.",
+    "description_en": "Warm, charismatic and deeply people-oriented, the ENFJ is a natural leader who inspires others to grow and give their best. With exceptional empathy and a clear vision of human potential, he mobilizes teams through shared purpose and emotional connection. He knows how to read the group's needs and acts as a guide, motivator and catalyst for positive change.",
+    "strengths_es": [
+      "Liderazgo carismático y capacidad de inspirar a otros.",
+      "Empatía excepcional y alta inteligencia emocional.",
+      "Habilidad para desarrollar el potencial de las personas.",
+      "Comunicación persuasiva y cálida.",
+      "Fuerte orientación al propósito y a los valores compartidos."
+    ],
+    "strengths_en": [
+      "Charismatic leadership and the ability to inspire others.",
+      "Exceptional empathy and high emotional intelligence.",
+      "Ability to develop people's potential.",
+      "Persuasive and warm communication.",
+      "Strong orientation toward purpose and shared values."
+    ],
+    "weaknesses_es": [
+      "Tiende a sobrecargarse cuidando de los demás.",
+      "Puede depender demasiado de la aprobación externa.",
+      "Dificultad para tomar decisiones impopulares.",
+      "Evita el conflicto para preservar la armonía.",
+      "Puede descuidar sus propias necesidades emocionales."
+    ],
+    "weaknesses_en": [
+      "Tends to overload himself caring for others.",
+      "May rely too much on external approval.",
+      "Difficulty making unpopular decisions.",
+      "Avoids conflict to preserve harmony.",
+      "May neglect his own emotional needs."
+    ],
+    "improvementAreas_es": [
+      "Establecer límites personales sin sentir culpa.",
+      "Aprender a tomar decisiones firmes aun cuando generen desacuerdo.",
+      "Equilibrar el cuidado de otros con el autocuidado.",
+      "Aceptar la crítica sin tomarla de forma personal."
+    ],
+    "improvementAreas_en": [
+      "Set personal boundaries without feeling guilty.",
+      "Learn to make firm decisions even when they cause disagreement.",
+      "Balance caring for others with self-care.",
+      "Accept criticism without taking it personally."
+    ],
+    "howToDevelop_es": [
+      "Coaching en liderazgo asertivo y toma de decisiones difíciles.",
+      "Talleres de gestión del estrés y balance personal.",
+      "Prácticas de delegación para evitar la sobrecarga.",
+      "Espacios de autorreflexión sobre sus propias necesidades."
+    ],
+    "howToDevelop_en": [
+      "Coaching in assertive leadership and difficult decision-making.",
+      "Stress management and personal balance workshops.",
+      "Delegation practices to avoid overload.",
+      "Self-reflection spaces about his own needs."
+    ],
+    "motivation_es": [
+      "Proyectos con impacto humano y propósito compartido.",
+      "Oportunidades para guiar, mentorear y desarrollar a otros.",
+      "Ambientes colaborativos, armónicos y de reconocimiento.",
+      "Reconocimiento auténtico por su aporte al bienestar del equipo."
+    ],
+    "motivation_en": [
+      "Projects with human impact and shared purpose.",
+      "Opportunities to guide, mentor and develop others.",
+      "Collaborative, harmonious and appreciative environments.",
+      "Authentic recognition for his contribution to the team's well-being."
+    ],
+    "howToWorkWith_es": [
+      "Reconoce y valora su aporte emocional al equipo.",
+      "Involúcralo en decisiones que afecten a las personas.",
+      "Evita la crítica dura o pública; sé constructivo.",
+      "Dale espacio para expresar su visión y su cuidado por otros."
+    ],
+    "howToWorkWith_en": [
+      "Recognize and value his emotional contribution to the team.",
+      "Involve him in decisions that affect people.",
+      "Avoid harsh or public criticism; be constructive.",
+      "Give him space to express his vision and his care for others."
+    ],
+    "communication_es": [
+      "Usa un tono cálido, empático y personal.",
+      "Conecta tus mensajes con valores y propósito.",
+      "Reconoce sus emociones y las de los demás.",
+      "Sé sincero y coherente; valora la autenticidad."
+    ],
+    "communication_en": [
+      "Use a warm, empathetic and personal tone.",
+      "Connect your messages to values and purpose.",
+      "Acknowledge his emotions and those of others.",
+      "Be sincere and consistent; he values authenticity."
+    ],
+    "potential_es": {
+      "social": "Líder inspirador y mentor; genera cohesión, motivación y sentido de comunidad.",
+      "laboral": "Recursos humanos, formación y desarrollo, liderazgo de equipos, educación, coaching, comunicación y gestión del talento."
+    },
+    "potential_en": {
+      "social": "An inspiring leader and mentor; he generates cohesion, motivation and a sense of community.",
+      "laboral": "Human resources, training and development, team leadership, education, coaching, communication and talent management."
+    },
+    "coachingStrategy_es": {
+      "objective": "Fortalecer su liderazgo inspirador desarrollando límites saludables y firmeza para decidir sin perder su calidez humana.",
+      "practices": [
+        "Coaching en asertividad y liderazgo con firmeza.",
+        "Prácticas de autocuidado y gestión de la energía emocional.",
+        "Entrenamiento en toma de decisiones bajo desacuerdo.",
+        "Espacios de reflexión para conectar con sus propios objetivos."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Strengthen his inspiring leadership by developing healthy boundaries and firmness to decide without losing his human warmth.",
+      "practices": [
+        "Coaching in assertiveness and firm leadership.",
+        "Self-care practices and management of emotional energy.",
+        "Training in decision-making under disagreement.",
+        "Reflection spaces to connect with his own objectives."
+      ]
+    }
+  },
+  {
+    "type": "ENTJ",
+    "authored": true,
+    "alias": "El Comandante",
+    "alias_en": "The Commander",
+    "tagline": "El Líder Estratega",
+    "tagline_en": "The Strategic Leader",
+    "description_es": "Decidido, estratégico y orientado a resultados, el ENTJ es un líder ejecutivo por naturaleza. Combina una visión de largo plazo con una capacidad excepcional para organizar recursos, tomar decisiones firmes y llevar los planes a la acción. Ambicioso y seguro de sí mismo, moviliza a los equipos hacia objetivos claros con determinación y eficiencia implacable.",
+    "description_en": "Decisive, strategic and results-oriented, the ENTJ is an executive leader by nature. He combines long-term vision with an exceptional ability to organize resources, make firm decisions and turn plans into action. Ambitious and self-assured, he mobilizes teams toward clear objectives with determination and relentless efficiency.",
+    "strengths_es": [
+      "Liderazgo estratégico y visión de largo plazo.",
+      "Gran capacidad de organización y ejecución.",
+      "Decisión y firmeza ante objetivos complejos.",
+      "Pensamiento lógico y orientación a resultados.",
+      "Habilidad para movilizar y dirigir equipos con eficiencia."
+    ],
+    "strengths_en": [
+      "Strategic leadership and long-term vision.",
+      "Great capacity for organization and execution.",
+      "Decisiveness and firmness in the face of complex objectives.",
+      "Logical thinking and results orientation.",
+      "Ability to mobilize and lead teams efficiently."
+    ],
+    "weaknesses_es": [
+      "Puede parecer dominante o excesivamente exigente.",
+      "Baja tolerancia a la ineficiencia y al error.",
+      "Dificultad para atender las emociones propias y ajenas.",
+      "Tiende a imponer su criterio sobre el de los demás.",
+      "Impaciencia con procesos lentos o indecisos."
+    ],
+    "weaknesses_en": [
+      "May come across as domineering or overly demanding.",
+      "Low tolerance for inefficiency and error.",
+      "Difficulty attending to his own and others' emotions.",
+      "Tends to impose his judgment over that of others.",
+      "Impatience with slow or indecisive processes."
+    ],
+    "improvementAreas_es": [
+      "Desarrollar empatía y escucha activa en el liderazgo.",
+      "Aceptar el error como parte del proceso de crecimiento.",
+      "Equilibrar la exigencia con el reconocimiento del esfuerzo.",
+      "Delegar confiando en el criterio de otros."
+    ],
+    "improvementAreas_en": [
+      "Develop empathy and active listening in leadership.",
+      "Accept error as part of the growth process.",
+      "Balance high standards with recognition of effort.",
+      "Delegate while trusting others' judgment."
+    ],
+    "howToDevelop_es": [
+      "Coaching en liderazgo empático e inteligencia emocional.",
+      "Prácticas de escucha activa y validación de otros.",
+      "Entrenamiento en delegación y desarrollo de equipos.",
+      "Retroalimentación orientada a equilibrar exigencia y motivación."
+    ],
+    "howToDevelop_en": [
+      "Coaching in empathetic leadership and emotional intelligence.",
+      "Active listening and validation-of-others practices.",
+      "Training in delegation and team development.",
+      "Feedback oriented toward balancing demand and motivation."
+    ],
+    "motivation_es": [
+      "Retos estratégicos de alta complejidad e impacto.",
+      "Autonomía para liderar, decidir y estructurar.",
+      "Objetivos ambiciosos, claros y medibles.",
+      "Reconocimiento por su capacidad de logro y ejecución."
+    ],
+    "motivation_en": [
+      "Strategic challenges of high complexity and impact.",
+      "Autonomy to lead, decide and structure.",
+      "Ambitious, clear and measurable objectives.",
+      "Recognition for his capacity for achievement and execution."
+    ],
+    "howToWorkWith_es": [
+      "Sé claro, directo y orientado a resultados.",
+      "Aporta datos, argumentos sólidos y soluciones, no solo problemas.",
+      "Respeta su necesidad de liderar y decidir.",
+      "Cumple los compromisos y los tiempos acordados."
+    ],
+    "howToWorkWith_en": [
+      "Be clear, direct and results-oriented.",
+      "Provide data, solid arguments and solutions, not just problems.",
+      "Respect his need to lead and decide.",
+      "Honor commitments and agreed timelines."
+    ],
+    "communication_es": [
+      "Usa lenguaje directo, lógico y estructurado.",
+      "Justifica con datos, hechos y objetivos claros.",
+      "Ve al grano; evita rodeos innecesarios.",
+      "Sé firme y seguro al presentar tus ideas."
+    ],
+    "communication_en": [
+      "Use direct, logical and structured language.",
+      "Justify with data, facts and clear objectives.",
+      "Get to the point; avoid unnecessary detours.",
+      "Be firm and confident when presenting your ideas."
+    ],
+    "potential_es": {
+      "social": "Líder natural y referente; impulsa a otros hacia metas ambiciosas con visión y determinación.",
+      "laboral": "Dirección ejecutiva, estrategia empresarial, gestión de proyectos, consultoría, emprendimiento, finanzas y operaciones de alto nivel."
+    },
+    "potential_en": {
+      "social": "A natural leader and role model; he drives others toward ambitious goals with vision and determination.",
+      "laboral": "Executive management, business strategy, project management, consulting, entrepreneurship, finance and high-level operations."
+    },
+    "coachingStrategy_es": {
+      "objective": "Humanizar su liderazgo estratégico integrando empatía y colaboración sin sacrificar su orientación a resultados.",
+      "practices": [
+        "Coaching en liderazgo emocional y comunicación empática.",
+        "Prácticas de delegación y confianza en el equipo.",
+        "Talleres de escucha activa y feedback bidireccional.",
+        "Dinámicas para valorar el proceso humano detrás de los resultados."
+      ]
+    },
+    "coachingStrategy_en": {
+      "objective": "Humanize his strategic leadership by integrating empathy and collaboration without sacrificing his results orientation.",
+      "practices": [
+        "Coaching in emotional leadership and empathetic communication.",
+        "Delegation and team-trust practices.",
+        "Active listening and two-way feedback workshops.",
+        "Dynamics to value the human process behind results."
+      ]
+    }
+  }
+]

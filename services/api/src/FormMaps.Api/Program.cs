@@ -32,6 +32,7 @@ app.MapReportEndpoints();
 app.MapExamEndpoints();
 app.MapLiaEndpoints();
 app.MapMilEndpoints();
+app.MapPersonalityEndpoints();
 
 app.Run();
 
