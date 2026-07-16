@@ -19,6 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Shared cross-repo LIA-core golden fixtures (byte-identical to lib/lia-core/__fixtures__/golden.json). -->
+    <EmbeddedResource Include="Assessments\Data\golden.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\FormMaps.Application\FormMaps.Application.csproj" />
     <ProjectReference Include="..\..\src\FormMaps.Domain\FormMaps.Domain.csproj" />
     <ProjectReference Include="..\..\src\FormMaps.Infrastructure\FormMaps.Infrastructure.csproj" />
