@@ -56,6 +56,20 @@ function shouldRouteEvaluationReportToDotnet() {
   );
 }
 
+function shouldRoutePcaExamSessionToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_SESSION_TO_DOTNET)
+  );
+}
+
+function shouldRoutePcaExamCompletedToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_COMPLETED_EXAMS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -186,6 +200,22 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/reports/evaluation/:sessionId",
               destination: `${dotnetApiBaseUrl}/api/v1/reports/evaluation/:sessionId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaExamSessionToDotnet()
+        ? [
+            {
+              source: "/api/pcaexam/session/:sessionId",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/session/:sessionId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaExamCompletedToDotnet()
+        ? [
+            {
+              source: "/api/pcaexam/completed-exams/:userId",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/completed-exams/:userId`,
             },
           ]
         : []),
