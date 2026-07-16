@@ -21,8 +21,43 @@ public static class ExamEndpoints
         group.MapGet("/exams/{examId}", GetExamWithQuestionsAsync);
         group.MapGet("/exams/{examId}/instructions", GetInstructionsAsync);
         group.MapGet("/exam-config/{examId}", GetExamConfigAsync);
+        group.MapGet("/statistics/{examId}", GetStatisticsAsync);
 
         return app;
+    }
+
+    private static async Task<IResult> GetStatisticsAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ISubscriptionGuard subscriptionGuard,
+        IExamStatisticsReader reader,
+        string examId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var subscription = await subscriptionGuard.RequireSubscriptionAsync(context, cancellationToken);
+        if (!subscription.Allowed)
+        {
+            return Deny(subscription);
+        }
+
+        // ADMIN_ROLES gate (Super Admin / school_admin, raw exact match) BEFORE any DB lookup.
+        if (!PcaAdminGate.IsAdmin(context))
+        {
+            return Results.Json(
+                new { success = false, message = "Admin access required" },
+                statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        var rows = await reader.ReadScoresAsync(context, examId, cancellationToken);
+        return Results.Ok(new { success = true, data = ExamStatistics.Compute(examId, rows) });
     }
 
     private static async Task<IResult> GetInstructionsAsync(
