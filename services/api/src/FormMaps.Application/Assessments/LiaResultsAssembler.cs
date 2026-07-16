@@ -11,6 +11,9 @@ namespace FormMaps.Application.Assessments;
 /// </summary>
 public static class LiaResultsAssembler
 {
+    private static readonly JsonElement EmptyObject = ParseClone("{}");
+    private static readonly JsonElement EmptyArray = ParseClone("[]");
+
     public static LiaResults Build(
         string sessionId,
         string? userName,
@@ -26,6 +29,15 @@ public static class LiaResultsAssembler
         DateTime? startedAt,
         DateTime? completedAt)
     {
+        // Legacy `?? {}` / `?? []` coalesce a JS null — and Prisma surfaces both a SQL NULL and a
+        // jsonb 'null' token as JS null, so a JSON-null value must default to the empty container too.
+        rawScores = ObjectOrEmpty(rawScores);
+        finalScores = ObjectOrEmpty(finalScores);
+        percentiles = ObjectOrEmpty(percentiles);
+        responseCounts = ObjectOrEmpty(responseCounts);
+        subtestTimes = ObjectOrEmpty(subtestTimes);
+        lockdownViolations = ArrayOrEmpty(lockdownViolations);
+
         // session.user?.name || session.user?.email || "" — JS truthiness treats "" as falsy.
         var name = !string.IsNullOrEmpty(userName)
             ? userName
@@ -80,6 +92,18 @@ public static class LiaResultsAssembler
             LockdownViolations: lockdownViolations,
             StartedAt: ToIsoZ(startedAt),
             CompletedAt: ToIsoZ(completedAt) ?? "");
+    }
+
+    private static JsonElement ObjectOrEmpty(JsonElement value) =>
+        value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined ? EmptyObject : value;
+
+    private static JsonElement ArrayOrEmpty(JsonElement value) =>
+        value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined ? EmptyArray : value;
+
+    private static JsonElement ParseClone(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.Clone();
     }
 
     // percentiles[subtest] ?? 0 (raw, unrounded).

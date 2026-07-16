@@ -163,4 +163,36 @@ public class LiaResultsAssemblerTests
         var started = new DateTime(2026, 7, 16, 1, 2, 3, 4, DateTimeKind.Utc);
         Assert.Equal("2026-07-16T01:02:03.004Z", Build(startedAt: started).StartedAt);
     }
+
+    [Fact]
+    public void Jsonb_json_null_defaults_to_empty_object_or_array()
+    {
+        // Legacy buildResults uses `?? {}` / `?? []`, which coalesce a JS null — and Prisma surfaces
+        // BOTH a SQL NULL and a jsonb 'null' token as JS null. A `'null'::jsonb` value must therefore
+        // become {} / [], never a JSON null, to match Node exactly.
+        var nul = Json("null");
+        var result = LiaResultsAssembler.Build(
+            sessionId: "s",
+            userName: "n",
+            userEmail: "e",
+            rawScores: nul,
+            finalScores: nul,
+            percentiles: nul,
+            globalPercentile: 0,
+            performanceLevel: "insufficient",
+            responseCounts: nul,
+            subtestTimes: nul,
+            lockdownViolations: nul,
+            startedAt: null,
+            completedAt: null);
+
+        Assert.Equal(JsonValueKind.Object, result.RawScores.ValueKind);
+        Assert.Equal(JsonValueKind.Object, result.FinalScores.ValueKind);
+        Assert.Equal(JsonValueKind.Object, result.Percentiles.ValueKind);
+        Assert.Equal(JsonValueKind.Object, result.ResponseCounts.ValueKind);
+        Assert.Equal(JsonValueKind.Object, result.SubtestTimes.ValueKind);
+        Assert.Equal(JsonValueKind.Array, result.LockdownViolations.ValueKind);
+        Assert.Equal(0, result.ViolationCount);
+        Assert.Equal("insufficient", result.SubtestPerformanceLevels["pattern_recognition"]);
+    }
 }

@@ -110,14 +110,14 @@ public sealed class LiaResultReader(
             sessionId: reader.GetString(reader.GetOrdinal("id")),
             userName: ReadNullableString(reader, "userName"),
             userEmail: ReadNullableString(reader, "userEmail"),
-            rawScores: ReadJsonOrDefault(reader, "rawScores", "{}"),
-            finalScores: ReadJsonOrDefault(reader, "finalScores", "{}"),
-            percentiles: ReadJsonOrDefault(reader, "percentiles", "{}"),
+            rawScores: ReadJson(reader, "rawScores"),
+            finalScores: ReadJson(reader, "finalScores"),
+            percentiles: ReadJson(reader, "percentiles"),
             globalPercentile: ReadNullableDouble(reader, "globalPercentile") ?? 0,
             performanceLevel: ReadNullableString(reader, "performanceLevel"),
-            responseCounts: ReadJsonOrDefault(reader, "responseCounts", "{}"),
-            subtestTimes: ReadJsonOrDefault(reader, "subtestTimes", "{}"),
-            lockdownViolations: ReadJsonOrDefault(reader, "lockdownViolations", "[]"),
+            responseCounts: ReadJson(reader, "responseCounts"),
+            subtestTimes: ReadJson(reader, "subtestTimes"),
+            lockdownViolations: ReadJson(reader, "lockdownViolations"),
             startedAt: ReadNullableDateTime(reader, "startedAt"),
             completedAt: ReadNullableDateTime(reader, "completedAt"));
     }
@@ -148,11 +148,12 @@ public sealed class LiaResultReader(
         return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
     }
 
-    // jsonb column as text -> JsonElement; null column -> the given empty literal ({} or []).
-    private static JsonElement ReadJsonOrDefault(DbDataReader reader, string name, string fallback)
+    // jsonb column as text -> JsonElement. A SQL NULL surfaces as a JSON-null element; the assembler
+    // coalesces both SQL-null and jsonb 'null' to {} / [], matching legacy's `?? {}` / `?? []`.
+    private static JsonElement ReadJson(DbDataReader reader, string name)
     {
         var ordinal = reader.GetOrdinal(name);
-        var raw = reader.IsDBNull(ordinal) ? fallback : reader.GetString(ordinal);
+        var raw = reader.IsDBNull(ordinal) ? "null" : reader.GetString(ordinal);
         using var document = JsonDocument.Parse(raw);
         return document.RootElement.Clone();
     }
