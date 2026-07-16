@@ -432,8 +432,8 @@
         "DONE 2026-07-15b: built agent-driven (explore map -> TDD build). Reuses FM-DOTNET-009 rails (RequireIdentity + IUserAccessGuard) unchanged; only new surface is the 3-query read-only passthrough reader.",
         "Reader parity verified: pca_evaluations WHERE userId only (active+inactive, createdDate DESC), coKey excluded; user_career_profiles via row_to_json (all numerics are Int -> no Decimal-as-string divergence; frontend does not parse profile timestamps so the row_to_json vs Prisma ISO-Z format is a documented no-op); completed = count>0.",
         "dotnet build 0/0; 27 unit + 1 contract + 49 integration (+5 pca) pass. Staging canary on real data: self -> 200 with correct shape (careerProfile null + empty evals for staff), non-existent -> 404, anonymous -> 401. Web flag FORMMAPS_ROUTE_PCA_REPORT_TO_DOTNET added (dynamic :userId rewrite, identical to user-report's proven mechanism).",
-        "Lighter gate than user-report (guard reused from the already-reviewed FM-009; simple read-only passthrough) \u2014 verified by own parity read + real-data canary. Codex adversarial CLI remained hung all session.",
-        "OPEN: careerProfile-populated passthrough not canaried on real data (jack.young is staff, no profile) \u2014 covered by unit/integration tests; canary when a real student-with-profile userId is available."
+        "Lighter gate than user-report (guard reused from the already-reviewed FM-009; simple read-only passthrough) — verified by own parity read + real-data canary. Codex adversarial CLI remained hung all session.",
+        "OPEN: careerProfile-populated passthrough not canaried on real data (jack.young is staff, no profile) — covered by unit/integration tests; canary when a real student-with-profile userId is available."
       ]
     },
     {
@@ -679,7 +679,7 @@
     {
       "id": "FM-DOTNET-016-mil-results",
       "status": "completed",
-      "goal": "Phase A cognitive-cluster reads: GET /api/v1/mil/results/{userId} \u2014 the synthesized MIL DTO (no MIL table). Dual-path (primary from the newest completed LIA session's percentiles; fallback to pca_exam_sessions) with the legacy 300-point weightedComposite; canAccessUser on the path id; never-404 on missing data.",
+      "goal": "Phase A cognitive-cluster reads: GET /api/v1/mil/results/{userId} — the synthesized MIL DTO (no MIL table). Dual-path (primary from the newest completed LIA session's percentiles; fallback to pca_exam_sessions) with the legacy 300-point weightedComposite; canAccessUser on the path id; never-404 on missing data.",
       "dependsOn": [
         "FM-DOTNET-015-lia-results"
       ],
@@ -774,7 +774,7 @@
     {
       "id": "FM-DOTNET-018-pcaexam-config-reads",
       "status": "completed",
-      "goal": "Phase A pca-exam catalog reads: GET /api/pcaexam/exams/{examId}/instructions + GET /api/pcaexam/exam-config/{examId} \u2014 subscription-only global catalog projections of pca_exams (legacy getExamInstructions / getExamConfig).",
+      "goal": "Phase A pca-exam catalog reads: GET /api/pcaexam/exams/{examId}/instructions + GET /api/pcaexam/exam-config/{examId} — subscription-only global catalog projections of pca_exams (legacy getExamInstructions / getExamConfig).",
       "dependsOn": [
         "FM-DOTNET-017-personality-results"
       ],
@@ -815,7 +815,7 @@
     {
       "id": "FM-DOTNET-019-pcaexam-statistics",
       "status": "completed",
-      "goal": "Phase A pca-exam admin read: GET /api/pcaexam/statistics/{examId} \u2014 ADMIN_ROLES-gated aggregate over completed+active sessions (legacy getExamStatistics).",
+      "goal": "Phase A pca-exam admin read: GET /api/pcaexam/statistics/{examId} — ADMIN_ROLES-gated aggregate over completed+active sessions (legacy getExamStatistics).",
       "dependsOn": [
         "FM-DOTNET-018-pcaexam-config-reads"
       ],
@@ -848,7 +848,48 @@
         "dotnet test services/api/FormMaps.slnx"
       ],
       "notes": [
-        "DONE 2026-07-16: pca-exam statistics admin aggregate (new reusable PcaAdminGate rail for future all-results). dotnet 0/0; 161u+1c+115i (+3u +4i). Fresh review SAFE (raw-role gate rejects aliases+counselor, aggregate math/rounding/SQL/security faithful; scorePercentage non-null so GetDouble safe; order-dependent sub-ULP sum unreachable). Codex SKIPPED (trivial pure aggregate + context limit; project rule = fresh+canary are the gate). Canary GREEN real-data: anon->401; jack(school_admin)/feature-detection-001->200 {totalAttempts:4, avg:45.8, high:85, low:16.66666666666666 raw, uniqueUsers:4} + x-formmaps-service (ADMIN gate + aggregate proven live). Branch named ...-history but contains statistics (reused). \ud83d\udd34 IMPORTANT FINDING (blocks the full-row slices): STJ serializes DateTimeOffset(zero offset) as '...+00:00' (NOT '...Z', no ms) - byte-DIVERGENT from Node toISOString '...Z'. => FM-013 ExamSession (/session, /completed-exams) has a LATENT timestamp divergence never canaried on real timestamps; and the remaining full-row slices (pca-exam /history/:userId + /all-results) MUST use ISO-Z STRING timestamps (like LIA/MIL/personality ToIsoZ), NOT DateTimeOffset. STJ List<object> serializes each element by RUNTIME type (heterogeneous rows OK). \u25b6 NEXT = FM-020 pca-exam /history/:userId (canAccessUser + LIA synth, heterogeneous full+partial rows, Z-string timestamps via a new full-row DTO) + /all-results (ADMIN + pagination, same Z-string full-row DTO)."
+        "DONE 2026-07-16: pca-exam statistics admin aggregate (new reusable PcaAdminGate rail for future all-results). dotnet 0/0; 161u+1c+115i (+3u +4i). Fresh review SAFE (raw-role gate rejects aliases+counselor, aggregate math/rounding/SQL/security faithful; scorePercentage non-null so GetDouble safe; order-dependent sub-ULP sum unreachable). Codex SKIPPED (trivial pure aggregate + context limit; project rule = fresh+canary are the gate). Canary GREEN real-data: anon->401; jack(school_admin)/feature-detection-001->200 {totalAttempts:4, avg:45.8, high:85, low:16.66666666666666 raw, uniqueUsers:4} + x-formmaps-service (ADMIN gate + aggregate proven live). Branch named ...-history but contains statistics (reused). 🔴 IMPORTANT FINDING (blocks the full-row slices): STJ serializes DateTimeOffset(zero offset) as '...+00:00' (NOT '...Z', no ms) - byte-DIVERGENT from Node toISOString '...Z'. => FM-013 ExamSession (/session, /completed-exams) has a LATENT timestamp divergence never canaried on real timestamps; and the remaining full-row slices (pca-exam /history/:userId + /all-results) MUST use ISO-Z STRING timestamps (like LIA/MIL/personality ToIsoZ), NOT DateTimeOffset. STJ List<object> serializes each element by RUNTIME type (heterogeneous rows OK). ▶ NEXT = FM-020 pca-exam /history/:userId (canAccessUser + LIA synth, heterogeneous full+partial rows, Z-string timestamps via a new full-row DTO) + /all-results (ADMIN + pagination, same Z-string full-row DTO)."
+      ]
+    },
+    {
+      "id": "FM-DOTNET-020-pcaexam-history",
+      "status": "completed",
+      "goal": "Phase A pca-exam full-row read: GET /api/pcaexam/history/{userId} — canAccessUser-gated exam history with 5 synthesized per-subtest LIA rows prepended to the full real pca_exam_sessions rows, dedup-by-examId (synth wins) -> {sessions, latest} (legacy getExamHistory).",
+      "dependsOn": [
+        "FM-DOTNET-019-pcaexam-statistics"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/assessment.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/assessmentService.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Endpoints",
+        "services/api/src/FormMaps.Application",
+        "services/api/src/FormMaps.Infrastructure",
+        "services/api/tests",
+        "apps/web/next.config.ts",
+        "docs/migration"
+      ],
+      "outputs": [
+        "GET /api/pcaexam/history/{userId} ({sessions, latest})",
+        "PcaHistorySession full-row DTO with ISO-Z STRING timestamps (NOT DateTimeOffset -> STJ +00:00) + violations jsonb passthrough",
+        "SynthesizedHistoryRow partial DTO (~18 fields; omits violations/violationCount/flagForReview/isActive/createdBy/createdDate/updatedBy/updatedAt) -> heterogeneous List<object> serialized by runtime type",
+        "pure ExamHistorySynthesizer golden-pinned (MIL_EXAM_MAP order; id=lia-{parityId}-{subtest}; SUBTEST_BY_TYPE incl NumericVelocity->numerical_speed; scorePercentage=round(pct); accuracy=round(correct/answered*1000)/10; totalTimeSpent=round(durationMs/1000); dedup synth-wins)",
+        "ExamHistoryReader (full pca_exam_sessions rows + newest completed+active LIA session; `if(percentiles truthy)` JS-truthiness gate; Z-string timestamps)",
+        "web flag FORMMAPS_ROUTE_PCAEXAM_HISTORY_TO_DOTNET (default off)",
+        "4 unit + 3 integration tests"
+      ],
+      "guardrails": [
+        "Read-only only.",
+        "Guard chain RequireIdentity -> RequireSubscription -> canAccessUser(raw path userId) -> uniform IDOR-safe 404; anon -> 401; NEVER 404 on empty data (reader never null -> {sessions:[],latest:[]} 200).",
+        "Timestamps MUST be JS-toISOString Z-strings (yyyy-MM-ddTHH:mm:ss.fff'Z'), NOT DateTimeOffset. Synth rows PARTIAL (omit the 8 real-only fields). Dedup by examId synth-first-wins. Do not weaken prior slices/RLS/security middleware."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: pca-exam /history/:userId (first full-row + LIA-synthesis read). dotnet 0/0; 165u+1c+118i (+4u +3i). GATE: fresh-agent adversarial review + Codex both run (prior fresh review had been killed mid-run, redone). Fresh review: all 10 parity axes MATCH (MIL order, SUBTEST_BY_TYPE, id, rounding, dedup synth-wins, partial-vs-full heterogeneity, Z-strings, `if(percentiles)` truthiness gate, SQL @map aliases, guard chain). Its one blocking [HIGH] RLS-policy-dependency concern DISSOLVED (same as FM-012 Finding 1 / FM-015 Med): premise that legacy is not row-scoped is WRONG — legacy Prisma applies the IDENTICAL RLS GUC plan on every query (prisma.ts:41 resolveGucPlan + prismaRls.ts:36 SET LOCAL app.current_user_id/current_school_id), so legacy+.NET are RLS-scoped identically; the live legacy app serves counselor/school_admin student reads, so policies grant that visibility and .NET inherits it; furthermore this endpoint reads only pca_exam_sessions (FM-013) + lia_assessment_sessions (FM-015) — both already ship reads on this exact rail, canaried green. Codex: FIXES-NEEDED but every finding marked reachable=no EXCEPT the anon-401 body string (which is the port-wide ProtectedRequestGuard contract shipped+canaried across FM-009..FM-019 = status-parity not body-parity, decided). Latent unreachable items (GetInt32 throw on fractional jsonb count; AwayFromZero vs Math.round on negative percentiles; both-null LIA timestamp -> new Date() fallback) DOCUMENTED, NOT replicated (JS-coercion accidents on corrupt data, not intended behavior) — consistent with FM-015/016/017 decisions. NO code fix; ship. Canary GREEN (direct .NET, deploy 29523034268, health 200): anon->401 missing_identity + x-formmaps-service; jack(school_admin)/SELF(sub)->200 {sessions:[],latest:[]} (staff, empty as expected; full chain identity->sub-bypass->canAccessUser self-allow->empty reader); jack/nonexistent->404 'Not found' uniform. OPEN follow-up (gated, same as FM-013/015/016): real-data synth 200 (a student with an LIA session showing 5 synth + real rows, dedup) needs a Country Day student id via a gated in-VPC read. LATENT (flag): FM-013 ExamSession (/session, /completed-exams) DateTimeOffset->+00:00 timestamp divergence never canaried on real timestamps — decide fix->Z-strings vs verify frontend tolerates. NEXT = FM-021 /all-results (ADMIN raw-gate [Super Admin, school_admin] via PcaAdminGate -> 403 'Admin access required' before lookup; page=max(1,parseInt||1), limit=min(100,max(1,||20)), skip=(page-1)*limit; getAllResults {data:sessions, total, page, limit, totalPages=ceil(total/limit)} -> double-nested data.data; REUSE PcaHistorySession Z-string DTO, NO synthesis, NO canAccessUser — leaks userId+violations cross-school per legacy; JS parseInt leading-int semantics, not int.TryParse)."
       ]
     }
   ]
