@@ -9,6 +9,8 @@
     <EmbeddedResource Include="Assessments\Data\personality-profiles.json" />
     <!-- LIA-core percentile norm tables (extracted from legacy percentile-mapper.ts PERCENTILE_TABLES; Infinity->1e9 sentinel). -->
     <EmbeddedResource Include="Assessments\Data\lia-percentile-tables.json" />
+    <!-- LIA-core question bank raw items (extracted from the shared golden.json questionBank[305]; computed answers omitted, verbal static answers carried). -->
+    <EmbeddedResource Include="Assessments\Data\lia-question-bank.json" />
   </ItemGroup>
 
   <PropertyGroup>
