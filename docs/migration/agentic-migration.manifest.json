@@ -1082,6 +1082,41 @@
       "notes": [
         "DONE 2026-07-16: FIRST Phase B slice — LIA-core scoring engine ported PURE + golden-pinned, byte-parity proven (no DB/canary). dotnet 0/0; 214u+1c+131i (+11u). Approach: extract PERCENTILE_TABLES -> embedded JSON (like the FM-017 bank embed), hardcode the 5 configs (cross-checked vs golden.configs), embed golden.json in tests, harness runs EVERY case. GATE: fresh review SAFE + Codex FIXES-NEEDED, both folded — fresh caught levelCases unpinned (MED vacuous-gap) -> wired golden.levelCases (606) into harness so LiaPerformanceLevels[FM-015] is cross-repo-pinned; Codex caught the extraction dropped the 5 leading -Infinity percentile-0 rows (MED: fractional-negative gap returned 0 vs TS throw, unreachable for integer finalScores but a public-API divergence) -> re-extracted INCLUDING them (double min/max, +/-1e9), throw-on-fractional-gap pinned; + global rounding AwayFromZero->Math.Floor(x+0.5)=JS Math.round (LOW, unreachable neg) + count pins. Fresh independently re-derived all tables + 606 levelCases (0 mismatches); golden.json confirmed byte-identical (sha256 match). Corpus #11 (penalty divisors, roundHalfUp, norm-table percentiles, global mean-of-5, WM=60, gap/NaN THROW) now COVERED + golden-pinned. ▶ NEXT (Phase B/C): item-level answer scoring (isAnswerCorrect + VR theta->theta-90 chirality [corpus #10] + correctAnswer + question-bank, golden questionBank[305]-pinned) at the LIA take/submit slice; then personality tally + RIASEC vocational engines; OR continue Phase A reads (test-scores/question360/vocational360/school-admin)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-026-lia-item-level-scoring",
+      "status": "completed",
+      "goal": "Phase B slice 2: pure port of LIA item-level answer scoring (lib/lia-core scoring-engine.ts item-level fns + question-bank.ts static bank + verbal-en.ts answer resolver). Visual-rotation scored CHIRALITY-only; the theta->theta-90 remap of the 378 VR glyphs (corpus #10) lives in the static bank data, proven by pinning BuildQuestionBank() against the shared golden.json questionBank[305]. No DB/endpoints/canary. Feeds the Phase C LIA take/submit path + the DB seed.",
+      "dependsOn": [
+        "FM-DOTNET-025-lia-core-engine"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/lib/lia-core/scoring-engine.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/lia-core/question-bank.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/lia-core/verbal-en.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/lia-core/types.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/lia-core/__fixtures__/golden.json"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments",
+        "services/api/tests"
+      ],
+      "outputs": [
+        "LiaAnswerScoring (isAnswerCorrect trim/upper/ordinal with the exact ECMAScript JsWhitespace trim set; calculateCorrectAnswer dispatcher verbal+unknown THROW; validatePatternRecognition/NumericalSpeed/WorkingMemory/VisualRotation; getVerbalAnswerForLanguage en-override practice#2->C; BuildQuestionBank)",
+        "NormalizeVisualFigure/VisualFiguresMatch chirality-only (base glyph R vs mirrored U+1589; rotation suffix _90/_180/_270 ignored)",
+        "embedded lia-question-bank.json (305 raw items extracted from the shared golden.questionBank; computed answers omitted so the engine must produce them, verbal static answers carried)",
+        "LiaAnswerScoringTests: BuildQuestionBank pinned vs golden.questionBank[305] (all 305 computed/static keys incl. VR chirality) + normalization / JS-trim-set / tie-break / throws / verbal-resolver units"
+      ],
+      "guardrails": [
+        "Pure functions only (no DB/endpoints/HTTP). Visual-rotation MUST stay chirality-only (U+1589 base glyph, rotation ignored) -- corpus #10, mutation-verified red-if-regressed. isAnswerCorrect both-empty->true is the pure-fn contract; the caller guards skip semantics. Verbal keys are pre-defined (throw, never compute). Normalization trims the EXACT JS strip set (incl U+FEFF, excl U+0085) -- do not fall back to plain .Trim()."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: SECOND Phase B slice -- LIA item-level answer scoring ported PURE + golden-pinned (no DB/canary). dotnet 0/0; 246u+1c+131i (+32u). KEY finding: the VR theta->theta-90 remap (corpus #10) is NOT runtime math -- it was a one-time data-transcription remap baked into the static bank; scoring ignores rotation and compares CHIRALITY ONLY (base glyph upright R vs mirrored U+1589). Embed lia-question-bank.json extracted from the shared golden.questionBank[305] (byte-identical chain: legacy==tims-suite==monorepo-test-embed==PARITY-MANIFEST sha 7d9e7b0e; NO cross-repo golden mutation needed). BuildQuestionBank() reproduces all 305 correct_answers (4 subtests computed, verbal static) == golden, mutation-verified red on a VR-chirality break. GATE: fresh review SAFE + Codex FIXES-NEEDED (1 Low: JS .trim() strips U+FEFF/keeps U+0085; .NET Trim() the opposite) -> folded the exact ECMAScript JsWhitespace trim set, mutation-pinned both directions. Corpus #10 (lia-vr-rotation) now COVERED + golden-pinned. NEXT (Phase B/C): personality scoring tally (corpus #12) + RIASEC vocational+integration engines; then Phase C authed WRITES (LIA/personality/exam take+submit+complete using these engines); OR continue Phase A reads (test-scores/question360/vocational360/school-admin)."
+      ]
     }
   ]
 }
