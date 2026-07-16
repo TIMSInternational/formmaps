@@ -25,12 +25,47 @@ public class LiaCoreGoldenTests
     [Fact]
     public void Configs_match_golden()
     {
+        var n = 0;
         foreach (var c in Golden.GetProperty("configs").EnumerateArray())
         {
             var subtest = c.GetProperty("subtest").GetString()!;
             Assert.Equal(c.GetProperty("itemCount").GetInt32(), LiaScoring.ItemCount(subtest));
             Assert.Equal(c.GetProperty("penaltyDivisor").GetDouble(), LiaScoring.PenaltyDivisor(subtest));
+            n++;
         }
+
+        Assert.Equal(5, n);
+    }
+
+    [Fact]
+    public void All_level_cases_match_golden()
+    {
+        // Cross-repo pin for the performance-level bands (FM-015 LiaPerformanceLevels) via the SHARED
+        // golden.levelCases — so a future TS band-boundary regeneration goes red here too.
+        var levels = Golden.GetProperty("levelCases");
+
+        var globalN = 0;
+        foreach (var c in levels.GetProperty("global").EnumerateArray())
+        {
+            Assert.Equal(
+                c.GetProperty("level").GetString(),
+                LiaPerformanceLevels.GetPerformanceLevel(c.GetProperty("percentile").GetDouble()));
+            globalN++;
+        }
+
+        Assert.Equal(101, globalN);
+
+        var subtestN = 0;
+        foreach (var c in levels.GetProperty("subtest").EnumerateArray())
+        {
+            Assert.Equal(
+                c.GetProperty("level").GetString(),
+                LiaPerformanceLevels.GetSubtestPerformanceLevel(
+                    c.GetProperty("subtest").GetString()!, c.GetProperty("percentile").GetDouble()));
+            subtestN++;
+        }
+
+        Assert.Equal(505, subtestN);
     }
 
     [Fact]
@@ -81,7 +116,7 @@ public class LiaCoreGoldenTests
             n++;
         }
 
-        Assert.True(n > 0);
+        Assert.Equal(6, n);
     }
 
     [Fact]
@@ -89,5 +124,23 @@ public class LiaCoreGoldenTests
     {
         // Corpus #11: a NaN score (broken data) must throw, not silently report a perfect 100.
         Assert.ThrowsAny<Exception>(() => LiaPercentileMapper.GetPercentile("pattern_recognition", double.NaN));
+    }
+
+    [Theory]
+    // Faithful to the restored -Infinity boundary rows: a fractional negative in the gap between the
+    // (-Inf, -1]/(WM -0.01] row and the [0, …] rows THROWS (legacy behavior), not a silent 0.
+    [InlineData("pattern_recognition", -0.5)]
+    [InlineData("visual_rotation", -0.5)]
+    [InlineData("working_memory", -0.005)] // WM boundary is -0.01, so -0.005 is in the gap
+    public void Get_percentile_throws_on_fractional_negative_gap(string subtest, double score)
+    {
+        Assert.ThrowsAny<Exception>(() => LiaPercentileMapper.GetPercentile(subtest, score));
+    }
+
+    [Fact]
+    public void Get_percentile_below_table_is_zero_via_boundary_row()
+    {
+        // A large negative integer is matched by the restored (-Inf, -1] percentile-0 row.
+        Assert.Equal(0, LiaPercentileMapper.GetPercentile("pattern_recognition", -15));
     }
 }

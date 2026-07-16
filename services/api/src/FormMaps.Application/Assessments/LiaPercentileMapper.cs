@@ -11,7 +11,9 @@ namespace FormMaps.Application.Assessments;
 /// </summary>
 public static class LiaPercentileMapper
 {
-    private sealed record PercentileRange(int MinScore, long MaxScore, int Percentile);
+    // min/max are double so the faithful ±Infinity boundary rows (serialized as the ±1e9 sentinel) and
+    // the fractional WM boundary (-0.01) are preserved exactly — this keeps the TS throw-on-gap behavior.
+    private sealed record PercentileRange(double MinScore, double MaxScore, int Percentile);
 
     private static readonly IReadOnlyDictionary<string, IReadOnlyList<PercentileRange>> Tables = LoadTables();
 
@@ -53,7 +55,9 @@ public static class LiaPercentileMapper
     public static double CalculateGlobalPercentile(IReadOnlyDictionary<string, double> percentiles)
     {
         var average = percentiles.Values.Sum() / percentiles.Count;
-        return Math.Round(average * 100, MidpointRounding.AwayFromZero) / 100;
+        // JS Math.round(x) = Math.floor(x + 0.5) (rounds .5 toward +Inf, not away-from-zero) — matches
+        // legacy exactly for all values, incl. hypothetical negatives.
+        return Math.Floor((average * 100) + 0.5) / 100;
     }
 
     private static Dictionary<string, IReadOnlyList<PercentileRange>> LoadTables()
@@ -72,8 +76,8 @@ public static class LiaPercentileMapper
             foreach (var r in subtest.Value.EnumerateArray())
             {
                 ranges.Add(new PercentileRange(
-                    r.GetProperty("minScore").GetInt32(),
-                    r.GetProperty("maxScore").GetInt64(),
+                    r.GetProperty("minScore").GetDouble(),
+                    r.GetProperty("maxScore").GetDouble(),
                     r.GetProperty("percentile").GetInt32()));
             }
 
