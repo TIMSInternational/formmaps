@@ -1,11 +1,14 @@
+using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using FormMaps.Application.Reports;
+using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Reports;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
 
@@ -36,7 +39,19 @@ public static class DependencyInjection
         services.AddScoped<ITimelineReportReader, TimelineReportReader>();
         services.AddScoped<ICoachingReportReader, CoachingReportReader>();
         services.AddScoped<IEvaluationReportReader, EvaluationReportReader>();
+        services.AddScoped<IExamSessionReader, ExamSessionReader>();
         services.AddScoped<IUserAccessGuard, UserAccessGuard>();
+
+        // Subscription entitlement gate (legacy requireSubscription). Grace window is env-tunable
+        // (SUBSCRIPTION_GRACE_DAYS, default 7) — matching legacy's env override.
+        var graceDays = int.TryParse(configuration["SUBSCRIPTION_GRACE_DAYS"], out var parsedGrace) && parsedGrace > 0
+            ? parsedGrace
+            : SubscriptionAccess.DefaultGraceDays;
+        services.AddScoped<ISubscriptionGuard>(sp =>
+            new SubscriptionGuard(
+                sp.GetRequiredService<IFormMapsDatabaseSessionFactory>(),
+                sp.GetRequiredService<ILogger<SubscriptionGuard>>(),
+                graceDays));
 
         return services;
     }
