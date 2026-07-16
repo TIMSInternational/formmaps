@@ -21,10 +21,71 @@ public static class PersonalityEndpoints
         var group = app.MapGroup("/api/v1/personality")
             .WithTags("Personality");
 
+        group.MapGet("/access", GetAccessAsync);
+        group.MapGet("/session/{sessionId}", GetSessionAsync);
         group.MapGet("/session/{sessionId}/results", GetSessionResultsAsync);
         group.MapGet("/user/{userId}/results", GetUserResultsAsync);
 
         return app;
+    }
+
+    private static async Task<IResult> GetAccessAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ISubscriptionGuard subscriptionGuard,
+        IPersonalitySessionReader reader,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var subscription = await subscriptionGuard.RequireSubscriptionAsync(context, cancellationToken);
+        if (!subscription.Allowed)
+        {
+            return Deny(subscription);
+        }
+
+        // Self-scoped: reads the caller's own sessions (legacy checkAccess(req.userId)).
+        var sessions = await reader.ReadAccessSessionsAsync(context, context.Tenant!.UserId, cancellationToken);
+        var access = PersonalityAccess.Evaluate(sessions);
+        return Results.Ok(new { success = true, data = access });
+    }
+
+    private static async Task<IResult> GetSessionAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ISubscriptionGuard subscriptionGuard,
+        IPersonalitySessionReader reader,
+        string sessionId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var subscription = await subscriptionGuard.RequireSubscriptionAsync(context, cancellationToken);
+        if (!subscription.Allowed)
+        {
+            return Deny(subscription);
+        }
+
+        // Self-ownership inside the reader (id + userId + isActive); foreign/missing -> uniform 404.
+        var session = await reader.GetOwnedSessionAsync(context, sessionId, context.Tenant!.UserId, cancellationToken);
+        if (session is null)
+        {
+            return NotFound();
+        }
+
+        return Results.Ok(new { success = true, data = session });
     }
 
     private static async Task<IResult> GetSessionResultsAsync(

@@ -96,6 +96,18 @@ function shouldRoutePersonalityResultsToDotnet() {
   );
 }
 
+function shouldRoutePersonalityAccessToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_ACCESS_TO_DOTNET)
+  );
+}
+
+function shouldRoutePersonalitySessionToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_SESSION_TO_DOTNET)
+  );
+}
+
 function shouldRoutePcaExamConfigToDotnet() {
   return Boolean(
     dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_CONFIG_TO_DOTNET)
@@ -310,6 +322,22 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/personality/user/:userId/results",
               destination: `${dotnetApiBaseUrl}/api/v1/personality/user/:userId/results`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePersonalityAccessToDotnet()
+        ? [
+            {
+              source: "/api/v1/personality/access",
+              destination: `${dotnetApiBaseUrl}/api/v1/personality/access`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePersonalitySessionToDotnet()
+        ? [
+            {
+              source: "/api/v1/personality/session/:sessionId",
+              destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId`,
             },
           ]
         : []),
