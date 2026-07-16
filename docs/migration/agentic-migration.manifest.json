@@ -1047,6 +1047,41 @@
       "notes": [
         "DONE 2026-07-16: assessments-timeline reads. dotnet 0/0; 204u+1c+131i (+7u +3i). GATE: fresh review + Codex BOTH = FIXES NEEDED, CONVERGED on ONE MED (int32 overflow in BuildTimeline skip: (page-1)*limit int32 wraps negative for huge page -> Skip(negative) returns first page vs legacy empty slice) — FIXED (compute skip in long, past-end->empty; golden-pinned Large_page_returns_empty test), same class as the FM-021 skip fix. Everything else parity-clean both reviews (event mapping/score-omission/titles/status, stable sort tie-break, enrolledAt??createdDate, totalPages, stats hardcoded-5+rounding+completedCourses, Z-dates, RequireIdentity-only-no-subscription self-scoped, SQL @@map+camelCase cols+isActive, camelCase JSON, backward-compat all-results default 20). 2 INFO (STJ escapes ° -> \\u00B0 decodes identically; export/report out of scope). Canary GREEN (redeploy 29530887712 of d638dbe, health 200): anon /me/timeline->401; jack /me/timeline->200 {total:0,totalPages:0,summary:{0,0,0},events:[]} (self-scoped empty — jack=staff has no OWN sessions; the /all-results rows were cross-school admin view); ?page=2&limit=1->200 {page:2,limit:1,totalPages:0}; /me/timeline/stats->200 {overallCompletion:0, breakdown pca{0,5}} (hardcoded pca total=5 proven live). OPEN follow-up (gated): non-empty real-data timeline (heterogeneous events + score-on-pca) needs a real student id/token. ▶ NEXT = FM-025 Phase B: port LIA-core scoring engine + percentile mapper (pure, golden.json-pinned: scoringCases/percentileCases/globalPercentileCases; no DB/canary) — unblocks Phase C LIA write path."
       ]
+    },
+    {
+      "id": "FM-DOTNET-025-lia-core-engine",
+      "status": "completed",
+      "goal": "Phase B slice 1: pure port of the LIA-core scoring engine + percentile mapper (lib/lia-core scoring-engine.ts + percentile-mapper.ts), verified byte-for-byte against the shared cross-repo golden.json. No DB/endpoints/canary. Unblocks the Phase C LIA write/completion path.",
+      "dependsOn": [
+        "FM-DOTNET-024-assessments-timeline"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/lib/lia-core/scoring-engine.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/lia-core/percentile-mapper.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/lia-core/types.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/lia-core/__fixtures__/golden.json"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments",
+        "services/api/tests"
+      ],
+      "outputs": [
+        "LiaScoring (calculateRawScore/FinalScore/SubtestScores/getMax/Min/clampScore; configs PR4/VB2/NS2/WM1/VR3; roundHalfUp==Math.Round AwayFromZero; WM unrounded)",
+        "LiaPercentileMapper (getPercentile range lookup w/ restored -Inf boundary rows -> gap/NaN THROW; calculateGlobalPercentile mean Math.Floor(x*100+0.5)/100)",
+        "embedded lia-percentile-tables.json (228 ranges extracted from PERCENTILE_TABLES, +/-Inf->+/-1e9, double min/max preserving WM -0.01)",
+        "LiaCoreGoldenTests: embedded golden.json (byte-identical, sha256 7d9e7b0e...) pins 90 scoringCases + 449 percentileCases + 6 globalPercentileCases + 5 configs + 606 levelCases (101 global + 505 subtest via LiaPerformanceLevels) + throw cases"
+      ],
+      "guardrails": [
+        "Pure functions only (no DB/endpoints/HTTP). Byte-parity via the SHARED golden.json (cross-repo sha256 PARITY-MANIFEST.json w/ tims-suite).",
+        "getPercentile: first-match range, restored -Inf boundary rows so <first is dead + gaps/NaN THROW (never silent 100/0). global = JS Math.round == Math.Floor(x+0.5). Do not weaken; item-level answer scoring (isAnswerCorrect/VR theta-90/correctAnswer/question-bank) deferred to the Phase C submit slice."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: FIRST Phase B slice — LIA-core scoring engine ported PURE + golden-pinned, byte-parity proven (no DB/canary). dotnet 0/0; 214u+1c+131i (+11u). Approach: extract PERCENTILE_TABLES -> embedded JSON (like the FM-017 bank embed), hardcode the 5 configs (cross-checked vs golden.configs), embed golden.json in tests, harness runs EVERY case. GATE: fresh review SAFE + Codex FIXES-NEEDED, both folded — fresh caught levelCases unpinned (MED vacuous-gap) -> wired golden.levelCases (606) into harness so LiaPerformanceLevels[FM-015] is cross-repo-pinned; Codex caught the extraction dropped the 5 leading -Infinity percentile-0 rows (MED: fractional-negative gap returned 0 vs TS throw, unreachable for integer finalScores but a public-API divergence) -> re-extracted INCLUDING them (double min/max, +/-1e9), throw-on-fractional-gap pinned; + global rounding AwayFromZero->Math.Floor(x+0.5)=JS Math.round (LOW, unreachable neg) + count pins. Fresh independently re-derived all tables + 606 levelCases (0 mismatches); golden.json confirmed byte-identical (sha256 match). Corpus #11 (penalty divisors, roundHalfUp, norm-table percentiles, global mean-of-5, WM=60, gap/NaN THROW) now COVERED + golden-pinned. ▶ NEXT (Phase B/C): item-level answer scoring (isAnswerCorrect + VR theta->theta-90 chirality [corpus #10] + correctAnswer + question-bank, golden questionBank[305]-pinned) at the LIA take/submit slice; then personality tally + RIASEC vocational engines; OR continue Phase A reads (test-scores/question360/vocational360/school-admin)."
+      ]
     }
   ]
 }
