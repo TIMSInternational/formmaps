@@ -967,6 +967,45 @@
       "notes": [
         "DONE 2026-07-16: closes the FM-013 ExamSession DateTimeOffset->+00:00 latent divergence flagged at FM-019/020. Root: STJ renders DateTimeOffset(zero offset) as +00:00 != Node toISOString Z. Frontend TOLERATED it (consumes timestamps as strings via new Date(), which parses +00:00 identically to Z — no functional break; verified apps/web has no exact-string-equality/cache-key use), so this is a byte-parity fix not a bug fix. Approach (architecturally-correct): /session unified onto PcaHistorySession via the shared PcaExamSessionRowMapper (the deleted ExamSession DTO had a byte-identical field set), so /session/history/all-results now share ONE full-row projection (no future drift); /completed-exams subset uses IsoZ. dotnet 0/0; 192u+1c+123i (net-zero test count; modified DTOs + added Z-string assertions). GATE: fresh review = SAFE TO SHIP (all 7 checks MATCH/UNCHANGED incl. field-by-field parity, violations-null parity [no global ignore-null config], byte-identical column list, IsoZ ms-truncation, guards unchanged, no dangling refs, no new throws); Codex = SAFE TO SHIP (no findings). Pre-existing out-of-scope note (NOT changed): /session missing -> 'Not found' vs legacy 'Session not found' = the port's intentional uniform-404 IDOR hardening (corpus #28). Canary GREEN real-data (deploy 29527813263, health 200): anon /session->401; admin /session/{real id from /all-results}->200 startTime '2026-06-17T21:40:03.141Z' (Z-STRING live, no +00:00), createdDate+updatedAt Z, violationCount+violations key present (full-row intact); /session/nonexistent->404; /completed-exams/self->200 count 0 (staff empty; same IsoZ proven on /session). ALL pca-exam full-row timestamp emitters now Z-string. ▶ NEXT = personality take-flow session reads (/access + /session/:id), then assessment-profile derive/insights-status + assessments-timeline reads, test-scores reads, question360 GETs, vocational360 catalog/score reads, school-admin views -> Phase B engines."
       ]
+    },
+    {
+      "id": "FM-DOTNET-023-personality-takeflow",
+      "status": "completed",
+      "goal": "Phase A personality take-flow reads: GET /api/v1/personality/access (checkAccess) + GET /session/{sessionId} (getOwnedSession). Completes the personality read cluster.",
+      "dependsOn": [
+        "FM-DOTNET-022-examsession-zstrings"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/personality.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/personality/personality-session-service.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Endpoints",
+        "services/api/src/FormMaps.Application/Assessments",
+        "services/api/src/FormMaps.Infrastructure/Assessments",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "GET /api/v1/personality/access ({has_access, has_completed, existing_session_id?, reason?}) — snake_case, optional keys OMITTED when absent",
+        "GET /api/v1/personality/session/{sessionId} (7-key snake_case projection {id,status,variant,language,resolved_type,started_at,completed_at}) — ISO-Z timestamps, uniform 404",
+        "pure PersonalityAccess.Evaluate (completed-wins-over-in-progress golden-pinned)",
+        "PersonalitySessionReader (self-scoped: /access = user's active sessions newest-first; /session = id+user_id+is_active owned row)",
+        "2 web flags FORMMAPS_ROUTE_PERSONALITY_{ACCESS,SESSION}_TO_DOTNET + rewrites",
+        "5 unit + 5 integration tests"
+      ],
+      "guardrails": [
+        "Read-only only.",
+        "Both self-scoped on context.Tenant.UserId (NO canAccessUser, NO path userId). Guard RequireIdentity -> RequireSubscription -> reader. /session ownership WHERE id+user_id+is_active -> null -> uniform IDOR-safe 404; anon -> 401.",
+        "/access: existing_session_id + reason OMITTED (JsonIgnore WhenWritingNull) when absent; reason only on completed branch. /session: all 7 keys present even when null; no leaked columns (dimension_scores/violations/flag_for_review/user_id). ISO-Z string timestamps (not DateTimeOffset). Do not weaken prior slices/RLS/security."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: personality take-flow reads (/access + /session/:id). Completes the personality read cluster (results = FM-017). dotnet 0/0; 197u+1c+128i (+5u +5i). GATE: fresh review = SAFE TO SHIP (all 9 axes MATCH: completed-wins ordering, omitted optional keys via JsonIgnore WhenWritingNull + snake_case, 7-key projection all-present-when-null no leaked cols, uniform-404 ownership, ISO-Z via PcaExamSessionRowMapper.IsoZ [personality timestamps are timestamp(3) not timestamptz -> correct Z], self-scoped no canAccessUser, no route shadowing /session vs /session/results, snake_case JsonPropertyName wins over camelCase policy; 2 unreachable-under-NOT-NULL-schema Low/Info notes). Codex = SAFE TO SHIP (parity confirmed incl. adversarial access orderings [in_progress-newer/completed-older etc], no RLS/sub divergence, no .NET-only throw). Canary GREEN (deploy 29528932080, health 200): anon /access->401+x-formmaps-service; jack(school_admin) /access->200 {has_access:true, has_completed:false} — existing_session_id+reason OMITTED (JsonIgnore proven LIVE); anon /session->401; jack /session/bogus->404 uniform. OPEN follow-up (gated, same as FM-017): real /session 200 7-key shape needs a real personality-session id (jack=staff has none). ▶ NEXT = FM-024 assessments-timeline (/me/timeline 3-source merge + /me/timeline/stats; RequireIdentity only, NO subscription; reuse PcaExamPagination default 50), then Phase B LIA-core engine port (golden-fixture-pinned)."
+      ]
     }
   ]
 }
