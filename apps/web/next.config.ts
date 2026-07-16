@@ -108,6 +108,12 @@ function shouldRoutePersonalitySessionToDotnet() {
   );
 }
 
+function shouldRouteAssessmentTimelineToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ASSESSMENT_TIMELINE_TO_DOTNET)
+  );
+}
+
 function shouldRoutePcaExamConfigToDotnet() {
   return Boolean(
     dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_CONFIG_TO_DOTNET)
@@ -338,6 +344,18 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/personality/session/:sessionId",
               destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteAssessmentTimelineToDotnet()
+        ? [
+            {
+              source: "/api/v1/assessments/me/timeline/stats",
+              destination: `${dotnetApiBaseUrl}/api/v1/assessments/me/timeline/stats`,
+            },
+            {
+              source: "/api/v1/assessments/me/timeline",
+              destination: `${dotnetApiBaseUrl}/api/v1/assessments/me/timeline`,
             },
           ]
         : []),
