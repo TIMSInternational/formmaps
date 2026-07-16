@@ -86,6 +86,20 @@ public class LiaAnswerScoringTests
     }
 
     [Theory]
+    // JS String.trim() strip-set parity (Codex FM-026 finding): JS `.trim()` strips U+FEFF (BOM) but
+    // NOT U+0085 (NEL); .NET's default Trim() is the exact OPPOSITE on both. Pins the faithful
+    // JsWhitespace set — these go red if IsAnswerCorrect ever falls back to a plain .Trim().
+    [InlineData("\uFEFFA\uFEFF", "A", true)]   // JS strips BOM -> "A" == "A"
+    [InlineData("\u00A0A\u00A0", "A", true)]   // JS strips NBSP (Zs)
+    [InlineData("\u2003A", "A", true)]          // JS strips EM SPACE (Zs)
+    [InlineData("\tA\t", "A", true)]           // TAB
+    [InlineData("\u0085A", "A", false)]         // JS does NOT strip NEL -> stays different from "A"
+    public void IsAnswerCorrect_matches_js_trim_strip_set(string user, string correct, bool expected)
+    {
+        Assert.Equal(expected, LiaAnswerScoring.IsAnswerCorrect("pattern_recognition", user, correct));
+    }
+
+    [Theory]
     [InlineData("R", "R", true)]
     [InlineData("R_90", "R_270", true)]   // same chirality, rotation ignored
     [InlineData("ᖉ", "ᖉ_180", true)]      // same chirality, rotation ignored

@@ -33,6 +33,18 @@ public static class LiaAnswerScoring
     // everything else (the upright 'R*' tokens) is chirality 'R'. Rotation suffixes are discarded.
     private const string MirroredR = "ᖉ";
 
+    // The exact ECMAScript String.prototype.trim() strip set (the WhiteSpace + LineTerminator
+    // productions) so IsAnswerCorrect's normalization matches JS `.trim()` byte-for-byte. This differs
+    // from .NET's default Trim() (char.IsWhiteSpace) in two code points: JS strips U+FEFF (ZWNBSP/BOM)
+    // which .NET keeps, and .NET strips U+0085 (NEL) which JS keeps. Both verified against node + .NET.
+    private static readonly char[] JsWhitespace =
+    [
+        '\u0009', '\u000A', '\u000B', '\u000C', '\u000D', '\u0020', '\u00A0', '\u1680',
+        '\u2000', '\u2001', '\u2002', '\u2003', '\u2004', '\u2005', '\u2006', '\u2007',
+        '\u2008', '\u2009', '\u200A', '\u2028', '\u2029', '\u202F', '\u205F', '\u3000',
+        '\uFEFF',
+    ];
+
     // Verbal answer-letter overrides where the official EN doc's option order diverges from the ES
     // original (legacy verbal-en.ts VERBAL_EN_ANSWER_OVERRIDES). Practice item 2 only; assessment: none.
     private static readonly IReadOnlyDictionary<int, string> PracticeVerbalOverrides =
@@ -175,7 +187,7 @@ public static class LiaAnswerScoring
     public static IReadOnlyList<LiaQuestionBankItem> BuildQuestionBank() => Bank;
 
     private static string Normalize(string? value) =>
-        (value ?? string.Empty).Trim().ToUpperInvariant();
+        (value ?? string.Empty).Trim(JsWhitespace).ToUpperInvariant();
 
     private static int LetterPosition(string letter) =>
         char.ToUpperInvariant(letter[0]) - 64;
