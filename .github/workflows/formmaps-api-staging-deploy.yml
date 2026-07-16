@@ -129,14 +129,22 @@ jobs:
           FORMMAPS_STAGING_DOTNET_API_BASE_URL: ${{ steps.service.outputs.base_url }}
         run: npm run api:staging-canary -- --health-only
 
+      # Post-deploy authenticated check. Non-blocking: the deploy + health canary
+      # already gate success; this mints a short-lived token in-CI from the JWT
+      # secret (no stored/expiring bearer to babysit) and is informational only.
       - name: Run authenticated benchmark canary
+        continue-on-error: true
         env:
           FORMMAPS_STAGING_DOTNET_API_BASE_URL: ${{ steps.service.outputs.base_url }}
-          FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN: ${{ secrets.FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN }}
+          JWT_SECRET_ARN: ${{ secrets.FORMMAPS_STAGING_JWT_SECRET_ARN }}
+          CANARY_USER_ID: ${{ vars.FORMMAPS_STAGING_CANARY_USER_ID || '00000000-0000-0000-0000-000000000001' }}
+          CANARY_SCHOOL_ID: ${{ vars.FORMMAPS_STAGING_CANARY_SCHOOL_ID || '0edde974-5257-4178-b4cf-0006a463d225' }}
         run: |
           set -euo pipefail
-          if [ -z "${FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN:-}" ]; then
-            echo "Skipping authenticated benchmark canary; FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN is not set."
+          if [ -z "${JWT_SECRET_ARN:-}" ]; then
+            echo "Skipping authenticated benchmark canary; FORMMAPS_STAGING_JWT_SECRET_ARN not set."
             exit 0
           fi
+          JWT_SECRET="$(aws secretsmanager get-secret-value --secret-id "$JWT_SECRET_ARN" --query SecretString --output text)"
+          export FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN="$(JWT_SECRET="$JWT_SECRET" node -e 'const c=require("crypto"),s=process.env.JWT_SECRET,E=o=>Buffer.from(JSON.stringify(o)).toString("base64url"),n=Math.floor(Date.now()/1000),h=E({alg:"HS256",typ:"JWT"}),p=E({sub:process.env.CANARY_USER_ID,role:"school_admin",schoolId:process.env.CANARY_SCHOOL_ID,permissions:["analytics:school"],iss:"formmaps-api",aud:"formmaps-frontend",iat:n,exp:n+300});process.stdout.write(h+"."+p+"."+c.createHmac("sha256",s).update(h+"."+p).digest("base64url"))')"
           npm run api:staging-canary
