@@ -33,6 +33,7 @@ app.MapExamEndpoints();
 app.MapLiaEndpoints();
 app.MapMilEndpoints();
 app.MapPersonalityEndpoints();
+app.MapAssessmentTimelineEndpoints();
 
 app.Run();
 

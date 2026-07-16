@@ -9,10 +9,10 @@ namespace FormMaps.Application.Assessments;
 /// </summary>
 public sealed record PcaExamPagination(int Page, int Limit, long Skip)
 {
-    public static PcaExamPagination Resolve(string? pageRaw, string? limitRaw)
+    public static PcaExamPagination Resolve(string? pageRaw, string? limitRaw, int defaultLimit = 20)
     {
         var page = Math.Max(1, FalsyOr(JsParseInt(pageRaw), 1));
-        var limit = Math.Min(100, Math.Max(1, FalsyOr(JsParseInt(limitRaw), 20)));
+        var limit = Math.Min(100, Math.Max(1, FalsyOr(JsParseInt(limitRaw), defaultLimit)));
         // 64-bit multiply: page can saturate to int.MaxValue, so an int32 (page-1)*limit could
         // overflow and wrap to a small OFFSET, silently serving wrong rows. OFFSET is bigint.
         return new PcaExamPagination(page, limit, (long)(page - 1) * limit);
