@@ -89,6 +89,13 @@ function shouldRouteMilResultsToDotnet() {
   );
 }
 
+function shouldRoutePersonalityResultsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_RESULTS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -267,6 +274,18 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/mil/results/:userId",
               destination: `${dotnetApiBaseUrl}/api/v1/mil/results/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePersonalityResultsToDotnet()
+        ? [
+            {
+              source: "/api/v1/personality/session/:sessionId/results",
+              destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId/results`,
+            },
+            {
+              source: "/api/v1/personality/user/:userId/results",
+              destination: `${dotnetApiBaseUrl}/api/v1/personality/user/:userId/results`,
             },
           ]
         : []),
