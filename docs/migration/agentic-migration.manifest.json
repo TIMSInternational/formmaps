@@ -388,7 +388,7 @@
     },
     {
       "id": "FM-DOTNET-010-reports-pca",
-      "status": "in_progress",
+      "status": "completed",
       "goal": "Migrate the read-only PCA report GET /api/v1/reports/pca/{userId} with canAccessUser ownership parity (own-record / counselor-assignment / same-school / super-admin), IDOR-safe 404 denial, and data parity against the legacy handler (evaluations without an isActive filter, no coKey, full career profile row).",
       "dependsOn": [
         "FM-DOTNET-009-reports-user-report"
@@ -427,6 +427,13 @@
       "validation": [
         "dotnet build services/api/FormMaps.slnx",
         "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-15b: built agent-driven (explore map -> TDD build). Reuses FM-DOTNET-009 rails (RequireIdentity + IUserAccessGuard) unchanged; only new surface is the 3-query read-only passthrough reader.",
+        "Reader parity verified: pca_evaluations WHERE userId only (active+inactive, createdDate DESC), coKey excluded; user_career_profiles via row_to_json (all numerics are Int -> no Decimal-as-string divergence; frontend does not parse profile timestamps so the row_to_json vs Prisma ISO-Z format is a documented no-op); completed = count>0.",
+        "dotnet build 0/0; 27 unit + 1 contract + 49 integration (+5 pca) pass. Staging canary on real data: self -> 200 with correct shape (careerProfile null + empty evals for staff), non-existent -> 404, anonymous -> 401. Web flag FORMMAPS_ROUTE_PCA_REPORT_TO_DOTNET added (dynamic :userId rewrite, identical to user-report's proven mechanism).",
+        "Lighter gate than user-report (guard reused from the already-reviewed FM-009; simple read-only passthrough) \u2014 verified by own parity read + real-data canary. Codex adversarial CLI remained hung all session.",
+        "OPEN: careerProfile-populated passthrough not canaried on real data (jack.young is staff, no profile) \u2014 covered by unit/integration tests; canary when a real student-with-profile userId is available."
       ]
     }
   ]
