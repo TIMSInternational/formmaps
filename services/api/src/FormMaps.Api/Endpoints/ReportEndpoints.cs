@@ -13,6 +13,7 @@ public static class ReportEndpoints
 
         group.MapGet("/benchmark", GetBenchmarkAsync);
         group.MapGet("/user-report/{userId}", GetUserReportAsync);
+        group.MapGet("/pca/{userId}", GetPcaReportAsync);
 
         return app;
     }
@@ -93,6 +94,62 @@ public static class ReportEndpoints
                     enrolled = report.Courses.Enrolled,
                     completed = report.Courses.Completed
                 },
+                generatedAt = report.GeneratedAt
+            }
+        });
+    }
+
+    private static async Task<IResult> GetPcaReportAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IUserAccessGuard userAccessGuard,
+        IPcaReportReader reportReader,
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var guardDecision = protectedRequestGuard.RequireIdentity(context);
+        if (!guardDecision.Allowed)
+        {
+            return Results.Json(
+                new
+                {
+                    success = false,
+                    code = guardDecision.Code,
+                    message = guardDecision.Message
+                },
+                statusCode: guardDecision.StatusCode);
+        }
+
+        if (!await userAccessGuard.CanAccessUserAsync(context, userId, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var report = await reportReader.ReadAsync(context, userId, cancellationToken);
+        if (report is null)
+        {
+            return NotFound();
+        }
+
+        return Results.Ok(new
+        {
+            success = true,
+            data = new
+            {
+                studentId = report.StudentId,
+                studentName = report.StudentName,
+                completed = report.Completed,
+                evaluations = report.Evaluations.Select(evaluation => new
+                {
+                    id = evaluation.Id,
+                    userId = evaluation.UserId,
+                    pcaCod = evaluation.PcaCod,
+                    isActive = evaluation.IsActive,
+                    createdDate = evaluation.CreatedDate,
+                    updatedAt = evaluation.UpdatedAt
+                }),
+                careerProfile = report.CareerProfile,
                 generatedAt = report.GeneratedAt
             }
         });
