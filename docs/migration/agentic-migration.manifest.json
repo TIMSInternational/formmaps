@@ -770,6 +770,47 @@
       "notes": [
         "DONE 2026-07-16: personality result reads. dotnet 0/0; 158u+1c+105i green (+22u +9i incl. the Codex fix). PROFILE BANK STRATEGY: extracted the 98KB legacy personality-profiles.data.ts to personality-profiles.json, embedded as a .NET EmbeddedResource, loaded once + localized at read time (avoids error-prone hand-transcription; deep-diff proved byte-identical). Fresh-agent review = SAFE TO SHIP (bank byte-perfect, localize asymmetry correct, buildResults/casing-hybrid/timestamps/gating/500-landmine/security all MATCH; 2 Low unreachable). Codex = FIXES NEEDED (2 Medium on adversarial jsonb) FIXED+PINNED: non-object dimensionScores must pass through to score.dimensions verbatim ('?? {}' coalesces ONLY null) + filter(Boolean) drops falsy dimension values (null/false/0) - both restore byte-parity though unreachable with the well-formed writer; 1 Low (non-array violations JS-length quirk) DOCUMENTED unreachable (writer stores null|array only), not replicated. Staging canary GREEN (redeploy 29510889228, health 200): anon session/user -> 401 missing_identity; authed(jack school_admin) session/nonexistent -> 404 + x-formmaps-service; authed(jack) user/<own id> -> 404 (full chain, jack=staff no personality session); user/nonexistent -> 404. OPEN follow-up (gated, same as prior slices): real-data 200 (the localized narrative for a real completed session) needs a Country Day student personality-session id via a gated in-VPC read; bank shape is otherwise backstopped by byte-identical embed + unit/integration tests."
       ]
+    },
+    {
+      "id": "FM-DOTNET-018-pcaexam-config-reads",
+      "status": "completed",
+      "goal": "Phase A pca-exam catalog reads: GET /api/pcaexam/exams/{examId}/instructions + GET /api/pcaexam/exam-config/{examId} \u2014 subscription-only global catalog projections of pca_exams (legacy getExamInstructions / getExamConfig).",
+      "dependsOn": [
+        "FM-DOTNET-017-personality-results"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/assessment.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/assessmentService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma",
+        "services/api/src/FormMaps.Infrastructure/Assessments/ExamCatalogReader.cs"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Endpoints",
+        "services/api/src/FormMaps.Application",
+        "services/api/src/FormMaps.Infrastructure",
+        "services/api/tests",
+        "apps/web/next.config.ts",
+        "docs/migration"
+      ],
+      "outputs": [
+        "GET /api/pcaexam/exams/{examId}/instructions ({id,name,type,timeLimitMinutes,description,totalQuestions,instructions}, instructions==description)",
+        "GET /api/pcaexam/exam-config/{examId} ({id,name,type,timeLimitMinutes,totalQuestions,instructions} - NO separate description key)",
+        "web flag FORMMAPS_ROUTE_PCAEXAM_CONFIG_TO_DOTNET (default off)",
+        "6 integration tests"
+      ],
+      "guardrails": [
+        "Read-only only.",
+        "Subscription-only (RequireIdentity + RequireSubscription, NO canAccessUser, NO admin); missing -> 404 'Exam not found' (global catalog, not the ownership-uniform 404).",
+        "instructions carries BOTH description and instructions (==description); exam-config OMITS the separate description key (only instructions==description) - the exact legacy field-set difference.",
+        "type enum ::text; pca_exams columns non-null (description String @default('') so GetString safe); param bound; no answer-key/question rows touched. Do not weaken prior slices, RLS, tenant isolation, or the security middleware."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: pca-exam config/instructions catalog reads (added to the existing /api/pcaexam ExamEndpoints group). dotnet 0/0; 158u+1c+111i green (+6i). Lighter-but-full gate justified (trivial catalog projections mirroring FM-014). Fresh-agent review = SAFE TO SHIP (both field-sets exact incl. the description-key difference, 404 'Exam not found', subscription-only guard + short-circuits, description non-null so GetString safe, no route shadowing /exams/{examId} vs /exams/{examId}/instructions, no leak). Codex first run timed out mid-read (foreground 2-min); re-dispatched background (per project rule fresh-review+canary are the gate, don't block on Codex). Staging canary GREEN incl. REAL-DATA 200s (deploy 29516639354, health 200): anon->401; authed(jack school_admin) instructions/feature-detection-001->200 + x-formmaps-service, keys=[id,name,type,timeLimitMinutes,description,totalQuestions,instructions], instructions==description (real: PatternRecognition, 60 q, 3 min); instructions/nonexistent->404 'Exam not found'; exam-config/feature-detection-001->200 keys=[id,name,type,timeLimitMinutes,totalQuestions,instructions] (NO description key); exam-config/nonexistent->404. Field-set difference proven LIVE. LATENT (corpus note): if pca_exams.description ever migrates to nullable, GetString would 500 vs legacy null-passthrough."
+      ]
     }
   ]
 }
