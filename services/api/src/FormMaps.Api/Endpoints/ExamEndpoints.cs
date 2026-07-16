@@ -23,6 +23,7 @@ public static class ExamEndpoints
         group.MapGet("/exam-config/{examId}", GetExamConfigAsync);
         group.MapGet("/statistics/{examId}", GetStatisticsAsync);
         group.MapGet("/history/{userId}", GetHistoryAsync);
+        group.MapGet("/all-results", GetAllResultsAsync);
 
         return app;
     }
@@ -57,6 +58,52 @@ public static class ExamEndpoints
 
         var data = await reader.ReadAsync(context, userId, cancellationToken);
         return Results.Ok(new { success = true, data });
+    }
+
+    private static async Task<IResult> GetAllResultsAsync(
+        HttpContext http,
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ISubscriptionGuard subscriptionGuard,
+        IAllResultsReader reader,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var subscription = await subscriptionGuard.RequireSubscriptionAsync(context, cancellationToken);
+        if (!subscription.Allowed)
+        {
+            return Deny(subscription);
+        }
+
+        // ADMIN_ROLES gate (Super Admin / school_admin, raw exact match) BEFORE any DB lookup.
+        if (!PcaAdminGate.IsAdmin(context))
+        {
+            return Results.Json(
+                new { success = false, message = "Admin access required" },
+                statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        var pageQuery = http.Request.Query["page"];
+        var limitQuery = http.Request.Query["limit"];
+        var pagination = PcaExamPagination.Resolve(
+            pageQuery.Count > 0 ? pageQuery[0] : null,
+            limitQuery.Count > 0 ? limitQuery[0] : null);
+
+        var page = await reader.ReadAsync(context, pagination.Skip, pagination.Limit, cancellationToken);
+        var totalPages = (int)Math.Ceiling((double)page.Total / pagination.Limit);
+
+        return Results.Ok(new
+        {
+            success = true,
+            data = new AllResults(page.Rows, page.Total, pagination.Page, pagination.Limit, totalPages),
+        });
     }
 
     private static async Task<IResult> GetStatisticsAsync(
