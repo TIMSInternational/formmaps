@@ -722,6 +722,54 @@
       "notes": [
         "DONE 2026-07-16: MIL synthesized results. dotnet 0/0; 134u+1c+96i green (+24u +4i). Fresh-agent adversarial review = SAFE TO SHIP (all 10 axes MATCH: weightedComposite order/unrounded-classification, IsTruthy primary/fallback, remaps, TruthyOrZero/`|| type`, ::double precision, camelCase, ISO fff'Z', SQL casing, two-reader RLS disposal, canAccessUser-raw-path + uniform-404 + never-404; Low items all unreachable). Codex cross-model = SAFE TO SHIP, no divergence, no fix needed. Staging canary GREEN (deploy 29507548525, health 200) incl. a REAL LIVE 200: anon -> 401 missing_identity; authed(jack school_admin) SELF -> 200 synthesized zeros DTO + x-formmaps-service (examResults[5] in order, perDomain[1].type=VisualRotation proving DOMAIN_WEIGHTS order live, camelCase cognitiveProfile w/ numericVelocity, all statuses not_started, overallScore 0 - the never-404 empty-fallback path proven live); authed(jack) nonexistent user -> 404 (canAccessUser deny). OPEN follow-up (gated, same as FM-011/013/015): the PRIMARY-path real-data 200 (weightedComposite/percentiles from a real completed LIA session) needs a real Country Day student LIA-session id via a gated in-VPC read (Aurora private); jack=staff exercised only the empty fallback."
       ]
+    },
+    {
+      "id": "FM-DOTNET-017-personality-results",
+      "status": "completed",
+      "goal": "Phase A cognitive-cluster reads: GET /api/v1/personality/session/{sessionId}/results (strict self-ownership) + GET /api/v1/personality/user/{userId}/results (canAccessUser). Echoes stored resolvedType + dimension_scores; reconstructs the localized narrative at read time from the verbatim 16-profile bilingual bank.",
+      "dependsOn": [
+        "FM-DOTNET-016-mil-results"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/personality.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/personality/personality-session-service.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/personality/personality-bank.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/personality/personality-scoring.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/data/personality-profiles.data.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma",
+        "services/api/src/FormMaps.Infrastructure/Assessments/LiaResultReader.cs"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Endpoints",
+        "services/api/src/FormMaps.Application",
+        "services/api/src/FormMaps.Infrastructure",
+        "services/api/tests",
+        "apps/web/next.config.ts",
+        "docs/migration"
+      ],
+      "outputs": [
+        "GET /api/v1/personality/session/{sessionId}/results (STRICT self-ownership)",
+        "GET /api/v1/personality/user/{userId}/results (canAccessUser on path :userId)",
+        "PersonalityProfileBank: the 16-profile bilingual narrative bank embedded VERBATIM as personality-profiles.json (extracted from the legacy 98KB personality-profiles.data.ts; byte-identical, deep-diff-verified) + localizeProfile port",
+        "PersonalityResultsAssembler (buildResults port): snake-top-level / camelCase-nested hybrid; dimension_scores reordered [EI,SN,TF,JP] filter(Boolean); score.dimensions verbatim jsonb passthrough; echoed resolvedType",
+        "web flag FORMMAPS_ROUTE_PERSONALITY_RESULTS_TO_DOTNET (default off)",
+        "22 unit + 9 integration tests"
+      ],
+      "guardrails": [
+        "Read-only only.",
+        "Profile bank embedded VERBATIM (deep-diff-verified 16/16 profiles, 0 field diffs); localize picks es (bare alias/tagline, else *_es) vs en (*_en / alias_en) exactly (en = language=='en').",
+        "buildResults: user_name coalesce; variant/language normalize; type=resolvedType??''; dimension_scores=[EI,SN,TF,JP].map(storedDims[d]).filter(Boolean) (drop missing AND falsy null/false/0); score.dimensions = storedDims ?? {} VERBATIM (arrays pass through, only null coalesces); toISOString||null; violation_count; flag_for_review.",
+        "getResults strict-self (userId==owner AND status=='completed' AND resolvedType truthy; findUnique NO isActive filter); getUserResults newest completed+active, null if !resolvedType. Unknown-non-empty stored type -> getProfileByType throws -> uniform 500 (parity).",
+        "Response = snake_case top level + camelCase nested (score.dimensions / dimension_scores stored jsonb keys + profile.* localized) - reproduce exactly.",
+        "Session endpoint STRICT self (NOT canAccessUser); user endpoint canAccessUser raw path; uniform IDOR-safe 404 on every deny/missing. Do not weaken prior slices, RLS, tenant isolation, or the security middleware."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: personality result reads. dotnet 0/0; 158u+1c+105i green (+22u +9i incl. the Codex fix). PROFILE BANK STRATEGY: extracted the 98KB legacy personality-profiles.data.ts to personality-profiles.json, embedded as a .NET EmbeddedResource, loaded once + localized at read time (avoids error-prone hand-transcription; deep-diff proved byte-identical). Fresh-agent review = SAFE TO SHIP (bank byte-perfect, localize asymmetry correct, buildResults/casing-hybrid/timestamps/gating/500-landmine/security all MATCH; 2 Low unreachable). Codex = FIXES NEEDED (2 Medium on adversarial jsonb) FIXED+PINNED: non-object dimensionScores must pass through to score.dimensions verbatim ('?? {}' coalesces ONLY null) + filter(Boolean) drops falsy dimension values (null/false/0) - both restore byte-parity though unreachable with the well-formed writer; 1 Low (non-array violations JS-length quirk) DOCUMENTED unreachable (writer stores null|array only), not replicated. Staging canary GREEN (redeploy 29510889228, health 200): anon session/user -> 401 missing_identity; authed(jack school_admin) session/nonexistent -> 404 + x-formmaps-service; authed(jack) user/<own id> -> 404 (full chain, jack=staff no personality session); user/nonexistent -> 404. OPEN follow-up (gated, same as prior slices): real-data 200 (the localized narrative for a real completed session) needs a Country Day student personality-session id via a gated in-VPC read; bank shape is otherwise backstopped by byte-identical embed + unit/integration tests."
+      ]
     }
   ]
 }
