@@ -933,6 +933,40 @@
       "notes": [
         "DONE 2026-07-16: pca-exam /all-results (admin + pagination). dotnet 0/0; 192u+1c+123i (+27u +5i over FM-020). GATE: fresh-agent review = SAFE TO SHIP (all 9 axes match: raw-admin gate, parseInt/falsiness, double-nested envelope+casing, totalPages, full-row no-scoping, sequential-vs-Promise.all equivalent, RLS parity, shared-mapper extraction byte-identical, no reachable throw) + folded its 1 LOW (skip int32 overflow -> (long) multiply, golden-pinned) + dead-using nit. Codex = FIXES NEEDED, folded its reachable LOW (bare parseInt 0x hex prefix — legacy assessment.ts:168 has no radix; JsParseInt now honors 0x, 8 golden cases) + WAIVED its unreachable LOW (Convert.ToInt32(COUNT) needs 2.1B rows). Codex CONFIRMED school_admin is same-school RLS-scoped identically in both stacks (dissolves cross-school concern). Extracted shared PcaExamSessionRowMapper (unifies the full-row projection with the FM-020 history reader; refactor byte-identical, FM-020 tests still green). Web flag + next.config rewrite added. Canary GREEN with REAL DATA (direct .NET, deploy 29526061457 of 788c4e2, health 200): anon->401 missing_identity+x-formmaps-service; jack(school_admin) /all-results->200 double-nested {data:[20 rows], total:22, page:1, limit:20, totalPages:2} — row0 startTime '2026-06-17T21:40:03.141Z' (Z-STRING proven live, no +00:00), violationCount present (full row), userId present; /all-results?page=2&limit=5->200 {page:2, limit:5, totalPages:5, 5 rows} (pagination live). Non-admin->403 path integration-pinned only (canary token=jack=admin). NOTE: canary ran on 788c4e2; the only post-canary change is the pure-function 0x-hex JsParseInt fix (golden-tested, no endpoint/SQL/guard change, does not affect the decimal canary paths). ▶ NEXT = FM-022 (fix FM-013 ExamSession /session + /completed-exams DateTimeOffset->Z-strings; frontend tolerates +00:00 via new Date() so no functional break, but fix for byte-parity + reuse PcaExamSessionRowMapper on the /session full-row). Then personality take-flow, assessment-profile/timeline, test-scores, question360, vocational360, school-admin -> Phase B."
       ]
+    },
+    {
+      "id": "FM-DOTNET-022-examsession-zstrings",
+      "status": "completed",
+      "goal": "Byte-parity fix: pca-exam /session + /completed-exams emit ISO-Z string timestamps (not DateTimeOffset -> STJ +00:00). Closes the FM-013 latent timestamp divergence.",
+      "dependsOn": [
+        "FM-DOTNET-021-pcaexam-all-results"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/assessment.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/assessmentService.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments",
+        "services/api/src/FormMaps.Infrastructure/Assessments",
+        "services/api/tests"
+      ],
+      "outputs": [
+        "GET /api/pcaexam/session/{sessionId} now returns PcaHistorySession (unified onto the shared full-row DTO+PcaExamSessionRowMapper) with ISO-Z string timestamps — deletes the duplicate ExamSession DTO",
+        "GET /api/pcaexam/completed-exams/{userId}: CompletedExamRow startTime/endTime -> ISO-Z strings via PcaExamSessionRowMapper.IsoZ",
+        "Z-string assertions pinning both endpoints (red-if-regressed)"
+      ],
+      "guardrails": [
+        "Format-only change (DateTimeOffset -> ISO-Z string) + violations non-null passthrough (provably byte-equal to the old JsonElement? path: null column -> \"violations\":null, key present).",
+        "No guard/SQL/logic change; guard chains + uniform 404 + anon 401 unchanged. /session output byte-identical to old ExamSession except timestamps.",
+        "Do not weaken prior slices/RLS/security middleware."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: closes the FM-013 ExamSession DateTimeOffset->+00:00 latent divergence flagged at FM-019/020. Root: STJ renders DateTimeOffset(zero offset) as +00:00 != Node toISOString Z. Frontend TOLERATED it (consumes timestamps as strings via new Date(), which parses +00:00 identically to Z — no functional break; verified apps/web has no exact-string-equality/cache-key use), so this is a byte-parity fix not a bug fix. Approach (architecturally-correct): /session unified onto PcaHistorySession via the shared PcaExamSessionRowMapper (the deleted ExamSession DTO had a byte-identical field set), so /session/history/all-results now share ONE full-row projection (no future drift); /completed-exams subset uses IsoZ. dotnet 0/0; 192u+1c+123i (net-zero test count; modified DTOs + added Z-string assertions). GATE: fresh review = SAFE TO SHIP (all 7 checks MATCH/UNCHANGED incl. field-by-field parity, violations-null parity [no global ignore-null config], byte-identical column list, IsoZ ms-truncation, guards unchanged, no dangling refs, no new throws); Codex = SAFE TO SHIP (no findings). Pre-existing out-of-scope note (NOT changed): /session missing -> 'Not found' vs legacy 'Session not found' = the port's intentional uniform-404 IDOR hardening (corpus #28). Canary GREEN real-data (deploy 29527813263, health 200): anon /session->401; admin /session/{real id from /all-results}->200 startTime '2026-06-17T21:40:03.141Z' (Z-STRING live, no +00:00), createdDate+updatedAt Z, violationCount+violations key present (full-row intact); /session/nonexistent->404; /completed-exams/self->200 count 0 (staff empty; same IsoZ proven on /session). ALL pca-exam full-row timestamp emitters now Z-string. ▶ NEXT = personality take-flow session reads (/access + /session/:id), then assessment-profile derive/insights-status + assessments-timeline reads, test-scores reads, question360 GETs, vocational360 catalog/score reads, school-admin views -> Phase B engines."
+      ]
     }
   ]
 }

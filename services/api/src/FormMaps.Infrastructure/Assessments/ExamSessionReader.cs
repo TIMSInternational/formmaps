@@ -1,5 +1,4 @@
 using System.Data.Common;
-using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
@@ -8,22 +7,15 @@ namespace FormMaps.Infrastructure.Assessments;
 
 /// <summary>
 /// Reproduces legacy <c>getSession</c> / <c>getCompletedExams</c> (services/assessmentService.ts)
-/// under the caller's read-only RLS session. The session read is a full-row passthrough; the
-/// @map'd columns violation_count / flag_for_review are aliased to the Prisma field names, enum
-/// columns are cast to text, and the violations jsonb is passed through as raw JSON.
+/// under the caller's read-only RLS session. The session read is a full-row passthrough (reusing the
+/// shared <see cref="PcaExamSessionRowMapper"/> full-row projection); the completed-exams read is a
+/// column subset with ISO-Z string timestamps.
 /// </summary>
 public sealed class ExamSessionReader(
     IFormMapsDatabaseSessionFactory databaseSessionFactory) : IExamSessionReader
 {
-    private const string SessionSql = """
-        SELECT
-            "id", "examId", "userId", "examName", "examType"::text AS "examType",
-            "startTime", "endTime", "totalTimeSpent", "totalQuestions", "questionsAnswered",
-            "correctAnswers", "incorrectAnswers", "unansweredQuestions", "scorePercentage",
-            "accuracyPercentage", "isTimeExpired", "isCompleted", "status"::text AS "status",
-            "violations"::text AS "violations", "violation_count" AS "violationCount",
-            "flag_for_review" AS "flagForReview", "isActive", "createdBy", "createdDate",
-            "updatedBy", "updatedAt"
+    private static readonly string SessionSql = $"""
+        SELECT {PcaExamSessionRowMapper.Columns}
         FROM "pca_exam_sessions"
         WHERE "id" = @sessionId
         """;
@@ -38,7 +30,7 @@ public sealed class ExamSessionReader(
         ORDER BY "startTime" DESC
         """;
 
-    public async Task<ExamSession?> GetSessionAsync(
+    public async Task<PcaHistorySession?> GetSessionAsync(
         RequestContext context,
         string sessionId,
         CancellationToken cancellationToken = default)
@@ -55,33 +47,7 @@ public sealed class ExamSessionReader(
             return null;
         }
 
-        return new ExamSession(
-            Id: reader.GetString(reader.GetOrdinal("id")),
-            ExamId: reader.GetString(reader.GetOrdinal("examId")),
-            UserId: reader.GetString(reader.GetOrdinal("userId")),
-            ExamName: reader.GetString(reader.GetOrdinal("examName")),
-            ExamType: reader.GetString(reader.GetOrdinal("examType")),
-            StartTime: ReadDateTimeOffsetUtc(reader, "startTime"),
-            EndTime: ReadNullableDateTimeOffsetUtc(reader, "endTime"),
-            TotalTimeSpent: ReadNullableInt(reader, "totalTimeSpent"),
-            TotalQuestions: reader.GetInt32(reader.GetOrdinal("totalQuestions")),
-            QuestionsAnswered: reader.GetInt32(reader.GetOrdinal("questionsAnswered")),
-            CorrectAnswers: reader.GetInt32(reader.GetOrdinal("correctAnswers")),
-            IncorrectAnswers: reader.GetInt32(reader.GetOrdinal("incorrectAnswers")),
-            UnansweredQuestions: reader.GetInt32(reader.GetOrdinal("unansweredQuestions")),
-            ScorePercentage: reader.GetDouble(reader.GetOrdinal("scorePercentage")),
-            AccuracyPercentage: reader.GetDouble(reader.GetOrdinal("accuracyPercentage")),
-            IsTimeExpired: reader.GetBoolean(reader.GetOrdinal("isTimeExpired")),
-            IsCompleted: reader.GetBoolean(reader.GetOrdinal("isCompleted")),
-            Status: reader.GetString(reader.GetOrdinal("status")),
-            Violations: ReadNullableJson(reader, "violations"),
-            ViolationCount: reader.GetInt32(reader.GetOrdinal("violationCount")),
-            FlagForReview: reader.GetBoolean(reader.GetOrdinal("flagForReview")),
-            IsActive: reader.GetBoolean(reader.GetOrdinal("isActive")),
-            CreatedBy: ReadNullableString(reader, "createdBy"),
-            CreatedDate: ReadDateTimeOffsetUtc(reader, "createdDate"),
-            UpdatedBy: ReadNullableString(reader, "updatedBy"),
-            UpdatedAt: ReadDateTimeOffsetUtc(reader, "updatedAt"));
+        return PcaExamSessionRowMapper.Map(reader);
     }
 
     public async Task<CompletedExams> GetCompletedExamsAsync(
@@ -106,8 +72,8 @@ public sealed class ExamSessionReader(
                     ExamName: reader.GetString(reader.GetOrdinal("examName")),
                     ExamType: reader.GetString(reader.GetOrdinal("examType")),
                     ScorePercentage: reader.GetDouble(reader.GetOrdinal("scorePercentage")),
-                    StartTime: ReadDateTimeOffsetUtc(reader, "startTime"),
-                    EndTime: ReadNullableDateTimeOffsetUtc(reader, "endTime")));
+                    StartTime: PcaExamSessionRowMapper.IsoZ(reader, "startTime")!,
+                    EndTime: PcaExamSessionRowMapper.IsoZ(reader, "endTime")));
             }
         }
 
@@ -120,47 +86,5 @@ public sealed class ExamSessionReader(
         parameter.ParameterName = name;
         parameter.Value = value;
         command.Parameters.Add(parameter);
-    }
-
-    private static string? ReadNullableString(DbDataReader reader, string name)
-    {
-        var ordinal = reader.GetOrdinal(name);
-        return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
-    }
-
-    private static int? ReadNullableInt(DbDataReader reader, string name)
-    {
-        var ordinal = reader.GetOrdinal(name);
-        return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
-    }
-
-    private static JsonElement? ReadNullableJson(DbDataReader reader, string name)
-    {
-        var ordinal = reader.GetOrdinal(name);
-        if (reader.IsDBNull(ordinal))
-        {
-            return null;
-        }
-
-        using var document = JsonDocument.Parse(reader.GetString(ordinal));
-        return document.RootElement.Clone();
-    }
-
-    private static DateTimeOffset ReadDateTimeOffsetUtc(DbDataReader reader, string name)
-    {
-        var value = reader.GetDateTime(reader.GetOrdinal(name));
-        return new DateTimeOffset(DateTime.SpecifyKind(value, DateTimeKind.Utc));
-    }
-
-    private static DateTimeOffset? ReadNullableDateTimeOffsetUtc(DbDataReader reader, string name)
-    {
-        var ordinal = reader.GetOrdinal(name);
-        if (reader.IsDBNull(ordinal))
-        {
-            return null;
-        }
-
-        var value = reader.GetDateTime(ordinal);
-        return new DateTimeOffset(DateTime.SpecifyKind(value, DateTimeKind.Utc));
     }
 }

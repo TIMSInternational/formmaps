@@ -1,41 +1,8 @@
-using System.Text.Json;
-
 namespace FormMaps.Application.Assessments;
 
-/// <summary>
-/// Full <c>pca_exam_sessions</c> row passthrough — legacy <c>getSession</c> is a
-/// <c>findUnique</c> with no <c>select</c>, so every column is returned. Property names mirror the
-/// Prisma FIELD names so Web camelCase serialization matches legacy exactly; the three <c>@map</c>'d
-/// columns (violation_count, flag_for_review) are aliased back in the reader. The pca_exam_answers
-/// relation is NOT selected (no answer-key leak), matching legacy.
-/// </summary>
-public sealed record ExamSession(
-    string Id,
-    string ExamId,
-    string UserId,
-    string ExamName,
-    string ExamType,
-    DateTimeOffset StartTime,
-    DateTimeOffset? EndTime,
-    int? TotalTimeSpent,
-    int TotalQuestions,
-    int QuestionsAnswered,
-    int CorrectAnswers,
-    int IncorrectAnswers,
-    int UnansweredQuestions,
-    double ScorePercentage,
-    double AccuracyPercentage,
-    bool IsTimeExpired,
-    bool IsCompleted,
-    string Status,
-    JsonElement? Violations,
-    int ViolationCount,
-    bool FlagForReview,
-    bool IsActive,
-    string? CreatedBy,
-    DateTimeOffset CreatedDate,
-    string? UpdatedBy,
-    DateTimeOffset UpdatedAt);
+// Legacy getSession returns the full pca_exam_sessions row (findUnique, no select) — the same shape
+// as the history/all-results rows, so it reuses PcaHistorySession (full-row DTO with ISO-Z string
+// timestamps). See IExamSessionReader.GetSessionAsync.
 
 /// <summary>
 /// Legacy <c>getCompletedExams</c> return shape: the full completed-session list plus a de-duped
@@ -66,11 +33,15 @@ public sealed record CompletedExams(
     }
 }
 
+/// <summary>
+/// Legacy getCompletedExams row subset. Timestamps are pre-formatted JS-toISOString Z-strings (NOT
+/// DateTimeOffset, which STJ would render as +00:00 instead of Node's Z).
+/// </summary>
 public sealed record CompletedExamRow(
     string Id,
     string ExamId,
     string ExamName,
     string ExamType,
     double ScorePercentage,
-    DateTimeOffset StartTime,
-    DateTimeOffset? EndTime);
+    string StartTime,
+    string? EndTime);

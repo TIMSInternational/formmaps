@@ -8,8 +8,8 @@ namespace FormMaps.Application.Assessments;
 /// </summary>
 public interface IExamSessionReader
 {
-    /// <summary>Full pca_exam_sessions row by id; null when absent (endpoint maps to a 404).</summary>
-    Task<ExamSession?> GetSessionAsync(
+    /// <summary>Full pca_exam_sessions row by id (reuses PcaHistorySession); null when absent (endpoint maps to a 404).</summary>
+    Task<PcaHistorySession?> GetSessionAsync(
         RequestContext context,
         string sessionId,
         CancellationToken cancellationToken = default);
