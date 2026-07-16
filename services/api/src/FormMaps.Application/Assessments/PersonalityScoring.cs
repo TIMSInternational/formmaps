@@ -21,11 +21,16 @@ public sealed record PersonalityDimensionScore(
     int NormalizedIntensity,
     bool Balanced);
 
-/// <summary>Resolved score (legacy PersonalityScore). Dimensions are in canonical EI,SN,TF,JP order (keyable by Dimension).</summary>
+/// <summary>
+/// Resolved score (legacy PersonalityScore). Dimensions is a KEYED map (legacy Record&lt;Dimension,
+/// DimensionScore&gt;) in canonical EI,SN,TF,JP insertion order — serializes to the `{ "EI": {...}, ... }`
+/// jsonb the Phase-C write persists and the FM-017 read side (PersonalityResultsAssembler, which gates on
+/// JsonValueKind.Object) consumes. Emitting an array here would make the reader return empty dimension_scores.
+/// </summary>
 public sealed record PersonalityScore(
     string Variant,
     string Type,
-    IReadOnlyList<PersonalityDimensionScore> Dimensions);
+    IReadOnlyDictionary<string, PersonalityDimensionScore> Dimensions);
 
 /// <summary>
 /// Pure port of legacy services/personality/personality-scoring.ts (the binary forced-choice tally). Each
@@ -83,9 +88,9 @@ public static class PersonalityScoring
 
         foreach (var answer in answers)
         {
-            if (!first.ContainsKey(answer.Dimension))
+            if (answer.Dimension is null || !first.ContainsKey(answer.Dimension))
             {
-                continue; // unknown dimension — ignore
+                continue; // null or unknown dimension — ignore (legacy tallies[dim] is undefined → skipped)
             }
 
             if (answer.Choice == "A")
@@ -100,7 +105,8 @@ public static class PersonalityScoring
             // any other value: ignore (skipped / malformed)
         }
 
-        var dimensions = new List<PersonalityDimensionScore>(Dimensions.Count);
+        // Keyed by dimension in canonical EI,SN,TF,JP insertion order (legacy Record<Dimension,DimensionScore>).
+        var dimensions = new Dictionary<string, PersonalityDimensionScore>(Dimensions.Count, StringComparer.Ordinal);
         var typeCode = new StringBuilder(Dimensions.Count);
 
         foreach (var dimension in Dimensions)
@@ -116,7 +122,7 @@ public static class PersonalityScoring
             var intensity = firstWins ? f : s;
             var normalizedIntensity = ClampPercent(RoundHalfUp((double)intensity / maxPerDimension * 100));
 
-            dimensions.Add(new PersonalityDimensionScore(
+            dimensions[dimension] = new PersonalityDimensionScore(
                 Dimension: dimension,
                 FirstCount: f,
                 SecondCount: s,
@@ -125,7 +131,7 @@ public static class PersonalityScoring
                 Answered: answered,
                 MaxPerDimension: maxPerDimension,
                 NormalizedIntensity: normalizedIntensity,
-                Balanced: tie));
+                Balanced: tie);
 
             typeCode.Append(winningPole);
         }

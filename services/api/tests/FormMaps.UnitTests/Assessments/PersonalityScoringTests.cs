@@ -33,7 +33,7 @@ public class PersonalityScoringTests
     }
 
     private static PersonalityDimensionScore Dim(PersonalityScore score, string dimension) =>
-        score.Dimensions.Single(d => d.Dimension == dimension);
+        score.Dimensions[dimension];
 
     [Fact]
     public void All_A_laboral_scores_ESTJ_full_first_pole_intensity()
@@ -43,7 +43,7 @@ public class PersonalityScoringTests
 
         Assert.Equal("ESTJ", score.Type);
         Assert.Equal(4, score.Dimensions.Count);
-        foreach (var d in score.Dimensions)
+        foreach (var d in score.Dimensions.Values)
         {
             Assert.Equal(d.WinningPole, DimensionFirstPole(d.Dimension));
             Assert.Equal(10, d.Intensity);
@@ -63,7 +63,7 @@ public class PersonalityScoringTests
             "estudiantil", Build(("EI", 0, 20), ("SN", 0, 20), ("TF", 0, 20), ("JP", 0, 20)));
 
         Assert.Equal("INFP", score.Type);
-        foreach (var d in score.Dimensions)
+        foreach (var d in score.Dimensions.Values)
         {
             Assert.Equal(20, d.Intensity);
             Assert.Equal(20, d.MaxPerDimension);
@@ -92,7 +92,7 @@ public class PersonalityScoringTests
         var score = PersonalityScoring.ScorePersonality("laboral", []);
 
         Assert.Equal("ESTJ", score.Type); // all first poles by tie-break
-        foreach (var d in score.Dimensions)
+        foreach (var d in score.Dimensions.Values)
         {
             Assert.Equal(0, d.Answered);
             Assert.Equal(0, d.FirstCount);
@@ -165,6 +165,30 @@ public class PersonalityScoringTests
         Assert.Equal("E", ei.WinningPole);
         // Other dimensions untouched (0-0 → balanced).
         Assert.True(Dim(score, "SN").Balanced);
+    }
+
+    [Fact]
+    public void Dimensions_is_keyed_by_dimension_covering_all_four()
+    {
+        // The output is a KEYED map (legacy Record<Dimension,DimensionScore>) so it serializes to the
+        // { "EI": {...}, ... } jsonb the FM-017 reader consumes — NOT a JSON array (which reads back empty).
+        var score = PersonalityScoring.ScorePersonality("laboral", []);
+
+        Assert.Equal(new[] { "EI", "SN", "TF", "JP" }, score.Dimensions.Keys);
+        foreach (var (key, value) in score.Dimensions)
+        {
+            Assert.Equal(key, value.Dimension); // key matches the inner dimension field
+        }
+    }
+
+    [Fact]
+    public void Null_dimension_answer_is_ignored_not_thrown()
+    {
+        // Legacy tallies[null] → undefined → continue; the permissive engine must ignore, not throw.
+        var answers = new List<PersonalityAnswer> { new(null!, 1, "A"), new("EI", 2, "A") };
+        var score = PersonalityScoring.ScorePersonality("laboral", answers);
+
+        Assert.Equal(1, Dim(score, "EI").FirstCount); // only the valid EI answer counted
     }
 
     [Fact]
