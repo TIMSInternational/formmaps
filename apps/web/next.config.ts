@@ -114,6 +114,12 @@ function shouldRoutePcaExamHistoryToDotnet() {
   );
 }
 
+function shouldRoutePcaExamAllResultsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_ALL_RESULTS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -332,6 +338,14 @@ const nextConfig: NextConfig = {
             {
               source: "/api/pcaexam/history/:userId",
               destination: `${dotnetApiBaseUrl}/api/pcaexam/history/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaExamAllResultsToDotnet()
+        ? [
+            {
+              source: "/api/pcaexam/all-results",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/all-results`,
             },
           ]
         : []),
