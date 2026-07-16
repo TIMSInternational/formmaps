@@ -31,6 +31,7 @@ app.MapRequestContextEndpoints();
 app.MapReportEndpoints();
 app.MapExamEndpoints();
 app.MapLiaEndpoints();
+app.MapMilEndpoints();
 
 app.Run();
 
