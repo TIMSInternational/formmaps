@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<IFormMapsDatabaseSessionFactory, NpgsqlFormMapsDatabaseSessionFactory>();
         services.AddScoped<ISchoolBenchmarkReportReader, SchoolBenchmarkReportReader>();
         services.AddScoped<IUserReportReader, UserReportReader>();
+        services.AddScoped<IPcaReportReader, PcaReportReader>();
         services.AddScoped<IUserAccessGuard, UserAccessGuard>();
 
         return services;

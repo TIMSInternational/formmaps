@@ -385,6 +385,49 @@
         "Staging canary on real Country Day data: self-read -> 200 with real report; non-existent id -> 404 via the real school_admin same-school lookup; anonymous -> 401. Web cutover: FORMMAPS_ROUTE_USER_REPORT_TO_DOTNET=true -> web serves the route from .NET (x-formmaps-service header + data), flag off -> route returns to Node. Dynamic :userId rewrite verified both directions.",
         "OPEN: positive same-school-student -> 200 and cross-school -> 404 and counselor-assignment paths are covered by unit/integration tests but not yet canaried on real data (needs a real student/other-school userId). Codex adversarial task stalled (CLI hang); the fresh cross-agent review + code read + canary served as the gate."
       ]
+    },
+    {
+      "id": "FM-DOTNET-010-reports-pca",
+      "status": "in_progress",
+      "goal": "Migrate the read-only PCA report GET /api/v1/reports/pca/{userId} with canAccessUser ownership parity (own-record / counselor-assignment / same-school / super-admin), IDOR-safe 404 denial, and data parity against the legacy handler (evaluations without an isActive filter, no coKey, full career profile row).",
+      "dependsOn": [
+        "FM-DOTNET-009-reports-user-report"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/report.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/access.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma",
+        "services/api/src/FormMaps.Api/Endpoints/ReportEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/Reports/UserReportReader.cs",
+        "docs/migration/auth-tenant-context-contract.md"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Endpoints",
+        "services/api/src/FormMaps.Application",
+        "services/api/src/FormMaps.Infrastructure",
+        "services/api/tests/FormMaps.IntegrationTests",
+        "docs/migration"
+      ],
+      "outputs": [
+        "GET /api/v1/reports/pca/{userId}",
+        "canAccessUser ownership guard parity reused from user-report (identity-only RequireIdentity + CanAccessUserAsync)",
+        "IDOR-safe 404 denial",
+        "PCA report reader (user existence + evaluations + full career profile row)",
+        "ownership + data parity tests"
+      ],
+      "guardrails": [
+        "Read-only only; no write endpoint in this slice.",
+        "All data access must use IFormMapsDatabaseSessionFactory read-only under the caller RLS session.",
+        "No isActive filter on evaluations; legacy returns active AND inactive rows.",
+        "coKey must never be returned; the evaluation select is an explicit column list that omits it.",
+        "Denial must be 404 Not found; never reveal whether the target exists.",
+        "Reuse the user-report ownership guard unchanged; do not invent a new guard or use resolveSecureUserId coercion.",
+        "Do not weaken benchmark/user-report parity, RLS, tenant isolation, or the security middleware."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ]
     }
   ]
 }
