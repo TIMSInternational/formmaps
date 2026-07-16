@@ -627,6 +627,54 @@
       "notes": [
         "DONE 2026-07-16: catalog reads. dotnet 0/0; 41u+1c+83i green (+5i). First slice under the regression-corpus discipline ([[formmaps-csharp-port-regression-corpus]]) - pins the answer-key non-leak invariant (structurally guaranteed: stripped at SQL + un-representable in DTO, stronger than legacy's post-query strip). Fresh-agent review SAFE TO SHIP (all catalog fields/isActive/ordering/enum/jsonb/404/guard-scope/500 verified faithful; 2 nits no-action). Staging canary GREEN incl. answer-key non-leak proven on REAL DATA: anon /exams->401; authed(jack) /exams->200 real list (feature-detection-001, 60 q); authed /exams/feature-detection-001->200 with 60 REAL questions and answer-key-leak=FALSE (keys=id,examId,questionNumber,questionText,type,data,isActive,createdBy/Date,updatedBy/At - NO correctAnswer/explanation); /exams/nonexistent->404 'Exam not found'. Corpus invariant verified end-to-end on prod data."
       ]
+    },
+    {
+      "id": "FM-DOTNET-015-lia-results",
+      "status": "completed",
+      "goal": "Phase A reads continued: GET /api/v1/lia/session/{sessionId}/results (strict self-ownership) + GET /api/v1/lia/user/{userId}/results (canAccessUser on the path :userId), reusing the FM-013 subscription guard, with exact parity to the legacy liaRouter/lia-results-service handlers and pinning the band-gap regression fix (#21).",
+      "dependsOn": [
+        "FM-DOTNET-014-pcaexam-catalog"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/lia.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/lia/lia-results-service.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/lia-core/types.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma",
+        "services/api/src/FormMaps.Infrastructure/Reports/LiaReportReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/ExamEndpoints.cs"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Endpoints",
+        "services/api/src/FormMaps.Application",
+        "services/api/src/FormMaps.Infrastructure",
+        "services/api/tests",
+        "apps/web/next.config.ts",
+        "docs/migration"
+      ],
+      "outputs": [
+        "GET /api/v1/lia/session/{sessionId}/results (strict self-ownership: session.userId == caller, status='completed')",
+        "GET /api/v1/lia/user/{userId}/results (newest completed+active session; canAccessUser on path :userId)",
+        "LiaPerformanceLevels pure module (band-gap fix #21 golden-pinned: highest band min<=p, 74.5 -> 'high'; faithful inclusive-range subtests)",
+        "snake_case results payload (jsonb passthrough; global_percentile as JSON number via ::double precision; echoed performance_level; NO numerical_speed->NumericVelocity remap)",
+        "web flag FORMMAPS_ROUTE_LIA_RESULTS_TO_DOTNET (default off)",
+        "68 unit + 9 integration tests"
+      ],
+      "guardrails": [
+        "Read-only only.",
+        "CORPUS #21 (band-gap): GetPerformanceLevel selects the highest band whose min<=p (74.5 -> 'high', never 'insufficient'); golden-pinned on gap decimals + out-of-range/NaN. Ported+pinned though the read path ECHOES the stored performanceLevel (the fn is the Phase-C write-path function).",
+        "Subtest levels are a faithful bug-for-bug port of the legacy inclusive-range matcher (gap decimal 11.5 -> 'insufficient' preserved).",
+        "Session endpoint = STRICT self-ownership (NOT canAccessUser) - no privileged cross-user access; user endpoint = canAccessUser on the raw path id.",
+        "global_percentile Decimal -> ::double precision -> JSON number (matches Number(x ?? 0)); jsonb '?? {}' / '?? []' defaulting covers SQL-null AND jsonb 'null' token; timestamps = JS toISOString shape (3 ms digits + Z) via SpecifyKind(Utc).",
+        "Uniform IDOR-safe 404 on every missing/denied branch; no sensitive fields (email only as user_name fallback).",
+        "Reads the SAME source as the shipped reports/lia reader (newest completed+active lia_assessment_sessions); do not weaken prior slices, RLS, tenant isolation, or the security middleware."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: LIA result reads. dotnet 0/0; 110u+1c+92i green (+68u +9i). Fresh-agent adversarial review = SAFE TO SHIP (all fields/parity/security/timestamps/band-gap-off-read-path verified faithful; its 1 Med RLS-parity concern DISSOLVED - legacy Prisma resolveGucPlan applies Identity-mode RLS on every query for counselor/school_admin, so Node getUserResults is RLS-scoped identically to the .NET reader, precedented by the live+canary-green reports/lia reader on the same table). Codex cross-model = 1 Medium FIXED+PINNED (jsonb 'null' token must default to {}/[] like legacy '?? {}'; single-source coalesce in the assembler + golden test) + 1 latent Low DOCUMENTED (JS coerces stringified jsonb numerics; the Node writer never produces them - a Phase-C write-path note, not coded). Staging canary GREEN (redeploy run 29504628601, health 200): anon session/user -> 401 missing_identity; authed(jack school_admin) session/nonexistent -> 404 'Not found' + x-formmaps-service; authed(jack) user/<own id> -> 404 (full chain: identity->sub-bypass->canAccessUser self-allow->reader null, jack=staff no LIA session); authed(jack) user/nonexistent -> 404. OPEN follow-up (gated, same as FM-011/013): real-data 200 shape + the counselor active-assignment RLS 200 path need a real Country Day student LIA-session id via a gated in-VPC read (Aurora private). LATENT Phase-C notes: (a) jsonb numeric trailing-zero/scale echo and (b) stringified-numeric coercion - both unreachable on app-written data, guard when the C# completion write-path lands."
+      ]
     }
   ]
 }
