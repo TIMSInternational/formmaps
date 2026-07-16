@@ -1117,6 +1117,38 @@
       "notes": [
         "DONE 2026-07-16: SECOND Phase B slice -- LIA item-level answer scoring ported PURE + golden-pinned (no DB/canary). dotnet 0/0; 246u+1c+131i (+32u). KEY finding: the VR theta->theta-90 remap (corpus #10) is NOT runtime math -- it was a one-time data-transcription remap baked into the static bank; scoring ignores rotation and compares CHIRALITY ONLY (base glyph upright R vs mirrored U+1589). Embed lia-question-bank.json extracted from the shared golden.questionBank[305] (byte-identical chain: legacy==tims-suite==monorepo-test-embed==PARITY-MANIFEST sha 7d9e7b0e; NO cross-repo golden mutation needed). BuildQuestionBank() reproduces all 305 correct_answers (4 subtests computed, verbal static) == golden, mutation-verified red on a VR-chirality break. GATE: fresh review SAFE + Codex FIXES-NEEDED (1 Low: JS .trim() strips U+FEFF/keeps U+0085; .NET Trim() the opposite) -> folded the exact ECMAScript JsWhitespace trim set, mutation-pinned both directions. Corpus #10 (lia-vr-rotation) now COVERED + golden-pinned. NEXT (Phase B/C): personality scoring tally (corpus #12) + RIASEC vocational+integration engines; then Phase C authed WRITES (LIA/personality/exam take+submit+complete using these engines); OR continue Phase A reads (test-scores/question360/vocational360/school-admin)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-027-personality-scoring",
+      "status": "completed",
+      "goal": "Phase B slice 3: pure port of the personality scoring tally (services/personality/personality-scoring.ts). Binary forced-choice over EI/SN/TF/JP; A->first pole, B->second; higher count wins (tie->first, balanced); 4 winners -> 4-letter type; normalizedIntensity = round(intensity / maxPerDimension * 100) on the 10/20 variant scale (corpus #12, NOT div answered). No DB/endpoints/canary. Output shape (keyed PersonalityScore.Dimensions + bare resolvedType) matches the FM-017 read side; feeds the Phase-C personality complete/write path.",
+      "dependsOn": [
+        "FM-DOTNET-026-lia-item-level-scoring"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/services/personality/personality-scoring.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/__tests__/personality-scoring.unit.test.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/personality/personality-session-service.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments",
+        "services/api/tests"
+      ],
+      "outputs": [
+        "PersonalityScoring (ScorePersonality tally + DIMENSIONS / DIMENSION_POLES / VARIANT_ITEMS_PER_DIMENSION(10/20) / TIE_BREAK_TO_FIRST_POLE + GetMaxPerDimension + ClampPercent + RoundHalfUp = Math.Floor(x+0.5) JS-Math.round parity)",
+        "records PersonalityAnswer / PersonalityDimensionScore / PersonalityScore (Dimensions = KEYED map {EI:...} == legacy Record<Dimension,DimensionScore>, matching the FM-017 reader)",
+        "PersonalityScoringTests: the legacy unit cases mirrored + corpus-#12 divisor discriminator + tie-break / type-order / defensive-ignore / keyed-shape / null-guard / clamp"
+      ],
+      "guardrails": [
+        "Pure functions only. Engine is DEFENSIVE (invalid choice / unknown|null dimension ignored, never throws) -- strict A/B->400 + retake->409 stay in the SERVICE (Phase C), PIN-WHEN-BUILT. normalizedIntensity divisor MUST be maxPerDimension (10/20), NOT answered (corpus #12). Dimensions MUST serialize as a KEYED object {EI:...} (not an array) or the FM-017 reader returns empty dimension_scores; the Phase-C write must emit camelCase inner fields + preserve the UPPERCASE dimension keys."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: THIRD Phase B slice -- personality scoring tally ported PURE + unit-pinned (no shared golden.json exists for personality; mirrored the TS unit test as spec). dotnet 0/0; 263u+1c+131i (+17u). Corpus #12 TALLY COVERED (div maxPerDim(10/20)x100 NOT div answered; tie->first pole+balanced), mutation-verified red on the divisor swap AND the tie-break flip. GATE: fresh SAFE + Codex FIXES-NEEDED, CONVERGED on 2 folded -- (High/Med) output was a LIST -> changed to keyed IReadOnlyDictionary (== legacy Record<Dim,DimensionScore>) so it serializes to the {EI:...} jsonb the FM-017 reader (gates on JsonValueKind.Object) consumes [an array reads back empty]; (Low) a null dimension threw on ContainsKey(null) -> guarded to ignore like TS tallies[null]. Unknown-variant fail-closed confirmed intentional by both. Item bank (120 bilingual items, UNUSED by scoring) deferred to a personality catalog/take-flow slice. strict-A/B-400 + retake-409 remain SERVICE/Phase-C (corpus #12 residual, PIN-WHEN-BUILT). NEXT (Phase B/C): RIASEC vocational + integration engines (vocationalScoringService), OR Phase C authed WRITES (LIA/personality/exam take+submit+complete using the FM-025/026/027 engines), OR Phase A reads (test-scores/question360/vocational360/school-admin)."
+      ]
     }
   ]
 }
