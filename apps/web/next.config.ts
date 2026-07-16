@@ -15,6 +15,13 @@ function shouldRouteBenchmarkReportToDotnet() {
   );
 }
 
+function shouldRouteUserReportToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_USER_REPORT_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -97,6 +104,14 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/reports/benchmark",
               destination: `${dotnetApiBaseUrl}/api/v1/reports/benchmark`,
+            },
+          ]
+        : []),
+      ...(shouldRouteUserReportToDotnet()
+        ? [
+            {
+              source: "/api/v1/reports/user-report/:userId",
+              destination: `${dotnetApiBaseUrl}/api/v1/reports/user-report/:userId`,
             },
           ]
         : []),
