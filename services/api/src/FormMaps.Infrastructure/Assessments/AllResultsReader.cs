@@ -26,7 +26,7 @@ public sealed class AllResultsReader(
         WHERE "isCompleted" = true AND "isActive" = true
         """;
 
-    public async Task<AllResultsPage> ReadAsync(RequestContext context, int skip, int limit, CancellationToken cancellationToken = default)
+    public async Task<AllResultsPage> ReadAsync(RequestContext context, long skip, int limit, CancellationToken cancellationToken = default)
     {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
@@ -55,7 +55,7 @@ public sealed class AllResultsReader(
         return new AllResultsPage(rows, total);
     }
 
-    private static void AddParameter(DbCommand command, string name, int value)
+    private static void AddParameter(DbCommand command, string name, long value)
     {
         var p = command.CreateParameter();
         p.ParameterName = name;

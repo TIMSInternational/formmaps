@@ -7,13 +7,15 @@ namespace FormMaps.Application.Assessments;
 /// <c>skip = (page - 1) * limit</c>. Reproduces JS <c>parseInt</c> (leading-integer scan, NOT
 /// int.TryParse) and JS <c>||</c> falsiness (NaN AND 0 fall through to the default).
 /// </summary>
-public sealed record PcaExamPagination(int Page, int Limit, int Skip)
+public sealed record PcaExamPagination(int Page, int Limit, long Skip)
 {
     public static PcaExamPagination Resolve(string? pageRaw, string? limitRaw)
     {
         var page = Math.Max(1, FalsyOr(JsParseInt(pageRaw), 1));
         var limit = Math.Min(100, Math.Max(1, FalsyOr(JsParseInt(limitRaw), 20)));
-        return new PcaExamPagination(page, limit, (page - 1) * limit);
+        // 64-bit multiply: page can saturate to int.MaxValue, so an int32 (page-1)*limit could
+        // overflow and wrap to a small OFFSET, silently serving wrong rows. OFFSET is bigint.
+        return new PcaExamPagination(page, limit, (long)(page - 1) * limit);
     }
 
     // JS `x || default`: default when x is NaN (null here) OR 0; otherwise x (incl. negatives).

@@ -127,11 +127,11 @@ public class ExamAllResultsEndpointsTests
     {
         public int CallCount { get; private set; }
 
-        public int LastSkip { get; private set; } = -1;
+        public long LastSkip { get; private set; } = -1;
 
         public int LastLimit { get; private set; } = -1;
 
-        public Task<AllResultsPage> ReadAsync(RequestContext context, int skip, int limit, CancellationToken cancellationToken = default)
+        public Task<AllResultsPage> ReadAsync(RequestContext context, long skip, int limit, CancellationToken cancellationToken = default)
         {
             CallCount++;
             LastSkip = skip;

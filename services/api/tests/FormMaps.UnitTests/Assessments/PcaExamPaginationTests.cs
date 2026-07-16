@@ -41,4 +41,14 @@ public class PcaExamPaginationTests
         Assert.Equal(limit, p.Limit);
         Assert.Equal(skip, p.Skip);
     }
+
+    [Fact]
+    public void Skip_uses_64bit_multiply_no_int_overflow()
+    {
+        // page*limit that would overflow int32 (page-1)*limit and wrap to a small OFFSET.
+        var p = PcaExamPagination.Resolve("67108865", "64"); // (67108865-1)*64 = 2^32
+        Assert.Equal(67108865, p.Page);
+        Assert.Equal(64, p.Limit);
+        Assert.Equal(4294967296L, p.Skip); // exact 64-bit product, not a wrapped 0
+    }
 }

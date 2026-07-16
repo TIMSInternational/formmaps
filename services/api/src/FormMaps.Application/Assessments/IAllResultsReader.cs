@@ -11,5 +11,5 @@ public sealed record AllResultsPage(IReadOnlyList<PcaHistorySession> Rows, int T
 /// </summary>
 public interface IAllResultsReader
 {
-    Task<AllResultsPage> ReadAsync(RequestContext context, int skip, int limit, CancellationToken cancellationToken = default);
+    Task<AllResultsPage> ReadAsync(RequestContext context, long skip, int limit, CancellationToken cancellationToken = default);
 }
