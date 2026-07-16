@@ -438,7 +438,7 @@
     },
     {
       "id": "FM-DOTNET-011-reports-lia-timeline-coaching",
-      "status": "in_progress",
+      "status": "completed",
       "goal": "Migrate three read-only report endpoints as one batched slice: GET /api/v1/reports/lia/{userId}, GET /api/v1/reports/timeline/{userId}, GET /api/v1/reports/coaching/{userId}, each with canAccessUser ownership parity (own-record / counselor-assignment / same-school / super-admin), IDOR-safe 404 denial, and exact data parity against the legacy handlers.",
       "dependsOn": [
         "FM-DOTNET-010-reports-pca"
@@ -482,10 +482,7 @@
         "dotnet test services/api/FormMaps.slnx"
       ],
       "notes": [
-        "DONE 2026-07-15: built TDD-first (3 endpoint test files red -> implement -> green). Reuses FM-009/FM-010 rails (RequireIdentity + IUserAccessGuard) unchanged; only new surface is three read-only readers mirroring PcaReportReader.",
-        "dotnet build 0/0; 27 unit + 1 contract + 64 integration (49 baseline + 15 new: 5 per endpoint) pass.",
-        "Parity details: /lia cognitiveProfile emitted as Dictionary<string,double> to keep PascalCase keys (Web defaults leave DictionaryKeyPolicy null); overallScore/round-half via AwayFromZero (non-negative domain matches JS Math.round). /timeline score omitted via JsonIgnoreCondition.WhenWritingNull + OrderByDescending stable sort keeps mil->eval->course tie order. /coaching enum columns cast ::text for Npgsql; session amount 0->null replicates BigInt 0n falsy quirk; currency null/'' -> USD.",
-        "OPEN: not yet canaried on real staging data; web route feature flags not added in this slice."
+        "DONE 2026-07-15b: 3 read endpoints, reuse FM-009 rails. Adversarial review SAFE TO SHIP (LIA overallScore rounding fix applied). dotnet 0/0; 27u+1c+64i green. Staging canary: lia/timeline/coaching self->200 correct shape + x-formmaps-service, non-existent->404, anon->401. Web flags added. OPEN: readers fake-tested only (no DB-level parity test); LIA jsonb path not canaried (needs a student-with-LIA-session; jack.young=staff)."
       ]
     }
   ]
