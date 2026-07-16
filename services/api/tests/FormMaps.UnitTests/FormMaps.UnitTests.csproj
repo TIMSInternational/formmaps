@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FormMaps.Application\FormMaps.Application.csproj" />
     <ProjectReference Include="..\..\src\FormMaps.Domain\FormMaps.Domain.csproj" />
+    <ProjectReference Include="..\..\src\FormMaps.Infrastructure\FormMaps.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

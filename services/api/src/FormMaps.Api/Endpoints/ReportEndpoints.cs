@@ -12,8 +12,102 @@ public static class ReportEndpoints
             .WithTags("Reports");
 
         group.MapGet("/benchmark", GetBenchmarkAsync);
+        group.MapGet("/user-report/{userId}", GetUserReportAsync);
 
         return app;
+    }
+
+    private static async Task<IResult> GetUserReportAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IUserAccessGuard userAccessGuard,
+        IUserReportReader reportReader,
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var guardDecision = protectedRequestGuard.RequireIdentity(context);
+        if (!guardDecision.Allowed)
+        {
+            return Results.Json(
+                new
+                {
+                    success = false,
+                    code = guardDecision.Code,
+                    message = guardDecision.Message
+                },
+                statusCode: guardDecision.StatusCode);
+        }
+
+        if (!await userAccessGuard.CanAccessUserAsync(context, userId, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var report = await reportReader.ReadAsync(context, userId, cancellationToken);
+        if (report is null)
+        {
+            return NotFound();
+        }
+
+        return Results.Ok(new
+        {
+            success = true,
+            data = new
+            {
+                student = new
+                {
+                    id = report.Student.Id,
+                    name = report.Student.Name,
+                    email = report.Student.Email,
+                    gradeLevel = report.Student.GradeLevel,
+                    joinedAt = report.Student.JoinedAt
+                },
+                academic = new
+                {
+                    gpa = report.Academic.Gpa,
+                    creditsEarned = report.Academic.CreditsEarned,
+                    totalGrades = report.Academic.TotalGrades
+                },
+                assessments = new
+                {
+                    pca = new
+                    {
+                        completed = report.Assessments.Pca.Completed,
+                        count = report.Assessments.Pca.Count
+                    },
+                    mil = new
+                    {
+                        completedExams = report.Assessments.Mil.CompletedExams,
+                        totalExams = report.Assessments.Mil.TotalExams,
+                        averageScore = report.Assessments.Mil.AverageScore
+                    },
+                    evaluation360 = new
+                    {
+                        total = report.Assessments.Evaluation360.Total,
+                        completed = report.Assessments.Evaluation360.Completed
+                    }
+                },
+                courses = new
+                {
+                    enrolled = report.Courses.Enrolled,
+                    completed = report.Courses.Completed
+                },
+                generatedAt = report.GeneratedAt
+            }
+        });
+    }
+
+    // IDOR defense: denial reveals nothing about existence — always 404 "Not found", never 403.
+    private static IResult NotFound()
+    {
+        return Results.Json(
+            new
+            {
+                success = false,
+                message = "Not found"
+            },
+            statusCode: StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> GetBenchmarkAsync(

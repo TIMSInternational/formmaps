@@ -1,5 +1,7 @@
+using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using FormMaps.Application.Reports;
+using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Reports;
 using Microsoft.Extensions.Configuration;
@@ -28,6 +30,8 @@ public static class DependencyInjection
         services.AddSingleton<RlsSessionContextApplier>();
         services.AddScoped<IFormMapsDatabaseSessionFactory, NpgsqlFormMapsDatabaseSessionFactory>();
         services.AddScoped<ISchoolBenchmarkReportReader, SchoolBenchmarkReportReader>();
+        services.AddScoped<IUserReportReader, UserReportReader>();
+        services.AddScoped<IUserAccessGuard, UserAccessGuard>();
 
         return services;
     }

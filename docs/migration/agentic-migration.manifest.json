@@ -332,6 +332,59 @@
         "DONE 2026-07-15b: benchmark parity cross-referenced against legacy report.ts GET /api/v1/reports/benchmark (all 5 metrics faithful; the gpaDistribution-vs-totalStudents population mismatch is legacy behavior, not a .NET regression).",
         "OPEN: in-process BenchmarkReportDatabaseSmokeTests cannot run outside the private VPC; the deployed in-VPC .NET read is the DB-read proof instead. Production traffic cutover decision is still deferred."
       ]
+    },
+    {
+      "id": "FM-DOTNET-009-reports-user-report",
+      "status": "completed",
+      "goal": "Migrate the read-only comprehensive student report GET /api/v1/reports/user-report/{userId} with canAccessUser ownership parity (own-record / counselor-assignment / same-school / super-admin), IDOR-safe 404 denial, and data parity against the legacy handler.",
+      "dependsOn": [
+        "FM-DOTNET-008-staging-benchmark-canary"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/report.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/access.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/prismaRls.ts",
+        "services/api/src/FormMaps.Api/Endpoints/ReportEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/Reports/SchoolBenchmarkReportReader.cs",
+        "docs/migration/auth-tenant-context-contract.md"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Endpoints",
+        "services/api/src/FormMaps.Application",
+        "services/api/src/FormMaps.Infrastructure",
+        "services/api/tests/FormMaps.IntegrationTests",
+        "services/api/tests/FormMaps.UnitTests",
+        "apps/web",
+        "docs/migration"
+      ],
+      "outputs": [
+        "GET /api/v1/reports/user-report/{userId}",
+        "canAccessUser ownership guard parity (privileged roles + counselor assignment + same-school; non-privileged own-record only)",
+        "IDOR-safe 404 denial",
+        "student/academic/assessments/courses report reader",
+        "ownership + tenant + data parity tests",
+        "web route feature flag + rollback"
+      ],
+      "guardrails": [
+        "Read-only only; no write endpoint in this slice.",
+        "All data access must use IFormMapsDatabaseSessionFactory under RLS.",
+        "Denial must be 404 Not found; never reveal whether the target exists.",
+        "Privileged cross-scope reads must match legacy prismaRls GUC behavior without leaking cross-tenant data.",
+        "Do not weaken benchmark parity, RLS, tenant isolation, or the security middleware."
+      ],
+      "validation": [
+        "npm run api:test",
+        "dotnet build services/api/FormMaps.slnx",
+        "authenticated staging canary for user-report ownership cases",
+        "staging web route flag + rollback"
+      ],
+      "notes": [
+        "DONE 2026-07-15b: built agent-driven (explore map -> TDD build -> fresh adversarial review + Codex -> fixes). dotnet build 0/0; 27 unit + 1 contract + 44 integration tests pass.",
+        "Adversarial review caught and fixed two divergences: (1) own-record endpoints must use an identity-only guard (new RequireIdentity), NOT RequireTenantContext, because legacy /user-report has no school-context gate; (2) the ownership guard must branch on the RAW Actor.Role (not NormalizedRole) or alias roles like 'admin' escalate to cross-tenant Super Admin.",
+        "Benchmark-style parity confirmed against legacy report.ts /user-report (all metric groups faithful; uniform 404 denial kept as an intentional IDOR hardening vs legacy's split Not found/User not found).",
+        "Staging canary on real Country Day data: self-read -> 200 with real report; non-existent id -> 404 via the real school_admin same-school lookup; anonymous -> 401. Web cutover: FORMMAPS_ROUTE_USER_REPORT_TO_DOTNET=true -> web serves the route from .NET (x-formmaps-service header + data), flag off -> route returns to Node. Dynamic :userId rewrite verified both directions.",
+        "OPEN: positive same-school-student -> 200 and cross-school -> 404 and counselor-assignment paths are covered by unit/integration tests but not yet canaried on real data (needs a real student/other-school userId). Codex adversarial task stalled (CLI hang); the fresh cross-agent review + code read + canary served as the gate."
+      ]
     }
   ]
 }

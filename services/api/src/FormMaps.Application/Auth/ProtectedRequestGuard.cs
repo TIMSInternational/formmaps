@@ -25,4 +25,22 @@ public sealed class ProtectedRequestGuard : IProtectedRequestGuard
 
         return GuardDecision.Allow();
     }
+
+    /// <summary>
+    /// Identity-only gate: requires an authenticated actor with a tenant user id, but imposes
+    /// NO school-context and NO permission requirement. Mirrors legacy routes mounted with only
+    /// `authenticate` (e.g. /user-report), where a school-less counselor/school_admin/teacher
+    /// reading their OWN record must still pass through to the per-user ownership check.
+    /// </summary>
+    public GuardDecision RequireIdentity(RequestContext context)
+    {
+        if (!context.IsAuthenticated ||
+            context.Actor is null ||
+            string.IsNullOrWhiteSpace(context.Tenant?.UserId))
+        {
+            return GuardDecision.Deny(401, "missing_identity", "Authenticated identity is required.");
+        }
+
+        return GuardDecision.Allow();
+    }
 }
