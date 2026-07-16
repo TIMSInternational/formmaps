@@ -37,6 +37,15 @@ Parameters:
     Type: String
     Default: /health
     Description: App Runner HTTP health check path.
+  VpcConnectorArn:
+    Type: String
+    Default: arn:aws:apprunner:us-east-1:747814092517:vpcconnector/nexa-api-vpc-nat/1/8b8be38b0fa94596a129dd31a9629ae1
+    Description: >-
+      App Runner VPC connector ARN for egress to the private Aurora cluster.
+      Defaults to the existing nexa-api-vpc-nat connector (shared VPC/subnets/SG
+      that reach nexa-aurora-enc); replace with a dedicated staging connector if
+      full isolation is later required. Without VPC egress the API cannot reach
+      the private database.
   Cpu:
     Type: String
     Default: 0.5 vCPU
@@ -135,7 +144,8 @@ Resources:
         IngressConfiguration:
           IsPubliclyAccessible: true
         EgressConfiguration:
-          EgressType: DEFAULT
+          EgressType: VPC
+          VpcConnectorArn: !Ref VpcConnectorArn
         IpAddressType: IPV4
       Tags:
         - Key: Project

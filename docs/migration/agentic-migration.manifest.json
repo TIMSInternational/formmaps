@@ -264,7 +264,7 @@
     },
     {
       "id": "FM-DOTNET-008-staging-benchmark-canary",
-      "status": "in_progress",
+      "status": "completed",
       "goal": "Deploy the .NET API to staging, run the benchmark DB smoke with real staging credentials, and verify the web route flag canary/rollback path.",
       "dependsOn": [
         "FM-DOTNET-007-live-db-smoke-and-route-flag"
@@ -324,7 +324,13 @@
         "The health-only staging canary passed and an unauthenticated benchmark request correctly returns 401.",
         "The authenticated benchmark canary is still pending because FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN is not configured.",
         "Before broader testing, rotate the copied staging database credential because a pre-fix deployment exposed it in CloudWatch logs.",
-        "Completion still requires authenticated benchmark data, gated staging DB smoke evidence, staging web route verification, and route-level rollback verification."
+        "Completion still requires authenticated benchmark data, gated staging DB smoke evidence, staging web route verification, and route-level rollback verification.",
+        "DONE 2026-07-15b: staging DATABASE_URL now points at a dedicated read-only role formmaps_staging_ro (created via one-off Fargate on formmaps-ops using the RDS master secret; not the shared prod formmaps_app credential).",
+        "DONE 2026-07-15b: root cause of first authenticated read failure was staging App Runner EgressType=DEFAULT (no VPC egress) so it could not reach the private Aurora; fixed to EgressType=VPC via the nexa-api-vpc-nat connector and codified in infra/aws/formmaps-api-staging-service.yml (new VpcConnectorArn parameter).",
+        "DONE 2026-07-15b: authenticated benchmark canary passed against the deployed .NET (200 + X-FormMaps-Service header + real school data); npm run api:staging-canary passed.",
+        "DONE 2026-07-15b: staging web canary passed with the route flag ON (benchmark served by .NET) and route-level rollback verified with the flag OFF (benchmark served by Node). Staging web = https://formmaps-staging-web.vercel.app.",
+        "DONE 2026-07-15b: benchmark parity cross-referenced against legacy report.ts GET /api/v1/reports/benchmark (all 5 metrics faithful; the gpaDistribution-vs-totalStudents population mismatch is legacy behavior, not a .NET regression).",
+        "OPEN: in-process BenchmarkReportDatabaseSmokeTests cannot run outside the private VPC; the deployed in-VPC .NET read is the DB-read proof instead. Production traffic cutover decision is still deferred."
       ]
     }
   ]
