@@ -811,6 +811,45 @@
       "notes": [
         "DONE 2026-07-16: pca-exam config/instructions catalog reads (added to the existing /api/pcaexam ExamEndpoints group). dotnet 0/0; 158u+1c+111i green (+6i). Lighter-but-full gate justified (trivial catalog projections mirroring FM-014). Fresh-agent review = SAFE TO SHIP (both field-sets exact incl. the description-key difference, 404 'Exam not found', subscription-only guard + short-circuits, description non-null so GetString safe, no route shadowing /exams/{examId} vs /exams/{examId}/instructions, no leak). Codex first run timed out mid-read (foreground 2-min); re-dispatched background (per project rule fresh-review+canary are the gate, don't block on Codex). Staging canary GREEN incl. REAL-DATA 200s (deploy 29516639354, health 200): anon->401; authed(jack school_admin) instructions/feature-detection-001->200 + x-formmaps-service, keys=[id,name,type,timeLimitMinutes,description,totalQuestions,instructions], instructions==description (real: PatternRecognition, 60 q, 3 min); instructions/nonexistent->404 'Exam not found'; exam-config/feature-detection-001->200 keys=[id,name,type,timeLimitMinutes,totalQuestions,instructions] (NO description key); exam-config/nonexistent->404. Field-set difference proven LIVE. LATENT (corpus note): if pca_exams.description ever migrates to nullable, GetString would 500 vs legacy null-passthrough."
       ]
+    },
+    {
+      "id": "FM-DOTNET-019-pcaexam-statistics",
+      "status": "completed",
+      "goal": "Phase A pca-exam admin read: GET /api/pcaexam/statistics/{examId} \u2014 ADMIN_ROLES-gated aggregate over completed+active sessions (legacy getExamStatistics).",
+      "dependsOn": [
+        "FM-DOTNET-018-pcaexam-config-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/assessment.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/assessmentService.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Endpoints",
+        "services/api/src/FormMaps.Application",
+        "services/api/src/FormMaps.Infrastructure",
+        "services/api/tests",
+        "apps/web/next.config.ts",
+        "docs/migration"
+      ],
+      "outputs": [
+        "GET /api/pcaexam/statistics/{examId} ({examId,totalAttempts,averageScore,highestScore,lowestScore,uniqueUsers})",
+        "reusable PcaAdminGate (raw exact-match [Super Admin, school_admin], NOT normalized) -> 403 'Admin access required'",
+        "pure ExamStatistics.Compute golden-pinned (avg=round(avg*10)/10 half-up; highest/lowest raw; empty->zeros)",
+        "web flag FORMMAPS_ROUTE_PCAEXAM_STATISTICS_TO_DOTNET (default off)",
+        "3 unit + 4 integration tests"
+      ],
+      "guardrails": [
+        "Read-only only.",
+        "ADMIN_ROLES gate = RAW exact match [Super Admin, school_admin] (reject admin/schooladmin/superadmin/counselor), 403 'Admin access required' AFTER subscription BEFORE DB read; never 404 (empty->zeros 200); no school scoping (global exams, matches legacy).",
+        "averageScore round(avg*10)/10 half-up (AwayFromZero); highest/lowest raw un-rounded max/min or 0; uniqueUsers distinct userId. Float (no Decimal). Do not weaken prior slices/RLS/security middleware."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: pca-exam statistics admin aggregate (new reusable PcaAdminGate rail for future all-results). dotnet 0/0; 161u+1c+115i (+3u +4i). Fresh review SAFE (raw-role gate rejects aliases+counselor, aggregate math/rounding/SQL/security faithful; scorePercentage non-null so GetDouble safe; order-dependent sub-ULP sum unreachable). Codex SKIPPED (trivial pure aggregate + context limit; project rule = fresh+canary are the gate). Canary GREEN real-data: anon->401; jack(school_admin)/feature-detection-001->200 {totalAttempts:4, avg:45.8, high:85, low:16.66666666666666 raw, uniqueUsers:4} + x-formmaps-service (ADMIN gate + aggregate proven live). Branch named ...-history but contains statistics (reused). \ud83d\udd34 IMPORTANT FINDING (blocks the full-row slices): STJ serializes DateTimeOffset(zero offset) as '...+00:00' (NOT '...Z', no ms) - byte-DIVERGENT from Node toISOString '...Z'. => FM-013 ExamSession (/session, /completed-exams) has a LATENT timestamp divergence never canaried on real timestamps; and the remaining full-row slices (pca-exam /history/:userId + /all-results) MUST use ISO-Z STRING timestamps (like LIA/MIL/personality ToIsoZ), NOT DateTimeOffset. STJ List<object> serializes each element by RUNTIME type (heterogeneous rows OK). \u25b6 NEXT = FM-020 pca-exam /history/:userId (canAccessUser + LIA synth, heterogeneous full+partial rows, Z-string timestamps via a new full-row DTO) + /all-results (ADMIN + pagination, same Z-string full-row DTO)."
+      ]
     }
   ]
 }
