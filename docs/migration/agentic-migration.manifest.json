@@ -1006,6 +1006,47 @@
       "notes": [
         "DONE 2026-07-16: personality take-flow reads (/access + /session/:id). Completes the personality read cluster (results = FM-017). dotnet 0/0; 197u+1c+128i (+5u +5i). GATE: fresh review = SAFE TO SHIP (all 9 axes MATCH: completed-wins ordering, omitted optional keys via JsonIgnore WhenWritingNull + snake_case, 7-key projection all-present-when-null no leaked cols, uniform-404 ownership, ISO-Z via PcaExamSessionRowMapper.IsoZ [personality timestamps are timestamp(3) not timestamptz -> correct Z], self-scoped no canAccessUser, no route shadowing /session vs /session/results, snake_case JsonPropertyName wins over camelCase policy; 2 unreachable-under-NOT-NULL-schema Low/Info notes). Codex = SAFE TO SHIP (parity confirmed incl. adversarial access orderings [in_progress-newer/completed-older etc], no RLS/sub divergence, no .NET-only throw). Canary GREEN (deploy 29528932080, health 200): anon /access->401+x-formmaps-service; jack(school_admin) /access->200 {has_access:true, has_completed:false} — existing_session_id+reason OMITTED (JsonIgnore proven LIVE); anon /session->401; jack /session/bogus->404 uniform. OPEN follow-up (gated, same as FM-017): real /session 200 7-key shape needs a real personality-session id (jack=staff has none). ▶ NEXT = FM-024 assessments-timeline (/me/timeline 3-source merge + /me/timeline/stats; RequireIdentity only, NO subscription; reuse PcaExamPagination default 50), then Phase B LIA-core engine port (golden-fixture-pinned)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-024-assessments-timeline",
+      "status": "completed",
+      "goal": "Phase A assessments-timeline reads: GET /api/v1/assessments/me/timeline (getTimeline 3-source merge) + /me/timeline/stats (getTimelineStats). Self-scoped, RequireIdentity only (NO subscription).",
+      "dependsOn": [
+        "FM-DOTNET-023-personality-takeflow"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/assessment.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/assessmentService.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Endpoints",
+        "services/api/src/FormMaps.Application/Assessments",
+        "services/api/src/FormMaps.Infrastructure/Assessments",
+        "services/api/src/FormMaps.Api/Program.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "GET /api/v1/assessments/me/timeline ({events,total,page,limit,totalPages,summary}) — heterogeneous events, camelCase",
+        "GET /api/v1/assessments/me/timeline/stats ({overallCompletion, assessmentBreakdown})",
+        "pure AssessmentTimeline.BuildTimeline/BuildStats golden-pinned (3-source merge, stable date-DESC sort, in-memory pagination, ISO-Z dates, stats total=5+evals+courses)",
+        "AssessmentTimelineReader (pca_exam_sessions + evaluation_groups + course_enrollments, self-scoped)",
+        "PcaExamPagination.Resolve gains defaultLimit param (backward-compat 20; timeline passes 50)",
+        "web flag FORMMAPS_ROUTE_ASSESSMENT_TIMELINE_TO_DOTNET + rewrites (both endpoints)",
+        "7 unit + 3 integration tests"
+      ],
+      "guardrails": [
+        "Read-only only.",
+        "RequireIdentity ONLY (mount lacks requireSubscription); self-scoped on context.Tenant.UserId (NO canAccessUser, NO path userId); anon -> 401.",
+        "Events: score present on pca (even 0) OMITTED on eval/course; STABLE date-DESC sort (OrderByDescending, ties pca<eval<course); course date=enrolledAt??createdDate; in-memory paginate (64-bit skip, past-end->empty); ISO-Z dates; stats total=5+evals+courses (hardcoded pca 5). Do not weaken prior slices/RLS/security."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: assessments-timeline reads. dotnet 0/0; 204u+1c+131i (+7u +3i). GATE: fresh review + Codex BOTH = FIXES NEEDED, CONVERGED on ONE MED (int32 overflow in BuildTimeline skip: (page-1)*limit int32 wraps negative for huge page -> Skip(negative) returns first page vs legacy empty slice) — FIXED (compute skip in long, past-end->empty; golden-pinned Large_page_returns_empty test), same class as the FM-021 skip fix. Everything else parity-clean both reviews (event mapping/score-omission/titles/status, stable sort tie-break, enrolledAt??createdDate, totalPages, stats hardcoded-5+rounding+completedCourses, Z-dates, RequireIdentity-only-no-subscription self-scoped, SQL @@map+camelCase cols+isActive, camelCase JSON, backward-compat all-results default 20). 2 INFO (STJ escapes ° -> \\u00B0 decodes identically; export/report out of scope). Canary GREEN (redeploy 29530887712 of d638dbe, health 200): anon /me/timeline->401; jack /me/timeline->200 {total:0,totalPages:0,summary:{0,0,0},events:[]} (self-scoped empty — jack=staff has no OWN sessions; the /all-results rows were cross-school admin view); ?page=2&limit=1->200 {page:2,limit:1,totalPages:0}; /me/timeline/stats->200 {overallCompletion:0, breakdown pca{0,5}} (hardcoded pca total=5 proven live). OPEN follow-up (gated): non-empty real-data timeline (heterogeneous events + score-on-pca) needs a real student id/token. ▶ NEXT = FM-025 Phase B: port LIA-core scoring engine + percentile mapper (pure, golden.json-pinned: scoringCases/percentileCases/globalPercentileCases; no DB/canary) — unblocks Phase C LIA write path."
+      ]
     }
   ]
 }
