@@ -171,6 +171,31 @@ public class EvaluationReportEndpointsTests
     }
 
     [Fact]
+    public async Task EvaluationReport_omits_student_name_key_when_student_row_absent()
+    {
+        // Legacy emits studentName from `student?.name`; when the evaluated user's row is absent
+        // (RLS-hidden), the key is OMITTED (undefined), not null.
+        var reader = new FakeEvaluationReportReader { StudentMissing = true };
+        var guard = new FakeUserAccessGuard(allow: true);
+        using var factory = new EvaluationReportApiFactory(reader, guard);
+        using var client = factory.CreateClient();
+        using var request = BuildAuthenticatedRequest(
+            sessionId: SessionId,
+            role: FormMapsRoles.Student,
+            schoolId: null);
+
+        var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var data = document.RootElement.GetProperty("data");
+        Assert.False(data.TryGetProperty("studentName", out _));
+        // Other fields still present; feedback nulls still emitted as JSON null.
+        Assert.Equal("group-1", data.GetProperty("groupId").GetString());
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("feedback")[1].GetProperty("averageRating").ValueKind);
+    }
+
+    [Fact]
     public async Task EvaluationReport_returns_report_for_privileged_caller_when_access_granted()
     {
         var reader = new FakeEvaluationReportReader();
@@ -262,6 +287,8 @@ public class EvaluationReportEndpointsTests
 
         public bool GroupMissing { get; init; }
 
+        public bool StudentMissing { get; init; }
+
         public Task<EvaluationGroupCore?> ResolveGroupAsync(
             RequestContext requestContext,
             string sessionId,
@@ -317,7 +344,7 @@ public class EvaluationReportEndpointsTests
             var report = new EvaluationReport(
                 GroupId: group.GroupId,
                 StudentId: group.EvaluatedUserId,
-                StudentName: "Sam Student",
+                StudentName: StudentMissing ? null : "Sam Student",
                 EvaluatorName: group.EvaluatorName,
                 GroupType: group.GroupType,
                 Relation: group.Relation,

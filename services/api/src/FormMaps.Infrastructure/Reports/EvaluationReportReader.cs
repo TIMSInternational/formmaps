@@ -164,6 +164,10 @@ public sealed class EvaluationReportReader(
     }
 
     // feedbackItems is non-nullable (Json @default("[]")); the "[]" fallback is a defensive guard.
+    // Parse-then-reserialize strips Postgres jsonb::text spacing and preserves key order, matching
+    // legacy's compact JSON.stringify. Known micro-divergence: JsonElement.WriteTo preserves the raw
+    // numeric token, so a jsonb value like 5.0 emits "5.0" whereas legacy round-trips through a JS
+    // number and emits "5". Unreachable for the integer 1-5 rating payloads this field carries.
     private static JsonElement ReadJson(DbDataReader reader, string name)
     {
         var ordinal = reader.GetOrdinal(name);
