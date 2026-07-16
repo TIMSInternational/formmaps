@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<ILiaReportReader, LiaReportReader>();
         services.AddScoped<ITimelineReportReader, TimelineReportReader>();
         services.AddScoped<ICoachingReportReader, CoachingReportReader>();
+        services.AddScoped<IEvaluationReportReader, EvaluationReportReader>();
         services.AddScoped<IUserAccessGuard, UserAccessGuard>();
 
         return services;

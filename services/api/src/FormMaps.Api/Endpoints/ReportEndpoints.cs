@@ -17,6 +17,7 @@ public static class ReportEndpoints
         group.MapGet("/lia/{userId}", GetLiaReportAsync);
         group.MapGet("/timeline/{userId}", GetTimelineReportAsync);
         group.MapGet("/coaching/{userId}", GetCoachingReportAsync);
+        group.MapGet("/evaluation/{sessionId}", GetEvaluationReportAsync);
 
         return app;
     }
@@ -317,6 +318,80 @@ public static class ReportEndpoints
                 generatedAt = report.GeneratedAt
             }
         });
+    }
+
+    private static async Task<IResult> GetEvaluationReportAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IUserAccessGuard userAccessGuard,
+        IEvaluationReportReader reportReader,
+        string sessionId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var guardDecision = protectedRequestGuard.RequireIdentity(context);
+        if (!guardDecision.Allowed)
+        {
+            return Results.Json(
+                new
+                {
+                    success = false,
+                    code = guardDecision.Code,
+                    message = guardDecision.Message
+                },
+                statusCode: guardDecision.StatusCode);
+        }
+
+        // Resolve the group first (by id, no isActive filter). A missing group returns the SAME
+        // uniform 404 as an access denial: legacy leaks existence via distinct messages
+        // ("Evaluation group not found" vs "Not found"); the uniform 404 closes that leak.
+        var group = await reportReader.ResolveGroupAsync(context, sessionId, cancellationToken);
+        if (group is null)
+        {
+            return NotFound();
+        }
+
+        // Access is gated on the group's evaluatedUserId via canAccessUser (NOT session ownership).
+        if (!await userAccessGuard.CanAccessUserAsync(context, group.EvaluatedUserId, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var report = await reportReader.ReadReportAsync(context, group, cancellationToken);
+
+        // Legacy emits studentName from `student?.name`, so the key is OMITTED (undefined) when the
+        // evaluated user's row is absent/RLS-hidden, but every other null (completedDate, and the
+        // feedback averageRating/completedAt) is an explicit Prisma null that must be emitted.
+        // An ordered dictionary preserves the legacy key order while conditionally dropping only
+        // studentName; the feedback nulls stay as JSON null.
+        var data = new Dictionary<string, object?>
+        {
+            ["groupId"] = report.GroupId,
+            ["studentId"] = report.StudentId,
+        };
+        if (report.StudentName is not null)
+        {
+            data["studentName"] = report.StudentName;
+        }
+        data["evaluatorName"] = report.EvaluatorName;
+        data["groupType"] = report.GroupType;
+        data["relation"] = report.Relation;
+        data["isCompleted"] = report.IsCompleted;
+        data["completedDate"] = report.CompletedDate;
+        // averageRating is a JSON string (Prisma Decimal? -> decimal.js toString) or null;
+        // feedbackItems is raw jsonb passed through verbatim; evaluatorEmail is never selected.
+        data["feedback"] = report.Feedback.Select(entry => new
+        {
+            id = entry.Id,
+            averageRating = entry.AverageRating,
+            totalQuestions = entry.TotalQuestions,
+            answeredQuestions = entry.AnsweredQuestions,
+            feedbackItems = entry.FeedbackItems,
+            completedAt = entry.CompletedAt
+        });
+        data["generatedAt"] = report.GeneratedAt;
+
+        return Results.Ok(new { success = true, data });
     }
 
     // IDOR defense: denial reveals nothing about existence — always 404 "Not found", never 403.
