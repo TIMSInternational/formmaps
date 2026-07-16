@@ -14,6 +14,9 @@ public static class ReportEndpoints
         group.MapGet("/benchmark", GetBenchmarkAsync);
         group.MapGet("/user-report/{userId}", GetUserReportAsync);
         group.MapGet("/pca/{userId}", GetPcaReportAsync);
+        group.MapGet("/lia/{userId}", GetLiaReportAsync);
+        group.MapGet("/timeline/{userId}", GetTimelineReportAsync);
+        group.MapGet("/coaching/{userId}", GetCoachingReportAsync);
 
         return app;
     }
@@ -150,6 +153,167 @@ public static class ReportEndpoints
                     updatedAt = evaluation.UpdatedAt
                 }),
                 careerProfile = report.CareerProfile,
+                generatedAt = report.GeneratedAt
+            }
+        });
+    }
+
+    private static async Task<IResult> GetLiaReportAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IUserAccessGuard userAccessGuard,
+        ILiaReportReader reportReader,
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var guardDecision = protectedRequestGuard.RequireIdentity(context);
+        if (!guardDecision.Allowed)
+        {
+            return Results.Json(
+                new
+                {
+                    success = false,
+                    code = guardDecision.Code,
+                    message = guardDecision.Message
+                },
+                statusCode: guardDecision.StatusCode);
+        }
+
+        if (!await userAccessGuard.CanAccessUserAsync(context, userId, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var report = await reportReader.ReadAsync(context, userId, cancellationToken);
+        if (report is null)
+        {
+            return NotFound();
+        }
+
+        return Results.Ok(new
+        {
+            success = true,
+            data = new
+            {
+                studentId = report.StudentId,
+                studentName = report.StudentName,
+                // Dictionary keys are serialized verbatim (Web defaults leave DictionaryKeyPolicy
+                // null), preserving the PascalCase cognitive keys exactly as legacy emits them.
+                cognitiveProfile = report.CognitiveProfile,
+                overallScore = report.OverallScore,
+                completedExams = report.CompletedExams,
+                totalExams = report.TotalExams,
+                strengths = report.Strengths,
+                areasForGrowth = report.AreasForGrowth,
+                generatedAt = report.GeneratedAt
+            }
+        });
+    }
+
+    private static async Task<IResult> GetTimelineReportAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IUserAccessGuard userAccessGuard,
+        ITimelineReportReader reportReader,
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var guardDecision = protectedRequestGuard.RequireIdentity(context);
+        if (!guardDecision.Allowed)
+        {
+            return Results.Json(
+                new
+                {
+                    success = false,
+                    code = guardDecision.Code,
+                    message = guardDecision.Message
+                },
+                statusCode: guardDecision.StatusCode);
+        }
+
+        if (!await userAccessGuard.CanAccessUserAsync(context, userId, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var report = await reportReader.ReadAsync(context, userId, cancellationToken);
+        if (report is null)
+        {
+            return NotFound();
+        }
+
+        return Results.Ok(new
+        {
+            success = true,
+            data = new
+            {
+                studentId = report.StudentId,
+                studentName = report.StudentName,
+                // TimelineEvent records omit the score key on evaluation/course events
+                // (JsonIgnoreCondition.WhenWritingNull on a nullable Score).
+                events = report.Events,
+                totalEvents = report.TotalEvents,
+                summary = new
+                {
+                    mil = report.Summary.Mil,
+                    evaluations = report.Summary.Evaluations,
+                    courses = report.Summary.Courses
+                },
+                generatedAt = report.GeneratedAt
+            }
+        });
+    }
+
+    private static async Task<IResult> GetCoachingReportAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IUserAccessGuard userAccessGuard,
+        ICoachingReportReader reportReader,
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var guardDecision = protectedRequestGuard.RequireIdentity(context);
+        if (!guardDecision.Allowed)
+        {
+            return Results.Json(
+                new
+                {
+                    success = false,
+                    code = guardDecision.Code,
+                    message = guardDecision.Message
+                },
+                statusCode: guardDecision.StatusCode);
+        }
+
+        if (!await userAccessGuard.CanAccessUserAsync(context, userId, cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var report = await reportReader.ReadAsync(context, userId, cancellationToken);
+        if (report is null)
+        {
+            return NotFound();
+        }
+
+        return Results.Ok(new
+        {
+            success = true,
+            data = new
+            {
+                studentId = report.StudentId,
+                studentName = report.StudentName,
+                totalSessions = report.TotalSessions,
+                completedSessions = report.CompletedSessions,
+                totalSpent = report.TotalSpent,
+                currency = report.Currency,
+                reviewsGiven = report.ReviewsGiven,
+                // CoachingSession records expose only id/coachName/coachSpecialization/date/
+                // status/amount — sensitive booking and coach columns were never selected.
+                sessions = report.Sessions,
                 generatedAt = report.GeneratedAt
             }
         });

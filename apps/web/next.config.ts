@@ -29,6 +29,26 @@ function shouldRoutePcaReportToDotnet() {
   );
 }
 
+function shouldRouteLiaReportToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_LIA_REPORT_TO_DOTNET)
+  );
+}
+
+function shouldRouteTimelineReportToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_TIMELINE_REPORT_TO_DOTNET)
+  );
+}
+
+function shouldRouteCoachingReportToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_COACHING_REPORT_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -127,6 +147,30 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/reports/pca/:userId",
               destination: `${dotnetApiBaseUrl}/api/v1/reports/pca/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteLiaReportToDotnet()
+        ? [
+            {
+              source: "/api/v1/reports/lia/:userId",
+              destination: `${dotnetApiBaseUrl}/api/v1/reports/lia/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteTimelineReportToDotnet()
+        ? [
+            {
+              source: "/api/v1/reports/timeline/:userId",
+              destination: `${dotnetApiBaseUrl}/api/v1/reports/timeline/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteCoachingReportToDotnet()
+        ? [
+            {
+              source: "/api/v1/reports/coaching/:userId",
+              destination: `${dotnetApiBaseUrl}/api/v1/reports/coaching/:userId`,
             },
           ]
         : []),

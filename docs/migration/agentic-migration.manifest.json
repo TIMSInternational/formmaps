@@ -435,6 +435,55 @@
         "Lighter gate than user-report (guard reused from the already-reviewed FM-009; simple read-only passthrough) \u2014 verified by own parity read + real-data canary. Codex adversarial CLI remained hung all session.",
         "OPEN: careerProfile-populated passthrough not canaried on real data (jack.young is staff, no profile) \u2014 covered by unit/integration tests; canary when a real student-with-profile userId is available."
       ]
+    },
+    {
+      "id": "FM-DOTNET-011-reports-lia-timeline-coaching",
+      "status": "completed",
+      "goal": "Migrate three read-only report endpoints as one batched slice: GET /api/v1/reports/lia/{userId}, GET /api/v1/reports/timeline/{userId}, GET /api/v1/reports/coaching/{userId}, each with canAccessUser ownership parity (own-record / counselor-assignment / same-school / super-admin), IDOR-safe 404 denial, and exact data parity against the legacy handlers.",
+      "dependsOn": [
+        "FM-DOTNET-010-reports-pca"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/report.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/access.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma",
+        "services/api/src/FormMaps.Api/Endpoints/ReportEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/Reports/PcaReportReader.cs",
+        "docs/migration/auth-tenant-context-contract.md"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Endpoints",
+        "services/api/src/FormMaps.Application",
+        "services/api/src/FormMaps.Infrastructure",
+        "services/api/tests/FormMaps.IntegrationTests",
+        "docs/migration"
+      ],
+      "outputs": [
+        "GET /api/v1/reports/lia/{userId}",
+        "GET /api/v1/reports/timeline/{userId}",
+        "GET /api/v1/reports/coaching/{userId}",
+        "canAccessUser ownership guard parity reused unchanged from user-report/pca (RequireIdentity + CanAccessUserAsync)",
+        "IDOR-safe 404 denial",
+        "LIA report reader (percentile remap dual-path), timeline report reader (heterogeneous merge + stable sort), coaching report reader (whitelist join + BigInt)",
+        "ownership + data parity + sensitive-field-exclusion tests"
+      ],
+      "guardrails": [
+        "Read-only only; no write endpoint in this slice.",
+        "All data access must use IFormMapsDatabaseSessionFactory read-only under the caller RLS session.",
+        "/lia: NO isActive filter on exam sessions + percentiles remap numerical_speed->NumericVelocity (key-name mismatch); dual path (parity LIA percentiles else per-type exam scorePercentage).",
+        "/timeline: isActive=true IS applied on all three sources + score key ABSENT on evaluation/course events (only mil carries score) + exclude invitationToken/evaluatorEmail from the evaluation select.",
+        "/coaching: booking->coach JOIN excludes coach hourlyRate/platformCommission/email and booking paymentIntentId/coachNotes/notes/meetingLink/cancellationReason + amount is BigInt emitted as a JSON number (0n/null -> null on session amount).",
+        "Denial must be 404 Not found; never reveal whether the target exists; read-only under caller RLS.",
+        "Reuse the user-report/pca ownership guard unchanged; do not invent a new guard or use resolveSecureUserId coercion.",
+        "Do not weaken benchmark/user-report/pca parity, RLS, tenant isolation, or the security middleware."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-15b: 3 read endpoints, reuse FM-009 rails. Adversarial review SAFE TO SHIP (LIA overallScore rounding fix applied). dotnet 0/0; 27u+1c+64i green. Staging canary: lia/timeline/coaching self->200 correct shape + x-formmaps-service, non-existent->404, anon->401. Web flags added. OPEN: readers fake-tested only (no DB-level parity test); LIA jsonb path not canaried (needs a student-with-LIA-session; jack.young=staff)."
+      ]
     }
   ]
 }
