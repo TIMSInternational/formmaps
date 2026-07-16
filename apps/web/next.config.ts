@@ -96,6 +96,12 @@ function shouldRoutePersonalityResultsToDotnet() {
   );
 }
 
+function shouldRoutePcaExamConfigToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_CONFIG_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -286,6 +292,18 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/personality/user/:userId/results",
               destination: `${dotnetApiBaseUrl}/api/v1/personality/user/:userId/results`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaExamConfigToDotnet()
+        ? [
+            {
+              source: "/api/pcaexam/exams/:examId/instructions",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/exams/:examId/instructions`,
+            },
+            {
+              source: "/api/pcaexam/exam-config/:examId",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/exam-config/:examId`,
             },
           ]
         : []),

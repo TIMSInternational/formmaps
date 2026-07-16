@@ -19,8 +19,81 @@ public static class ExamEndpoints
         group.MapGet("/completed-exams/{userId}", GetCompletedExamsAsync);
         group.MapGet("/exams", GetExamsAsync);
         group.MapGet("/exams/{examId}", GetExamWithQuestionsAsync);
+        group.MapGet("/exams/{examId}/instructions", GetInstructionsAsync);
+        group.MapGet("/exam-config/{examId}", GetExamConfigAsync);
 
         return app;
+    }
+
+    private static async Task<IResult> GetInstructionsAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ISubscriptionGuard subscriptionGuard,
+        IExamConfigReader reader,
+        string examId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var subscription = await subscriptionGuard.RequireSubscriptionAsync(context, cancellationToken);
+        if (!subscription.Allowed)
+        {
+            return Deny(subscription);
+        }
+
+        var instructions = await reader.GetInstructionsAsync(context, examId, cancellationToken);
+        if (instructions is null)
+        {
+            return ExamNotFound();
+        }
+
+        return Results.Ok(new { success = true, data = instructions });
+    }
+
+    private static async Task<IResult> GetExamConfigAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ISubscriptionGuard subscriptionGuard,
+        IExamConfigReader reader,
+        string examId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var subscription = await subscriptionGuard.RequireSubscriptionAsync(context, cancellationToken);
+        if (!subscription.Allowed)
+        {
+            return Deny(subscription);
+        }
+
+        var config = await reader.GetConfigAsync(context, examId, cancellationToken);
+        if (config is null)
+        {
+            return ExamNotFound();
+        }
+
+        return Results.Ok(new { success = true, data = config });
+    }
+
+    // Global catalog: exam existence is not sensitive (listable via /exams), so match the legacy
+    // message rather than the ownership-uniform 404.
+    private static IResult ExamNotFound()
+    {
+        return Results.Json(
+            new { success = false, message = "Exam not found" },
+            statusCode: StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> GetExamsAsync(
