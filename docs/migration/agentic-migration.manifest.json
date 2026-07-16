@@ -484,6 +484,56 @@
       "notes": [
         "DONE 2026-07-15b: 3 read endpoints, reuse FM-009 rails. Adversarial review SAFE TO SHIP (LIA overallScore rounding fix applied). dotnet 0/0; 27u+1c+64i green. Staging canary: lia/timeline/coaching self->200 correct shape + x-formmaps-service, non-existent->404, anon->401. Web flags added. OPEN: readers fake-tested only (no DB-level parity test); LIA jsonb path not canaried (needs a student-with-LIA-session; jack.young=staff)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-012-reports-evaluation",
+      "status": "completed",
+      "goal": "Migrate the last reports read-domain endpoint GET /api/v1/reports/evaluation/{sessionId} (session-scoped). Resolve the evaluation group by id (no isActive filter), then gate access on the group's evaluatedUserId via canAccessUser (RequireIdentity + CanAccessUserAsync reused unchanged), with IDOR-safe uniform 404 and exact data parity against the legacy handler (report.ts:176).",
+      "dependsOn": [
+        "FM-DOTNET-011-reports-lia-timeline-coaching"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/report.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/access.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/prismaRls.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma",
+        "services/api/src/FormMaps.Api/Endpoints/ReportEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/Reports/CoachingReportReader.cs"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Endpoints",
+        "services/api/src/FormMaps.Application",
+        "services/api/src/FormMaps.Infrastructure",
+        "services/api/tests/FormMaps.IntegrationTests",
+        "apps/web/next.config.ts",
+        "docs/migration"
+      ],
+      "outputs": [
+        "GET /api/v1/reports/evaluation/{sessionId}",
+        "Two-phase reader: ResolveGroupAsync (group core incl. evaluatedUserId, no isActive filter) -> canAccessUser on evaluatedUserId -> ReadReportAsync (student name + active feedback)",
+        "canAccessUser ownership guard parity reused unchanged (RequireIdentity + CanAccessUserAsync)",
+        "IDOR-safe uniform 404 (closes the legacy existence leak from the distinct 'Evaluation group not found' message)",
+        "averageRating (Decimal?) emitted as JSON string via trim_scale()::text; feedbackItems (jsonb) raw passthrough; sensitive columns excluded",
+        "web route flag FORMMAPS_ROUTE_EVALUATION_REPORT_TO_DOTNET (default off)",
+        "7 integration tests (ordering, averageRating string, jsonb passthrough, studentName omit-when-null, sensitive-field exclusion, uniform 404)"
+      ],
+      "guardrails": [
+        "Read-only only; no write endpoint in this slice.",
+        "All data access must use IFormMapsDatabaseSessionFactory read-only under the caller RLS session.",
+        "Group resolved by id with NO isActive filter (legacy findUnique); feedback filtered to isActive=true with NO orderBy (legacy findMany has none).",
+        "Access is gated on the group's evaluatedUserId (NOT the sessionId) via the reused canAccessUser guard.",
+        "averageRating must serialize as a JSON string (Prisma Decimal? -> decimal.js toString) or null; feedbackItems must pass through as raw jsonb; evaluatorEmail/invitationToken/token flags must never appear.",
+        "studentName is omitted (not null) when the evaluated user row is absent, matching legacy student?.name; every other Prisma null (completedDate, feedback averageRating/completedAt) stays explicit JSON null.",
+        "Denial and not-found both return 404 Not found; never reveal whether the group exists.",
+        "Do not weaken benchmark/user-report/pca/lia/timeline/coaching parity, RLS, tenant isolation, or the security middleware."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: last reports read endpoint. dotnet 0/0; 27u+1c+71i green (+7 evaluation). Adversarial review (fresh agent): Finding 1 (RLS-superset HIGH) DISSOLVED - verified legacy Prisma applies the SAME RLS GUC plan on every query (prismaRls.ts SET LOCAL current_user_id/current_school_id), so legacy is also two-layer RLS+canAccessUser with identical policies; no divergence. Finding 2 (studentName null-vs-omit LOW) FIXED (omit-when-null + test). Finding 3 (jsonb 5.0-vs-5 number canonicalization LOW) documented, unreachable for integer ratings. Finding 4 (500 body) verified faithful. Reports read-domain now 7/7 .NET-capable on staging. OPEN: reader fake-tested only; same-school real-data 200-shape path NOT canaried (needs a real Country Day evaluation-group id via gated in-VPC read; jack.young=staff has no own 360). Prod cutover still deferred (Federico)."
+      ]
     }
   ]
 }
