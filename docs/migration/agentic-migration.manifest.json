@@ -582,6 +582,51 @@
       "notes": [
         "DONE 2026-07-16: first assessments slice. dotnet 0/0; 41u+1c+78i green (+14u +7i). Adversarial review (fresh agent) SAFE TO SHIP - only Low finding (503-vs-500 on subscription-check DB failure) FIXED (try/catch -> 503, ILogger); 2 nits (negative grace env, whitespace schoolId) unrealistic no-action; entitlement logic + full-row + dedup + guard order verified faithful. Staging canary green incl. REAL-DATA 200: anon session/completed->401, authed(jack school_admin)+non-existent session->404 uniform, authed(jack)+completed-exams/self->200 {sessions:[],uniqueCompleted:[],count:0} (proves RequireIdentity->sub-guard non-student BYPASS->canAccessUser self->reader shape, all .NET-served). OPEN: readers fake-tested only (no DB-level reader parity test); individual-student subscription-DENIAL path unit-tested only (jack.young=school_admin, not a school-less student). Reusable subscription guard now unblocks the whole cognitive+exam surface. Prod cutover deferred (Federico)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-014-pcaexam-catalog",
+      "status": "completed",
+      "goal": "Phase A reads continued: GET /api/pcaexam/exams (listExams) + GET /api/pcaexam/exams/{examId} (getExamWithQuestions), reusing the FM-013 subscription guard, with exact parity to the legacy examRouter handlers + the answer-key non-leak security invariant.",
+      "dependsOn": [
+        "FM-DOTNET-013-pcaexam-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/assessment.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/assessmentService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma",
+        "services/api/src/FormMaps.Api/Endpoints/ExamEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/Assessments/ExamSessionReader.cs"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Api/Endpoints",
+        "services/api/src/FormMaps.Application",
+        "services/api/src/FormMaps.Infrastructure",
+        "services/api/tests",
+        "apps/web/next.config.ts",
+        "docs/migration"
+      ],
+      "outputs": [
+        "GET /api/pcaexam/exams (active exam list, no orderBy)",
+        "GET /api/pcaexam/exams/{examId} (exam + answer-stripped questions ordered by questionNumber)",
+        "answer-key non-leak: correctAnswer + explanation excluded at SQL AND un-representable in the ExamQuestion DTO",
+        "web flag FORMMAPS_ROUTE_PCAEXAM_CATALOG_TO_DOTNET (default off)",
+        "5 integration tests incl. the answer-key-strip regression pin"
+      ],
+      "guardrails": [
+        "Read-only only.",
+        "CORPUS: correctAnswer/explanation must NEVER appear in any question-fetch response (answer key stays server-side).",
+        "listExams: WHERE isActive=true, no orderBy; getExamWithQuestions: exam by id (no isActive filter, findUnique parity) + questions WHERE isActive orderBy questionNumber ASC.",
+        "data jsonb passthrough; enums ::text; global catalog so NO canAccessUser; guard = RequireIdentity + RequireSubscription.",
+        "Missing exam -> 404 'Exam not found' (global catalog, no IDOR surface, matches legacy message).",
+        "Do not weaken prior slices, RLS, tenant isolation, or the security middleware."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: catalog reads. dotnet 0/0; 41u+1c+83i green (+5i). First slice under the regression-corpus discipline ([[formmaps-csharp-port-regression-corpus]]) - pins the answer-key non-leak invariant (structurally guaranteed: stripped at SQL + un-representable in DTO, stronger than legacy's post-query strip). Fresh-agent review SAFE TO SHIP (all catalog fields/isActive/ordering/enum/jsonb/404/guard-scope/500 verified faithful; 2 nits no-action). Staging canary GREEN incl. answer-key non-leak proven on REAL DATA: anon /exams->401; authed(jack) /exams->200 real list (feature-detection-001, 60 q); authed /exams/feature-detection-001->200 with 60 REAL questions and answer-key-leak=FALSE (keys=id,examId,questionNumber,questionText,type,data,isActive,createdBy/Date,updatedBy/At - NO correctAnswer/explanation); /exams/nonexistent->404 'Exam not found'. Corpus invariant verified end-to-end on prod data."
+      ]
     }
   ]
 }
