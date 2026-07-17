@@ -34,6 +34,7 @@ app.MapLiaEndpoints();
 app.MapMilEndpoints();
 app.MapPersonalityEndpoints();
 app.MapAssessmentTimelineEndpoints();
+app.MapVocationalEndpoints();
 
 app.Run();
 
