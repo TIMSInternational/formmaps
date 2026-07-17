@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
@@ -200,7 +201,26 @@ public sealed class PersonalitySessionWriterTests : IClassFixture<PersonalityWri
         Assert.Equal("completed", row.Status);
         Assert.Equal(outcome.Result!.Type, row.ResolvedType);
         Assert.NotNull(row.CompletedAt);
-        Assert.False(string.IsNullOrEmpty(row.DimensionScores));
+
+        // dimension_scores jsonb MUST use the legacy camelCase inner keys — the FM-017 reader echoes them
+        // verbatim to the frontend (which reads winningPole / normalizedIntensity / balanced). A PascalCase
+        // jsonb would silently blank the results radar + intensity bars.
+        Assert.NotNull(row.DimensionScores);
+        using (var stored = JsonDocument.Parse(row.DimensionScores!))
+        {
+            var ei = stored.RootElement.GetProperty("EI"); // outer keys stay EI/SN/TF/JP
+            Assert.True(ei.TryGetProperty("winningPole", out _));
+            Assert.True(ei.TryGetProperty("normalizedIntensity", out _));
+            Assert.True(ei.TryGetProperty("balanced", out _));
+            Assert.False(ei.TryGetProperty("WinningPole", out _));       // NOT PascalCase
+            Assert.False(ei.TryGetProperty("NormalizedIntensity", out _));
+        }
+
+        // End-to-end: the results the writer returns (via the FM-017 reader) carry the camelCase contract too.
+        var responseJson = JsonSerializer.Serialize(outcome.Result);
+        Assert.Contains("\"winningPole\"", responseJson, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"WinningPole\"", responseJson, StringComparison.Ordinal);
+
         Assert.Contains(logger.Entries, e => e.Message.StartsWith("audit.assessment.personality.completed", StringComparison.Ordinal));
     }
 
