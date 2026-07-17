@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 
@@ -25,9 +26,164 @@ public static class PersonalityEndpoints
         group.MapGet("/session/{sessionId}", GetSessionAsync);
         group.MapGet("/session/{sessionId}/results", GetSessionResultsAsync);
         group.MapGet("/user/{userId}/results", GetUserResultsAsync);
+        group.MapPost("/start", StartAsync);
+        group.MapPost("/session/{sessionId}/answer", AnswerAsync);
+        group.MapPost("/session/{sessionId}/complete", CompleteAsync);
 
         return app;
     }
+
+    // POST /start (legacy startSession) — resume an open session or create a new one; retake -> 409.
+    private static async Task<IResult> StartAsync(
+        HttpContext http,
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ISubscriptionGuard subscriptionGuard,
+        IPersonalitySessionWriter writer,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var subscription = await subscriptionGuard.RequireSubscriptionAsync(context, cancellationToken);
+        if (!subscription.Allowed)
+        {
+            return Deny(subscription);
+        }
+
+        var body = await ReadJsonObjectAsync(http, cancellationToken);
+        // Legacy: laboral -> laboral, estudiantil -> estudiantil, anything else -> estudiantil default.
+        var variant = ReadString(body, "variant") == "laboral" ? "laboral" : "estudiantil";
+        var language = ReadString(body, "language") == "en" ? "en" : "es";
+
+        var outcome = await writer.StartAsync(context, context.Tenant!.UserId, variant, language, cancellationToken);
+        return outcome.Status == PersonalityWriteStatus.Ok
+            ? Results.Ok(new { success = true, data = outcome.Payload })
+            : MapWriteError(outcome.Status);
+    }
+
+    // POST /session/{sessionId}/answer (legacy saveAnswer) — upsert one item's answer (strict A/B).
+    private static async Task<IResult> AnswerAsync(
+        HttpContext http,
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ISubscriptionGuard subscriptionGuard,
+        IPersonalitySessionWriter writer,
+        string sessionId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var subscription = await subscriptionGuard.RequireSubscriptionAsync(context, cancellationToken);
+        if (!subscription.Allowed)
+        {
+            return Deny(subscription);
+        }
+
+        var body = await ReadJsonObjectAsync(http, cancellationToken);
+        // Number(req.body?.itemNumber) must be a positive integer (else 400 before the write).
+        if (ReadInteger(body, "itemNumber") is not { } itemNumber || itemNumber < 1)
+        {
+            return Error(StatusCodes.Status400BadRequest, "itemNumber is required");
+        }
+
+        // Pass the raw choice through — the writer accepts ONLY exact "A"/"B" (truncating would score "BLAH" as "B").
+        var choice = ReadString(body, "choice") ?? string.Empty;
+
+        var outcome = await writer.SaveAnswerAsync(context, sessionId, context.Tenant!.UserId, itemNumber, choice, cancellationToken);
+        return outcome.Status == PersonalityWriteStatus.Ok
+            ? Results.Ok(new { success = true, data = outcome.Result })
+            : MapWriteError(outcome.Status);
+    }
+
+    // POST /session/{sessionId}/complete (legacy completeSession) — idempotent, coverage-gated completion.
+    private static async Task<IResult> CompleteAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ISubscriptionGuard subscriptionGuard,
+        IPersonalitySessionWriter writer,
+        string sessionId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var subscription = await subscriptionGuard.RequireSubscriptionAsync(context, cancellationToken);
+        if (!subscription.Allowed)
+        {
+            return Deny(subscription);
+        }
+
+        var outcome = await writer.CompleteAsync(context, sessionId, context.Tenant!.UserId, cancellationToken);
+        return outcome.Status == PersonalityWriteStatus.Ok
+            ? Results.Ok(new { success = true, data = outcome.Result })
+            : MapWriteError(outcome.Status);
+    }
+
+    // Legacy personality.ts handleError status/body mapping.
+    private static IResult MapWriteError(PersonalityWriteStatus status) => status switch
+    {
+        PersonalityWriteStatus.SessionNotFound => NotFound(),
+        PersonalityWriteStatus.ItemNotFound => NotFound(),
+        PersonalityWriteStatus.AlreadyCompleted => Error(StatusCodes.Status409Conflict, "Assessment already completed"),
+        PersonalityWriteStatus.InvalidChoice => Error(StatusCodes.Status400BadRequest, "Invalid answer"),
+        PersonalityWriteStatus.NotInProgress => Error(StatusCodes.Status400BadRequest, "Assessment is not in progress"),
+        PersonalityWriteStatus.IncompleteCoverage => Error(StatusCodes.Status400BadRequest, "Please answer every item before finishing"),
+        _ => NotFound(),
+    };
+
+    private static IResult Error(int statusCode, string message) =>
+        Results.Json(new { success = false, message }, statusCode: statusCode);
+
+    // Lenient JSON body read — matches legacy `req.body?.x` optional-chaining (absent/invalid -> empty).
+    private static async Task<JsonElement> ReadJsonObjectAsync(HttpContext http, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var element = await http.Request.ReadFromJsonAsync<JsonElement>(cancellationToken);
+            return element.ValueKind == JsonValueKind.Object ? element : default;
+        }
+        catch (JsonException)
+        {
+            return default;
+        }
+        catch (BadHttpRequestException)
+        {
+            return default;
+        }
+    }
+
+    private static string? ReadString(JsonElement body, string name) =>
+        body.ValueKind == JsonValueKind.Object
+        && body.TryGetProperty(name, out var value)
+        && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    // Number(x) restricted to a JSON integer (the only shape the client sends); non-integers -> null -> 400.
+    private static int? ReadInteger(JsonElement body, string name) =>
+        body.ValueKind == JsonValueKind.Object
+        && body.TryGetProperty(name, out var value)
+        && value.ValueKind == JsonValueKind.Number
+        && value.TryGetInt32(out var number)
+            ? number
+            : null;
 
     private static async Task<IResult> GetAccessAsync(
         IRequestContextAccessor requestContextAccessor,

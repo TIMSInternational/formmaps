@@ -23,6 +23,8 @@
   <ItemGroup>
     <!-- Schema-only DDL for the Testcontainers LIA write harness (FM-DOTNET-029). -->
     <EmbeddedResource Include="Assessments\Data\lia-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers personality write harness (FM-DOTNET-030). -->
+    <EmbeddedResource Include="Assessments\Data\personality-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
