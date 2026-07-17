@@ -83,6 +83,12 @@ function shouldRouteLiaResultsToDotnet() {
   );
 }
 
+function shouldRouteLiaCompleteToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_LIA_COMPLETE_TO_DOTNET)
+  );
+}
+
 function shouldRouteMilResultsToDotnet() {
   return Boolean(
     dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_MIL_RESULTS_TO_DOTNET)
@@ -308,6 +314,18 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/lia/user/:userId/results",
               destination: `${dotnetApiBaseUrl}/api/v1/lia/user/:userId/results`,
+            },
+          ]
+        : []),
+      // POST /api/v1/lia/session/:sessionId/complete — the FIRST authored WRITE routed to .NET.
+      // Default OFF; the prod route-flip stays deferred until the take/submit slice owns the whole
+      // session lifecycle (porting only /complete while Node owns /start,/answer,/timeout is a
+      // dual-write on lia_assessment_sessions — fine only for the flag-gated staging proof).
+      ...(shouldRouteLiaCompleteToDotnet()
+        ? [
+            {
+              source: "/api/v1/lia/session/:sessionId/complete",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/complete`,
             },
           ]
         : []),
