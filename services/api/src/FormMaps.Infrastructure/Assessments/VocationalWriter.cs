@@ -20,6 +20,8 @@ namespace FormMaps.Infrastructure.Assessments;
 /// </summary>
 public sealed class VocationalWriter(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
+    IVocationalReader vocationalReader,
+    ICompleteProfileAssembler profileAssembler,
     ILogger<VocationalWriter> logger) : IVocationalWriter
 {
     // camelCase jsonb (the stored dimension_scores/rankings/weights_applied keys the frontend reads).
@@ -138,6 +140,104 @@ public sealed class VocationalWriter(
             evaluatedUserId, context.Tenant?.UserId, payload.InstrumentVersion, payload.Composite, payload.Band);
 
         return new VocationalRecomputeOutcome(VocationalRecomputeStatus.Ready, payload, null);
+    }
+
+    public async Task<IntegrationOutcome?> RecomputeIntegratedAsync(
+        RequestContext context,
+        string evaluatedUserId,
+        CancellationToken cancellationToken = default)
+    {
+        // 1. Active instrument (version + integration weights + interpretation bands). None → never_computed.
+        string version, integrationWeightsJson, bandsJson;
+        await using (var readSession = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken))
+        await using (var command = Command(readSession, """
+            SELECT "version", "integrationWeights"::text, "interpretationBands"::text
+            FROM "vocational_instruments" WHERE "status" = 'active' AND "isActive" = true
+            LIMIT 1
+            """))
+        {
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                return null;
+            }
+
+            version = reader.GetString(0);
+            integrationWeightsJson = reader.IsDBNull(1) ? "{}" : reader.GetString(1);
+            bandsJson = reader.IsDBNull(2) ? "{}" : reader.GetString(2);
+        }
+
+        // 2. The three integration channels (legacy loadIntegrationInputs), each via a shipped read:
+        //    360 = the persisted vocational composite (FM-033); pca/mil = derived from the FM-035 profile.
+        var score = await vocationalReader.GetScoreAsync(context, evaluatedUserId, cancellationToken);
+        var profile = await profileAssembler.AssembleAsync(context, evaluatedUserId, cancellationToken);
+
+        var competences = (profile.Pca.Competences ?? [])
+            .Select(c => new Competence(c.Name, c.Level))
+            .ToList();
+        var inputs = new IntegrationInputs(
+            ThreeSixty: score?.Composite,
+            PcaScore: VocationalIntegration.CompetencesToScore(competences),
+            MilScore: profile.Completeness.Lia ? VocationalIntegration.MilToScore(ToMilDomains(profile.Lia.Mil)) : null);
+        var config = new IntegrationConfig(version, ParseIntegrationWeights(integrationWeightsJson), ParseBands(bandsJson));
+
+        var outcome = VocationalIntegration.ComputeIntegratedResult(config, inputs);
+        if (outcome is not IntegratedResultPayload payload)
+        {
+            // NotReady (a channel is missing) — nothing persisted, matching legacy.
+            return outcome;
+        }
+
+        // Persist (legacy prisma.vocationalIntegratedResult.upsert on @@unique([evaluatedUserId, instrumentVersion])).
+        var now = Now();
+        await using var writeSession = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+        await using (var command = Command(writeSession, """
+            INSERT INTO "vocational_integrated_results"
+                ("id", "evaluatedUserId", "instrumentVersion", "integratedComposite", "band",
+                 "threeSixtyScore", "pcaScore", "milScore", "weightsApplied", "computedAt")
+            VALUES (@id, @uid, @version, @integratedComposite, @band,
+                    @threeSixtyScore, @pcaScore, @milScore, @weightsApplied::jsonb, @computedAt)
+            ON CONFLICT ("evaluatedUserId", "instrumentVersion") DO UPDATE SET
+                "integratedComposite" = EXCLUDED."integratedComposite",
+                "band" = EXCLUDED."band",
+                "threeSixtyScore" = EXCLUDED."threeSixtyScore",
+                "pcaScore" = EXCLUDED."pcaScore",
+                "milScore" = EXCLUDED."milScore",
+                "weightsApplied" = EXCLUDED."weightsApplied",
+                "computedAt" = EXCLUDED."computedAt"
+            """))
+        {
+            AddParameter(command, "id", Guid.NewGuid().ToString());
+            AddParameter(command, "uid", evaluatedUserId);
+            AddParameter(command, "version", payload.InstrumentVersion);
+            AddParameter(command, "integratedComposite", (decimal)payload.IntegratedComposite);
+            AddParameter(command, "band", payload.Band);
+            AddParameter(command, "threeSixtyScore", (decimal)payload.ThreeSixtyScore);
+            AddParameter(command, "pcaScore", (decimal)payload.PcaScore);
+            AddParameter(command, "milScore", (decimal)payload.MilScore);
+            AddParameter(command, "weightsApplied", JsonSerializer.Serialize(payload.WeightsApplied, JsonbOptions));
+            AddTimestamp(command, "computedAt", now);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await writeSession.CommitAsync(cancellationToken);
+        logger.LogInformation(
+            "audit.assessment.vocational.integrated_recomputed evaluatedUserId={SubjectUserId} actorUserId={ActorUserId} instrumentVersion={Version} integratedComposite={Composite} band={Band}",
+            evaluatedUserId, context.Tenant?.UserId, payload.InstrumentVersion, payload.IntegratedComposite, payload.Band);
+
+        return payload;
+    }
+
+    // profile.lia.mil (keyed by domain) → the five-field MilDomains the integration engine consumes.
+    private static MilDomains ToMilDomains(IReadOnlyDictionary<string, int> mil) => new(
+        mil["milReasoning"], mil["milDetection"], mil["milNumeric"], mil["milMemory"], mil["milOrientation"]);
+
+    // asIntegrationWeights: threeSixty/pca/mil when JSON numbers, else 0 (legacy default; renormalized later).
+    private static IntegrationWeights ParseIntegrationWeights(string json)
+    {
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        return new IntegrationWeights(NumberOr(root, "threeSixty", 0), NumberOr(root, "pca", 0), NumberOr(root, "mil", 0));
     }
 
     private static async Task<List<ScoringGroup>> LoadGroupsAsync(

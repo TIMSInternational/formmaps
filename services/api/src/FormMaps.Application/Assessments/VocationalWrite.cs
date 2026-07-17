@@ -32,12 +32,22 @@ public sealed record VocationalRecomputeOutcome(
 /// instrumentVersion). Ownership is enforced at the endpoint via canAccessUser (a privileged role may
 /// recompute an accessible user), so this method is not self-scoped. Decimal is persisted as a numeric
 /// value; the jsonb payloads are serialized camelCase (the reader/frontend echo the inner keys verbatim).
-/// The integrated recompute (recomputeIntegratedResult) is DEFERRED — it depends on assembleCompleteProfile
-/// (the DISC/PCA + MIL/LIA profile assembler), which is a separate unported cross-domain unit.
 /// </summary>
 public interface IVocationalWriter
 {
     Task<VocationalRecomputeOutcome> RecomputeScoreAsync(
+        RequestContext context,
+        string evaluatedUserId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The authed vocational INTEGRATED recompute (legacy recomputeIntegratedResult): fuses the persisted
+    /// 360 composite (FM-033), the FM-035 profile's PCA competences + MIL cognitive channels via the shipped
+    /// FM-028 <see cref="VocationalIntegration"/> engine, and — only when ready (all three channels present) —
+    /// UPSERTs vocational_integrated_results. Returns the <see cref="IntegrationOutcome"/> (ready payload or
+    /// not-ready), or <c>null</c> when there is no active instrument (never_computed, nothing persisted).
+    /// </summary>
+    Task<IntegrationOutcome?> RecomputeIntegratedAsync(
         RequestContext context,
         string evaluatedUserId,
         CancellationToken cancellationToken = default);
