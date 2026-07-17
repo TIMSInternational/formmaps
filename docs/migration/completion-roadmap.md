@@ -5,7 +5,7 @@ Grounds: `dotnet-implementation-plan.md` (11-domain order), `cutover-matrix.md`
 (risk), `source-inventory.md` (52 routes / 90 services / 123 models / 177 tests).
 Companion: `agentic-migration.manifest.json` (per-slice ledger).
 
-## 1. Where we are (main `a745d06`, 31/31 manifest slices)
+## 1. Where we are (main `538c3d0`, 32/32 manifest slices)
 
 | Block | State |
 |---|---|
@@ -13,7 +13,7 @@ Companion: `agentic-migration.manifest.json` (per-slice ledger).
 | Reports domain — reads (7/7 endpoints) | ✅ done (FM-006, 009→012) |
 | Assessments — reads (pca-exam cluster, LIA/MIL/personality results, timeline) | ✅ done (FM-013→024) |
 | Assessments — pure engines (LIA-core, LIA item, personality tally, vocational) | ✅ done (FM-025→028) |
-| Assessments — writes (LIA complete, personality full-lifecycle, pca-exam take/submit) | ✅ done (FM-029→031) |
+| Assessments — writes (LIA complete, personality, pca-exam take/submit, vocational recompute) | ✅ done (FM-029→032) |
 
 **Honest read:** ~20–25% of the endpoint surface is .NET-capable-**on-staging**,
 heavily read-weighted. **Cutover to prod = 0%** — every .NET route is flag-gated
@@ -25,9 +25,9 @@ majority of the app — and every structurally hard part — remains.
 
 Legend: R=read slice (fast), W=write slice (slow, full gate), 🔴=high structural risk.
 
-### Phase A — Finish Assessments (domain 3) — **~9–13 slices**
+### Phase A — Finish Assessments (domain 3) — **~8–12 slices**
 - ✅ **W** pca-exam submit/take (FM-031, DONE `a745d06`) — closed corpus #18 answer-replay (completed/TimeExpired→409, no dup, no rescore). Prod-flip deferred (Node owns /complete timeout + es-VerbalReasoning serve + insight-polyglot).
-- **W** vocational authed take/submit (vocational360) — uses FM-028 engine.
+- ✅ **W** vocational authed SCORE recompute (FM-032, DONE `538c3d0`) — wires FM-028 VocationalScoring → upserts vocational_results (numeric composite + camelCase jsonb). **Integrated recompute DEFERRED** — needs the assembleCompleteProfile (DISC/PCA + MIL/LIA) assembler port.
 - **R** remaining Phase-A reads: test-scores (378 lines, 7ep +superscore +college-fit Decimal), question360 (11ep, answer-key strip), vocational360 catalog/score, school-admin views (14ep), assessment-profile derive/insights-status.
 - **W** 🔴 external **token-gated write rail** (evaluation `submit-feedback`, vocationalTake external submit) — NEW fail-closed non-tenant rail; highest risk in assessments.
 - TIMS vendor proxy (`pcaapi.ts` 732 lines, 13ep) — **DEFER / keep in Node** (Federico) or 2–3 slices if ported.
