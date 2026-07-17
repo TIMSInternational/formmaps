@@ -180,6 +180,18 @@ function shouldRouteVocationalScoreRecomputeToDotnet() {
   );
 }
 
+function shouldRouteVocationalScoreReadToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_SCORE_READ_TO_DOTNET)
+  );
+}
+
+function shouldRouteVocationalIntegratedReadToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_INTEGRATED_READ_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -497,6 +509,22 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/vocational360/score/:evaluatedUserId/recompute",
               destination: `${dotnetApiBaseUrl}/api/v1/vocational360/score/:evaluatedUserId/recompute`,
+            },
+          ]
+        : []),
+      ...(shouldRouteVocationalScoreReadToDotnet()
+        ? [
+            {
+              source: "/api/v1/vocational360/score/:evaluatedUserId",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/score/:evaluatedUserId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteVocationalIntegratedReadToDotnet()
+        ? [
+            {
+              source: "/api/v1/vocational360/integrated/:evaluatedUserId",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/integrated/:evaluatedUserId`,
             },
           ]
         : []),

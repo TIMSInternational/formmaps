@@ -103,4 +103,23 @@ CREATE TABLE "vocational_results" (
 );
 CREATE UNIQUE INDEX "vocational_results_evaluatedUserId_instrumentVersion_key" ON "vocational_results"("evaluatedUserId", "instrumentVersion");
 
+CREATE TABLE "vocational_integrated_results" (
+    "id" TEXT NOT NULL,
+    "evaluatedUserId" TEXT NOT NULL,
+    "instrumentVersion" TEXT NOT NULL,
+    "integratedComposite" DECIMAL NOT NULL,
+    "band" TEXT NOT NULL,
+    "threeSixtyScore" DECIMAL NOT NULL,
+    "pcaScore" DECIMAL NOT NULL,
+    "milScore" DECIMAL NOT NULL,
+    "weightsApplied" JSONB NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdBy" TEXT,
+    "createdDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedBy" TEXT,
+    "computedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "vocational_integrated_results_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX "vocational_integrated_results_evaluatedUserId_instrumentVersion_key" ON "vocational_integrated_results"("evaluatedUserId", "instrumentVersion");
+
 ALTER TABLE "vocational_responses" ADD CONSTRAINT "vocational_responses_evaluationGroupId_fkey" FOREIGN KEY ("evaluationGroupId") REFERENCES "evaluation_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
