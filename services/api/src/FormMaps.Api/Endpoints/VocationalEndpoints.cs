@@ -7,9 +7,10 @@ namespace FormMaps.Api.Endpoints;
 /// Authed vocational-360 endpoints (legacy vocational360.ts, mounted /api/v1/vocational360 with
 /// <c>authenticate</c> ONLY — no tenantContext, no requireSubscription). Guard order: RequireIdentity →
 /// canAccessUser on the path :evaluatedUserId (a privileged role may access an accessible user; deny is the
-/// uniform IDOR-safe 404). Ported: the score recompute WRITE (FM-032) + the score/integrated result READS
-/// (FM-033). Deferred: the integrated recompute (depends on the unported DISC/PCA + MIL/LIA profile
-/// assembler); /instrument + /questionnaire catalog reads; /recommendations (Bedrock, stays polyglot).
+/// uniform IDOR-safe 404). Ported: the score recompute WRITE (FM-032), the score/integrated result READS
+/// (FM-033), and the /instrument + /questionnaire catalog READS (FM-034, authenticate-only, no per-user
+/// gate). Deferred: the integrated recompute (depends on the unported DISC/PCA + MIL/LIA profile assembler);
+/// /recommendations (Bedrock, stays polyglot).
 /// </summary>
 public static class VocationalEndpoints
 {

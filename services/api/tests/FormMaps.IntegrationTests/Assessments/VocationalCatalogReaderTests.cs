@@ -68,7 +68,7 @@ public sealed class VocationalCatalogReaderTests : IClassFixture<VocationalWrite
         var q1 = await SeedQuestionAsync(conn, instrumentId, number: 1, block: "dimension", type: "likert", order: 0, dimensionId: d1, group: null, scaleAnchors: null);
         await SeedVariantAsync(conn, q1, "self", "Pregunta 1 self");
         // q2: open question, OWN scaleAnchors, no dimension, all groups.
-        var q2 = await SeedQuestionAsync(conn, instrumentId, number: 2, block: "open", type: "open", order: 1, dimensionId: null, group: null, scaleAnchors: """["own1","own2"]""", area: "interests");
+        var q2 = await SeedQuestionAsync(conn, instrumentId, number: 2, block: "open", type: "open", order: 1, dimensionId: null, group: null, scaleAnchors: """["own1","own2"]""", area: "interests", options: """[{"value":"a","labelEs":"A"}]""");
         await SeedVariantAsync(conn, q2, "self", "Pregunta 2 self");
         // q3: group-specific to 'parent' — excluded for 'self'.
         var q3 = await SeedQuestionAsync(conn, instrumentId, number: 3, block: "group_specific", type: "likert", order: 2, dimensionId: d1, group: "parent", scaleAnchors: null);
@@ -86,6 +86,8 @@ public sealed class VocationalCatalogReaderTests : IClassFixture<VocationalWrite
         Assert.Null(self[1].DimensionKey);
         Assert.Equal("interests", self[1].Area);
         Assert.Equal("own1", self[1].ScaleAnchors[0].GetString());  // own overrides inherited
+        Assert.Equal("a", self[1].Options[0].GetProperty("value").GetString()); // options jsonb passthrough
+        Assert.Equal(JsonValueKind.Null, self[0].Options.ValueKind);            // null options -> JSON null
         Assert.Equal("Pregunta 2 self", self[1].Text);
 
         // 'parent': q1 + q2 (both all-groups, no parent variant -> text "") + q3 (parent-specific).
@@ -143,14 +145,14 @@ public sealed class VocationalCatalogReaderTests : IClassFixture<VocationalWrite
 
     private static async Task<string> SeedQuestionAsync(
         NpgsqlConnection conn, string instrumentId, int number, string block, string type, int order,
-        string? dimensionId, string? group, string? scaleAnchors, string? area = null)
+        string? dimensionId, string? group, string? scaleAnchors, string? area = null, string? options = null)
     {
         var id = "vq-" + Guid.NewGuid().ToString("N");
         await using var cmd = new NpgsqlCommand(
             """
             INSERT INTO "vocational_questions"
-                ("id","instrumentId","dimensionId","block","number","type","area","scaleAnchors","group","order")
-            VALUES (@id, @inst, @dim, @block, @number, @type, @area, @scale::jsonb, @group, @order)
+                ("id","instrumentId","dimensionId","block","number","type","area","scaleAnchors","options","group","order")
+            VALUES (@id, @inst, @dim, @block, @number, @type, @area, @scale::jsonb, @options::jsonb, @group, @order)
             """, conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("inst", instrumentId);
@@ -160,6 +162,7 @@ public sealed class VocationalCatalogReaderTests : IClassFixture<VocationalWrite
         cmd.Parameters.AddWithValue("type", type);
         cmd.Parameters.AddWithValue("area", (object?)area ?? DBNull.Value);
         cmd.Parameters.AddWithValue("scale", (object?)scaleAnchors ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("options", (object?)options ?? DBNull.Value);
         cmd.Parameters.AddWithValue("group", (object?)group ?? DBNull.Value);
         cmd.Parameters.AddWithValue("order", order);
         await cmd.ExecuteNonQueryAsync();
