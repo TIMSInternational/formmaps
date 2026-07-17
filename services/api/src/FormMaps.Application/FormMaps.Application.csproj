@@ -7,6 +7,8 @@
   <ItemGroup>
     <!-- Verbatim TIMS personality profile bank (extracted from legacy personality-profiles.data.ts). -->
     <EmbeddedResource Include="Assessments\Data\personality-profiles.json" />
+    <!-- Verbatim TIMS personality item bank (extracted from legacy personality-items.data.ts PERSONALITY_ITEMS; laboral 40 + estudiantil 80). -->
+    <EmbeddedResource Include="Assessments\Data\personality-items.json" />
     <!-- LIA-core percentile norm tables (extracted from legacy percentile-mapper.ts PERCENTILE_TABLES; Infinity->1e9 sentinel). -->
     <EmbeddedResource Include="Assessments\Data\lia-percentile-tables.json" />
     <!-- LIA-core question bank raw items (extracted from the shared golden.json questionBank[305]; computed answers omitted, verbal static answers carried). -->
