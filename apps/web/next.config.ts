@@ -192,6 +192,12 @@ function shouldRouteVocationalIntegratedReadToDotnet() {
   );
 }
 
+function shouldRouteVocationalCatalogToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_CATALOG_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -525,6 +531,18 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/vocational360/integrated/:evaluatedUserId",
               destination: `${dotnetApiBaseUrl}/api/v1/vocational360/integrated/:evaluatedUserId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteVocationalCatalogToDotnet()
+        ? [
+            {
+              source: "/api/v1/vocational360/instrument",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/instrument`,
+            },
+            {
+              source: "/api/v1/vocational360/questionnaire",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/questionnaire`,
             },
           ]
         : []),

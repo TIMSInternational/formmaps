@@ -21,8 +21,58 @@ public static class VocationalEndpoints
         group.MapPost("/score/{evaluatedUserId}/recompute", RecomputeScoreAsync);
         group.MapGet("/score/{evaluatedUserId}", GetScoreAsync);
         group.MapGet("/integrated/{evaluatedUserId}", GetIntegratedAsync);
+        group.MapGet("/instrument", GetInstrumentAsync);
+        group.MapGet("/questionnaire", GetQuestionnaireAsync);
 
         return app;
+    }
+
+    // The four rater groups (legacy VALID_GROUPS) accepted by /questionnaire.
+    private static readonly HashSet<string> ValidGroups = new(StringComparer.Ordinal) { "self", "parent", "teacher", "sibling_friend" };
+
+    // GET /instrument (legacy getInstrument) — active instrument catalog; authenticate-only, no per-user gate.
+    private static async Task<IResult> GetInstrumentAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IVocationalReader reader,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var instrument = await reader.GetInstrumentAsync(context, cancellationToken);
+        return instrument is null
+            ? Results.Json(new { success = false, message = "No active vocational instrument" }, statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(new { success = true, data = instrument });
+    }
+
+    // GET /questionnaire?group=... (legacy getQuestionnaire) — invalid group -> 400 "Invalid group".
+    private static async Task<IResult> GetQuestionnaireAsync(
+        HttpContext http,
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IVocationalReader reader,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var group = (http.Request.Query["group"].Count > 0 ? http.Request.Query["group"][0] ?? string.Empty : string.Empty).Trim();
+        if (!ValidGroups.Contains(group))
+        {
+            return Results.Json(new { success = false, message = "Invalid group" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var data = await reader.GetQuestionnaireAsync(context, group, cancellationToken);
+        return Results.Ok(new { success = true, data });
     }
 
     // GET /score/{evaluatedUserId} (legacy getVocationalResult) — persisted 360 score or never_computed.
