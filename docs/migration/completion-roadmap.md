@@ -5,7 +5,7 @@ Grounds: `dotnet-implementation-plan.md` (11-domain order), `cutover-matrix.md`
 (risk), `source-inventory.md` (52 routes / 90 services / 123 models / 177 tests).
 Companion: `agentic-migration.manifest.json` (per-slice ledger).
 
-## 1. Where we are (main `36ae7ed`, 30/30 manifest slices)
+## 1. Where we are (main `a745d06`, 31/31 manifest slices)
 
 | Block | State |
 |---|---|
@@ -13,7 +13,7 @@ Companion: `agentic-migration.manifest.json` (per-slice ledger).
 | Reports domain — reads (7/7 endpoints) | ✅ done (FM-006, 009→012) |
 | Assessments — reads (pca-exam cluster, LIA/MIL/personality results, timeline) | ✅ done (FM-013→024) |
 | Assessments — pure engines (LIA-core, LIA item, personality tally, vocational) | ✅ done (FM-025→028) |
-| Assessments — writes (LIA complete, personality full-lifecycle) | ✅ done (FM-029→030) |
+| Assessments — writes (LIA complete, personality full-lifecycle, pca-exam take/submit) | ✅ done (FM-029→031) |
 
 **Honest read:** ~20–25% of the endpoint surface is .NET-capable-**on-staging**,
 heavily read-weighted. **Cutover to prod = 0%** — every .NET route is flag-gated
@@ -25,8 +25,8 @@ majority of the app — and every structurally hard part — remains.
 
 Legend: R=read slice (fast), W=write slice (slow, full gate), 🔴=high structural risk.
 
-### Phase A — Finish Assessments (domain 3) — **~10–14 slices**
-- **W** pca-exam submit/take (FM-031, queued) — closes corpus #18 answer-replay. 🔴 write.
+### Phase A — Finish Assessments (domain 3) — **~9–13 slices**
+- ✅ **W** pca-exam submit/take (FM-031, DONE `a745d06`) — closed corpus #18 answer-replay (completed/TimeExpired→409, no dup, no rescore). Prod-flip deferred (Node owns /complete timeout + es-VerbalReasoning serve + insight-polyglot).
 - **W** vocational authed take/submit (vocational360) — uses FM-028 engine.
 - **R** remaining Phase-A reads: test-scores (378 lines, 7ep +superscore +college-fit Decimal), question360 (11ep, answer-key strip), vocational360 catalog/score, school-admin views (14ep), assessment-profile derive/insights-status.
 - **W** 🔴 external **token-gated write rail** (evaluation `submit-feedback`, vocationalTake external submit) — NEW fail-closed non-tenant rail; highest risk in assessments.
@@ -88,6 +88,6 @@ Throughout: stand up **persistent audit** (compliance) and wire **frontend flags
 - **Priority/pace:** this is a months-long effort at agentic pace. Is finishing the migration the priority vs shipping product features on the live app?
 
 ## 6. Immediate next 3 slices (ready to execute)
-1. **FM-031 pca-exam submit** — resume note `resume-formmaps-dotnet-fm031-pcaexam-submit` written; closes corpus #18.
-2. **FM-032 vocational authed write** — reuse FM-028 engine + the write rail.
-3. **FM-033 personality PROD cutover** (Milestone 1 proof) — flip `FORMMAPS_ROUTE_PERSONALITY_*` on prod web + canary + rollback drill. Federico-gated (prod).
+1. ✅ **FM-031 pca-exam submit** — DONE `a745d06` (313u+1c+200i; fresh+Codex gate; staging canary green). Closed corpus #18.
+2. **FM-032 vocational authed write** — reuse FM-028 engine + the write rail. (Token-gated external submit = Phase D risk, separate.)
+3. **FM-033 personality PROD cutover** (Milestone 1 proof) — flip `FORMMAPS_ROUTE_PERSONALITY_*` on prod web + canary + rollback drill. Federico-gated (prod). Personality is dual-write-free → the readiest cutover to prove the mechanism.
