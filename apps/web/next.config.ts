@@ -114,6 +114,24 @@ function shouldRoutePersonalitySessionToDotnet() {
   );
 }
 
+function shouldRoutePersonalityStartToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_START_TO_DOTNET)
+  );
+}
+
+function shouldRoutePersonalityAnswerToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_ANSWER_TO_DOTNET)
+  );
+}
+
+function shouldRoutePersonalityCompleteToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_COMPLETE_TO_DOTNET)
+  );
+}
+
 function shouldRouteAssessmentTimelineToDotnet() {
   return Boolean(
     dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ASSESSMENT_TIMELINE_TO_DOTNET)
@@ -362,6 +380,33 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/personality/session/:sessionId",
               destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId`,
+            },
+          ]
+        : []),
+      // Personality WRITE lifecycle (FM-DOTNET-030) — start / answer / complete. Default OFF. Because
+      // .NET owns the whole lifecycle there is no dual-write, so (unlike LIA) this domain is
+      // prod-cut-over-able once validated. Each flag is independent so the flip can be staged.
+      ...(shouldRoutePersonalityStartToDotnet()
+        ? [
+            {
+              source: "/api/v1/personality/start",
+              destination: `${dotnetApiBaseUrl}/api/v1/personality/start`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePersonalityAnswerToDotnet()
+        ? [
+            {
+              source: "/api/v1/personality/session/:sessionId/answer",
+              destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId/answer`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePersonalityCompleteToDotnet()
+        ? [
+            {
+              source: "/api/v1/personality/session/:sessionId/complete",
+              destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId/complete`,
             },
           ]
         : []),
