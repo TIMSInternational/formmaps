@@ -119,6 +119,15 @@ public sealed class VocationalWriterTests : IClassFixture<VocationalWriteDatabas
             Assert.Equal(0.5d, weights.RootElement.GetProperty("parent").GetDouble());
         }
 
+        // rankings jsonb also uses the legacy camelCase keys.
+        using (var rankings = JsonDocument.Parse(row.Rankings))
+        {
+            Assert.True(rankings.RootElement.TryGetProperty("interests", out _));
+            Assert.True(rankings.RootElement.TryGetProperty("industries", out _));
+            Assert.True(rankings.RootElement.TryGetProperty("workType", out _));
+            Assert.True(rankings.RootElement.TryGetProperty("openInsights", out _));
+        }
+
         // The response payload serializes as a Decimal-as-NUMBER + status="ready" (concrete type, not the base).
         var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));
         Assert.Contains("\"status\":\"ready\"", json, StringComparison.Ordinal);
@@ -126,6 +135,53 @@ public sealed class VocationalWriterTests : IClassFixture<VocationalWriteDatabas
         Assert.DoesNotContain("\"composite\":\"75\"", json, StringComparison.Ordinal); // number, not string
 
         Assert.Contains(logger.Entries, e => e.Message.StartsWith("audit.assessment.vocational.recomputed", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Recompute_counts_each_evaluation_group_separately_even_with_the_same_group_type()
+    {
+        // Two 'teacher' groups (distinct evaluators) stay two ScoringGroups — respondentCount counts groups,
+        // not group types.
+        var userId = UserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var instrumentId = await SeedInstrumentAsync(conn, "v1");
+        await SeedDimensionAsync(conn, instrumentId, "d1", "Dim1", weight: 1);
+        await SeedQuestionAsync(conn, instrumentId, number: 1, type: "likert");
+        var self = await SeedGroupAsync(conn, userId, "self");
+        await SeedLikertAsync(conn, self, "v1", "self", 1, "d1", rating: 5);
+        var teacherA = await SeedGroupAsync(conn, userId, "teacher");
+        await SeedLikertAsync(conn, teacherA, "v1", "teacher", 1, "d1", rating: 4);
+        var teacherB = await SeedGroupAsync(conn, userId, "teacher");
+        await SeedLikertAsync(conn, teacherB, "v1", "teacher", 1, "d1", rating: 2);
+
+        var (writer, _) = MakeWriter();
+        var outcome = await writer.RecomputeScoreAsync(Ctx(userId), userId);
+
+        Assert.Equal(VocationalRecomputeStatus.Ready, outcome.Status);
+        Assert.Equal(3, outcome.Ready!.RespondentCount);                       // self + 2 teachers
+        Assert.Equal(new[] { "self", "teacher", "teacher" }, outcome.Ready!.GroupsIncluded);
+    }
+
+    [Fact]
+    public async Task Recompute_counts_a_completed_group_with_no_active_responses()
+    {
+        // Legacy include returns a completed group even with zero responses → it still counts as present
+        // (this would go NotReady under an inner join). Pins the LEFT JOIN.
+        var userId = UserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var instrumentId = await SeedInstrumentAsync(conn, "v1");
+        await SeedDimensionAsync(conn, instrumentId, "d1", "Dim1", weight: 1);
+        await SeedQuestionAsync(conn, instrumentId, number: 1, type: "likert");
+        var self = await SeedGroupAsync(conn, userId, "self");
+        await SeedLikertAsync(conn, self, "v1", "self", 1, "d1", rating: 5);
+        await SeedGroupAsync(conn, userId, "parent"); // completed 'parent' group, NO responses seeded
+
+        var (writer, _) = MakeWriter();
+        var outcome = await writer.RecomputeScoreAsync(Ctx(userId), userId);
+
+        Assert.Equal(VocationalRecomputeStatus.Ready, outcome.Status); // self + empty parent → ready
+        Assert.Equal(2, outcome.Ready!.RespondentCount);
+        Assert.Contains("parent", outcome.Ready!.GroupsIncluded);
     }
 
     [Fact]
