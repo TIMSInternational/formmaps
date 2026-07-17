@@ -1466,6 +1466,50 @@
       "notes": [
         "DONE 2026-07-17: assembleCompleteProfile read foundation. dotnet 0/0; 369u + 248i (56 new unit + 12 new integration). GATE (fresh reviewer + Codex, full TS visibility) folded 6 real findings: (1) BLOCKING toFixed(2) double-rounding — G17 rounded 7.3/4=1.82499.. up to 1.825->1.83 vs V8 1.82; fixed to G30 + 27-case Node gold batch incl exact-tie/round-up cases; (2) profile map fields -> IReadOnlyDictionary (legacy object/Record shape); (3) competences drop empty-name + level as number (double); (4) fingerprint integer-like category keys ordered numerically (JS object enumeration) + Node gold pin; (5) NULLS LAST -> NULLS FIRST on the 2 implicit-desc reads (matches Prisma) + red-if-regressed NULL-endTime test; softened fingerprint docstring. Internal lib -> NO route/flag/canary (deviation from prior read slices). UNBLOCKS: vocational INTEGRATED recompute write (recomputeIntegratedResult) + assessment-profile insights-status (getInsightsStatus). NEXT: port recomputeIntegratedResult (consumes this assembler + FM-028 VocationalScoring) OR remaining Phase-A reads OR personality PROD cutover."
       ]
+    },
+    {
+      "id": "FM-DOTNET-036-integrated-recompute",
+      "status": "completed",
+      "goal": "Port legacy recomputeIntegratedResult (vocational360Service.ts) — the authed vocational INTEGRATED recompute WRITE. Fuses the persisted 360 composite (FM-033) + the FM-035 profile's PCA competences + MIL cognitive channels via the FM-028 VocationalIntegration engine, and upserts vocational_integrated_results. Completes the vocational360 authed WRITE surface (the slice FM-035 was built to unblock).",
+      "dependsOn": [
+        "FM-DOTNET-035-assemble-complete-profile",
+        "FM-DOTNET-033-vocational-result-reads",
+        "FM-DOTNET-032-vocational-score-recompute",
+        "FM-DOTNET-028-vocational-scoring-integration"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/services/vocational360Service.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/routes/vocational360.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/vocationalIntegrationService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/assessmentProfile.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments/VocationalWrite.cs",
+        "services/api/src/FormMaps.Infrastructure/Assessments/VocationalWriter.cs",
+        "services/api/src/FormMaps.Api/Endpoints/VocationalEndpoints.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "VocationalWriter.RecomputeIntegratedAsync (IVocationalWriter gains it): read-only session loads active instrument (integrationWeights + interpretationBands; none -> null=never_computed) -> GetScoreAsync composite (threeSixty channel) + AssembleAsync (pcaScore=CompetencesToScore(profile.pca.competences ?? []); milScore=completeness.lia ? MilToScore(mil) : null) -> VocationalIntegration.ComputeIntegratedResult -> if ready, writable session UPSERT vocational_integrated_results ON CONFLICT (evaluatedUserId,instrumentVersion) {integratedComposite/threeSixtyScore/pcaScore/milScore as numeric Decimal, band, weightsApplied normalized {threeSixty,pca,mil} camelCase jsonb, computedAt=now (@updatedAt)} + PII-free audit; not_ready/never_computed -> no write. Reuses FM-032 write rail + FM-035 assembler + FM-033 reader + FM-028 engine",
+        "POST /api/v1/vocational360/integrated/{evaluatedUserId}/recompute on VocationalEndpoints (authenticate-only + canAccessUser 100-char-bound -> 404 deny; all outcomes 200: ready payload status=ready / not_ready+missing[] / never_computed). Serialize CONCRETE outcome type (abstract IntegrationOutcome drops fields)",
+        "harness += integrated-recompute-schema.sql (3 vocational tables) loaded ALONGSIDE assessmentprofile-schema.sql by IntegratedRecomputeDatabaseFixture; IntegratedRecomputeWriterTests(8) + VocationalIntegratedWriteEndpointTests(6)",
+        "web flag FORMMAPS_ROUTE_VOCATIONAL_INTEGRATED_RECOMPUTE_TO_DOTNET (default off) + rewrite"
+      ],
+      "guardrails": [
+        "channel mapping faithful: threeSixty=score?.Composite (never_computed->null); pcaScore=CompetencesToScore(competences ?? []); milScore gated on completeness.lia; ordered missing [360,pca,mil]; 0-score channel counts as PRESENT (not missing)",
+        "asIntegrationWeights default 0 / asBands default 80·60·40; weights renormalized to sum 1 before persist+composite (pinned with un-normalized {50,30,20}); Decimal-as-number ((decimal)double); camelCase weightsApplied jsonb; computedAt bumped on every upsert (@updatedAt, pinned)",
+        "never_computed + not_ready write NOTHING (write session opened only after the ready check); plain idempotent upsert on the unique key (no TOCTOU pre-check needed, matches FM-032); reads in separate sessions before the write (faithful to TS separate awaits)",
+        "authenticate-only + canAccessUser (privileged may recompute a foreign id); audit after commit, PII-free; all SQL parameterized"
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx",
+        "staging deploy + health 200 + anon POST vocational360/integrated/{id}/recompute -> 401"
+      ],
+      "notes": [
+        "DONE 2026-07-17: vocational INTEGRATED recompute write. dotnet 0/0; 369u + 262i (14 new integration). GATE: fresh reviewer NO behavioral divergence/bug (ship-quality) + Codex SAFE-TO-SHIP -> folded the fresh reviewer's 4 coverage gaps (weight-normalization identity, partial not_ready, 0-vs-null channel boundary, computedAt-advances). Caught in-flight: an EmbeddedResource EndsWith collision (integrated-vocational-schema.sql matched the vocational-schema.sql fixture loader -> renamed integrated-recompute-schema.sql) — full-suite run surfaced it. COMPLETES the vocational360 authed WRITE surface. Prod-flip deferred (dark). NEXT: remaining Phase-A reads (test-scores/question360/school-admin), OR personality PROD cutover (Milestone-1 proof), OR Phase B."
+      ]
     }
   ]
 }
