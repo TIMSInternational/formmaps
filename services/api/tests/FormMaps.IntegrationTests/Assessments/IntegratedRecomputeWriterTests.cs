@@ -119,6 +119,94 @@ public sealed class IntegratedRecomputeWriterTests : IClassFixture<IntegratedRec
         Assert.Equal(77d, read!.IntegratedComposite);
     }
 
+    [Fact]
+    public async Task Recompute_normalizes_integration_weights_before_persisting()
+    {
+        // Un-normalized instrument weights {50,30,20} must be renormalized to sum 1 both for the composite
+        // and the stored weightsApplied — a regression that persisted the raw weights would still balance.
+        var user = NewUser();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedInstrumentAsync(conn, "v1", weights: """{"threeSixty":50,"pca":30,"mil":20}""");
+        await SeedVocationalScoreAsync(conn, user, "v1", composite: 70m);
+        await SeedCompetencesAsync(conn, user, levels: [4, 4, 4]);  // pca 100
+        await SeedFiveExamsAsync(conn, user, scorePercentage: 60);  // mil 60
+
+        var payload = Assert.IsType<IntegratedResultPayload>(await Writer().RecomputeIntegratedAsync(Ctx(user), user));
+
+        Assert.Equal(0.5, payload.WeightsApplied.ThreeSixty);
+        Assert.Equal(0.3, payload.WeightsApplied.Pca);
+        Assert.Equal(0.2, payload.WeightsApplied.Mil);
+        Assert.Equal(77, payload.IntegratedComposite); // 70*0.5 + 100*0.3 + 60*0.2 (normalized)
+
+        var read = await Reader().GetIntegratedAsync(Ctx(user), user);
+        Assert.Equal(0.5d, read!.WeightsApplied.GetProperty("threeSixty").GetDouble());
+        Assert.Equal(0.3d, read.WeightsApplied.GetProperty("pca").GetDouble());
+    }
+
+    [Fact]
+    public async Task Recompute_not_ready_reports_only_the_missing_channel()
+    {
+        // 360 + pca present, but no LIA exams -> completeness.lia false -> only "mil" is missing (not all three).
+        var user = NewUser();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedInstrumentAsync(conn, "v1");
+        await SeedVocationalScoreAsync(conn, user, "v1", composite: 70m);
+        await SeedCompetencesAsync(conn, user, levels: [4, 4, 4]);
+
+        var notReady = Assert.IsType<IntegrationNotReady>(await Writer().RecomputeIntegratedAsync(Ctx(user), user));
+
+        Assert.Equal(new[] { "mil" }, notReady.Missing);
+        Assert.Null(await Reader().GetIntegratedAsync(Ctx(user), user)); // nothing persisted
+    }
+
+    [Fact]
+    public async Task Recompute_treats_a_zero_channel_score_as_present_not_missing()
+    {
+        // pcaScore 0 (all competences level 1 -> (1-1)/3*100 = 0) must count as PRESENT, so the run is ready.
+        var user = NewUser();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedInstrumentAsync(conn, "v1");
+        await SeedVocationalScoreAsync(conn, user, "v1", composite: 70m);
+        await SeedCompetencesAsync(conn, user, levels: [1, 1, 1]);   // pca 0, but present
+        await SeedFiveExamsAsync(conn, user, scorePercentage: 60);
+
+        var payload = Assert.IsType<IntegratedResultPayload>(await Writer().RecomputeIntegratedAsync(Ctx(user), user));
+
+        Assert.Equal(0, payload.PcaScore);                 // 0, not null/missing
+        Assert.Equal(47, payload.IntegratedComposite);     // 70*0.5 + 0*0.3 + 60*0.2 = 47
+    }
+
+    [Fact]
+    public async Task Recompute_advances_computedAt_on_the_upsert()
+    {
+        // Prisma computedAt is @default(now()) @updatedAt -> the upsert must bump it on every write.
+        var user = NewUser();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedInstrumentAsync(conn, "v1");
+        await SeedVocationalScoreAsync(conn, user, "v1", composite: 70m);
+        await SeedCompetencesAsync(conn, user, levels: [4, 4, 4]);
+        await SeedFiveExamsAsync(conn, user, scorePercentage: 60);
+        // Pre-existing row with a stale computedAt that the recompute must overwrite.
+        await using (var seed = new NpgsqlCommand(
+            """
+            INSERT INTO "vocational_integrated_results"
+                ("id","evaluatedUserId","instrumentVersion","integratedComposite","band",
+                 "threeSixtyScore","pcaScore","milScore","weightsApplied","computedAt")
+            VALUES (@id, @uid, 'v1', 1, 'low', 1, 1, 1, '{}'::jsonb, TIMESTAMP '2020-01-01 00:00:00.000')
+            """, conn))
+        {
+            seed.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
+            seed.Parameters.AddWithValue("uid", user);
+            await seed.ExecuteNonQueryAsync();
+        }
+
+        await Writer().RecomputeIntegratedAsync(Ctx(user), user);
+
+        var read = await Reader().GetIntegratedAsync(Ctx(user), user);
+        Assert.DoesNotContain("2020", read!.ComputedAt);  // bumped off the stale value
+        Assert.Equal(77d, read.IntegratedComposite);      // and the row is the fresh recompute
+    }
+
     // ---------------------------------------------------------------- helpers
 
     private VocationalWriter Writer()
@@ -138,7 +226,7 @@ public sealed class IntegratedRecomputeWriterTests : IClassFixture<IntegratedRec
             schoolId: null, permissions: Array.Empty<string>(),
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
 
-    private static async Task SeedInstrumentAsync(NpgsqlConnection conn, string version)
+    private static async Task SeedInstrumentAsync(NpgsqlConnection conn, string version, string? weights = null)
     {
         await using var cmd = new NpgsqlCommand(
             """
@@ -147,7 +235,7 @@ public sealed class IntegratedRecomputeWriterTests : IClassFixture<IntegratedRec
             """, conn);
         cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
         cmd.Parameters.AddWithValue("version", version);
-        cmd.Parameters.AddWithValue("weights", Weights);
+        cmd.Parameters.AddWithValue("weights", weights ?? Weights);
         cmd.Parameters.AddWithValue("bands", Bands);
         await cmd.ExecuteNonQueryAsync();
     }
