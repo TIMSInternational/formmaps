@@ -29,6 +29,8 @@
     <EmbeddedResource Include="Assessments\Data\pcaexam-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers vocational score recompute write harness (FM-DOTNET-032). -->
     <EmbeddedResource Include="Assessments\Data\vocational-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers assembleCompleteProfile read harness (FM-DOTNET-035). -->
+    <EmbeddedResource Include="Assessments\Data\assessmentprofile-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
