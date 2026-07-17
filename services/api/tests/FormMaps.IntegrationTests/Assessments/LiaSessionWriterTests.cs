@@ -79,6 +79,11 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
         var row = await ReadSessionAsync(sessionId);
         Assert.Equal("completed", row.Status);
         Assert.NotNull(row.CompletedAt);
+        // tz-independence pin (server runs America/New_York): the persisted completed_at, re-read and
+        // formatted, must byte-equal the value the completion returned — proving no TimeZone shift.
+        Assert.Equal(
+            result.CompletedAt,
+            row.CompletedAt!.Value.ToString("yyyy-MM-ddTHH:mm:ss.fff'Z'", CultureInfo.InvariantCulture));
         Assert.Equal(expected.GlobalPercentile, row.GlobalPercentile);
         Assert.Equal(expected.PerformanceLevel, row.PerformanceLevel);
         var persistedFinal = DeserializeDoubles(row.FinalScores);

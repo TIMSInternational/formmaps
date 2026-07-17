@@ -56,8 +56,10 @@ public static class LiaEndpoints
         return outcome.Status switch
         {
             LiaCompleteStatus.Completed => Results.Ok(new { success = true, data = outcome.Result }),
+            // Legacy handleError bodies (lia.ts): incomplete_coverage -> 409 "Assessment not complete";
+            // not_in_progress -> 400 body "not_in_progress" (the raw error string). Match both exactly.
             LiaCompleteStatus.IncompleteCoverage => Error(StatusCodes.Status409Conflict, "Assessment not complete"),
-            LiaCompleteStatus.NotInProgress => Error(StatusCodes.Status400BadRequest, "Assessment not complete"),
+            LiaCompleteStatus.NotInProgress => Error(StatusCodes.Status400BadRequest, "not_in_progress"),
             _ => NotFound(),
         };
     }

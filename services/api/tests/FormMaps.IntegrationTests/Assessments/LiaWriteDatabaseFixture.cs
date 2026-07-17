@@ -26,6 +26,15 @@ public sealed class LiaWriteDatabaseFixture : IAsyncLifetime
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand(LoadSchemaDdl(), connection);
         await command.ExecuteNonQueryAsync();
+
+        // Pin every subsequent session to a NON-UTC server timezone. The write columns are
+        // `timestamp` (without tz); a correct writer binds tz-independently so stored == returned under
+        // any server tz. If a regression bound completed_at as `timestamptz` (Kind=Utc), Postgres would
+        // apply a TimeZone cast here and the store-vs-return assertions would go red — this is the
+        // regression pin for the completed_at tz footgun.
+        var database = (string)(await new NpgsqlCommand("SELECT current_database()", connection).ExecuteScalarAsync())!;
+        await using var tz = new NpgsqlCommand($"ALTER DATABASE \"{database}\" SET timezone TO 'America/New_York'", connection);
+        await tz.ExecuteNonQueryAsync();
     }
 
     public async Task DisposeAsync() => await _container.DisposeAsync();

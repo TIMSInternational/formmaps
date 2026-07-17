@@ -1,3 +1,4 @@
+using System.Data;
 using System.Data.Common;
 using System.Globalization;
 using System.Text.Json;
@@ -135,11 +136,17 @@ public sealed class LiaSessionWriter(
         }
 
         var scored = LiaCompletionScorer.ScoreCompletion(counts);
-        // Millisecond precision, matching legacy JS `new Date()` (integer ms). ToIsoZ truncates to ms but
-        // Postgres timestamp(3) ROUNDS to ms — so an un-truncated tick value would make this response's
-        // completed_at differ by 1ms from the persisted row (and every idempotent replay / results read).
-        // Truncate up front so store == return == every subsequent read.
-        var completedAt = TruncateToMilliseconds(DateTimeOffset.UtcNow.UtcDateTime);
+        // UTC wall-clock at millisecond precision, matching legacy JS `new Date()` (integer ms). Two
+        // reasons for the exact shape:
+        //   1. ToIsoZ truncates to ms but Postgres timestamp(3) ROUNDS to ms — an un-truncated tick value
+        //      would make this response's completed_at differ by 1ms from the persisted row (and every
+        //      idempotent replay / results read). Truncate up front so store == return == every read.
+        //   2. Kind=Unspecified (not Utc) so Npgsql binds the value as `timestamp` (without time zone),
+        //      matching the Prisma @db.Timestamp(3) columns. A Kind=Utc value would infer `timestamptz`
+        //      and Postgres would apply a TimeZone-GUC-dependent cast on write — the stored wall-clock
+        //      would shift on any non-UTC server while the returned value would not. Store tz-independently.
+        var completedAt = TruncateToMilliseconds(
+            DateTime.SpecifyKind(DateTimeOffset.UtcNow.UtcDateTime, DateTimeKind.Unspecified));
 
         int affected;
         await using (var command = session.Connection.CreateCommand())
@@ -147,7 +154,7 @@ public sealed class LiaSessionWriter(
             command.Transaction = session.Transaction;
             command.CommandText = UpdateSql;
             AddParameter(command, "sessionId", sessionId);
-            AddParameter(command, "completedAt", completedAt);
+            AddTimestampParameter(command, "completedAt", completedAt);
             AddParameter(command, "rawScores", Serialize(scored.RawScores));
             AddParameter(command, "finalScores", Serialize(scored.FinalScores));
             AddParameter(command, "percentiles", Serialize(scored.Percentiles));
@@ -259,6 +266,17 @@ public sealed class LiaSessionWriter(
     {
         var parameter = command.CreateParameter();
         parameter.ParameterName = name;
+        parameter.Value = value;
+        command.Parameters.Add(parameter);
+    }
+
+    // Bind a `timestamp` (without time zone) value tz-independently — DbType.DateTime2 maps to Postgres
+    // `timestamp`, matching the Prisma @db.Timestamp(3) columns and never applying a TimeZone cast.
+    private static void AddTimestampParameter(DbCommand command, string name, DateTime value)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.DbType = DbType.DateTime2;
         parameter.Value = value;
         command.Parameters.Add(parameter);
     }
