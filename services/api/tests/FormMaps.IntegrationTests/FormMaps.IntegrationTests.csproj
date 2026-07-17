@@ -25,6 +25,8 @@
     <EmbeddedResource Include="Assessments\Data\lia-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers personality write harness (FM-DOTNET-030). -->
     <EmbeddedResource Include="Assessments\Data\personality-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers pca-exam take/submit write harness (FM-DOTNET-031). -->
+    <EmbeddedResource Include="Assessments\Data\pcaexam-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
