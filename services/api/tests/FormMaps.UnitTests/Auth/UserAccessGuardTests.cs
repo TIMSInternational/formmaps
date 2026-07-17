@@ -123,5 +123,14 @@ public class UserAccessGuardTests
             throw new InvalidOperationException(
                 "Database access must not occur for pure access-guard branches.");
         }
+
+        public Task<FormMapsDatabaseSession> OpenWritableAsync(
+            RequestContext requestContext,
+            CancellationToken cancellationToken = default)
+        {
+            WasCalled = true;
+            throw new InvalidOperationException(
+                "Database access must not occur for pure access-guard branches.");
+        }
     }
 }

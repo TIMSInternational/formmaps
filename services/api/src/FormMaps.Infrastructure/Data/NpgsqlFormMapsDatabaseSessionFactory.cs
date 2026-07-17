@@ -9,9 +9,20 @@ public sealed class NpgsqlFormMapsDatabaseSessionFactory(
     NpgsqlDataSource dataSource,
     RlsSessionContextApplier rlsSessionContextApplier) : IFormMapsDatabaseSessionFactory
 {
-    public async Task<FormMapsDatabaseSession> OpenReadOnlyAsync(
+    public Task<FormMapsDatabaseSession> OpenReadOnlyAsync(
         RequestContext requestContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        OpenAsync(requestContext, readOnly: true, cancellationToken);
+
+    public Task<FormMapsDatabaseSession> OpenWritableAsync(
+        RequestContext requestContext,
+        CancellationToken cancellationToken = default) =>
+        OpenAsync(requestContext, readOnly: false, cancellationToken);
+
+    private async Task<FormMapsDatabaseSession> OpenAsync(
+        RequestContext requestContext,
+        bool readOnly,
+        CancellationToken cancellationToken)
     {
         var tenantGucPlan = TenantGucPlanResolver.Resolve(requestContext);
         var connection = await dataSource.OpenConnectionAsync(cancellationToken);
@@ -25,14 +36,14 @@ public sealed class NpgsqlFormMapsDatabaseSessionFactory(
                 connection,
                 transaction,
                 tenantGucPlan,
-                readOnly: true,
+                readOnly,
                 cancellationToken);
 
             return new FormMapsDatabaseSession(
                 connection,
                 transaction,
                 tenantGucPlan,
-                isReadOnly: true);
+                isReadOnly: readOnly);
         }
         catch
         {

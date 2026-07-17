@@ -17,6 +17,10 @@ public sealed class FormMapsDatabaseSession(
 
     public bool IsReadOnly { get; } = isReadOnly;
 
+    /// <summary>Commit the transaction (writable sessions). Dispose still rolls back if not committed.</summary>
+    public Task CommitAsync(CancellationToken cancellationToken = default) =>
+        Transaction.CommitAsync(cancellationToken);
+
     public async ValueTask DisposeAsync()
     {
         await Transaction.DisposeAsync();

@@ -46,6 +46,7 @@ public static class DependencyInjection
         services.AddScoped<IExamHistoryReader, ExamHistoryReader>();
         services.AddScoped<IAllResultsReader, AllResultsReader>();
         services.AddScoped<ILiaResultReader, LiaResultReader>();
+        services.AddScoped<ILiaSessionWriter, LiaSessionWriter>();
         services.AddScoped<IMilResultReader, MilResultReader>();
         services.AddScoped<IPersonalityResultReader, PersonalityResultReader>();
         services.AddScoped<IPersonalitySessionReader, PersonalitySessionReader>();
