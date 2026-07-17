@@ -135,7 +135,11 @@ public sealed class LiaSessionWriter(
         }
 
         var scored = LiaCompletionScorer.ScoreCompletion(counts);
-        var completedAt = DateTimeOffset.UtcNow.UtcDateTime;
+        // Millisecond precision, matching legacy JS `new Date()` (integer ms). ToIsoZ truncates to ms but
+        // Postgres timestamp(3) ROUNDS to ms — so an un-truncated tick value would make this response's
+        // completed_at differ by 1ms from the persisted row (and every idempotent replay / results read).
+        // Truncate up front so store == return == every subsequent read.
+        var completedAt = TruncateToMilliseconds(DateTimeOffset.UtcNow.UtcDateTime);
 
         int affected;
         await using (var command = session.Connection.CreateCommand())
@@ -246,6 +250,10 @@ public sealed class LiaSessionWriter(
 
     private static string ToIsoZ(DateTime value) =>
         value.ToString("yyyy-MM-ddTHH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
+
+    // Drop sub-millisecond ticks so the value round-trips a Postgres timestamp(3) column unchanged.
+    private static DateTime TruncateToMilliseconds(DateTime value) =>
+        new(value.Ticks - (value.Ticks % TimeSpan.TicksPerMillisecond), value.Kind);
 
     private static void AddParameter(DbCommand command, string name, object value)
     {
