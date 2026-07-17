@@ -31,6 +31,8 @@
     <EmbeddedResource Include="Assessments\Data\vocational-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers assembleCompleteProfile read harness (FM-DOTNET-035). -->
     <EmbeddedResource Include="Assessments\Data\assessmentprofile-schema.sql" />
+    <!-- Supplemental vocational DDL for the Testcontainers integrated recompute write harness (FM-DOTNET-036). -->
+    <EmbeddedResource Include="Assessments\Data\integrated-recompute-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

@@ -9,8 +9,7 @@ namespace FormMaps.Api.Endpoints;
 /// canAccessUser on the path :evaluatedUserId (a privileged role may access an accessible user; deny is the
 /// uniform IDOR-safe 404). Ported: the score recompute WRITE (FM-032), the score/integrated result READS
 /// (FM-033), and the /instrument + /questionnaire catalog READS (FM-034, authenticate-only, no per-user
-/// gate). Deferred: the integrated recompute (depends on the unported DISC/PCA + MIL/LIA profile assembler);
-/// /recommendations (Bedrock, stays polyglot).
+/// gate) + the INTEGRATED recompute WRITE (FM-036). Deferred: /recommendations (Bedrock, stays polyglot).
 /// </summary>
 public static class VocationalEndpoints
 {
@@ -20,6 +19,7 @@ public static class VocationalEndpoints
             .WithTags("Vocational");
 
         group.MapPost("/score/{evaluatedUserId}/recompute", RecomputeScoreAsync);
+        group.MapPost("/integrated/{evaluatedUserId}/recompute", RecomputeIntegratedAsync);
         group.MapGet("/score/{evaluatedUserId}", GetScoreAsync);
         group.MapGet("/integrated/{evaluatedUserId}", GetIntegratedAsync);
         group.MapGet("/instrument", GetInstrumentAsync);
@@ -161,6 +161,34 @@ public static class VocationalEndpoints
         {
             VocationalRecomputeStatus.Ready => outcome.Ready!,                     // concrete payload: status="ready" + fields
             VocationalRecomputeStatus.NotReady => new { status = "not_ready", reason = outcome.NotReadyReason },
+            _ => new { status = "never_computed" },
+        };
+
+        return Results.Ok(new { success = true, data });
+    }
+
+    private static async Task<IResult> RecomputeIntegratedAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IUserAccessGuard userAccessGuard,
+        IVocationalWriter writer,
+        string evaluatedUserId,
+        CancellationToken cancellationToken)
+    {
+        var (context, denied, targetId) = await AuthorizeAsync(requestContextAccessor, protectedRequestGuard, userAccessGuard, evaluatedUserId, cancellationToken);
+        if (denied is not null)
+        {
+            return denied;
+        }
+
+        var outcome = await writer.RecomputeIntegratedAsync(context, targetId, cancellationToken);
+
+        // Always 200 on access; the outcome status rides in the body. Serialize the CONCRETE outcome type
+        // (an IntegrationOutcome-typed value would drop the ready payload's fields); null = never_computed.
+        object data = outcome switch
+        {
+            IntegratedResultPayload payload => payload,                 // status="ready" + composite/scores/weightsApplied
+            IntegrationNotReady notReady => notReady,                   // status="not_ready" + missing[]
             _ => new { status = "never_computed" },
         };
 

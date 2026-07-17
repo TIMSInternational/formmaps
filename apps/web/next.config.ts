@@ -180,6 +180,12 @@ function shouldRouteVocationalScoreRecomputeToDotnet() {
   );
 }
 
+function shouldRouteVocationalIntegratedRecomputeToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_INTEGRATED_RECOMPUTE_TO_DOTNET)
+  );
+}
+
 function shouldRouteVocationalScoreReadToDotnet() {
   return Boolean(
     dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_SCORE_READ_TO_DOTNET)
@@ -515,6 +521,14 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/vocational360/score/:evaluatedUserId/recompute",
               destination: `${dotnetApiBaseUrl}/api/v1/vocational360/score/:evaluatedUserId/recompute`,
+            },
+          ]
+        : []),
+      ...(shouldRouteVocationalIntegratedRecomputeToDotnet()
+        ? [
+            {
+              source: "/api/v1/vocational360/integrated/:evaluatedUserId/recompute",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/integrated/:evaluatedUserId/recompute`,
             },
           ]
         : []),

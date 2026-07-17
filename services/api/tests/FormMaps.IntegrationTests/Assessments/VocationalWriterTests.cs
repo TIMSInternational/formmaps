@@ -213,7 +213,10 @@ public sealed class VocationalWriterTests : IClassFixture<VocationalWriteDatabas
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
-        return (new VocationalWriter(factory, logger), logger);
+        // The score recompute (these tests) doesn't touch the reader/assembler; the integrated recompute
+        // (IntegratedRecomputeWriterTests) exercises them.
+        var writer = new VocationalWriter(factory, new VocationalReader(factory), new CompleteProfileAssembler(factory), logger);
+        return (writer, logger);
     }
 
     private static string UserId() => "u-" + Guid.NewGuid().ToString("N");
