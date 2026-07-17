@@ -20,7 +20,7 @@ public sealed record ScoringDimension(string Key, string NameEs, double Weight);
 
 public sealed record ScoringBands(double Strong, double ModerateHigh, double Medium);
 
-public sealed record ScoringRule(string Kind, int? TopPoints, int? N, int? PointsEach);
+public sealed record ScoringRule(string Kind, double? TopPoints, double? N, double? PointsEach);
 
 public sealed record ScoringQuestion(int Number, string Type, ScoringRule? ScoringRule);
 
@@ -88,8 +88,16 @@ public static class VocationalScoring
     /// <summary>The four rater groups (legacy VOCATIONAL_GROUPS).</summary>
     public static readonly IReadOnlyList<string> Groups = ["self", "parent", "teacher", "sibling_friend"];
 
-    /// <summary>Round to 2 dp (legacy round2). JS Math.round is half toward +Inf → Math.Floor(x+0.5), not .NET banker's rounding.</summary>
-    public static double Round2(double n) => Math.Floor((n * 100) + 0.5) / 100;
+    /// <summary>Round to 2 dp (legacy round2). Uses an exact JS Math.round — avoids both .NET banker's rounding AND the Math.Floor(x+0.5) ULP artifact (n*100 == 0.49999999999999994 → JS 0, floor(x+0.5) → 1).</summary>
+    public static double Round2(double n) => JsRound(n * 100) / 100;
+
+    // Byte-exact JS Math.round for all doubles: the integer closest to x, ties toward +Inf. `x - Floor(x)`
+    // is the exact fractional part, so this reproduces JS Math.round without the Math.Floor(x+0.5) artifact.
+    private static double JsRound(double x)
+    {
+        var f = Math.Floor(x);
+        return (x - f) >= 0.5 ? f + 1 : f;
+    }
 
     /// <summary>Likert 1-5 → 0-100 (legacy normalize): 1→0, 3→50, 5→100.</summary>
     public static double Normalize(double rating) => (rating - 1) / 4 * 100;
@@ -172,7 +180,7 @@ public static class VocationalScoring
     /// <summary>Dimension-weight the scored dimensions, renormalizing over the scored ones; 0 if none scored (legacy composite).</summary>
     public static double Composite(IReadOnlyList<DimensionScore> dims, IReadOnlyList<ScoringDimension> dimMeta)
     {
-        var wByKey = dimMeta.ToDictionary(d => d.Key, d => d.Weight, StringComparer.Ordinal);
+        var wByKey = LastWins(dimMeta, d => d.Key, d => d.Weight, StringComparer.Ordinal);
         var scored = dims.Where(d => d.Score.HasValue).ToList();
         var wsum = scored.Sum(d => wByKey.GetValueOrDefault(d.Key));
         if (wsum == 0)
@@ -189,7 +197,7 @@ public static class VocationalScoring
     {
         var present = groups.Select(g => g.Group).ToList();
         var w = RenormalizeGroupWeights(baseWeights, present);
-        var qByNum = questions.ToDictionary(q => q.Number, q => q);
+        var qByNum = LastWins(questions, q => q.Number, q => q);
         var interestPts = new OrderedTally();
         var industryCnt = new OrderedTally();
         var workTypeCnt = new OrderedTally();
@@ -202,10 +210,10 @@ public static class VocationalScoring
             {
                 if (r.Type == "ranking" && r.RankingOrder is not null)
                 {
-                    var topPoints = (qByNum.TryGetValue(r.QuestionNumber, out var q) ? q.ScoringRule?.TopPoints : null) ?? 20;
+                    var topPoints = (qByNum.TryGetValue(r.QuestionNumber, out var q) ? q.ScoringRule?.TopPoints : null) ?? 20.0;
                     foreach (var entry in r.RankingOrder)
                     {
-                        var pts = Math.Max(0, topPoints - (entry.Rank - 1)) * gw;
+                        var pts = Math.Max(0.0, topPoints - (entry.Rank - 1)) * gw;
                         interestPts.Add(entry.Value, pts);
                     }
                 }
@@ -220,9 +228,9 @@ public static class VocationalScoring
                 {
                     workTypeCnt.Add(r.TextValue, gw);
                 }
-                else if (r.Type == "open" && r.TextValue is not null && r.TextValue.Trim().Length > 0)
+                else if (r.Type == "open" && r.TextValue is not null && JsString.JsTrim(r.TextValue).Length > 0)
                 {
-                    openInsights.Add(new OpenInsight(grp.Group, r.TextValue.Trim()));
+                    openInsights.Add(new OpenInsight(grp.Group, JsString.JsTrim(r.TextValue)));
                 }
             }
         }
@@ -291,6 +299,21 @@ public static class VocationalScoring
             DimensionScores: dimensionScores,
             Rankings: ComputeRankings(groups, config.GroupWeights, questions),
             WeightsApplied: RenormalizeGroupWeights(config.GroupWeights, present));
+    }
+
+    // Build a dictionary with JS `new Map(entries)` LAST-WINS semantics on duplicate keys (.NET
+    // ToDictionary throws on a duplicate; the TS engine silently keeps the last entry).
+    private static Dictionary<TKey, TVal> LastWins<TItem, TKey, TVal>(
+        IEnumerable<TItem> items, Func<TItem, TKey> key, Func<TItem, TVal> value, IEqualityComparer<TKey>? comparer = null)
+        where TKey : notnull
+    {
+        var dict = new Dictionary<TKey, TVal>(comparer);
+        foreach (var item in items)
+        {
+            dict[key(item)] = value(item);
+        }
+
+        return dict;
     }
 
     // Accumulator that preserves first-seen key order (JS Map semantics) so a later stable sort

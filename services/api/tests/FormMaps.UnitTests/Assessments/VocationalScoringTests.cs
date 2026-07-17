@@ -140,6 +140,59 @@ public class VocationalScoringTests
         Assert.Equal(2, ready.RespondentCount);
     }
 
+    [Theory]
+    // round2 must match JS Math.round byte-for-byte, incl. the ULP quirk value where Math.Floor(x+0.5)
+    // diverges: JS round2(0.004999999999999999) = 0 (Math.Floor(x+0.5) would give 0.01). Codex/fresh F1.
+    [InlineData(0.004999999999999999, 0)]
+    [InlineData(0.005, 0.01)]
+    [InlineData(0.015, 0.02)]
+    [InlineData(67.5, 67.5)]
+    public void Round2_matches_js_math_round(double input, double expected) =>
+        Assert.Equal(expected, VocationalScoring.Round2(input), 12);
+
+    [Fact]
+    public void ComputeRankings_tolerates_duplicate_question_numbers_last_wins()
+    {
+        // Two questions share number 50 (JS `new Map` keeps the LAST entry; .NET ToDictionary would throw).
+        // The last entry has a null rule → topPoints defaults to 20 → rank-1 interest point = 20 * gw(1).
+        var qs = new List<ScoringQuestion>
+        {
+            new(50, "ranking", new ScoringRule("rank", TopPoints: 5, N: null, PointsEach: null)),
+            new(50, "ranking", null),
+        };
+        var groups = new List<ScoringGroup>
+        {
+            new("self", new List<ScoringResponse>
+            {
+                new(50, "ranking", null, null, [new RankingEntry("x", 1)], null, null),
+            }),
+        };
+        var baseW = new Dictionary<string, double> { ["self"] = 1 };
+
+        var r = VocationalScoring.ComputeRankings(groups, baseW, qs);
+        Assert.Equal(20, r.Interests.Single(i => i.Value == "x").Points, 9); // default-20 (last entry), not 5
+    }
+
+    [Fact]
+    public void ComputeRankings_open_text_uses_js_trim_dropping_bom()
+    {
+        // JS `.trim()` strips U+FEFF; .NET `.Trim()` does not. A BOM-only open answer must be dropped and
+        // a BOM-wrapped one stored trimmed — matching the TS engine (Codex F: open-text trim parity).
+        var qs = new List<ScoringQuestion> { new(45, "open", null) };
+        var groups = new List<ScoringGroup>
+        {
+            new("self", new List<ScoringResponse>
+            {
+                new(45, "open", null, null, null, null, "\uFEFF"),            // BOM-only -> dropped
+                new(45, "open", null, null, null, null, "\uFEFFhi\uFEFF"),        // BOM-wrapped -> "hi"
+            }),
+        };
+        var baseW = new Dictionary<string, double> { ["self"] = 1 };
+
+        var r = VocationalScoring.ComputeRankings(groups, baseW, qs);
+        Assert.Equal(new OpenInsight("self", "hi"), Assert.Single(r.OpenInsights));
+    }
+
     private static ScoringConfig ResultConfig() => new(
         InstrumentVersion: "v1",
         GroupWeights: Base,
