@@ -76,14 +76,16 @@ public static class PcaNormalization
                 continue;
             }
 
-            var name = GetProp(item, "CmpNom", "cmpNom");
-            if (name is not { ValueKind: JsonValueKind.String })
+            var nameProp = GetProp(item, "CmpNom", "cmpNom");
+            // Legacy keeps a competence only when the raw name is truthy: an empty-string name is dropped
+            // (a whitespace name is kept and trims to ""). level stays a number (integer 1–4 in practice).
+            if (nameProp is not { ValueKind: JsonValueKind.String } name || string.IsNullOrEmpty(name.GetString()))
             {
                 continue;
             }
 
             var level = Num(GetProp(item, "Level", "level")) ?? 0;
-            output.Add(new CompetenceEntry(name.Value.GetString()!.Trim(), (int)level));
+            output.Add(new CompetenceEntry(name.GetString()!.Trim(), level));
         }
 
         return output.Count > 0 ? output : null;

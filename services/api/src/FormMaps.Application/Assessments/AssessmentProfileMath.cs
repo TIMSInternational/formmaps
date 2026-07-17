@@ -22,11 +22,14 @@ public static class JsNumber
     /// </summary>
     public static double ToFixed2(double value)
     {
-        // "G17" is the shortest string that round-trips to the same double while exposing enough of the
-        // exact value to resolve 2-decimal rounding. For the profile's domain (0 ≤ v ≲ 2000) it is always
-        // plain (never exponential), so decimal.Parse is exact.
+        // Round the EXACT value with ties away from zero. Precision matters: "G17" (shortest round-trip)
+        // is NOT enough — e.g. 7.3/4 = 1.82499999999999995559…, whose 17-significant-digit form rounds UP
+        // to "1.825", which then rounds to 1.83, whereas V8 toFixed sees the true sub-midpoint value and
+        // yields "1.82". "G30" emits ~30 significant digits of the exact binary value, so decimal.Parse
+        // (28–29 sig-fig capacity) captures the correct side of the .xx5 midpoint. For the profile's domain
+        // (0 ≤ v ≲ 2000) the format is always plain decimal (never exponential).
         var exact = decimal.Parse(
-            value.ToString("G17", CultureInfo.InvariantCulture),
+            value.ToString("G30", CultureInfo.InvariantCulture),
             NumberStyles.Float,
             CultureInfo.InvariantCulture);
         return (double)Math.Round(exact, 2, MidpointRounding.AwayFromZero);
@@ -51,10 +54,15 @@ public static class JsNumber
 
 /// <summary>
 /// Deterministic 32-hex fingerprint over the salient assessment inputs — consumers recompute / bust
-/// caches when it changes (any LIA, PCA, or 360 change). Faithful port of
-/// <c>sha256(JSON.stringify({ mil, disc, comp, cats })).slice(0, 32)</c>: the JSON is emitted with the
-/// same key order, number formatting, and (crucially) UTF-8 non-ASCII passthrough as Node's
-/// JSON.stringify, then hashed over the UTF-8 bytes.
+/// caches when it changes (any LIA, PCA, or 360 change). Faithful port of the legacy
+/// <c>sha256(JSON.stringify({ mil, disc, comp, cats })).slice(0, 32)</c>: for a GIVEN payload the JSON is
+/// emitted with the same key order, number formatting, and (crucially) UTF-8 non-ASCII passthrough as
+/// Node's JSON.stringify, then hashed over the UTF-8 bytes (pinned by the AssessmentProfileMathTests gold
+/// hashes). The <c>cats</c> key order is the category first-seen order from the feedback read; that read is
+/// deterministically ordered here (legacy had no orderBy), so the fingerprint is stable within this runtime
+/// — it reproduces a specific Node run's hash only when that run happened to read feedbacks in the same
+/// order. As a cache-buster that is sufficient; a cross-runtime mismatch degrades to a recompute, not a
+/// wrong result.
 /// </summary>
 public static class ProfileFingerprint
 {
@@ -83,16 +91,17 @@ public static class ProfileFingerprint
     private static void AppendIntObject(StringBuilder sb, IReadOnlyList<KeyValuePair<string, int>> entries)
     {
         sb.Append('{');
-        for (var i = 0; i < entries.Count; i++)
+        var i = 0;
+        foreach (var entry in OrderByJsKeys(entries))
         {
-            if (i > 0)
+            if (i++ > 0)
             {
                 sb.Append(',');
             }
 
-            AppendString(sb, entries[i].Key);
+            AppendString(sb, entry.Key);
             sb.Append(':');
-            sb.Append(entries[i].Value.ToString(CultureInfo.InvariantCulture));
+            sb.Append(entry.Value.ToString(CultureInfo.InvariantCulture));
         }
 
         sb.Append('}');
@@ -101,19 +110,68 @@ public static class ProfileFingerprint
     private static void AppendNumberObject(StringBuilder sb, IReadOnlyList<KeyValuePair<string, double>> entries)
     {
         sb.Append('{');
-        for (var i = 0; i < entries.Count; i++)
+        var i = 0;
+        foreach (var entry in OrderByJsKeys(entries))
         {
-            if (i > 0)
+            if (i++ > 0)
             {
                 sb.Append(',');
             }
 
-            AppendString(sb, entries[i].Key);
+            AppendString(sb, entry.Key);
             sb.Append(':');
-            sb.Append(JsNumber.ToJsonNumber(entries[i].Value));
+            sb.Append(JsNumber.ToJsonNumber(entry.Value));
         }
 
         sb.Append('}');
+    }
+
+    // JS object property enumeration order: integer-index keys first in ascending numeric order, then the
+    // remaining string keys in insertion order. JSON.stringify follows this, so the fingerprint must too —
+    // it matters for numeric-like 360 category names (e.g. first-seen "10" then "2" serializes as 2,10).
+    private static IEnumerable<KeyValuePair<string, T>> OrderByJsKeys<T>(IReadOnlyList<KeyValuePair<string, T>> entries)
+    {
+        List<(uint Index, KeyValuePair<string, T> Entry)>? indexed = null;
+        List<KeyValuePair<string, T>>? rest = null;
+        foreach (var entry in entries)
+        {
+            if (TryGetArrayIndex(entry.Key, out var index))
+            {
+                (indexed ??= []).Add((index, entry));
+            }
+            else
+            {
+                (rest ??= []).Add(entry);
+            }
+        }
+
+        if (indexed is null)
+        {
+            return entries;
+        }
+
+        indexed.Sort((a, b) => a.Index.CompareTo(b.Index));
+        return indexed.Select(x => x.Entry).Concat(rest ?? []);
+    }
+
+    // ES array-index key: canonical uint string (no leading zeros, value < 2^32 - 1).
+    private static bool TryGetArrayIndex(string key, out uint index)
+    {
+        index = 0;
+        if (key.Length == 0 || (key.Length > 1 && key[0] == '0'))
+        {
+            return false;
+        }
+
+        foreach (var ch in key)
+        {
+            if (ch is < '0' or > '9')
+            {
+                return false;
+            }
+        }
+
+        return uint.TryParse(key, NumberStyles.None, CultureInfo.InvariantCulture, out index) && index != uint.MaxValue;
     }
 
     private static void AppendDisc(StringBuilder sb, DiscMatrix? disc)
@@ -163,7 +221,7 @@ public static class ProfileFingerprint
             sb.Append("{\"name\":");
             AppendString(sb, competences[i].Name);
             sb.Append(",\"level\":");
-            sb.Append(competences[i].Level.ToString(CultureInfo.InvariantCulture));
+            sb.Append(JsNumber.ToJsonNumber(competences[i].Level));
             sb.Append('}');
         }
 

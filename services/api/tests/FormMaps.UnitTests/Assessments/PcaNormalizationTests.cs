@@ -81,6 +81,18 @@ public class PcaNormalizationTests
     }
 
     [Fact]
+    public void NormalizeCompetences_drops_empty_name_and_keeps_numeric_level()
+    {
+        // Legacy `name ? ... : null`: an empty-string name is dropped; level stays a number.
+        var comp = J("""{"PcaCmps":[{"CmpNom":"","Level":3},{"CmpNom":"LIDERAZGO","Level":2}]}""");
+
+        var result = PcaNormalization.NormalizeCompetences(comp);
+
+        Assert.NotNull(result);
+        Assert.Equal(new CompetenceEntry("LIDERAZGO", 2), Assert.Single(result!));
+    }
+
+    [Fact]
     public void NormalizeCompetences_is_null_when_empty_or_absent()
     {
         Assert.Null(PcaNormalization.NormalizeCompetences(J("""{"PcaCmps":[]}""")));

@@ -25,24 +25,31 @@ public sealed record DiscMatrix(
     DiscGraph SelfImage,
     DiscGraph Primary);
 
-/// <summary>A PCA competence (name + level 1–4).</summary>
-public sealed record CompetenceEntry(string Name, int Level);
+/// <summary>A PCA competence (name + level; legacy `number`, integer 1–4 in practice).</summary>
+public sealed record CompetenceEntry(string Name, double Level);
 
 /// <summary>One LIA domain's surfaced result. camelCase: domain/type/percent/accuracy/timeSpent.</summary>
 public sealed record LiaExamEntry(string Domain, string Type, int Percent, int Accuracy, int? TimeSpent);
 
-/// <summary>LIA block: the 5 mil percents (ordered), per-exam detail, and the 300-pt composite.</summary>
+/// <summary>
+/// LIA block: the 5 mil percents (object keyed by milReasoning/milDetection/milNumeric/milMemory/
+/// milOrientation, in that iteration order = the legacy object-literal order), per-exam detail, and the
+/// 300-pt composite.
+/// </summary>
 public sealed record LiaProfile(
-    IReadOnlyList<KeyValuePair<string, int>> Mil,
+    IReadOnlyDictionary<string, int> Mil,
     IReadOnlyList<LiaExamEntry> PerExam,
     MilCompositeResult Composite);
 
 /// <summary>PCA block: the DISC matrix (null when absent) + competences (null when absent).</summary>
 public sealed record PcaProfile(DiscMatrix? Disc, IReadOnlyList<CompetenceEntry>? Competences);
 
-/// <summary>360 block: weighted per-category averages (insertion order) + evaluator count (incl. self).</summary>
+/// <summary>
+/// 360 block: weighted per-category averages (legacy Record&lt;string,number&gt;; insertion order preserved,
+/// first-seen during the feedback read) + evaluator count (incl. self).
+/// </summary>
 public sealed record ThreeSixtyProfile(
-    IReadOnlyList<KeyValuePair<string, double>> Categories,
+    IReadOnlyDictionary<string, double> Categories,
     int EvaluatorCount);
 
 /// <summary>Extracurricular summary folded into the academics block.</summary>

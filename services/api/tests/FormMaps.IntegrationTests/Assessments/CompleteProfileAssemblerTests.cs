@@ -98,6 +98,38 @@ public sealed class CompleteProfileAssemblerTests : IClassFixture<AssessmentProf
         Assert.True(p.Completeness.Lia);          // parity present -> complete even with 1 per-exam row
     }
 
+    [Fact]
+    public async Task Lia_pick_treats_a_null_endTime_completed_exam_as_most_recent()
+    {
+        // Prisma `orderBy: { endTime: "desc" }` inherits Postgres DESC default = NULLS FIRST, so a completed
+        // exam with a NULL endTime outranks a dated one of the same type. Red-if-regressed guard against a
+        // NULLS LAST inversion.
+        var user = NewUser();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedExamAsync(conn, user, "VerbalReasoning", "verbal-reasoning-001", 40, 40, 100); // dated
+        await SeedExamWithNullEndTimeAsync(conn, user, "VerbalReasoning", "verbal-reasoning-001", 88); // NULL endTime -> most recent
+
+        var p = await Assemble(user);
+
+        Assert.Equal(88, Mil(p, "milReasoning"));
+    }
+
+    [Fact]
+    public async Task Lia_parity_coerces_a_numeric_string_percentile()
+    {
+        var user = NewUser();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedParityAsync(
+            conn, user,
+            percentiles: """{"verbal_reasoning":"82.4"}""", // string, as JS Number()/legacy would coerce
+            responseCounts: "{}",
+            subtestTimes: "{}");
+
+        var p = await Assemble(user);
+
+        Assert.Equal(82, Mil(p, "milReasoning")); // round(82.4)
+    }
+
     // ---------------------------------------------------------------- PCA
 
     [Fact]
@@ -168,8 +200,7 @@ public sealed class CompleteProfileAssemblerTests : IClassFixture<AssessmentProf
         var p = await Assemble(user);
 
         // (4*1.1 + 5*0.9 + 3*0.8)/3 = 3.77 ; the self rating (1) is excluded.
-        var arts = p.ThreeSixty.Categories.Single(c => c.Key == "Arts");
-        Assert.Equal(3.77, arts.Value);
+        Assert.Equal(3.77, p.ThreeSixty.Categories["Arts"]);
         Assert.Equal(4, p.ThreeSixty.EvaluatorCount); // counts ALL feedbacks incl. self
         Assert.True(p.Completeness.ThreeSixty);
     }
@@ -202,6 +233,22 @@ public sealed class CompleteProfileAssemblerTests : IClassFixture<AssessmentProf
         Assert.Equal(new[] { "Computer Science" }, p.Preferences.PreferredFields);
         Assert.Equal(new[] { "Software Engineer" }, p.Preferences.TargetCareers);
         Assert.Equal(new[] { "United States" }, p.Preferences.PreferredCountries);
+    }
+
+    [Fact]
+    public async Task Academics_include_empty_type_activities_and_flag_work_experience()
+    {
+        // type "" (empty) satisfies the legacy `type === "activity" || !type` inclusion; a "work" category
+        // flips hasWorkExperience.
+        var user = NewUser();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedPortfolioAsync(conn, user, "", "Member", "work");
+
+        var p = await Assemble(user);
+
+        Assert.Equal(1, p.Academics.Activities.Total);
+        Assert.Equal(0, p.Academics.Activities.LeadershipRoles);
+        Assert.True(p.Academics.Activities.HasWorkExperience);
     }
 
     [Fact]
@@ -250,7 +297,7 @@ public sealed class CompleteProfileAssemblerTests : IClassFixture<AssessmentProf
 
     private static string NewUser() => "u-" + Guid.NewGuid().ToString("N");
 
-    private static int Mil(CompleteAssessmentProfile p, string key) => p.Lia.Mil.Single(m => m.Key == key).Value;
+    private static int Mil(CompleteAssessmentProfile p, string key) => p.Lia.Mil[key];
 
     private static RequestContext Ctx(string userId) =>
         RequestContext.Authenticated(
@@ -276,6 +323,23 @@ public sealed class CompleteProfileAssemblerTests : IClassFixture<AssessmentProf
         cmd.Parameters.AddWithValue("time", timeSpent);
         cmd.Parameters.AddWithValue("score", score);
         cmd.Parameters.AddWithValue("accuracy", accuracy);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    private static async Task SeedExamWithNullEndTimeAsync(
+        NpgsqlConnection conn, string userId, string examType, string examId, double score)
+    {
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "pca_exam_sessions"
+                ("id","examId","userId","examType","endTime","scorePercentage","accuracyPercentage","isCompleted","isActive")
+            VALUES (@id, @examId, @uid, @examType::"ExamType", NULL, @score, 0, true, true)
+            """, conn);
+        cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
+        cmd.Parameters.AddWithValue("examId", examId);
+        cmd.Parameters.AddWithValue("uid", userId);
+        cmd.Parameters.AddWithValue("examType", examType);
+        cmd.Parameters.AddWithValue("score", score);
         await cmd.ExecuteNonQueryAsync();
     }
 

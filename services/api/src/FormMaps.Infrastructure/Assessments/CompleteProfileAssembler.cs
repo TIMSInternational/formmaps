@@ -76,35 +76,48 @@ public sealed partial class CompleteProfileAssembler(IFormMapsDatabaseSessionFac
         var portfolio = await ReadPortfolioAsync(session, userId, cancellationToken);
         var preferences = await ReadPreferencesAsync(session, userId, cancellationToken);
 
-        var lia = BuildLia(sessions, parityPercentiles, parityCounts, parityTimes);
+        // milEntries / categoryEntries keep the legacy insertion order for the fingerprint; the profile
+        // exposes them as (insertion-order-preserving) dictionaries — the legacy object / Record shape.
+        var (milEntries, perExam, composite) = BuildLia(sessions, parityPercentiles, parityCounts, parityTimes);
         var pca = new PcaProfile(
             PcaNormalization.NormalizeDisc(discResult),
             PcaNormalization.NormalizeCompetences(competencesJson));
-        var categories = Evaluation360Scoring.CategoryAverages(
+        var categoryEntries = Evaluation360Scoring.CategoryAverages(
             Evaluation360Scoring.CategoryScoresFromFeedback(feedbacks, questions));
-        var threeSixty = new ThreeSixtyProfile(categories, feedbacks.Count);
         var academics = BuildAcademics(grades, testScores, portfolio);
 
         var parityPresent = parityPercentiles is { ValueKind: not JsonValueKind.Null };
-        var fingerprint = ProfileFingerprint.Compute(lia.Mil, pca.Disc, pca.Competences, categories);
+        var fingerprint = ProfileFingerprint.Compute(milEntries, pca.Disc, pca.Competences, categoryEntries);
 
         return new CompleteAssessmentProfile(
             UserId: userId,
-            Lia: lia,
+            Lia: new LiaProfile(ToOrderedDictionary(milEntries), perExam, composite),
             Pca: pca,
-            ThreeSixty: threeSixty,
+            ThreeSixty: new ThreeSixtyProfile(ToOrderedDictionary(categoryEntries), feedbacks.Count),
             Academics: academics,
             Preferences: preferences,
             Completeness: new ProfileCompleteness(
-                Lia: lia.Composite is not null && (parityPresent || AllExamsPresent(sessions)),
+                Lia: parityPresent || AllExamsPresent(sessions),
                 Pca: pca.Disc is not null,
-                ThreeSixty: categories.Count > 0),
+                ThreeSixty: categoryEntries.Count > 0),
             Fingerprint: fingerprint);
+    }
+
+    private static Dictionary<string, T> ToOrderedDictionary<T>(IReadOnlyList<KeyValuePair<string, T>> entries)
+    {
+        // Dictionary preserves insertion order (no removals) -> the legacy object/Record iteration order.
+        var dict = new Dictionary<string, T>(entries.Count, StringComparer.Ordinal);
+        foreach (var entry in entries)
+        {
+            dict[entry.Key] = entry.Value;
+        }
+
+        return dict;
     }
 
     // ---------------------------------------------------------------- LIA assembly (parity-aware)
 
-    private static LiaProfile BuildLia(
+    private static (IReadOnlyList<KeyValuePair<string, int>> Mil, IReadOnlyList<LiaExamEntry> PerExam, MilCompositeResult Composite) BuildLia(
         IReadOnlyList<SessionRow> sessions, JsonElement? parityPct, JsonElement? parityCounts, JsonElement? parityTimes)
     {
         var hasParity = parityPct is { ValueKind: not JsonValueKind.Null };
@@ -124,7 +137,7 @@ public sealed partial class CompleteProfileAssembler(IFormMapsDatabaseSessionFac
             perDomainPercent[type] = percent;
         }
 
-        return new LiaProfile(mil, perExam, MilComposite.Compute(perDomainPercent));
+        return (mil, perExam, MilComposite.Compute(perDomainPercent));
     }
 
     private static bool AllExamsPresent(IReadOnlyList<SessionRow> sessions) =>
@@ -132,7 +145,9 @@ public sealed partial class CompleteProfileAssembler(IFormMapsDatabaseSessionFac
 
     private static SessionRow? Pick(IReadOnlyList<SessionRow> sessions, string type, string id)
     {
-        // sessions are ordered endTime DESC -> FirstOrDefault matches the most recent (legacy .find).
+        // sessions are ordered endTime DESC NULLS FIRST (Prisma's `orderBy: { endTime: "desc" }` inherits
+        // the Postgres default, which for DESC is NULLS FIRST — a NULL endTime sorts as most-recent) ->
+        // FirstOrDefault matches the most recent (legacy .find).
         foreach (var s in sessions)
         {
             if (s.ExamType == type || s.ExamId == id)
@@ -240,7 +255,7 @@ public sealed partial class CompleteProfileAssembler(IFormMapsDatabaseSessionFac
             SELECT "examType"::text AS "examType", "examId", "scorePercentage", "accuracyPercentage", "totalTimeSpent"
             FROM "pca_exam_sessions"
             WHERE "userId" = @uid AND "isActive" = true AND "isCompleted" = true
-            ORDER BY "endTime" DESC NULLS LAST
+            ORDER BY "endTime" DESC NULLS FIRST
             """);
         AddParameter(command, "uid", userId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -265,7 +280,7 @@ public sealed partial class CompleteProfileAssembler(IFormMapsDatabaseSessionFac
             SELECT "percentiles"::text, "response_counts"::text, "subtest_times"::text
             FROM "lia_assessment_sessions"
             WHERE "user_id" = @uid AND "status" = 'completed' AND "is_active" = true
-            ORDER BY "completed_at" DESC NULLS LAST
+            ORDER BY "completed_at" DESC NULLS FIRST
             LIMIT 1
             """);
         AddParameter(command, "uid", userId);
