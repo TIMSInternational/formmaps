@@ -5,7 +5,7 @@ Grounds: `dotnet-implementation-plan.md` (11-domain order), `cutover-matrix.md`
 (risk), `source-inventory.md` (52 routes / 90 services / 123 models / 177 tests).
 Companion: `agentic-migration.manifest.json` (per-slice ledger).
 
-## 1. Where we are (main `538c3d0`, 32/32 manifest slices)
+## 1. Where we are (main `781a72a`, 33/33 manifest slices)
 
 | Block | State |
 |---|---|
@@ -28,7 +28,8 @@ Legend: R=read slice (fast), W=write slice (slow, full gate), 🔴=high structur
 ### Phase A — Finish Assessments (domain 3) — **~8–12 slices**
 - ✅ **W** pca-exam submit/take (FM-031, DONE `a745d06`) — closed corpus #18 answer-replay (completed/TimeExpired→409, no dup, no rescore). Prod-flip deferred (Node owns /complete timeout + es-VerbalReasoning serve + insight-polyglot).
 - ✅ **W** vocational authed SCORE recompute (FM-032, DONE `538c3d0`) — wires FM-028 VocationalScoring → upserts vocational_results (numeric composite + camelCase jsonb). **Integrated recompute DEFERRED** — needs the assembleCompleteProfile (DISC/PCA + MIL/LIA) assembler port.
-- **R** remaining Phase-A reads: test-scores (378 lines, 7ep +superscore +college-fit Decimal), question360 (11ep, answer-key strip), vocational360 catalog/score, school-admin views (14ep), assessment-profile derive/insights-status.
+- ✅ **R** vocational360 result reads (FM-033, DONE `781a72a`) — GET /score/{id} + /integrated/{id} (Decimal→number, jsonb passthrough, never_computed). /recommendations (AI) + /instrument + /questionnaire catalog deferred.
+- **R** remaining Phase-A reads: test-scores (378 lines, 7ep +superscore +college-fit Decimal), question360 (11ep, answer-key strip), vocational360 catalog (/instrument+/questionnaire), school-admin views (14ep), assessment-profile derive/insights-status.
 - **W** 🔴 external **token-gated write rail** (evaluation `submit-feedback`, vocationalTake external submit) — NEW fail-closed non-tenant rail; highest risk in assessments.
 - TIMS vendor proxy (`pcaapi.ts` 732 lines, 13ep) — **DEFER / keep in Node** (Federico) or 2–3 slices if ported.
 - AI (assessment-profile insights, Bedrock) — **stays polyglot** (~0 .NET).
