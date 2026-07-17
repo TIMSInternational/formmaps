@@ -1386,6 +1386,43 @@
       "notes": [
         "DONE 2026-07-17: authed vocational result reads (complements FM-032). dotnet 0/0; 313u+1c+227i. GATE: fresh review SAFE-TO-SHIP + Codex SAFE-TO-SHIP (NO runtime findings) -> folded the 3 Codex LOW test-hardening gaps (fractional-composite Decimal-as-number, integrated no-active-instrument never_computed, integrated-route guard-chain anon/deny) + refreshed the stale VocationalEndpoints class doc. Staging deploy GREEN (run 29611462422) + canary GREEN (health 200; anon GET score/integrated -> 401 missing_identity + x-formmaps-service). DEFERRED (polyglot): GET /recommendations (Bedrock aiJson + PII strip + AI cache = standing AI-polyglot decision); catalog reads /instrument + /questionnaire = a later slice. Prod route-flip deferred (dark). NEXT: catalog reads (/instrument + /questionnaire), OR port assembleCompleteProfile -> vocational INTEGRATED recompute, OR remaining Phase-A reads (test-scores/question360/school-admin), OR FM-034 personality PROD cutover (Milestone 1 proof)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-034-vocational-catalog-reads",
+      "status": "completed",
+      "goal": "Phase A, the authed vocational CATALOG reads (legacy getInstrument + getQuestionnaire) \u2014 completes the vocational360 read surface. Authenticate-only (no canAccessUser: catalog, not per-user).",
+      "dependsOn": [
+        "FM-DOTNET-033-vocational-result-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/vocational360.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/vocational360Service.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments/VocationalRead.cs",
+        "services/api/src/FormMaps.Infrastructure/Assessments/VocationalReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/VocationalEndpoints.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "VocationalReader.GetInstrumentAsync (active instrument + dims order asc; weight ::double precision=number; groupWeights/integrationWeights/interpretationBands + dim scaleAnchors jsonb passthrough; null when none) + GetQuestionnaireAsync (questions isActive AND group IS NULL OR =@group order asc; LEFT JOIN dimension[key+scaleAnchors] + variant[group,isActive]; scaleAnchors = q ?? dimension ?? null via FirstNonNullJson skipping SQL-null AND jsonb 'null'; options passthrough; text = variant.textEs ?? '')",
+        "InstrumentDto/InstrumentDimensionDto/QuestionnaireItem records; IVocationalReader gains GetInstrument/GetQuestionnaire",
+        "GET /instrument (RequireIdentity only; null->404 'No active vocational instrument') + GET /questionnaire?group (RequireIdentity; group validated {self,parent,teacher,sibling_friend} else 400 'Invalid group' BEFORE reader) on VocationalEndpoints",
+        "harness += vocational_question_variants + question area/scaleAnchors/options cols; VocationalCatalogReaderTests(3) + 6 catalog endpoint tests",
+        "web flag FORMMAPS_ROUTE_VOCATIONAL_CATALOG_TO_DOTNET (default off) + rewrites"
+      ],
+      "guardrails": [
+        "authenticate-only (RequireIdentity, NO canAccessUser \u2014 catalog not per-user); weight as JSON number; jsonb passthrough (groupWeights/integrationWeights/interpretationBands/scaleAnchors/options); scaleAnchors two-level ?? fallback skips SQL-null AND jsonb 'null'; group validated before the reader (400 'Invalid group'); variant LEFT JOIN cannot fan out (unique (questionId,group)); question.group null = all groups."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx",
+        "staging deploy + health 200 + anon GET vocational360/instrument|questionnaire -> 401"
+      ],
+      "notes": [
+        "DONE 2026-07-17: vocational catalog reads \u2014 completes the vocational360 read surface. dotnet 0/0; 313u+1c+236i. GATE: fresh SAFE-TO-SHIP + Codex SAFE-TO-SHIP (no runtime findings) -> folded doc/coverage gaps (refreshed stale VocationalEndpoints class doc; pinned options jsonb passthrough). Staging deploy GREEN (run 29612690391) + canary GREEN (health 200; anon GET instrument/questionnaire -> 401). DEFERRED (polyglot): /recommendations (Bedrock). Vocational360 authed surface now .NET-capable EXCEPT the integrated recompute write (needs assembleCompleteProfile) + /recommendations (AI). NEXT: port assembleCompleteProfile -> vocational INTEGRATED recompute, OR remaining Phase-A reads (test-scores/question360/school-admin), OR personality PROD cutover (Milestone 1 proof)."
+      ]
     }
   ]
 }

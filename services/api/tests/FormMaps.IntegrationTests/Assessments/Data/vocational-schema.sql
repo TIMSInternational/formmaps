@@ -42,6 +42,9 @@ CREATE TABLE "vocational_questions" (
     "block" TEXT NOT NULL DEFAULT '',
     "number" INTEGER NOT NULL,
     "type" TEXT NOT NULL,
+    "area" TEXT,
+    "scaleAnchors" JSONB,
+    "options" JSONB,
     "scoringRule" JSONB,
     "group" TEXT,
     "order" INTEGER NOT NULL DEFAULT 0,
@@ -50,6 +53,19 @@ CREATE TABLE "vocational_questions" (
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "vocational_questions_pkey" PRIMARY KEY ("id")
 );
+
+CREATE TABLE "vocational_question_variants" (
+    "id" TEXT NOT NULL,
+    "questionId" TEXT NOT NULL,
+    "group" TEXT NOT NULL,
+    "textEs" TEXT NOT NULL,
+    "textEn" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "vocational_question_variants_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX "vocational_question_variants_questionId_group_key" ON "vocational_question_variants"("questionId", "group");
 
 -- Minimal stub: only the columns the recompute query joins/filters on.
 CREATE TABLE "evaluation_groups" (

@@ -154,6 +154,77 @@ public class VocationalReadEndpointTests
         Assert.Equal("never_computed", doc.RootElement.GetProperty("data").GetProperty("status").GetString());
     }
 
+    // ---- catalog: /instrument + /questionnaire (authenticate-only, no canAccessUser) ----
+
+    [Fact]
+    public async Task GetInstrument_denies_anonymous()
+    {
+        using var factory = new Factory(new FakeReader(), new FakeAccessGuard(allow: true));
+        using var client = factory.CreateClient();
+        var response = await client.GetAsync("/api/v1/vocational360/instrument");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetInstrument_null_is_404()
+    {
+        using var factory = new Factory(new FakeReader { Instrument = null }, new FakeAccessGuard(allow: true));
+        using var client = factory.CreateClient();
+        var response = await Send(client, "/api/v1/vocational360/instrument");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await AssertMessage(response, "No active vocational instrument");
+    }
+
+    [Fact]
+    public async Task GetInstrument_present_is_200()
+    {
+        var instrument = new InstrumentDto("v1", "Test", Empty, Empty, Empty, []);
+        using var factory = new Factory(new FakeReader { Instrument = instrument }, new FakeAccessGuard(allow: true));
+        using var client = factory.CreateClient();
+        var response = await Send(client, "/api/v1/vocational360/instrument");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("v1", doc.RootElement.GetProperty("data").GetProperty("version").GetString());
+    }
+
+    [Fact]
+    public async Task GetQuestionnaire_invalid_group_is_400_before_the_reader()
+    {
+        var reader = new FakeReader();
+        using var factory = new Factory(reader, new FakeAccessGuard(allow: true));
+        using var client = factory.CreateClient();
+        var response = await Send(client, "/api/v1/vocational360/questionnaire?group=bogus");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await AssertMessage(response, "Invalid group");
+        Assert.Equal(0, reader.QuestionnaireCalls);
+    }
+
+    [Fact]
+    public async Task GetQuestionnaire_missing_group_is_400()
+    {
+        using var factory = new Factory(new FakeReader(), new FakeAccessGuard(allow: true));
+        using var client = factory.CreateClient();
+        var response = await Send(client, "/api/v1/vocational360/questionnaire");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await AssertMessage(response, "Invalid group");
+    }
+
+    [Fact]
+    public async Task GetQuestionnaire_valid_group_is_200_and_passes_the_group()
+    {
+        var reader = new FakeReader
+        {
+            Questionnaire = [new QuestionnaireItem(1, "dimension", "likert", null, "d1", Empty, Empty, "P1")],
+        };
+        using var factory = new Factory(reader, new FakeAccessGuard(allow: true));
+        using var client = factory.CreateClient();
+        var response = await Send(client, "/api/v1/vocational360/questionnaire?group=self");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("self", reader.LastGroup);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(1, doc.RootElement.GetProperty("data").GetArrayLength());
+    }
+
     // ---- helpers ----
 
     private static async Task AssertMessage(HttpResponseMessage response, string expected)
@@ -206,9 +277,17 @@ public class VocationalReadEndpointTests
 
         public VocationalIntegratedRead? Integrated { get; init; }
 
+        public InstrumentDto? Instrument { get; init; }
+
+        public IReadOnlyList<QuestionnaireItem> Questionnaire { get; init; } = [];
+
         public int ScoreCalls { get; private set; }
 
+        public int QuestionnaireCalls { get; private set; }
+
         public string? LastScoreUserId { get; private set; }
+
+        public string? LastGroup { get; private set; }
 
         public Task<VocationalScoreRead?> GetScoreAsync(RequestContext context, string evaluatedUserId, CancellationToken cancellationToken = default)
         {
@@ -219,5 +298,15 @@ public class VocationalReadEndpointTests
 
         public Task<VocationalIntegratedRead?> GetIntegratedAsync(RequestContext context, string evaluatedUserId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Integrated);
+
+        public Task<InstrumentDto?> GetInstrumentAsync(RequestContext context, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Instrument);
+
+        public Task<IReadOnlyList<QuestionnaireItem>> GetQuestionnaireAsync(RequestContext context, string group, CancellationToken cancellationToken = default)
+        {
+            QuestionnaireCalls++;
+            LastGroup = group;
+            return Task.FromResult(Questionnaire);
+        }
     }
 }

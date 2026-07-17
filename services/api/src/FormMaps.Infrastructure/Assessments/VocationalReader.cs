@@ -94,6 +94,116 @@ public sealed class VocationalReader(IFormMapsDatabaseSessionFactory databaseSes
             ComputedAt: IsoZ(reader.GetDateTime(6)));
     }
 
+    public async Task<InstrumentDto?> GetInstrumentAsync(RequestContext context, CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+
+        string instrumentId, version, name;
+        JsonElement groupWeights, integrationWeights, interpretationBands;
+        await using (var command = Command(session, """
+            SELECT "id", "version", "name", "groupWeights"::text AS "groupWeights",
+                   "integrationWeights"::text AS "integrationWeights", "interpretationBands"::text AS "interpretationBands"
+            FROM "vocational_instruments" WHERE "status" = 'active' AND "isActive" = true LIMIT 1
+            """))
+        {
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                return null;
+            }
+
+            instrumentId = reader.GetString(0);
+            version = reader.GetString(1);
+            name = reader.GetString(2);
+            groupWeights = ReadJson(reader, 3);
+            integrationWeights = ReadJson(reader, 4);
+            interpretationBands = ReadJson(reader, 5);
+        }
+
+        var dimensions = new List<InstrumentDimensionDto>();
+        await using (var command = Command(session, """
+            SELECT "key", "nameEs", "nameEn", "weight"::double precision AS "weight", "scaleAnchors"::text AS "scaleAnchors", "order"
+            FROM "vocational_dimensions" WHERE "instrumentId" = @instrumentId AND "isActive" = true
+            ORDER BY "order" ASC
+            """))
+        {
+            AddParameter(command, "instrumentId", instrumentId);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                dimensions.Add(new InstrumentDimensionDto(
+                    Key: reader.GetString(0),
+                    NameEs: reader.GetString(1),
+                    NameEn: reader.IsDBNull(2) ? null : reader.GetString(2),
+                    Weight: reader.GetDouble(3),
+                    ScaleAnchors: ReadJson(reader, 4),
+                    Order: reader.GetInt32(5)));
+            }
+        }
+
+        return new InstrumentDto(version, name, groupWeights, integrationWeights, interpretationBands, dimensions);
+    }
+
+    public async Task<IReadOnlyList<QuestionnaireItem>> GetQuestionnaireAsync(
+        RequestContext context, string group, CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+
+        var items = new List<QuestionnaireItem>();
+        // Active questions for the group (question.group null = all groups), joined to their dimension (key +
+        // fallback scaleAnchors) and the group's text variant. (questionId, group) is unique -> ≤1 variant row.
+        await using var command = Command(session, """
+            SELECT q."number", q."block", q."type", q."area", d."key" AS "dimensionKey",
+                   q."scaleAnchors"::text AS "questionScale", d."scaleAnchors"::text AS "dimensionScale",
+                   q."options"::text AS "options", v."textEs"
+            FROM "vocational_questions" q
+            LEFT JOIN "vocational_dimensions" d ON d."id" = q."dimensionId"
+            LEFT JOIN "vocational_question_variants" v ON v."questionId" = q."id" AND v."group" = @group AND v."isActive" = true
+            WHERE q."isActive" = true AND (q."group" IS NULL OR q."group" = @group)
+            ORDER BY q."order" ASC
+            """);
+        AddParameter(command, "group", group);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            items.Add(new QuestionnaireItem(
+                Number: reader.GetInt32(0),
+                Block: reader.GetString(1),
+                Type: reader.GetString(2),
+                Area: reader.IsDBNull(3) ? null : reader.GetString(3),
+                DimensionKey: reader.IsDBNull(4) ? null : reader.GetString(4),
+                // legacy: q.scaleAnchors ?? q.dimension?.scaleAnchors ?? null (skips SQL-null AND jsonb 'null').
+                ScaleAnchors: FirstNonNullJson(
+                    reader.IsDBNull(5) ? null : reader.GetString(5),
+                    reader.IsDBNull(6) ? null : reader.GetString(6)),
+                Options: ReadJson(reader, 7),
+                Text: reader.IsDBNull(8) ? string.Empty : reader.GetString(8)));
+        }
+
+        return items;
+    }
+
+    // JS `a ?? b ?? null`: the first jsonb text whose value is not null (SQL-null OR jsonb 'null' are skipped).
+    private static JsonElement FirstNonNullJson(string? first, string? second)
+    {
+        foreach (var raw in new[] { first, second })
+        {
+            if (raw is null)
+            {
+                continue;
+            }
+
+            using var document = JsonDocument.Parse(raw);
+            if (document.RootElement.ValueKind != JsonValueKind.Null)
+            {
+                return document.RootElement.Clone();
+            }
+        }
+
+        using var nullDocument = JsonDocument.Parse("null");
+        return nullDocument.RootElement.Clone();
+    }
+
     private static async Task<string?> ActiveInstrumentVersionAsync(FormMapsDatabaseSession session, CancellationToken cancellationToken)
     {
         await using var command = Command(session, """
