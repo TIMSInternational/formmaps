@@ -197,8 +197,8 @@ public static class ExamEndpoints
             ? n
             : 0;
 
-    // String(x): a JSON string passes through; a JSON number stringifies (invariant); other kinds -> null
-    // so the `??` coalesce chain continues.
+    // String(x): a JSON string passes through; a JSON number stringifies by VALUE (not raw token) so
+    // String(3.0) === "3" matches an Int answer key of 3; other kinds -> null so the `??` chain continues.
     private static string? ReadAnswerValue(JsonElement element, string name)
     {
         if (!element.TryGetProperty(name, out var value))
@@ -209,10 +209,17 @@ public static class ExamEndpoints
         return value.ValueKind switch
         {
             JsonValueKind.String => value.GetString(),
-            JsonValueKind.Number => value.GetRawText(),
+            JsonValueKind.Number => JsNumberToString(value),
             _ => null,
         };
     }
+
+    // Legacy String(number): stringifies the numeric VALUE, not the raw token — String(3.0) === "3",
+    // String(1e2) === "100". Emit the integer form when integral, else the shortest round-trip double.
+    private static string JsNumberToString(JsonElement value) =>
+        value.TryGetInt64(out var l)
+            ? l.ToString(CultureInfo.InvariantCulture)
+            : value.GetDouble().ToString(CultureInfo.InvariantCulture);
 
     private static async Task<IResult> GetHistoryAsync(
         IRequestContextAccessor requestContextAccessor,

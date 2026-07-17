@@ -182,6 +182,28 @@ public class PcaExamWriteEndpointTests
     }
 
     [Fact]
+    public async Task Submit_stringifies_a_numeric_answer_like_js_String()
+    {
+        // Legacy String(ans.answer): a JSON number answer stringifies by VALUE — 3 and 3.0 both become "3"
+        // (so they match an Int answer key of 3), not the raw token "3.0".
+        var writer = new FakeWriter
+        {
+            SubmitOutcome = new PcaExamSubmitOutcome(PcaExamWriteStatus.Ok, new ExamSubmitResult(SessionId, 0, 0, 0, "Completed")),
+        };
+        var reader = new FakeSessionReader { Session = Session(CallerUserId) };
+        using var factory = new Factory(new FakeSubscriptionGuard(allow: true), writer, reader, new FakeAccessGuard(allow: true));
+        using var client = factory.CreateClient();
+
+        var body = """{"sessionId":"session-1","answers":[{"questionNumber":1,"answer":3},{"questionNumber":2,"answer":3.0},{"questionNumber":3,"selectedAnswer":100}]}""";
+        var response = await Send(client, HttpMethod.Post, "/api/pcaexam/submit", body);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("3", writer.LastAnswers![0].UserAnswer);
+        Assert.Equal("3", writer.LastAnswers![1].UserAnswer);   // 3.0 -> "3", NOT "3.0"
+        Assert.Equal("100", writer.LastAnswers![2].UserAnswer); // selectedAnswer number stringifies too
+    }
+
+    [Fact]
     public async Task Submit_already_completed_maps_to_409()
     {
         var response = await SubmitOutcome(new PcaExamSubmitOutcome(PcaExamWriteStatus.AlreadyCompleted, null));

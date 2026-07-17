@@ -94,9 +94,12 @@ public sealed class PcaExamWriter(
             }
         }
 
-        // NOTE (deferred divergence): legacy rebuilds VerbalReasoning question text via buildQuestionRows
-        // when the user's language is "es". That authored-bank rebuild is display-only (scoring uses the DB
-        // answer key) and is deferred; v1 serves the DB rows unchanged for all languages.
+        // NOTE (deferred divergence — PROD-CUTOVER BLOCKER for /start): legacy resolves the user's language
+        // and rebuilds VerbalReasoning question text via buildQuestionRows when language == "es". That
+        // authored-bank rebuild (numerica/deteccion/memoria/verbal banks + verbalAnswer) is display-only —
+        // scoring uses the DB answer key, so submit is unaffected — and is a separate slice; v1 serves the
+        // DB rows unchanged for all languages. Close this before flipping /start to .NET in prod (a Spanish
+        // VerbalReasoning taker would otherwise see DB text instead of the es-rebuilt passage).
 
         var sessionId = Guid.NewGuid().ToString();
         var now = Now();
@@ -269,9 +272,11 @@ public sealed class PcaExamWriter(
         }
 
         await session.CommitAsync(cancellationToken);
+        // Actor = the caller who performed the write (a privileged role may submit another user's
+        // session); subject = the session owner. Both are IDs (PII-free); accountability trail for SOC2.
         logger.LogInformation(
-            "audit.assessment.pcaexam.submitted sessionId={SessionId} actorUserId={ActorUserId} examId={ExamId} score={Score} correct={Correct} total={Total}",
-            sessionId, ownerUserId, examId, scorePercent, correct, totalQuestions);
+            "audit.assessment.pcaexam.submitted sessionId={SessionId} actorUserId={ActorUserId} subjectUserId={SubjectUserId} examId={ExamId} score={Score} correct={Correct} total={Total}",
+            sessionId, context.Tenant?.UserId, ownerUserId, examId, scorePercent, correct, totalQuestions);
 
         return new PcaExamSubmitOutcome(
             PcaExamWriteStatus.Ok,

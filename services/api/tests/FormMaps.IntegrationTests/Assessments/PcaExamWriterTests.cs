@@ -241,6 +241,27 @@ public sealed class PcaExamWriterTests : IClassFixture<PcaExamWriteDatabaseFixtu
     }
 
     [Fact]
+    public async Task Submit_audit_records_the_caller_as_actor_and_the_owner_as_subject()
+    {
+        // A privileged role may submit another user's session (ownership is at the route). The audit must
+        // attribute the write to the actual caller (actorUserId), not the session owner (subjectUserId).
+        var ownerId = await SeedUserId();
+        var callerId = await SeedUserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var examId = await SeedExamAsync(conn, name: "Pattern", type: "PatternRecognition", timeLimitMinutes: 5);
+        await SeedQuestionAsync(conn, examId, 1, 1);
+        var sessionId = await SeedSessionAsync(conn, examId, ownerId, status: "InProgress", isCompleted: false);
+
+        var (writer, logger) = MakeWriter();
+        var outcome = await writer.SubmitExamAsync(Ctx(callerId), sessionId, [new(1, "1", 0)], timeTaken: 1);
+
+        Assert.Equal(PcaExamWriteStatus.Ok, outcome.Status);
+        var audit = Assert.Single(logger.Entries, e => e.Message.StartsWith("audit.assessment.pcaexam.submitted", StringComparison.Ordinal));
+        Assert.Contains($"actorUserId={callerId}", audit.Message, StringComparison.Ordinal);
+        Assert.Contains($"subjectUserId={ownerId}", audit.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Submit_on_a_nonexistent_session_is_session_not_found()
     {
         var userId = await SeedUserId();
