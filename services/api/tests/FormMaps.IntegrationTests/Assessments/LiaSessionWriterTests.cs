@@ -108,13 +108,16 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
 
         Assert.Equal(LiaCompleteStatus.Completed, first.Status);
         Assert.Equal(LiaCompleteStatus.Completed, second.Status);
-        // Identical results — the replay returns the stored scores verbatim.
+        // Identical results across EVERY field — the replay returns the stored bundle verbatim.
         Assert.Equal(first.Result!.GlobalPercentile, second.Result!.GlobalPercentile);
         Assert.Equal(first.Result!.PerformanceLevel, second.Result!.PerformanceLevel);
         Assert.Equal(first.Result!.CompletedAt, second.Result!.CompletedAt);
+        Assert.Equal(first.Result!.RawScores.OrderBy(k => k.Key), second.Result!.RawScores.OrderBy(k => k.Key));
+        Assert.Equal(first.Result!.FinalScores.OrderBy(k => k.Key), second.Result!.FinalScores.OrderBy(k => k.Key));
+        Assert.Equal(first.Result!.Percentiles.OrderBy(k => k.Key), second.Result!.Percentiles.OrderBy(k => k.Key));
         Assert.Equal(
-            first.Result!.FinalScores.OrderBy(k => k.Key),
-            second.Result!.FinalScores.OrderBy(k => k.Key));
+            first.Result!.ResponseCounts.OrderBy(k => k.Key),
+            second.Result!.ResponseCounts.OrderBy(k => k.Key));
         // The second call performed NO write: updated_at is byte-identical (a re-UPDATE would bump it).
         Assert.Equal(updatedAtAfterFirst, updatedAtAfterSecond);
     }
@@ -133,7 +136,7 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
         };
         var (userId, sessionId) = await SeedRunAsync(status: "in_progress", allEnded: true, counts: counts);
 
-        var (writer, _) = MakeWriter();
+        var (writer, logger) = MakeWriter();
         var outcome = await writer.CompleteAsync(Ctx(userId), sessionId, userId);
 
         Assert.Equal(LiaCompleteStatus.IncompleteCoverage, outcome.Status);
@@ -142,6 +145,9 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
         Assert.Equal("in_progress", row.Status); // untouched
         Assert.Null(row.CompletedAt);
         Assert.Null(row.GlobalPercentile);
+        // A rejected completion must NOT emit a completion audit event (nothing was written).
+        Assert.DoesNotContain(
+            logger.Entries, e => e.Message.StartsWith("audit.assessment.lia.completed", StringComparison.Ordinal));
     }
 
     // ----------------------------------------------------------------------------------------------

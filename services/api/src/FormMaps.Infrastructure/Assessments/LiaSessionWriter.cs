@@ -164,17 +164,21 @@ public sealed class LiaSessionWriter(
             affected = await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        await session.CommitAsync(cancellationToken);
-
-        // affected == 0 is unreachable under the FOR UPDATE lock (we verified status <> completed while
-        // holding the exclusive row lock); scoring is deterministic so the computed result equals what a
-        // prior commit would have stored. Log + return the computed result defensively.
+        // affected == 0 is unreachable under the FOR UPDATE lock: we hold the exclusive row lock and
+        // verified status <> 'completed', so the conditional UPDATE ... WHERE status <> 'completed' must
+        // match the one locked row. If it somehow matched nothing (e.g. an RLS UPDATE policy filtered the
+        // row), FAIL CLOSED — do not commit a phantom success or emit a completion audit for a write that
+        // did not land (processing integrity, SOC2 PI). Disposing the session rolls the transaction back.
         if (affected == 0)
         {
-            logger.LogWarning("lia.session.complete conditional update matched 0 rows sessionId={SessionId}", sessionId);
+            logger.LogError("lia.session.complete conditional update matched 0 rows sessionId={SessionId}", sessionId);
+            throw new InvalidOperationException($"LIA completion update affected 0 rows for session {sessionId}");
         }
 
-        // Audit (SOC2 CC7.2 / ISO A.8.15): actor/action/subject/outcome — IDs only, never PII.
+        await session.CommitAsync(cancellationToken);
+
+        // Audit (SOC2 CC7.2 / ISO A.8.15): actor/action/subject/outcome — IDs only, never PII. Emitted
+        // only after the durable write commits, so it can never claim a completion that did not persist.
         logger.LogInformation(
             "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
             sessionId, ownerUserId, scored.GlobalPercentile, scored.PerformanceLevel);
