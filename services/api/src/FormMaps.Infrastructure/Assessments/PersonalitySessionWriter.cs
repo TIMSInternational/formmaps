@@ -102,7 +102,8 @@ public sealed class PersonalitySessionWriter(
     {
         string status, variant, language;
         await using (var command = Command(session, """
-            SELECT "status", "variant", "session_language" FROM "personality_assessment_sessions"
+            SELECT "user_id", "status", "variant", "session_language", "is_active"
+            FROM "personality_assessment_sessions"
             WHERE "id" = @sessionId
             """))
         {
@@ -110,14 +111,21 @@ public sealed class PersonalitySessionWriter(
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             if (!await reader.ReadAsync(cancellationToken))
             {
-                // The id came from the caller's own active sessions a statement ago; a miss here is a
-                // race — uniform session_not_found (no write).
                 return new PersonalityStartOutcome(PersonalityWriteStatus.SessionNotFound, null);
             }
 
-            status = reader.GetString(0);
-            variant = NormalizeVariant(reader.GetString(1));
-            language = NormalizeLanguage(reader.IsDBNull(2) ? null : reader.GetString(2));
+            // Re-validate ownership + is_active on the resume read (legacy resumeSession -> getOwnedSession),
+            // not just id: a session deactivated between the access check and here (same txn, ReadCommitted)
+            // must uniform-404, not serve a resume payload.
+            var ownerUserId = reader.GetString(0);
+            status = reader.GetString(1);
+            variant = NormalizeVariant(reader.GetString(2));
+            language = NormalizeLanguage(reader.IsDBNull(3) ? null : reader.GetString(3));
+            var isActive = reader.GetBoolean(4);
+            if (!string.Equals(ownerUserId, userId, StringComparison.Ordinal) || !isActive)
+            {
+                return new PersonalityStartOutcome(PersonalityWriteStatus.SessionNotFound, null);
+            }
         }
 
         var answered = new List<int>();

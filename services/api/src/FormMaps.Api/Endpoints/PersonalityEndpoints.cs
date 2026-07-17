@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
@@ -176,14 +177,22 @@ public static class PersonalityEndpoints
             ? value.GetString()
             : null;
 
-    // Number(x) restricted to a JSON integer (the only shape the client sends); non-integers -> null -> 400.
-    private static int? ReadInteger(JsonElement body, string name) =>
-        body.ValueKind == JsonValueKind.Object
-        && body.TryGetProperty(name, out var value)
-        && value.ValueKind == JsonValueKind.Number
-        && value.TryGetInt32(out var number)
-            ? number
-            : null;
+    // Legacy Number(req.body?.itemNumber): a JSON number OR a numeric string both coerce (then the route
+    // requires Number.isInteger && >= 1). Non-integers / non-numeric -> null -> 400 "itemNumber is required".
+    private static int? ReadInteger(JsonElement body, string name)
+    {
+        if (body.ValueKind != JsonValueKind.Object || !body.TryGetProperty(name, out var value))
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number when value.TryGetInt32(out var n) => n,
+            JsonValueKind.String when int.TryParse(value.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var s) => s,
+            _ => null,
+        };
+    }
 
     private static async Task<IResult> GetAccessAsync(
         IRequestContextAccessor requestContextAccessor,

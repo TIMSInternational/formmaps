@@ -111,6 +111,37 @@ public class PersonalityWriteEndpointTests
     }
 
     [Fact]
+    public async Task Answer_accepts_a_numeric_string_itemNumber_like_legacy_Number()
+    {
+        // Legacy Number("5") === 5 — a numeric-string itemNumber must be accepted, not 400'd.
+        var writer = new FakeWriter
+        {
+            AnswerOutcome = new PersonalityAnswerOutcome(PersonalityWriteStatus.Ok, new AnswerResult(SessionId, 1, 40, false)),
+        };
+        using var factory = new Factory(new FakeSubscriptionGuard(allow: true), writer);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Post, $"/api/v1/personality/session/{SessionId}/answer", """{"itemNumber":"5","choice":"A"}""");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(5, writer.LastItemNumber);
+    }
+
+    [Fact]
+    public async Task Answer_rejects_a_non_numeric_itemNumber_string()
+    {
+        var writer = new FakeWriter();
+        using var factory = new Factory(new FakeSubscriptionGuard(allow: true), writer);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Post, $"/api/v1/personality/session/{SessionId}/answer", """{"itemNumber":"x","choice":"A"}""");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await AssertMessage(response, "itemNumber is required");
+        Assert.Equal(0, writer.AnswerCalls);
+    }
+
+    [Fact]
     public async Task Answer_invalid_choice_maps_to_400_invalid_answer()
     {
         var response = await SendAnswerOutcome(PersonalityWriteStatus.InvalidChoice, """{"itemNumber":5,"choice":"BLAH"}""");
