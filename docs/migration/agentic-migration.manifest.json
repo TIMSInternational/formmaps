@@ -1225,6 +1225,49 @@
       "notes": [
         "DONE 2026-07-17: the FIRST authored WRITE + the first real-DB harness. dotnet 0/0; 292u+1c+146i. The harness caught a real write-path bug: completed_at drifted 1ms (ToIsoZ truncates to ms but Postgres timestamp(3) rounds) -> truncate up front. GATE: fresh review FIXES-NEEDED + Codex FIXES-NEEDED, both CONVERGED. Folded: M1 (tz-independent timestamp binding; the write harness now runs the container under America/New_York so the store-vs-return assertions are the regression pin), L1 (400 body 'not_in_progress' exact), the affected==0 fail-closed (Codex NOTE: never emit a completion audit for a write that did not land), + new LiaCompleteEndpointTests pinning the HTTP status/body mapping both reviewers flagged as untested, + strengthened idempotency (all fields) + audit-absence-on-reject assertions. Documented-not-replicated (unreachable on app-written data; prior-slice JS-coercion policy): NULL/string-valued stored scores in the idempotent branch (this writer only persists well-formed jsonb); endedAt truthiness vs string-kind gate. Corpus write-guards #18/#19/#25 now COVERED (idempotent no-double-score, incomplete-coverage->409, no double-write). NEXT: Phase C authed WRITES (personality/exam/vocational submit+complete wiring FM-025/026/027/028), OR Phase A reads (test-scores/question360/vocational360/school-admin)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-030-personality-write",
+      "status": "completed",
+      "goal": "Phase C, the FULL personality session lifecycle write (legacy personality-session-service.ts start + answer + complete). Because .NET owns the WHOLE lifecycle there is NO dual-write on personality_assessment_sessions -> personality is the FIRST prod-cut-over-able domain (unlike LIA/FM-029). Reuses the FM-029 write rail, FM-027 PersonalityScoring, and the FM-017 results reader.",
+      "dependsOn": [
+        "FM-DOTNET-029-lia-complete-write",
+        "FM-DOTNET-027-personality-scoring",
+        "FM-DOTNET-017-personality-results"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/services/personality/personality-session-service.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/routes/personality.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/personality/personality-bank.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/data/personality-items.data.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments",
+        "services/api/src/FormMaps.Infrastructure/Assessments",
+        "services/api/src/FormMaps.Api/Endpoints/PersonalityEndpoints.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "PersonalityItemBank + embedded personality-items.json (laboral 40 + estudiantil 80, byte-faithful extract; ServeItems drops poles = answer-key non-leak; FindItem/ItemCount)",
+        "PersonalitySessionWriter (StartAsync resume/create/retake-block; SaveAnswerAsync upsert + server-derived dimension + strict A/B + status/ownership guards; CompleteAsync TOCTOU FOR UPDATE + conditional UPDATE, idempotent, coverage gate, FM-027 score, returns via FM-017 reader; affected==0 fail-closed; PII-free audit on create + complete; tz-independent timestamps)",
+        "PersonalityWrite.cs (PersonalityWriteStatus enum, SessionStartPayload/AnswerResult DTOs, 3 outcome records, IPersonalitySessionWriter)",
+        "POST /api/v1/personality/{start, session/{id}/answer, session/{id}/complete} with lenient body parsing + exact legacy handleError status/body map",
+        "PersonalityWriteDatabaseFixture (personality_assessment_sessions + personality_responses, non-UTC server pin) + PersonalitySessionWriterTests(16) + PersonalityWriteEndpointTests(13) + PersonalityItemBankTests(8)",
+        "web flags FORMMAPS_ROUTE_PERSONALITY_{START,ANSWER,COMPLETE}_TO_DOTNET (default off) + next.config rewrites",
+        "[JsonPropertyName] camelCase added to PersonalityDimensionScore (the dimension_scores jsonb contract)"
+      ],
+      "guardrails": [
+        "dimension_scores jsonb inner keys MUST be camelCase (winningPole/normalizedIntensity/balanced) — the FM-017 reader echoes them verbatim to the frontend; a PascalCase jsonb silently blanks the results radar/bars (fresh+Codex C1/HIGH). Strict A/B raw (never truncated: 'BLAH' != 'B'). Server derives the dimension from the item bank; poles never served. complete idempotent (completed -> no rescore) + coverage-gated + TOCTOU (SELECT FOR UPDATE + conditional UPDATE WHERE status<>'completed') + affected==0 fail-closed. Resume revalidates owner + is_active (getOwnedSession parity). itemNumber mirrors Number() (numeric string coerces). Audit PII-free, only after commit. NO dual-write -> prod-cut-over-able. Timestamps tz-independent (Kind=Unspecified + DbType.DateTime2)."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx",
+        "staging deploy + health 200 + anon POST start/answer/complete -> 401"
+      ],
+      "notes": [
+        "DONE 2026-07-17: the FULL personality lifecycle write (start+answer+complete) -> personality is the FIRST prod-cut-over-able domain (no dual-write). dotnet 0/0; 300u+1c+175i. GATE: fresh review CRITICAL C1 + Codex HIGH (SAME bug: dimension_scores PascalCase vs legacy camelCase, latent until the first .NET write exercised the casing the FM-017 reader had only seen from legacy Node; masked by a green suite) -> FIXED (camelCase on the record) + round-trip pinned. Codex-only catches folded: itemNumber Number()-string coercion (MED), ResumeAsync owner+is_active revalidation (MED, fresh missed it). L1/L2 documented (unreachable/faithful). Reuses FM-029 rail + FM-027 + FM-017. Corpus #12 (strict A/B->InvalidChoice, retake->AlreadyCompleted, division already FM-027), #19 (coverage), #25 (idempotency), #28 (uniform 404) COVERED. NEXT: pca-exam submit (corpus #18 answer-replay) OR vocational write OR remaining Phase A reads; personality prod route-flip is now possible (Federico go/no-go)."
+      ]
     }
   ]
 }
