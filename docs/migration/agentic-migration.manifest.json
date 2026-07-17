@@ -1268,6 +1268,46 @@
       "notes": [
         "DONE 2026-07-17: the FULL personality lifecycle write (start+answer+complete) -> personality is the FIRST prod-cut-over-able domain (no dual-write). dotnet 0/0; 300u+1c+175i. GATE: fresh review CRITICAL C1 + Codex HIGH (SAME bug: dimension_scores PascalCase vs legacy camelCase, latent until the first .NET write exercised the casing the FM-017 reader had only seen from legacy Node; masked by a green suite) -> FIXED (camelCase on the record) + round-trip pinned. Codex-only catches folded: itemNumber Number()-string coercion (MED), ResumeAsync owner+is_active revalidation (MED, fresh missed it). L1/L2 documented (unreachable/faithful). Reuses FM-029 rail + FM-027 + FM-017. Corpus #12 (strict A/B->InvalidChoice, retake->AlreadyCompleted, division already FM-027), #19 (coverage), #25 (idempotency), #28 (uniform 404) COVERED. NEXT: pca-exam submit (corpus #18 answer-replay) OR vocational write OR remaining Phase A reads; personality prod route-flip is now possible (Federico go/no-go)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-031-pcaexam-submit-write",
+      "status": "completed",
+      "goal": "Phase C, the pca-exam take/submit WRITE (legacy assessmentService.ts startExamSession + submitExam). THIRD Phase-C write domain (after LIA complete/FM-029, personality lifecycle/FM-030). Closes regression corpus #18: a completed OR time-expired session 409s before any write under SELECT ... FOR UPDATE -> the report-visible answer key cannot be replayed to force 100% and no duplicate answer rows are appended, no rescore. Reuses the FM-029 write rail, the FM-013 pca-exam readers, and the FM-009 canAccessUser guard.",
+      "dependsOn": [
+        "FM-DOTNET-029-lia-complete-write",
+        "FM-DOTNET-013-pcaexam-session",
+        "FM-DOTNET-009-user-report"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/services/assessmentService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/routes/assessment.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments",
+        "services/api/src/FormMaps.Infrastructure/Assessments/PcaExamWriter.cs",
+        "services/api/src/FormMaps.Api/Endpoints/ExamEndpoints.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "ExamScoring (pure): String(Int correctAnswer)===userAnswer, Float score/accuracy (unrounded, JS op-order), timeSpent number|HH:MM:SS|parseInt||0 coercion",
+        "PcaExamWriter: StartExamAsync (exam->404, retake-block on status='Completed' ONLY, answer-key-stripped serve, create InProgress) + SubmitExamAsync (SELECT FOR UPDATE, guard isCompleted||status='Completed' before any write, in-handler score, conditional UPDATE WHERE isCompleted=false AND status<>'Completed', affected==0 fail-closed, PII-free audit actor=caller/subject=owner)",
+        "PcaExamWrite.cs (PcaExamWriteStatus enum, ServedExamQuestion/ExamStartPayload/ExamSubmitResult/SubmitAnswer DTOs, 2 outcome records, IPcaExamWriter)",
+        "POST /api/pcaexam/exams/{examId}/start (self-scoped) + POST /api/pcaexam/submit (ownership at route via IExamSessionReader.GetSession + canAccessUser -> privileged CAN submit) with exact legacy error map",
+        "PcaExamWriteDatabaseFixture (native ExamType/ExamStatus enums, camelCase cols, non-UTC pin) + PcaExamWriterTests(11) + PcaExamWriteEndpointTests(14) + ExamScoringTests(13)",
+        "web flags FORMMAPS_ROUTE_PCAEXAM_{START,SUBMIT}_TO_DOTNET (default off) + next.config rewrites"
+      ],
+      "guardrails": [
+        "Corpus #18: submit on a completed OR time-expired session (isCompleted || status='Completed') 409s BEFORE any write under SELECT FOR UPDATE; conditional UPDATE guards WHERE isCompleted=false AND status<>'Completed' (a TimeExpired session with isCompleted=true must 409 -- Node still owns /complete timeout = real cross-stack race); affected==0 fails closed; no dup answer rows, no rescore. Retake-block on start filters status='Completed' ONLY (a time-expired session does NOT block a new start). isCorrect = String(Int correctAnswer)===userAnswer; numeric JSON answers stringify by VALUE (String(3.0)==='3'). scorePercentage/accuracyPercentage are Float (unrounded). Answer INSERT sets id/updatedAt explicitly (Prisma @default(uuid())/@updatedAt are app-level, not prod DB defaults). Answer key never served. Enum ::casts. tz-independent timestamps (Kind=Unspecified + DbType.DateTime2). Audit PII-free, actor=caller/subject=owner, only after commit."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx",
+        "staging deploy + health 200 + anon POST exams/{id}/start & submit -> 401"
+      ],
+      "notes": [
+        "DONE 2026-07-17: THIRD Phase-C write (pca-exam take/submit). dotnet 0/0; 313u+1c+200i. GATE: fresh review SAFE-TO-SHIP (corpus #18 confirmed strictly SAFER than legacy: row-locked/atomic/fail-closed) + Codex FIXES-NEEDED -> CONVERGED, folded: [High] numeric JSON answers must JS-stringify by value (String(3.0)==='3' matches Int key 3; was GetRawText '3.0' -> mis-scored; now JsNumberToString) + [Low] submit audit attributed session owner as actor (privileged submit -> actorUserId=caller/subjectUserId=owner). DOCUMENTED (not code): [Med] insight trigger (Bedrock) stays polyglot/out-of-write-path (standing AI-polyglot decision, FM-029 M2 caveat); [Med] es+VerbalReasoning buildQuestionRows serve rebuild DEFERRED -> flagged in-code as an explicit /start prod-cutover blocker (display-only, scoring uses DB key). Corpus #18 (answer-replay-to-100% -> 409, no dup, no rescore) COVERED + real-DB Testcontainers pins (completed->409, TimeExpired->409 cross-stack race, TOCTOU one-write-under-concurrency). Staging deploy GREEN (run 29607164704) + deploy-only canary GREEN (health 200; anon POST start/submit -> 401 missing_identity + x-formmaps-service). PROD ROUTE-FLIP DEFERRED: Node still owns /complete (timeout) = partial-lifecycle dual-write on pca_exam_sessions; also the Spanish-VR serve + insight-trigger polyglot must close first. NEXT: vocational authed write (FM-028 engine + token-gated external = Phase D risk) OR remaining Phase A reads OR FM-033 personality PROD cutover (Milestone 1 proof)."
+      ]
     }
   ]
 }
