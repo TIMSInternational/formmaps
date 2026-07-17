@@ -23,9 +23,47 @@ public static class LiaEndpoints
 
         group.MapGet("/session/{sessionId}/results", GetSessionResultsAsync);
         group.MapGet("/user/{userId}/results", GetUserResultsAsync);
+        group.MapPost("/session/{sessionId}/complete", CompleteSessionAsync);
 
         return app;
     }
+
+    // POST /session/{sessionId}/complete (legacy completeSession) — the first authored write. STRICT
+    // self-ownership (no canAccessUser); idempotent + coverage-gated in the writer.
+    private static async Task<IResult> CompleteSessionAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ISubscriptionGuard subscriptionGuard,
+        ILiaSessionWriter writer,
+        string sessionId,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var subscription = await subscriptionGuard.RequireSubscriptionAsync(context, cancellationToken);
+        if (!subscription.Allowed)
+        {
+            return Deny(subscription);
+        }
+
+        var outcome = await writer.CompleteAsync(context, sessionId, context.Tenant!.UserId, cancellationToken);
+        return outcome.Status switch
+        {
+            LiaCompleteStatus.Completed => Results.Ok(new { success = true, data = outcome.Result }),
+            LiaCompleteStatus.IncompleteCoverage => Error(StatusCodes.Status409Conflict, "Assessment not complete"),
+            LiaCompleteStatus.NotInProgress => Error(StatusCodes.Status400BadRequest, "Assessment not complete"),
+            _ => NotFound(),
+        };
+    }
+
+    private static IResult Error(int statusCode, string message) =>
+        Results.Json(new { success = false, message }, statusCode: statusCode);
 
     private static async Task<IResult> GetSessionResultsAsync(
         IRequestContextAccessor requestContextAccessor,
