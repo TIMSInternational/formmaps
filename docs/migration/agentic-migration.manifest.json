@@ -1149,6 +1149,41 @@
       "notes": [
         "DONE 2026-07-16: THIRD Phase B slice -- personality scoring tally ported PURE + unit-pinned (no shared golden.json exists for personality; mirrored the TS unit test as spec). dotnet 0/0; 263u+1c+131i (+17u). Corpus #12 TALLY COVERED (div maxPerDim(10/20)x100 NOT div answered; tie->first pole+balanced), mutation-verified red on the divisor swap AND the tie-break flip. GATE: fresh SAFE + Codex FIXES-NEEDED, CONVERGED on 2 folded -- (High/Med) output was a LIST -> changed to keyed IReadOnlyDictionary (== legacy Record<Dim,DimensionScore>) so it serializes to the {EI:...} jsonb the FM-017 reader (gates on JsonValueKind.Object) consumes [an array reads back empty]; (Low) a null dimension threw on ContainsKey(null) -> guarded to ignore like TS tallies[null]. Unknown-variant fail-closed confirmed intentional by both. Item bank (120 bilingual items, UNUSED by scoring) deferred to a personality catalog/take-flow slice. strict-A/B-400 + retake-409 remain SERVICE/Phase-C (corpus #12 residual, PIN-WHEN-BUILT). NEXT (Phase B/C): RIASEC vocational + integration engines (vocationalScoringService), OR Phase C authed WRITES (LIA/personality/exam take+submit+complete using the FM-025/026/027 engines), OR Phase A reads (test-scores/question360/vocational360/school-admin)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-028-vocational-scoring",
+      "status": "completed",
+      "goal": "Phase B slice 4: pure port of the vocational-360 scoring engine + the 3-channel integration engine (vocationalScoringService.ts + vocationalIntegrationService.ts). NOTE: NO RIASEC/Holland logic exists — it is a config-driven, dimension-weighted vocational-360 engine + a (360 x PCA x MIL) -> integratedComposite integration. No DB/endpoints/canary. Feeds the Phase-C vocational recompute/write path; the service emits the Decimal columns as JSON numbers (Number(Decimal)).",
+      "dependsOn": [
+        "FM-DOTNET-027-personality-scoring"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/services/vocationalScoringService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/vocationalIntegrationService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/__tests__/vocationalScoringService.test.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/__tests__/vocationalIntegrationService.test.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/vocational360Service.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments",
+        "services/api/tests"
+      ],
+      "outputs": [
+        "VocationalScoring (round2 = exact JsRound; normalize; band; dimensionScoreForGroup; renormalizeGroupWeights; aggregateDimension; composite; computeRankings [OrderedTally insertion-order + stable sort; LastWins Map semantics]; computeVocationalResult) + records + discriminated ready/not_ready",
+        "VocationalIntegration (competencesToScore / milToScore / normalizeIntegrationWeights / integrate / computeIntegratedResult; ordered missing [360,pca,mil])",
+        "shared JsString.JsTrim (ECMAScript WhiteSpace+LineTerminator strip set; LiaAnswerScoring[FM-026] migrated onto it)",
+        "VocationalScoringTests + VocationalIntegrationTests mirror both TS suites + round2-ULP + duplicate-question last-wins + BOM open-text pins"
+      ],
+      "guardrails": [
+        "Pure functions only. round2 = exact JS Math.round (JsRound: x-floor(x)>=0.5 ? floor+1 : floor, NOT Math.Floor(x+0.5) which has a ULP artifact). Map-keyed lookups MUST be last-wins (ToDictionary throws on a duplicate question-number / dimension-key; TS new Map keeps last). Rankings tie-break = JS-Map insertion order + STABLE sort (OrderedTally + OrderByDescending). Dimension band on the UNROUNDED aggregate while score is rounded. PHASE-C SERIALIZATION CONTRACT: emit the Decimal columns as JSON NUMBERS (Number(Decimal)), NOT strings; serialize the CONCRETE outcome type (or configure polymorphism) so ready-payload fields are not lost — the abstract ScoringOutcome/IntegrationOutcome base would drop them. Readiness gates (needs_self_plus_one; ordered missing [360,pca,mil]) are contract."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx"
+      ],
+      "notes": [
+        "DONE 2026-07-16: FOURTH Phase B slice. KEY: the 'RIASEC' working title was WRONG — there is NO Holland/RIASEC logic; this is a config-driven dimension-weighted vocational-360 engine + a 3-channel integration. Both source files 100% pure. Mirrors both TS unit suites verbatim (no golden.json for vocational). dotnet 0/0; 290u+1c+131i (+27u). GATE: fresh SAFE + Codex FIXES-NEEDED, CONVERGED, folded (a) round2 -> byte-exact JsRound [fresh F1: Math.Floor(x+0.5) diverges from JS Math.round at n*100==0.49999999999999994; verified in node], (b) Map LAST-WINS for duplicate question-numbers/dimension-keys [Codex rated 'Critical' citing a dup-question-50 in the live instrument — that specific evidence did NOT verify vs the actual source (hallucinated line refs 2198/2251/...); but the Map-vs-ToDictionary divergence is real, folded as faithfulness], (c) JS-trim for open-text U+FEFF -> extracted a shared JsString.JsTrim + migrated FM-026 LiaAnswerScoring onto it (consolidated the duplicated ECMAScript trim primitive), (d) ScoringRule numeric fields int?->double? to match TS number. Output-contract abstract-base-serialization risk documented as a Phase-C guardrail (records carry all fields per concrete type). All 4 folds mutation-verified red-if-regressed. LESSON reinforced: verify Codex severity/evidence against real code before acting. NEXT: Phase C authed WRITES (wire the FM-025/026/027/028 engines into LIA/personality/exam/vocational take+submit+complete, idempotent, new write-owner rails), OR Phase A reads (test-scores/question360/vocational360/school-admin), OR the vocationalInterestMap recommendation micro-engine."
+      ]
     }
   ]
 }
