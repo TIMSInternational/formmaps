@@ -1184,6 +1184,47 @@
       "notes": [
         "DONE 2026-07-16: FOURTH Phase B slice. KEY: the 'RIASEC' working title was WRONG — there is NO Holland/RIASEC logic; this is a config-driven dimension-weighted vocational-360 engine + a 3-channel integration. Both source files 100% pure. Mirrors both TS unit suites verbatim (no golden.json for vocational). dotnet 0/0; 290u+1c+131i (+27u). GATE: fresh SAFE + Codex FIXES-NEEDED, CONVERGED, folded (a) round2 -> byte-exact JsRound [fresh F1: Math.Floor(x+0.5) diverges from JS Math.round at n*100==0.49999999999999994; verified in node], (b) Map LAST-WINS for duplicate question-numbers/dimension-keys [Codex rated 'Critical' citing a dup-question-50 in the live instrument — that specific evidence did NOT verify vs the actual source (hallucinated line refs 2198/2251/...); but the Map-vs-ToDictionary divergence is real, folded as faithfulness], (c) JS-trim for open-text U+FEFF -> extracted a shared JsString.JsTrim + migrated FM-026 LiaAnswerScoring onto it (consolidated the duplicated ECMAScript trim primitive), (d) ScoringRule numeric fields int?->double? to match TS number. Output-contract abstract-base-serialization risk documented as a Phase-C guardrail (records carry all fields per concrete type). All 4 folds mutation-verified red-if-regressed. LESSON reinforced: verify Codex severity/evidence against real code before acting. NEXT: Phase C authed WRITES (wire the FM-025/026/027/028 engines into LIA/personality/exam/vocational take+submit+complete, idempotent, new write-owner rails), OR Phase A reads (test-scores/question360/vocational360/school-admin), OR the vocationalInterestMap recommendation micro-engine."
       ]
+    },
+    {
+      "id": "FM-DOTNET-029-lia-complete-write",
+      "status": "completed",
+      "goal": "Phase C, the FIRST authored WRITE in the .NET backend: port legacy completeSession (LIA session completion). TOCTOU-safe idempotent write (SELECT FOR UPDATE + conditional UPDATE WHERE status<>completed), two coverage gates, the shipped Phase-B engines score, PII-free audit event; plus the FIRST real-DB Testcontainers harness. Flag-gated staging-only; PROD stays Node. The prod route-flip is deferred until the take/submit slice owns the whole session lifecycle (porting only /complete while Node owns /start,/answer,/timeout = a dual-write on lia_assessment_sessions).",
+      "dependsOn": [
+        "FM-DOTNET-025-lia-core-engine",
+        "FM-DOTNET-024-assessments-timeline"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/services/lia/lia-results-service.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/routes/lia.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/migrations/20260703000000_lia_tims_parity/migration.sql"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments",
+        "services/api/src/FormMaps.Infrastructure/Assessments",
+        "services/api/src/FormMaps.Infrastructure/Data",
+        "services/api/src/FormMaps.Api/Endpoints/LiaEndpoints.cs",
+        "services/api/tests/FormMaps.IntegrationTests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "LiaSessionWriter (write-owner: OpenWritableAsync + SELECT FOR UPDATE + idempotency + 2 coverage gates + tally + conditional UPDATE WHERE status<>completed + PII-free audit; completed_at truncate-to-ms + tz-independent timestamp binding; affected==0 fails closed)",
+        "LiaCompletion (LiaCompletionResult snake_case DTO + LiaCompletionScorer pure + ILiaSessionWriter)",
+        "write rail: FormMapsDatabaseSession.CommitAsync + IFormMapsDatabaseSessionFactory.OpenWritableAsync + NpgsqlFormMapsDatabaseSessionFactory.OpenAsync(readOnly)",
+        "POST /api/v1/lia/session/{sessionId}/complete (RequireIdentity->RequireSubscription->writer; Completed->200, IncompleteCoverage->409 'Assessment not complete', NotInProgress->400 'not_in_progress', else uniform 404)",
+        "FIRST real-DB Testcontainers harness: LiaWriteDatabaseFixture (schema-only, non-UTC server as the tz regression pin) + LiaSessionWriterTests (8) + LiaCompleteEndpointTests (6)",
+        "web flag FORMMAPS_ROUTE_LIA_COMPLETE_TO_DOTNET (default off) + next.config rewrite"
+      ],
+      "guardrails": [
+        "TOCTOU: SELECT FOR UPDATE + conditional UPDATE WHERE status<>'completed' under ReadCommitted (the loser re-reads status='completed' and returns the stored bundle, NO write). An already-completed session returns its stored scores with NO write (no double-score / double-bill). completed_at = Kind=Unspecified UTC wall-clock truncated to ms + bound DbType.DateTime2 (tz-independent, matches Prisma @db.Timestamp(3); a Kind=Utc/timestamptz binding would shift on a non-UTC server). affected==0 FAILS CLOSED (no phantom commit/audit/success). Audit event PII-free (IDs + scores only), emitted only after commit. DUAL-WRITE CAVEAT: the prod route-flip stays deferred until the take/submit slice owns start/answer/timeout. M2: the insight-funnel (Bedrock) trigger stays polyglot / out of the write path -> prod-cutover checklist item."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx",
+        "staging deploy + health 200 + anon POST /complete -> 401"
+      ],
+      "notes": [
+        "DONE 2026-07-17: the FIRST authored WRITE + the first real-DB harness. dotnet 0/0; 292u+1c+146i. The harness caught a real write-path bug: completed_at drifted 1ms (ToIsoZ truncates to ms but Postgres timestamp(3) rounds) -> truncate up front. GATE: fresh review FIXES-NEEDED + Codex FIXES-NEEDED, both CONVERGED. Folded: M1 (tz-independent timestamp binding; the write harness now runs the container under America/New_York so the store-vs-return assertions are the regression pin), L1 (400 body 'not_in_progress' exact), the affected==0 fail-closed (Codex NOTE: never emit a completion audit for a write that did not land), + new LiaCompleteEndpointTests pinning the HTTP status/body mapping both reviewers flagged as untested, + strengthened idempotency (all fields) + audit-absence-on-reject assertions. Documented-not-replicated (unreachable on app-written data; prior-slice JS-coercion policy): NULL/string-valued stored scores in the idempotent branch (this writer only persists well-formed jsonb); endedAt truthiness vs string-kind gate. Corpus write-guards #18/#19/#25 now COVERED (idempotent no-double-score, incomplete-coverage->409, no double-write). NEXT: Phase C authed WRITES (personality/exam/vocational submit+complete wiring FM-025/026/027/028), OR Phase A reads (test-scores/question360/vocational360/school-admin)."
+      ]
     }
   ]
 }
