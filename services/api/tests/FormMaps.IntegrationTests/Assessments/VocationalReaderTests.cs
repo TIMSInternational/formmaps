@@ -75,6 +75,26 @@ public sealed class VocationalReaderTests : IClassFixture<VocationalWriteDatabas
     }
 
     [Fact]
+    public async Task GetScore_reads_a_fractional_composite_as_a_number()
+    {
+        // Guards against a Decimal->int/rounding regression on real (fractional) computed scores.
+        var userId = "u-" + Guid.NewGuid().ToString("N");
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedInstrumentAsync(conn, "v1");
+        await SeedScoreRowAsync(conn, userId, "v1", composite: 62.5m);
+
+        var result = await MakeReader().GetScoreAsync(Ctx(userId), userId);
+
+        Assert.Equal(62.5d, result!.Composite);
+    }
+
+    [Fact]
+    public async Task GetIntegrated_with_no_active_instrument_is_never_computed()
+    {
+        Assert.Null(await MakeReader().GetIntegratedAsync(Ctx("u1"), "u1"));
+    }
+
+    [Fact]
     public async Task GetIntegrated_serializes_all_four_scores_as_numbers()
     {
         var userId = "u-" + Guid.NewGuid().ToString("N");
@@ -126,19 +146,20 @@ public sealed class VocationalReaderTests : IClassFixture<VocationalWriteDatabas
         await cmd.ExecuteNonQueryAsync();
     }
 
-    private static async Task SeedScoreRowAsync(NpgsqlConnection conn, string userId, string version)
+    private static async Task SeedScoreRowAsync(NpgsqlConnection conn, string userId, string version, decimal composite = 75m)
     {
         await using var cmd = new NpgsqlCommand(
             """
             INSERT INTO "vocational_results"
                 ("id","evaluatedUserId","instrumentVersion","composite","band","respondentCount",
                  "groupsIncluded","dimensionScores","rankings","weightsApplied","computedAt")
-            VALUES (@id, @uid, @version, 75, 'moderateHigh', 2, @groups,
+            VALUES (@id, @uid, @version, @composite, 'moderateHigh', 2, @groups,
                     @dims::jsonb, @rankings::jsonb, @weights::jsonb, TIMESTAMP '2026-06-15 12:34:56.789')
             """, conn);
         cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
         cmd.Parameters.AddWithValue("uid", userId);
         cmd.Parameters.AddWithValue("version", version);
+        cmd.Parameters.AddWithValue("composite", composite);
         cmd.Parameters.AddWithValue("groups", new[] { "self", "parent" });
         cmd.Parameters.AddWithValue("dims", """[{"key":"d1","nameEs":"Dim1","score":75,"band":"moderateHigh","byGroup":{"self":100,"parent":50}}]""");
         cmd.Parameters.AddWithValue("rankings", """{"interests":[],"industries":[],"workType":null,"openInsights":[]}""");

@@ -104,6 +104,26 @@ public class VocationalReadEndpointTests
     }
 
     [Fact]
+    public async Task GetIntegrated_denies_anonymous_and_404s_on_access_denied()
+    {
+        // The integrated route shares AuthorizeAsync with /score — pin its guard chain independently.
+        var reader = new FakeReader { Integrated = new VocationalIntegratedRead(TargetUserId, "v1", 70, "b", 75, 60, 80, Empty, "t") };
+        using (var anonFactory = new Factory(reader, new FakeAccessGuard(allow: true)))
+        using (var anonClient = anonFactory.CreateClient())
+        {
+            var anon = await anonClient.GetAsync($"/api/v1/vocational360/integrated/{TargetUserId}");
+            Assert.Equal(HttpStatusCode.Unauthorized, anon.StatusCode);
+        }
+
+        var guard = new FakeAccessGuard(allow: false);
+        using var factory = new Factory(reader, guard);
+        using var client = factory.CreateClient();
+        var response = await Send(client, $"/api/v1/vocational360/integrated/{TargetUserId}");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await AssertMessage(response, "Not found");
+    }
+
+    [Fact]
     public async Task GetIntegrated_ready_returns_200_status_ready()
     {
         var read = new VocationalIntegratedRead(TargetUserId, "v1", 70, "moderateHigh", 75, 60, 80, Empty, "2026-06-15T12:34:56.789Z");
