@@ -1308,6 +1308,46 @@
       "notes": [
         "DONE 2026-07-17: THIRD Phase-C write (pca-exam take/submit). dotnet 0/0; 313u+1c+200i. GATE: fresh review SAFE-TO-SHIP (corpus #18 confirmed strictly SAFER than legacy: row-locked/atomic/fail-closed) + Codex FIXES-NEEDED -> CONVERGED, folded: [High] numeric JSON answers must JS-stringify by value (String(3.0)==='3' matches Int key 3; was GetRawText '3.0' -> mis-scored; now JsNumberToString) + [Low] submit audit attributed session owner as actor (privileged submit -> actorUserId=caller/subjectUserId=owner). DOCUMENTED (not code): [Med] insight trigger (Bedrock) stays polyglot/out-of-write-path (standing AI-polyglot decision, FM-029 M2 caveat); [Med] es+VerbalReasoning buildQuestionRows serve rebuild DEFERRED -> flagged in-code as an explicit /start prod-cutover blocker (display-only, scoring uses DB key). Corpus #18 (answer-replay-to-100% -> 409, no dup, no rescore) COVERED + real-DB Testcontainers pins (completed->409, TimeExpired->409 cross-stack race, TOCTOU one-write-under-concurrency). Staging deploy GREEN (run 29607164704) + deploy-only canary GREEN (health 200; anon POST start/submit -> 401 missing_identity + x-formmaps-service). PROD ROUTE-FLIP DEFERRED: Node still owns /complete (timeout) = partial-lifecycle dual-write on pca_exam_sessions; also the Spanish-VR serve + insight-trigger polyglot must close first. NEXT: vocational authed write (FM-028 engine + token-gated external = Phase D risk) OR remaining Phase A reads OR FM-033 personality PROD cutover (Milestone 1 proof)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-032-vocational-score-recompute-write",
+      "status": "completed",
+      "goal": "Phase C, the authed vocational SCORE recompute WRITE (legacy vocational360Service.ts recomputeVocationalResult). Wires the shipped FM-028 VocationalScoring engine into a write: loads the active instrument + completed rater responses, computes, and — only when ready — UPSERTs vocational_results (idempotent on evaluatedUserId + instrumentVersion). The INTEGRATED recompute (recomputeIntegratedResult) is DEFERRED: it depends on assembleCompleteProfile (the 237-LOC DISC/PCA + MIL/LIA cross-domain assembler), an unported separate unit.",
+      "dependsOn": [
+        "FM-DOTNET-028-vocational-scoring",
+        "FM-DOTNET-031-pcaexam-submit-write",
+        "FM-DOTNET-009-user-report"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/vocational360.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/vocational360Service.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/vocationalScoringService.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments/VocationalWrite.cs",
+        "services/api/src/FormMaps.Infrastructure/Assessments/VocationalWriter.cs",
+        "services/api/src/FormMaps.Api/Endpoints/VocationalEndpoints.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "VocationalWriter.RecomputeScoreAsync: load active instrument (singleton) + dimensions + questions + completed vocational evaluation_groups LEFT JOIN vocational_responses -> ScoringConfig/ScoringQuestion/ScoringGroup (each evaluation_group is its own group; jsonb parsers for groupWeights/bands/scoringRule/rankingOrder/selectedValues) -> VocationalScoring.ComputeVocationalResult -> if ready UPSERT vocational_results ON CONFLICT (evaluatedUserId,instrumentVersion) (composite numeric, groupsIncluded text[], dimensionScores/rankings/weightsApplied camelCase jsonb, computedAt tz-independent) + PII-free audit; not-ready/never-computed -> no write",
+        "VocationalWrite.cs (VocationalRecomputeStatus enum, VocationalRecomputeOutcome, IVocationalWriter)",
+        "NEW VocationalEndpoints group: POST /api/v1/vocational360/score/{evaluatedUserId}/recompute — authenticate-only (RequireIdentity + canAccessUser on 100-char-bounded id, NO subscription gate), privileged CAN recompute; all outcomes 200 with the outcome in data",
+        "VocationalWriteDatabaseFixture (hand-written DDL — no prod migration exists for the vocational tables; non-UTC pin) + VocationalWriterTests(6) + VocationalWriteEndpointTests(6)",
+        "web flag FORMMAPS_ROUTE_VOCATIONAL_SCORE_RECOMPUTE_TO_DOTNET (default off) + rewrite"
+      ],
+      "guardrails": [
+        "dimensionScores/rankings/weightsApplied jsonb MUST be camelCase (the Node reader echoes inner keys verbatim) — serialized with JsonSerializerDefaults.Web; composite is a Decimal column emitted as a JSON NUMBER (FM-028 guardrail); serialize the CONCRETE VocationalResultPayload (abstract ScoringOutcome base drops the ready fields) via object-typed data. UPSERT is idempotent on the unique key (no dup rows). LEFT JOIN so a completed group with zero active responses still counts as present (legacy include semantics). authenticate-only mount -> RequireIdentity + canAccessUser, NO subscription. Deterministic group order (createdDate,id) is a documented superset of the legacy no-orderBy (non-deterministic) order. computedAt tz-independent. Audit PII-free (IDs + composite/band), after commit."
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx",
+        "staging deploy + health 200 + anon POST vocational360/score/{id}/recompute -> 401"
+      ],
+      "notes": [
+        "DONE 2026-07-17: authed vocational SCORE recompute write. dotnet 0/0; 313u+1c+212i. GATE: fresh review SAFE-TO-SHIP (camelCase jsonb + Decimal-as-number guardrails verified) + Codex FIXES-NEEDED -> CONVERGED, folded: empty completed groups (both reviewers — legacy Prisma include returns a group even with zero active responses; inner join -> LEFT JOIN so it still counts; pinned red-if-regressed) + test-pinning (rankings camelCase assertion + two-'teacher'-groups test). KEPT as a documented decision (Codex flagged 'blocking'): deterministic group ordering (createdDate,id) — the legacy findMany has NO orderBy so its output is itself non-deterministic (DB physical order); no byte-match exists, and the deterministic order only differs on ranking ties / duplicate group keys where TS is arbitrary -> the faithful superset. Staging deploy GREEN (run 29609809187) + deploy-only canary GREEN (health 200; anon POST recompute -> 401 missing_identity + x-formmaps-service). DEFERRED: recomputeIntegratedResult (needs the assembleCompleteProfile DISC/PCA + MIL/LIA assembler port). Prod route-flip deferred (dark, flag off). NEXT: port assembleCompleteProfile -> vocational INTEGRATED recompute, OR remaining Phase A reads (test-scores/question360/school-admin), OR FM-033 personality PROD cutover (Milestone 1 proof)."
+      ]
     }
   ]
 }

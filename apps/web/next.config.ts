@@ -174,6 +174,12 @@ function shouldRoutePcaExamSubmitToDotnet() {
   );
 }
 
+function shouldRouteVocationalScoreRecomputeToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_SCORE_RECOMPUTE_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -483,6 +489,14 @@ const nextConfig: NextConfig = {
             {
               source: "/api/pcaexam/submit",
               destination: `${dotnetApiBaseUrl}/api/pcaexam/submit`,
+            },
+          ]
+        : []),
+      ...(shouldRouteVocationalScoreRecomputeToDotnet()
+        ? [
+            {
+              source: "/api/v1/vocational360/score/:evaluatedUserId/recompute",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/score/:evaluatedUserId/recompute`,
             },
           ]
         : []),
