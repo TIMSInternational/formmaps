@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace FormMaps.Application.Assessments;
 
@@ -6,20 +7,22 @@ namespace FormMaps.Application.Assessments;
 public sealed record PersonalityAnswer(string Dimension, int N, string Choice);
 
 /// <summary>
-/// Per-dimension scoring detail (legacy DimensionScore). Field names mirror the jsonb the read side
-/// (FM-017 PersonalityResultsAssembler) echoes: dimension/firstCount/secondCount/winningPole/intensity/
-/// answered/maxPerDimension/normalizedIntensity/balanced.
+/// Per-dimension scoring detail (legacy DimensionScore). The JSON names are camelCase (legacy
+/// personality-scoring.ts), matching the dimension_scores jsonb the write side (FM-030) persists and the
+/// read side (FM-017 PersonalityResultsAssembler) echoes VERBATIM to the frontend. The names are on the
+/// record — not a per-call serializer policy — so any serialization of it stays on-contract; a PascalCase
+/// jsonb would silently blank the results radar / intensity bars (they read winningPole/normalizedIntensity).
 /// </summary>
 public sealed record PersonalityDimensionScore(
-    string Dimension,
-    int FirstCount,
-    int SecondCount,
-    string WinningPole,
-    int Intensity,
-    int Answered,
-    int MaxPerDimension,
-    int NormalizedIntensity,
-    bool Balanced);
+    [property: JsonPropertyName("dimension")] string Dimension,
+    [property: JsonPropertyName("firstCount")] int FirstCount,
+    [property: JsonPropertyName("secondCount")] int SecondCount,
+    [property: JsonPropertyName("winningPole")] string WinningPole,
+    [property: JsonPropertyName("intensity")] int Intensity,
+    [property: JsonPropertyName("answered")] int Answered,
+    [property: JsonPropertyName("maxPerDimension")] int MaxPerDimension,
+    [property: JsonPropertyName("normalizedIntensity")] int NormalizedIntensity,
+    [property: JsonPropertyName("balanced")] bool Balanced);
 
 /// <summary>
 /// Resolved score (legacy PersonalityScore). Dimensions is a KEYED map (legacy Record&lt;Dimension,
