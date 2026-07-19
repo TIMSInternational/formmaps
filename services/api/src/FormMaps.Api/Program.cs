@@ -35,6 +35,7 @@ app.MapMilEndpoints();
 app.MapPersonalityEndpoints();
 app.MapAssessmentTimelineEndpoints();
 app.MapVocationalEndpoints();
+app.MapTestScoreEndpoints();
 
 app.Run();
 
