@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Data;
@@ -115,9 +116,47 @@ public sealed class TestScoreReaderTests : IClassFixture<TestScoreDatabaseFixtur
         Assert.True(all[0].IsOfficial);
         Assert.Equal(1400, all[0].SatTotal);
 
+        // The ACT row stored a SQL-NULL subScores -> surfaces as a JSON-null element (not an object).
+        Assert.Equal(JsonValueKind.Null, all[1].SubScores.ValueKind);
+
         var satOnly = await Reader().ListActiveScoresAsync(Ctx(user), user, testType: "SAT");
         Assert.Single(satOnly);
         Assert.Equal("SAT", satOnly[0].TestType);
+    }
+
+    [Fact]
+    public async Task ListActiveScores_sorts_a_null_testDate_first_and_serializes_it_null()
+    {
+        // Prisma `orderBy: { testDate: "desc" }` -> Postgres DESC = NULLS FIRST: a null-testDate row outranks
+        // a dated one, and testDate surfaces as null.
+        var user = NewUser();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedFullScoreAsync(conn, user, "SAT", new DateTime(2025, 3, 1), satTotal: 1400, subScores: null);
+        await SeedFullScoreAsync(conn, user, "ACT", testDate: null, satTotal: null, subScores: null);
+
+        var all = await Reader().ListActiveScoresAsync(Ctx(user), user, testType: null);
+
+        Assert.Equal(2, all.Count);
+        Assert.Equal("ACT", all[0].TestType);   // null testDate sorts first (NULLS FIRST)
+        Assert.Null(all[0].TestDate);
+    }
+
+    [Fact]
+    public async Task CollegeFit_orders_null_acceptance_rate_last_and_serializes_it_null()
+    {
+        // A university with SAT bands but NULL acceptanceRate is included (the WHERE only filters bands) and,
+        // under Prisma's implicit `asc` (Postgres ASC = NULLS LAST), sorts AFTER any rated university.
+        var user = NewUser();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedSatAsync(conn, user, math: 720, reading: 700); // superscore 1420
+        await SeedUniversityAsync(conn, "Rated", rate: 0.20m, m25: 700, r25: 700, m75: 780, r75: 780);
+        await SeedUniversityAsync(conn, "NullRate", rate: null, m25: 600, r25: 600, m75: 700, r75: 700);
+
+        var result = await Reader().GetCollegeFitAsync(Ctx(user));
+
+        Assert.Equal(new[] { "Rated", "NullRate" }, result.Colleges.Select(c => c.Name).ToArray()); // null rate LAST
+        Assert.Null(result.Colleges[1].AcceptanceRate);          // Decimal NULL -> null
+        Assert.Equal("safety", result.Colleges[1].Fit);          // sat75=1400 <= 1420, rate null -> not reach
     }
 
     // ---------------------------------------------------------------- helpers
@@ -158,7 +197,7 @@ public sealed class TestScoreReaderTests : IClassFixture<TestScoreDatabaseFixtur
     }
 
     private static async Task SeedFullScoreAsync(
-        NpgsqlConnection conn, string userId, string testType, DateTime testDate, int? satTotal, string? subScores, bool isActive = true)
+        NpgsqlConnection conn, string userId, string testType, DateTime? testDate, int? satTotal, string? subScores, bool isActive = true)
     {
         await using var cmd = new NpgsqlCommand(
             """
@@ -168,7 +207,7 @@ public sealed class TestScoreReaderTests : IClassFixture<TestScoreDatabaseFixtur
         cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
         cmd.Parameters.AddWithValue("uid", userId);
         cmd.Parameters.AddWithValue("type", testType);
-        cmd.Parameters.AddWithValue("date", DateTime.SpecifyKind(testDate, DateTimeKind.Unspecified));
+        cmd.Parameters.AddWithValue("date", testDate is { } d ? DateTime.SpecifyKind(d, DateTimeKind.Unspecified) : (object)DBNull.Value);
         cmd.Parameters.AddWithValue("sat", (object?)satTotal ?? DBNull.Value);
         cmd.Parameters.AddWithValue("sub", (object?)subScores ?? DBNull.Value);
         cmd.Parameters.AddWithValue("active", isActive);
@@ -176,7 +215,7 @@ public sealed class TestScoreReaderTests : IClassFixture<TestScoreDatabaseFixtur
     }
 
     private static async Task SeedUniversityAsync(
-        NpgsqlConnection conn, string name, decimal rate, int? m25, int? r25, int? m75, int? r75)
+        NpgsqlConnection conn, string name, decimal? rate, int? m25, int? r25, int? m75, int? r75)
     {
         await using var cmd = new NpgsqlCommand(
             """
@@ -185,7 +224,7 @@ public sealed class TestScoreReaderTests : IClassFixture<TestScoreDatabaseFixtur
             """, conn);
         cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
         cmd.Parameters.AddWithValue("name", name);
-        cmd.Parameters.AddWithValue("rate", rate);
+        cmd.Parameters.AddWithValue("rate", (object?)rate ?? DBNull.Value);
         cmd.Parameters.AddWithValue("m25", (object?)m25 ?? DBNull.Value);
         cmd.Parameters.AddWithValue("r25", (object?)r25 ?? DBNull.Value);
         cmd.Parameters.AddWithValue("m75", (object?)m75 ?? DBNull.Value);

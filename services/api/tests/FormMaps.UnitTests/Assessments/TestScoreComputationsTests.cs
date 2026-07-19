@@ -50,6 +50,16 @@ public class TestScoreComputationsTests
     }
 
     [Fact]
+    public void Superscore_act_composite_rounds_a_half_away_from_zero_not_banker_s()
+    {
+        // best sections 29/31/31/31 -> mean 122/4 = 30.5. JS Math.round -> 31 (half up); C# default ToEven
+        // would give 30. This case (unlike 31.5) distinguishes AwayFromZero from banker's rounding.
+        var result = TestScoreComputations.Superscore([Act(29, 31, 31, 31)]);
+
+        Assert.Equal(31, result.Act!.ActComposite);   // NOT 30
+    }
+
+    [Fact]
     public void Superscore_act_composite_is_null_unless_all_four_sections_present()
     {
         var result = TestScoreComputations.Superscore([Act(30, 31, 32, null)]);

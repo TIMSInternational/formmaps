@@ -141,6 +141,22 @@ public class TestScoreEndpointsTests
     }
 
     [Fact]
+    public async Task Student_view_role_match_is_case_sensitive_on_the_raw_role()
+    {
+        // Legacy compares the RAW role to exact "counselor"/"parent"; a capitalized "Counselor" is NOT the
+        // counselor branch -> it falls through to the generic 403 "Forbidden" (no assignment check).
+        var reader = new FakeReader { CounselorAllowed = true };
+        using var factory = new Factory(reader);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, $"/api/v1/test-scores/students/{Student}/test-scores", "Counselor");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        await AssertMessage(response, "Forbidden");
+        Assert.Null(reader.CounselorStudentId); // never entered the counselor branch
+    }
+
+    [Fact]
     public async Task Student_view_bounds_the_path_param_to_100_chars()
     {
         var longId = new string('a', 150);
