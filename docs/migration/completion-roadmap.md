@@ -32,7 +32,8 @@ Legend: R=read slice (fast), W=write slice (slow, full gate), 🔴=high structur
 - ✅ **R** vocational360 catalog reads (FM-034, DONE `1b071be`) — GET /instrument + /questionnaire.
 - ✅ **R (foundation)** assembleCompleteProfile assembler (FM-035, DONE) — CompleteProfileAssembler (LIA parity-aware + DISC/PCA + 360 + academics/preferences; byte-exact Node fingerprint + toFixed(2) parity; internal lib, no route). Unblocked FM-036 + assessment-profile insights-status.
 - ✅ **W** vocational INTEGRATED recompute (FM-036, DONE) — recomputeIntegratedResult: fuses 360 composite (FM-033) + PCA competences + MIL (FM-035 profile) via FM-028 engine → upserts vocational_integrated_results. POST /integrated/{id}/recompute. **Completes the vocational360 authed WRITE surface.** (Only /recommendations = AI-polyglot remains on vocational360.)
-- **R** remaining Phase-A reads: test-scores (378 lines, 7ep +superscore +college-fit Decimal), question360 (11ep, answer-key strip), school-admin views (14ep).
+- ◑ **R** test-scores READS (FM-037, DONE) — /superscore + /college-fit (pure Superscore/ClassifyFit) + /students/{id}/test-scores (counselor-404/parent-403 role auth). GET / list + POST/PUT/DELETE writes DEFERRED (share the bare path — cut over together in a write slice).
+- **R** remaining Phase-A reads: question360 (11ep, answer-key strip), school-admin views (14ep). + test-scores writes (list+CRUD).
 - **W** 🔴 external **token-gated write rail** (evaluation `submit-feedback`, vocationalTake external submit) — NEW fail-closed non-tenant rail; highest risk in assessments.
 - TIMS vendor proxy (`pcaapi.ts` 732 lines, 13ep) — **DEFER / keep in Node** (Federico) or 2–3 slices if ported.
 - AI (assessment-profile insights, Bedrock) — **stays polyglot** (~0 .NET).

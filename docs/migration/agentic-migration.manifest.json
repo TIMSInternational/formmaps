@@ -1510,6 +1510,46 @@
       "notes": [
         "DONE 2026-07-17: vocational INTEGRATED recompute write. dotnet 0/0; 369u + 262i (14 new integration). GATE: fresh reviewer NO behavioral divergence/bug (ship-quality) + Codex SAFE-TO-SHIP -> folded the fresh reviewer's 4 coverage gaps (weight-normalization identity, partial not_ready, 0-vs-null channel boundary, computedAt-advances). Caught in-flight: an EmbeddedResource EndsWith collision (integrated-vocational-schema.sql matched the vocational-schema.sql fixture loader -> renamed integrated-recompute-schema.sql) — full-suite run surfaced it. COMPLETES the vocational360 authed WRITE surface. Prod-flip deferred (dark). NEXT: remaining Phase-A reads (test-scores/question360/school-admin), OR personality PROD cutover (Milestone-1 proof), OR Phase B."
       ]
+    },
+    {
+      "id": "FM-DOTNET-037-test-scores-reads",
+      "status": "completed",
+      "goal": "Port the 3 method-unambiguous test-scores GET reads (routes/test-scores.ts): /superscore + /college-fit (pure Superscore + ClassifyFit) + /students/{id}/test-scores (bespoke counselor-404/parent-403/other-403 role auth, full-row passthrough). GET / (list) + POST/PUT/DELETE writes DEFERRED to a write slice — they share the bare /api/v1/test-scores path (Next rewrites match by path not method).",
+      "dependsOn": [
+        "FM-DOTNET-036-integrated-recompute"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/test-scores.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/normalizeEmail.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments/TestScoreComputations.cs",
+        "services/api/src/FormMaps.Application/Assessments/TestScoreReads.cs",
+        "services/api/src/FormMaps.Infrastructure/Assessments/TestScoreReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/TestScoreEndpoints.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "TestScoreComputations (pure): Superscore (SAT best-of + satTotal-both-required; ACT best-of + composite=round(mean/4) only-if-all-4, AwayFromZero=JS Math.round) + ClassifyFit (ordered: rate<0.15->reach, sat75->safety, sat25->match, else reach; >= boundaries; null rate not reach)",
+        "TestScoreReader: GetSuperscoreAsync/GetCollegeFitAsync (self, req.userId) + HasActiveCounselorAssignmentAsync/HasActiveParentLinkAsync + ListActiveScoresAsync(userId,testType). college-fit: universities WHERE 4 SAT bands NOT NULL ORDER BY acceptanceRate ASC NULLS LAST,id LIMIT 12; sat25/sat75 sums; acceptanceRate ::double precision. Full-row TestScoreRow (23 cols, ISO-Z, subScores jsonb passthrough). testDate DESC NULLS FIRST",
+        "3 GET endpoints on TestScoreEndpoints (RequireIdentity only, no tenant/subscription; read-only RLS; 100-char id bound on student-view). student-view auth asymmetry: counselor+no-assignment->404 'Not found'; parent+no-link->403 'Forbidden: no active parent link'; other role->403 'Forbidden'; RAW role compare (case-sensitive); parent email trim+lowercase",
+        "harness += testscores-schema.sql (student_test_scores full + universities + counselor_student_assignments + student_parent_links) + TestScoreDatabaseFixture; TestScoreComputationsTests(12) + TestScoreReaderTests(8) + TestScoreEndpointsTests(12)",
+        "web flags FORMMAPS_ROUTE_TEST_SCORES_{SUPERSCORE,COLLEGE_FIT,STUDENT_VIEW}_TO_DOTNET (default off) + 3 rewrites (distinct GET paths; NO bare-path rewrite -> POST not hijacked)"
+      ],
+      "guardrails": [
+        "GET / list DEFERRED (shares bare path with POST -> cut over together in the write slice)",
+        "ACT composite AwayFromZero (=JS Math.round for positive means; pinned by a mean-30.5 case distinguishing it from banker's ToEven); Decimal->number ::double precision; jsonb null passthrough; ISO-Z; NULLS FIRST(desc)/LAST(asc) matching Prisma implicit + deterministic id tie-break (documented superset)",
+        "student-view raw-role case-sensitive (Counselor != counselor -> 403); parent email normalized; counselor UserId / parent normalized email; 100-char id bound (api-standards superset, harmless vs TS full-id since a >100-char id never matches a UUID)"
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx",
+        "staging deploy + health 200 + anon GET test-scores/{superscore,college-fit,students/x/test-scores} -> 401"
+      ],
+      "notes": [
+        "DONE 2026-07-18: test-scores reads (built by a fork inheriting full rail context; I ran the adversarial gate + ship). dotnet 0/0; 381u + 281i. GATE: fresh reviewer NO correctness bug (faithful) + Codex SAFE-TO-SHIP -> folded 6 coverage pins (the fresh MEDIUM: rounding test used mean 31.5 which passes under BOTH AwayFromZero and banker's -> added mean-30.5 case; + NULL acceptanceRate ordering, null subScores passthrough, null testDate NULLS-FIRST, case-sensitive role->403). NEXT: test-scores WRITES (GET / list + POST/PUT/DELETE, cut over together) OR question360 reads OR school-admin reads OR personality PROD cutover."
+      ]
     }
   ]
 }
