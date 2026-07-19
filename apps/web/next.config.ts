@@ -204,6 +204,24 @@ function shouldRouteVocationalCatalogToDotnet() {
   );
 }
 
+function shouldRouteTestScoresSuperscoreToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TEST_SCORES_SUPERSCORE_TO_DOTNET)
+  );
+}
+
+function shouldRouteTestScoresCollegeFitToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TEST_SCORES_COLLEGE_FIT_TO_DOTNET)
+  );
+}
+
+function shouldRouteTestScoresStudentViewToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TEST_SCORES_STUDENT_VIEW_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -557,6 +575,30 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/vocational360/questionnaire",
               destination: `${dotnetApiBaseUrl}/api/v1/vocational360/questionnaire`,
+            },
+          ]
+        : []),
+      ...(shouldRouteTestScoresSuperscoreToDotnet()
+        ? [
+            {
+              source: "/api/v1/test-scores/superscore",
+              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/superscore`,
+            },
+          ]
+        : []),
+      ...(shouldRouteTestScoresCollegeFitToDotnet()
+        ? [
+            {
+              source: "/api/v1/test-scores/college-fit",
+              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/college-fit`,
+            },
+          ]
+        : []),
+      ...(shouldRouteTestScoresStudentViewToDotnet()
+        ? [
+            {
+              source: "/api/v1/test-scores/students/:id/test-scores",
+              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/students/:id/test-scores`,
             },
           ]
         : []),
