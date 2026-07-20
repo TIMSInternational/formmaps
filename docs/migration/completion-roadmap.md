@@ -45,7 +45,8 @@ Legend: R=read slice (fast), W=write slice (slow, full gate), 🔴=high structur
 - AI (assessment-profile insights, Bedrock) — **stays polyglot** (~0 .NET).
 
 ### Phase B — Schools / rosters / organizations (domain 4) — **~6–10 slices**
-- `school-courses.ts` (396), school/roster/org read queries, then writes. Medium risk (school-scoped).
+- ✅ **R** gradebook transcript read (FM-046, DONE) — GET /gradebook/students/:studentId (transcript-by-year + GPA; pure GPA math in double, 4-dp AwayFromZero; reuses the school:manage rail). First Phase-B slice. Grade writes (POST/PUT/DELETE) deferred.
+- `school-courses.ts` (396), school.ts / school-students.ts / school-grades.ts read queries, then writes. Medium risk (school-scoped). ▶ next Phase-B reads.
 
 ### Phase C — Counselor / student / parent workflows (domain 5) — **~12–18 slices** 🔴
 - `counselor.ts` (495), `student.ts` (410), `parent.ts` (395), counselor-notes, counselor-sessions.

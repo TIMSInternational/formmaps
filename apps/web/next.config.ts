@@ -280,6 +280,16 @@ function shouldRouteEvalExternalToDotnet() {
   );
 }
 
+// FM-DOTNET Phase-B — the gradebook transcript read (routes/school-gradebook.ts GET
+// /gradebook/students/:studentId, mounted under /api/v1/school-admin). GET-only (the grade writes in that
+// file stay Node), so there is no path-not-method coupling. Default OFF (dark). Its path prefix
+// (gradebook/students) is disjoint from the school-admin /results and /assessments rewrites.
+function shouldRouteGradebookReadToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_GRADEBOOK_READ_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -716,6 +726,17 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/assessments/pipeline",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/pipeline`,
+            },
+          ]
+        : []),
+      // FM-DOTNET Phase-B gradebook transcript read (GET-only; the grade writes stay Node). Its prefix
+      // (/school-admin/gradebook/students) is disjoint from the /results and /assessments rewrites above, and
+      // it must precede the /api/:path* catch-all below.
+      ...(shouldRouteGradebookReadToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/gradebook/students/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/gradebook/students/:studentId`,
             },
           ]
         : []),
