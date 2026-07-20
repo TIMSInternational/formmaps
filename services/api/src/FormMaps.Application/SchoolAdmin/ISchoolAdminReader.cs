@@ -26,4 +26,18 @@ public interface ISchoolAdminReader
 
     Task<IReadOnlyList<AssessmentScheduleRow>> GetSchedulesAsync(
         RequestContext context, string schoolId, CancellationToken cancellationToken = default);
+
+    // -- sub-slice 2 --
+
+    /// <summary>getStudentReport — the rich per-student report; null when the student is missing or not in the school.</summary>
+    Task<StudentReport?> GetStudentReportAsync(
+        RequestContext context, string schoolId, string studentId, CancellationToken cancellationToken = default);
+
+    /// <summary>exportResultsCsv — the raw CSV body (not the JSON envelope).</summary>
+    Task<string> ExportResultsCsvAsync(
+        RequestContext context, string schoolId, CancellationToken cancellationToken = default);
+
+    /// <summary>getAssessmentPipeline — per-student PCA/MIL/360 status grid, filtered by grade + statusFilter.</summary>
+    Task<IReadOnlyList<PipelineRow>> GetAssessmentPipelineAsync(
+        RequestContext context, string schoolId, int? grade, string statusFilter, CancellationToken cancellationToken = default);
 }

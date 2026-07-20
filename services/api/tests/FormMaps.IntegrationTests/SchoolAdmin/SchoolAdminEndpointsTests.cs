@@ -31,6 +31,9 @@ public class SchoolAdminEndpointsTests
     [InlineData("/api/v1/school-admin/assessments/status")]
     [InlineData("/api/v1/school-admin/assessments/schedule")]
     [InlineData("/api/v1/school-admin/results/student-x/pca-status")]
+    [InlineData("/api/v1/school-admin/results/export")]
+    [InlineData("/api/v1/school-admin/results/student-x")]
+    [InlineData("/api/v1/school-admin/assessments/pipeline")]
     public async Task Anonymous_is_401(string path)
     {
         using var factory = new Factory(new FakeReader(), new FakeScope(School));
@@ -232,6 +235,137 @@ public class SchoolAdminEndpointsTests
         Assert.Equal(expected, doc.RootElement.GetProperty("message").GetString());
     }
 
+    [Fact]
+    public async Task StudentReport_returns_200_shape_with_generatedAt_and_nested_sections()
+    {
+        var report = new StudentReport(
+            Version: "1",
+            GeneratedAt: "2026-07-20T12:34:56.789Z",
+            Student: new StudentReportStudent("stu-1", "Ana", "ana@x.test", 11),
+            Completion: new StudentReportCompletion(true, true, false, false),
+            Pca: new StudentReportPca(true, 2, "2026-07-01T00:00:00.000Z"),
+            Mil: new StudentReportMil(1, 85.3, [new StudentReportMilSession(
+                "sess-1", "PR", "Completed", true, 85.3, "2026-07-01T00:00:00.000Z", null)]),
+            Evaluation360: new StudentReportEvaluation360(3, 1,
+                [new StudentReportEvalGroup("g1", "self", "Ana", true, "2026-07-01T00:00:00.000Z")]));
+        using var factory = new Factory(new FakeReader { Report = report }, new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, "/api/v1/school-admin/results/student-1");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var data = doc.RootElement.GetProperty("data");
+        Assert.Equal("1", data.GetProperty("version").GetString());
+        Assert.Equal("2026-07-20T12:34:56.789Z", data.GetProperty("generatedAt").GetString());
+        Assert.Equal("stu-1", data.GetProperty("student").GetProperty("id").GetString());
+        Assert.False(data.GetProperty("completion").GetProperty("eval360").GetBoolean());
+        Assert.Equal(2, data.GetProperty("pca").GetProperty("evaluationCount").GetInt32());
+        Assert.Equal(85.3, data.GetProperty("mil").GetProperty("averageScore").GetDouble(), 3);
+        Assert.Equal(1, data.GetProperty("mil").GetProperty("sessions").GetArrayLength());
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("mil").GetProperty("sessions")[0].GetProperty("endTime").ValueKind);
+        Assert.Equal("self", data.GetProperty("evaluation360").GetProperty("groups")[0].GetProperty("groupType").GetString());
+    }
+
+    [Fact]
+    public async Task StudentReport_null_is_404_student_not_found()
+    {
+        using var factory = new Factory(new FakeReader { Report = null }, new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, "/api/v1/school-admin/results/missing");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await AssertMessage(response, "Student not found");
+    }
+
+    [Fact]
+    public async Task StudentReport_passes_the_full_studentId_no_truncation()
+    {
+        var reader = new FakeReader { Report = null };
+        using var factory = new Factory(reader, new FakeScope(School));
+        using var client = factory.CreateClient();
+        var longId = new string('a', 130);
+
+        await Send(client, $"/api/v1/school-admin/results/{longId}");
+
+        // Report route is NOT length-bounded (unlike pca-status): the full value reaches the parameterized query.
+        Assert.Equal(longId, reader.ReportStudentId);
+    }
+
+    [Fact]
+    public async Task Export_returns_text_csv_with_attachment_disposition()
+    {
+        const string csv = "Name,Email,Grade Level,PCA Status,MIL Average Score,Completed Exams\n\"Ana\",\"ana@x.test\",11,completed,85.3,1";
+        using var factory = new Factory(new FakeReader { ExportCsv = csv }, new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, "/api/v1/school-admin/results/export");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/csv", response.Content.Headers.ContentType!.ToString());
+        Assert.Equal("attachment; filename=results-export.csv", response.Content.Headers.ContentDisposition!.ToString());
+        Assert.Equal(csv, await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Export_anonymous_is_401_json_not_csv()
+    {
+        using var factory = new Factory(new FakeReader { ExportCsv = "x" }, new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v1/school-admin/results/export");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.NotEqual("text/csv", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task Pipeline_returns_200_with_ordered_pca_keys_and_passes_filters()
+    {
+        var row = new PipelineRow(
+            "stu-1", "Ana", "ana@x.test", 11,
+            new Dictionary<string, string>
+            {
+                ["PatternRecognition"] = "done",
+                ["VerbalReasoning"] = "in_progress",
+                ["WorkingMemory"] = "not_started",
+                ["NumericVelocity"] = "not_started",
+                ["VisualRotation"] = "not_started"
+            },
+            "not_started", "in_progress", new PipelineEvalDetail(2, 1));
+        var reader = new FakeReader { Pipeline = [row] };
+        using var factory = new Factory(reader, new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, "/api/v1/school-admin/assessments/pipeline?grade=11&status=incomplete");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(11, reader.PipelineGrade);
+        Assert.Equal("incomplete", reader.PipelineStatus);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var pca = doc.RootElement.GetProperty("data")[0].GetProperty("pca");
+        // key order must be the EXAM_TYPES order
+        var keys = pca.EnumerateObject().Select(p => p.Name).ToArray();
+        Assert.Equal(
+            new[] { "PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation" }, keys);
+        Assert.Equal("done", pca.GetProperty("PatternRecognition").GetString());
+        Assert.Equal(1, doc.RootElement.GetProperty("data")[0].GetProperty("eval360Detail").GetProperty("completed").GetInt32());
+    }
+
+    [Fact]
+    public async Task Pipeline_absent_grade_and_status_pass_null_and_empty()
+    {
+        var reader = new FakeReader();
+        using var factory = new Factory(reader, new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        await Send(client, "/api/v1/school-admin/assessments/pipeline");
+
+        Assert.Null(reader.PipelineGrade);
+        Assert.Equal(string.Empty, reader.PipelineStatus);
+    }
+
     private static Task<HttpResponseMessage> Send(HttpClient client, string path, string permission = FormMapsPermissions.SchoolManage)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, path);
@@ -285,6 +419,37 @@ public class SchoolAdminEndpointsTests
         public ResultsListQuery? ResultsQuery { get; private set; }
 
         public string? PcaStudentId { get; private set; }
+
+        public StudentReport? Report { get; init; }
+
+        public string ExportCsv { get; init; } = string.Empty;
+
+        public IReadOnlyList<PipelineRow> Pipeline { get; init; } = [];
+
+        public string? ReportStudentId { get; private set; }
+
+        public int? PipelineGrade { get; private set; }
+
+        public string? PipelineStatus { get; private set; }
+
+        public Task<StudentReport?> GetStudentReportAsync(
+            RequestContext context, string schoolId, string studentId, CancellationToken cancellationToken = default)
+        {
+            ReportStudentId = studentId;
+            return Task.FromResult(Report);
+        }
+
+        public Task<string> ExportResultsCsvAsync(
+            RequestContext context, string schoolId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(ExportCsv);
+
+        public Task<IReadOnlyList<PipelineRow>> GetAssessmentPipelineAsync(
+            RequestContext context, string schoolId, int? grade, string statusFilter, CancellationToken cancellationToken = default)
+        {
+            PipelineGrade = grade;
+            PipelineStatus = statusFilter;
+            return Task.FromResult(Pipeline);
+        }
 
         public Task<IReadOnlyList<EvaluationOverviewRow>> GetEvaluationsOverviewAsync(
             RequestContext context, string schoolId, CancellationToken cancellationToken = default)
