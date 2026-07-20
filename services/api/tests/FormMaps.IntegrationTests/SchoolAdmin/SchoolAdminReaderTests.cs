@@ -543,7 +543,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     private static async Task SeedGroupAsync(NpgsqlConnection conn, string evaluatedUserId, string groupType, bool isCompleted, bool isActive = true)
     {
         await using var cmd = new NpgsqlCommand(
-            """INSERT INTO "evaluation_groups" ("id","evaluatedUserId","groupType","isEvaluationCompleted","isActive") VALUES (@id,@u,@t,@c,@a)""",
+            """INSERT INTO "evaluation_groups" ("id","evaluatedUserId","groupType","isEvaluationCompleted","isActive","updatedAt") VALUES (@id,@u,@t,@c,@a,CURRENT_TIMESTAMP)""",
             conn);
         cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
         cmd.Parameters.AddWithValue("u", evaluatedUserId);
