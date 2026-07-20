@@ -37,6 +37,7 @@ app.MapAssessmentTimelineEndpoints();
 app.MapVocationalEndpoints();
 app.MapTestScoreEndpoints();
 app.MapSchoolAdminEndpoints();
+app.MapGradebookEndpoints();
 app.MapQuestion360Endpoints();
 app.MapVocationalTakeEndpoints();
 app.MapEvaluationExternalEndpoints();

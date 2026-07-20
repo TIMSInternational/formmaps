@@ -5,12 +5,14 @@ using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using FormMaps.Application.Email;
 using FormMaps.Application.Reports;
+using FormMaps.Application.Gradebook;
 using FormMaps.Application.SchoolAdmin;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Email;
 using FormMaps.Infrastructure.Reports;
+using FormMaps.Infrastructure.Gradebook;
 using FormMaps.Infrastructure.SchoolAdmin;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -66,6 +68,7 @@ public static class DependencyInjection
         services.AddScoped<ITestScoreWriter, TestScoreWriter>();
         services.AddScoped<ISchoolAdminScopeResolver, SchoolAdminScopeResolver>();
         services.AddScoped<ISchoolAdminReader, SchoolAdminReader>();
+        services.AddScoped<IGradebookReader, GradebookReader>();
         services.AddScoped<ISchoolAdminWriter, SchoolAdminWriter>();
 
         // Outbound email (SES v2) — the FIRST outbound integration. EmailOptions mirrors lib/email.ts env constants.
