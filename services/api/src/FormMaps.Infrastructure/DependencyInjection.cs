@@ -1,11 +1,13 @@
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
+using FormMaps.Application.Calendar;
 using FormMaps.Application.Data;
 using FormMaps.Application.Reports;
 using FormMaps.Application.Gradebook;
 using FormMaps.Application.SchoolAdmin;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
+using FormMaps.Infrastructure.Calendar;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Reports;
 using FormMaps.Infrastructure.Gradebook;
@@ -65,6 +67,7 @@ public static class DependencyInjection
         services.AddScoped<ISchoolAdminScopeResolver, SchoolAdminScopeResolver>();
         services.AddScoped<ISchoolAdminReader, SchoolAdminReader>();
         services.AddScoped<IGradebookReader, GradebookReader>();
+        services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ISchoolAdminWriter, SchoolAdminWriter>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IQuestion360Reader, Question360Reader>();

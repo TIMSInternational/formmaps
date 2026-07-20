@@ -290,6 +290,16 @@ function shouldRouteGradebookReadToDotnet() {
   );
 }
 
+// FM-DOTNET-047 Phase-B — the school academic-calendar reads (routes/school-grades.ts GET
+// /calendar/academic-years, /assessment-periods, /holidays, mounted under /api/v1/school-admin). GET-only (the
+// calendar writes in that file stay Node) so no path-not-method coupling. Default OFF (dark). The /calendar
+// prefix is disjoint from the /results, /assessments, and /gradebook rewrites.
+function shouldRouteSchoolCalendarReadsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_CALENDAR_READS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -737,6 +747,24 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/gradebook/students/:studentId",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/gradebook/students/:studentId`,
+            },
+          ]
+        : []),
+      // FM-DOTNET-047 Phase-B school academic-calendar reads (GET-only; the calendar writes stay Node). Three
+      // literal 3-segment paths, disjoint from every other rewrite; must precede the /api/:path* catch-all.
+      ...(shouldRouteSchoolCalendarReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/calendar/academic-years",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/assessment-periods",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/assessment-periods`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/holidays",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/holidays`,
             },
           ]
         : []),
