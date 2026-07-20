@@ -663,6 +663,13 @@ const nextConfig: NextConfig = {
               source: "/api/v1/school-admin/evaluations/overview",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/evaluations/overview`,
             },
+            // sub-slice 2: /results/export (literal) + /results/:studentId/pca-status MUST precede the
+            // /results/:studentId report route below (Next matches in array order; same segment count for
+            // export vs :studentId). All GET-only, so they cut over with the sub-slice-1 flag.
+            {
+              source: "/api/v1/school-admin/results/export",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results/export`,
+            },
             {
               source: "/api/v1/school-admin/results/:studentId/pca-status",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results/:studentId/pca-status`,
@@ -672,8 +679,16 @@ const nextConfig: NextConfig = {
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results`,
             },
             {
+              source: "/api/v1/school-admin/results/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results/:studentId`,
+            },
+            {
               source: "/api/v1/school-admin/assessments/status",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/status`,
+            },
+            {
+              source: "/api/v1/school-admin/assessments/pipeline",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/pipeline`,
             },
           ]
         : []),

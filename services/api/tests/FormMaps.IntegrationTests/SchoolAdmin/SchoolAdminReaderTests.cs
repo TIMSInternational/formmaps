@@ -27,7 +27,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
         _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
         await using var conn = await _dataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand(
-            """TRUNCATE "users","evaluation_groups","pca_evaluations","pca_exam_sessions","school_assessment_settings","assessment_schedules" """,
+            """TRUNCATE "users","evaluation_groups","pca_evaluations","pca_exam_sessions","lia_assessment_sessions","school_assessment_settings","assessment_schedules" """,
             conn);
         await cmd.ExecuteNonQueryAsync();
     }
@@ -205,6 +205,28 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     }
 
     [Fact]
+    public async Task StudentReport_super_admin_is_scoped_to_own_db_school_not_the_token_claim()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        // Super-admin's OWN users.schoolId = School (A); their token claim says OtherSchool (B).
+        await SeedUserAsync(conn, "super-1", School, role: "Super Admin");
+        await SeedUserAsync(conn, "a-student", School, name: "Ana");     // own school
+        await SeedUserAsync(conn, "b-student", OtherSchool, name: "Bee"); // foreign school (full report data)
+        await SeedLiaAsync(conn, "b-student", "completed");
+        await SeedPcaEvalAsync(conn, "b-student", isCompleted: true);
+
+        var ctx = CtxWithClaim("super-1", claimSchool: OtherSchool);
+        var resolved = await Resolver().ResolveSchoolIdAsync(ctx);
+        Assert.Equal(School, resolved);
+
+        // The rich report's student lookup is school-scoped IN the query: even under a super-admin RLS bypass,
+        // a foreign-school student -> null -> 404 (no cross-school data leak, despite that student having data);
+        // the own-school student -> the real report.
+        Assert.Null(await Reader().GetStudentReportAsync(ctx, resolved!, "b-student"));
+        Assert.NotNull(await Reader().GetStudentReportAsync(ctx, resolved!, "a-student"));
+    }
+
+    [Fact]
     public async Task Both_role_spellings_are_counted_and_listed()
     {
         await using var conn = await _dataSource.OpenConnectionAsync();
@@ -331,8 +353,158 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
 
     // ---------------------------------------------------------------- helpers
 
+    // ---------------------------------------------------------------- sub-slice 2: student report
+
+    [Fact]
+    public async Task StudentReport_parity_lia_and_thresholds_make_overall_done()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUserAsync(conn, "stu-1", School, name: "Ana", email: "ana@e.st", gradeLevel: 11);
+        await SeedLiaAsync(conn, "stu-1", "completed");                        // parity -> all 5 subtests
+        await SeedGroupAsync(conn, "stu-1", "self", isCompleted: true);
+        await SeedGroupAsync(conn, "stu-1", "parent", isCompleted: true);
+        await SeedGroupAsync(conn, "stu-1", "teacher", isCompleted: true);     // 3 completed -> min(3,3)
+        await SeedPcaEvalAsync(conn, "stu-1", isCompleted: true);
+        await SeedExamDetailAsync(conn, "stu-1", "PatternRecognition", "Completed", isCompleted: true, scorePercentage: 90);
+
+        var report = (await Reader().GetStudentReportAsync(Ctx("admin-1"), School, "stu-1"))!;
+
+        Assert.Equal("1", report.Version);
+        Assert.Matches(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$", report.GeneratedAt); // ISO-Z shape, non-deterministic value
+        Assert.True(report.Completion.Lia);      // parity LIA => liaCompleted 5
+        Assert.True(report.Completion.Disc);
+        Assert.True(report.Completion.Eval360);  // 3 >= min(3,3)
+        Assert.True(report.Completion.Overall);
+        Assert.True(report.Pca.Completed);
+        Assert.Equal(1, report.Pca.EvaluationCount);
+        Assert.NotNull(report.Pca.LastCompletedDate);
+        Assert.Equal(1, report.Mil.CompletedCount);
+        Assert.Equal(90d, report.Mil.AverageScore);
+        Assert.Equal(3, report.Evaluation360.Total);
+        Assert.Equal(3, report.Evaluation360.Completed);
+    }
+
+    [Fact]
+    public async Task StudentReport_averageScore_rounds_away_from_zero_and_sessions_desc()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUserAsync(conn, "stu-1", School);
+        await SeedExamDetailAsync(conn, "stu-1", "PatternRecognition", "Completed", isCompleted: true,
+            scorePercentage: 85.2, startTime: new DateTime(2026, 1, 1));
+        await SeedExamDetailAsync(conn, "stu-1", "VerbalReasoning", "Completed", isCompleted: true,
+            scorePercentage: 85.3, startTime: new DateTime(2026, 3, 1));   // newer -> first (desc)
+
+        var report = (await Reader().GetStudentReportAsync(Ctx("admin-1"), School, "stu-1"))!;
+
+        Assert.Equal(85.3d, report.Mil.AverageScore);                       // mean 85.25 -> AwayFromZero 85.3 (banker's=85.2)
+        Assert.Equal(2, report.Mil.Sessions.Count);
+        Assert.Equal(new DateTime(2026, 3, 1).ToString("yyyy-MM-ddTHH:mm:ss.fff'Z'"), report.Mil.Sessions[0].StartTime); // newest first (desc)
+        Assert.False(report.Completion.Lia);                                // only 2 distinct exam types (<5)
+    }
+
+    [Fact]
+    public async Task StudentReport_cross_school_or_missing_returns_null()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUserAsync(conn, "other", OtherSchool);
+
+        Assert.Null(await Reader().GetStudentReportAsync(Ctx("admin-1"), School, "other"));  // cross-school
+        Assert.Null(await Reader().GetStudentReportAsync(Ctx("admin-1"), School, "ghost"));  // missing
+    }
+
+    // ---------------------------------------------------------------- sub-slice 2: CSV export
+
+    [Fact]
+    public async Task Export_has_exact_header_csvSafe_and_no_isActive_filter()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUserAsync(conn, "s-1", School, name: "=SUM(A1)", email: "ok@e.st", gradeLevel: 11);   // formula-leading name
+        await SeedUserAsync(conn, "s-2", School, name: "Bob", email: "bob@e.st", isActive: false);      // inactive -> still exported
+        await SeedExamDetailAsync(conn, "s-1", "PatternRecognition", "Completed", isCompleted: true, scorePercentage: 85.2);
+        await SeedExamDetailAsync(conn, "s-1", "VerbalReasoning", "Completed", isCompleted: true, scorePercentage: 85.3);
+        await SeedPcaEvalAsync(conn, "s-1", isCompleted: false);   // existence -> "completed" (PCA status = row exists)
+
+        var csv = await Reader().ExportResultsCsvAsync(Ctx("admin-1"), School);
+        var lines = csv.Split('\n');
+
+        Assert.Equal("Name,Email,Grade Level,PCA Status,MIL Average Score,Completed Exams", lines[0]);
+        Assert.Equal(3, lines.Length);                                       // header + 2 students (incl. inactive)
+        Assert.Contains("\"'=SUM(A1)\",\"ok@e.st\",11,completed,85.3,2", csv); // csvSafe prefix + avg 85.3 + count 2
+        Assert.Contains("\"Bob\",\"bob@e.st\",,not_started,0,0", csv);        // no grade -> empty; no pca -> not_started
+    }
+
+    [Theory]
+    [InlineData("=")]
+    [InlineData("+")]
+    [InlineData("-")]
+    [InlineData("@")]
+    [InlineData("\t")]
+    [InlineData("\r")]
+    public async Task Export_csvSafe_prefixes_every_formula_leading_char(string trigger)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var name = trigger + "danger";
+        await SeedUserAsync(conn, "s-1", School, name: name, email: "ok@e.st");
+
+        var csv = await Reader().ExportResultsCsvAsync(Ctx("admin-1"), School);
+
+        // csvSafe prefixes a leading ' so a spreadsheet can't evaluate the cell as a formula.
+        Assert.Contains($"\"'{name}\"", csv);
+    }
+
+    // ---------------------------------------------------------------- sub-slice 2: pipeline
+
+    [Fact]
+    public async Task Pipeline_status_precedence_lia_overlay_states_and_filters()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUserAsync(conn, "a", School, name: "Ana", gradeLevel: 11);
+        await SeedUserAsync(conn, "b", School, name: "Bob", gradeLevel: 11);
+        await SeedUserAsync(conn, "c", School, name: "Cy", gradeLevel: 12);
+
+        // A: completed parity LIA -> all 5 pca done, mil done; 2 groups both completed -> eval360 done => fully done.
+        await SeedLiaAsync(conn, "a", "completed");
+        await SeedGroupAsync(conn, "a", "self", isCompleted: true);
+        await SeedGroupAsync(conn, "a", "parent", isCompleted: true);
+        // B: PatternRecognition InProgress then Completed (precedence -> done); others not_started -> incomplete.
+        await SeedExamDetailAsync(conn, "b", "PatternRecognition", "InProgress", isCompleted: false);
+        await SeedExamDetailAsync(conn, "b", "PatternRecognition", "Completed", isCompleted: true);
+        // C (grade 12): nothing.
+
+        var all = await Reader().GetAssessmentPipelineAsync(Ctx("admin-1"), School, null, "");
+        Assert.Equal(new[] { "a", "b", "c" }, all.Select(r => r.Id).ToArray());        // gradeLevel asc, name asc
+        var a = all.Single(r => r.Id == "a");
+        Assert.All(a.Pca.Values, v => Assert.Equal("done", v));                        // parity -> all done
+        Assert.Equal("done", a.Mil);
+        Assert.Equal("done", a.Eval360);
+        Assert.Equal(2, a.Eval360Detail.Total);
+        var b = all.Single(r => r.Id == "b");
+        Assert.Equal("done", b.Pca["PatternRecognition"]);                             // Completed wins over InProgress
+        Assert.Equal("not_started", b.Pca["VerbalReasoning"]);
+        Assert.Equal("not_started", b.Mil);
+        Assert.Equal("not_started", b.Eval360);
+
+        var incomplete = await Reader().GetAssessmentPipelineAsync(Ctx("admin-1"), School, null, "incomplete");
+        Assert.Equal(new[] { "b", "c" }, incomplete.Select(r => r.Id).ToArray());      // A fully done -> excluded
+
+        var grade12 = await Reader().GetAssessmentPipelineAsync(Ctx("admin-1"), School, 12, "");
+        Assert.Equal(new[] { "c" }, grade12.Select(r => r.Id).ToArray());
+    }
+
+    [Fact]
+    public async Task Pipeline_active_lia_marks_in_progress_unless_completed()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUserAsync(conn, "a", School, gradeLevel: 11);
+        await SeedLiaAsync(conn, "a", "in_progress");   // active run -> all 5 InProgress
+
+        var rows = await Reader().GetAssessmentPipelineAsync(Ctx("admin-1"), School, null, "");
+        Assert.All(rows.Single().Pca.Values, v => Assert.Equal("in_progress", v));
+        Assert.Equal("not_started", rows.Single().Mil);  // not all Completed
+    }
+
     private SchoolAdminReader Reader() =>
-        new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()));
+        new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System);
 
     private SchoolAdminScopeResolver Resolver() =>
         new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()));
@@ -401,6 +573,41 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
         cmd.Parameters.AddWithValue("ex", "exam-a");
         cmd.Parameters.AddWithValue("s", scorePercentage);
         cmd.Parameters.AddWithValue("c", isCompleted);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    private static async Task SeedExamDetailAsync(
+        NpgsqlConnection conn, string userId, string examType, string status, bool isCompleted,
+        double scorePercentage = 0, string examName = "Exam", bool isActive = true,
+        DateTime? startTime = null, DateTime? endTime = null)
+    {
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "pca_exam_sessions"
+              ("id","userId","examName","examType","status","scorePercentage","isCompleted","isActive","startTime","endTime")
+            VALUES (@id,@u,@en,@et,@st,@s,@c,@a,@sd,@ed)
+            """, conn);
+        cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
+        cmd.Parameters.AddWithValue("u", userId);
+        cmd.Parameters.AddWithValue("en", examName);
+        cmd.Parameters.AddWithValue("et", examType);
+        cmd.Parameters.AddWithValue("st", status);
+        cmd.Parameters.AddWithValue("s", scorePercentage);
+        cmd.Parameters.AddWithValue("c", isCompleted);
+        cmd.Parameters.AddWithValue("a", isActive);
+        cmd.Parameters.AddWithValue("sd", DateTime.SpecifyKind(startTime ?? new DateTime(2026, 1, 1), DateTimeKind.Unspecified));
+        cmd.Parameters.AddWithValue("ed", endTime is null ? DBNull.Value : DateTime.SpecifyKind(endTime.Value, DateTimeKind.Unspecified));
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    private static async Task SeedLiaAsync(NpgsqlConnection conn, string userId, string status, bool isActive = true)
+    {
+        await using var cmd = new NpgsqlCommand(
+            """INSERT INTO "lia_assessment_sessions" ("id","user_id","status","is_active") VALUES (@id,@u,@st,@a)""", conn);
+        cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
+        cmd.Parameters.AddWithValue("u", userId);
+        cmd.Parameters.AddWithValue("st", status);
+        cmd.Parameters.AddWithValue("a", isActive);
         await cmd.ExecuteNonQueryAsync();
     }
 

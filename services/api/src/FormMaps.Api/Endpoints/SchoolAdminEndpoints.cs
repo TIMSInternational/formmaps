@@ -22,10 +22,15 @@ public static class SchoolAdminEndpoints
 
         group.MapGet("/evaluations/overview", GetEvaluationsOverviewAsync);
         group.MapGet("/results", GetResultsAsync);
+        // Literal /results/export and the more-specific /results/{studentId}/pca-status both outrank the
+        // /results/{studentId} param route in ASP.NET route precedence (registration order is irrelevant).
+        group.MapGet("/results/export", GetResultsExportAsync);
         group.MapGet("/results/{studentId}/pca-status", GetStudentPcaStatusAsync);
+        group.MapGet("/results/{studentId}", GetStudentReportAsync);
         group.MapGet("/assessments/config", GetConfigAsync);
         group.MapGet("/assessments/status", GetStatusAsync);
         group.MapGet("/assessments/schedule", GetScheduleAsync);
+        group.MapGet("/assessments/pipeline", GetPipelineAsync);
 
         return app;
     }
@@ -233,6 +238,152 @@ public static class SchoolAdminEndpoints
                 createdDate = r.CreatedDate,
                 updatedBy = r.UpdatedBy,
                 updatedAt = r.UpdatedAt
+            })
+        });
+    }
+
+    private static async Task<IResult> GetStudentReportAsync(
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        ISchoolAdminReader reader,
+        string studentId,
+        CancellationToken cancellationToken)
+    {
+        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        // No length bound here (unlike pca-status): the report lookup key is passed verbatim to the
+        // parameterized WHERE id=@id AND schoolId=@school — a too-long non-matching id 404s naturally (faithful
+        // to legacy's full-id findUnique), and truncating would risk a real id that is a 100-char prefix of a
+        // longer requested value false-matching.
+        var report = await reader.GetStudentReportAsync(context, schoolId!, studentId, cancellationToken);
+        if (report is null)
+        {
+            return StudentNotFound();
+        }
+
+        return Results.Ok(new
+        {
+            success = true,
+            data = new
+            {
+                version = report.Version,
+                generatedAt = report.GeneratedAt,
+                student = new
+                {
+                    id = report.Student.Id,
+                    name = report.Student.Name,
+                    email = report.Student.Email,
+                    gradeLevel = report.Student.GradeLevel
+                },
+                completion = new
+                {
+                    lia = report.Completion.Lia,
+                    disc = report.Completion.Disc,
+                    eval360 = report.Completion.Eval360,
+                    overall = report.Completion.Overall
+                },
+                pca = new
+                {
+                    completed = report.Pca.Completed,
+                    evaluationCount = report.Pca.EvaluationCount,
+                    lastCompletedDate = report.Pca.LastCompletedDate
+                },
+                mil = new
+                {
+                    completedCount = report.Mil.CompletedCount,
+                    averageScore = report.Mil.AverageScore,
+                    sessions = report.Mil.Sessions.Select(s => new
+                    {
+                        id = s.Id,
+                        examName = s.ExamName,
+                        status = s.Status,
+                        completed = s.Completed,
+                        scorePercentage = s.ScorePercentage,
+                        startTime = s.StartTime,
+                        endTime = s.EndTime
+                    })
+                },
+                evaluation360 = new
+                {
+                    total = report.Evaluation360.Total,
+                    completed = report.Evaluation360.Completed,
+                    groups = report.Evaluation360.Groups.Select(g => new
+                    {
+                        id = g.Id,
+                        groupType = g.GroupType,
+                        evaluatorName = g.EvaluatorName,
+                        isCompleted = g.IsCompleted,
+                        completedDate = g.CompletedDate
+                    })
+                }
+            }
+        });
+    }
+
+    private static async Task<IResult> GetResultsExportAsync(
+        HttpContext http,
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        ISchoolAdminReader reader,
+        CancellationToken cancellationToken)
+    {
+        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        var csv = await reader.ExportResultsCsvAsync(context, schoolId!, cancellationToken);
+        // Legacy sets Content-Type: text/csv (no charset) + the attachment disposition, then res.send(csv).
+        http.Response.ContentType = "text/csv";
+        http.Response.Headers.ContentDisposition = "attachment; filename=results-export.csv";
+        await http.Response.WriteAsync(csv, cancellationToken);
+        return Results.Empty;
+    }
+
+    private static async Task<IResult> GetPipelineAsync(
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        ISchoolAdminReader reader,
+        string? grade,
+        string? status,
+        CancellationToken cancellationToken)
+    {
+        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        // grade = req.query.grade ? parseInt(qs(grade)) : null  (the reader applies JS `if (grade)` truthiness).
+        int? resolvedGrade = string.IsNullOrEmpty(grade) ? null : PcaExamPagination.JsParseInt(grade);
+        // statusFilter = qs(req.query.status)  (undefined -> "").
+        var statusFilter = status ?? string.Empty;
+
+        var rows = await reader.GetAssessmentPipelineAsync(context, schoolId!, resolvedGrade, statusFilter, cancellationToken);
+        return Results.Ok(new
+        {
+            success = true,
+            data = rows.Select(r => new
+            {
+                id = r.Id,
+                name = r.Name,
+                email = r.Email,
+                gradeLevel = r.GradeLevel,
+                // Emit the dictionary directly: legacy pca keys are the verbatim EXAM_TYPES names (PascalCase),
+                // and Web-default JSON leaves DictionaryKeyPolicy null so keys are NOT camelCased; the reader
+                // builds the dict in EXAM_TYPES insertion order, which STJ preserves.
+                pca = r.Pca,
+                mil = r.Mil,
+                eval360 = r.Eval360,
+                eval360Detail = new { total = r.Eval360Detail.Total, completed = r.Eval360Detail.Completed }
             })
         });
     }
