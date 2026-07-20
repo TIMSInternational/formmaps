@@ -190,6 +190,62 @@ behavior). Prove the reverse works before relying on it.
 - [ ] **S4** Rollback drill (START on→off→Node); confirm insight-funnel posture acceptable.
 - [ ] **Done** = personality legacy prod routes are read-only/idle; record in manifest + `completion-roadmap.md` §Milestone-1 as the first proven prod cutover.
 
+## Step-0 concrete execution (Federico, prod-infra via `!`)
+
+The prod-service CFN is authored at `infra/aws/formmaps-api-prod-service.yml`
+(copy of the staging stack with prod CORS + prod secret ARNs + a **write-capable**
+DATABASE_URL). Concrete sequence:
+
+**A. Decide + provision the DB write role.** Two options (runbook open-decision #2):
+- *Fastest (recommended for the first cutover):* reuse the **existing prod Node app
+  DB role** — it already reads everything under RLS and writes the personality
+  tables, so it satisfies the .NET service's read+write needs with zero new grants.
+  Point `DATABASE_URL` at that role's connection string secret.
+- *Cleaner (hardening, do later):* a dedicated least-privilege `formmaps_dotnet_writer`:
+  ```sql
+  CREATE ROLE formmaps_dotnet_writer LOGIN PASSWORD '...';        -- NOT SUPERUSER, NOT BYPASSRLS
+  GRANT CONNECT ON DATABASE <db> TO formmaps_dotnet_writer;
+  GRANT USAGE ON SCHEMA public TO formmaps_dotnet_writer;
+  GRANT SELECT ON ALL TABLES IN SCHEMA public TO formmaps_dotnet_writer;   -- reads run under RLS
+  GRANT INSERT, UPDATE ON personality_assessment_sessions, personality_responses TO formmaps_dotnet_writer;
+  -- verify the existing RLS policies on those 2 tables permit the owner
+  -- (app.current_user_id) to INSERT/UPDATE; the .NET writer sets that GUC.
+  ```
+  Confirm `SELECT rolbypassrls FROM pg_roles WHERE rolname='formmaps_dotnet_writer';` → **false**.
+  Store the conn string in Secrets Manager; use that ARN for `DatabaseUrlSecretArn`.
+
+**B. Deploy the prod .NET service (dark).** Promote the SAME image tag that is green
+on staging (build once, deploy the identical artifact):
+```
+aws cloudformation deploy \
+  --template-file infra/aws/formmaps-api-prod-service.yml \
+  --stack-name formmaps-api-prod \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides \
+    ImageIdentifier=<ECR image:tag green on staging> \
+    EcrAccessRoleArn=<same ECR access role as staging> \
+    JwtSecretArn=<PROD JWT_SECRET secret ARN> \
+    DatabaseUrlSecretArn=<PROD write-capable DATABASE_URL secret ARN> \
+    ProdWebOrigin=https://app.formmaps.ai      # CONFIRM the exact prod Vercel domain
+```
+Grab the output `ServiceUrl`.
+
+**C. Wire prod web (still dark).** On the **prod Vercel project** set
+`FORMMAPS_DOTNET_API_BASE_URL=https://<ServiceUrl>` and redeploy. With all six
+`FORMMAPS_ROUTE_PERSONALITY_*` flags absent/`0`, nothing changes for users (every
+`shouldRoute…` returns false) — the prod .NET service is live but dark.
+
+**D. Exit criterion (Step-1 dark canary):**
+```
+BASE=https://<ServiceUrl>
+curl -s -o /dev/null -w '%{http_code}\n' $BASE/health                              # 200
+curl -s -o /dev/null -w '%{http_code}\n' -X POST $BASE/api/v1/personality/start    # 401
+curl -s $BASE/api/v1/personality/access -H "Cookie: access_token=$PROD_JWT"        # 200 (real prod auth+RLS)
+```
+When the authed `/access` returns a correct 200, the prod service can authenticate a
+real prod user and read under RLS — proceed to Step 2 (flip the read flags). Ping me
+with the `ServiceUrl` and I'll drive the read→write flag sequence + canaries with you.
+
 ## Open decisions for Federico
 1. **Provision a prod .NET service now?** (cost: one more App Runner @ ~0.5vCPU/1GB on the
    shared VPC/NAT; the strategic payoff is de-risking the whole migration — recommend yes).

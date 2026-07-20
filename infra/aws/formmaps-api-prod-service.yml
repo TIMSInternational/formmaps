@@ -1,0 +1,199 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  App Runner service for the FormMaps .NET API PRODUCTION deployment.
+  Deployed DARK: it serves the full .NET API but no prod traffic reaches it
+  until the prod Vercel web sets FORMMAPS_DOTNET_API_BASE_URL and a
+  FORMMAPS_ROUTE_*_TO_DOTNET flag is flipped. First cutover target =
+  the personality domain (dual-write-free). See
+  docs/migration/personality-prod-cutover-runbook.md.
+
+  ⚠️ THE ONE DIFFERENCE FROM STAGING THAT MATTERS: DatabaseUrlSecretArn must
+  point at a WRITE-CAPABLE prod Aurora role (staging is read-only). The role
+  must be able to INSERT/UPDATE the personality tables AND respect the Identity
+  RLS GUCs the .NET writer sets (app.current_user_id / app.current_school_id).
+  It must NOT be a BYPASSRLS/superuser role. See the Step-0 checklist in the
+  runbook for the role + RLS grant SQL.
+
+Parameters:
+  ServiceName:
+    Type: String
+    Default: formmaps-api-prod
+    AllowedPattern: "[A-Za-z0-9][A-Za-z0-9-_]{3,39}"
+    Description: App Runner service name.
+  ImageIdentifier:
+    Type: String
+    Description: >-
+      Full ECR image identifier including tag. Promote the SAME image tag that
+      is green on staging (build once, deploy the identical artifact to prod).
+  EcrAccessRoleArn:
+    Type: String
+    Description: IAM role ARN that App Runner uses to pull the private ECR image.
+  JwtSecretArn:
+    Type: String
+    NoEcho: true
+    Description: >-
+      Full ARN of the Secrets Manager secret holding the PROD JWT_SECRET. MUST
+      be the same signing key the prod Node API uses to sign the access_token
+      cookie (issuer formmaps-api, audience formmaps-frontend) or every prod
+      cookie 401s.
+  DatabaseUrlSecretArn:
+    Type: String
+    NoEcho: true
+    Description: >-
+      Full ARN of the Secrets Manager secret holding the PROD DATABASE_URL.
+      MUST be a WRITE-CAPABLE, RLS-respecting (non-BYPASSRLS) prod Aurora role
+      (see runbook Step-0). This is the single security-critical difference
+      from the staging stack, whose role is read-only.
+  ProdWebOrigin:
+    Type: String
+    Default: https://app.formmaps.ai
+    Description: >-
+      Prod frontend origin allowed by CORS. CONFIRM the exact prod Vercel
+      domain (app.formmaps.ai vs app.formmaps.com) before deploying — a
+      mismatch makes the browser block every cross-origin call.
+  LegacyJwtIssuer:
+    Type: String
+    Default: formmaps-api
+    Description: Legacy JWT issuer expected by the .NET API.
+  LegacyJwtAudience:
+    Type: String
+    Default: formmaps-frontend
+    Description: Legacy JWT audience expected by the .NET API.
+  HealthCheckPath:
+    Type: String
+    Default: /health
+    Description: App Runner HTTP health check path.
+  VpcConnectorArn:
+    Type: String
+    Default: arn:aws:apprunner:us-east-1:747814092517:vpcconnector/nexa-api-vpc-nat/1/8b8be38b0fa94596a129dd31a9629ae1
+    Description: >-
+      App Runner VPC connector ARN for egress to the private prod Aurora
+      cluster. Defaults to the existing nexa-api-vpc-nat connector (the shared
+      VPC/subnets/SG that reach nexa-aurora-enc — the prod cluster the live
+      Node API uses). CONFIRM this connector reaches the PROD database before
+      deploying. Without VPC egress the API cannot reach the private DB.
+  Cpu:
+    Type: String
+    Default: 0.5 vCPU
+    AllowedValues:
+      - 0.25 vCPU
+      - 0.5 vCPU
+      - 1 vCPU
+      - 2 vCPU
+      - 4 vCPU
+    Description: App Runner CPU allocation.
+  Memory:
+    Type: String
+    Default: 1 GB
+    AllowedValues:
+      - 0.5 GB
+      - 1 GB
+      - 2 GB
+      - 3 GB
+      - 4 GB
+      - 6 GB
+      - 8 GB
+      - 10 GB
+      - 12 GB
+    Description: App Runner memory allocation.
+
+Resources:
+  AppRunnerInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ServiceName}-instance
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: tasks.apprunner.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: read-formmaps-prod-secrets
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref JwtSecretArn
+                  - !Ref DatabaseUrlSecretArn
+      Tags:
+        - Key: Project
+          Value: formmaps
+        - Key: Environment
+          Value: production
+
+  AppRunnerService:
+    Type: AWS::AppRunner::Service
+    Properties:
+      ServiceName: !Ref ServiceName
+      SourceConfiguration:
+        AuthenticationConfiguration:
+          AccessRoleArn: !Ref EcrAccessRoleArn
+        # Prod moves only on an explicit deploy (promote a vetted staging image).
+        AutoDeploymentsEnabled: false
+        ImageRepository:
+          ImageIdentifier: !Ref ImageIdentifier
+          ImageRepositoryType: ECR
+          ImageConfiguration:
+            Port: "8080"
+            RuntimeEnvironmentVariables:
+              - Name: ASPNETCORE_ENVIRONMENT
+                Value: Production
+              - Name: ASPNETCORE_URLS
+                Value: http://+:8080
+              - Name: CORS_ORIGINS
+                Value: !Ref ProdWebOrigin
+              - Name: LegacyJwt__Issuer
+                Value: !Ref LegacyJwtIssuer
+              - Name: LegacyJwt__Audience
+                Value: !Ref LegacyJwtAudience
+            RuntimeEnvironmentSecrets:
+              - Name: JWT_SECRET
+                Value: !Ref JwtSecretArn
+              - Name: DATABASE_URL
+                Value: !Ref DatabaseUrlSecretArn
+      InstanceConfiguration:
+        Cpu: !Ref Cpu
+        Memory: !Ref Memory
+        InstanceRoleArn: !GetAtt AppRunnerInstanceRole.Arn
+      HealthCheckConfiguration:
+        Protocol: HTTP
+        Path: !Ref HealthCheckPath
+        Interval: 10
+        Timeout: 5
+        HealthyThreshold: 1
+        UnhealthyThreshold: 5
+      NetworkConfiguration:
+        IngressConfiguration:
+          IsPubliclyAccessible: true
+        EgressConfiguration:
+          EgressType: VPC
+          VpcConnectorArn: !Ref VpcConnectorArn
+        IpAddressType: IPV4
+      Tags:
+        - Key: Project
+          Value: formmaps
+        - Key: Environment
+          Value: production
+
+Outputs:
+  ServiceArn:
+    Description: App Runner service ARN.
+    Value: !GetAtt AppRunnerService.ServiceArn
+  ServiceId:
+    Description: App Runner service ID.
+    Value: !GetAtt AppRunnerService.ServiceId
+  ServiceUrl:
+    Description: >-
+      App Runner generated service URL, without protocol. Set
+      FORMMAPS_DOTNET_API_BASE_URL=https://<this> on the PROD Vercel project
+      (with all FORMMAPS_ROUTE_*_TO_DOTNET flags still off) to deploy the .NET
+      API dark, then canary it before flipping any flag.
+    Value: !GetAtt AppRunnerService.ServiceUrl
+  InstanceRoleArn:
+    Description: Runtime instance role ARN.
+    Value: !GetAtt AppRunnerInstanceRole.Arn
