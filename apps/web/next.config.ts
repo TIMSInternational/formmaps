@@ -300,15 +300,10 @@ function shouldRouteGradebookReadToDotnet() {
   );
 }
 
-// FM-DOTNET-047 Phase-B — the school academic-calendar reads (routes/school-grades.ts GET
-// /calendar/academic-years, /assessment-periods, /holidays, mounted under /api/v1/school-admin). GET-only (the
-// calendar writes in that file stay Node) so no path-not-method coupling. Default OFF (dark). The /calendar
-// prefix is disjoint from the /results, /assessments, and /gradebook rewrites.
-function shouldRouteSchoolCalendarReadsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_CALENDAR_READS_TO_DOTNET)
-  );
-}
+// NOTE (FM-DOTNET-047): the .NET calendar GET endpoints exist + are tested, but their next.config rewrite is
+// DELIBERATELY NOT added here — the 3 /calendar/* bare paths also serve Node POST creates, and Next rewrites
+// match path-not-method, so a reads-only rewrite would capture those POSTs and break calendar creation. The
+// rewrite + flag are added by FM-048 (which co-ports the POST creates), same as FM-044 did for config/schedule.
 
 const nextConfig: NextConfig = {
   /**
@@ -760,24 +755,8 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // FM-DOTNET-047 Phase-B school academic-calendar reads (GET-only; the calendar writes stay Node). Three
-      // literal 3-segment paths, disjoint from every other rewrite; must precede the /api/:path* catch-all.
-      ...(shouldRouteSchoolCalendarReadsToDotnet()
-        ? [
-            {
-              source: "/api/v1/school-admin/calendar/academic-years",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years`,
-            },
-            {
-              source: "/api/v1/school-admin/calendar/assessment-periods",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/assessment-periods`,
-            },
-            {
-              source: "/api/v1/school-admin/calendar/holidays",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/holidays`,
-            },
-          ]
-        : []),
+      // (FM-DOTNET-047 calendar-reads rewrite intentionally omitted — see the note by the flag helpers above;
+      //  added with the POST creates in FM-048.)
       // School-admin CONFIG + SCHEDULE (FM-DOTNET-044) — /assessments/config + /assessments/schedule, each
       // GET(read, FM-039) + PUT(write, FM-044) flipping together under one flag (path-not-method). Same .NET
       // backend; both paths are 3-segment literals so no ordering hazard vs the reads routes above.
