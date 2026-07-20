@@ -1802,6 +1802,44 @@
       "notes": [
         "DONE 2026-07-20 (capstone): token-gated external write rail. Fork-built off source-verified brief (main caught 5 spec divergences pre-build: string evaluationGroupId, category-drop-not-reject, camelCase feedbackItems, jsonb/scalar upsert asymmetry, closed-expiry-gap). Adversarial gate: fresh reviewer SAFE + Codex BLOCKING(rate-limiter)+CONFIRMED(email)+PLAUSIBLE(ToDictionary) -> all 3 folded + red-if-regressed tests. Federico RATIFIED closing the expiry gap. dotnet 0/0; unit 460 + integration 481(+1 skip) + contract 1 (main re-ran suite as ship gate). COMPLETES the assessments external write surface. NEXT: school-admin/test-scores config-schedule writes OR Phase B (schools/rosters/orgs)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-044-school-admin-config-schedule-writes",
+      "status": "completed",
+      "goal": "Port the two DB-only school-admin assessment WRITES (routes/school-assessments.ts): PUT /assessments/config + PUT /assessments/schedule. Reuse the FM-039 getSchoolUser school-scope rail. (send-reminders + setup-360 deferred to FM-045 \u2014 they need a .NET outbound-email surface.)",
+      "dependsOn": [
+        "FM-DOTNET-039-school-admin-reads-1"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-assessments.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolAssessmentsService.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/SchoolAdmin/ISchoolAdminWriter.cs",
+        "services/api/src/FormMaps.Infrastructure/SchoolAdmin/SchoolAdminWriter.cs",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolAdminEndpoints.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "PUT config: upsert school_assessment_settings on schoolId (PATCH \u2014 only provided fields; create sets createdBy+updatedBy, conflict updates provided + updatedBy; aiWeights truthy\u2192aiWeightsJson=JSON.stringify). DOUBLE-wrap {data:{data}} response. READ-BACK RETURNS RAW DB VALUES (gate fix \u2014 legacy WRITE does NOT coalesce; null windows/empty retakePolicy pass through; only the GET path defaults).",
+        "PUT schedule: per-item upsert assessment_schedules on composite (schoolId,gradeLevel,assessmentType); skip-incomplete (falsy gradeLevel 0/type/dates); create createdBy / conflict updatedBy; SINGLE-wrap {data:[rows]}. schedules-not-array\u2192400.",
+        "New flag FORMMAPS_ROUTE_SCHOOL_ADMIN_CONFIG_SCHEDULE_TO_DOTNET (default off) + 2 rewrites (config+schedule paths, GET+PUT together \u2014 finally lights the paths FM-039 left dark for the Node-only PUTs). Fixture (schooladmin-schema.sql) gained the write columns + composite UNIQUE (fork caught a read-shaped fixture)."
+      ],
+      "guardrails": [
+        "GATE BLOCKING (both reviewers CONFIRMED): config PUT read-back must return RAW (updateAssessmentConfig, no || DEFAULT) \u2014 the FalsyOr coalescing is GET-only. Folded: raw values, AssessmentConfig window/retakePolicy nullable, dead FalsyOr removed, 2 tests fixed.",
+        "GATE LOW (folded): malformed JSON body -> 400 (ReadBodyAsync reads raw; empty->{} legacy parity, malformed->400 no phantom write) +test.",
+        "PATCH only-provided (no null-out of unpassed cols); double vs single wrap depth; aiWeights JS truthiness + compact JSON; skip-incomplete falsy; composite upsert preserves id+createdBy; 400-over-500 on bad input (documented divergence); atomic one-session schedule upserts (documented).",
+        "repo hygiene: gitignored .claude/ (git add -A was capturing harness worktrees)."
+      ],
+      "validation": [
+        "dotnet build 0/0",
+        "dotnet test (unit 460 + integration 498 + 1 skip + contract 1)",
+        "staging deploy run 29779252461 + canary (health 200; anon PUT config/schedule -> 401; regressions intact)"
+      ],
+      "notes": [
+        "DONE 2026-07-20 (parallel with FM-046). Fork-built + fresh+Codex gate folded the BLOCKING coalescing bug (config PUT would fabricate default window dates/retakePolicy where legacy returns null/\"\") + the malformed-JSON phantom-write. dotnet 0/0; unit 460 + integration 498(+1 skip). NEXT: FM-045 (email writes: send-reminders + setup-360)."
+      ]
     }
   ]
 }

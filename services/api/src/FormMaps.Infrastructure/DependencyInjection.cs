@@ -65,6 +65,7 @@ public static class DependencyInjection
         services.AddScoped<ISchoolAdminScopeResolver, SchoolAdminScopeResolver>();
         services.AddScoped<ISchoolAdminReader, SchoolAdminReader>();
         services.AddScoped<IGradebookReader, GradebookReader>();
+        services.AddScoped<ISchoolAdminWriter, SchoolAdminWriter>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IQuestion360Reader, Question360Reader>();
         services.AddScoped<IQuestion360Writer, Question360Writer>();

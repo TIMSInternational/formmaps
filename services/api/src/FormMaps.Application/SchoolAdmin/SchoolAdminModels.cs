@@ -41,9 +41,11 @@ public sealed record PcaStatusResult(bool Completed);
 /// null/parse-failure), so it is carried as a JsonElement to preserve arbitrary shape + number tokens.
 /// </summary>
 public sealed record AssessmentConfig(
-    string AssessmentWindowStart,
-    string AssessmentWindowEnd,
-    string RetakePolicy,
+    // Nullable: the WRITE read-back (updateAssessmentConfig) returns these RAW from the DB (may be null/empty);
+    // only the READ (getAssessmentConfig) coalesces them to CONFIG defaults. See SchoolAdminReader vs SchoolAdminWriter.
+    string? AssessmentWindowStart,
+    string? AssessmentWindowEnd,
+    string? RetakePolicy,
     bool AllowSelfSchedule,
     int ReminderDaysBefore,
     JsonElement AiWeights);
