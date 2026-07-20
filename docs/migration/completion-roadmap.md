@@ -46,7 +46,9 @@ Legend: R=read slice (fast), W=write slice (slow, full gate), 🔴=high structur
 
 ### Phase B — Schools / rosters / organizations (domain 4) — **~6–10 slices**
 - ✅ **R** gradebook transcript read (FM-046, DONE) — GET /gradebook/students/:studentId (transcript-by-year + GPA; pure GPA math in double, 4-dp AwayFromZero; reuses the school:manage rail). First Phase-B slice. Grade writes (POST/PUT/DELETE) deferred.
-- `school-courses.ts` (396), school.ts / school-students.ts / school-grades.ts read queries, then writes. Medium risk (school-scoped). ▶ next Phase-B reads.
+- ✅ **R** school calendar reads (FM-047, DONE, DARK) — GET /calendar/academic-years (nested terms) + /assessment-periods (yearId gate-not-filter) + /holidays; new calendar:manage permission; DOUBLE-wrap. **Shipped dark WITHOUT a web rewrite** (the 3 bare paths carry Node-only POST creates — path-not-method) — rewrite deferred to FM-048.
+- ▶ **W** calendar POST creates + co-flip rewrite (FM-048, NEXT) — createAcademicYear/AssessmentPeriod/Holidays; adds the /calendar/* rewrite so GET+POST flip together (routes the FM-047 reads). PUT/DELETE/set-current on /:id later.
+- `school-courses.ts` (396), school.ts / school-students.ts read queries, then writes. Medium risk (school-scoped). ▶ more Phase-B reads after FM-048.
 
 ### Phase C — Counselor / student / parent workflows (domain 5) — **~12–18 slices** 🔴
 - `counselor.ts` (495), `student.ts` (410), `parent.ts` (395), counselor-notes, counselor-sessions.
