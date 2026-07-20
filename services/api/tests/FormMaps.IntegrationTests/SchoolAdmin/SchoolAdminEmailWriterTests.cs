@@ -176,7 +176,7 @@ public sealed class SchoolAdminEmailWriterTests : IClassFixture<SchoolAdminDatab
     private async Task SeedGroupAsync(string evaluatedUserId, string evaluatorEmail, string groupType)
     {
         await Exec(
-            """INSERT INTO "evaluation_groups" ("id","evaluatedUserId","evaluatorEmail","groupType","invitationToken","tokenExpiryDate") VALUES (@id,@u,@e,@g,@t,CURRENT_TIMESTAMP)""",
+            """INSERT INTO "evaluation_groups" ("id","evaluatedUserId","evaluatorEmail","groupType","invitationToken","tokenExpiryDate","updatedAt") VALUES (@id,@u,@e,@g,@t,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)""",
             ("id", Guid.NewGuid().ToString()), ("u", evaluatedUserId), ("e", evaluatorEmail), ("g", groupType), ("t", "seed-token"));
     }
 

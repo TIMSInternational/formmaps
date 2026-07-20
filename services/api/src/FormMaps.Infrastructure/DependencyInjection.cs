@@ -81,8 +81,12 @@ public static class DependencyInjection
             AwsRegion: EnvOr(configuration, "AWS_REGION", EmailOptions.DefaultAwsRegion));
         services.AddSingleton(emailOptions);
         services.AddSingleton(new EmailTemplates(emailOptions));
+        // Factory lambda (NOT a pre-constructed instance) so the SES client — and its eager credential
+        // resolution — is built on FIRST RESOLVE (only when an email endpoint runs, which is dark until the
+        // flag flips), never at startup. A pre-constructed client would resolve creds at boot and brick the
+        // ENTIRE service in any env without resolvable AWS creds.
         services.AddSingleton<IAmazonSimpleEmailServiceV2>(
-            new AmazonSimpleEmailServiceV2Client(RegionEndpoint.GetBySystemName(emailOptions.AwsRegion)));
+            _ => new AmazonSimpleEmailServiceV2Client(RegionEndpoint.GetBySystemName(emailOptions.AwsRegion)));
         services.AddScoped<IEmailSender, SesEmailSender>();
         services.AddScoped<ISchoolAdminEmailWriter, SchoolAdminEmailWriter>();
 

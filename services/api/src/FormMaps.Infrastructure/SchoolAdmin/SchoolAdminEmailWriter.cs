@@ -210,7 +210,7 @@ public sealed class SchoolAdminEmailWriter(
 
         if (groups.Count > 0)
         {
-            await InsertGroupsAsync(session, groups, expiry, cancellationToken);
+            await InsertGroupsAsync(session, groups, expiry, now, cancellationToken);
         }
 
         await session.CommitAsync(cancellationToken);
@@ -261,7 +261,7 @@ public sealed class SchoolAdminEmailWriter(
     }
 
     private static async Task InsertGroupsAsync(
-        FormMapsDatabaseSession session, List<GroupInsert> groups, DateTime expiry, CancellationToken cancellationToken)
+        FormMapsDatabaseSession session, List<GroupInsert> groups, DateTime expiry, DateTime now, CancellationToken cancellationToken)
     {
         // Single multi-row INSERT (legacy prisma.createMany). id generated app-side (no DB default, matches Prisma
         // @default(uuid())); isActive/isTokenUsed/isEvaluationCompleted/createdDate take their DB defaults.
@@ -270,7 +270,7 @@ public sealed class SchoolAdminEmailWriter(
         command.Transaction = session.Transaction;
         for (var i = 0; i < groups.Count; i++)
         {
-            values.Add($"(@id{i}, @en{i}, @ee{i}, @rel{i}, @gt{i}, @eu{i}, @tok{i}, @exp, @cb{i})");
+            values.Add($"(@id{i}, @en{i}, @ee{i}, @rel{i}, @gt{i}, @eu{i}, @tok{i}, @exp, @cb{i}, @upd)");
             AddParameter(command, $"id{i}", Guid.NewGuid().ToString());
             AddParameter(command, $"en{i}", groups[i].EvaluatorName);
             AddParameter(command, $"ee{i}", groups[i].EvaluatorEmail);
@@ -282,9 +282,13 @@ public sealed class SchoolAdminEmailWriter(
         }
 
         AddTimestamp(command, "exp", expiry);
+        // updatedAt is Prisma @updatedAt = app-managed, NOT NULL with NO db default in prod — a raw INSERT that
+        // omits it fails 23502. Set it explicitly (= now), like every other .NET insert. createdDate is safe to
+        // omit (it has a db default). (Gate fix: the test fixture had wrongly given updatedAt a DEFAULT, masking this.)
+        AddTimestamp(command, "upd", now);
         command.CommandText =
             "INSERT INTO \"evaluation_groups\" " +
-            "(\"id\", \"evaluatorName\", \"evaluatorEmail\", \"relation\", \"groupType\", \"evaluatedUserId\", \"invitationToken\", \"tokenExpiryDate\", \"createdBy\") " +
+            "(\"id\", \"evaluatorName\", \"evaluatorEmail\", \"relation\", \"groupType\", \"evaluatedUserId\", \"invitationToken\", \"tokenExpiryDate\", \"createdBy\", \"updatedAt\") " +
             "VALUES " + string.Join(", ", values);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }

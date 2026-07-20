@@ -41,7 +41,8 @@ public sealed class SesEmailSender(
         catch (Exception ex)
         {
             // Match legacy: log + return false, never throw. No recipient/PII in the log.
-            logger.LogError(ex, "audit.email.send_failed subject={Subject}", subject);
+            // Do NOT log the subject — it carries the student name (PII). Legacy logs only a generic message.
+            logger.LogError(ex, "audit.email.send_failed");
             return false;
         }
     }

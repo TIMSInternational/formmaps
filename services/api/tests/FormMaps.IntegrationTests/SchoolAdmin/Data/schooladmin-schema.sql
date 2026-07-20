@@ -30,7 +30,9 @@ CREATE TABLE "evaluation_groups" (
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdBy" TEXT,
     "createdDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- NO db default (matches prod: Prisma @updatedAt is app-managed, NOT NULL, no default). A default here would
+    -- mask a writer that forgets to set updatedAt (it did — see SchoolAdminEmailWriter setup-360 INSERT).
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "evaluation_groups_pkey" PRIMARY KEY ("id")
 );
 
