@@ -38,6 +38,8 @@ app.MapVocationalEndpoints();
 app.MapTestScoreEndpoints();
 app.MapSchoolAdminEndpoints();
 app.MapQuestion360Endpoints();
+app.MapVocationalTakeEndpoints();
+app.MapEvaluationExternalEndpoints();
 
 app.Run();
 

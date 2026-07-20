@@ -253,6 +253,22 @@ function shouldRouteQuestion360ToDotnet() {
   );
 }
 
+// FM-DOTNET capstone — the token-gated external write rail. Two flags (one per tree) give independent prod
+// rollback of the two highest-risk write paths. These paths are under /evaluation/* (NOT /api/*) — the .NET
+// service mounts them at /evaluation and /evaluation/vocational, matching the legacy Express mount. Both
+// default OFF (dark). Each tree's reads + writes cut over together (path-not-method rewrites).
+function shouldRouteVocationalTakeToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_TAKE_TO_DOTNET)
+  );
+}
+
+function shouldRouteEvalExternalToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_EVAL_EXTERNAL_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -733,6 +749,45 @@ const nextConfig: NextConfig = {
             {
               source: "/api/question360/:id",
               destination: `${dotnetApiBaseUrl}/api/question360/:id`,
+            },
+          ]
+        : []),
+      // FM-DOTNET capstone — token-gated external write rail. These /evaluation/* paths MUST precede the
+      // /evaluation/:path* legacy catch-all below. Vocational tree first: literal /submit precedes /:token (a
+      // token could otherwise be "submit"; the destination path is identical so .NET method-routes correctly
+      // either way, but literal-first keeps intent explicit). /:token/violations is 2-segment (no shadow).
+      ...(shouldRouteVocationalTakeToDotnet()
+        ? [
+            {
+              source: "/evaluation/vocational/submit",
+              destination: `${dotnetApiBaseUrl}/evaluation/vocational/submit`,
+            },
+            {
+              source: "/evaluation/vocational/:token/violations",
+              destination: `${dotnetApiBaseUrl}/evaluation/vocational/:token/violations`,
+            },
+            {
+              source: "/evaluation/vocational/:token",
+              destination: `${dotnetApiBaseUrl}/evaluation/vocational/:token`,
+            },
+          ]
+        : []),
+      // External 360 tree. validate-token + submit-feedback are literals; 360evolutor/:token is a distinct
+      // literal-prefixed segment. All precede the /evaluation/:path* catch-all and the /evaluation/vocational
+      // rewrites above are more specific, so no collision.
+      ...(shouldRouteEvalExternalToDotnet()
+        ? [
+            {
+              source: "/evaluation/validate-token",
+              destination: `${dotnetApiBaseUrl}/evaluation/validate-token`,
+            },
+            {
+              source: "/evaluation/submit-feedback",
+              destination: `${dotnetApiBaseUrl}/evaluation/submit-feedback`,
+            },
+            {
+              source: "/evaluation/360evolutor/:token",
+              destination: `${dotnetApiBaseUrl}/evaluation/360evolutor/:token`,
             },
           ]
         : []),
