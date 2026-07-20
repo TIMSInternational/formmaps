@@ -5,6 +5,19 @@ Prep: Claude. This is the FIRST production cutover of any .NET domain — its pu
 is to **prove the strangler flag-flip + rollback mechanism on real traffic** before
 70+ more dark slices are ported assuming it works.
 
+> **✅ STATUS 2026-07-20 — Step-0 DONE. Prod .NET service is LIVE + DARK.**
+> `formmaps-api-prod` App Runner stack created (Federico ran the §B deploy).
+> **Prod .NET base URL = `https://zt9tppuwei.us-east-1.awsapprunner.com`.**
+> Dark canary GREEN: `/health` 200; anon `POST /personality/start` → 401
+> `missing_identity`; `x-formmaps-service` header present; CORS echoes
+> `https://app.formmaps.com`. Receiving ZERO user traffic (no Vercel base-URL set /
+> all flags off). **Remaining before cutover:** (1) authed `/access` → 200 check
+> (proves DB connectivity under real prod auth+RLS — needs a real prod cookie or a
+> token minted from `nexa/api/JWT_SECRET`); (2) set `FORMMAPS_DOTNET_API_BASE_URL`
+> on the `formmaps` Vercel project (§C, dark); (3) then the read→write flag-flip
+> cutover (§2–§3, Claude drives with Federico). Undo everything:
+> `aws cloudformation delete-stack --region us-east-1 --stack-name formmaps-api-prod`.
+
 ## Why personality first
 Personality is the only fully **dual-write-free** domain: .NET owns the entire
 session lifecycle (start → answer → complete = FM-030) plus every read
