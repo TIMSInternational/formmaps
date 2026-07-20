@@ -71,7 +71,13 @@ CREATE TABLE "school_assessment_settings" (
     "retakePolicy" TEXT NOT NULL DEFAULT 'none',
     "allowSelfSchedule" BOOLEAN NOT NULL DEFAULT false,
     "reminderDaysBefore" INTEGER NOT NULL DEFAULT 7,
+    "courseRequestDeadline" TIMESTAMP(3),
     "aiWeightsJson" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdBy" TEXT,
+    "createdDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedBy" TEXT,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "school_assessment_settings_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "school_assessment_settings_schoolId_key" UNIQUE ("schoolId")
 );
@@ -88,7 +94,8 @@ CREATE TABLE "assessment_schedules" (
     "createdDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedBy" TEXT,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "assessment_schedules_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "assessment_schedules_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "assessment_schedules_schoolId_gradeLevel_assessmentType_key" UNIQUE ("schoolId", "gradeLevel", "assessmentType")
 );
 
 CREATE INDEX "users_schoolId_idx" ON "users"("schoolId");
