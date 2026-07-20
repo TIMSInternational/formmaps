@@ -48,6 +48,12 @@ public static class Evaluation360Scoring
         };
     }
 
+    /// <summary>
+    /// questions_360.relationType has exactly 4 buckets (Self/Parent/Teacher/Other); sibling_friend + any
+    /// free-text relation share "Other". Port of evaluationGroups.ts relationTypeForGroup (canonical groupType).
+    /// </summary>
+    public static string RelationTypeForGroup(string? groupType) => RelationTypeForBucket(NormalizeGroupType(groupType));
+
     public static IReadOnlyList<KeyValuePair<string, CategoryScore>> CategoryScoresFromFeedback(
         IReadOnlyList<FeedbackRow> feedbacks,
         IReadOnlyList<Question360Lite> questions,
