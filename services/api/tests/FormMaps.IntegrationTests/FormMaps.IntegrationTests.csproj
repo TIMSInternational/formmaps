@@ -41,6 +41,8 @@
     <EmbeddedResource Include="Assessments\Data\question360-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers token-gated external write rail harness (FM-DOTNET capstone). -->
     <EmbeddedResource Include="Assessments\Data\token-rail-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers gradebook transcript read harness (FM-DOTNET Phase-B). -->
+    <EmbeddedResource Include="Gradebook\Data\gradebook-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
