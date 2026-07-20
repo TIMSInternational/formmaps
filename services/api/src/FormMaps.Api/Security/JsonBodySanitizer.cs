@@ -49,7 +49,10 @@ public static class JsonBodySanitizer
 
                 break;
             case JsonArray jsonArray:
-                foreach (var item in jsonArray)
+                // Snapshot with ToArray() (like the JsonObject case): sanitizing a string element calls
+                // ReplaceWith(), which mutates the array — enumerating it directly throws "Collection was
+                // modified". Latent until a request body carried an array of strings (e.g. studentIds).
+                foreach (var item in jsonArray.ToArray())
                 {
                     if (item is not null)
                     {

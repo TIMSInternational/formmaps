@@ -252,6 +252,16 @@ function shouldRouteSchoolAdminConfigScheduleToDotnet() {
   );
 }
 
+// School-admin EMAIL writes (FM-DOTNET-045): POST /assessments/send-reminders + /assessments/setup-360. These
+// send SES email (send-reminders) and bulk-create evaluation_groups + fire invites (setup-360). POST-only paths
+// (no GET twin), so no path-not-method coupling — one flag. Default off (dark). Cutover prereq: the prod App
+// Runner role needs ses:SendEmail + a verified SES sender identity.
+function shouldRouteSchoolAdminEmailWritesToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_EMAIL_WRITES_TO_DOTNET)
+  );
+}
+
 // question360 (FM-DOTNET question360) — ONE flag covers the WHOLE surface: all 5 GET reads + all 6 writes. A
 // single flag is the only design with no misconfigurable state: Next rewrites match by PATH not method, so the
 // `/api/question360/:id` rewrite cannot distinguish GET (read) from PUT/DELETE (write), and `/bulk-create`
@@ -731,6 +741,20 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/assessments/schedule",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/schedule`,
+            },
+          ]
+        : []),
+      // School-admin EMAIL writes (FM-DOTNET-045) — POST /assessments/send-reminders + /assessments/setup-360
+      // (SES reminder emails / eval-group bulk-create + invites). POST-only, one flag, default off (dark).
+      ...(shouldRouteSchoolAdminEmailWritesToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/assessments/send-reminders",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/send-reminders`,
+            },
+            {
+              source: "/api/v1/school-admin/assessments/setup-360",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/setup-360`,
             },
           ]
         : []),

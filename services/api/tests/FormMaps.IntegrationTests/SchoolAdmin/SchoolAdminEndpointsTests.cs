@@ -563,7 +563,145 @@ public class SchoolAdminEndpointsTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    private sealed class Factory(FakeReader reader, FakeScope scope, FakeWriter? writer = null) : WebApplicationFactory<Program>
+    // ---------------------------------------------------------------- POST send-reminders
+
+    [Fact]
+    public async Task Post_send_reminders_returns_200_with_counts()
+    {
+        var email = new FakeEmailWriter { ReminderResult = new(2, 1, 3) };
+        using var factory = new Factory(new FakeReader(), new FakeScope(School), emailWriter: email);
+        using var client = factory.CreateClient();
+
+        var response = await SendPost(client, "/api/v1/school-admin/assessments/send-reminders",
+            new { studentIds = new[] { "s1", "s2", "s3" }, assessmentTypes = new[] { "PCA" } });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var data = doc.RootElement.GetProperty("data");
+        Assert.Equal(2, data.GetProperty("sent").GetInt32());
+        Assert.Equal(1, data.GetProperty("failed").GetInt32());
+        Assert.Equal(3, data.GetProperty("total").GetInt32());
+        Assert.True(email.SendRemindersCalled);
+    }
+
+    [Fact]
+    public async Task Post_send_reminders_empty_studentIds_400()
+    {
+        using var factory = new Factory(new FakeReader(), new FakeScope(School));
+        using var client = factory.CreateClient();
+        var response = await SendPost(client, "/api/v1/school-admin/assessments/send-reminders",
+            new { studentIds = Array.Empty<string>(), assessmentTypes = new[] { "PCA" } });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("studentIds required", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Post_send_reminders_empty_assessmentTypes_400()
+    {
+        using var factory = new Factory(new FakeReader(), new FakeScope(School));
+        using var client = factory.CreateClient();
+        var response = await SendPost(client, "/api/v1/school-admin/assessments/send-reminders",
+            new { studentIds = new[] { "s1" }, assessmentTypes = Array.Empty<string>() });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("assessmentTypes required", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Post_send_reminders_over_100_400()
+    {
+        using var factory = new Factory(new FakeReader(), new FakeScope(School));
+        using var client = factory.CreateClient();
+        var response = await SendPost(client, "/api/v1/school-admin/assessments/send-reminders",
+            new { studentIds = Enumerable.Range(0, 101).Select(i => $"s{i}").ToArray(), assessmentTypes = new[] { "PCA" } });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("Maximum 100 students per batch", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Post_send_reminders_school_not_found_404()
+    {
+        var email = new FakeEmailWriter { ReminderResult = null }; // service null -> route 404
+        using var factory = new Factory(new FakeReader(), new FakeScope(School), emailWriter: email);
+        using var client = factory.CreateClient();
+        var response = await SendPost(client, "/api/v1/school-admin/assessments/send-reminders",
+            new { studentIds = new[] { "s1" }, assessmentTypes = new[] { "PCA" } });
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Contains("School not found", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Post_send_reminders_anonymous_401()
+    {
+        using var factory = new Factory(new FakeReader(), new FakeScope(School));
+        using var client = factory.CreateClient();
+        var response = await SendPost(client, "/api/v1/school-admin/assessments/send-reminders",
+            new { studentIds = new[] { "s1" }, assessmentTypes = new[] { "PCA" } }, authenticated: false);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    // ---------------------------------------------------------------- POST setup-360
+
+    [Fact]
+    public async Task Post_setup_360_returns_200_with_result()
+    {
+        var email = new FakeEmailWriter { Setup360Result = new(3, 1, 2, 2) };
+        using var factory = new Factory(new FakeReader(), new FakeScope(School), emailWriter: email);
+        using var client = factory.CreateClient();
+
+        var response = await SendPost(client, "/api/v1/school-admin/assessments/setup-360",
+            new { gradeLevel = 10 });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var data = doc.RootElement.GetProperty("data");
+        Assert.Equal(3, data.GetProperty("created").GetInt32());
+        Assert.Equal(1, data.GetProperty("skipped").GetInt32());
+        Assert.Equal(2, data.GetProperty("emailsSent").GetInt32());
+        Assert.Equal(2, data.GetProperty("studentsProcessed").GetInt32());
+        Assert.True(email.Setup360Called);
+        Assert.Equal(10, email.ReceivedGradeLevel);
+        Assert.Empty(email.ReceivedStudentIds!); // studentIds omitted -> [] passed to the service
+    }
+
+    [Fact]
+    public async Task Post_setup_360_no_students_400()
+    {
+        var email = new FakeEmailWriter { Setup360Result = null }; // service null -> route 400
+        using var factory = new Factory(new FakeReader(), new FakeScope(School), emailWriter: email);
+        using var client = factory.CreateClient();
+        var response = await SendPost(client, "/api/v1/school-admin/assessments/setup-360", new { studentIds = new[] { "s1" } });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("No students to setup", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Post_setup_360_over_100_400()
+    {
+        using var factory = new Factory(new FakeReader(), new FakeScope(School));
+        using var client = factory.CreateClient();
+        var response = await SendPost(client, "/api/v1/school-admin/assessments/setup-360",
+            new { studentIds = Enumerable.Range(0, 101).Select(i => $"s{i}").ToArray() });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("Maximum 100 students per batch", await response.Content.ReadAsStringAsync());
+    }
+
+    private static Task<HttpResponseMessage> SendPost(
+        HttpClient client, string path, object body, string permission = FormMapsPermissions.SchoolManage, bool authenticated = true)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, path)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(body), System.Text.Encoding.UTF8, "application/json"),
+        };
+        if (authenticated)
+        {
+            AddAuth(request, permission);
+        }
+
+        return client.SendAsync(request);
+    }
+
+    private sealed class Factory(FakeReader reader, FakeScope scope, FakeWriter? writer = null, FakeEmailWriter? emailWriter = null)
+        : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -576,7 +714,38 @@ public class SchoolAdminEndpointsTests
                 services.AddSingleton<ISchoolAdminScopeResolver>(scope);
                 services.RemoveAll<ISchoolAdminWriter>();
                 services.AddSingleton<ISchoolAdminWriter>(writer ?? new FakeWriter());
+                services.RemoveAll<ISchoolAdminEmailWriter>();
+                services.AddSingleton<ISchoolAdminEmailWriter>(emailWriter ?? new FakeEmailWriter());
             });
+        }
+    }
+
+    private sealed class FakeEmailWriter : ISchoolAdminEmailWriter
+    {
+        public ReminderResult? ReminderResult { get; init; } = new(2, 0, 2);
+        public Setup360Result? Setup360Result { get; init; } = new(3, 1, 2, 2);
+        public IReadOnlyList<string>? ReceivedStudentIds { get; private set; }
+        public int? ReceivedGradeLevel { get; private set; }
+        public bool SendRemindersCalled { get; private set; }
+        public bool Setup360Called { get; private set; }
+
+        public Task<ReminderResult?> SendRemindersAsync(
+            RequestContext context, string schoolId, IReadOnlyList<string> studentIds,
+            IReadOnlyList<string> assessmentTypes, CancellationToken cancellationToken = default)
+        {
+            SendRemindersCalled = true;
+            ReceivedStudentIds = studentIds;
+            return Task.FromResult(ReminderResult);
+        }
+
+        public Task<Setup360Result?> Setup360Async(
+            RequestContext context, string schoolId, string? userId, IReadOnlyList<string> studentIds,
+            int? gradeLevel, CancellationToken cancellationToken = default)
+        {
+            Setup360Called = true;
+            ReceivedStudentIds = studentIds;
+            ReceivedGradeLevel = gradeLevel;
+            return Task.FromResult(Setup360Result);
         }
     }
 
