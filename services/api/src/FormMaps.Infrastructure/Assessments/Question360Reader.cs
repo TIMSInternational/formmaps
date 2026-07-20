@@ -1,5 +1,4 @@
 using System.Data.Common;
-using System.Globalization;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
@@ -15,11 +14,8 @@ namespace FormMaps.Infrastructure.Assessments;
 /// </summary>
 public sealed class Question360Reader(IFormMapsDatabaseSessionFactory databaseSessionFactory) : IQuestion360Reader
 {
-    private const string SelectColumns = """
-        SELECT "id", "questionEnglishText", "questionSpanishText", "category", "relationType", "questionNumber",
-               "isSubQuestion", "parentQuestionId", "isActive", "createdBy", "createdDate", "updatedBy", "updatedAt"
-        FROM "questions_360"
-        """;
+    private static readonly string SelectColumns =
+        $"SELECT {Question360RowMapper.Projection}\nFROM \"questions_360\"";
 
     public async Task<IReadOnlyList<Question360Row>> ListAsync(
         RequestContext context, string? relationType, CancellationToken cancellationToken = default)
@@ -81,26 +77,13 @@ public sealed class Question360Reader(IFormMapsDatabaseSessionFactory databaseSe
         var rows = new List<Question360Row>();
         while (await reader.ReadAsync(cancellationToken))
         {
-            rows.Add(Map(reader));
+            rows.Add(Question360RowMapper.Read(reader));
         }
 
         return rows;
     }
 
-    private static Question360Row Map(DbDataReader reader) => new(
-        Id: reader.GetString(0),
-        QuestionEnglishText: reader.GetString(1),
-        QuestionSpanishText: reader.GetString(2),
-        Category: reader.GetString(3),
-        RelationType: reader.GetString(4),
-        QuestionNumber: reader.GetInt32(5),
-        IsSubQuestion: reader.GetBoolean(6),
-        ParentQuestionId: reader.IsDBNull(7) ? null : reader.GetString(7),
-        IsActive: reader.GetBoolean(8),
-        CreatedBy: reader.IsDBNull(9) ? null : reader.GetString(9),
-        CreatedDate: IsoZ(reader.GetDateTime(10)),
-        UpdatedBy: reader.IsDBNull(11) ? null : reader.GetString(11),
-        UpdatedAt: IsoZ(reader.GetDateTime(12)));
+    private static Question360Row Map(DbDataReader reader) => Question360RowMapper.Read(reader);
 
     private static DbCommand Command(FormMapsDatabaseSession session, string sql)
     {
@@ -117,7 +100,4 @@ public sealed class Question360Reader(IFormMapsDatabaseSessionFactory databaseSe
         parameter.Value = value;
         command.Parameters.Add(parameter);
     }
-
-    private static string IsoZ(DateTime value) =>
-        DateTime.SpecifyKind(value, DateTimeKind.Utc).ToString("yyyy-MM-ddTHH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
 }

@@ -1712,6 +1712,44 @@
       "notes": [
         "DONE 2026-07-20 (Batch B): school-admin reads sub-slice 2 (fork-built; fresh SAFE + Codex FIXES-NEEDED converged). dotnet 0/0; unit 428 + integration 389 + contract 1. Folded Codex MEDIUM (untruncate report lookup) + 4 coverage pins (super-admin report scope, csvSafe all-6, LIA 4/5 boundary, evalTotal edges). NEXT: question360 writes (FM-042, folded, ready) OR token-gated external write rail (capstone, scoped)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-042-question360-writes",
+      "status": "completed",
+      "goal": "Port the question360 WRITE surface (routes/question360.ts): POST / + PUT /{id} + PUT /{id}/activate + PUT /{id}/deactivate + DELETE /{id} (soft + child-guard) + POST /bulk-create. Mount /api/question360, requirePermission(evaluations:manage). Collapses the FM-038 reads flag + writes into ONE surface flag.",
+      "dependsOn": [
+        "FM-DOTNET-038-question360-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/question360.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments/Question360Writes.cs",
+        "services/api/src/FormMaps.Infrastructure/Assessments/Question360Writer.cs",
+        "services/api/src/FormMaps.Infrastructure/Assessments/Question360RowMapper.cs",
+        "services/api/src/FormMaps.Api/Endpoints/Question360Endpoints.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "Question360Writer (Npgsql OpenWritableAsync): create (defaults materialized, createdBy/updatedBy NULL, questionNumber as long); update (PATCH, isActive EXCLUDED over-post guard, no create-defaults); activate/deactivate; delete (child-guard count parentQuestionId+isActive>0 -> 400; soft isActive=false; success {success:true} NO data); bulk-create (per-item independent session no-transaction, 23505->'Duplicate question' else 'Failed to create question' never leaks, always 200 {createdCount,totalRequested,errors}, null element graceful per-item error 200)",
+        "Question360Writes (validation): zod port create required+bounds+defaults + update all-optional isActive-excluded; first-error order; questionNumber long (>Int32 -> DB 22003 error path)",
+        "shared Question360RowMapper (reader refactored onto it, FM-038 reads byte-unchanged)",
+        "6 write endpoints on Question360Endpoints; SINGLE flag FORMMAPS_ROUTE_QUESTION360_TO_DOTNET gating ALL 11 endpoints (5 reads + 6 writes) in one next.config block (renamed FM-038 reads flag)"
+      ],
+      "guardrails": [
+        "SINGLE-FLAG (Codex HIGH): Next rewrites match path not method -> GET vs PUT/DELETE on /:id inseparable -> one flag is the only design with no split-brain (was two coupled flags)",
+        "int32 overflow (Codex HIGH): questionNumber long, >Int32 hits DB error path not silent wrap",
+        "isActive over-post guard; createdBy/updatedBy NULL (faithful); child-guard 400 exact; DELETE {success:true} no-data; bulk no-transaction + 23505 mapping (no real unique added, dups succeed); missing-id->500 (legacy P2025, no IDOR); bulk null-element graceful 200 (documented divergence from legacy throw->500, robustness)"
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx",
+        "staging deploy + health 200 + anon POST/PUT/DELETE/bulk-create /api/question360/* -> 401/403"
+      ],
+      "notes": [
+        "DONE 2026-07-20 (Batch B): question360 writes (fork-built; fresh SAFE + Codex FIXES-NEEDED converged). dotnet 0/0; unit 433 + integration 398 + contract 1. Folded Codex HIGH x2 (single-flag collapse + int32 overflow) + LOW (bulk null-element kept graceful, documented) + PUT-success test. Reconciled next.config+DI against FM-041 (clean auto-merge; single-flag rename intact). COMPLETES the question360 surface (reads FM-038 + writes FM-042 under one flag). NEXT: token-gated external write rail (capstone, scoped) OR school-admin/test-scores config-schedule writes."
+      ]
     }
   ]
 }

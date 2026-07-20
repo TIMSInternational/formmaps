@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Domain.Auth;
@@ -25,7 +26,189 @@ public static class Question360Endpoints
         group.MapGet("/sub-questions/{parentQuestionId}", GetSubQuestionsAsync);
         group.MapGet("/{id}", GetByIdAsync);
 
+        // Writes (all require evaluations:manage). Literal /bulk-create + the 2-segment activate/deactivate are
+        // distinguished from the {id} routes by method/segment shape (ASP.NET ranks literals above templates).
+        group.MapPost("/", CreateAsync);
+        group.MapPost("/bulk-create", BulkCreateAsync);
+        group.MapPut("/{id}", UpdateAsync);
+        group.MapPut("/{id}/activate", ActivateAsync);
+        group.MapPut("/{id}/deactivate", DeactivateAsync);
+        group.MapDelete("/{id}", DeleteAsync);
+
         return app;
+    }
+
+    // POST / — create a catalog question.
+    private static async Task<IResult> CreateAsync(
+        HttpContext http,
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IQuestion360Writer writer,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        if (Guard(context, protectedRequestGuard, requireManage: true) is { } denied)
+        {
+            return denied;
+        }
+
+        var body = await ReadBodyAsync(http, cancellationToken);
+        var outcome = await writer.CreateAsync(context, body, cancellationToken);
+        return outcome.Status switch
+        {
+            Question360WriteStatus.Created => Results.Json(new { success = true, data = outcome.Row }, statusCode: StatusCodes.Status201Created),
+            _ => ValidationError(outcome.Message),
+        };
+    }
+
+    // PUT /{id} — partial update (isActive deliberately not accepted); missing id → 500 (legacy P2025).
+    private static async Task<IResult> UpdateAsync(
+        HttpContext http,
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IQuestion360Writer writer,
+        string id,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        if (Guard(context, protectedRequestGuard, requireManage: true) is { } denied)
+        {
+            return denied;
+        }
+
+        var body = await ReadBodyAsync(http, cancellationToken);
+        var outcome = await writer.UpdateAsync(context, id, body, cancellationToken);
+        return MapWriteOutcome(outcome);
+    }
+
+    // PUT /{id}/activate — set isActive = true.
+    private static Task<IResult> ActivateAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IQuestion360Writer writer,
+        string id,
+        CancellationToken cancellationToken) =>
+        SetActiveAsync(requestContextAccessor, protectedRequestGuard, writer, id, isActive: true, cancellationToken);
+
+    // PUT /{id}/deactivate — set isActive = false.
+    private static Task<IResult> DeactivateAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IQuestion360Writer writer,
+        string id,
+        CancellationToken cancellationToken) =>
+        SetActiveAsync(requestContextAccessor, protectedRequestGuard, writer, id, isActive: false, cancellationToken);
+
+    private static async Task<IResult> SetActiveAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IQuestion360Writer writer,
+        string id,
+        bool isActive,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        if (Guard(context, protectedRequestGuard, requireManage: true) is { } denied)
+        {
+            return denied;
+        }
+
+        var outcome = await writer.SetActiveAsync(context, id, isActive, cancellationToken);
+        return MapWriteOutcome(outcome);
+    }
+
+    // DELETE /{id} — soft-delete; child-guard 400; missing id → 500. Success is {success:true} with NO data key.
+    private static async Task<IResult> DeleteAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IQuestion360Writer writer,
+        string id,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        if (Guard(context, protectedRequestGuard, requireManage: true) is { } denied)
+        {
+            return denied;
+        }
+
+        var status = await writer.DeleteAsync(context, id, cancellationToken);
+        return status switch
+        {
+            Question360DeleteStatus.Deleted => Results.Ok(new { success = true }),
+            Question360DeleteStatus.ChildGuard => Results.Json(
+                new { success = false, message = "Cannot delete: has active sub-questions" },
+                statusCode: StatusCodes.Status400BadRequest),
+            _ => InternalError(),
+        };
+    }
+
+    // POST /bulk-create — array body → per-item report (always 200). A non-array body → 400 "Array required".
+    private static async Task<IResult> BulkCreateAsync(
+        HttpContext http,
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        IQuestion360Writer writer,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        if (Guard(context, protectedRequestGuard, requireManage: true) is { } denied)
+        {
+            return denied;
+        }
+
+        var body = await ReadBodyAsync(http, cancellationToken);
+        if (body.ValueKind != JsonValueKind.Array)
+        {
+            return Results.Json(new { success = false, message = "Array required" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var result = await writer.BulkCreateAsync(context, body, cancellationToken);
+        return Results.Ok(new
+        {
+            success = true,
+            data = new { createdCount = result.CreatedCount, totalRequested = result.TotalRequested, errors = result.Errors },
+        });
+    }
+
+    private static IResult MapWriteOutcome(Question360WriteOutcome outcome) => outcome.Status switch
+    {
+        Question360WriteStatus.Ok => Results.Ok(new { success = true, data = outcome.Row }),
+        Question360WriteStatus.ValidationError => ValidationError(outcome.Message),
+        _ => InternalError(),
+    };
+
+    private static IResult ValidationError(string? message) =>
+        Results.Json(new { success = false, message }, statusCode: StatusCodes.Status400BadRequest);
+
+    // Legacy: an update/activate/deactivate/delete on a missing id throws Prisma P2025 → the route catch returns
+    // 500 "Internal server error". The catalog has no IDOR/ownership concern, so this is NOT a 404. (Candidate
+    // 404-upgrade — flagged in the slice report; kept as legacy for strict parity.)
+    private static IResult InternalError() =>
+        Results.Json(new { success = false, message = "Internal server error" }, statusCode: StatusCodes.Status500InternalServerError);
+
+    // Absent/empty/malformed body → empty object {} (legacy express.json()); a present array/primitive is preserved
+    // so the create validator (or the bulk array-check) sees its real kind.
+    private static readonly JsonElement EmptyObject = JsonDocument.Parse("{}").RootElement.Clone();
+
+    private static async Task<JsonElement> ReadBodyAsync(HttpContext http, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var element = await http.Request.ReadFromJsonAsync<JsonElement>(cancellationToken);
+            return element.ValueKind == JsonValueKind.Undefined ? EmptyObject : element;
+        }
+        catch (JsonException)
+        {
+            return EmptyObject;
+        }
+        catch (BadHttpRequestException)
+        {
+            return EmptyObject;
+        }
+        catch (InvalidOperationException)
+        {
+            return EmptyObject;
+        }
     }
 
     // GET /GetQuestions — active questions, optional ?relationType filter, rich envelope with count + echo.

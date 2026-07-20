@@ -241,11 +241,15 @@ function shouldRouteSchoolAdminReadsToDotnet() {
   );
 }
 
-// question360 READS (FM-DOTNET question360) — one flag covers all five GET reads (global catalog; they cut
-// over together). Default OFF.
-function shouldRouteQuestion360ReadsToDotnet() {
+// question360 (FM-DOTNET question360) — ONE flag covers the WHOLE surface: all 5 GET reads + all 6 writes. A
+// single flag is the only design with no misconfigurable state: Next rewrites match by PATH not method, so the
+// `/api/question360/:id` rewrite cannot distinguish GET (read) from PUT/DELETE (write), and `/bulk-create`
+// matches the `/:id` shape — splitting reads and writes onto two flags would route writes to .NET whenever the
+// reads flag was on regardless of a writes flag. So reads + writes are one surface that cuts over together.
+// Default OFF (this replaces the FM-038 reads-only flag; renaming is safe — it was default-off, never set in prod).
+function shouldRouteQuestion360ToDotnet() {
   return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_QUESTION360_READS_TO_DOTNET)
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_QUESTION360_TO_DOTNET)
   );
 }
 
@@ -688,9 +692,11 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // question360 READS — literal single-segment routes MUST precede the /:id catch-all so /GetQuestions and
-      // /all are not swallowed by :id (Next matches in array order). All five hit the same .NET backend.
-      ...(shouldRouteQuestion360ReadsToDotnet()
+      // question360 (FM-DOTNET question360) — the WHOLE surface (5 reads + 6 writes) under ONE flag; reads +
+      // writes cut over together (path-not-method: /:id can't split GET from PUT/DELETE). All literal + 2-segment
+      // routes MUST precede the /:id catch-all (Next matches in array order) so /GetQuestions, /all, /bulk-create,
+      // /:id/activate, etc. are not swallowed by :id. All hit the same .NET backend.
+      ...(shouldRouteQuestion360ToDotnet()
         ? [
             {
               source: "/api/question360/GetQuestions",
@@ -707,6 +713,22 @@ const nextConfig: NextConfig = {
             {
               source: "/api/question360/sub-questions/:parentQuestionId",
               destination: `${dotnetApiBaseUrl}/api/question360/sub-questions/:parentQuestionId`,
+            },
+            {
+              source: "/api/question360/bulk-create",
+              destination: `${dotnetApiBaseUrl}/api/question360/bulk-create`,
+            },
+            {
+              source: "/api/question360/:id/activate",
+              destination: `${dotnetApiBaseUrl}/api/question360/:id/activate`,
+            },
+            {
+              source: "/api/question360/:id/deactivate",
+              destination: `${dotnetApiBaseUrl}/api/question360/:id/deactivate`,
+            },
+            {
+              source: "/api/question360",
+              destination: `${dotnetApiBaseUrl}/api/question360`,
             },
             {
               source: "/api/question360/:id",
