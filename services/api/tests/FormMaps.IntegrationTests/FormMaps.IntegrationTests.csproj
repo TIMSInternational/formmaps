@@ -35,6 +35,8 @@
     <EmbeddedResource Include="Assessments\Data\integrated-recompute-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers test-scores read harness (FM-DOTNET-037). -->
     <EmbeddedResource Include="Assessments\Data\testscores-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers question360 read harness (FM-DOTNET question360). -->
+    <EmbeddedResource Include="Assessments\Data\question360-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
