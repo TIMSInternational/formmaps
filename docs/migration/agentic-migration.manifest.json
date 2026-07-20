@@ -1591,6 +1591,46 @@
       "notes": [
         "DONE 2026-07-20: question360 reads (built by a fork inheriting full rail context; I ran the adversarial gate + shipped). dotnet 0/0; 381u + 303i. GATE: fresh reviewer SAFE-TO-SHIP (answer-key non-leak confirmed — no such column) + Codex FIXES-NEEDED -> converged; all findings LOW/NIT resolving to established .NET port conventions (403/401 code field = shared guard house-style; relationType single-value = more correct than legacy Prisma array->500; id tie-break = documented determinism superset). Folded the one real coverage pin: bare {success,data} envelope-shape assertions on /all,/category,/sub-questions,/{id}. Staging deploy GREEN (run 29759262713) + canary GREEN (health 200; anon /all,/GetQuestions,/:id -> 401 missing_identity; x-formmaps-service present). NEXT: test-scores WRITES + school-admin reads (Batch A remaining) OR personality PROD cutover."
       ]
+    },
+    {
+      "id": "FM-DOTNET-039-school-admin-reads",
+      "status": "completed",
+      "goal": "Port the school-admin READ surface sub-slice 1 (school-assessments.ts): the getSchoolUser school-scoping rail + 6 straightforward school-scoped reads. DEFERRED to sub-slice 2: /results/{studentId} rich report, /results/export CSV, /assessments/pipeline. EXCLUDED (AI-polyglot): /assessments/insights (Bedrock).",
+      "dependsOn": [
+        "FM-DOTNET-038-question360-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-assessments.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolAssessmentsService.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/SchoolAdmin",
+        "services/api/src/FormMaps.Infrastructure/SchoolAdmin",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolAdminEndpoints.cs",
+        "services/api/src/FormMaps.Domain/Auth/FormMapsPermissions.cs",
+        "services/api/tests/FormMaps.IntegrationTests/SchoolAdmin",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "SchoolAdminScopeResolver (the getSchoolUser rail): resolves caller schoolId from a FRESH users.schoolId read on the caller's OWN id (NOT the JWT/tenant claim); null->400 'No school'. Reusable by sub-slice 2 + writes",
+        "SchoolAdminReader (read-only RLS, raw Npgsql): 6 reads — overview (students w/ >=1 group; selfCompleted via normalizeGroupType), results (paginated name ASC, nested data.data, averageScore 1dp AwayFromZero, hasPca/pcaStatus), pca-status (school-scoped IN THE QUERY: WHERE id AND schoolId AND isActive -> uniform 404), config (missing->CONFIG_DEFAULTS, double-wrapped, aiWeights JSON.parse catch->default, String window dates verbatim), status (single-wrapped, completionRate 2dp, inProgress hardcoded 0), schedule (full rows isActive=true)",
+        "6 GET routes on SchoolAdminEndpoints + shared AuthorizeAsync (RequireIdentity -> school:manage 403 -> scope 400). isActive filter divergence honored per endpoint; role set ['Student','student']; scorePercentage Float->number; coKey never selected; ISO-Z; search ILIKE unescaped (faithful to Prisma contains)",
+        "harness += schooladmin-schema.sql (non-UTC pin) + SchoolAdminDatabaseFixture; SchoolAdminReaderTests(19) + SchoolAdminEndpointsTests(15)",
+        "web flag FORMMAPS_ROUTE_SCHOOL_ADMIN_READS_TO_DOTNET (default off) + 4 GET-only rewrites (overview/results/pca-status/status); /config + /schedule GET rewrites left DARK (those paths carry Node-only PUTs -> FM-037 trap)"
+      ],
+      "guardrails": [
+        "TENANT-ISOLATION HARDENING (gate HIGH, compliance-by-design): pca-status student lookup school-scoped IN THE QUERY so a super-admin RLS-bypassed session never reads a foreign-school row before the 404 (observably identical to legacy findUnique-then-check)",
+        "wrapping asymmetry EXACT: config double data.data, status single data (deliberate legacy fix), results nested data.data+pagination; rounding MidpointRounding.AwayFromZero (JS Math.round); isActive divergence per endpoint (overview filters, results+status do NOT); both role spellings",
+        "documented supersets: 100-char studentId bound; deterministic id/evaluatedUserId tie-break ordering; 403 code:missing_permission field (shared guard house-style)"
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx",
+        "staging deploy + health 200 + anon GET /api/v1/school-admin/{evaluations/overview,results,assessments/status} -> 401"
+      ],
+      "notes": [
+        "DONE 2026-07-20: school-admin reads sub-slice 1 (built by a fork; I ran the adversarial gate + shipped). dotnet 0/0; 381u + 315i + 1c. GATE: fresh reviewer SAFE-TO-SHIP + Codex FIXES-NEEDED -> converged. Folded the HIGH (query-level school scope on pca-status closes a super-admin cross-tenant read) + a super-admin-scoped-to-own-DB-school test (proves the rail uses the DB value not the token claim) + a lowercase-role coverage test. Kept documented supersets (100-char bound, tie-break ordering, 403 code field). Reconciled the 5 append-only wiring files against FM-038 by merging main into the branch (next.config.ts helper+rewrite regions needed hand-fixing where conflict boundaries fell inside shared trailing brackets). NEXT: test-scores WRITES (FM-040, in fold) OR school-admin sub-slice 2 (rich report/CSV/pipeline) OR personality PROD cutover."
+      ]
     }
   ]
 }
