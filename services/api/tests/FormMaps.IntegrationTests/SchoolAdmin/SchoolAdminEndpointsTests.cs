@@ -369,15 +369,180 @@ public class SchoolAdminEndpointsTests
     private static Task<HttpResponseMessage> Send(HttpClient client, string path, string permission = FormMapsPermissions.SchoolManage)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, path);
+        AddAuth(request, permission);
+        return client.SendAsync(request);
+    }
+
+    private static Task<HttpResponseMessage> SendPut(
+        HttpClient client, string path, object body, string permission = FormMapsPermissions.SchoolManage, bool authenticated = true)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put, path)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(body), System.Text.Encoding.UTF8, "application/json"),
+        };
+        if (authenticated)
+        {
+            AddAuth(request, permission);
+        }
+
+        return client.SendAsync(request);
+    }
+
+    private static void AddAuth(HttpRequestMessage request, string permission)
+    {
         request.Headers.Add(DevelopmentRequestContextFactory.UserIdHeader, Caller);
         request.Headers.Add(DevelopmentRequestContextFactory.RoleHeader, FormMapsRoles.SchoolAdmin);
         request.Headers.Add(DevelopmentRequestContextFactory.EmailHeader, "admin@example.test");
         request.Headers.Add(DevelopmentRequestContextFactory.NameHeader, "Admin");
         request.Headers.Add(DevelopmentRequestContextFactory.PermissionsHeader, permission);
-        return client.SendAsync(request);
     }
 
-    private sealed class Factory(FakeReader reader, FakeScope scope) : WebApplicationFactory<Program>
+    // ---------------------------------------------------------------- PUT config
+
+    [Fact]
+    public async Task Put_config_double_wraps_and_forwards_only_provided_fields()
+    {
+        var writer = new FakeWriter { Config = new("2026-05-01", "2026-06-30", "none", false, 14,
+            JsonDocument.Parse("""{"academic":0.6,"social":0.2,"career":0.2}""").RootElement.Clone()) };
+        using var factory = new Factory(new FakeReader(), new FakeScope(School), writer);
+        using var client = factory.CreateClient();
+
+        var response = await SendPut(client, "/api/v1/school-admin/assessments/config",
+            new { reminderDaysBefore = 14, aiWeights = new { academic = 0.6, social = 0.2, career = 0.2 } });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var inner = doc.RootElement.GetProperty("data").GetProperty("data"); // DOUBLE wrap
+        Assert.Equal(14, inner.GetProperty("reminderDaysBefore").GetInt32());
+        Assert.Equal(0.6, inner.GetProperty("aiWeights").GetProperty("academic").GetDouble());
+
+        Assert.True(writer.ReceivedPatch!.HasReminderDaysBefore);
+        Assert.True(writer.ReceivedPatch.HasAiWeights);
+        Assert.False(writer.ReceivedPatch.HasRetakePolicy);   // not sent -> not flagged
+        Assert.False(writer.ReceivedPatch.HasWindowStart);
+        Assert.Equal(Caller, writer.ReceivedUserId);
+    }
+
+    [Fact]
+    public async Task Put_config_skips_falsy_aiWeights()
+    {
+        var writer = new FakeWriter();
+        using var factory = new Factory(new FakeReader(), new FakeScope(School), writer);
+        using var client = factory.CreateClient();
+
+        await SendPut(client, "/api/v1/school-admin/assessments/config", new { aiWeights = (object?)null });
+
+        Assert.False(writer.ReceivedPatch!.HasAiWeights); // null is JS-falsy -> skipped
+    }
+
+    [Fact]
+    public async Task Put_config_rejects_wrong_typed_field_400()
+    {
+        using var factory = new Factory(new FakeReader(), new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        var response = await SendPut(client, "/api/v1/school-admin/assessments/config", new { reminderDaysBefore = "not-a-number" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_config_anonymous_is_401()
+    {
+        using var factory = new Factory(new FakeReader(), new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        var response = await SendPut(client, "/api/v1/school-admin/assessments/config", new { reminderDaysBefore = 5 }, authenticated: false);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_config_no_school_is_400()
+    {
+        using var factory = new Factory(new FakeReader(), new FakeScope(null));
+        using var client = factory.CreateClient();
+
+        var response = await SendPut(client, "/api/v1/school-admin/assessments/config", new { reminderDaysBefore = 5 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await AssertMessage(response, "No school");
+    }
+
+    // ---------------------------------------------------------------- PUT schedule
+
+    [Fact]
+    public async Task Put_schedule_single_wraps_and_forwards_items()
+    {
+        var writer = new FakeWriter
+        {
+            Schedules = [new AssessmentScheduleRow("id-1", School, 9, "PCA",
+                "2026-03-01T00:00:00.000Z", "2026-06-30T00:00:00.000Z", true, "admin-1", "2026-01-01T00:00:00.000Z", null, "2026-01-01T00:00:00.000Z")],
+        };
+        using var factory = new Factory(new FakeReader(), new FakeScope(School), writer);
+        using var client = factory.CreateClient();
+
+        var response = await SendPut(client, "/api/v1/school-admin/assessments/schedule",
+            new { schedules = new[] { new { gradeLevel = 9, assessmentType = "PCA", startDate = "2026-03-01", endDate = "2026-06-30" } } });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var arr = doc.RootElement.GetProperty("data"); // SINGLE wrap -> array directly
+        Assert.Equal(JsonValueKind.Array, arr.ValueKind);
+        Assert.Equal("id-1", arr[0].GetProperty("id").GetString());
+
+        var item = Assert.Single(writer.ReceivedItems!);
+        Assert.Equal(9, item.GradeLevel);
+        Assert.Equal("PCA", item.AssessmentType);
+    }
+
+    [Fact]
+    public async Task Put_schedule_array_required_400()
+    {
+        using var factory = new Factory(new FakeReader(), new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        var response = await SendPut(client, "/api/v1/school-admin/assessments/schedule", new { schedules = "not-an-array" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await AssertMessage(response, "schedules array required");
+    }
+
+    [Fact]
+    public async Task Put_schedule_skips_incomplete_items()
+    {
+        var writer = new FakeWriter();
+        using var factory = new Factory(new FakeReader(), new FakeScope(School), writer);
+        using var client = factory.CreateClient();
+
+        await SendPut(client, "/api/v1/school-admin/assessments/schedule", new
+        {
+            schedules = new object[]
+            {
+                new { gradeLevel = 9, assessmentType = "PCA", startDate = "2026-03-01", endDate = "2026-06-30" }, // complete
+                new { gradeLevel = 0, assessmentType = "MIL", startDate = "2026-03-01", endDate = "2026-06-30" }, // gradeLevel 0 -> skip
+                new { gradeLevel = 10, assessmentType = "", startDate = "2026-03-01", endDate = "2026-06-30" },   // empty type -> skip
+                new { gradeLevel = 11, assessmentType = "360", startDate = "2026-03-01", endDate = "" },          // empty endDate -> skip
+            },
+        });
+
+        var item = Assert.Single(writer.ReceivedItems!); // only the complete one survives
+        Assert.Equal(9, item.GradeLevel);
+    }
+
+    [Fact]
+    public async Task Put_schedule_invalid_date_400()
+    {
+        using var factory = new Factory(new FakeReader(), new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        var response = await SendPut(client, "/api/v1/school-admin/assessments/schedule",
+            new { schedules = new[] { new { gradeLevel = 9, assessmentType = "PCA", startDate = "garbage-date", endDate = "2026-06-30" } } });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    private sealed class Factory(FakeReader reader, FakeScope scope, FakeWriter? writer = null) : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -388,7 +553,39 @@ public class SchoolAdminEndpointsTests
                 services.AddSingleton<ISchoolAdminReader>(reader);
                 services.RemoveAll<ISchoolAdminScopeResolver>();
                 services.AddSingleton<ISchoolAdminScopeResolver>(scope);
+                services.RemoveAll<ISchoolAdminWriter>();
+                services.AddSingleton<ISchoolAdminWriter>(writer ?? new FakeWriter());
             });
+        }
+    }
+
+    private sealed class FakeWriter : ISchoolAdminWriter
+    {
+        public AssessmentConfig Config { get; init; } =
+            new("2026-03-01", "2026-06-30", "once_per_semester", true, 7,
+                JsonDocument.Parse("""{"academic":0.4,"social":0.3,"career":0.3}""").RootElement.Clone());
+
+        public IReadOnlyList<AssessmentScheduleRow> Schedules { get; init; } = [];
+
+        public AssessmentConfigPatch? ReceivedPatch { get; private set; }
+
+        public IReadOnlyList<ScheduleUpsertItem>? ReceivedItems { get; private set; }
+
+        public string? ReceivedUserId { get; private set; }
+
+        public Task<AssessmentConfig> UpdateAssessmentConfigAsync(
+            RequestContext context, string schoolId, string userId, AssessmentConfigPatch patch, CancellationToken cancellationToken = default)
+        {
+            ReceivedPatch = patch;
+            ReceivedUserId = userId;
+            return Task.FromResult(Config);
+        }
+
+        public Task<IReadOnlyList<AssessmentScheduleRow>> UpsertSchedulesAsync(
+            RequestContext context, string schoolId, string? userId, IReadOnlyList<ScheduleUpsertItem> items, CancellationToken cancellationToken = default)
+        {
+            ReceivedItems = items;
+            return Task.FromResult(Schedules);
         }
     }
 

@@ -241,6 +241,17 @@ function shouldRouteSchoolAdminReadsToDotnet() {
   );
 }
 
+// School-admin CONFIG + SCHEDULE writes (FM-DOTNET-044): the /assessments/config and /assessments/schedule
+// paths each serve a GET (read, FM-039) AND a PUT (write, FM-044). Next rewrites match by PATH not method, so
+// both methods cut over together under ONE flag — the only non-split-brain design (same rationale as
+// question360). FM-039 deliberately left these two paths on Node because their PUTs were still Node-only; now
+// that both PUTs are .NET-capable the paths can flip. Default off (dark).
+function shouldRouteSchoolAdminConfigScheduleToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_CONFIG_SCHEDULE_TO_DOTNET)
+  );
+}
+
 // question360 (FM-DOTNET question360) — ONE flag covers the WHOLE surface: all 5 GET reads + all 6 writes. A
 // single flag is the only design with no misconfigurable state: Next rewrites match by PATH not method, so the
 // `/api/question360/:id` rewrite cannot distinguish GET (read) from PUT/DELETE (write), and `/bulk-create`
@@ -705,6 +716,21 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/assessments/pipeline",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/pipeline`,
+            },
+          ]
+        : []),
+      // School-admin CONFIG + SCHEDULE (FM-DOTNET-044) — /assessments/config + /assessments/schedule, each
+      // GET(read, FM-039) + PUT(write, FM-044) flipping together under one flag (path-not-method). Same .NET
+      // backend; both paths are 3-segment literals so no ordering hazard vs the reads routes above.
+      ...(shouldRouteSchoolAdminConfigScheduleToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/assessments/config",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/config`,
+            },
+            {
+              source: "/api/v1/school-admin/assessments/schedule",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/schedule`,
             },
           ]
         : []),

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.SchoolAdmin;
@@ -28,8 +29,10 @@ public static class SchoolAdminEndpoints
         group.MapGet("/results/{studentId}/pca-status", GetStudentPcaStatusAsync);
         group.MapGet("/results/{studentId}", GetStudentReportAsync);
         group.MapGet("/assessments/config", GetConfigAsync);
+        group.MapPut("/assessments/config", PutConfigAsync);
         group.MapGet("/assessments/status", GetStatusAsync);
         group.MapGet("/assessments/schedule", GetScheduleAsync);
+        group.MapPut("/assessments/schedule", PutScheduleAsync);
         group.MapGet("/assessments/pipeline", GetPipelineAsync);
 
         return app;
@@ -386,6 +389,241 @@ public static class SchoolAdminEndpoints
                 eval360Detail = new { total = r.Eval360Detail.Total, completed = r.Eval360Detail.Completed }
             })
         });
+    }
+
+    private static async Task<IResult> PutConfigAsync(
+        HttpContext http,
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        ISchoolAdminWriter writer,
+        CancellationToken cancellationToken)
+    {
+        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        var body = await ReadBodyAsync(http, cancellationToken);
+        if (!TryParseConfigPatch(body, out var patch, out var parseError))
+        {
+            // Architecturally-correct divergence: legacy has no body validation and would pass a wrong-typed
+            // value to Prisma -> DB error -> 500. We reject the malformed field up front with a 400.
+            return Results.Json(new { success = false, message = parseError }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        // userId = the authenticated caller (legacy getSchoolUser().userId is the caller's own id).
+        var userId = context.Tenant?.UserId ?? string.Empty;
+        var config = await writer.UpdateAssessmentConfigAsync(context, schoolId!, userId, patch, cancellationToken);
+
+        // Deliberate DOUBLE-wrap ({ data: { data } }) — matches the GET config route.
+        return Results.Ok(new
+        {
+            success = true,
+            data = new
+            {
+                data = new
+                {
+                    assessmentWindowStart = config.AssessmentWindowStart,
+                    assessmentWindowEnd = config.AssessmentWindowEnd,
+                    retakePolicy = config.RetakePolicy,
+                    allowSelfSchedule = config.AllowSelfSchedule,
+                    reminderDaysBefore = config.ReminderDaysBefore,
+                    aiWeights = config.AiWeights
+                }
+            }
+        });
+    }
+
+    private static async Task<IResult> PutScheduleAsync(
+        HttpContext http,
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        ISchoolAdminWriter writer,
+        CancellationToken cancellationToken)
+    {
+        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        var body = await ReadBodyAsync(http, cancellationToken);
+        // Route guard: `schedules` must be an array (legacy `!Array.isArray(schedules)` -> 400).
+        if (!body.TryGetProperty("schedules", out var schedulesEl) || schedulesEl.ValueKind != JsonValueKind.Array)
+        {
+            return Results.Json(new { success = false, message = "schedules array required" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        if (!TryParseScheduleItems(schedulesEl, out var items, out var parseError))
+        {
+            return Results.Json(new { success = false, message = parseError }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        // req.userId (nullable) is the createdBy/updatedBy actor.
+        var userId = context.Tenant?.UserId;
+        var rows = await writer.UpsertSchedulesAsync(context, schoolId!, userId, items, cancellationToken);
+
+        // Deliberate SINGLE-wrap (matches the GET schedule route shape).
+        return Results.Ok(new
+        {
+            success = true,
+            data = rows.Select(r => new
+            {
+                id = r.Id,
+                schoolId = r.SchoolId,
+                gradeLevel = r.GradeLevel,
+                assessmentType = r.AssessmentType,
+                startDate = r.StartDate,
+                endDate = r.EndDate,
+                isActive = r.IsActive,
+                createdBy = r.CreatedBy,
+                createdDate = r.CreatedDate,
+                updatedBy = r.UpdatedBy,
+                updatedAt = r.UpdatedAt
+            })
+        });
+    }
+
+    // updateAssessmentConfig body is untyped (no zod). PATCH: only provided keys are written; aiWeights only
+    // when JS-truthy. Wrong-typed provided fields are rejected 400 (legacy would 500 at the DB — see PutConfig).
+    private static bool TryParseConfigPatch(JsonElement body, out AssessmentConfigPatch patch, out string error)
+    {
+        patch = default!;
+        error = string.Empty;
+        bool hasWs = false, hasWe = false, hasRp = false, hasAss = false, hasRdb = false, hasAiw = false;
+        string? ws = null, we = null, rp = null, aiwJson = null;
+        bool ass = false;
+        int rdb = 0;
+
+        if (body.ValueKind == JsonValueKind.Object)
+        {
+            if (body.TryGetProperty("assessmentWindowStart", out var wsEl))
+            {
+                if (wsEl.ValueKind is not (JsonValueKind.String or JsonValueKind.Null)) { error = "assessmentWindowStart must be a string"; return false; }
+                hasWs = true; ws = wsEl.ValueKind == JsonValueKind.String ? wsEl.GetString() : null;
+            }
+
+            if (body.TryGetProperty("assessmentWindowEnd", out var weEl))
+            {
+                if (weEl.ValueKind is not (JsonValueKind.String or JsonValueKind.Null)) { error = "assessmentWindowEnd must be a string"; return false; }
+                hasWe = true; we = weEl.ValueKind == JsonValueKind.String ? weEl.GetString() : null;
+            }
+
+            if (body.TryGetProperty("retakePolicy", out var rpEl))
+            {
+                if (rpEl.ValueKind != JsonValueKind.String) { error = "retakePolicy must be a string"; return false; }
+                hasRp = true; rp = rpEl.GetString();
+            }
+
+            if (body.TryGetProperty("allowSelfSchedule", out var assEl))
+            {
+                if (assEl.ValueKind is not (JsonValueKind.True or JsonValueKind.False)) { error = "allowSelfSchedule must be a boolean"; return false; }
+                hasAss = true; ass = assEl.GetBoolean();
+            }
+
+            if (body.TryGetProperty("reminderDaysBefore", out var rdbEl))
+            {
+                if (rdbEl.ValueKind != JsonValueKind.Number || !rdbEl.TryGetInt32(out rdb)) { error = "reminderDaysBefore must be an integer"; return false; }
+                hasRdb = true;
+            }
+
+            // `if (body.aiWeights)` — JS truthiness: skip null/false/0/"" ; otherwise store JSON.stringify(value).
+            if (body.TryGetProperty("aiWeights", out var aiwEl) && IsTruthy(aiwEl))
+            {
+                hasAiw = true; aiwJson = JsonSerializer.Serialize(aiwEl);
+            }
+        }
+
+        patch = new AssessmentConfigPatch(hasWs, ws, hasWe, we, hasRp, rp, hasAss, ass, hasRdb, rdb, hasAiw, aiwJson);
+        return true;
+    }
+
+    // upsertSchedules: skip any item missing a truthy gradeLevel/assessmentType/startDate/endDate (legacy `!s.x`;
+    // gradeLevel 0 is falsy -> skipped). A structurally-complete item with an UNPARSEABLE date -> 400 (legacy
+    // `new Date("bad")` -> Invalid Date -> Prisma -> 500; we reject cleanly up front).
+    private static bool TryParseScheduleItems(JsonElement schedulesEl, out List<ScheduleUpsertItem> items, out string error)
+    {
+        items = [];
+        error = string.Empty;
+
+        foreach (var el in schedulesEl.EnumerateArray())
+        {
+            if (el.ValueKind != JsonValueKind.Object) { continue; }
+
+            // gradeLevel: truthy integer (0 / missing / non-number -> skip).
+            if (!el.TryGetProperty("gradeLevel", out var gradeEl) || gradeEl.ValueKind != JsonValueKind.Number
+                || !gradeEl.TryGetInt32(out var gradeLevel) || gradeLevel == 0)
+            {
+                continue;
+            }
+
+            if (!TryTruthyString(el, "assessmentType", out var type)) { continue; }
+            if (!TryTruthyString(el, "startDate", out var startRaw)) { continue; }
+            if (!TryTruthyString(el, "endDate", out var endRaw)) { continue; }
+
+            if (!TryParseDate(startRaw, out var start)) { error = "Invalid startDate"; return false; }
+            if (!TryParseDate(endRaw, out var end)) { error = "Invalid endDate"; return false; }
+
+            items.Add(new ScheduleUpsertItem(gradeLevel, type, start, end));
+        }
+
+        return true;
+    }
+
+    private static bool TryTruthyString(JsonElement obj, string name, out string value)
+    {
+        value = string.Empty;
+        if (!obj.TryGetProperty(name, out var el) || el.ValueKind != JsonValueKind.String) { return false; }
+        var s = el.GetString();
+        if (string.IsNullOrEmpty(s)) { return false; }
+        value = s;
+        return true;
+    }
+
+    // `new Date(s)` semantics: parse as an instant, normalized to UTC wall-clock (Kind=Unspecified for the
+    // timestamp(3)-without-tz column). A bare date "2026-03-01" -> 2026-03-01T00:00:00Z, matching JS.
+    private static bool TryParseDate(string raw, out DateTime value)
+    {
+        value = default;
+        if (!DateTimeOffset.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var dto))
+        {
+            return false;
+        }
+
+        value = DateTime.SpecifyKind(dto.UtcDateTime, DateTimeKind.Unspecified);
+        return true;
+    }
+
+    // JS truthiness for the aiWeights guard: false for null/false/0/"" ; true otherwise (objects/arrays incl. empty).
+    private static bool IsTruthy(JsonElement el) => el.ValueKind switch
+    {
+        JsonValueKind.Null => false,
+        JsonValueKind.False => false,
+        JsonValueKind.Undefined => false,
+        JsonValueKind.String => !string.IsNullOrEmpty(el.GetString()),
+        JsonValueKind.Number => el.TryGetDouble(out var d) && d != 0,
+        _ => true
+    };
+
+    private static readonly JsonElement EmptyObject = JsonDocument.Parse("{}").RootElement.Clone();
+
+    private static async Task<JsonElement> ReadBodyAsync(HttpContext http, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var element = await http.Request.ReadFromJsonAsync<JsonElement>(cancellationToken);
+            return element.ValueKind == JsonValueKind.Undefined ? EmptyObject : element;
+        }
+        catch (JsonException)
+        {
+            // Malformed/empty body -> treat as {} (legacy express json parser yields {} for an empty body; a
+            // truly malformed body is a rare non-client case and an empty patch is the safe read).
+            return EmptyObject;
+        }
     }
 
     /// <summary>
