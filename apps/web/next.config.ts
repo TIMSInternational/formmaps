@@ -231,6 +231,24 @@ function shouldRouteTestScoresWriteToDotnet() {
   );
 }
 
+// School-admin READS (FM-DOTNET sub-slice 1): the six straightforward school-scoped reads cut over as one
+// group behind a single flag (low-risk, no dual-write). The deferred /results/:studentId report,
+// /results/export CSV, /assessments/pipeline, and the polyglot /assessments/insights stay on Node (fall
+// through to the /api/:path* catch-all).
+function shouldRouteSchoolAdminReadsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_READS_TO_DOTNET)
+  );
+}
+
+// question360 READS (FM-DOTNET question360) — one flag covers all five GET reads (global catalog; they cut
+// over together). Default OFF.
+function shouldRouteQuestion360ReadsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_QUESTION360_READS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -625,6 +643,59 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/test-scores/:id",
               destination: `${dotnetApiBaseUrl}/api/v1/test-scores/:id`,
+            },
+          ]
+        : []),
+      // School-admin READS (FM-DOTNET sub-slice 1). More specific than the /api/:path* catch-all below, so
+      // these must precede it. ONLY the four method-unambiguous GET paths are wired here. The GET readers for
+      // /assessments/config and /assessments/schedule are also built + staged + tested, but their rewrites are
+      // DEFERRED to the config/schedule WRITE slice: Next rewrites match by PATH not method, and those two
+      // paths also serve a PUT write (still Node-only) — flipping them would route the PUT to .NET (no handler).
+      // /results/:studentId/pca-status precedes the (deferred) rich /results/:studentId and does not shadow the
+      // exact /results list source.
+      ...(shouldRouteSchoolAdminReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/evaluations/overview",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/evaluations/overview`,
+            },
+            {
+              source: "/api/v1/school-admin/results/:studentId/pca-status",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results/:studentId/pca-status`,
+            },
+            {
+              source: "/api/v1/school-admin/results",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results`,
+            },
+            {
+              source: "/api/v1/school-admin/assessments/status",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/status`,
+            },
+          ]
+        : []),
+      // question360 READS — literal single-segment routes MUST precede the /:id catch-all so /GetQuestions and
+      // /all are not swallowed by :id (Next matches in array order). All five hit the same .NET backend.
+      ...(shouldRouteQuestion360ReadsToDotnet()
+        ? [
+            {
+              source: "/api/question360/GetQuestions",
+              destination: `${dotnetApiBaseUrl}/api/question360/GetQuestions`,
+            },
+            {
+              source: "/api/question360/all",
+              destination: `${dotnetApiBaseUrl}/api/question360/all`,
+            },
+            {
+              source: "/api/question360/category/:category",
+              destination: `${dotnetApiBaseUrl}/api/question360/category/:category`,
+            },
+            {
+              source: "/api/question360/sub-questions/:parentQuestionId",
+              destination: `${dotnetApiBaseUrl}/api/question360/sub-questions/:parentQuestionId`,
+            },
+            {
+              source: "/api/question360/:id",
+              destination: `${dotnetApiBaseUrl}/api/question360/:id`,
             },
           ]
         : []),
