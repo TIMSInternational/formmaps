@@ -2,10 +2,12 @@ using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using FormMaps.Application.Reports;
+using FormMaps.Application.SchoolAdmin;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Reports;
+using FormMaps.Infrastructure.SchoolAdmin;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -57,6 +59,8 @@ public static class DependencyInjection
         services.AddScoped<IAssessmentTimelineReader, AssessmentTimelineReader>();
         services.AddScoped<ICompleteProfileAssembler, CompleteProfileAssembler>();
         services.AddScoped<ITestScoreReader, TestScoreReader>();
+        services.AddScoped<ISchoolAdminScopeResolver, SchoolAdminScopeResolver>();
+        services.AddScoped<ISchoolAdminReader, SchoolAdminReader>();
         services.AddScoped<IUserAccessGuard, UserAccessGuard>();
 
         // Subscription entitlement gate (legacy requireSubscription). Grace window is env-tunable

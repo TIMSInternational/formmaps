@@ -9,4 +9,5 @@ public static class FormMapsPermissions
     public const string AssessmentsRead = "assessments:read";
     public const string ProfileRead = "profile:read";
     public const string ProfileWrite = "profile:write";
+    public const string SchoolManage = "school:manage";
 }

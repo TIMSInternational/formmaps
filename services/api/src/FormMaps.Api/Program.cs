@@ -36,6 +36,7 @@ app.MapPersonalityEndpoints();
 app.MapAssessmentTimelineEndpoints();
 app.MapVocationalEndpoints();
 app.MapTestScoreEndpoints();
+app.MapSchoolAdminEndpoints();
 
 app.Run();
 
