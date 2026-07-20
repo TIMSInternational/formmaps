@@ -1840,6 +1840,45 @@
       "notes": [
         "DONE 2026-07-20 (parallel with FM-046). Fork-built + fresh+Codex gate folded the BLOCKING coalescing bug (config PUT would fabricate default window dates/retakePolicy where legacy returns null/\"\") + the malformed-JSON phantom-write. dotnet 0/0; unit 460 + integration 498(+1 skip). NEXT: FM-045 (email writes: send-reminders + setup-360)."
       ]
+    },
+    {
+      "id": "FM-DOTNET-046-gradebook-transcript-read",
+      "status": "completed",
+      "goal": "First Phase-B slice: port the student gradebook transcript READ (routes/school-gradebook.ts GET /gradebook/students/:studentId) \u2014 grades-by-year + GPA summary. Reuse the school:manage school-scope rail; own GradebookEndpoints + GradebookReader (no edit to SchoolAdminEndpoints).",
+      "dependsOn": [
+        "FM-DOTNET-039-school-admin-reads-1"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-gradebook.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/gradebookService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/transcriptService.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Gradebook/GpaComputation.cs",
+        "services/api/src/FormMaps.Application/Gradebook/GradebookModels.cs",
+        "services/api/src/FormMaps.Application/Gradebook/IGradebookReader.cs",
+        "services/api/src/FormMaps.Infrastructure/Gradebook/GradebookReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/GradebookEndpoints.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "GpaComputation (pure): DOUBLE arithmetic, Math.Round(x*10000, AwayFromZero)/10000 (= JS Math.round for non-negative GPA); skip null/empty grade + letter-not-in-map + credits<=0; totalCredits==0 -> {null,null,0} asymmetry; DEFAULT_UNWEIGHTED_MAP + DEFAULT_WEIGHT_BONUSES.",
+        "GradebookReader: verifyStudentInSchool (schoolId==caller AND roleName in {student,Student} -> else 404 'Student not found', IDOR-safe) + getTranscriptData (student_grades where studentId+schoolId+isActive, ORDER BY academicYear DESC/semester ASC = Postgres default NULLS FIRST/LAST; full 17-col row passthrough camelCase, credits::double precision->JSON number, ISO-Z ts; byYear grouped, null/empty year->'Unknown', insertion order) + resolveGpaConfig (gpa_configurations jsonb; present-non-null object incl {} used, SQL-null/'null'/non-object->DEFAULT; weightBonuses keys lowercased, unweightedMap verbatim). Read-only RLS session.",
+        "GradebookEndpoints: GET on the school:manage guard chain (RequireIdentity->permission->getSchoolUser 400 'No school'); SINGLE-wrap {success,data:{byYear,gpaUnweighted,gpaWeighted,totalCredits}}. Flag FORMMAPS_ROUTE_GRADEBOOK_READ_TO_DOTNET (default off), rewrite disjoint from /results, before the /api catch-all."
+      ],
+      "guardrails": [
+        "GATE (fresh + Codex): NO CONFIRMED blocker on the supported path. Both flagged only unreachable corrupt-jsonb divergences: string-valued unweightedMap entry (TS concatenates->NaN->null weighted GPA; .NET coerces), non-object/array-shaped map (TS truthiness uses it->null GPA; .NET->DEFAULT), negative custom map rounding. All require malformed gpa_configurations data the UI/API can't write; .NET's non-object/non-numeric->DEFAULT is the more defensive behavior. ACCEPTED DIVERGENCES (documented, not folded) per architecturally-correct-over-bug-faithful.",
+        "double (not decimal) GPA math; AwayFromZero rounding; Decimal credits->JSON number; jsonb truthiness; Postgres NULLS ordering; full-row camelCase passthrough; SINGLE wrap; exact 404/400 messages; parameterized SQL."
+      ],
+      "validation": [
+        "dotnet build 0/0",
+        "dotnet test (unit 467 + integration ~499 + contract 1) \u2014 on the main-merged tree",
+        "staging deploy + canary (health 200; anon GET gradebook -> 401)"
+      ],
+      "notes": [
+        "DONE 2026-07-20 (parallel with FM-044; built in own worktree, gated in parallel, merged after FM-044). Fork-built (repo-verify guard added after a wrong-repo dispatch). Gate found no reachable bug. Merged main (FM-044) to reconcile the next.config.ts + DI.cs append conflicts (the known trailing-bracket trap \u2014 hand-closed the gradebook rewrite block). NEXT: FM-045 (email writes) then more Phase-B (school.ts/school-courses/school-students/school-grades reads)."
+      ]
     }
   ]
 }
