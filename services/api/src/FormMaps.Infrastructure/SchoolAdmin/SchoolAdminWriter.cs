@@ -81,11 +81,13 @@ public sealed class SchoolAdminWriter(
         await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
         {
             await reader.ReadAsync(cancellationToken);
-            // Same `settings.x || DEFAULT` coalescing + parseAiWeights the reader emits (an empty/null
-            // retakePolicy reads back as the CONFIG default "once_per_semester", NOT the DB default "none").
-            var windowStart = FalsyOr(reader.IsDBNull(0) ? null : reader.GetString(0), "2026-03-01");
-            var windowEnd = FalsyOr(reader.IsDBNull(1) ? null : reader.GetString(1), "2026-06-30");
-            var retakePolicy = FalsyOr(reader.IsDBNull(2) ? null : reader.GetString(2), "once_per_semester");
+            // Legacy updateAssessmentConfig (schoolAssessmentsService.ts:250-257) returns the window/retakePolicy
+            // fields RAW from the DB — NO `|| DEFAULT` coalescing (that is the GET-only path, getAssessmentConfig).
+            // So a first save omitting windows returns null (not "2026-03-01"), and retakePolicy:"" returns ""
+            // (not "once_per_semester"). aiWeights IS parsed in the write (parseAiWeights), so keep that.
+            var windowStart = reader.IsDBNull(0) ? null : reader.GetString(0);
+            var windowEnd = reader.IsDBNull(1) ? null : reader.GetString(1);
+            var retakePolicy = reader.IsDBNull(2) ? null : reader.GetString(2);
             var allowSelfSchedule = reader.GetBoolean(3);
             var reminderDaysBefore = reader.GetInt32(4);
             var aiWeightsJson = reader.IsDBNull(5) ? null : reader.GetString(5);
@@ -188,9 +190,6 @@ public sealed class SchoolAdminWriter(
         using var document = JsonDocument.Parse(AiWeightsDefaultJson);
         return document.RootElement.Clone();
     }
-
-    private static string FalsyOr(string? value, string fallback) =>
-        string.IsNullOrEmpty(value) ? fallback : value;
 
     private static string IsoZ(DateTime value) =>
         DateTime.SpecifyKind(value, DateTimeKind.Utc).ToString("yyyy-MM-ddTHH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);

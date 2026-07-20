@@ -62,9 +62,10 @@ public sealed class SchoolAdminWriterTests : IClassFixture<SchoolAdminDatabaseFi
     {
         var config = await Writer().UpdateAssessmentConfigAsync(Ctx(), School, Actor, Patch());
 
-        // Row now exists with DB defaults; windows null -> FalsyOr defaults; aiWeightsJson null -> default weights.
-        Assert.Equal("2026-03-01", config.AssessmentWindowStart);
-        Assert.Equal("2026-06-30", config.AssessmentWindowEnd);
+        // Legacy WRITE returns raw DB values (NO GET-style coalescing): unset nullable windows read back null;
+        // retakePolicy takes its non-null DB default "none"; aiWeightsJson null -> parseAiWeights default weights.
+        Assert.Null(config.AssessmentWindowStart);
+        Assert.Null(config.AssessmentWindowEnd);
         Assert.Equal("none", config.RetakePolicy);
         Assert.False(config.AllowSelfSchedule);
         Assert.Equal(7, config.ReminderDaysBefore);
@@ -91,13 +92,14 @@ public sealed class SchoolAdminWriterTests : IClassFixture<SchoolAdminDatabaseFi
     }
 
     [Fact]
-    public async Task Config_empty_retakePolicy_reads_back_as_config_default()
+    public async Task Config_empty_retakePolicy_reads_back_raw_empty()
     {
-        // A stored empty-string retakePolicy is falsy -> read-back coalesces to the CONFIG default.
+        // The legacy WRITE returns the stored value RAW (no coalescing) — a stored "" reads back as "",
+        // NOT the CONFIG default "once_per_semester" (which is a GET-only fallback). Parity-critical.
         var config = await Writer().UpdateAssessmentConfigAsync(
             Ctx(), School, Actor, Patch(retakePolicy: ("", true)));
 
-        Assert.Equal("once_per_semester", config.RetakePolicy);
+        Assert.Equal("", config.RetakePolicy);
     }
 
     // ---------------------------------------------------------------- schedule

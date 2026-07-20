@@ -447,6 +447,27 @@ public class SchoolAdminEndpointsTests
     }
 
     [Fact]
+    public async Task Put_config_malformed_json_is_400_and_does_not_write()
+    {
+        // Malformed JSON must 400 BEFORE the writer runs (legacy routes it to the body-parser error handler,
+        // so no row is created). Regression guard: treating a malformed body as {} would upsert a phantom row.
+        var writer = new FakeWriter { Config = new("2026-05-01", "2026-06-30", "none", false, 7,
+            JsonDocument.Parse("""{"academic":0.4,"social":0.3,"career":0.3}""").RootElement.Clone()) };
+        using var factory = new Factory(new FakeReader(), new FakeScope(School), writer);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/api/v1/school-admin/assessments/config")
+        {
+            Content = new StringContent("{ not-valid-json", System.Text.Encoding.UTF8, "application/json"),
+        };
+        AddAuth(request, FormMapsPermissions.SchoolManage);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Null(writer.ReceivedPatch); // malformed body never reached the writer
+    }
+
+    [Fact]
     public async Task Put_config_anonymous_is_401()
     {
         using var factory = new Factory(new FakeReader(), new FakeScope(School));

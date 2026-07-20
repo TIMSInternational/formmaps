@@ -406,7 +406,12 @@ public static class SchoolAdminEndpoints
         }
 
         var body = await ReadBodyAsync(http, cancellationToken);
-        if (!TryParseConfigPatch(body, out var patch, out var parseError))
+        if (body is null)
+        {
+            return Results.Json(new { success = false, message = "Invalid request body" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        if (!TryParseConfigPatch(body.Value, out var patch, out var parseError))
         {
             // Architecturally-correct divergence: legacy has no body validation and would pass a wrong-typed
             // value to Prisma -> DB error -> 500. We reject the malformed field up front with a 400.
@@ -451,8 +456,13 @@ public static class SchoolAdminEndpoints
         }
 
         var body = await ReadBodyAsync(http, cancellationToken);
+        if (body is null)
+        {
+            return Results.Json(new { success = false, message = "Invalid request body" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
         // Route guard: `schedules` must be an array (legacy `!Array.isArray(schedules)` -> 400).
-        if (!body.TryGetProperty("schedules", out var schedulesEl) || schedulesEl.ValueKind != JsonValueKind.Array)
+        if (!body.Value.TryGetProperty("schedules", out var schedulesEl) || schedulesEl.ValueKind != JsonValueKind.Array)
         {
             return Results.Json(new { success = false, message = "schedules array required" }, statusCode: StatusCodes.Status400BadRequest);
         }
@@ -611,18 +621,27 @@ public static class SchoolAdminEndpoints
 
     private static readonly JsonElement EmptyObject = JsonDocument.Parse("{}").RootElement.Clone();
 
-    private static async Task<JsonElement> ReadBodyAsync(HttpContext http, CancellationToken cancellationToken)
+    // Returns EmptyObject for an empty/whitespace body (legacy express.json() yields {} for an empty body), or
+    // null when the body is present-but-malformed JSON — the caller then returns 400 (legacy routes malformed
+    // JSON to the body-parser error handler BEFORE the route runs, so no write happens; treating it as {} would
+    // instead upsert a phantom defaults row). Reads the raw body so empty vs malformed can be distinguished.
+    private static async Task<JsonElement?> ReadBodyAsync(HttpContext http, CancellationToken cancellationToken)
     {
+        using var streamReader = new StreamReader(http.Request.Body);
+        var raw = await streamReader.ReadToEndAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return EmptyObject;
+        }
+
         try
         {
-            var element = await http.Request.ReadFromJsonAsync<JsonElement>(cancellationToken);
-            return element.ValueKind == JsonValueKind.Undefined ? EmptyObject : element;
+            using var document = JsonDocument.Parse(raw);
+            return document.RootElement.Clone();
         }
         catch (JsonException)
         {
-            // Malformed/empty body -> treat as {} (legacy express json parser yields {} for an empty body; a
-            // truly malformed body is a rare non-client case and an empty patch is the safe read).
-            return EmptyObject;
+            return null;
         }
     }
 
