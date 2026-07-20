@@ -1631,6 +1631,46 @@
       "notes": [
         "DONE 2026-07-20: school-admin reads sub-slice 1 (built by a fork; I ran the adversarial gate + shipped). dotnet 0/0; 381u + 315i + 1c. GATE: fresh reviewer SAFE-TO-SHIP + Codex FIXES-NEEDED -> converged. Folded the HIGH (query-level school scope on pca-status closes a super-admin cross-tenant read) + a super-admin-scoped-to-own-DB-school test (proves the rail uses the DB value not the token claim) + a lowercase-role coverage test. Kept documented supersets (100-char bound, tie-break ordering, 403 code field). Reconciled the 5 append-only wiring files against FM-038 by merging main into the branch (next.config.ts helper+rewrite regions needed hand-fixing where conflict boundaries fell inside shared trailing brackets). NEXT: test-scores WRITES (FM-040, in fold) OR school-admin sub-slice 2 (rich report/CSV/pipeline) OR personality PROD cutover."
       ]
+    },
+    {
+      "id": "FM-DOTNET-040-test-scores-writes",
+      "status": "completed",
+      "goal": "Port the deferred test-scores WRITE + LIST surface (routes/test-scores.ts): GET / (list) + POST / + PUT /{id} + DELETE /{id} on the bare /api/v1/test-scores path. Cuts over WITH the FM-037 reads (Next rewrites match by path not method). Self-scoped writes (RequireIdentity only).",
+      "dependsOn": [
+        "FM-DOTNET-037-test-scores-reads",
+        "FM-DOTNET-039-school-admin-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/test-scores.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Assessments/TestScoreWrites.cs",
+        "services/api/src/FormMaps.Infrastructure/Assessments/TestScoreWriter.cs",
+        "services/api/src/FormMaps.Infrastructure/Assessments/TestScoreRowMapper.cs",
+        "services/api/src/FormMaps.Api/Endpoints/TestScoreEndpoints.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "TestScoreWriter (OpenWritableAsync rail): CreateAsync (userId=caller, explicit fields, isOfficial??true/isSuperScore??false, subScores jsonb, testDate empty->null via IsNullOrEmpty matching JS truthiness) + UpdateAsync (ownership 404 BEFORE validation; PATCH-style present-fields-only; no create-defaults) + DeleteAsync (soft isActive=false, idempotent 2nd->404) + OwnsActiveRowAsync (null||!owner||!isActive -> uniform 404); PII-free audit post-commit",
+        "TestScoreValidation (pure Zod port): testType enum required; inclusive int bounds; .int() float-reject; apSubject<=120; subScores object-only; .partial() update; first-error schema order; non-object top-level body -> 400 'Expected object, received <type>'",
+        "TestScoreRowMapper: shared read+write full-row projection (TestScoreReader refactored onto it, FM-037 reads unchanged); all score cols Int? (no Decimal); ISO-Z; testDate DESC NULLS FIRST + id tie-break",
+        "4 endpoints on TestScoreEndpoints (POST 201{success,data}; GET 200{success,data:[]}; PUT 200; DELETE 200{success,message:'Test score deleted successfully'}; 400 first-error; ownership 404 'Test score not found')",
+        "TestScoreValidationTests + TestScoreWriterTests(real-DB) + TestScoreWriteEndpointsTests; web flag FORMMAPS_ROUTE_TEST_SCORES_WRITE_TO_DOTNET (default off) + 2 rewrites (bare + /:id)"
+      ],
+      "guardrails": [
+        "corpus #8 IDOR (non-owner PUT/DELETE->404 uniform), #25 soft-delete idempotency (2nd DELETE->404, drops from list+superscore); inclusive range bounds + float-reject; isOfficial default only on create; no @@unique (dup POSTs allowed)",
+        "FIDELITY (Codex-caught, folded): non-object JSON body->400 (was 200+spurious updatedAt); empty testDate ''->null via IsNullOrEmpty (whitespace-only stays 500, faithful to d.testDate? truthiness)",
+        "documented accepted: enum non-string message wording; no-offset datetime TZ (UI date-only); /:id write rewrite also matches GET /superscore,/college-fit (same .NET backend)"
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx",
+        "staging deploy + health 200 + anon POST/PUT/DELETE/GET bare /api/v1/test-scores -> 401"
+      ],
+      "notes": [
+        "DONE 2026-07-20: test-scores writes+list (built by a fork; I ran the adversarial gate + shipped). dotnet 0/0; unit 416 + integration 306 + contract 1. GATE: fresh SAFE-TO-SHIP + Codex FIXES-NEEDED -> converged; folded 2 MEDIUM behavioral divergences (non-object-body 400; empty-testDate null) + corrected whitespace-testDate to IsNullOrEmpty (byte-faithful). Reconciled DI.cs + next.config.ts against FM-038+FM-039 by merging main into the branch (next.config helper+rewrite regions hand-fixed where conflict boundaries fell inside shared trailing brackets). COMPLETES the test-scores bare-path surface. NEXT: school-admin sub-slice 2 OR question360 writes OR token-gated external write rail OR personality PROD cutover."
+      ]
     }
   ]
 }

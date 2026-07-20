@@ -59,6 +59,7 @@ public static class DependencyInjection
         services.AddScoped<IAssessmentTimelineReader, AssessmentTimelineReader>();
         services.AddScoped<ICompleteProfileAssembler, CompleteProfileAssembler>();
         services.AddScoped<ITestScoreReader, TestScoreReader>();
+        services.AddScoped<ITestScoreWriter, TestScoreWriter>();
         services.AddScoped<ISchoolAdminScopeResolver, SchoolAdminScopeResolver>();
         services.AddScoped<ISchoolAdminReader, SchoolAdminReader>();
         services.AddScoped<IQuestion360Reader, Question360Reader>();

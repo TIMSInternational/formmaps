@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Domain.Auth;
@@ -5,12 +6,11 @@ using FormMaps.Domain.Auth;
 namespace FormMaps.Api.Endpoints;
 
 /// <summary>
-/// Authed test-scores READ endpoints (legacy routes/test-scores.ts, mounted /api/v1/test-scores with
-/// authenticate + tenantContext). Ported: GET /superscore + GET /college-fit (self-scoped via the request
-/// actor, RequireIdentity only) and GET /students/{id}/test-scores (bespoke role auth — counselor needs an
-/// active assignment [miss → 404], parent needs an active link [miss → 403]; any other role → 403). The
-/// list GET / and the POST/PUT/DELETE writes share the bare /api/v1/test-scores path and cut over in a
-/// later write slice.
+/// Authed test-scores endpoints (legacy routes/test-scores.ts, mounted /api/v1/test-scores with authenticate +
+/// tenantContext — no subscription, no permission; self-scoped ownership per handler). Reads: GET /superscore +
+/// GET /college-fit (self, RequireIdentity only) + GET /students/{id}/test-scores (bespoke role auth). Bare-path
+/// list + writes: GET / (own active scores), POST / (create for self), PUT /{id} + DELETE /{id} (own-active-row
+/// gate → uniform 404). The bare path + /{id} path cut over together (Next rewrites match by path, not method).
 /// </summary>
 public static class TestScoreEndpoints
 {
@@ -21,8 +21,138 @@ public static class TestScoreEndpoints
         group.MapGet("/superscore", GetSuperscoreAsync);
         group.MapGet("/college-fit", GetCollegeFitAsync);
         group.MapGet("/students/{id}/test-scores", GetStudentScoresAsync);
+        group.MapGet("/", ListMyScoresAsync);
+        group.MapPost("/", CreateScoreAsync);
+        group.MapPut("/{id}", UpdateScoreAsync);
+        group.MapDelete("/{id}", DeleteScoreAsync);
 
         return app;
+    }
+
+    // GET / — the caller's own active scores (optional ?testType filter), testDate DESC.
+    private static async Task<IResult> ListMyScoresAsync(
+        HttpContext http,
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ITestScoreReader reader,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var testType = http.Request.Query["testType"].Count > 0 ? http.Request.Query["testType"][0] : null;
+        var data = await reader.ListActiveScoresAsync(
+            context, context.Actor!.UserId, string.IsNullOrEmpty(testType) ? null : testType, cancellationToken);
+        return Results.Ok(new { success = true, data });
+    }
+
+    // POST / — create a score for the caller.
+    private static async Task<IResult> CreateScoreAsync(
+        HttpContext http,
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ITestScoreWriter writer,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var body = await ReadBodyAsync(http, cancellationToken);
+        var outcome = await writer.CreateAsync(context, context.Actor!.UserId, body, cancellationToken);
+        return outcome.Status switch
+        {
+            TestScoreWriteStatus.Created => Results.Json(new { success = true, data = outcome.Row }, statusCode: StatusCodes.Status201Created),
+            _ => ValidationError(outcome.Message),
+        };
+    }
+
+    // PUT /{id} — update an own, active score (ownership 404 precedes validation 400).
+    private static async Task<IResult> UpdateScoreAsync(
+        HttpContext http,
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ITestScoreWriter writer,
+        string id,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var body = await ReadBodyAsync(http, cancellationToken);
+        var outcome = await writer.UpdateAsync(context, context.Actor!.UserId, id, body, cancellationToken);
+        return outcome.Status switch
+        {
+            TestScoreWriteStatus.Ok => Results.Ok(new { success = true, data = outcome.Row }),
+            TestScoreWriteStatus.ValidationError => ValidationError(outcome.Message),
+            _ => TestScoreNotFound(),
+        };
+    }
+
+    // DELETE /{id} — soft-delete an own, active score.
+    private static async Task<IResult> DeleteScoreAsync(
+        IRequestContextAccessor requestContextAccessor,
+        IProtectedRequestGuard protectedRequestGuard,
+        ITestScoreWriter writer,
+        string id,
+        CancellationToken cancellationToken)
+    {
+        var context = requestContextAccessor.Current;
+        var identity = protectedRequestGuard.RequireIdentity(context);
+        if (!identity.Allowed)
+        {
+            return Deny(identity);
+        }
+
+        var deleted = await writer.DeleteAsync(context, context.Actor!.UserId, id, cancellationToken);
+        return deleted
+            ? Results.Ok(new { success = true, message = "Test score deleted successfully" })
+            : TestScoreNotFound();
+    }
+
+    private static IResult ValidationError(string? message) =>
+        Results.Json(new { success = false, message }, statusCode: StatusCodes.Status400BadRequest);
+
+    // Uniform IDOR 404 for the writes (missing == not-owned == already-deleted), legacy "Test score not found".
+    private static IResult TestScoreNotFound() =>
+        Results.Json(new { success = false, message = "Test score not found" }, statusCode: StatusCodes.Status404NotFound);
+
+    // Empty-object sentinel for an absent/malformed body (legacy express.json() yields {} -> zod "Required"
+    // on create / no-op on update). A PRESENT non-object body (array/primitive) is preserved verbatim so the
+    // validator can reject it with "Expected object, received <type>" (matches legacy z.object(...)).
+    private static readonly JsonElement EmptyObject = JsonDocument.Parse("{}").RootElement.Clone();
+
+    private static async Task<JsonElement> ReadBodyAsync(HttpContext http, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var element = await http.Request.ReadFromJsonAsync<JsonElement>(cancellationToken);
+            return element.ValueKind == JsonValueKind.Undefined ? EmptyObject : element;
+        }
+        catch (JsonException)
+        {
+            return EmptyObject;
+        }
+        catch (BadHttpRequestException)
+        {
+            return EmptyObject;
+        }
+        catch (InvalidOperationException)
+        {
+            // No / non-JSON Content-Type on an empty request — legacy express.json() yields {} here.
+            return EmptyObject;
+        }
     }
 
     // GET /superscore — the caller's own SAT/ACT superscore.

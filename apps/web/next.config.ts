@@ -222,6 +222,15 @@ function shouldRouteTestScoresStudentViewToDotnet() {
   );
 }
 
+// FM-DOTNET test-scores bare-path list + writes (GET / list, POST /, PUT /:id, DELETE /:id). One flag gates
+// the whole bare-path router because Next rewrites match by PATH, not method (the bare path and the /:id path
+// cannot be split by verb).
+function shouldRouteTestScoresWriteToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TEST_SCORES_WRITE_TO_DOTNET)
+  );
+}
+
 // School-admin READS (FM-DOTNET sub-slice 1): the six straightforward school-scoped reads cut over as one
 // group behind a single flag (low-risk, no dual-write). The deferred /results/:studentId report,
 // /results/export CSV, /assessments/pipeline, and the polyglot /assessments/insights stay on Node (fall
@@ -617,6 +626,23 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/test-scores/students/:id/test-scores",
               destination: `${dotnetApiBaseUrl}/api/v1/test-scores/students/:id/test-scores`,
+            },
+          ]
+        : []),
+      // FM-DOTNET test-scores bare-path list + writes. Placed AFTER the superscore/college-fit/student-view
+      // rewrites so those literal reads win when their own flags are on. NOTE: the "/:id" rewrite also matches
+      // GET /superscore and /college-fit (single-segment) — those resolve to the SAME .NET endpoints, so
+      // enabling this flag also routes those two reads to .NET even when their dedicated flags are off
+      // (harmless; identical backend). There is no legacy GET /:id route. Must precede the /api/:path* catch-all.
+      ...(shouldRouteTestScoresWriteToDotnet()
+        ? [
+            {
+              source: "/api/v1/test-scores",
+              destination: `${dotnetApiBaseUrl}/api/v1/test-scores`,
+            },
+            {
+              source: "/api/v1/test-scores/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/:id`,
             },
           ]
         : []),
