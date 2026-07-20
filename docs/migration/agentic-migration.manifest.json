@@ -1922,6 +1922,44 @@
       "notes": [
         "DONE 2026-07-20 (parallel forks with FM-046/047). Token generator PORTED not reused (FM-043 only ported token validate). \ud83d\udd34 FEDERICO cutover prereq: ses:SendEmail on the formmaps-api-prod App Runner role + a verified SES sender identity before these can deliver in prod (ships dark). Completes the assessments email/write surface. NEXT: FM-047 calendar reads (ship dark, rewrite deferred to FM-048) + FM-048 calendar creates."
       ]
+    },
+    {
+      "id": "FM-DOTNET-047-school-calendar-reads",
+      "status": "completed",
+      "goal": "Second Phase-B slice: port the 3 school academic-calendar READS (routes/school-grades.ts): GET /calendar/academic-years (nested terms), /assessment-periods (yearId gate-not-filter), /holidays. New calendar:manage permission. Ships DARK (no rewrite \u2014 the paths carry Node-only POST creates; rewrite deferred to FM-048).",
+      "dependsOn": [
+        "FM-DOTNET-046-gradebook-transcript-read"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-grades.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolGradesService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/auth.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Domain/Auth/FormMapsPermissions.cs",
+        "services/api/src/FormMaps.Application/Calendar/*",
+        "services/api/src/FormMaps.Infrastructure/Calendar/CalendarReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/CalendarEndpoints.cs",
+        "services/api/tests"
+      ],
+      "outputs": [
+        "New permission constant CalendarManage='calendar:manage' (SuperAdmin+SchoolAdmin only, NOT counselor \u2014 enforced, not substituted for school:manage; test proves a school:manage-only principal gets 403).",
+        "CalendarReader (read-only session, explicit WHERE schoolId \u2014 no RLS on these tables): getAcademicYears (academic_years isActive ORDER BY startDate DESC + nested academic_terms isActive ORDER BY sortOrder ASC via ANY(@ids) batch); getAssessmentPeriods (GATE QUIRK: yearId=param??current-year-id??'' -> empty -> [] no query; else findMany WHERE schoolId+isActive ORDER BY startDate ASC, NOT year-filtered; text[] assessmentTypes -> JSON array); getHolidays (WHERE schoolId+isActive ORDER BY date ASC, nullable endDate -> null).",
+        "CalendarEndpoints: 3 GETs, own guard chain (RequireIdentity -> calendar:manage 403 -> getSchoolUser 400 'No school'); DOUBLE-wrap {success,data:{data:[]}} (distinct from gradebook single-wrap); ISO-Z; full-row camelCase passthrough.",
+        "\u26a0\ufe0f SHIPPED DARK WITHOUT the next.config rewrite (gate fix) \u2014 endpoints exist+tested but unrouted until FM-048 co-ports the POST creates + adds the co-flip rewrite."
+      ],
+      "guardrails": [
+        "GATE BLOCKING (both fresh + Codex CONFIRMED): a reads-only next.config rewrite for the 3 /calendar/* bare paths would ALSO capture the co-located Node POST creates (path-not-method) -> route them to the GET-only .NET service -> 404/405 -> breaks calendar creation at cutover. Folded: DROPPED the rewrite + flag helper; endpoints ship dark; FM-048 adds POST creates + the co-flip rewrite (FM-039->FM-044 precedent).",
+        "gate quirk (assessment-periods yearId = gate not filter) reproduced exactly; DOUBLE-wrap; calendar:manage enforced; text[]->array; nested-terms batch; nullable endDate->null; explicit WHERE schoolId. Everything else verified clean by both reviewers."
+      ],
+      "validation": [
+        "dotnet build 0/0",
+        "dotnet test (unit 470 + integration ~544 + 1 skip + contract 1) on the main-merged tree",
+        "staging deploy + canary (health 200; anon GET /calendar/* on the .NET service directly -> 401; NO web rewrite in prod)"
+      ],
+      "notes": [
+        "DONE 2026-07-20 (parallel fork with FM-045; re-dispatched once after a cwd-misroute caught by the repo-verify guard). Gate caught my scoping miss (I wrongly briefed 'GET-only, no coupling'). Ships DARK/unrouted. NEXT: FM-048 = calendar POST creates (createAcademicYear/AssessmentPeriod/Holidays) + the co-flip rewrite to route both."
+      ]
     }
   ]
 }

@@ -300,6 +300,11 @@ function shouldRouteGradebookReadToDotnet() {
   );
 }
 
+// NOTE (FM-DOTNET-047): the .NET calendar GET endpoints exist + are tested, but their next.config rewrite is
+// DELIBERATELY NOT added here — the 3 /calendar/* bare paths also serve Node POST creates, and Next rewrites
+// match path-not-method, so a reads-only rewrite would capture those POSTs and break calendar creation. The
+// rewrite + flag are added by FM-048 (which co-ports the POST creates), same as FM-044 did for config/schedule.
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -750,6 +755,8 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
+      // (FM-DOTNET-047 calendar-reads rewrite intentionally omitted — see the note by the flag helpers above;
+      //  added with the POST creates in FM-048.)
       // School-admin CONFIG + SCHEDULE (FM-DOTNET-044) — /assessments/config + /assessments/schedule, each
       // GET(read, FM-039) + PUT(write, FM-044) flipping together under one flag (path-not-method). Same .NET
       // backend; both paths are 3-segment literals so no ordering hazard vs the reads routes above.

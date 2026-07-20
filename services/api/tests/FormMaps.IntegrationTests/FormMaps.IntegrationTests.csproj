@@ -43,6 +43,8 @@
     <EmbeddedResource Include="Assessments\Data\token-rail-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers gradebook transcript read harness (FM-DOTNET Phase-B). -->
     <EmbeddedResource Include="Gradebook\Data\gradebook-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers school academic-calendar reads harness (FM-DOTNET-047 Phase-B). -->
+    <EmbeddedResource Include="Calendar\Data\calendar-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

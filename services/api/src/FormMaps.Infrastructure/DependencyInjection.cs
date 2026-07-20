@@ -2,6 +2,7 @@ using Amazon;
 using Amazon.SimpleEmailV2;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
+using FormMaps.Application.Calendar;
 using FormMaps.Application.Data;
 using FormMaps.Application.Email;
 using FormMaps.Application.Reports;
@@ -9,6 +10,7 @@ using FormMaps.Application.Gradebook;
 using FormMaps.Application.SchoolAdmin;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
+using FormMaps.Infrastructure.Calendar;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Email;
 using FormMaps.Infrastructure.Reports;
@@ -69,6 +71,7 @@ public static class DependencyInjection
         services.AddScoped<ISchoolAdminScopeResolver, SchoolAdminScopeResolver>();
         services.AddScoped<ISchoolAdminReader, SchoolAdminReader>();
         services.AddScoped<IGradebookReader, GradebookReader>();
+        services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ISchoolAdminWriter, SchoolAdminWriter>();
 
         // Outbound email (SES v2) — the FIRST outbound integration. EmailOptions mirrors lib/email.ts env constants.
