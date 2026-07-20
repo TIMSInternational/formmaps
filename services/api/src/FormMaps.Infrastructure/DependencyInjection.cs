@@ -63,6 +63,7 @@ public static class DependencyInjection
         services.AddScoped<ISchoolAdminScopeResolver, SchoolAdminScopeResolver>();
         services.AddScoped<ISchoolAdminReader, SchoolAdminReader>();
         services.AddScoped<IQuestion360Reader, Question360Reader>();
+        services.AddScoped<IQuestion360Writer, Question360Writer>();
         services.AddScoped<IUserAccessGuard, UserAccessGuard>();
 
         // Subscription entitlement gate (legacy requireSubscription). Grace window is env-tunable
