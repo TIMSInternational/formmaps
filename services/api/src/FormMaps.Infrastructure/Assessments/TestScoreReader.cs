@@ -1,6 +1,4 @@
 using System.Data.Common;
-using System.Globalization;
-using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
@@ -139,12 +137,10 @@ public sealed class TestScoreReader(IFormMapsDatabaseSessionFactory databaseSess
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
         // Optional testType filter; legacy orderBy testDate desc = Postgres DESC default NULLS FIRST, plus a
-        // deterministic id tie-break (legacy has none) so ties are stable.
-        var sql = """
-            SELECT "id", "userId", "testType", "testDate", "satTotal", "satMath", "satReading", "actComposite",
-                   "actEnglish", "actMath", "actReading", "actScience", "apSubject", "apScore", "totalScore",
-                   "subScores"::text AS "subScores", "isSuperScore", "isOfficial", "isActive",
-                   "createdBy", "createdDate", "updatedBy", "updatedAt"
+        // deterministic id tie-break (legacy has none) so ties are stable. Shared full-row projection with the
+        // write path (TestScoreRowMapper) so reads and writes can't drift on columns/jsonb/timestamps.
+        var sql = $"""
+            SELECT {TestScoreRowMapper.Projection}
             FROM "student_test_scores"
             WHERE "userId" = @uid AND "isActive" = true
             """
@@ -162,30 +158,7 @@ public sealed class TestScoreReader(IFormMapsDatabaseSessionFactory databaseSess
         var rows = new List<TestScoreRow>();
         while (await reader.ReadAsync(cancellationToken))
         {
-            rows.Add(new TestScoreRow(
-                Id: reader.GetString(0),
-                UserId: reader.GetString(1),
-                TestType: reader.GetString(2),
-                TestDate: reader.IsDBNull(3) ? null : IsoZ(reader.GetDateTime(3)),
-                SatTotal: NullableInt(reader, 4),
-                SatMath: NullableInt(reader, 5),
-                SatReading: NullableInt(reader, 6),
-                ActComposite: NullableInt(reader, 7),
-                ActEnglish: NullableInt(reader, 8),
-                ActMath: NullableInt(reader, 9),
-                ActReading: NullableInt(reader, 10),
-                ActScience: NullableInt(reader, 11),
-                ApSubject: reader.IsDBNull(12) ? null : reader.GetString(12),
-                ApScore: NullableInt(reader, 13),
-                TotalScore: NullableInt(reader, 14),
-                SubScores: ReadJson(reader, 15),
-                IsSuperScore: reader.GetBoolean(16),
-                IsOfficial: reader.GetBoolean(17),
-                IsActive: reader.GetBoolean(18),
-                CreatedBy: reader.IsDBNull(19) ? null : reader.GetString(19),
-                CreatedDate: IsoZ(reader.GetDateTime(20)),
-                UpdatedBy: reader.IsDBNull(21) ? null : reader.GetString(21),
-                UpdatedAt: IsoZ(reader.GetDateTime(22))));
+            rows.Add(TestScoreRowMapper.Read(reader));
         }
 
         return rows;
@@ -209,15 +182,4 @@ public sealed class TestScoreReader(IFormMapsDatabaseSessionFactory databaseSess
 
     private static int? NullableInt(DbDataReader reader, int ordinal) =>
         reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
-
-    // jsonb-as-text -> JsonElement (verbatim; SQL NULL and jsonb 'null' both surface as a JSON-null element).
-    private static JsonElement ReadJson(DbDataReader reader, int ordinal)
-    {
-        var raw = reader.IsDBNull(ordinal) ? "null" : reader.GetString(ordinal);
-        using var document = JsonDocument.Parse(raw);
-        return document.RootElement.Clone();
-    }
-
-    private static string IsoZ(DateTime value) =>
-        DateTime.SpecifyKind(value, DateTimeKind.Utc).ToString("yyyy-MM-ddTHH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
 }
