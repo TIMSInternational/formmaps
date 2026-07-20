@@ -19,7 +19,9 @@ CREATE TABLE "evaluation_groups" (
     "id" TEXT NOT NULL,
     "evaluatedUserId" TEXT NOT NULL,
     "groupType" TEXT,
+    "evaluatorName" TEXT,
     "isEvaluationCompleted" BOOLEAN NOT NULL DEFAULT false,
+    "evaluationCompletedDate" TIMESTAMP(3),
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     CONSTRAINT "evaluation_groups_pkey" PRIMARY KEY ("id")
 );
@@ -28,16 +30,37 @@ CREATE TABLE "pca_evaluations" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "isCompleted" BOOLEAN NOT NULL DEFAULT false,
+    "createdDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "pca_evaluations_pkey" PRIMARY KEY ("id")
 );
 
+-- pca_exam_sessions uses camelCase columns (matches Prisma @@map default here). Sub-slice 2 adds the
+-- per-session detail columns the rich report + pipeline read (examType/status are native enums in prod;
+-- TEXT here is faithful for the read comparisons). endTime is nullable; isActive gates the pipeline read.
 CREATE TABLE "pca_exam_sessions" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "examId" TEXT,
+    "examName" TEXT NOT NULL DEFAULT '',
+    "examType" TEXT NOT NULL DEFAULT 'PatternRecognition',
+    "status" TEXT NOT NULL DEFAULT 'InProgress',
     "scorePercentage" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "isCompleted" BOOLEAN NOT NULL DEFAULT false,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "startTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "endTime" TIMESTAMP(3),
     CONSTRAINT "pca_exam_sessions_pkey" PRIMARY KEY ("id")
+);
+
+-- lia_assessment_sessions uses snake_case column maps (user_id / is_active); status is the LiaSessionStatus
+-- enum in prod (TEXT here — the reads compare to string literals). The rich report + pipeline read it.
+CREATE TABLE "lia_assessment_sessions" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'not_started',
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT "lia_assessment_sessions_pkey" PRIMARY KEY ("id")
 );
 
 CREATE TABLE "school_assessment_settings" (
@@ -72,4 +95,5 @@ CREATE INDEX "users_schoolId_idx" ON "users"("schoolId");
 CREATE INDEX "evaluation_groups_evaluatedUserId_idx" ON "evaluation_groups"("evaluatedUserId");
 CREATE INDEX "pca_evaluations_userId_idx" ON "pca_evaluations"("userId");
 CREATE INDEX "pca_exam_sessions_userId_idx" ON "pca_exam_sessions"("userId");
+CREATE INDEX "lia_assessment_sessions_user_id_idx" ON "lia_assessment_sessions"("user_id");
 CREATE INDEX "assessment_schedules_schoolId_idx" ON "assessment_schedules"("schoolId");

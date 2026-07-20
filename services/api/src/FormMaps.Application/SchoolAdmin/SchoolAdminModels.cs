@@ -68,3 +68,62 @@ public sealed record AssessmentScheduleRow(
     string CreatedDate,
     string? UpdatedBy,
     string UpdatedAt);
+
+// ---------------------------------------------------------------- sub-slice 2 (rich report / CSV / pipeline)
+
+/// <summary>
+/// Canonical per-student assessment report (getStudentReport, version "1"). <c>GeneratedAt</c> is server-now
+/// (ISO-Z) so it is NON-DETERMINISTIC — tests assert shape, not value. Completion derives from the shared
+/// <see cref="StudentCompletion"/> predicate. coKey is never read.
+/// </summary>
+public sealed record StudentReport(
+    string Version,
+    string GeneratedAt,
+    StudentReportStudent Student,
+    StudentReportCompletion Completion,
+    StudentReportPca Pca,
+    StudentReportMil Mil,
+    StudentReportEvaluation360 Evaluation360);
+
+public sealed record StudentReportStudent(string Id, string Name, string Email, int? GradeLevel);
+
+public sealed record StudentReportCompletion(bool Lia, bool Disc, bool Eval360, bool Overall);
+
+public sealed record StudentReportPca(bool Completed, int EvaluationCount, string? LastCompletedDate);
+
+public sealed record StudentReportMil(int CompletedCount, double AverageScore, IReadOnlyList<StudentReportMilSession> Sessions);
+
+public sealed record StudentReportMilSession(
+    string Id,
+    string ExamName,
+    string Status,
+    bool Completed,
+    double ScorePercentage,
+    string StartTime,
+    string? EndTime);
+
+public sealed record StudentReportEvaluation360(int Total, int Completed, IReadOnlyList<StudentReportEvalGroup> Groups);
+
+public sealed record StudentReportEvalGroup(
+    string Id,
+    string? GroupType,
+    string? EvaluatorName,
+    bool IsCompleted,
+    string? CompletedDate);
+
+/// <summary>
+/// One student's assessment-pipeline row (getAssessmentPipeline). <c>Pca</c> holds the five EXAM_TYPES in
+/// order, each "done" | "in_progress" | "not_started"; <c>Mil</c>/<c>Eval360</c> are the same-vocabulary
+/// rollups.
+/// </summary>
+public sealed record PipelineRow(
+    string Id,
+    string Name,
+    string Email,
+    int? GradeLevel,
+    IReadOnlyDictionary<string, string> Pca,
+    string Mil,
+    string Eval360,
+    PipelineEvalDetail Eval360Detail);
+
+public sealed record PipelineEvalDetail(int Total, int Completed);

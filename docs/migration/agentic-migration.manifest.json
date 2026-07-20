@@ -1671,6 +1671,47 @@
       "notes": [
         "DONE 2026-07-20: test-scores writes+list (built by a fork; I ran the adversarial gate + shipped). dotnet 0/0; unit 416 + integration 306 + contract 1. GATE: fresh SAFE-TO-SHIP + Codex FIXES-NEEDED -> converged; folded 2 MEDIUM behavioral divergences (non-object-body 400; empty-testDate null) + corrected whitespace-testDate to IsNullOrEmpty (byte-faithful). Reconciled DI.cs + next.config.ts against FM-038+FM-039 by merging main into the branch (next.config helper+rewrite regions hand-fixed where conflict boundaries fell inside shared trailing brackets). COMPLETES the test-scores bare-path surface. NEXT: school-admin sub-slice 2 OR question360 writes OR token-gated external write rail OR personality PROD cutover."
       ]
+    },
+    {
+      "id": "FM-DOTNET-041-school-admin-reads-2",
+      "status": "completed",
+      "goal": "Port the 3 heavy school-admin reads deferred from FM-039: GET /results/{studentId} (rich report), GET /results/export (CSV), GET /assessments/pipeline. Reuses the FM-039 getSchoolUser rail. Excludes /assessments/insights (AI-polyglot); defers config/schedule/reminders/setup-360 writes.",
+      "dependsOn": [
+        "FM-DOTNET-039-school-admin-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolAssessmentsService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/assessmentService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/sanitize.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/SchoolAdmin",
+        "services/api/src/FormMaps.Infrastructure/SchoolAdmin/SchoolAdminReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolAdminEndpoints.cs",
+        "services/api/tests/FormMaps.IntegrationTests/SchoolAdmin",
+        "services/api/tests/FormMaps.UnitTests/SchoolAdmin",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "StudentCompletion (pure): computeStudentCompletion port — PARITY_ALL_FIVE 5-set when a completed active LIA session exists else distinct completed examTypes; allLiaDone>=5; evalRequired=min(evalTotal,3); pcaCompleted=any isCompleted row; overall",
+        "GetStudentReportAsync: student lookup school-scoped IN query (WHERE id AND schoolId; FULL id no truncation after Codex fold; NO isActive; uniform 404; coKey never selected); generatedAt via injected TimeProvider ISO-Z; averageScore round(mean*10)/10 AwayFromZero; lastPca=max updatedAt completed; mil.sessions startTime DESC; completion/pca/mil/evaluation360 payload",
+        "ExportResultsCsvAsync: text/csv (no charset)+attachment disposition; raw body (auth errors still JSON); csvSafe ' -prefix on =,+,-,@,\\t,\\r (corpus #30); NO isActive/no pagination; avg invariant",
+        "GetAssessmentPipelineAsync: per-exam precedence Completed>InProgress; LIA overlay completed->5 EXAM_TYPES; pca grid keys VERBATIM PascalCase (Dictionary, DictionaryKeyPolicy null); mil all-5-done; eval360 states; grade if(grade) truthiness (0 dropped); incomplete filter; students isActive=true; order gradeLevel ASC NULLS LAST,name",
+        "3 GET routes on SchoolAdminEndpoints under the shared AuthorizeAsync; +3 next.config rewrites under existing FORMMAPS_ROUTE_SCHOOL_ADMIN_READS_TO_DOTNET flag (ordered /results/export + pca-status before /:studentId)"
+      ],
+      "guardrails": [
+        "TENANT-ISOLATION: report student lookup school-scoped in query (super-admin cross-read closed; pinned by super-admin scope test)",
+        "Codex MEDIUM folded: removed 100-char truncation on the report lookup key (parameterized; too-long id 404s naturally = faithful; kills prefix-false-match)",
+        "csvSafe corpus #30 all 6 trigger chars pinned; completion boundaries (LIA 4-vs-5, evalTotal 1/2/3) pinned; documented superset: deterministic id tie-break ordering"
+      ],
+      "validation": [
+        "dotnet build services/api/FormMaps.slnx",
+        "dotnet test services/api/FormMaps.slnx",
+        "staging deploy + health 200 + anon GET /api/v1/school-admin/{results/x,results/export,assessments/pipeline} -> 401"
+      ],
+      "notes": [
+        "DONE 2026-07-20 (Batch B): school-admin reads sub-slice 2 (fork-built; fresh SAFE + Codex FIXES-NEEDED converged). dotnet 0/0; unit 428 + integration 389 + contract 1. Folded Codex MEDIUM (untruncate report lookup) + 4 coverage pins (super-admin report scope, csvSafe all-6, LIA 4/5 boundary, evalTotal edges). NEXT: question360 writes (FM-042, folded, ready) OR token-gated external write rail (capstone, scoped)."
+      ]
     }
   ]
 }
