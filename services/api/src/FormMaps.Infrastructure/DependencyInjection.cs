@@ -1,7 +1,10 @@
+using Amazon;
+using Amazon.SimpleEmailV2;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Calendar;
 using FormMaps.Application.Data;
+using FormMaps.Application.Email;
 using FormMaps.Application.Reports;
 using FormMaps.Application.Gradebook;
 using FormMaps.Application.SchoolAdmin;
@@ -9,6 +12,7 @@ using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
 using FormMaps.Infrastructure.Data;
+using FormMaps.Infrastructure.Email;
 using FormMaps.Infrastructure.Reports;
 using FormMaps.Infrastructure.Gradebook;
 using FormMaps.Infrastructure.SchoolAdmin;
@@ -69,6 +73,26 @@ public static class DependencyInjection
         services.AddScoped<IGradebookReader, GradebookReader>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ISchoolAdminWriter, SchoolAdminWriter>();
+
+        // Outbound email (SES v2) — the FIRST outbound integration. EmailOptions mirrors lib/email.ts env constants.
+        var emailOptions = new EmailOptions(
+            FromEmail: EnvOr(configuration, "SES_FROM_EMAIL", EmailOptions.DefaultFromEmail),
+            FrontendUrl: StripTrailingSlash(EnvOr(configuration, "FRONTEND_BASE_URL", EmailOptions.DefaultFrontendUrl)),
+            InviteBaseUrl: EnvOr(configuration, "FRONTEND_BASE_URL", EmailOptions.DefaultInviteBaseUrl),
+            LogoUrl: EnvOr(configuration, "EMAIL_LOGO_URL", EmailOptions.DefaultLogoUrl),
+            PostalAddress: EnvOr(configuration, "COMPANY_POSTAL_ADDRESS", EmailOptions.DefaultPostalAddress),
+            AwsRegion: EnvOr(configuration, "AWS_REGION", EmailOptions.DefaultAwsRegion));
+        services.AddSingleton(emailOptions);
+        services.AddSingleton(new EmailTemplates(emailOptions));
+        // Factory lambda (NOT a pre-constructed instance) so the SES client — and its eager credential
+        // resolution — is built on FIRST RESOLVE (only when an email endpoint runs, which is dark until the
+        // flag flips), never at startup. A pre-constructed client would resolve creds at boot and brick the
+        // ENTIRE service in any env without resolvable AWS creds.
+        services.AddSingleton<IAmazonSimpleEmailServiceV2>(
+            _ => new AmazonSimpleEmailServiceV2Client(RegionEndpoint.GetBySystemName(emailOptions.AwsRegion)));
+        services.AddScoped<IEmailSender, SesEmailSender>();
+        services.AddScoped<ISchoolAdminEmailWriter, SchoolAdminEmailWriter>();
+
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IQuestion360Reader, Question360Reader>();
         services.AddScoped<IQuestion360Writer, Question360Writer>();
@@ -89,4 +113,13 @@ public static class DependencyInjection
 
         return services;
     }
+
+    // Legacy `process.env.X || default` — a missing OR empty/whitespace value falls back to the default.
+    private static string EnvOr(IConfiguration configuration, string key, string fallback)
+    {
+        var value = configuration[key];
+        return string.IsNullOrWhiteSpace(value) ? fallback : value;
+    }
+
+    private static string StripTrailingSlash(string value) => value.TrimEnd('/');
 }

@@ -34,6 +34,8 @@ public static class SchoolAdminEndpoints
         group.MapGet("/assessments/schedule", GetScheduleAsync);
         group.MapPut("/assessments/schedule", PutScheduleAsync);
         group.MapGet("/assessments/pipeline", GetPipelineAsync);
+        group.MapPost("/assessments/send-reminders", PostSendRemindersAsync);
+        group.MapPost("/assessments/setup-360", PostSetup360Async);
 
         return app;
     }
@@ -495,6 +497,124 @@ public static class SchoolAdminEndpoints
                 updatedAt = r.UpdatedAt
             })
         });
+    }
+
+    private static async Task<IResult> PostSendRemindersAsync(
+        HttpContext http,
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        ISchoolAdminEmailWriter emailWriter,
+        CancellationToken cancellationToken)
+    {
+        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        var body = await ReadBodyAsync(http, cancellationToken);
+        if (body is null)
+        {
+            return Results.Json(new { success = false, message = "Invalid request body" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        // Legacy validation order: studentIds array+non-empty, then assessmentTypes array+non-empty, then >100.
+        var studentIds = ReadStringArray(body.Value, "studentIds");
+        if (studentIds is null || studentIds.Count == 0)
+        {
+            return Results.Json(new { success = false, message = "studentIds required" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var assessmentTypes = ReadStringArray(body.Value, "assessmentTypes");
+        if (assessmentTypes is null || assessmentTypes.Count == 0)
+        {
+            return Results.Json(new { success = false, message = "assessmentTypes required" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        if (studentIds.Count > 100)
+        {
+            return Results.Json(new { success = false, message = "Maximum 100 students per batch" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var result = await emailWriter.SendRemindersAsync(context, schoolId!, studentIds, assessmentTypes, cancellationToken);
+        if (result is null)
+        {
+            return Results.Json(new { success = false, message = "School not found" }, statusCode: StatusCodes.Status404NotFound);
+        }
+
+        return Results.Ok(new { success = true, data = new { sent = result.Sent, failed = result.Failed, total = result.Total } });
+    }
+
+    private static async Task<IResult> PostSetup360Async(
+        HttpContext http,
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        ISchoolAdminEmailWriter emailWriter,
+        CancellationToken cancellationToken)
+    {
+        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        var body = await ReadBodyAsync(http, cancellationToken);
+        if (body is null)
+        {
+            return Results.Json(new { success = false, message = "Invalid request body" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        // studentIds = body.studentIds || []  (missing/non-array -> empty); gradeLevel = body.gradeLevel (number else null).
+        var studentIds = ReadStringArray(body.Value, "studentIds") ?? [];
+        int? gradeLevel = body.Value.TryGetProperty("gradeLevel", out var gl)
+            && gl.ValueKind == JsonValueKind.Number && gl.TryGetInt32(out var g) ? g : null;
+
+        if (studentIds.Count > 100)
+        {
+            return Results.Json(new { success = false, message = "Maximum 100 students per batch" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var userId = context.Tenant?.UserId;
+        var result = await emailWriter.Setup360Async(context, schoolId!, userId, studentIds, gradeLevel, cancellationToken);
+        if (result is null)
+        {
+            return Results.Json(new { success = false, message = "No students to setup" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        return Results.Ok(new
+        {
+            success = true,
+            data = new
+            {
+                created = result.Created,
+                skipped = result.Skipped,
+                emailsSent = result.EmailsSent,
+                studentsProcessed = result.StudentsProcessed
+            }
+        });
+    }
+
+    // Read a JSON array property as its string elements; null when the property is missing or not an array
+    // (legacy `Array.isArray(x)` gate). Non-string elements are skipped (student ids are string uuids).
+    private static List<string>? ReadStringArray(JsonElement body, string prop)
+    {
+        if (!body.TryGetProperty(prop, out var el) || el.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        var list = new List<string>();
+        foreach (var item in el.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.String)
+            {
+                list.Add(item.GetString()!);
+            }
+        }
+
+        return list;
     }
 
     // updateAssessmentConfig body is untyped (no zod). PATCH: only provided keys are written; aiWeights only

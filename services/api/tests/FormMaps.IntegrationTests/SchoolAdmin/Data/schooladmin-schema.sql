@@ -20,10 +20,45 @@ CREATE TABLE "evaluation_groups" (
     "evaluatedUserId" TEXT NOT NULL,
     "groupType" TEXT,
     "evaluatorName" TEXT,
+    "evaluatorEmail" TEXT,
+    "relation" TEXT,
+    "invitationToken" TEXT,
+    "tokenExpiryDate" TIMESTAMP(3),
+    "isTokenUsed" BOOLEAN NOT NULL DEFAULT false,
     "isEvaluationCompleted" BOOLEAN NOT NULL DEFAULT false,
     "evaluationCompletedDate" TIMESTAMP(3),
     "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdBy" TEXT,
+    "createdDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- NO db default (matches prod: Prisma @updatedAt is app-managed, NOT NULL, no default). A default here would
+    -- mask a writer that forgets to set updatedAt (it did — see SchoolAdminEmailWriter setup-360 INSERT).
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "evaluation_groups_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "schools" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT "schools_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "student_parent_links" (
+    "id" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "parentEmail" TEXT NOT NULL,
+    "parentName" TEXT,
+    "relation" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT "student_parent_links_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "counselor_student_assignments" (
+    "id" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "counselorId" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT "counselor_student_assignments_pkey" PRIMARY KEY ("id")
 );
 
 CREATE TABLE "pca_evaluations" (
