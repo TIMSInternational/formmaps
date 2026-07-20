@@ -197,10 +197,12 @@ The prod-service CFN is authored at `infra/aws/formmaps-api-prod-service.yml`
 DATABASE_URL). Concrete sequence:
 
 **A. Decide + provision the DB write role.** Two options (runbook open-decision #2):
-- *Fastest (recommended for the first cutover):* reuse the **existing prod Node app
-  DB role** — it already reads everything under RLS and writes the personality
-  tables, so it satisfies the .NET service's read+write needs with zero new grants.
-  Point `DATABASE_URL` at that role's connection string secret.
+- *Fastest (recommended for the first cutover) — NO DB mutation, already wired in §B:*
+  reuse the **existing prod Node app DB role**, whose connection string is the secret
+  `arn:aws:secretsmanager:us-east-1:747814092517:secret:nexa/api/DATABASE_URL-8fY9MS`.
+  It already reads everything under RLS and writes the personality tables (it's what the
+  live Node app uses), so it satisfies the .NET service's read+write needs with zero new
+  grants. This is the ARN passed as `DatabaseUrlSecretArn` in §B.
 - *Cleaner (hardening, do later):* a dedicated least-privilege `formmaps_dotnet_writer`:
   ```sql
   CREATE ROLE formmaps_dotnet_writer LOGIN PASSWORD '...';        -- NOT SUPERUSER, NOT BYPASSRLS
@@ -214,26 +216,42 @@ DATABASE_URL). Concrete sequence:
   Confirm `SELECT rolbypassrls FROM pg_roles WHERE rolname='formmaps_dotnet_writer';` → **false**.
   Store the conn string in Secrets Manager; use that ARN for `DatabaseUrlSecretArn`.
 
-**B. Deploy the prod .NET service (dark).** Promote the SAME image tag that is green
-on staging (build once, deploy the identical artifact):
+**B. Deploy the prod .NET service (dark).** All parameters below are RESOLVED from the
+live prod config (2026-07-20, acct 747814092517). Reuses the green staging image
+(code-identical to main HEAD) + the prod Node app's DB + JWT secrets + the prod VPC
+connector (default). Run it (Claude's attempt was blocked by the prod-infra guardrail —
+this is yours to execute):
 ```
+cd ~/Desktop/NexaDev/clients/tims-international/github/formmaps
 aws cloudformation deploy \
+  --region us-east-1 \
   --template-file infra/aws/formmaps-api-prod-service.yml \
   --stack-name formmaps-api-prod \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
-    ImageIdentifier=<ECR image:tag green on staging> \
-    EcrAccessRoleArn=<same ECR access role as staging> \
-    JwtSecretArn=<PROD JWT_SECRET secret ARN> \
-    DatabaseUrlSecretArn=<PROD write-capable DATABASE_URL secret ARN> \
-    ProdWebOrigin=https://app.formmaps.ai      # CONFIRM the exact prod Vercel domain
+    ServiceName=formmaps-api-prod \
+    ImageIdentifier=747814092517.dkr.ecr.us-east-1.amazonaws.com/formmaps-api:staging-12d85c0f885f45585c3667cc8e0763115bdc2faa \
+    EcrAccessRoleArn=arn:aws:iam::747814092517:role/formmaps-apprunner-ecr-access-staging \
+    JwtSecretArn=arn:aws:secretsmanager:us-east-1:747814092517:secret:nexa/api/JWT_SECRET-gQjzRH \
+    DatabaseUrlSecretArn=arn:aws:secretsmanager:us-east-1:747814092517:secret:nexa/api/DATABASE_URL-8fY9MS \
+    ProdWebOrigin=https://app.formmaps.com
+# then grab the URL:
+aws cloudformation describe-stacks --region us-east-1 --stack-name formmaps-api-prod \
+  --query "Stacks[0].Outputs[?OutputKey=='ServiceUrl'].OutputValue" --output text
 ```
-Grab the output `ServiceUrl`.
+(To undo entirely: `aws cloudformation delete-stack --region us-east-1 --stack-name formmaps-api-prod`.)
 
-**C. Wire prod web (still dark).** On the **prod Vercel project** set
-`FORMMAPS_DOTNET_API_BASE_URL=https://<ServiceUrl>` and redeploy. With all six
-`FORMMAPS_ROUTE_PERSONALITY_*` flags absent/`0`, nothing changes for users (every
-`shouldRoute…` returns false) — the prod .NET service is live but dark.
+**C. Wire prod web (still dark).** The prod Vercel project is **`formmaps`**
+(production domain **`https://app.formmaps.com`**). Set the base URL (Production
+scope):
+```
+cd ~/Desktop/NexaDev/clients/tims-international/github/formmaps/apps/web   # or wherever the formmaps project is linked
+printf 'https://<ServiceUrl>' | vercel env add FORMMAPS_DOTNET_API_BASE_URL production
+```
+With all six `FORMMAPS_ROUTE_PERSONALITY_*` flags absent/`0`, this changes nothing for
+users (every `shouldRoute…` returns false). You can set it now and leave it — it only
+takes effect on the next prod redeploy AND only for a route whose flag is on. The Step-1
+dark canary (§D) hits the App Runner URL directly, so no prod redeploy is needed yet.
 
 **D. Exit criterion (Step-1 dark canary):**
 ```
