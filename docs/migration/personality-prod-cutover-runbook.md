@@ -31,6 +31,25 @@ is to **prove the strangler flag-flip + rollback mechanism on real traffic** bef
 > flag-flip cutover (§2–§3, Claude prepares+canaries, Federico flips on prod Vercel).
 > Undo everything:
 > `aws cloudformation delete-stack --region us-east-1 --stack-name formmaps-api-prod`.
+>
+> **🎉 2026-07-21 — FIRST PROD CUTOVER DONE (ACCESS route). The strangler mechanism is PROVEN on prod.**
+> Bridged the blocker first: the cutover rewrites lived only in the monorepo `apps/web`,
+> but `app.formmaps.com` = Vercel project `formmaps` (root dir `frontend`) deploys from
+> `tafurfede/formmaps-platform`. Ported the `shouldRoutePersonality*` flag scaffolding +
+> 6 rewrites into `formmaps-platform/frontend/next.config.ts` (PR #313→#314, prod main
+> `9bc6cb1`), deployed DARK (config-identical when env unset). Then on the `formmaps`
+> Vercel project (Production env): set `FORMMAPS_DOTNET_API_BASE_URL=https://zt9tppuwei…`
+> + `FORMMAPS_ROUTE_PERSONALITY_ACCESS_TO_DOTNET=1`, redeployed. **Canary (synthetic
+> prod-signed token, no real user): `GET app.formmaps.com/api/v1/personality/access` →
+> `x-formmaps-service: formmaps-api` (served by .NET); `POST …/start` (flag off) → no
+> header, Node "Invalid or expired token" (still Node).** Per-route routing confirmed
+> live + reversible. Insight-funnel caveat CLEARED (personality completion has no Bedrock
+> side-effect — grep-confirmed in personality-session-service.ts). **▶ REMAINING:**
+> SESSION + RESULTS reads (recommend watching a REAL completed student's results page
+> render identically — the real-data 200 path, unverified in prod), then the rollback
+> drill, then the WRITE flags START/ANSWER/COMPLETE (route real student assessment
+> writes; do with a real e2e). Rollback any route instantly: set its flag to 0 (or unset
+> the base URL) on the `formmaps` Vercel project + redeploy.
 
 ## Why personality first
 Personality is the only fully **dual-write-free** domain: .NET owns the entire
