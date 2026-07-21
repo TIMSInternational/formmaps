@@ -2048,6 +2048,37 @@
       ],
       "verification": "dotnet build -warnaserror 0/0; SchoolReads 36 tests + full integration 659 + unit 516 green (Docker up). Staging deploy + health + authed canary green (run 29836536506). Merged --no-ff to main f945890.",
       "commit": "f945890"
+    },
+    {
+      "id": "FM-DOTNET-051-school-profile-settings",
+      "status": "completed",
+      "goal": "Phase-B slice: port GET+PUT /school/profile and GET+PUT /settings (routes/school.ts, school:manage). Co-flip (path-not-method): one flag routes all four. .NET write-owner for the schools profile/settings columns.",
+      "dependsOn": [
+        "FM-DOTNET-050-school-manage-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/emailNormalize.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/SchoolProfile/*",
+        "services/api/src/FormMaps.Infrastructure/SchoolProfile/*",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolProfileEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/DependencyInjection.cs",
+        "services/api/src/FormMaps.Api/Program.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "SchoolProfile reader (full schools-row passthrough + email=contactEmail??'') + writer (FM-029 writable rail). Mass-assignment allow-list builder (only name/details/phone/website/timezone/logoUrl + contactEmail via email + address jsonb \u2014 NO body key becomes a column); email clear/set/ignore (emailNormalize regex, not zod); address full jsonb replace; scalar bounds; empty-PUT no-op still bumps updatedAt. getSettings || vs ?? defaults + plan hardcoded 'Standard' (no column) + studentCount both-case.",
+        "Two distinct no-school 404s (/school/profile 'No school linked'; /settings + null 'Not found').",
+        "Co-flip next.config rewrite under FORMMAPS_ROUTE_SCHOOL_PROFILE_SETTINGS_TO_DOTNET (default OFF, both methods both paths).",
+        "GATE fresh + Codex: mass-assignment guard CLEAN (no leak). Folded the one HIGH/MED both flagged: notify flags are Boolean? \u2014 JSON null must write NULL + 200 (legacy `x !== undefined`), not 400; other non-bool types keep 400 (house rule). +4 red-if-regressed tests. Accepted/documented: invalid-type\u2192400-vs-legacy-500 (house rule); no-school+malformed-body ordering (double-error, negligible)."
+      ],
+      "verification": "dotnet build -warnaserror 0/0; SchoolProfile 28u+42i; full integration 702 + unit 544 green (Docker up). Staging deploy + health + authed canary green (run 29840495027). Merged --no-ff to main a8d3bcd.",
+      "commit": "a8d3bcd"
     }
   ]
 }
