@@ -47,6 +47,8 @@
     <EmbeddedResource Include="Calendar\Data\calendar-schema.sql" />
     <!-- Schema-only DDL (with FK ON DELETE CASCADE) for the calendar WRITES harness (FM-DOTNET-048 Phase-B). -->
     <EmbeddedResource Include="Calendar\Data\calendar-write-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers school-analytics reads harness (FM-DOTNET-049 Phase-B). -->
+    <EmbeddedResource Include="SchoolAnalytics\Data\analytics-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

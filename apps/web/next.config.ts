@@ -313,6 +313,15 @@ function shouldRouteSchoolAdminCalendarToDotnet() {
   );
 }
 
+// School-admin ANALYTICS reads (FM-DOTNET-049) — routes/school.ts /analytics/{overview,trends,
+// performance-trends,top-performers}, mounted under /api/v1/school-admin. All four are method-unambiguous GETs
+// (no POST/PUT twin on these paths), so this is a straight read cut-over (not dark) behind ONE flag. Default OFF.
+function shouldRouteSchoolAnalyticsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ANALYTICS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -796,6 +805,30 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/calendar/holidays/:id",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/holidays/:id`,
+            },
+          ]
+        : []),
+      // School-admin ANALYTICS reads (FM-DOTNET-049) — four method-unambiguous GET paths under
+      // /school-admin/analytics. Disjoint from the /results, /assessments and /gradebook rewrites; more specific
+      // than the /api/:path* catch-all below, so these must precede it. /trends and /performance-trends hit the
+      // same .NET backend (identical service call).
+      ...(shouldRouteSchoolAnalyticsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/analytics/overview",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/overview`,
+            },
+            {
+              source: "/api/v1/school-admin/analytics/trends",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/trends`,
+            },
+            {
+              source: "/api/v1/school-admin/analytics/performance-trends",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/performance-trends`,
+            },
+            {
+              source: "/api/v1/school-admin/analytics/top-performers",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/top-performers`,
             },
           ]
         : []),
