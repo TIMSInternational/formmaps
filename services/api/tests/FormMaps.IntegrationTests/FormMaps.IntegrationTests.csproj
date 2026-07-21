@@ -51,6 +51,8 @@
     <EmbeddedResource Include="SchoolAnalytics\Data\analytics-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers school:manage reads harness (FM-DOTNET-050 Phase-B). -->
     <EmbeddedResource Include="SchoolReads\Data\schoolreads-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers school profile + settings reads/writes harness (FM-DOTNET-051 Phase-B). -->
+    <EmbeddedResource Include="SchoolProfile\Data\schoolprofile-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

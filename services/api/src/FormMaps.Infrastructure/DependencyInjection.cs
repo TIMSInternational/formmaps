@@ -9,6 +9,7 @@ using FormMaps.Application.Reports;
 using FormMaps.Application.Gradebook;
 using FormMaps.Application.SchoolAdmin;
 using FormMaps.Application.SchoolAnalytics;
+using FormMaps.Application.SchoolProfile;
 using FormMaps.Application.SchoolReads;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
@@ -19,6 +20,7 @@ using FormMaps.Infrastructure.Reports;
 using FormMaps.Infrastructure.Gradebook;
 using FormMaps.Infrastructure.SchoolAdmin;
 using FormMaps.Infrastructure.SchoolAnalytics;
+using FormMaps.Infrastructure.SchoolProfile;
 using FormMaps.Infrastructure.SchoolReads;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -78,6 +80,10 @@ public static class DependencyInjection
         services.AddScoped<ISchoolAnalyticsReader, SchoolAnalyticsReader>();
         // FM-DOTNET-050: school:manage reads (dashboard/stats, counselor-assignments/all, notes, counselor-workload).
         services.AddScoped<ISchoolReadsReader, SchoolReadsReader>();
+        // FM-DOTNET-051: school:manage profile + settings reads/writes (school/profile, settings) — the .NET
+        // write-owner for the schools table's profile/settings columns.
+        services.AddScoped<ISchoolProfileReader, SchoolProfileReader>();
+        services.AddScoped<ISchoolProfileWriter, SchoolProfileWriter>();
         services.AddScoped<IGradebookReader, GradebookReader>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();
