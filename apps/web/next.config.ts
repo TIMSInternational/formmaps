@@ -300,10 +300,18 @@ function shouldRouteGradebookReadToDotnet() {
   );
 }
 
-// NOTE (FM-DOTNET-047): the .NET calendar GET endpoints exist + are tested, but their next.config rewrite is
-// DELIBERATELY NOT added here — the 3 /calendar/* bare paths also serve Node POST creates, and Next rewrites
-// match path-not-method, so a reads-only rewrite would capture those POSTs and break calendar creation. The
-// rewrite + flag are added by FM-048 (which co-ports the POST creates), same as FM-044 did for config/schedule.
+// School-admin CALENDAR reads + writes (FM-DOTNET-048) — the whole /calendar/* surface (3 GET reads from
+// FM-047 + the 9 writes ported here) cuts over under ONE flag. Next rewrites match by PATH not method, and the
+// bare /calendar/academic-years, /assessment-periods, /holidays paths each serve BOTH a GET (read) AND a POST
+// (create), so reads and writes MUST flip together — the only non-split-brain design (same rationale as
+// config/schedule and question360). FM-047 deliberately shipped the reads dark WITHOUT a rewrite for exactly
+// this reason; FM-048 co-ports the writes and adds the rewrite. Default off (dark).
+function shouldRouteSchoolAdminCalendarToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_CALENDAR_TO_DOTNET)
+  );
+}
 
 const nextConfig: NextConfig = {
   /**
@@ -755,8 +763,42 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // (FM-DOTNET-047 calendar-reads rewrite intentionally omitted — see the note by the flag helpers above;
-      //  added with the POST creates in FM-048.)
+      // School-admin CALENDAR reads + writes (FM-DOTNET-048) — the /calendar/* surface (3 GET reads + 9 writes)
+      // flips together under ONE flag (path-not-method: the bare paths serve both GET and POST). The
+      // /:id/set-current path precedes the /:id path (Next matches array order; both are :id-shaped so the more
+      // specific 4-segment route must come first). All must precede the /api/:path* catch-all below.
+      ...(shouldRouteSchoolAdminCalendarToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/calendar/academic-years",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/academic-years/:id/set-current",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years/:id/set-current`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/academic-years/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years/:id`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/assessment-periods",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/assessment-periods`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/assessment-periods/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/assessment-periods/:id`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/holidays",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/holidays`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/holidays/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/holidays/:id`,
+            },
+          ]
+        : []),
       // School-admin CONFIG + SCHEDULE (FM-DOTNET-044) — /assessments/config + /assessments/schedule, each
       // GET(read, FM-039) + PUT(write, FM-044) flipping together under one flag (path-not-method). Same .NET
       // backend; both paths are 3-segment literals so no ordering hazard vs the reads routes above.
