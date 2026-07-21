@@ -44,12 +44,22 @@ is to **prove the strangler flag-flip + rollback mechanism on real traffic** bef
 > `x-formmaps-service: formmaps-api` (served by .NET); `POST …/start` (flag off) → no
 > header, Node "Invalid or expired token" (still Node).** Per-route routing confirmed
 > live + reversible. Insight-funnel caveat CLEARED (personality completion has no Bedrock
-> side-effect — grep-confirmed in personality-session-service.ts). **▶ REMAINING:**
-> SESSION + RESULTS reads (recommend watching a REAL completed student's results page
-> render identically — the real-data 200 path, unverified in prod), then the rollback
-> drill, then the WRITE flags START/ANSWER/COMPLETE (route real student assessment
-> writes; do with a real e2e). Rollback any route instantly: set its flag to 0 (or unset
-> the base URL) on the `formmaps` Vercel project + redeploy.
+> side-effect — grep-confirmed in personality-session-service.ts).
+>
+> **✅ 2026-07-21 — FULL personality domain cut over: ALL 6 flags ON.** Flipped SESSION +
+> RESULTS (reads) then START + ANSWER + COMPLETE (writes) on the `formmaps` Vercel project
+> + redeployed. Canary (synthetic token, header check): all 6 routes → `x-formmaps-service`
+> = **.NET**; control `GET /api/v1/lia/...` (not cut over) → **Node**. Prod .NET image
+> `staging-12d85c0f` includes the FM-030 write endpoints + a write-capable DB role.
+> **▶ ONLY REMAINING = human acceptance e2e:** log in as a real/test student, take the
+> personality assessment end-to-end (start→answer→complete) via app.formmaps.com; confirm
+> the session persists + results render (radar + intensity bars non-empty, camelCase
+> dimension_scores), then watch error rates. Not done autonomously — declined to
+> impersonate a real student with prod creds; the synthetic-token canary proves ROUTING
+> only, not the real write. **INSTANT ROLLBACK** per route: on the `formmaps` project set
+> `FORMMAPS_ROUTE_PERSONALITY_<ROUTE>_TO_DOTNET=0` (or `vercel env rm … production`) +
+> redeploy → that route returns to Node in ~1–2 min. Global kill: remove
+> `FORMMAPS_DOTNET_API_BASE_URL`.
 
 ## Why personality first
 Personality is the only fully **dual-write-free** domain: .NET owns the entire
