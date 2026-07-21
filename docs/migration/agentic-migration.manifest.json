@@ -2019,6 +2019,35 @@
       ],
       "verification": "dotnet build 0/0; CI Test API green (Testcontainers reader suite). Deploy step first failed on a concurrent-changeset race with FM-048 on the shared staging stack (NOT code); merged into main and re-verified via the main staging deploy. Merged --no-ff to main a6293de.",
       "commit": "a6293de"
+    },
+    {
+      "id": "FM-DOTNET-050-school-manage-reads",
+      "status": "completed",
+      "goal": "Phase-B slice: port the 4 school.ts school:manage method-unambiguous GET reads (routes/school.ts): /dashboard/stats, /counselor-assignments/all, /notes, /counselor-workload. Real read cut-over (no write shares their path) under FORMMAPS_ROUTE_SCHOOL_READS_TO_DOTNET.",
+      "dependsOn": [
+        "FM-DOTNET-049-school-analytics-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/SchoolReads/*",
+        "services/api/src/FormMaps.Infrastructure/SchoolReads/SchoolReadsReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolReadsEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/DependencyInjection.cs",
+        "services/api/src/FormMaps.Api/Program.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "New SchoolReads namespace; read-only RLS reader (batched, no N+1); reuses SchoolAnalyticsMath.JsRound. dashboard KPIs (distinct-PCA, avg scorePercentage, 1-dp JsRound percentages), no-school 6-field zeros vs 10-field with-school; counselor-assignments pairs; notes (ILIKE content+student.name, 50-cap, dual empty shapes, full scalar passthrough + nested student/author); counselor-workload (studentCount-desc stable over name-asc). roleName exact 'counselor' vs student both-case. Deterministic id/createdDate tie-breaks = FM-032-precedent supersets.",
+        "next.config rewrite (4 GET paths) under FORMMAPS_ROUTE_SCHOOL_READS_TO_DOTNET (default OFF).",
+        "GATE fresh SHIP + Codex SHIP; folded Codex MEDIUM (SQL AVG NaN \u2192 TS `avg || 0` coerces NaN\u21920; .NET kept double.NaN \u2192 System.Text.Json 500 on the dashboard) with a red-if-regressed NaN test."
+      ],
+      "verification": "dotnet build -warnaserror 0/0; SchoolReads 36 tests + full integration 659 + unit 516 green (Docker up). Staging deploy + health + authed canary green (run 29836536506). Merged --no-ff to main f945890.",
+      "commit": "f945890"
     }
   ]
 }
