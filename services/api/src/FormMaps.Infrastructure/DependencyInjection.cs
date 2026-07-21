@@ -11,6 +11,7 @@ using FormMaps.Application.SchoolAdmin;
 using FormMaps.Application.SchoolAnalytics;
 using FormMaps.Application.SchoolProfile;
 using FormMaps.Application.SchoolReads;
+using FormMaps.Application.SchoolUsers;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
@@ -22,6 +23,7 @@ using FormMaps.Infrastructure.SchoolAdmin;
 using FormMaps.Infrastructure.SchoolAnalytics;
 using FormMaps.Infrastructure.SchoolProfile;
 using FormMaps.Infrastructure.SchoolReads;
+using FormMaps.Infrastructure.SchoolUsers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -84,6 +86,10 @@ public static class DependencyInjection
         // write-owner for the schools table's profile/settings columns.
         services.AddScoped<ISchoolProfileReader, SchoolProfileReader>();
         services.AddScoped<ISchoolProfileWriter, SchoolProfileWriter>();
+        // FM-DOTNET-052: school:users cluster (list users, grade-level write, counselor assign/unassign, counselor
+        // students). The .NET write-owner for users.gradeLevel + counselor_student_assignments via school:users routes.
+        services.AddScoped<ISchoolUsersReader, SchoolUsersReader>();
+        services.AddScoped<ISchoolUsersWriter, SchoolUsersWriter>();
         services.AddScoped<IGradebookReader, GradebookReader>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();

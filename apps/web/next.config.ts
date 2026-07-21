@@ -344,6 +344,20 @@ function shouldRouteSchoolProfileSettingsToDotnet() {
   );
 }
 
+// School:users CLUSTER (FM-DOTNET-052) — routes/school.ts GET /users, PUT /users/:userId/grade-level,
+// POST+DELETE /counselors/:counselorId/assign-students, GET /counselors/:counselorId/students, mounted under
+// /api/v1/school-admin. Reads + writes cut over TOGETHER under ONE flag — Next rewrites match by PATH not method,
+// and /counselors/:counselorId/assign-students serves BOTH POST and DELETE, so a method-split is impossible (same
+// rationale as calendar / profile-settings). This slice is the .NET write-owner for users.gradeLevel and the
+// counselor_student_assignments table via the school:users routes. Default OFF (dark). Disjoint from every other
+// school-admin rewrite block: FM-050 uses /dashboard/stats, /counselor-assignments/all, /notes,
+// /counselor-workload; FM-049 uses /analytics/*; none match /users or /counselors/*.
+function shouldRouteSchoolUsersToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -890,6 +904,30 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/settings",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/settings`,
+            },
+          ]
+        : []),
+      // School:users CLUSTER (FM-DOTNET-052) — /users (GET), /users/:userId/grade-level (PUT),
+      // /counselors/:counselorId/assign-students (POST + DELETE, path-not-method), /counselors/:counselorId/students
+      // (GET). Reads + writes flip together under one flag. All are distinct path shapes, disjoint from every other
+      // school-admin rewrite block; more specific than the /api/:path* catch-all below, so they must precede it.
+      ...(shouldRouteSchoolUsersToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/users",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/users`,
+            },
+            {
+              source: "/api/v1/school-admin/users/:userId/grade-level",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/users/:userId/grade-level`,
+            },
+            {
+              source: "/api/v1/school-admin/counselors/:counselorId/assign-students",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselors/:counselorId/assign-students`,
+            },
+            {
+              source: "/api/v1/school-admin/counselors/:counselorId/students",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselors/:counselorId/students`,
             },
           ]
         : []),

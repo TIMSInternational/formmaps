@@ -11,5 +11,6 @@ public static class FormMapsPermissions
     public const string ProfileRead = "profile:read";
     public const string ProfileWrite = "profile:write";
     public const string SchoolManage = "school:manage";
+    public const string SchoolUsers = "school:users";
     public const string CalendarManage = "calendar:manage";
 }
