@@ -300,6 +300,15 @@ function shouldRouteGradebookReadToDotnet() {
   );
 }
 
+// School-admin ANALYTICS reads (FM-DOTNET-049) — routes/school.ts /analytics/{overview,trends,
+// performance-trends,top-performers}, mounted under /api/v1/school-admin. All four are method-unambiguous GETs
+// (no POST/PUT twin on these paths), so this is a straight read cut-over (not dark) behind ONE flag. Default OFF.
+function shouldRouteSchoolAnalyticsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ANALYTICS_TO_DOTNET)
+  );
+}
+
 // NOTE (FM-DOTNET-047): the .NET calendar GET endpoints exist + are tested, but their next.config rewrite is
 // DELIBERATELY NOT added here — the 3 /calendar/* bare paths also serve Node POST creates, and Next rewrites
 // match path-not-method, so a reads-only rewrite would capture those POSTs and break calendar creation. The
@@ -757,6 +766,30 @@ const nextConfig: NextConfig = {
         : []),
       // (FM-DOTNET-047 calendar-reads rewrite intentionally omitted — see the note by the flag helpers above;
       //  added with the POST creates in FM-048.)
+      // School-admin ANALYTICS reads (FM-DOTNET-049) — four method-unambiguous GET paths under
+      // /school-admin/analytics. Disjoint from the /results, /assessments and /gradebook rewrites; more specific
+      // than the /api/:path* catch-all below, so these must precede it. /trends and /performance-trends hit the
+      // same .NET backend (identical service call).
+      ...(shouldRouteSchoolAnalyticsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/analytics/overview",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/overview`,
+            },
+            {
+              source: "/api/v1/school-admin/analytics/trends",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/trends`,
+            },
+            {
+              source: "/api/v1/school-admin/analytics/performance-trends",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/performance-trends`,
+            },
+            {
+              source: "/api/v1/school-admin/analytics/top-performers",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/top-performers`,
+            },
+          ]
+        : []),
       // School-admin CONFIG + SCHEDULE (FM-DOTNET-044) — /assessments/config + /assessments/schedule, each
       // GET(read, FM-039) + PUT(write, FM-044) flipping together under one flag (path-not-method). Same .NET
       // backend; both paths are 3-segment literals so no ordering hazard vs the reads routes above.
