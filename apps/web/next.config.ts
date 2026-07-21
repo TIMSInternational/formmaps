@@ -332,6 +332,18 @@ function shouldRouteSchoolReadsToDotnet() {
   );
 }
 
+// School:manage PROFILE + SETTINGS reads + writes (FM-DOTNET-051) — routes/school.ts /school/profile and
+// /settings, mounted under /api/v1/school-admin. Each path serves a GET (read) AND a PUT (write), so both methods
+// cut over together under ONE flag — Next rewrites match by PATH not method, so a reads-only flag would drag the
+// PUTs to .NET too (the only non-split-brain design; same rationale as config/schedule, calendar, question360).
+// This slice is the .NET write-owner for the schools table's profile/settings columns. Default OFF (dark).
+// Disjoint from the /results, /assessments, /gradebook, /calendar, /analytics and FM-050 read rewrite blocks.
+function shouldRouteSchoolProfileSettingsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_PROFILE_SETTINGS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -863,6 +875,21 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/counselor-workload",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselor-workload`,
+            },
+          ]
+        : []),
+      // School:manage PROFILE + SETTINGS (FM-DOTNET-051) — /school/profile + /settings, each GET(read)+PUT(write)
+      // flipping together under one flag (path-not-method). Both are distinct literals, disjoint from every other
+      // school-admin rewrite block; more specific than the /api/:path* catch-all below, so they must precede it.
+      ...(shouldRouteSchoolProfileSettingsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/school/profile",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/school/profile`,
+            },
+            {
+              source: "/api/v1/school-admin/settings",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/settings`,
             },
           ]
         : []),
