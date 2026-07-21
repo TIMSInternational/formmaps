@@ -1,5 +1,38 @@
 import type { NextConfig } from "next";
 
+// ── FormMaps → .NET migration: personality domain prod cutover (Milestone-1) ──
+// The .NET backend serves the SAME /api/v1/personality/* paths. A route is proxied to
+// .NET only when BOTH FORMMAPS_DOTNET_API_BASE_URL is set AND that route's per-route flag
+// is on, so this whole block is INERT (dark) until the base URL is configured and a flag is
+// flipped. Each flag maps to a distinct path (Next rewrites match by path, not method),
+// giving per-route, instant rollback (set the flag to 0, or unset the base URL as a global
+// kill-switch). Helpers ported verbatim from the monorepo apps/web/next.config.ts, proven
+// on the staging .NET service.
+const dotnetApiBaseUrl = process.env.FORMMAPS_DOTNET_API_BASE_URL?.replace(/\/+$/, "");
+
+function isEnabled(value: string | undefined) {
+  return value === "1" || value?.toLowerCase() === "true";
+}
+
+function shouldRoutePersonalityAccessToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_ACCESS_TO_DOTNET));
+}
+function shouldRoutePersonalitySessionToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_SESSION_TO_DOTNET));
+}
+function shouldRoutePersonalityResultsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_RESULTS_TO_DOTNET));
+}
+function shouldRoutePersonalityStartToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_START_TO_DOTNET));
+}
+function shouldRoutePersonalityAnswerToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_ANSWER_TO_DOTNET));
+}
+function shouldRoutePersonalityCompleteToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_COMPLETE_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -77,8 +110,36 @@ const nextConfig: NextConfig = {
    */
   async rewrites() {
     const target = process.env.API_PROXY_TARGET || "https://5t8ch34ijm.us-east-1.awsapprunner.com";
+    // Personality → .NET (dark until FORMMAPS_DOTNET_API_BASE_URL is set + a flag is on).
+    // MUST precede the /api/:path* catch-all below so a flipped route reaches .NET. The
+    // /session/:sessionId sub-paths (results/answer/complete) precede the bare
+    // /session/:sessionId (Next matches array order, first match wins).
+    const personalityRewrites = [
+      ...(shouldRoutePersonalityAccessToDotnet()
+        ? [{ source: "/api/v1/personality/access", destination: `${dotnetApiBaseUrl}/api/v1/personality/access` }]
+        : []),
+      ...(shouldRoutePersonalityResultsToDotnet()
+        ? [{ source: "/api/v1/personality/session/:sessionId/results", destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId/results` }]
+        : []),
+      ...(shouldRoutePersonalityAnswerToDotnet()
+        ? [{ source: "/api/v1/personality/session/:sessionId/answer", destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId/answer` }]
+        : []),
+      ...(shouldRoutePersonalityCompleteToDotnet()
+        ? [{ source: "/api/v1/personality/session/:sessionId/complete", destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId/complete` }]
+        : []),
+      ...(shouldRoutePersonalitySessionToDotnet()
+        ? [{ source: "/api/v1/personality/session/:sessionId", destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId` }]
+        : []),
+      ...(shouldRoutePersonalityResultsToDotnet()
+        ? [{ source: "/api/v1/personality/user/:userId/results", destination: `${dotnetApiBaseUrl}/api/v1/personality/user/:userId/results` }]
+        : []),
+      ...(shouldRoutePersonalityStartToDotnet()
+        ? [{ source: "/api/v1/personality/start", destination: `${dotnetApiBaseUrl}/api/v1/personality/start` }]
+        : []),
+    ];
     return {
       afterFiles: [
+        ...personalityRewrites,
         { source: "/api/:path*", destination: `${target}/api/:path*` },
         { source: "/authapi/:path*", destination: `${target}/authapi/:path*` },
         { source: "/evaluation/:path*", destination: `${target}/evaluation/:path*` },
