@@ -322,6 +322,16 @@ function shouldRouteSchoolAnalyticsToDotnet() {
   );
 }
 
+// School:manage READS (FM-DOTNET-050) — routes/school.ts /dashboard/stats, /counselor-assignments/all, /notes,
+// /counselor-workload, mounted under /api/v1/school-admin. All four are method-unambiguous GETs (no POST/PUT twin
+// on these paths), so this is a straight read cut-over (not dark) behind ONE flag. Default OFF. Disjoint from the
+// /results, /assessments, /gradebook, /calendar and /analytics rewrite blocks.
+function shouldRouteSchoolReadsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_READS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -829,6 +839,30 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/analytics/top-performers",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/top-performers`,
+            },
+          ]
+        : []),
+      // School:manage READS (FM-DOTNET-050) — the four method-unambiguous GET paths under /school-admin. Each is a
+      // distinct literal (dashboard/stats, counselor-assignments/all, notes, counselor-workload), disjoint from the
+      // /results, /assessments, /gradebook, /calendar and /analytics rewrites; more specific than the /api/:path*
+      // catch-all below, so these must precede it. No write shares any of these paths (straight read cut-over).
+      ...(shouldRouteSchoolReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/dashboard/stats",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/dashboard/stats`,
+            },
+            {
+              source: "/api/v1/school-admin/counselor-assignments/all",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselor-assignments/all`,
+            },
+            {
+              source: "/api/v1/school-admin/notes",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/notes`,
+            },
+            {
+              source: "/api/v1/school-admin/counselor-workload",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselor-workload`,
             },
           ]
         : []),
