@@ -11,11 +11,25 @@ is to **prove the strangler flag-flip + rollback mechanism on real traffic** bef
 > Dark canary GREEN: `/health` 200; anon `POST /personality/start` → 401
 > `missing_identity`; `x-formmaps-service` header present; CORS echoes
 > `https://app.formmaps.com`. Receiving ZERO user traffic (no Vercel base-URL set /
-> all flags off). **Remaining before cutover:** (1) authed `/access` → 200 check
-> (proves DB connectivity under real prod auth+RLS — needs a real prod cookie or a
-> token minted from `nexa/api/JWT_SECRET`); (2) set `FORMMAPS_DOTNET_API_BASE_URL`
-> on the `formmaps` Vercel project (§C, dark); (3) then the read→write flag-flip
-> cutover (§2–§3, Claude drives with Federico). Undo everything:
+> all flags off).
+>
+> **✅ 2026-07-21 — S1 auth+DB smoke test PARTIALLY DONE (Claude, read-only).** Minted a
+> short-lived HS256 token from `nexa/api/JWT_SECRET` for a SYNTHETIC (non-real) sub and
+> hit `GET /api/v1/personality/access` on the prod .NET host → **401 `user_not_found`**
+> (NOT `missing_identity`/invalid), header `x-formmaps-service: formmaps-api`. This proves
+> two things without touching any real user's data: (a) the prod JWT secret is correctly
+> wired (the service validated the prod-signed token past signature check), and (b) prod
+> Aurora connectivity works under the auth factory (it ran the users lookup and correctly
+> found no synthetic user). **Still needed for a literal `/access`→200:** a REAL prod
+> cookie (or Federico-authorized real user id) — deliberately NOT done to avoid
+> impersonating a real student with prod creds.
+>
+> **Remaining before cutover:** (1) authed `/access` → 200 with a REAL prod session
+> (Federico: paste a logged-in `access_token` cookie, or OK a specific staff user id to
+> mint against); (2) set `FORMMAPS_DOTNET_API_BASE_URL` on the `formmaps` Vercel project
+> (§C, dark) — **prod-mutating, Federico via Vercel/`!`**; (3) then the read→write
+> flag-flip cutover (§2–§3, Claude prepares+canaries, Federico flips on prod Vercel).
+> Undo everything:
 > `aws cloudformation delete-stack --region us-east-1 --stack-name formmaps-api-prod`.
 
 ## Why personality first
