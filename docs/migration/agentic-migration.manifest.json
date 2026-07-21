@@ -1960,6 +1960,65 @@
       "notes": [
         "DONE 2026-07-20 (parallel fork with FM-045; re-dispatched once after a cwd-misroute caught by the repo-verify guard). Gate caught my scoping miss (I wrongly briefed 'GET-only, no coupling'). Ships DARK/unrouted. NEXT: FM-048 = calendar POST creates (createAcademicYear/AssessmentPeriod/Holidays) + the co-flip rewrite to route both."
       ]
+    },
+    {
+      "id": "FM-DOTNET-048-school-calendar-writes",
+      "status": "completed",
+      "goal": "Third Phase-B slice: port the 9 school academic-calendar WRITE endpoints (routes/school-grades.ts): academic-years POST/PUT/:id/set-current/DELETE, assessment-periods POST/PUT/DELETE, holidays POST/DELETE. Adds the co-flip next.config rewrite that routes BOTH the FM-047 dark reads and these writes under ONE flag FORMMAPS_ROUTE_SCHOOL_ADMIN_CALENDAR_TO_DOTNET (path-not-method: bare paths serve GET+POST).",
+      "dependsOn": [
+        "FM-DOTNET-047-school-calendar-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-grades.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolGradesService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Calendar/ICalendarWriter.cs",
+        "services/api/src/FormMaps.Infrastructure/Calendar/CalendarWriter.cs",
+        "services/api/src/FormMaps.Api/Endpoints/CalendarEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/DependencyInjection.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "ICalendarWriter/CalendarWriter on the FM-029 writable RLS rail; hard deletes; set-current ownership-before-clear; createdBy/updatedBy stay NULL; holiday normalization (trim/slice100/50, endDate-strictly-after, batch-500); assessment-period termId fallback (deterministic superset of unordered legacy include-take-1).",
+        "Co-flip next.config rewrite for the whole /calendar/* surface under FORMMAPS_ROUTE_SCHOOL_ADMIN_CALENDAR_TO_DOTNET (default OFF); supersedes the FM-047 deferred-rewrite note.",
+        "Testcontainers write harness (calendar-write-schema.sql with ON DELETE CASCADE FKs, non-UTC tz pin): 22 writer + 32 endpoint tests.",
+        "GATE (fresh reviewer + Codex, full TS visibility) folded 6 findings each with a red-if-regressed test: 2 Codex HIGH (non-string termId/type produced wrong SUCCESSFUL writes -> 400) + 4 consistency/faithfulness (reject wrong-typed assessmentTypes/holidays/terms; honor falsy-coalescing -> [] and empty-string name -> 201). Documented+accepted: invalid-date rollover (stricter), epoch-ms date (exotic), cross-school termId (inherited from legacy, not a divergence)."
+      ],
+      "verification": "dotnet build -warnaserror 0/0; CI Test API green (Testcontainers writer suite ran in CI, Docker-less locally); staging deploy + health + authed canary green (run 29796937908). Merged --no-ff to main 7d73720.",
+      "commit": "7d73720"
+    },
+    {
+      "id": "FM-DOTNET-049-school-analytics-reads",
+      "status": "completed",
+      "goal": "Phase-B slice: port the 4 school-analytics READ endpoints (routes/school.ts): GET /analytics/{overview,trends,performance-trends,top-performers}, mounted under /api/v1/school-admin, permission analytics:school. All method-unambiguous GETs -> real read cut-over (not dark) behind FORMMAPS_ROUTE_SCHOOL_ANALYTICS_TO_DOTNET.",
+      "dependsOn": [
+        "FM-DOTNET-046-gradebook-transcript-read"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/SchoolAnalytics/*",
+        "services/api/src/FormMaps.Infrastructure/SchoolAnalytics/SchoolAnalyticsReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolAnalyticsEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/DependencyInjection.cs",
+        "services/api/src/FormMaps.Api/Program.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "Pure SchoolAnalyticsMath (GRADE_MAP GPA, JsRound half-up, date bucketing) + ISchoolAnalyticsReader/SchoolAnalyticsReader (read-only RLS session); no-school -> 200 per-endpoint empty default; grades trend metric scoped by schoolId ONLY (not studentId); distinct-user PCA/counselor counting; UTC bucketing (both prod runtimes UTC).",
+        "next.config rewrite (4 GET paths) under FORMMAPS_ROUTE_SCHOOL_ANALYTICS_TO_DOTNET (default OFF).",
+        "46 pure-math + 17 endpoint + 14 DB reader tests.",
+        "GATE (fresh reviewer SHIP + Codex): faithful. DOCUMENTED deterministic superset (FM-032 precedent): top-performers adds ORDER BY id ASC for GPA ties where legacy findMany is unordered/nondeterministic (no byte-match exists). Codex date-bucketing tz findings are non-issues under UTC prod."
+      ],
+      "verification": "dotnet build 0/0; CI Test API green (Testcontainers reader suite). Deploy step first failed on a concurrent-changeset race with FM-048 on the shared staging stack (NOT code); merged into main and re-verified via the main staging deploy. Merged --no-ff to main a6293de.",
+      "commit": "a6293de"
     }
   ]
 }
