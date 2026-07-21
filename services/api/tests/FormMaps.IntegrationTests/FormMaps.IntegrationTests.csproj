@@ -49,6 +49,8 @@
     <EmbeddedResource Include="Calendar\Data\calendar-write-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers school-analytics reads harness (FM-DOTNET-049 Phase-B). -->
     <EmbeddedResource Include="SchoolAnalytics\Data\analytics-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers school:manage reads harness (FM-DOTNET-050 Phase-B). -->
+    <EmbeddedResource Include="SchoolReads\Data\schoolreads-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

@@ -9,6 +9,7 @@ using FormMaps.Application.Reports;
 using FormMaps.Application.Gradebook;
 using FormMaps.Application.SchoolAdmin;
 using FormMaps.Application.SchoolAnalytics;
+using FormMaps.Application.SchoolReads;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
@@ -18,6 +19,7 @@ using FormMaps.Infrastructure.Reports;
 using FormMaps.Infrastructure.Gradebook;
 using FormMaps.Infrastructure.SchoolAdmin;
 using FormMaps.Infrastructure.SchoolAnalytics;
+using FormMaps.Infrastructure.SchoolReads;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -74,6 +76,8 @@ public static class DependencyInjection
         services.AddScoped<ISchoolAdminReader, SchoolAdminReader>();
         // FM-DOTNET-049: school-analytics reads (overview / trends / performance-trends / top-performers).
         services.AddScoped<ISchoolAnalyticsReader, SchoolAnalyticsReader>();
+        // FM-DOTNET-050: school:manage reads (dashboard/stats, counselor-assignments/all, notes, counselor-workload).
+        services.AddScoped<ISchoolReadsReader, SchoolReadsReader>();
         services.AddScoped<IGradebookReader, GradebookReader>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();
