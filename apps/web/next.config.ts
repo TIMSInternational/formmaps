@@ -370,6 +370,21 @@ function shouldRouteIsamsReadsToDotnet() {
   );
 }
 
+// Curriculum FRAMEWORKS (FM-DOTNET-055) — routes/school-courses.ts, mounted under /api/v1/school-admin: the FOUR
+// /curriculum/frameworks endpoints ONLY (GET+PUT /curriculum/frameworks, GET /curriculum/frameworks/:type/courses,
+// PUT /curriculum/frameworks/:type/courses/:courseId). The /courses, /data-mapping, /prerequisite and AI routes on the
+// same router stay on Node (fall through to the /api/:path* catch-all). Reads + writes flip together under ONE flag —
+// Next rewrites match by PATH not method, and /curriculum/frameworks serves BOTH GET and PUT, so a method-split is
+// impossible. The three path shapes have DISTINCT segment counts (…/frameworks, …/frameworks/:type/courses,
+// …/frameworks/:type/courses/:courseId) → no mutual collision; all disjoint from /courses/* and every other
+// school-admin block; more specific than the /api/:path* catch-all, so they must precede it. Default OFF (dark).
+function shouldRouteCurriculumFrameworksToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_CURRICULUM_FRAMEWORKS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -957,6 +972,27 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/integrations/isams/jobs",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/integrations/isams/jobs`,
+            },
+          ]
+        : []),
+      // Curriculum FRAMEWORKS (FM-DOTNET-055) — the four /curriculum/frameworks endpoints under /school-admin, all
+      // gated by one flag (reads + writes flip together; /curriculum/frameworks serves GET and PUT). The three path
+      // shapes have distinct segment counts, but the most-specific (…/:courseId) is listed first anyway. All disjoint
+      // from /courses/* and every other school-admin block; more specific than the /api/:path* catch-all below.
+      ...(shouldRouteCurriculumFrameworksToDotnet()
+        ? [
+            {
+              source:
+                "/api/v1/school-admin/curriculum/frameworks/:type/courses/:courseId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/curriculum/frameworks/:type/courses/:courseId`,
+            },
+            {
+              source: "/api/v1/school-admin/curriculum/frameworks/:type/courses",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/curriculum/frameworks/:type/courses`,
+            },
+            {
+              source: "/api/v1/school-admin/curriculum/frameworks",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/curriculum/frameworks`,
             },
           ]
         : []),

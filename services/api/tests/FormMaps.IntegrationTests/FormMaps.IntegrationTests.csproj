@@ -57,6 +57,8 @@
     <EmbeddedResource Include="SchoolUsers\Data\schoolusers-schema.sql" />
     <!-- Schema-only DDL (native SyncJobStatus enum + isams_configs + isams_sync_jobs) for the iSAMS reads harness (FM-DOTNET-053). -->
     <EmbeddedResource Include="IsamsReads\Data\isams-reads-schema.sql" />
+    <!-- Schema-only DDL (curriculum_frameworks + framework_courses + school_framework_course_overrides, with the two @@unique indexes) for the curriculum-frameworks harness (FM-DOTNET-055). -->
+    <EmbeddedResource Include="CurriculumFrameworks\Data\curriculum-frameworks-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
