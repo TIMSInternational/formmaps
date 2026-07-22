@@ -2111,6 +2111,37 @@
       ],
       "verification": "dotnet build 0/0; unit 577, integration 767 (+1 skip), contract 1 — full suite green (Docker). Staging deploy 29878482225 + anon canary GREEN (health 200; all 5 routes anon->401 + x-formmaps-service). Merged --no-ff to main ed68eec.",
       "commit": "ed68eec"
+    },
+    {
+      "id": "FM-DOTNET-053-isams-reads",
+      "status": "completed",
+      "goal": "Phase-B slice: port the two READ-ONLY iSAMS integration endpoints (GET /integrations/isams/status, GET /integrations/isams/jobs) from routes/school.ts (school:manage). DELIBERATELY reads-only (Federico decision) — configure/sync/test (external iSAMS vendor HTTP + credential encryption + cross-domain course/user/grade upserts) STAY IN NODE as an explicit vendor boundary, to be ported as one unit after school-courses.ts + school-students.ts land.",
+      "dependsOn": [
+        "FM-DOTNET-052-school-users"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma",
+        "/Users/federicotafur/formmaps-platform/api/prisma/migrations/20260505140750_init/migration.sql"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/IsamsReads/*",
+        "services/api/src/FormMaps.Infrastructure/IsamsReads/*",
+        "services/api/src/FormMaps.Api/Endpoints/IsamsReadsEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/DependencyInjection.cs",
+        "services/api/src/FormMaps.Api/Program.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "IsamsReadsReader (read-only RLS): status reads endpoint+lastSyncAt from isams_configs (unique on schoolId); jobs = full 12-col isams_sync_jobs passthrough, native SyncJobStatus enum via ::text, ORDER BY createdDate DESC + id-ASC (FM-032 tie-break), LIMIT 20.",
+        "IsamsReadsEndpoints: 2 GETs on /api/v1/school-admin (school:manage). status has THREE distinct 200 shapes — no-school {configured:false}; no-config-row {configured:false,enabled:false} WITHOUT lastSyncAt key; config-row {configured:true,enabled,lastSyncAt} with key present even when null. enabled = !string.IsNullOrEmpty(endpoint) (legacy !!endpoint). jobs no-school -> [].",
+        "One flag FORMMAPS_ROUTE_ISAMS_READS_TO_DOTNET (default OFF) over ONLY the 2 GET paths (status, jobs). The 3 POST write paths (/integrations/isams, /sync, /test) NOT rewritten; no vendor HTTP client or field-encryption code added (vendor boundary stays Node).",
+        "GATE fresh reviewer SHIP + Codex SHIP (first Codex run wedged >30m no verdict; focused retry returned clean SHIP; honestly recorded as inconclusive-then-clean, never claimed approval we did not have). Folded 1 LOW: harness schema timestamp -> timestamp(3) matching the prod init migration (harness fidelity; ISO-Z output faithful either way)."
+      ],
+      "verification": "dotnet build 0/0; unit 577, integration 793 (+1 skip; +26 new IsamsReads), contract 1 green (Docker; a transient Docker-daemon drop mid-run was a flake, not a failure — re-run clean). Staging deploy 29928568944 + anon canary GREEN (health 200; both routes anon->401 + x-formmaps-service). Merged --no-ff to main ceeba72.",
+      "commit": "ceeba72"
     }
   ]
 }
