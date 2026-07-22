@@ -2204,6 +2204,36 @@
       ],
       "verification": "dotnet build 0/0; unit 585, integration 833 (+1 skip), contract 1. Staging deploy 29935354699 + anon canary GREEN (4 routes 401 + x-formmaps-service). Merged --no-ff to main 344d02c (wiring conflicts vs FM-054 reconciled by hand — kept both; post-merge SchoolCourses+CurriculumFrameworks 88 green).",
       "commit": "344d02c"
+    },
+    {
+      "id": "FM-DOTNET-056-data-mappings",
+      "status": "completed",
+      "goal": "Phase-B slice (school-courses.ts sub-slice 3): port the data-mappings surface — GET /data-mappings (paginated list) + POST /data-mappings (create; source/status FORCED to manual/approved) + POST /data-mappings/bulk-approve. Permission school:data-mapping. .NET write-owner for data_mappings INSERT + bulk status-approve. PUT/DELETE /data-mappings/:id + ai-suggest DEFERRED — the bare /:id wildcard collides with the permanently-Node AI siblings (batched negative-lookahead cutover later).",
+      "dependsOn": [
+        "FM-DOTNET-055-curriculum-frameworks"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-courses.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolCoursesService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/DataMappings/*",
+        "services/api/src/FormMaps.Infrastructure/DataMappings/*",
+        "services/api/src/FormMaps.Api/Endpoints/DataMappingsEndpoints.cs",
+        "services/api/src/FormMaps.Domain/Auth/FormMapsPermissions.cs",
+        "services/api/src/FormMaps.Infrastructure/DependencyInjection.cs",
+        "services/api/src/FormMaps.Api/Program.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "listDataMappings (school-scoped, page/limit clamp 1..100/default 20, optional status filter, createdDate DESC + id ASC tie-break, full-row passthrough). createDataMapping RAW body no app-validation (Prisma type/NOT-NULL rejection = 500): externalCode/internalCourseId String kind else DBNull->NOT-NULL->500; externalSource || 'manual' (JS-falsy incl ''/0 -> 'manual', truthy non-string -> 500); externalName String?->value/NULL else 500; confidence Number|numeric-String->decimal else 500; source FORCED 'manual', status 'approved', approvedBy=caller, approvedAt/createdDate/updatedAt=now, createdBy/updatedBy NULL. NO 23505 catch -> duplicate (schoolId,externalCode,externalSource) surfaces as 500 (NOT 409, unlike createCourse). bulkApproveMappings school-scoped id-array flip -> approved (updatedAt bumps, updatedBy NOT set). confidence emitted as decimal.js STRING via trim_scale(col)::text (raw-Decimal-column guardrail, NOT ::double precision). One flag FORMMAPS_ROUTE_DATA_MAPPINGS_TO_DOTNET over the 3 collision-free literal paths.",
+        "RATIFIED SAFE DIVERGENCE: bulk-approve with missing/non-array/empty mappingIds -> endpoint normalizes to empty text[] -> = ANY('{}') matches nothing -> 0 approved. Legacy Prisma { id: { in: undefined } } DROPS the filter and approves the WHOLE school -> we deliberately do NOT reproduce that footgun (fail-safe). Documented + tested.",
+        "GATE: prior-session fresh reviewer = SHIP (faithful port; ONE LOW residual = confidence numeric-STRING coercion). This session RESOLVED the LOW by FOLDING (red-if-regressed): confidence string parse changed from NumberStyles.Number to AllowLeadingSign|AllowDecimalPoint|AllowExponent. Verified empirically against real decimal.js AND real .NET: the fold makes every realistic numeric string agree ('0.85'->0.85, '1e3'->1000) AND makes legacy's rejections agree ('1,000'/' 0.85 '->reject), ELIMINATING the two fail-OPEN divergences (default .NET parsed thousands-separator/whitespace strings decimal.js 500s on -> would have written a row legacy rejects). Residual divergences (hex 0x10, Infinity, NaN, ES underscore 1_000) are all FAIL-CLOSED (.NET 500 where legacy persists a nonsense value) — one-directional/safe; NOT reproduced by choice (would mean persisting NaN/Infinity/hex confidence). Exact decimal.js parity is unreachable via any NumberStyles mask. Codex INCONCLUSIVE (hung both attempts, session-recurring — NOT an approval; fold independently verified via ground-truth decimal.js + .NET probes + green suite)."
+      ],
+      "verification": "dotnet build 0/0; unit 585, integration 921 (+1 documented skip), contract 1 — full suite green. Staging deploy run 29953931884 SUCCESS + anon canary GREEN (health 200; GET+POST /api/v1/school-admin/data-mappings + POST /bulk-approve all anon->401 + x-formmaps-service). Merged --no-ff to main 3892721 (no wiring conflicts — branch based on FM-055 HEAD eead656, main had not advanced).",
+      "commit": "3892721"
     }
   ]
 }
