@@ -2175,6 +2175,35 @@
       ],
       "verification": "dotnet build 0/0; unit 577, integration 841 (+1 skip; +48 SchoolCourses), contract 1 green. Staging deploy 29932949189 + anon canary GREEN (health 200; GET+POST /courses anon->401 + x-formmaps-service). Merged --no-ff to main b1800de.",
       "commit": "b1800de"
+    },
+    {
+      "id": "FM-DOTNET-055-curriculum-frameworks",
+      "status": "completed",
+      "goal": "Phase-B slice (school-courses.ts sub-slice 2): port the 4 /curriculum/frameworks endpoints (GET/PUT /curriculum/frameworks, GET /curriculum/frameworks/:type/courses [global catalog], PUT /curriculum/frameworks/:type/courses/:courseId). curriculum:manage. .NET write-owner for curriculum_frameworks + school_framework_course_overrides.",
+      "dependsOn": [
+        "FM-DOTNET-054-school-courses-crud"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-courses.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolCoursesService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/CurriculumFrameworks/*",
+        "services/api/src/FormMaps.Infrastructure/CurriculumFrameworks/*",
+        "services/api/src/FormMaps.Api/Endpoints/CurriculumFrameworksEndpoints.cs",
+        "services/api/src/FormMaps.Domain/Auth/FormMapsPermissions.cs",
+        "services/api/src/FormMaps.Infrastructure/DependencyInjection.cs",
+        "services/api/src/FormMaps.Api/Program.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "listFrameworks (4 fixed types, id/configuredAt omitted when no row, double-nested {data:{data}}, global groupBy courseCount); updateFrameworks upsert-tx configuredAt=now, empty->noop, HasEnabled undefined-skip on UPDATE; listFrameworkCourses GLOBAL (no school) 100-cap raw case-sensitive type; customizeFrameworkCourse 404/400(ToUpperCase) + create-vs-update undefined-asymmetry + merged view (singular gradeLevel key). credits emitted as decimal.js STRING (trim_scale::text). One flag over 3 path shapes.",
+        "GATE fresh + Codex both FIXES-NEEDED. Folds (red-if-regressed): Codex HIGH customize credits accepts numeric-string (Prisma Decimal parity); fresh MED updateFrameworks enabled undefined-skip on UPDATE (HasEnabled flag); cross-cutting credits raw-Decimal->string. Dismissed: Codex HIGH#1 routing (verified false positive — endpoint ported, no un-ported sibling); Codex LOW#3 id-tie-break (ratified FM-032 no-op under UNIQUE(frameworkType,code)); fresh LOW stale comments (cleaned)."
+      ],
+      "verification": "dotnet build 0/0; unit 585, integration 833 (+1 skip), contract 1. Staging deploy 29935354699 + anon canary GREEN (4 routes 401 + x-formmaps-service). Merged --no-ff to main 344d02c (wiring conflicts vs FM-054 reconciled by hand — kept both; post-merge SchoolCourses+CurriculumFrameworks 88 green).",
+      "commit": "344d02c"
     }
   ]
 }
