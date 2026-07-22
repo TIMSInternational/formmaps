@@ -370,6 +370,19 @@ function shouldRouteIsamsReadsToDotnet() {
   );
 }
 
+// School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
+// ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
+// PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
+// (no trailing segment), it does NOT match /courses/:courseId, /courses/pathways, /courses/import, /courses/ai-import,
+// /courses/import/:jobId, etc. — those un-ported siblings stay on Node (fall through to the /api/:path* catch-all).
+// The PUT/DELETE /courses/:courseId writes are deliberately NOT ported (that :courseId path collides with the
+// siblings above). Default OFF (dark). Disjoint from every other school-admin rewrite block.
+function shouldRouteSchoolCoursesToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_COURSES_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -957,6 +970,18 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/integrations/isams/jobs",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/integrations/isams/jobs`,
+            },
+          ]
+        : []),
+      // School-courses GET + POST /courses (FM-DOTNET-054) — the EXACT literal /courses ONLY (GET+POST co-flip;
+      // path-not-method). Does NOT match /courses/:courseId, /courses/pathways, /courses/import, /courses/ai-import
+      // (all have a trailing segment) — those stay Node. More specific than the /api/:path* catch-all below, so it
+      // must precede it. Default OFF (dark).
+      ...(shouldRouteSchoolCoursesToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/courses",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses`,
             },
           ]
         : []),

@@ -13,6 +13,7 @@ using FormMaps.Application.SchoolProfile;
 using FormMaps.Application.IsamsReads;
 using FormMaps.Application.SchoolReads;
 using FormMaps.Application.SchoolUsers;
+using FormMaps.Application.SchoolCourses;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
@@ -26,6 +27,7 @@ using FormMaps.Infrastructure.SchoolProfile;
 using FormMaps.Infrastructure.IsamsReads;
 using FormMaps.Infrastructure.SchoolReads;
 using FormMaps.Infrastructure.SchoolUsers;
+using FormMaps.Infrastructure.SchoolCourses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -92,6 +94,10 @@ public static class DependencyInjection
         // students). The .NET write-owner for users.gradeLevel + counselor_student_assignments via school:users routes.
         services.AddScoped<ISchoolUsersReader, SchoolUsersReader>();
         services.AddScoped<ISchoolUsersWriter, SchoolUsersWriter>();
+        // FM-DOTNET-054: school-courses GET /courses (framework+enrollment merge read) + POST /courses (create).
+        // SCOPE = these two only; the .NET write-owner for INSERTs into school_courses via POST /courses.
+        services.AddScoped<ISchoolCoursesReader, SchoolCoursesReader>();
+        services.AddScoped<ISchoolCoursesWriter, SchoolCoursesWriter>();
         // FM-DOTNET-053: iSAMS integration READS (status + jobs). READS-ONLY — configure/sync/test stay in Node
         // (vendor boundary). No vendor HTTP client / field-encryption code.
         services.AddScoped<IIsamsReadsReader, IsamsReadsReader>();
