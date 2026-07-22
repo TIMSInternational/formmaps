@@ -5,7 +5,20 @@ Prep: Claude. This is the FIRST production cutover of any .NET domain — its pu
 is to **prove the strangler flag-flip + rollback mechanism on real traffic** before
 70+ more dark slices are ported assuming it works.
 
-> **🔴🔴 2026-07-22 — CRITICAL: the human e2e caught a PROD DEFECT. RECOMMEND IMMEDIATE ROLLBACK.**
+> **✅✅ 2026-07-22 — RESOLVED + FULL ACCEPTANCE PASSED. MILESTONE-1 COMPLETE (real traffic).**
+> Root cause below was fixed (App Runner `formmaps-api-prod` `LegacyJwt__Issuer`→`nexa-api`,
+> `LegacyJwt__Audience`→`nexa-frontend` via `update-stack`; UPDATE_COMPLETE; health 200). Then the
+> REAL UI e2e ran clean as prod test student `federico@countryday.edu`: login → **no logout loop**;
+> `GET /personality/access` → **200 .NET** `{has_access:true,has_completed:false}`; drove the FULL
+> write path (`POST /start` → **80** `POST …/answer` → `POST …/complete`) — **all 200, all
+> `x-formmaps-service` = .NET**; session persisted (type **ESTJ**), `dimension_scores` inner keys
+> **camelCase** (FM-030 fix holds on a real write). Results page `/dashboard/assessments/personality/
+> results` **RENDERS**: Dimension-Profile radar (EI/SN/TF/JP) + Intensity bars (all non-empty) + full
+> localized narrative "El Director Ejecutivo" (FM-017 bank). Screenshot: `personality-results-render-PASS.png`.
+> **The flags stayed ON (fix-forward, no rollback needed once the redeploy landed).** Personality is
+> now genuinely cut over on real traffic. The section below is the historical incident record.
+>
+> **🔴🔴 2026-07-22 — CRITICAL: the human e2e caught a PROD DEFECT. RECOMMEND IMMEDIATE ROLLBACK. [RESOLVED — see above]**
 > Logged in through the real UI as a prod TEST student (`federico@countryday.edu`) and drove
 > `app.formmaps.com`. Result: **every `.NET` personality route returns `401 missing_identity`
 > for a VALIDLY logged-in user** — while every Node endpoint (`/api/v1/user/me`,
