@@ -2142,6 +2142,39 @@
       ],
       "verification": "dotnet build 0/0; unit 577, integration 793 (+1 skip; +26 new IsamsReads), contract 1 green (Docker; a transient Docker-daemon drop mid-run was a flake, not a failure — re-run clean). Staging deploy 29928568944 + anon canary GREEN (health 200; both routes anon->401 + x-formmaps-service). Merged --no-ff to main ceeba72.",
       "commit": "ceeba72"
+    },
+    {
+      "id": "FM-DOTNET-054-school-courses-crud",
+      "status": "completed",
+      "goal": "Phase-B slice (school-courses.ts sub-slice 1 of a mini-phase): port GET /courses (list, with the read-only framework+enrollment merge) + POST /courses (create) under one flag, exact-literal /courses path (GET+POST co-flip). PUT/DELETE /courses/:courseId DEFERRED — that path collides with the un-ported /courses/pathways, /courses/import, /courses/ai-import siblings. AI endpoints (ai-suggest/ai-import) stay Node (Bedrock).",
+      "dependsOn": [
+        "FM-DOTNET-053-isams-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-courses.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolCoursesService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/transcriptService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/SchoolCourses/*",
+        "services/api/src/FormMaps.Infrastructure/SchoolCourses/*",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolCoursesEndpoints.cs",
+        "services/api/src/FormMaps.Domain/Auth/FormMapsPermissions.cs",
+        "services/api/src/FormMaps.Infrastructure/DependencyInjection.cs",
+        "services/api/src/FormMaps.Api/Program.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "SchoolCoursesReader (read-only RLS): 500-cap pagination; search name|code ILIKE no-escape; department ILIKE; gradeLevel `has` (0 skipped); code-ASC+id-ASC tie-break; enrollmentCount via ONE student_course_plans groupBy (enrolled/planned, default 0, no N+1); framework merge quirk faithfully preserved (enabled frameworks' courses appended UN-paginated to EVERY page, total=schoolCount+fwCount, framework prerequisites always []).",
+        "SchoolCoursesWriter (OpenWritableAsync): createCourse || defaults; 201 {id,code}; unique (schoolId,code) 23505→409 'Course code already exists'; createdBy/updatedBy NULL. New perms courses:read/courses:write. no-school→400.",
+        "One flag FORMMAPS_ROUTE_SCHOOL_COURSES_TO_DOTNET over the EXACT literal /courses path only (GET+POST). Confirmed disjoint from /courses/:courseId, /courses/pathways, /courses/import, /courses/ai-import.",
+        "GATE fresh reviewer SHIP + Codex FIXES-NEEDED (1 MEDIUM). Folds each red-if-regressed: (a) MED department silently coerced truthy-non-string->'' (201); now fails closed ->500 (Prisma text-column type rejection); same applied to nullable frameworkType/description. (b) CROSS-CUTTING: credits was ::double precision (number) but legacy raw Prisma Decimal serializes as a JSON STRING (transcriptService Number()s it explicitly to avoid the decimal-string; listCourses does NOT) -> trim_scale('credits')::text (string), both school + framework rows (FM-012 precedent). Documented LOW residuals (client-unreachable, uncertain Prisma coercion): maxEnrollment '0'-string; isHonors truthy-non-bool.",
+        "⚠️ STANDING GUARDRAIL CORRECTION: 'Decimal->number via ::double precision' holds ONLY for computed/Number()-ified values; a RAW Prisma Decimal column passthrough serializes as a JSON STRING (decimal.js toString; emit via trim_scale::text). Prior slices with raw-Decimal passthroughs (candidate: universities.acceptanceRate FM-037) may warrant a focused audit."
+      ],
+      "verification": "dotnet build 0/0; unit 577, integration 841 (+1 skip; +48 SchoolCourses), contract 1 green. Staging deploy 29932949189 + anon canary GREEN (health 200; GET+POST /courses anon->401 + x-formmaps-service). Merged --no-ff to main b1800de.",
+      "commit": "b1800de"
     }
   ]
 }
