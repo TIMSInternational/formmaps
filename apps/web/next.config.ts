@@ -398,6 +398,20 @@ function shouldRouteCurriculumFrameworksToDotnet() {
   );
 }
 
+// Data-mappings (FM-DOTNET-056) — routes/school-courses.ts, mounted under /api/v1/school-admin: EXACTLY the two
+// literal paths GET+POST /data-mappings (co-flip; path-not-method) and POST /data-mappings/bulk-approve. Both sources
+// are EXACT literals (no trailing segment / wildcard), so /data-mappings does NOT match /data-mappings/:id nor
+// /data-mappings/ai-suggest, and /data-mappings/bulk-approve is its own literal — NO collision with the un-ported
+// PUT/DELETE /data-mappings/:id or the /data-mappings/ai-suggest (Bedrock) route, which stay on Node (fall through to
+// the /api/:path* catch-all). Disjoint from /courses/*, /curriculum/* and every other school-admin block; more
+// specific than the /api/:path* catch-all, so they must precede it. Default OFF (dark).
+function shouldRouteDataMappingsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_DATA_MAPPINGS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1018,6 +1032,23 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/curriculum/frameworks",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/curriculum/frameworks`,
+            },
+          ]
+        : []),
+      // Data-mappings (FM-DOTNET-056) — EXACTLY the two literal paths: /data-mappings (GET+POST co-flip) and
+      // /data-mappings/bulk-approve (POST). Both exact literals → NO collision with the un-ported /data-mappings/:id
+      // (PUT/DELETE) or /data-mappings/ai-suggest (Bedrock → Node); those fall through to the /api/:path* catch-all.
+      // The more-specific bulk-approve literal is listed first (harmless — the two are disjoint literals). More
+      // specific than the /api/:path* catch-all below, so both must precede it. Default OFF (dark).
+      ...(shouldRouteDataMappingsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/data-mappings/bulk-approve",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings/bulk-approve`,
+            },
+            {
+              source: "/api/v1/school-admin/data-mappings",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings`,
             },
           ]
         : []),
