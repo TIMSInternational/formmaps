@@ -53,12 +53,22 @@ Parameters:
       mismatch makes the browser block every cross-origin call.
   LegacyJwtIssuer:
     Type: String
-    Default: formmaps-api
-    Description: Legacy JWT issuer expected by the .NET API.
+    Default: nexa-api
+    Description: >-
+      Legacy JWT issuer expected by the .NET API. MUST match what the LIVE prod
+      Node backend (nexa-api App Runner) actually SIGNS cookies with at runtime —
+      it overrides the code default `formmaps-api` to `nexa-api` via its JWT_ISSUER
+      env. A mismatch fails issuer validation → every real cookie 401s
+      `missing_identity` (2026-07-22 P0). Verify against nexa-api `JWT_ISSUER`
+      before deploy.
   LegacyJwtAudience:
     Type: String
-    Default: formmaps-frontend
-    Description: Legacy JWT audience expected by the .NET API.
+    Default: nexa-frontend
+    Description: >-
+      Legacy JWT audience expected by the .NET API. MUST match the LIVE prod Node
+      `JWT_AUDIENCE` runtime value (`nexa-frontend`, which overrides the code
+      default `formmaps-frontend`). A mismatch 401s every real cookie
+      (2026-07-22 P0).
   HealthCheckPath:
     Type: String
     Default: /health

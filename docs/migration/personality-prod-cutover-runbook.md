@@ -25,28 +25,36 @@ is to **prove the strangler flag-flip + rollback mechanism on real traffic** bef
 > + redeploy. `vercel env rm FORMMAPS_DOTNET_API_BASE_URL production` → `vercel redeploy <prod-url>`.
 > Node has always served these paths, so this is a clean, instant revert.
 >
-> **▶ ROOT CAUSE (two candidates — .NET returns `missing_identity` for ANY anonymous context, so
-> the 401 code alone can't distinguish them; `LegacyJwtRequestContextFactory` maps no_token AND
-> invalid_token AND token_expired all → anonymous → guard `missing_identity`):**
-> 1. **JWT secret/issuer/audience mismatch** — prod Node signs the `access_token` cookie with its
->    `JWT_SECRET` + issuer `formmaps-api` + audience `formmaps-frontend` (`api/src/lib/auth.ts:188`).
->    Prod .NET must validate with the IDENTICAL secret VALUE + issuer + audience. The prior
->    synthetic test (minted from `nexa/api/JWT_SECRET`) reached `user_not_found` (past signature) —
->    but that only proves .NET accepts tokens signed by THAT secret with the issuer/audience the
->    test used; if the live prod Node app signs with a different `JWT_SECRET` value (or overridden
->    `JWT_ISSUER`/`JWT_AUDIENCE`), .NET rejects the real cookie → invalid_token → missing_identity.
->    **CHECK:** compare `formmaps-api-prod` vs `nexa-api` App Runner env — `JWT_SECRET` (ARN/value),
->    `JWT_ISSUER`, `JWT_AUDIENCE` must match exactly. (`aws apprunner describe-service` — Claude was
->    classifier-blocked from reading prod env; Federico run it.)
-> 2. **Cookie not forwarded by the Vercel rewrite** — `access_token` is httpOnly, `sameSite=lax`,
->    `path=/` (`api/src/lib/authCookies.ts:13`). If Next's rewrite to the external .NET App Runner
->    host doesn't forward the `Cookie` header, .NET sees no_token → missing_identity. (Counter:
->    the Node catch-all rewrite reaches the Node App Runner the same way and DOES carry auth — so
->    candidate #1 is the stronger bet, but confirm the cookie actually arrives at .NET, e.g. via a
->    request-log on the prod .NET service.)
-> The .NET side is faithful (cookie name `access_token`, HS256, issuer/audience from config —
-> `LegacyJwtRequestContextFactory.cs:15,93-109`); the defect is almost certainly a prod CONFIG
-> mismatch, not the ported code. Full evidence + repro below in §Acceptance / this session's log.
+> **▶ ROOT CAUSE — ✅ CONFIRMED 2026-07-22 (Federico ran the App Runner env compare): JWT
+> ISSUER + AUDIENCE MISMATCH.** The secret matches (both services read
+> `nexa/api/JWT_SECRET`), but:
+> - Prod Node `nexa-api` (signs the cookie) runtime env: **`JWT_ISSUER=nexa-api`**,
+>   **`JWT_AUDIENCE=nexa-frontend`** (it OVERRIDES the code default `formmaps-api`/`formmaps-frontend`).
+> - Prod .NET `formmaps-api-prod` (validates) env: **`LegacyJwt__Issuer=formmaps-api`**,
+>   **`LegacyJwt__Audience=formmaps-frontend`**.
+> .NET validates with `ValidateIssuer=true`/`ValidateAudience=true`
+> (`LegacyJwtRequestContextFactory.cs:99-102`), so a real cookie (`iss=nexa-api, aud=nexa-frontend`)
+> throws `SecurityTokenException` → `invalid_token` → anonymous → guard `missing_identity`. Every
+> test/synthetic-canary token was minted with the CODE defaults (`formmaps-api`/`formmaps-frontend`),
+> which is why it validated in tests but real prod cookies don't. Prod-runtime-vs-code-default drift;
+> the ported .NET code is faithful.
+>
+> **▶ FIX (config-only, no image rebuild):** set `formmaps-api-prod` `LegacyJwt__Issuer=nexa-api`
+> + `LegacyJwt__Audience=nexa-frontend` to match the live prod Node signer. IaC corrected: the CFN
+> params `LegacyJwtIssuer`/`LegacyJwtAudience` defaults changed `formmaps-api`/`formmaps-frontend`
+> → `nexa-api`/`nexa-frontend` in `infra/aws/formmaps-api-prod-service.yml`. Deploy:
+> `aws cloudformation update-stack --region us-east-1 --stack-name formmaps-api-prod
+> --template-body file://infra/aws/formmaps-api-prod-service.yml --capabilities CAPABILITY_NAMED_IAM
+> --parameters ParameterKey=…` (reuse existing params; only the two defaults change). App Runner
+> redeploys (~few min). THEN re-verify with a synthetic token minted using `iss=nexa-api,
+> aud=nexa-frontend` (should reach user_not_found/200, NOT missing_identity), then a REAL authed UI
+> round-trip (200-with-render) BEFORE re-enabling the flags.
+>
+> **▶ SEQUENCE (recommended): (1) roll back now** (remove `FORMMAPS_DOTNET_API_BASE_URL` on the
+> `formmaps` Vercel project + redeploy → all personality back to Node, stops the logout loop);
+> **(2) apply the .NET env fix** (update-stack above); **(3) re-verify** synthetic + real authed
+> round-trip; **(4) re-cut-over** (set base URL + flags) + real-UI e2e confirm. Don't re-enable the
+> flags until a real authenticated user gets a 200-with-data.
 
 > **✅ STATUS 2026-07-20 — Step-0 DONE. Prod .NET service is LIVE + DARK.**
 > `formmaps-api-prod` App Runner stack created (Federico ran the §B deploy).
