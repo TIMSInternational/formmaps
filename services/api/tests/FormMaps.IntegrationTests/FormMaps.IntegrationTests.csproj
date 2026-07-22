@@ -55,6 +55,8 @@
     <EmbeddedResource Include="SchoolProfile\Data\schoolprofile-schema.sql" />
     <!-- Schema-only DDL (unique + FK ON DELETE CASCADE) for the Testcontainers school:users cluster harness (FM-DOTNET-052 Phase-B). -->
     <EmbeddedResource Include="SchoolUsers\Data\schoolusers-schema.sql" />
+    <!-- Schema-only DDL (native SyncJobStatus enum + isams_configs + isams_sync_jobs) for the iSAMS reads harness (FM-DOTNET-053). -->
+    <EmbeddedResource Include="IsamsReads\Data\isams-reads-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
