@@ -60,6 +60,22 @@ is to **prove the strangler flag-flip + rollback mechanism on real traffic** bef
 > `FORMMAPS_ROUTE_PERSONALITY_<ROUTE>_TO_DOTNET=0` (or `vercel env rm … production`) +
 > redeploy → that route returns to Node in ~1–2 min. Global kill: remove
 > `FORMMAPS_DOTNET_API_BASE_URL`.
+>
+> **✅ 2026-07-22 — RE-VERIFIED live, no drift (Claude, anon header canary — zero secrets).**
+> The `x-formmaps-service` header is stamped by the .NET service on EVERY response incl.
+> anon 401s, so an unauthenticated request per route proves which backend serves it with
+> no token/impersonation. On `https://app.formmaps.com` all 6 personality routes
+> (access · session/:id · session/:id/results · user/:id/results · start · answer ·
+> complete) → **401 + `x-formmaps-service: formmaps-api` = .NET**; control
+> `GET /api/v1/lia/session/:id/results` → **401, no header = Node**. Prod .NET service
+> `formmaps-api-prod` = `RUNNING`, `/health` 200 (~0.26 s), image still
+> `staging-12d85c0f`. Cutover + per-route auth boundary are stable & healthy as of today.
+> **The ONLY unresolved atom is unchanged: a real/test-student UI click-through
+> (start→answer→complete) confirming render** — everything technical it would gate is
+> green. Autonomous path WITHOUT impersonation (the one input needed): Federico pastes a
+> logged-in **test/demo-student** `access_token` cookie (a session he controls) → Claude
+> drives the full flow via Playwright + confirms results render + `x-formmaps-service`.
+> Absent that, it's a 60-second manual click-through (checklist in §Acceptance below).
 
 ## Why personality first
 Personality is the only fully **dual-write-free** domain: .NET owns the entire
@@ -328,3 +344,36 @@ with the `ServiceUrl` and I'll drive the read→write flag sequence + canaries w
    dedicated role — cleaner audit + blast-radius).
 3. **Insight funnel:** accept that .NET completion doesn't fire the Bedrock funnel (keep it
    a Node-side scheduled/side job), or wire a .NET→funnel call before cutover.
+
+---
+
+## Acceptance — human e2e (the one remaining atom)
+
+**Goal:** confirm a real browser session takes the personality assessment start→complete
+through `app.formmaps.com` and results render — served by .NET end-to-end. Everything
+technical this gates is verified green (routing on all 6 routes, prod health, write role,
+per-route rollback). This step is the human sign-off, not a code gate.
+
+**Vehicle — pick one (avoid a real/paying student's roster):**
+- **A (fastest, Claude-driven):** paste a logged-in **test/demo-student** `access_token`
+  cookie (from a browser session you control). Claude injects it into Playwright, drives
+  start→answer→complete, and asserts render + `x-formmaps-service`. No impersonation of a
+  real student, no password shared.
+- **B:** authorize seeding a throwaway QA student in a **demo/sandbox tenant** (name it) →
+  Claude seeds, runs, cleans up.
+- **C (manual, ~60 s):** you click through yourself using the checklist below.
+
+**Checklist (any vehicle):**
+1. Log in as the test student → open the personality assessment.
+2. `POST …/personality/start` succeeds; a session id is issued (Network tab response has
+   `x-formmaps-service: formmaps-api`).
+3. Answer every item (each `POST …/answer` → 200, `.NET` header).
+4. `POST …/complete` → 200; you land on results.
+5. Results render: radar chart + intensity bars **non-empty**, a resolved type shows, and
+   `…/results` response `dimension_scores` inner keys are **camelCase** (EI/SN/TF/JP dims).
+6. Watch App Runner error rate ~10 min (should stay flat). If anything's off → instant
+   rollback: set the offending `FORMMAPS_ROUTE_PERSONALITY_<ROUTE>_TO_DOTNET=0` on the
+   `formmaps` Vercel project + redeploy (~1–2 min back to Node).
+
+**Sign-off:** once render is confirmed, personality is fully cut over on real traffic and
+Milestone-1 is closed — the strangler flag-flip + rollback mechanism is proven end-to-end.
