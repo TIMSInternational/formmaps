@@ -3,6 +3,7 @@ using Amazon.SimpleEmailV2;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Calendar;
+using FormMaps.Application.CurriculumFrameworks;
 using FormMaps.Application.Data;
 using FormMaps.Application.Email;
 using FormMaps.Application.Reports;
@@ -17,6 +18,7 @@ using FormMaps.Application.SchoolCourses;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
+using FormMaps.Infrastructure.CurriculumFrameworks;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Email;
 using FormMaps.Infrastructure.Reports;
@@ -101,6 +103,10 @@ public static class DependencyInjection
         // FM-DOTNET-053: iSAMS integration READS (status + jobs). READS-ONLY — configure/sync/test stay in Node
         // (vendor boundary). No vendor HTTP client / field-encryption code.
         services.AddScoped<IIsamsReadsReader, IsamsReadsReader>();
+        // FM-DOTNET-055: curriculum:manage frameworks reads/writes (the four /curriculum/frameworks endpoints). The
+        // .NET write-owner for curriculum_frameworks (enable) + school_framework_course_overrides (customize).
+        services.AddScoped<ICurriculumFrameworksReader, CurriculumFrameworksReader>();
+        services.AddScoped<ICurriculumFrameworksWriter, CurriculumFrameworksWriter>();
         services.AddScoped<IGradebookReader, GradebookReader>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();

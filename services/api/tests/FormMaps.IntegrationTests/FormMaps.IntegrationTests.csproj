@@ -59,6 +59,8 @@
     <EmbeddedResource Include="IsamsReads\Data\isams-reads-schema.sql" />
     <!-- Schema-only DDL (two uniques) for the school-courses GET+POST harness (FM-DOTNET-054 Phase-B). -->
     <EmbeddedResource Include="SchoolCourses\Data\school-courses-schema.sql" />
+    <!-- Schema-only DDL (curriculum_frameworks + framework_courses + school_framework_course_overrides, with the two @@unique indexes) for the curriculum-frameworks harness (FM-DOTNET-055). -->
+    <EmbeddedResource Include="CurriculumFrameworks\Data\curriculum-frameworks-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

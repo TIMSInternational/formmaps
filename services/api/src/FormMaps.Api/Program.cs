@@ -43,6 +43,7 @@ app.MapSchoolProfileEndpoints();
 app.MapSchoolUsersEndpoints();
 app.MapSchoolCoursesEndpoints();
 app.MapIsamsReadsEndpoints();
+app.MapCurriculumFrameworksEndpoints();
 app.MapGradebookEndpoints();
 app.MapCalendarEndpoints();
 app.MapQuestion360Endpoints();

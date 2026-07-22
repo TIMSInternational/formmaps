@@ -15,4 +15,5 @@ public static class FormMapsPermissions
     public const string CalendarManage = "calendar:manage";
     public const string CoursesRead = "courses:read";
     public const string CoursesWrite = "courses:write";
+    public const string CurriculumManage = "curriculum:manage";
 }
