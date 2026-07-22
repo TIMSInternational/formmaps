@@ -358,6 +358,18 @@ function shouldRouteSchoolUsersToDotnet() {
   );
 }
 
+// iSAMS integration READS (FM-DOTNET-053) — routes/school.ts GET /integrations/isams/status and
+// /integrations/isams/jobs, mounted under /api/v1/school-admin. READS-ONLY: the POST configure/sync/test paths
+// (/integrations/isams, /integrations/isams/sync, /integrations/isams/test) stay in Node (vendor boundary) and are
+// deliberately NOT rewritten. Both rewritten paths are GET-only with NO sibling write on the same path, so there is
+// NO path-not-method hazard. Default OFF (dark). Disjoint from every other school-admin rewrite block. More specific
+// than the /api/:path* catch-all → placed before it.
+function shouldRouteIsamsReadsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ISAMS_READS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -928,6 +940,23 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/counselors/:counselorId/students",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselors/:counselorId/students`,
+            },
+          ]
+        : []),
+      // iSAMS integration READS (FM-DOTNET-053) — /integrations/isams/status + /integrations/isams/jobs, both
+      // method-unambiguous GETs (no write shares either path; a straight read cut-over, not dark). READS-ONLY: the
+      // POST /integrations/isams (configure), /integrations/isams/sync and /integrations/isams/test paths are NOT
+      // rewritten — they stay Node (vendor boundary). Both literals are disjoint from every other school-admin
+      // rewrite block; more specific than the /api/:path* catch-all below, so they must precede it.
+      ...(shouldRouteIsamsReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/integrations/isams/status",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/integrations/isams/status`,
+            },
+            {
+              source: "/api/v1/school-admin/integrations/isams/jobs",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/integrations/isams/jobs`,
             },
           ]
         : []),

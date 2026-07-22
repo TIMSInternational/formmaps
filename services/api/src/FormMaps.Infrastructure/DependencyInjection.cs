@@ -10,6 +10,7 @@ using FormMaps.Application.Gradebook;
 using FormMaps.Application.SchoolAdmin;
 using FormMaps.Application.SchoolAnalytics;
 using FormMaps.Application.SchoolProfile;
+using FormMaps.Application.IsamsReads;
 using FormMaps.Application.SchoolReads;
 using FormMaps.Application.SchoolUsers;
 using FormMaps.Infrastructure.Assessments;
@@ -22,6 +23,7 @@ using FormMaps.Infrastructure.Gradebook;
 using FormMaps.Infrastructure.SchoolAdmin;
 using FormMaps.Infrastructure.SchoolAnalytics;
 using FormMaps.Infrastructure.SchoolProfile;
+using FormMaps.Infrastructure.IsamsReads;
 using FormMaps.Infrastructure.SchoolReads;
 using FormMaps.Infrastructure.SchoolUsers;
 using Microsoft.Extensions.Configuration;
@@ -90,6 +92,9 @@ public static class DependencyInjection
         // students). The .NET write-owner for users.gradeLevel + counselor_student_assignments via school:users routes.
         services.AddScoped<ISchoolUsersReader, SchoolUsersReader>();
         services.AddScoped<ISchoolUsersWriter, SchoolUsersWriter>();
+        // FM-DOTNET-053: iSAMS integration READS (status + jobs). READS-ONLY — configure/sync/test stay in Node
+        // (vendor boundary). No vendor HTTP client / field-encryption code.
+        services.AddScoped<IIsamsReadsReader, IsamsReadsReader>();
         services.AddScoped<IGradebookReader, GradebookReader>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();
