@@ -53,6 +53,8 @@
     <EmbeddedResource Include="SchoolReads\Data\schoolreads-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers school profile + settings reads/writes harness (FM-DOTNET-051 Phase-B). -->
     <EmbeddedResource Include="SchoolProfile\Data\schoolprofile-schema.sql" />
+    <!-- Schema-only DDL (unique + FK ON DELETE CASCADE) for the Testcontainers school:users cluster harness (FM-DOTNET-052 Phase-B). -->
+    <EmbeddedResource Include="SchoolUsers\Data\schoolusers-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
