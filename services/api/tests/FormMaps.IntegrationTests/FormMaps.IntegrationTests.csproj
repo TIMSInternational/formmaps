@@ -61,6 +61,8 @@
     <EmbeddedResource Include="SchoolCourses\Data\school-courses-schema.sql" />
     <!-- Schema-only DDL (curriculum_frameworks + framework_courses + school_framework_course_overrides, with the two @@unique indexes) for the curriculum-frameworks harness (FM-DOTNET-055). -->
     <EmbeddedResource Include="CurriculumFrameworks\Data\curriculum-frameworks-schema.sql" />
+    <!-- Schema-only DDL (the two native enums + data_mappings, with the @@unique index) for the data-mappings harness (FM-DOTNET-056). -->
+    <EmbeddedResource Include="DataMappings\Data\data-mappings-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

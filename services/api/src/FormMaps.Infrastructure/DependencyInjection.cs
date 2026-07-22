@@ -5,6 +5,7 @@ using FormMaps.Application.Auth;
 using FormMaps.Application.Calendar;
 using FormMaps.Application.CurriculumFrameworks;
 using FormMaps.Application.Data;
+using FormMaps.Application.DataMappings;
 using FormMaps.Application.Email;
 using FormMaps.Application.Reports;
 using FormMaps.Application.Gradebook;
@@ -19,6 +20,7 @@ using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
 using FormMaps.Infrastructure.CurriculumFrameworks;
+using FormMaps.Infrastructure.DataMappings;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Email;
 using FormMaps.Infrastructure.Reports;
@@ -107,6 +109,11 @@ public static class DependencyInjection
         // .NET write-owner for curriculum_frameworks (enable) + school_framework_course_overrides (customize).
         services.AddScoped<ICurriculumFrameworksReader, CurriculumFrameworksReader>();
         services.AddScoped<ICurriculumFrameworksWriter, CurriculumFrameworksWriter>();
+        // FM-DOTNET-056: school:data-mapping GET /data-mappings + POST /data-mappings + POST /data-mappings/bulk-approve
+        // (routes/school-courses.ts). SCOPE = these three only; PUT/DELETE /:id + /ai-suggest (Bedrock) stay Node. The
+        // .NET write-owner for INSERTs + bulk status-approve on data_mappings.
+        services.AddScoped<IDataMappingsReader, DataMappingsReader>();
+        services.AddScoped<IDataMappingsWriter, DataMappingsWriter>();
         services.AddScoped<IGradebookReader, GradebookReader>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();
