@@ -5,6 +5,49 @@ Prep: Claude. This is the FIRST production cutover of any .NET domain — its pu
 is to **prove the strangler flag-flip + rollback mechanism on real traffic** before
 70+ more dark slices are ported assuming it works.
 
+> **🔴🔴 2026-07-22 — CRITICAL: the human e2e caught a PROD DEFECT. RECOMMEND IMMEDIATE ROLLBACK.**
+> Logged in through the real UI as a prod TEST student (`federico@countryday.edu`) and drove
+> `app.formmaps.com`. Result: **every `.NET` personality route returns `401 missing_identity`
+> for a VALIDLY logged-in user** — while every Node endpoint (`/api/v1/user/me`,
+> `/mil/results/…`, `/Dashboard/student/…`) returns 200 in the SAME session. The app's axios
+> interceptor reads the persistent personality 401 as a dead session → `POST /authapi/refresh`
+> (200) → retry personality (still 401) → **`DELETE /authapi/refresh` (forced logout) →
+> redirect to `/login`**. Reproduced on every dashboard load (the dashboard calls
+> `/personality/access` on mount). **Net user impact: any authenticated student who loads the
+> dashboard/assessments gets bounced to login.** This has been live since the 2026-07-21
+> cutover; the synthetic-token canary could not see it (it only asserted the `x-formmaps-service`
+> header + expected 401 for a *synthetic* user — it structurally cannot tell "routes to .NET AND
+> .NET accepts real auth" from "routes to .NET but .NET rejects ALL auth").
+>
+> **▶ MITIGATION (Federico, prod Vercel via `!` or dashboard) — global kill, reverts all 6 routes to Node:**
+> On the `formmaps` Vercel project (Production), **remove `FORMMAPS_DOTNET_API_BASE_URL`** (every
+> `shouldRoutePersonality*` requires it, so unsetting it reverts ALL personality routes to Node)
+> + redeploy. `vercel env rm FORMMAPS_DOTNET_API_BASE_URL production` → `vercel redeploy <prod-url>`.
+> Node has always served these paths, so this is a clean, instant revert.
+>
+> **▶ ROOT CAUSE (two candidates — .NET returns `missing_identity` for ANY anonymous context, so
+> the 401 code alone can't distinguish them; `LegacyJwtRequestContextFactory` maps no_token AND
+> invalid_token AND token_expired all → anonymous → guard `missing_identity`):**
+> 1. **JWT secret/issuer/audience mismatch** — prod Node signs the `access_token` cookie with its
+>    `JWT_SECRET` + issuer `formmaps-api` + audience `formmaps-frontend` (`api/src/lib/auth.ts:188`).
+>    Prod .NET must validate with the IDENTICAL secret VALUE + issuer + audience. The prior
+>    synthetic test (minted from `nexa/api/JWT_SECRET`) reached `user_not_found` (past signature) —
+>    but that only proves .NET accepts tokens signed by THAT secret with the issuer/audience the
+>    test used; if the live prod Node app signs with a different `JWT_SECRET` value (or overridden
+>    `JWT_ISSUER`/`JWT_AUDIENCE`), .NET rejects the real cookie → invalid_token → missing_identity.
+>    **CHECK:** compare `formmaps-api-prod` vs `nexa-api` App Runner env — `JWT_SECRET` (ARN/value),
+>    `JWT_ISSUER`, `JWT_AUDIENCE` must match exactly. (`aws apprunner describe-service` — Claude was
+>    classifier-blocked from reading prod env; Federico run it.)
+> 2. **Cookie not forwarded by the Vercel rewrite** — `access_token` is httpOnly, `sameSite=lax`,
+>    `path=/` (`api/src/lib/authCookies.ts:13`). If Next's rewrite to the external .NET App Runner
+>    host doesn't forward the `Cookie` header, .NET sees no_token → missing_identity. (Counter:
+>    the Node catch-all rewrite reaches the Node App Runner the same way and DOES carry auth — so
+>    candidate #1 is the stronger bet, but confirm the cookie actually arrives at .NET, e.g. via a
+>    request-log on the prod .NET service.)
+> The .NET side is faithful (cookie name `access_token`, HS256, issuer/audience from config —
+> `LegacyJwtRequestContextFactory.cs:15,93-109`); the defect is almost certainly a prod CONFIG
+> mismatch, not the ported code. Full evidence + repro below in §Acceptance / this session's log.
+
 > **✅ STATUS 2026-07-20 — Step-0 DONE. Prod .NET service is LIVE + DARK.**
 > `formmaps-api-prod` App Runner stack created (Federico ran the §B deploy).
 > **Prod .NET base URL = `https://zt9tppuwei.us-east-1.awsapprunner.com`.**
