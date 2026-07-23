@@ -2459,6 +2459,32 @@
       ],
       "verification": "dotnet build 0/0; unit 659, integration 1150 (+2 skip, +25 new FM-064: SchoolStudentsCoursePlanReader parity [merge/grade-key asymmetry, derivedGradeLevel, credits fallback, isOnTrack, JsOr empty-string fold, NaN→null fold, change-requests passthrough+enum-filter 500, deadline] + SchoolStudentsCoursePlanEndpoints [role gate 403, Super-Admin bypass, 404, minimal empty shape, envelopes, deadline 400]), contract 1 — full suite green. Extended the shared school-students-schema.sql harness (native CourseChangeStatus/CourseChangeAction enums + student_course_plans/course_change_requests/school_assessment_settings + columns). Staging deploy run 30001899078 SUCCESS + anon canary GREEN (health 200; all 3 routes anon->401 + x-formmaps-service). Merged --no-ff to main 0051f69. **COMPLETES the school-students.ts READ surface** (FM-062 identity + FM-063 parents + FM-064 course-plan). Deferred: the 14 school-students WRITES (invites/resend/bulk-onboard [SES], delete [soft], verify community-service, review change-request + deadline PUT, parent invite/unlink/resend).",
       "commit": "0051f69"
+    },
+    {
+      "id": "FM-DOTNET-065-school-students-writes",
+      "status": "completed",
+      "goal": "Phase-B slice: FIRST WRITE sub-slice of school-students.ts — the two non-SES DB writes (DELETE /students/{studentId} soft delete + PUT /course-request-deadline upsert). Establishes the school-students WRITE rail. Shipped DARK.",
+      "dependsOn": [
+        "FM-DOTNET-064-school-students-course-plan-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-students.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolStudentsService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/index.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/SchoolStudents/ISchoolStudentsWriter.cs",
+        "services/api/src/FormMaps.Infrastructure/SchoolStudents/SchoolStudentsWriter.cs",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolStudentsWriteEndpoints.cs",
+        "services/api/tests/FormMaps.IntegrationTests/SchoolStudents"
+      ],
+      "outputs": [
+        "DELETE /students/{studentId} (deleteStudent): ownership check under ONE writable session — SELECT users.schoolId; missing OR cross-school → false → 404 'Student not found' with NO write (session opened but never committed on that path); else UPDATE users SET isActive=false, updatedAt=@now (Prisma @updatedAt) → {success:true,data:{studentId}}. PUT /course-request-deadline (updateCourseRequestDeadline): idempotent upsert INSERT ... ON CONFLICT (schoolId) DO UPDATE SET courseRequestDeadline=EXCLUDED, updatedAt=@now; id=gen_random_uuid()::text + createdDate/updatedAt on insert, other scalar cols via DB defaults; RETURNING courseRequestDeadline → {deadline} ISO-Z|null. no-school (both) → 400 'No school'. New ISchoolStudentsWriter + SchoolStudentsWriter (OpenWritableAsync + CommitAsync; tz-independent ms-truncated timestamps via DbType.DateTime2 + Kind=Unspecified; fixed-literal SET/INSERT columns = mass-assignment guard).",
+        "DEADLINE BODY PARSE = faithful port of `req.body.deadline || null` then `deadline ? new Date(deadline) : null`: JS-falsy (absent/null/''/0/false) → null (clears); non-empty string parsed via DateTimeOffset.TryParse(AssumeUniversal|AdjustToUniversal) (offset-less = UTC, matching new Date on a UTC prod server); number → epoch ms (DateTimeOffset.FromUnixTimeMilliseconds, TimeClip ±8.64e15 range); true → new Date(1); object/array/unparseable/out-of-range → 500 'Internal server error' (no write). EMPTY body → express.json {} → deadline null → 200 clears; MALFORMED JSON → 500 no write (distinguished via an empty-object sentinel — the FIX for the phantom-write divergence below).",
+        "GATE: fresh reviewer (write-safety CONFIRMED sound — ownership/no-phantom-write, idempotent upsert, correct timestamps; no BLOCKING/HIGH) + Codex (RETURNED a verdict this run, not fully wedged). FOLDED 2 real write-safety divergences, each red-if-regressed: [fresh MED = Codex HIGH-2] non-string `deadline` JSON values — the port treated ALL non-strings as null (a wrong/NULL persisted value + 200 where TS new Date(number) STORES a date and new Date(object) → Invalid → 500) → reproduced JS truthiness + new Date(number/bool), object/array → 500. [Codex HIGH-1] MALFORMED JSON body — the port swallowed the parse error and treated it as an empty body → wrote NULL + 200 (a PHANTOM CLEARING WRITE), but legacy express.json() throws → global handler → 500 with NO write → distinguished empty ({}→clears) from malformed (500, no write). ACCEPTED/DOCUMENTED (not folded): [Codex MED-3] impossible-calendar-date strings ('2026-02-30') roll over in V8 new Date but .NET TryParse rejects → 500 — the same infeasible-to-reproduce new Date string grammar/normalization as the documented LOW (frontend only sends ISO date-picker strings); [Codex LOW-4] the 415 unsupported-content-type message text = a SYSTEMIC MutationContentTypeMiddleware string, not FM-065-specific. Built INLINE."
+      ],
+      "verification": "dotnet build 0/0; unit 659, integration 1173 (+2 skip, +23 new FM-065: SchoolStudentsWriter [delete ownership+no-write, soft-delete+updatedAt, upsert idempotency COUNT=1, null-clear] + SchoolStudentsWriteEndpoints [401/403/400, delete 404+happy, deadline parse theory incl. number/0/true + malformed-500-no-write + empty-200-clears + object/array-500]), contract 1 — full suite green. Reused the school-students-schema.sql harness (school_assessment_settings gained createdDate/updatedAt). Staging deploy run 30004291644 SUCCESS + anon canary GREEN (health 200; DELETE + PUT anon->401 + x-formmaps-service). Merged --no-ff to main 721102b. Deferred: FM-066 verify + review writes (both enum writes); FM-067/068 parent + student invite writes (SES — email-SENDS to stay Node-polyglot per Federico's lean, port only cleanly-separable DB halves).",
+      "commit": "721102b"
     }
   ]
 }
