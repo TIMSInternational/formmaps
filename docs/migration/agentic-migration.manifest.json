@@ -2376,6 +2376,34 @@
       ],
       "verification": "dotnet build 0/0; unit 659, integration 1067 (+2 skip), contract 1 — full suite green (~44 new FM-061 integration: SchoolCourses 19 writer[+4 credits-mask] + endpoint; DataMappings 21 writer+endpoint; incl. the 403-vs-404 asymmetry pin). Reused the FM-054 SchoolCourses + FM-056 DataMappings Testcontainers harnesses. Staging deploy run 29980711687 SUCCESS + anon canary GREEN (health 200; all 4 write routes anon->401 + x-formmaps-service). Merged --no-ff to main 9cc9484. ⚠️ ROUTING: the two negative-lookahead rewrites are in apps/web/next.config.ts (staging/reference) — MUST be re-verified in formmaps-platform/frontend/next.config.ts at cutover (not CI-testable).",
       "commit": "9cc9484"
+    },
+    {
+      "id": "FM-DOTNET-062-school-students-reads",
+      "status": "completed",
+      "goal": "Phase-B slice: FIRST sub-slice of school-students.ts (routes/school-students.ts, mounted /api/v1/school-admin) — the three school:manage student-identity GET reads: list, detail, community-service. Shipped DARK (no next.config rewrite): /students/:studentId carries an un-ported DELETE (soft delete) + /students carries un-ported POST invites, and Next rewrites match PATH-not-method (FM-047 precedent) → a reads-only rewrite would misroute the writes; the domain co-flips when the writes land.",
+      "dependsOn": [
+        "FM-DOTNET-061-id-writes"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-students.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolStudentsService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/evaluationGroups.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/SchoolStudents/ISchoolStudentsReader.cs",
+        "services/api/src/FormMaps.Infrastructure/SchoolStudents/SchoolStudentsReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolStudentsEndpoints.cs",
+        "services/api/tests/FormMaps.IntegrationTests/SchoolStudents"
+      ],
+      "outputs": [
+        "GET /students (listStudents): paginated roster (roleName IN ('Student','student') + isActive + schoolId; search ILIKE name/email no-escape; ORDER BY createdDate DESC, id ASC tie-break [documented superset]; PcaExamPagination.Resolve clamp page=max(1,parseInt||1)/limit=min(100,max(1,parseInt||20)); status=isActive?active:inactive). ENVELOPE ASYMMETRY preserved EXACTLY: no-school → 200 {success:true,data:{data:[],total:0}} (NO page/limit); happy path → res.json(result) = the SERVICE object VERBATIM {data,total,page,limit,totalPages} with NO success wrapper.",
+        "GET /students/:studentId (getStudentDetail): cross-school/missing → null → 404 'Student not found'. GPA = JsRound(mean(points)*100)/100 over gradeMap (case-sensitive Ordinal keys, grade.Trim(), unmapped dropped; null when none map). creditsRequired default 120, overridden by the active graduation_rule_set for the CURRENT academic_year (both findFirst-no-orderBy → ORDER BY id ASC LIMIT 1). creditsEarned = per completed+active+grade-not-null grade: own credits>0 ? own : school_courses fallback ?? 0. assessmentStatus: PCA = pca_evaluations existence; MIL = completed>=5 ? completed : (completed>0||inProgress>0) ? in_progress : not_started (pca_exam_sessions status ::text); Eval360 = parent&&teacher&&sibling_friend all completed (Evaluation360Scoring.NormalizeGroupType) → completed; else any group → in_progress; else not_started. alertCount = student_alerts school-scoped isRead=false isDismissed=false. lastActive = ISO-Z(updatedAt ?? createdDate). Credits/required are COMPUTED (::double precision) → JSON NUMBERS. VERBATIM PCA/MIL/Eval360 keys via Dictionary<string,string> (the Web camelCase policy would mangle anonymous-object 'PCA'→'pCA'; DictionaryKeyPolicy is null so dict keys stay verbatim — the codebase idiom for PascalCase keys).",
+        "GET /students/:studentId/community-service (getStudentCommunityService): cross-school/missing → null → 404. entries = full community_service_entries passthrough in Prisma field order (ORDER BY date DESC, id ASC; isActive filter). hours = RAW Prisma Decimal COLUMN → JSON STRING via trim_scale::text (FM-054 raw-Decimal rule, NOT ::double precision). status ::text enum label; verifiedAt/createdDate/updatedAt/date ISO-Z (verifiedAt null passthrough); nullable cols IsDBNull-guarded. totalHoursRequired = schools.serviceHoursRequired ?? 0. no-school (detail+community) → 400 'No school'.",
+        "GATE: fresh general-purpose reviewer = SHIP (thorough byte-level parity across all 6 focus areas; NO blocking/high/medium divergence — port faithful). Two LOW accepted (NOT folded): [L1] duplicate ?search= query param — TS qs() takes first array element, ASP.NET binds a single string? as comma-joined ('a,b'); pathological (no real client), page/limit unaffected (parseInt stops at comma), and it is the SAME string? query-binding pattern used by every prior read slice (FM-050 notes) → codebase-wide documented divergence, not an FM-062 regression. [L2] normalizeGroupType Unicode-\\s strip vs ASCII-only — non-issue, controlled enum-like groupType values, identical to the already-ratified analytics port. Codex INCONCLUSIVE (wedged into background sub-task task-mrxbusoh-04tahl, never returned a verdict; NOT an approval). Built INLINE (subtle single-slice work); I scoped the live TS + built + gated + verified."
+      ],
+      "verification": "dotnet build 0/0; unit 659, integration 1105 (+2 skip, +38 new FM-062: 23 SchoolStudentsReader parity incl. a GPA half-up tie [2×C- + 6×F → mean 0.425 → JsRound(42.5)=43 → 0.43, RED if JsRound regresses to banker's ToEven→0.42] + 15 SchoolStudentsEndpoints mapping/shape), contract 1 — full suite green. New Testcontainers harness school-students-schema.sql (11 tables, non-UTC tz pin). Staging deploy run 29997155473 SUCCESS + anon canary GREEN (health 200; all 3 routes anon->401 + x-formmaps-service). Merged --no-ff to main 3cb1997. Deferred follow-ups: parents reads (/parents, /students/:id/parents), course-plan reads (/course-plan, /change-requests, /course-request-deadline GET), then the 14 writes (SES-entangled invites, bulk-onboard, delete, verify, review, parent links).",
+      "commit": "3cb1997"
     }
   ]
 }
