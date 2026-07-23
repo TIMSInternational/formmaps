@@ -126,6 +126,7 @@ public static class DependencyInjection
         services.AddScoped<ISchoolStudentsReviewWriter, SchoolStudentsReviewWriter>();
         services.AddScoped<ICounselorDashboardReader, CounselorDashboardReader>();
         services.AddScoped<ICounselorCaseloadReader, CounselorCaseloadReader>();
+        services.AddScoped<ICounselorAvailabilityRepository, CounselorAvailabilityRepository>();
         // FM-DOTNET-053: iSAMS integration READS (status + jobs). READS-ONLY — configure/sync/test stay in Node
         // (vendor boundary). No vendor HTTP client / field-encryption code.
         services.AddScoped<IIsamsReadsReader, IsamsReadsReader>();

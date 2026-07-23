@@ -394,6 +394,16 @@ function shouldRouteCounselorCaseloadToDotnet() {
   );
 }
 
+// Counselor availability GET+PUT (FM-DOTNET-069) — routes/counselor.ts /me/availability. First counselor WRITE slice.
+// GET (read) and PUT (upsert) share the EXACT literal /me/availability, so ONE flag co-flips both (Next matches
+// path-not-method, same rationale as calendar / profile-settings). Distinct from every other counselor path. Default
+// OFF (dark). More specific than the /api/:path* catch-all → placed before it.
+function shouldRouteCounselorAvailabilityToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_AVAILABILITY_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1078,6 +1088,16 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/counselor/me/students",
               destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/students`,
+            },
+          ]
+        : []),
+      // Counselor availability GET+PUT (FM-DOTNET-069) — exact literal /me/availability, one flag co-flips read+write
+      // (path-not-method). Distinct from every other counselor path; precedes the /api/:path* catch-all.
+      ...(shouldRouteCounselorAvailabilityToDotnet()
+        ? [
+            {
+              source: "/api/v1/counselor/me/availability",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/availability`,
             },
           ]
         : []),
