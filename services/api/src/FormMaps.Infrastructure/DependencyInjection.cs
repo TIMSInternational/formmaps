@@ -3,6 +3,7 @@ using Amazon.SimpleEmailV2;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Calendar;
+using FormMaps.Application.CourseImport;
 using FormMaps.Application.CurriculumFrameworks;
 using FormMaps.Application.Data;
 using FormMaps.Application.DataMappings;
@@ -21,6 +22,7 @@ using FormMaps.Application.SchoolCourses;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
+using FormMaps.Infrastructure.CourseImport;
 using FormMaps.Infrastructure.CurriculumFrameworks;
 using FormMaps.Infrastructure.DataMappings;
 using FormMaps.Infrastructure.Pathways;
@@ -126,6 +128,11 @@ public static class DependencyInjection
         // FM-DOTNET-058: derived course pathways — GET /courses/pathways (curriculum:manage). Read-only derivation of
         // root→leaf chains over the transitively-reduced prereq DAG (schoolCoursesService.ts computePathways). No writes.
         services.AddScoped<IPathwaysReader, PathwaysReader>();
+        // FM-DOTNET-059: course bulk-import CORE — POST /courses/import (202) + GET /courses/import/:jobId (courses:write).
+        // The .NET write-owner for school_course_import_jobs + school_course_import_errors + the upsert into
+        // school_courses. /download-failures is DEFERRED to FM-060 (stays Node). Atomic-import ratified divergence.
+        services.AddScoped<ICourseImportReader, CourseImportReader>();
+        services.AddScoped<ICourseImportWriter, CourseImportWriter>();
         services.AddScoped<IGradebookReader, GradebookReader>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();

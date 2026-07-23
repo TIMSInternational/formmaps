@@ -19,4 +19,9 @@ public static class JsString
 
     /// <summary>Trim leading/trailing whitespace using the exact JS String.prototype.trim() strip set.</summary>
     public static string JsTrim(string value) => value.Trim(Whitespace);
+
+    /// <summary>True when <paramref name="c"/> is in the exact ECMAScript whitespace/line-terminator set (the same set
+    /// JS <c>parseFloat</c> skips as leading whitespace). Differs from <see cref="char.IsWhiteSpace(char)"/> in two code
+    /// points — includes U+FEFF (ZWNBSP), excludes U+0085 (NEL).</summary>
+    public static bool IsWhitespace(char c) => Array.IndexOf(Whitespace, c) >= 0;
 }

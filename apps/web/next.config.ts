@@ -434,6 +434,19 @@ function shouldRoutePathwaysToDotnet() {
   );
 }
 
+// Course bulk-import CORE (FM-DOTNET-059) — routes/school-courses.ts, mounted under /api/v1/school-admin: TWO paths,
+// POST /courses/import + GET /courses/import/:jobId (both courses:write). The third route
+// (/courses/import/:jobId/download-failures) is DEFERRED to FM-060 and stays Node — NOT rewritten here. The literal
+// "import" (2-seg) and "import/:jobId" (3-seg) segments are MORE specific than the deferred bare /courses/:courseId
+// (still Node) and disjoint from /courses (exact), /courses/pathways and /courses/:courseId/prerequisite* → collision-
+// free (no negative-lookahead needed). Both precede the /api/:path* catch-all. Default OFF (dark).
+function shouldRouteCourseImportToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_COURSE_IMPORT_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1109,6 +1122,22 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/courses/pathways",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/pathways`,
+            },
+          ]
+        : []),
+      // Course bulk-import CORE (FM-DOTNET-059) — POST /courses/import + GET /courses/import/:jobId. The literal
+      // "import" segments are more specific than the deferred bare /courses/:courseId (still Node) and disjoint from
+      // /courses, /courses/pathways and /courses/:courseId/prerequisite* → collision-free. NOT /download-failures
+      // (deferred to FM-060, stays Node). Both more specific than the /api/:path* catch-all below → must precede it. Dark.
+      ...(shouldRouteCourseImportToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/courses/import",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/import`,
+            },
+            {
+              source: "/api/v1/school-admin/courses/import/:jobId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/import/:jobId`,
             },
           ]
         : []),
