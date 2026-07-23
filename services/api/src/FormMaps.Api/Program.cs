@@ -47,6 +47,7 @@ app.MapCurriculumFrameworksEndpoints();
 app.MapDataMappingsEndpoints();
 app.MapPrerequisitesEndpoints();
 app.MapPathwaysEndpoints();
+app.MapCourseImportEndpoints();
 app.MapGradebookEndpoints();
 app.MapCalendarEndpoints();
 app.MapQuestion360Endpoints();

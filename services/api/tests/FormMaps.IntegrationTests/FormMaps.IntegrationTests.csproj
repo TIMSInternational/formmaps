@@ -67,6 +67,8 @@
     <EmbeddedResource Include="Prerequisites\Data\prerequisites-schema.sql" />
     <!-- Schema-only DDL (school_courses) for the derived-pathways harness (FM-DOTNET-058). -->
     <EmbeddedResource Include="Pathways\Data\pathways-schema.sql" />
+    <!-- Schema-only DDL (ImportJobStatus enum + school_courses + import jobs/errors) for the course-import harness (FM-DOTNET-059). -->
+    <EmbeddedResource Include="CourseImport\Data\course-import-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
