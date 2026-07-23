@@ -213,6 +213,123 @@ public class DataMappingsEndpointsTests
         Assert.Equal(["a", "b"], writer.LastIds); // non-string elements skipped (won't match → 0 for those)
     }
 
+    // ---- PUT/DELETE /data-mappings/{id} (FM-DOTNET-061) ----
+
+    private const string ItemPath = ListPath + "/m1";
+
+    [Theory]
+    [InlineData("PUT")]
+    [InlineData("DELETE")]
+    public async Task Mapping_write_anonymous_is_401(string method)
+    {
+        using var factory = new Factory(new FakeReader(), new FakeWriter(), new FakeScope(School));
+        using var client = factory.CreateClient();
+        var request = new HttpRequestMessage(new HttpMethod(method), ItemPath);
+        if (method == "PUT")
+        {
+            request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+        }
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.SendAsync(request)).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("PUT")]
+    [InlineData("DELETE")]
+    public async Task Mapping_write_missing_permission_is_403(string method)
+    {
+        using var factory = new Factory(new FakeReader(), new FakeWriter(), new FakeScope(School));
+        using var client = factory.CreateClient();
+        var response = await Send(client, new HttpMethod(method), ItemPath, method == "PUT" ? "{}" : null, FormMapsPermissions.SchoolManage);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("missing_permission", doc.RootElement.GetProperty("code").GetString());
+    }
+
+    [Theory]
+    [InlineData("PUT")]
+    [InlineData("DELETE")]
+    public async Task Mapping_write_no_school_is_400(string method)
+    {
+        using var factory = new Factory(new FakeReader(), new FakeWriter(), new FakeScope(null));
+        using var client = factory.CreateClient();
+        var response = await Send(client, new HttpMethod(method), ItemPath, method == "PUT" ? "{}" : null);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("No school", doc.RootElement.GetProperty("message").GetString());
+    }
+
+    [Fact]
+    public async Task Put_mapping_not_found_is_404_mapping_not_found()
+    {
+        // The writer's null outcome (missing OR wrong-school) → uniform 404 (NOT 403 — mappings differ from courses).
+        var writer = new FakeWriter { UpdateResult = null };
+        using var factory = new Factory(new FakeReader(), writer, new FakeScope(School));
+        using var client = factory.CreateClient();
+        var response = await Send(client, HttpMethod.Put, ItemPath, """{"externalCode":"X"}""");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Mapping not found", doc.RootElement.GetProperty("message").GetString());
+        Assert.Equal("m1", writer.LastMappingId);
+        Assert.Equal("admin-1", writer.LastUserId); // caller stamped as updatedBy
+    }
+
+    [Fact]
+    public async Task Delete_mapping_not_found_is_404_mapping_not_found()
+    {
+        var writer = new FakeWriter { DeleteResult = false };
+        using var factory = new Factory(new FakeReader(), writer, new FakeScope(School));
+        using var client = factory.CreateClient();
+        var response = await Send(client, HttpMethod.Delete, ItemPath, null);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Mapping not found", doc.RootElement.GetProperty("message").GetString());
+    }
+
+    [Fact]
+    public async Task Put_mapping_success_is_200_with_id()
+    {
+        var writer = new FakeWriter { UpdateResult = "m1" };
+        using var factory = new Factory(new FakeReader(), writer, new FakeScope(School));
+        using var client = factory.CreateClient();
+        var response = await Send(client, HttpMethod.Put, ItemPath, """{"externalName":"New"}""");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.True(doc.RootElement.GetProperty("success").GetBoolean());
+        Assert.Equal("m1", doc.RootElement.GetProperty("data").GetProperty("id").GetString());
+    }
+
+    [Fact]
+    public async Task Delete_mapping_success_is_200_success_true()
+    {
+        var writer = new FakeWriter { DeleteResult = true };
+        using var factory = new Factory(new FakeReader(), writer, new FakeScope(School));
+        using var client = factory.CreateClient();
+        var response = await Send(client, HttpMethod.Delete, ItemPath, null);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.True(doc.RootElement.GetProperty("success").GetBoolean());
+        Assert.False(doc.RootElement.TryGetProperty("data", out _)); // delete → { success:true } only
+    }
+
+    // ---- the 403-vs-404 asymmetry pin (courses vs mappings) ----
+
+    [Fact]
+    public async Task Mappings_not_found_is_404_while_courses_not_owned_is_403()
+    {
+        // Same "ownership gate failed" outcome maps to DIFFERENT status codes across the two domains. This pins the
+        // data-mappings side (404); SchoolCoursesEndpointsTests pins the courses side (403).
+        var writer = new FakeWriter { UpdateResult = null, DeleteResult = false };
+        using var factory = new Factory(new FakeReader(), writer, new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        var put = await Send(client, HttpMethod.Put, ItemPath, "{}");
+        var del = await Send(client, HttpMethod.Delete, ItemPath, null);
+
+        Assert.Equal(HttpStatusCode.NotFound, put.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, del.StatusCode);
+    }
+
     // ---- helpers ----
 
     private static Task<HttpResponseMessage> SendGet(HttpClient client, string path, string permission = FormMapsPermissions.SchoolDataMapping) =>
@@ -286,6 +403,14 @@ public class DataMappingsEndpointsTests
         public string? LastApprovedBy { get; private set; }
         public IReadOnlyList<string>? LastIds { get; private set; }
 
+        // updateDataMapping / deleteDataMapping outcomes: null / false = not-found (endpoint → 404).
+        public string? UpdateResult { get; set; } = "m1";
+        public bool DeleteResult { get; set; } = true;
+        public string? LastUserId { get; private set; }
+        public string? LastMappingId { get; private set; }
+        public bool UpdateCalled { get; private set; }
+        public bool DeleteCalled { get; private set; }
+
         public Task<DataMappingRow> CreateAsync(
             RequestContext context, string schoolId, JsonElement body, string approvedBy,
             CancellationToken cancellationToken = default)
@@ -301,6 +426,24 @@ public class DataMappingsEndpointsTests
             LastIds = ids;
             LastApprovedBy = approvedBy;
             return Task.FromResult(ApproveCount);
+        }
+
+        public Task<string?> UpdateDataMappingAsync(
+            RequestContext context, string schoolId, string userId, string mappingId, JsonElement body,
+            CancellationToken cancellationToken = default)
+        {
+            UpdateCalled = true;
+            LastUserId = userId;
+            LastMappingId = mappingId;
+            return Task.FromResult(UpdateResult);
+        }
+
+        public Task<bool> DeleteDataMappingAsync(
+            RequestContext context, string schoolId, string mappingId, CancellationToken cancellationToken = default)
+        {
+            DeleteCalled = true;
+            LastMappingId = mappingId;
+            return Task.FromResult(DeleteResult);
         }
     }
 }

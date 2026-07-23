@@ -26,6 +26,8 @@ public static class SchoolCoursesEndpoints
 
         group.MapGet("/courses", GetCoursesAsync);
         group.MapPost("/courses", PostCourseAsync);
+        group.MapPut("/courses/{courseId}", PutCourseAsync);
+        group.MapDelete("/courses/{courseId}", DeleteCourseAsync);
 
         return app;
     }
@@ -147,6 +149,73 @@ public static class SchoolCoursesEndpoints
             statusCode: StatusCodes.Status201Created);
     }
 
+    // ---------------------------------------------------------------- PUT /courses/{courseId} (courses:write)
+
+    private static async Task<IResult> PutCourseAsync(
+        HttpContext http,
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        ISchoolCoursesWriter writer,
+        string courseId,
+        CancellationToken cancellationToken)
+    {
+        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, FormMapsPermissions.CoursesWrite, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        if (string.IsNullOrEmpty(schoolId))
+        {
+            return NoSchool();
+        }
+
+        var body = await ReadBodyAsync(http, cancellationToken);
+        if (body is null)
+        {
+            return InvalidBody();
+        }
+
+        var id = await writer.UpdateCourseAsync(context, schoolId, courseId, body.Value, cancellationToken);
+        if (id is null)
+        {
+            return CourseNotInSchool(); // 403 — uniform for both not-found AND wrong-school
+        }
+
+        return Results.Json(new { success = true, data = new { id } });
+    }
+
+    // ---------------------------------------------------------------- DELETE /courses/{courseId} (courses:write)
+
+    private static async Task<IResult> DeleteCourseAsync(
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        ISchoolCoursesWriter writer,
+        string courseId,
+        CancellationToken cancellationToken)
+    {
+        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, FormMapsPermissions.CoursesWrite, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        if (string.IsNullOrEmpty(schoolId))
+        {
+            return NoSchool();
+        }
+
+        var deleted = await writer.DeleteCourseAsync(context, schoolId, courseId, cancellationToken);
+        if (!deleted)
+        {
+            return CourseNotInSchool(); // 403
+        }
+
+        return Results.Json(new { success = true });
+    }
+
     // ---------------------------------------------------------------- JSON shapes
 
     // A school_courses row = the FULL model (camelCase) + enrollmentCount (legacy spreads the row then adds the count).
@@ -216,6 +285,14 @@ public static class SchoolCoursesEndpoints
 
     private static IResult NoSchool() =>
         Results.Json(new { success = false, message = "No school" }, statusCode: StatusCodes.Status400BadRequest);
+
+    private static IResult InvalidBody() =>
+        Results.Json(new { success = false, message = "Invalid request body" }, statusCode: StatusCodes.Status400BadRequest);
+
+    // The 403 (NOT 404) both updateCourse/deleteCourse return for a not-found OR wrong-school course (uniform — the
+    // course-vs-mapping asymmetry: courses → 403 "Course not in your school"; mappings → 404 "Mapping not found").
+    private static IResult CourseNotInSchool() =>
+        Results.Json(new { success = false, message = "Course not in your school" }, statusCode: StatusCodes.Status403Forbidden);
 
     /// <summary>
     /// Shared guard chain: RequireIdentity (401) → the route's permission (403) → resolve the caller's own schoolId.

@@ -1037,15 +1037,27 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // School-courses GET + POST /courses (FM-DOTNET-054) — the EXACT literal /courses ONLY (GET+POST co-flip;
-      // path-not-method). Does NOT match /courses/:courseId, /courses/pathways, /courses/import, /courses/ai-import
-      // (all have a trailing segment) — those stay Node. More specific than the /api/:path* catch-all below, so it
-      // must precede it. Default OFF (dark).
+      // School-courses GET + POST /courses (FM-DOTNET-054) + PUT/DELETE /courses/:courseId (FM-DOTNET-061), one flag.
+      // The exact literal /courses (GET+POST). The 2-segment /courses/:courseId (PUT/DELETE update/soft-delete) uses a
+      // NEGATIVE-LOOKAHEAD so it does NOT swallow the Node-only 2-seg siblings — /courses/ai-import (POST, Bedrock →
+      // Node) and, regardless of their own flags' state, /courses/import (FM-059) and /courses/pathways (FM-058) which
+      // have their own rewrites. Next.js rewrites match by PATH NOT METHOD, so without the lookahead a courses-flag flip
+      // would misroute POST /courses/ai-import to the .NET group (no POST /courses/:courseId handler → 404/405, breaking
+      // the AI import). courseIds are UUIDs so they never equal those literals; the lookahead is the safety belt.
+      // 3-segment siblings (/courses/:courseId/prerequisite-chain FM-057, /courses/import/:jobId FM-059, /courses/
+      // ai-import/confirm) are NOT matched by the 1-segment [^/]+ param. Distinct METHODS from the co-flipped literals
+      // (pathways/import = GET/POST, these = PUT/DELETE) → no ASP.NET ambiguity on the .NET side.
+      // ⚠️ CUTOVER: verify this rewrite in formmaps-platform/frontend/next.config.ts (the live prod frontend) — this
+      // monorepo apps/web copy is the staging/reference artifact; the negative-lookahead is not exercised by CI.
       ...(shouldRouteSchoolCoursesToDotnet()
         ? [
             {
               source: "/api/v1/school-admin/courses",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses`,
+            },
+            {
+              source: "/api/v1/school-admin/courses/:courseId((?!import|pathways|ai-import)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/:courseId`,
             },
           ]
         : []),
@@ -1070,11 +1082,13 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // Data-mappings (FM-DOTNET-056) — EXACTLY the two literal paths: /data-mappings (GET+POST co-flip) and
-      // /data-mappings/bulk-approve (POST). Both exact literals → NO collision with the un-ported /data-mappings/:id
-      // (PUT/DELETE) or /data-mappings/ai-suggest (Bedrock → Node); those fall through to the /api/:path* catch-all.
-      // The more-specific bulk-approve literal is listed first (harmless — the two are disjoint literals). More
-      // specific than the /api/:path* catch-all below, so both must precede it. Default OFF (dark).
+      // Data-mappings (FM-DOTNET-056 GET+POST /data-mappings + POST /bulk-approve) + PUT/DELETE /data-mappings/:id
+      // (FM-DOTNET-061), one flag. /data-mappings (GET+POST) and /data-mappings/bulk-approve (POST) are exact literals.
+      // The 2-segment /data-mappings/:id (PUT/DELETE update/hard-delete) uses a NEGATIVE-LOOKAHEAD so it does NOT swallow
+      // the Node-only /data-mappings/ai-suggest (POST, Bedrock → Node) or /data-mappings/bulk-approve (its own rewrite) —
+      // rewrites match by PATH NOT METHOD, so without it a flag flip would misroute POST /data-mappings/ai-suggest to the
+      // .NET group (no handler → break). mapping ids are UUIDs so never equal those literals; the lookahead is the belt.
+      // ⚠️ CUTOVER: verify in formmaps-platform/frontend/next.config.ts (live prod frontend) — not exercised by CI here.
       ...(shouldRouteDataMappingsToDotnet()
         ? [
             {
@@ -1084,6 +1098,10 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/data-mappings",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings`,
+            },
+            {
+              source: "/api/v1/school-admin/data-mappings/:id((?!bulk-approve|ai-suggest)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings/:id`,
             },
           ]
         : []),
