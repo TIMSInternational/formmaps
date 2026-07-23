@@ -2582,6 +2582,23 @@
         "services/api/src/FormMaps.Infrastructure/Counselor/CounselorAlertsRepository.cs",
         "services/api/src/FormMaps.Api/Endpoints/CounselorAlertsEndpoints.cs"
       ]
+    },
+    {
+      "id": "FM-DOTNET-071-counselor-sessions",
+      "status": "completed",
+      "goal": "Phase-C slice 5: counselor sessions GET /me/sessions + PUT /me/sessions/:id/complete (counselor.ts) behind dark flag FORMMAPS_ROUTE_COUNSELOR_SESSIONS_TO_DOTNET (two paths, one flag). Permission counselor:sessions. ICounselorSessionsRepository: GET read-only list (own+active, paged, real COUNT, startTime DESC + id tie-break, optional ?status!=all, LEFT JOIN users studentName, verbatim calendarEventIds jsonb, all cols + nested student{name}); complete writable+commit (ownership\u2192NotYourSession\u2192403 'Not your session'; notes counselorNotes??notes??'' nullish\u2192non-string ''\u2192slice5000; malformed body\u2192500 before ownership). PUT /me/sessions/:id/cancel DELIBERATELY NOT ported (syncRecordSafe calendar side-effect stays Node). Fresh reviewer SHIP.",
+      "dependsOn": [
+        "FM-DOTNET-070-counselor-alerts"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/counselor.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Counselor/ICounselorSessionsRepository.cs",
+        "services/api/src/FormMaps.Infrastructure/Counselor/CounselorSessionsRepository.cs",
+        "services/api/src/FormMaps.Api/Endpoints/CounselorSessionsEndpoints.cs"
+      ]
     }
   ]
 }
