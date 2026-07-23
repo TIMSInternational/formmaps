@@ -438,6 +438,17 @@ function shouldRouteCounselorNotesToDotnet() {
   );
 }
 
+// Student portfolio CRUD (FM-DOTNET-073) — routes/student.ts /portfolio (GET+POST), /portfolio/summary (GET),
+// /portfolio/:id (PUT+DELETE), mounted /api/v1/student. Self-scoped (req.userId). ONE flag co-flips all three paths
+// (Next matches path-not-method). /portfolio/summary MUST precede /portfolio/:id (the :id param would otherwise
+// swallow "summary"); the exact /portfolio (no trailing segment) matches neither. Default OFF (dark). All precede the
+// /api/:path* catch-all.
+function shouldRouteStudentPortfolioToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_PORTFOLIO_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1181,6 +1192,25 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/counselor/notes/:noteId",
               destination: `${dotnetApiBaseUrl}/api/v1/counselor/notes/:noteId`,
+            },
+          ]
+        : []),
+      // Student portfolio CRUD (FM-DOTNET-073) — GET+POST /portfolio, GET /portfolio/summary, PUT+DELETE
+      // /portfolio/:id, one flag. /portfolio/summary precedes /portfolio/:id (else :id swallows "summary"); the exact
+      // /portfolio matches neither. All precede the /api/:path* catch-all; disjoint from every other student path.
+      ...(shouldRouteStudentPortfolioToDotnet()
+        ? [
+            {
+              source: "/api/v1/student/portfolio/summary",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio/summary`,
+            },
+            {
+              source: "/api/v1/student/portfolio/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio/:id`,
+            },
+            {
+              source: "/api/v1/student/portfolio",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio`,
             },
           ]
         : []),

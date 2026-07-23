@@ -83,6 +83,8 @@
     <EmbeddedResource Include="Counselor\Data\counselor-sessions-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers counselor notes CRUD harness (FM-DOTNET-072 Phase-C). -->
     <EmbeddedResource Include="Counselor\Data\counselor-notes-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers student portfolio CRUD harness (FM-DOTNET-073 Phase-C). -->
+    <EmbeddedResource Include="StudentPortfolio\Data\student-portfolio-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
