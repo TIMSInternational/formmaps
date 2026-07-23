@@ -2234,6 +2234,34 @@
       ],
       "verification": "dotnet build 0/0; unit 585, integration 921 (+1 documented skip), contract 1 — full suite green. Staging deploy run 29953931884 SUCCESS + anon canary GREEN (health 200; GET+POST /api/v1/school-admin/data-mappings + POST /bulk-approve all anon->401 + x-formmaps-service). Merged --no-ff to main 3892721 (no wiring conflicts — branch based on FM-055 HEAD eead656, main had not advanced).",
       "commit": "3892721"
+    },
+    {
+      "id": "FM-DOTNET-057-prerequisites",
+      "status": "completed",
+      "goal": "Phase-B slice (school-courses.ts sub-slice 4): port the prerequisites surface — GET /courses/:courseId/prerequisite-chain (courses:read), PUT /courses/:courseId/prerequisites (courses:write), and GET /prerequisites/{check/:studentId/:courseId, eligible/:studentId, missing/:studentId/:courseId} (curriculum:manage) — under one flag FORMMAPS_ROUTE_PREREQUISITES_TO_DOTNET. .NET write-owner for the school_courses prerequisites/corequisites columns via the PUT. The two /courses/:courseId/* sub-paths are more specific than the deferred bare /courses/:courseId (PUT/DELETE) so no collision.",
+      "dependsOn": [
+        "FM-DOTNET-056-data-mappings"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-courses.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolCoursesService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Prerequisites/*",
+        "services/api/src/FormMaps.Infrastructure/Prerequisites/*",
+        "services/api/src/FormMaps.Api/Endpoints/PrerequisitesEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/DependencyInjection.cs",
+        "services/api/src/FormMaps.Api/Program.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "getPrerequisiteChain (BFS over active catalog, depth-DESC STABLE sort [ties keep BFS order], cycle-safe via visited-UPPER; credits HETEROGENEOUS — in-catalog prereq emits decimal.js STRING via trim_scale(credits)::text, unresolved code emits JSON number 0; unresolved fallback name=code/department=''/frameworkType=null/isHonors=false; null/404 on missing/foreign course). updatePrerequisites (course lookup id+schoolId->404; prerequisiteRules[].courseIds resolved to school-scoped CODES ORDER BY id ASC [FM-032 superset]; corequisites ||[] + Prisma String[] semantics; @updatedAt bump + updatedBy=caller). resolveCourse (id-in-school then EXACT case-sensitive code). checkEligibility (grade gate JS-falsy 0/null-skip, prereq trim+UPPER match, 'Not in catalog' vs incomplete, exact error strings, eligible=errors==0&&missing==0). computeEligibilityMap TWO-SET (resolution=full catalog incl inactive/draft; enumeration=active+status='active' only). eligible endpoint: DOUBLE-NESTED {data:{data,total}}, gradeLevel(parseInt/NaN-excludes-all)/department(lowercase-includes) filters, projection {id,code,name,department,credits,gradeLevels}. missing endpoint OMITS eligible. Per-route perms; no-school 400; uniform 404 'Student not found'/'Course not found'.",
+        "GATE: fresh reviewer SHIP (all 10 parity axes verified faithful) + Codex FIXES-NEEDED -> CONVERGED. Folds (each red-if-regressed): (1) corequisites type-reject must NOT pre-empt the missing-course 404 -> ParseCorequisites moved AFTER the course lookup (both reviewers, HIGH/MED); (2) prerequisiteRules flatMap null-rule-element throws (JS null.courseIds TypeError->500, post-lookup) [Codex HIGH]; (3) bare-string courseIds is ONE id + non-string courseId element -> Prisma id:{in} String reject->500 [Codex MED]. DISMISSED as unreachable (both reviewers agree; accepted FM-054 precedent): credits decimal.js exponential notation at exp<=-7/>=+21 (credit-hours never that large/small; reproducing decimal.js grammar deliberately rejected per FM-056); JsParseInt int32 saturation on gradeLevel (grades 6-12, no course gradeLevel near int.MaxValue; shared-helper property)."
+      ],
+      "verification": "dotnet build 0/0; unit 585, integration 972 (+1 skip), contract 1 — full suite green (+51 new). New Prerequisites Testcontainers harness (school_courses + student_grades + users, non-UTC tz pin). Staging deploy run 29968626827 SUCCESS + anon canary GREEN (health 200; all 5 routes anon->401 + x-formmaps-service). Merged --no-ff to main 5dffc55 (no wiring conflicts — branch based on FM-056 HEAD 9bbf765).",
+      "commit": "5dffc55"
     }
   ]
 }
