@@ -25,6 +25,7 @@ public static class CourseImportEndpoints
 
         group.MapPost("/courses/import", PostImportAsync);
         group.MapGet("/courses/import/{jobId}", GetImportJobAsync);
+        group.MapGet("/courses/import/{jobId}/download-failures", GetImportFailuresAsync);
 
         return app;
     }
@@ -137,6 +138,42 @@ public static class CourseImportEndpoints
                 completedAt = result.CompletedAt
             }
         });
+    }
+
+    // ---------------------------------------------------------------- GET /courses/import/{jobId}/download-failures
+
+    private static async Task<IResult> GetImportFailuresAsync(
+        string jobId,
+        HttpContext http,
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        ICourseImportReader reader,
+        CancellationToken cancellationToken)
+    {
+        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, FormMapsPermissions.CoursesWrite, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        if (string.IsNullOrEmpty(schoolId))
+        {
+            return NoSchool();
+        }
+
+        var csv = await reader.GetImportFailuresCsvAsync(context, schoolId, jobId, cancellationToken);
+        if (csv is null)
+        {
+            return NotFound("Job not found");
+        }
+
+        // text/csv attachment; filename=course-import-failures-{jobId}.csv. Legacy `res.send(csv)` (Express) rewrites
+        // the Content-Type via setCharset → `text/csv; charset=utf-8` (verified against Express 5.2.1) — the charset
+        // MUST be in the media-type string (an Encoding arg alone does NOT append it), else accented content (Spanish
+        // course names) mojibakes in Excel/Windows-1252-defaulting clients.
+        http.Response.Headers.ContentDisposition = $"attachment; filename=course-import-failures-{jobId}.csv";
+        return Results.Text(csv, "text/csv; charset=utf-8");
     }
 
     // ---------------------------------------------------------------- json shapes

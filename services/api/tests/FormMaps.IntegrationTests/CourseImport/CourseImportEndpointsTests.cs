@@ -27,12 +27,14 @@ public class CourseImportEndpointsTests
     private const string School = "school-1";
     private const string ImportPath = "/api/v1/school-admin/courses/import";
     private const string JobPath = "/api/v1/school-admin/courses/import/job-1";
+    private const string FailuresPath = "/api/v1/school-admin/courses/import/job-1/download-failures";
 
     // ---- auth ----
 
     [Theory]
     [InlineData("POST", ImportPath)]
     [InlineData("GET", JobPath)]
+    [InlineData("GET", FailuresPath)]
     public async Task Anonymous_is_401(string method, string path)
     {
         using var factory = Factory();
@@ -44,11 +46,12 @@ public class CourseImportEndpointsTests
     [Theory]
     [InlineData("POST", ImportPath, """{"rows":[{"code":"A","name":"A"}]}""")]
     [InlineData("GET", JobPath, null)]
+    [InlineData("GET", FailuresPath, null)]
     public async Task Wrong_permission_is_403(string method, string path, string? body)
     {
         using var factory = Factory();
         using var client = factory.CreateClient();
-        // SchoolManage is accepted by neither route (both require courses:write).
+        // SchoolManage is accepted by none of the routes (all require courses:write).
         var response = await Send(client, new HttpMethod(method), path, body, FormMapsPermissions.SchoolManage);
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -56,6 +59,7 @@ public class CourseImportEndpointsTests
     [Theory]
     [InlineData("POST", ImportPath, """{"rows":[{"code":"A","name":"A"}]}""")]
     [InlineData("GET", JobPath, null)]
+    [InlineData("GET", FailuresPath, null)]
     public async Task No_school_is_400(string method, string path, string? body)
     {
         using var factory = Factory(scope: new FakeScope(null));
@@ -203,6 +207,36 @@ public class CourseImportEndpointsTests
         Assert.Equal("Job not found", doc.RootElement.GetProperty("message").GetString());
     }
 
+    // ---- GET download-failures (FM-060) ----
+
+    [Fact]
+    public async Task Get_failures_is_200_text_csv_attachment()
+    {
+        var reader = new FakeReader { Csv = "row_number,errors,raw_data\n1,\"e\",\"{}\"" };
+        using var factory = Factory(reader);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Get, FailuresPath, null, FormMapsPermissions.CoursesWrite);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        // Full Content-Type incl. charset (legacy res.send → text/csv; charset=utf-8) — .MediaType alone would strip it.
+        Assert.Equal("text/csv; charset=utf-8", response.Content.Headers.ContentType!.ToString());
+        Assert.Equal("attachment; filename=course-import-failures-job-1.csv",
+            response.Content.Headers.ContentDisposition!.ToString());
+        Assert.Equal("row_number,errors,raw_data\n1,\"e\",\"{}\"", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Get_failures_null_is_404_job_not_found()
+    {
+        using var factory = Factory(new FakeReader { Csv = null });
+        using var client = factory.CreateClient();
+        var response = await Send(client, HttpMethod.Get, FailuresPath, null, FormMapsPermissions.CoursesWrite);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Job not found", doc.RootElement.GetProperty("message").GetString());
+    }
+
     // ---- helpers ----
 
     private static Factory_ Factory(FakeReader? reader = null, FakeWriter? writer = null, FakeScope? scope = null) =>
@@ -261,10 +295,15 @@ public class CourseImportEndpointsTests
     private sealed class FakeReader : ICourseImportReader
     {
         public ImportJobView? Job { get; set; } = new("job-1", "completed", 0, 0, 0, [], null);
+        public string? Csv { get; set; } = "row_number,errors,raw_data";
 
         public Task<ImportJobView?> GetImportJobAsync(
             RequestContext context, string schoolId, string jobId, CancellationToken cancellationToken = default) =>
             Task.FromResult(Job);
+
+        public Task<string?> GetImportFailuresCsvAsync(
+            RequestContext context, string schoolId, string jobId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Csv);
     }
 
     private sealed class FakeWriter : ICourseImportWriter

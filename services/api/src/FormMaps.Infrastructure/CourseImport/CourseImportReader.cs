@@ -60,6 +60,49 @@ public sealed class CourseImportReader(IFormMapsDatabaseSessionFactory databaseS
             CompletedAt: completedAt);
     }
 
+    public async Task<string?> GetImportFailuresCsvAsync(
+        RequestContext context, string schoolId, string jobId, CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+
+        // Job existence + school ownership gate (findUnique + job.schoolId !== schoolId → null → 404).
+        await using (var jobCommand = Command(session, """
+            SELECT "schoolId" FROM "school_course_import_jobs" WHERE "id" = @id
+            """))
+        {
+            AddParameter(jobCommand, "id", jobId);
+            await using var jobReader = await jobCommand.ExecuteReaderAsync(cancellationToken);
+            if (!await jobReader.ReadAsync(cancellationToken)
+                || !string.Equals(jobReader.GetString(0), schoolId, StringComparison.Ordinal))
+            {
+                return null;
+            }
+        }
+
+        // errors = findMany where jobId. Legacy has NO orderBy (nondeterministic); we ORDER BY "rowNumber" ASC — the
+        // insertion order the loop produces, a deterministic superset (FM-032 precedent; rowNumber is unique per job).
+        var lines = new List<string> { FailuresCsvBuilder.Header };
+        await using (var errorsCommand = Command(session, """
+            SELECT "rowNumber", "errorMessages", "rawRow"::text AS "rawRow"
+            FROM "school_course_import_errors"
+            WHERE "jobId" = @jid
+            ORDER BY "rowNumber" ASC
+            """))
+        {
+            AddParameter(errorsCommand, "jid", jobId);
+            await using var reader = await errorsCommand.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var rowNumber = reader.GetInt32(0);
+                var errorMessages = reader.IsDBNull(1) ? [] : reader.GetFieldValue<string[]>(1);
+                using var rawRow = JsonDocument.Parse(reader.GetString(2));
+                lines.Add(FailuresCsvBuilder.DataLine(rowNumber, errorMessages, rawRow.RootElement));
+            }
+        }
+
+        return string.Join("\n", lines);
+    }
+
     private static string IsoZ(DateTime value) =>
         DateTime.SpecifyKind(value, DateTimeKind.Utc).ToString("yyyy-MM-ddTHH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
 
