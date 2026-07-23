@@ -2404,6 +2404,34 @@
       ],
       "verification": "dotnet build 0/0; unit 659, integration 1105 (+2 skip, +38 new FM-062: 23 SchoolStudentsReader parity incl. a GPA half-up tie [2×C- + 6×F → mean 0.425 → JsRound(42.5)=43 → 0.43, RED if JsRound regresses to banker's ToEven→0.42] + 15 SchoolStudentsEndpoints mapping/shape), contract 1 — full suite green. New Testcontainers harness school-students-schema.sql (11 tables, non-UTC tz pin). Staging deploy run 29997155473 SUCCESS + anon canary GREEN (health 200; all 3 routes anon->401 + x-formmaps-service). Merged --no-ff to main 3cb1997. Deferred follow-ups: parents reads (/parents, /students/:id/parents), course-plan reads (/course-plan, /change-requests, /course-request-deadline GET), then the 14 writes (SES-entangled invites, bulk-onboard, delete, verify, review, parent links).",
       "commit": "3cb1997"
+    },
+    {
+      "id": "FM-DOTNET-063-school-students-parents-reads",
+      "status": "completed",
+      "goal": "Phase-B slice: SECOND sub-slice of school-students.ts — the two school:manage parent-link GET reads: GET /parents (school-wide grouped-by-email parent roster + stats) + GET /students/:studentId/parents (the Guardians tab for one student). Shipped DARK (co-flips with the school-students writes; both paths carry un-ported POST/DELETE siblings, Next matches path-not-method).",
+      "dependsOn": [
+        "FM-DOTNET-062-school-students-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-students.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolStudentsService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/query.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/SchoolStudents/ISchoolStudentsParentsReader.cs",
+        "services/api/src/FormMaps.Infrastructure/SchoolStudents/SchoolStudentsParentsReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolStudentsParentsEndpoints.cs",
+        "services/api/tests/FormMaps.IntegrationTests/SchoolStudents"
+      ],
+      "outputs": [
+        "GET /parents (listParents): JOIN student_parent_links → users to school-scope via student.schoolId (the table has no schoolId col — legacy where:{student:{schoolId}} relation filter) + link.isActive; paginate LINKS (ORDER BY createdDate DESC, id ASC tie-break) THEN group by lower(parentEmail) keep-FIRST in memory (students appended; a parent linked to N students → N links → N students). PcaExamPagination.Resolve clamp; search = qs?.trim()||undefined (TRIMMED — unlike GET /students). ENVELOPE: no-school → 200 {success:true,data:[],total:0,totalPages:1} (NO page/stats); happy → res.json({success:true,...result}) = {success,data,total,totalPages,page,stats}. total = raw LINK count (search-filtered) so data.Count can be < total. Group keys id/parentName/parentEmail/parentUserId/isAccepted/acceptedAt/createdDate/students; student keys id/name/email/gradeLevel.",
+        "⚠️ CASE-SENSITIVITY ASYMMETRY (faithful, PINNED): the DISPLAY grouping key is parentEmail.toLowerCase() (case-INSENSITIVE) but stats.totalParents = Prisma groupBy({by:['parentEmail']}).length on the RAW email = case-SENSITIVE → 'Pat@e.st'+'pat@e.st' collapse to ONE data row but count as TWO in totalParents. Ported as: ToLowerInvariant() dict key for data; COUNT(DISTINCT \"parentEmail\") for the stat. Stats (totalParents distinct / linkedStudents raw-link-count / pendingInvites isAccepted=false-count) are school-wide, search-INDEPENDENT, un-paginated (three separate aggregates).",
+        "GET /students/:studentId/parents (listParentsForStudent): scoped by studentInCallerSchool — Super Admin (RAW exact context.Actor.Role=='Super Admin', matching req.userRole==='Super Admin') BYPASSES; else the caller must have a school (ISchoolAdminScopeResolver null → false) AND student.schoolId==caller.schoolId (IsStudentInCallerSchoolAsync; missing/null/mismatch → false); ANY miss → 404 message EXACTLY 'Not found' (NOT the FM-062 'Student not found'). links where studentId + isActive, ORDER BY createdDate DESC (+id ASC); status = isAccepted ? accepted : (tokenExpiresAt!=null && tokenExpiresAt<now ? expired : pending) via injected TimeProvider (UTC-vs-UTC, strict <); keys id/name(parentName)/email(parentEmail)/relationship(relation)/status/invitedAt(createdDate)/acceptedAt/parentUserId. Response {success:true,data:[...]}.",
+        "GATE: fresh general-purpose reviewer = SHIP ('faithful 1:1 reproduction'; NO blocking/high/medium; all 6 scrutinize items confirmed incl. the case-sensitivity asymmetry + the DBNull-vs-500 audit [all nullable cols IsDBNull-guarded; unconditional GetString only on NOT-NULL cols]). One LOW accepted (NOT folded): duplicate ?search= query param — TS qs() first-element vs ASP.NET string? comma-join; pathological + the SAME codebase-wide string? binding as every prior read slice (page/limit unaffected). Codex INCONCLUSIVE (wedged into background task-mrxd0o4c-m5r8d8, no verdict; NOT an approval). Built INLINE — my own reader test surfaced + then PINNED the display-vs-stats case-sensitivity asymmetry (initial assertion 2 was wrong; code returned the faithful 3)."
+      ],
+      "verification": "dotnet build 0/0; unit 659, integration 1123 (+2 skip, +18 new FM-063: 10 SchoolStudentsParentsReader parity [grouping/case-sensitivity asymmetry + accepted/expired/pending status via a fixed TimeProvider + IsStudentInCallerSchool matrix] + 8 SchoolStudentsParentsEndpoints [Super-Admin bypass, 404 'Not found', no-school shape, search-trim, stats]), contract 1 — full suite green. Reused + extended the FM-062 school-students-schema.sql harness (added student_parent_links). Staging deploy run 29999146557 SUCCESS + anon canary GREEN (health 200; both routes anon->401 + x-formmaps-service; verified the 404→401 flip = new image live). Merged --no-ff to main 262b418. Deferred: course-plan reads (/course-plan, /change-requests, /course-request-deadline GET) → the 14 school-students writes.",
+      "commit": "262b418"
     }
   ]
 }
