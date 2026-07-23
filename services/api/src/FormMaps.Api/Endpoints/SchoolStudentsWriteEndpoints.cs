@@ -176,7 +176,13 @@ public static class SchoolStudentsWriteEndpoints
         try
         {
             using var document = JsonDocument.Parse(raw);
-            return document.RootElement.Clone();
+            var root = document.RootElement;
+            return root.ValueKind switch
+            {
+                JsonValueKind.Object => root.Clone(),
+                JsonValueKind.Array => EmptyObject, // express accepts arrays; no field access → deadline absent
+                _ => null,                          // primitive → express strict rejects → 500
+            };
         }
         catch (JsonException)
         {

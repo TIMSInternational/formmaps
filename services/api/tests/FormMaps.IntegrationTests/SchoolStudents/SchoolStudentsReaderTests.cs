@@ -463,7 +463,7 @@ public sealed class SchoolStudentsReaderTests : IClassFixture<SchoolStudentsData
             """
             INSERT INTO "community_service_entries"
                 ("id","studentId","schoolId","organization","hours","date","status","verifiedAt","isActive","createdDate","updatedAt")
-            VALUES (@id,@st,@s,@org,@h,@d,@status,@va,@a,@cd,@cd)
+            VALUES (@id,@st,@s,@org,@h,@d,@status::"CommunityServiceStatus",@va,@a,@cd,@cd)
             """, conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("st", studentId);
