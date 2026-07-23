@@ -2548,6 +2548,23 @@
         "services/api/src/FormMaps.Infrastructure/Counselor/CounselorCaseloadReader.cs",
         "services/api/src/FormMaps.Api/Endpoints/CounselorCaseloadEndpoints.cs"
       ]
+    },
+    {
+      "id": "FM-DOTNET-069-counselor-availability",
+      "status": "completed",
+      "goal": "Phase-C slice 3 (FIRST counselor WRITE slice \u2014 establishes the counselor write rail): GET+PUT /me/availability (counselor.ts) behind dark flag FORMMAPS_ROUTE_COUNSELOR_AVAILABILITY_TO_DOTNET (one flag co-flips read+write, same path). ICounselorAvailabilityRepository (read-only GET; writable+commit upsert on unique userId); weeklySchedule verbatim jsonb; JS-|| body resolution (timezone||'UTC', weeklySchedule||slots||[]); primitive/malformed body->500. Permission counselor:sessions. Fresh reviewer SHIP.",
+      "dependsOn": [
+        "FM-DOTNET-068-counselor-enriched-caseload"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/counselor.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Counselor/ICounselorAvailabilityRepository.cs",
+        "services/api/src/FormMaps.Infrastructure/Counselor/CounselorAvailabilityRepository.cs",
+        "services/api/src/FormMaps.Api/Endpoints/CounselorAvailabilityEndpoints.cs"
+      ]
     }
   ]
 }
