@@ -384,6 +384,16 @@ function shouldRouteCounselorDashboardToDotnet() {
   );
 }
 
+// Counselor enriched caseload READ (FM-DOTNET-068) — routes/counselor.ts GET /me/students (listEnrichedStudents), the
+// deferred companion to FM-067, on its OWN flag. The EXACT literal /me/students (no trailing segment) — distinct from
+// /me/students/:studentId (FM-067) which requires a segment, and from the 4-segment AI sub-path. GET-only → no
+// path-not-method hazard. Default OFF (dark). More specific than the /api/:path* catch-all → placed before it.
+function shouldRouteCounselorCaseloadToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_CASELOAD_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1057,6 +1067,17 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/counselor/students/:studentId",
               destination: `${dotnetApiBaseUrl}/api/v1/counselor/students/:studentId`,
+            },
+          ]
+        : []),
+      // Counselor enriched caseload READ (FM-DOTNET-068) — the EXACT literal /me/students (listEnrichedStudents),
+      // own flag. GET-only; distinct from /me/students/:studentId (needs a trailing segment). More specific than the
+      // /api/:path* catch-all → precedes it.
+      ...(shouldRouteCounselorCaseloadToDotnet()
+        ? [
+            {
+              source: "/api/v1/counselor/me/students",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/students`,
             },
           ]
         : []),
