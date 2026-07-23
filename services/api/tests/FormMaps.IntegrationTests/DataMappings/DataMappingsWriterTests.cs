@@ -183,6 +183,114 @@ public sealed class DataMappingsWriterTests
         Assert.Equal(("pending", (string?)null), await StatusOf("m2"));
     }
 
+    // ---- updateDataMapping (FM-DOTNET-061 PUT /data-mappings/:id) ----
+
+    [Fact]
+    public async Task Update_always_sets_updatedBy_updatedAt_and_only_present_conditional_fields()
+    {
+        var old = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+        await InsertPendingAsync("m1", School, "E1", updatedAt: old, externalName: "OrigName");
+
+        // externalCode present → changed; the other conditional keys absent → unchanged; updatedBy+updatedAt ALWAYS set.
+        var id = await Writer().UpdateDataMappingAsync(Ctx(), School, "user-9", "m1", Json("""{"externalCode":"NEW"}"""));
+
+        Assert.Equal("m1", id);
+        var m = await ReadMappingAsync("m1");
+        Assert.Equal("NEW", m.ExternalCode);        // present → changed
+        Assert.Equal("OrigName", m.ExternalName);   // absent → unchanged
+        Assert.Equal("manual", m.ExternalSource);   // absent → unchanged
+        Assert.Equal("course-1", m.InternalCourseId); // absent → unchanged
+        Assert.Equal("user-9", m.UpdatedBy);        // ALWAYS stamped
+        Assert.True(m.UpdatedAt > old);             // @updatedAt bumped
+    }
+
+    [Fact]
+    public async Task Update_present_null_on_nullable_externalName_writes_null()
+    {
+        await InsertPendingAsync("m1", School, "E1", externalName: "Was");
+
+        await Writer().UpdateDataMappingAsync(Ctx(), School, "user-9", "m1", Json("""{"externalName":null}"""));
+
+        Assert.Null((await ReadMappingAsync("m1")).ExternalName); // nullable column → NULL (house rule)
+    }
+
+    [Fact]
+    public async Task Update_all_conditional_fields_persist()
+    {
+        await InsertPendingAsync("m1", School, "E1");
+
+        var id = await Writer().UpdateDataMappingAsync(Ctx(), School, "user-9", "m1",
+            Json("""{"externalCode":"C2","externalName":"N2","externalSource":"powerschool","internalCourseId":"course-2"}"""));
+
+        Assert.Equal("m1", id);
+        var m = await ReadMappingAsync("m1");
+        Assert.Equal("C2", m.ExternalCode);
+        Assert.Equal("N2", m.ExternalName);
+        Assert.Equal("powerschool", m.ExternalSource); // raw copy — NO `|| "manual"` here
+        Assert.Equal("course-2", m.InternalCourseId);
+    }
+
+    [Fact]
+    public async Task Update_present_null_on_not_null_externalCode_throws()
+    {
+        await InsertPendingAsync("m1", School, "E1");
+
+        // externalCode is NOT NULL → present null → DBNull → NOT-NULL violation → 500.
+        await Assert.ThrowsAsync<PostgresException>(() =>
+            Writer().UpdateDataMappingAsync(Ctx(), School, "user-9", "m1", Json("""{"externalCode":null}""")));
+    }
+
+    [Fact]
+    public async Task Update_missing_mapping_returns_null()
+    {
+        Assert.Null(await Writer().UpdateDataMappingAsync(Ctx(), School, "user-9", "nope", Json("""{"externalCode":"X"}""")));
+    }
+
+    [Fact]
+    public async Task Update_wrong_school_returns_null_and_does_not_write()
+    {
+        var old = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+        await InsertPendingAsync("m1", "school-2", "E1", updatedAt: old, externalName: "Other");
+
+        var id = await Writer().UpdateDataMappingAsync(Ctx(), School, "user-9", "m1", Json("""{"externalName":"Hijack"}"""));
+
+        Assert.Null(id);
+        var m = await ReadMappingAsync("m1");
+        Assert.Equal("Other", m.ExternalName); // unchanged
+        Assert.Null(m.UpdatedBy);              // not stamped
+        Assert.Equal(old, m.UpdatedAt);        // not bumped
+    }
+
+    // ---- deleteDataMapping (HARD delete) ----
+
+    [Fact]
+    public async Task Delete_hard_removes_row()
+    {
+        await InsertPendingAsync("m1", School, "E1");
+
+        var ok = await Writer().DeleteDataMappingAsync(Ctx(), School, "m1");
+
+        Assert.True(ok);
+        Assert.Equal(0, await RowCount()); // HARD delete — the row is gone
+    }
+
+    [Fact]
+    public async Task Delete_missing_mapping_returns_false()
+    {
+        Assert.False(await Writer().DeleteDataMappingAsync(Ctx(), School, "nope"));
+    }
+
+    [Fact]
+    public async Task Delete_wrong_school_returns_false_and_row_still_present()
+    {
+        await InsertPendingAsync("m1", "school-2", "E1");
+
+        var ok = await Writer().DeleteDataMappingAsync(Ctx(), School, "m1");
+
+        Assert.False(ok);
+        Assert.Equal(1, await RowCount()); // untouched
+    }
+
     // ---- helpers ----
 
     private static JsonElement Json(string s) => JsonDocument.Parse(s).RootElement.Clone();
@@ -196,21 +304,43 @@ public sealed class DataMappingsWriterTests
             schoolId: School, permissions: Array.Empty<string>(),
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
 
-    private async Task InsertPendingAsync(string id, string schoolId, string externalCode, DateTime? updatedAt = null)
+    private async Task InsertPendingAsync(
+        string id, string schoolId, string externalCode, DateTime? updatedAt = null, string? externalName = null)
     {
         await using var conn = await _dataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand(
             """
             INSERT INTO "data_mappings"
-                ("id","schoolId","externalCode","externalSource","internalCourseId","status","updatedAt")
-            VALUES (@id,@sid,@code,'manual',@icid,'pending'::"DataMappingStatus",@upd)
+                ("id","schoolId","externalCode","externalName","externalSource","internalCourseId","status","updatedAt")
+            VALUES (@id,@sid,@code,@name,'manual',@icid,'pending'::"DataMappingStatus",@upd)
             """, conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("sid", schoolId);
         cmd.Parameters.AddWithValue("code", externalCode);
+        cmd.Parameters.AddWithValue("name", (object?)externalName ?? DBNull.Value);
         cmd.Parameters.AddWithValue("icid", "course-1");
         cmd.Parameters.AddWithValue("upd", (object?)updatedAt ?? new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified));
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    private async Task<(string ExternalCode, string? ExternalName, string ExternalSource, string InternalCourseId, string? UpdatedBy, DateTime UpdatedAt)> ReadMappingAsync(string id)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            SELECT "externalCode","externalName","externalSource","internalCourseId","updatedBy","updatedAt"
+            FROM "data_mappings" WHERE "id"=@id
+            """, conn);
+        cmd.Parameters.AddWithValue("id", id);
+        await using var reader = await cmd.ExecuteReaderAsync();
+        await reader.ReadAsync();
+        return (
+            reader.GetString(0),
+            reader.IsDBNull(1) ? null : reader.GetString(1),
+            reader.GetString(2),
+            reader.GetString(3),
+            reader.IsDBNull(4) ? null : reader.GetString(4),
+            reader.GetDateTime(5));
     }
 
     private async Task<(string Status, string? ApprovedBy)> StatusOf(string id)

@@ -219,6 +219,93 @@ public class SchoolCoursesEndpointsTests
         Assert.Equal("Course code already exists", await MessageAsync(response));
     }
 
+    // ---- PUT/DELETE /courses/{courseId} (FM-DOTNET-061) ----
+
+    private const string CoursePath = CoursesPath + "/course-1";
+
+    [Theory]
+    [InlineData("PUT")]
+    [InlineData("DELETE")]
+    public async Task Course_write_anonymous_is_401(string method)
+    {
+        using var client = Client(new FakeReader(), new FakeWriter(), new FakeScope(School));
+        var response = await client.SendAsync(Anon(new HttpMethod(method), CoursePath, method == "PUT" ? "{}" : null));
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("PUT")]
+    [InlineData("DELETE")]
+    public async Task Course_write_requires_courses_write_not_courses_read(string method)
+    {
+        var writer = new FakeWriter();
+        using var client = Client(new FakeReader(), writer, new FakeScope(School));
+        var response = await client.SendAsync(Auth(new HttpMethod(method), CoursePath, method == "PUT" ? "{}" : null, FormMapsPermissions.CoursesRead));
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal("missing_permission", await CodeAsync(response));
+        Assert.False(writer.UpdateCalled);
+        Assert.False(writer.DeleteCalled);
+    }
+
+    [Theory]
+    [InlineData("PUT")]
+    [InlineData("DELETE")]
+    public async Task Course_write_no_school_is_400_no_school(string method)
+    {
+        using var client = Client(new FakeReader(), new FakeWriter(), new FakeScope(null));
+        var response = await client.SendAsync(Auth(new HttpMethod(method), CoursePath, method == "PUT" ? "{}" : null, FormMapsPermissions.CoursesWrite));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("No school", await MessageAsync(response));
+    }
+
+    [Fact]
+    public async Task Put_course_not_owned_is_403_course_not_in_your_school()
+    {
+        // The writer's null outcome (missing OR wrong-school) → uniform 403 (NOT 404 — the course-vs-mapping asymmetry).
+        var writer = new FakeWriter { UpdateResult = null };
+        using var client = Client(new FakeReader(), writer, new FakeScope(School));
+        var response = await client.SendAsync(Auth(HttpMethod.Put, CoursePath, """{"name":"X"}""", FormMapsPermissions.CoursesWrite));
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal("Course not in your school", await MessageAsync(response));
+        Assert.Equal("course-1", writer.LastCourseId);
+    }
+
+    [Fact]
+    public async Task Delete_course_not_owned_is_403_course_not_in_your_school()
+    {
+        var writer = new FakeWriter { DeleteResult = false };
+        using var client = Client(new FakeReader(), writer, new FakeScope(School));
+        var response = await client.SendAsync(Auth(HttpMethod.Delete, CoursePath, permission: FormMapsPermissions.CoursesWrite));
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal("Course not in your school", await MessageAsync(response));
+    }
+
+    [Fact]
+    public async Task Put_course_success_is_200_with_id()
+    {
+        var writer = new FakeWriter { UpdateResult = "course-1" };
+        using var client = Client(new FakeReader(), writer, new FakeScope(School));
+        var response = await client.SendAsync(Auth(HttpMethod.Put, CoursePath, """{"name":"X"}""", FormMapsPermissions.CoursesWrite));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.True(doc.RootElement.GetProperty("success").GetBoolean());
+        Assert.Equal("course-1", doc.RootElement.GetProperty("data").GetProperty("id").GetString());
+        Assert.True(writer.UpdateCalled);
+    }
+
+    [Fact]
+    public async Task Delete_course_success_is_200_success_true()
+    {
+        var writer = new FakeWriter { DeleteResult = true };
+        using var client = Client(new FakeReader(), writer, new FakeScope(School));
+        var response = await client.SendAsync(Auth(HttpMethod.Delete, CoursePath, permission: FormMapsPermissions.CoursesWrite));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.True(doc.RootElement.GetProperty("success").GetBoolean());
+        Assert.False(doc.RootElement.TryGetProperty("data", out _)); // delete → { success:true } only
+        Assert.True(writer.DeleteCalled);
+    }
+
     // ---- helpers ----
 
     private static HttpClient Client(FakeReader reader, FakeWriter writer, FakeScope scope) =>
@@ -304,11 +391,35 @@ public class SchoolCoursesEndpointsTests
         public CreateCourseResult Result { get; init; } = new("id-x", "C1", false);
         public bool Called { get; private set; }
 
+        // updateCourse / deleteCourse outcomes: null / false = the not-owned outcome (endpoint → 403).
+        public string? UpdateResult { get; init; } = "course-1";
+        public bool DeleteResult { get; init; } = true;
+        public string? LastCourseId { get; private set; }
+        public bool UpdateCalled { get; private set; }
+        public bool DeleteCalled { get; private set; }
+
         public Task<CreateCourseResult> CreateCourseAsync(
             RequestContext context, string schoolId, JsonElement body, CancellationToken cancellationToken = default)
         {
             Called = true;
             return Task.FromResult(Result);
+        }
+
+        public Task<string?> UpdateCourseAsync(
+            RequestContext context, string schoolId, string courseId, JsonElement body,
+            CancellationToken cancellationToken = default)
+        {
+            UpdateCalled = true;
+            LastCourseId = courseId;
+            return Task.FromResult(UpdateResult);
+        }
+
+        public Task<bool> DeleteCourseAsync(
+            RequestContext context, string schoolId, string courseId, CancellationToken cancellationToken = default)
+        {
+            DeleteCalled = true;
+            LastCourseId = courseId;
+            return Task.FromResult(DeleteResult);
         }
     }
 }

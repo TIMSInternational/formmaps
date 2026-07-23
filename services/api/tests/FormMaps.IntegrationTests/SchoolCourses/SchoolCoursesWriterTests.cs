@@ -161,6 +161,179 @@ public sealed class SchoolCoursesWriterTests : IClassFixture<SchoolCoursesDataba
             Writer().CreateCourseAsync(Ctx(), School, Body("""{"code":"C1","name":"One","frameworkType":123}""")));
     }
 
+    // ---- updateCourse (FM-DOTNET-061 PUT /courses/:courseId) ----
+
+    [Fact]
+    public async Task Update_only_present_fields_change_and_bumps_updatedAt()
+    {
+        var old = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+        await SeedCourseAsync("cx", School, old, name: "Orig", department: "OrigDept", credits: 1m,
+            maxEnrollment: 10, isHonors: false, status: "active");
+
+        // Only name + credits present → the rest keeps its existing value (undefined-omit).
+        var id = await Writer().UpdateCourseAsync(Ctx(), School, "cx", Body("""{"name":"Changed","credits":4.5}"""));
+
+        Assert.Equal("cx", id);
+        var row = await ReadCourse("cx");
+        Assert.Equal("Changed", await NameOf("cx"));  // present → changed
+        Assert.Equal(4.5m, row.Credits);              // present → changed
+        Assert.Equal("OrigDept", row.Department);     // absent → unchanged
+        Assert.Equal(10, row.MaxEnrollment);          // absent → unchanged
+        Assert.False(row.IsHonors);                   // absent → unchanged
+        Assert.Equal("active", row.Status);           // absent → unchanged
+        Assert.True(await UpdatedAtOf("cx") > old);   // @updatedAt bumped
+    }
+
+    [Fact]
+    public async Task Update_empty_body_still_bumps_updatedAt_and_touches_nothing_else()
+    {
+        // Legacy prisma.update({data:{}}) still bumps @updatedAt (parity: SET always includes updatedAt).
+        var old = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+        await SeedCourseAsync("cx", School, old, name: "Keep", department: "KeepDept");
+
+        var id = await Writer().UpdateCourseAsync(Ctx(), School, "cx", Body("{}"));
+
+        Assert.Equal("cx", id);
+        Assert.Equal("Keep", await NameOf("cx"));
+        Assert.Equal("KeepDept", (await ReadCourse("cx")).Department);
+        Assert.True(await UpdatedAtOf("cx") > old);
+    }
+
+    [Fact]
+    public async Task Update_all_field_types_persist()
+    {
+        await SeedCourseAsync("cx", School, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified));
+
+        var id = await Writer().UpdateCourseAsync(Ctx(), School, "cx", Body("""
+            {"code":"NEW","name":"New Name","department":"Sci","credits":"3.25","gradeLevels":[9,10],
+             "prerequisites":["P1"],"corequisites":["C1"],"frameworkType":"AP","description":"d",
+             "maxEnrollment":25,"isHonors":true,"status":"archived"}
+            """));
+
+        Assert.Equal("cx", id);
+        var row = await ReadCourse("cx");
+        Assert.Equal("Sci", row.Department);
+        Assert.Equal(3.25m, row.Credits);              // numeric STRING coerced → decimal (Prisma Decimal)
+        Assert.Equal(new[] { 9, 10 }, row.GradeLevels);
+        Assert.Equal(new[] { "P1" }, row.Prerequisites);
+        Assert.Equal(new[] { "C1" }, row.Corequisites);
+        Assert.Equal("AP", row.FrameworkType);
+        Assert.Equal("d", row.Description);
+        Assert.Equal(25, row.MaxEnrollment);
+        Assert.True(row.IsHonors);
+        Assert.Equal("archived", row.Status);
+    }
+
+    [Fact]
+    public async Task Update_credits_exponent_string_parses_like_decimaljs()
+    {
+        // FM-061 gate fold (mirrors the FM-056 confidence mask): the credits string coercion ALLOWS exponent, matching
+        // legacy Prisma's decimal.js ("1e3" → 1000).
+        await SeedCourseAsync("cx", School, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified));
+        await Writer().UpdateCourseAsync(Ctx(), School, "cx", Body("""{"credits":"1e3"}"""));
+        Assert.Equal(1000m, (await ReadCourse("cx")).Credits);
+    }
+
+    [Theory]
+    [InlineData("1,000")]  // thousands separator
+    [InlineData(" 0.85 ")] // surrounding whitespace
+    [InlineData("5-")]     // trailing sign
+    public async Task Update_credits_thousands_or_whitespace_string_fails_closed(string credits)
+    {
+        // RED if the mask regresses to NumberStyles.Number: these would silently PARSE (fail-OPEN — writing a row that
+        // legacy's decimal.js 500s on). The restricted mask throws → 500, no write.
+        await SeedCourseAsync("cx", School, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), credits: 1m);
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            Writer().UpdateCourseAsync(Ctx(), School, "cx", Body($$"""{"credits":"{{credits}}"}""")));
+        Assert.Equal(1m, (await ReadCourse("cx")).Credits); // unchanged
+    }
+
+    [Fact]
+    public async Task Update_present_null_on_nullable_column_writes_null()
+    {
+        await SeedCourseAsync("cx", School, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified),
+            frameworkType: "AP", description: "orig", maxEnrollment: 10);
+
+        // frameworkType/description (nullable) + maxEnrollment (nullable Int) present-null → NULL (house rule).
+        await Writer().UpdateCourseAsync(Ctx(), School, "cx",
+            Body("""{"frameworkType":null,"description":null,"maxEnrollment":null}"""));
+
+        var row = await ReadCourse("cx");
+        Assert.Null(row.FrameworkType);
+        Assert.Null(row.Description);
+        Assert.Null(row.MaxEnrollment);
+    }
+
+    [Fact]
+    public async Task Update_wrong_typed_present_field_fails_closed()
+    {
+        await SeedCourseAsync("cx", School, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified));
+
+        // A number for a text column → Prisma type rejection → 500 (fail-closed throw). No write.
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            Writer().UpdateCourseAsync(Ctx(), School, "cx", Body("""{"name":123}""")));
+        Assert.Equal("Orig", await NameOf("cx")); // unchanged
+    }
+
+    [Fact]
+    public async Task Update_missing_course_returns_null()
+    {
+        var id = await Writer().UpdateCourseAsync(Ctx(), School, "does-not-exist", Body("""{"name":"X"}"""));
+        Assert.Null(id);
+    }
+
+    [Fact]
+    public async Task Update_wrong_school_returns_null_and_does_not_write()
+    {
+        var old = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+        await SeedCourseAsync("cx", "school-2", old, name: "Other");
+
+        // Caller is school-1; the course belongs to school-2 → ownership gate → null, no write.
+        var id = await Writer().UpdateCourseAsync(Ctx(), School, "cx", Body("""{"name":"Hijack"}"""));
+
+        Assert.Null(id);
+        Assert.Equal("Other", await NameOf("cx"));         // unchanged
+        Assert.Equal(old, await UpdatedAtOf("cx"));        // not even updatedAt bumped
+    }
+
+    // ---- deleteCourse (soft delete) ----
+
+    [Fact]
+    public async Task Delete_soft_archives_row_and_bumps_updatedAt_row_still_present()
+    {
+        var old = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+        await SeedCourseAsync("cx", School, old, status: "active", isActive: true);
+
+        var ok = await Writer().DeleteCourseAsync(Ctx(), School, "cx");
+
+        Assert.True(ok);
+        var row = await ReadCourse("cx");     // row still readable → NOT hard-deleted
+        Assert.False(row.IsActive);           // SOFT delete
+        Assert.Equal("archived", row.Status);
+        Assert.True(await UpdatedAtOf("cx") > old);
+        Assert.Equal(1, await CountCourses());
+    }
+
+    [Fact]
+    public async Task Delete_missing_course_returns_false()
+    {
+        Assert.False(await Writer().DeleteCourseAsync(Ctx(), School, "nope"));
+    }
+
+    [Fact]
+    public async Task Delete_wrong_school_returns_false_and_does_not_archive()
+    {
+        await SeedCourseAsync("cx", "school-2", new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Unspecified),
+            status: "active", isActive: true);
+
+        var ok = await Writer().DeleteCourseAsync(Ctx(), School, "cx");
+
+        Assert.False(ok);
+        var row = await ReadCourse("cx");
+        Assert.True(row.IsActive);            // untouched
+        Assert.Equal("active", row.Status);
+    }
+
     // ---- helpers ----
 
     private SchoolCoursesWriter Writer() =>
@@ -173,6 +346,53 @@ public sealed class SchoolCoursesWriterTests : IClassFixture<SchoolCoursesDataba
             new RequestActor("admin-1", "school-admin", "a@e.st", "Admin"),
             schoolId: schoolId, permissions: Array.Empty<string>(),
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
+
+    // Direct-SQL seed with a controllable updatedAt (so the @updatedAt-bump assertions are deterministic).
+    private async Task SeedCourseAsync(
+        string id, string schoolId, DateTime updatedAt, string name = "Orig", string department = "OrigDept",
+        decimal credits = 1m, int? maxEnrollment = 10, bool isHonors = false, string status = "active",
+        bool isActive = true, string? frameworkType = null, string? description = null)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "school_courses"
+                ("id","schoolId","code","name","department","credits","gradeLevels","prerequisites","corequisites",
+                 "frameworkType","description","maxEnrollment","isHonors","status","isActive","createdDate","updatedAt")
+            VALUES (@id,@sid,@code,@name,@dept,@credits,ARRAY[]::integer[],ARRAY[]::text[],ARRAY[]::text[],
+                    @fw,@desc,@max,@honors,@status,@active,@upd,@upd)
+            """, conn);
+        cmd.Parameters.AddWithValue("id", id);
+        cmd.Parameters.AddWithValue("sid", schoolId);
+        cmd.Parameters.AddWithValue("code", "C-" + id);
+        cmd.Parameters.AddWithValue("name", name);
+        cmd.Parameters.AddWithValue("dept", department);
+        cmd.Parameters.AddWithValue("credits", credits);
+        cmd.Parameters.AddWithValue("fw", (object?)frameworkType ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("desc", (object?)description ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("max", (object?)maxEnrollment ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("honors", isHonors);
+        cmd.Parameters.AddWithValue("status", status);
+        cmd.Parameters.AddWithValue("active", isActive);
+        cmd.Parameters.AddWithValue("upd", updatedAt);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    private async Task<string> NameOf(string id)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand("""SELECT "name" FROM "school_courses" WHERE "id"=@id""", conn);
+        cmd.Parameters.AddWithValue("id", id);
+        return (string)(await cmd.ExecuteScalarAsync())!;
+    }
+
+    private async Task<DateTime> UpdatedAtOf(string id)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand("""SELECT "updatedAt" FROM "school_courses" WHERE "id"=@id""", conn);
+        cmd.Parameters.AddWithValue("id", id);
+        return (DateTime)(await cmd.ExecuteScalarAsync())!;
+    }
 
     private async Task<int> CountCourses()
     {

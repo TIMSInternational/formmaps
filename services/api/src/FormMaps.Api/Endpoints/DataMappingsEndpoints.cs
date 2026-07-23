@@ -29,6 +29,8 @@ public static class DataMappingsEndpoints
         group.MapGet("/data-mappings", GetDataMappingsAsync);
         group.MapPost("/data-mappings", PostDataMappingAsync);
         group.MapPost("/data-mappings/bulk-approve", BulkApproveAsync);
+        group.MapPut("/data-mappings/{id}", PutDataMappingAsync);
+        group.MapDelete("/data-mappings/{id}", DeleteDataMappingAsync);
 
         return app;
     }
@@ -146,6 +148,73 @@ public static class DataMappingsEndpoints
         return Results.Ok(new { success = true, data = new { approved } });
     }
 
+    // ---------------------------------------------------------------- PUT /data-mappings/{id} (school:data-mapping)
+
+    private static async Task<IResult> PutDataMappingAsync(
+        HttpContext http,
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        IDataMappingsWriter writer,
+        string id,
+        CancellationToken cancellationToken)
+    {
+        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        if (string.IsNullOrEmpty(schoolId))
+        {
+            return NoSchool();
+        }
+
+        var body = await ReadBodyAsync(http, cancellationToken);
+        if (body is null)
+        {
+            return InvalidBody();
+        }
+
+        var mappingId = await writer.UpdateDataMappingAsync(context, schoolId, context.Actor!.UserId, id, body.Value, cancellationToken);
+        if (mappingId is null)
+        {
+            return MappingNotFound(); // 404 — uniform for both not-found AND wrong-school
+        }
+
+        return Results.Json(new { success = true, data = new { id = mappingId } });
+    }
+
+    // ---------------------------------------------------------------- DELETE /data-mappings/{id} (school:data-mapping)
+
+    private static async Task<IResult> DeleteDataMappingAsync(
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        IDataMappingsWriter writer,
+        string id,
+        CancellationToken cancellationToken)
+    {
+        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, cancellationToken);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        if (string.IsNullOrEmpty(schoolId))
+        {
+            return NoSchool();
+        }
+
+        var deleted = await writer.DeleteDataMappingAsync(context, schoolId, id, cancellationToken);
+        if (!deleted)
+        {
+            return MappingNotFound(); // 404
+        }
+
+        return Results.Json(new { success = true });
+    }
+
     // ---------------------------------------------------------------- mappingIds normalizer (safe divergence)
 
     // The ratified safe divergence: body.mappingIds → an array of its STRING elements ONLY. A missing/non-array
@@ -226,6 +295,11 @@ public static class DataMappingsEndpoints
 
     private static IResult InvalidBody() =>
         Results.Json(new { success = false, message = "Invalid request body" }, statusCode: StatusCodes.Status400BadRequest);
+
+    // The 404 (NOT 403) both updateDataMapping/deleteDataMapping return for a not-found OR wrong-school mapping (uniform
+    // — the course-vs-mapping asymmetry: mappings → 404 "Mapping not found"; courses → 403 "Course not in your school").
+    private static IResult MappingNotFound() =>
+        Results.Json(new { success = false, message = "Mapping not found" }, statusCode: StatusCodes.Status404NotFound);
 
     /// <summary>
     /// Shared guard chain: RequireIdentity (401) → permission school:data-mapping (403) → resolve the caller's own

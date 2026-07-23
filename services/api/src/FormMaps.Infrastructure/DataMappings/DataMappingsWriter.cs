@@ -93,6 +93,114 @@ public sealed class DataMappingsWriter(IFormMapsDatabaseSessionFactory databaseS
         return affected;
     }
 
+    // ---------------------------------------------------------------- updateDataMapping (PUT /data-mappings/:id)
+
+    // The conditional allow-list in legacy order (routes/school-courses.ts PUT + service updateDataMapping). data ALWAYS
+    // sets updatedBy + updatedAt; these are added ONLY when the body key is present (undefined-omit — a RAW copy, so no
+    // `|| "manual"` on externalSource). Column nullability: externalCode/externalSource/internalCourseId NOT NULL,
+    // externalName nullable.
+    private static readonly string[] MappingUpdateFields =
+        ["externalCode", "externalName", "externalSource", "internalCourseId"];
+
+    public async Task<string?> UpdateDataMappingAsync(
+        RequestContext context, string schoolId, string userId, string mappingId, JsonElement body,
+        CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        // Ownership gate (findUnique then schoolId check): missing row OR different school → null (endpoint → 404).
+        var ownerSchool = await SelectSchoolIdAsync(session, mappingId, cancellationToken);
+        if (ownerSchool is null || !string.Equals(ownerSchool, schoolId, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        // data ALWAYS = { updatedBy, updatedAt } + the present conditional keys (undefined-omit). Params before text.
+        var command = session.Connection.CreateCommand();
+        command.Transaction = session.Transaction;
+        AddParameter(command, "id", mappingId);
+        AddParameter(command, "userId", userId);
+        AddTimestamp(command, "now", Now());
+
+        var sets = new List<string> { "\"updatedBy\" = @userId", "\"updatedAt\" = @now" };
+        if (body.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var field in MappingUpdateFields)
+            {
+                if (!body.TryGetProperty(field, out var element))
+                {
+                    continue; // absent → not written (keeps existing value)
+                }
+
+                sets.Add($"\"{field}\" = @{field}");
+                // externalName is the only nullable column (present null → NULL); the other three are NOT NULL (present
+                // null → DBNull → NOT-NULL violation → 500). A present non-string non-null → Prisma text rejection → 500.
+                AddParameter(command, field, string.Equals(field, "externalName", StringComparison.Ordinal)
+                    ? NullableStringValue(element, field)
+                    : RequiredStringValue(element, field));
+            }
+        }
+
+        command.CommandText = $"""UPDATE "data_mappings" SET {string.Join(", ", sets)} WHERE "id" = @id""";
+        await using (command)
+        {
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await session.CommitAsync(cancellationToken);
+        return mappingId; // legacy returns { id: mappingId }
+    }
+
+    public async Task<bool> DeleteDataMappingAsync(
+        RequestContext context, string schoolId, string mappingId, CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        var ownerSchool = await SelectSchoolIdAsync(session, mappingId, cancellationToken);
+        if (ownerSchool is null || !string.Equals(ownerSchool, schoolId, StringComparison.Ordinal))
+        {
+            return false; // endpoint → 404 "Mapping not found"
+        }
+
+        // HARD delete — the row is removed (no updatedAt).
+        await using (var command = Command(session, """DELETE FROM "data_mappings" WHERE "id" = @id"""))
+        {
+            AddParameter(command, "id", mappingId);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await session.CommitAsync(cancellationToken);
+        return true;
+    }
+
+    // findUnique(select schoolId) within the caller's writable session. NULL when the row is absent.
+    private static async Task<string?> SelectSchoolIdAsync(
+        FormMapsDatabaseSession session, string mappingId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """SELECT "schoolId" FROM "data_mappings" WHERE "id" = @id""");
+        AddParameter(command, "id", mappingId);
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result as string;
+    }
+
+    // NOT-NULL text (present): String → value (incl ""); null → DBNull (DB rejects → 500); else → 500 (fail-closed).
+    private static object RequiredStringValue(JsonElement element, string field) =>
+        element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString()!,
+            JsonValueKind.Null => DBNull.Value,
+            _ => throw NonStringText(field),
+        };
+
+    // Nullable text (present): String → value; null → NULL (honored); else → 500 (fail-closed).
+    private static object NullableStringValue(JsonElement element, string field) =>
+        element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString()!,
+            JsonValueKind.Null => DBNull.Value,
+            _ => throw NonStringText(field),
+        };
+
     // ---------------------------------------------------------------- body coercion (JS `||` falsiness / raw passthrough)
 
     // String kind → value (incl ""); else null (→ DBNull → NOT-NULL → 500). Captures BOTH missing and non-string.

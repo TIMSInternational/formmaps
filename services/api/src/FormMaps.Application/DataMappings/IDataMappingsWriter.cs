@@ -36,4 +36,27 @@ public interface IDataMappingsWriter
     Task<int> BulkApproveAsync(
         RequestContext context, string schoolId, IReadOnlyList<string> ids, string approvedBy,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// updateDataMapping (FM-DOTNET-061 PUT /data-mappings/:id): read-then-write in ONE writable session. findUnique on
+    /// <paramref name="mappingId"/>; a missing row OR a schoolId mismatch → <c>null</c> (endpoint maps to 404 "Mapping
+    /// not found" — uniform for both, UNLIKE courses' 403). Else the SET clause ALWAYS sets updatedBy=@userId +
+    /// "updatedAt"=now(), then adds externalCode / externalName / externalSource / internalCourseId ONLY when the body
+    /// key is present (<c>!== undefined</c> — undefined-omit; a raw copy, so there is NO <c>|| "manual"</c> on
+    /// externalSource here). externalCode/externalSource/internalCourseId are String NOT NULL (a present JSON null →
+    /// NULL → NOT-NULL violation → 500; a present non-string non-null → Prisma type rejection → 500); externalName is
+    /// nullable (present null → NULL; present non-string non-null → 500). Returns the <paramref name="mappingId"/> on
+    /// success.
+    /// </summary>
+    Task<string?> UpdateDataMappingAsync(
+        RequestContext context, string schoolId, string userId, string mappingId, JsonElement body,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// deleteDataMapping (FM-DOTNET-061 DELETE /data-mappings/:id): read-then-write in ONE writable session. findUnique;
+    /// missing row OR schoolId mismatch → <c>false</c> (endpoint maps to 404 "Mapping not found"). Else a HARD delete —
+    /// <c>DELETE FROM data_mappings WHERE id=@id</c> (the row is removed; no updatedAt). Returns <c>true</c> on delete.
+    /// </summary>
+    Task<bool> DeleteDataMappingAsync(
+        RequestContext context, string schoolId, string mappingId, CancellationToken cancellationToken = default);
 }
