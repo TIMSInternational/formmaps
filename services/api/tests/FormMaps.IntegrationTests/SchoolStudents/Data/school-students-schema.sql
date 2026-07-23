@@ -175,7 +175,9 @@ CREATE TABLE "course_change_requests" (
 CREATE TABLE "school_assessment_settings" (
     "id"                    text PRIMARY KEY,
     "schoolId"              text NOT NULL UNIQUE,
-    "courseRequestDeadline" timestamp
+    "courseRequestDeadline" timestamp,
+    "createdDate"           timestamp NOT NULL DEFAULT now(),  -- FM-065 (deadline upsert)
+    "updatedAt"             timestamp NOT NULL DEFAULT now()   -- FM-065
 );
 
 CREATE INDEX "schoolstudents_users_schoolId_idx" ON "users"("schoolId");
