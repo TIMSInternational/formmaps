@@ -71,6 +71,8 @@
     <EmbeddedResource Include="Pathways\Data\pathways-schema.sql" />
     <!-- Schema-only DDL (ImportJobStatus enum + school_courses + import jobs/errors) for the course-import harness (FM-DOTNET-059). -->
     <EmbeddedResource Include="CourseImport\Data\course-import-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers counselor dashboard reads harness (FM-DOTNET-067 Phase-C). -->
+    <EmbeddedResource Include="Counselor\Data\counselor-dashboard-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

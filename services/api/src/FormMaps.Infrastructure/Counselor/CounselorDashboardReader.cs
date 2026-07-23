@@ -27,7 +27,13 @@ public sealed class CounselorDashboardReader(
         RequestContext context, string counselorId, CancellationToken cancellationToken = default)
     {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
-        var now = timeProvider.GetUtcNow().UtcDateTime;
+        // UTC wall-clock at ms precision, bound Kind=Unspecified so Npgsql binds it as `timestamp` (without time
+        // zone) — matching the Prisma @db.Timestamp(3) startTime/followUpDate columns. A Kind=Utc value would infer
+        // `timestamptz` and Postgres would apply a TimeZone-GUC-dependent cast on the comparison, diverging on any
+        // non-UTC session (see LiaSessionWriter.cs:144-147 — the codebase's tz-independence rule). Legacy `new Date()`
+        // is tz-independent (Prisma binds it as `timestamp`).
+        var now = TruncateToMilliseconds(
+            DateTime.SpecifyKind(timeProvider.GetUtcNow().UtcDateTime, DateTimeKind.Unspecified));
 
         // Active caseload assignment studentIds.
         var studentIds = new List<string>();
@@ -314,4 +320,7 @@ public sealed class CounselorDashboardReader(
 
     private static string IsoZ(DateTime value) =>
         DateTime.SpecifyKind(value, DateTimeKind.Utc).ToString("yyyy-MM-ddTHH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
+
+    private static DateTime TruncateToMilliseconds(DateTime value) =>
+        new(value.Ticks - (value.Ticks % TimeSpan.TicksPerMillisecond), value.Kind);
 }
