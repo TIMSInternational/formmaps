@@ -424,6 +424,16 @@ function shouldRoutePrerequisitesToDotnet() {
   );
 }
 
+// Derived pathways (FM-DOTNET-058) — routes/school-courses.ts, mounted under /api/v1/school-admin: ONE path,
+// GET /courses/pathways (curriculum:manage). The literal "pathways" segment is MORE specific than the deferred bare
+// /courses/:courseId (PUT/DELETE, still Node) and is disjoint from the FM-054 exact /courses and every other route,
+// so it is collision-free (no negative-lookahead needed). Must precede the /api/:path* catch-all. Default OFF (dark).
+function shouldRoutePathwaysToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PATHWAYS_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1088,6 +1098,17 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/prerequisites/missing/:studentId/:courseId",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/prerequisites/missing/:studentId/:courseId`,
+            },
+          ]
+        : []),
+      // Derived pathways (FM-DOTNET-058) — GET /courses/pathways. Literal "pathways" segment is more specific than the
+      // deferred bare /courses/:courseId (still Node) and disjoint from the FM-054 exact /courses → collision-free.
+      // More specific than the /api/:path* catch-all below, so it must precede it. Dark.
+      ...(shouldRoutePathwaysToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/courses/pathways",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/pathways`,
             },
           ]
         : []),
