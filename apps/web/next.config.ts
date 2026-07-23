@@ -404,6 +404,16 @@ function shouldRouteCounselorAvailabilityToDotnet() {
   );
 }
 
+// Counselor alerts (FM-DOTNET-070) — GET /me/alerts + PUT /me/alerts/:id/read. Two DIFFERENT paths under one flag.
+// GET /me/alerts is exact-literal (no trailing segment → does not match /me/alerts/:id/read); the PUT is the 3-seg
+// /me/alerts/:id/read. Neither collides with any other counselor path. Default OFF (dark). Precedes the /api/:path*
+// catch-all. (The GET's ?studentId IDOR is closed in the .NET handler, not the rewrite.)
+function shouldRouteCounselorAlertsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_ALERTS_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1098,6 +1108,20 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/counselor/me/availability",
               destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/availability`,
+            },
+          ]
+        : []),
+      // Counselor alerts (FM-DOTNET-070) — GET /me/alerts + PUT /me/alerts/:id/read, one flag, two rewrites. Exact
+      // /me/alerts does not match the 3-seg /me/alerts/:id/read; both precede the /api/:path* catch-all.
+      ...(shouldRouteCounselorAlertsToDotnet()
+        ? [
+            {
+              source: "/api/v1/counselor/me/alerts",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/alerts`,
+            },
+            {
+              source: "/api/v1/counselor/me/alerts/:id/read",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/alerts/:id/read`,
             },
           ]
         : []),
