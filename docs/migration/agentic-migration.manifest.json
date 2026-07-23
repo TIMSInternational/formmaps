@@ -2529,6 +2529,25 @@
         "services/api/src/FormMaps.Infrastructure/Counselor/CounselorDashboardReader.cs",
         "services/api/src/FormMaps.Api/Endpoints/CounselorDashboardEndpoints.cs"
       ]
+    },
+    {
+      "id": "FM-DOTNET-068-counselor-enriched-caseload",
+      "status": "completed",
+      "goal": "Phase-C slice 2: the deferred enriched caseload GET /me/students (counselor.ts \u2192 counselorAnalyticsService.listEnrichedStudents) behind dark flag FORMMAPS_ROUTE_COUNSELOR_CASELOAD_TO_DOTNET. Pure EnrichedCaseloadComputer (GPA/credit/3-badges/at-risk-status/career-jsonb/search+status-filter/name-ICU+numeric-sort/paginate) + CounselorCaseloadReader (~10 loads incl. required-credits resolution). pca_evaluations NOT isActive-filtered; credits ::double precision. Gate: fresh reviewer SHIP.",
+      "dependsOn": [
+        "FM-DOTNET-067-counselor-dashboard-reads"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/services/counselorAnalyticsService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/routes/counselor.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Counselor/ICounselorCaseloadReader.cs",
+        "services/api/src/FormMaps.Application/Counselor/EnrichedCaseloadComputer.cs",
+        "services/api/src/FormMaps.Infrastructure/Counselor/CounselorCaseloadReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/CounselorCaseloadEndpoints.cs"
+      ]
     }
   ]
 }
