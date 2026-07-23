@@ -2347,6 +2347,35 @@
       ],
       "verification": "dotnet build 0/0; unit 659 (+FailuresCsvBuilder 18: JsStringify Node-gold + CsvSafe + DataLine), integration 1023 (+2 skip; +8 CourseImport: 3 reader failures-CSV [missing/cross-school->null, no-errors->header-only, real-Postgres byte-exact CSV with csvSafe+quote-doubling+jsonb-key-order] + 5 endpoint [anon/perm/no-school theories + 200 text/csv;charset=utf-8 + 404], + updated SchoolAdmin export-CSV content-type assertion), contract 1 - full suite green. Reused the FM-059 CourseImport Testcontainers harness. Staging deploy run 29978494786 SUCCESS + anon canary GREEN (health 200; download-failures anon->401 + x-formmaps-service). Merged --no-ff to main 271f353.",
       "commit": "271f353"
+    },
+    {
+      "id": "FM-DOTNET-061-id-writes",
+      "status": "completed",
+      "goal": "Phase-B slice: port the DEFERRED /:id WRITES that complete the FM-054 (courses) + FM-056 (data-mappings) write surfaces — PUT/DELETE /courses/:courseId (courses:write) + PUT/DELETE /data-mappings/:id (school:data-mapping) — each under its EXISTING flag, PLUS the batched negative-lookahead next.config rewrites (the recurring routing deferral: Next rewrites match by PATH NOT METHOD, so /courses/:courseId((?!import|pathways|ai-import)…) + /data-mappings/:id((?!bulk-approve|ai-suggest)…) prevent a flag flip misrouting the Node-only AI/literal siblings to the .NET group).",
+      "dependsOn": [
+        "FM-DOTNET-060-import-failures-csv"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-courses.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolCoursesService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/SchoolCourses/ISchoolCoursesWriter.cs",
+        "services/api/src/FormMaps.Application/DataMappings/IDataMappingsWriter.cs",
+        "services/api/src/FormMaps.Infrastructure/SchoolCourses/SchoolCoursesWriter.cs",
+        "services/api/src/FormMaps.Infrastructure/DataMappings/DataMappingsWriter.cs",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolCoursesEndpoints.cs",
+        "services/api/src/FormMaps.Api/Endpoints/DataMappingsEndpoints.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "updateCourse (SchoolCoursesWriter.UpdateCourseAsync): ownership gate SELECT schoolId (missing OR wrong-school → null → endpoint 403 'Course not in your school', UNIFORM incl not-found); 12-field undefined-omit mass-assignment (code/name/department/credits/gradeLevels/prerequisites/corequisites/frameworkType/description/maxEnrollment/isHonors/status) — RAW copy (NO create-side || falsy defaults) so present-null/wrong-type on a NOT-NULL column → 500, present-null on nullable → NULL; updatedAt ALWAYS in the SET (Prisma @updatedAt bumps even on update({data:{}})); per-field Prisma typing incl maxEnrollment Int? STRICT (numeric-string → 500, faithful to Prisma Int, DELIBERATELY unlike the create-side MaxEnrollmentOrNull); returns the passed-in courseId. deleteCourse: SOFT delete (isActive=false, status='archived', +updatedAt; row stays). updateDataMapping (DataMappingsWriter): gate → null → 404 'Mapping not found'; data ALWAYS updatedBy=userId + updatedAt + conditional externalCode/externalName/externalSource/internalCourseId (undefined-omit; externalName nullable / other 3 NOT NULL). deleteDataMapping: HARD delete. Endpoints add MapPut/MapDelete on the existing groups; the 403(courses)-vs-404(mappings) asymmetry is exact. next.config: /courses/:courseId + /data-mappings/:id negative-lookahead rewrites appended to the existing FM-054/056 flag blocks (documented for cutover verification in the live formmaps-platform/frontend/next.config.ts — not CI-exercised).",
+        "GATE: fresh reviewer FIXES-NEEDED (1 finding, LOW-reachability but FAIL-OPEN) → FOLDED. credits numeric-string parse used the default NumberStyles.Number → the EXACT FM-056 confidence regression: '1,000'/' 0.85 '/'5-' silently PARSE (.NET writes a row legacy's decimal.js 500s on) — fail-OPEN. Applied the ratified FM-056 mask (AllowLeadingSign|AllowDecimalPoint|AllowExponent) to BOTH the new CreditsUpdateValue (FM-061 update) AND the FM-054 create twin CreditsOrZero + 4 red-if-regressed tests ('1e3'→1000 parses; '1,000'/' 0.85 '/'5-' throw→500, unchanged). Every OTHER axis CONFIRMED faithful (8/8): 403/404 asymmetry, 12-field per-column Prisma typing (status NOT-NULL text not enum; maxEnrollment Int-strict numeric-string→500 IS faithful), soft-vs-hard delete, updateDataMapping nullability (externalName vs 3 NOT-NULL), ownership gate one-session-no-write-on-miss + return-passed-in-id, auth 401/403/400, tz-independent @updatedAt. Reviewer NOTED (out-of-scope, pre-existing FM-054 fail-open): the create-side MaxEnrollmentOrNull ACCEPTS numeric strings where Prisma Int 500s — candidate follow-up. Codex INCONCLUSIVE (foreground timeout → background → never returned in a bounded 7-min wait; NOT an approval). Built by a plain (non-worktree) agent; I verified the tree + reviewed all writers/endpoints + confirmed DataMapping nullability against schema + ran the gate + folded."
+      ],
+      "verification": "dotnet build 0/0; unit 659, integration 1067 (+2 skip), contract 1 — full suite green (~44 new FM-061 integration: SchoolCourses 19 writer[+4 credits-mask] + endpoint; DataMappings 21 writer+endpoint; incl. the 403-vs-404 asymmetry pin). Reused the FM-054 SchoolCourses + FM-056 DataMappings Testcontainers harnesses. Staging deploy run 29980711687 SUCCESS + anon canary GREEN (health 200; all 4 write routes anon->401 + x-formmaps-service). Merged --no-ff to main 9cc9484. ⚠️ ROUTING: the two negative-lookahead rewrites are in apps/web/next.config.ts (staging/reference) — MUST be re-verified in formmaps-platform/frontend/next.config.ts at cutover (not CI-testable).",
+      "commit": "9cc9484"
     }
   ]
 }
