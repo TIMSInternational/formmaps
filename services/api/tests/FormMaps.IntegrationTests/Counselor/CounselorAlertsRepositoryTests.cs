@@ -69,6 +69,33 @@ public sealed class CounselorAlertsRepositoryTests : IClassFixture<CounselorAler
     }
 
     [Fact]
+    public async Task List_pages_with_offset_and_reports_full_total()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await Assign(conn, "a1", Counselor, "s1");
+        for (var i = 0; i < 3; i++)
+        {
+            await Alert(conn, $"al{i}", "s1", createdDate: new DateTime(2026, 7, 1 + i));
+        }
+
+        var page2 = await Repo().ListAsync(Ctx(), Counselor, studentIdFilter: null, unreadOnly: false, page: 2, limit: 2);
+        Assert.Equal(3, page2.Total);       // full COUNT, not page length
+        Assert.Single(page2.Data);          // OFFSET 2 → the last row
+        Assert.Equal("al0", page2.Data[0].Id); // oldest (createdDate DESC → al2,al1 on page 1; al0 on page 2)
+    }
+
+    [Fact]
+    public async Task List_returns_severity_enum_label()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await Assign(conn, "a1", Counselor, "s1");
+        await Alert(conn, "al1", "s1", severity: "critical");
+
+        var result = await Repo().ListAsync(Ctx(), Counselor, studentIdFilter: null, unreadOnly: false, page: 1, limit: 20);
+        Assert.Equal("critical", result.Data[0].Severity);
+    }
+
+    [Fact]
     public async Task UnreadOnly_filters_read_alerts()
     {
         await using var conn = await _dataSource.OpenConnectionAsync();
@@ -93,12 +120,13 @@ public sealed class CounselorAlertsRepositoryTests : IClassFixture<CounselorAler
         Assert.Equal(MarkReadResult.NotAssigned, await Repo().MarkReadAsync(Ctx(), Counselor, "al-other"));
         Assert.Equal(MarkReadResult.Ok, await Repo().MarkReadAsync(Ctx(), Counselor, "al-mine"));
 
-        // verify the write
-        await using var check = new NpgsqlCommand("""SELECT "isRead","readBy" FROM "student_alerts" WHERE "id"='al-mine'""", conn);
+        // verify the write (isRead + readBy + readAt all set)
+        await using var check = new NpgsqlCommand("""SELECT "isRead","readBy","readAt" FROM "student_alerts" WHERE "id"='al-mine'""", conn);
         await using var reader = await check.ExecuteReaderAsync();
         await reader.ReadAsync();
         Assert.True(reader.GetBoolean(0));
         Assert.Equal(Counselor, reader.GetString(1));
+        Assert.False(reader.IsDBNull(2)); // readAt written
     }
 
     // ---- helpers ----
@@ -129,15 +157,17 @@ public sealed class CounselorAlertsRepositoryTests : IClassFixture<CounselorAler
     }
 
     private static async Task Alert(
-        NpgsqlConnection conn, string id, string studentId, bool isActive = true, bool isRead = false, DateTime? createdDate = null)
+        NpgsqlConnection conn, string id, string studentId, bool isActive = true, bool isRead = false,
+        DateTime? createdDate = null, string severity = "info")
     {
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "student_alerts"("id","studentId","type","message","isActive","isRead","createdDate")
-            VALUES(@id,@s,'academic','msg',@a,@r,@cd)
+            INSERT INTO "student_alerts"("id","studentId","type","severity","message","isActive","isRead","createdDate")
+            VALUES(@id,@s,'academic',@sev::"AlertSeverity",'msg',@a,@r,@cd)
             """, conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("s", studentId);
+        cmd.Parameters.AddWithValue("sev", severity);
         cmd.Parameters.AddWithValue("a", isActive);
         cmd.Parameters.AddWithValue("r", isRead);
         cmd.Parameters.AddWithValue("cd", DateTime.SpecifyKind(createdDate ?? new DateTime(2026, 1, 1), DateTimeKind.Unspecified));
