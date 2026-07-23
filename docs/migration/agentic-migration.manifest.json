@@ -2319,6 +2319,34 @@
       ],
       "verification": "dotnet build 0/0; unit 641, integration 1015 (+2 skip), contract 1 - full suite green (+21 new unit: ImportRowParser + JsParseFloat whitespace; +6 new integration: writer create/update/undefined-omit/validation/mixed/job-finalize/NaN-credits/atomic-commit + RowTypeInvalid + concurrent-23505-savepoint-recovery, reader shape/cross-school/ISO-Z/validationErrors, endpoint auth/perm/no-school/empty-rows/202/404/filename-default/non-string-filename/numeric-credits + 1 skip doc). New CourseImport Testcontainers harness (native ImportJobStatus enum, school_courses + import jobs/errors, non-UTC tz). Staging deploy run 29975305440 SUCCESS + anon canary GREEN (health 200; both routes anon->401 + x-formmaps-service). Merged --no-ff to main 5ce2eac.",
       "commit": "5ce2eac"
+    },
+    {
+      "id": "FM-DOTNET-060-import-failures-csv",
+      "status": "completed",
+      "goal": "Phase-B slice (school-courses.ts sub-slice 6b, completes the course-import surface): port GET /courses/import/:jobId/download-failures + getImportFailuresCsv to .NET, under the EXISTING flag FORMMAPS_ROUTE_COURSE_IMPORT_TO_DOTNET (3rd rewrite added to the FM-059 block; courses:write). The deferred hard-parity piece: JSON.stringify of the ARBITRARY-keyed jsonb rawRow.",
+      "dependsOn": [
+        "FM-DOTNET-059-course-import"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-courses.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolCoursesService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/lib/sanitize.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/CourseImport/FailuresCsvBuilder.cs",
+        "services/api/src/FormMaps.Application/CourseImport/ICourseImportReader.cs",
+        "services/api/src/FormMaps.Infrastructure/CourseImport/CourseImportReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/CourseImportEndpoints.cs",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolAdminEndpoints.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "getImportFailuresCsv (CourseImportReader.GetImportFailuresCsvAsync): read-only RLS; job findUnique + schoolId gate (missing OR cross-school -> null -> 404 'Job not found'); errors findMany ORDER BY \"rowNumber\" ASC (deterministic superset of legacy's unordered findMany, FM-032; rowNumber unique-per-job in practice); build header 'row_number,errors,raw_data' + one line per error joined by \\n. FailuresCsvBuilder (PURE): (a) JsStringify = faithful JS JSON.stringify walker over the parsed jsonb rawRow -- compact (no spaces), object keys in ELEMENT order (= Postgres jsonb normalized order, read via rawRow::text, NOT re-sorted; both Node-via-Prisma and .NET read the SAME jsonb), JS string escaping (\" \\ escaped; \\b \\f \\n \\r \\t short forms; other control <0x20 -> \\u00XX; < > & + and non-ASCII incl DEL/U+2028/U+2029 and well-formed surrogate pairs stay LITERAL; number branch double.ToString('R') shortest round-trip -- unreachable via CSV strings); (b) CsvSafe = lib/sanitize.ts formula-injection guard (leading = + - @ TAB CR -> prefix '); (c) DataLine = csvSafe(errorMessages.join('; '))->quote-double + csvSafe(JsStringify(rawRow))->quote-double, wrapped in CSV quotes. Endpoint GetImportFailuresAsync: text/csv + Content-Disposition attachment filename=course-import-failures-{jobId}.csv; 401/403/400/404 chain.",
+        "GATE: fresh reviewer FIXES-NEEDED (1 MEDIUM, empirically confirmed vs Express 5.2.1) -> FOLDED. Content-Type MISSING charset: legacy res.send(<string>) rewrites the Content-Type via setCharset -> 'text/csv; charset=utf-8' EVEN after an explicit res.setHeader('Content-Type','text/csv'); the port emitted bare 'text/csv' (an Encoding arg alone does NOT append the charset) -> accented content (Spanish course names, routine for LatAm schools) mojibakes in Excel/Windows-1252-defaulting clients. Fixed HERE (Results.Text(csv,'text/csv; charset=utf-8')) AND retroactively in the FM-041 PRECEDENT (SchoolAdminEndpoints results-export CSV -- same bare text/csv + a WRONG 'legacy has no charset' comment; school-grades.ts also res.send). Tightened BOTH endpoint tests to assert the FULL Content-Type (.ToString() incl charset, not .MediaType which strips it). Codex INCONCLUSIVE (foreground 2-min timeout -> --resume-last background -> never returned within a bounded 7-min wait; recorded as NOT an approval). All OTHER parity axes CONFIRMED faithful: JsStringify (surrogates/U+2028-2029/DEL/escaping/key-order), csvSafe (regex-exact, \\n excluded), line format, ORDER BY rowNumber ASC soundness, job gate, response headers, routing (4-seg vs 3-seg no collision). Durable lesson -> [[formmaps-csharp-port-regression-corpus]] CSV/text-export Content-Type rule."
+      ],
+      "verification": "dotnet build 0/0; unit 659 (+FailuresCsvBuilder 18: JsStringify Node-gold + CsvSafe + DataLine), integration 1023 (+2 skip; +8 CourseImport: 3 reader failures-CSV [missing/cross-school->null, no-errors->header-only, real-Postgres byte-exact CSV with csvSafe+quote-doubling+jsonb-key-order] + 5 endpoint [anon/perm/no-school theories + 200 text/csv;charset=utf-8 + 404], + updated SchoolAdmin export-CSV content-type assertion), contract 1 - full suite green. Reused the FM-059 CourseImport Testcontainers harness. Staging deploy run 29978494786 SUCCESS + anon canary GREEN (health 200; download-failures anon->401 + x-formmaps-service). Merged --no-ff to main 271f353.",
+      "commit": "271f353"
     }
   ]
 }
