@@ -17,4 +17,5 @@ public static class FormMapsPermissions
     public const string CoursesWrite = "courses:write";
     public const string CurriculumManage = "curriculum:manage";
     public const string SchoolDataMapping = "school:data-mapping";
+    public const string CounselorDashboard = "counselor:dashboard";
 }
