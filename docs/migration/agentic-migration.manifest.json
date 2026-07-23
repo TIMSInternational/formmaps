@@ -2618,6 +2618,27 @@
       ],
       "verification": "dotnet build 0/0; unit 681, integration 1355 (+2 skip; +52 new: 24 endpoint guard/coercion/mapping [faked repo] + 28 Testcontainers repo incl. createdDate/id tie-break + role-asymmetry soft-delete + deferred InvalidBody after ownership), contract 1 - full suite green. New Testcontainers harness counselor-notes-schema.sql (users + counselor_student_assignments + counselor_notes). Staging deploy run 30047880099 SUCCESS + anon canary GREEN (health 200; all 5 note routes anon->401 missing_identity). Merged --no-ff to main 75eec6b. counselor.ts is now COMPLETE on the .NET side except onboarding (Node email/token), cancel (Node calendar-sync), ai-briefing (Bedrock/Node).",
       "commit": "75eec6b"
+    },
+    {
+      "id": "FM-DOTNET-073-student-portfolio",
+      "status": "completed",
+      "goal": "Phase-C: student portfolio CRUD (5 endpoints of routes/student.ts + studentService.ts) behind one dark flag FORMMAPS_ROUTE_STUDENT_PORTFOLIO_TO_DOTNET (three rewrites, path-not-method; /portfolio/summary precedes /portfolio/:id). Self-scoped (req.userId) — RequireIdentity + RLS, no role/permission. GET /portfolio (paged list + ?type), GET /portfolio/summary (byType/hours/skills/categories aggregate), POST /portfolio (zod-validated create, 201), PUT /portfolio/:id (zod partial + bounded() slice, ownership 404), DELETE /portfolio/:id (soft delete). New StudentPortfolio namespace: IStudentPortfolioRepository + repo + StudentPortfolioValidation (Zod-parity first-error message in schema order, mirrors TestScoreValidation). Faithful: hoursPerWeek/totalHours Decimal(65,30) -> decimal.js-normalized string on the row (trim_scale::text) but ::double sum in the summary; create JS-|| defaults (type present-'' -> 'activity'; enum omit-when-absent -> 'other'); update bounded() per-field slice (observable type>50); @updatedAt bump; attachments verbatim jsonb; activityCategory enum cast; express.json({strict}) malformed/primitive body -> 500, array -> zod 'Expected object, received array' -> 400 (folded from fresh review). Fresh reviewer SHIP (no BLOCKING/HIGH/MEDIUM; folded primitive-body-500; LOWs = decimal.js exponential for non-physical extremes / jsonb numeric normalization / byType-skills determinism superset / dup-key last-vs-first, all pathological or documented).",
+      "dependsOn": [
+        "FM-DOTNET-072-counselor-notes"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/student.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/studentService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/StudentPortfolio/IStudentPortfolioRepository.cs",
+        "services/api/src/FormMaps.Application/StudentPortfolio/StudentPortfolioValidation.cs",
+        "services/api/src/FormMaps.Infrastructure/StudentPortfolio/StudentPortfolioRepository.cs",
+        "services/api/src/FormMaps.Api/Endpoints/StudentPortfolioEndpoints.cs"
+      ],
+      "verification": "dotnet build 0/0; unit 704 (+23 StudentPortfolioValidation), integration 1383 (+2 skip; portfolio repo Testcontainers + endpoint faked-repo), contract 1 - full suite green. New Testcontainers harness student-portfolio-schema.sql (hand-written from schema.prisma; incl. the StudentActivityCategory enum type — prod db-push drift, no committed migration). Staging deploy run 30052499380 SUCCESS + anon canary GREEN (health 200; all 5 portfolio routes anon->401 missing_identity). Merged --no-ff to main ce59409. Opens student.ts; NEXT = student.ts applications/community-service/parents-link reads + writes -> parent.ts.",
+      "commit": "ce59409"
     }
   ]
 }
