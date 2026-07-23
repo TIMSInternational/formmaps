@@ -412,6 +412,18 @@ function shouldRouteDataMappingsToDotnet() {
   );
 }
 
+// Prerequisites (FM-DOTNET-057) — routes/school-courses.ts, mounted under /api/v1/school-admin: 5 specific paths —
+// GET /courses/:courseId/prerequisite-chain, PUT /courses/:courseId/prerequisites, and GET
+// /prerequisites/{check/:studentId/:courseId, eligible/:studentId, missing/:studentId/:courseId}. The two /courses/:id/*
+// sub-paths are MORE specific than the deferred bare /courses/:courseId (PUT/DELETE) — no collision. The /prerequisites/*
+// block is disjoint from every other school-admin route. All five precede the /api/:path* catch-all. Default OFF (dark).
+function shouldRoutePrerequisitesToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_PREREQUISITES_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1049,6 +1061,33 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/data-mappings",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings`,
+            },
+          ]
+        : []),
+      // Prerequisites (FM-DOTNET-057) — 5 paths. The two /courses/:courseId/* sub-paths are MORE specific than the
+      // deferred bare /courses/:courseId (PUT/DELETE, still Node) → no collision. The /prerequisites/* trio is disjoint
+      // from every other route. All more specific than the /api/:path* catch-all below, so all must precede it. Dark.
+      ...(shouldRoutePrerequisitesToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/courses/:courseId/prerequisite-chain",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/:courseId/prerequisite-chain`,
+            },
+            {
+              source: "/api/v1/school-admin/courses/:courseId/prerequisites",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/:courseId/prerequisites`,
+            },
+            {
+              source: "/api/v1/school-admin/prerequisites/check/:studentId/:courseId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/prerequisites/check/:studentId/:courseId`,
+            },
+            {
+              source: "/api/v1/school-admin/prerequisites/eligible/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/prerequisites/eligible/:studentId`,
+            },
+            {
+              source: "/api/v1/school-admin/prerequisites/missing/:studentId/:courseId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/prerequisites/missing/:studentId/:courseId`,
             },
           ]
         : []),

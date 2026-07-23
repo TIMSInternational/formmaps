@@ -6,6 +6,7 @@ using FormMaps.Application.Calendar;
 using FormMaps.Application.CurriculumFrameworks;
 using FormMaps.Application.Data;
 using FormMaps.Application.DataMappings;
+using FormMaps.Application.Prerequisites;
 using FormMaps.Application.Email;
 using FormMaps.Application.Reports;
 using FormMaps.Application.Gradebook;
@@ -21,6 +22,7 @@ using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
 using FormMaps.Infrastructure.CurriculumFrameworks;
 using FormMaps.Infrastructure.DataMappings;
+using FormMaps.Infrastructure.Prerequisites;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Email;
 using FormMaps.Infrastructure.Reports;
@@ -114,6 +116,11 @@ public static class DependencyInjection
         // .NET write-owner for INSERTs + bulk status-approve on data_mappings.
         services.AddScoped<IDataMappingsReader, DataMappingsReader>();
         services.AddScoped<IDataMappingsWriter, DataMappingsWriter>();
+        // FM-DOTNET-057: prerequisites — GET /courses/:courseId/prerequisite-chain (courses:read), PUT
+        // /courses/:courseId/prerequisites (courses:write), GET /prerequisites/{check,eligible,missing}
+        // (curriculum:manage). The .NET write-owner for the school_courses prerequisites/corequisites columns via the PUT.
+        services.AddScoped<IPrerequisitesReader, PrerequisitesReader>();
+        services.AddScoped<IPrerequisitesWriter, PrerequisitesWriter>();
         services.AddScoped<IGradebookReader, GradebookReader>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();

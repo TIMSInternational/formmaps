@@ -45,6 +45,7 @@ app.MapSchoolCoursesEndpoints();
 app.MapIsamsReadsEndpoints();
 app.MapCurriculumFrameworksEndpoints();
 app.MapDataMappingsEndpoints();
+app.MapPrerequisitesEndpoints();
 app.MapGradebookEndpoints();
 app.MapCalendarEndpoints();
 app.MapQuestion360Endpoints();
