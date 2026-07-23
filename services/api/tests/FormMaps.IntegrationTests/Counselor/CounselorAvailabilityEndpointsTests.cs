@@ -94,6 +94,11 @@ public class CounselorAvailabilityEndpointsTests
     [InlineData("""{}""", "UTC", "[]")]
     // empty array weeklySchedule is JS-truthy → wins over slots
     [InlineData("""{"weeklySchedule":[],"slots":[{"s":1}]}""", "UTC", "[]")]
+    // weeklySchedule null / "" are FALSY → fall through to slots
+    [InlineData("""{"weeklySchedule":null,"slots":[{"s":1}]}""", "UTC", """[{"s":1}]""")]
+    [InlineData("""{"weeklySchedule":"","slots":[{"s":1}]}""", "UTC", """[{"s":1}]""")]
+    // timezone non-string (pathological) → documented divergence → "UTC" (TS would 500)
+    [InlineData("""{"timezone":5,"weeklySchedule":[]}""", "UTC", "[]")]
     public async Task Put_body_resolution_parity(string body, string expectedTz, string expectedSchedule)
     {
         var repo = new FakeRepo { Row = SampleRow("[]") };
@@ -105,14 +110,32 @@ public class CounselorAvailabilityEndpointsTests
         Assert.Equal(expectedSchedule, Compact(repo.LastWeeklyScheduleJson!));
     }
 
-    [Fact]
-    public async Task Put_primitive_body_is_500()
+    [Theory]
+    [InlineData("5")]        // primitive number
+    [InlineData("\"str\"")]  // primitive string
+    [InlineData("{\"a\":")]  // malformed (non-primitive) → JsonException branch
+    public async Task Put_primitive_or_malformed_body_is_500(string body)
     {
         using var factory = new Factory(new FakeRepo { Row = SampleRow("[]") });
         using var client = factory.CreateClient();
 
-        var response = await Send(client, HttpMethod.Put, Path, body: "5");
+        var response = await Send(client, HttpMethod.Put, Path, body: body);
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("")]    // empty body → {} → defaults
+    [InlineData("[]")]  // array body → {} → defaults (no named props)
+    public async Task Put_empty_or_array_body_uses_defaults(string body)
+    {
+        var repo = new FakeRepo { Row = SampleRow("[]") };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Put, Path, body: body);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("UTC", repo.LastTimezone);
+        Assert.Equal("[]", Compact(repo.LastWeeklyScheduleJson!));
     }
 
     // ---- helpers ----
