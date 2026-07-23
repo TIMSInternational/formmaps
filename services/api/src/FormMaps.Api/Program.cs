@@ -51,6 +51,7 @@ app.MapCounselorCaseloadEndpoints();
 app.MapCounselorAvailabilityEndpoints();
 app.MapCounselorAlertsEndpoints();
 app.MapCounselorSessionsEndpoints();
+app.MapCounselorNotesEndpoints();
 app.MapSchoolCoursesEndpoints();
 app.MapIsamsReadsEndpoints();
 app.MapCurriculumFrameworksEndpoints();

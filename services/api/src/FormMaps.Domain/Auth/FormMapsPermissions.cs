@@ -19,5 +19,6 @@ public static class FormMapsPermissions
     public const string SchoolDataMapping = "school:data-mapping";
     public const string CounselorDashboard = "counselor:dashboard";
     public const string CounselorSessions = "counselor:sessions";
+    public const string CounselorNotes = "counselor:notes";
     public const string AlertsRead = "alerts:read";
 }

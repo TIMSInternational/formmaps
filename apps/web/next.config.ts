@@ -425,6 +425,19 @@ function shouldRouteCounselorSessionsToDotnet() {
   );
 }
 
+// Counselor notes CRUD (FM-DOTNET-072) — routes/counselor.ts GET+POST /students/:studentId/notes, PUT+DELETE
+// /notes/:noteId, PUT /notes/:noteId/complete-followup. ONE flag co-flips all three paths (Next matches path-not-
+// method, so GET+POST on /students/:id/notes and PUT+DELETE on /notes/:id are inseparable — one flag is the only
+// non-split-brain design). Auth is asymmetric inside the handlers (GET/POST/DELETE = inline role check; PUT +
+// complete-followup = counselor:notes). Disjoint from every other counselor path (the 2-seg /students/:id and
+// /me/students/:id dashboard reads don't match the 3-seg /students/:id/notes; no other counselor path starts
+// /notes). Default OFF (dark). All precede the /api/:path* catch-all.
+function shouldRouteCounselorNotesToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_NOTES_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1148,6 +1161,26 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/counselor/me/sessions/:id/complete",
               destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/sessions/:id/complete`,
+            },
+          ]
+        : []),
+      // Counselor notes CRUD (FM-DOTNET-072) — GET+POST /students/:studentId/notes, PUT+DELETE /notes/:noteId, PUT
+      // /notes/:noteId/complete-followup. One flag, three rewrites. The 3-seg /students/:studentId/notes does NOT
+      // match the 2-seg dashboard reads /students/:studentId or /me/students/:studentId. The 2-seg /notes/:noteId and
+      // 3-seg /notes/:noteId/complete-followup are disjoint from every other counselor path. All precede /api/:path*.
+      ...(shouldRouteCounselorNotesToDotnet()
+        ? [
+            {
+              source: "/api/v1/counselor/students/:studentId/notes",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/students/:studentId/notes`,
+            },
+            {
+              source: "/api/v1/counselor/notes/:noteId/complete-followup",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/notes/:noteId/complete-followup`,
+            },
+            {
+              source: "/api/v1/counselor/notes/:noteId",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/notes/:noteId`,
             },
           ]
         : []),
