@@ -73,6 +73,8 @@
     <EmbeddedResource Include="CourseImport\Data\course-import-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers counselor dashboard reads harness (FM-DOTNET-067 Phase-C). -->
     <EmbeddedResource Include="Counselor\Data\counselor-dashboard-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers counselor enriched caseload reads harness (FM-DOTNET-068 Phase-C). -->
+    <EmbeddedResource Include="Counselor\Data\counselor-caseload-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
