@@ -81,6 +81,8 @@
     <EmbeddedResource Include="Counselor\Data\counselor-alerts-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers counselor sessions GET/complete harness (FM-DOTNET-071 Phase-C). -->
     <EmbeddedResource Include="Counselor\Data\counselor-sessions-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers counselor notes CRUD harness (FM-DOTNET-072 Phase-C). -->
+    <EmbeddedResource Include="Counselor\Data\counselor-notes-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
