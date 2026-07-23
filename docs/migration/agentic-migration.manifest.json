@@ -2565,6 +2565,23 @@
         "services/api/src/FormMaps.Infrastructure/Counselor/CounselorAvailabilityRepository.cs",
         "services/api/src/FormMaps.Api/Endpoints/CounselorAvailabilityEndpoints.cs"
       ]
+    },
+    {
+      "id": "FM-DOTNET-070-counselor-alerts",
+      "status": "completed",
+      "goal": "Phase-C slice 4: counselor alerts GET /me/alerts + PUT /me/alerts/:id/read (counselor.ts) behind dark flag FORMMAPS_ROUTE_COUNSELOR_ALERTS_TO_DOTNET (two paths, one flag). Permission alerts:read. ICounselorAlertsRepository: GET read-only list (caseload-scoped, paged, real COUNT, createdDate DESC + id tie-break, optional ?studentId + ?unreadOnly); PUT writable+commit mark-read (AlertNotFound->404 'Alert not found'; NotAssigned->404 'Not found'; Ok). \ud83d\udd12 Federico-RATIFIED IDOR fold: the legacy ?studentId override that bypassed caseload scoping is now caseload-scoped (non-caseload studentId -> empty). Fresh reviewer SHIP; IDOR fold verified fully closed.",
+      "dependsOn": [
+        "FM-DOTNET-069-counselor-availability"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/counselor.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Counselor/ICounselorAlertsRepository.cs",
+        "services/api/src/FormMaps.Infrastructure/Counselor/CounselorAlertsRepository.cs",
+        "services/api/src/FormMaps.Api/Endpoints/CounselorAlertsEndpoints.cs"
+      ]
     }
   ]
 }
