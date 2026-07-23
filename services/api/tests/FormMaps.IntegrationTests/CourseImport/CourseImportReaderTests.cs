@@ -75,7 +75,59 @@ public sealed class CourseImportReaderTests : IClassFixture<CourseImportDatabase
         Assert.Null(await Reader().GetImportJobAsync(Ctx(), School, "does-not-exist"));
     }
 
+    // ---- getImportFailuresCsv (FM-060) ----
+
+    [Fact]
+    public async Task Failures_csv_missing_or_cross_school_is_null()
+    {
+        Assert.Null(await Reader().GetImportFailuresCsvAsync(Ctx(), School, "nope"));
+        await SeedJobAsync("job-x", "other-school", status: "completed", totalRows: 0, validationErrors: "[]", completedAt: null);
+        Assert.Null(await Reader().GetImportFailuresCsvAsync(Ctx(), School, "job-x"));
+    }
+
+    [Fact]
+    public async Task Failures_csv_no_errors_is_header_only()
+    {
+        await SeedJobAsync("job-e", School, status: "completed", totalRows: 0, validationErrors: "[]", completedAt: null);
+        Assert.Equal("row_number,errors,raw_data", await Reader().GetImportFailuresCsvAsync(Ctx(), School, "job-e"));
+    }
+
+    [Fact]
+    public async Task Failures_csv_builds_lines_ordered_with_csvsafe_and_stringified_rawrow()
+    {
+        await SeedJobAsync("job-f", School, status: "completed", totalRows: 3, validationErrors: "[]", completedAt: null);
+        // Insert out of rowNumber order to prove ORDER BY rowNumber ASC; row 2 carries a formula-leader error (csvSafe
+        // prefixes '); rawRow keys are distinct lengths so the Postgres jsonb order is deterministic (shorter first).
+        await InsertErrorAsync("job-f", 2, ["=cmd", "two"], """{"code":"B","department":"Sci"}""");
+        await InsertErrorAsync("job-f", 1, ["code and name are required"], """{"code":"A"}""");
+
+        var csv = await Reader().GetImportFailuresCsvAsync(Ctx(), School, "job-f");
+
+        var lines = csv!.Split("\n");
+        Assert.Equal("row_number,errors,raw_data", lines[0]);
+        // row 1 first (ordered), rawRow JSON.stringify'd + quote-doubled, CSV-quoted.
+        Assert.Equal("1,\"code and name are required\",\"{\"\"code\"\":\"\"A\"\"}\"", lines[1]);
+        // row 2: errors "=cmd; two" → csvSafe prefixes ' → "'=cmd; two"; two-key rawRow shorter-key-first.
+        Assert.Equal("2,\"'=cmd; two\",\"{\"\"code\"\":\"\"B\"\",\"\"department\"\":\"\"Sci\"\"}\"", lines[2]);
+    }
+
     // ---- helpers ----
+
+    private async Task InsertErrorAsync(string jobId, int rowNumber, string[] errorMessages, string rawRowJson)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "school_course_import_errors"
+                ("id","jobId","rowNumber","rawRow","errorMessages","updatedAt")
+            VALUES (gen_random_uuid()::text, @jid, @rn, @raw::jsonb, @msgs, now())
+            """, conn);
+        cmd.Parameters.AddWithValue("jid", jobId);
+        cmd.Parameters.AddWithValue("rn", rowNumber);
+        cmd.Parameters.AddWithValue("raw", rawRowJson);
+        cmd.Parameters.AddWithValue("msgs", errorMessages);
+        await cmd.ExecuteNonQueryAsync();
+    }
 
     private CourseImportReader Reader() =>
         new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()));

@@ -303,7 +303,9 @@ public class SchoolAdminEndpointsTests
         var response = await Send(client, "/api/v1/school-admin/results/export");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("text/csv", response.Content.Headers.ContentType!.ToString());
+        // Legacy res.send(csv) → text/csv; charset=utf-8 (FM-060 gate fix — the charset must be present or accented
+        // content mojibakes in Windows-1252-defaulting clients).
+        Assert.Equal("text/csv; charset=utf-8", response.Content.Headers.ContentType!.ToString());
         Assert.Equal("attachment; filename=results-export.csv", response.Content.Headers.ContentDisposition!.ToString());
         Assert.Equal(csv, await response.Content.ReadAsStringAsync());
     }

@@ -1125,15 +1125,21 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // Course bulk-import CORE (FM-DOTNET-059) — POST /courses/import + GET /courses/import/:jobId. The literal
-      // "import" segments are more specific than the deferred bare /courses/:courseId (still Node) and disjoint from
-      // /courses, /courses/pathways and /courses/:courseId/prerequisite* → collision-free. NOT /download-failures
-      // (deferred to FM-060, stays Node). Both more specific than the /api/:path* catch-all below → must precede it. Dark.
+      // Course bulk-import (FM-DOTNET-059 CORE + FM-DOTNET-060 failures CSV) — POST /courses/import + GET
+      // /courses/import/:jobId + GET /courses/import/:jobId/download-failures, all under one flag. The literal "import"
+      // segments are more specific than the deferred bare /courses/:courseId (still Node) and disjoint from /courses,
+      // /courses/pathways and /courses/:courseId/prerequisite* → collision-free. The 4-segment /download-failures does
+      // not overlap the 3-segment :jobId (a param captures one segment), but is listed first as the more specific path.
+      // All more specific than the /api/:path* catch-all below → must precede it. Dark.
       ...(shouldRouteCourseImportToDotnet()
         ? [
             {
               source: "/api/v1/school-admin/courses/import",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/import`,
+            },
+            {
+              source: "/api/v1/school-admin/courses/import/:jobId/download-failures",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/import/:jobId/download-failures`,
             },
             {
               source: "/api/v1/school-admin/courses/import/:jobId",

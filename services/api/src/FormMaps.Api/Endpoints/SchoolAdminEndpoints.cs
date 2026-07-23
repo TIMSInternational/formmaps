@@ -345,8 +345,10 @@ public static class SchoolAdminEndpoints
         }
 
         var csv = await reader.ExportResultsCsvAsync(context, schoolId!, cancellationToken);
-        // Legacy sets Content-Type: text/csv (no charset) + the attachment disposition, then res.send(csv).
-        http.Response.ContentType = "text/csv";
+        // Legacy sets Content-Type text/csv + the attachment disposition, then res.send(csv) — Express's res.send(string)
+        // rewrites the Content-Type via setCharset → `text/csv; charset=utf-8` (school-grades.ts:257-259, verified against
+        // Express 5.2.1). The charset is REQUIRED or accented content mojibakes in Windows-1252-defaulting clients.
+        http.Response.ContentType = "text/csv; charset=utf-8";
         http.Response.Headers.ContentDisposition = "attachment; filename=results-export.csv";
         await http.Response.WriteAsync(csv, cancellationToken);
         return Results.Empty;
