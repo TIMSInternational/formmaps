@@ -2599,6 +2599,25 @@
         "services/api/src/FormMaps.Infrastructure/Counselor/CounselorSessionsRepository.cs",
         "services/api/src/FormMaps.Api/Endpoints/CounselorSessionsEndpoints.cs"
       ]
+    },
+    {
+      "id": "FM-DOTNET-072-counselor-notes",
+      "status": "completed",
+      "goal": "Phase-C slice 6: counselor notes CRUD (5 endpoints of counselor.ts) behind one dark flag FORMMAPS_ROUTE_COUNSELOR_NOTES_TO_DOTNET (three rewrites, path-not-method). Auth asymmetry: GET/POST /students/:studentId/notes + DELETE /notes/:noteId use an INLINE raw-role check (counselor/school_admin/Super Admin) with counselor-only ensureCounselorStudentAccess 404, DELETE author-bypass only when caller is a counselor (school_admin/Super Admin delete any); PUT /notes/:noteId + PUT /notes/:noteId/complete-followup use permission counselor:notes + author-ownership (403 'Not authorized'). ICounselorNotesRepository: GET read-only paged list (studentId+active, optional type filter, real COUNT, createdDate DESC + id tie-break, JOIN users authorName, dual author{name}+authorName emission); create/update/soft-delete/complete-followup writable+commit (ownership + write in one session, atomic). Faithful JS-|| create defaults + Prisma type-500s; PUT partial update with DEFERRED InvalidBody (non-owner + bad-type body -> 403 not 500); @updatedAt bumped on soft-delete + complete-followup; tags text[] verbatim; Kind=Unspecified+ms-trunc writes; ISO-Z reads; mass-assignment fixed columns. Fresh reviewer SHIP (no BLOCKING/HIGH/MEDIUM; LOWs = slice-wide accepted divergences / pathological / determinism superset).",
+      "dependsOn": [
+        "FM-DOTNET-071-counselor-sessions"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/counselor.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Counselor/ICounselorNotesRepository.cs",
+        "services/api/src/FormMaps.Infrastructure/Counselor/CounselorNotesRepository.cs",
+        "services/api/src/FormMaps.Api/Endpoints/CounselorNotesEndpoints.cs"
+      ],
+      "verification": "dotnet build 0/0; unit 681, integration 1355 (+2 skip; +52 new: 24 endpoint guard/coercion/mapping [faked repo] + 28 Testcontainers repo incl. createdDate/id tie-break + role-asymmetry soft-delete + deferred InvalidBody after ownership), contract 1 - full suite green. New Testcontainers harness counselor-notes-schema.sql (users + counselor_student_assignments + counselor_notes). Staging deploy run 30047880099 SUCCESS + anon canary GREEN (health 200; all 5 note routes anon->401 missing_identity). Merged --no-ff to main 75eec6b. counselor.ts is now COMPLETE on the .NET side except onboarding (Node email/token), cancel (Node calendar-sync), ai-briefing (Bedrock/Node).",
+      "commit": "75eec6b"
     }
   ]
 }
