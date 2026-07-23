@@ -120,6 +120,8 @@ public static class DependencyInjection
         services.AddScoped<ISchoolStudentsCoursePlanReader, SchoolStudentsCoursePlanReader>();
         // FM-DOTNET-065: school:manage non-SES writes (DELETE /students/{id} soft delete, PUT /course-request-deadline).
         services.AddScoped<ISchoolStudentsWriter, SchoolStudentsWriter>();
+        // FM-DOTNET-066: school:manage review writes (PUT /community-service/{id}/verify, PUT .../change-requests/{id}/review).
+        services.AddScoped<ISchoolStudentsReviewWriter, SchoolStudentsReviewWriter>();
         // FM-DOTNET-053: iSAMS integration READS (status + jobs). READS-ONLY — configure/sync/test stay in Node
         // (vendor boundary). No vendor HTTP client / field-encryption code.
         services.AddScoped<IIsamsReadsReader, IsamsReadsReader>();

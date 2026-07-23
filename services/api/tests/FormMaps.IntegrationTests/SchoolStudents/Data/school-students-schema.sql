@@ -84,6 +84,9 @@ CREATE TABLE "student_alerts" (
     "isDismissed" boolean NOT NULL DEFAULT false
 );
 
+-- FM-066: community_service_entries.status is a native PG enum (verify writes it via ::enum cast).
+CREATE TYPE "CommunityServiceStatus" AS ENUM ('pending', 'verified', 'rejected');
+
 CREATE TABLE "community_service_entries" (
     "id"              text PRIMARY KEY,
     "studentId"       text NOT NULL,
@@ -94,7 +97,7 @@ CREATE TABLE "community_service_entries" (
     "date"            timestamp NOT NULL,
     "supervisorName"  text,
     "supervisorEmail" text,
-    "status"          text NOT NULL DEFAULT 'pending',
+    "status"          "CommunityServiceStatus" NOT NULL DEFAULT 'pending',
     "note"            text,
     "verifiedBy"      text,
     "verifiedAt"      timestamp,
@@ -145,7 +148,9 @@ CREATE TABLE "student_course_plans" (
     "courseId"       text NOT NULL,
     "status"         text,
     "sortOrder"      integer NOT NULL DEFAULT 0,
-    "isActive"       boolean NOT NULL DEFAULT true
+    "isActive"       boolean NOT NULL DEFAULT true,
+    "createdDate"    timestamp NOT NULL DEFAULT now(),  -- FM-066 (review approved+add creates a plan row)
+    "updatedAt"      timestamp NOT NULL DEFAULT now()   -- FM-066
 );
 
 CREATE TABLE "course_change_requests" (
