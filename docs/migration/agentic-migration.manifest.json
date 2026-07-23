@@ -2262,6 +2262,34 @@
       ],
       "verification": "dotnet build 0/0; unit 585, integration 972 (+1 skip), contract 1 — full suite green (+51 new). New Prerequisites Testcontainers harness (school_courses + student_grades + users, non-UTC tz pin). Staging deploy run 29968626827 SUCCESS + anon canary GREEN (health 200; all 5 routes anon->401 + x-formmaps-service). Merged --no-ff to main 5dffc55 (no wiring conflicts — branch based on FM-056 HEAD 9bbf765).",
       "commit": "5dffc55"
+    },
+    {
+      "id": "FM-DOTNET-058-pathways",
+      "status": "completed",
+      "goal": "Phase-B slice (school-courses.ts sub-slice 5): port the derived course-pathways read — GET /courses/pathways (curriculum:manage) — under one flag FORMMAPS_ROUTE_PATHWAYS_TO_DOTNET. A 'sequence' is a maximal chain in the transitively-reduced prerequisite DAG. Read-only; editing pathways = editing prereqs (FM-057). The literal 'pathways' segment is more specific than the deferred bare /courses/:courseId (PUT/DELETE, still Node) and disjoint from the FM-054 exact /courses — collision-free (no negative-lookahead needed).",
+      "dependsOn": [
+        "FM-DOTNET-057-prerequisites"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-courses.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolCoursesService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/Pathways/*",
+        "services/api/src/FormMaps.Infrastructure/Pathways/*",
+        "services/api/src/FormMaps.Api/Endpoints/PathwaysEndpoints.cs",
+        "services/api/src/FormMaps.Infrastructure/DependencyInjection.cs",
+        "services/api/src/FormMaps.Api/Program.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "computePathways (PURE PathwaysComputer.Compute + thin PathwaysReader). Reader loads the active catalog (WHERE schoolId AND isActive=true AND status='active' ORDER BY \"code\" ASC — same Postgres collation as Prisma orderBy, load-bearing for byCode last-wins / forward-edge push order / root order / DFS order), text[] prerequisites verbatim, delegates to the computer. Computer: byCode/inCatalogPrereqs UPPER-keyed last-wins; prereq trim (JsString.JsTrim ECMAScript set) + toUpperCase + drop empty/non-catalog (raw dups preserved); redundant-edge pruning via isTransitivePrereq (cycle-safe stack DFS — a direct edge u→v dropped when u is already a transitive prereq of another prereq of v, so no misleading sub-chain); roots = hasNoCatalogPrereqs && hasDependents; DFS root→leaf chains (chains<2 dropped, fresh path array per recursion, visited excludes currentCode from its own nexts filter + added to newVisited for children, MAX_CHAIN_LEN=12 & MAX_CHAINS=200 truncation boundaries exact); dedup by joined code key keep-first; group by chain[0] department verbatim (\"General\" only if unresolvable — dead fallback since department is non-nullable); dept-then-chainKey sort via JS localeCompare parity (CultureInfo.InvariantCulture.CompareInfo.Compare(...,CompareOptions.None), ICU, stable OrderBy). Wire: { success, data:{ truncated, groups:[{ department, chains:[[{courseId,code,name,isHonors}]] }] } }. RequireIdentity→curriculum:manage→resolve caller schoolId; null/empty→400 'No school'; NEVER 404s (empty catalog→{truncated:false,groups:[]}).",
+        "GATE: fresh reviewer SHIP (faithful, full line-by-line — verified all 8 focus areas incl. the ICU '|'<digit sort ordering, the dead ?? 'General' fallback, and zero-tie stability irrelevance) → folded the ONE residual: a null prerequisites array element is an intentional robustness SUPERSET (raw ?? \"\" → dropped→200, vs legacy JS null.trim()→500) — UNREACHABLE via Prisma's non-nullable String[]; pinned red-if-regressed + in-code note. Codex INCONCLUSIVE (exceeded 600s foreground, moved to background, never returned a verdict within a bounded 9-min wait — its recurring-hang pattern; honestly recorded as NOT an approval). localeCompare parity EMPIRICALLY verified: .NET InvariantCulture ICU matches Node en-US on the load-bearing pairs (ALG12 vs ALG1|X = +1, i.e. '|' sorts BEFORE '2', which an ordinal compare gets backwards), pinned as Node gold in PathwaysLocaleCompareTests."
+      ],
+      "verification": "dotnet build 0/0; unit 602, integration 981 (+1 skip), contract 1 — full suite green (+26 new: 17 unit [10 computer + 1 null-element fold + 5 locale gold + reflexive/symmetric], 9 integration [4 reader + 5 endpoint]). New Pathways Testcontainers harness (school_courses only, distinct pathways-schema.sql basename — no EndsWith collision). Staging deploy run 29971802026 SUCCESS + anon canary GREEN (health 200; GET /courses/pathways anon→401 + x-formmaps-service). Merged --no-ff to main 9822e84 (no wiring conflicts — branch based on FM-057 HEAD 433fa2c, main had not advanced).",
+      "commit": "9822e84"
     }
   ]
 }
