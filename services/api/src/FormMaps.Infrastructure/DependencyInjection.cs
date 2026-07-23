@@ -17,6 +17,7 @@ using FormMaps.Application.SchoolAnalytics;
 using FormMaps.Application.SchoolProfile;
 using FormMaps.Application.IsamsReads;
 using FormMaps.Application.SchoolReads;
+using FormMaps.Application.SchoolStudents;
 using FormMaps.Application.SchoolUsers;
 using FormMaps.Application.SchoolCourses;
 using FormMaps.Infrastructure.Assessments;
@@ -36,6 +37,7 @@ using FormMaps.Infrastructure.SchoolAnalytics;
 using FormMaps.Infrastructure.SchoolProfile;
 using FormMaps.Infrastructure.IsamsReads;
 using FormMaps.Infrastructure.SchoolReads;
+using FormMaps.Infrastructure.SchoolStudents;
 using FormMaps.Infrastructure.SchoolUsers;
 using FormMaps.Infrastructure.SchoolCourses;
 using Microsoft.Extensions.Configuration;
@@ -108,6 +110,9 @@ public static class DependencyInjection
         // SCOPE = these two only; the .NET write-owner for INSERTs into school_courses via POST /courses.
         services.AddScoped<ISchoolCoursesReader, SchoolCoursesReader>();
         services.AddScoped<ISchoolCoursesWriter, SchoolCoursesWriter>();
+        // FM-DOTNET-062: school:manage roster reads (GET /students list, /students/{id} detail,
+        // /students/{id}/community-service). READS-ONLY first sub-slice of school-students.ts; writes stay Node.
+        services.AddScoped<ISchoolStudentsReader, SchoolStudentsReader>();
         // FM-DOTNET-053: iSAMS integration READS (status + jobs). READS-ONLY — configure/sync/test stay in Node
         // (vendor boundary). No vendor HTTP client / field-encryption code.
         services.AddScoped<IIsamsReadsReader, IsamsReadsReader>();

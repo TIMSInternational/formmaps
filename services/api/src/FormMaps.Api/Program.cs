@@ -39,6 +39,7 @@ app.MapTestScoreEndpoints();
 app.MapSchoolAdminEndpoints();
 app.MapSchoolAnalyticsEndpoints();
 app.MapSchoolReadsEndpoints();
+app.MapSchoolStudentsEndpoints();
 app.MapSchoolProfileEndpoints();
 app.MapSchoolUsersEndpoints();
 app.MapSchoolCoursesEndpoints();
