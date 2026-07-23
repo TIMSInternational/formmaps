@@ -65,6 +65,8 @@
     <EmbeddedResource Include="DataMappings\Data\data-mappings-schema.sql" />
     <!-- Schema-only DDL (school_courses + student_grades + users) for the prerequisites harness (FM-DOTNET-057). -->
     <EmbeddedResource Include="Prerequisites\Data\prerequisites-schema.sql" />
+    <!-- Schema-only DDL (school_courses) for the derived-pathways harness (FM-DOTNET-058). -->
+    <EmbeddedResource Include="Pathways\Data\pathways-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

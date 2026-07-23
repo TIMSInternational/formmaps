@@ -6,6 +6,7 @@ using FormMaps.Application.Calendar;
 using FormMaps.Application.CurriculumFrameworks;
 using FormMaps.Application.Data;
 using FormMaps.Application.DataMappings;
+using FormMaps.Application.Pathways;
 using FormMaps.Application.Prerequisites;
 using FormMaps.Application.Email;
 using FormMaps.Application.Reports;
@@ -22,6 +23,7 @@ using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
 using FormMaps.Infrastructure.CurriculumFrameworks;
 using FormMaps.Infrastructure.DataMappings;
+using FormMaps.Infrastructure.Pathways;
 using FormMaps.Infrastructure.Prerequisites;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Email;
@@ -121,6 +123,9 @@ public static class DependencyInjection
         // (curriculum:manage). The .NET write-owner for the school_courses prerequisites/corequisites columns via the PUT.
         services.AddScoped<IPrerequisitesReader, PrerequisitesReader>();
         services.AddScoped<IPrerequisitesWriter, PrerequisitesWriter>();
+        // FM-DOTNET-058: derived course pathways — GET /courses/pathways (curriculum:manage). Read-only derivation of
+        // root→leaf chains over the transitively-reduced prereq DAG (schoolCoursesService.ts computePathways). No writes.
+        services.AddScoped<IPathwaysReader, PathwaysReader>();
         services.AddScoped<IGradebookReader, GradebookReader>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();
