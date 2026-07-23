@@ -78,6 +78,20 @@ public class CounselorSessionsEndpointsTests
     }
 
     [Theory]
+    [InlineData("?page=3", 3)]
+    [InlineData("?page=abc", 1)] // NaN → 1
+    [InlineData("?page=0", 1)]   // 0 is falsy → 1
+    [InlineData("", 1)]
+    public async Task Page_is_clamped_and_echoed(string query, int expected)
+    {
+        using var factory = new Factory(new FakeRepo());
+        using var client = factory.CreateClient();
+        var response = await Send(client, HttpMethod.Get, ListPath + query);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(expected, doc.RootElement.GetProperty("data").GetProperty("page").GetInt32());
+    }
+
+    [Theory]
     [InlineData("?status=confirmed", "confirmed")]
     [InlineData("?status=all", "all")]   // repo decides to ignore "all"
     [InlineData("", null)]
