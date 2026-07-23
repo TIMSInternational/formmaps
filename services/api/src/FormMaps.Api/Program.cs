@@ -46,6 +46,7 @@ app.MapSchoolStudentsWriteEndpoints();
 app.MapSchoolStudentsReviewEndpoints();
 app.MapSchoolProfileEndpoints();
 app.MapSchoolUsersEndpoints();
+app.MapCounselorDashboardEndpoints();
 app.MapSchoolCoursesEndpoints();
 app.MapIsamsReadsEndpoints();
 app.MapCurriculumFrameworksEndpoints();

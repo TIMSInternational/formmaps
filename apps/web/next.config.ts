@@ -370,6 +370,20 @@ function shouldRouteIsamsReadsToDotnet() {
   );
 }
 
+// Counselor dashboard self-contained READS (FM-DOTNET-067) — routes/counselor.ts, mounted under /api/v1/counselor.
+// Four counselor:dashboard GETs: /dashboard, /dashboard/change-requests, /me/students/:studentId, /students/:studentId.
+// All are GET-only (no sibling write shares any of these paths) → NO path-not-method hazard, a straight read cut-over.
+// The enriched caseload GET /me/students (listEnrichedStudents) is DEFERRED (stays Node) — the :studentId param needs a
+// trailing segment, so /me/students/:studentId does NOT match the bare /me/students. The 4-segment AI sub-path
+// /me/students/:studentId/graduation-plan/generate is NOT matched by the 1-segment :studentId param either. Onboarding
+// verify/complete stay in Node. Distinct paths, disjoint from every other rewrite block; more specific than the
+// /api/:path* catch-all below, so they must precede it. Default OFF (dark).
+function shouldRouteCounselorDashboardToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_DASHBOARD_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1017,6 +1031,32 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/counselors/:counselorId/students",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselors/:counselorId/students`,
+            },
+          ]
+        : []),
+      // Counselor dashboard self-contained READS (FM-DOTNET-067) — /dashboard, /dashboard/change-requests,
+      // /me/students/:studentId, /students/:studentId (all counselor:dashboard GETs). One flag. All GET-only with no
+      // sibling write on any path → no path-not-method hazard. The bare /me/students (enriched caseload) is DEFERRED
+      // and intentionally NOT rewritten (the :studentId param requires a trailing segment). change-requests is listed
+      // first, but exact literals don't shadow each other regardless. Distinct paths, disjoint from every other rewrite
+      // block; more specific than the /api/:path* catch-all below, so they must precede it.
+      ...(shouldRouteCounselorDashboardToDotnet()
+        ? [
+            {
+              source: "/api/v1/counselor/dashboard/change-requests",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/dashboard/change-requests`,
+            },
+            {
+              source: "/api/v1/counselor/dashboard",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/dashboard`,
+            },
+            {
+              source: "/api/v1/counselor/me/students/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/students/:studentId`,
+            },
+            {
+              source: "/api/v1/counselor/students/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/students/:studentId`,
             },
           ]
         : []),
