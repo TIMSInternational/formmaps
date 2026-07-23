@@ -2485,6 +2485,30 @@
       ],
       "verification": "dotnet build 0/0; unit 659, integration 1173 (+2 skip, +23 new FM-065: SchoolStudentsWriter [delete ownership+no-write, soft-delete+updatedAt, upsert idempotency COUNT=1, null-clear] + SchoolStudentsWriteEndpoints [401/403/400, delete 404+happy, deadline parse theory incl. number/0/true + malformed-500-no-write + empty-200-clears + object/array-500]), contract 1 — full suite green. Reused the school-students-schema.sql harness (school_assessment_settings gained createdDate/updatedAt). Staging deploy run 30004291644 SUCCESS + anon canary GREEN (health 200; DELETE + PUT anon->401 + x-formmaps-service). Merged --no-ff to main 721102b. Deferred: FM-066 verify + review writes (both enum writes); FM-067/068 parent + student invite writes (SES — email-SENDS to stay Node-polyglot per Federico's lean, port only cleanly-separable DB halves).",
       "commit": "721102b"
+    },
+    {
+      "id": "FM-DOTNET-066-school-students-verify-review",
+      "status": "completed",
+      "goal": "Phase-B slice: SECOND WRITE sub-slice of school-students.ts — the two review/verify enum writes: PUT /community-service/{entryId}/verify + PUT /students/{studentId}/course-plan/change-requests/{requestId}/review. Shipped DARK.",
+      "dependsOn": ["FM-DOTNET-065-school-students-writes"],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-students.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolStudentsService.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/index.ts"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/SchoolStudents/ISchoolStudentsReviewWriter.cs",
+        "services/api/src/FormMaps.Infrastructure/SchoolStudents/SchoolStudentsReviewWriter.cs",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolStudentsReviewEndpoints.cs",
+        "services/api/src/FormMaps.Api/Endpoints/SchoolStudentsWriteEndpoints.cs",
+        "services/api/tests/FormMaps.IntegrationTests/SchoolStudents"
+      ],
+      "outputs": [
+        "verify (verifyCommunityService): zod {status ∈ {verified,rejected}, note? ≤1000} → 400 'Invalid request body'; callerSchoolId = Super Admin ? null : own school (non-admin no-school → 400 'No school'); entry missing/cross-school → 404 'Entry not found'; UPDATE status(::CommunityServiceStatus)+verifiedBy=caller+verifiedAt=now+note(empty→null else slice1000)+updatedAt → full-row return (hours STRING). review (reviewChangeRequest): truthy-invalid status → 400 'Invalid status'; studentInCallerSchool (Super-Admin bypass) → 404 'Not found'; cr missing/wrong-student → 404 'Request not found'; UPDATE status(::CourseChangeStatus, omit-if-absent)+reviewedBy+reviewedAt+counselorNote(if-truthy)+updatedAt; on approved+add → CREATE student_course_plan (term=cr.semester||'Fall', planned, sortOrder 0) when admin has school+current AY; full-row return. New ISchoolStudentsReviewWriter+SchoolStudentsReviewWriter (writable session + native ::enum casts; cr-update + plan-create in ONE tx). Harness: community_service_entries.status → native CommunityServiceStatus enum; student_course_plans gained createdDate/updatedAt.",
+        "GATE: fresh reviewer + Codex CONVERGED (Codex ranked BLOCKING). FOLDED red-if-regressed: [non-object/malformed body] JsonElement.TryGetProperty threw on a non-object root → UNHANDLED 500 crash + violated the codebase ValueKind==Object guard → unified body reader (empty/array → {} : verify 400-missing-status / review proceeds; primitive/malformed → 500 no-write, matching express strict/throw); [non-string `status` PHANTOM WRITE] the port treated a non-string status as absent → 200 + metadata write, but legacy 400s (truthy) or 500s (falsy) with NO status write → reproduced JS truthiness (truthy non-valid → 400 'Invalid status'; falsy present ''/0/false/null → passed as '' so the writer's enum cast 500s AFTER the 404 gates). ALSO fixed the SAME latent non-object-body crash in FM-065's deadline PUT (array → {} → 200 clears; primitive/malformed → 500). ACCEPTED/DOCUMENTED: non-string truthy counselorNote (legacy Prisma 500 vs .NET omit+200 — pathological/unreachable, .NET more lenient, no garbage persisted); the cr-update+plan-create atomicity (legacy two autocommits vs .NET one tx — unreachable, no FK on student_course_plans.courseId). Object-body happy paths + verify fully faithful (both reviewers). Built INLINE."
+      ],
+      "verification": "dotnet build 0/0; unit 659, integration 1201 (+2 skip, +22 new FM-066: SchoolStudentsReviewWriter [verify missing/cross-school/super-admin/note-slice/empty-null; review missing/wrong-student/status+note/approved-add-plan-create + NOT-for-other-action-or-status] + SchoolStudentsReviewEndpoints [verify zod 400/no-school/super-admin-null/404/happy; review invalid-status 400/student-not-in-school 404/super-admin bypass/happy; non-object body; truthy-non-string status 400; malformed 500-no-write; array-proceeds]), contract 1 — full suite green. Harness community_service_entries.status→enum + student_course_plans timestamps. Staging deploy run 30007320283 SUCCESS + anon canary GREEN (both PUT routes anon->401 + x-formmaps-service). Merged --no-ff to main b2cba19. Deferred: FM-067/068 SES invite writes — email-SENDS stay Node-polyglot per Federico; port only cleanly-separable DB halves.",
+      "commit": "b2cba19"
     }
   ]
 }
