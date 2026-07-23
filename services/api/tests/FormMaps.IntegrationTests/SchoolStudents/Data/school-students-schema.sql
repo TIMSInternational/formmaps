@@ -102,6 +102,26 @@ CREATE TABLE "schools" (
     "serviceHoursRequired" integer
 );
 
+-- FM-DOTNET-063: parent-link reads (listParents grouped roster + stats; listParentsForStudent Guardians tab).
+CREATE TABLE "student_parent_links" (
+    "id"              text PRIMARY KEY,
+    "studentId"       text NOT NULL,
+    "parentEmail"     text NOT NULL,
+    "parentName"      text NOT NULL DEFAULT '',
+    "parentUserId"    text,
+    "relation"        text NOT NULL DEFAULT 'parent',
+    "invitationToken" text,
+    "tokenExpiresAt"  timestamp,
+    "isAccepted"      boolean NOT NULL DEFAULT false,
+    "acceptedAt"      timestamp,
+    "invitedBy"       text,
+    "isActive"        boolean NOT NULL DEFAULT true,
+    "createdBy"       text,
+    "createdDate"     timestamp NOT NULL DEFAULT now(),
+    "updatedBy"       text,
+    "updatedAt"       timestamp NOT NULL DEFAULT now()
+);
+
 CREATE INDEX "schoolstudents_users_schoolId_idx" ON "users"("schoolId");
 CREATE INDEX "schoolstudents_student_grades_studentId_idx" ON "student_grades"("studentId");
 CREATE INDEX "schoolstudents_academic_years_schoolId_idx" ON "academic_years"("schoolId");
@@ -112,3 +132,5 @@ CREATE INDEX "schoolstudents_pca_exam_sessions_userId_idx" ON "pca_exam_sessions
 CREATE INDEX "schoolstudents_evaluation_groups_userId_idx" ON "evaluation_groups"("evaluatedUserId");
 CREATE INDEX "schoolstudents_student_alerts_studentId_idx" ON "student_alerts"("studentId");
 CREATE INDEX "schoolstudents_community_service_studentId_idx" ON "community_service_entries"("studentId");
+CREATE INDEX "schoolstudents_parent_links_studentId_idx" ON "student_parent_links"("studentId");
+CREATE INDEX "schoolstudents_parent_links_parentEmail_idx" ON "student_parent_links"("parentEmail");

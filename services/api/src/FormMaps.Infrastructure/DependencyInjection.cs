@@ -113,6 +113,9 @@ public static class DependencyInjection
         // FM-DOTNET-062: school:manage roster reads (GET /students list, /students/{id} detail,
         // /students/{id}/community-service). READS-ONLY first sub-slice of school-students.ts; writes stay Node.
         services.AddScoped<ISchoolStudentsReader, SchoolStudentsReader>();
+        // FM-DOTNET-063: school:manage parent-link reads (GET /parents grouped roster+stats, GET
+        // /students/{id}/parents Guardians tab). READS-ONLY; parent writes stay Node for now.
+        services.AddScoped<ISchoolStudentsParentsReader, SchoolStudentsParentsReader>();
         // FM-DOTNET-053: iSAMS integration READS (status + jobs). READS-ONLY — configure/sync/test stay in Node
         // (vendor boundary). No vendor HTTP client / field-encryption code.
         services.AddScoped<IIsamsReadsReader, IsamsReadsReader>();
