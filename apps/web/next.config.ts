@@ -414,6 +414,17 @@ function shouldRouteCounselorAlertsToDotnet() {
   );
 }
 
+// Counselor sessions (FM-DOTNET-071) — GET /me/sessions + PUT /me/sessions/:id/complete. Two paths, one flag.
+// ⚠️ PUT /me/sessions/:id/cancel is DELIBERATELY NOT rewritten — its syncRecordSafe calendar-sync side-effect stays
+// in Node. The exact literal /me/sessions and the 4-seg /me/sessions/:id/complete are disjoint from /me/sessions/:id/
+// cancel (different last segment) and from every other counselor path. Default OFF (dark). Precede the /api/:path*
+// catch-all.
+function shouldRouteCounselorSessionsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_SESSIONS_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1122,6 +1133,21 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/counselor/me/alerts/:id/read",
               destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/alerts/:id/read`,
+            },
+          ]
+        : []),
+      // Counselor sessions (FM-DOTNET-071) — GET /me/sessions + PUT /me/sessions/:id/complete, one flag. The 4-seg
+      // /me/sessions/:id/complete does NOT match /me/sessions/:id/cancel (stays Node — calendar side-effect). Both
+      // precede the /api/:path* catch-all; disjoint from every other counselor path.
+      ...(shouldRouteCounselorSessionsToDotnet()
+        ? [
+            {
+              source: "/api/v1/counselor/me/sessions",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/sessions`,
+            },
+            {
+              source: "/api/v1/counselor/me/sessions/:id/complete",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/sessions/:id/complete`,
             },
           ]
         : []),
