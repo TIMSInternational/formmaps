@@ -2290,6 +2290,35 @@
       ],
       "verification": "dotnet build 0/0; unit 602, integration 981 (+1 skip), contract 1 — full suite green (+26 new: 17 unit [10 computer + 1 null-element fold + 5 locale gold + reflexive/symmetric], 9 integration [4 reader + 5 endpoint]). New Pathways Testcontainers harness (school_courses only, distinct pathways-schema.sql basename — no EndsWith collision). Staging deploy run 29971802026 SUCCESS + anon canary GREEN (health 200; GET /courses/pathways anon→401 + x-formmaps-service). Merged --no-ff to main 9822e84 (no wiring conflicts — branch based on FM-057 HEAD 433fa2c, main had not advanced).",
       "commit": "9822e84"
+    },
+    {
+      "id": "FM-DOTNET-059-course-import",
+      "status": "completed",
+      "goal": "Phase-B slice (school-courses.ts sub-slice 6): port the course bulk-import CORE — POST /courses/import (202, importCourses) + GET /courses/import/:jobId (getImportJob) — under one flag FORMMAPS_ROUTE_COURSE_IMPORT_TO_DOTNET (courses:write). The failures-CSV GET /courses/import/:jobId/download-failures is DEFERRED to FM-060 (JSON.stringify-of-arbitrary-jsonb rawRow byte-parity deserves its own gold-pinned slice); its rewrite stays Node. Literal /courses/import + /courses/import/:jobId are collision-free (more specific than the deferred bare /courses/:courseId, disjoint from /courses, /courses/pathways, /courses/:id/prerequisite*).",
+      "dependsOn": [
+        "FM-DOTNET-058-pathways"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/school-courses.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/schoolCoursesService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/CourseImport/*",
+        "services/api/src/FormMaps.Infrastructure/CourseImport/*",
+        "services/api/src/FormMaps.Api/Endpoints/CourseImportEndpoints.cs",
+        "services/api/src/FormMaps.Application/Assessments/JsString.cs",
+        "services/api/src/FormMaps.Infrastructure/DependencyInjection.cs",
+        "services/api/src/FormMaps.Api/Program.cs",
+        "services/api/tests",
+        "apps/web/next.config.ts"
+      ],
+      "outputs": [
+        "importCourses (CourseImportWriter): per-row validate (JS-falsy code/name -> 'code and name are required') then upsert-by-(schoolId,code) case-sensitive exact. create-vs-update UNDEFINED-OMIT asymmetry (UPDATE always name/department[row.department||existing]/updatedAt; credits/gradeLevels/description present-only; empty gradeLevels [] IS written [JS-truthy]; CREATE description RAW ''->''/absent->NULL, credits row.credits?parseFloat:0, gradeLevels ||[]). Native ImportJobStatus enum (CAST(@x AS \"ImportJobStatus\") on write, ::text read). tz-independent ms-truncated timestamps (Unspecified, DbType.DateTime2). validationErrors emitted from the IN-MEMORY list (POST) / structured jsonb round-trip (GET). getImportJob (CourseImportReader): read-only RLS, missing/cross-school -> null -> 404 'Job not found'; completedAt ISO-Z or null; status ::text; validationErrors deserialized [{row,errors}] then re-emitted (no Postgres ::text spacing). ImportRowParser (pure): JS-truthy credits (string/truthy-number->text, 0/''/null->skip) + RowTypeInvalid (non-string department/description, non-int gradeLevels element, non-string/number credits -> Prisma type reject -> row fails). JsParseFloat (pure ECMAScript parseFloat; leading whitespace via the exact JsString StrWhiteSpace set).",
+        "GATE: fresh reviewer SHIP (faithful for the parsed-CSV/all-strings contract; confirmed 9 probed suspicions) + Codex FIXES-NEEDED (3 HIGH) -> CONVERGED. Cross-model EARNED ITS KEEP: Codex caught the concurrent-duplicate-code POISONED-TRANSACTION 500 the fresh reviewer under-weighted (a per-row 23505 from a racing same-code import aborts the whole single transaction -> the per-row catch's error-insert then fails -> 500, vs legacy's per-row-autocommit completing the job with a failed row). Folds, each red-if-regressed: (1) ATOMIC IMPORT + PER-ROW SAVEPOINT RECOVERY (SAVEPOINT/ROLLBACK TO/RELEASE around each row's DB work so a per-row DB error is recovered and the job still completes; deterministic concurrent-23505 test via an uncommitted lock-holder + pg_stat_activity Lock-wait poll); (2) numeric-JSON credits parsed not dropped (was stored 0 vs legacy 3.5) [both HIGH]; (3) gradeLevels non-int element / non-string department|description -> RowTypeInvalid -> row fails matching Prisma Int[]/String rejection [Codex HIGH+MED]; (4) JsParseFloat leading whitespace uses the exact ECMAScript set (U+FEFF in, U+0085 out) [both MED]; (5) fixed the misleading (decimal)-overflow 'matches legacy' comment (legacy DECIMAL(65,30) would succeed for ~[7.9e28,1e35) that .NET decimal overflows; unreachable). DOCUMENTED (pinned, not reproduced): non-string filename keeps 202 + 'import.csv' (legacy 500s on the Prisma String type error outside the per-row try; hardening); incremental row-visibility mid-import (non-observable via the API); numeric code/name -> row fails either way (message-only divergence)."
+      ],
+      "verification": "dotnet build 0/0; unit 641, integration 1015 (+2 skip), contract 1 - full suite green (+21 new unit: ImportRowParser + JsParseFloat whitespace; +6 new integration: writer create/update/undefined-omit/validation/mixed/job-finalize/NaN-credits/atomic-commit + RowTypeInvalid + concurrent-23505-savepoint-recovery, reader shape/cross-school/ISO-Z/validationErrors, endpoint auth/perm/no-school/empty-rows/202/404/filename-default/non-string-filename/numeric-credits + 1 skip doc). New CourseImport Testcontainers harness (native ImportJobStatus enum, school_courses + import jobs/errors, non-UTC tz). Staging deploy run 29975305440 SUCCESS + anon canary GREEN (health 200; both routes anon->401 + x-formmaps-service). Merged --no-ff to main 5ce2eac.",
+      "commit": "5ce2eac"
     }
   ]
 }
