@@ -77,6 +77,8 @@
     <EmbeddedResource Include="Counselor\Data\counselor-caseload-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers counselor availability GET/PUT harness (FM-DOTNET-069 Phase-C). -->
     <EmbeddedResource Include="Counselor\Data\counselor-availability-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers counselor alerts GET/PUT harness (FM-DOTNET-070 Phase-C). -->
+    <EmbeddedResource Include="Counselor\Data\counselor-alerts-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
