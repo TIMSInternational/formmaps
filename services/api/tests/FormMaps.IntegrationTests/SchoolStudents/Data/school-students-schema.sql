@@ -20,18 +20,23 @@ CREATE TABLE "users" (
 );
 
 CREATE TABLE "student_grades" (
-    "id"        text PRIMARY KEY,
-    "studentId" text NOT NULL,
-    "courseId"  text NOT NULL,
-    "grade"     text,
-    "credits"   numeric NOT NULL DEFAULT 0,
-    "status"    text NOT NULL DEFAULT 'completed',
-    "isActive"  boolean NOT NULL DEFAULT true
+    "id"           text PRIMARY KEY,
+    "studentId"    text NOT NULL,
+    "schoolId"     text,             -- FM-064 (course-plan grades are school-scoped)
+    "courseId"     text NOT NULL,
+    "courseCode"   text,             -- FM-064 (course-plan grade enrollments)
+    "grade"        text,
+    "credits"      numeric NOT NULL DEFAULT 0,
+    "status"       text NOT NULL DEFAULT 'completed',
+    "academicYear" text,             -- FM-064 ("YYYY-YYYY", drives derivedGradeLevel)
+    "semester"     text,             -- FM-064
+    "isActive"     boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE "academic_years" (
     "id"        text PRIMARY KEY,
     "schoolId"  text NOT NULL,
+    "name"      text NOT NULL DEFAULT '',  -- FM-064 ("YYYY-YYYY")
     "isCurrent" boolean NOT NULL DEFAULT false
 );
 
@@ -44,10 +49,13 @@ CREATE TABLE "graduation_rule_sets" (
 );
 
 CREATE TABLE "school_courses" (
-    "id"       text PRIMARY KEY,
-    "schoolId" text NOT NULL,
-    "credits"  numeric NOT NULL DEFAULT 0,
-    "isActive" boolean NOT NULL DEFAULT true
+    "id"         text PRIMARY KEY,
+    "schoolId"   text NOT NULL,
+    "code"       text NOT NULL DEFAULT '',   -- FM-064 (course-plan enrollment lookup)
+    "name"       text NOT NULL DEFAULT '',   -- FM-064
+    "department" text NOT NULL DEFAULT '',   -- FM-064 (enrollment.category)
+    "credits"    numeric NOT NULL DEFAULT 0,
+    "isActive"   boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE "pca_evaluations" (
@@ -122,6 +130,54 @@ CREATE TABLE "student_parent_links" (
     "updatedAt"       timestamp NOT NULL DEFAULT now()
 );
 
+-- FM-DOTNET-064: course-planning reads. Native enums (the real DB uses PG enums) so the change-requests status
+-- filter (@status::"CourseChangeStatus") reproduces Prisma's enum-validation 500 on an invalid label; action/status
+-- are read back via ::text.
+CREATE TYPE "CourseChangeStatus" AS ENUM ('pending', 'approved', 'rejected');
+CREATE TYPE "CourseChangeAction" AS ENUM ('add', 'drop', 'swap');
+
+CREATE TABLE "student_course_plans" (
+    "id"             text PRIMARY KEY,
+    "studentId"      text NOT NULL,
+    "schoolId"       text NOT NULL,
+    "academicYearId" text NOT NULL,
+    "term"           text,
+    "courseId"       text NOT NULL,
+    "status"         text,
+    "sortOrder"      integer NOT NULL DEFAULT 0,
+    "isActive"       boolean NOT NULL DEFAULT true
+);
+
+CREATE TABLE "course_change_requests" (
+    "id"            text PRIMARY KEY,
+    "studentId"     text NOT NULL,
+    "schoolId"      text NOT NULL,
+    "courseId"      text NOT NULL,
+    "courseCode"    text,
+    "courseName"    text,
+    "credits"       numeric NOT NULL DEFAULT 0,
+    "gradeLevel"    integer NOT NULL,
+    "semester"      text,
+    "action"        "CourseChangeAction" NOT NULL,
+    "dueDate"       timestamp,
+    "studentNote"   text,
+    "status"        "CourseChangeStatus" NOT NULL DEFAULT 'pending',
+    "counselorNote" text,
+    "reviewedBy"    text,
+    "reviewedAt"    timestamp,
+    "isActive"      boolean NOT NULL DEFAULT true,
+    "createdBy"     text,
+    "createdDate"   timestamp NOT NULL DEFAULT now(),
+    "updatedBy"     text,
+    "updatedAt"     timestamp NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "school_assessment_settings" (
+    "id"                    text PRIMARY KEY,
+    "schoolId"              text NOT NULL UNIQUE,
+    "courseRequestDeadline" timestamp
+);
+
 CREATE INDEX "schoolstudents_users_schoolId_idx" ON "users"("schoolId");
 CREATE INDEX "schoolstudents_student_grades_studentId_idx" ON "student_grades"("studentId");
 CREATE INDEX "schoolstudents_academic_years_schoolId_idx" ON "academic_years"("schoolId");
@@ -134,3 +190,5 @@ CREATE INDEX "schoolstudents_student_alerts_studentId_idx" ON "student_alerts"("
 CREATE INDEX "schoolstudents_community_service_studentId_idx" ON "community_service_entries"("studentId");
 CREATE INDEX "schoolstudents_parent_links_studentId_idx" ON "student_parent_links"("studentId");
 CREATE INDEX "schoolstudents_parent_links_parentEmail_idx" ON "student_parent_links"("parentEmail");
+CREATE INDEX "schoolstudents_course_plans_studentId_idx" ON "student_course_plans"("studentId");
+CREATE INDEX "schoolstudents_change_requests_studentId_idx" ON "course_change_requests"("studentId");

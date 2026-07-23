@@ -41,6 +41,7 @@ app.MapSchoolAnalyticsEndpoints();
 app.MapSchoolReadsEndpoints();
 app.MapSchoolStudentsEndpoints();
 app.MapSchoolStudentsParentsEndpoints();
+app.MapSchoolStudentsCoursePlanEndpoints();
 app.MapSchoolProfileEndpoints();
 app.MapSchoolUsersEndpoints();
 app.MapSchoolCoursesEndpoints();
