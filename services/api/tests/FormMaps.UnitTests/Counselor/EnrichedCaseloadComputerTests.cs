@@ -85,6 +85,21 @@ public class EnrichedCaseloadComputerTests
         Assert.Equal(expected, s.Eval360);
     }
 
+    [Theory]
+    [InlineData(true, "completed")]    // any pca_evaluation isCompleted → completed
+    [InlineData(false, "in_progress")] // a pca_evaluation row exists but not completed → in_progress
+    public void Pca_badge_from_pca_evaluations(bool completed, string expected)
+    {
+        var s = Single(Data(students: [Student("s1")], pcaEvals: [new CaseloadPcaEval("s1", completed)]));
+        Assert.Equal(expected, s.Pca);
+    }
+
+    [Fact]
+    public void Pca_badge_not_started_with_no_evaluations()
+    {
+        Assert.Equal("not_started", Single(Data(students: [Student("s1")])).Pca);
+    }
+
     [Fact]
     public void Status_inactive_then_at_risk_then_active()
     {
@@ -114,17 +129,21 @@ public class EnrichedCaseloadComputerTests
     [Fact]
     public void Career_path_precedence_name_then_careerName_then_cluster_then_clusterName()
     {
-        var data = Data(students: [Student("s1"), Student("s2"), Student("s3")], profiles:
+        var data = Data(students: [Student("s0"), Student("s1"), Student("s2"), Student("s3"), Student("s4")], profiles:
         [
-            new CaseloadProfile("s1", """[{"careerName":"Engineer","cluster":"STEM"}]"""),  // no name → careerName
-            new CaseloadProfile("s2", """[{"cluster":"Arts"}]"""),                            // → cluster
-            new CaseloadProfile("s3", """[]"""),                                              // empty → null
+            new CaseloadProfile("s0", """[{"name":"Doctor","careerName":"X","cluster":"Health"}]"""), // name WINS
+            new CaseloadProfile("s1", """[{"name":"","careerName":"Engineer","cluster":"STEM"}]"""),   // empty name → careerName
+            new CaseloadProfile("s2", """[{"cluster":"Arts"}]"""),                                     // → cluster
+            new CaseloadProfile("s3", """[]"""),                                                       // empty → null
+            new CaseloadProfile("s4", """not json"""),                                                 // malformed → null
         ]);
 
         var byId = EnrichedCaseloadComputer.Compute(data, DefaultOpts).Data.ToDictionary(s => s.Id);
+        Assert.Equal("Doctor", byId["s0"].CareerPath);
         Assert.Equal("Engineer", byId["s1"].CareerPath);
         Assert.Equal("Arts", byId["s2"].CareerPath);
         Assert.Null(byId["s3"].CareerPath);
+        Assert.Null(byId["s4"].CareerPath);
     }
 
     [Fact]

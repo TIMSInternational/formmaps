@@ -30,6 +30,7 @@ public sealed class CounselorCaseloadReader(IFormMapsDatabaseSessionFactory data
             FROM "counselor_student_assignments" a
             JOIN "users" s ON s."id" = a."studentId"
             WHERE a."counselorId" = @cid AND a."isActive" = true
+            ORDER BY s."id" ASC
             """))
         {
             AddParameter(command, "cid", counselorId);
