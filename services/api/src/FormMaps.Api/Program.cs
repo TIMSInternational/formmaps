@@ -62,6 +62,7 @@ app.MapCollegeEssaysEndpoints();
 app.MapCommunityServiceEndpoints();
 app.MapStudentCoursePlanEndpoints();
 app.MapCourseChangeRequestEndpoints();
+app.MapCoursePlanComputeEndpoints();
 app.MapStudentParentEndpoints();
 app.MapParentPortalEndpoints();
 app.MapParentChildReadEndpoints();

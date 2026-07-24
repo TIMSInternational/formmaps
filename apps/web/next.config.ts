@@ -598,6 +598,18 @@ function shouldRouteStudentChangeRequestsToDotnet() {
   );
 }
 
+// Student course-plan recommendations + eligibility (FM-DOTNET-086) — routes/course-plan.ts L149-200, mounted
+// /api/v1/student. ONE flag co-flips two GET PATHS: /course-plan/recommendations, /course-plan/eligibility. COMPLETES
+// the course-plan.ts mini-phase. LOCAL keyword scoring, NOT Bedrock (the aiLimiter'd recs live in course.ts → Node).
+// Disjoint from the FM-084 /course-plan[/courses] + FM-085 /course-plan/change-requests sources. More specific than the
+// /api/:path* catch-all, so they must precede it. Default OFF (dark).
+function shouldRouteStudentCoursePlanComputeToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COURSE_PLAN_COMPUTE_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1608,6 +1620,22 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/student/course-plan/change-requests/:requestId",
               destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/change-requests/:requestId`,
+            },
+          ]
+        : []),
+      // Student course-plan recommendations + eligibility (FM-DOTNET-086) — routes/course-plan.ts, mounted
+      // /api/v1/student. GET /course-plan/recommendations + GET /course-plan/eligibility under ONE flag. COMPLETES the
+      // course-plan.ts mini-phase. Exact-literal sources, disjoint from the FM-084 /course-plan[/courses] + FM-085
+      // /change-requests sources. More specific than the /api/:path* catch-all below, so they must precede it.
+      ...(shouldRouteStudentCoursePlanComputeToDotnet()
+        ? [
+            {
+              source: "/api/v1/student/course-plan/recommendations",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/recommendations`,
+            },
+            {
+              source: "/api/v1/student/course-plan/eligibility",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/eligibility`,
             },
           ]
         : []),
