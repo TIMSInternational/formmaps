@@ -85,6 +85,8 @@
     <EmbeddedResource Include="Counselor\Data\counselor-notes-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers student portfolio CRUD harness (FM-DOTNET-073 Phase-C). -->
     <EmbeddedResource Include="StudentPortfolio\Data\student-portfolio-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers student applications core CRUD harness (FM-DOTNET-074 Phase-C). -->
+    <EmbeddedResource Include="StudentApplications\Data\student-applications-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

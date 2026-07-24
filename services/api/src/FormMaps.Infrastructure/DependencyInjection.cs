@@ -21,6 +21,7 @@ using FormMaps.Application.SchoolStudents;
 using FormMaps.Application.SchoolUsers;
 using FormMaps.Application.SchoolCourses;
 using FormMaps.Application.Counselor;
+using FormMaps.Application.StudentApplications;
 using FormMaps.Application.StudentPortfolio;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
@@ -43,6 +44,7 @@ using FormMaps.Infrastructure.SchoolStudents;
 using FormMaps.Infrastructure.SchoolUsers;
 using FormMaps.Infrastructure.SchoolCourses;
 using FormMaps.Infrastructure.Counselor;
+using FormMaps.Infrastructure.StudentApplications;
 using FormMaps.Infrastructure.StudentPortfolio;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -133,6 +135,7 @@ public static class DependencyInjection
         services.AddScoped<ICounselorSessionsRepository, CounselorSessionsRepository>();
         services.AddScoped<ICounselorNotesRepository, CounselorNotesRepository>();
         services.AddScoped<IStudentPortfolioRepository, StudentPortfolioRepository>();
+        services.AddScoped<IStudentApplicationRepository, StudentApplicationRepository>();
         // FM-DOTNET-053: iSAMS integration READS (status + jobs). READS-ONLY — configure/sync/test stay in Node
         // (vendor boundary). No vendor HTTP client / field-encryption code.
         services.AddScoped<IIsamsReadsReader, IsamsReadsReader>();

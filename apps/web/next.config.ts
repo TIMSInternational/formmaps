@@ -449,6 +449,18 @@ function shouldRouteStudentPortfolioToDotnet() {
   );
 }
 
+// Student applications core CRUD (FM-DOTNET-074) — routes/student.ts /applications (GET+POST), /applications/deadlines
+// (GET), /applications/:id (GET+PUT+DELETE), mounted /api/v1/student. Self-scoped. ONE flag co-flips the three paths
+// (path-not-method). /applications/deadlines MUST precede /applications/:id (else :id swallows "deadlines"); the exact
+// /applications matches neither. The 3-seg AI/sub-resource paths (/applications/:id/essays, /checklist, /classify,
+// /essays/:eid/ai-review, /checklist/generate) are NOT matched by the 2-seg /:id param → they stay Node (essays +
+// checklist = later slices; classify/ai-review/checklist-generate = Bedrock). Default OFF (dark).
+function shouldRouteStudentApplicationsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_APPLICATIONS_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1211,6 +1223,26 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/student/portfolio",
               destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio`,
+            },
+          ]
+        : []),
+      // Student applications core CRUD (FM-DOTNET-074) — GET+POST /applications, GET /applications/deadlines,
+      // GET+PUT+DELETE /applications/:id, one flag. /applications/deadlines precedes /applications/:id (else :id
+      // swallows "deadlines"); the exact /applications matches neither. The 3-seg sub-resource paths (essays,
+      // checklist, classify, ai-review) are NOT matched by the 2-seg :id and stay Node. All precede /api/:path*.
+      ...(shouldRouteStudentApplicationsToDotnet()
+        ? [
+            {
+              source: "/api/v1/student/applications/deadlines",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/applications/deadlines`,
+            },
+            {
+              source: "/api/v1/student/applications/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id`,
+            },
+            {
+              source: "/api/v1/student/applications",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/applications`,
             },
           ]
         : []),
