@@ -6,6 +6,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="4.0.101.4" />
     <PackageReference Include="AWSSDK.SimpleEmailV2" Version="4.0.101" />
     <!-- FM-DOTNET-087: AES-256-GCM field cipher (iSAMS credential encryption) needs a 16-byte-IV GCM to match
          Node's lib/fieldEncrypt.ts; .NET's native AesGcm rejects non-12-byte nonces, so BouncyCastle's GCM (which

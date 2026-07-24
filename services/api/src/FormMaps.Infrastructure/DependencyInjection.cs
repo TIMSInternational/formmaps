@@ -18,6 +18,8 @@ using FormMaps.Application.SchoolProfile;
 using FormMaps.Application.IsamsReads;
 using FormMaps.Application.IsamsWrites;
 using FormMaps.Application.Security;
+using FormMaps.Application.Storage;
+using FormMaps.Application.Uploads;
 using FormMaps.Application.SchoolReads;
 using FormMaps.Application.SchoolStudents;
 using FormMaps.Application.SchoolUsers;
@@ -51,6 +53,9 @@ using FormMaps.Infrastructure.SchoolProfile;
 using FormMaps.Infrastructure.IsamsReads;
 using FormMaps.Infrastructure.IsamsWrites;
 using FormMaps.Infrastructure.Security;
+using FormMaps.Infrastructure.Storage;
+using FormMaps.Infrastructure.Uploads;
+using Amazon.S3;
 using FormMaps.Infrastructure.SchoolReads;
 using FormMaps.Infrastructure.SchoolStudents;
 using FormMaps.Infrastructure.SchoolUsers;
@@ -239,6 +244,19 @@ public static class DependencyInjection
             _ => new AmazonSimpleEmailServiceV2Client(RegionEndpoint.GetBySystemName(emailOptions.AwsRegion)));
         services.AddScoped<IEmailSender, SesEmailSender>();
         services.AddScoped<ISchoolAdminEmailWriter, SchoolAdminEmailWriter>();
+
+        // FM-DOTNET-088: object storage (S3) + routes/upload.ts — the FIRST file-upload surface in .NET. Port of
+        // lib/s3.ts (PutObject ContentDisposition=attachment + 24h presigned GET). The S3 client uses the SAME
+        // factory-lambda pattern as SES so credential resolution is deferred to first use (uploads are dark until
+        // the flag flips) — a pre-constructed client would resolve creds at boot and brick the whole service.
+        var objectStorageOptions = new ObjectStorageOptions(
+            Bucket: EnvOr(configuration, "S3_BUCKET", "formmaps-platform-uploads"),
+            Region: EnvOr(configuration, "AWS_REGION", EmailOptions.DefaultAwsRegion));
+        services.AddSingleton(objectStorageOptions);
+        services.AddSingleton<IAmazonS3>(
+            _ => new AmazonS3Client(RegionEndpoint.GetBySystemName(objectStorageOptions.Region)));
+        services.AddScoped<IObjectStorage, S3ObjectStorage>();
+        services.AddScoped<IUploadRepository, UploadRepository>();
 
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IQuestion360Reader, Question360Reader>();
