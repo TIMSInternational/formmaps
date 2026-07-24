@@ -16,6 +16,8 @@ using FormMaps.Application.SchoolAdmin;
 using FormMaps.Application.SchoolAnalytics;
 using FormMaps.Application.SchoolProfile;
 using FormMaps.Application.IsamsReads;
+using FormMaps.Application.IsamsWrites;
+using FormMaps.Application.Security;
 using FormMaps.Application.SchoolReads;
 using FormMaps.Application.SchoolStudents;
 using FormMaps.Application.SchoolUsers;
@@ -47,6 +49,8 @@ using FormMaps.Infrastructure.SchoolAdmin;
 using FormMaps.Infrastructure.SchoolAnalytics;
 using FormMaps.Infrastructure.SchoolProfile;
 using FormMaps.Infrastructure.IsamsReads;
+using FormMaps.Infrastructure.IsamsWrites;
+using FormMaps.Infrastructure.Security;
 using FormMaps.Infrastructure.SchoolReads;
 using FormMaps.Infrastructure.SchoolStudents;
 using FormMaps.Infrastructure.SchoolUsers;
@@ -182,6 +186,14 @@ public static class DependencyInjection
         // FM-DOTNET-053: iSAMS integration READS (status + jobs). READS-ONLY — configure/sync/test stay in Node
         // (vendor boundary). No vendor HTTP client / field-encryption code.
         services.AddScoped<IIsamsReadsReader, IsamsReadsReader>();
+        // FM-DOTNET-087: iSAMS CONFIGURE write (POST /integrations/isams). The only iSAMS write ported — a
+        // self-contained isamsConfig upsert + AES-256-GCM credential encryption. sync/test stay in Node (SSRF-
+        // hardened vendor client; sync creates user rows). The field cipher is a byte-compatible port of
+        // lib/fieldEncrypt.ts (16-byte IV so Node's isEncrypted/decryptField round-trip); Singleton = stateless
+        // (only the derived key is cached, lazily, so a missing FIELD_ENCRYPTION_KEY never bricks startup).
+        services.AddSingleton(new FieldEncryptionOptions(configuration["FIELD_ENCRYPTION_KEY"]));
+        services.AddSingleton<IFieldCipher, AesGcmFieldCipher>();
+        services.AddScoped<IIsamsConfigWriter, IsamsConfigWriter>();
         // FM-DOTNET-055: curriculum:manage frameworks reads/writes (the four /curriculum/frameworks endpoints). The
         // .NET write-owner for curriculum_frameworks (enable) + school_framework_course_overrides (customize).
         services.AddScoped<ICurriculumFrameworksReader, CurriculumFrameworksReader>();
