@@ -28,6 +28,7 @@ using FormMaps.Application.StudentApplications;
 using FormMaps.Application.StudentApplicationSubResources;
 using FormMaps.Application.ParentPortal;
 using FormMaps.Application.ParentChildReads;
+using FormMaps.Application.StudentCoursePlan;
 using FormMaps.Application.StudentParents;
 using FormMaps.Application.StudentPortfolio;
 using FormMaps.Infrastructure.Assessments;
@@ -58,6 +59,7 @@ using FormMaps.Infrastructure.StudentApplications;
 using FormMaps.Infrastructure.StudentApplicationSubResources;
 using FormMaps.Infrastructure.ParentPortal;
 using FormMaps.Infrastructure.ParentChildReads;
+using FormMaps.Infrastructure.StudentCoursePlan;
 using FormMaps.Infrastructure.StudentParents;
 using FormMaps.Infrastructure.StudentPortfolio;
 using Microsoft.Extensions.Configuration;
@@ -160,6 +162,9 @@ public static class DependencyInjection
         // FM-DOTNET-083: college essays + comments (routes/college.ts Feature 3) — completes the college.ts mini-phase.
         services.AddScoped<ICollegeEssaysRepository, CollegeEssaysRepository>();
         services.AddScoped<ICommunityServiceRepository, CommunityServiceRepository>();
+        // FM-DOTNET-084: student course-planning CRUD (routes/course-plan.ts) — GET /course-plan + POST/DELETE
+        // /course-plan/courses. Change-requests + recommendations + eligibility on the same router stay Node (later slices).
+        services.AddScoped<IStudentCoursePlanRepository, StudentCoursePlanRepository>();
         services.AddScoped<IStudentParentRepository, StudentParentRepository>();
         // FM-DOTNET-077: application essays + checklist (non-AI sub-resources). AI siblings (essay ai-review,
         // checklist generate) stay in Node (Bedrock).

@@ -573,6 +573,19 @@ function shouldRouteCollegeEssaysToDotnet() {
   );
 }
 
+// Student course-planning CRUD (FM-DOTNET-084) — routes/course-plan.ts, mounted /api/v1/student. ONE flag co-flips
+// three PATHS (Next matches PATH not method): GET /course-plan, POST /course-plan/courses, DELETE
+// /course-plan/courses/:courseId. The bare /course-plan literal is EXACT — it does NOT match /course-plan/courses nor
+// the same router's Node-only /course-plan/change-requests, /course-plan/recommendations, /course-plan/eligibility
+// siblings (later slices). Disjoint from every /portfolio,/applications,... student source. More specific than the
+// /api/:path* catch-all, so they must precede it. Default OFF (dark).
+function shouldRouteStudentCoursePlanToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COURSE_PLAN_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1546,6 +1559,27 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/college/essays/:id",
               destination: `${dotnetApiBaseUrl}/api/v1/college/essays/:id`,
+            },
+          ]
+        : []),
+      // Student course-planning CRUD (FM-DOTNET-084) — routes/course-plan.ts, mounted /api/v1/student. GET /course-plan
+      // + POST /course-plan/courses + DELETE /course-plan/courses/:courseId under ONE flag (path-not-method co-flip).
+      // The bare /course-plan literal is EXACT — it does NOT match /course-plan/courses or the Node-only /course-plan/
+      // change-requests, /course-plan/recommendations, /course-plan/eligibility siblings (later slices). Disjoint from
+      // every other student source. More specific than the /api/:path* catch-all below, so they must precede it.
+      ...(shouldRouteStudentCoursePlanToDotnet()
+        ? [
+            {
+              source: "/api/v1/student/course-plan",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan`,
+            },
+            {
+              source: "/api/v1/student/course-plan/courses",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/courses`,
+            },
+            {
+              source: "/api/v1/student/course-plan/courses/:courseId",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/courses/:courseId`,
             },
           ]
         : []),
