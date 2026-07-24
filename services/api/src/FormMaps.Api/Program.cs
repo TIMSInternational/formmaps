@@ -56,6 +56,7 @@ app.MapAcademicGapsEndpoints();
 app.MapStudentPortfolioEndpoints();
 app.MapStudentApplicationEndpoints();
 app.MapStudentApplicationSubResourceEndpoints();
+app.MapCollegeApplicationEndpoints();
 app.MapCommunityServiceEndpoints();
 app.MapStudentParentEndpoints();
 app.MapParentPortalEndpoints();
