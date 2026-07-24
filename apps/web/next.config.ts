@@ -370,6 +370,18 @@ function shouldRouteIsamsReadsToDotnet() {
   );
 }
 
+// iSAMS integration CONFIGURE write (FM-DOTNET-087) — routes/school.ts POST /integrations/isams (the exact
+// literal), mounted under /api/v1/school-admin. A WRITE-ONLY cut-over of the single configure path: the
+// isamsConfig upsert + AES-256-GCM credential encryption. The /integrations/isams/status + /jobs reads (FM-053)
+// and the /sync + /test writes (which stay Node — the SSRF-hardened undici vendor client; sync creates user rows)
+// live on DISTINCT paths, so the exact /integrations/isams literal has NO path-not-method hazard. Default OFF
+// (dark). More specific than the /api/:path* catch-all → placed before it.
+function shouldRouteIsamsConfigureToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ISAMS_CONFIGURE_TO_DOTNET)
+  );
+}
+
 // Counselor dashboard self-contained READS (FM-DOTNET-067) — routes/counselor.ts, mounted under /api/v1/counselor.
 // Four counselor:dashboard GETs: /dashboard, /dashboard/change-requests, /me/students/:studentId, /students/:studentId.
 // All are GET-only (no sibling write shares any of these paths) → NO path-not-method hazard, a straight read cut-over.
@@ -1653,6 +1665,18 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/integrations/isams/jobs",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/integrations/isams/jobs`,
+            },
+          ]
+        : []),
+      // iSAMS integration CONFIGURE write (FM-DOTNET-087) — POST /integrations/isams (the exact literal): the
+      // isamsConfig upsert + credential encryption. Distinct path from the /status + /jobs reads (FM-053) above and
+      // the Node-only /sync + /test writes, so NO path-not-method hazard. Default OFF (dark); precedes the
+      // /api/:path* catch-all below.
+      ...(shouldRouteIsamsConfigureToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/integrations/isams",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/integrations/isams`,
             },
           ]
         : []),

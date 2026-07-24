@@ -68,6 +68,7 @@ app.MapParentPortalEndpoints();
 app.MapParentChildReadEndpoints();
 app.MapSchoolCoursesEndpoints();
 app.MapIsamsReadsEndpoints();
+app.MapIsamsWriteEndpoints();
 app.MapCurriculumFrameworksEndpoints();
 app.MapDataMappingsEndpoints();
 app.MapPrerequisitesEndpoints();
