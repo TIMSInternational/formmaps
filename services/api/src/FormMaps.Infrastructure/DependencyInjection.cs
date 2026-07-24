@@ -155,6 +155,8 @@ public static class DependencyInjection
         // FM-DOTNET-081: college applications CRUD (routes/college.ts Feature 1) + the shared getStudentAccess rail.
         services.AddScoped<ICollegeAccessResolver, CollegeAccessResolver>();
         services.AddScoped<ICollegeApplicationsRepository, CollegeApplicationsRepository>();
+        // FM-DOTNET-082: college search + favorites (routes/college.ts Feature 2).
+        services.AddScoped<ICollegeFavoritesRepository, CollegeFavoritesRepository>();
         services.AddScoped<ICommunityServiceRepository, CommunityServiceRepository>();
         services.AddScoped<IStudentParentRepository, StudentParentRepository>();
         // FM-DOTNET-077: application essays + checklist (non-AI sub-resources). AI siblings (essay ai-review,
