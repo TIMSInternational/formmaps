@@ -2681,6 +2681,26 @@
       ],
       "verification": "dotnet build 0/0; unit 734 (+15 CommunityServiceValidation), integration 1433 (+2 skip; community-service repo Testcontainers + endpoint faked-repo), contract 1 - full suite green. New Testcontainers harness community-service-schema.sql (users + schools + community_service_entries + CommunityServiceStatus enum). Staging deploy run 30062214232 SUCCESS + anon canary GREEN (health 200; all 4 routes anon->401). Merged --no-ff to main c28a8b5. NEXT = student.ts parents-link reads/writes -> essays/checklist (non-AI) -> parent.ts (child-link-scoped).",
       "commit": "c28a8b5"
+    },
+    {
+      "id": "FM-DOTNET-076-student-parents",
+      "status": "completed",
+      "goal": "Phase-C: student parent-links CRUD (4 endpoints of routes/student.ts + studentService.ts) behind one dark flag FORMMAPS_ROUTE_STUDENT_PARENTS_TO_DOTNET (four rewrites; /parents/invite precedes /parents/:parentLinkId). Self-scoped (req.userId) — RequireIdentity + RLS. GET /parents (list active links, createdDate desc), POST /parents/invite (mint link+token -> {id, invitationUrl}, 201), DELETE /parents/:parentLinkId (unlink, ownership-only gate -> 404 'Link not found'), POST /parents/:parentLinkId/resend (regenerate token -> {invitationUrl}). NOT SES-coupled (invite/resend only create/refresh an invitationToken + return a frontend invitationUrl — no email; earlier SES flag was wrong). New StudentParents namespace: IStudentParentRepository + repo. Token via InvitationTokenGenerator (crypto.randomBytes(32) base64url); tokenExpiresAt = now+48h. Invite body RAW (no zod): parentEmail required (falsy->400 'parentEmail required'; truthy non-string->500 reproducing .toLowerCase() throw); parentName||'' / relation||'parent' (truthy non-string->500 at Prisma String). unique (studentId, parentEmail) -> duplicate caught as Postgres 23505 -> Duplicate -> 500 (right {success,message} shape). delete/resend gate = ownership-ONLY (no isActive check, matches legacy). invitationUrl = FRONTEND_BASE_URL || app.formmaps.ai. Fresh reviewer SHIP (no BLOCKING/HIGH/MEDIUM/security; no IDOR, mass-assignment-guarded, atomic gate+write; verified express global-500-on-body-error, base64url token, ownership-only gate, raw-passthrough invitationToken faithful; one LOW = Content-Type raw-body-read convention across all slices). Folded reviewer coverage note (delete already-inactive owned link -> still true).",
+      "dependsOn": [
+        "FM-DOTNET-075-community-service"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/student.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/studentService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/StudentParents/IStudentParentRepository.cs",
+        "services/api/src/FormMaps.Infrastructure/StudentParents/StudentParentRepository.cs",
+        "services/api/src/FormMaps.Api/Endpoints/StudentParentEndpoints.cs"
+      ],
+      "verification": "dotnet build 0/0; unit 734, integration 1458 (+2 skip; parents repo Testcontainers incl. unique-dup + token regen + endpoint faked-repo), contract 1 - full suite green. New Testcontainers harness student-parents-schema.sql (student_parent_links + unique (studentId, parentEmail)). Staging deploy run 30063920868 SUCCESS + anon canary GREEN (health 200; all 4 routes anon->401). Merged --no-ff to main 89e8feb. student.ts REMAINING = essays (5 ep, 1 AI stays Node) + checklist (4 ep, 1 AI stays Node) + classify (AI, Node). NEXT = essays/checklist non-AI OR parent.ts (child-link-scoped).",
+      "commit": "89e8feb"
     }
   ]
 }
