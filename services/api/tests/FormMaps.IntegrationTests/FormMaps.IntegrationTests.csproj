@@ -93,6 +93,8 @@
     <EmbeddedResource Include="StudentParents\Data\student-parents-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers application essays + checklist harness (FM-DOTNET-077 Phase-C). -->
     <EmbeddedResource Include="StudentApplicationSubResources\Data\application-subresources-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers parent portal harness (FM-DOTNET-078 Phase-C). -->
+    <EmbeddedResource Include="ParentPortal\Data\parent-portal-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

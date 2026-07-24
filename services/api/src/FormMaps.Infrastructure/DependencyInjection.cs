@@ -24,6 +24,7 @@ using FormMaps.Application.Counselor;
 using FormMaps.Application.CommunityService;
 using FormMaps.Application.StudentApplications;
 using FormMaps.Application.StudentApplicationSubResources;
+using FormMaps.Application.ParentPortal;
 using FormMaps.Application.StudentParents;
 using FormMaps.Application.StudentPortfolio;
 using FormMaps.Infrastructure.Assessments;
@@ -50,6 +51,7 @@ using FormMaps.Infrastructure.Counselor;
 using FormMaps.Infrastructure.CommunityService;
 using FormMaps.Infrastructure.StudentApplications;
 using FormMaps.Infrastructure.StudentApplicationSubResources;
+using FormMaps.Infrastructure.ParentPortal;
 using FormMaps.Infrastructure.StudentParents;
 using FormMaps.Infrastructure.StudentPortfolio;
 using Microsoft.Extensions.Configuration;
@@ -147,6 +149,9 @@ public static class DependencyInjection
         // FM-DOTNET-077: application essays + checklist (non-AI sub-resources). AI siblings (essay ai-review,
         // checklist generate) stay in Node (Bedrock).
         services.AddScoped<IApplicationSubResourceRepository, ApplicationSubResourceRepository>();
+        // FM-DOTNET-078: parent portal self-scoped surface (profile, notifications, evaluations/pending, delete-link).
+        // Onboarding (auth-cookie), invite/resend (SES), and child-link reads stay in Node.
+        services.AddScoped<IParentPortalRepository, ParentPortalRepository>();
         // FM-DOTNET-053: iSAMS integration READS (status + jobs). READS-ONLY — configure/sync/test stay in Node
         // (vendor boundary). No vendor HTTP client / field-encryption code.
         services.AddScoped<IIsamsReadsReader, IsamsReadsReader>();
