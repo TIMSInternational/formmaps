@@ -559,6 +559,20 @@ function shouldRouteCollegeFavoritesToDotnet() {
   );
 }
 
+// College essays + comments (FM-DOTNET-083) — routes/college.ts Feature 3, mounted /api/v1/college. ONE flag co-flips
+// three paths (Next matches PATH not method): GET+POST /students/:studentId/essays, PUT+DELETE /essays/:id, POST+GET
+// /essays/:id/comments. COMPLETES the college.ts mini-phase. The single-segment :id on /essays/:id does NOT swallow the
+// two-segment /essays/:id/comments (Next :params match exactly one segment) → no negative-lookahead needed. Disjoint
+// from the FM-081 /students/:id/applications + /applications/:id and the FM-082 /search + /students/:id/list + /list/:id
+// sources (different last segment / prefix) — no collision. More specific than the /api/:path* catch-all, so they must
+// precede it. Default OFF (dark).
+function shouldRouteCollegeEssaysToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_ESSAYS_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1511,6 +1525,27 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/college/list/:id",
               destination: `${dotnetApiBaseUrl}/api/v1/college/list/:id`,
+            },
+          ]
+        : []),
+      // College essays + comments (FM-DOTNET-083) — routes/college.ts Feature 3, mounted /api/v1/college. GET+POST
+      // /students/:studentId/essays + PUT+DELETE /essays/:id + POST+GET /essays/:id/comments under ONE flag (path-not-
+      // method co-flip). COMPLETES the college.ts mini-phase. The single-segment /essays/:id does NOT match the
+      // two-segment /essays/:id/comments (Next :params are one segment) — no lookahead needed. Disjoint from the FM-081
+      // applications + FM-082 search/list sources. More specific than the /api/:path* catch-all below, so they precede it.
+      ...(shouldRouteCollegeEssaysToDotnet()
+        ? [
+            {
+              source: "/api/v1/college/students/:studentId/essays",
+              destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/essays`,
+            },
+            {
+              source: "/api/v1/college/essays/:id/comments",
+              destination: `${dotnetApiBaseUrl}/api/v1/college/essays/:id/comments`,
+            },
+            {
+              source: "/api/v1/college/essays/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/college/essays/:id`,
             },
           ]
         : []),
