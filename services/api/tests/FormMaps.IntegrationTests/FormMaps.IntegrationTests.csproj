@@ -93,6 +93,8 @@
     <EmbeddedResource Include="StudentParents\Data\student-parents-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers student course-planning CRUD harness (FM-DOTNET-084 Phase-D). -->
     <EmbeddedResource Include="StudentCoursePlan\Data\student-course-plan-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers student course change-requests CRUD harness (FM-DOTNET-085 Phase-D). -->
+    <EmbeddedResource Include="StudentCoursePlan\Data\course-change-requests-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers application essays + checklist harness (FM-DOTNET-077 Phase-C). -->
     <EmbeddedResource Include="StudentApplicationSubResources\Data\application-subresources-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers parent portal harness (FM-DOTNET-078 Phase-C). -->
