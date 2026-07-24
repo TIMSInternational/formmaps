@@ -382,6 +382,17 @@ function shouldRouteIsamsConfigureToDotnet() {
   );
 }
 
+// File uploads (FM-DOTNET-088) — routes/upload.ts, mounted /api/v1/upload. Six POST endpoints (school-logo,
+// profile-image, resume, course-import, grade-import, portfolio-attachment), all multipart `multer.single("file")`
+// + authenticate + tenantContext (self-scoped). ONE flag cuts the whole router over; each is a distinct POST path
+// with no sibling on the same path → NO path-not-method hazard. Default OFF (dark). Each literal is disjoint from
+// every other rewrite block and more specific than the /api/:path* catch-all → placed before it.
+function shouldRouteUploadToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_UPLOAD_TO_DOTNET)
+  );
+}
+
 // Counselor dashboard self-contained READS (FM-DOTNET-067) — routes/counselor.ts, mounted under /api/v1/counselor.
 // Four counselor:dashboard GETs: /dashboard, /dashboard/change-requests, /me/students/:studentId, /students/:studentId.
 // All are GET-only (no sibling write shares any of these paths) → NO path-not-method hazard, a straight read cut-over.
@@ -1677,6 +1688,36 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/integrations/isams",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/integrations/isams`,
+            },
+          ]
+        : []),
+      // File uploads (FM-DOTNET-088) — the six /api/v1/upload/* POST endpoints, all multipart → S3, under one flag.
+      // Each an exact literal, disjoint from every other rewrite; more specific than the /api/:path* catch-all below.
+      ...(shouldRouteUploadToDotnet()
+        ? [
+            {
+              source: "/api/v1/upload/school-logo",
+              destination: `${dotnetApiBaseUrl}/api/v1/upload/school-logo`,
+            },
+            {
+              source: "/api/v1/upload/profile-image",
+              destination: `${dotnetApiBaseUrl}/api/v1/upload/profile-image`,
+            },
+            {
+              source: "/api/v1/upload/resume",
+              destination: `${dotnetApiBaseUrl}/api/v1/upload/resume`,
+            },
+            {
+              source: "/api/v1/upload/course-import",
+              destination: `${dotnetApiBaseUrl}/api/v1/upload/course-import`,
+            },
+            {
+              source: "/api/v1/upload/grade-import",
+              destination: `${dotnetApiBaseUrl}/api/v1/upload/grade-import`,
+            },
+            {
+              source: "/api/v1/upload/portfolio-attachment",
+              destination: `${dotnetApiBaseUrl}/api/v1/upload/portfolio-attachment`,
             },
           ]
         : []),
