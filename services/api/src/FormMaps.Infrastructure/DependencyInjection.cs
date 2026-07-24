@@ -167,6 +167,8 @@ public static class DependencyInjection
         services.AddScoped<IStudentCoursePlanRepository, StudentCoursePlanRepository>();
         // FM-DOTNET-085: student course change-requests CRUD (routes/course-plan.ts L92-143) — sub-slice 2/3.
         services.AddScoped<ICourseChangeRequestRepository, CourseChangeRequestRepository>();
+        // FM-DOTNET-086: course-plan recommendations + eligibility compute reads — completes the course-plan.ts mini-phase.
+        services.AddScoped<ICoursePlanComputeReader, CoursePlanComputeReader>();
         services.AddScoped<IStudentParentRepository, StudentParentRepository>();
         // FM-DOTNET-077: application essays + checklist (non-AI sub-resources). AI siblings (essay ai-review,
         // checklist generate) stay in Node (Bedrock).
