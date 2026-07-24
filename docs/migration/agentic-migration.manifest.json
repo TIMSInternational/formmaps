@@ -2740,6 +2740,25 @@
       ],
       "verification": "dotnet build 0/0; unit 736, integration 1551 (+2 skip; 32 new tests = endpoint faked-repo + repo Testcontainers incl. profile children-join + dual-party delete IDOR + pending email-scope + pagination clamp), contract 1 - full suite green. New Testcontainers harness parent-portal-schema.sql (users + student_parent_links + notifications + evaluation_groups). Staging deploy run 30068224591 SUCCESS + anon canary GREEN (health 200; all 6 routes anon->401; invite->405 [direct-.NET, lookahead prevents rewrite], onboarding/children/resend->404). Merged --no-ff to main f863b92. NEXT = FM-079 = child-link child reads /children/:studentId/progress (link->403 'Not linked', GPA/credits/assessment badges) + /children/:studentId/course-plan (link->404, runAsSystem plan/target/coursePlan).",
       "commit": "f863b92"
+    },
+    {
+      "id": "FM-DOTNET-079-parent-child-reads",
+      "status": "completed",
+      "goal": "Phase-C: parent child-link-scoped reads (2 authenticated CROSS-USER handlers of routes/parent.ts) behind ONE dark flag FORMMAPS_ROUTE_PARENT_CHILD_READS_TO_DOTNET (2 rewrites). GET /children/:studentId/progress + GET /children/:studentId/course-plan. IDOR corpus #1: both gated by an accepted+active StudentParentLink (parentUserId==caller, isActive, isAccepted). New ParentChildReads namespace (IParentChildReader + reader + endpoints). COMPLETES parent.ts on .NET (only onboarding + invite/resend SES stay Node). Parity: progress link->403 'Not linked to this student' vs student-missing->404 'Student not found' (link check first); course-plan collapses both to 404 (existence-hiding). TWO RLS sessions: progress reads on the caller Identity session (legacy tenantContext, NO runAsSystem); course-plan link-check on Identity then plan/target/course-plan on a System (RLS-bypass) session (legacy runAsSystem). Compute: GPA Round2 (SchoolAnalyticsMath.JsRound(x*100)/100) over A..F gradeMap (unknown/empty grade -> no point); GPA NOT school-gated (school-less students get a GPA - caught+fixed a bug where GPA was nested inside if(schoolId)); creditsEarned school-gated raw sum; creditsRequired = current-AY active rule set totalCreditsRequired (two-step findFirst) else 120; percentage = Math.round(earned/required*100) NO 100 cap; mil averageScore = round(avg scorePercentage); pca = any pca_evaluations row (no isActive); eval360 active-total+completed; isOnTrack = gpa==null||gpa>=2.0. Decimal->double = Number(); ISO-Z dates. Fresh reviewer (read all files) SHIP (no BLOCKING/HIGH/MEDIUM; 3 LOWs = progress-under-Identity-RLS faithful / int-cast-safe / plan tie-break faithful - no folds). CUTOVER-VERIFY: confirm a real linked parent sees real progress data before flipping (prod RLS on a school-less parent's assessment/grade reads).",
+      "dependsOn": [
+        "FM-DOTNET-078-parent-portal"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/parent.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/ParentChildReads/IParentChildReader.cs",
+        "services/api/src/FormMaps.Infrastructure/ParentChildReads/ParentChildReader.cs",
+        "services/api/src/FormMaps.Api/Endpoints/ParentChildReadEndpoints.cs"
+      ],
+      "verification": "dotnet build 0/0; unit 736, integration 1568 (+2 skip; 34 new tests = endpoint faked-reader + reader Testcontainers incl. link IDOR gate + GPA/credit/badge compute + no-100-cap + school-less-GPA + course-plan System reads), contract 1 - full suite green. New Testcontainers harness parent-child-reads-schema.sql (12 tables). Staging deploy run 30070091125 SUCCESS + anon canary GREEN (both routes anon->401; FM-078 parent siblings still 401 = no regression). Merged --no-ff to main 359b50e. parent.ts COMPLETE on .NET. NEXT = new domain: Phase D (academic-gaps.ts / college.ts / course-planning) OR deferred school.ts/school-courses.ts writes.",
+      "commit": "359b50e"
     }
   ]
 }
