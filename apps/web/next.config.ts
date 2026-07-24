@@ -510,6 +510,18 @@ function shouldRouteParentPortalToDotnet() {
   );
 }
 
+// Parent child-link-scoped reads (FM-DOTNET-079) — routes/parent.ts, mounted /api/v1/parent: GET
+// /children/:studentId/progress and GET /children/:studentId/course-plan. ONE flag co-flips the two paths. Both are
+// 3-segment literals (distinct endings), so they collide with nothing — disjoint from the FM-078 /:parentLinkId
+// single-seg catch-all (whose lookahead already excludes `children`) and from each other. Both gated in .NET by an
+// accepted+active parent-child link (IDOR corpus #1); course-plan reads the plan/target/course-plan as SYSTEM
+// (runAsSystem). Default OFF (dark). Both precede the /api/:path* catch-all.
+function shouldRouteParentChildReadsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PARENT_CHILD_READS_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1390,6 +1402,21 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/parent/:parentLinkId((?!profile|notifications|invite|onboarding|children|evaluations)[^/]+)",
               destination: `${dotnetApiBaseUrl}/api/v1/parent/:parentLinkId`,
+            },
+          ]
+        : []),
+      // Parent child-link-scoped reads (FM-DOTNET-079) — GET /children/:studentId/progress + GET
+      // /children/:studentId/course-plan, one flag. Both 3-seg literals, disjoint from the FM-078 /:parentLinkId
+      // catch-all and from each other. Precede /api/:path*.
+      ...(shouldRouteParentChildReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/parent/children/:studentId/progress",
+              destination: `${dotnetApiBaseUrl}/api/v1/parent/children/:studentId/progress`,
+            },
+            {
+              source: "/api/v1/parent/children/:studentId/course-plan",
+              destination: `${dotnetApiBaseUrl}/api/v1/parent/children/:studentId/course-plan`,
             },
           ]
         : []),
