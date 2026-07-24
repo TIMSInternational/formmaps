@@ -495,6 +495,21 @@ function shouldRouteStudentEssaysChecklistToDotnet() {
   );
 }
 
+// Parent portal self-scoped surface (FM-DOTNET-078) — routes/parent.ts, mounted /api/v1/parent. The authenticated,
+// caller-owned endpoints: GET /profile, GET /notifications, PUT /notifications/read-all, PUT /notifications/:id/read,
+// GET /evaluations/pending, DELETE /:parentLinkId. ONE flag co-flips the six paths (Next matches path-not-method).
+// The onboarding flow (anonymous + auth-cookie write), POST /invite + POST /:parentLinkId/resend (SES email), and the
+// child-link-scoped child reads (/children/:id/progress + course-plan — a later slice) stay Node. The DELETE
+// /:parentLinkId source is a single-segment catch-all, so it carries a negative-lookahead excluding every sibling
+// literal — critically `invite` (POST stays Node) — plus profile/notifications/onboarding/children/evaluations for
+// defence-in-depth (parentLinkIds are UUIDs, never these words). Default OFF (dark). All precede the /api/:path*
+// catch-all.
+function shouldRouteParentPortalToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PARENT_PORTAL_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1342,6 +1357,39 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/student/applications/:id/checklist",
               destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist`,
+            },
+          ]
+        : []),
+      // Parent portal self-scoped surface (FM-DOTNET-078) — GET /profile, GET /notifications, PUT
+      // /notifications/read-all, PUT /notifications/:id/read, GET /evaluations/pending, DELETE /:parentLinkId, one
+      // flag. The DELETE /:parentLinkId single-seg catch-all excludes every sibling literal via a negative-lookahead
+      // (critically `invite`, whose POST stays Node). Onboarding, invite/resend (SES), and the /children reads stay
+      // Node. Specific paths precede the catch-all; all precede /api/:path*.
+      ...(shouldRouteParentPortalToDotnet()
+        ? [
+            {
+              source: "/api/v1/parent/profile",
+              destination: `${dotnetApiBaseUrl}/api/v1/parent/profile`,
+            },
+            {
+              source: "/api/v1/parent/notifications/read-all",
+              destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications/read-all`,
+            },
+            {
+              source: "/api/v1/parent/notifications/:id/read",
+              destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications/:id/read`,
+            },
+            {
+              source: "/api/v1/parent/notifications",
+              destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications`,
+            },
+            {
+              source: "/api/v1/parent/evaluations/pending",
+              destination: `${dotnetApiBaseUrl}/api/v1/parent/evaluations/pending`,
+            },
+            {
+              source: "/api/v1/parent/:parentLinkId((?!profile|notifications|invite|onboarding|children|evaluations)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/v1/parent/:parentLinkId`,
             },
           ]
         : []),
