@@ -470,6 +470,17 @@ function shouldRouteStudentCommunityServiceToDotnet() {
   );
 }
 
+// Student parent-links CRUD (FM-DOTNET-076) — routes/student.ts GET /parents, POST /parents/invite, DELETE
+// /parents/:parentLinkId, POST /parents/:parentLinkId/resend, mounted /api/v1/student. Self-scoped; NOT email-coupled
+// (invite/resend mint a token + return an invitationUrl). ONE flag co-flips the four paths (path-not-method). The
+// literal /parents/invite MUST precede /parents/:parentLinkId (else :parentLinkId swallows "invite"); the 3-seg
+// /parents/:parentLinkId/resend is disjoint; the exact /parents matches none. Default OFF (dark).
+function shouldRouteStudentParentsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_PARENTS_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1267,6 +1278,30 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/student/community-service",
               destination: `${dotnetApiBaseUrl}/api/v1/student/community-service`,
+            },
+          ]
+        : []),
+      // Student parent-links CRUD (FM-DOTNET-076) — GET /parents, POST /parents/invite, DELETE /parents/:parentLinkId,
+      // POST /parents/:parentLinkId/resend, one flag. /parents/invite (literal) precedes /parents/:parentLinkId (else
+      // :parentLinkId swallows "invite"); the 3-seg .../resend and the exact /parents are disjoint. All precede
+      // /api/:path*.
+      ...(shouldRouteStudentParentsToDotnet()
+        ? [
+            {
+              source: "/api/v1/student/parents/invite",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/parents/invite`,
+            },
+            {
+              source: "/api/v1/student/parents/:parentLinkId/resend",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/parents/:parentLinkId/resend`,
+            },
+            {
+              source: "/api/v1/student/parents/:parentLinkId",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/parents/:parentLinkId`,
+            },
+            {
+              source: "/api/v1/student/parents",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/parents`,
             },
           ]
         : []),
