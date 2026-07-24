@@ -2721,6 +2721,25 @@
       ],
       "verification": "dotnet build 0/0; unit 736, integration 1519 (+2 skip; 61 new tests = endpoint faked-repo + repo Testcontainers incl. ownership/deferred-500/bounded-slice/draftVersion-bump/completedAt-transition), contract 1 - full suite green. New Testcontainers harness application-subresources-schema.sql (student_applications parent + application_essays + application_checklists). Staging deploy run 30066222653 SUCCESS + anon canary GREEN (health 200; all 6 routes anon->401; ai-review->404, checklist/generate->405 on direct-.NET = the negative-lookahead validated). Merged --no-ff to main 2ce3de3. student.ts non-AI surface COMPLETE (portfolio + applications + community-service + parents + essays + checklist). NEXT = parent.ts (child-link-scoped, IDOR corpus #1, ~395 LOC).",
       "commit": "2ce3de3"
+    },
+    {
+      "id": "FM-DOTNET-078-parent-portal",
+      "status": "completed",
+      "goal": "Phase-C: parent portal SELF-SCOPED surface (6 authenticated caller-owned handlers of routes/parent.ts) behind ONE dark flag FORMMAPS_ROUTE_PARENT_PORTAL_TO_DOTNET (6 rewrites). GET /profile ({...user, children}: absent user -> just {children}; children = accepted+active links inner-joined to child user, dropping orphans, shape {studentId, studentName, gradeLevel, relationship:l.relation}), GET /notifications (page=Math.max(1,parseInt||1)/limit=Math.min(50,Math.max(1,parseInt||20)), unreadOnly=='true' literal, where{userId,isActive}, createdDate desc, envelope {data:{data,total,page,limit}}), PUT /notifications/:id/read (findUnique no-isActive -> null|not-owned -> 403 'Access denied' uniform; else isRead+readAt; {success}), PUT /notifications/read-all (updateMany {userId,isRead:false} NO isActive -> {updatedCount}), GET /evaluations/pending (DB email not token, !email->[], evaluatorEmail==email.toLowerCase()+isActive+!completed, {evaluationId, studentName: name||'your student', deadline:tokenExpiryDate, token:invitationToken}), DELETE /:parentLinkId (findUnique no-isActive -> null|(parentUserId!=caller AND studentId!=caller) -> 403 'Access denied'; else isActive=false; dual-party ownership). New ParentPortal namespace (IParentPortalRepository + repo + endpoints). STAYS NODE: onboarding verify+complete (auth-cookie/JWT/password write), invite + resend (SES email), and the child-link child reads /children/:id/progress + course-plan (IDOR corpus #1, compute-heavy + runAsSystem = FM-079). The DELETE /:parentLinkId single-seg catch-all rewrite carries a ((?!profile|notifications|invite|onboarding|children|evaluations)[^/]+) negative-lookahead (keeps POST /invite on Node; parentLinkIds are UUIDs). Fixed-column writes, reads read-only / writes writable+commit, timestamps Kind=Unspecified+ms-trunc, id tie-break deterministic superset. Fresh reviewer (read all files) SHIP (no BLOCKING/HIGH/MEDIUM; 4 LOWs = order-superset / extra code on 401 / null-field JSON [confirmed no global WhenWritingNull] / RLS-parity established - no folds).",
+      "dependsOn": [
+        "FM-DOTNET-077-student-essays-checklist"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/parent.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/ParentPortal/IParentPortalRepository.cs",
+        "services/api/src/FormMaps.Infrastructure/ParentPortal/ParentPortalRepository.cs",
+        "services/api/src/FormMaps.Api/Endpoints/ParentPortalEndpoints.cs"
+      ],
+      "verification": "dotnet build 0/0; unit 736, integration 1551 (+2 skip; 32 new tests = endpoint faked-repo + repo Testcontainers incl. profile children-join + dual-party delete IDOR + pending email-scope + pagination clamp), contract 1 - full suite green. New Testcontainers harness parent-portal-schema.sql (users + student_parent_links + notifications + evaluation_groups). Staging deploy run 30068224591 SUCCESS + anon canary GREEN (health 200; all 6 routes anon->401; invite->405 [direct-.NET, lookahead prevents rewrite], onboarding/children/resend->404). Merged --no-ff to main f863b92. NEXT = FM-079 = child-link child reads /children/:studentId/progress (link->403 'Not linked', GPA/credits/assessment badges) + /children/:studentId/course-plan (link->404, runAsSystem plan/target/coursePlan).",
+      "commit": "f863b92"
     }
   ]
 }
