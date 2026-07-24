@@ -461,6 +461,15 @@ function shouldRouteStudentApplicationsToDotnet() {
   );
 }
 
+// Student community-service CRUD (FM-DOTNET-075) — routes/student.ts /community-service (GET+POST) + /community-service/:id
+// (PUT+DELETE), mounted /api/v1/student. Self-scoped. ONE flag co-flips both paths (path-not-method). The exact
+// /community-service (no trailing segment) does not match the 2-seg /community-service/:id. Default OFF (dark).
+function shouldRouteStudentCommunityServiceToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COMMUNITY_SERVICE_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1243,6 +1252,21 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/student/applications",
               destination: `${dotnetApiBaseUrl}/api/v1/student/applications`,
+            },
+          ]
+        : []),
+      // Student community-service CRUD (FM-DOTNET-075) — GET+POST /community-service, PUT+DELETE /community-service/:id,
+      // one flag. The exact /community-service matches neither the 2-seg /:id. Both precede /api/:path*; disjoint from
+      // every other student path.
+      ...(shouldRouteStudentCommunityServiceToDotnet()
+        ? [
+            {
+              source: "/api/v1/student/community-service/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/community-service/:id`,
+            },
+            {
+              source: "/api/v1/student/community-service",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/community-service`,
             },
           ]
         : []),
