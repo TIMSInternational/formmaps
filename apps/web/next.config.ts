@@ -535,6 +535,18 @@ function shouldRouteAcademicGapsToDotnet() {
   );
 }
 
+// College applications CRUD (FM-DOTNET-081) — routes/college.ts Feature 1, mounted /api/v1/college. ONE flag co-flips
+// the two paths (Next matches PATH not method): GET+POST /students/:studentId/applications and PUT+DELETE
+// /applications/:id. The single-segment :id/:studentId sources do NOT capture the college.ts list/essays siblings
+// (…/students/:id/list, …/students/:id/essays) nor any /applications/:id/<seg> (there are none) — those stay Node.
+// More specific than the /api/:path* catch-all, so they must precede it. Default OFF (dark).
+function shouldRouteCollegeApplicationsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_APPLICATIONS_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1451,6 +1463,22 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/academic-gaps/recommendations/:studentId",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/recommendations/:studentId`,
+            },
+          ]
+        : []),
+      // College applications CRUD (FM-DOTNET-081) — routes/college.ts Feature 1, mounted /api/v1/college. GET+POST
+      // /students/:studentId/applications and PUT+DELETE /applications/:id under ONE flag (path-not-method co-flip).
+      // Single-segment sources — no collision with the college.ts list/essays/search siblings; those stay Node. More
+      // specific than the /api/:path* catch-all below, so they must precede it.
+      ...(shouldRouteCollegeApplicationsToDotnet()
+        ? [
+            {
+              source: "/api/v1/college/students/:studentId/applications",
+              destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/applications`,
+            },
+            {
+              source: "/api/v1/college/applications/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/college/applications/:id`,
             },
           ]
         : []),

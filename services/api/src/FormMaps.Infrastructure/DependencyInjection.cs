@@ -22,6 +22,7 @@ using FormMaps.Application.SchoolUsers;
 using FormMaps.Application.SchoolCourses;
 using FormMaps.Application.Counselor;
 using FormMaps.Application.AcademicGaps;
+using FormMaps.Application.College;
 using FormMaps.Application.CommunityService;
 using FormMaps.Application.StudentApplications;
 using FormMaps.Application.StudentApplicationSubResources;
@@ -51,6 +52,7 @@ using FormMaps.Infrastructure.SchoolUsers;
 using FormMaps.Infrastructure.SchoolCourses;
 using FormMaps.Infrastructure.Counselor;
 using FormMaps.Infrastructure.AcademicGaps;
+using FormMaps.Infrastructure.College;
 using FormMaps.Infrastructure.CommunityService;
 using FormMaps.Infrastructure.StudentApplications;
 using FormMaps.Infrastructure.StudentApplicationSubResources;
@@ -150,6 +152,9 @@ public static class DependencyInjection
         services.AddScoped<IAcademicGapsReader, AcademicGapsReader>();
         services.AddScoped<IStudentPortfolioRepository, StudentPortfolioRepository>();
         services.AddScoped<IStudentApplicationRepository, StudentApplicationRepository>();
+        // FM-DOTNET-081: college applications CRUD (routes/college.ts Feature 1) + the shared getStudentAccess rail.
+        services.AddScoped<ICollegeAccessResolver, CollegeAccessResolver>();
+        services.AddScoped<ICollegeApplicationsRepository, CollegeApplicationsRepository>();
         services.AddScoped<ICommunityServiceRepository, CommunityServiceRepository>();
         services.AddScoped<IStudentParentRepository, StudentParentRepository>();
         // FM-DOTNET-077: application essays + checklist (non-AI sub-resources). AI siblings (essay ai-review,

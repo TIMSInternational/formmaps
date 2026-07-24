@@ -99,6 +99,8 @@
     <EmbeddedResource Include="ParentChildReads\Data\parent-child-reads-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers academic-gaps reads harness (FM-DOTNET-080 Phase-D). -->
     <EmbeddedResource Include="AcademicGaps\Data\academic-gaps-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers college applications CRUD harness (FM-DOTNET-081 Phase-D). -->
+    <EmbeddedResource Include="College\Data\college-applications-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
