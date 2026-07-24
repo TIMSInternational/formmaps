@@ -2701,6 +2701,26 @@
       ],
       "verification": "dotnet build 0/0; unit 734, integration 1458 (+2 skip; parents repo Testcontainers incl. unique-dup + token regen + endpoint faked-repo), contract 1 - full suite green. New Testcontainers harness student-parents-schema.sql (student_parent_links + unique (studentId, parentEmail)). Staging deploy run 30063920868 SUCCESS + anon canary GREEN (health 200; all 4 routes anon->401). Merged --no-ff to main 89e8feb. student.ts REMAINING = essays (5 ep, 1 AI stays Node) + checklist (4 ep, 1 AI stays Node) + classify (AI, Node). NEXT = essays/checklist non-AI OR parent.ts (child-link-scoped).",
       "commit": "89e8feb"
+    },
+    {
+      "id": "FM-DOTNET-077-student-essays-checklist",
+      "status": "completed",
+      "goal": "Phase-C: student application ESSAYS + CHECKLIST CRUD (6 endpoints of routes/student.ts + studentService.ts, the non-AI application sub-resources) behind ONE dark flag FORMMAPS_ROUTE_STUDENT_ESSAYS_CHECKLIST_TO_DOTNET (4 rewrites). Gated by verifyAppOwnership (parent app.studentId == caller). GET+POST /applications/:id/essays, PUT /applications/:id/essays/:eid, GET+POST /applications/:id/checklist, PUT /applications/:id/checklist/:cid. New StudentApplicationSubResources namespace: one IApplicationSubResourceRepository + repo + one endpoints class (both sub-resources = one cohesive slice). AI siblings stay Node (Bedrock): POST .../essays/:eid/ai-review is a 5-seg path excluded by segment count; POST .../checklist/generate collides with /checklist/:cid (same single-trailing-segment shape) so :cid carries a ((?!generate)[^/]+) negative-lookahead (FM-061 pattern; cids are UUIDs). Parity: POST required-field (title/itemName) JS-truthy gate -> 400 '<field> is required' BEFORE ownership; every other type mismatch = Prisma reject -> 500 DEFERRED past ownership (create) and past ownership AND the sub-resource existence 404 (update). Two dueDate resolvers: create 'x ? new Date(x) : null' (falsy->null, string parse, number=epoch ms, true=new Date(1), object/array->500) vs update = raw value Prisma coerces as ISO string only (null->NULL, string parse, number/bool->500). Create coalescing prompt/notes ||null, category ||'other', wordLimit ||null (0->null on CREATE); update wordLimit no || (0 stored). Essay update bounded() slices {title:200,prompt:2000,currentDraft:50000,status:50,dueDate:50} + draftVersion bump on currentDraft change (raw compare, ||0); checklist update raw (NO bounded) + completedAt set/clear on isCompleted transition. Fixed-column INSERT/SET (mass-assignment guard); ownership at parent-app level under RLS; timestamps Kind=Unspecified+ms-trunc; response = raw Prisma passthrough. Fresh reviewer SHIP (no BLOCKING/HIGH/MEDIUM; both 404 gates verified before the deferred 500; no IDOR). Two LOWs ACCEPTED no folds (precedent-consistent with the shipped FM-065/072 create-date resolver): single-element-array dueDate on CREATE (port 500s but JS new Date([str]) ToPrimitive->valid date; pathological, future consistency pass) + tz-less datetime string AssumeUniversal-UTC vs JS local (documented, UTC-safe).",
+      "dependsOn": [
+        "FM-DOTNET-076-student-parents"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/student.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/studentService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/StudentApplicationSubResources/IApplicationSubResourceRepository.cs",
+        "services/api/src/FormMaps.Infrastructure/StudentApplicationSubResources/ApplicationSubResourceRepository.cs",
+        "services/api/src/FormMaps.Api/Endpoints/StudentApplicationSubResourceEndpoints.cs"
+      ],
+      "verification": "dotnet build 0/0; unit 736, integration 1519 (+2 skip; 61 new tests = endpoint faked-repo + repo Testcontainers incl. ownership/deferred-500/bounded-slice/draftVersion-bump/completedAt-transition), contract 1 - full suite green. New Testcontainers harness application-subresources-schema.sql (student_applications parent + application_essays + application_checklists). Staging deploy run 30066222653 SUCCESS + anon canary GREEN (health 200; all 6 routes anon->401; ai-review->404, checklist/generate->405 on direct-.NET = the negative-lookahead validated). Merged --no-ff to main 2ce3de3. student.ts non-AI surface COMPLETE (portfolio + applications + community-service + parents + essays + checklist). NEXT = parent.ts (child-link-scoped, IDOR corpus #1, ~395 LOC).",
+      "commit": "2ce3de3"
     }
   ]
 }
