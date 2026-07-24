@@ -97,6 +97,8 @@
     <EmbeddedResource Include="ParentPortal\Data\parent-portal-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers parent child-link reads harness (FM-DOTNET-079 Phase-C). -->
     <EmbeddedResource Include="ParentChildReads\Data\parent-child-reads-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers academic-gaps reads harness (FM-DOTNET-080 Phase-D). -->
+    <EmbeddedResource Include="AcademicGaps\Data\academic-gaps-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
