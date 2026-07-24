@@ -54,6 +54,7 @@ app.MapCounselorSessionsEndpoints();
 app.MapCounselorNotesEndpoints();
 app.MapStudentPortfolioEndpoints();
 app.MapStudentApplicationEndpoints();
+app.MapStudentApplicationSubResourceEndpoints();
 app.MapCommunityServiceEndpoints();
 app.MapStudentParentEndpoints();
 app.MapSchoolCoursesEndpoints();
