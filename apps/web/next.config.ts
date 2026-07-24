@@ -481,6 +481,20 @@ function shouldRouteStudentParentsToDotnet() {
   );
 }
 
+// Student application ESSAYS + CHECKLIST (FM-DOTNET-077) — routes/student.ts, mounted /api/v1/student. The non-AI
+// application sub-resources: GET+POST /applications/:id/essays, PUT /applications/:id/essays/:eid, GET+POST
+// /applications/:id/checklist, PUT /applications/:id/checklist/:cid. ONE flag co-flips the four paths (Next matches
+// path-not-method). The AI siblings stay Node (Bedrock): POST /applications/:id/essays/:eid/ai-review is a 5-seg path
+// excluded by segment count (essays/:eid is single-segment); POST /applications/:id/checklist/generate would collide
+// with /checklist/:cid (both a single trailing segment), so :cid carries a ((?!generate)[^/]+) negative-lookahead
+// (the FM-061 pattern — checklist ids are UUIDs, never "generate"). Disjoint from the FM-074 /applications/:id (2-seg)
+// block (a 4-seg path can't match a 2-seg source). Default OFF (dark). All precede the /api/:path* catch-all.
+function shouldRouteStudentEssaysChecklistToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_ESSAYS_CHECKLIST_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1302,6 +1316,32 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/student/parents",
               destination: `${dotnetApiBaseUrl}/api/v1/student/parents`,
+            },
+          ]
+        : []),
+      // Student application ESSAYS + CHECKLIST (FM-DOTNET-077) — GET+POST /applications/:id/essays, PUT
+      // /applications/:id/essays/:eid, GET+POST /applications/:id/checklist, PUT /applications/:id/checklist/:cid, one
+      // flag. The AI siblings stay Node: /essays/:eid/ai-review is a 5-seg path (excluded by segment count), and
+      // /checklist/generate collides with /checklist/:cid (same shape) so :cid uses a ((?!generate)[^/]+) negative-
+      // lookahead (FM-061 pattern; cids are UUIDs). Disjoint from the FM-074 /applications/:id block. All precede
+      // /api/:path*.
+      ...(shouldRouteStudentEssaysChecklistToDotnet()
+        ? [
+            {
+              source: "/api/v1/student/applications/:id/essays/:eid",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/essays/:eid`,
+            },
+            {
+              source: "/api/v1/student/applications/:id/essays",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/essays`,
+            },
+            {
+              source: "/api/v1/student/applications/:id/checklist/:cid((?!generate)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist/:cid`,
+            },
+            {
+              source: "/api/v1/student/applications/:id/checklist",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist`,
             },
           ]
         : []),
