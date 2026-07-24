@@ -89,6 +89,8 @@
     <EmbeddedResource Include="StudentApplications\Data\student-applications-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers student community-service CRUD harness (FM-DOTNET-075 Phase-C). -->
     <EmbeddedResource Include="CommunityService\Data\community-service-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers student parent-links CRUD harness (FM-DOTNET-076 Phase-C). -->
+    <EmbeddedResource Include="StudentParents\Data\student-parents-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
