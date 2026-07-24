@@ -157,6 +157,8 @@ public static class DependencyInjection
         services.AddScoped<ICollegeApplicationsRepository, CollegeApplicationsRepository>();
         // FM-DOTNET-082: college search + favorites (routes/college.ts Feature 2).
         services.AddScoped<ICollegeFavoritesRepository, CollegeFavoritesRepository>();
+        // FM-DOTNET-083: college essays + comments (routes/college.ts Feature 3) — completes the college.ts mini-phase.
+        services.AddScoped<ICollegeEssaysRepository, CollegeEssaysRepository>();
         services.AddScoped<ICommunityServiceRepository, CommunityServiceRepository>();
         services.AddScoped<IStudentParentRepository, StudentParentRepository>();
         // FM-DOTNET-077: application essays + checklist (non-AI sub-resources). AI siblings (essay ai-review,
