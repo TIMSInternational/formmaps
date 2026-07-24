@@ -522,6 +522,19 @@ function shouldRouteParentChildReadsToDotnet() {
   );
 }
 
+// Academic-gaps non-AI reads (FM-DOTNET-080) — routes/academic-gaps.ts, mounted /api/v1/school-admin/academic-gaps:
+// GET /summary, GET /students/:studentId, GET /recommendations/:studentId. ONE flag co-flips all three. The 4th route
+// GET /ai-recommendations/:studentId (Bedrock) is a DISTINCT literal segment and is NOT rewritten — it stays Node
+// (and keeps its aiLimiter). The three sources are method-unambiguous GETs on disjoint literal prefixes (/summary,
+// /students/:id, /recommendations/:id) — no mutual collision, and /ai-recommendations/:id does not match any of them.
+// Disjoint from every other school-admin block; more specific than the /api/:path* catch-all, so they must precede it.
+// Default OFF (dark).
+function shouldRouteAcademicGapsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ACADEMIC_GAPS_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1417,6 +1430,27 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/parent/children/:studentId/course-plan",
               destination: `${dotnetApiBaseUrl}/api/v1/parent/children/:studentId/course-plan`,
+            },
+          ]
+        : []),
+      // Academic-gaps non-AI reads (FM-DOTNET-080) — routes/academic-gaps.ts, mounted /api/v1/school-admin/academic-gaps.
+      // GET /summary, /students/:studentId, /recommendations/:studentId under ONE flag. The /ai-recommendations/:studentId
+      // (Bedrock) sibling is a distinct literal and is deliberately NOT rewritten (stays Node). All three literals are
+      // disjoint from each other and from every other school-admin block; more specific than the /api/:path* catch-all
+      // below, so they must precede it.
+      ...(shouldRouteAcademicGapsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/academic-gaps/summary",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/summary`,
+            },
+            {
+              source: "/api/v1/school-admin/academic-gaps/students/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/students/:studentId`,
+            },
+            {
+              source: "/api/v1/school-admin/academic-gaps/recommendations/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/recommendations/:studentId`,
             },
           ]
         : []),

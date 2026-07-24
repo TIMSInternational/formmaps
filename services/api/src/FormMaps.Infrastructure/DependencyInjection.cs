@@ -21,6 +21,7 @@ using FormMaps.Application.SchoolStudents;
 using FormMaps.Application.SchoolUsers;
 using FormMaps.Application.SchoolCourses;
 using FormMaps.Application.Counselor;
+using FormMaps.Application.AcademicGaps;
 using FormMaps.Application.CommunityService;
 using FormMaps.Application.StudentApplications;
 using FormMaps.Application.StudentApplicationSubResources;
@@ -49,6 +50,7 @@ using FormMaps.Infrastructure.SchoolStudents;
 using FormMaps.Infrastructure.SchoolUsers;
 using FormMaps.Infrastructure.SchoolCourses;
 using FormMaps.Infrastructure.Counselor;
+using FormMaps.Infrastructure.AcademicGaps;
 using FormMaps.Infrastructure.CommunityService;
 using FormMaps.Infrastructure.StudentApplications;
 using FormMaps.Infrastructure.StudentApplicationSubResources;
@@ -144,6 +146,8 @@ public static class DependencyInjection
         services.AddScoped<ICounselorAlertsRepository, CounselorAlertsRepository>();
         services.AddScoped<ICounselorSessionsRepository, CounselorSessionsRepository>();
         services.AddScoped<ICounselorNotesRepository, CounselorNotesRepository>();
+        // FM-DOTNET-080: academic-gaps 3 non-AI reads (summary / student detail / recommendations).
+        services.AddScoped<IAcademicGapsReader, AcademicGapsReader>();
         services.AddScoped<IStudentPortfolioRepository, StudentPortfolioRepository>();
         services.AddScoped<IStudentApplicationRepository, StudentApplicationRepository>();
         services.AddScoped<ICommunityServiceRepository, CommunityServiceRepository>();
