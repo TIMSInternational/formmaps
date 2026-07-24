@@ -101,6 +101,8 @@
     <EmbeddedResource Include="AcademicGaps\Data\academic-gaps-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers college applications CRUD harness (FM-DOTNET-081 Phase-D). -->
     <EmbeddedResource Include="College\Data\college-applications-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers college search + favorites harness (FM-DOTNET-082 Phase-D). -->
+    <EmbeddedResource Include="College\Data\college-favorites-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
