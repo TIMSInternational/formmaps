@@ -586,6 +586,18 @@ function shouldRouteStudentCoursePlanToDotnet() {
   );
 }
 
+// Student course change-requests CRUD (FM-DOTNET-085) — routes/course-plan.ts L92-143, mounted /api/v1/student. ONE
+// flag co-flips two PATHS (Next matches PATH not method): POST+GET /course-plan/change-requests, DELETE
+// /course-plan/change-requests/:requestId. Disjoint from the FM-084 /course-plan[/courses] sources and the Node-only
+// /course-plan/recommendations + /course-plan/eligibility siblings (later slice) — no collision. More specific than the
+// /api/:path* catch-all, so they must precede it. Default OFF (dark).
+function shouldRouteStudentChangeRequestsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl &&
+      isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_CHANGE_REQUESTS_TO_DOTNET)
+  );
+}
+
 // School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
 // ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
 // PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
@@ -1580,6 +1592,22 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/student/course-plan/courses/:courseId",
               destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/courses/:courseId`,
+            },
+          ]
+        : []),
+      // Student course change-requests CRUD (FM-DOTNET-085) — routes/course-plan.ts, mounted /api/v1/student. POST+GET
+      // /course-plan/change-requests + DELETE /course-plan/change-requests/:requestId under ONE flag (path-not-method
+      // co-flip). Disjoint from the FM-084 /course-plan[/courses] sources and the Node-only /course-plan/recommendations
+      // + /course-plan/eligibility siblings (later slice). More specific than the /api/:path* catch-all, so they precede it.
+      ...(shouldRouteStudentChangeRequestsToDotnet()
+        ? [
+            {
+              source: "/api/v1/student/course-plan/change-requests",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/change-requests`,
+            },
+            {
+              source: "/api/v1/student/course-plan/change-requests/:requestId",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/change-requests/:requestId`,
             },
           ]
         : []),
