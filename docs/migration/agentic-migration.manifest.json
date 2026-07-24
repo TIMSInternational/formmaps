@@ -2660,6 +2660,27 @@
       ],
       "verification": "dotnet build 0/0; unit 719 (+15 StudentApplicationValidation), integration 1412 (+2 skip; applications repo Testcontainers + endpoint faked-repo incl. int32-overflow + enum-message folds), contract 1 - full suite green. New Testcontainers harness student-applications-schema.sql (hand-written; ApplicationColumn + CollegeAppStatus enums). Staging deploy run 30056599381 SUCCESS + anon canary GREEN (health 200; all 6 core routes anon->401; /applications/x/essays -> 404 confirming :id does not swallow the 3-seg essay sub-path). Merged --no-ff to main 9d4b5f9. NEXT = student.ts community-service CRUD -> parents-link reads/writes -> essays/checklist (non-AI) -> parent.ts.",
       "commit": "9d4b5f9"
+    },
+    {
+      "id": "FM-DOTNET-075-community-service",
+      "status": "completed",
+      "goal": "Phase-C: student community-service CRUD (4 endpoints of routes/student.ts + studentService.ts) behind one dark flag FORMMAPS_ROUTE_STUDENT_COMMUNITY_SERVICE_TO_DOTNET (two rewrites; /community-service/:id + exact /community-service). Self-scoped (req.userId) — RequireIdentity + RLS. GET /community-service = computed envelope {data: entries, totalHours, totalHoursRequired} (schoolId-scoped when user has a school, date DESC, Sigma hours, serviceHoursRequired ?? 0), POST (zod create, 201; NoSchool -> 400 'No school'), PUT /community-service/:id (zod partial, owner+isActive+status=='pending' gate -> 404), DELETE /community-service/:id (same gate, -> {data:null}). New CommunityService namespace: ICommunityServiceRepository + repo + CommunityServiceValidation (Zod-parity, first-error message in schema order). NEW parity surfaces: z.string().email() (reuses ExternalEmailNormalization zod-v3 regex), date .refine(valid && non-future) via injected TimeProvider (Date.now()), update top-level .refine('At least one field is required') firing only when no field present (field errors win). hours Decimal -> trim_scale::text string on row + ::double sum for totalHours; CommunityServiceStatus enum cast; edit/delete atomic gate+write one session; express.json({strict}) body handling. Fresh reviewer SHIP (no HIGH/MEDIUM/security; no IDOR, mass-assignment-guarded; LOWs = whitespace-only-body 500-vs-400 [IsNullOrWhiteSpace convention across all slices] / empty-vs-NULL schoolId [FK-precluded] / >29-digit hours GetDecimal [shared behavior] / id tie-break determinism superset / tz-less datetime UTC-safe — all pathological or documented).",
+      "dependsOn": [
+        "FM-DOTNET-074-student-applications"
+      ],
+      "inputs": [
+        "/Users/federicotafur/formmaps-platform/api/src/routes/student.ts",
+        "/Users/federicotafur/formmaps-platform/api/src/services/studentService.ts",
+        "/Users/federicotafur/formmaps-platform/api/prisma/schema.prisma"
+      ],
+      "ownedPaths": [
+        "services/api/src/FormMaps.Application/CommunityService/ICommunityServiceRepository.cs",
+        "services/api/src/FormMaps.Application/CommunityService/CommunityServiceValidation.cs",
+        "services/api/src/FormMaps.Infrastructure/CommunityService/CommunityServiceRepository.cs",
+        "services/api/src/FormMaps.Api/Endpoints/CommunityServiceEndpoints.cs"
+      ],
+      "verification": "dotnet build 0/0; unit 734 (+15 CommunityServiceValidation), integration 1433 (+2 skip; community-service repo Testcontainers + endpoint faked-repo), contract 1 - full suite green. New Testcontainers harness community-service-schema.sql (users + schools + community_service_entries + CommunityServiceStatus enum). Staging deploy run 30062214232 SUCCESS + anon canary GREEN (health 200; all 4 routes anon->401). Merged --no-ff to main c28a8b5. NEXT = student.ts parents-link reads/writes -> essays/checklist (non-AI) -> parent.ts (child-link-scoped).",
+      "commit": "c28a8b5"
     }
   ]
 }
