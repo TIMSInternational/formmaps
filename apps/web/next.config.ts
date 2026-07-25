@@ -393,6 +393,17 @@ function shouldRouteUploadToDotnet() {
   );
 }
 
+// Resume section + template writes (FM-DOTNET-089) — routes/resume.ts, mounted /api/resume. Four self-scoped,
+// non-AI routes: PUT /:id/sections/order, POST /:id/sections, DELETE /:id/sections/:sectionId, PUT /:id/template.
+// Each carries a unique 2nd path segment ("sections"/"template") so none collide with the resume CRUD, the
+// cross-user GET /:id/original, or the AI /:id/ai-edit routes (all of which stay Node). /sections/order must
+// precede /sections/:sectionId (Next first-match). Default OFF (dark); before the /api/:path* catch-all.
+function shouldRouteResumeSectionsToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_SECTIONS_TO_DOTNET)
+  );
+}
+
 // Counselor dashboard self-contained READS (FM-DOTNET-067) — routes/counselor.ts, mounted under /api/v1/counselor.
 // Four counselor:dashboard GETs: /dashboard, /dashboard/change-requests, /me/students/:studentId, /students/:studentId.
 // All are GET-only (no sibling write shares any of these paths) → NO path-not-method hazard, a straight read cut-over.
@@ -1718,6 +1729,29 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/upload/portfolio-attachment",
               destination: `${dotnetApiBaseUrl}/api/v1/upload/portfolio-attachment`,
+            },
+          ]
+        : []),
+      // Resume section + template writes (FM-DOTNET-089) — /api/resume section/template routes. /sections/order
+      // precedes /sections/:sectionId (first-match). Unique 2nd segments ("sections"/"template") → no collision with
+      // the Node-only resume CRUD / cross-user / AI routes. One flag; before the /api/:path* catch-all.
+      ...(shouldRouteResumeSectionsToDotnet()
+        ? [
+            {
+              source: "/api/resume/:id/sections/order",
+              destination: `${dotnetApiBaseUrl}/api/resume/:id/sections/order`,
+            },
+            {
+              source: "/api/resume/:id/sections/:sectionId",
+              destination: `${dotnetApiBaseUrl}/api/resume/:id/sections/:sectionId`,
+            },
+            {
+              source: "/api/resume/:id/sections",
+              destination: `${dotnetApiBaseUrl}/api/resume/:id/sections`,
+            },
+            {
+              source: "/api/resume/:id/template",
+              destination: `${dotnetApiBaseUrl}/api/resume/:id/template`,
             },
           ]
         : []),

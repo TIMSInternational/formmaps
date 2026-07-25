@@ -70,6 +70,7 @@ app.MapSchoolCoursesEndpoints();
 app.MapIsamsReadsEndpoints();
 app.MapIsamsWriteEndpoints();
 app.MapUploadEndpoints();
+app.MapResumeSectionsEndpoints();
 app.MapCurriculumFrameworksEndpoints();
 app.MapDataMappingsEndpoints();
 app.MapPrerequisitesEndpoints();

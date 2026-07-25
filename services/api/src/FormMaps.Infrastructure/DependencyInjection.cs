@@ -18,6 +18,7 @@ using FormMaps.Application.SchoolProfile;
 using FormMaps.Application.IsamsReads;
 using FormMaps.Application.IsamsWrites;
 using FormMaps.Application.Security;
+using FormMaps.Application.Resumes;
 using FormMaps.Application.Storage;
 using FormMaps.Application.Uploads;
 using FormMaps.Application.SchoolReads;
@@ -53,6 +54,7 @@ using FormMaps.Infrastructure.SchoolProfile;
 using FormMaps.Infrastructure.IsamsReads;
 using FormMaps.Infrastructure.IsamsWrites;
 using FormMaps.Infrastructure.Security;
+using FormMaps.Infrastructure.Resumes;
 using FormMaps.Infrastructure.Storage;
 using FormMaps.Infrastructure.Uploads;
 using Amazon.S3;
@@ -257,6 +259,10 @@ public static class DependencyInjection
             _ => new AmazonS3Client(RegionEndpoint.GetBySystemName(objectStorageOptions.Region)));
         services.AddScoped<IObjectStorage, S3ObjectStorage>();
         services.AddScoped<IUploadRepository, UploadRepository>();
+
+        // FM-DOTNET-089: resume section + template writes (routes/resume.ts, /api/resume). Self-scoped jsonb-array
+        // manipulation; resumes has NO RLS so ownership is code-only. The resume CRUD + cross-user + AI routes stay Node.
+        services.AddScoped<IResumeSectionsRepository, ResumeSectionsRepository>();
 
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IQuestion360Reader, Question360Reader>();
