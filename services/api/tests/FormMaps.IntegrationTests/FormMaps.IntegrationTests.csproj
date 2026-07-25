@@ -111,6 +111,7 @@
     <EmbeddedResource Include="College\Data\college-favorites-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers college essays + comments harness (FM-DOTNET-083 Phase-D). -->
     <EmbeddedResource Include="College\Data\college-essays-schema.sql" />
+    <EmbeddedResource Include="Resumes\Data\resume-sections-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
