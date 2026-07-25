@@ -264,6 +264,10 @@ public static class DependencyInjection
         // manipulation; resumes has NO RLS so ownership is code-only. The resume CRUD + cross-user + AI routes stay Node.
         services.AddScoped<IResumeSectionsRepository, ResumeSectionsRepository>();
 
+        // FM-DOTNET-090: resume CRUD list + create (routes/resume.ts, /api/resume). Self-scoped by userId (no RLS);
+        // GET / lists the caller's active resumes, POST / creates one (full 22-col Prisma row passthrough).
+        services.AddScoped<IResumeRepository, ResumeRepository>();
+
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IQuestion360Reader, Question360Reader>();
         services.AddScoped<IQuestion360Writer, Question360Writer>();

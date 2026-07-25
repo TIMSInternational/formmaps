@@ -404,6 +404,18 @@ function shouldRouteResumeSectionsToDotnet() {
   );
 }
 
+// Resume CRUD list + create (FM-DOTNET-090) — routes/resume.ts, mounted /api/resume. Three self-scoped, non-AI
+// routes: GET /default (a static empty-resume shape), GET / (list the caller's own active resumes) and POST /
+// (create). GET / and POST / share the exact /api/resume path — Next matches path-not-method, so ONE flag co-flips
+// them; /default is a distinct exact literal. None collide with the Node-only single-segment GET /:id (other than
+// the "default" literal, which the .NET side now serves), the cross-user GET /:id/original, PUT/DELETE /:resumeId
+// or the AI /:id/... routes. Default OFF (dark); before the /api/:path* catch-all.
+function shouldRouteResumeCrudToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_CRUD_TO_DOTNET)
+  );
+}
+
 // Counselor dashboard self-contained READS (FM-DOTNET-067) — routes/counselor.ts, mounted under /api/v1/counselor.
 // Four counselor:dashboard GETs: /dashboard, /dashboard/change-requests, /me/students/:studentId, /students/:studentId.
 // All are GET-only (no sibling write shares any of these paths) → NO path-not-method hazard, a straight read cut-over.
@@ -1752,6 +1764,23 @@ const nextConfig: NextConfig = {
             {
               source: "/api/resume/:id/template",
               destination: `${dotnetApiBaseUrl}/api/resume/:id/template`,
+            },
+          ]
+        : []),
+      // Resume CRUD list + create (FM-DOTNET-090) — /api/resume/default (static shape), GET /api/resume (list) and
+      // POST /api/resume (create). /default is an exact literal; the bare /api/resume matches only the exact path
+      // (GET+POST co-flip, path-not-method). Disjoint from the resume-sections block above (multi-segment) and from
+      // the Node-only single-segment GET /:id / PUT/DELETE /:resumeId (only the "default" literal is rewritten). One
+      // flag; before the /api/:path* catch-all.
+      ...(shouldRouteResumeCrudToDotnet()
+        ? [
+            {
+              source: "/api/resume/default",
+              destination: `${dotnetApiBaseUrl}/api/resume/default`,
+            },
+            {
+              source: "/api/resume",
+              destination: `${dotnetApiBaseUrl}/api/resume`,
             },
           ]
         : []),
