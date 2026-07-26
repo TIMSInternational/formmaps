@@ -3,8 +3,9 @@
 /**
  * LIA flow state machine — the tims-suite LIAEvaluation orchestration:
  * overview → general-instructions → subtest-intro → practice → assessment,
- * with between-subtest transitions going straight to practice (intro skipped),
- * timeout marking, and auto-completion on the last subtest.
+ * with between-subtest transitions showing the next subtest's intro before
+ * practice (instructions before every subtest), timeout marking, and
+ * auto-completion on the last subtest.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -121,11 +122,13 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
         questionStartTimeRef.current = Date.now();
         setPhase("assessment");
       } else if (result.resume_mode === "next_subtest") {
-        // The prior subtest expired server-side and was advanced. Resume at the
-        // next subtest's practice (general instructions were already seen).
+        // The prior subtest expired server-side and was advanced. Land on the
+        // intro (not practice directly) — instructions show before every new
+        // subtest, including this resume path. The timer stays off until
+        // startAssessment runs.
         setPracticeQuestions(result.practice_questions);
         setCurrentQuestionIndex(0);
-        setPhase("practice");
+        setPhase("subtest-intro");
       } else {
         setPracticeQuestions(result.practice_questions);
         setPhase("general-instructions");
@@ -189,8 +192,10 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
     async (nextSubtest: LIASubtest) => {
       if (!sessionId) return;
       // Phase first, then swap data — prevents rendering the old subtest's
-      // items against the new subtest (tims ordering).
-      setPhase("practice");
+      // items against the new subtest (tims ordering). Land on the intro (not
+      // practice directly) so instructions show before every subtest, not
+      // only the first — the timer stays off until startAssessment runs.
+      setPhase("subtest-intro");
       setAssessmentQuestions([]);
       setCurrentSubtest(nextSubtest);
       setCurrentQuestionIndex(0);
