@@ -2287,6 +2287,12 @@
     "warning": "Warning",
     "info": "Information"
   },
+  "lia": {
+    "locked": {
+      "title": "Assessment Locked",
+      "body": "Your assessment is locked after too many exits. Ask your school administrator to unlock it."
+    }
+  },
   "mil": {
     "patternRecognition": "Pattern Recognition",
     "verbalReasoning": "Verbal Reasoning",

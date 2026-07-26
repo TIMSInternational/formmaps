@@ -2480,6 +2480,12 @@
       "viewAll": "Ver todo"
     }
   },
+  "lia": {
+    "locked": {
+      "title": "Evaluación Bloqueada",
+      "body": "Tu evaluación está bloqueada por demasiadas salidas. Pide al administrador de tu colegio que la desbloquee."
+    }
+  },
   "mil": {
     "patternRecognition": "Reconocimiento de Patrones",
     "verbalReasoning": "Razonamiento Verbal",

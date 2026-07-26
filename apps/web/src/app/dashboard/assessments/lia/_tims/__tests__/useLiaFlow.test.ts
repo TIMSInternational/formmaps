@@ -60,6 +60,24 @@ describe("useLiaFlow", () => {
     await waitFor(() => expect(r2.current.phase).toBe("already-completed"));
   });
 
+  it("lands on locked when checkAccess reports a locked in-progress session", async () => {
+    api.checkAccess.mockResolvedValue({ has_access: true, has_completed: false, locked: true });
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("locked"));
+  });
+
+  it("begin() surfaces the locked phase on a session_locked 409 (defense in depth)", async () => {
+    const lockedError = Object.assign(new Error("Locked"), {
+      status: 409,
+      data: { success: false, error: "session_locked" },
+    });
+    api.start.mockRejectedValue(lockedError);
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    expect(result.current.phase).toBe("locked");
+  });
+
   it("begin() starts the session, activates lockdown, and shows general instructions", async () => {
     const cb = makeCallbacks();
     api.start.mockResolvedValue({

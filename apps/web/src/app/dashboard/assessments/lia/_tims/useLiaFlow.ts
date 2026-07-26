@@ -19,6 +19,7 @@ export type LiaPhase =
   | "loading"
   | "overview"
   | "already-completed"
+  | "locked"
   | "general-instructions"
   | "subtest-intro"
   | "practice"
@@ -82,7 +83,7 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
       .then((access) => {
         if (cancelled) return;
         setHasResumableSession(!!access.existing_session_id && !access.has_completed);
-        setPhase(access.has_completed ? "already-completed" : "overview");
+        setPhase(access.locked ? "locked" : access.has_completed ? "already-completed" : "overview");
       })
       .catch(() => {
         if (!cancelled) setSessionError("access_check_failed");
@@ -108,7 +109,9 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
       setPhase("general-instructions");
     } catch (err) {
       const status = (err as Error & { status?: number })?.status;
-      if (status === 409) setPhase("already-completed");
+      const errorCode = (err as Error & { data?: { error?: string } })?.data?.error;
+      if (errorCode === "session_locked") setPhase("locked");
+      else if (status === 409) setPhase("already-completed");
       else setSessionError("start_failed");
     }
   }, [language, onLockdownBegin]);
@@ -238,7 +241,7 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
     setPhase("loading");
     liaAssessmentApi
       .checkAccess()
-      .then((access) => setPhase(access.has_completed ? "already-completed" : "overview"))
+      .then((access) => setPhase(access.locked ? "locked" : access.has_completed ? "already-completed" : "overview"))
       .catch(() => setSessionError("access_check_failed"));
   }, []);
 

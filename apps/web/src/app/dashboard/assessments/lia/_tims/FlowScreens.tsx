@@ -7,6 +7,7 @@
  * FormMaps brand tokens (navy #102B47 for TIMS purple).
  */
 import { Clock, HelpCircle, Maximize2, Lock, AlertTriangle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { SUBTEST_CONFIG, SUBTEST_ORDER, type LIASubtest } from "@/services/liaService";
 import { LIATimer } from "./LIATimer";
 
@@ -149,12 +150,30 @@ export function ProgressHeader({
 export function OverviewCard({
   language,
   resuming,
+  locked = false,
   onBegin,
 }: {
   language: "es" | "en";
   resuming: boolean;
+  locked?: boolean;
   onBegin: () => void;
 }) {
+  const { t } = useTranslation();
+
+  if (locked) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center bg-white rounded-2xl shadow-sm p-8">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t("lia.locked.title")}</h2>
+          <p className="text-gray-600">{t("lia.locked.body")}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[60vh] flex items-center justify-center p-6">
       <div className="max-w-2xl w-full bg-white rounded-2xl shadow-sm p-8">

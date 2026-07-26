@@ -164,6 +164,10 @@ export default function LIAAssessmentPage() {
     return <OverviewCard language={language} resuming={flow.hasResumableSession} onBegin={flow.begin} />;
   }
 
+  if (flow.phase === "locked") {
+    return <OverviewCard language={language} resuming={false} locked onBegin={flow.begin} />;
+  }
+
   if (flow.phase === "completed") {
     return (
       <MILCompletion

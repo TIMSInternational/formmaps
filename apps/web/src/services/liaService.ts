@@ -97,6 +97,7 @@ export interface CheckAccessResponse {
   has_completed: boolean;
   existing_session_id?: string;
   reason?: string;
+  locked?: boolean;
 }
 
 export interface StartSessionRequest {
