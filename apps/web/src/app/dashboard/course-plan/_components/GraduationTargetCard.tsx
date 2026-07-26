@@ -3,6 +3,7 @@
 import { GraduationCap, Lock, Pencil, Sparkles, LoaderCircle, Target } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EVAL_REQUIRED_RULE } from "@/services/assessmentProgressService";
 import type {
   GraduationTarget,
   AssessmentCompletion,
@@ -51,8 +52,12 @@ export function GraduationTargetCard({
     if (completion) {
       if (completion.liaCompleted < 5) parts.push(`LIA ${completion.liaCompleted}/5`);
       if (!completion.pcaCompleted) parts.push("PCA");
-      if (completion.evalTotal === 0 || completion.evalCompleted < completion.evalTotal)
-        parts.push(`360° ${completion.evalCompleted}/${completion.evalTotal}`);
+      // Same threshold the server unlocks careers/course-plan with — a
+      // student who finished min(evalTotal,3) evaluators is done, even if
+      // more were invited (see EVAL_REQUIRED_RULE).
+      const evalRequired = EVAL_REQUIRED_RULE(completion.evalTotal);
+      if (completion.evalTotal === 0 || completion.evalCompleted < evalRequired)
+        parts.push(`360° ${completion.evalCompleted}/${evalRequired}`);
     }
     return (
       <section className="rounded-xl p-5 bg-[#102B47] text-white">

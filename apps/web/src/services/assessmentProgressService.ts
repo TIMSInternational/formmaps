@@ -37,6 +37,21 @@ interface MILEnhancedData {
   }>;
 }
 
+// Single 360-completion rule, mirroring the server's gate
+// (computeStudentCompletion in api/src/services/assessmentService.ts):
+// a student needs at most 3 completed evaluators, never more than were
+// actually invited. One unresponsive evaluator must never permanently lock
+// a student out — this is why "3-of-4 done" must read as complete, not
+// "one of each relation type" (self/parent/teacher/sibling-friend), which
+// is what this file used to require and is the exact bug Madhav reported.
+export function EVAL_REQUIRED_RULE(evalTotal: number): number {
+  return Math.min(evalTotal, 3);
+}
+
+export function isEvalComplete(evalCompleted: number, evalTotal: number): boolean {
+  return evalTotal > 0 && evalCompleted >= EVAL_REQUIRED_RULE(evalTotal);
+}
+
 export interface AssessmentOverallProgress {
   milAssessment: {
     status: "not_started" | "in_progress" | "completed";
@@ -152,29 +167,17 @@ export async function getUserAssessmentProgress(
       evaluationProgress = getUserEvaluationProgressSummary(evaluationGroups);
 
       if (evaluationGroups.length > 0) {
-        // Check if 360° evaluation is complete:
-        // - Self-evaluation must be completed
-        // - At least one from each group type (Parent, Teacher, SiblingFriend) must be completed
-        // Self-evaluation has groupType "Parent" but relation "Self"
-        const gt = (g: EvaluationGroupProgress) => (g.groupType || "").toLowerCase();
-        const rel = (g: EvaluationGroupProgress) => (g.relation || "").toLowerCase();
-        const selfCompleted = evaluationGroups.some(
-          (g) => (gt(g) === "self" || rel(g) === "self") && g.isEvaluationCompleted
-        );
-        const parentCompleted = evaluationGroups.some(
-          (g) => gt(g) === "parent" && rel(g) !== "self" && g.isEvaluationCompleted
-        );
-        const teacherCompleted = evaluationGroups.some(
-          (g) => gt(g) === "teacher" && g.isEvaluationCompleted
-        );
-        const otherCompleted = evaluationGroups.some(
-          (g) => (gt(g) === "siblingfriend" || gt(g) === "other") && g.isEvaluationCompleted
-        );
+        // 360° evaluation is complete once evalCompleted >= min(evalTotal, 3) —
+        // the SAME threshold the server unlocks careers/course-plan with (see
+        // EVAL_REQUIRED_RULE above). Requiring one-of-each relation type here
+        // let one unresponsive evaluator lock a student out forever even after
+        // the server had already unlocked them (3-of-4 done read as "pending").
+        const evalTotal = evaluationGroups.length;
+        const evalCompleted = evaluationGroups.filter((g) => g.isEvaluationCompleted).length;
 
-        evaluationStatus =
-          selfCompleted && parentCompleted && teacherCompleted && otherCompleted
-            ? "completed"
-            : "in_progress";
+        evaluationStatus = isEvalComplete(evalCompleted, evalTotal)
+          ? "completed"
+          : "in_progress";
 
         const latestGroup = evaluationGroups.sort(
           (a, b) =>
