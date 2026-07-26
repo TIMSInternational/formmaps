@@ -74,7 +74,7 @@ export function AssessmentsTab({
     <div className="space-y-4">
       {/* MIL / LIA Results */}
       <Card>
-        <CardHeader icon={Brain} color="#2E9098" title="MIL / LIA Cognitive Assessment" badge={
+        <CardHeader icon={Brain} color="#2E9098" title="MIL / LIA Assessment" badge={
           milData ? (
             <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(99,102,241,0.1)", color: "#2E9098", marginLeft: 4 }}>
               {milData.completedExams}/{milData.totalExams} complete
@@ -101,7 +101,7 @@ export function AssessmentsTab({
               {/* Cognitive Profile */}
               {milData.cognitiveProfile && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>Cognitive Profile</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>MIL Profile</div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {Object.entries(milData.cognitiveProfile).map(([key, value]) => (
                       <div key={key} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)" }}>
@@ -165,7 +165,7 @@ export function AssessmentsTab({
 
       {/* PCA DISC Profile (TIMS) */}
       <Card>
-        <CardHeader icon={Target} color="#8b5cf6" title="PCA DISC Profile" badge={
+        <CardHeader icon={Target} color="#8b5cf6" title="PCA Profile" badge={
           pcaDISC?.pcaFec ? (
             <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(139,92,246,0.1)", color: "#8b5cf6", marginLeft: 4 }}>
               Completed {pcaDISC.pcaFec}
@@ -267,7 +267,7 @@ export function AssessmentsTab({
             <div style={{ textAlign: "center", padding: "24px 0" }}>
               <Target style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.4, color: "var(--admin-font-tertiary)" }} />
               <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginBottom: 12 }}>
-                No PCA DISC results available.
+                No PCA results available.
               </div>
               <button
                 onClick={() => {

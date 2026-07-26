@@ -115,7 +115,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
               <CardTitle className="flex items-center justify-between text-base">
                 <div className="flex items-center gap-2">
                   <Brain className="h-4 w-4 text-indigo-600" />
-                  {t("assessments.pcaTitle", "PCA Cognitive Assessment")}
+                  {t("assessments.pcaTitle", "PCA Assessment")}
                 </div>
                 {(() => {
                   const examStatuses = milHistory?.examStatus ?? [];

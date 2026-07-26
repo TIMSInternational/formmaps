@@ -121,9 +121,9 @@ function PCAReports({ student }: { student: StudentRecord }) {
       const blob = await getPcaChartBlob(String(d.pcaCod));
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a"); a.href = url;
-      a.download = `DISC-Chart-${student.name.replace(/\s+/g, "-")}.png`; a.click();
+      a.download = `PCA-Chart-${student.name.replace(/\s+/g, "-")}.png`; a.click();
       URL.revokeObjectURL(url);
-      toast.success("DISC chart downloaded");
+      toast.success("PCA chart downloaded");
     } catch { toast.error("Failed to download chart"); }
     setLoading(null);
   };
@@ -163,7 +163,7 @@ function PCAReports({ student }: { student: StudentRecord }) {
     try {
       const report = {
         student: { name: student.name, email: student.email, id: student.id },
-        type: "PCA DISC Profile Report",
+        type: "PCA Profile Report",
         generatedAt: new Date().toISOString(),
         disc: d ? {
           workAdaptation: { D: d.pcaD1, I: d.pcaI1, S: d.pcaS1, C: d.pcaC1 },
@@ -188,7 +188,7 @@ function PCAReports({ student }: { student: StudentRecord }) {
           <Target style={{ width: 20, height: 20, color: "#8b5cf6" }} />
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary)" }}>{student.name}</div>
-            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>PCA / DISC Profile Reports</div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>PCA Assessment Reports</div>
           </div>
         </div>
       </div>
@@ -206,17 +206,17 @@ function PCAReports({ student }: { student: StudentRecord }) {
           </div>
         ) : (
           <>
-            <ReportRow icon={Image} label="DISC Chart Image" desc="Visual chart of D/I/S/C profile across 3 graphs" format="PNG" loading={loading === "chart"} onDownload={downloadChart} />
+            <ReportRow icon={Image} label="PCA Chart Image" desc="Visual chart of D/I/S/C profile across 3 graphs" format="PNG" loading={loading === "chart"} onDownload={downloadChart} />
             <ReportRow icon={FileText} label={t("pca.reports.informePca")} desc={t("pca.reports.informePcaDesc")} format="PDF" loading={loading === "pca"} onDownload={() => downloadTimsReport("pca", "Informe-PCA")} />
             <ReportRow icon={FileText} label={t("pca.reports.guiaDesarrollo")} desc={t("pca.reports.guiaDesarrolloDesc")} format="PDF" loading={loading === "gd"} onDownload={() => downloadTimsReport("gd", "Guia-Desarrollo")} />
             <ReportRow icon={FileText} label={t("pca.reports.coaching")} desc={t("pca.reports.coachingDesc")} format="PDF" loading={loading === "coaching"} onDownload={() => downloadTimsReport("coaching", "PCA-Coaching")} />
             <ReportRow icon={FileText} label={t("informe.download")} desc={t("informe.desc")} format="PDF" loading={loading === "informe"} onDownload={downloadInforme} />
-            <ReportRow icon={FileText} label="Full PCA Report" desc="DISC scores, competences, and completion data" format="JSON" loading={loading === "full"} onDownload={downloadFullReport}
+            <ReportRow icon={FileText} label="Full PCA Report" desc="PCA scores, competences, and completion data" format="JSON" loading={loading === "full"} onDownload={downloadFullReport}
               onPrint={() => {
                 if (!d) return;
                 const cmps = ((competences as Record<string, unknown>)?.pcaCmps || []) as Array<Record<string, unknown>>;
-                openPrintableReport("PCA DISC Profile Report", student.name, [
-                  { heading: "DISC Scores", content: `<table><tr><th></th><th>D</th><th>I</th><th>S</th><th>C</th></tr>
+                openPrintableReport("PCA Profile Report", student.name, [
+                  { heading: "PCA Scores", content: `<table><tr><th></th><th>D</th><th>I</th><th>S</th><th>C</th></tr>
                     <tr><td>Work Adaptation</td><td>${escapeHtml(d.pcaD1)}</td><td>${escapeHtml(d.pcaI1)}</td><td>${escapeHtml(d.pcaS1)}</td><td>${escapeHtml(d.pcaC1)}</td></tr>
                     <tr><td>Under Pressure</td><td>${escapeHtml(d.pcaD2)}</td><td>${escapeHtml(d.pcaI2)}</td><td>${escapeHtml(d.pcaS2)}</td><td>${escapeHtml(d.pcaC2)}</td></tr>
                     <tr><td>Self-Image</td><td>${escapeHtml(d.pcaD3)}</td><td>${escapeHtml(d.pcaI3)}</td><td>${escapeHtml(d.pcaS3)}</td><td>${escapeHtml(d.pcaC3)}</td></tr></table>
@@ -262,13 +262,13 @@ function MILReports({ student }: { student: StudentRecord }) {
     try {
       const blob = new Blob([JSON.stringify({
         student: { name: student.name, email: student.email },
-        type: "MIL / LIA Cognitive Profile",
+        type: "MIL / LIA Profile",
         generatedAt: new Date().toISOString(),
         ...milData,
       }, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-      a.download = `MIL-Cognitive-${student.name.replace(/\s+/g, "-")}.json`; a.click();
-      toast.success("Cognitive profile downloaded");
+      a.download = `MIL-Profile-${student.name.replace(/\s+/g, "-")}.json`; a.click();
+      toast.success("MIL profile downloaded");
     } catch { toast.error("Failed"); }
     setLoading(null);
   };
@@ -298,7 +298,7 @@ function MILReports({ student }: { student: StudentRecord }) {
           <Brain style={{ width: 20, height: 20, color: "#2E9098" }} />
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary)" }}>{student.name}</div>
-            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>MIL / LIA Cognitive Assessment Reports</div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>MIL / LIA Assessment Reports</div>
           </div>
         </div>
       </div>
@@ -313,13 +313,13 @@ function MILReports({ student }: { student: StudentRecord }) {
           </div>
         ) : (
           <>
-            <ReportRow icon={Brain} label="Cognitive Profile" desc="5 domains: Reasoning, Detection, Numeric, Memory, Orientation" format="JSON" loading={loading === "cognitive"} onDownload={downloadCognitive}
+            <ReportRow icon={Brain} label="MIL Profile" desc="5 domains: Reasoning, Detection, Numeric, Memory, Orientation" format="JSON" loading={loading === "cognitive"} onDownload={downloadCognitive}
               onPrint={() => {
                 const cp = (milData?.cognitiveProfile || {}) as Record<string, unknown>;
                 const labels: Record<string, string> = { PatternRecognition: "Pattern Recognition", VerbalReasoning: "Verbal Reasoning", WorkingMemory: "Working Memory", NumericVelocity: "Numeric Velocity", VisualRotation: "Visual Rotation" };
-                openPrintableReport("MIL / LIA Cognitive Profile", student.name, [
+                openPrintableReport("MIL / LIA Profile", student.name, [
                   { heading: "Overall Score", content: `<p style="font-size:28px;font-weight:700;">${escapeHtml(milData?.overallScore || 0)}%</p><p style="color:#888;">Completed ${escapeHtml(milData?.completedExams || 0)} of ${escapeHtml(milData?.totalExams || 5)} exams</p>` },
-                  { heading: "Cognitive Domains", content: `<table><tr><th>Domain</th><th>Score</th><th>Visual</th></tr>${Object.entries(cp).map(([k, v]) => {
+                  { heading: "MIL Domains", content: `<table><tr><th>Domain</th><th>Score</th><th>Visual</th></tr>${Object.entries(cp).map(([k, v]) => {
                     const pct = Number(v) || 0;
                     const color = pct >= 70 ? "#16a34a" : pct >= 40 ? "#ca8a04" : "#dc2626";
                     return `<tr><td>${escapeHtml(labels[k] || k)}</td><td style="font-weight:600;">${pct}%</td><td><div class="bar-container"><div class="bar" style="width:${pct}%;background:${color};"></div></div></td></tr>`;

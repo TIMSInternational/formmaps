@@ -116,7 +116,7 @@ export function UniversityDetailsModal({
             <div className="px-6 py-4 border-b border-[var(--admin-border-light)]">
               <div className="grid grid-cols-4 gap-3">
                 {[
-                  { label: t("Cognitive", "Cognitivo"), value: matchBreakdown.academicMatch, icon: BarChart3 },
+                  { label: t("MIL", "MIL"), value: matchBreakdown.academicMatch, icon: BarChart3 },
                   { label: t("Career", "Carrera"), value: matchBreakdown.careerAlignment, icon: TrendingUp },
                   { label: t("Personality", "Personalidad"), value: matchBreakdown.personalityMatch, icon: Star },
                   { label: t("Preferences", "Preferencias"), value: matchBreakdown.preferencesMatch, icon: CheckCircle2 },

@@ -258,7 +258,7 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
         <View style={styles.headerBanner}>
           <Text style={styles.headerLogo}>FormMaps</Text>
           <Text style={styles.headerTitle}>PCA Personality Profile Report</Text>
-          <Text style={styles.headerSubtitle}>Personal Characteristics Assessment • DISC-Based Analysis</Text>
+          <Text style={styles.headerSubtitle}>Personal Characteristics Assessment • PCA-Based Analysis</Text>
         </View>
 
         {/* User Info */}
@@ -447,7 +447,7 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
             About This Assessment
           </Text>
           <Text style={{ fontSize: 8, color: '#14b8a6', lineHeight: 1.5 }}>
-            The PCA (Personal Characteristics Assessment) is based on the DISC behavioral model and 
+            The PCA (Personal Characteristics Assessment) is based on the PCA behavioral model and
             measures natural and adapted behavioral tendencies. This report provides insights into 
             personality preferences and is intended for personal and professional development purposes.
           </Text>

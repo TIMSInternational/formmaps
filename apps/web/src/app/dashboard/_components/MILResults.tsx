@@ -170,7 +170,7 @@ export function MILResults({ className, milDataProp }: MILResultsProps) {
                 {t("dashboard.liaResults")}
               </h3>
               <p className="text-sm text-slate-500 mt-1">
-                Cognitive Assessment
+                MIL Assessment
               </p>
             </div>
           </div>

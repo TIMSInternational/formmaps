@@ -58,14 +58,14 @@ function buildPrintableSections(r: StudentReport) {
   sections.push({
     heading: "Completion Summary",
     content: `<table><tr><th>Component</th><th>Status</th></tr>
-      <tr><td>Cognitive (MIL / LIA)</td><td>${r.completion.lia ? "Completed" : "Pending"}</td></tr>
-      <tr><td>DISC / PCA</td><td>${r.completion.disc ? "Completed" : "Pending"}</td></tr>
+      <tr><td>MIL / LIA</td><td>${r.completion.lia ? "Completed" : "Pending"}</td></tr>
+      <tr><td>PCA</td><td>${r.completion.disc ? "Completed" : "Pending"}</td></tr>
       <tr><td>360 Evaluation</td><td>${r.completion.eval360 ? "Completed" : "Pending"}</td></tr>
       <tr><td><strong>Overall</strong></td><td><strong>${r.completion.overall ? "Complete" : "Incomplete"}</strong></td></tr></table>`,
   });
   if (r.mil.sessions.length) {
     sections.push({
-      heading: `Cognitive Exams (avg ${r.mil.averageScore}% · ${r.mil.completedCount} completed)`,
+      heading: `MIL Exams (avg ${r.mil.averageScore}% · ${r.mil.completedCount} completed)`,
       content: `<table><tr><th>Exam</th><th>Status</th><th>Score</th><th>Date</th></tr>${r.mil.sessions.map(s =>
         `<tr><td>${escapeHtml(s.examName || "—")}</td><td>${escapeHtml(s.status || "—")}</td><td>${s.completed ? `${s.scorePercentage}%` : "—"}</td><td>${escapeHtml(fmtDate(s.startTime))}</td></tr>`).join("")}</table>`,
     });
@@ -116,7 +116,7 @@ export function StudentReportModal({ studentId, open, onOpenChange }: {
             Student Assessment Report
           </DialogTitle>
           <DialogDescription style={{ color: "var(--admin-font-tertiary)" }}>
-            Full assessment breakdown across cognitive, DISC, and 360 components.
+            Full assessment breakdown across MIL, PCA, and 360 components.
           </DialogDescription>
         </DialogHeader>
 
@@ -159,18 +159,18 @@ export function StudentReportModal({ studentId, open, onOpenChange }: {
 
             {/* Completion summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <CompletionChip label="Cognitive" done={report.completion.lia} />
-              <CompletionChip label="DISC / PCA" done={report.completion.disc} />
+              <CompletionChip label="MIL" done={report.completion.lia} />
+              <CompletionChip label="PCA" done={report.completion.disc} />
               <CompletionChip label="360" done={report.completion.eval360} />
               <CompletionChip label="Overall" done={report.completion.overall} />
             </div>
 
             {/* Cognitive (MIL) */}
             <div>
-              <SectionHeading icon={Brain} color="#2E9098" title="Cognitive Exams"
+              <SectionHeading icon={Brain} color="#2E9098" title="MIL Exams"
                 sub={`avg ${report.mil.averageScore}% · ${report.mil.completedCount} completed`} />
               {report.mil.sessions.length === 0 ? (
-                <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", padding: "8px 0" }}>No cognitive exam sessions yet.</div>
+                <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", padding: "8px 0" }}>No MIL exam sessions yet.</div>
               ) : (
                 <div className="space-y-2">
                   {report.mil.sessions.map((s) => (
@@ -190,7 +190,7 @@ export function StudentReportModal({ studentId, open, onOpenChange }: {
 
             {/* DISC / PCA */}
             <div>
-              <SectionHeading icon={Target} color="#8b5cf6" title="DISC / PCA"
+              <SectionHeading icon={Target} color="#8b5cf6" title="PCA"
                 sub={`${report.pca.evaluationCount} evaluation${report.pca.evaluationCount === 1 ? "" : "s"}`} />
               <div className="flex items-center gap-2" style={{ fontSize: 12, color: "var(--admin-font-secondary)" }}>
                 {report.pca.completed

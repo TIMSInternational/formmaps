@@ -224,7 +224,7 @@ export default function PCAAssessmentPage() {
                   {t("dashboard.viewResults", "View Results")}
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  See your DISC personality profile and competency breakdown
+                  See your PCA personality profile and competency breakdown
                 </p>
               </div>
             </div>

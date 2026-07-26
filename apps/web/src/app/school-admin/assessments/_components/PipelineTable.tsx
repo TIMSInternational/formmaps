@@ -80,7 +80,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
           {/* PCA Exams */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-              PCA Cognitive Assessment ({pcaDone}/{pcaTotal})
+              PCA Assessment ({pcaDone}/{pcaTotal})
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {pcaEntries.map(([name, status]) => (
@@ -215,7 +215,7 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
     const hasPcaIncomplete = selectedStudents.some(s => Object.values(s.pca).some(v => v !== "done"));
     const hasMilIncomplete = selectedStudents.some(s => s.mil !== "done");
     const has360Incomplete = selectedStudents.some(s => s.eval360 !== "done");
-    if (hasPcaIncomplete) pendingTypes.push("PCA (Cognitive Assessment)");
+    if (hasPcaIncomplete) pendingTypes.push("PCA (Personal Competence Analysis)");
     if (hasMilIncomplete) pendingTypes.push("MIL (Multiple Intelligence Lens)");
     if (has360Incomplete) pendingTypes.push("360 Evaluation");
   }

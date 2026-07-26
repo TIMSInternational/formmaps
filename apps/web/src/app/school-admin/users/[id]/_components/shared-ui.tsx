@@ -29,7 +29,7 @@ export function PCAChartImage({ pcaCod }: { pcaCod?: string }) {
   if (!src) return null;
   return (
     <div style={{ marginTop: 8 }}>
-      <img src={src} alt="DISC Chart" style={{ width: "100%", borderRadius: 6, border: "1px solid var(--admin-border-default)" }} />
+      <img src={src} alt="PCA Chart" style={{ width: "100%", borderRadius: 6, border: "1px solid var(--admin-border-default)" }} />
     </div>
   );
 }

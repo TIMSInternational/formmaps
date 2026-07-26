@@ -205,11 +205,11 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
                   </h3>
                   {[
                     {
-                      label: "DISC Personality",
+                      label: "PCA Personality",
                       value: selectedCareer.breakdown.discScore,
                     },
                     {
-                      label: "Cognitive (MIL)",
+                      label: "MIL",
                       value: selectedCareer.breakdown.milScore,
                     },
                     {

@@ -820,6 +820,11 @@
     },
     {
       "file": "src/app/counselor/reports/_components/PCAReports.tsx",
+      "line": 119,
+      "text": "PCA Assessment Report"
+    },
+    {
+      "file": "src/app/counselor/reports/_components/PCAReports.tsx",
       "line": 130,
       "text": "Under Pressure"
     },
@@ -1115,13 +1120,13 @@
     },
     {
       "file": "src/app/dashboard/assessments/_components/PCAResultsPanel.tsx",
-      "line": 58,
-      "text": "DISC Profile Graph"
+      "line": 60,
+      "text": "PCA Profile Graph"
     },
     {
       "file": "src/app/dashboard/assessments/_components/PCAResultsPanel.tsx",
-      "line": 63,
-      "text": "DISC Profile Graph"
+      "line": 65,
+      "text": "PCA Profile Graph"
     },
     {
       "file": "src/app/dashboard/assessments/_components/PCAResultsPanel.tsx",
@@ -3216,7 +3221,7 @@
     {
       "file": "src/app/school-admin/assessments/_components/InsightsCard.tsx",
       "line": 152,
-      "text": "DISC Distribution"
+      "text": "PCA Distribution"
     },
     {
       "file": "src/app/school-admin/assessments/_components/InsightsCard.tsx",
@@ -3336,7 +3341,7 @@
     {
       "file": "src/app/school-admin/assessments/_components/StudentReportModal.tsx",
       "line": 170,
-      "text": "Cognitive Exams"
+      "text": "MIL Exams"
     },
     {
       "file": "src/app/school-admin/assessments/_components/StudentReportModal.tsx",
@@ -3600,13 +3605,18 @@
     },
     {
       "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
+      "line": 191,
+      "text": "PCA Assessment Reports"
+    },
+    {
+      "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
       "line": 171,
       "text": "PCA Not Completed"
     },
     {
       "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
-      "line": 176,
-      "text": "DISC Chart Image"
+      "line": 209,
+      "text": "PCA Chart Image"
     },
     {
       "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
@@ -3625,8 +3635,8 @@
     },
     {
       "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
-      "line": 279,
-      "text": "Cognitive Profile"
+      "line": 316,
+      "text": "MIL Profile"
     },
     {
       "file": "src/app/school-admin/reports/_components/StudentReportPanels.tsx",
@@ -3815,8 +3825,8 @@
     },
     {
       "file": "src/app/school-admin/users/[id]/_components/assessments-tab.tsx",
-      "line": 62,
-      "text": "Cognitive Profile"
+      "line": 104,
+      "text": "MIL Profile"
     },
     {
       "file": "src/app/school-admin/users/[id]/_components/assessments-tab.tsx",
@@ -3825,8 +3835,8 @@
     },
     {
       "file": "src/app/school-admin/users/[id]/_components/assessments-tab.tsx",
-      "line": 126,
-      "text": "PCA DISC Profile"
+      "line": 168,
+      "text": "PCA Profile"
     },
     {
       "file": "src/app/school-admin/users/[id]/_components/extracurriculars-tab.tsx",
@@ -3911,7 +3921,7 @@
     {
       "file": "src/app/school-admin/users/[id]/_components/shared-ui.tsx",
       "line": 32,
-      "text": "DISC Chart"
+      "text": "PCA Chart"
     },
     {
       "file": "src/app/school-admin/users/_components/CounselorAssignPanel.tsx",

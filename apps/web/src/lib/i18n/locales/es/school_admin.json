@@ -168,12 +168,12 @@
       "eval360Complete": "360° Completo",
       "fullyAssessed": "Evaluados Completamente"
     },
-    "cognitiveProfile": "Perfil Cognitivo Institucional",
+    "cognitiveProfile": "Perfil MIL Institucional",
     "topCareerInterests": "Principales Intereses Vocacionales",
     "careerDataEmpty": "Los datos de carrera aparecerán tras el análisis de perfil.",
     "aiInsights": "Insights IA",
     "cached": "CACHÉ",
-    "discDistribution": "Distribución DISC",
+    "discDistribution": "Distribución PCA",
     "aiAnalysisEmpty": "El análisis de IA estará disponible una vez que suficientes estudiantes completen sus evaluaciones.",
     "topPerformers": {
       "title": "Mejores Desempeños",
@@ -327,8 +327,8 @@
     "title": "Informes",
     "subtitle": "Descarga informes de evaluación y exportaciones de datos por estudiante",
     "tabs": {
-      "pca": "PCA / Perfil DISC",
-      "mil": "MIL / LIA Cognitivo",
+      "pca": "PCA — Análisis de Competencia Personal",
+      "mil": "MIL / LIA",
       "eval360": "Evaluación 360°",
       "360": "Evaluación 360°"
     },
@@ -515,7 +515,7 @@
     "configure": "Configurar",
     "providers": {
       "isams": "Sincroniza datos de estudiantes, horarios y calificaciones desde el sistema de gestión escolar iSAMS.",
-      "tims": "Integración de la evaluación de personalidad DISC para orientación profesional y mapeo de competencias.",
+      "tims": "Integración de la evaluación de personalidad PCA para orientación profesional y mapeo de competencias.",
       "google": "Inicio de sesión único e integración con Google Classroom para un acceso fluido de los estudiantes.",
       "canvas": "Importa calificaciones y tareas desde el sistema de gestión de aprendizaje Canvas.",
       "powerschool": "Sincroniza datos del sistema de información estudiantil, incluidos datos demográficos y expedientes."
