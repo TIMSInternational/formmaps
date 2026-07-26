@@ -246,6 +246,73 @@ describe("useLiaFlow", () => {
     expect(result.current.phase).toBe("completed");
   });
 
+  it("resume_mode 'mid_subtest' enters assessment directly at the stored position with the ORIGINAL started_at (clock never resets)", async () => {
+    // Task-3 behavior change: resume-in-place supersedes delete+practice-reset (see 2026-07-25 plan)
+    const cb = makeCallbacks();
+    const original = new Date(Date.now() - 40_000).toISOString(); // 40s already elapsed
+    api.start.mockResolvedValue({
+      session_id: "s1",
+      current_subtest: "pattern_recognition",
+      practice_questions: [],
+      resume_mode: "mid_subtest",
+      current_item: 5, // 4 answered → resume at array index 4
+      started_at: original,
+      time_limit_seconds: 180,
+      questions: Array.from({ length: 60 }, (_, i) => ({ ...Q(`a${i + 1}`), item_number: i + 1 })),
+    });
+    const { result } = renderHook(() => useLiaFlow(cb));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    expect(result.current.phase).toBe("assessment");
+    expect(result.current.assessmentQuestions).toHaveLength(60);
+    expect(result.current.currentQuestionIndex).toBe(4); // next unanswered
+    expect(result.current.timeLimitSeconds).toBe(180);
+    expect(result.current.subtestStartTime?.toISOString()).toBe(original);
+    expect(cb.onLockdownBegin).toHaveBeenCalled();
+  });
+
+  it("resume_mode 'next_subtest' resumes at the next subtest's practice (prior subtest expired server-side)", async () => {
+    api.start.mockResolvedValue({
+      session_id: "s1",
+      current_subtest: "verbal_reasoning",
+      practice_questions: [Q("vp1", "verbal_reasoning")],
+      resume_mode: "next_subtest",
+    });
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    expect(result.current.phase).toBe("practice");
+    expect(result.current.currentSubtest).toBe("verbal_reasoning");
+    expect(result.current.practiceQuestions).toHaveLength(1);
+  });
+
+  it("a timed_out submit response advances like a timeout (the late answer was not saved)", async () => {
+    api.start.mockResolvedValue({ session_id: "s1", current_subtest: "pattern_recognition", practice_questions: [] });
+    api.startSubtest.mockResolvedValue({
+      session_id: "s1",
+      subtest: "pattern_recognition",
+      questions: [Q("a1"), Q("a2")],
+      time_limit_seconds: 180,
+      started_at: new Date().toISOString(),
+    });
+    // Server rejected the answer (clock expired), advanced to the next subtest.
+    api.submitAnswer.mockResolvedValue({
+      timed_out: true,
+      subtest_complete: true,
+      assessment_complete: false,
+      next_subtest: "verbal_reasoning",
+      session_status: "practice",
+    });
+    api.getPracticeQuestions.mockResolvedValue([Q("vp1", "verbal_reasoning")]);
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    await act(() => result.current.startAssessment());
+    await act(() => result.current.submitAssessmentAnswer("3"));
+    expect(result.current.phase).toBe("practice");
+    expect(result.current.currentSubtest).toBe("verbal_reasoning");
+  });
+
   it("timeout marks remaining questions and advances", async () => {
     api.start.mockResolvedValue({ session_id: "s1", current_subtest: "pattern_recognition", practice_questions: [] });
     api.startSubtest.mockResolvedValue({

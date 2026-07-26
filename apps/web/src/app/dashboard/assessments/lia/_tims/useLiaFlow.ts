@@ -104,9 +104,32 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
       });
       setSessionId(result.session_id);
       setCurrentSubtest(result.current_subtest);
-      setPracticeQuestions(result.practice_questions);
       onLockdownBegin();
-      setPhase("general-instructions");
+      if (result.resume_mode === "mid_subtest") {
+        // Server-authoritative timer: the subtest clock is still live. Enter the
+        // assessment phase directly at the stored position with the ORIGINAL
+        // started_at — LIATimer is server-anchored, so the countdown shows the
+        // true remaining time (never a fresh full clock).
+        const questions = result.questions ?? [];
+        setAssessmentQuestions(questions);
+        // current_item is 1-based (items answered + 1); the next unanswered item
+        // sits at array index current_item - 1. Clamp defensively.
+        const resumeIndex = Math.max(0, Math.min((result.current_item ?? 1) - 1, Math.max(0, questions.length - 1)));
+        setCurrentQuestionIndex(resumeIndex);
+        setSubtestStartTime(result.started_at ? new Date(result.started_at) : new Date());
+        setTimeLimitSeconds(result.time_limit_seconds ?? 0);
+        questionStartTimeRef.current = Date.now();
+        setPhase("assessment");
+      } else if (result.resume_mode === "next_subtest") {
+        // The prior subtest expired server-side and was advanced. Resume at the
+        // next subtest's practice (general instructions were already seen).
+        setPracticeQuestions(result.practice_questions);
+        setCurrentQuestionIndex(0);
+        setPhase("practice");
+      } else {
+        setPracticeQuestions(result.practice_questions);
+        setPhase("general-instructions");
+      }
     } catch (err) {
       const status = (err as Error & { status?: number })?.status;
       const errorCode = (err as Error & { data?: { error?: string } })?.data?.error;
@@ -206,7 +229,10 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
           answer,
           time_spent_ms: timeSpentMs,
         });
-        if (result.subtest_complete) {
+        // A `timed_out` response means the server rejected this answer because
+        // the subtest clock expired and advanced the session — jump to the next
+        // phase exactly as the timeout handler does (the answer was not saved).
+        if (result.timed_out || result.subtest_complete) {
           if (result.assessment_complete) await finishAssessment();
           else if (result.next_subtest) await advanceToNextSubtest(result.next_subtest);
         } else {
