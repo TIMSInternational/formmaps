@@ -43,7 +43,7 @@ public class CoursePlanComputeEndpointsTests
         var reader = new FakeReader
         {
             Recommendations = new RecommendationsData(
-                new StudentCompletionVerdict(2, 5, 1, 3, false, false), Done: false, [], new HashSet<string>(), [])
+                new StudentCompletionVerdict(2, 5, 1, 3, false, false), Done: false, [], new HashSet<string>(), [], [])
         };
         using var factory = new Factory(reader);
         using var client = factory.CreateClient();
@@ -69,7 +69,7 @@ public class CoursePlanComputeEndpointsTests
         {
             Recommendations = new RecommendationsData(
                 new StudentCompletionVerdict(5, 5, 3, 3, true, true), Done: true,
-                [Course("c1", rating: 5)], new HashSet<string>(), [])
+                [Course("c1", rating: 5)], new HashSet<string>(), [], [])
         };
         using var factory = new Factory(reader);
         using var client = factory.CreateClient();
@@ -156,7 +156,7 @@ public class CoursePlanComputeEndpointsTests
     private sealed class FakeReader : ICoursePlanComputeReader
     {
         public RecommendationsData Recommendations { get; init; } =
-            new(new StudentCompletionVerdict(0, 5, 0, 0, false, false), false, [], new HashSet<string>(), []);
+            new(new StudentCompletionVerdict(0, 5, 0, 0, false, false), false, [], new HashSet<string>(), [], []);
 
         public IReadOnlyList<EligibilityEntry>? Eligibility { get; init; } = [];
 

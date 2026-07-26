@@ -47,7 +47,8 @@ public static class CoursePlanComputeEndpoints
             });
         }
 
-        var scored = CoursePlanRecommendationsScorer.Score(data.Courses, data.EnrolledCourseIds, data.PreferredFieldsLower);
+        var scored = CoursePlanRecommendationsScorer.Score(
+            data.Courses, data.EnrolledCourseIds, data.PreferredFieldsLower, data.EngineCareersLower);
         return Results.Ok(new { success = true, data = scored.Select(x => CourseJson(x.Course, x.MatchScore)) });
     }
 

@@ -21,6 +21,14 @@ public sealed class CoursePlanComputeReader(IFormMapsDatabaseSessionFactory data
         ["PatternRecognition", "VerbalReasoning", "NumericVelocity", "WorkingMemory", "VisualRotation"];
 
     private static readonly IReadOnlySet<string> EmptySet = new HashSet<string>(StringComparer.Ordinal);
+    private static readonly JsonElement EmptyJsonArray = JsonDocument.Parse("[]").RootElement.Clone();
+
+    // Task-6 language-parity fold (FM-DOTNET-086 porting report §3): raw catalog-vocabulary strings, ready to drop
+    // straight into a `lower("language") = ANY(@langs)` WHERE clause (the case-insensitive equivalent of TS's
+    // `mode: "insensitive"`). Mirrors TS's CATALOG_VALUES_BY_CODE (unverified against real prod distinct-language
+    // values per the TS report's own top concern — re-verify before fully trusting this filter in production).
+    private static readonly string[] EnglishCatalogValues = ["English"];
+    private static readonly string[] SpanishCatalogValues = ["Spanish", "Español", "Espanol"];
 
     private const string CourseColumns =
         """
@@ -90,7 +98,7 @@ public sealed class CoursePlanComputeReader(IFormMapsDatabaseSessionFactory data
         var verdict = StudentCompletion.Compute(liaExamTypes, evalGroupsCompleted, pcaEvalsCompleted);
         if (!verdict.AllDone)
         {
-            return new RecommendationsData(verdict, Done: false, [], EmptySet, []);
+            return new RecommendationsData(verdict, Done: false, [], EmptySet, [], []);
         }
 
         // Enrolled course ids (to exclude).
@@ -120,20 +128,144 @@ public sealed class CoursePlanComputeReader(IFormMapsDatabaseSessionFactory data
             }
         }
 
-        // Active catalog, take 100 (ORDER BY id — deterministic superset over the legacy unordered take).
-        var courses = new List<CourseRow>();
-        await using (var command = Command(session, $"""
-            SELECT {CourseColumns} FROM "courses" WHERE "isActive" = true ORDER BY "id" ASC LIMIT 100
-            """))
+        // Task-6 language-parity fold (report §3): resolve the caller's allowed course languages, then load the
+        // active catalog filtered to them (still ORDER BY id ASC LIMIT 100 — the pre-existing determinism superset,
+        // untouched beyond the added WHERE term). If the language-filtered pool is sparse (&lt;10), widen to include
+        // English and REPLACE the candidate list with the re-queried result (never append — mirrors the TS two-query
+        // pattern exactly).
+        var allowedLanguages = await ResolveAllowedCourseLanguagesAsync(session, userId, cancellationToken);
+        var courses = await LoadCourseCatalogAsync(session, allowedLanguages, cancellationToken);
+        if (courses.Count < 10)
         {
+            var widenedLanguages = WidenLanguagesIfSparse(allowedLanguages, courses.Count);
+            courses = await LoadCourseCatalogAsync(session, widenedLanguages, cancellationToken);
+        }
+
+        // Task-6 engine-career-alignment fold (report §4/§5): user_career_profiles.careerMatches → first-5 titles
+        // (JSON-document order, see EngineCareerTitleExtractor) → lowercased for the scorer's substring predicate.
+        // No row / schema-default "[]" → [] (never throws).
+        JsonElement careerMatches = EmptyJsonArray;
+        await using (var command = Command(session, """SELECT "careerMatches"::text FROM "user_career_profiles" WHERE "userId" = @u"""))
+        {
+            AddParameter(command, "u", userId);
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
+            if (await reader.ReadAsync(cancellationToken) && !reader.IsDBNull(0))
             {
-                courses.Add(MapCourseRow(reader));
+                careerMatches = ParseJson(reader.GetString(0));
             }
         }
 
-        return new RecommendationsData(verdict, Done: true, courses, enrolled, preferredFieldsLower);
+        var engineCareersLower = EngineCareerTitleExtractor.Extract(careerMatches)
+            .Select(t => t.ToLowerInvariant())
+            .ToList();
+
+        return new RecommendationsData(verdict, Done: true, courses, enrolled, preferredFieldsLower, engineCareersLower);
+    }
+
+    private async Task<List<CourseRow>> LoadCourseCatalogAsync(
+        FormMapsDatabaseSession session, IReadOnlyList<string> allowedLanguages, CancellationToken cancellationToken)
+    {
+        var courses = new List<CourseRow>();
+        await using var command = Command(session, $"""
+            SELECT {CourseColumns} FROM "courses"
+            WHERE "isActive" = true AND lower("language") = ANY(@langs)
+            ORDER BY "id" ASC LIMIT 100
+            """);
+        AddParameter(command, "langs", allowedLanguages.Select(l => l.ToLowerInvariant()).ToArray());
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            courses.Add(MapCourseRow(reader));
+        }
+
+        return courses;
+    }
+
+    /// <summary>Ports resolveAllowedCourseLanguages (report §3). Priority: (1) UserPreferences.preferredLanguages, if
+    /// any non-blank entries survive trimming — each entry maps en/english → English, es/spanish/español/espanol →
+    /// {Spanish, Español, Espanol}, else the raw trimmed literal passes through (de-duped); (2) else the platform UI
+    /// language via <see cref="ResolveUserLanguageAsync"/> mapped the same way. NEVER returns empty — branch 2 always
+    /// yields a non-empty catalog-value list.</summary>
+    private async Task<IReadOnlyList<string>> ResolveAllowedCourseLanguagesAsync(
+        FormMapsDatabaseSession session, string userId, CancellationToken cancellationToken)
+    {
+        string[]? preferredLanguages = null;
+        await using (var command = Command(session, """SELECT "preferredLanguages" FROM "user_preferences" WHERE "userId" = @u"""))
+        {
+            AddParameter(command, "u", userId);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken) && !reader.IsDBNull(0))
+            {
+                preferredLanguages = reader.GetFieldValue<string[]>(0);
+            }
+        }
+
+        if (preferredLanguages is { Length: > 0 })
+        {
+            var mapped = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var raw in preferredLanguages)
+            {
+                foreach (var value in MapPreferredLanguageEntry(raw))
+                {
+                    mapped.Add(value);
+                }
+            }
+
+            if (mapped.Count > 0)
+            {
+                return mapped.ToList();
+            }
+        }
+
+        var platformLanguage = await ResolveUserLanguageAsync(session, userId, cancellationToken);
+        return platformLanguage == "es" ? SpanishCatalogValues : EnglishCatalogValues;
+    }
+
+    private static IReadOnlyList<string> MapPreferredLanguageEntry(string raw)
+    {
+        var trimmed = raw.Trim();
+        if (trimmed.Length == 0)
+        {
+            return [];
+        }
+
+        var lower = trimmed.ToLowerInvariant();
+        if (lower is "en" or "english")
+        {
+            return EnglishCatalogValues;
+        }
+
+        if (lower is "es" or "spanish" or "español" or "espanol")
+        {
+            return SpanishCatalogValues;
+        }
+
+        return [trimmed]; // no en/es bucket match → pass the raw trimmed literal through (report §3)
+    }
+
+    /// <summary>Ports resolveUserLanguage(userId) (report's "Schema facts" section — no pre-existing .NET port;
+    /// scoped here to just this reader's needs, not a general-purpose shared service). Returns "es" only on an EXACT
+    /// "es" value in user_settings.language; a null row, any other value, or no row at all → "en". Never throws.</summary>
+    private static async Task<string> ResolveUserLanguageAsync(
+        FormMapsDatabaseSession session, string userId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """SELECT "language" FROM "user_settings" WHERE "userId" = @u""");
+        AddParameter(command, "u", userId);
+        return await command.ExecuteScalarAsync(cancellationToken) is "es" ? "es" : "en";
+    }
+
+    /// <summary>Ports widenLanguagesIfSparse (report §3): pure decision, no DB access. &lt;10 candidates → union in
+    /// English's catalog value (de-duped); otherwise unchanged.</summary>
+    private static IReadOnlyList<string> WidenLanguagesIfSparse(
+        IReadOnlyList<string> allowedLanguages, int candidateCount, int minCandidates = 10)
+    {
+        if (candidateCount >= minCandidates)
+        {
+            return allowedLanguages;
+        }
+
+        var widened = new HashSet<string>(allowedLanguages, StringComparer.Ordinal) { "English" };
+        return widened.ToList();
     }
 
     public async Task<IReadOnlyList<EligibilityEntry>?> GetEligibilityAsync(

@@ -15,7 +15,11 @@ namespace FormMaps.Application.StudentCoursePlan;
 public interface ICoursePlanComputeReader
 {
     /// <summary>GET /course-plan/recommendations. Loads the completion verdict; when not done returns it alone
-    /// (the endpoint emits the locked payload). When done also loads the catalog / enrollments / preferred fields.</summary>
+    /// (the endpoint emits the locked payload). When done also loads: the catalog (pre-filtered to the caller's
+    /// allowed course languages — resolveAllowedCourseLanguages + widen-if-&lt;10-candidates, Task-6 language-parity
+    /// fold, FM-DOTNET-086 porting report §3), enrollments, preferred fields, and the caller's engine-matched career
+    /// titles (extracted from user_career_profiles.careerMatches — report §4/§5) for the scorer's alignment
+    /// bonus.</summary>
     Task<RecommendationsData> GetRecommendationsAsync(
         RequestContext context, string userId, CancellationToken cancellationToken = default);
 
@@ -27,13 +31,16 @@ public interface ICoursePlanComputeReader
 
 /// <summary>Recommendations load. When <see cref="Done"/> (allDone) is false the endpoint emits
 /// { success:true, data:[], locked:true, completion:&lt;verdict&gt; }. Otherwise the scorer runs over
-/// <see cref="Courses"/> minus <see cref="EnrolledCourseIds"/> using <see cref="PreferredFieldsLower"/>.</summary>
+/// <see cref="Courses"/> (already language-filtered by the reader — see <see cref="ICoursePlanComputeReader"/>'s
+/// docs) minus <see cref="EnrolledCourseIds"/> using <see cref="PreferredFieldsLower"/> and
+/// <see cref="EngineCareersLower"/>.</summary>
 public sealed record RecommendationsData(
     StudentCompletionVerdict Verdict,
     bool Done,
     IReadOnlyList<CourseRow> Courses,
     IReadOnlySet<string> EnrolledCourseIds,
-    IReadOnlyList<string> PreferredFieldsLower);
+    IReadOnlyList<string> PreferredFieldsLower,
+    IReadOnlyList<string> EngineCareersLower);
 
 /// <summary>A raw Course row (verbatim Prisma passthrough, schema field order). rating / recommendedScore are Decimal →
 /// JSON STRING; the array columns are string[]; syllabus is jsonb; dates ISO-Z. <see cref="RatingNumber"/> is the same
