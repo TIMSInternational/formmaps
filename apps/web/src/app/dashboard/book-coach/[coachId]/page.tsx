@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Star,
   MapPin,
-  Clock,
   Calendar,
   Globe,
   Shield,
@@ -21,6 +20,7 @@ import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AvailabilityStatus } from "./_components/AvailabilityStatus";
 
 export default function CoachProfilePage() {
   const { t } = useTranslation();
@@ -221,21 +221,7 @@ export default function CoachProfilePage() {
             {t("coaching.profile.availability")}
           </h3>
 
-          <div className="rounded-xl bg-secondary p-3 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-card flex items-center justify-center border border-border">
-                <Clock className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-foreground">
-                  {t("coaching.profile.nextAvailable")}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {t("coaching.profile.slotsToday")}
-                </p>
-              </div>
-            </div>
-          </div>
+          <AvailabilityStatus coachId={coach.id} />
 
           <button
             className="w-full py-2.5 rounded-xl bg-foreground text-background text-sm font-semibold hover:bg-foreground/90 transition-colors flex items-center justify-center gap-2"

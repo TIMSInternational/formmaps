@@ -870,6 +870,8 @@
       "availability": "Disponibilidad",
       "nextAvailable": "Siguiente disponible",
       "slotsToday": "Turnos disponibles hoy",
+      "nextAvailableOn": "Próxima disponibilidad {{date}}",
+      "checkCalendarFallback": "Consulta el calendario para ver disponibilidad",
       "checkCalendar": "Ver calendario",
       "freeCancellation": "Cancelación gratuita hasta 24h antes",
       "updated": "Perfil actualizado con éxito",

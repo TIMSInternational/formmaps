@@ -112,6 +112,17 @@ export function toLocalDateString(date: Date): string {
 }
 
 /**
+ * Parses a "YYYY-MM-DD" API date string (e.g. `nextAvailableDate`) as a LOCAL
+ * calendar date. `new Date("YYYY-MM-DD")` parses as UTC midnight, which then
+ * renders as the PREVIOUS day in any timezone behind UTC (all of North/South/
+ * Central America) — this avoids that off-by-one.
+ */
+export function parseYmdLocal(ymd: string): Date {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/**
  * Format a DATE-ONLY value (stored as UTC midnight, e.g. test-score dates,
  * recommendation due dates) using its UTC parts. Local formatting shifts these
  * a day back in any western timezone ("entered 2026-05-01, displayed Apr 30").

@@ -28,6 +28,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { parseYmdLocal } from "@/lib/dateUtils";
 
 interface BookingModalProps {
   coach: Coach | null;
@@ -500,7 +501,7 @@ export function BookingModal({
                             size="sm"
                             onClick={() => {
                               if (slotsData.nextAvailableDate) {
-                                const nextDate = new Date(
+                                const nextDate = parseYmdLocal(
                                   slotsData.nextAvailableDate
                                 );
                                 setDate(nextDate);
@@ -510,7 +511,7 @@ export function BookingModal({
                           >
                             Jump to{" "}
                             {format(
-                              new Date(slotsData.nextAvailableDate),
+                              parseYmdLocal(slotsData.nextAvailableDate),
                               "MMM d"
                             )}
                           </Button>

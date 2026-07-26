@@ -1370,6 +1370,8 @@
       "availability": "Availability",
       "nextAvailable": "Next Available",
       "slotsToday": "Slots available today",
+      "nextAvailableOn": "Next available {{date}}",
+      "checkCalendarFallback": "Check calendar for availability",
       "checkCalendar": "Check Calendar",
       "freeCancellation": "Free cancellation up to 24h before",
       "updated": "Profile updated successfully",
