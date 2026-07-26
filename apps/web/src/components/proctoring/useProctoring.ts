@@ -15,6 +15,18 @@ export const FACE_VERIFY_ENABLED = process.env.NEXT_PUBLIC_LIA_FACE_VERIFY === "
 
 const BLOCKED_KEYS = new Set(["F12", "PrintScreen"]);
 
+export interface UseProctoringOptions {
+  /** Debounce window (ms) between a recorded violation and the `onFlush` callback. Default 2000. */
+  flushDebounceMs?: number;
+  /**
+   * Called with the drained violation batch once the debounce window elapses
+   * after a recorded violation, so evidence ships live instead of only on
+   * pagehide/completion. Callers wire this to the same keepalive POST
+   * `flushViolations.ts` builds (see `postViolations`).
+   */
+  onFlush?: (violations: LockdownViolation[]) => void;
+}
+
 export interface Proctoring {
   active: boolean;
   elapsedTime: string;
@@ -47,7 +59,7 @@ function formatElapsed(startMs: number): string {
   return `${h}:${m}:${s}`;
 }
 
-export function useProctoring(): Proctoring {
+export function useProctoring(opts: UseProctoringOptions = {}): Proctoring {
   const [active, setActive] = useState(false);
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
   const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
@@ -56,9 +68,42 @@ export function useProctoring(): Proctoring {
   const startRef = useRef<number>(0);
   const violations = useRef<LockdownViolation[]>([]);
 
+  // Latest options in a ref so the stable scheduleFlush/flushNow callbacks
+  // (and everything that depends on recordViolation's identity) always read
+  // the current debounce/onFlush without needing them in a dependency array.
+  const optsRef = useRef(opts);
+  optsRef.current = opts;
+  const pendingFlushRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const drainViolations = useCallback(() => {
+    const drained = violations.current;
+    violations.current = [];
+    return drained;
+  }, []);
+
+  const flushNow = useCallback(() => {
+    pendingFlushRef.current = null;
+    const drained = drainViolations();
+    if (drained.length) optsRef.current.onFlush?.(drained);
+  }, [drainViolations]);
+
+  // Debounced so a burst of violations (e.g. rapid tab-switches) coalesces
+  // into a single flush instead of one network call per event.
+  const scheduleFlush = useCallback(() => {
+    if (pendingFlushRef.current) return;
+    pendingFlushRef.current = setTimeout(flushNow, optsRef.current.flushDebounceMs ?? 2000);
+  }, [flushNow]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingFlushRef.current) clearTimeout(pendingFlushRef.current);
+    };
+  }, []);
+
   const recordViolation = useCallback((type: string, details?: string) => {
     violations.current.push({ type, timestamp: new Date().toISOString(), details });
-  }, []);
+    scheduleFlush();
+  }, [scheduleFlush]);
 
   const enterFullscreen = useCallback(() => {
     document.documentElement.requestFullscreen?.().catch(() => {});
@@ -164,12 +209,6 @@ export function useProctoring(): Proctoring {
       document.removeEventListener("keydown", onKeyDown, true);
     };
   }, [active, recordViolation]);
-
-  const drainViolations = useCallback(() => {
-    const drained = violations.current;
-    violations.current = [];
-    return drained;
-  }, []);
 
   return { active, elapsedTime, needsFullscreenPrompt, focusLost, multiDisplay, enterFullscreen, begin, end, violations, drainViolations };
 }

@@ -8,7 +8,7 @@
  * Runs under lockdown-lite (fullscreen + violation capture); face
  * verification is stubbed behind NEXT_PUBLIC_LIA_FACE_VERIFY.
  */
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
@@ -37,20 +37,41 @@ import { useLockdown } from "./_tims/useLockdown";
 import { ErrorScreen, ProgressHeader, OverviewCard } from "./_tims/FlowScreens";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
 import { RequireChromium } from "@/components/proctoring/RequireChromium";
-import { installViolationFlush } from "@/components/proctoring/flushViolations";
+import { installViolationFlush, postViolations } from "@/components/proctoring/flushViolations";
 import type { LockdownViolation } from "@/components/proctoring/types";
 import MILCompletion from "./_components/MILCompletion";
 
 export default function LIAAssessmentPage() {
   const router = useRouter();
   const { i18n } = useTranslation();
-  const { setAssessmentActive } = useGlobalStore();
+  const { setAssessmentActive, user } = useGlobalStore();
   // Content language follows the RESOLVED UI locale (i18next), not the store's
   // English default — otherwise a Spanish user's session was created in English
   // and switched to English items at Verbal Reasoning.
   const language: "es" | "en" = resolveContentLanguage(i18n.language);
 
-  const lockdown = useLockdown();
+  // The session id only exists once `useLiaFlow` (below) starts a session, but
+  // `useLockdown`/`useProctoring` must be constructed first (the flow needs
+  // `lockdown.begin`/`end`/`drainViolations`) — a ref bridges that ordering so
+  // the live per-event flush (onFlush) can reach the current session id
+  // without re-creating the proctoring hook every time it changes.
+  const sessionIdRef = useRef<string | null>(null);
+  const lockdown = useLockdown({
+    onFlush: (v) => {
+      const sid = sessionIdRef.current;
+      if (!sid) return;
+      postViolations(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/lia/session/${sid}/violations`,
+        v,
+        {
+          token: useGlobalStore.getState().user.accessToken,
+          // Failed live-flush violations go back into the buffer so the
+          // pagehide/tab-hide backstop below re-sends them — no evidence loss.
+          requeue: (failed) => { lockdown.violations.current.unshift(...failed); },
+        },
+      );
+    },
+  });
   const flow = useLiaFlow({
     language,
     onLockdownBegin: lockdown.begin,
@@ -70,6 +91,7 @@ export default function LIAAssessmentPage() {
   // cookie + Bearer authed). The completion path drains too; this covers a
   // student closing/killing the tab mid-exam so flag_for_review still lands.
   const { sessionId } = flow;
+  sessionIdRef.current = sessionId ?? null;
   const { drainViolations: drainLockdown, violations: lockdownViolations } = lockdown;
   useEffect(() => {
     if (!sessionId) return;
@@ -83,9 +105,10 @@ export default function LIAAssessmentPage() {
   }, [sessionId, drainLockdown, lockdownViolations]);
 
   // Wrap a live exam phase in the browser gate + proctoring chrome.
+  const watermark = user?.email ? { email: user.email } : undefined;
   const proctored = (node: ReactNode) => (
     <RequireChromium>
-      <ProctoredShell proctoring={lockdown}>{node}</ProctoredShell>
+      <ProctoredShell proctoring={lockdown} watermark={watermark}>{node}</ProctoredShell>
     </RequireChromium>
   );
 

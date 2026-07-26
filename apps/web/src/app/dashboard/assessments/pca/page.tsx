@@ -129,7 +129,7 @@ export default function PCAAssessmentPage() {
   if (assessmentUrl) {
     return (
       <RequireChromium>
-        <ProctoredShell proctoring={proctoring}>
+        <ProctoredShell proctoring={proctoring} watermark={user?.email ? { email: user.email } : undefined}>
           <div className="min-h-screen bg-background">
             <div className="bg-card border-b border-border px-4 py-3">
               <div className="max-w-7xl mx-auto flex items-center justify-between">

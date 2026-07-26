@@ -24,20 +24,49 @@ function BlockingOverlay({ title, body }: { title: string; body: string }) {
   );
 }
 
+/**
+ * Screenshot-deterrent overlay: a faint tiled stamp of the taker's email +
+ * capture timestamp. Honest limit (documented elsewhere): browsers cannot
+ * block OS-level screenshots, so this — plus recording — is the ceiling
+ * short of a native lockdown browser. It only raises the cost/traceability
+ * of a leaked screenshot.
+ */
+function Watermark({ email }: { email: string }) {
+  const stamp = `${email} · ${new Date().toISOString()}`;
+  const tiles = Array.from({ length: 24 });
+  return (
+    <div
+      aria-hidden="true"
+      className="fixed inset-0 pointer-events-none select-none z-40 opacity-[0.06] grid grid-cols-4 grid-rows-6 place-items-center overflow-hidden"
+    >
+      {tiles.map((_, i) => (
+        <span key={i} className="text-xs font-mono text-black whitespace-nowrap -rotate-[20deg]">
+          {stamp}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function ProctoredShell({
   proctoring,
   children,
   showTimer = true,
+  watermark,
 }: {
   proctoring: Proctoring;
   children: ReactNode;
   showTimer?: boolean;
+  /** When set, renders a tiled screenshot-deterrent watermark of the taker's email + timestamp. */
+  watermark?: { email: string };
 }) {
   const { t } = useTranslation();
   const { active, elapsedTime, needsFullscreenPrompt, focusLost, multiDisplay, enterFullscreen } = proctoring;
 
   return (
     <>
+      {watermark && <Watermark email={watermark.email} />}
+
       {active && showTimer && (
         <div className="bg-[#0F172A] text-white py-2 px-4 flex items-center justify-between text-sm sticky top-0 z-20">
           <span className="bg-[#10B981] px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1">
