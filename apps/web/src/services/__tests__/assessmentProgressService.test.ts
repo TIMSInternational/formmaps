@@ -19,6 +19,7 @@ import {
   EvaluationGroupWithId,
 } from "@/services/evaluationService";
 import { checkPCAStatus } from "@/services/pcaService";
+import { personalityApi } from "@/services/personalityService";
 
 jest.mock("@/services/milService", () => ({ getMILResults: jest.fn() }));
 jest.mock("@/services/evaluationService", () => ({
@@ -26,11 +27,13 @@ jest.mock("@/services/evaluationService", () => ({
   getUserEvaluationProgressSummary: jest.fn(),
 }));
 jest.mock("@/services/pcaService", () => ({ checkPCAStatus: jest.fn() }));
+jest.mock("@/services/personalityService", () => ({ personalityApi: { getAccess: jest.fn() } }));
 
 const mockMil = getMILResults as jest.Mock;
 const mockGroups = getUserEvaluationGroups as jest.Mock;
 const mockSummary = getUserEvaluationProgressSummary as jest.Mock;
 const mockPca = checkPCAStatus as jest.Mock;
+const mockPersonalityAccess = personalityApi.getAccess as jest.Mock;
 
 function group(
   overrides: Partial<EvaluationGroupWithId> & { id: string },
@@ -75,6 +78,7 @@ describe("getUserAssessmentProgress — 360 evaluation status", () => {
     jest.clearAllMocks();
     mockMil.mockResolvedValue(null);
     mockPca.mockResolvedValue({ status: "not_started" });
+    mockPersonalityAccess.mockResolvedValue({ has_access: false, has_completed: false });
     mockSummary.mockReturnValue({
       totalGroups: 0, completedEvaluations: 0, pendingEvaluations: 0, expiredInvitations: 0,
       groupsByType: { Parent: 0, Teacher: 0, SiblingFriend: 0, Self: 0 },
@@ -146,5 +150,71 @@ describe("getUserAssessmentProgress — 360 evaluation status", () => {
     ]);
     const progress = await getUserAssessmentProgress("student-1");
     expect(progress.overallCompletion.completedAssessments).toBe(3);
+  });
+});
+
+describe("getUserAssessmentProgress — personality: a 4th, non-gating entry", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockMil.mockResolvedValue(null);
+    mockGroups.mockResolvedValue([]);
+    mockSummary.mockReturnValue({
+      totalGroups: 0, completedEvaluations: 0, pendingEvaluations: 0, expiredInvitations: 0,
+      groupsByType: { Parent: 0, Teacher: 0, SiblingFriend: 0, Self: 0 },
+    });
+    mockPca.mockResolvedValue({ status: "not_started", lastActivity: undefined, hasResults: false, pcaCod: null });
+  });
+
+  it("exposes personalityAssessment with gating:false and status derived from /access", async () => {
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: true, existing_session_id: "sess-1" });
+
+    const result = await getUserAssessmentProgress("u1");
+
+    expect(result).toHaveProperty("personalityAssessment");
+    expect((result as any).personalityAssessment.gating).toBe(false);
+    expect((result as any).personalityAssessment.status).toBe("completed");
+  });
+
+  it("status is in_progress when access exists with an unfinished session", async () => {
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: false, existing_session_id: "sess-1" });
+    const result = await getUserAssessmentProgress("u1");
+    expect((result as any).personalityAssessment.status).toBe("in_progress");
+  });
+
+  it("status is not_started when there is no session yet", async () => {
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: false });
+    const result = await getUserAssessmentProgress("u1");
+    expect((result as any).personalityAssessment.status).toBe("not_started");
+  });
+
+  it("never throws when the /access call fails — falls back to not_started", async () => {
+    mockPersonalityAccess.mockRejectedValue(new Error("network down"));
+    await expect(getUserAssessmentProgress("u1")).resolves.not.toThrow();
+    const result = await getUserAssessmentProgress("u1");
+    expect((result as any).personalityAssessment.status).toBe("not_started");
+  });
+
+  // -----------------------------------------------------------------------
+  // THE GATING GUARANTEE: overallCompletion is computed from exactly the same
+  // 3 assessments as before — personality must NEVER shift this math, in
+  // either direction, regardless of its own status.
+  // -----------------------------------------------------------------------
+  it("overallCompletion.totalAssessments stays 3 even when personality is completed", async () => {
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: true, existing_session_id: "sess-1" });
+    const result = await getUserAssessmentProgress("u1");
+    expect(result.overallCompletion.totalAssessments).toBe(3);
+  });
+
+  it("overallCompletion.completedAssessments is byte-identical whether personality is completed or absent", async () => {
+    mockPersonalityAccess.mockResolvedValue({ has_access: false, has_completed: false });
+    const withoutPersonality = await getUserAssessmentProgress("u1");
+
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: true, existing_session_id: "sess-1" });
+    const withPersonality = await getUserAssessmentProgress("u1");
+
+    expect(withPersonality.overallCompletion).toEqual(withoutPersonality.overallCompletion);
+    expect(withPersonality.milAssessment.status).toEqual(withoutPersonality.milAssessment.status);
+    expect(withPersonality.evaluationAssessment.status).toEqual(withoutPersonality.evaluationAssessment.status);
+    expect(withPersonality.pcaAssessment.status).toEqual(withoutPersonality.pcaAssessment.status);
   });
 });

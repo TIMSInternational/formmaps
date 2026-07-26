@@ -14,6 +14,7 @@ import {
   UserEvaluationProgress,
 } from "./evaluationService";
 import { checkPCAStatus } from "./pcaService";
+import { personalityApi } from "./personalityService";
 
 interface MILEnhancedData {
   completedExams: number;
@@ -69,6 +70,18 @@ export interface AssessmentOverallProgress {
     status: "not_started" | "in_progress" | "completed";
     progress?: number;
     lastActivity?: string;
+  };
+  /**
+   * The personality assessment — a 4th, ADDITIVE entry. `gating: false` marks
+   * it explicitly as never part of the 3-assessment career-unlock math below
+   * (overallCompletion). It is purely a visibility/progress-tracking signal —
+   * "recommended", never required.
+   */
+  personalityAssessment: {
+    key: "personality";
+    gating: false;
+    status: "not_started" | "in_progress" | "completed";
+    hasAccess: boolean;
   };
   overallCompletion: {
     totalAssessments: number;
@@ -223,7 +236,27 @@ export async function getUserAssessmentProgress(
       // Keep default values
     }
 
-    // Calculate overall completion
+    // Fetch personality access — additive, NEVER part of the completion math
+    // below. Never throws: any failure falls back to "not_started".
+    let personalityStatus: "not_started" | "in_progress" | "completed" = "not_started";
+    let personalityHasAccess = false;
+
+    try {
+      const access = await personalityApi.getAccess();
+      personalityHasAccess = access.has_access;
+      personalityStatus = access.has_completed
+        ? "completed"
+        : access.existing_session_id
+          ? "in_progress"
+          : "not_started";
+    } catch {
+      // Keep defaults — a personality-service outage must never break the
+      // rest of progress tracking.
+    }
+
+    // Calculate overall completion — deliberately excludes personality.
+    // Changing this to include a 4th assessment would re-lock careers for
+    // every student already unlocked under the current 3-assessment rule.
     const assessmentStatuses = [milStatus, evaluationStatus, pcaStatus];
     const completedCount = assessmentStatuses.filter(
       (status) => status === "completed"
@@ -256,6 +289,12 @@ export async function getUserAssessmentProgress(
         status: pcaStatus,
         progress: pcaProgress,
         lastActivity: pcaLastActivity,
+      },
+      personalityAssessment: {
+        key: "personality",
+        gating: false,
+        status: personalityStatus,
+        hasAccess: personalityHasAccess,
       },
       overallCompletion: {
         totalAssessments: 3,
