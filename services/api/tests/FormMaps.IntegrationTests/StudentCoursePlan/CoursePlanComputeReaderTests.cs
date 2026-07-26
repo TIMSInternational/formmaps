@@ -29,7 +29,7 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
         await using var conn = await _dataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand(
-            """TRUNCATE "users","pca_exam_sessions","lia_assessment_sessions","evaluation_groups","pca_evaluations","course_enrollments","user_preferences","courses","school_courses","student_grades" """, conn);
+            """TRUNCATE "users","pca_exam_sessions","lia_assessment_sessions","evaluation_groups","pca_evaluations","course_enrollments","user_preferences","user_settings","user_career_profiles","courses","school_courses","student_grades" """, conn);
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -70,9 +70,109 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
 
         var data = await Repo().GetRecommendationsAsync(Ctx(), User);
         Assert.True(data.Done);
-        Assert.Equal(["c1", "c2"], data.Courses.Select(c => c.Id));   // active only, id order
+        Assert.Equal(["c1", "c2"], data.Courses.Select(c => c.Id));   // active + language-matched, id order
         Assert.Contains("c1", data.EnrolledCourseIds);
         Assert.Equal(["science", "math"], data.PreferredFieldsLower); // lowercased
+        Assert.Empty(data.EngineCareersLower);                        // no user_career_profiles row → []
+    }
+
+    // ---- Task-6 language-parity fold (report §3) ----
+
+    [Fact]
+    public async Task Recommendations_language_filter_excludes_non_matching_language_when_pool_is_not_sparse()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await UserRow(conn, User, School, 11);
+        await CompleteAllAssessments(conn);
+
+        // 10 English courses (>= the sparsity floor) + 1 French course. No preferredLanguages/user_settings row →
+        // resolveAllowedCourseLanguages falls to resolveUserLanguage's null-row default "en" → ["English"]. Pool
+        // is non-sparse (10 >= 10) so no widen fires, and the French course must be excluded.
+        for (var i = 0; i < 10; i++)
+        {
+            await Course_(conn, $"en{i:D2}", title: $"English {i}", language: "English");
+        }
+
+        await Course_(conn, "fr01", title: "French course", language: "French");
+
+        var data = await Repo().GetRecommendationsAsync(Ctx(), User);
+        Assert.DoesNotContain("fr01", data.Courses.Select(c => c.Id));
+        Assert.Equal(10, data.Courses.Count);
+    }
+
+    [Fact]
+    public async Task Recommendations_widens_to_include_English_when_language_filtered_pool_is_sparse()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await UserRow(conn, User, School, 11);
+        await CompleteAllAssessments(conn);
+        await UserSettings(conn, User, language: "es"); // platform language es → allowed = {Spanish, Español, Espanol}
+
+        // Only 2 Spanish courses (< 10) → sparse → widen adds English; the English course must now appear too.
+        await Course_(conn, "es01", title: "Curso 1", language: "Spanish");
+        await Course_(conn, "es02", title: "Curso 2", language: "Spanish");
+        await Course_(conn, "en01", title: "English course", language: "English");
+
+        var data = await Repo().GetRecommendationsAsync(Ctx(), User);
+        Assert.Equal(["en01", "es01", "es02"], data.Courses.Select(c => c.Id).OrderBy(id => id, StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public async Task Recommendations_language_match_is_case_insensitive()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await UserRow(conn, User, School, 11);
+        await CompleteAllAssessments(conn);
+
+        // Stored casing differs from the catalog-value casing ("English") — must still match (ILIKE-equivalent).
+        await Course_(conn, "c1", title: "Weird casing", language: "ENGLISH");
+
+        var data = await Repo().GetRecommendationsAsync(Ctx(), User);
+        Assert.Contains("c1", data.Courses.Select(c => c.Id));
+    }
+
+    [Fact]
+    public async Task Recommendations_preferredLanguages_takes_priority_over_platform_language()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await UserRow(conn, User, School, 11);
+        await CompleteAllAssessments(conn);
+        await UserSettings(conn, User, language: "en"); // platform says en, but preferredLanguages should win
+        await PreferredLanguages(conn, User, "es");
+
+        // < 10 Spanish courses → widen adds English too, but a French-only course must still be excluded.
+        await Course_(conn, "es01", title: "Curso", language: "Spanish");
+        await Course_(conn, "fr01", title: "French", language: "French");
+
+        var data = await Repo().GetRecommendationsAsync(Ctx(), User);
+        Assert.Contains("es01", data.Courses.Select(c => c.Id));
+        Assert.DoesNotContain("fr01", data.Courses.Select(c => c.Id));
+    }
+
+    // ---- Task-6 engine-career-alignment fold (report §4/§5) ----
+
+    [Fact]
+    public async Task Recommendations_engine_careers_lower_extracted_from_careerMatches_object_shape()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await UserRow(conn, User, School, 11);
+        await CompleteAllAssessments(conn);
+        await CareerProfile(conn, User, """{"prog-1": "insight A", "prog-2": "insight B"}""");
+
+        var data = await Repo().GetRecommendationsAsync(Ctx(), User);
+        Assert.Equal(["prog-1", "prog-2"], data.EngineCareersLower); // lowercased (already lowercase here)
+    }
+
+    [Fact]
+    public async Task Recommendations_engine_careers_lower_is_empty_when_careerMatches_is_schema_default_empty_array()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await UserRow(conn, User, School, 11);
+        await CompleteAllAssessments(conn);
+        await CareerProfile(conn, User, "[]"); // row exists, field untouched (schema default)
+
+        var data = await Repo().GetRecommendationsAsync(Ctx(), User);
+        Assert.Empty(data.EngineCareersLower);
     }
 
     [Fact]
@@ -201,8 +301,40 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         Exec(c, """INSERT INTO "user_preferences"("id","userId","preferredFields") VALUES(gen_random_uuid()::text,@u,@f)""",
             ("u", user), ("f", fields));
 
-    private static Task Course_(NpgsqlConnection c, string id, string title, bool isActive = true) =>
-        Exec(c, """INSERT INTO "courses"("id","title","isActive") VALUES(@id,@t,@a)""", ("id", id), ("t", title), ("a", isActive));
+    // Task-6 language-parity fold helpers.
+    private static Task PreferredLanguages(NpgsqlConnection c, string user, params string[] languages) =>
+        Exec(c, """
+            INSERT INTO "user_preferences"("id","userId","preferredLanguages") VALUES(gen_random_uuid()::text,@u,@l)
+            ON CONFLICT ("userId") DO UPDATE SET "preferredLanguages" = @l
+            """, ("u", user), ("l", languages));
+
+    private static Task UserSettings(NpgsqlConnection c, string user, string language) =>
+        Exec(c, """INSERT INTO "user_settings"("id","userId","language") VALUES(gen_random_uuid()::text,@u,@l)""",
+            ("u", user), ("l", language));
+
+    // Task-6 engine-career-alignment fold helper. `careerMatchesJson` is inserted verbatim as jsonb.
+    private static Task CareerProfile(NpgsqlConnection c, string user, string careerMatchesJson) =>
+        Exec(c, """INSERT INTO "user_career_profiles"("id","userId","careerMatches") VALUES(gen_random_uuid()::text,@u,@cm::jsonb)""",
+            ("u", user), ("cm", careerMatchesJson));
+
+    // Runs the 4 completion loads with the minimum needed to make computeStudentCompletion.allDone true, so
+    // language/engine-career tests can reach the catalog-loading branch without repeating this boilerplate.
+    private static async Task CompleteAllAssessments(NpgsqlConnection c)
+    {
+        foreach (var t in new[] { "PatternRecognition", "VerbalReasoning", "NumericVelocity", "WorkingMemory", "VisualRotation" })
+        {
+            await PcaExam(c, User, t, completed: true);
+        }
+
+        await EvalGroup(c, User, completed: true);
+        await EvalGroup(c, User, completed: true);
+        await EvalGroup(c, User, completed: true);
+        await PcaEval(c, User, completed: true);
+    }
+
+    private static Task Course_(NpgsqlConnection c, string id, string title, bool isActive = true, string language = "English") =>
+        Exec(c, """INSERT INTO "courses"("id","title","isActive","language") VALUES(@id,@t,@a,@l)""",
+            ("id", id), ("t", title), ("a", isActive), ("l", language));
 
     private static Task SchoolCourse(NpgsqlConnection c, string id, string school, string code, string[]? prereqs = null) =>
         Exec(c, """INSERT INTO "school_courses"("id","schoolId","code","prerequisites","status","isActive") VALUES(@id,@s,@c,@p,'active',true)""",

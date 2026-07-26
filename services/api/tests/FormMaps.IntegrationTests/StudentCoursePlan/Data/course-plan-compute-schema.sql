@@ -48,9 +48,24 @@ CREATE TABLE "course_enrollments" (
 );
 
 CREATE TABLE "user_preferences" (
-    "id"              text PRIMARY KEY DEFAULT gen_random_uuid()::text,
-    "userId"          text NOT NULL UNIQUE,
-    "preferredFields" text[] NOT NULL DEFAULT '{}'
+    "id"                 text PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    "userId"             text NOT NULL UNIQUE,
+    "preferredFields"    text[] NOT NULL DEFAULT '{}',
+    "preferredLanguages" text[] NOT NULL DEFAULT '{}'
+);
+
+-- Task-6 language-parity fold: resolveUserLanguage(userId) reads this (report's "Schema facts" section).
+CREATE TABLE "user_settings" (
+    "id"       text PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    "userId"   text NOT NULL UNIQUE,
+    "language" text NOT NULL DEFAULT 'en'
+);
+
+-- Task-6 engine-career-alignment fold: extractEngineCareerTitles reads this (report §4/§5).
+CREATE TABLE "user_career_profiles" (
+    "id"            text PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    "userId"        text NOT NULL UNIQUE,
+    "careerMatches" jsonb NOT NULL DEFAULT '[]'
 );
 
 CREATE TABLE "courses" (

@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace FormMaps.Application.StudentCoursePlan;
 
 /// <summary>
@@ -7,13 +9,23 @@ namespace FormMaps.Application.StudentCoursePlan;
 public static class CoursePlanRecommendationsScorer
 {
     /// <summary>
-    /// Ports the recommendations scorer (course-plan.ts L170-182): drop already-enrolled courses; base 50; +15 for each
-    /// preferredField (already lowercased) that is a substring of "title shortDescription category" lowercased; +10 when
-    /// rating &gt; 4; cap at 100; sort by matchScore DESC (stable → ties keep the id-ordered load order, a determinism
-    /// superset over the legacy unordered take-100); take 10.
+    /// Ports the recommendations scorer (course-plan.ts L170-182, + the Task-6 language/engine-career-alignment fold):
+    /// drop already-enrolled courses; base 50; +15 for each preferredField (already lowercased) that is a substring of
+    /// "title shortDescription category" lowercased; +10 when rating &gt; 4; **+10** (NOT +15 — that weight belongs to
+    /// courseService.ts's separate scorer, which has no .NET counterpart) when <paramref name="engineCareersLower"/> is
+    /// non-empty AND any of the course's (lowercased) <see cref="CourseRow.CareerPaths"/> case-insensitive-substring-
+    /// matches, in EITHER direction, any engine career (a single boolean gate via <c>.Any()</c>, not accumulated per
+    /// match — see FM-DOTNET-086 course-rec-language-parity porting report §4/§9); cap at 100; sort by matchScore DESC
+    /// (stable → ties keep the id-ordered load order, a determinism superset over the legacy unordered take-100);
+    /// take 10. Language filtering itself is NOT this function's concern — courses are assumed pre-filtered to the
+    /// caller's allowed languages by the reader/query layer before reaching this scorer (mirrors the TS split between
+    /// query-time `resolveAllowedCourseLanguages` and in-memory `scoreCourse`).
     /// </summary>
     public static IReadOnlyList<(CourseRow Course, int MatchScore)> Score(
-        IReadOnlyList<CourseRow> courses, IReadOnlySet<string> enrolledCourseIds, IReadOnlyList<string> preferredFieldsLower)
+        IReadOnlyList<CourseRow> courses,
+        IReadOnlySet<string> enrolledCourseIds,
+        IReadOnlyList<string> preferredFieldsLower,
+        IReadOnlyList<string> engineCareersLower)
     {
         return courses
             .Where(c => !enrolledCourseIds.Contains(c.Id))
@@ -34,12 +46,89 @@ public static class CoursePlanRecommendationsScorer
                     score += 10;
                 }
 
+                if (engineCareersLower.Count > 0)
+                {
+                    var courseCareerPathsLower = c.CareerPaths.Select(cp => cp.ToLowerInvariant());
+                    var engineCareerAligned = courseCareerPathsLower.Any(cp =>
+                        engineCareersLower.Any(ec => cp.Contains(ec, StringComparison.Ordinal) || ec.Contains(cp, StringComparison.Ordinal)));
+                    if (engineCareerAligned)
+                    {
+                        score += 10;
+                    }
+                }
+
                 return (Course: c, MatchScore: Math.Min(100, score));
             })
             .OrderByDescending(x => x.MatchScore) // stable — preserves the id-ordered load order on ties
             .Take(10)
             .ToList();
     }
+}
+
+/// <summary>
+/// Ports extractEngineCareerTitles (courseService.ts) — used ONLY by <see cref="CoursePlanRecommendationsScorer"/>'s
+/// engine-career-alignment bonus (FM-DOTNET-086 course-rec-language-parity porting report §4/§5). Handles both the
+/// schema-documented array-of-objects shape (currently unused by any TS writer) and the REAL persisted shape — a JSON
+/// OBJECT keyed by catalog programId, <c>{ [programId]: aiInsightText }</c>, written by careerService.ts's
+/// scoreCareers. Absent/null/non-object/non-array input, or the Prisma schema-default empty array literal, → [].
+/// Never throws.
+/// </summary>
+public static class EngineCareerTitleExtractor
+{
+    private const int MaxTitles = 5;
+
+    /// <summary>
+    /// CRITICAL parity detail (report §4): for the object shape, "top 5" means the first 5 property names in
+    /// JSON-DOCUMENT order — the real data carries no rank/score, so JS's <c>Object.keys(...).slice(0,5)</c> relies on
+    /// ECMA-262's guaranteed string-key insertion-order enumeration. This reads via
+    /// <see cref="JsonElement.EnumerateObject"/>, which preserves source-document property order, and NEVER via a
+    /// <c>Dictionary&lt;string,string&gt;</c> (whose enumeration order is an implementation detail, not a documented
+    /// contract, and is not safe to rely on for byte-for-byte TS parity).
+    ///
+    /// KNOWN PARITY GAP (documented, not silently approximated): TS resolves each programId key to its
+    /// human-readable <c>programTitle</c> via an in-memory career catalog (data/careers.json), falling back to the raw
+    /// key only on a catalog miss. This repo has no ported career-catalog data source yet (confirmed: no
+    /// careers.json / CareerCatalog-equivalent under services/api/src as of this port), so every key resolves via the
+    /// TS catalog-miss fallback path — the raw programId string is used as the comparand. This converges with TS
+    /// once/if a catalog is ported here, but diverges from TS today for any prod careerMatches key that TS's catalog
+    /// WOULD have resolved to a different display title (see FM-DOTNET-086 course-rec-language-parity porting report
+    /// §2/§9 for the full gap writeup).
+    /// </summary>
+    public static IReadOnlyList<string> Extract(JsonElement careerMatches)
+    {
+        switch (careerMatches.ValueKind)
+        {
+            case JsonValueKind.Object:
+                return careerMatches.EnumerateObject()
+                    .Take(MaxTitles)
+                    .Select(p => p.Name)
+                    .ToList();
+
+            case JsonValueKind.Array:
+                var titles = new List<string>();
+                foreach (var entry in careerMatches.EnumerateArray().Take(MaxTitles))
+                {
+                    if (entry.ValueKind != JsonValueKind.Object)
+                    {
+                        continue;
+                    }
+
+                    var title = TryGetString(entry, "programTitle") ?? TryGetString(entry, "title") ?? TryGetString(entry, "name");
+                    if (title is not null)
+                    {
+                        titles.Add(title);
+                    }
+                }
+
+                return titles;
+
+            default:
+                return []; // absent / null / scalar → never throws
+        }
+    }
+
+    private static string? TryGetString(JsonElement obj, string propertyName) =>
+        obj.TryGetProperty(propertyName, out var prop) && prop.ValueKind == JsonValueKind.String ? prop.GetString() : null;
 }
 
 /// <summary>
