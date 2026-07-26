@@ -21,6 +21,8 @@
     "main": "Principal",
     "explore": "Explorar",
     "tools": "Herramientas",
+    "buildTools": "Crear",
+    "myRecords": "Mis Registros",
     "communication": "Comunicación",
     "account": "Cuenta",
     "applications": "Solicitudes",

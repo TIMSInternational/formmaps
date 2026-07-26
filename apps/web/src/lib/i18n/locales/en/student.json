@@ -53,6 +53,8 @@
     "pending": "Pending",
     "remaining": "Remaining",
     "progress": "Progress",
+    "goalLabel": "Goal",
+    "noGoalSet": "No community service hours goal set for your account",
     "noHoursTitle": "No service hours logged yet",
     "noHoursBody": "Click \"Log Hours\" above to start tracking your community service.",
     "deleteConfirm": "Delete this entry? This cannot be undone.",

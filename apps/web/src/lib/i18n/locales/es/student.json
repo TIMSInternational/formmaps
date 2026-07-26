@@ -53,6 +53,8 @@
     "pending": "Pendientes",
     "remaining": "Restantes",
     "progress": "Progreso",
+    "goalLabel": "Meta",
+    "noGoalSet": "No hay una meta de horas de servicio comunitario configurada para tu cuenta",
     "noHoursTitle": "Aún no hay horas registradas",
     "noHoursBody": "Haz clic en \"Registrar Horas\" para comenzar a rastrear tu servicio comunitario.",
     "deleteConfirm": "¿Eliminar esta entrada? Esta acción no se puede deshacer.",

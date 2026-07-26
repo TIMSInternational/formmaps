@@ -21,6 +21,8 @@
     "main": "Main",
     "explore": "Explore",
     "tools": "Tools",
+    "buildTools": "Build",
+    "myRecords": "My Records",
     "communication": "Communication",
     "account": "Account",
     "applications": "Applications",

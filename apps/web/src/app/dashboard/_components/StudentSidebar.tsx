@@ -95,10 +95,15 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    label: "nav.tools",
+    label: "nav.buildTools",
     items: [
       { label: "dashboard.resumeBuilder", href: "/dashboard/resumes", icon: ClipboardList },
       { label: "dashboard.portfolio", href: "/dashboard/portfolio", icon: FolderOpen },
+    ],
+  },
+  {
+    label: "nav.myRecords",
+    items: [
       { label: "nav.applications", href: "/dashboard/applications", icon: Target },
       { label: "nav.testScores", href: "/dashboard/test-scores", icon: FileText },
       { label: "nav.transcript", href: "/dashboard/transcript", icon: BookOpen },
