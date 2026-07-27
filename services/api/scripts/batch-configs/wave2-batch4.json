@@ -1,0 +1,33 @@
+{
+  "batch": "wave2-batch4-school-admin-reads",
+  "routes": [
+    {
+      "label": "school-admin-overview",
+      "path": "/api/v1/school-admin/evaluations/overview",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": []
+    },
+    {
+      "label": "school-admin-results",
+      "path": "/api/v1/school-admin/results",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["data", "total", "page", "limit", "totalPages"]
+    },
+    {
+      "label": "school-admin-pca-status",
+      "path": "/api/v1/school-admin/results/{{fixtureUserId}}/pca-status",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["completed"]
+    },
+    {
+      "label": "school-admin-status",
+      "path": "/api/v1/school-admin/assessments/status",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["totalStudents", "completed", "completionRate"]
+    }
+  ]
+}
