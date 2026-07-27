@@ -21,6 +21,20 @@ directions: flip-off→Node in ~4min, flip-on→.NET in ~8min; CloudWatch clean)
 Node routes for these 5 endpoints are now FROZEN (rollback target only, no further
 Node-side changes expected). See `formmaps-platform/docs/superpowers/plans/2026-07-27-wave2-batch1-cutover.md`
 and `cutover-verification-checklist.md` for full detail.
+
+**Wave 2 Batch 2** — pca-exam session (FM-013/022), history (FM-020), completed-exams
+(FM-013) — LIVE on prod traffic as of 2026-07-27 14:21 CDT. CloudWatch clean, anon +
+real-auth canaries green with real seeded values round-tripped correctly (Z-string
+timestamps intact, no `+00:00` divergence — FM-DOTNET-022's fix holds live). **No
+Playwright acceptance spec** — traced the actual frontend call sites and found no
+student-facing page currently calls `/session` or `/completed-exams` (only `/history`,
+reachable only via a counselor viewing a student, not this batch's student fixture);
+relied instead on the real-auth gate's response bodies, which is a stronger check for
+these specific 2 routes (exact seeded values verified, not just "page rendered").
+Rollback-drill NOT repeated (Batch 1 already proved the mechanism; repeating every batch
+is unnecessary — an accidental extra flip during this batch's close-out was caught and
+reverted immediately, no user impact). Legacy Node routes for these 3 endpoints now
+FROZEN.
 | Assessments — pure engines (LIA-core, LIA item, personality tally, vocational) | ✅ done (FM-025→028) |
 | Assessments — writes (LIA complete, personality, pca-exam take/submit, vocational recompute) | ✅ done (FM-029→032) |
 
