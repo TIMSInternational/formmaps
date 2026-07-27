@@ -1,0 +1,61 @@
+{
+  "batch": "wave2-batch3-testscores-question360",
+  "routes": [
+    {
+      "label": "test-scores-superscore",
+      "path": "/api/v1/test-scores/superscore",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["sat", "act"]
+    },
+    {
+      "label": "test-scores-college-fit",
+      "path": "/api/v1/test-scores/college-fit",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["superscore", "colleges"]
+    },
+    {
+      "label": "test-scores-students-by-id",
+      "path": "/api/v1/test-scores/students/{{fixtureUserId}}/test-scores",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 403,
+      "authedShapeKeys": []
+    },
+    {
+      "label": "question360-getquestions",
+      "path": "/api/question360/GetQuestions",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": []
+    },
+    {
+      "label": "question360-all",
+      "path": "/api/question360/all",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": []
+    },
+    {
+      "label": "question360-category",
+      "path": "/api/question360/category/leadership",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": []
+    },
+    {
+      "label": "question360-sub-questions",
+      "path": "/api/question360/sub-questions/00000000-0000-0000-0000-000000000000",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 403,
+      "authedShapeKeys": []
+    },
+    {
+      "label": "question360-by-id",
+      "path": "/api/question360/00000000-0000-0000-0000-000000000000",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 403,
+      "authedShapeKeys": []
+    }
+  ]
+}
