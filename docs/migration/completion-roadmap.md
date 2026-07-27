@@ -35,6 +35,15 @@ Rollback-drill NOT repeated (Batch 1 already proved the mechanism; repeating eve
 is unnecessary — an accidental extra flip during this batch's close-out was caught and
 reverted immediately, no user impact). Legacy Node routes for these 3 endpoints now
 FROZEN.
+
+**Wave 2 Batch 3** — test-scores reads (FM-037: superscore, college-fit,
+students/:id/test-scores) + question360 reads (FM-038: all 5 GETs) — LIVE on prod
+traffic as of 2026-07-27 14:44 CDT. CloudWatch clean, anon + real-auth canaries green
+(16/16 checks incl. faithful 403s for the counselor/parent-only and
+evaluations:manage-gated routes — a student caller correctly 403s, matching legacy).
+Playwright confirms `/dashboard/test-scores` triggers real `.NET`-served
+superscore+college-fit calls for the fixture student. Legacy Node routes for these 8
+endpoints now FROZEN.
 | Assessments — pure engines (LIA-core, LIA item, personality tally, vocational) | ✅ done (FM-025→028) |
 | Assessments — writes (LIA complete, personality, pca-exam take/submit, vocational recompute) | ✅ done (FM-029→032) |
 
