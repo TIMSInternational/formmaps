@@ -73,6 +73,32 @@ function shouldRouteSchoolAdminReadsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_READS_TO_DOTNET));
 }
 
+// ── Reports domain: benchmark/user-report/pca/lia/timeline/coaching/evaluation reads ──
+// .NET server code for all 7 was already deployed before Wave 2 batch numbering existed;
+// this block was never ported into this file until now. Ported verbatim from the
+// monorepo apps/web/next.config.ts (lines 11-57 / 813-868), proven on staging.
+function shouldRouteBenchmarkReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_BENCHMARK_REPORT_TO_DOTNET));
+}
+function shouldRouteUserReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_USER_REPORT_TO_DOTNET));
+}
+function shouldRoutePcaReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCA_REPORT_TO_DOTNET));
+}
+function shouldRouteLiaReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_LIA_REPORT_TO_DOTNET));
+}
+function shouldRouteTimelineReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TIMELINE_REPORT_TO_DOTNET));
+}
+function shouldRouteCoachingReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COACHING_REPORT_TO_DOTNET));
+}
+function shouldRouteEvaluationReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_EVALUATION_REPORT_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -289,6 +315,47 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/assessments/status",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/status`,
+            },
+          ]
+        : []),
+      ...(shouldRouteBenchmarkReportToDotnet()
+        ? [{ source: "/api/v1/reports/benchmark", destination: `${dotnetApiBaseUrl}/api/v1/reports/benchmark` }]
+        : []),
+      ...(shouldRouteUserReportToDotnet()
+        ? [
+            {
+              source: "/api/v1/reports/user-report/:userId",
+              destination: `${dotnetApiBaseUrl}/api/v1/reports/user-report/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaReportToDotnet()
+        ? [{ source: "/api/v1/reports/pca/:userId", destination: `${dotnetApiBaseUrl}/api/v1/reports/pca/:userId` }]
+        : []),
+      ...(shouldRouteLiaReportToDotnet()
+        ? [{ source: "/api/v1/reports/lia/:userId", destination: `${dotnetApiBaseUrl}/api/v1/reports/lia/:userId` }]
+        : []),
+      ...(shouldRouteTimelineReportToDotnet()
+        ? [
+            {
+              source: "/api/v1/reports/timeline/:userId",
+              destination: `${dotnetApiBaseUrl}/api/v1/reports/timeline/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteCoachingReportToDotnet()
+        ? [
+            {
+              source: "/api/v1/reports/coaching/:userId",
+              destination: `${dotnetApiBaseUrl}/api/v1/reports/coaching/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteEvaluationReportToDotnet()
+        ? [
+            {
+              source: "/api/v1/reports/evaluation/:sessionId",
+              destination: `${dotnetApiBaseUrl}/api/v1/reports/evaluation/:sessionId`,
             },
           ]
         : []),
