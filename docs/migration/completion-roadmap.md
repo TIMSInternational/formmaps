@@ -12,6 +12,15 @@ Companion: `agentic-migration.manifest.json` (per-slice ledger).
 | Foundation (rails, auth-ctx, JWT, security, RLS, staging pipeline) | ✅ done (FM-001→008) |
 | Reports domain — reads (7/7 endpoints) | ✅ done (FM-006, 009→012) |
 | Assessments — reads (pca-exam cluster, LIA/MIL/personality results, timeline) | ✅ done (FM-013→024) |
+
+**✅ CUTOVER (prod traffic):** Personality domain (all 6 routes, FM-023/030) fully cut
+over 2026-07-22 (Milestone-1, see `personality-prod-cutover-runbook.md`). **Wave 2
+Batch 1** — LIA results (FM-015), MIL results (FM-016), pca-exam catalog/config
+(FM-018) — LIVE on prod traffic as of 2026-07-27 13:16 CDT (rollback drill proven both
+directions: flip-off→Node in ~4min, flip-on→.NET in ~8min; CloudWatch clean). Legacy
+Node routes for these 5 endpoints are now FROZEN (rollback target only, no further
+Node-side changes expected). See `formmaps-platform/docs/superpowers/plans/2026-07-27-wave2-batch1-cutover.md`
+and `cutover-verification-checklist.md` for full detail.
 | Assessments — pure engines (LIA-core, LIA item, personality tally, vocational) | ✅ done (FM-025→028) |
 | Assessments — writes (LIA complete, personality, pca-exam take/submit, vocational recompute) | ✅ done (FM-029→032) |
 
