@@ -47,6 +47,17 @@ function shouldRoutePcaExamConfigToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_CONFIG_TO_DOTNET));
 }
 
+// ── Wave 2 Batch 2: pca-exam session/history/completed-exams reads ──
+function shouldRoutePcaExamSessionToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_SESSION_TO_DOTNET));
+}
+function shouldRoutePcaExamHistoryToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_HISTORY_TO_DOTNET));
+}
+function shouldRoutePcaExamCompletedExamsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_COMPLETED_EXAMS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -179,6 +190,30 @@ const nextConfig: NextConfig = {
             {
               source: "/api/pcaexam/exam-config/:examId",
               destination: `${dotnetApiBaseUrl}/api/pcaexam/exam-config/:examId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaExamSessionToDotnet()
+        ? [
+            {
+              source: "/api/pcaexam/session/:sessionId",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/session/:sessionId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaExamHistoryToDotnet()
+        ? [
+            {
+              source: "/api/pcaexam/history/:userId",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/history/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaExamCompletedExamsToDotnet()
+        ? [
+            {
+              source: "/api/pcaexam/completed-exams/:userId",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/completed-exams/:userId`,
             },
           ]
         : []),
