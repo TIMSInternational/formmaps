@@ -1,0 +1,26 @@
+{
+  "batch": "wave2-batch2-pcaexam-session-history",
+  "routes": [
+    {
+      "label": "pcaexam-session",
+      "path": "/api/pcaexam/session/{{fixturePcaSessionId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["examId", "startTime", "scorePercentage", "isCompleted"]
+    },
+    {
+      "label": "pcaexam-history",
+      "path": "/api/pcaexam/history/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["sessions", "latest"]
+    },
+    {
+      "label": "pcaexam-completed-exams",
+      "path": "/api/pcaexam/completed-exams/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["sessions", "uniqueCompleted", "count"]
+    }
+  ]
+}
