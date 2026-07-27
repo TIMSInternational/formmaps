@@ -44,6 +44,17 @@ evaluations:manage-gated routes — a student caller correctly 403s, matching le
 Playwright confirms `/dashboard/test-scores` triggers real `.NET`-served
 superscore+college-fit calls for the fixture student. Legacy Node routes for these 8
 endpoints now FROZEN.
+
+**Wave 2 Batch 4** — school-admin reads (FM-039: overview, results, pca-status,
+status) — LIVE on prod traffic as of 2026-07-27 15:16 CDT. `/assessments/config` +
+`/assessments/schedule` deliberately left dark (those paths also carry Node-only PUTs —
+the FM-037-style routing trap the manifest itself flagged). New fixture:
+`test.schooladmin@formmaps.dev` password rotated (reusing `rotateFixturePassword.ts`);
+no extra data seeding needed — the fixture already shares a school with
+`test.student@formmaps.dev`, so real non-trivial results were visible immediately.
+CloudWatch clean, anon + real-auth canaries green (8/8), Playwright confirms
+`/school-admin` dashboard triggers real `.NET`-served `assessments/status`. Legacy Node
+routes for these 4 endpoints now FROZEN.
 | Assessments — pure engines (LIA-core, LIA item, personality tally, vocational) | ✅ done (FM-025→028) |
 | Assessments — writes (LIA complete, personality, pca-exam take/submit, vocational recompute) | ✅ done (FM-029→032) |
 
