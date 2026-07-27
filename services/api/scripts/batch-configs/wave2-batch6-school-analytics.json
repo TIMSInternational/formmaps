@@ -1,0 +1,33 @@
+{
+  "batch": "wave2-batch6-school-analytics-reads",
+  "routes": [
+    {
+      "label": "school-analytics-overview",
+      "path": "/api/v1/school-admin/analytics/overview",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["totalStudents", "activeStudents", "assessmentCompletionRate", "averageProgressScore", "studentsAtRisk", "counselorCoverage"]
+    },
+    {
+      "label": "school-analytics-trends",
+      "path": "/api/v1/school-admin/analytics/trends",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["metric", "range", "labels", "values"]
+    },
+    {
+      "label": "school-analytics-performance-trends",
+      "path": "/api/v1/school-admin/analytics/performance-trends",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["metric", "range", "labels", "values"]
+    },
+    {
+      "label": "school-analytics-top-performers",
+      "path": "/api/v1/school-admin/analytics/top-performers",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["data"]
+    }
+  ]
+}

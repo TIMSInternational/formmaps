@@ -72,6 +72,19 @@ confirms all 7 routes now carry `x-formmaps-service: formmaps-api`. Playwright c
 `.NET`-served `lia` + `user-report` calls with real seeded values (GPA 3.67, 6 completed
 MIL exams, 1 completed coaching session at $50) rendering with no console errors. Legacy
 Node routes for these 7 endpoints now FROZEN.
+
+**Wave 2 Batch 6** — school-analytics reads (FM-049: overview, trends, performance-trends,
+top-performers) — LIVE on prod traffic as of 2026-07-27. Corrected a stale research-draft
+claim that this domain's frontend wiring "already existed" — it pointed at
+`~/formmaps/apps/web/next.config.ts`, which has no linked Vercel project at all; the real
+gap (same as Batch 5) was `formmaps-platform/frontend/next.config.ts`, now fixed. Seeded
+one active `CounselorStudentAssignment` (test.counselor → test.student) so
+`counselorCoverage` wasn't a degenerate 0% (confirmed 0→100 pre/post). Real-auth gate
+green (4/4 authed checks + verified 403 for a student caller against the actual
+`.NET` permission guard). Anon canary through `app.formmaps.com` confirms all 4 routes
+carry `x-formmaps-service: formmaps-api`. Playwright confirms `/school-admin/analytics`
+triggers real `.NET`-served `overview` + `top-performers` calls on mount, 0 console
+errors. Legacy Node routes for these 4 endpoints now FROZEN.
 | Assessments — pure engines (LIA-core, LIA item, personality tally, vocational) | ✅ done (FM-025→028) |
 | Assessments — writes (LIA complete, personality, pca-exam take/submit, vocational recompute) | ✅ done (FM-029→032) |
 
