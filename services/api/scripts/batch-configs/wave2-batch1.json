@@ -1,0 +1,40 @@
+{
+  "batch": "wave2-batch1-lia-mil-pcaexam",
+  "routes": [
+    {
+      "label": "lia-session-results",
+      "path": "/api/v1/lia/session/{{fixtureLiaSessionId}}/results",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["global_percentile", "performance_level", "percentiles"]
+    },
+    {
+      "label": "lia-user-results",
+      "path": "/api/v1/lia/user/{{fixtureUserId}}/results",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["global_percentile", "performance_level"]
+    },
+    {
+      "label": "mil-results",
+      "path": "/api/v1/mil/results/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["examResults", "cognitiveProfile", "overallScore"]
+    },
+    {
+      "label": "pcaexam-instructions",
+      "path": "/api/pcaexam/exams/feature-detection-001/instructions",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["id", "name", "type", "instructions", "description"]
+    },
+    {
+      "label": "pcaexam-exam-config",
+      "path": "/api/pcaexam/exam-config/feature-detection-001",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["id", "name", "type", "instructions"]
+    }
+  ]
+}
