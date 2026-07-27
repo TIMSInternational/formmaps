@@ -55,6 +55,23 @@ no extra data seeding needed — the fixture already shares a school with
 CloudWatch clean, anon + real-auth canaries green (8/8), Playwright confirms
 `/school-admin` dashboard triggers real `.NET`-served `assessments/status`. Legacy Node
 routes for these 4 endpoints now FROZEN.
+
+**Wave 2 Batch 5** — Reports domain (FM-006, 009→012: benchmark, user-report, pca, lia,
+timeline, coaching, evaluation) — LIVE on prod traffic as of 2026-07-27. All 7 `.NET`
+endpoints were already deployed (ancestor of the live image since before Wave 2 batch
+numbering existed) — the only gap was the `next.config.ts` rewrite block, never ported
+into `formmaps-platform/frontend` (the file `app.formmaps.com` actually deploys from).
+New fixture data seeded for `test.student@formmaps.dev` covering the 4 endpoints with no
+prior coverage (benchmark/timeline/coaching/evaluation): `StudentGrade`,
+`CourseEnrollment`, `PCAEvaluation`, `UserCareerProfile`, `EvaluationGroup`+`Feedback`,
+`Booking`+`Review` (`seedBatch5ReportsFixtures.ts`). Real-auth gate green (8/8 student-actor
+checks + 1/1 school-admin-actor check for benchmark, incl. faithful 403 for a student
+calling benchmark and 404 for a nonexistent user). Anon canary through `app.formmaps.com`
+confirms all 7 routes now carry `x-formmaps-service: formmaps-api`. Playwright confirms
+`/school-admin/reports` (Test Student dialog, MIL/LIA and 360° tabs) triggers real
+`.NET`-served `lia` + `user-report` calls with real seeded values (GPA 3.67, 6 completed
+MIL exams, 1 completed coaching session at $50) rendering with no console errors. Legacy
+Node routes for these 7 endpoints now FROZEN.
 | Assessments — pure engines (LIA-core, LIA item, personality tally, vocational) | ✅ done (FM-025→028) |
 | Assessments — writes (LIA complete, personality, pca-exam take/submit, vocational recompute) | ✅ done (FM-029→032) |
 

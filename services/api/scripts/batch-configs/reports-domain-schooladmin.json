@@ -1,0 +1,12 @@
+{
+  "batch": "reports-domain-schooladmin-actor",
+  "routes": [
+    {
+      "label": "reports-benchmark",
+      "path": "/api/v1/reports/benchmark",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["totalStudents", "averageGpa", "pcaCompletionRate", "milAverageScore", "gpaDistribution"]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "batch": "reports-domain-student-actor",
+  "routes": [
+    {
+      "label": "reports-user-report",
+      "path": "/api/v1/reports/user-report/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["student", "academic", "assessments", "courses"]
+    },
+    {
+      "label": "reports-pca",
+      "path": "/api/v1/reports/pca/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["studentId", "completed", "evaluations"]
+    },
+    {
+      "label": "reports-lia",
+      "path": "/api/v1/reports/lia/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": []
+    },
+    {
+      "label": "reports-timeline",
+      "path": "/api/v1/reports/timeline/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["studentId", "events", "totalEvents", "summary"]
+    },
+    {
+      "label": "reports-coaching",
+      "path": "/api/v1/reports/coaching/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["studentId", "totalSessions", "completedSessions", "sessions"]
+    },
+    {
+      "label": "reports-evaluation",
+      "path": "/api/v1/reports/evaluation/{{fixtureEvaluationGroupId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["groupId", "studentId", "isCompleted", "feedback"]
+    },
+    {
+      "label": "reports-user-report-nonexistent",
+      "path": "/api/v1/reports/user-report/00000000-0000-0000-0000-000000000000",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 404,
+      "authedShapeKeys": []
+    },
+    {
+      "label": "reports-benchmark-as-student-should-403",
+      "path": "/api/v1/reports/benchmark",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 403,
+      "authedShapeKeys": []
+    }
+  ]
+}
