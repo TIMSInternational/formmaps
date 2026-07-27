@@ -58,6 +58,14 @@ function shouldRoutePcaExamCompletedExamsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_COMPLETED_EXAMS_TO_DOTNET));
 }
 
+// ── Wave 2 Batch 3: test-scores (superscore/college-fit) + question360 reads ──
+function shouldRouteTestScoresReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TEST_SCORES_READS_TO_DOTNET));
+}
+function shouldRouteQuestion360ReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_QUESTION360_READS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -214,6 +222,46 @@ const nextConfig: NextConfig = {
             {
               source: "/api/pcaexam/completed-exams/:userId",
               destination: `${dotnetApiBaseUrl}/api/pcaexam/completed-exams/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteTestScoresReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/test-scores/superscore",
+              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/superscore`,
+            },
+            {
+              source: "/api/v1/test-scores/college-fit",
+              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/college-fit`,
+            },
+            {
+              source: "/api/v1/test-scores/students/:id/test-scores",
+              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/students/:id/test-scores`,
+            },
+          ]
+        : []),
+      ...(shouldRouteQuestion360ReadsToDotnet()
+        ? [
+            {
+              source: "/api/question360/GetQuestions",
+              destination: `${dotnetApiBaseUrl}/api/question360/GetQuestions`,
+            },
+            {
+              source: "/api/question360/all",
+              destination: `${dotnetApiBaseUrl}/api/question360/all`,
+            },
+            {
+              source: "/api/question360/category/:category",
+              destination: `${dotnetApiBaseUrl}/api/question360/category/:category`,
+            },
+            {
+              source: "/api/question360/sub-questions/:parentQuestionId",
+              destination: `${dotnetApiBaseUrl}/api/question360/sub-questions/:parentQuestionId`,
+            },
+            {
+              source: "/api/question360/:id",
+              destination: `${dotnetApiBaseUrl}/api/question360/:id`,
             },
           ]
         : []),
