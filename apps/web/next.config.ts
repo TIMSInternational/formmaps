@@ -99,6 +99,14 @@ function shouldRouteEvaluationReportToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_EVALUATION_REPORT_TO_DOTNET));
 }
 
+// ── School-analytics reads (FM-DOTNET-049): overview/trends/performance-trends/top-performers ──
+// Ported verbatim from ~/formmaps/apps/web/next.config.ts (lines 316-323 / 1222-1245) — that copy
+// is NOT a deploy target (no linked Vercel project), this file is. /trends and /performance-trends
+// hit the identical service call.
+function shouldRouteSchoolAnalyticsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ANALYTICS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -356,6 +364,26 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/reports/evaluation/:sessionId",
               destination: `${dotnetApiBaseUrl}/api/v1/reports/evaluation/:sessionId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteSchoolAnalyticsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/analytics/overview",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/overview`,
+            },
+            {
+              source: "/api/v1/school-admin/analytics/trends",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/trends`,
+            },
+            {
+              source: "/api/v1/school-admin/analytics/performance-trends",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/performance-trends`,
+            },
+            {
+              source: "/api/v1/school-admin/analytics/top-performers",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/top-performers`,
             },
           ]
         : []),
