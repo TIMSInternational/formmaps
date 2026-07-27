@@ -66,6 +66,13 @@ function shouldRouteQuestion360ReadsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_QUESTION360_READS_TO_DOTNET));
 }
 
+// ── Wave 2 Batch 4: school-admin reads (overview/results/pca-status/status) ──
+// /assessments/config + /assessments/schedule stay dark — those paths also
+// carry Node-only PUTs (Next matches by path not method).
+function shouldRouteSchoolAdminReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_READS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -262,6 +269,26 @@ const nextConfig: NextConfig = {
             {
               source: "/api/question360/:id",
               destination: `${dotnetApiBaseUrl}/api/question360/:id`,
+            },
+          ]
+        : []),
+      ...(shouldRouteSchoolAdminReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/evaluations/overview",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/evaluations/overview`,
+            },
+            {
+              source: "/api/v1/school-admin/results/:studentId/pca-status",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results/:studentId/pca-status`,
+            },
+            {
+              source: "/api/v1/school-admin/results",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results`,
+            },
+            {
+              source: "/api/v1/school-admin/assessments/status",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/status`,
             },
           ]
         : []),
