@@ -33,6 +33,20 @@ function shouldRoutePersonalityCompleteToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_COMPLETE_TO_DOTNET));
 }
 
+// ── Wave 2 Batch 1: LIA/MIL results reads + pca-exam catalog/config reads ──
+// Ported verbatim from the monorepo apps/web/next.config.ts (G13 — rewrites
+// only take effect in THIS file, which is what app.formmaps.com actually
+// deploys from).
+function shouldRouteLiaResultsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_LIA_RESULTS_TO_DOTNET));
+}
+function shouldRouteMilResultsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_MIL_RESULTS_TO_DOTNET));
+}
+function shouldRoutePcaExamConfigToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_CONFIG_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -135,6 +149,38 @@ const nextConfig: NextConfig = {
         : []),
       ...(shouldRoutePersonalityStartToDotnet()
         ? [{ source: "/api/v1/personality/start", destination: `${dotnetApiBaseUrl}/api/v1/personality/start` }]
+        : []),
+      ...(shouldRouteLiaResultsToDotnet()
+        ? [
+            {
+              source: "/api/v1/lia/session/:sessionId/results",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/results`,
+            },
+            {
+              source: "/api/v1/lia/user/:userId/results",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/user/:userId/results`,
+            },
+          ]
+        : []),
+      ...(shouldRouteMilResultsToDotnet()
+        ? [
+            {
+              source: "/api/v1/mil/results/:userId",
+              destination: `${dotnetApiBaseUrl}/api/v1/mil/results/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaExamConfigToDotnet()
+        ? [
+            {
+              source: "/api/pcaexam/exams/:examId/instructions",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/exams/:examId/instructions`,
+            },
+            {
+              source: "/api/pcaexam/exam-config/:examId",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/exam-config/:examId`,
+            },
+          ]
         : []),
     ];
     return {
