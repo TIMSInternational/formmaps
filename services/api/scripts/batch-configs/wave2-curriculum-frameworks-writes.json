@@ -1,0 +1,47 @@
+{
+  "vars": {
+    "apCourseId": "7b2785fa-5ab4-490b-bb35-763f5a8b2fc9",
+    "markerLocalName": "__CANARY_FW_2026-07-28__"
+  },
+  "plan": [
+    {
+      "label": "read-frameworks",
+      "method": "GET",
+      "path": "/api/v1/school-admin/curriculum/frameworks",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200
+    },
+    {
+      "label": "toggle-ap-on",
+      "method": "PUT",
+      "path": "/api/v1/school-admin/curriculum/frameworks",
+      "bodyTemplate": { "frameworks": [{ "type": "AP", "enabled": true }] },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "expectedStatus": 200
+    },
+    {
+      "label": "toggle-ap-off",
+      "method": "PUT",
+      "path": "/api/v1/school-admin/curriculum/frameworks",
+      "bodyTemplate": { "frameworks": [{ "type": "AP", "enabled": false }] },
+      "expectedStatus": 200
+    },
+    {
+      "label": "read-ap-catalog",
+      "method": "GET",
+      "path": "/api/v1/school-admin/curriculum/frameworks/AP/courses?limit=3",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200
+    },
+    {
+      "label": "customize-ap-course",
+      "method": "PUT",
+      "path": "/api/v1/school-admin/curriculum/frameworks/AP/courses/{{apCourseId}}",
+      "bodyTemplate": { "credits": 99, "localName": "{{markerLocalName}}" },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "expectedStatus": 200
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "vars": {
+    "throwawayCourseId": "12e5b77f-69e5-4abe-9f70-707590325a6e",
+    "targetStudentId": "e7298f70-0afc-4687-900d-fe911fa28c3a"
+  },
+  "plan": [
+    {
+      "label": "read-prerequisite-chain",
+      "method": "GET",
+      "path": "/api/v1/school-admin/courses/{{throwawayCourseId}}/prerequisite-chain",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200
+    },
+    {
+      "label": "write-prerequisites",
+      "method": "PUT",
+      "path": "/api/v1/school-admin/courses/{{throwawayCourseId}}/prerequisites",
+      "bodyTemplate": { "prerequisiteRules": [], "corequisites": ["__CANARY_COREQ_2026-07-28__"] },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "expectedStatus": 200
+    },
+    {
+      "label": "check-eligibility",
+      "method": "GET",
+      "path": "/api/v1/school-admin/prerequisites/check/{{targetStudentId}}/{{throwawayCourseId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200
+    },
+    {
+      "label": "eligible-for-student",
+      "method": "GET",
+      "path": "/api/v1/school-admin/prerequisites/eligible/{{targetStudentId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200
+    },
+    {
+      "label": "missing-for-student",
+      "method": "GET",
+      "path": "/api/v1/school-admin/prerequisites/missing/{{targetStudentId}}/{{throwawayCourseId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200
+    }
+  ]
+}
