@@ -8,15 +8,18 @@ using FormMaps.Application.SchoolAnalytics;
 namespace FormMaps.Infrastructure.ParentChildReads;
 
 /// <summary>
-/// Parent child-link-scoped reads (FM-DOTNET-079). Every path first verifies an accepted+active StudentParentLink
-/// (parentUserId == caller) on a SYSTEM (RLS-bypass) session — the tenant_isolation RLS policy on
-/// student_parent_links only admits a row when studentId equals the caller's own id or the caller shares the
-/// student's school, which a parent (school-less, id never equal to their child's) can never satisfy, so the link
-/// check itself must bypass RLS. progress then reads assessments/credits/grades on the caller's Identity session
-/// (legacy reads them under tenantContext — NO runAsSystem). course-plan reads the approved plan / target / current
-/// courses on a SYSTEM (RLS-bypass) session too (legacy runAsSystem, because a school-less parent cannot see those
-/// school-scoped rows under tenant RLS). Decimal credits → Number() = double; GPA/percentage/avg use JS Math.round
-/// (SchoolAnalyticsMath.JsRound); percentage has NO 100 cap (matching legacy). All read-only.
+/// Parent child-link-scoped reads (FM-DOTNET-079). Every path — the link check, the student lookup, and every
+/// assessment/credit/grade/plan/target/course read — runs on a SYSTEM (RLS-bypass) session. The tenant_isolation
+/// RLS policy on student_parent_links (and on users, and on every other table these reads touch) only admits a row
+/// when the target studentId equals the caller's own id or the caller shares the student's school; a parent is
+/// school-less and their id never equals their child's, so NONE of these reads can ever pass under the caller's own
+/// Identity session. Legacy Node's routes/parent.ts runs progress entirely under tenantContext (never runAsSystem)
+/// and course-plan's link check the same way (only its later plan/target/enrollment reads use runAsSystem) — this
+/// is confirmed to be a live, currently-broken bug in legacy (verified 2026-07-28: a real linked parent gets 403
+/// "Not linked"/404 "Student not found" through legacy Node prod right now), not a deliberate business rule to
+/// preserve. This port fixes it rather than faithfully reproducing it. Decimal credits → Number() = double;
+/// GPA/percentage/avg use JS Math.round (SchoolAnalyticsMath.JsRound); percentage has NO 100 cap (matching legacy's
+/// arithmetic, independent of the RLS-session bug). All read-only.
 /// </summary>
 public sealed class ParentChildReader(IFormMapsDatabaseSessionFactory databaseSessionFactory) : IParentChildReader
 {
@@ -30,14 +33,11 @@ public sealed class ParentChildReader(IFormMapsDatabaseSessionFactory databaseSe
     public async Task<ChildProgressResult> GetProgressAsync(
         RequestContext context, string parentUserId, string studentId, CancellationToken cancellationToken = default)
     {
-        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
 
-        await using (var linkCheckSession = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken))
+        if (!await IsLinkedAsync(session, parentUserId, studentId, cancellationToken))
         {
-            if (!await IsLinkedAsync(linkCheckSession, parentUserId, studentId, cancellationToken))
-            {
-                return new ChildProgressResult(ChildProgressOutcome.NotLinked, null);
-            }
+            return new ChildProgressResult(ChildProgressOutcome.NotLinked, null);
         }
 
         // student = user.findUnique(select id,name,gradeLevel,schoolId). Missing → 404.
