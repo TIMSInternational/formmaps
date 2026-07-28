@@ -211,6 +211,14 @@ function shouldRouteCommunityServiceToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COMMUNITY_SERVICE_TO_DOTNET));
 }
 
+// ── College applications CRUD (FM-DOTNET-081): GET+POST /college/students/:studentId/applications,
+// PUT+DELETE /college/applications/:id — ONE flag co-flips both paths. Access via ICollegeAccessResolver
+// (student self / counselor with active assignment / school_admin same-school / super admin) — any
+// failure collapses to a uniform 404. Soft-delete. Default OFF (dark).
+function shouldRouteCollegeApplicationsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_APPLICATIONS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -639,6 +647,12 @@ const nextConfig: NextConfig = {
         ? [
             { source: "/api/v1/student/community-service", destination: `${dotnetApiBaseUrl}/api/v1/student/community-service` },
             { source: "/api/v1/student/community-service/:id", destination: `${dotnetApiBaseUrl}/api/v1/student/community-service/:id` },
+          ]
+        : []),
+      ...(shouldRouteCollegeApplicationsToDotnet()
+        ? [
+            { source: "/api/v1/college/students/:studentId/applications", destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/applications` },
+            { source: "/api/v1/college/applications/:id", destination: `${dotnetApiBaseUrl}/api/v1/college/applications/:id` },
           ]
         : []),
     ];
