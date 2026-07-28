@@ -202,6 +202,15 @@ function shouldRouteStudentPortfolioToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_PORTFOLIO_TO_DOTNET));
 }
 
+// ── Student community-service CRUD (FM-DOTNET-075): GET+POST /community-service,
+// PUT+DELETE /community-service/:id — ONE flag co-flips both paths (Next matches
+// path-not-method). Self-scoped (req.userId) — no server-side permission gate at all,
+// only identity. Edit/delete additionally gated on isActive + status=="pending" server-side.
+// Default OFF (dark).
+function shouldRouteCommunityServiceToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COMMUNITY_SERVICE_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -624,6 +633,12 @@ const nextConfig: NextConfig = {
             { source: "/api/v1/student/portfolio", destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio` },
             { source: "/api/v1/student/portfolio/summary", destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio/summary` },
             { source: "/api/v1/student/portfolio/:id", destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio/:id` },
+          ]
+        : []),
+      ...(shouldRouteCommunityServiceToDotnet()
+        ? [
+            { source: "/api/v1/student/community-service", destination: `${dotnetApiBaseUrl}/api/v1/student/community-service` },
+            { source: "/api/v1/student/community-service/:id", destination: `${dotnetApiBaseUrl}/api/v1/student/community-service/:id` },
           ]
         : []),
     ];
