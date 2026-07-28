@@ -1,0 +1,24 @@
+{
+  "vars": {
+    "markerCourseId": "__CANARY_CCR_2026-07-28__"
+  },
+  "plan": [
+    {
+      "label": "create-change-request",
+      "method": "POST",
+      "path": "/api/v1/student/course-plan/change-requests",
+      "bodyTemplate": { "courseId": "{{markerCourseId}}", "action": "add", "credits": 1, "gradeLevel": 10 },
+      "anonExpectedStatus": 401,
+      "expectedStatus": 201,
+      "exportAs": "createdRequestId"
+    },
+    {
+      "label": "cancel-change-request",
+      "method": "DELETE",
+      "path": "/api/v1/student/course-plan/change-requests/{{createdRequestId}}",
+      "crossTenantExpectedStatus": 400,
+      "crossTenantResourceIdVar": "createdRequestId",
+      "expectedStatus": 200
+    }
+  ]
+}

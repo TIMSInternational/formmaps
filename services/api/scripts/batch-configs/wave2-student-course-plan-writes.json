@@ -1,0 +1,21 @@
+{
+  "vars": {
+    "markerCourseId": "__CANARY_CP_2026-07-28__"
+  },
+  "plan": [
+    {
+      "label": "create-course-plan-enrollment",
+      "method": "POST",
+      "path": "/api/v1/student/course-plan/courses",
+      "bodyTemplate": { "courseId": "{{markerCourseId}}" },
+      "anonExpectedStatus": 401,
+      "expectedStatus": 201
+    },
+    {
+      "label": "delete-course-plan-enrollment",
+      "method": "DELETE",
+      "path": "/api/v1/student/course-plan/courses/{{markerCourseId}}",
+      "expectedStatus": 200
+    }
+  ]
+}
