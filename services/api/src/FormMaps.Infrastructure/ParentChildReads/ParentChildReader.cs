@@ -9,11 +9,14 @@ namespace FormMaps.Infrastructure.ParentChildReads;
 
 /// <summary>
 /// Parent child-link-scoped reads (FM-DOTNET-079). Every path first verifies an accepted+active StudentParentLink
-/// (parentUserId == caller) under the caller's Identity RLS session. progress then reads assessments/credits/grades on
-/// that SAME Identity session (legacy reads them under tenantContext — NO runAsSystem). course-plan reads the approved
-/// plan / target / current courses on a SYSTEM (RLS-bypass) session (legacy runAsSystem, because a school-less parent
-/// cannot see those school-scoped rows under tenant RLS). Decimal credits → Number() = double; GPA/percentage/avg use
-/// JS Math.round (SchoolAnalyticsMath.JsRound); percentage has NO 100 cap (matching legacy). All read-only.
+/// (parentUserId == caller) on a SYSTEM (RLS-bypass) session — the tenant_isolation RLS policy on
+/// student_parent_links only admits a row when studentId equals the caller's own id or the caller shares the
+/// student's school, which a parent (school-less, id never equal to their child's) can never satisfy, so the link
+/// check itself must bypass RLS. progress then reads assessments/credits/grades on the caller's Identity session
+/// (legacy reads them under tenantContext — NO runAsSystem). course-plan reads the approved plan / target / current
+/// courses on a SYSTEM (RLS-bypass) session too (legacy runAsSystem, because a school-less parent cannot see those
+/// school-scoped rows under tenant RLS). Decimal credits → Number() = double; GPA/percentage/avg use JS Math.round
+/// (SchoolAnalyticsMath.JsRound); percentage has NO 100 cap (matching legacy). All read-only.
 /// </summary>
 public sealed class ParentChildReader(IFormMapsDatabaseSessionFactory databaseSessionFactory) : IParentChildReader
 {
@@ -29,9 +32,12 @@ public sealed class ParentChildReader(IFormMapsDatabaseSessionFactory databaseSe
     {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
-        if (!await IsLinkedAsync(session, parentUserId, studentId, cancellationToken))
+        await using (var linkCheckSession = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken))
         {
-            return new ChildProgressResult(ChildProgressOutcome.NotLinked, null);
+            if (!await IsLinkedAsync(linkCheckSession, parentUserId, studentId, cancellationToken))
+            {
+                return new ChildProgressResult(ChildProgressOutcome.NotLinked, null);
+            }
         }
 
         // student = user.findUnique(select id,name,gradeLevel,schoolId). Missing → 404.
@@ -147,18 +153,14 @@ public sealed class ParentChildReader(IFormMapsDatabaseSessionFactory databaseSe
     public async Task<ChildCoursePlanResult> GetCoursePlanAsync(
         RequestContext context, string parentUserId, string studentId, CancellationToken cancellationToken = default)
     {
-        // Link check under the caller's Identity RLS (→ 404 when absent, hiding existence).
-        await using (var identity = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken))
-        {
-            if (!await IsLinkedAsync(identity, parentUserId, studentId, cancellationToken))
-            {
-                return new ChildCoursePlanResult(Linked: false, null);
-            }
-        }
-
-        // The accepted link is the authorization; parents are school-less so the plan/target/course-plan rows are read
-        // as SYSTEM (RLS bypass), mirroring legacy runAsSystem.
+        // The accepted link is the authorization; parents are school-less so both the link check itself and the
+        // plan/target/course-plan rows are read as SYSTEM (RLS bypass), mirroring legacy runAsSystem.
         await using var system = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
+
+        if (!await IsLinkedAsync(system, parentUserId, studentId, cancellationToken))
+        {
+            return new ChildCoursePlanResult(Linked: false, null);
+        }
 
         ChildApprovedPlan? approvedPlan = null;
         string? planId = null;
