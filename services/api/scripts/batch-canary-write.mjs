@@ -85,6 +85,18 @@ function locate(list, locateBy, vars) {
   return list.find((row) => String(row[field]) === expected);
 }
 
+function fieldsEqual(actual, expected) {
+  // For primitives, use strict equality
+  if (typeof actual !== "object" || actual === null) {
+    return actual === expected;
+  }
+  if (typeof expected !== "object" || expected === null) {
+    return actual === expected;
+  }
+  // For objects/arrays, use JSON.stringify for deep content comparison
+  return JSON.stringify(actual) === JSON.stringify(expected);
+}
+
 async function runStep(step, vars) {
   const label = step.label;
   const path = interpolate(step.path, vars);
@@ -125,7 +137,7 @@ async function runStep(step, vars) {
         if (afterRow) {
           // Row still exists after denied write - check fields are unchanged
           for (const [field, beforeValue] of Object.entries(beforeRow)) {
-            if (afterRow[field] !== beforeValue) {
+            if (!fieldsEqual(afterRow[field], beforeValue)) {
               fail(`${label}/deny`, `read-back field "${field}" changed from ${JSON.stringify(beforeValue)} to ${JSON.stringify(afterRow[field])} despite denied write`);
             }
           }
@@ -158,6 +170,22 @@ async function runStep(step, vars) {
   }
 
   let createdId = json?.data?.id;
+
+  // Read-back and locate before cleanup registration, so createdId can be updated from the located row
+  let row = null;
+  if (step.readBackPath && step.readBackLocateBy) {
+    const after = await getJson(interpolate(step.readBackPath, vars), WRITE_TOKEN);
+    const list = after.json?.data?.data || after.json?.data || [];
+    row = locate(list, step.readBackLocateBy, { ...vars, createdId });
+    if (!row) {
+      fail(label, `read-back could not locate the written row by ${step.readBackLocateBy.field}`);
+    } else if (!createdId && row.id) {
+      // If write response had no id field, use the id from the located row for cleanup
+      createdId = row.id;
+    }
+  }
+
+  // Register cleanup after createdId is finalized
   if (step.cleanup) {
     createdIds.push({
       method: step.cleanup.method,
@@ -165,18 +193,12 @@ async function runStep(step, vars) {
     });
   }
 
-  if (step.readBackPath && step.readBackLocateBy) {
-    const after = await getJson(interpolate(step.readBackPath, vars), WRITE_TOKEN);
-    const list = after.json?.data?.data || after.json?.data || [];
-    const row = locate(list, step.readBackLocateBy, { ...vars, createdId });
-    if (!row) {
-      fail(label, `read-back could not locate the written row by ${step.readBackLocateBy.field}`);
-    } else if (step.expectedFieldsAfterWrite) {
-      for (const [field, expected] of Object.entries(step.expectedFieldsAfterWrite)) {
-        const expectedValue = typeof expected === "string" ? interpolate(expected, { ...vars, createdId }) : expected;
-        if (row[field] !== expectedValue) {
-          fail(label, `read-back field "${field}" = ${JSON.stringify(row[field])}, expected ${JSON.stringify(expectedValue)}`);
-        }
+  // Verify expected field values after write
+  if (row && step.expectedFieldsAfterWrite) {
+    for (const [field, expected] of Object.entries(step.expectedFieldsAfterWrite)) {
+      const expectedValue = typeof expected === "string" ? interpolate(expected, { ...vars, createdId }) : expected;
+      if (!fieldsEqual(row[field], expectedValue)) {
+        fail(label, `read-back field "${field}" = ${JSON.stringify(row[field])}, expected ${JSON.stringify(expectedValue)}`);
       }
     }
   }
