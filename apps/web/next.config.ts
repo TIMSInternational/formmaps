@@ -193,6 +193,15 @@ function shouldRouteAcademicGapsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ACADEMIC_GAPS_TO_DOTNET));
 }
 
+// ── Student portfolio CRUD (FM-DOTNET-073): GET+POST /portfolio, GET /portfolio/summary,
+// PUT+DELETE /portfolio/:id — ONE flag co-flips all 5. /portfolio/summary MUST precede
+// /portfolio/:id (the :id param would otherwise swallow "summary"). Self-scoped
+// (req.userId) — no server-side permission gate on this endpoint at all, only identity.
+// Default OFF (dark).
+function shouldRouteStudentPortfolioToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_PORTFOLIO_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -608,6 +617,13 @@ const nextConfig: NextConfig = {
               source: "/api/v1/school-admin/academic-gaps/recommendations/:studentId",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/recommendations/:studentId`,
             },
+          ]
+        : []),
+      ...(shouldRouteStudentPortfolioToDotnet()
+        ? [
+            { source: "/api/v1/student/portfolio", destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio` },
+            { source: "/api/v1/student/portfolio/summary", destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio/summary` },
+            { source: "/api/v1/student/portfolio/:id", destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio/:id` },
           ]
         : []),
     ];
