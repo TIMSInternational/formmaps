@@ -127,6 +127,13 @@ function shouldRouteSchoolReadsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_READS_TO_DOTNET));
 }
 
+// ── iSAMS integration reads (FM-DOTNET-053): /status + /jobs, no write sharing either path.
+// The POST configure/sync/test paths stay Node (vendor boundary, SSRF-hardened undici client) —
+// not part of this cutover.
+function shouldRouteIsamsReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ISAMS_READS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -442,6 +449,18 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/counselor-workload",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselor-workload`,
+            },
+          ]
+        : []),
+      ...(shouldRouteIsamsReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/integrations/isams/status",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/integrations/isams/status`,
+            },
+            {
+              source: "/api/v1/school-admin/integrations/isams/jobs",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/integrations/isams/jobs`,
             },
           ]
         : []),
