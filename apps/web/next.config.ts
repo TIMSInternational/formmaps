@@ -234,6 +234,33 @@ function shouldRouteCollegeEssaysToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_ESSAYS_TO_DOTNET));
 }
 
+// ── Student applications core CRUD (FM-DOTNET-074): GET+POST /student/applications,
+// GET /student/applications/deadlines, GET+PUT+DELETE /student/applications/:id — ONE flag
+// co-flips three paths (/applications/deadlines MUST precede /applications/:id). Self-scoped
+// (RequireIdentity only). Soft-delete. Writes the same student_applications table as college.ts
+// (FM-081), same as legacy Node's two independent route surfaces. Default OFF.
+function shouldRouteStudentApplicationsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_APPLICATIONS_TO_DOTNET));
+}
+
+// ── Student parent-links CRUD (FM-DOTNET-076): GET /student/parents, POST /student/parents/invite,
+// DELETE /student/parents/:parentLinkId, POST /student/parents/:parentLinkId/resend — ONE flag
+// co-flips four paths (/parents/invite MUST precede /parents/:parentLinkId). Self-scoped. NOT
+// SES-coupled (mints a token only, no email). Delete gate = ownership-only (no isActive check).
+// Default OFF.
+function shouldRouteStudentParentsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_PARENTS_TO_DOTNET));
+}
+
+// ── Student application essays + checklist (FM-DOTNET-077): GET+POST /student/applications/:id/essays,
+// PUT /student/applications/:id/essays/:eid, GET+POST /student/applications/:id/checklist,
+// PUT /student/applications/:id/checklist/:cid — ONE flag co-flips all four paths. Self-scoped +
+// application-ownership check. Zero delete endpoints — no Tier-2 check needed. AI siblings
+// (ai-review, checklist/generate) stay Node. Default OFF.
+function shouldRouteStudentEssaysChecklistToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_ESSAYS_CHECKLIST_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -682,6 +709,29 @@ const nextConfig: NextConfig = {
             { source: "/api/v1/college/students/:studentId/essays", destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/essays` },
             { source: "/api/v1/college/essays/:id", destination: `${dotnetApiBaseUrl}/api/v1/college/essays/:id` },
             { source: "/api/v1/college/essays/:id/comments", destination: `${dotnetApiBaseUrl}/api/v1/college/essays/:id/comments` },
+          ]
+        : []),
+      ...(shouldRouteStudentApplicationsToDotnet()
+        ? [
+            { source: "/api/v1/student/applications/deadlines", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/deadlines` },
+            { source: "/api/v1/student/applications", destination: `${dotnetApiBaseUrl}/api/v1/student/applications` },
+            { source: "/api/v1/student/applications/:id", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id` },
+          ]
+        : []),
+      ...(shouldRouteStudentParentsToDotnet()
+        ? [
+            { source: "/api/v1/student/parents/invite", destination: `${dotnetApiBaseUrl}/api/v1/student/parents/invite` },
+            { source: "/api/v1/student/parents", destination: `${dotnetApiBaseUrl}/api/v1/student/parents` },
+            { source: "/api/v1/student/parents/:parentLinkId", destination: `${dotnetApiBaseUrl}/api/v1/student/parents/:parentLinkId` },
+            { source: "/api/v1/student/parents/:parentLinkId/resend", destination: `${dotnetApiBaseUrl}/api/v1/student/parents/:parentLinkId/resend` },
+          ]
+        : []),
+      ...(shouldRouteStudentEssaysChecklistToDotnet()
+        ? [
+            { source: "/api/v1/student/applications/:id/essays", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/essays` },
+            { source: "/api/v1/student/applications/:id/essays/:eid", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/essays/:eid` },
+            { source: "/api/v1/student/applications/:id/checklist", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist` },
+            { source: "/api/v1/student/applications/:id/checklist/:cid", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist/:cid` },
           ]
         : []),
     ];
