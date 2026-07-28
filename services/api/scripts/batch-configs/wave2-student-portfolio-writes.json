@@ -1,0 +1,51 @@
+{
+  "vars": {
+    "markerTitle": "__CANARY_PORTFOLIO_2026-07-28__"
+  },
+  "plan": [
+    {
+      "label": "create-portfolio-item",
+      "method": "POST",
+      "path": "/api/v1/student/portfolio",
+      "bodyTemplate": {
+        "type": "activity",
+        "title": "{{markerTitle}}",
+        "organization": "Canary Org",
+        "isCurrent": false,
+        "hoursPerWeek": 5
+      },
+      "anonExpectedStatus": 401,
+      "expectedStatus": 201,
+      "readBackPath": "/api/v1/student/portfolio",
+      "readBackLocateBy": { "field": "title", "equals": "{{markerTitle}}" },
+      "expectedFieldsAfterWrite": {
+        "title": "{{markerTitle}}",
+        "type": "activity",
+        "organization": "Canary Org",
+        "isActive": true,
+        "hoursPerWeek": "5"
+      },
+      "exportAs": "createdPortfolioId"
+    },
+    {
+      "label": "update-portfolio-item",
+      "method": "PUT",
+      "path": "/api/v1/student/portfolio/{{createdPortfolioId}}",
+      "bodyTemplate": { "organization": "Canary Org Updated", "hoursPerWeek": 7.5 },
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdPortfolioId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/student/portfolio",
+      "readBackLocateBy": { "field": "id", "equals": "{{createdPortfolioId}}" },
+      "expectedFieldsAfterWrite": { "organization": "Canary Org Updated", "hoursPerWeek": "7.5" }
+    },
+    {
+      "label": "delete-portfolio-item",
+      "method": "DELETE",
+      "path": "/api/v1/student/portfolio/{{createdPortfolioId}}",
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdPortfolioId",
+      "expectedStatus": 200
+    }
+  ]
+}
