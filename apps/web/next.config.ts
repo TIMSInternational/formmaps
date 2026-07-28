@@ -118,6 +118,15 @@ function shouldRouteVocationalResultReadsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_RESULT_READS_TO_DOTNET));
 }
 
+// ── School-manage-reads (FM-DOTNET-050): dashboard/stats, counselor-assignments/all, notes,
+// counselor-workload. The 4 GET-only paths with no write sharing their path. FM-051
+// (school/profile+settings) and FM-052 (users+counselor-assign) are DELIBERATELY excluded —
+// both co-flip a GET and a PUT/POST/DELETE on the identical literal path (path-not-method),
+// same trap as the calendar slice; not safe to cut over as reads-only.
+function shouldRouteSchoolReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_READS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -413,6 +422,26 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/vocational360/integrated/:evaluatedUserId",
               destination: `${dotnetApiBaseUrl}/api/v1/vocational360/integrated/:evaluatedUserId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteSchoolReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/dashboard/stats",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/dashboard/stats`,
+            },
+            {
+              source: "/api/v1/school-admin/counselor-assignments/all",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselor-assignments/all`,
+            },
+            {
+              source: "/api/v1/school-admin/notes",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/notes`,
+            },
+            {
+              source: "/api/v1/school-admin/counselor-workload",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselor-workload`,
             },
           ]
         : []),
