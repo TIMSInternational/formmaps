@@ -219,6 +219,21 @@ function shouldRouteCollegeApplicationsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_APPLICATIONS_TO_DOTNET));
 }
 
+// ── College search + favorites (FM-DOTNET-082): GET /college/search (no access gate),
+// GET+POST /college/students/:studentId/list, PUT+DELETE /college/list/:id — ONE flag
+// co-flips all three paths. Favorites reuse ICollegeAccessResolver. Soft-delete. Default OFF.
+function shouldRouteCollegeFavoritesToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_FAVORITES_TO_DOTNET));
+}
+
+// ── College essays + comments (FM-DOTNET-083): GET+POST /college/students/:studentId/essays,
+// PUT+DELETE /college/essays/:id, POST+GET /college/essays/:id/comments — ONE flag co-flips
+// all three paths. Reuses ICollegeAccessResolver. Soft-delete on essays; comments have no delete.
+// Default OFF.
+function shouldRouteCollegeEssaysToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_ESSAYS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -653,6 +668,20 @@ const nextConfig: NextConfig = {
         ? [
             { source: "/api/v1/college/students/:studentId/applications", destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/applications` },
             { source: "/api/v1/college/applications/:id", destination: `${dotnetApiBaseUrl}/api/v1/college/applications/:id` },
+          ]
+        : []),
+      ...(shouldRouteCollegeFavoritesToDotnet()
+        ? [
+            { source: "/api/v1/college/search", destination: `${dotnetApiBaseUrl}/api/v1/college/search` },
+            { source: "/api/v1/college/students/:studentId/list", destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/list` },
+            { source: "/api/v1/college/list/:id", destination: `${dotnetApiBaseUrl}/api/v1/college/list/:id` },
+          ]
+        : []),
+      ...(shouldRouteCollegeEssaysToDotnet()
+        ? [
+            { source: "/api/v1/college/students/:studentId/essays", destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/essays` },
+            { source: "/api/v1/college/essays/:id", destination: `${dotnetApiBaseUrl}/api/v1/college/essays/:id` },
+            { source: "/api/v1/college/essays/:id/comments", destination: `${dotnetApiBaseUrl}/api/v1/college/essays/:id/comments` },
           ]
         : []),
     ];
