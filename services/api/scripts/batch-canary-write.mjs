@@ -106,11 +106,35 @@ async function runStep(step, vars) {
     assertStatus(`${label}/deny`, status, step.denyExpectedStatus);
     if (before && step.readBackLocateBy) {
       const after = await getJson(interpolate(step.readBackPath, vars), WRITE_TOKEN);
-      const beforeCount = (before.json?.data?.data || before.json?.data || []).length;
-      const afterCount = (after.json?.data?.data || after.json?.data || []).length;
+      const beforeList = before.json?.data?.data || before.json?.data || [];
+      const afterList = after.json?.data?.data || after.json?.data || [];
+
+      // Count check: useful for detecting if CREATE was blocked
+      const beforeCount = beforeList.length;
+      const afterCount = afterList.length;
       if (beforeCount !== afterCount) {
         fail(`${label}/deny`, `read-back row count changed (${beforeCount} -> ${afterCount}) despite denied write`);
       }
+
+      // Field-level check for UPDATE/DELETE operations: locate the specific row
+      // and verify it wasn't modified despite the denied write
+      const beforeRow = locate(beforeList, step.readBackLocateBy, vars);
+      if (beforeRow) {
+        // This is an UPDATE/DELETE operation (target row existed before write)
+        const afterRow = locate(afterList, step.readBackLocateBy, vars);
+        if (afterRow) {
+          // Row still exists after denied write - check fields are unchanged
+          for (const [field, beforeValue] of Object.entries(beforeRow)) {
+            if (afterRow[field] !== beforeValue) {
+              fail(`${label}/deny`, `read-back field "${field}" changed from ${JSON.stringify(beforeValue)} to ${JSON.stringify(afterRow[field])} despite denied write`);
+            }
+          }
+        } else {
+          // Row was deleted by the denied request - that's also a failure
+          fail(`${label}/deny`, `read-back row was deleted despite denied write`);
+        }
+      }
+      // If beforeRow is null, this is a CREATE operation - count check alone is sufficient
     }
   }
 
