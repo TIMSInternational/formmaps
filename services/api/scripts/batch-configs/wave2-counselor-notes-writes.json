@@ -1,0 +1,59 @@
+{
+  "vars": {
+    "studentId": "e7298f70-0afc-4687-900d-fe911fa28c3a",
+    "markerContent": "__CANARY_CNOTE_2026-07-28__"
+  },
+  "plan": [
+    {
+      "label": "create-note",
+      "method": "POST",
+      "path": "/api/v1/counselor/students/{{studentId}}/notes",
+      "bodyTemplate": { "type": "general", "content": "{{markerContent}}", "isPrivate": false, "tags": ["canary"] },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "expectedStatus": 201,
+      "readBackPath": "/api/v1/counselor/students/{{studentId}}/notes?limit=50",
+      "readBackLocateBy": { "field": "content", "equals": "{{markerContent}}" },
+      "expectedFieldsAfterWrite": {
+        "content": "{{markerContent}}",
+        "type": "general",
+        "isPrivate": false,
+        "isActive": true,
+        "followUpCompleted": false
+      },
+      "exportAs": "createdNoteId"
+    },
+    {
+      "label": "update-note",
+      "method": "PUT",
+      "path": "/api/v1/counselor/notes/{{createdNoteId}}",
+      "bodyTemplate": { "content": "{{markerContent}}-updated", "isPrivate": true },
+      "denyExpectedStatus": 403,
+      "crossTenantExpectedStatus": 403,
+      "crossTenantResourceIdVar": "createdNoteId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/counselor/students/{{studentId}}/notes?limit=50",
+      "readBackLocateBy": { "field": "id", "equals": "{{createdNoteId}}" },
+      "expectedFieldsAfterWrite": { "content": "{{markerContent}}-updated", "isPrivate": true }
+    },
+    {
+      "label": "complete-followup",
+      "method": "PUT",
+      "path": "/api/v1/counselor/notes/{{createdNoteId}}/complete-followup",
+      "denyExpectedStatus": 403,
+      "crossTenantExpectedStatus": 403,
+      "crossTenantResourceIdVar": "createdNoteId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/counselor/students/{{studentId}}/notes?limit=50",
+      "readBackLocateBy": { "field": "id", "equals": "{{createdNoteId}}" },
+      "expectedFieldsAfterWrite": { "followUpCompleted": true }
+    },
+    {
+      "label": "delete-note",
+      "method": "DELETE",
+      "path": "/api/v1/counselor/notes/{{createdNoteId}}",
+      "denyExpectedStatus": 403,
+      "expectedStatus": 200
+    }
+  ]
+}
