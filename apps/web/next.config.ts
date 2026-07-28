@@ -140,6 +140,19 @@ function shouldRouteIsamsReadsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ISAMS_READS_TO_DOTNET));
 }
 
+// ── Course catalog CRUD (FM-DOTNET-054 GET+POST /courses, FM-DOTNET-061 PUT+DELETE
+// /courses/:courseId) — ONE flag gates all 4. Next.js rewrites match by PATH not method, so the
+// exact-literal /courses source co-flips GET+POST together, and the :courseId param source
+// co-flips PUT+DELETE together — deliberate (FM-061 completed FM-054's originally-deferred
+// PUT/DELETE under the SAME flag). The negative lookahead on :courseId excludes
+// /courses/pathways, /courses/import, /courses/ai-import and their sub-paths (courseIds are
+// UUIDs, never equal to those literals — a safety belt, not a real collision risk). Distinct
+// methods (PUT/DELETE) from the co-flipped literal's siblings (pathways/import are GET/POST) →
+// no ASP.NET route-matching ambiguity on the .NET side. Default OFF (dark).
+function shouldRouteSchoolCoursesToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_COURSES_TO_DOTNET));
+}
+
 // ── Course pathways (FM-DOTNET-058): GET /courses/pathways, the one TRUE pure read in the
 // curriculum cluster. The other 4 cluster slices (frameworks, data-mappings, prerequisites,
 // course-import) all co-flip reads+writes under one flag each — deliberately excluded here,
@@ -529,6 +542,18 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/integrations/isams/jobs",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/integrations/isams/jobs`,
+            },
+          ]
+        : []),
+      ...(shouldRouteSchoolCoursesToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/courses",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses`,
+            },
+            {
+              source: "/api/v1/school-admin/courses/:courseId((?!import|pathways|ai-import)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/:courseId`,
             },
           ]
         : []),
