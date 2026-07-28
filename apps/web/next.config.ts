@@ -175,6 +175,20 @@ function shouldRoutePathwaysToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PATHWAYS_TO_DOTNET));
 }
 
+// ── Curriculum frameworks (FM-DOTNET-055): GET+PUT /curriculum/frameworks, GET .../:type/courses,
+// PUT .../:type/courses/:courseId. All 4 co-flip under one flag (path-not-method on the first pair).
+function shouldRouteCurriculumFrameworksToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_CURRICULUM_FRAMEWORKS_TO_DOTNET));
+}
+
+// ── Prerequisites (FM-DOTNET-057): GET /courses/:courseId/prerequisite-chain (courses:read),
+// PUT /courses/:courseId/prerequisites (courses:write), GET /prerequisites/{check,eligible,missing}
+// (curriculum:manage). One flag co-flips all 5. Data-mappings (FM-056) and course-import
+// (FM-059/060) remain dark — the cluster's only delete + an unresolved canary-engine gap.
+function shouldRoutePrerequisitesToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PREREQUISITES_TO_DOTNET));
+}
+
 // ── Counselor dashboard reads (FM-DOTNET-067) + enriched caseload (FM-DOTNET-068) — all GET-only,
 // no write anywhere on any of these 5 paths. Counselor writes (availability/alerts/sessions/notes,
 // FM-069-072) and student/parent CRUD (FM-073-078) deliberately excluded — write-coupled.
@@ -716,6 +730,43 @@ const nextConfig: NextConfig = {
         : []),
       ...(shouldRoutePathwaysToDotnet()
         ? [{ source: "/api/v1/school-admin/courses/pathways", destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/pathways` }]
+        : []),
+      ...(shouldRouteCurriculumFrameworksToDotnet()
+        ? [
+            { source: "/api/v1/school-admin/curriculum/frameworks", destination: `${dotnetApiBaseUrl}/api/v1/school-admin/curriculum/frameworks` },
+            {
+              source: "/api/v1/school-admin/curriculum/frameworks/:type/courses",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/curriculum/frameworks/:type/courses`,
+            },
+            {
+              source: "/api/v1/school-admin/curriculum/frameworks/:type/courses/:courseId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/curriculum/frameworks/:type/courses/:courseId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePrerequisitesToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/courses/:courseId/prerequisite-chain",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/:courseId/prerequisite-chain`,
+            },
+            {
+              source: "/api/v1/school-admin/courses/:courseId/prerequisites",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/:courseId/prerequisites`,
+            },
+            {
+              source: "/api/v1/school-admin/prerequisites/check/:studentId/:courseId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/prerequisites/check/:studentId/:courseId`,
+            },
+            {
+              source: "/api/v1/school-admin/prerequisites/eligible/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/prerequisites/eligible/:studentId`,
+            },
+            {
+              source: "/api/v1/school-admin/prerequisites/missing/:studentId/:courseId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/prerequisites/missing/:studentId/:courseId`,
+            },
+          ]
         : []),
       ...(shouldRouteCounselorDashboardToDotnet()
         ? [
