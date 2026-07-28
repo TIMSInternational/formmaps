@@ -170,6 +170,16 @@ function shouldRouteCounselorDashboardToDotnet() {
 function shouldRouteCounselorCaseloadToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_CASELOAD_TO_DOTNET));
 }
+// ── Counselor notes CRUD (FM-DOTNET-072): GET+POST /students/:studentId/notes, PUT+DELETE
+// /notes/:noteId, PUT /notes/:noteId/complete-followup — ONE flag co-flips all 5 (path-not-method).
+// GET/POST/DELETE use a raw-role check (counselor/school_admin/Super Admin, no school-ownership
+// check); PUT + complete-followup require permission counselor:notes (school_admin lacks it).
+// Availability/alerts/sessions (FM-069-071) deliberately excluded — no safe round-trippable write
+// path via the API alone (no create endpoint for alerts/sessions; availability is a singleton
+// upsert with no delete). Default OFF (dark).
+function shouldRouteCounselorNotesToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_NOTES_TO_DOTNET));
+}
 // ── Parent child-link-scoped reads (FM-DOTNET-079) — GET progress + GET course-plan, both
 // gated by an accepted+active StudentParentLink. Pure reads, no write on either path.
 function shouldRouteParentChildReadsToDotnet() {
@@ -570,6 +580,13 @@ const nextConfig: NextConfig = {
         : []),
       ...(shouldRouteCounselorCaseloadToDotnet()
         ? [{ source: "/api/v1/counselor/me/students", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/students` }]
+        : []),
+      ...(shouldRouteCounselorNotesToDotnet()
+        ? [
+            { source: "/api/v1/counselor/students/:studentId/notes", destination: `${dotnetApiBaseUrl}/api/v1/counselor/students/:studentId/notes` },
+            { source: "/api/v1/counselor/notes/:noteId", destination: `${dotnetApiBaseUrl}/api/v1/counselor/notes/:noteId` },
+            { source: "/api/v1/counselor/notes/:noteId/complete-followup", destination: `${dotnetApiBaseUrl}/api/v1/counselor/notes/:noteId/complete-followup` },
+          ]
         : []),
       ...(shouldRouteParentChildReadsToDotnet()
         ? [
