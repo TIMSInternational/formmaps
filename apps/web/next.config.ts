@@ -107,6 +107,17 @@ function shouldRouteSchoolAnalyticsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ANALYTICS_TO_DOTNET));
 }
 
+// ── Vocational-360 reads (FM-DOTNET-033/034): catalog (instrument/questionnaire, no per-user
+// gate) + result reads (score/integrated, canAccessUser-gated). Two flags so catalog (no IDOR
+// risk) and result reads (per-user) can be flipped/rolled back independently. Recompute WRITES
+// and /recommendations (Bedrock) stay Node — not part of this cutover.
+function shouldRouteVocationalCatalogToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_CATALOG_TO_DOTNET));
+}
+function shouldRouteVocationalResultReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_RESULT_READS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -384,6 +395,24 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/analytics/top-performers",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/analytics/top-performers`,
+            },
+          ]
+        : []),
+      ...(shouldRouteVocationalCatalogToDotnet()
+        ? [
+            { source: "/api/v1/vocational360/instrument", destination: `${dotnetApiBaseUrl}/api/v1/vocational360/instrument` },
+            { source: "/api/v1/vocational360/questionnaire", destination: `${dotnetApiBaseUrl}/api/v1/vocational360/questionnaire` },
+          ]
+        : []),
+      ...(shouldRouteVocationalResultReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/vocational360/score/:evaluatedUserId",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/score/:evaluatedUserId`,
+            },
+            {
+              source: "/api/v1/vocational360/integrated/:evaluatedUserId",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/integrated/:evaluatedUserId`,
             },
           ]
         : []),
