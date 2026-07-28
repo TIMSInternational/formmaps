@@ -1,0 +1,51 @@
+{
+  "vars": {
+    "studentId": "e7298f70-0afc-4687-900d-fe911fa28c3a",
+    "markerTitle": "__CANARY_ESSAY_2026-07-28__"
+  },
+  "plan": [
+    {
+      "label": "create-college-essay",
+      "method": "POST",
+      "path": "/api/v1/college/students/{{studentId}}/essays",
+      "bodyTemplate": { "title": "{{markerTitle}}", "content": "Canary essay content here" },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 404,
+      "crossTenantExpectedStatus": 404,
+      "expectedStatus": 201,
+      "exportAs": "createdEssayId"
+    },
+    {
+      "label": "add-essay-comment",
+      "method": "POST",
+      "path": "/api/v1/college/essays/{{createdEssayId}}/comments",
+      "bodyTemplate": { "content": "Canary comment" },
+      "denyExpectedStatus": 404,
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdEssayId",
+      "expectedStatus": 201
+    },
+    {
+      "label": "update-college-essay",
+      "method": "PUT",
+      "path": "/api/v1/college/essays/{{createdEssayId}}",
+      "bodyTemplate": { "status": "in_review" },
+      "denyExpectedStatus": 404,
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdEssayId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/college/students/{{studentId}}/essays",
+      "readBackLocateBy": { "field": "id", "equals": "{{createdEssayId}}" },
+      "expectedFieldsAfterWrite": { "status": "in_review" }
+    },
+    {
+      "label": "delete-college-essay",
+      "method": "DELETE",
+      "path": "/api/v1/college/essays/{{createdEssayId}}",
+      "denyExpectedStatus": 404,
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdEssayId",
+      "expectedStatus": 200
+    }
+  ]
+}

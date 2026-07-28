@@ -1,0 +1,41 @@
+{
+  "vars": {
+    "studentId": "e7298f70-0afc-4687-900d-fe911fa28c3a",
+    "universityId": "69f308cfc0df05f12f946db7"
+  },
+  "plan": [
+    {
+      "label": "add-college-favorite",
+      "method": "POST",
+      "path": "/api/v1/college/students/{{studentId}}/list",
+      "bodyTemplate": { "universityId": "{{universityId}}" },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 404,
+      "crossTenantExpectedStatus": 404,
+      "expectedStatus": 201,
+      "exportAs": "createdFavoriteId"
+    },
+    {
+      "label": "update-college-favorite",
+      "method": "PUT",
+      "path": "/api/v1/college/list/{{createdFavoriteId}}",
+      "bodyTemplate": { "fitClassification": "Canary Reach" },
+      "denyExpectedStatus": 404,
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdFavoriteId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/college/students/{{studentId}}/list",
+      "readBackLocateBy": { "field": "id", "equals": "{{createdFavoriteId}}" },
+      "expectedFieldsAfterWrite": { "fitClassification": "Canary Reach" }
+    },
+    {
+      "label": "delete-college-favorite",
+      "method": "DELETE",
+      "path": "/api/v1/college/list/{{createdFavoriteId}}",
+      "denyExpectedStatus": 404,
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdFavoriteId",
+      "expectedStatus": 200
+    }
+  ]
+}
