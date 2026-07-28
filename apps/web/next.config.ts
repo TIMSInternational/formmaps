@@ -134,6 +134,14 @@ function shouldRouteIsamsReadsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ISAMS_READS_TO_DOTNET));
 }
 
+// ── Course pathways (FM-DOTNET-058): GET /courses/pathways, the one TRUE pure read in the
+// curriculum cluster. The other 4 cluster slices (frameworks, data-mappings, prerequisites,
+// course-import) all co-flip reads+writes under one flag each — deliberately excluded here,
+// same as calendar/FM-051/FM-052/FM-054, pending their own write-verification harnesses.
+function shouldRoutePathwaysToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PATHWAYS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -463,6 +471,9 @@ const nextConfig: NextConfig = {
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/integrations/isams/jobs`,
             },
           ]
+        : []),
+      ...(shouldRoutePathwaysToDotnet()
+        ? [{ source: "/api/v1/school-admin/courses/pathways", destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/pathways` }]
         : []),
     ];
     return {
