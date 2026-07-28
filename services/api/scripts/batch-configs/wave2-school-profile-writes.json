@@ -1,0 +1,44 @@
+{
+  "vars": {
+    "markerDetails": "__CANARY_PROFILE_2026-07-28__"
+  },
+  "plan": [
+    {
+      "label": "read-profile",
+      "method": "GET",
+      "path": "/api/v1/school-admin/school/profile",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200
+    },
+    {
+      "label": "write-profile-marker",
+      "method": "PUT",
+      "path": "/api/v1/school-admin/school/profile",
+      "bodyTemplate": { "details": "{{markerDetails}}" },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "expectedStatus": 200
+    },
+    {
+      "label": "read-settings",
+      "method": "GET",
+      "path": "/api/v1/school-admin/settings",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200
+    },
+    {
+      "label": "write-settings-marker",
+      "method": "PUT",
+      "path": "/api/v1/school-admin/settings",
+      "bodyTemplate": {
+        "notifyOnStudentSignup": false,
+        "notifyOnAssessmentComplete": false,
+        "allowStudentSelfRegistration": true,
+        "timezone": "America/Chicago"
+      },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "expectedStatus": 200
+    }
+  ]
+}

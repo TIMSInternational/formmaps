@@ -1,0 +1,61 @@
+{
+  "vars": {
+    "counselorId": "7cdcb8ce-212f-4633-a6b4-d602e7f91c19",
+    "throwawayStudentId": "2ef5b32d-a4db-47f6-aad2-de3b60d475f7"
+  },
+  "plan": [
+    {
+      "label": "read-users",
+      "method": "GET",
+      "path": "/api/v1/school-admin/users",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200
+    },
+    {
+      "label": "update-grade-level",
+      "method": "PUT",
+      "path": "/api/v1/school-admin/users/{{throwawayStudentId}}/grade-level",
+      "bodyTemplate": { "gradeLevel": 11 },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "crossTenantExpectedStatus": 403,
+      "crossTenantResourceIdVar": "counselorId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/school-admin/users?search=test.student.fm052",
+      "readBackLocateBy": { "field": "id", "equals": "{{throwawayStudentId}}" },
+      "expectedFieldsAfterWrite": { "gradeLevel": 11 }
+    },
+    {
+      "label": "assign-student",
+      "method": "POST",
+      "path": "/api/v1/school-admin/counselors/{{counselorId}}/assign-students",
+      "bodyTemplate": { "studentIds": ["{{throwawayStudentId}}"] },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "crossTenantExpectedStatus": 400,
+      "crossTenantResourceIdVar": "counselorId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/school-admin/counselors/{{counselorId}}/students",
+      "readBackLocateBy": { "field": "id", "equals": "{{throwawayStudentId}}" },
+      "expectedFieldsAfterWrite": { "gradeLevel": 11 }
+    },
+    {
+      "label": "unassign-student",
+      "method": "DELETE",
+      "path": "/api/v1/school-admin/counselors/{{counselorId}}/assign-students",
+      "bodyTemplate": { "studentIds": ["{{throwawayStudentId}}"] },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "crossTenantExpectedStatus": 400,
+      "crossTenantResourceIdVar": "counselorId",
+      "expectedStatus": 200
+    },
+    {
+      "label": "restore-grade-level",
+      "method": "PUT",
+      "path": "/api/v1/school-admin/users/{{throwawayStudentId}}/grade-level",
+      "bodyTemplate": { "gradeLevel": 10 },
+      "expectedStatus": 200
+    }
+  ]
+}
