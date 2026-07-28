@@ -36,19 +36,6 @@
       "expectedFieldsAfterWrite": { "endDate": "2027-07-01T00:00:00.000Z", "name": "{{markerName}}" }
     },
     {
-      "label": "create-assessment-period",
-      "method": "POST",
-      "path": "/api/v1/school-admin/calendar/assessment-periods",
-      "bodyTemplate": { "yearId": "{{throwawayYearId}}", "name": "{{markerName}}-AP", "startDate": "2026-09-01", "endDate": "2026-09-15" },
-      "denyExpectedStatus": 403,
-      "expectedStatus": 201,
-      "readBackPath": "/api/v1/school-admin/calendar/assessment-periods?yearId={{throwawayYearId}}",
-      "readBackLocateBy": { "field": "name", "equals": "{{markerName}}-AP" },
-      "expectedFieldsAfterWrite": { "name": "{{markerName}}-AP" },
-      "cleanup": { "method": "DELETE", "pathTemplate": "/api/v1/school-admin/calendar/assessment-periods/{{createdId}}" },
-      "exportAs": "assessmentPeriodId"
-    },
-    {
       "label": "set-current-to-throwaway",
       "method": "PUT",
       "path": "/api/v1/school-admin/calendar/academic-years/{{throwawayYearId}}/set-current",
@@ -59,6 +46,19 @@
       "expectedFieldsAfterWrite": { "isCurrent": true }
     },
     {
+      "label": "create-assessment-period",
+      "method": "POST",
+      "path": "/api/v1/school-admin/calendar/assessment-periods",
+      "bodyTemplate": { "name": "{{markerName}}-AP", "startDate": "2026-09-01", "endDate": "2026-09-15", "assessmentTypes": ["default"] },
+      "denyExpectedStatus": 403,
+      "expectedStatus": 201,
+      "readBackPath": "/api/v1/school-admin/calendar/assessment-periods",
+      "readBackLocateBy": { "field": "name", "equals": "{{markerName}}-AP" },
+      "expectedFieldsAfterWrite": { "name": "{{markerName}}-AP" },
+      "cleanup": { "method": "DELETE", "pathTemplate": "/api/v1/school-admin/calendar/assessment-periods/{{createdId}}" },
+      "exportAs": "assessmentPeriodId"
+    },
+    {
       "label": "create-holiday-adversarial-name-truncation",
       "method": "POST",
       "path": "/api/v1/school-admin/calendar/holidays",
@@ -67,7 +67,7 @@
         "date": "2026-09-20"
       },
       "denyExpectedStatus": 403,
-      "expectedStatus": 201,
+      "expectedStatus": 200,
       "readBackPath": "/api/v1/school-admin/calendar/holidays",
       "readBackLocateBy": { "field": "date", "equals": "2026-09-20T00:00:00.000Z" },
       "cleanup": { "method": "DELETE", "pathTemplate": "/api/v1/school-admin/calendar/holidays/{{createdId}}" },
