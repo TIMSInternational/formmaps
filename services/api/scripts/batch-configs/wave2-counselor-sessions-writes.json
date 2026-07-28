@@ -1,0 +1,26 @@
+{
+  "vars": {
+    "sessionId": "a203a3ae-ccab-4052-bc4a-66e322745dbd"
+  },
+  "plan": [
+    {
+      "label": "read-sessions",
+      "method": "GET",
+      "path": "/api/v1/counselor/me/sessions",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200
+    },
+    {
+      "label": "complete-session",
+      "method": "PUT",
+      "path": "/api/v1/counselor/me/sessions/{{sessionId}}/complete",
+      "bodyTemplate": { "counselorNotes": "Canary completion note" },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/counselor/me/sessions?status=completed&limit=50",
+      "readBackLocateBy": { "field": "id", "equals": "{{sessionId}}" },
+      "expectedFieldsAfterWrite": { "status": "completed", "counselorNotes": "Canary completion note" }
+    }
+  ]
+}

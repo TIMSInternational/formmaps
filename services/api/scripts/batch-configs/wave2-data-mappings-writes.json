@@ -1,0 +1,58 @@
+{
+  "vars": {
+    "markerCode": "__CANARY_DM_2026-07-28__",
+    "markerCourseId": "CANARY-COURSE-CODE"
+  },
+  "plan": [
+    {
+      "label": "read-mappings",
+      "method": "GET",
+      "path": "/api/v1/school-admin/data-mappings",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200
+    },
+    {
+      "label": "create-mapping",
+      "method": "POST",
+      "path": "/api/v1/school-admin/data-mappings",
+      "bodyTemplate": { "externalCode": "{{markerCode}}", "internalCourseId": "{{markerCourseId}}", "externalName": "Canary Mapping" },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "expectedStatus": 201,
+      "readBackPath": "/api/v1/school-admin/data-mappings?status=approved&limit=100",
+      "readBackLocateBy": { "field": "externalCode", "equals": "{{markerCode}}" },
+      "expectedFieldsAfterWrite": { "externalCode": "{{markerCode}}", "internalCourseId": "{{markerCourseId}}", "externalName": "Canary Mapping", "status": "approved", "isActive": true },
+      "exportAs": "createdId"
+    },
+    {
+      "label": "update-mapping",
+      "method": "PUT",
+      "path": "/api/v1/school-admin/data-mappings/{{createdId}}",
+      "bodyTemplate": { "externalName": "Canary Mapping Updated" },
+      "denyExpectedStatus": 403,
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/school-admin/data-mappings?status=approved&limit=100",
+      "readBackLocateBy": { "field": "id", "equals": "{{createdId}}" },
+      "expectedFieldsAfterWrite": { "externalName": "Canary Mapping Updated" }
+    },
+    {
+      "label": "bulk-approve-mapping",
+      "method": "POST",
+      "path": "/api/v1/school-admin/data-mappings/bulk-approve",
+      "bodyTemplate": { "mappingIds": ["{{createdId}}"] },
+      "denyExpectedStatus": 403,
+      "expectedStatus": 200
+    },
+    {
+      "label": "delete-mapping",
+      "method": "DELETE",
+      "path": "/api/v1/school-admin/data-mappings/{{createdId}}",
+      "denyExpectedStatus": 403,
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdId",
+      "expectedStatus": 200
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "vars": {
+    "alertId": "c79d4a23-f97c-4e0f-9b6a-4fc869ef5f8a"
+  },
+  "plan": [
+    {
+      "label": "read-alerts",
+      "method": "GET",
+      "path": "/api/v1/counselor/me/alerts",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200
+    },
+    {
+      "label": "mark-alert-read",
+      "method": "PUT",
+      "path": "/api/v1/counselor/me/alerts/{{alertId}}/read",
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/counselor/me/alerts?unreadOnly=false&limit=50",
+      "readBackLocateBy": { "field": "id", "equals": "{{alertId}}" },
+      "expectedFieldsAfterWrite": { "isRead": true }
+    }
+  ]
+}

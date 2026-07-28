@@ -1,0 +1,23 @@
+{
+  "_note": "school_courses.code has a soft-delete-unscoped unique constraint (same trap as school-courses/FM-054). A re-run against an already-archived code UPDATEs it in place WITHOUT reactivating isActive/status (import's UPDATE branch never touches those columns) — the readback then silently fails to locate it. Use a fresh per-run marker or hard-delete the prior archived row via Tier-2 SQL before re-running this exact config.",
+  "vars": {
+    "markerCode": "__CANARY_IMPORT_2026-07-28__"
+  },
+  "plan": [
+    {
+      "label": "import-course-row",
+      "method": "POST",
+      "path": "/api/v1/school-admin/courses/import",
+      "bodyTemplate": {
+        "rows": [{ "code": "{{markerCode}}", "name": "Canary Import Course", "department": "Canary", "credits": 1, "gradeLevels": [9, 10] }]
+      },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "expectedStatus": 202,
+      "readBackPath": "/api/v1/school-admin/courses?search={{markerCode}}",
+      "readBackLocateBy": { "field": "code", "equals": "{{markerCode}}" },
+      "expectedFieldsAfterWrite": { "code": "{{markerCode}}", "name": "Canary Import Course", "department": "Canary", "isActive": true, "status": "active" },
+      "cleanup": { "method": "DELETE", "pathTemplate": "/api/v1/school-admin/courses/{{createdId}}" }
+    }
+  ]
+}
