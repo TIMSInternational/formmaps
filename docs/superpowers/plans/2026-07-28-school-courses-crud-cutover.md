@@ -271,7 +271,7 @@ import { verifySchoolCoursesWriteInvariants } from "../lib/verifySchoolCoursesWr
 
 describe("verifySchoolCoursesWriteInvariants", () => {
   it("reports rowStillExists=false if the row is truly gone (would indicate a hard-delete regression)", async () => {
-    const client = { query: jest.fn().mockResolvedValue({ rows: [] }) };
+    const client = { query: vi.fn().mockResolvedValue({ rows: [] }) };
     const result = await verifySchoolCoursesWriteInvariants(client as any, "missing-course-id");
     expect(result.rowStillExists).toBe(false);
     expect(result.isActiveFalse).toBeNull();
@@ -279,7 +279,7 @@ describe("verifySchoolCoursesWriteInvariants", () => {
 
   it("reports the soft-delete shape for a row that still exists", async () => {
     const client = {
-      query: jest.fn().mockResolvedValue({
+      query: vi.fn().mockResolvedValue({
         rows: [{ isActive: false, status: "archived", createdBy: null }],
       }),
     };
@@ -292,7 +292,7 @@ describe("verifySchoolCoursesWriteInvariants", () => {
 
   it("flags a regression if a deleted row is still isActive=true", async () => {
     const client = {
-      query: jest.fn().mockResolvedValue({ rows: [{ isActive: true, status: "active", createdBy: null }] }),
+      query: vi.fn().mockResolvedValue({ rows: [{ isActive: true, status: "active", createdBy: null }] }),
     };
     const result = await verifySchoolCoursesWriteInvariants(client as any, "not-actually-deleted-id");
     expect(result.isActiveFalse).toBe(false);
@@ -303,7 +303,7 @@ describe("verifySchoolCoursesWriteInvariants", () => {
 - [ ] **Step 2: Run to verify it fails**
 
 ```bash
-cd ~/formmaps-platform/api && npx jest verifySchoolCoursesWriteInvariants -v
+cd ~/formmaps-platform/api && npx vitest run verifySchoolCoursesWriteInvariants
 ```
 
 Expected: FAIL — module not found.
@@ -359,7 +359,7 @@ export async function verifySchoolCoursesWriteInvariants(
 - [ ] **Step 4: Run to verify it passes**
 
 ```bash
-cd ~/formmaps-platform/api && npx jest verifySchoolCoursesWriteInvariants -v
+cd ~/formmaps-platform/api && npx vitest run verifySchoolCoursesWriteInvariants
 ```
 
 - [ ] **Step 5: Write the CLI wrapper (invoked inside the ECS task's `command`, same `formmaps-migrate` pattern as Calendar's Tier-2 check)**
