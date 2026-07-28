@@ -278,6 +278,22 @@ function shouldRouteParentPortalToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PARENT_PORTAL_TO_DOTNET));
 }
 
+// ── Course-plan CRUD (FM-DOTNET-084): GET /student/course-plan, POST /student/course-plan/courses,
+// DELETE /student/course-plan/courses/:courseId — ONE flag co-flips all three. Self-scoped,
+// gated on requireSchoolMembership + a current academic year. Hard delete (deleteMany).
+// Default OFF.
+function shouldRouteStudentCoursePlanToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COURSE_PLAN_TO_DOTNET));
+}
+
+// ── Course change-requests CRUD (FM-DOTNET-085): POST+GET /student/course-plan/change-requests,
+// DELETE /student/course-plan/change-requests/:requestId — ONE flag co-flips both paths.
+// Self-scoped, gated on requireSchoolMembership only (no current-year gate). Soft-cancel
+// (status=cancelled, only from pending). Default OFF.
+function shouldRouteStudentChangeRequestsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_CHANGE_REQUESTS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -765,6 +781,19 @@ const nextConfig: NextConfig = {
             { source: "/api/v1/parent/notifications/:id/read", destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications/:id/read` },
             { source: "/api/v1/parent/evaluations/pending", destination: `${dotnetApiBaseUrl}/api/v1/parent/evaluations/pending` },
             { source: "/api/v1/parent/:parentLinkId((?!profile|notifications|invite|onboarding|children|evaluations)[^/]+)", destination: `${dotnetApiBaseUrl}/api/v1/parent/:parentLinkId` },
+          ]
+        : []),
+      ...(shouldRouteStudentCoursePlanToDotnet()
+        ? [
+            { source: "/api/v1/student/course-plan", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan` },
+            { source: "/api/v1/student/course-plan/courses", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/courses` },
+            { source: "/api/v1/student/course-plan/courses/:courseId", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/courses/:courseId` },
+          ]
+        : []),
+      ...(shouldRouteStudentChangeRequestsToDotnet()
+        ? [
+            { source: "/api/v1/student/course-plan/change-requests", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/change-requests` },
+            { source: "/api/v1/student/course-plan/change-requests/:requestId", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/change-requests/:requestId` },
           ]
         : []),
     ];
