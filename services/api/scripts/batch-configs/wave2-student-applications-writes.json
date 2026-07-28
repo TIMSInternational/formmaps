@@ -1,0 +1,36 @@
+{
+  "vars": {
+    "markerName": "__CANARY_SA_2026-07-28__"
+  },
+  "plan": [
+    {
+      "label": "create-student-application",
+      "method": "POST",
+      "path": "/api/v1/student/applications",
+      "bodyTemplate": { "name": "{{markerName}}" },
+      "anonExpectedStatus": 401,
+      "expectedStatus": 201,
+      "exportAs": "createdApplicationId"
+    },
+    {
+      "label": "update-student-application",
+      "method": "PUT",
+      "path": "/api/v1/student/applications/{{createdApplicationId}}",
+      "bodyTemplate": { "notes": "Canary note updated" },
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdApplicationId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/student/applications",
+      "readBackLocateBy": { "field": "id", "equals": "{{createdApplicationId}}" },
+      "expectedFieldsAfterWrite": { "notes": "Canary note updated" }
+    },
+    {
+      "label": "delete-student-application",
+      "method": "DELETE",
+      "path": "/api/v1/student/applications/{{createdApplicationId}}",
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdApplicationId",
+      "expectedStatus": 200
+    }
+  ]
+}

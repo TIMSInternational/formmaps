@@ -1,0 +1,57 @@
+{
+  "vars": {
+    "markerName": "__CANARY_SEC_BOOTSTRAP_2026-07-28__",
+    "markerTitle": "__CANARY_ESSAY2_2026-07-28__",
+    "markerItem": "__CANARY_CHECKLIST_2026-07-28__"
+  },
+  "plan": [
+    {
+      "label": "create-bootstrap-application",
+      "method": "POST",
+      "path": "/api/v1/student/applications",
+      "bodyTemplate": { "name": "{{markerName}}" },
+      "expectedStatus": 201,
+      "exportAs": "bootstrapAppId",
+      "cleanup": { "method": "DELETE", "pathTemplate": "/api/v1/student/applications/{{createdId}}" }
+    },
+    {
+      "label": "create-essay",
+      "method": "POST",
+      "path": "/api/v1/student/applications/{{bootstrapAppId}}/essays",
+      "bodyTemplate": { "title": "{{markerTitle}}" },
+      "anonExpectedStatus": 401,
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "bootstrapAppId",
+      "expectedStatus": 201,
+      "exportAs": "createdEssayId"
+    },
+    {
+      "label": "update-essay",
+      "method": "PUT",
+      "path": "/api/v1/student/applications/{{bootstrapAppId}}/essays/{{createdEssayId}}",
+      "bodyTemplate": { "status": "in_review" },
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/student/applications/{{bootstrapAppId}}/essays",
+      "readBackLocateBy": { "field": "id", "equals": "{{createdEssayId}}" },
+      "expectedFieldsAfterWrite": { "status": "in_review" }
+    },
+    {
+      "label": "create-checklist-item",
+      "method": "POST",
+      "path": "/api/v1/student/applications/{{bootstrapAppId}}/checklist",
+      "bodyTemplate": { "itemName": "{{markerItem}}" },
+      "expectedStatus": 201,
+      "exportAs": "createdChecklistId"
+    },
+    {
+      "label": "update-checklist-item",
+      "method": "PUT",
+      "path": "/api/v1/student/applications/{{bootstrapAppId}}/checklist/{{createdChecklistId}}",
+      "bodyTemplate": { "isCompleted": true },
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/student/applications/{{bootstrapAppId}}/checklist",
+      "readBackLocateBy": { "field": "id", "equals": "{{createdChecklistId}}" },
+      "expectedFieldsAfterWrite": { "isCompleted": true }
+    }
+  ]
+}

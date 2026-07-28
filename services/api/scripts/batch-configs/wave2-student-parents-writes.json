@@ -1,0 +1,32 @@
+{
+  "vars": {
+    "markerEmail": "__canary_parent_2026-07-28@formmaps.dev"
+  },
+  "plan": [
+    {
+      "label": "invite-parent",
+      "method": "POST",
+      "path": "/api/v1/student/parents/invite",
+      "bodyTemplate": { "parentEmail": "{{markerEmail}}" },
+      "anonExpectedStatus": 401,
+      "expectedStatus": 201,
+      "exportAs": "createdLinkId"
+    },
+    {
+      "label": "resend-parent-invite",
+      "method": "POST",
+      "path": "/api/v1/student/parents/{{createdLinkId}}/resend",
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdLinkId",
+      "expectedStatus": 200
+    },
+    {
+      "label": "delete-parent-link",
+      "method": "DELETE",
+      "path": "/api/v1/student/parents/{{createdLinkId}}",
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdLinkId",
+      "expectedStatus": 200
+    }
+  ]
+}
