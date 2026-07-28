@@ -112,7 +112,7 @@ public sealed class ParentChildReader(IFormMapsDatabaseSessionFactory databaseSe
         }
 
         await using (var command = Command(session, """
-            SELECT "credits", "grade" FROM "student_grades"
+            SELECT "credits"::double precision, "grade" FROM "student_grades"
             WHERE "studentId" = @sid AND "status" = 'completed' AND "isActive" = true
             """))
         {
@@ -122,7 +122,7 @@ public sealed class ParentChildReader(IFormMapsDatabaseSessionFactory databaseSe
             {
                 if (schoolId is not null)
                 {
-                    creditsEarned += (double)reader.GetDecimal(0);
+                    creditsEarned += reader.GetDouble(0);
                 }
 
                 if (!reader.IsDBNull(1) && GradePoints.TryGetValue(reader.GetString(1).Trim(), out var pts))
@@ -184,7 +184,7 @@ public sealed class ParentChildReader(IFormMapsDatabaseSessionFactory databaseSe
         {
             var items = new List<ChildPlanItem>();
             await using var command = Command(system, """
-                SELECT "courseCode", "courseName", "credits", "gradeLevel", "term" FROM "graduation_plan_items"
+                SELECT "courseCode", "courseName", "credits"::double precision, "gradeLevel", "term" FROM "graduation_plan_items"
                 WHERE "planId" = @pid AND "isActive" = true ORDER BY "sortOrder" ASC
                 """);
             AddParameter(command, "pid", planId);
@@ -194,7 +194,7 @@ public sealed class ParentChildReader(IFormMapsDatabaseSessionFactory databaseSe
                 items.Add(new ChildPlanItem(
                     CourseCode: reader.GetString(0),
                     CourseName: reader.GetString(1),
-                    Credits: (double)reader.GetDecimal(2),
+                    Credits: reader.GetDouble(2),
                     GradeLevel: reader.GetInt32(3),
                     Term: reader.IsDBNull(4) ? null : reader.GetString(4)));
             }
@@ -270,14 +270,14 @@ public sealed class ParentChildReader(IFormMapsDatabaseSessionFactory databaseSe
         }
 
         await using (var command = Command(session, """
-            SELECT "totalCreditsRequired" FROM "graduation_rule_sets"
+            SELECT "totalCreditsRequired"::double precision FROM "graduation_rule_sets"
             WHERE "schoolId" = @school AND "academicYearId" = @ay AND "isActive" = true LIMIT 1
             """))
         {
             AddParameter(command, "school", schoolId);
             AddParameter(command, "ay", academicYearId);
             var value = await command.ExecuteScalarAsync(cancellationToken);
-            return value is null or DBNull ? 120 : (double)(decimal)value;
+            return value is null or DBNull ? 120 : (double)value;
         }
     }
 
