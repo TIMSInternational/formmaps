@@ -133,6 +133,20 @@ function shouldRouteSchoolReadsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_READS_TO_DOTNET));
 }
 
+// ── School profile + settings (FM-DOTNET-051): GET+PUT /school/profile, GET+PUT /settings. Both
+// paths co-flip a read and a write on the identical literal path (path-not-method) — write-coupled,
+// like calendar. gate = school:manage permission.
+function shouldRouteSchoolProfileToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_PROFILE_TO_DOTNET));
+}
+
+// ── School users cluster (FM-DOTNET-052): GET /users, PUT /users/:userId/grade-level,
+// POST+DELETE /counselors/:counselorId/assign-students, GET /counselors/:counselorId/students.
+// ONE flag co-flips all 5 (path-not-method on 2 of the 3 sub-paths). gate = school:users permission.
+function shouldRouteSchoolUsersToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET));
+}
+
 // ── iSAMS integration reads (FM-DOTNET-053): /status + /jobs, no write sharing either path.
 // The POST configure/sync/test paths stay Node (vendor boundary, SSRF-hardened undici client) —
 // not part of this cutover.
@@ -641,6 +655,38 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/counselor-workload",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselor-workload`,
+            },
+          ]
+        : []),
+      ...(shouldRouteSchoolProfileToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/school/profile",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/school/profile`,
+            },
+            {
+              source: "/api/v1/school-admin/settings",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/settings`,
+            },
+          ]
+        : []),
+      ...(shouldRouteSchoolUsersToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/users",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/users`,
+            },
+            {
+              source: "/api/v1/school-admin/users/:userId/grade-level",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/users/:userId/grade-level`,
+            },
+            {
+              source: "/api/v1/school-admin/counselors/:counselorId/assign-students",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselors/:counselorId/assign-students`,
+            },
+            {
+              source: "/api/v1/school-admin/counselors/:counselorId/students",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/counselors/:counselorId/students`,
             },
           ]
         : []),
