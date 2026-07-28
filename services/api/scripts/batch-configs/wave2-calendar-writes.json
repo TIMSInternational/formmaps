@@ -63,8 +63,12 @@
       "method": "POST",
       "path": "/api/v1/school-admin/calendar/holidays",
       "bodyTemplate": {
-        "name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-        "date": "2026-09-20"
+        "holidays": [
+          {
+            "name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "date": "2026-09-20"
+          }
+        ]
       },
       "denyExpectedStatus": 403,
       "expectedStatus": 200,
