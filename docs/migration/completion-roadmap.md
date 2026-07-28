@@ -108,17 +108,31 @@ assumptions) by re-deriving against the actually-deployed image/file/prod-data b
 trusting it. Real-auth gate + anon canary green for all 19 routes, no regression on any
 prior batch. Legacy Node routes for these 19 endpoints now FROZEN.
 
-**⚠️ Real bug found, NOT shipped — FM-079 parent child-link-scoped reads
-(`FORMMAPS_ROUTE_PARENT_CHILD_READS_TO_DOTNET`, wired but deliberately left unset in
-Vercel):** the `tenant_isolation` RLS policy on `student_parent_links` only admits a row
-when `studentId = current_setting('app.current_user_id')` (caller viewing their OWN row)
-or the caller shares the student's school — a parent's own id never equals their child's
-studentId, and parents have no school, so the `IsLinkedAsync` check in
-`ParentChildReader.cs` (which runs under the caller's own RLS session, not System) can
-**never** pass for any real parent. This is a `.NET`-port regression, not a seeding gap —
-`course-plan`'s later reads already correctly use a System/bypass_rls session for the
-same reason; `progress`'s initial link-check does not. Needs a fix in
-`ParentChildReader.cs` before this flag can ever be flipped.
+**✅ FIXED + LIVE (2026-07-28) — FM-079 parent child-link-scoped reads
+(`FORMMAPS_ROUTE_PARENT_CHILD_READS_TO_DOTNET`).** Root cause: the `tenant_isolation` RLS
+policy on `student_parent_links` (and `users`, and every other table these reads touch)
+only admits a row when `studentId = current_setting('app.current_user_id')` (caller
+viewing their OWN row) or the caller shares the student's school — a parent's own id
+never equals their child's studentId, and parents have no school, so any read of these
+tables under the caller's own Identity RLS session can **never** pass for a real parent.
+**Verified this is a live, currently-broken bug in legacy Node too**
+(`formmaps-platform/api/src/routes/parent.ts` — progress's link check + every subsequent
+read run under `tenantContext`, never `runAsSystem`; course-plan's link check is the
+same), not a deliberate business rule — confirmed by curling `app.formmaps.com` as a real
+linked parent pre-fix and getting 403/404 from legacy exactly as the .NET port did.
+Fixed in `ParentChildReader.cs` (`dbd9d43`, `a0d56be`): both `GetProgressAsync` and
+`GetCoursePlanAsync` now run every read — the link check, the student lookup, and all
+assessment/credit/grade/plan/target/course reads — on a System (RLS-bypass) session.
+Also hit and fixed a second, unrelated bug surfaced only once real seeded data was
+reachable for the first time (`8ce967e`): `Npgsql`'s `GetDecimal()` threw
+`OverflowException` reading `student_grades.credits` (stored with scale 30, exceeding
+`System.Decimal`'s max scale of 28, even though the value itself was just `1.0`) — fixed
+by casting to `::double precision` in SQL and reading via `GetDouble()`, the same pattern
+`CounselorCaseloadReader.cs` already established for this exact column. Redeployed to
+`formmaps-api-prod` (image `staging-8ce967e`), flag flipped in Vercel prod, live-verified
+through `app.formmaps.com` as `test.parent@formmaps.dev` — both routes now return real
+data (GPA 3.67, Computer Science target) for the first time either has ever worked in
+prod, on either backend. Legacy Node routes for these 2 endpoints now FROZEN.
 | Assessments — pure engines (LIA-core, LIA item, personality tally, vocational) | ✅ done (FM-025→028) |
 | Assessments — writes (LIA complete, personality, pca-exam take/submit, vocational recompute) | ✅ done (FM-029→032) |
 
