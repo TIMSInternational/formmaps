@@ -1,0 +1,44 @@
+{
+  "vars": {
+    "markerCollege": "__CANARY_CA_2026-07-28__",
+    "studentId": "e7298f70-0afc-4687-900d-fe911fa28c3a"
+  },
+  "plan": [
+    {
+      "label": "create-college-application",
+      "method": "POST",
+      "path": "/api/v1/college/students/{{studentId}}/applications",
+      "bodyTemplate": {
+        "collegeName": "{{markerCollege}}",
+        "appStatus": "researching"
+      },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 404,
+      "crossTenantExpectedStatus": 404,
+      "expectedStatus": 201,
+      "exportAs": "createdApplicationId"
+    },
+    {
+      "label": "update-college-application",
+      "method": "PUT",
+      "path": "/api/v1/college/applications/{{createdApplicationId}}",
+      "bodyTemplate": { "appStatus": "applying", "notes": "Canary note updated" },
+      "denyExpectedStatus": 404,
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdApplicationId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/college/students/{{studentId}}/applications",
+      "readBackLocateBy": { "field": "id", "equals": "{{createdApplicationId}}" },
+      "expectedFieldsAfterWrite": { "appStatus": "applying" }
+    },
+    {
+      "label": "delete-college-application",
+      "method": "DELETE",
+      "path": "/api/v1/college/applications/{{createdApplicationId}}",
+      "denyExpectedStatus": 404,
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdApplicationId",
+      "expectedStatus": 200
+    }
+  ]
+}
