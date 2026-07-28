@@ -261,6 +261,23 @@ function shouldRouteStudentEssaysChecklistToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_ESSAYS_CHECKLIST_TO_DOTNET));
 }
 
+// ── Course-plan compute reads (FM-DOTNET-086): GET /student/course-plan/recommendations,
+// GET /student/course-plan/eligibility — ONE flag co-flips both. Self-scoped, pure reads,
+// no writes at all. Default OFF.
+function shouldRouteStudentCoursePlanComputeToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COURSE_PLAN_COMPUTE_TO_DOTNET));
+}
+
+// ── Parent portal (FM-DOTNET-078): GET /parent/profile, GET /parent/notifications,
+// PUT /parent/notifications/read-all, PUT /parent/notifications/:id/read,
+// GET /parent/evaluations/pending, DELETE /parent/:parentLinkId — ONE flag co-flips all six.
+// Self-scoped (RequireIdentity, caller's own identity). :parentLinkId excludes the 6 sibling
+// top-level /parent/* segments (profile/notifications/invite/onboarding/children/evaluations)
+// so it never swallows them. invite/resend + onboarding + children reads stay Node. Default OFF.
+function shouldRouteParentPortalToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PARENT_PORTAL_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -732,6 +749,22 @@ const nextConfig: NextConfig = {
             { source: "/api/v1/student/applications/:id/essays/:eid", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/essays/:eid` },
             { source: "/api/v1/student/applications/:id/checklist", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist` },
             { source: "/api/v1/student/applications/:id/checklist/:cid", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist/:cid` },
+          ]
+        : []),
+      ...(shouldRouteStudentCoursePlanComputeToDotnet()
+        ? [
+            { source: "/api/v1/student/course-plan/recommendations", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/recommendations` },
+            { source: "/api/v1/student/course-plan/eligibility", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/eligibility` },
+          ]
+        : []),
+      ...(shouldRouteParentPortalToDotnet()
+        ? [
+            { source: "/api/v1/parent/profile", destination: `${dotnetApiBaseUrl}/api/v1/parent/profile` },
+            { source: "/api/v1/parent/notifications", destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications` },
+            { source: "/api/v1/parent/notifications/read-all", destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications/read-all` },
+            { source: "/api/v1/parent/notifications/:id/read", destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications/:id/read` },
+            { source: "/api/v1/parent/evaluations/pending", destination: `${dotnetApiBaseUrl}/api/v1/parent/evaluations/pending` },
+            { source: "/api/v1/parent/:parentLinkId((?!profile|notifications|invite|onboarding|children|evaluations)[^/]+)", destination: `${dotnetApiBaseUrl}/api/v1/parent/:parentLinkId` },
           ]
         : []),
     ];
