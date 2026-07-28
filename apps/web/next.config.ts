@@ -142,6 +142,21 @@ function shouldRoutePathwaysToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PATHWAYS_TO_DOTNET));
 }
 
+// ── Counselor dashboard reads (FM-DOTNET-067) + enriched caseload (FM-DOTNET-068) — all GET-only,
+// no write anywhere on any of these 5 paths. Counselor writes (availability/alerts/sessions/notes,
+// FM-069-072) and student/parent CRUD (FM-073-078) deliberately excluded — write-coupled.
+function shouldRouteCounselorDashboardToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_DASHBOARD_TO_DOTNET));
+}
+function shouldRouteCounselorCaseloadToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_CASELOAD_TO_DOTNET));
+}
+// ── Parent child-link-scoped reads (FM-DOTNET-079) — GET progress + GET course-plan, both
+// gated by an accepted+active StudentParentLink. Pure reads, no write on either path.
+function shouldRouteParentChildReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PARENT_CHILD_READS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -474,6 +489,23 @@ const nextConfig: NextConfig = {
         : []),
       ...(shouldRoutePathwaysToDotnet()
         ? [{ source: "/api/v1/school-admin/courses/pathways", destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/pathways` }]
+        : []),
+      ...(shouldRouteCounselorDashboardToDotnet()
+        ? [
+            { source: "/api/v1/counselor/dashboard/change-requests", destination: `${dotnetApiBaseUrl}/api/v1/counselor/dashboard/change-requests` },
+            { source: "/api/v1/counselor/dashboard", destination: `${dotnetApiBaseUrl}/api/v1/counselor/dashboard` },
+            { source: "/api/v1/counselor/me/students/:studentId", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/students/:studentId` },
+            { source: "/api/v1/counselor/students/:studentId", destination: `${dotnetApiBaseUrl}/api/v1/counselor/students/:studentId` },
+          ]
+        : []),
+      ...(shouldRouteCounselorCaseloadToDotnet()
+        ? [{ source: "/api/v1/counselor/me/students", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/students` }]
+        : []),
+      ...(shouldRouteParentChildReadsToDotnet()
+        ? [
+            { source: "/api/v1/parent/children/:studentId/progress", destination: `${dotnetApiBaseUrl}/api/v1/parent/children/:studentId/progress` },
+            { source: "/api/v1/parent/children/:studentId/course-plan", destination: `${dotnetApiBaseUrl}/api/v1/parent/children/:studentId/course-plan` },
+          ]
         : []),
     ];
     return {
