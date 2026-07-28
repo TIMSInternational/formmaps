@@ -189,6 +189,20 @@ function shouldRoutePrerequisitesToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PREREQUISITES_TO_DOTNET));
 }
 
+// ── Data mappings (FM-DOTNET-056/061): GET+POST /data-mappings, POST /data-mappings/bulk-approve,
+// PUT+DELETE /data-mappings/:id (negative lookahead excludes bulk-approve/ai-suggest). One flag,
+// courses cluster's only real hard-delete. ai-suggest (Bedrock) stays Node.
+function shouldRouteDataMappingsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_DATA_MAPPINGS_TO_DOTNET));
+}
+
+// ── Course import (FM-DOTNET-059/060): POST /courses/import, GET /courses/import/:jobId,
+// GET /courses/import/:jobId/download-failures. One flag, all courses:write. Import is
+// synchronous despite the 202 status — the job is already "completed" by the time POST returns.
+function shouldRouteCourseImportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COURSE_IMPORT_TO_DOTNET));
+}
+
 // ── Counselor dashboard reads (FM-DOTNET-067) + enriched caseload (FM-DOTNET-068) — all GET-only,
 // no write anywhere on any of these 5 paths. Counselor writes (availability/alerts/sessions/notes,
 // FM-069-072) and student/parent CRUD (FM-073-078) deliberately excluded — write-coupled.
@@ -207,6 +221,21 @@ function shouldRouteCounselorCaseloadToDotnet() {
 // upsert with no delete). Default OFF (dark).
 function shouldRouteCounselorNotesToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_NOTES_TO_DOTNET));
+}
+// ── Counselor availability (FM-DOTNET-069): GET+PUT /me/availability, one flag (path-not-method).
+// Full-overwrite upsert — no merge, no delete. Cutover captures+restores the real row's fields.
+function shouldRouteCounselorAvailabilityToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_AVAILABILITY_TO_DOTNET));
+}
+// ── Counselor alerts (FM-DOTNET-070): GET /me/alerts, PUT /me/alerts/:id/read. Two distinct
+// paths under one flag. No create endpoint — mark-read is idempotent, seeded via Tier-2 SQL.
+function shouldRouteCounselorAlertsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_ALERTS_TO_DOTNET));
+}
+// ── Counselor sessions (FM-DOTNET-071): GET /me/sessions, PUT /me/sessions/:id/complete. Two
+// distinct paths under one flag. cancel stays Node (calendar-sync side effect).
+function shouldRouteCounselorSessionsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_SESSIONS_TO_DOTNET));
 }
 // ── Parent child-link-scoped reads (FM-DOTNET-079) — GET progress + GET course-plan, both
 // gated by an accepted+active StudentParentLink. Pure reads, no write on either path.
@@ -768,6 +797,32 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
+      ...(shouldRouteDataMappingsToDotnet()
+        ? [
+            { source: "/api/v1/school-admin/data-mappings", destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings` },
+            {
+              source: "/api/v1/school-admin/data-mappings/bulk-approve",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings/bulk-approve`,
+            },
+            {
+              source: "/api/v1/school-admin/data-mappings/:id((?!bulk-approve|ai-suggest)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings/:id`,
+            },
+          ]
+        : []),
+      ...(shouldRouteCourseImportToDotnet()
+        ? [
+            { source: "/api/v1/school-admin/courses/import", destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/import` },
+            {
+              source: "/api/v1/school-admin/courses/import/:jobId((?!download-failures)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/import/:jobId`,
+            },
+            {
+              source: "/api/v1/school-admin/courses/import/:jobId/download-failures",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/import/:jobId/download-failures`,
+            },
+          ]
+        : []),
       ...(shouldRouteCounselorDashboardToDotnet()
         ? [
             { source: "/api/v1/counselor/dashboard/change-requests", destination: `${dotnetApiBaseUrl}/api/v1/counselor/dashboard/change-requests` },
@@ -784,6 +839,21 @@ const nextConfig: NextConfig = {
             { source: "/api/v1/counselor/students/:studentId/notes", destination: `${dotnetApiBaseUrl}/api/v1/counselor/students/:studentId/notes` },
             { source: "/api/v1/counselor/notes/:noteId", destination: `${dotnetApiBaseUrl}/api/v1/counselor/notes/:noteId` },
             { source: "/api/v1/counselor/notes/:noteId/complete-followup", destination: `${dotnetApiBaseUrl}/api/v1/counselor/notes/:noteId/complete-followup` },
+          ]
+        : []),
+      ...(shouldRouteCounselorAvailabilityToDotnet()
+        ? [{ source: "/api/v1/counselor/me/availability", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/availability` }]
+        : []),
+      ...(shouldRouteCounselorAlertsToDotnet()
+        ? [
+            { source: "/api/v1/counselor/me/alerts", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/alerts` },
+            { source: "/api/v1/counselor/me/alerts/:id/read", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/alerts/:id/read` },
+          ]
+        : []),
+      ...(shouldRouteCounselorSessionsToDotnet()
+        ? [
+            { source: "/api/v1/counselor/me/sessions", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/sessions` },
+            { source: "/api/v1/counselor/me/sessions/:id/complete", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/sessions/:id/complete` },
           ]
         : []),
       ...(shouldRouteParentChildReadsToDotnet()
