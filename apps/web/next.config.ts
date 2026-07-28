@@ -157,6 +157,13 @@ function shouldRouteParentChildReadsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PARENT_CHILD_READS_TO_DOTNET));
 }
 
+// ── Academic gaps reads (FM-DOTNET-080): summary/students/recommendations, all pure GETs.
+// The 4th sibling route /ai-recommendations/:studentId (Bedrock) is a distinct literal segment
+// and stays Node permanently by design — not part of this cutover.
+function shouldRouteAcademicGapsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ACADEMIC_GAPS_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -505,6 +512,22 @@ const nextConfig: NextConfig = {
         ? [
             { source: "/api/v1/parent/children/:studentId/progress", destination: `${dotnetApiBaseUrl}/api/v1/parent/children/:studentId/progress` },
             { source: "/api/v1/parent/children/:studentId/course-plan", destination: `${dotnetApiBaseUrl}/api/v1/parent/children/:studentId/course-plan` },
+          ]
+        : []),
+      ...(shouldRouteAcademicGapsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/academic-gaps/summary",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/summary`,
+            },
+            {
+              source: "/api/v1/school-admin/academic-gaps/students/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/students/:studentId`,
+            },
+            {
+              source: "/api/v1/school-admin/academic-gaps/recommendations/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/recommendations/:studentId`,
+            },
           ]
         : []),
     ];
