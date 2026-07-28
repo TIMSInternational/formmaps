@@ -85,6 +85,40 @@ green (4/4 authed checks + verified 403 for a student caller against the actual
 carry `x-formmaps-service: formmaps-api`. Playwright confirms `/school-admin/analytics`
 triggers real `.NET`-served `overview` + `top-performers` calls on mount, 0 console
 errors. Legacy Node routes for these 4 endpoints now FROZEN.
+
+**Wave 2 Batches 7-12** — 6 more read-only slices cut, 19 routes LIVE on prod traffic as of
+2026-07-28. **Batch 7** vocational-360 (FM-033/034: catalog `instrument`/`questionnaire` +
+result reads `score`/`integrated`, canAccessUser-gated, 4 routes). **Batch 8**
+school-manage-reads (FM-050: `dashboard/stats`, `counselor-assignments/all`, `notes`,
+`counselor-workload`, 4 routes) — FM-051/052 (profile/settings, users) deliberately
+excluded, both co-flip a GET and a write on the same literal path. **Batch 9** iSAMS
+integration reads (FM-053: `status`, `jobs`, 2 routes) — FM-054 (courses GET+POST) excluded,
+same trap. **Batch 10** course pathways (FM-058: 1 route, the one true pure read in the
+5-slice curriculum cluster; frameworks/data-mappings/prerequisites/course-import all
+excluded). **Batch 11** counselor dashboard (FM-067, 4 routes) + enriched caseload
+(FM-068, 1 route) — all pure GETs; counselor writes (FM-069-072) and student/parent CRUD
+(FM-073-078) excluded. **Batch 12** academic gaps (FM-080: `summary`, `students/:id`,
+`recommendations/:id`, 3 routes) — `/ai-recommendations` (Bedrock) stays Node by design;
+rest of domain 6 (college applications/favorites/essays, student course-plan,
+change-requests) is CRUD, excluded.
+
+Every batch corrected at least one stale claim from the prior research workflow (wrong
+ancestor-check reference point, wrong repo for "already wired," local-dev-DB seed-volume
+assumptions) by re-deriving against the actually-deployed image/file/prod-data before
+trusting it. Real-auth gate + anon canary green for all 19 routes, no regression on any
+prior batch. Legacy Node routes for these 19 endpoints now FROZEN.
+
+**⚠️ Real bug found, NOT shipped — FM-079 parent child-link-scoped reads
+(`FORMMAPS_ROUTE_PARENT_CHILD_READS_TO_DOTNET`, wired but deliberately left unset in
+Vercel):** the `tenant_isolation` RLS policy on `student_parent_links` only admits a row
+when `studentId = current_setting('app.current_user_id')` (caller viewing their OWN row)
+or the caller shares the student's school — a parent's own id never equals their child's
+studentId, and parents have no school, so the `IsLinkedAsync` check in
+`ParentChildReader.cs` (which runs under the caller's own RLS session, not System) can
+**never** pass for any real parent. This is a `.NET`-port regression, not a seeding gap —
+`course-plan`'s later reads already correctly use a System/bypass_rls session for the
+same reason; `progress`'s initial link-check does not. Needs a fix in
+`ParentChildReader.cs` before this flag can ever be flipped.
 | Assessments — pure engines (LIA-core, LIA item, personality tally, vocational) | ✅ done (FM-025→028) |
 | Assessments — writes (LIA complete, personality, pca-exam take/submit, vocational recompute) | ✅ done (FM-029→032) |
 

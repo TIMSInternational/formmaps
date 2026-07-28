@@ -1,0 +1,19 @@
+{
+  "batch": "wave2-batch9-isams-reads",
+  "routes": [
+    {
+      "label": "isams-status",
+      "path": "/api/v1/school-admin/integrations/isams/status",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["configured", "enabled"]
+    },
+    {
+      "label": "isams-jobs",
+      "path": "/api/v1/school-admin/integrations/isams/jobs",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": []
+    }
+  ]
+}

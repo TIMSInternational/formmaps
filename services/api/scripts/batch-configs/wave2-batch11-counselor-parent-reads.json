@@ -1,0 +1,47 @@
+{
+  "batch": "wave2-batch11-counselor-parent-reads",
+  "routes": [
+    {
+      "label": "counselor-dashboard",
+      "path": "/api/v1/counselor/dashboard",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["totalStudents", "pendingRequests", "upcomingSessions", "recentNotes"]
+    },
+    {
+      "label": "counselor-dashboard-change-requests",
+      "path": "/api/v1/counselor/dashboard/change-requests",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["data", "total"]
+    },
+    {
+      "label": "counselor-me-students-by-id",
+      "path": "/api/v1/counselor/me/students/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["id", "name", "schoolId"]
+    },
+    {
+      "label": "counselor-students-by-id",
+      "path": "/api/v1/counselor/students/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["id", "name", "schoolId"]
+    },
+    {
+      "label": "counselor-me-students-nonexistent-idor",
+      "path": "/api/v1/counselor/me/students/00000000-0000-0000-0000-000000000000",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 404,
+      "authedShapeKeys": []
+    },
+    {
+      "label": "counselor-enriched-caseload",
+      "path": "/api/v1/counselor/me/students",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["data", "total", "page", "limit", "totalPages"]
+    }
+  ]
+}

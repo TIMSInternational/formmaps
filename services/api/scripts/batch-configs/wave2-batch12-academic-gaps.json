@@ -1,0 +1,33 @@
+{
+  "batch": "wave2-batch12-academic-gaps",
+  "routes": [
+    {
+      "label": "academic-gaps-summary",
+      "path": "/api/v1/school-admin/academic-gaps/summary",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["data"]
+    },
+    {
+      "label": "academic-gaps-student-detail",
+      "path": "/api/v1/school-admin/academic-gaps/students/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["gaps", "creditsEarned", "creditsRequired"]
+    },
+    {
+      "label": "academic-gaps-recommendations",
+      "path": "/api/v1/school-admin/academic-gaps/recommendations/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["recommendations"]
+    },
+    {
+      "label": "academic-gaps-nonexistent-student",
+      "path": "/api/v1/school-admin/academic-gaps/students/00000000-0000-0000-0000-000000000000",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 404,
+      "authedShapeKeys": []
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "batch": "wave2-batch7-vocational-reads",
+  "routes": [
+    {
+      "label": "vocational-instrument",
+      "path": "/api/v1/vocational360/instrument",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["version", "name", "groupWeights", "integrationWeights", "interpretationBands"]
+    },
+    {
+      "label": "vocational-questionnaire-self",
+      "path": "/api/v1/vocational360/questionnaire?group=self",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": []
+    },
+    {
+      "label": "vocational-questionnaire-invalid-group",
+      "path": "/api/v1/vocational360/questionnaire?group=bogus",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 400,
+      "authedShapeKeys": []
+    },
+    {
+      "label": "vocational-score-own",
+      "path": "/api/v1/vocational360/score/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["status"]
+    },
+    {
+      "label": "vocational-integrated-own",
+      "path": "/api/v1/vocational360/integrated/{{fixtureUserId}}",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["status"]
+    },
+    {
+      "label": "vocational-score-nonexistent-user-idor",
+      "path": "/api/v1/vocational360/score/00000000-0000-0000-0000-000000000000",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 404,
+      "authedShapeKeys": []
+    }
+  ]
+}

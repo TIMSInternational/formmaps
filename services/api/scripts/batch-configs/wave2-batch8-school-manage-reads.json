@@ -1,0 +1,33 @@
+{
+  "batch": "wave2-batch8-school-manage-reads",
+  "routes": [
+    {
+      "label": "school-manage-dashboard-stats",
+      "path": "/api/v1/school-admin/dashboard/stats",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["totalStudents", "activeStudents", "totalCounselors", "totalCourses", "assessmentCompletionRate"]
+    },
+    {
+      "label": "school-manage-counselor-assignments-all",
+      "path": "/api/v1/school-admin/counselor-assignments/all",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": []
+    },
+    {
+      "label": "school-manage-notes",
+      "path": "/api/v1/school-admin/notes",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["data", "total", "page", "limit"]
+    },
+    {
+      "label": "school-manage-counselor-workload",
+      "path": "/api/v1/school-admin/counselor-workload",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": []
+    }
+  ]
+}

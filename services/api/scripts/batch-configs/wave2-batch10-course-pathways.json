@@ -1,0 +1,12 @@
+{
+  "batch": "wave2-batch10-course-pathways",
+  "routes": [
+    {
+      "label": "course-pathways",
+      "path": "/api/v1/school-admin/courses/pathways",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["truncated", "groups"]
+    }
+  ]
+}

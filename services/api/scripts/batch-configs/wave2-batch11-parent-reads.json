@@ -1,0 +1,26 @@
+{
+  "batch": "wave2-batch11-parent-reads",
+  "routes": [
+    {
+      "label": "parent-child-progress",
+      "path": "/api/v1/parent/children/{{fixtureUserId}}/progress",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["student", "gpa", "isOnTrack", "creditProgress", "assessments"]
+    },
+    {
+      "label": "parent-child-course-plan",
+      "path": "/api/v1/parent/children/{{fixtureUserId}}/course-plan",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 200,
+      "authedShapeKeys": ["target", "approvedPlan", "currentCourses"]
+    },
+    {
+      "label": "parent-child-progress-unlinked-student",
+      "path": "/api/v1/parent/children/00000000-0000-0000-0000-000000000000/progress",
+      "anonExpectedStatus": 401,
+      "authedExpectedStatus": 403,
+      "authedShapeKeys": []
+    }
+  ]
+}
