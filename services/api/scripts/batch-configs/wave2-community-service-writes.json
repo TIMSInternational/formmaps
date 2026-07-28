@@ -1,0 +1,49 @@
+{
+  "vars": {
+    "markerOrg": "__CANARY_CS_2026-07-28__"
+  },
+  "plan": [
+    {
+      "label": "create-community-service-entry",
+      "method": "POST",
+      "path": "/api/v1/student/community-service",
+      "bodyTemplate": {
+        "organization": "{{markerOrg}}",
+        "description": "Canary entry",
+        "hours": 3,
+        "date": "2026-07-01T00:00:00.000Z"
+      },
+      "anonExpectedStatus": 401,
+      "expectedStatus": 201,
+      "readBackPath": "/api/v1/student/community-service",
+      "readBackLocateBy": { "field": "organization", "equals": "{{markerOrg}}" },
+      "expectedFieldsAfterWrite": {
+        "organization": "{{markerOrg}}",
+        "hours": "3",
+        "isActive": true,
+        "status": "pending"
+      },
+      "exportAs": "createdServiceId"
+    },
+    {
+      "label": "update-community-service-entry",
+      "method": "PUT",
+      "path": "/api/v1/student/community-service/{{createdServiceId}}",
+      "bodyTemplate": { "organization": "Canary Org Updated", "hours": 4.5 },
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdServiceId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/student/community-service",
+      "readBackLocateBy": { "field": "id", "equals": "{{createdServiceId}}" },
+      "expectedFieldsAfterWrite": { "organization": "Canary Org Updated", "hours": "4.5" }
+    },
+    {
+      "label": "delete-community-service-entry",
+      "method": "DELETE",
+      "path": "/api/v1/student/community-service/{{createdServiceId}}",
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "createdServiceId",
+      "expectedStatus": 200
+    }
+  ]
+}
