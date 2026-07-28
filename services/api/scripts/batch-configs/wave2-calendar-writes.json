@@ -1,0 +1,89 @@
+{
+  "vars": {
+    "markerName": "__CANARY_CAL_2026-07-28__"
+  },
+  "plan": [
+    {
+      "label": "create-academic-year",
+      "method": "POST",
+      "path": "/api/v1/school-admin/calendar/academic-years",
+      "bodyTemplate": {
+        "name": "{{markerName}}",
+        "startDate": "2026-08-01",
+        "endDate": "2027-06-15",
+        "terms": [{ "name": "T1", "startDate": "2026-08-01", "endDate": "2026-12-15" }]
+      },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "expectedStatus": 201,
+      "readBackPath": "/api/v1/school-admin/calendar/academic-years",
+      "readBackLocateBy": { "field": "name", "equals": "{{markerName}}" },
+      "expectedFieldsAfterWrite": { "name": "{{markerName}}", "isCurrent": false, "isActive": true, "createdBy": null, "updatedBy": null },
+      "cleanup": { "method": "DELETE", "pathTemplate": "/api/v1/school-admin/calendar/academic-years/{{createdId}}" },
+      "exportAs": "throwawayYearId"
+    },
+    {
+      "label": "update-academic-year",
+      "method": "PUT",
+      "path": "/api/v1/school-admin/calendar/academic-years/{{throwawayYearId}}",
+      "bodyTemplate": { "endDate": "2027-07-01" },
+      "denyExpectedStatus": 403,
+      "crossTenantExpectedStatus": 404,
+      "crossTenantResourceIdVar": "throwawayYearId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/school-admin/calendar/academic-years",
+      "readBackLocateBy": { "field": "id", "equals": "{{throwawayYearId}}" },
+      "expectedFieldsAfterWrite": { "endDate": "2027-07-01T00:00:00.000Z", "name": "{{markerName}}" }
+    },
+    {
+      "label": "create-assessment-period",
+      "method": "POST",
+      "path": "/api/v1/school-admin/calendar/assessment-periods",
+      "bodyTemplate": { "yearId": "{{throwawayYearId}}", "name": "{{markerName}}-AP", "startDate": "2026-09-01", "endDate": "2026-09-15" },
+      "denyExpectedStatus": 403,
+      "expectedStatus": 201,
+      "readBackPath": "/api/v1/school-admin/calendar/assessment-periods?yearId={{throwawayYearId}}",
+      "readBackLocateBy": { "field": "name", "equals": "{{markerName}}-AP" },
+      "expectedFieldsAfterWrite": { "name": "{{markerName}}-AP" },
+      "cleanup": { "method": "DELETE", "pathTemplate": "/api/v1/school-admin/calendar/assessment-periods/{{createdId}}" },
+      "exportAs": "assessmentPeriodId"
+    },
+    {
+      "label": "set-current-to-throwaway",
+      "method": "PUT",
+      "path": "/api/v1/school-admin/calendar/academic-years/{{throwawayYearId}}/set-current",
+      "denyExpectedStatus": 403,
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/school-admin/calendar/academic-years",
+      "readBackLocateBy": { "field": "id", "equals": "{{throwawayYearId}}" },
+      "expectedFieldsAfterWrite": { "isCurrent": true }
+    },
+    {
+      "label": "create-holiday-adversarial-name-truncation",
+      "method": "POST",
+      "path": "/api/v1/school-admin/calendar/holidays",
+      "bodyTemplate": {
+        "name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "date": "2026-09-20"
+      },
+      "denyExpectedStatus": 403,
+      "expectedStatus": 201,
+      "readBackPath": "/api/v1/school-admin/calendar/holidays",
+      "readBackLocateBy": { "field": "date", "equals": "2026-09-20T00:00:00.000Z" },
+      "cleanup": { "method": "DELETE", "pathTemplate": "/api/v1/school-admin/calendar/holidays/{{createdId}}" },
+      "exportAs": "holidayId"
+    },
+    {
+      "label": "delete-assessment-period",
+      "method": "DELETE",
+      "path": "/api/v1/school-admin/calendar/assessment-periods/{{assessmentPeriodId}}",
+      "expectedStatus": 200
+    },
+    {
+      "label": "delete-academic-year",
+      "method": "DELETE",
+      "path": "/api/v1/school-admin/calendar/academic-years/{{throwawayYearId}}",
+      "expectedStatus": 200
+    }
+  ]
+}
