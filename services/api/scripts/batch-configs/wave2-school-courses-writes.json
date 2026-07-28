@@ -1,0 +1,68 @@
+{
+  "vars": {
+    "markerCode": "__CANARY_CRS_2026-07-28__",
+    "markerName": "__CANARY_CRS_2026-07-28__ Course"
+  },
+  "plan": [
+    {
+      "label": "create-course",
+      "method": "POST",
+      "path": "/api/v1/school-admin/courses",
+      "bodyTemplate": {
+        "code": "{{markerCode}}",
+        "name": "{{markerName}}",
+        "department": "Canary",
+        "credits": 1,
+        "gradeLevels": [9, 10],
+        "prerequisites": [],
+        "corequisites": [],
+        "isHonors": false
+      },
+      "anonExpectedStatus": 401,
+      "denyExpectedStatus": 403,
+      "expectedStatus": 201,
+      "readBackPath": "/api/v1/school-admin/courses?search={{markerCode}}&includeFramework=false",
+      "readBackLocateBy": { "field": "code", "equals": "{{markerCode}}" },
+      "expectedFieldsAfterWrite": {
+        "code": "{{markerCode}}",
+        "name": "{{markerName}}",
+        "department": "Canary",
+        "credits": "1",
+        "isActive": true,
+        "status": "active",
+        "createdBy": null,
+        "updatedBy": null
+      },
+      "exportAs": "createdCourseId"
+    },
+    {
+      "label": "reject-duplicate-code",
+      "method": "POST",
+      "path": "/api/v1/school-admin/courses",
+      "bodyTemplate": { "code": "{{markerCode}}", "name": "duplicate attempt", "department": "Canary", "credits": 1 },
+      "expectedStatus": 409
+    },
+    {
+      "label": "update-course",
+      "method": "PUT",
+      "path": "/api/v1/school-admin/courses/{{createdCourseId}}",
+      "bodyTemplate": { "department": "Canary-Updated", "credits": 2.5, "isHonors": true },
+      "denyExpectedStatus": 403,
+      "crossTenantExpectedStatus": 403,
+      "crossTenantResourceIdVar": "createdCourseId",
+      "expectedStatus": 200,
+      "readBackPath": "/api/v1/school-admin/courses?search={{markerCode}}&includeFramework=false",
+      "readBackLocateBy": { "field": "id", "equals": "{{createdCourseId}}" },
+      "expectedFieldsAfterWrite": { "department": "Canary-Updated", "credits": "2.5", "isHonors": true }
+    },
+    {
+      "label": "delete-course",
+      "method": "DELETE",
+      "path": "/api/v1/school-admin/courses/{{createdCourseId}}",
+      "denyExpectedStatus": 403,
+      "crossTenantExpectedStatus": 403,
+      "crossTenantResourceIdVar": "createdCourseId",
+      "expectedStatus": 200
+    }
+  ]
+}

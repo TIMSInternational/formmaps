@@ -223,10 +223,7 @@ git push origin develop
       "denyExpectedStatus": 403,
       "crossTenantExpectedStatus": 403,
       "crossTenantResourceIdVar": "createdCourseId",
-      "expectedStatus": 200,
-      "readBackPath": "/api/v1/school-admin/courses?search={{markerCode}}&includeFramework=false",
-      "readBackLocateBy": { "field": "id", "equals": "{{createdCourseId}}" },
-      "expectAbsentAfterWrite": true
+      "expectedStatus": 200
     }
   ]
 }
@@ -234,7 +231,7 @@ git push origin develop
 
 Notes:
 - `credits` is asserted as the **string** `"1"` / `"2.5"` after write (not the number `1`), per `SchoolCoursesReader.cs`'s `trim_scale("credits")::text` — a raw Prisma Decimal passthrough serializes as a JSON string, unlike the double-precision-cast numeric fields seen in other domains. Getting this wrong (asserting a number) would be exactly the kind of review-passable-but-wrong bug the calendar session's standing lesson warns about — verified against the reader source directly (see Task 1 refs), not assumed.
-- `delete-course`'s `expectAbsentAfterWrite` checks the API-level read-back, which is expected to show the row gone because `GET` filters `isActive=true` — this does NOT by itself prove hard-vs-soft delete (that's Task 4's job). Do not treat this step's pass as proof of the delete mechanism.
+- **`delete-course` deliberately carries NO `readBackPath`/`readBackLocateBy`.** An earlier draft of this config had `expectAbsentAfterWrite: true` with a read-back — checked the actual (post-fix, currently committed) `batch-canary-write.mjs` engine and confirmed it has **no `expectAbsentAfterWrite` handling at all**: when a delete step's read-back can't locate the row (the correct, expected outcome after any delete, soft or hard, since `GET` filters `isActive=true`), the engine's generic `if (!row) { fail(...) }` branch would have misreported a successful delete as a canary FAILURE. Confirmed by reading `wave2-calendar-writes.json` (the actual executed config, not the plan-doc draft) — its own `delete-assessment-period`/`delete-academic-year` steps carry no `readBackPath` either, only `expectedStatus: 200` on the delete call itself. Matched that proven-working pattern instead. Task 4's Tier-2 raw-SQL check is what actually proves the delete mechanism (soft vs. hard) — this step only proves the API accepted the call.
 - No `cleanup` entries — the created row is deleted by the plan's own last step, and delete is soft (row stays with `isActive=false`), so there is nothing further to clean up. Unlike Calendar, there's no separate throwaway-vs-real-restore step needed here (nothing else depends on course ordering/currency).
 - No explicit anon/deny checks on `reject-duplicate-code` (redundant with `create-course`'s own anon/deny coverage of the same path+method).
 
