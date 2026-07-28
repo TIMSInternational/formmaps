@@ -99,6 +99,12 @@ function shouldRouteEvaluationReportToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_EVALUATION_REPORT_TO_DOTNET));
 }
 
+// ── Calendar writes (FM-DOTNET-047/048): academic-years/assessment-periods/holidays ──
+// All 12 calendar endpoints cut over as a write-coupled slice; blue-canary write-verified in prod.
+function shouldRouteCalendarToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_CALENDAR_TO_DOTNET));
+}
+
 // ── School-analytics reads (FM-DOTNET-049): overview/trends/performance-trends/top-performers ──
 // Ported verbatim from ~/formmaps/apps/web/next.config.ts (lines 316-323 / 1222-1245) — that copy
 // is NOT a deploy target (no linked Vercel project), this file is. /trends and /performance-trends
@@ -380,6 +386,38 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/assessments/status",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/status`,
+            },
+          ]
+        : []),
+      ...(shouldRouteCalendarToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/calendar/academic-years",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/academic-years/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years/:id`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/academic-years/:id/set-current",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years/:id/set-current`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/assessment-periods",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/assessment-periods`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/assessment-periods/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/assessment-periods/:id`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/holidays",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/holidays`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/holidays/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/holidays/:id`,
             },
           ]
         : []),
