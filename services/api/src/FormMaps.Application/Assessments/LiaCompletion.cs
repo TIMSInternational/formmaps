@@ -84,4 +84,10 @@ public interface ILiaSessionWriter
         string sessionId,
         string ownerUserId,
         CancellationToken cancellationToken = default);
+
+    Task<LiaStartOutcome> StartAsync(
+        RequestContext context,
+        string userId,
+        string language,
+        CancellationToken cancellationToken = default);
 }

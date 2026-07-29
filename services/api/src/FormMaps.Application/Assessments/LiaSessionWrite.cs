@@ -80,3 +80,48 @@ public static class LiaQuestionServing
         return new ClientQuestion(BuildId(q), q.Subtest, q.ItemNumber, data, q.IsPractice);
     }
 }
+
+/// <summary>Response payload for a successful <c>StartAsync</c> — a fresh, resumed, or mid-subtest session.</summary>
+public sealed record LiaSessionStartPayload(
+    [property: JsonPropertyName("session_id")] string SessionId,
+    [property: JsonPropertyName("current_subtest")] string CurrentSubtest,
+    [property: JsonPropertyName("practice_questions")] IReadOnlyList<ClientQuestion> PracticeQuestions,
+    [property: JsonPropertyName("resume_mode")] string? ResumeMode = null,
+    [property: JsonPropertyName("current_item")] int? CurrentItem = null,
+    [property: JsonPropertyName("started_at")] string? StartedAt = null,
+    [property: JsonPropertyName("time_limit_seconds")] int? TimeLimitSeconds = null,
+    [property: JsonPropertyName("questions")] IReadOnlyList<ClientQuestion>? Questions = null);
+
+public enum LiaStartStatus { Started, Locked, AlreadyCompleted }
+
+/// <summary>Discriminated outcome of a start attempt (maps to 200 / 423 / 409 at the endpoint).</summary>
+public sealed record LiaStartOutcome(LiaStartStatus Status, LiaSessionStartPayload? Payload);
+
+/// <summary>
+/// Result of a shared timeout-driven advance (legacy advancePastSubtest / recordSubtestEnd): the subtest
+/// that follows the one just closed out, or null with AssessmentComplete=true when it was the last one.
+/// Consumed by StartAsync's own Gate 2 here, and by Task 5's SubmitAnswerAsync / Task 6's reads.
+/// </summary>
+public sealed record TimeoutAdvanceResult(string? NextSubtest, bool AssessmentComplete);
+
+public static class LiaSubtestOrder
+{
+    // legacy SUBTEST_ORDER (lib/lia-core/types.ts) — fixed instrument order, never re-derived from data.
+    public static readonly IReadOnlyList<string> Order =
+        ["pattern_recognition", "verbal_reasoning", "numerical_speed", "working_memory", "visual_rotation"];
+
+    public static readonly IReadOnlyDictionary<string, int> ItemCounts = new Dictionary<string, int>(StringComparer.Ordinal)
+    {
+        ["pattern_recognition"] = 60, ["verbal_reasoning"] = 50, ["numerical_speed"] = 60,
+        ["working_memory"] = 60, ["visual_rotation"] = 60,
+    };
+
+    // legacy TIMER_GRACE_MS + per-subtest timeSeconds (lib/lia-core/types.ts SUBTEST_CONFIGS) — verified
+    // directly against source, not the plan's unverified placeholders.
+    public const int TimerGraceMs = 5000;
+    public static readonly IReadOnlyDictionary<string, int> TimeSeconds = new Dictionary<string, int>(StringComparer.Ordinal)
+    {
+        ["pattern_recognition"] = 180, ["verbal_reasoning"] = 240, ["numerical_speed"] = 240,
+        ["working_memory"] = 240, ["visual_rotation"] = 300,
+    };
+}
