@@ -360,6 +360,14 @@ function shouldRouteSchoolAdminEmailWritesToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_EMAIL_WRITES_TO_DOTNET));
 }
 
+// School-admin CONFIG/SCHEDULE writes (FM-DOTNET-044): PUT /assessments/config + PUT /assessments/schedule.
+// GET(read, FM-039) + PUT(write, FM-044) flip together under one flag (path-not-method). Default OFF.
+function shouldRouteSchoolAdminConfigScheduleToDotnet() {
+  return Boolean(
+    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_CONFIG_SCHEDULE_TO_DOTNET)
+  );
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -576,6 +584,19 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/assessments/status",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/status`,
+            },
+          ]
+        : []),
+      // GET(read, FM-039) + PUT(write, FM-044) flipping together under one flag (path-not-method).
+      ...(shouldRouteSchoolAdminConfigScheduleToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/assessments/config",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/config`,
+            },
+            {
+              source: "/api/v1/school-admin/assessments/schedule",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/schedule`,
             },
           ]
         : []),
