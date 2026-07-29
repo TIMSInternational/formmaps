@@ -351,6 +351,15 @@ function shouldRouteStudentChangeRequestsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_CHANGE_REQUESTS_TO_DOTNET));
 }
 
+// ── School-admin email writes (FM-DOTNET-045): POST /assessments/send-reminders
+// (no DB write, fans out reminder emails) + POST /assessments/setup-360 (bulk-INSERT
+// evaluation_groups then fires 360-eval invite emails). ONE flag, both paths distinct
+// literals so no co-flip risk with the read-only /assessments/status. Emails are
+// best-effort (IEmailSender never throws). Default OFF.
+function shouldRouteSchoolAdminEmailWritesToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_EMAIL_WRITES_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -567,6 +576,18 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/assessments/status",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/status`,
+            },
+          ]
+        : []),
+      ...(shouldRouteSchoolAdminEmailWritesToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/assessments/send-reminders",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/send-reminders`,
+            },
+            {
+              source: "/api/v1/school-admin/assessments/setup-360",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/setup-360`,
             },
           ]
         : []),
