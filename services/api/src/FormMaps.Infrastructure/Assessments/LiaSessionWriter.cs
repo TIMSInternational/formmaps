@@ -607,6 +607,274 @@ public sealed class LiaSessionWriter(
             LiaSubtestOrder.TimeSeconds[subtest], ToIsoZ(startedAt)));
     }
 
+    // ================================================================================================
+    // SubmitAnswerAsync / SubmitPracticeAnswerAsync — legacy submitAnswer / submitPracticeAnswer
+    // (services/lia/lia-response-service.ts). SubmitAnswerAsync shares Task 3's
+    // ExpireIfPastDeadlineAsync/AdvancePastSubtestAsync timeout-advance machinery: a submitted answer
+    // past the subtest's deadline is discarded (never persisted) and instead runs the SAME
+    // timeout-advance path StartAsync's Gate 2 uses — including, when it happens to close out the
+    // assessment's LAST subtest, computing and persisting REAL scores and threading them into
+    // LiaAnswerResult.Completion, then audit-logging only after that commit succeeds (identical
+    // ordering/guard to StartAsync's own Gate 2, so a completion audit can never be emitted for a
+    // write that did not durably persist).
+    // ================================================================================================
+
+    private const string SelectSessionForAnswerSql = """
+        SELECT "user_id" AS "userId", "status"::text AS "status", "current_subtest"::text AS "currentSubtest",
+               "current_item" AS "currentItem", "subtest_times"::text AS "subtestTimes", "language"
+        FROM "lia_assessment_sessions" WHERE "id" = @sessionId
+        """;
+
+    public async Task<LiaSubmitAnswerOutcome> SubmitAnswerAsync(
+        RequestContext context, string sessionId, string ownerUserId, string questionId, string? answer,
+        int timeSpentMs, CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        AnswerSessionRow row;
+        await using (var command = session.Connection.CreateCommand())
+        {
+            command.Transaction = session.Transaction;
+            command.CommandText = SelectSessionForAnswerSql;
+            AddParameter(command, "sessionId", sessionId);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.NotFound, null);
+            }
+
+            row = new AnswerSessionRow(
+                reader.GetString(reader.GetOrdinal("userId")), reader.GetString(reader.GetOrdinal("status")),
+                ReadNullableString(reader, "currentSubtest"), reader.GetInt32(reader.GetOrdinal("currentItem")),
+                ReadNullableString(reader, "subtestTimes"), reader.GetString(reader.GetOrdinal("language")));
+        }
+
+        // Ownership: missing == denied -> uniform NotFound (IDOR-safe), like every other writer here.
+        if (!string.Equals(row.UserId, ownerUserId, StringComparison.Ordinal))
+        {
+            return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.NotFound, null);
+        }
+
+        if (row.Status != "in_progress")
+        {
+            return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.NotInProgress, null);
+        }
+
+        var currentSubtest = row.CurrentSubtest!;
+        var itemCount = LiaSubtestOrder.ItemCounts[currentSubtest];
+
+        // Shared timeout-advance gate (Task 3): a late submit is discarded, never persisted as a real
+        // response — the subtest is instead closed out via the SAME path StartAsync's Gate 2 uses.
+        var expiry = await ExpireIfPastDeadlineAsync(session, sessionId, currentSubtest, row.SubtestTimes, cancellationToken);
+        if (expiry is not null)
+        {
+            await session.CommitAsync(cancellationToken);
+
+            if (expiry.Completion is { } completion)
+            {
+                // Audit only after the commit above succeeds, mirroring CompleteAsync's / StartAsync's
+                // own ordering — a completion audit can never be emitted for a write that did not
+                // durably persist.
+                logger.LogInformation(
+                    "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
+                    sessionId, ownerUserId, completion.GlobalPercentile, completion.PerformanceLevel);
+            }
+
+            return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.Ok, new LiaAnswerResult(
+                sessionId, itemCount, itemCount, 0, true, expiry.NextSubtest, expiry.AssessmentComplete,
+                Completion: expiry.Completion, TimedOut: true,
+                SessionStatus: expiry.AssessmentComplete ? "completed" : "practice"));
+        }
+
+        var question = LiaQuestionServing.FindById(questionId);
+        if (question is null || question.Subtest != currentSubtest || question.IsPractice)
+        {
+            return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.QuestionNotFound, null);
+        }
+
+        var effectiveAnswer = currentSubtest == "verbal_reasoning"
+            ? LiaAnswerScoring.GetVerbalAnswerForLanguage(question.CorrectAnswer, question.ItemNumber, isPractice: false, row.Language)
+            : question.CorrectAnswer;
+        bool? isCorrect = answer is null ? null : LiaAnswerScoring.IsAnswerCorrect(currentSubtest, answer, effectiveAnswer);
+
+        bool alreadyAnswered;
+        await using (var command = session.Connection.CreateCommand())
+        {
+            command.Transaction = session.Transaction;
+            command.CommandText = """SELECT 1 FROM "lia_responses" WHERE "session_id" = @sessionId AND "question_id" = @questionId""";
+            AddParameter(command, "sessionId", sessionId);
+            AddParameter(command, "questionId", questionId);
+            alreadyAnswered = await command.ExecuteScalarAsync(cancellationToken) is not null;
+        }
+
+        await using (var command = session.Connection.CreateCommand())
+        {
+            command.Transaction = session.Transaction;
+            command.CommandText = """
+                INSERT INTO "lia_responses"
+                    ("id", "session_id", "question_id", "subtest", "item_number", "user_answer", "is_correct",
+                     "answered_at", "time_spent_ms", "updated_at")
+                VALUES (@id, @sessionId, @questionId, @subtest::"LiaSubtest", @itemNumber, @answer, @isCorrect, @now, @timeSpentMs, @now)
+                ON CONFLICT ("session_id", "question_id") DO UPDATE SET
+                    "user_answer" = @answer, "is_correct" = @isCorrect, "answered_at" = @now, "time_spent_ms" = @timeSpentMs
+                """;
+            AddParameter(command, "id", Guid.NewGuid().ToString());
+            AddParameter(command, "sessionId", sessionId);
+            AddParameter(command, "questionId", questionId);
+            AddParameter(command, "subtest", currentSubtest);
+            AddParameter(command, "itemNumber", question.ItemNumber);
+            AddParameter(command, "answer", (object?)answer ?? DBNull.Value);
+            AddParameter(command, "isCorrect", (object?)isCorrect ?? DBNull.Value);
+            AddTimestampParameter(command, "now", NowTruncated());
+            AddParameter(command, "timeSpentMs", timeSpentMs);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        var newCurrentItem = alreadyAnswered ? row.CurrentItem : row.CurrentItem + 1;
+        if (!alreadyAnswered)
+        {
+            int itemAffected;
+            await using (var command = session.Connection.CreateCommand())
+            {
+                command.Transaction = session.Transaction;
+                command.CommandText = """UPDATE "lia_assessment_sessions" SET "current_item" = @item WHERE "id" = @sessionId""";
+                AddParameter(command, "item", newCurrentItem);
+                AddParameter(command, "sessionId", sessionId);
+                itemAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            // Targets the session by primary key only, inside the same transaction that just read the
+            // row — 0 rows affected means the row vanished mid-transaction, which must never pass
+            // silently (processing integrity, matches AdvancePastSubtestAsync's/CompleteAsync's rigor).
+            if (itemAffected == 0)
+            {
+                logger.LogError("lia.answer.submit current_item update matched 0 rows sessionId={SessionId}", sessionId);
+                throw new InvalidOperationException($"LIA current_item update affected 0 rows for session {sessionId}");
+            }
+        }
+
+        var subtestComplete = newCurrentItem > itemCount;
+        var startedAt = ReadSubtestStartedAt(row.SubtestTimes, currentSubtest);
+        // AssumeUniversal|AdjustToUniversal (not RoundtripKind, which .NET rejects when combined with
+        // AdjustToUniversal): same culture-safe parse ExpireIfPastDeadlineAsync uses.
+        var elapsedSeconds = startedAt is null
+            ? 0
+            : (DateTime.UtcNow - DateTime.Parse(
+                startedAt, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal))
+                .TotalSeconds;
+        var timeRemaining = Math.Max(0, LiaSubtestOrder.TimeSeconds[currentSubtest] - elapsedSeconds);
+
+        string? nextSubtest = null;
+        var assessmentComplete = false;
+        if (subtestComplete)
+        {
+            var advanced = await AdvancePastSubtestAsync(session, sessionId, currentSubtest, cancellationToken);
+            nextSubtest = advanced.NextSubtest;
+            assessmentComplete = advanced.AssessmentComplete;
+        }
+
+        await session.CommitAsync(cancellationToken);
+        return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.Ok, new LiaAnswerResult(
+            sessionId, newCurrentItem - 1, itemCount, (int)Math.Round(timeRemaining), subtestComplete, nextSubtest,
+            assessmentComplete));
+    }
+
+    private const string SelectSessionForPracticeAnswerSql = """
+        SELECT "user_id", "status"::text, "practice_completed"::text, "language"
+        FROM "lia_assessment_sessions" WHERE "id" = @sessionId
+        """;
+
+    public async Task<LiaPracticeAnswerOutcome> SubmitPracticeAnswerAsync(
+        RequestContext context, string sessionId, string ownerUserId, string questionId, string answer,
+        CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        string userId;
+        string status;
+        string? practiceCompletedJson;
+        string language;
+        await using (var command = session.Connection.CreateCommand())
+        {
+            command.Transaction = session.Transaction;
+            command.CommandText = SelectSessionForPracticeAnswerSql;
+            AddParameter(command, "sessionId", sessionId);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                return new LiaPracticeAnswerOutcome(LiaPracticeAnswerStatus.NotFound, null);
+            }
+
+            userId = reader.GetString(0);
+            status = reader.GetString(1);
+            practiceCompletedJson = reader.IsDBNull(2) ? null : reader.GetString(2);
+            language = reader.GetString(3);
+        }
+
+        // Ownership: missing == denied -> uniform NotFound (IDOR-safe), like every other writer here.
+        if (!string.Equals(userId, ownerUserId, StringComparison.Ordinal))
+        {
+            return new LiaPracticeAnswerOutcome(LiaPracticeAnswerStatus.NotFound, null);
+        }
+
+        if (status != "practice")
+        {
+            return new LiaPracticeAnswerOutcome(LiaPracticeAnswerStatus.NotInPractice, null);
+        }
+
+        var question = LiaQuestionServing.FindById(questionId);
+        if (question is null)
+        {
+            return new LiaPracticeAnswerOutcome(LiaPracticeAnswerStatus.QuestionNotFound, null);
+        }
+
+        var effectiveAnswer = question.Subtest == "verbal_reasoning"
+            ? LiaAnswerScoring.GetVerbalAnswerForLanguage(question.CorrectAnswer, question.ItemNumber, isPractice: true, language)
+            : question.CorrectAnswer;
+        var isCorrect = LiaAnswerScoring.IsAnswerCorrect(question.Subtest, answer, effectiveAnswer);
+
+        var practiceItems = LiaQuestionServing.FetchPracticeQuestions(question.Subtest, language);
+        var next = practiceItems.FirstOrDefault(q => q.ItemNumber > question.ItemNumber);
+        var practiceComplete = next is null;
+
+        if (practiceComplete)
+        {
+            var updated = MergePracticeCompleted(practiceCompletedJson, question.Subtest);
+            int practiceAffected;
+            await using (var command = session.Connection.CreateCommand())
+            {
+                command.Transaction = session.Transaction;
+                command.CommandText = """UPDATE "lia_assessment_sessions" SET "practice_completed" = @pc::jsonb WHERE "id" = @sessionId""";
+                AddParameter(command, "pc", updated);
+                AddParameter(command, "sessionId", sessionId);
+                practiceAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            // Same processing-integrity rigor as SubmitAnswerAsync's current_item update above.
+            if (practiceAffected == 0)
+            {
+                logger.LogError("lia.practice.answer practice_completed update matched 0 rows sessionId={SessionId}", sessionId);
+                throw new InvalidOperationException($"LIA practice_completed update affected 0 rows for session {sessionId}");
+            }
+        }
+
+        await session.CommitAsync(cancellationToken);
+        return new LiaPracticeAnswerOutcome(LiaPracticeAnswerStatus.Ok, new PracticeAnswerResult(
+            isCorrect, effectiveAnswer, practiceComplete, next));
+    }
+
+    private static string MergePracticeCompleted(string? existingJson, string subtest)
+    {
+        var dict = string.IsNullOrEmpty(existingJson)
+            ? new Dictionary<string, bool>(StringComparer.Ordinal)
+            : JsonSerializer.Deserialize<Dictionary<string, bool>>(existingJson, JsonOptions)!;
+        dict[subtest] = true;
+        return JsonSerializer.Serialize(dict, JsonOptions);
+    }
+
+    private sealed record AnswerSessionRow(
+        string UserId, string Status, string? CurrentSubtest, int CurrentItem, string? SubtestTimes, string Language);
+
     private static bool IsPracticeCompleted(string? practiceCompletedJson, string subtest)
     {
         if (string.IsNullOrEmpty(practiceCompletedJson))

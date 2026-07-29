@@ -140,3 +140,38 @@ public static class LiaSubtestOrder
         ["working_memory"] = 240, ["visual_rotation"] = 300,
     };
 }
+
+/// <summary>
+/// Response payload for a successful <see cref="ILiaSessionWriter.SubmitAnswerAsync"/> (legacy submitAnswer).
+/// Named "Lia"-prefixed (unlike the brief's plain "AnswerResult") because
+/// FormMaps.Application.Assessments.PersonalityWrite already defines an unrelated AnswerResult
+/// (per-item save progress for the Personality assessment) in this same namespace.
+/// </summary>
+public sealed record LiaAnswerResult(
+    [property: JsonPropertyName("session_id")] string SessionId,
+    [property: JsonPropertyName("items_completed")] int ItemsCompleted,
+    [property: JsonPropertyName("total_items")] int TotalItems,
+    [property: JsonPropertyName("time_remaining_seconds")] int TimeRemainingSeconds,
+    [property: JsonPropertyName("subtest_complete")] bool SubtestComplete,
+    [property: JsonPropertyName("next_subtest")] string? NextSubtest,
+    [property: JsonPropertyName("assessment_complete")] bool AssessmentComplete,
+    [property: JsonPropertyName("completion")] LiaCompletionResult? Completion = null,
+    [property: JsonPropertyName("timed_out")] bool? TimedOut = null,
+    [property: JsonPropertyName("session_status")] string? SessionStatus = null);
+
+/// <summary>Response payload for a successful <see cref="ILiaSessionWriter.SubmitPracticeAnswerAsync"/> (legacy submitPracticeAnswer).</summary>
+public sealed record PracticeAnswerResult(
+    [property: JsonPropertyName("is_correct")] bool IsCorrect,
+    [property: JsonPropertyName("correct_answer")] string CorrectAnswer,
+    [property: JsonPropertyName("practice_complete")] bool PracticeComplete,
+    [property: JsonPropertyName("next_question")] ClientQuestion? NextQuestion);
+
+public enum LiaSubmitAnswerStatus { Ok, NotFound, NotInProgress, QuestionNotFound }
+
+/// <summary>Discriminated outcome of an answer-submit attempt (maps to 200 / 404 / 409 / 404 at the endpoint).</summary>
+public sealed record LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus Status, LiaAnswerResult? Result);
+
+public enum LiaPracticeAnswerStatus { Ok, NotFound, NotInPractice, QuestionNotFound }
+
+/// <summary>Discriminated outcome of a practice-answer-submit attempt (maps to 200 / 404 / 409 / 404 at the endpoint).</summary>
+public sealed record LiaPracticeAnswerOutcome(LiaPracticeAnswerStatus Status, PracticeAnswerResult? Result);

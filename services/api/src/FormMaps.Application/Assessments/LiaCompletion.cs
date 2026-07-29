@@ -97,4 +97,21 @@ public interface ILiaSessionWriter
         string ownerUserId,
         string subtest,
         CancellationToken cancellationToken = default);
+
+    Task<LiaSubmitAnswerOutcome> SubmitAnswerAsync(
+        RequestContext context,
+        string sessionId,
+        string ownerUserId,
+        string questionId,
+        string? answer,
+        int timeSpentMs,
+        CancellationToken cancellationToken = default);
+
+    Task<LiaPracticeAnswerOutcome> SubmitPracticeAnswerAsync(
+        RequestContext context,
+        string sessionId,
+        string ownerUserId,
+        string questionId,
+        string answer,
+        CancellationToken cancellationToken = default);
 }

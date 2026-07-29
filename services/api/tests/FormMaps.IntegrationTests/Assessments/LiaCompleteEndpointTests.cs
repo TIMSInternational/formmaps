@@ -202,6 +202,16 @@ public class LiaCompleteEndpointTests
             RequestContext context, string sessionId, string ownerUserId, string subtest, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException("StartSubtestAsync is not exercised by LiaCompleteEndpointTests");
 
+        public Task<LiaSubmitAnswerOutcome> SubmitAnswerAsync(
+            RequestContext context, string sessionId, string ownerUserId, string questionId, string? answer,
+            int timeSpentMs, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException("SubmitAnswerAsync is not exercised by LiaCompleteEndpointTests");
+
+        public Task<LiaPracticeAnswerOutcome> SubmitPracticeAnswerAsync(
+            RequestContext context, string sessionId, string ownerUserId, string questionId, string answer,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException("SubmitPracticeAnswerAsync is not exercised by LiaCompleteEndpointTests");
+
         public Task<LiaCompleteOutcome> CompleteAsync(
             RequestContext context, string sessionId, string ownerUserId, CancellationToken cancellationToken = default)
         {
