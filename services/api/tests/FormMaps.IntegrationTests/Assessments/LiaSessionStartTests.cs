@@ -167,7 +167,7 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
     {
         var startedAt = DateTime.UtcNow.AddHours(-1); // well past visual_rotation's 300s + grace.
         var (userId, sessionId) = await SeedLastSubtestExpiredWithFullPriorCoverageAsync(startedAt);
-        var (writer, _) = MakeWriter();
+        var (writer, logger) = MakeWriter();
 
         var outcome = await writer.StartAsync(Ctx(userId), userId, "es");
 
@@ -178,6 +178,14 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
         AssertHasAllFiveSubtestKeys(rawScoresJson, "raw_scores");
         AssertHasAllFiveSubtestKeys(finalScoresJson, "final_scores");
         AssertHasAllFiveSubtestKeys(percentilesJson, "percentiles");
+
+        // The timeout-driven completion must emit exactly the same PII-free audit event CompleteAsync
+        // emits on its own commit — StartAsync's Gate 2 logs it only after its own commit succeeds.
+        var audit = Assert.Single(
+            logger.Entries, e => e.Message.StartsWith("audit.assessment.lia.completed", StringComparison.Ordinal));
+        Assert.Equal(LogLevel.Information, audit.Level);
+        Assert.Contains(sessionId, audit.Message, StringComparison.Ordinal);
+        Assert.Contains(userId, audit.Message, StringComparison.Ordinal);
 
         // Strongest check (would have failed before this fix): a subsequent /complete call hits
         // CompleteAsync's idempotent status=='completed' branch (BuildStoredResult) — before the fix
@@ -191,6 +199,49 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
         Assert.NotEqual("insufficient", result.PerformanceLevel);
         Assert.NotEqual(0d, result.GlobalPercentile);
         Assert.NotEqual("1970-01-01T00:00:00.000Z", result.CompletedAt);
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Fix round 1, Important #1: two concurrent /start calls racing through Gate 2's timeout path on
+    // the SAME last-subtest-expired session. Both read the session via the UNLOCKED
+    // SelectActiveSessionsForUserSql before Gate 1, so whichever call loses the race to Gate 1's
+    // reentry-increment row lock still carries a STALE in-memory snapshot (status still "in_progress")
+    // by the time it reaches AdvancePastSubtestAsync's isLast branch — even though the winner has, by
+    // then, already scored and committed status='completed'. Before this fix, the loser's
+    // PersistCompletionAsync would attempt its own status-guarded UPDATE, match 0 rows, and FAIL
+    // CLOSED (throw InvalidOperationException -> 500), because the isLast branch had no way to tell
+    // "someone else already completed it" apart from "the row vanished". The fix adds a
+    // SELECT ... FOR UPDATE status re-check immediately before scoring: it blocks until the winner's
+    // transaction commits, then sees 'completed' and returns AlreadyCompleted cleanly instead of
+    // re-scoring or throwing. This mirrors the existing "Two_concurrent_completions_score_exactly_once"
+    // (LiaSessionWriterTests) and "Concurrent_starts_..." (this file) precedent for exercising a real
+    // Postgres row-lock race via genuine Task.WhenAll concurrency rather than a mocked/sequential stand-in.
+    // ------------------------------------------------------------------------------------------
+    [Fact]
+    public async Task Two_concurrent_starts_racing_the_last_subtest_timeout_do_not_throw_and_both_report_complete()
+    {
+        var startedAt = DateTime.UtcNow.AddHours(-1); // well past visual_rotation's 300s + grace.
+        var (userId, sessionId) = await SeedLastSubtestExpiredWithFullPriorCoverageAsync(startedAt);
+        var (writerA, _) = MakeWriter();
+        var (writerB, _) = MakeWriter();
+
+        // Task.WhenAll would propagate any exception from either call — a 500 from the pre-fix bug
+        // would surface here as a thrown InvalidOperationException, failing this test outright.
+        var results = await Task.WhenAll(
+            writerA.StartAsync(Ctx(userId), userId, "es"),
+            writerB.StartAsync(Ctx(userId), userId, "es"));
+
+        // Whichever call scored it fresh and whichever lost the race and found it already completed,
+        // BOTH must resolve to AlreadyCompleted — never a throw, never a Started/mid-scoring result.
+        Assert.All(results, r => Assert.Equal(LiaStartStatus.AlreadyCompleted, r.Status));
+
+        // Exactly one real scoring occurred: the session carries real (non-null) scores, not a
+        // half-scored or double-scored state.
+        var (status, rawScoresJson, finalScoresJson, percentilesJson) = await ReadScoringColumnsAsync(sessionId);
+        Assert.Equal("completed", status);
+        AssertHasAllFiveSubtestKeys(rawScoresJson, "raw_scores");
+        AssertHasAllFiveSubtestKeys(finalScoresJson, "final_scores");
+        AssertHasAllFiveSubtestKeys(percentilesJson, "percentiles");
     }
 
     private static void AssertHasAllFiveSubtestKeys(string? json, string columnName)

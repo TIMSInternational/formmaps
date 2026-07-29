@@ -42,6 +42,12 @@ public sealed class LiaSessionWriter(
         FROM "lia_responses" WHERE "session_id" = @sessionId
         """;
 
+    // Row-locking status re-check used only by AdvancePastSubtestAsync's isLast branch, immediately
+    // before scoring — see the comment at that call site for why this is needed.
+    private const string SelectStatusForUpdateSql = """
+        SELECT "status"::text FROM "lia_assessment_sessions" WHERE "id" = @sessionId FOR UPDATE
+        """;
+
     private const string UpdateSql = """
         UPDATE "lia_assessment_sessions" SET
             "status" = 'completed'::"LiaSessionStatus",
@@ -456,6 +462,39 @@ public sealed class LiaSessionWriter(
 
         if (isLast)
         {
+            // Re-read status under a row lock before scoring: the "row" that got us here (StartAsync's
+            // own SELECT, taken before Gate 1) is NOT locked, so it can be stale. A concurrent completer
+            // (another /start racing through Gate 1 first, or a direct /complete) may have already
+            // scored + committed this exact session between our caller's stale read and this point —
+            // Gate 1's own reentry UPDATE serializes on the row but does not refresh that stale snapshot.
+            // If we scored again here, PersistCompletionAsync's status-guarded UPDATE would match 0 rows
+            // and fail-close (throw) for what is actually a benign "someone else already finished it"
+            // race, not a genuine invariant violation. FOR UPDATE here blocks until any such concurrent
+            // completer's transaction commits, so the re-read is guaranteed current.
+            string currentStatus;
+            await using (var statusCommand = session.Connection.CreateCommand())
+            {
+                statusCommand.Transaction = session.Transaction;
+                statusCommand.CommandText = SelectStatusForUpdateSql;
+                AddParameter(statusCommand, "sessionId", sessionId);
+                var statusResult = await statusCommand.ExecuteScalarAsync(cancellationToken);
+                if (statusResult is not string status)
+                {
+                    logger.LogError("lia.session.start advance-past-subtest status re-check found no row sessionId={SessionId}", sessionId);
+                    throw new InvalidOperationException($"LIA advance-past-subtest status re-check found no row for session {sessionId}");
+                }
+
+                currentStatus = status;
+            }
+
+            if (currentStatus == "completed")
+            {
+                // Someone else already completed this session first — return AlreadyCompleted with no
+                // Completion. StartAsync's Gate 2 already treats a null Completion as "no audit, still
+                // AlreadyCompleted" (the completing transaction emitted its own audit on its own commit).
+                return new TimeoutAdvanceResult(null, AssessmentComplete: true);
+            }
+
             // legacy applyTimeout calls completeSession() inline the moment the assessment truly
             // finishes. Coverage is trusted via the state-machine invariant: every subtest is only ever
             // advanced-past once ApplyTimeoutAsync (or a real submit) has fully filled it, so — unlike
