@@ -195,3 +195,36 @@ public enum LiaSaveViolationsStatus { Ok, NotFound }
 
 /// <summary>Discriminated outcome of a violation-save attempt (maps to 200 / 404 at the endpoint).</summary>
 public sealed record LiaSaveViolationsOutcome(LiaSaveViolationsStatus Status, int SavedCount);
+
+/// <summary>
+/// Result of legacy checkAccess (services/lia/lia-session-service.ts). Named "Lia"-prefixed (unlike the
+/// brief's plain "CheckAccessResult") because FormMaps.Application.Assessments.PersonalityTakeFlow
+/// already defines an unrelated CheckAccessResult (the Personality assessment's own access check) in
+/// this same namespace — the exact same class of collision Tasks 5/6 hit with AnswerResult/
+/// SessionStartPayload.
+/// </summary>
+public sealed record LiaCheckAccessResult(
+    [property: JsonPropertyName("has_access")] bool HasAccess,
+    [property: JsonPropertyName("has_completed")] bool HasCompleted,
+    [property: JsonPropertyName("existing_session_id")] string? ExistingSessionId = null,
+    [property: JsonPropertyName("reason")] string? Reason = null,
+    [property: JsonPropertyName("locked")] bool? Locked = null);
+
+/// <summary>
+/// Result of legacy getSession (services/lia/lia-session-service.ts) — the full session-detail read,
+/// lazily expiring a stale subtest clock via <see cref="ILiaSessionWriter.ReadWithLazyExpiryAsync"/>
+/// before being returned. StartedAt/CompletedAt are ISO strings (via the shared ToIsoZ formatting), NOT
+/// raw DateTime, matching every other DateTime-bearing response DTO in this codebase (e.g.
+/// LiaCompletionResult.CompletedAt) — there is no global JSON DateTime converter configured (checked
+/// Program.cs), so a raw DateTime? here would serialize inconsistently with every other endpoint.
+/// </summary>
+public sealed record SessionDetail(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("status")] string Status,
+    [property: JsonPropertyName("current_subtest")] string? CurrentSubtest,
+    [property: JsonPropertyName("current_item")] int CurrentItem,
+    [property: JsonPropertyName("practice_completed")] JsonElement PracticeCompleted,
+    [property: JsonPropertyName("subtest_times")] JsonElement SubtestTimes,
+    [property: JsonPropertyName("language")] string Language,
+    [property: JsonPropertyName("started_at")] string? StartedAt,
+    [property: JsonPropertyName("completed_at")] string? CompletedAt);

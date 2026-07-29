@@ -1063,6 +1063,148 @@ public sealed class LiaSessionWriter(
         return new LiaSaveViolationsOutcome(LiaSaveViolationsStatus.Ok, violations.Count);
     }
 
+    // ================================================================================================
+    // ReadWithLazyExpiryAsync — legacy getSession's lazy-expiry read (services/lia/lia-session-
+    // service.ts). Shares Task 3's ExpireIfPastDeadlineAsync/ApplyTimeoutAsync/AdvancePastSubtestAsync
+    // chain rather than duplicating it: legacy getSession calls the SAME expireIfPastDeadline function
+    // submitAnswer/startSession call, and — exactly like those call sites — a lazy expiry that happens
+    // to close out the assessment's LAST subtest computes and persists REAL scores (via
+    // PersistCompletionAsync) and must be audit-logged only after that write's own commit succeeds.
+    // ================================================================================================
+
+    // FOR UPDATE: this read can turn into a write (ExpireIfPastDeadlineAsync) a few lines later in the
+    // SAME transaction — same reasoning as SubmitAnswerAsync's/HandleTimeoutAsync's own session SELECTs.
+    private const string SelectSessionDetailForUpdateSql = """
+        SELECT "id", "user_id" AS "userId", "status"::text AS "status",
+               "current_subtest"::text AS "currentSubtest", "current_item" AS "currentItem",
+               "practice_completed"::text AS "practiceCompleted", "subtest_times"::text AS "subtestTimes",
+               "language", "started_at" AS "startedAt", "completed_at" AS "completedAt"
+        FROM "lia_assessment_sessions"
+        WHERE "id" = @sessionId
+        FOR UPDATE
+        """;
+
+    // Same column set, no FOR UPDATE — used only for the post-commit re-read below, where the prior
+    // writable transaction has already committed and a read-only session is reading the fresh row.
+    private const string SelectSessionDetailSql = """
+        SELECT "id", "user_id" AS "userId", "status"::text AS "status",
+               "current_subtest"::text AS "currentSubtest", "current_item" AS "currentItem",
+               "practice_completed"::text AS "practiceCompleted", "subtest_times"::text AS "subtestTimes",
+               "language", "started_at" AS "startedAt", "completed_at" AS "completedAt"
+        FROM "lia_assessment_sessions"
+        WHERE "id" = @sessionId
+        """;
+
+    public async Task<SessionDetail?> ReadWithLazyExpiryAsync(
+        RequestContext context, string sessionId, string ownerUserId, CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        LazySessionRow row;
+        await using (var command = session.Connection.CreateCommand())
+        {
+            command.Transaction = session.Transaction;
+            command.CommandText = SelectSessionDetailForUpdateSql;
+            AddParameter(command, "sessionId", sessionId);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                return null;
+            }
+
+            row = ReadLazySessionRow(reader);
+        }
+
+        // Ownership: missing == denied -> uniform not-found (IDOR-safe), like every other reader/writer here.
+        if (!string.Equals(row.UserId, ownerUserId, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        // legacy getSession calls expireIfPastDeadline unconditionally, but that helper itself is a
+        // no-op unless the CURRENT subtest already has a live startedAt in subtest_times — reachable
+        // only when status=="in_progress" (StartAsync's own Gate 2 / SubmitAnswerAsync only ever call
+        // it from that same status), so gating here avoids re-running timeout machinery against an
+        // already-completed or still-practice session (which would otherwise re-insert/no-op
+        // ApplyTimeoutAsync's already-answered rows and, worse, re-advance a completed session).
+        if (row.Status == "in_progress")
+        {
+            var expiry = await ExpireIfPastDeadlineAsync(session, sessionId, row.CurrentSubtest, row.SubtestTimesJson, cancellationToken);
+            if (expiry is not null)
+            {
+                await session.CommitAsync(cancellationToken);
+
+                if (expiry.Completion is { } completion)
+                {
+                    // Audit only after the commit above succeeds, mirroring CompleteAsync's /
+                    // StartAsync's / SubmitAnswerAsync's / HandleTimeoutAsync's own ordering — a
+                    // completion audit can never be emitted for a write that did not durably persist.
+                    // ownerUserId is the actor: a lazy expiry discovered by a plain GET still completes
+                    // the assessment on the session owner's behalf, same as every other lazy-expiry
+                    // call site in this class.
+                    logger.LogInformation(
+                        "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
+                        sessionId, ownerUserId, completion.GlobalPercentile, completion.PerformanceLevel);
+                }
+
+                // Re-read the post-expiry state on a FRESH read-only session: the writable transaction
+                // above is already committed, and its RLS GUCs were scoped to that transaction (see
+                // RlsSessionContextApplier), so reusing it here isn't possible — a fresh session is the
+                // clean way to observe the just-committed row.
+                await using var refreshed = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+                await using var refreshCommand = refreshed.Connection.CreateCommand();
+                refreshCommand.Transaction = refreshed.Transaction;
+                refreshCommand.CommandText = SelectSessionDetailSql;
+                AddParameter(refreshCommand, "sessionId", sessionId);
+                await using var refreshReader = await refreshCommand.ExecuteReaderAsync(cancellationToken);
+                if (!await refreshReader.ReadAsync(cancellationToken))
+                {
+                    return null; // Unreachable in practice — the row we just committed a write to vanished.
+                }
+
+                return BuildSessionDetail(ReadLazySessionRow(refreshReader));
+            }
+        }
+
+        return BuildSessionDetail(row);
+    }
+
+    private sealed record LazySessionRow(
+        string Id, string UserId, string Status, string? CurrentSubtest, int CurrentItem,
+        string? PracticeCompletedJson, string? SubtestTimesJson, string Language,
+        DateTime? StartedAt, DateTime? CompletedAt);
+
+    private static LazySessionRow ReadLazySessionRow(DbDataReader reader) => new(
+        Id: reader.GetString(reader.GetOrdinal("id")),
+        UserId: reader.GetString(reader.GetOrdinal("userId")),
+        Status: reader.GetString(reader.GetOrdinal("status")),
+        CurrentSubtest: ReadNullableString(reader, "currentSubtest"),
+        CurrentItem: reader.GetInt32(reader.GetOrdinal("currentItem")),
+        PracticeCompletedJson: ReadNullableString(reader, "practiceCompleted"),
+        SubtestTimesJson: ReadNullableString(reader, "subtestTimes"),
+        Language: reader.GetString(reader.GetOrdinal("language")),
+        StartedAt: ReadNullableDateTime(reader, "startedAt"),
+        CompletedAt: ReadNullableDateTime(reader, "completedAt"));
+
+    private static SessionDetail BuildSessionDetail(LazySessionRow row) => new(
+        row.Id,
+        row.Status,
+        row.CurrentSubtest,
+        row.CurrentItem,
+        ParseJsonElementOrNull(row.PracticeCompletedJson),
+        ParseJsonElementOrNull(row.SubtestTimesJson),
+        row.Language,
+        row.StartedAt is { } startedAt ? ToIsoZ(startedAt) : null,
+        row.CompletedAt is { } completedAt ? ToIsoZ(completedAt) : null);
+
+    // A SQL NULL surfaces as a JSON-null element, matching LiaResultReader's own ReadJson idiom for the
+    // same jsonb-as-text pattern.
+    private static JsonElement ParseJsonElementOrNull(string? json)
+    {
+        using var document = JsonDocument.Parse(string.IsNullOrEmpty(json) ? "null" : json);
+        return document.RootElement.Clone();
+    }
+
     private static string MergePracticeCompleted(string? existingJson, string subtest)
     {
         var dict = string.IsNullOrEmpty(existingJson)

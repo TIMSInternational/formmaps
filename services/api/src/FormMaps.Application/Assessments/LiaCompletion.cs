@@ -128,4 +128,20 @@ public interface ILiaSessionWriter
         string ownerUserId,
         IReadOnlyList<ViolationEntry> violations,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// legacy getSession's lazy-expiry read: an ownership-checked read of the session, and — only when
+    /// its status is "in_progress" — a lazy expiry check via the SAME ExpireIfPastDeadlineAsync/
+    /// ApplyTimeoutAsync/AdvancePastSubtestAsync chain StartAsync's Gate 2 and SubmitAnswerAsync's own
+    /// timeout branch use. Lives on the writer (not the reader) because a stale deadline turns this GET
+    /// into a genuine write — including, when it happens to close out the assessment's LAST subtest,
+    /// computing and persisting REAL scores and audit-logging only after that write's own commit
+    /// succeeds, exactly like every other lazy-expiry call site in this class. Null = not found/not
+    /// owned (uniform IDOR-safe outcome).
+    /// </summary>
+    Task<SessionDetail?> ReadWithLazyExpiryAsync(
+        RequestContext context,
+        string sessionId,
+        string ownerUserId,
+        CancellationToken cancellationToken = default);
 }

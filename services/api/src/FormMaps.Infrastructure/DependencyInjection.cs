@@ -114,6 +114,7 @@ public static class DependencyInjection
         services.AddScoped<IAllResultsReader, AllResultsReader>();
         services.AddScoped<ILiaResultReader, LiaResultReader>();
         services.AddScoped<ILiaSessionWriter, LiaSessionWriter>();
+        services.AddScoped<ILiaSessionReader, LiaSessionReader>();
         services.AddScoped<IPersonalitySessionWriter, PersonalitySessionWriter>();
         services.AddScoped<IPcaExamWriter, PcaExamWriter>();
         services.AddScoped<IVocationalWriter, VocationalWriter>();

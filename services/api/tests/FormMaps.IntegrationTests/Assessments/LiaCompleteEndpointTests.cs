@@ -222,6 +222,10 @@ public class LiaCompleteEndpointTests
             CancellationToken cancellationToken = default) =>
             throw new NotImplementedException("SaveViolationsAsync is not exercised by LiaCompleteEndpointTests");
 
+        public Task<SessionDetail?> ReadWithLazyExpiryAsync(
+            RequestContext context, string sessionId, string ownerUserId, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException("ReadWithLazyExpiryAsync is not exercised by LiaCompleteEndpointTests");
+
         public Task<LiaCompleteOutcome> CompleteAsync(
             RequestContext context, string sessionId, string ownerUserId, CancellationToken cancellationToken = default)
         {
