@@ -1,9 +1,10 @@
 -- Schema-only harness DDL for the LIA completeSession write slice (FM-DOTNET-029).
 -- Verbatim from prisma/migrations/20260703000000_lia_tims_parity (+ flag_for_review from the
--- 07-13 proctoring migration), with two harness simplifications: a minimal `users` stub (the prod
--- table has many more columns none of which completeSession touches) and the lia_responses ->
--- lia_questions FK dropped (completeSession never reads lia_questions, so the harness omits that
--- table). NO RLS policies (schema-only; RLS-e2e deferred — policy DDL is not in the repo migrations).
+-- 07-13 proctoring migration, + reentryCount/lockedAt from 20260725100000_lia_reentry_limit),
+-- with two harness simplifications: a minimal `users` stub (the prod table has many more columns
+-- none of which completeSession touches) and the lia_responses -> lia_questions FK dropped
+-- (completeSession never reads lia_questions, so the harness omits that table). NO RLS policies
+-- (schema-only; RLS-e2e deferred — policy DDL is not in the repo migrations).
 
 CREATE TYPE "LiaSubtest" AS ENUM ('pattern_recognition', 'verbal_reasoning', 'numerical_speed', 'working_memory', 'visual_rotation');
 CREATE TYPE "LiaSessionStatus" AS ENUM ('not_started', 'practice', 'in_progress', 'completed', 'abandoned');
@@ -35,8 +36,8 @@ CREATE TABLE "lia_assessment_sessions" (
     "device_info" JSONB,
     "language" TEXT NOT NULL DEFAULT 'es',
     "flag_for_review" BOOLEAN NOT NULL DEFAULT false,
-    "reentry_count" INTEGER NOT NULL DEFAULT 0,
-    "locked_at" TIMESTAMP(3),
+    "reentryCount" INTEGER NOT NULL DEFAULT 0,
+    "lockedAt" TIMESTAMP(3),
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
