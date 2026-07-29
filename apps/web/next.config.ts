@@ -124,6 +124,16 @@ function shouldRouteVocationalResultReadsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_RESULT_READS_TO_DOTNET));
 }
 
+// Vocational recompute WRITES (FM-DOTNET-032/036): authenticate-only + canAccessUser, no
+// permission-gate tier. Two independent flags (score vs. integrated), each its own POST-only
+// path, default OFF.
+function shouldRouteVocationalScoreRecomputeToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_SCORE_RECOMPUTE_TO_DOTNET));
+}
+function shouldRouteVocationalIntegratedRecomputeToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_INTEGRATED_RECOMPUTE_TO_DOTNET));
+}
+
 // ── School-manage-reads (FM-DOTNET-050): dashboard/stats, counselor-assignments/all, notes,
 // counselor-workload. The 4 GET-only paths with no write sharing their path. FM-051
 // (school/profile+settings) and FM-052 (users+counselor-assign) are DELIBERATELY excluded —
@@ -720,6 +730,22 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/vocational360/integrated/:evaluatedUserId",
               destination: `${dotnetApiBaseUrl}/api/v1/vocational360/integrated/:evaluatedUserId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteVocationalScoreRecomputeToDotnet()
+        ? [
+            {
+              source: "/api/v1/vocational360/score/:evaluatedUserId/recompute",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/score/:evaluatedUserId/recompute`,
+            },
+          ]
+        : []),
+      ...(shouldRouteVocationalIntegratedRecomputeToDotnet()
+        ? [
+            {
+              source: "/api/v1/vocational360/integrated/:evaluatedUserId/recompute",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/integrated/:evaluatedUserId/recompute`,
             },
           ]
         : []),
