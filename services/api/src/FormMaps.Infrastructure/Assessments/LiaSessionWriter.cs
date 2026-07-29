@@ -375,7 +375,12 @@ public sealed class LiaSessionWriter(
             return null;
         }
 
-        var deadline = DateTime.Parse(startedAt).ToUniversalTime()
+        // AssumeUniversal|AdjustToUniversal (not RoundtripKind, which .NET rejects when combined with
+        // AdjustToUniversal): a startedAt with no offset info is assumed UTC rather than local server
+        // time, and the result Kind is always Utc regardless of whether the source string carried an
+        // explicit "Z"/offset.
+        var deadline = DateTime.Parse(
+                startedAt, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal)
             .AddSeconds(LiaSubtestOrder.TimeSeconds[currentSubtest])
             .AddMilliseconds(LiaSubtestOrder.TimerGraceMs);
         if (DateTime.UtcNow <= deadline)
@@ -442,11 +447,22 @@ public sealed class LiaSessionWriter(
         await using (var command = session.Connection.CreateCommand())
         {
             command.Transaction = session.Transaction;
+            // Build the per-subtest object defensively via jsonb_build_object + COALESCE rather than
+            // jsonb_set: jsonb_set silently no-ops (row still matches, "endedAt" never lands) when
+            // subtest_times has no object yet under this subtest's key. That's unreachable from
+            // StartAsync's own Gate 2 today (it requires startedAt to already exist), but this helper is
+            // shared with Task 5's SubmitAnswerAsync where that precondition won't hold.
             if (isLast)
             {
+                // Last subtest timing out also terminates the session: without this, every subsequent
+                // /start on an already-finished assessment would keep incrementing reentryCount (via
+                // Gate 1, which runs before this helper) toward a false lockout instead of short-
+                // circuiting through the AlreadyCompleted check at the top of StartAsync.
                 command.CommandText = """
                     UPDATE "lia_assessment_sessions"
-                    SET "subtest_times" = jsonb_set("subtest_times", ARRAY[@subtest, 'endedAt'], to_jsonb(@now::text))
+                    SET "subtest_times" = "subtest_times" || jsonb_build_object(
+                            @subtest, COALESCE("subtest_times"->@subtest, '{}'::jsonb) || jsonb_build_object('endedAt', @now::text)),
+                        "status" = 'completed'::"LiaSessionStatus"
                     WHERE "id" = @sessionId
                     """;
             }
@@ -454,7 +470,8 @@ public sealed class LiaSessionWriter(
             {
                 command.CommandText = """
                     UPDATE "lia_assessment_sessions"
-                    SET "subtest_times" = jsonb_set("subtest_times", ARRAY[@subtest, 'endedAt'], to_jsonb(@now::text)),
+                    SET "subtest_times" = "subtest_times" || jsonb_build_object(
+                            @subtest, COALESCE("subtest_times"->@subtest, '{}'::jsonb) || jsonb_build_object('endedAt', @now::text)),
                         "current_subtest" = @nextSubtest::"LiaSubtest", "current_item" = 0,
                         "status" = 'practice'::"LiaSessionStatus"
                     WHERE "id" = @sessionId
@@ -464,7 +481,7 @@ public sealed class LiaSessionWriter(
 
             AddParameter(command, "subtest", subtest);
             AddParameter(command, "sessionId", sessionId);
-            AddParameter(command, "now", NowTruncated().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
+            AddParameter(command, "now", ToIsoZ(NowTruncated()));
             affected = await command.ExecuteNonQueryAsync(cancellationToken);
         }
 

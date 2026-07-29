@@ -106,18 +106,17 @@ public sealed record TimeoutAdvanceResult(string? NextSubtest, bool AssessmentCo
 
 public static class LiaSubtestOrder
 {
-    // legacy SUBTEST_ORDER (lib/lia-core/types.ts) — fixed instrument order, never re-derived from data.
-    public static readonly IReadOnlyList<string> Order =
-        ["pattern_recognition", "verbal_reasoning", "numerical_speed", "working_memory", "visual_rotation"];
+    // legacy SUBTEST_ORDER (lib/lia-core/types.ts) — same fixed instrument order LiaScoring already
+    // carries as its canonical list; referenced directly rather than duplicated as a second literal.
+    public static readonly IReadOnlyList<string> Order = LiaScoring.SubtestOrder;
 
-    public static readonly IReadOnlyDictionary<string, int> ItemCounts = new Dictionary<string, int>(StringComparer.Ordinal)
-    {
-        ["pattern_recognition"] = 60, ["verbal_reasoning"] = 50, ["numerical_speed"] = 60,
-        ["working_memory"] = 60, ["visual_rotation"] = 60,
-    };
+    // Derived from LiaScoring's canonical per-subtest item counts rather than a second duplicate literal.
+    public static readonly IReadOnlyDictionary<string, int> ItemCounts =
+        LiaScoring.SubtestOrder.ToDictionary(s => s, LiaScoring.ItemCount, StringComparer.Ordinal);
 
     // legacy TIMER_GRACE_MS + per-subtest timeSeconds (lib/lia-core/types.ts SUBTEST_CONFIGS) — verified
-    // directly against source, not the plan's unverified placeholders.
+    // directly against source. No canonical source elsewhere in this codebase (LiaScoring only carries
+    // item counts/penalty divisors, not time limits), so these stay as new data here.
     public const int TimerGraceMs = 5000;
     public static readonly IReadOnlyDictionary<string, int> TimeSeconds = new Dictionary<string, int>(StringComparer.Ordinal)
     {

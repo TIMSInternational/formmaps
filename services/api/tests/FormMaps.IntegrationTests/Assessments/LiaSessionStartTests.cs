@@ -106,6 +106,36 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
             DateTime.Parse(outcome.Payload.StartedAt!).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
     }
 
+    // ------------------------------------------------------------------------------------------
+    // Gate 2 coverage: a subtest whose clock expired an hour ago (well past pattern_recognition's
+    // 180s + 5s grace) must be timed out on the NEXT /start — filling every unanswered live item with
+    // a null response, stamping endedAt, and advancing current_subtest/status — not silently resumed
+    // as if the clock were still live. This is the shared helper path (ExpireIfPastDeadlineAsync ->
+    // ApplyTimeoutAsync -> AdvancePastSubtestAsync) Tasks 5/6 build on, so it needs its own coverage
+    // here rather than relying on Gate 3's live-clock test to exercise it incidentally.
+    // ------------------------------------------------------------------------------------------
+    [Fact]
+    public async Task Expired_subtest_clock_advances_past_the_subtest_and_fills_unanswered_items_on_next_start()
+    {
+        var startedAt = DateTime.UtcNow.AddHours(-1); // well past any subtest's time limit + grace.
+        var (userId, sessionId) = await SeedInProgressSessionAsync(reentryCount: 0, subtestStartedAt: startedAt);
+        var (writer, _) = MakeWriter();
+
+        var outcome = await writer.StartAsync(Ctx(userId), userId, "es");
+
+        Assert.Equal(LiaStartStatus.Started, outcome.Status);
+        Assert.Equal("next_subtest", outcome.Payload!.ResumeMode);
+        Assert.Equal("verbal_reasoning", outcome.Payload.CurrentSubtest);
+
+        var (status, currentSubtest) = await ReadSessionStatusAsync(sessionId);
+        Assert.Equal("practice", status);
+        Assert.Equal("verbal_reasoning", currentSubtest);
+
+        // pattern_recognition has 60 items; none were answered, so all 60 must land as null responses.
+        var nullResponseCount = await CountNullResponsesAsync(sessionId, "pattern_recognition");
+        Assert.Equal(60, nullResponseCount);
+    }
+
     // ==============================================================================================
     // Helpers — MakeWriter/Ctx copied verbatim from LiaSessionWriterTests.cs (same fixture, same DI
     // wiring; every test class in this directory sharing LiaWriteDatabaseFixture keeps these identical).
@@ -191,6 +221,32 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
         cmd.Parameters.AddWithValue("id", sessionId);
         var result = await cmd.ExecuteScalarAsync();
         return result is DBNull ? null : (DateTime?)result;
+    }
+
+    private async Task<(string Status, string? CurrentSubtest)> ReadSessionStatusAsync(string sessionId)
+    {
+        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """SELECT status::text, current_subtest::text FROM lia_assessment_sessions WHERE id = @id""", conn);
+        cmd.Parameters.AddWithValue("id", sessionId);
+        await using var reader = await cmd.ExecuteReaderAsync();
+        await reader.ReadAsync();
+        return (reader.GetString(0), reader.IsDBNull(1) ? null : reader.GetString(1));
+    }
+
+    private async Task<int> CountNullResponsesAsync(string sessionId, string subtest)
+    {
+        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            SELECT COUNT(*) FROM lia_responses
+            WHERE session_id = @sessionId AND subtest::text = @subtest AND user_answer IS NULL
+            """, conn);
+        cmd.Parameters.AddWithValue("sessionId", sessionId);
+        cmd.Parameters.AddWithValue("subtest", subtest);
+        return (int)(long)(await cmd.ExecuteScalarAsync())!;
     }
 
     /// <summary>Captures log entries (shared pattern with LiaSessionWriterTests's CapturingLogger).</summary>
