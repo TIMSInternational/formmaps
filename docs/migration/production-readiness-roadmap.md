@@ -1,84 +1,45 @@
 # FormMaps Production-Readiness Roadmap
 
-Status: proposed, awaiting first-execution
-Last updated: 2026-07-28
-Supersedes: the slice-level narrative in `completion-roadmap.md` (kept for historical Phase A-I rationale only — see "Living-doc discipline" below)
+Status: revised to match verified reality
+Last updated: 2026-07-29
+Authoritative sources this defers to (don't re-derive detail already there): `~/formmaps-platform/docs/superpowers/specs/2026-07-27-master-completion-sequencing-design.md` (phase sequencing, Federico-approved), memory anchor `resume-formmaps-full-production-migration` + `resume-formmaps-wave2-batch1-cutover` (exact execution state). This doc is a short pointer + the few gaps those sources don't cover, not a competing plan.
 
-## Purpose
+## Correction from the 2026-07-28 version of this doc
 
-`agentic-migration.manifest.json` tracks 66/66 FM-DOTNET tasks as "completed," but completed means *code-complete*, not *cut over*. As of 2026-07-28, exactly one domain (Personality) is actually live on real production traffic; everything else built so far is flag-dark. This document sequences the remaining work — both the dark backlog and the four domains not yet started — through to full production readiness, defined as: **every domain migrated to .NET, and the legacy Node backend fully decommissioned.**
+That version assumed only Personality was live and Wave 2 (~90 slices) hadn't started. Both were wrong — caused by checking `~/formmaps` git branch state and the monorepo's abandoned `apps/web` copy, neither of which reflects real production. **Reality, verified directly against Vercel + live `curl` checks on 2026-07-29:**
 
-No hard deadline drives this; phases are sequenced by risk and dependency, executed one slice at a time (matching the pattern that has produced 66 clean merges and one caught-and-fixed incident so far).
+- **57 `FORMMAPS_ROUTE_*_TO_DOTNET` flags are live in Vercel production**, serving real traffic through `formmaps-platform/frontend` (the actual deployed frontend — Vercel deploys via direct `vercel --prod` CLI invocation from whatever's checked out locally, **not** gated on merging to `main`; this is why git branch state undercounts what's live).
+- `agentic-migration.manifest.json` is at 90/90 tasks "completed" (was 66 when last checked).
+- `completion-roadmap.md` already has 21 "FROZEN" markers recording each cutover batch.
+- Frontend topology: no live mismatch. `formmaps-platform` is the one true deployed frontend and always has been; the monorepo's `apps/web` is a dead, unused snapshot from 2026-07-15. Nothing to "consolidate" — just retire the stale copy (see Phase 0 below).
+- Wave 3 (infra hardening: SES, S3, `FIELD_ENCRYPTION_KEY`, credential rotation) is done, per memory. Not re-verified line-by-line here.
 
-## Phase structure
+## What's actually left
 
-| Phase | Name | Entry gate | Rough scope |
-|---|---|---|---|
-| 0 | Foundation hardening | none — starts now | Frontend consolidation, frontend CI, dedicated DB role, SES IAM |
-| 1 | Flip the dark backlog | Phase 0 complete | 5 FM slices, all Assessments, already S1-done |
-| 2 | Documents/resume | Phase 1 complete | F-2b-ii, F-2b-iii, report.ts — genuinely not started |
-| 3 | Messaging/video | Phase 2 complete | Starts with its own research/design spec — real-time architecture is unresolved |
-| 4 | Billing/Stripe | Phase 3 complete | Starts with its own spec — money-correctness domain |
-| 5 | Auth/session | Phase 4 complete | The keystone, deliberately last — starts with its own spec |
-| 6 | Retire Node | Phase 5 complete, dark-route count at zero | Decommission Node + archive superseded repos |
+Five concrete gaps, then four large domains:
 
-Phase 0's four work items don't block each other internally but all four gate Phase 1. Phases 2-6 are strictly sequential.
+1. **FM-029** — LIA session `/complete`. Node still owns `/start`/`/answer`/`/timeout` on the same session table; needs either a combined 4-route slice or a documented split-ownership invariant.
+2. **FM-032/036** — vocational360 recompute writes.
+3. **FM-043** — token-gated external evaluation rail. New fail-closed, non-tenant, RLS-bypass code path — highest-risk remaining Assessments slice, deliberately last of these five.
+4. **FM-044** — school-admin `/assessments/config` + `/assessments/schedule` writes.
+5. **Phase F (documents/resume)** — partial. `FM-DOTNET-090` (resume CRUD list/create) has backend code; cross-user resume reads/writes and `report.ts` (PDF + SES attachment) remain.
 
-## Phase 0 — Foundation hardening
+Then, per the approved master sequencing design, in order:
 
-**0.1 — Frontend consolidation.** `app.formmaps.com` currently deploys from `tafurfede/formmaps-platform`, not this monorepo's `apps/web` — a real production-topology hazard discovered during the initial investigation (the Personality cutover required manually porting flag changes into that separate repo out-of-band). Fix: diff `formmaps-platform/frontend` against `apps/web` to find and land any drift, then repoint the Vercel project serving `app.formmaps.com` to build from the monorepo. Verify via the existing `X-FormMaps-Service` header technique plus a full Playwright pass against staging before flipping the deploy source; keep the old deployment instantly reachable as rollback for a defined soak window. Exit: `app.formmaps.com` builds from `github/formmaps`; the legacy frontend deployment is frozen — no more dual-porting, ever.
+6. **Domain 7 — Messaging/video.** Decided: rebuilds on .NET (SignalR), not permanently polyglot. Largest remaining net-new build (~10-16 slices) — no prior real-time infra to build on.
+7. **Domain 9 — Billing/Stripe.** Money-correctness: idempotency, webhook verification, reconciliation. Inherits pre-existing coach-money-path P0s.
+8. **Domain 10 — Auth/session.** The keystone, strictly last — every domain's RLS/session contract depends on it.
+9. **Domain 11 — Retire Node.** Gated on both 7 and 10 being fully off Node.
 
-**0.2 — Frontend CI.** No CI currently runs against `apps/web` (the API has full GitHub Actions coverage; the frontend has none despite `web:build`/`web:test` npm scripts existing). Add `formmaps-web-ci.yml` mirroring the API workflow: lint, typecheck, unit tests, build, staging e2e smoke on PR. Exit: a red build blocks merge, same guarantee the API already has.
+Running in parallel with the above, not blocking it: a SOC2/ISO gap-assessment (started 2026-07-27, no FormMaps-specific findings yet).
 
-**0.3 — Dedicated DB role.** The .NET service currently reuses the legacy Node app's DB credential (`nexa/api/DATABASE_URL`) rather than a scoped role of its own — a real blast-radius gap. Create `formmaps_dotnet_writer` as a least-privilege Postgres role, migrate staging/prod CFN to a new secret, cut the service over, confirm via the existing RLS/session-GUC integration tests, then remove the shared credential's implicit access. Exit: a bug or compromise in the .NET service can't touch tables outside its own domain.
+## Remaining real gaps not tracked elsewhere
 
-**0.4 — SES for FM-045.** `formmaps-api-prod`'s App Runner instance role has no `ses:SendEmail` permission and no verified sender identity — the only thing blocking FM-045 (send-reminders/setup-360), which is otherwise code-complete. Verify a sender identity, attach the IAM permission, then flip the flag and canary like any other slice. Exit: FM-045 actually delivers mail in prod.
+- **Dedicated least-privilege DB role for the .NET service.** It currently reuses the legacy Node app's DB credential rather than a scoped role of its own. Not mentioned as done in Wave 3 or since — worth confirming still open before scheduling.
+- **Retire the monorepo's stale `apps/web`.** Dead weight, not deployed anywhere, missing ~2 weeks of the real frontend's history at the point it was snapshotted. No reason to keep porting anything into it.
+- **`GET /roadmap`** (`MigrationRoadmapProvider.cs`) is still a hardcoded 8-domain list showing stale statuses (e.g. "planned" for things shipped weeks ago) — live in prod, actively misleading if anyone checks it for real status. Fix or remove.
+- **Manifest doesn't track live-vs-dark state**, only code-completion. Reconstructing real prod status has twice now required a manual full pass (this artifact, this doc). Add `cutoverStage`/`flag`/`liveInProd` fields per task so the manifest itself answers "what's actually live."
 
-## Phase 1 — Flip the dark backlog
+## Sequencing note
 
-Five FM slices, all S1-done (backend built and deployed), S2-S5 pending. Ordered lowest-risk first:
-
-1. **FM-044** — `PUT /assessments/config`, `PUT /assessments/schedule` (`FORMMAPS_ROUTE_SCHOOL_ADMIN_CONFIG_SCHEDULE_TO_DOTNET`). DB-only upserts, no external dependencies — the same pattern already run 10+ times successfully. Do first.
-2. **FM-032/036** — vocational360 recompute (`/score/:id/recompute`, `/integrated/:id/recompute`). No permission-gate tier (just `canAccessUser`) — simpler fixture/canary work than most, no 403 matrix needed.
-3. **FM-045** — school-admin email/SES writes. Sequence immediately after Phase 0.4 lands.
-4. **FM-029** — `POST /lia/session/:sessionId/complete`. Node still owns `/start`/`/answer`/`/timeout` on the same session table — flipping `/complete` alone splits writes for `lia_assessment_sessions` across both backends mid-flight. **Decision needed before this slice starts**: port all four LIA session routes together as one slice (recommended — avoids the split-write entirely), or accept the split with an explicit documented invariant about which backend owns which sub-state. Also has no safe way to fabricate a session id for canary — requires a real in-flight session, a different verification approach than every prior slice.
-5. **FM-043** — the token-gated external evaluation rail (`/evaluation/vocational/:token`, `/evaluation/vocational/submit`, `/evaluation/vocational/:token/violations`, `/evaluation/validate-token`, `/evaluation/submit-feedback`, `/evaluation/360evolutor`; flags `FORMMAPS_ROUTE_VOCATIONAL_TAKE_TO_DOTNET`, `FORMMAPS_ROUTE_EVAL_EXTERNAL_TO_DOTNET`). A brand-new fail-closed, non-tenant, RLS-bypass code path (anonymous → deny, system → bypass) — the highest-risk Assessments slice in the backlog. Deliberately last in this phase so four clean cutovers precede it.
-
-Each slice reuses the existing playbook (Tier-2 SQL fixtures, `X-FormMaps-Service` header canary, real-auth verification, flip-and-soak per `benchmark-route-canary-runbook.md`). Exit: all 5 flags on in prod, dark-route count at zero, manifest updated per the schema extension below.
-
-## Phase 2 — Documents/resume
-
-Entry: Phase 1 complete. Scope: `F-2b-ii` (cross-user GET, PUT/DELETE with bounded-field writes + a ported `sanitizeDocumentEdits`), `F-2b-iii` (presigned 300s inline-URL GET via `IObjectStorage`), `report.ts` (PDF generation + SES attachment, reusing Phase 0.4's SES rail — may end up partially polyglot if PDF rendering needs a headless-browser dependency). AI-backed routes (ask/tailor/extract-job-posting) stay on Node permanently by design — LLM-orchestration routes are out of scope for this migration regardless of end state. Exit: ordinary CRUD-cutover criteria, same as Phase 1.
-
-## Phase 3 — Messaging/video
-
-Entry: Phase 2 complete. First deliverable is a **research/design spec, not code** — resolving whether real-time messaging/video fits the .NET service's current request/response Clean-Architecture shape, or needs its own subsystem (e.g. SignalR) or a different approach entirely. This is the single biggest open unknown in this roadmap: if the spec finds a hard architectural wall, the "full Node retirement" end state may need to be renegotiated for this domain specifically — flag that explicitly if it happens, rather than forcing a bad fit.
-
-## Phase 4 — Billing/Stripe
-
-Entry: Phase 3 complete. Starts with its own spec covering idempotency keys, webhook replay/ordering, dual-write vs. point-in-time cutover for in-flight subscriptions, and reconciliation strategy. Money-correctness domain — the rollback story must not risk double-charging or silently dropping a webhook, a materially different risk shape than any RLS/CRUD slice completed so far.
-
-## Phase 5 — Auth/session
-
-Entry: Phase 4 complete. The keystone, last by design — every other domain's RLS/session-GUC contract depends on this working correctly. Starts with its own spec covering JWT issuance and session/cookie handling, including an explicit plan for validating claim compatibility before flipping (the Personality prod incident was exactly an issuer/audience mismatch between live Node's env-configured JWT claims and the .NET service's code defaults — this must not repeat here, where the blast radius is every user).
-
-## Phase 6 — Retire Node
-
-Entry: Phase 5 complete, dark-route count at zero across all domains. Decommission the legacy Node backend; archive/delete `formmaps-api`, `formmaps-web`, and (once Phase 0.1 lands) `formmaps-platform` — all three already marked superseded in `repository-strategy.md`, this finishes the job. Exit: no traffic reaches Node; no repo still deploys from it.
-
-## Living-doc discipline (keeping this roadmap from going stale)
-
-`agentic-migration-workflow.md`'s "Current Active Slice" pointer drifted 58 slices out of date, and `completion-roadmap.md`'s prose went stale mid-write — both because they were hand-maintained pointers, separate from the one thing that has stayed perfectly accurate across all 66 slices: `agentic-migration.manifest.json`, updated in lockstep via the "manifest N→N+1" commit convention. The fix rides that existing discipline instead of adding a new habit to forget:
-
-1. **Extend the manifest schema** — add `cutoverStage` (`S1`-`S5`), `flag` (env var name or null), and `liveInProd` (bool) to each task object. This is the actual gap: the manifest currently only tracks binary "completed," which is why reconstructing real prod status required a manual "full exhaustive pass" from scratch. With these fields, the manifest alone answers "what's actually live."
-2. **Delete the stale pointer, don't just fix it** — remove `agentic-migration-workflow.md`'s "Current Active Slice" line, replace with "see the highest FM-DOTNET-### in manifest.json" (derived, so it can't go stale).
-3. **Fix or remove `GET /roadmap`** — `MigrationRoadmapProvider.cs` is live in prod and actively misleading (shows "planned" for things that shipped weeks ago). Either wire it to read the manifest for real, or remove the endpoint in Phase 0 — a wrong status endpoint reachable in production is its own small hazard.
-4. **Trim `completion-roadmap.md` to phase-level rationale only** — once this document exists, stop duplicating slice-level narrative there (that's the manifest's job); keep only the Phase A-I-style reasoning, which changes rarely enough not to rot.
-
-## Decisions locked in for this roadmap
-
-- End state: full parity, Node fully retired (Phase 6), including messaging/video — subject to the Phase 3 spec possibly surfacing a hard architectural constraint.
-- Execution model: sequential, one slice at a time, matching the existing worktree-per-slice convention.
-- No hard deadline; phases sequenced by risk, not by date.
-- Frontend topology mismatch resolved in Phase 0 (consolidate now), not deferred to Phase 6.
-- Infra hardening (frontend CI, DB role, SES) bundled into Phase 0 rather than fixed lazily per-domain.
+No hard deadline. The five FM-backlog items are ordinary continuations of the same playbook that shipped 90 slices already — no new phase gate needed before starting them. Domains 7/9/10/11 each get their own brainstorm→spec→plan cycle when their turn comes, per the master sequencing design — don't pre-plan their internals here.
