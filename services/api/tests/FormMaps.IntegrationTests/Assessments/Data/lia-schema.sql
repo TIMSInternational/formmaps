@@ -35,6 +35,8 @@ CREATE TABLE "lia_assessment_sessions" (
     "device_info" JSONB,
     "language" TEXT NOT NULL DEFAULT 'es',
     "flag_for_review" BOOLEAN NOT NULL DEFAULT false,
+    "reentry_count" INTEGER NOT NULL DEFAULT 0,
+    "locked_at" TIMESTAMP(3),
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,

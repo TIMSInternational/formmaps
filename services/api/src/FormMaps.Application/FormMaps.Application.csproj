@@ -13,6 +13,8 @@
     <EmbeddedResource Include="Assessments\Data\lia-percentile-tables.json" />
     <!-- LIA-core question bank raw items (extracted from the shared golden.json questionBank[305]; computed answers omitted, verbal static answers carried). -->
     <EmbeddedResource Include="Assessments\Data\lia-question-bank.json" />
+    <!-- LIA-core EN verbal-reasoning question TEXT bank (extracted from legacy verbal-en.ts VERBAL_EN; certified human-reviewed content). -->
+    <EmbeddedResource Include="Assessments\Data\lia-verbal-en.json" />
   </ItemGroup>
 
   <PropertyGroup>

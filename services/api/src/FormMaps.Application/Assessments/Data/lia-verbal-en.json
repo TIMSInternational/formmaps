@@ -1,0 +1,642 @@
+{
+ "practice": {
+  "1": {
+   "premises": [
+    "Anna is taller than Mary.",
+    "Mary is taller than Olivia."
+   ],
+   "question": "Who is the tallest?",
+   "options": [
+    "Anna",
+    "Mary",
+    "Olivia"
+   ]
+  },
+  "2": {
+   "premises": [
+    "Liam is faster than James.",
+    "James is faster than Henry."
+   ],
+   "question": "Who is the slowest?",
+   "options": [
+    "Liam",
+    "James",
+    "Henry"
+   ]
+  },
+  "3": {
+   "premises": [
+    "Leo is nicer than David.",
+    "Owen is meaner than David."
+   ],
+   "question": "Who is the meanest?",
+   "options": [
+    "Leo",
+    "David",
+    "Owen"
+   ]
+  }
+ },
+ "assessment": {
+  "1": {
+   "premises": [
+    "Mateo is slower than Liam.",
+    "Mateo is faster than Pedro."
+   ],
+   "question": "Who is the slowest?",
+   "options": [
+    "Mateo",
+    "Liam",
+    "Pedro"
+   ]
+  },
+  "2": {
+   "premises": [
+    "Olivia is shorter than Emma.",
+    "Olivia is taller than Sophia."
+   ],
+   "question": "Who is the tallest?",
+   "options": [
+    "Olivia",
+    "Emma",
+    "Sophia"
+   ]
+  },
+  "3": {
+   "premises": [
+    "Lily is smarter than Mia.",
+    "Lily is more clumsy than Maria."
+   ],
+   "question": "Who is the smartest?",
+   "options": [
+    "Lily",
+    "Mia",
+    "Maria"
+   ]
+  },
+  "4": {
+   "premises": [
+    "Pablo is les happy than Luis.",
+    "Pedro is les happy than Pablo."
+   ],
+   "question": "Who is the happiest?",
+   "options": [
+    "Pablo",
+    "Luis",
+    "Pedro"
+   ]
+  },
+  "5": {
+   "premises": [
+    "Lucas is colder than Carlos.",
+    "David is colder than Lucas."
+   ],
+   "question": "Who is the coldest?",
+   "options": [
+    "Lucas",
+    "Carlos",
+    "David"
+   ]
+  },
+  "6": {
+   "premises": [
+    "Anna is shorter than Sara.",
+    "Sara is shorter than Ava."
+   ],
+   "question": "Who is the shortest?",
+   "options": [
+    "Anna",
+    "Sara",
+    "Ava"
+   ]
+  },
+  "7": {
+   "premises": [
+    "Evan is smarter than Mario.",
+    "Mario is smarter than Pablo."
+   ],
+   "question": "Who is the clumsiest?",
+   "options": [
+    "Evan",
+    "Mario",
+    "Pablo"
+   ]
+  },
+  "8": {
+   "premises": [
+    "Sofia is slower than Anna.",
+    "Anna is slower than Emma."
+   ],
+   "question": "Who is the fastest?",
+   "options": [
+    "Sofia",
+    "Anna",
+    "Emma"
+   ]
+  },
+  "9": {
+   "premises": [
+    "Charlotte is more caring than Martha.",
+    "Mia is more caring than Charlotte."
+   ],
+   "question": "Who is the most affectionate?",
+   "options": [
+    "Charlotte",
+    "Martha",
+    "Mia"
+   ]
+  },
+  "10": {
+   "premises": [
+    "Jack is taller than Owen.",
+    "Mike is shorter than Owen."
+   ],
+   "question": "Who is the shortest?",
+   "options": [
+    "Jack",
+    "Owen",
+    "Mike"
+   ]
+  },
+  "11": {
+   "premises": [
+    "Elena is taller than Julia.",
+    "Sofia is shorter than Julia."
+   ],
+   "question": "Who is the shortest?",
+   "options": [
+    "Elena",
+    "Julia",
+    "Sofia"
+   ]
+  },
+  "12": {
+   "premises": [
+    "Jorge is happier than Mario.",
+    "Jorge is less happy than Theo."
+   ],
+   "question": "Who is the saddest?",
+   "options": [
+    "Jorge",
+    "Mario",
+    "Theo"
+   ]
+  },
+  "13": {
+   "premises": [
+    "Lucas is stronger than Noah.",
+    "Noah is stronger than Oliver."
+   ],
+   "question": "Who is the strongest?",
+   "options": [
+    "Lucas",
+    "Noah",
+    "Oliver"
+   ]
+  },
+  "14": {
+   "premises": [
+    "Pablo is older than Mike.",
+    "Pedro is older than Pablo."
+   ],
+   "question": "Who is the youngest?",
+   "options": [
+    "Pablo",
+    "Mike",
+    "Pedro"
+   ]
+  },
+  "15": {
+   "premises": [
+    "Amelia is meaner than Lana.",
+    "Laura is nicer than Lana."
+   ],
+   "question": "Who is the nicest?",
+   "options": [
+    "Amelia",
+    "Lana",
+    "Laura"
+   ]
+  },
+  "16": {
+   "premises": [
+    "Daniel is slower than Samuel.",
+    "David is faster than Samuel."
+   ],
+   "question": "Who is the fastest?",
+   "options": [
+    "Daniel",
+    "Samuel",
+    "David"
+   ]
+  },
+  "17": {
+   "premises": [
+    "Ava is stronger than Lisa.",
+    "Sara is weaker than Lisa."
+   ],
+   "question": "Who is the weakest?",
+   "options": [
+    "Ava",
+    "Lisa",
+    "Sara"
+   ]
+  },
+  "18": {
+   "premises": [
+    "David is faster than Leo.",
+    "Leo is faster than Jack."
+   ],
+   "question": "Who is the fastest?",
+   "options": [
+    "David",
+    "Leo",
+    "Jack"
+   ]
+  },
+  "19": {
+   "premises": [
+    "Lisa is smarter than Julia.",
+    "Julia is smarter than Elena."
+   ],
+   "question": "Who is the smartest?",
+   "options": [
+    "Lisa",
+    "Julia",
+    "Elena"
+   ]
+  },
+  "20": {
+   "premises": [
+    "Martha is weaker than Jessica.",
+    "Anna is stronger than Jessica."
+   ],
+   "question": "Who is the strongest?",
+   "options": [
+    "Martha",
+    "Jessica",
+    "Anna"
+   ]
+  },
+  "21": {
+   "premises": [
+    "Mario is older than Joe.",
+    "Milo is older than Mario."
+   ],
+   "question": "Who is the oldest?",
+   "options": [
+    "Mario",
+    "Joe",
+    "Milo"
+   ]
+  },
+  "22": {
+   "premises": [
+    "Ben is smarter than Liam.",
+    "Ben is clumsier than Samuel."
+   ],
+   "question": "Who is the clumsiest?",
+   "options": [
+    "Ben",
+    "Liam",
+    "Samuel"
+   ]
+  },
+  "23": {
+   "premises": [
+    "Eva is sicker than Anna.",
+    "Anna is sicker than Laura."
+   ],
+   "question": "Who is the sickest?",
+   "options": [
+    "Eva",
+    "Anna",
+    "Laura"
+   ]
+  },
+  "24": {
+   "premises": [
+    "Evelyn is younger than Emma.",
+    "Evelyn is older than Sofia."
+   ],
+   "question": "Who is the youngest?",
+   "options": [
+    "Evelyn",
+    "Emma",
+    "Sofia"
+   ]
+  },
+  "25": {
+   "premises": [
+    "Robert is younger than Charles.",
+    "Charles is younger than William."
+   ],
+   "question": "Who is the oldest?",
+   "options": [
+    "Robert",
+    "Charles",
+    "William"
+   ]
+  },
+  "26": {
+   "premises": [
+    "Maria is meaner than Leah.",
+    "Sofia is nicer than Leah."
+   ],
+   "question": "Who is the nicest?",
+   "options": [
+    "Maria",
+    "Leah",
+    "Sofia"
+   ]
+  },
+  "27": {
+   "premises": [
+    "Pablo is more tired than Alex.",
+    "Diego is more tired than Pablo."
+   ],
+   "question": "Who is more tired?",
+   "options": [
+    "Pablo",
+    "Alex",
+    "Diego"
+   ]
+  },
+  "28": {
+   "premises": [
+    "Eva is smarter than Sara.",
+    "Isabella is smarter than Eva."
+   ],
+   "question": "Who is the clumsiest?",
+   "options": [
+    "Eva",
+    "Sara",
+    "Isabella"
+   ]
+  },
+  "29": {
+   "premises": [
+    "Lena is taller than Martha.",
+    "Lena is shorter than Anna."
+   ],
+   "question": "Who is the tallest?",
+   "options": [
+    "Lena",
+    "Martha",
+    "Anna"
+   ]
+  },
+  "30": {
+   "premises": [
+    "Brody is younger than James.",
+    "Brody is older than Noah."
+   ],
+   "question": "Who is the oldest?",
+   "options": [
+    "Brody",
+    "James",
+    "Noah"
+   ]
+  },
+  "31": {
+   "premises": [
+    "John is faster than George.",
+    "Robert is faster than John."
+   ],
+   "question": "Who is the slowest?",
+   "options": [
+    "John",
+    "George",
+    "Robert"
+   ]
+  },
+  "32": {
+   "premises": [
+    "Maria is stronger than Susan.",
+    "Mia is weaker than Susan."
+   ],
+   "question": "Who is the strongest?",
+   "options": [
+    "Maria",
+    "Susan",
+    "Mia"
+   ]
+  },
+  "33": {
+   "premises": [
+    "Jennifer is less patient than Maria.",
+    "Jennifer is more patient than Isabella."
+   ],
+   "question": "¿Who is the least patient?",
+   "options": [
+    "Jennifer",
+    "Maria",
+    "Isabella"
+   ]
+  },
+  "34": {
+   "premises": [
+    "Lily is younger than Amelia.",
+    "Emma is older than Amelia."
+   ],
+   "question": "Who is the oldest?",
+   "options": [
+    "Lily",
+    "Amelia",
+    "Emma"
+   ]
+  },
+  "35": {
+   "premises": [
+    "Nico is more tired than Juan.",
+    "Juan is more tired than Daniel."
+   ],
+   "question": "Who is the most exhausted?",
+   "options": [
+    "Nico",
+    "Juan",
+    "Daniel"
+   ]
+  },
+  "36": {
+   "premises": [
+    "Anna is stronger than Lisa.",
+    "Anna is weaker than Mary."
+   ],
+   "question": "Who is the weakest?",
+   "options": [
+    "Anna",
+    "Lisa",
+    "Mary"
+   ]
+  },
+  "37": {
+   "premises": [
+    "Carlos is smarter than Pablo.",
+    "Alvaro is smarter than Carlos."
+   ],
+   "question": "Who is the smartest?",
+   "options": [
+    "Carlos",
+    "Pablo",
+    "Alvaro"
+   ]
+  },
+  "38": {
+   "premises": [
+    "Mateo is taller than Miguel.",
+    "Miguel is taller than Diego."
+   ],
+   "question": "Who is the shortest?",
+   "options": [
+    "Mateo",
+    "Miguel",
+    "Diego"
+   ]
+  },
+  "39": {
+   "premises": [
+    "Henry is more generous than Juan.",
+    "John is less generous than Juan."
+   ],
+   "question": "Who is the most generous?",
+   "options": [
+    "Henry",
+    "Juan",
+    "John"
+   ]
+  },
+  "40": {
+   "premises": [
+    "Maria is colder than Emma.",
+    "Emma is colder than Laura."
+   ],
+   "question": "Who is the coldest?",
+   "options": [
+    "Maria",
+    "Emma",
+    "Laura"
+   ]
+  },
+  "41": {
+   "premises": [
+    "David is more patient than Juan.",
+    "Luis is more patient than David."
+   ],
+   "question": "Who is the least patient?",
+   "options": [
+    "David",
+    "Juan",
+    "Luis"
+   ]
+  },
+  "42": {
+   "premises": [
+    "Lucas is more caring than Daniel.",
+    "George is more affectionate than Lucas."
+   ],
+   "question": "Who is the most affectionate?",
+   "options": [
+    "Lucas",
+    "Daniel",
+    "George"
+   ]
+  },
+  "43": {
+   "premises": [
+    "Lola is weaker than Martha.",
+    "Lola is stronger than Eva."
+   ],
+   "question": "Who is the strongest?",
+   "options": [
+    "Lola",
+    "Martha",
+    "Eva"
+   ]
+  },
+  "44": {
+   "premises": [
+    "David is quieter than Robert.",
+    "Luis is louder than Robert."
+   ],
+   "question": "Who is the loudest?",
+   "options": [
+    "David",
+    "Robert",
+    "Luis"
+   ]
+  },
+  "45": {
+   "premises": [
+    "Juan is younger than Miguel.",
+    "John is younger than Juan."
+   ],
+   "question": "Who is the youngest?",
+   "options": [
+    "Juan",
+    "Miguel",
+    "John"
+   ]
+  },
+  "46": {
+   "premises": [
+    "Elena is faster than Pedro.",
+    "Luisa is slower than Pedro."
+   ],
+   "question": "Who is the slowest?",
+   "options": [
+    "Elena",
+    "Pedro",
+    "Luisa"
+   ]
+  },
+  "47": {
+   "premises": [
+    "Diana is taller than Robert.",
+    "David is taller than Diana."
+   ],
+   "question": "Who is the tallest?",
+   "options": [
+    "Diana",
+    "Robert",
+    "David"
+   ]
+  },
+  "48": {
+   "premises": [
+    "James is taller than Charles.",
+    "Andy is taller than James."
+   ],
+   "question": "Who is the shortest?",
+   "options": [
+    "James",
+    "Charles",
+    "Andy"
+   ]
+  },
+  "49": {
+   "premises": [
+    "Anna is louder than Olivia.",
+    "Olivia is louder than Maya."
+   ],
+   "question": "Who is the loudest?",
+   "options": [
+    "Anna",
+    "Olivia",
+    "Maya"
+   ]
+  },
+  "50": {
+   "premises": [
+    "Sophia is slower than Mia.",
+    "Mia is slower than Ava."
+   ],
+   "question": "Who is the fastest?",
+   "options": [
+    "Sophia",
+    "Mia",
+    "Ava"
+   ]
+  }
+ }
+}
