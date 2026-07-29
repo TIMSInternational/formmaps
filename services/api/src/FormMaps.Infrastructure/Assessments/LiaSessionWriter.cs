@@ -619,10 +619,16 @@ public sealed class LiaSessionWriter(
     // write that did not durably persist).
     // ================================================================================================
 
+    // FOR UPDATE (fix round 1, Important): closes the same race class CompleteAsync's own
+    // SelectForUpdateSql already guards against — without it, a concurrent /complete could score +
+    // commit this exact session between this read and the response upsert below, and this method
+    // would have no way to detect that. Locking here also makes the current_item UPDATE below
+    // (itself now a proper atomic increment) race-free against a second concurrent submit.
     private const string SelectSessionForAnswerSql = """
         SELECT "user_id" AS "userId", "status"::text AS "status", "current_subtest"::text AS "currentSubtest",
                "current_item" AS "currentItem", "subtest_times"::text AS "subtestTimes", "language"
         FROM "lia_assessment_sessions" WHERE "id" = @sessionId
+        FOR UPDATE
         """;
 
     public async Task<LiaSubmitAnswerOutcome> SubmitAnswerAsync(
@@ -697,16 +703,14 @@ public sealed class LiaSessionWriter(
             : question.CorrectAnswer;
         bool? isCorrect = answer is null ? null : LiaAnswerScoring.IsAnswerCorrect(currentSubtest, answer, effectiveAnswer);
 
-        bool alreadyAnswered;
-        await using (var command = session.Connection.CreateCommand())
-        {
-            command.Transaction = session.Transaction;
-            command.CommandText = """SELECT 1 FROM "lia_responses" WHERE "session_id" = @sessionId AND "question_id" = @questionId""";
-            AddParameter(command, "sessionId", sessionId);
-            AddParameter(command, "questionId", questionId);
-            alreadyAnswered = await command.ExecuteScalarAsync(cancellationToken) is not null;
-        }
-
+        // Fix round 1 (Critical/Important review): determine "was this a fresh insert, not a
+        // resubmit" ATOMICALLY from the upsert itself via the "xmax" = 0 Postgres idiom (the row's
+        // xmax is 0 iff it was just INSERTed, never touched by an UPDATE — including this statement's
+        // own ON CONFLICT DO UPDATE branch) rather than a separate read-then-write SELECT probe,
+        // which raced with a concurrent submit of a DIFFERENT item on the same session: both could
+        // read "not yet answered" before either wrote, then both computed current_item+1 as an
+        // absolute value below, silently losing one advance.
+        bool wasFreshInsert;
         await using (var command = session.Connection.CreateCommand())
         {
             command.Transaction = session.Transaction;
@@ -717,6 +721,7 @@ public sealed class LiaSessionWriter(
                 VALUES (@id, @sessionId, @questionId, @subtest::"LiaSubtest", @itemNumber, @answer, @isCorrect, @now, @timeSpentMs, @now)
                 ON CONFLICT ("session_id", "question_id") DO UPDATE SET
                     "user_answer" = @answer, "is_correct" = @isCorrect, "answered_at" = @now, "time_spent_ms" = @timeSpentMs
+                RETURNING ("xmax" = 0) AS "inserted"
                 """;
             AddParameter(command, "id", Guid.NewGuid().ToString());
             AddParameter(command, "sessionId", sessionId);
@@ -727,30 +732,38 @@ public sealed class LiaSessionWriter(
             AddParameter(command, "isCorrect", (object?)isCorrect ?? DBNull.Value);
             AddTimestampParameter(command, "now", NowTruncated());
             AddParameter(command, "timeSpentMs", timeSpentMs);
-            await command.ExecuteNonQueryAsync(cancellationToken);
+            wasFreshInsert = (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
         }
 
-        var newCurrentItem = alreadyAnswered ? row.CurrentItem : row.CurrentItem + 1;
-        if (!alreadyAnswered)
+        var newCurrentItem = row.CurrentItem;
+        if (wasFreshInsert)
         {
-            int itemAffected;
-            await using (var command = session.Connection.CreateCommand())
-            {
-                command.Transaction = session.Transaction;
-                command.CommandText = """UPDATE "lia_assessment_sessions" SET "current_item" = @item WHERE "id" = @sessionId""";
-                AddParameter(command, "item", newCurrentItem);
-                AddParameter(command, "sessionId", sessionId);
-                itemAffected = await command.ExecuteNonQueryAsync(cancellationToken);
-            }
-
-            // Targets the session by primary key only, inside the same transaction that just read the
-            // row — 0 rows affected means the row vanished mid-transaction, which must never pass
-            // silently (processing integrity, matches AdvancePastSubtestAsync's/CompleteAsync's rigor).
-            if (itemAffected == 0)
+            // Atomic conditional increment (both halves of the binding constraint: a WHERE guard
+            // matching the exact state precondition, AND fail-closed on 0 rows) instead of writing a
+            // pre-computed absolute value — two concurrent submits of two different unanswered items
+            // both incrementing via SQL can never lose one's advance the way two absolute writes of
+            // "row.CurrentItem + 1" could. 0 rows now genuinely means "the session left in_progress
+            // under us" (this row IS locked via SelectSessionForAnswerSql's FOR UPDATE, so that is
+            // only reachable if this same transaction itself changed status earlier — unreachable
+            // today, but still a real invariant worth failing closed on, matching
+            // AdvancePastSubtestAsync's/CompleteAsync's rigor), not "can never happen".
+            await using var command = session.Connection.CreateCommand();
+            command.Transaction = session.Transaction;
+            command.CommandText = """
+                UPDATE "lia_assessment_sessions"
+                SET "current_item" = "current_item" + 1
+                WHERE "id" = @sessionId AND "status" = 'in_progress'::"LiaSessionStatus"
+                RETURNING "current_item"
+                """;
+            AddParameter(command, "sessionId", sessionId);
+            var result = await command.ExecuteScalarAsync(cancellationToken);
+            if (result is null)
             {
                 logger.LogError("lia.answer.submit current_item update matched 0 rows sessionId={SessionId}", sessionId);
                 throw new InvalidOperationException($"LIA current_item update affected 0 rows for session {sessionId}");
             }
+
+            newCurrentItem = (int)result;
         }
 
         var subtestComplete = newCurrentItem > itemCount;
@@ -780,7 +793,7 @@ public sealed class LiaSessionWriter(
     }
 
     private const string SelectSessionForPracticeAnswerSql = """
-        SELECT "user_id", "status"::text, "practice_completed"::text, "language"
+        SELECT "user_id", "status"::text, "practice_completed"::text, "language", "current_subtest"::text
         FROM "lia_assessment_sessions" WHERE "id" = @sessionId
         """;
 
@@ -794,6 +807,7 @@ public sealed class LiaSessionWriter(
         string status;
         string? practiceCompletedJson;
         string language;
+        string? currentSubtest;
         await using (var command = session.Connection.CreateCommand())
         {
             command.Transaction = session.Transaction;
@@ -809,6 +823,7 @@ public sealed class LiaSessionWriter(
             status = reader.GetString(1);
             practiceCompletedJson = reader.IsDBNull(2) ? null : reader.GetString(2);
             language = reader.GetString(3);
+            currentSubtest = reader.IsDBNull(4) ? null : reader.GetString(4);
         }
 
         // Ownership: missing == denied -> uniform NotFound (IDOR-safe), like every other writer here.
@@ -822,8 +837,17 @@ public sealed class LiaSessionWriter(
             return new LiaPracticeAnswerOutcome(LiaPracticeAnswerStatus.NotInPractice, null);
         }
 
+        // Critical fix (review round 1): the ONLY question validation used to be `question is null`,
+        // which let a candidate submit an ASSESSMENT-shaped id (e.g. "pattern_recognition:7:assessment")
+        // through this endpoint and harvest the entire timed-subtest answer key via
+        // PracticeAnswerResult.CorrectAnswer before the clock ever started — SubmitAnswerAsync already
+        // rejects the mirror-image case (question.IsPractice -> QuestionNotFound), so this was a
+        // one-sided oversight, not intentional. The missing question.Subtest check separately let a
+        // session mark a DIFFERENT subtest's practice complete (and read ITS keys) by submitting e.g.
+        // "visual_rotation:3:practice" while sitting on pattern_recognition — both are folded into the
+        // same uniform QuestionNotFound outcome used everywhere else in this class.
         var question = LiaQuestionServing.FindById(questionId);
-        if (question is null)
+        if (question is null || !question.IsPractice || question.Subtest != currentSubtest)
         {
             return new LiaPracticeAnswerOutcome(LiaPracticeAnswerStatus.QuestionNotFound, null);
         }
@@ -844,7 +868,13 @@ public sealed class LiaSessionWriter(
             await using (var command = session.Connection.CreateCommand())
             {
                 command.Transaction = session.Transaction;
-                command.CommandText = """UPDATE "lia_assessment_sessions" SET "practice_completed" = @pc::jsonb WHERE "id" = @sessionId""";
+                // "AND status = 'practice'" (fix round 1, Important): the missing WHERE-guard half of
+                // the binding "conditional UPDATE" constraint — matches the exact state precondition
+                // just checked above, not just the primary key.
+                command.CommandText = """
+                    UPDATE "lia_assessment_sessions" SET "practice_completed" = @pc::jsonb
+                    WHERE "id" = @sessionId AND "status" = 'practice'::"LiaSessionStatus"
+                    """;
                 AddParameter(command, "pc", updated);
                 AddParameter(command, "sessionId", sessionId);
                 practiceAffected = await command.ExecuteNonQueryAsync(cancellationToken);

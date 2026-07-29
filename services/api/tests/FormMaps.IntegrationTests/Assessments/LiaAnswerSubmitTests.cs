@@ -83,6 +83,34 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         Assert.Equal("verbal_reasoning", currentSubtest);
     }
 
+    // ------------------------------------------------------------------------------------------
+    // Fix round 1, Important: the current_item UPDATE used to write a pre-computed absolute value
+    // ("row.CurrentItem + 1") from an unlocked read taken earlier in the method — two concurrent
+    // submits of two DIFFERENT unanswered items could both read current_item = N and both write
+    // N + 1, silently losing one item's advance. The fix makes the upsert report "was this a fresh
+    // insert" via the "xmax" = 0 idiom and the current_item write a genuine atomic SQL increment
+    // ("current_item" = "current_item" + 1) guarded by status = 'in_progress', with FOR UPDATE on
+    // the session SELECT serializing the two concurrent transactions. This must count BOTH
+    // advances, not just one.
+    // ------------------------------------------------------------------------------------------
+    [Fact]
+    public async Task Concurrent_submits_of_two_different_items_both_advance_current_item_without_losing_one()
+    {
+        var (userId, sessionId) = await SeedInProgressSessionAsync(subtest: "pattern_recognition", currentItem: 1);
+        var (writerA, _) = MakeWriter();
+        var (writerB, _) = MakeWriter();
+
+        await Task.WhenAll(
+            writerA.SubmitAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:1:assessment", "0", 100),
+            writerB.SubmitAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:2:assessment", "0", 100));
+
+        // Both items are now answered and current_item must reflect BOTH advances (1 -> 3), never
+        // just one (the lost-update bug this fix addresses would land on 2, not 3).
+        Assert.Equal(3, await ReadCurrentItemAsync(sessionId));
+        Assert.True(await ResponseExistsAsync(sessionId, "pattern_recognition:1:assessment", withRealAnswer: true));
+        Assert.True(await ResponseExistsAsync(sessionId, "pattern_recognition:2:assessment", withRealAnswer: true));
+    }
+
     [Fact]
     public async Task Submitting_past_the_deadline_times_out_instead_of_persisting_the_answer()
     {
@@ -273,6 +301,46 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, "not_a_real_subtest:1:practice", "0");
 
         Assert.Equal(LiaPracticeAnswerStatus.QuestionNotFound, outcome.Status);
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Fix round 1, Critical: SubmitPracticeAnswerAsync's only validation used to be `question is
+    // null` — an ASSESSMENT-shaped id (e.g. "pattern_recognition:7:assessment") resolved just fine
+    // via LiaQuestionServing.FindById and leaked the entire timed-subtest answer key through
+    // PracticeAnswerResult.CorrectAnswer before the candidate's clock ever started. Must reject with
+    // the same uniform QuestionNotFound as every other invalid-question case.
+    // ------------------------------------------------------------------------------------------
+    [Fact]
+    public async Task Practice_answer_rejects_an_assessment_shaped_question_id_and_does_not_leak_its_answer_key()
+    {
+        var (userId, sessionId) = await SeedPracticePhaseSessionAsync(subtest: "pattern_recognition");
+        var (writer, _) = MakeWriter();
+
+        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:7:assessment", "0");
+
+        Assert.Equal(LiaPracticeAnswerStatus.QuestionNotFound, outcome.Status);
+        Assert.Null(outcome.Result);
+        // Must not have leaked practice_completed[pattern_recognition] = true off the back of an
+        // assessment-item submission either (the practice-gate-bypass consequence of the same bug).
+        Assert.False(await ReadPracticeCompletedAsync(sessionId, "pattern_recognition"));
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Fix round 1, Critical (continued): a practice id from a DIFFERENT subtest than the session's
+    // current one must also be rejected — otherwise a session sitting on pattern_recognition's
+    // practice phase could mark visual_rotation's practice complete (and read ITS keys) by
+    // submitting "visual_rotation:3:practice".
+    // ------------------------------------------------------------------------------------------
+    [Fact]
+    public async Task Practice_answer_rejects_a_practice_question_from_a_different_subtest_than_the_sessions_current_one()
+    {
+        var (userId, sessionId) = await SeedPracticePhaseSessionAsync(subtest: "pattern_recognition");
+        var (writer, _) = MakeWriter();
+
+        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, "visual_rotation:3:practice", "0");
+
+        Assert.Equal(LiaPracticeAnswerStatus.QuestionNotFound, outcome.Status);
+        Assert.False(await ReadPracticeCompletedAsync(sessionId, "visual_rotation"));
     }
 
     // ==============================================================================================
