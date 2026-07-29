@@ -221,6 +221,45 @@ public sealed class LiaTimeoutViolationsTests : IClassFixture<LiaWriteDatabaseFi
         Assert.Equal(3, doc.RootElement.GetArrayLength());
     }
 
+    // ------------------------------------------------------------------------------------------
+    // Fix round 1, Important: SaveViolationsAsync's session SELECT is now FOR UPDATE — without it,
+    // two concurrent violation flushes for the same session (a plausible normal shape: the lockdown
+    // client flushes batches on a timer and typically retries on failure) both read the same
+    // `existing` array, both compute `all`, and the second commit silently overwrites the first's
+    // batch — losing proctoring evidence AND computing `flag` from a stale, too-small count. Mirrors
+    // Task 5's "Concurrent_submits_of_two_different_items_both_advance_current_item_without_losing_one"
+    // pattern: two concurrent SaveViolationsAsync calls on the SAME session must both survive, and the
+    // final stored count must be the SUM of both batches, never just one.
+    // ------------------------------------------------------------------------------------------
+    [Fact]
+    public async Task Concurrent_violation_saves_for_the_same_session_both_persist_without_losing_one()
+    {
+        var (userId, sessionId) = await SeedInProgressSessionAsync(reentryCount: 0);
+        var (writerA, _) = MakeWriter();
+        var (writerB, _) = MakeWriter();
+
+        var batchA = new List<ViolationEntry> { new("tab_switch", DateTime.UtcNow.ToString("o"), "batch A") };
+        var batchB = new List<ViolationEntry> { new("fullscreen_exit", DateTime.UtcNow.ToString("o"), "batch B") };
+
+        var results = await Task.WhenAll(
+            writerA.SaveViolationsAsync(Ctx(userId), sessionId, userId, batchA),
+            writerB.SaveViolationsAsync(Ctx(userId), sessionId, userId, batchB));
+
+        Assert.All(results, r => Assert.Equal(LiaSaveViolationsStatus.Ok, r.Status));
+
+        // Both batches must be reflected in the final stored array — a lost update (the bug this fix
+        // addresses) would land on 1, not 2.
+        var (json, _) = await ReadViolationsAsync(sessionId);
+        using var doc = JsonDocument.Parse(json!);
+        Assert.Equal(2, doc.RootElement.GetArrayLength());
+
+        var details = doc.RootElement.EnumerateArray()
+            .Select(e => e.GetProperty("details").GetString())
+            .ToList();
+        Assert.Contains("batch A", details);
+        Assert.Contains("batch B", details);
+    }
+
     [Fact]
     public async Task Saving_violations_rejects_with_uniform_NotFound_for_a_nonexistent_session()
     {

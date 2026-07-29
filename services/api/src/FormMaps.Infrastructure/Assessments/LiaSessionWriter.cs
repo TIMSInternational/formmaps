@@ -977,16 +977,24 @@ public sealed class LiaSessionWriter(
     // incoming lockdown-proctoring violation events to the session's existing lockdown_violations
     // JSONB array and unconditionally overwrites flag_for_review based on the CUMULATIVE count
     // (existing + new) crossing PROCTORING_FLAG_THRESHOLD — legacy's own design (lia-session-
-    // service.ts:659 `flagForReview: flag`), not a defect to correct. No FOR UPDATE here, matching
-    // this codebase's existing precedent for the identical read-merge-write JSONB shape
-    // (VocationalTakeService.SaveViolationsAsync also reads-then-writes a violations JSONB column with
-    // a plain SELECT, no row lock).
+    // service.ts:659 `flagForReview: flag`), not a defect to correct.
+    //
+    // Fix round 1 (Important): the session SELECT is now FOR UPDATE. This is a genuine
+    // read-modify-write of a JSONB array — the lockdown client flushes violation batches on a timer
+    // and typically retries on failure, so an overlapping retry + timer flush for the SAME session is
+    // a plausible normal failure mode, not an exotic race. Without a lock, two concurrent calls both
+    // read `existing`, both compute `all`, and the second commit silently discards the first batch's
+    // violations AND computes `flag` from a stale (too-small) count — a session that should be flagged
+    // for review might not be. Same lock Task 5 already established for current_item's fix and
+    // HandleTimeoutAsync's own read above; same session row by primary key, so no new lock-ordering
+    // risk.
     // ================================================================================================
 
     private const int ProctoringFlagThreshold = 3; // legacy PROCTORING_FLAG_THRESHOLD (lib/proctoring.ts).
 
     private const string SelectSessionForViolationsSql = """
         SELECT "user_id", "lockdown_violations"::text FROM "lia_assessment_sessions" WHERE "id" = @sessionId
+        FOR UPDATE
         """;
 
     public async Task<LiaSaveViolationsOutcome> SaveViolationsAsync(
@@ -1024,6 +1032,7 @@ public sealed class LiaSessionWriter(
         var all = existing.Concat(violations).Take(500).ToList();
         var flag = all.Count >= ProctoringFlagThreshold;
 
+        int affected;
         await using (var command = session.Connection.CreateCommand())
         {
             command.Transaction = session.Transaction;
@@ -1034,7 +1043,20 @@ public sealed class LiaSessionWriter(
             AddParameter(command, "all", JsonSerializer.Serialize(all, JsonOptions));
             AddParameter(command, "flag", flag);
             AddParameter(command, "sessionId", sessionId);
-            await command.ExecuteNonQueryAsync(cancellationToken);
+            affected = await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        // Fix round 1 (Important, plan-mandated fail-closed constraint): this UPDATE targets the
+        // session by primary key only, inside the same transaction that just confirmed (under FOR
+        // UPDATE, above) the row exists — 0 rows affected here means the row vanished mid-transaction
+        // or an RLS UPDATE policy silently blocked it despite the SELECT succeeding. That must never
+        // pass silently as a reported "Ok" save with a SavedCount that didn't actually persist —
+        // mirrors AdvancePastSubtestAsync's/CompleteAsync's identical rigor for their own conditional
+        // UPDATEs.
+        if (affected == 0)
+        {
+            logger.LogError("lia.violations.save conditional update matched 0 rows sessionId={SessionId}", sessionId);
+            throw new InvalidOperationException($"LIA violations update affected 0 rows for session {sessionId}");
         }
 
         await session.CommitAsync(cancellationToken);
