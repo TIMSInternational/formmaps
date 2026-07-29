@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
@@ -134,6 +135,175 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
         // pattern_recognition has 60 items; none were answered, so all 60 must land as null responses.
         var nullResponseCount = await CountNullResponsesAsync(sessionId, "pattern_recognition");
         Assert.Equal(60, nullResponseCount);
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Task 3b regression: legacy applyTimeout calls the REAL completeSession() the instant the
+    // assessment's LAST subtest times out — it does not just flip status to "completed". Before this
+    // fix, AdvancePastSubtestAsync's isLast branch set status='completed' directly without ever
+    // computing/persisting raw_scores/final_scores/percentiles/etc, so CompleteAsync's own idempotency
+    // check (status=='completed' -> return stored values) would hand back a fake zero-score
+    // "insufficient" completion for a session that was never actually scored. This test seeds the
+    // LAST subtest (visual_rotation) with an expired clock and the 4 PRIOR subtests fully answered,
+    // drives it through Gate 2, and asserts real scores landed — then proves it via a second /complete
+    // call that must return the real (non-fallback) values, not BuildStoredResult's defaults.
+    // ------------------------------------------------------------------------------------------
+
+    // Fully-answered (no unanswered) correct/incorrect split for each of the 4 subtests PRIOR to
+    // visual_rotation. Values are arbitrary but chosen (verified via LiaCompletionScorer directly) to
+    // produce a comfortably non-insufficient, non-zero global completion even though visual_rotation
+    // itself will land 0 correct / 0 incorrect / all-unanswered (auto-filled by the timeout path).
+    private static readonly IReadOnlyDictionary<string, (int Correct, int Incorrect)> PriorSubtestCounts =
+        new Dictionary<string, (int, int)>(StringComparer.Ordinal)
+        {
+            ["pattern_recognition"] = (50, 10),
+            ["verbal_reasoning"] = (40, 10),
+            ["numerical_speed"] = (45, 15),
+            ["working_memory"] = (55, 5),
+        };
+
+    [Fact]
+    public async Task Timeout_on_the_last_subtest_computes_and_persists_real_scores_not_just_status()
+    {
+        var startedAt = DateTime.UtcNow.AddHours(-1); // well past visual_rotation's 300s + grace.
+        var (userId, sessionId) = await SeedLastSubtestExpiredWithFullPriorCoverageAsync(startedAt);
+        var (writer, _) = MakeWriter();
+
+        var outcome = await writer.StartAsync(Ctx(userId), userId, "es");
+
+        Assert.Equal(LiaStartStatus.AlreadyCompleted, outcome.Status);
+
+        var (status, rawScoresJson, finalScoresJson, percentilesJson) = await ReadScoringColumnsAsync(sessionId);
+        Assert.Equal("completed", status);
+        AssertHasAllFiveSubtestKeys(rawScoresJson, "raw_scores");
+        AssertHasAllFiveSubtestKeys(finalScoresJson, "final_scores");
+        AssertHasAllFiveSubtestKeys(percentilesJson, "percentiles");
+
+        // Strongest check (would have failed before this fix): a subsequent /complete call hits
+        // CompleteAsync's idempotent status=='completed' branch (BuildStoredResult) — before the fix
+        // that would return the fallback defaults (0 / "insufficient" / epoch) because nothing had
+        // actually been scored. After the fix, it must return the REAL persisted values.
+        var (completeWriter, _) = MakeWriter();
+        var completeOutcome = await completeWriter.CompleteAsync(Ctx(userId), sessionId, userId);
+
+        Assert.Equal(LiaCompleteStatus.Completed, completeOutcome.Status);
+        var result = completeOutcome.Result!;
+        Assert.NotEqual("insufficient", result.PerformanceLevel);
+        Assert.NotEqual(0d, result.GlobalPercentile);
+        Assert.NotEqual("1970-01-01T00:00:00.000Z", result.CompletedAt);
+    }
+
+    private static void AssertHasAllFiveSubtestKeys(string? json, string columnName)
+    {
+        Assert.False(string.IsNullOrEmpty(json), $"{columnName} must not be NULL/empty after a timeout-driven completion.");
+        using var doc = JsonDocument.Parse(json!);
+        foreach (var subtest in LiaScoring.SubtestOrder)
+        {
+            Assert.True(
+                doc.RootElement.TryGetProperty(subtest, out _),
+                $"{columnName} is missing an entry for '{subtest}'.");
+        }
+    }
+
+    /// <summary>
+    /// Seeds an in_progress session sitting on visual_rotation (the LAST subtest) with an already-
+    /// expired clock, subtest_times already showing the 4 PRIOR subtests ended, and full response
+    /// coverage (correct+incorrect, no unanswered) for those 4 prior subtests. visual_rotation itself
+    /// has NO responses yet — StartAsync's Gate 2 is expected to fill all of them as null timeouts.
+    /// </summary>
+    private async Task<(string UserId, string SessionId)> SeedLastSubtestExpiredWithFullPriorCoverageAsync(
+        DateTime visualRotationStartedAt)
+    {
+        var userId = Guid.NewGuid().ToString();
+        var sessionId = Guid.NewGuid().ToString();
+        await SeedUserAsync(userId);
+
+        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await conn.OpenAsync();
+
+        var priorEndedAt = DateTime.UtcNow.AddHours(-2);
+        var subtestTimesEntries = new List<string>();
+        foreach (var subtest in LiaScoring.SubtestOrder)
+        {
+            if (subtest == "visual_rotation")
+            {
+                subtestTimesEntries.Add($$$"""
+                    "visual_rotation":{"startedAt":"{{{visualRotationStartedAt:o}}}"}
+                    """.Trim());
+            }
+            else
+            {
+                subtestTimesEntries.Add($$$"""
+                    "{{{subtest}}}":{"startedAt":"{{{priorEndedAt.AddMinutes(-10):o}}}","endedAt":"{{{priorEndedAt:o}}}"}
+                    """.Trim());
+            }
+        }
+
+        var subtestTimesJson = "{" + string.Join(",", subtestTimesEntries) + "}";
+        var practiceCompletedJson = JsonSerializer.Serialize(
+            LiaScoring.SubtestOrder.ToDictionary(s => s, _ => true));
+
+        await using (var cmd = new NpgsqlCommand("""
+            INSERT INTO lia_assessment_sessions
+                (id, user_id, status, current_subtest, current_item, practice_completed, subtest_times,
+                 "reentryCount", language, updated_at)
+            VALUES (@id, @userId, 'in_progress', 'visual_rotation', 1, @practiceCompleted::jsonb,
+                    @subtestTimes::jsonb, 0, 'es', now())
+            """, conn))
+        {
+            cmd.Parameters.AddWithValue("id", sessionId);
+            cmd.Parameters.AddWithValue("userId", userId);
+            cmd.Parameters.AddWithValue("practiceCompleted", practiceCompletedJson);
+            cmd.Parameters.AddWithValue("subtestTimes", subtestTimesJson);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        foreach (var (subtest, (correct, incorrect)) in PriorSubtestCounts)
+        {
+            await SeedFullyAnsweredResponsesAsync(conn, sessionId, subtest, correct, incorrect);
+        }
+
+        return (userId, sessionId);
+    }
+
+    /// <summary>Inserts exactly `correct + incorrect` fully-answered (no unanswered) response rows for one subtest.</summary>
+    private static async Task SeedFullyAnsweredResponsesAsync(
+        NpgsqlConnection connection, string sessionId, string subtest, int correct, int incorrect)
+    {
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO lia_responses
+                (id, session_id, question_id, subtest, item_number, user_answer, is_correct, answered_at, time_spent_ms, updated_at)
+            SELECT @sid || '-' || @sub || '-' || g, @sid, @sub || '-' || g, @sub::"LiaSubtest", g,
+                   'x', CASE WHEN g <= @correct THEN true ELSE false END,
+                   now(), 1000, now()
+            FROM generate_series(1, @total) g
+            """,
+            connection);
+        cmd.Parameters.AddWithValue("sid", sessionId);
+        cmd.Parameters.AddWithValue("sub", subtest);
+        cmd.Parameters.AddWithValue("correct", correct);
+        cmd.Parameters.AddWithValue("total", correct + incorrect);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    private async Task<(string Status, string? RawScores, string? FinalScores, string? Percentiles)> ReadScoringColumnsAsync(string sessionId)
+    {
+        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            SELECT "status"::text, "raw_scores"::text, "final_scores"::text, "percentiles"::text
+            FROM lia_assessment_sessions WHERE id = @id
+            """, conn);
+        cmd.Parameters.AddWithValue("id", sessionId);
+        await using var reader = await cmd.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        return (
+            reader.GetString(0),
+            reader.IsDBNull(1) ? null : reader.GetString(1),
+            reader.IsDBNull(2) ? null : reader.GetString(2),
+            reader.IsDBNull(3) ? null : reader.GetString(3));
     }
 
     // ==============================================================================================

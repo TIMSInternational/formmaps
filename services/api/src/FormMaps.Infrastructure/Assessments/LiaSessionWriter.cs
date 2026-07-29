@@ -135,63 +135,15 @@ public sealed class LiaSessionWriter(
             }
         }
 
-        var scored = LiaCompletionScorer.ScoreCompletion(counts);
-        // UTC wall-clock at millisecond precision, matching legacy JS `new Date()` (integer ms). Two
-        // reasons for the exact shape:
-        //   1. ToIsoZ truncates to ms but Postgres timestamp(3) ROUNDS to ms — an un-truncated tick value
-        //      would make this response's completed_at differ by 1ms from the persisted row (and every
-        //      idempotent replay / results read). Truncate up front so store == return == every read.
-        //   2. Kind=Unspecified (not Utc) so Npgsql binds the value as `timestamp` (without time zone),
-        //      matching the Prisma @db.Timestamp(3) columns. A Kind=Utc value would infer `timestamptz`
-        //      and Postgres would apply a TimeZone-GUC-dependent cast on write — the stored wall-clock
-        //      would shift on any non-UTC server while the returned value would not. Store tz-independently.
-        var completedAt = TruncateToMilliseconds(
-            DateTime.SpecifyKind(DateTimeOffset.UtcNow.UtcDateTime, DateTimeKind.Unspecified));
-
-        int affected;
-        await using (var command = session.Connection.CreateCommand())
-        {
-            command.Transaction = session.Transaction;
-            command.CommandText = UpdateSql;
-            AddParameter(command, "sessionId", sessionId);
-            AddTimestampParameter(command, "completedAt", completedAt);
-            AddParameter(command, "rawScores", Serialize(scored.RawScores));
-            AddParameter(command, "finalScores", Serialize(scored.FinalScores));
-            AddParameter(command, "percentiles", Serialize(scored.Percentiles));
-            AddParameter(command, "globalPercentile", (decimal)scored.GlobalPercentile);
-            AddParameter(command, "performanceLevel", scored.PerformanceLevel);
-            AddParameter(command, "responseCounts", Serialize(counts));
-            affected = await command.ExecuteNonQueryAsync(cancellationToken);
-        }
-
-        // affected == 0 is unreachable under the FOR UPDATE lock: we hold the exclusive row lock and
-        // verified status <> 'completed', so the conditional UPDATE ... WHERE status <> 'completed' must
-        // match the one locked row. If it somehow matched nothing (e.g. an RLS UPDATE policy filtered the
-        // row), FAIL CLOSED — do not commit a phantom success or emit a completion audit for a write that
-        // did not land (processing integrity, SOC2 PI). Disposing the session rolls the transaction back.
-        if (affected == 0)
-        {
-            logger.LogError("lia.session.complete conditional update matched 0 rows sessionId={SessionId}", sessionId);
-            throw new InvalidOperationException($"LIA completion update affected 0 rows for session {sessionId}");
-        }
-
+        var result = await PersistCompletionAsync(session, sessionId, counts, cancellationToken);
         await session.CommitAsync(cancellationToken);
 
         // Audit (SOC2 CC7.2 / ISO A.8.15): actor/action/subject/outcome — IDs only, never PII. Emitted
         // only after the durable write commits, so it can never claim a completion that did not persist.
         logger.LogInformation(
             "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
-            sessionId, ownerUserId, scored.GlobalPercentile, scored.PerformanceLevel);
+            sessionId, ownerUserId, result.GlobalPercentile, result.PerformanceLevel);
 
-        var result = new LiaCompletionResult(
-            SessionId: sessionId,
-            RawScores: scored.RawScores,
-            FinalScores: scored.FinalScores,
-            Percentiles: scored.Percentiles,
-            GlobalPercentile: scored.GlobalPercentile,
-            PerformanceLevel: scored.PerformanceLevel,
-            ResponseCounts: counts,
-            CompletedAt: ToIsoZ(completedAt));
         return new LiaCompleteOutcome(LiaCompleteStatus.Completed, result);
     }
 
@@ -317,6 +269,16 @@ public sealed class LiaSessionWriter(
                 await session.CommitAsync(cancellationToken);
                 if (expiry.AssessmentComplete)
                 {
+                    if (expiry.Completion is { } completion)
+                    {
+                        // Audit only after the commit above succeeds, mirroring CompleteAsync's own
+                        // ordering — a completion audit can never be emitted for a write that didn't
+                        // durably persist.
+                        logger.LogInformation(
+                            "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
+                            row.Id, userId, completion.GlobalPercentile, completion.PerformanceLevel);
+                    }
+
                     return new LiaStartOutcome(LiaStartStatus.AlreadyCompleted, null);
                 }
 
@@ -454,15 +416,13 @@ public sealed class LiaSessionWriter(
             // shared with Task 5's SubmitAnswerAsync where that precondition won't hold.
             if (isLast)
             {
-                // Last subtest timing out also terminates the session: without this, every subsequent
-                // /start on an already-finished assessment would keep incrementing reentryCount (via
-                // Gate 1, which runs before this helper) toward a false lockout instead of short-
-                // circuiting through the AlreadyCompleted check at the top of StartAsync.
+                // Status is deliberately left as-is here (still "in_progress") — PersistCompletionAsync
+                // below flips it to "completed" as part of writing REAL scores, matching legacy's
+                // applyTimeout, which calls completeSession() inline rather than just flagging status.
                 command.CommandText = """
                     UPDATE "lia_assessment_sessions"
                     SET "subtest_times" = "subtest_times" || jsonb_build_object(
-                            @subtest, COALESCE("subtest_times"->@subtest, '{}'::jsonb) || jsonb_build_object('endedAt', @now::text)),
-                        "status" = 'completed'::"LiaSessionStatus"
+                            @subtest, COALESCE("subtest_times"->@subtest, '{}'::jsonb) || jsonb_build_object('endedAt', @now::text))
                     WHERE "id" = @sessionId
                     """;
             }
@@ -492,6 +452,18 @@ public sealed class LiaSessionWriter(
         {
             logger.LogError("lia.session.start advance-past-subtest matched 0 rows sessionId={SessionId}", sessionId);
             throw new InvalidOperationException($"LIA advance-past-subtest update affected 0 rows for session {sessionId}");
+        }
+
+        if (isLast)
+        {
+            // legacy applyTimeout calls completeSession() inline the moment the assessment truly
+            // finishes. Coverage is trusted via the state-machine invariant: every subtest is only ever
+            // advanced-past once ApplyTimeoutAsync (or a real submit) has fully filled it, so — unlike
+            // CompleteAsync's own HTTP-driven entry point, which has no such guarantee — no separate
+            // coverage-gate re-check is needed here before scoring.
+            var counts = await ReadResponseCountsAsync(session, sessionId, cancellationToken);
+            var completion = await PersistCompletionAsync(session, sessionId, counts, cancellationToken);
+            return new TimeoutAdvanceResult(null, AssessmentComplete: true, completion);
         }
 
         return new TimeoutAdvanceResult(nextSubtest, isLast);
@@ -659,6 +631,87 @@ public sealed class LiaSessionWriter(
 
     private static Dictionary<string, ResponseCount> InitializeCounts() =>
         LiaScoring.SubtestOrder.ToDictionary(s => s, _ => new ResponseCount(0, 0, 0), StringComparer.Ordinal);
+
+    // Shared per-subtest correct/incorrect/unanswered tally from lia_responses. CompleteAsync's own
+    // coverage-gate loop stays inline and untouched (it also needs a separate per-subtest answered-count
+    // for its coverage gate, which this helper doesn't compute) — this is a fresh read for the
+    // timeout-driven completion path below, where counts must reflect items ApplyTimeoutAsync just
+    // inserted in this SAME open transaction (Postgres sees its own uncommitted writes).
+    private static async Task<Dictionary<string, ResponseCount>> ReadResponseCountsAsync(
+        FormMapsDatabaseSession session, string sessionId, CancellationToken cancellationToken)
+    {
+        var counts = InitializeCounts();
+        await using var command = session.Connection.CreateCommand();
+        command.Transaction = session.Transaction;
+        command.CommandText = ResponsesSql;
+        AddParameter(command, "sessionId", sessionId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var subtest = reader.GetString(0);
+            if (!counts.ContainsKey(subtest))
+            {
+                continue;
+            }
+
+            var isCorrect = reader.IsDBNull(1) ? (bool?)null : reader.GetBoolean(1);
+            var current = counts[subtest];
+            counts[subtest] = isCorrect switch
+            {
+                true => current with { Correct = current.Correct + 1 },
+                false => current with { Incorrect = current.Incorrect + 1 },
+                null => current with { Unanswered = current.Unanswered + 1 },
+            };
+        }
+
+        return counts;
+    }
+
+    // Shared scoring+persist tail for BOTH the HTTP-driven CompleteAsync path and the timeout-driven
+    // completion inside AdvancePastSubtestAsync's isLast branch (legacy: both call completeSession()).
+    // Deliberately does NOT commit or audit-log — callers own the transaction's commit boundary
+    // (CompleteAsync commits immediately after; the timeout-driven path batches this into a larger
+    // transaction the top-level caller commits later) and must audit-log ONLY after their own commit
+    // succeeds, so a completion audit can never be emitted for a write that didn't durably persist.
+    private async Task<LiaCompletionResult> PersistCompletionAsync(
+        FormMapsDatabaseSession session, string sessionId,
+        Dictionary<string, ResponseCount> counts, CancellationToken cancellationToken)
+    {
+        var scored = LiaCompletionScorer.ScoreCompletion(counts);
+        var completedAt = NowTruncated();
+
+        int affected;
+        await using (var command = session.Connection.CreateCommand())
+        {
+            command.Transaction = session.Transaction;
+            command.CommandText = UpdateSql;
+            AddParameter(command, "sessionId", sessionId);
+            AddTimestampParameter(command, "completedAt", completedAt);
+            AddParameter(command, "rawScores", Serialize(scored.RawScores));
+            AddParameter(command, "finalScores", Serialize(scored.FinalScores));
+            AddParameter(command, "percentiles", Serialize(scored.Percentiles));
+            AddParameter(command, "globalPercentile", (decimal)scored.GlobalPercentile);
+            AddParameter(command, "performanceLevel", scored.PerformanceLevel);
+            AddParameter(command, "responseCounts", Serialize(counts));
+            affected = await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        if (affected == 0)
+        {
+            logger.LogError("lia.session.complete conditional update matched 0 rows sessionId={SessionId}", sessionId);
+            throw new InvalidOperationException($"LIA completion update affected 0 rows for session {sessionId}");
+        }
+
+        return new LiaCompletionResult(
+            SessionId: sessionId,
+            RawScores: scored.RawScores,
+            FinalScores: scored.FinalScores,
+            Percentiles: scored.Percentiles,
+            GlobalPercentile: scored.GlobalPercentile,
+            PerformanceLevel: scored.PerformanceLevel,
+            ResponseCounts: counts,
+            CompletedAt: ToIsoZ(completedAt));
+    }
 
     private static bool AllSubtestsEnded(string? subtestTimesJson)
     {

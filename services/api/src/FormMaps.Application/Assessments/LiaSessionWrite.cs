@@ -102,7 +102,7 @@ public sealed record LiaStartOutcome(LiaStartStatus Status, LiaSessionStartPaylo
 /// that follows the one just closed out, or null with AssessmentComplete=true when it was the last one.
 /// Consumed by StartAsync's own Gate 2 here, and by Task 5's SubmitAnswerAsync / Task 6's reads.
 /// </summary>
-public sealed record TimeoutAdvanceResult(string? NextSubtest, bool AssessmentComplete);
+public sealed record TimeoutAdvanceResult(string? NextSubtest, bool AssessmentComplete, LiaCompletionResult? Completion = null);
 
 /// <summary>
 /// Response payload for a successful <see cref="ILiaSessionWriter.StartSubtestAsync"/> — the live
