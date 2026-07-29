@@ -198,6 +198,10 @@ public class LiaCompleteEndpointTests
             RequestContext context, string userId, string language, CancellationToken cancellationToken = default) =>
             throw new NotImplementedException("StartAsync is not exercised by LiaCompleteEndpointTests");
 
+        public Task<LiaSubtestStartOutcome> StartSubtestAsync(
+            RequestContext context, string sessionId, string ownerUserId, string subtest, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException("StartSubtestAsync is not exercised by LiaCompleteEndpointTests");
+
         public Task<LiaCompleteOutcome> CompleteAsync(
             RequestContext context, string sessionId, string ownerUserId, CancellationToken cancellationToken = default)
         {

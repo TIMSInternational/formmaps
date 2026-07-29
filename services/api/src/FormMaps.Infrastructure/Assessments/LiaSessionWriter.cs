@@ -497,6 +497,120 @@ public sealed class LiaSessionWriter(
         return new TimeoutAdvanceResult(nextSubtest, isLast);
     }
 
+    // ================================================================================================
+    // StartSubtestAsync — legacy startSubtest (services/lia/lia-subtest-service.ts): a one-shot clock
+    // guard enforced as an atomic SQL predicate, not a separate read-then-write step. Practice must be
+    // marked complete for the subtest, and the subtest's own subtest_times entry must have no
+    // "startedAt" yet — live OR ended — or the write is rejected in the SAME statement that would have
+    // performed it (no read/write TOCTOU window to race in).
+    // ================================================================================================
+
+    private const string SelectSessionForSubtestStartSql = """
+        SELECT "user_id" AS "userId", "practice_completed"::text AS "practiceCompleted",
+               "subtest_times"::text AS "subtestTimes", "language", "started_at" AS "startedAt"
+        FROM "lia_assessment_sessions" WHERE "id" = @sessionId
+        """;
+
+    // One-shot guard AS A SQL PREDICATE: reject in the SAME statement that writes subtestTimes if the
+    // target subtest already has a startedAt, live or ended — stronger than Node's two-step
+    // read-then-conditional-write, since there's no window between the check and the write to race in.
+    //
+    // Builds the per-subtest object defensively via jsonb_build_object + COALESCE rather than jsonb_set:
+    // jsonb_set only auto-creates the FINAL path element, never an intermediate object, so
+    // jsonb_set(subtest_times, ARRAY[@subtest, 'startedAt'], ...) silently no-ops — status/current_subtest/
+    // current_item update but startedAt never persists — for the COMMON case where subtest_times has no
+    // object yet under @subtest (a subtest being started for the very first time). Same defect class
+    // Task 3's AdvancePastSubtestAsync guards against with the identical pattern.
+    private const string StartSubtestIfNeverStartedSql = """
+        UPDATE "lia_assessment_sessions" SET
+            "status" = 'in_progress'::"LiaSessionStatus",
+            "current_subtest" = @subtest::"LiaSubtest",
+            "current_item" = 1,
+            "subtest_times" = "subtest_times" || jsonb_build_object(
+                @subtest, COALESCE("subtest_times"->@subtest, '{}'::jsonb) || jsonb_build_object('startedAt', @startedAt::text)),
+            "started_at" = COALESCE("started_at", @now)
+        WHERE "id" = @sessionId
+          AND NOT ("subtest_times" ? @subtest AND "subtest_times"->@subtest ? 'startedAt')
+        """;
+
+    public async Task<LiaSubtestStartOutcome> StartSubtestAsync(
+        RequestContext context, string sessionId, string ownerUserId, string subtest,
+        CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        SubtestStartSessionRow row;
+        await using (var command = session.Connection.CreateCommand())
+        {
+            command.Transaction = session.Transaction;
+            command.CommandText = SelectSessionForSubtestStartSql;
+            AddParameter(command, "sessionId", sessionId);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                return new LiaSubtestStartOutcome(LiaSubtestStartStatus.NotFound, null);
+            }
+
+            row = new SubtestStartSessionRow(
+                reader.GetString(reader.GetOrdinal("userId")),
+                ReadNullableString(reader, "practiceCompleted"),
+                ReadNullableString(reader, "subtestTimes"),
+                reader.GetString(reader.GetOrdinal("language")),
+                ReadNullableDateTime(reader, "startedAt"));
+        }
+
+        // Ownership: missing == denied -> uniform NotFound (IDOR-safe), like every other writer here.
+        if (!string.Equals(row.UserId, ownerUserId, StringComparison.Ordinal))
+        {
+            return new LiaSubtestStartOutcome(LiaSubtestStartStatus.NotFound, null);
+        }
+
+        if (!IsPracticeCompleted(row.PracticeCompleted, subtest))
+        {
+            return new LiaSubtestStartOutcome(LiaSubtestStartStatus.PracticeIncomplete, null);
+        }
+
+        var startedAt = NowTruncated();
+        int affected;
+        await using (var command = session.Connection.CreateCommand())
+        {
+            command.Transaction = session.Transaction;
+            command.CommandText = StartSubtestIfNeverStartedSql;
+            AddParameter(command, "sessionId", sessionId);
+            AddParameter(command, "subtest", subtest);
+            AddParameter(command, "startedAt", ToIsoZ(startedAt));
+            AddTimestampParameter(command, "now", startedAt);
+            affected = await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        if (affected == 0)
+        {
+            // The WHERE guard rejected: subtestTimes[subtest].startedAt already exists (live or ended).
+            return new LiaSubtestStartOutcome(LiaSubtestStartStatus.AlreadyStarted, null);
+        }
+
+        await session.CommitAsync(cancellationToken);
+        var itemCount = LiaSubtestOrder.ItemCounts[subtest];
+        return new LiaSubtestStartOutcome(LiaSubtestStartStatus.Started, new SubtestStartResult(
+            sessionId, subtest, LiaQuestionServing.FetchAssessmentQuestions(subtest, row.Language, itemCount),
+            LiaSubtestOrder.TimeSeconds[subtest], ToIsoZ(startedAt)));
+    }
+
+    private static bool IsPracticeCompleted(string? practiceCompletedJson, string subtest)
+    {
+        if (string.IsNullOrEmpty(practiceCompletedJson))
+        {
+            return false;
+        }
+
+        using var doc = JsonDocument.Parse(practiceCompletedJson);
+        return doc.RootElement.TryGetProperty(subtest, out var value)
+            && value.ValueKind == JsonValueKind.True;
+    }
+
+    private sealed record SubtestStartSessionRow(
+        string UserId, string? PracticeCompleted, string? SubtestTimes, string Language, DateTime? StartedAt);
+
     private static string? ReadSubtestStartedAt(string? subtestTimesJson, string subtest)
     {
         if (string.IsNullOrEmpty(subtestTimesJson))

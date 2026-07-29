@@ -104,6 +104,22 @@ public sealed record LiaStartOutcome(LiaStartStatus Status, LiaSessionStartPaylo
 /// </summary>
 public sealed record TimeoutAdvanceResult(string? NextSubtest, bool AssessmentComplete);
 
+/// <summary>
+/// Response payload for a successful <see cref="ILiaSessionWriter.StartSubtestAsync"/> — the live
+/// assessment questions for the subtest whose clock has just started.
+/// </summary>
+public sealed record SubtestStartResult(
+    [property: JsonPropertyName("session_id")] string SessionId,
+    [property: JsonPropertyName("subtest")] string Subtest,
+    [property: JsonPropertyName("questions")] IReadOnlyList<ClientQuestion> Questions,
+    [property: JsonPropertyName("time_limit_seconds")] int TimeLimitSeconds,
+    [property: JsonPropertyName("started_at")] string StartedAt);
+
+public enum LiaSubtestStartStatus { Started, NotFound, PracticeIncomplete, AlreadyStarted }
+
+/// <summary>Discriminated outcome of a subtest-start attempt (maps to 200 / 404 / 400 / 409 at the endpoint).</summary>
+public sealed record LiaSubtestStartOutcome(LiaSubtestStartStatus Status, SubtestStartResult? Result);
+
 public static class LiaSubtestOrder
 {
     // legacy SUBTEST_ORDER (lib/lia-core/types.ts) — same fixed instrument order LiaScoring already

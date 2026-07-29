@@ -90,4 +90,11 @@ public interface ILiaSessionWriter
         string userId,
         string language,
         CancellationToken cancellationToken = default);
+
+    Task<LiaSubtestStartOutcome> StartSubtestAsync(
+        RequestContext context,
+        string sessionId,
+        string ownerUserId,
+        string subtest,
+        CancellationToken cancellationToken = default);
 }
