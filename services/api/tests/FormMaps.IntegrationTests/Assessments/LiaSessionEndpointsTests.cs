@@ -68,6 +68,35 @@ public class LiaSessionEndpointsTests
         Assert.Equal(0, reader.AccessCalls + reader.GetSessionCalls + reader.GetPracticeCalls);
     }
 
+    // Regression guard (fix round 1): /subtest/start and /timeout previously bound a non-nullable
+    // SubtestStartRequest/TimeoutRequest body, so an anonymous caller with an EMPTY/missing body got a
+    // framework 400 from ASP.NET's own model binding BEFORE the identity guard ever ran. The sweep above
+    // masks this because it always sends a well-formed {"subtest":...} body for these two routes; this
+    // test pins the true "guard order first" contract with no body at all.
+    [Fact]
+    public async Task Anonymous_calls_with_no_body_to_subtest_start_and_timeout_still_return_401_not_a_framework_400()
+    {
+        var (writer, reader) = (new FakeLiaSessionWriter(), new FakeLiaSessionReader());
+        using var factory = new LiaApiFactory(new FakeSubscriptionGuard(allow: true), writer, reader);
+        using var client = factory.CreateClient();
+
+        var routes = new[]
+        {
+            $"{Base}/session/{SessionId}/subtest/start",
+            $"{Base}/session/{SessionId}/timeout",
+        };
+
+        foreach (var path in routes)
+        {
+            var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Post, path));
+            Assert.True(
+                HttpStatusCode.Unauthorized == response.StatusCode,
+                $"POST {path} with no body expected 401 (identity guard first) but got {(int)response.StatusCode}");
+        }
+
+        Assert.Equal(0, writer.StartSubtestCalls + writer.HandleTimeoutCalls);
+    }
+
     // ---------------------------------------------------------------------------------------------
     // POST /start
     // ---------------------------------------------------------------------------------------------

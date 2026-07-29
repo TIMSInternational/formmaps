@@ -261,7 +261,7 @@ public static class LiaEndpoints
         ISubscriptionGuard subscriptionGuard,
         ILiaSessionWriter writer,
         string sessionId,
-        SubtestStartRequest body,
+        SubtestStartRequest? body,
         CancellationToken cancellationToken)
     {
         var context = requestContextAccessor.Current;
@@ -278,12 +278,15 @@ public static class LiaEndpoints
             return Deny(subscription);
         }
 
-        if (!LiaSubtestOrder.Order.Contains(body.Subtest))
+        // body is nullable so a missing/malformed JSON body doesn't short-circuit ASP.NET's own
+        // model-binding BEFORE the guards above run — Contains(null) is safe (just false), matching
+        // legacy's SUBTEST_ORDER.includes(undefined) -> false -> the same "Invalid subtest" 400.
+        if (!LiaSubtestOrder.Order.Contains(body?.Subtest))
         {
             return Error(StatusCodes.Status400BadRequest, "Invalid subtest");
         }
 
-        var outcome = await writer.StartSubtestAsync(context, sessionId, context.Tenant!.UserId, body.Subtest, cancellationToken);
+        var outcome = await writer.StartSubtestAsync(context, sessionId, context.Tenant!.UserId, body!.Subtest, cancellationToken);
         return outcome.Status switch
         {
             LiaSubtestStartStatus.Started => Results.Ok(new { success = true, data = outcome.Result }),
@@ -303,7 +306,7 @@ public static class LiaEndpoints
         ISubscriptionGuard subscriptionGuard,
         ILiaSessionWriter writer,
         string sessionId,
-        TimeoutRequest body,
+        TimeoutRequest? body,
         CancellationToken cancellationToken)
     {
         var context = requestContextAccessor.Current;
@@ -320,12 +323,15 @@ public static class LiaEndpoints
             return Deny(subscription);
         }
 
-        if (!LiaSubtestOrder.Order.Contains(body.Subtest))
+        // body is nullable so a missing/malformed JSON body doesn't short-circuit ASP.NET's own
+        // model-binding BEFORE the guards above run — Contains(null) is safe (just false), matching
+        // legacy's SUBTEST_ORDER.includes(undefined) -> false -> the same "Invalid subtest" 400.
+        if (!LiaSubtestOrder.Order.Contains(body?.Subtest))
         {
             return Error(StatusCodes.Status400BadRequest, "Invalid subtest");
         }
 
-        var outcome = await writer.HandleTimeoutAsync(context, sessionId, context.Tenant!.UserId, body.Subtest, cancellationToken);
+        var outcome = await writer.HandleTimeoutAsync(context, sessionId, context.Tenant!.UserId, body!.Subtest, cancellationToken);
         return outcome.Status switch
         {
             LiaSubmitAnswerStatus.Ok => Results.Ok(new { success = true, data = outcome.Result }),
