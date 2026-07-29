@@ -117,6 +117,45 @@ public sealed class LiaSessionReaderTests : IClassFixture<LiaWriteDatabaseFixtur
         Assert.Contains(userId, audit.Message, StringComparison.Ordinal);
     }
 
+    // ------------------------------------------------------------------------------------------
+    // Fix round 1, Important #2: ReadWithLazyExpiryAsync's ownership check (nonexistent-session -> null,
+    // wrong-owner -> null) is new, IDOR-relevant code that had zero coverage — every other GetSessionAsync
+    // test uses the owning user. Mirrors GetPracticeQuestions_returns_null_for_a_nonexistent_or_not_owned_session.
+    // ------------------------------------------------------------------------------------------
+    [Fact]
+    public async Task GetSession_returns_null_for_a_nonexistent_or_not_owned_session()
+    {
+        var attackerId = Guid.NewGuid().ToString();
+        await SeedUserAsync(attackerId);
+        var (_, sessionId) = await SeedInProgressSessionExpiredAsync(subtest: "pattern_recognition"); // owned by a different user.
+        var (reader, _, _) = MakeReaderAndWriter();
+
+        Assert.Null(await reader.GetSessionAsync(Ctx(attackerId), Guid.NewGuid().ToString(), attackerId));
+        Assert.Null(await reader.GetSessionAsync(Ctx(attackerId), sessionId, attackerId));
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // Fix round 1, Important #3: pins the invariant that a plain GET against a session whose clock has
+    // NOT expired never emits a completion audit log — the audit-log call is correctly nested inside
+    // the expiry-detected branch today, but nothing proved it; a future refactor could accidentally move
+    // it out and fire a spurious "completed" audit on every read.
+    // ------------------------------------------------------------------------------------------
+    [Fact]
+    public async Task GetSession_on_a_session_with_a_live_clock_never_emits_a_completion_audit_log()
+    {
+        var startedAt = DateTime.UtcNow.AddSeconds(-10); // well within pattern_recognition's 180s + grace.
+        var (userId, sessionId) = await SeedInProgressSubtestSessionAsync(
+            subtest: "pattern_recognition", currentItem: 1, subtestStartedAt: startedAt);
+        var (reader, _, logger) = MakeReaderAndWriter();
+
+        var detail = await reader.GetSessionAsync(Ctx(userId), sessionId, userId);
+
+        Assert.NotNull(detail);
+        Assert.Equal("pattern_recognition", detail!.CurrentSubtest); // untouched — the clock has not expired.
+        Assert.DoesNotContain(
+            logger.Entries, e => e.Message.StartsWith("audit.assessment.lia.completed", StringComparison.Ordinal));
+    }
+
     // ==============================================================================================
     // GetPracticeQuestionsAsync
     // ==============================================================================================
