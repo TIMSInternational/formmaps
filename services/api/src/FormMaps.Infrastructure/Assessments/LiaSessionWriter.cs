@@ -893,6 +893,154 @@ public sealed class LiaSessionWriter(
             isCorrect, effectiveAnswer, practiceComplete, next));
     }
 
+    // ================================================================================================
+    // HandleTimeoutAsync — legacy handleTimeout (services/lia/lia-response-service.ts), the explicit
+    // POST /timeout endpoint's write: unlike ExpireIfPastDeadlineAsync (which only fires implicitly, as
+    // a side effect of /start or /submit-answer discovering an expired clock), this is invoked directly
+    // by the candidate's client when its own countdown reaches zero. It shares Task 3/5's
+    // ApplyTimeoutAsync (fill unanswered items -> AdvancePastSubtestAsync) rather than duplicating it,
+    // and — because that machinery can complete the assessment's LAST subtest here exactly as it can
+    // from SubmitAnswerAsync's timeout branch or StartAsync's Gate 2 — threads a real
+    // LiaCompletionResult into LiaAnswerResult.Completion and audit-logs only after the commit succeeds.
+    // ================================================================================================
+
+    // FOR UPDATE (same reasoning as SubmitAnswerAsync's SelectSessionForAnswerSql): this method calls
+    // ApplyTimeoutAsync directly, off of this read, with no other serializing write in between — without
+    // the lock, a concurrent /complete could score + commit this exact session between this read and
+    // ApplyTimeoutAsync's writes, and this method would have no way to detect that.
+    private const string SelectSessionForTimeoutSql = """
+        SELECT "user_id" AS "userId", "status"::text AS "status", "current_subtest"::text AS "currentSubtest"
+        FROM "lia_assessment_sessions" WHERE "id" = @sessionId
+        FOR UPDATE
+        """;
+
+    public async Task<LiaSubmitAnswerOutcome> HandleTimeoutAsync(
+        RequestContext context, string sessionId, string ownerUserId, string subtest,
+        CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        string userId, status, currentSubtest;
+        await using (var command = session.Connection.CreateCommand())
+        {
+            command.Transaction = session.Transaction;
+            command.CommandText = SelectSessionForTimeoutSql;
+            AddParameter(command, "sessionId", sessionId);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.NotFound, null);
+            }
+
+            userId = reader.GetString(0);
+            status = reader.GetString(1);
+            currentSubtest = reader.IsDBNull(2) ? "" : reader.GetString(2);
+        }
+
+        // Ownership: missing == denied -> uniform NotFound (IDOR-safe), like every other writer here.
+        // Kept as its own check, separate from the state-precondition check below: an ownership
+        // mismatch must never be conflated with "wrong status/subtest for the real owner" — the latter
+        // legitimately returns NotInProgress, but folding both into one branch would let an attacker
+        // learn (from a NotInProgress response) that the session exists and is simply in some other
+        // state, defeating the uniform not-found contract every other method in this class upholds.
+        if (!string.Equals(userId, ownerUserId, StringComparison.Ordinal))
+        {
+            return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.NotFound, null);
+        }
+
+        if (status != "in_progress" || currentSubtest != subtest)
+        {
+            return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.NotInProgress, null);
+        }
+
+        var itemCount = LiaSubtestOrder.ItemCounts[subtest];
+        var advanced = await ApplyTimeoutAsync(session, sessionId, subtest, cancellationToken);
+        await session.CommitAsync(cancellationToken);
+
+        if (advanced.Completion is { } completion)
+        {
+            // Audit only after the commit above succeeds, mirroring CompleteAsync's / StartAsync's /
+            // SubmitAnswerAsync's own ordering — a completion audit can never be emitted for a write
+            // that did not durably persist.
+            logger.LogInformation(
+                "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
+                sessionId, ownerUserId, completion.GlobalPercentile, completion.PerformanceLevel);
+        }
+
+        return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.Ok, new LiaAnswerResult(
+            sessionId, itemCount, itemCount, 0, true, advanced.NextSubtest, advanced.AssessmentComplete,
+            Completion: advanced.Completion));
+    }
+
+    // ================================================================================================
+    // SaveViolationsAsync — legacy saveViolations / mergeViolations (lib/proctoring.ts): appends
+    // incoming lockdown-proctoring violation events to the session's existing lockdown_violations
+    // JSONB array and unconditionally overwrites flag_for_review based on the CUMULATIVE count
+    // (existing + new) crossing PROCTORING_FLAG_THRESHOLD — legacy's own design (lia-session-
+    // service.ts:659 `flagForReview: flag`), not a defect to correct. No FOR UPDATE here, matching
+    // this codebase's existing precedent for the identical read-merge-write JSONB shape
+    // (VocationalTakeService.SaveViolationsAsync also reads-then-writes a violations JSONB column with
+    // a plain SELECT, no row lock).
+    // ================================================================================================
+
+    private const int ProctoringFlagThreshold = 3; // legacy PROCTORING_FLAG_THRESHOLD (lib/proctoring.ts).
+
+    private const string SelectSessionForViolationsSql = """
+        SELECT "user_id", "lockdown_violations"::text FROM "lia_assessment_sessions" WHERE "id" = @sessionId
+        """;
+
+    public async Task<LiaSaveViolationsOutcome> SaveViolationsAsync(
+        RequestContext context, string sessionId, string ownerUserId, IReadOnlyList<ViolationEntry> violations,
+        CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        string userId;
+        string? existingJson;
+        await using (var command = session.Connection.CreateCommand())
+        {
+            command.Transaction = session.Transaction;
+            command.CommandText = SelectSessionForViolationsSql;
+            AddParameter(command, "sessionId", sessionId);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                return new LiaSaveViolationsOutcome(LiaSaveViolationsStatus.NotFound, 0);
+            }
+
+            userId = reader.GetString(0);
+            existingJson = reader.IsDBNull(1) ? null : reader.GetString(1);
+        }
+
+        // Ownership: missing == denied -> uniform NotFound (IDOR-safe), like every other writer here.
+        if (!string.Equals(userId, ownerUserId, StringComparison.Ordinal))
+        {
+            return new LiaSaveViolationsOutcome(LiaSaveViolationsStatus.NotFound, 0);
+        }
+
+        var existing = string.IsNullOrEmpty(existingJson)
+            ? new List<ViolationEntry>()
+            : JsonSerializer.Deserialize<List<ViolationEntry>>(existingJson, JsonOptions)!;
+        var all = existing.Concat(violations).Take(500).ToList();
+        var flag = all.Count >= ProctoringFlagThreshold;
+
+        await using (var command = session.Connection.CreateCommand())
+        {
+            command.Transaction = session.Transaction;
+            command.CommandText = """
+                UPDATE "lia_assessment_sessions" SET "lockdown_violations" = @all::jsonb, "flag_for_review" = @flag
+                WHERE "id" = @sessionId
+                """;
+            AddParameter(command, "all", JsonSerializer.Serialize(all, JsonOptions));
+            AddParameter(command, "flag", flag);
+            AddParameter(command, "sessionId", sessionId);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await session.CommitAsync(cancellationToken);
+        return new LiaSaveViolationsOutcome(LiaSaveViolationsStatus.Ok, violations.Count);
+    }
+
     private static string MergePracticeCompleted(string? existingJson, string subtest)
     {
         var dict = string.IsNullOrEmpty(existingJson)

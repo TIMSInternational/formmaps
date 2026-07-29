@@ -114,4 +114,18 @@ public interface ILiaSessionWriter
         string questionId,
         string answer,
         CancellationToken cancellationToken = default);
+
+    Task<LiaSubmitAnswerOutcome> HandleTimeoutAsync(
+        RequestContext context,
+        string sessionId,
+        string ownerUserId,
+        string subtest,
+        CancellationToken cancellationToken = default);
+
+    Task<LiaSaveViolationsOutcome> SaveViolationsAsync(
+        RequestContext context,
+        string sessionId,
+        string ownerUserId,
+        IReadOnlyList<ViolationEntry> violations,
+        CancellationToken cancellationToken = default);
 }

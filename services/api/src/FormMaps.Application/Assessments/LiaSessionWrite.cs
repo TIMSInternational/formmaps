@@ -175,3 +175,23 @@ public enum LiaPracticeAnswerStatus { Ok, NotFound, NotInPractice, QuestionNotFo
 
 /// <summary>Discriminated outcome of a practice-answer-submit attempt (maps to 200 / 404 / 409 / 404 at the endpoint).</summary>
 public sealed record LiaPracticeAnswerOutcome(LiaPracticeAnswerStatus Status, PracticeAnswerResult? Result);
+
+/// <summary>
+/// One lockdown-proctoring violation event (legacy ProctoringViolation, lib/proctoring.ts). Explicit
+/// lowercase JsonPropertyName attributes are required here: the shared JsonOptions instance
+/// (LiaSessionWriter.JsonOptions) is `new JsonSerializerOptions()` — case-sensitive by default — and the
+/// "lockdown_violations" JSONB column stores lowercase keys ("type"/"timestamp"/"details") for both
+/// legacy-written rows and every row this type itself writes going forward. Without these attributes,
+/// deserializing an existing row would silently default every field instead of throwing, and serializing
+/// would write PascalCase keys, permanently diverging from the on-disk shape. "Details" is nullable to
+/// match legacy's optional `details?: string`.
+/// </summary>
+public sealed record ViolationEntry(
+    [property: JsonPropertyName("type")] string Type,
+    [property: JsonPropertyName("timestamp")] string Timestamp,
+    [property: JsonPropertyName("details")] string? Details);
+
+public enum LiaSaveViolationsStatus { Ok, NotFound }
+
+/// <summary>Discriminated outcome of a violation-save attempt (maps to 200 / 404 at the endpoint).</summary>
+public sealed record LiaSaveViolationsOutcome(LiaSaveViolationsStatus Status, int SavedCount);

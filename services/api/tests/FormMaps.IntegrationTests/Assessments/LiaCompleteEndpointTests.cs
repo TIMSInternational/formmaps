@@ -212,6 +212,16 @@ public class LiaCompleteEndpointTests
             CancellationToken cancellationToken = default) =>
             throw new NotImplementedException("SubmitPracticeAnswerAsync is not exercised by LiaCompleteEndpointTests");
 
+        public Task<LiaSubmitAnswerOutcome> HandleTimeoutAsync(
+            RequestContext context, string sessionId, string ownerUserId, string subtest,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException("HandleTimeoutAsync is not exercised by LiaCompleteEndpointTests");
+
+        public Task<LiaSaveViolationsOutcome> SaveViolationsAsync(
+            RequestContext context, string sessionId, string ownerUserId, IReadOnlyList<ViolationEntry> violations,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException("SaveViolationsAsync is not exercised by LiaCompleteEndpointTests");
+
         public Task<LiaCompleteOutcome> CompleteAsync(
             RequestContext context, string sessionId, string ownerUserId, CancellationToken cancellationToken = default)
         {
