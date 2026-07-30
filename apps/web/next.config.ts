@@ -444,7 +444,12 @@ function shouldRouteVideoSessionsToDotnet() {
 }
 
 // Video session detail (Domain 7a, FM-093): GET /api/v1/video/sessions/:id. Own path, own flag,
-// independent from the list+create flag above. Default OFF.
+// independent from the list+create flag above. The rewrite source below excludes the literal
+// "schedule" segment via negative lookahead (same pattern as resume cross-user) because
+// :id would otherwise also match POST /sessions/schedule — that route stays on Node (its
+// calendar-sync side effect was never ported to .NET) and has no .NET handler, so an
+// unguarded :id match would silently 404/break scheduling once this flag is flipped on.
+// Do not remove the exclusion as "redundant" — it is load-bearing.
 function shouldRouteVideoSessionDetailToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VIDEO_SESSION_DETAIL_TO_DOTNET));
 }
@@ -1228,7 +1233,12 @@ const nextConfig: NextConfig = {
         ? [{ source: "/api/v1/video/sessions", destination: `${dotnetApiBaseUrl}/api/v1/video/sessions` }]
         : []),
       ...(shouldRouteVideoSessionDetailToDotnet()
-        ? [{ source: "/api/v1/video/sessions/:id", destination: `${dotnetApiBaseUrl}/api/v1/video/sessions/:id` }]
+        ? [
+            {
+              source: "/api/v1/video/sessions/:id((?!schedule)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/v1/video/sessions/:id`,
+            },
+          ]
         : []),
       ...(shouldRouteVideoSignatureToDotnet()
         ? [{ source: "/api/v1/video/signature", destination: `${dotnetApiBaseUrl}/api/v1/video/signature` }]
