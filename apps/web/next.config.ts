@@ -414,6 +414,11 @@ function shouldRouteResumeCrudToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_CRUD_TO_DOTNET));
 }
 
+// Report send-report-email (Phase F): byte-for-byte port, no PDF/attachment. Default OFF.
+function shouldRouteSendReportEmailToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SEND_REPORT_EMAIL_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1148,6 +1153,14 @@ const nextConfig: NextConfig = {
         ? [
             { source: "/api/resume/default", destination: `${dotnetApiBaseUrl}/api/resume/default` },
             { source: "/api/resume", destination: `${dotnetApiBaseUrl}/api/resume` },
+          ]
+        : []),
+      ...(shouldRouteSendReportEmailToDotnet()
+        ? [
+            {
+              source: "/api/v1/reports/send-report-email/:userId",
+              destination: `${dotnetApiBaseUrl}/api/v1/reports/send-report-email/:userId`,
+            },
           ]
         : []),
     ];
