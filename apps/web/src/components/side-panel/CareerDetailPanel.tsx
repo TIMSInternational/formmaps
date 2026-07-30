@@ -57,8 +57,9 @@ export function CareerDetailPanel({
         </div>
       </div>
 
-      {/* Match Score */}
-      {typeof matchScore === "number" && (
+      {/* Match Score — only when actually scored. Engine floor is ~25%, so a
+          null/<=0 value means "not scored", never a genuine 0% match. */}
+      {typeof matchScore === "number" && matchScore > 0 && (
         <div className={cn("flex items-center gap-3 px-4 py-3 rounded-xl border", scoreBg)}>
           <TrendingUp className={cn("h-5 w-5", scoreColor)} />
           <div>
