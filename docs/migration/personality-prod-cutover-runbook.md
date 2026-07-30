@@ -357,6 +357,11 @@ live prod config (2026-07-20, acct 747814092517). Reuses the green staging image
 (code-identical to main HEAD) + the prod Node app's DB + JWT secrets + the prod VPC
 connector (default). Run it (Claude's attempt was blocked by the prod-infra guardrail —
 this is yours to execute):
+
+> `DailyApiKeySecretArn` is a required parameter (Domain 7a video calling, no CFN
+> default) — the ARN below is a placeholder suffix. Before running this command,
+> create/locate the Secrets Manager secret holding the prod `DAILY_API_KEY` and swap
+> in its real ARN.
 ```
 cd ~/Desktop/NexaDev/clients/tims-international/github/formmaps
 aws cloudformation deploy \
@@ -370,6 +375,7 @@ aws cloudformation deploy \
     EcrAccessRoleArn=arn:aws:iam::747814092517:role/formmaps-apprunner-ecr-access-staging \
     JwtSecretArn=arn:aws:secretsmanager:us-east-1:747814092517:secret:nexa/api/JWT_SECRET-gQjzRH \
     DatabaseUrlSecretArn=arn:aws:secretsmanager:us-east-1:747814092517:secret:nexa/api/DATABASE_URL-8fY9MS \
+    DailyApiKeySecretArn=arn:aws:secretsmanager:us-east-1:747814092517:secret:nexa/api/DAILY_API_KEY-XXXXXX \
     ProdWebOrigin=https://app.formmaps.com
 # then grab the URL:
 aws cloudformation describe-stacks --region us-east-1 --stack-name formmaps-api-prod \

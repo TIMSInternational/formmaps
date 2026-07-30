@@ -253,7 +253,7 @@ public static class VideoEndpoints
         try
         {
             using var document = JsonDocument.Parse(raw);
-            return document.RootElement.ValueKind is JsonValueKind.Object or JsonValueKind.Array
+            return document.RootElement.ValueKind is JsonValueKind.Object
                 ? document.RootElement.Clone()
                 : null;
         }

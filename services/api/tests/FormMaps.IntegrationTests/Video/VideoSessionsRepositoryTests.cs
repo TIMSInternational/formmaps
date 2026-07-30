@@ -19,7 +19,7 @@ public sealed class VideoSessionsRepositoryTests : IClassFixture<VideoSessionsRe
     {
         _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
         await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand("""TRUNCATE "users","counselor_sessions","schools" CASCADE""", conn);
+        await using var cmd = new NpgsqlCommand("""TRUNCATE "users","counselor_sessions","schools","counselor_student_assignments" CASCADE""", conn);
         await cmd.ExecuteNonQueryAsync();
     }
 
