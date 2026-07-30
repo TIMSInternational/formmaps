@@ -72,14 +72,15 @@ export interface AssessmentOverallProgress {
     lastActivity?: string;
   };
   /**
-   * The personality assessment — a 4th, ADDITIVE entry. `gating: false` marks
-   * it explicitly as never part of the 3-assessment career-unlock math below
-   * (overallCompletion). It is purely a visibility/progress-tracking signal —
-   * "recommended", never required.
+   * The personality assessment — became a required 4th assessment (alongside
+   * MIL/360/PCA) in the career/university-unlock gate on 2026-07-30. `gating: true`
+   * reflects that; the one exception is a student already unlocked under the old
+   * 3-assessment rule at cutover (server-side `legacyUnlockGrandfathered`), which
+   * `overallCompletion` below already accounts for via the server's own verdict.
    */
   personalityAssessment: {
     key: "personality";
-    gating: false;
+    gating: boolean;
     status: "not_started" | "in_progress" | "completed";
     hasAccess: boolean;
   };
@@ -236,8 +237,7 @@ export async function getUserAssessmentProgress(
       // Keep default values
     }
 
-    // Fetch personality access — additive, NEVER part of the completion math
-    // below. Never throws: any failure falls back to "not_started".
+    // Fetch personality access. Never throws: any failure falls back to "not_started".
     let personalityStatus: "not_started" | "in_progress" | "completed" = "not_started";
     let personalityHasAccess = false;
 
@@ -254,22 +254,43 @@ export async function getUserAssessmentProgress(
       // rest of progress tracking.
     }
 
-    // Calculate overall completion — deliberately excludes personality.
-    // Changing this to include a 4th assessment would re-lock careers for
-    // every student already unlocked under the current 3-assessment rule.
-    const assessmentStatuses = [milStatus, evaluationStatus, pcaStatus];
-    const completedCount = assessmentStatuses.filter(
-      (status) => status === "completed"
-    ).length;
-    const inProgressCount = assessmentStatuses.filter(
-      (status) => status === "in_progress"
-    ).length;
-
+    // Overall completion (4 assessments: MIL, 360, PCA, Personality) is fetched from
+    // the server's own verdict (GET /api/v1/assessment/completion → checkAssessmentCompletion)
+    // rather than re-derived here, so this client-side tally can never drift from the
+    // server's actual unlock decision — critically including legacyUnlockGrandfathered,
+    // which only the server can evaluate. Falls back to a client-derived 3-of-3 estimate
+    // (the pre-2026-07-30 shape, personality excluded) if the endpoint is unreachable, so
+    // an outage degrades progress display rather than breaking it.
+    let completedCount = 0;
     let overallPercentage = 0;
-    if (completedCount > 0) {
-      overallPercentage = (completedCount / 3) * 100;
-    } else if (inProgressCount > 0) {
-      overallPercentage = (inProgressCount / 3) * 30; // 30% for in progress
+    let totalAssessments = 4;
+    let personalityGates = true;
+
+    try {
+      const completionJson = await apiRequest<{
+        data?: { allDone: boolean; readyForInsights: boolean; personalityCompleted: boolean };
+      }>("/api/v1/assessment/completion");
+      const serverCompletion = completionJson.data;
+      if (!serverCompletion) throw new Error("no completion data");
+
+      const nonPersonalityStatuses = [milStatus, evaluationStatus, pcaStatus];
+      const nonPersonalityCompleted = nonPersonalityStatuses.filter((s) => s === "completed").length;
+      completedCount = nonPersonalityCompleted + (personalityStatus === "completed" ? 1 : 0);
+      overallPercentage = serverCompletion.allDone ? 100 : (completedCount / 4) * 100;
+      // The student is grandfathered if the server says allDone despite Personality
+      // not actually being complete — the only way that combination can occur.
+      personalityGates = !(serverCompletion.allDone && !serverCompletion.personalityCompleted);
+    } catch {
+      totalAssessments = 3;
+      const assessmentStatuses = [milStatus, evaluationStatus, pcaStatus];
+      const nonPersonalityCompletedCount = assessmentStatuses.filter((s) => s === "completed").length;
+      const inProgressCount = assessmentStatuses.filter((s) => s === "in_progress").length;
+      completedCount = nonPersonalityCompletedCount;
+      if (nonPersonalityCompletedCount > 0) {
+        overallPercentage = (nonPersonalityCompletedCount / 3) * 100;
+      } else if (inProgressCount > 0) {
+        overallPercentage = (inProgressCount / 3) * 30; // 30% for in progress
+      }
     }
 
     return {
@@ -292,12 +313,12 @@ export async function getUserAssessmentProgress(
       },
       personalityAssessment: {
         key: "personality",
-        gating: false,
+        gating: personalityGates,
         status: personalityStatus,
         hasAccess: personalityHasAccess,
       },
       overallCompletion: {
-        totalAssessments: 3,
+        totalAssessments,
         completedAssessments: completedCount,
         percentageComplete: Math.round(overallPercentage),
       },

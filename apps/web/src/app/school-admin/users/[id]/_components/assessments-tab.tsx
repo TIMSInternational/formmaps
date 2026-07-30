@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import {
   Brain,
   Target,
+  Sparkles,
   Download,
   Loader2,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import type { PCADISCResult } from "@/hooks/useStudentDetailData";
 import type { MILResultsData } from "@/services/milService";
 import type { PCAAssessmentResponse } from "@/services/pcaService";
 import type { UseMutationResult } from "@tanstack/react-query";
+import type { StudentReport } from "@/types/student";
 
 interface AssessmentsTabProps {
   milData?: MILResultsData | null;
@@ -25,6 +27,7 @@ interface AssessmentsTabProps {
   pcaDISCLoading: boolean;
   registerPCA: UseMutationResult<PCAAssessmentResponse, Error, { PerNom: string; PerApe: string; PerNumIde: string; PerGen: "F" | "M"; PerMail: string }>;
   student: { id: string; name: string; email: string };
+  studentReport?: StudentReport | null;
 }
 
 export function AssessmentsTab({
@@ -33,6 +36,7 @@ export function AssessmentsTab({
   pcaDISCLoading,
   registerPCA,
   student,
+  studentReport,
 }: AssessmentsTabProps) {
   const { t, i18n } = useTranslation();
   const [reportLoading, setReportLoading] = useState<string | null>(null);
@@ -307,6 +311,29 @@ export function AssessmentsTab({
                   </a>
                 </div>
               )}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Personality — status only (full narrative lives on the student's own results page) */}
+      <Card>
+        <CardHeader icon={Sparkles} color="#6366f1" title="Personality Assessment" badge={
+          studentReport?.completion.personality ? (
+            <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(99,102,241,0.1)", color: "#6366f1", marginLeft: 4 }}>
+              Complete
+            </span>
+          ) : null
+        } />
+        <div style={{ padding: 16 }}>
+          {studentReport?.completion.personality ? (
+            <div style={{ fontSize: 12, color: "var(--admin-font-secondary)" }}>
+              This student has completed their Personality Assessment.
+            </div>
+          ) : (
+            <div style={{ textAlign: "center", padding: "24px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
+              <Sparkles style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.4 }} />
+              No Personality Assessment results yet.
             </div>
           )}
         </div>

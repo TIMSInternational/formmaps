@@ -3,7 +3,9 @@
 // ============================================
 
 export type HolidayType = "national" | "school" | "custom";
-export type AssessmentType = "MIL" | "PCA" | "360" | "TIMS";
+// "TIMS" predates the 4 real assessments (MIL/PCA/360/Personality) and no code branches
+// on it — left as-is rather than assumed to mean Personality (unconfirmed legacy value).
+export type AssessmentType = "MIL" | "PCA" | "360" | "TIMS" | "Personality";
 
 export interface AcademicTerm {
   id: string;

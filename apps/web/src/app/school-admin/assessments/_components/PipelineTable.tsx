@@ -46,8 +46,8 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
   const statusLabel = (s: string) => s === "done" ? "Completed" : s === "in_progress" ? "In Progress" : "Not Started";
   const statusBg = (s: string) => s === "done" ? "rgba(16,185,129,0.1)" : s === "in_progress" ? "rgba(245,158,11,0.1)" : "rgba(107,114,128,0.1)";
 
-  const overallDone = pcaDone + (student.mil === "done" ? 1 : 0) + student.eval360Detail.completed;
-  const overallTotal = pcaTotal + 1 + (student.eval360Detail.total || 1);
+  const overallDone = pcaDone + (student.mil === "done" ? 1 : 0) + student.eval360Detail.completed + (student.personality === "done" ? 1 : 0);
+  const overallTotal = pcaTotal + 1 + (student.eval360Detail.total || 1) + 1;
   const overallPct = overallTotal > 0 ? Math.round((overallDone / overallTotal) * 100) : 0;
 
   return (
@@ -139,6 +139,25 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
               </span>
             </div>
           </div>
+
+          {/* Personality */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+              Personality Assessment
+            </div>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>4-Letter Personality Type</span>
+              <span style={{
+                fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
+                background: statusBg(student.personality), color: statusColor(student.personality), textTransform: "uppercase",
+              }}>
+                {statusLabel(student.personality)}
+              </span>
+            </div>
+          </div>
         </div>
 
         <div style={{ padding: "12px 20px", borderTop: "1px solid var(--admin-border-default)", display: "flex", justifyContent: "flex-end", gap: 8 }}>
@@ -188,7 +207,7 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
   if (showIncomplete) {
     filtered = filtered.filter(s => {
       const pcaIncomplete = Object.values(s.pca).some(v => v !== "done");
-      return pcaIncomplete || s.mil !== "done" || s.eval360 !== "done";
+      return pcaIncomplete || s.mil !== "done" || s.eval360 !== "done" || s.personality !== "done";
     });
   }
 
@@ -215,9 +234,11 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
     const hasPcaIncomplete = selectedStudents.some(s => Object.values(s.pca).some(v => v !== "done"));
     const hasMilIncomplete = selectedStudents.some(s => s.mil !== "done");
     const has360Incomplete = selectedStudents.some(s => s.eval360 !== "done");
+    const hasPersonalityIncomplete = selectedStudents.some(s => s.personality !== "done");
     if (hasPcaIncomplete) pendingTypes.push("PCA (Personal Competence Analysis)");
     if (hasMilIncomplete) pendingTypes.push("MIL (Multiple Intelligence Lens)");
     if (has360Incomplete) pendingTypes.push("360 Evaluation");
+    if (hasPersonalityIncomplete) pendingTypes.push("Personality Assessment");
   }
 
   return (
@@ -322,6 +343,7 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
               ))}
               <th style={thStyle}>MIL</th>
               <th style={thStyle}>360</th>
+              <th style={thStyle}>Personality</th>
             </tr>
           </thead>
           <tbody>
@@ -366,11 +388,14 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
                     )}
                   </div>
                 </td>
+                <td style={{ padding: "6px 10px", textAlign: "center" }}>
+                  <StatusIcon status={s.personality} />
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={10} style={{ padding: 24, textAlign: "center", color: "var(--admin-font-tertiary)", fontSize: 13 }}>
+                <td colSpan={11} style={{ padding: 24, textAlign: "center", color: "var(--admin-font-tertiary)", fontSize: 13 }}>
                   No students found
                 </td>
               </tr>

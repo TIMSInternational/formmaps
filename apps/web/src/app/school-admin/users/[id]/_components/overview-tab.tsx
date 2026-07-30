@@ -27,6 +27,8 @@ interface OverviewTabProps {
   pcaTotal: number;
   evalCompleted: number;
   evalTotal: number;
+  personalityCompleted: number;
+  personalityTotal: number;
   evalGroups?: EvaluationGroupWithId[] | null;
 }
 
@@ -39,6 +41,8 @@ export function OverviewTab({
   pcaTotal,
   evalCompleted,
   evalTotal,
+  personalityCompleted,
+  personalityTotal,
   evalGroups,
 }: OverviewTabProps) {
   return (
@@ -125,6 +129,7 @@ export function OverviewTab({
             { label: "MIL / LIA", completed: milCompleted, total: milTotal, color: "#2E9098" },
             { label: "PCA Exams", completed: pcaCompleted, total: pcaTotal || 1, color: "#8b5cf6" },
             { label: "360 Evaluations", completed: evalCompleted, total: evalTotal || 1, color: "#14b8a6" },
+            { label: "Personality", completed: personalityCompleted, total: personalityTotal || 1, color: "#6366f1" },
           ].map((item) => {
             const pct = item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0;
             return (

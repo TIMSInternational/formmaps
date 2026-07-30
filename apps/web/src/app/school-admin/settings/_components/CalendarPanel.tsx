@@ -244,7 +244,7 @@ export default function CalendarPanel() {
                   <div className="space-y-2"><Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("settings.calendarPanel.periods.type")}</Label>
                     <Select value={periodForm.assessmentTypes[0]} onValueChange={(v) => setPeriodForm({ ...periodForm, assessmentTypes: [v as AssessmentType] })}>
                       <SelectTrigger style={inputStyle}><SelectValue /></SelectTrigger>
-                      <SelectContent><SelectItem value="MIL">MIL</SelectItem><SelectItem value="PCA">PCA</SelectItem><SelectItem value="360">360°</SelectItem><SelectItem value="TIMS">TIMS</SelectItem></SelectContent>
+                      <SelectContent><SelectItem value="MIL">MIL</SelectItem><SelectItem value="PCA">PCA</SelectItem><SelectItem value="360">360°</SelectItem><SelectItem value="Personality">Personality</SelectItem><SelectItem value="TIMS">TIMS</SelectItem></SelectContent>
                     </Select></div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2"><Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("settings.calendarPanel.periods.start")}</Label><Input type="date" style={inputStyle} value={periodForm.startDate} onChange={(e) => setPeriodForm({ ...periodForm, startDate: e.target.value })} /></div>

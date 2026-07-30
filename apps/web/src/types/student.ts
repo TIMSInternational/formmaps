@@ -133,6 +133,7 @@ export interface StudentReport {
     lia: boolean;
     disc: boolean;
     eval360: boolean;
+    personality: boolean;
     overall: boolean;
   };
   pca: {

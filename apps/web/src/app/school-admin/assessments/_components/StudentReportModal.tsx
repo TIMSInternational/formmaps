@@ -61,6 +61,7 @@ function buildPrintableSections(r: StudentReport) {
       <tr><td>MIL / LIA</td><td>${r.completion.lia ? "Completed" : "Pending"}</td></tr>
       <tr><td>PCA</td><td>${r.completion.disc ? "Completed" : "Pending"}</td></tr>
       <tr><td>360 Evaluation</td><td>${r.completion.eval360 ? "Completed" : "Pending"}</td></tr>
+      <tr><td>Personality</td><td>${r.completion.personality ? "Completed" : "Pending"}</td></tr>
       <tr><td><strong>Overall</strong></td><td><strong>${r.completion.overall ? "Complete" : "Incomplete"}</strong></td></tr></table>`,
   });
   if (r.mil.sessions.length) {
@@ -158,10 +159,11 @@ export function StudentReportModal({ studentId, open, onOpenChange }: {
             </div>
 
             {/* Completion summary */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               <CompletionChip label="MIL" done={report.completion.lia} />
               <CompletionChip label="PCA" done={report.completion.disc} />
               <CompletionChip label="360" done={report.completion.eval360} />
+              <CompletionChip label="Personality" done={report.completion.personality} />
               <CompletionChip label="Overall" done={report.completion.overall} />
             </div>
 

@@ -52,9 +52,10 @@ export default function UniversityPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Assessment gate — same as Career Paths Explorer
+  // Assessment gate — same as Career Paths Explorer. percentageComplete (server-driven,
+  // accounts for legacyUnlockGrandfathered) rather than a raw completedAssessments/totalAssessments compare.
   const { data: assessmentProgress, isLoading: assessmentLoading } = useAssessmentProgress(userId);
-  const allAssessmentsComplete = assessmentProgress?.overallCompletion?.completedAssessments === 3;
+  const allAssessmentsComplete = assessmentProgress?.overallCompletion?.percentageComplete === 100;
 
   // Initialize filters from URL params
   const [filters, setFiltersState] = React.useState<UniversityFilters>(() => {
@@ -158,10 +159,12 @@ export default function UniversityPage() {
     const pcaStatus = assessmentProgress?.pcaAssessment?.status || "not_started";
     const milStatus = assessmentProgress?.milAssessment?.status || "not_started";
     const evalStatus = assessmentProgress?.evaluationAssessment?.status || "not_started";
+    const personalityStatus = assessmentProgress?.personalityAssessment?.status || "not_started";
     const gateAssessments = [
       { name: "PCA Assessment", description: "Discover your DISC personality profile", status: pcaStatus, href: "/dashboard/assessments/pca" },
       { name: "LIA Assessment", description: "Measure your cognitive abilities across 5 dimensions", status: milStatus, href: "/dashboard/assessments/lia" },
       { name: "360° Evaluation", description: "Gather feedback from peers, parents, and teachers", status: evalStatus, href: "/dashboard/assessments/evaluation" },
+      { name: "Personality Assessment", description: "Resolve your 4-letter personality type", status: personalityStatus, href: "/dashboard/assessments/personality" },
     ];
     const completedCount = gateAssessments.filter((a) => a.status === "completed").length;
 
@@ -173,13 +176,13 @@ export default function UniversityPage() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Complete Your Assessments</h1>
           <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-            Finish all 3 assessments to unlock personalized university recommendations based on your profile, competencies, and preferences.
+            Finish all 4 assessments to unlock personalized university recommendations based on your profile, competencies, and preferences.
           </p>
         </div>
         <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground">
-          <span>{completedCount}/3 completed</span>
+          <span>{completedCount}/4 completed</span>
           <div className="flex gap-1.5">
-            {[0, 1, 2].map((i) => (
+            {[0, 1, 2, 3].map((i) => (
               <div key={i} className={`w-8 h-2 rounded-full transition-colors ${i < completedCount ? "bg-emerald-500" : "bg-muted"}`} />
             ))}
           </div>
@@ -208,7 +211,7 @@ export default function UniversityPage() {
             );
           })}
         </div>
-        {completedCount < 3 && (() => {
+        {completedCount < 4 && (() => {
           const next = gateAssessments.find((a) => a.status !== "completed");
           return next ? (
             <div className="text-center pt-2">

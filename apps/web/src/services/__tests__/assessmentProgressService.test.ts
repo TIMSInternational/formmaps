@@ -20,6 +20,7 @@ import {
 } from "@/services/evaluationService";
 import { checkPCAStatus } from "@/services/pcaService";
 import { personalityApi } from "@/services/personalityService";
+import { apiRequest } from "@/lib/api/apiClient";
 
 jest.mock("@/services/milService", () => ({ getMILResults: jest.fn() }));
 jest.mock("@/services/evaluationService", () => ({
@@ -28,12 +29,27 @@ jest.mock("@/services/evaluationService", () => ({
 }));
 jest.mock("@/services/pcaService", () => ({ checkPCAStatus: jest.fn() }));
 jest.mock("@/services/personalityService", () => ({ personalityApi: { getAccess: jest.fn() } }));
+jest.mock("@/lib/api/apiClient", () => ({ apiRequest: jest.fn() }));
 
 const mockMil = getMILResults as jest.Mock;
 const mockGroups = getUserEvaluationGroups as jest.Mock;
 const mockSummary = getUserEvaluationProgressSummary as jest.Mock;
 const mockPca = checkPCAStatus as jest.Mock;
 const mockPersonalityAccess = personalityApi.getAccess as jest.Mock;
+const mockApiRequest = apiRequest as jest.Mock;
+
+// GET /api/v1/assessment/completion — the server's checkAssessmentCompletion verdict,
+// now the authoritative source for overallCompletion (see assessmentProgressService.ts).
+function mockCompletionEndpoint(overrides: { allDone?: boolean; personalityCompleted?: boolean } = {}) {
+  mockApiRequest.mockResolvedValue({
+    success: true,
+    data: {
+      allDone: overrides.allDone ?? false,
+      readyForInsights: overrides.allDone ?? false,
+      personalityCompleted: overrides.personalityCompleted ?? false,
+    },
+  });
+}
 
 function group(
   overrides: Partial<EvaluationGroupWithId> & { id: string },
@@ -79,6 +95,7 @@ describe("getUserAssessmentProgress — 360 evaluation status", () => {
     mockMil.mockResolvedValue(null);
     mockPca.mockResolvedValue({ status: "not_started" });
     mockPersonalityAccess.mockResolvedValue({ has_access: false, has_completed: false });
+    mockCompletionEndpoint();
     mockSummary.mockReturnValue({
       totalGroups: 0, completedEvaluations: 0, pendingEvaluations: 0, expiredInvitations: 0,
       groupsByType: { Parent: 0, Teacher: 0, SiblingFriend: 0, Self: 0 },
@@ -133,10 +150,12 @@ describe("getUserAssessmentProgress — 360 evaluation status", () => {
     expect(progress.evaluationAssessment.status).toBe("not_started");
   });
 
-  // CareerExplorer.tsx gates on overallCompletion.completedAssessments === 3
-  // (all 3 of MIL/360/PCA "completed"). This proves that gate is unlocked by
-  // the corrected 360 rule transitively, with no separate fix needed there.
-  it("unlocks the CareerExplorer 3-of-3 gate (overallCompletion) at 3-of-4 360 evaluators", async () => {
+  // CareerExplorer.tsx reads overallCompletion.completedAssessments. This proves the
+  // corrected 360 rule feeds through transitively (MIL/360/PCA all read as "completed"),
+  // with no separate fix needed there. Personality intentionally left not-completed and
+  // the server mocked as NOT allDone (real, non-grandfathered case) — completedAssessments
+  // should be 3-of-4, not 4, matching the fact Personality still isn't done.
+  it("reflects 3-of-4 completed (MIL/360/PCA) at 3-of-4 360 evaluators, Personality still pending", async () => {
     mockMil.mockResolvedValue({
       completedExams: 5, totalExams: 5, overallScore: 80, lastCompletedAt: "2026-01-01",
       examResults: [{ status: "completed", scorePercentage: 80 }],
@@ -148,12 +167,15 @@ describe("getUserAssessmentProgress — 360 evaluation status", () => {
       group({ id: "3", groupType: "Teacher", relation: "Counselor", isEvaluationCompleted: true }),
       group({ id: "4", groupType: "SiblingFriend", relation: "Friend", isEvaluationCompleted: false }),
     ]);
+    mockCompletionEndpoint({ allDone: false, personalityCompleted: false });
     const progress = await getUserAssessmentProgress("student-1");
     expect(progress.overallCompletion.completedAssessments).toBe(3);
+    expect(progress.overallCompletion.totalAssessments).toBe(4);
+    expect(progress.overallCompletion.percentageComplete).toBe(75);
   });
 });
 
-describe("getUserAssessmentProgress — personality: a 4th, non-gating entry", () => {
+describe("getUserAssessmentProgress — personality: required 4th assessment (since 2026-07-30)", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockMil.mockResolvedValue(null);
@@ -163,15 +185,17 @@ describe("getUserAssessmentProgress — personality: a 4th, non-gating entry", (
       groupsByType: { Parent: 0, Teacher: 0, SiblingFriend: 0, Self: 0 },
     });
     mockPca.mockResolvedValue({ status: "not_started", lastActivity: undefined, hasResults: false, pcaCod: null });
+    mockCompletionEndpoint();
   });
 
-  it("exposes personalityAssessment with gating:false and status derived from /access", async () => {
+  it("exposes personalityAssessment with gating:true (not grandfathered) and status derived from /access", async () => {
     mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: true, existing_session_id: "sess-1" });
+    mockCompletionEndpoint({ allDone: false, personalityCompleted: true });
 
     const result = await getUserAssessmentProgress("u1");
 
     expect(result).toHaveProperty("personalityAssessment");
-    expect((result as any).personalityAssessment.gating).toBe(false);
+    expect((result as any).personalityAssessment.gating).toBe(true);
     expect((result as any).personalityAssessment.status).toBe("completed");
   });
 
@@ -195,26 +219,53 @@ describe("getUserAssessmentProgress — personality: a 4th, non-gating entry", (
   });
 
   // -----------------------------------------------------------------------
-  // THE GATING GUARANTEE: overallCompletion is computed from exactly the same
-  // 3 assessments as before — personality must NEVER shift this math, in
-  // either direction, regardless of its own status.
+  // THE 4-ASSESSMENT GUARANTEE: overallCompletion now counts Personality as a
+  // real 4th assessment (totalAssessments === 4), and completedAssessments
+  // reflects Personality's own status — the opposite of the pre-2026-07-30
+  // "personality never shifts the math" invariant this suite used to pin.
   // -----------------------------------------------------------------------
-  it("overallCompletion.totalAssessments stays 3 even when personality is completed", async () => {
+  it("overallCompletion.totalAssessments is 4", async () => {
     mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: true, existing_session_id: "sess-1" });
+    mockCompletionEndpoint({ allDone: false, personalityCompleted: true });
     const result = await getUserAssessmentProgress("u1");
-    expect(result.overallCompletion.totalAssessments).toBe(3);
+    expect(result.overallCompletion.totalAssessments).toBe(4);
   });
 
-  it("overallCompletion.completedAssessments is byte-identical whether personality is completed or absent", async () => {
+  it("overallCompletion.completedAssessments increases by 1 when personality completes (all else held constant)", async () => {
     mockPersonalityAccess.mockResolvedValue({ has_access: false, has_completed: false });
+    mockCompletionEndpoint({ allDone: false, personalityCompleted: false });
     const withoutPersonality = await getUserAssessmentProgress("u1");
 
     mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: true, existing_session_id: "sess-1" });
+    mockCompletionEndpoint({ allDone: false, personalityCompleted: true });
     const withPersonality = await getUserAssessmentProgress("u1");
 
-    expect(withPersonality.overallCompletion).toEqual(withoutPersonality.overallCompletion);
+    expect(withPersonality.overallCompletion.completedAssessments).toBe(
+      withoutPersonality.overallCompletion.completedAssessments + 1
+    );
     expect(withPersonality.milAssessment.status).toEqual(withoutPersonality.milAssessment.status);
     expect(withPersonality.evaluationAssessment.status).toEqual(withoutPersonality.evaluationAssessment.status);
     expect(withPersonality.pcaAssessment.status).toEqual(withoutPersonality.pcaAssessment.status);
+  });
+
+  it("a legacyUnlockGrandfathered student reads gating:false and 100% complete even without personality", async () => {
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: false });
+    // Server says allDone despite personalityCompleted:false — the only way that
+    // combination occurs is legacyUnlockGrandfathered.
+    mockCompletionEndpoint({ allDone: true, personalityCompleted: false });
+
+    const result = await getUserAssessmentProgress("u1");
+
+    expect((result as any).personalityAssessment.gating).toBe(false);
+    expect(result.overallCompletion.percentageComplete).toBe(100);
+  });
+
+  it("falls back to the 3-assessment estimate (does not throw) when the completion endpoint is unreachable", async () => {
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: true, existing_session_id: "sess-1" });
+    mockApiRequest.mockRejectedValue(new Error("network down"));
+
+    const result = await getUserAssessmentProgress("u1");
+
+    expect(result.overallCompletion.totalAssessments).toBe(3);
   });
 });

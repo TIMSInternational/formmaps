@@ -25,8 +25,12 @@ export default function CareerExplorer() {
   const { t } = useTranslation();
   const { user } = useGlobalStore();
   const { data: assessmentProgress, isLoading: assessmentLoading } = useAssessmentProgress(user?.id || "");
+  // percentageComplete (not a raw completedAssessments/totalAssessments compare) is
+  // deliberately used here — it's already server-driven and accounts for
+  // legacyUnlockGrandfathered, where completedAssessments can be 3-of-4 (Personality
+  // not done) while the student is still genuinely unlocked.
   const allAssessmentsComplete =
-    assessmentProgress?.overallCompletion?.completedAssessments === 3;
+    assessmentProgress?.overallCompletion?.percentageComplete === 100;
 
   const [filters, setFilters] = useState<{
     search?: string;
@@ -35,9 +39,8 @@ export default function CareerExplorer() {
     sort?: string;
   }>({});
 
-  // Personality is a 4th, ADDITIVE progress-tracking entry (gating:false) —
-  // rendered as a "recommended" chip here, never as a gate alongside the 3
-  // required assessments above.
+  // Personality became a required 4th assessment (alongside PCA/LIA/360) on
+  // 2026-07-30 — see personalityAssessment.gating and the required checklist below.
   const personalityStatus = assessmentProgress?.personalityAssessment?.status || "not_started";
   const personalityCompleted = personalityStatus === "completed";
 
@@ -135,6 +138,7 @@ export default function CareerExplorer() {
     const pcaStatus = assessmentProgress?.pcaAssessment?.status || "not_started";
     const milStatus = assessmentProgress?.milAssessment?.status || "not_started";
     const evalStatus = assessmentProgress?.evaluationAssessment?.status || "not_started";
+    const personalityGateStatus = assessmentProgress?.personalityAssessment?.status || "not_started";
 
     const assessments = [
       {
@@ -155,6 +159,12 @@ export default function CareerExplorer() {
         status: evalStatus,
         href: "/dashboard/assessments/evaluation",
       },
+      {
+        name: t("career.gate.personality", "Personality Assessment"),
+        description: t("career.gate.personalityDesc", "Resolve your 4-letter personality type"),
+        status: personalityGateStatus,
+        href: "/dashboard/assessments/personality",
+      },
     ];
 
     const completedCount = assessments.filter((a) => a.status === "completed").length;
@@ -169,15 +179,15 @@ export default function CareerExplorer() {
             {t("career.gate.title", "Complete Your Assessments")}
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-            {t("career.gate.subtitle", "Finish all 3 assessments to unlock personalized career matches tailored to your unique profile.")}
+            {t("career.gate.subtitle", "Finish all 4 assessments to unlock personalized career matches tailored to your unique profile.")}
           </p>
         </div>
 
         {/* Progress indicator */}
         <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground">
-          <span>{completedCount}/3 {t("career.gate.completed", "completed")}</span>
+          <span>{completedCount}/4 {t("career.gate.completed", "completed")}</span>
           <div className="flex gap-1.5">
-            {[0, 1, 2].map((i) => (
+            {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
                 className={`w-8 h-2 rounded-full transition-colors ${
@@ -232,42 +242,8 @@ export default function CareerExplorer() {
           })}
         </div>
 
-        {/* Personality — recommended, NOT a gate. Not counted in completedCount/3. */}
-        <Link
-          href="/dashboard/assessments/personality"
-          className={`flex items-center gap-4 p-5 rounded-2xl border transition-all duration-200 ${
-            personalityCompleted
-              ? "bg-emerald-50/50 border-emerald-200/60"
-              : "bg-card border-dashed border-border hover:border-primary/30 hover:shadow-sm"
-          }`}
-        >
-          <div className="shrink-0">
-            {personalityCompleted ? (
-              <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-            ) : (
-              <Sparkles className="w-6 h-6 text-indigo-400" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className={`text-sm font-semibold ${personalityCompleted ? "text-emerald-700" : "text-foreground"}`}>
-              {t("career.personality.name", "Personality Assessment")}
-              <span className="ml-2 text-xs font-medium text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">
-                {personalityCompleted
-                  ? t("career.personality.completed", "Completed")
-                  : t("career.personality.recommended", "Recommended")}
-              </span>
-            </h3>
-            <p className={`text-xs mt-0.5 ${personalityCompleted ? "text-emerald-600/70" : "text-muted-foreground"}`}>
-              {t("career.personality.description", "Add your 4-letter personality type for even sharper career matches")}
-            </p>
-          </div>
-          {!personalityCompleted && (
-            <ArrowRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />
-          )}
-        </Link>
-
         {/* CTA */}
-        {completedCount < 3 && (() => {
+        {completedCount < 4 && (() => {
           const next = assessments.find((a) => a.status !== "completed");
           return next ? (
             <div className="text-center pt-2">
@@ -303,7 +279,8 @@ export default function CareerExplorer() {
           <p className="text-[11px] text-muted-foreground/70 ml-0 sm:ml-[3.25rem] leading-relaxed">
             {t("career.explorer.disclaimer", "These match estimates are based on your assessment data and are for informational guidance only — not a guarantee of employment and not a substitute for professional career counseling.")}
           </p>
-          {/* Personality — recommended, non-gating signal into an already-unlocked explorer. */}
+          {/* Reachable only for a legacyUnlockGrandfathered student (Personality is required for
+              everyone else to have reached this unlocked view at all) — nudge to still complete it. */}
           {!personalityCompleted && (
             <Link
               href="/dashboard/assessments/personality"
