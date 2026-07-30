@@ -3,6 +3,7 @@ using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.Assessments;
@@ -21,7 +22,24 @@ public sealed class LiaSubtestStartTests : IClassFixture<LiaWriteDatabaseFixture
     private NpgsqlDataSource _dataSource = null!;
 
     public LiaSubtestStartTests(LiaWriteDatabaseFixture fixture) => _fixture = fixture;
-    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
+    // Shared, PRE-WARMED question-catalog cache (one per test class, mirroring the process-wide
+    // singleton production registers). Warming in InitializeAsync matters for the concurrency tests:
+    // the resolver's first-load semaphore would otherwise serialize the racers at the top of
+    // StartAsync, letting the first one run to completion (and commit the reentry lock) while the
+    // others are still queued — an artificial ordering that is not what those tests pin, and which
+    // production never sees after its first request.
+    private readonly LiaQuestionCatalogCache _catalogCache = new();
+
+    public async Task InitializeAsync()
+    {
+        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
+        await new LiaQuestionIdResolver(
+                new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()),
+                _catalogCache,
+                NullLogger<LiaQuestionIdResolver>.Instance)
+            .WarmAsync(Ctx(Guid.NewGuid().ToString()));
+    }
+
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     [Fact]
@@ -137,7 +155,9 @@ public sealed class LiaSubtestStartTests : IClassFixture<LiaWriteDatabaseFixture
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
-        return (new LiaSessionWriter(factory, logger), logger);
+        var resolver = new LiaQuestionIdResolver(
+            factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
+        return (new LiaSessionWriter(factory, resolver, logger), logger);
     }
 
     private static RequestContext Ctx(string userId, string name = "Test User", string email = "test@e.st") =>

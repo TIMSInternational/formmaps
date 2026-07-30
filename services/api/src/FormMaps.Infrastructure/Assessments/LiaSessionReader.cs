@@ -29,7 +29,8 @@ namespace FormMaps.Infrastructure.Assessments;
 /// </summary>
 public sealed class LiaSessionReader(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
-    ILiaSessionWriter sessionWriter) : ILiaSessionReader
+    ILiaSessionWriter sessionWriter,
+    ILiaQuestionIdResolver questionIdResolver) : ILiaSessionReader
 {
     private const string SelectActiveSessionForAccessSql = """
         SELECT "id", "status"::text, "lockedAt" FROM "lia_assessment_sessions"
@@ -77,6 +78,11 @@ public sealed class LiaSessionReader(
     public async Task<IReadOnlyList<ClientQuestion>?> GetPracticeQuestionsAsync(
         RequestContext context, string sessionId, string ownerUserId, CancellationToken cancellationToken = default)
     {
+        // Warm the question catalog BEFORE taking a connection — a lazy first load from inside the
+        // transaction below would need a SECOND pooled connection while this one is held, and
+        // MaxPoolSize is 10. See ILiaQuestionIdResolver.WarmAsync.
+        await questionIdResolver.WarmAsync(context, cancellationToken);
+
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
         await using var command = session.Connection.CreateCommand();
         command.Transaction = session.Transaction;
@@ -91,7 +97,8 @@ public sealed class LiaSessionReader(
         }
 
         var subtest = reader.IsDBNull(1) ? LiaSubtestOrder.Order[0] : reader.GetString(1);
-        return LiaQuestionServing.FetchPracticeQuestions(subtest, reader.GetString(2));
+        return await LiaQuestionServing.FetchPracticeQuestionsAsync(
+            questionIdResolver, context, subtest, reader.GetString(2), cancellationToken);
     }
 
     private static void AddParameter(DbCommand command, string name, object value)

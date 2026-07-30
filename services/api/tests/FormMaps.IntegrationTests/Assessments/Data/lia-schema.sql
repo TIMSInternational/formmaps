@@ -1,10 +1,19 @@
--- Schema-only harness DDL for the LIA completeSession write slice (FM-DOTNET-029).
+-- Schema-only harness DDL for the LIA session write lifecycle (FM-DOTNET-029).
 -- Verbatim from prisma/migrations/20260703000000_lia_tims_parity (+ flag_for_review from the
 -- 07-13 proctoring migration, + reentryCount/lockedAt from 20260725100000_lia_reentry_limit),
--- with two harness simplifications: a minimal `users` stub (the prod table has many more columns
--- none of which completeSession touches) and the lia_responses -> lia_questions FK dropped
--- (completeSession never reads lia_questions, so the harness omits that table). NO RLS policies
--- (schema-only; RLS-e2e deferred — policy DDL is not in the repo migrations).
+-- with ONE harness simplification: a minimal `users` stub (the prod table has many more columns
+-- none of which this slice touches). NO RLS policies (schema-only; RLS-e2e deferred — policy DDL
+-- is not in the repo migrations; note that prod's lia_questions has no RLS policy either, so this
+-- table in particular is a faithful mirror).
+--
+-- `lia_questions` and the `lia_responses_question_id_fkey` FK ARE present and MUST stay present.
+-- They were originally omitted with the justification "completeSession never reads lia_questions" —
+-- true for the first task's read-only-completion scope, but false the moment response-INSERTing code
+-- arrived. Without this constraint the harness silently accepted any question_id string, so a whole
+-- class of bug (writing ids that cannot exist in prod's lia_questions) passed a fully green suite and
+-- would have 500'd on every /answer and /timeout call in production. LiaWriteDatabaseFixture seeds
+-- one row here per entry of the embedded static question bank, with a freshly generated uuid — exactly
+-- mirroring prod, where `id` is `@default(uuid())` and therefore differs per environment/seed run.
 
 CREATE TYPE "LiaSubtest" AS ENUM ('pattern_recognition', 'verbal_reasoning', 'numerical_speed', 'working_memory', 'visual_rotation');
 CREATE TYPE "LiaSessionStatus" AS ENUM ('not_started', 'practice', 'in_progress', 'completed', 'abandoned');
@@ -14,6 +23,19 @@ CREATE TABLE "users" (
     "name" TEXT,
     "email" TEXT,
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "lia_questions" (
+    "id" TEXT NOT NULL,
+    "subtest" "LiaSubtest" NOT NULL,
+    "item_number" INTEGER NOT NULL,
+    "question_data" JSONB NOT NULL,
+    "correct_answer" TEXT NOT NULL,
+    "is_practice" BOOLEAN NOT NULL DEFAULT false,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "lia_questions_pkey" PRIMARY KEY ("id")
 );
 
 CREATE TABLE "lia_assessment_sessions" (
@@ -60,6 +82,8 @@ CREATE TABLE "lia_responses" (
     CONSTRAINT "lia_responses_pkey" PRIMARY KEY ("id")
 );
 
+CREATE INDEX "lia_questions_subtest_is_practice_idx" ON "lia_questions"("subtest", "is_practice");
+CREATE UNIQUE INDEX "lia_questions_subtest_item_number_is_practice_key" ON "lia_questions"("subtest", "item_number", "is_practice");
 CREATE INDEX "lia_assessment_sessions_user_id_idx" ON "lia_assessment_sessions"("user_id");
 CREATE INDEX "lia_assessment_sessions_user_id_status_idx" ON "lia_assessment_sessions"("user_id", "status");
 CREATE INDEX "lia_responses_session_id_idx" ON "lia_responses"("session_id");
@@ -68,3 +92,4 @@ CREATE UNIQUE INDEX "lia_responses_session_id_question_id_key" ON "lia_responses
 
 ALTER TABLE "lia_assessment_sessions" ADD CONSTRAINT "lia_assessment_sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "lia_responses" ADD CONSTRAINT "lia_responses_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "lia_assessment_sessions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "lia_responses" ADD CONSTRAINT "lia_responses_question_id_fkey" FOREIGN KEY ("question_id") REFERENCES "lia_questions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -4,6 +4,7 @@ using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.Assessments;
@@ -24,7 +25,24 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
     private NpgsqlDataSource _dataSource = null!;
 
     public LiaAnswerSubmitTests(LiaWriteDatabaseFixture fixture) => _fixture = fixture;
-    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
+    // Shared, PRE-WARMED question-catalog cache (one per test class, mirroring the process-wide
+    // singleton production registers). Warming in InitializeAsync matters for the concurrency tests:
+    // the resolver's first-load semaphore would otherwise serialize the racers at the top of
+    // StartAsync, letting the first one run to completion (and commit the reentry lock) while the
+    // others are still queued — an artificial ordering that is not what those tests pin, and which
+    // production never sees after its first request.
+    private readonly LiaQuestionCatalogCache _catalogCache = new();
+
+    public async Task InitializeAsync()
+    {
+        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
+        await new LiaQuestionIdResolver(
+                new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()),
+                _catalogCache,
+                NullLogger<LiaQuestionIdResolver>.Instance)
+            .WarmAsync(Ctx(Guid.NewGuid().ToString()));
+    }
+
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     // ==============================================================================================
@@ -37,7 +55,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedInProgressSessionAsync(subtest: "pattern_recognition", currentItem: 1);
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:1:assessment", "0", 500);
+        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("pattern_recognition", 1, isPractice: false), "0", 500);
 
         Assert.Equal(LiaSubmitAnswerStatus.Ok, outcome.Status);
         Assert.Equal(1, outcome.Result!.ItemsCompleted);
@@ -46,7 +64,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         Assert.Null(outcome.Result.NextSubtest);
         Assert.False(outcome.Result.AssessmentComplete);
 
-        Assert.True(await ResponseExistsAsync(sessionId, "pattern_recognition:1:assessment", withRealAnswer: true));
+        Assert.True(await ResponseExistsAsync(sessionId, _fixture.QuestionId("pattern_recognition", 1, isPractice: false), withRealAnswer: true));
         Assert.Equal(2, await ReadCurrentItemAsync(sessionId));
     }
 
@@ -54,15 +72,15 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
     public async Task Resubmitting_an_already_answered_item_updates_the_response_but_does_not_advance()
     {
         var (userId, sessionId) = await SeedInProgressWithOneAnsweredAsync(
-            subtest: "pattern_recognition", questionId: "pattern_recognition:1:assessment");
+            subtest: "pattern_recognition", questionId: _fixture.QuestionId("pattern_recognition", 1, isPractice: false));
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:1:assessment", "X", 500);
+        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("pattern_recognition", 1, isPractice: false), "X", 500);
 
         Assert.Equal(LiaSubmitAnswerStatus.Ok, outcome.Status);
         Assert.Equal(1, outcome.Result!.ItemsCompleted); // unchanged — the resubmit must not increment currentItem.
         Assert.Equal(2, await ReadCurrentItemAsync(sessionId)); // unchanged.
-        Assert.Equal("X", await ReadUserAnswerAsync(sessionId, "pattern_recognition:1:assessment"));
+        Assert.Equal("X", await ReadUserAnswerAsync(sessionId, _fixture.QuestionId("pattern_recognition", 1, isPractice: false)));
     }
 
     [Fact]
@@ -71,7 +89,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedInProgressSessionAsync(subtest: "pattern_recognition", currentItem: 60);
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:60:assessment", "1", 500);
+        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("pattern_recognition", 60, isPractice: false), "1", 500);
 
         Assert.Equal(LiaSubmitAnswerStatus.Ok, outcome.Status);
         Assert.True(outcome.Result!.SubtestComplete);
@@ -101,14 +119,14 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (writerB, _) = MakeWriter();
 
         await Task.WhenAll(
-            writerA.SubmitAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:1:assessment", "0", 100),
-            writerB.SubmitAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:2:assessment", "0", 100));
+            writerA.SubmitAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("pattern_recognition", 1, isPractice: false), "0", 100),
+            writerB.SubmitAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("pattern_recognition", 2, isPractice: false), "0", 100));
 
         // Both items are now answered and current_item must reflect BOTH advances (1 -> 3), never
         // just one (the lost-update bug this fix addresses would land on 2, not 3).
         Assert.Equal(3, await ReadCurrentItemAsync(sessionId));
-        Assert.True(await ResponseExistsAsync(sessionId, "pattern_recognition:1:assessment", withRealAnswer: true));
-        Assert.True(await ResponseExistsAsync(sessionId, "pattern_recognition:2:assessment", withRealAnswer: true));
+        Assert.True(await ResponseExistsAsync(sessionId, _fixture.QuestionId("pattern_recognition", 1, isPractice: false), withRealAnswer: true));
+        Assert.True(await ResponseExistsAsync(sessionId, _fixture.QuestionId("pattern_recognition", 2, isPractice: false), withRealAnswer: true));
     }
 
     [Fact]
@@ -117,12 +135,12 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedInProgressSessionExpiredAsync(subtest: "pattern_recognition");
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:1:assessment", "A", 100);
+        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("pattern_recognition", 1, isPractice: false), "A", 100);
 
         Assert.Equal(LiaSubmitAnswerStatus.Ok, outcome.Status);
         Assert.True(outcome.Result!.TimedOut);
         // The late answer must NOT be persisted as a real response.
-        Assert.False(await ResponseExistsAsync(sessionId, "pattern_recognition:1:assessment", withRealAnswer: true));
+        Assert.False(await ResponseExistsAsync(sessionId, _fixture.QuestionId("pattern_recognition", 1, isPractice: false), withRealAnswer: true));
     }
 
     // ------------------------------------------------------------------------------------------
@@ -148,7 +166,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedLastSubtestExpiredWithFullPriorCoverageAsync(startedAt);
         var (writer, logger) = MakeWriter();
 
-        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, "visual_rotation:1:assessment", "A", 100);
+        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("visual_rotation", 1, isPractice: false), "A", 100);
 
         Assert.Equal(LiaSubmitAnswerStatus.Ok, outcome.Status);
         Assert.True(outcome.Result!.TimedOut);
@@ -183,7 +201,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         await SeedUserAsync(userId);
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), Guid.NewGuid().ToString(), userId, "pattern_recognition:1:assessment", "A", 100);
+        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), Guid.NewGuid().ToString(), userId, _fixture.QuestionId("pattern_recognition", 1, isPractice: false), "A", 100);
 
         Assert.Equal(LiaSubmitAnswerStatus.NotFound, outcome.Status);
     }
@@ -196,7 +214,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         await SeedUserAsync(attackerId);
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitAnswerAsync(Ctx(attackerId), sessionId, attackerId, "pattern_recognition:1:assessment", "A", 100);
+        var outcome = await writer.SubmitAnswerAsync(Ctx(attackerId), sessionId, attackerId, _fixture.QuestionId("pattern_recognition", 1, isPractice: false), "A", 100);
 
         Assert.Equal(LiaSubmitAnswerStatus.NotFound, outcome.Status);
     }
@@ -207,7 +225,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedPracticePhaseSessionAsync(subtest: "pattern_recognition");
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:1:assessment", "A", 100);
+        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("pattern_recognition", 1, isPractice: false), "A", 100);
 
         Assert.Equal(LiaSubmitAnswerStatus.NotInProgress, outcome.Status);
     }
@@ -218,7 +236,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedInProgressSessionAsync(subtest: "pattern_recognition", currentItem: 1);
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, "verbal_reasoning:1:assessment", "A", 100);
+        var outcome = await writer.SubmitAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("verbal_reasoning", 1, isPractice: false), "A", 100);
 
         Assert.Equal(LiaSubmitAnswerStatus.QuestionNotFound, outcome.Status);
     }
@@ -233,7 +251,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedPracticePhaseSessionAsync(subtest: "pattern_recognition");
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:1:practice", "0");
+        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("pattern_recognition", 1, isPractice: true), "0");
 
         Assert.Equal(LiaPracticeAnswerStatus.Ok, outcome.Status);
         Assert.NotNull(outcome.Result);
@@ -248,7 +266,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedPracticePhaseSessionAsync(subtest: "pattern_recognition");
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:3:practice", "0");
+        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("pattern_recognition", 3, isPractice: true), "0");
 
         Assert.Equal(LiaPracticeAnswerStatus.Ok, outcome.Status);
         Assert.True(outcome.Result!.PracticeComplete);
@@ -263,7 +281,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         await SeedUserAsync(userId);
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), Guid.NewGuid().ToString(), userId, "pattern_recognition:1:practice", "0");
+        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), Guid.NewGuid().ToString(), userId, _fixture.QuestionId("pattern_recognition", 1, isPractice: true), "0");
 
         Assert.Equal(LiaPracticeAnswerStatus.NotFound, outcome.Status);
     }
@@ -276,7 +294,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         await SeedUserAsync(attackerId);
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(attackerId), sessionId, attackerId, "pattern_recognition:1:practice", "0");
+        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(attackerId), sessionId, attackerId, _fixture.QuestionId("pattern_recognition", 1, isPractice: true), "0");
 
         Assert.Equal(LiaPracticeAnswerStatus.NotFound, outcome.Status);
     }
@@ -287,7 +305,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedInProgressSessionAsync(subtest: "pattern_recognition", currentItem: 1);
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:1:practice", "0");
+        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("pattern_recognition", 1, isPractice: true), "0");
 
         Assert.Equal(LiaPracticeAnswerStatus.NotInPractice, outcome.Status);
     }
@@ -298,7 +316,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedPracticePhaseSessionAsync(subtest: "pattern_recognition");
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, "not_a_real_subtest:1:practice", "0");
+        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, Guid.NewGuid().ToString(), "0");
 
         Assert.Equal(LiaPracticeAnswerStatus.QuestionNotFound, outcome.Status);
     }
@@ -316,7 +334,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedPracticePhaseSessionAsync(subtest: "pattern_recognition");
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, "pattern_recognition:7:assessment", "0");
+        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("pattern_recognition", 7, isPractice: false), "0");
 
         Assert.Equal(LiaPracticeAnswerStatus.QuestionNotFound, outcome.Status);
         Assert.Null(outcome.Result);
@@ -337,7 +355,7 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedPracticePhaseSessionAsync(subtest: "pattern_recognition");
         var (writer, _) = MakeWriter();
 
-        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, "visual_rotation:3:practice", "0");
+        var outcome = await writer.SubmitPracticeAnswerAsync(Ctx(userId), sessionId, userId, _fixture.QuestionId("visual_rotation", 3, isPractice: true), "0");
 
         Assert.Equal(LiaPracticeAnswerStatus.QuestionNotFound, outcome.Status);
         Assert.False(await ReadPracticeCompletedAsync(sessionId, "visual_rotation"));
@@ -353,7 +371,9 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
-        return (new LiaSessionWriter(factory, logger), logger);
+        var resolver = new LiaQuestionIdResolver(
+            factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
+        return (new LiaSessionWriter(factory, resolver, logger), logger);
     }
 
     private static RequestContext Ctx(string userId, string name = "Test User", string email = "test@e.st") =>
@@ -517,10 +537,16 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
             """
             INSERT INTO lia_responses
                 (id, session_id, question_id, subtest, item_number, user_answer, is_correct, answered_at, time_spent_ms, updated_at)
-            SELECT @sid || '-' || @sub || '-' || g, @sid, @sub || '-' || g, @sub::"LiaSubtest", g,
+            SELECT @sid || '-' || @sub || '-' || g, @sid, q.id, @sub::"LiaSubtest", g,
                    'x', CASE WHEN g <= @correct THEN true ELSE false END,
                    now(), 1000, now()
             FROM generate_series(1, @total) g
+            -- question_id must be a REAL lia_questions.id: lia_responses now carries the production FK
+            -- lia_responses_question_id_fkey, so a synthesized string is rejected here exactly as it
+            -- would be in prod. Joining the (subtest, item_number, is_practice) natural key yields one
+            -- row per g, preserving the per-session uniqueness lia_responses_session_id_question_id_key needs.
+            JOIN lia_questions q
+              ON q.subtest = @sub::"LiaSubtest" AND q.item_number = g AND q.is_practice = false
             """,
             connection);
         cmd.Parameters.AddWithValue("sid", sessionId);

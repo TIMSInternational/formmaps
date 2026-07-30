@@ -20,6 +20,7 @@ namespace FormMaps.Infrastructure.Assessments;
 /// </summary>
 public sealed class LiaSessionWriter(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
+    ILiaQuestionIdResolver questionIdResolver,
     ILogger<LiaSessionWriter> logger) : ILiaSessionWriter
 {
     private static readonly JsonSerializerOptions JsonOptions = new();
@@ -40,12 +41,6 @@ public sealed class LiaSessionWriter(
     private const string ResponsesSql = """
         SELECT "subtest"::text AS "subtest", "is_correct" AS "isCorrect"
         FROM "lia_responses" WHERE "session_id" = @sessionId
-        """;
-
-    // Row-locking status re-check used only by AdvancePastSubtestAsync's isLast branch, immediately
-    // before scoring — see the comment at that call site for why this is needed.
-    private const string SelectStatusForUpdateSql = """
-        SELECT "status"::text FROM "lia_assessment_sessions" WHERE "id" = @sessionId FOR UPDATE
         """;
 
     private const string UpdateSql = """
@@ -141,7 +136,7 @@ public sealed class LiaSessionWriter(
             }
         }
 
-        var result = await PersistCompletionAsync(session, sessionId, counts, cancellationToken);
+        var result = await PersistCompletionAsync(session, sessionId, counts, "complete", cancellationToken);
         await session.CommitAsync(cancellationToken);
 
         // Audit (SOC2 CC7.2 / ISO A.8.15): actor/action/subject/outcome — IDs only, never PII. Emitted
@@ -198,6 +193,11 @@ public sealed class LiaSessionWriter(
     public async Task<LiaStartOutcome> StartAsync(
         RequestContext context, string userId, string language, CancellationToken cancellationToken = default)
     {
+        // Warm the question catalog BEFORE taking a connection — a lazy first load from inside the
+        // transaction below would need a SECOND pooled connection while this one is held, and
+        // MaxPoolSize is 10. See ILiaQuestionIdResolver.WarmAsync.
+        await questionIdResolver.WarmAsync(context, cancellationToken);
+
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
 
         // legacy checkAccess, inlined: find an existing active session for this user.
@@ -231,7 +231,9 @@ public sealed class LiaSessionWriter(
                 // legacy: an interrupted practice phase resumes cleanly at its own practice questions.
                 var currentSubtest = row.CurrentSubtest ?? LiaSubtestOrder.Order[0];
                 return new LiaStartOutcome(LiaStartStatus.Started, new LiaSessionStartPayload(
-                    row.Id, currentSubtest, LiaQuestionServing.FetchPracticeQuestions(currentSubtest, language)));
+                    row.Id, currentSubtest,
+                    await LiaQuestionServing.FetchPracticeQuestionsAsync(
+                        questionIdResolver, context, currentSubtest, language, cancellationToken)));
             }
 
             // status == "in_progress": Gate 1 (strike + lock), atomic. IncrementReentrySql's row-level
@@ -269,7 +271,8 @@ public sealed class LiaSessionWriter(
             }
 
             // Gate 2: expired clock -> shared timeout path.
-            var expiry = await ExpireIfPastDeadlineAsync(session, row.Id, row.CurrentSubtest, row.SubtestTimes, cancellationToken);
+            var expiry = await ExpireIfPastDeadlineAsync(
+                context, session, row.Id, row.CurrentSubtest, row.SubtestTimes, cancellationToken);
             if (expiry is not null)
             {
                 await session.CommitAsync(cancellationToken);
@@ -289,7 +292,9 @@ public sealed class LiaSessionWriter(
                 }
 
                 return new LiaStartOutcome(LiaStartStatus.Started, new LiaSessionStartPayload(
-                    row.Id, expiry.NextSubtest!, LiaQuestionServing.FetchPracticeQuestions(expiry.NextSubtest!, language),
+                    row.Id, expiry.NextSubtest!,
+                    await LiaQuestionServing.FetchPracticeQuestionsAsync(
+                        questionIdResolver, context, expiry.NextSubtest!, language, cancellationToken),
                     ResumeMode: "next_subtest"));
             }
 
@@ -300,7 +305,8 @@ public sealed class LiaSessionWriter(
             return new LiaStartOutcome(LiaStartStatus.Started, new LiaSessionStartPayload(
                 row.Id, subtest, [], ResumeMode: "mid_subtest", CurrentItem: row.CurrentItem,
                 StartedAt: startedAt, TimeLimitSeconds: LiaSubtestOrder.TimeSeconds[subtest],
-                Questions: LiaQuestionServing.FetchAssessmentQuestions(subtest, language, LiaSubtestOrder.ItemCounts[subtest])));
+                Questions: await LiaQuestionServing.FetchAssessmentQuestionsAsync(
+                    questionIdResolver, context, subtest, language, LiaSubtestOrder.ItemCounts[subtest], cancellationToken)));
         }
 
         // No existing session (or an existing not_started/abandoned row, which never blocks a fresh
@@ -324,13 +330,15 @@ public sealed class LiaSessionWriter(
 
         await session.CommitAsync(cancellationToken);
         return new LiaStartOutcome(LiaStartStatus.Started, new LiaSessionStartPayload(
-            newId, firstSubtest, LiaQuestionServing.FetchPracticeQuestions(firstSubtest, language)));
+            newId, firstSubtest,
+            await LiaQuestionServing.FetchPracticeQuestionsAsync(
+                questionIdResolver, context, firstSubtest, language, cancellationToken)));
     }
 
     // legacy expireIfPastDeadline. Returns null if the subtest's clock has not expired.
     private async Task<TimeoutAdvanceResult?> ExpireIfPastDeadlineAsync(
-        FormMapsDatabaseSession session, string sessionId, string? currentSubtest, string? subtestTimesJson,
-        CancellationToken cancellationToken)
+        RequestContext context, FormMapsDatabaseSession session, string sessionId, string? currentSubtest,
+        string? subtestTimesJson, CancellationToken cancellationToken)
     {
         if (currentSubtest is null)
         {
@@ -343,28 +351,26 @@ public sealed class LiaSessionWriter(
             return null;
         }
 
-        // AssumeUniversal|AdjustToUniversal (not RoundtripKind, which .NET rejects when combined with
-        // AdjustToUniversal): a startedAt with no offset info is assumed UTC rather than local server
-        // time, and the result Kind is always Utc regardless of whether the source string carried an
-        // explicit "Z"/offset.
-        var deadline = DateTime.Parse(
-                startedAt, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal)
+        var deadline = ParseIsoAsUnspecifiedUtc(startedAt)
             .AddSeconds(LiaSubtestOrder.TimeSeconds[currentSubtest])
             .AddMilliseconds(LiaSubtestOrder.TimerGraceMs);
-        if (DateTime.UtcNow <= deadline)
+        if (NowTruncated() <= deadline)
         {
             return null;
         }
 
-        return await ApplyTimeoutAsync(session, sessionId, currentSubtest, cancellationToken);
+        return await ApplyTimeoutAsync(context, session, sessionId, currentSubtest, cancellationToken);
     }
 
     // legacy applyTimeout: fill every unanswered live item with a null response, then advance.
     private async Task<TimeoutAdvanceResult> ApplyTimeoutAsync(
-        FormMapsDatabaseSession session, string sessionId, string subtest, CancellationToken cancellationToken)
+        RequestContext context, FormMapsDatabaseSession session, string sessionId, string subtest,
+        CancellationToken cancellationToken)
     {
         var itemCount = LiaSubtestOrder.ItemCounts[subtest];
-        var served = LiaQuestionServing.FetchAssessmentQuestions(subtest, "es", itemCount); // language doesn't affect ids/coverage.
+        // language doesn't affect ids/coverage — only the question text this path never reads.
+        var served = await LiaQuestionServing.FetchAssessmentQuestionsAsync(
+            questionIdResolver, context, subtest, "es", itemCount, cancellationToken);
 
         var answeredIds = new HashSet<string>(StringComparer.Ordinal);
         await using (var command = session.Connection.CreateCommand())
@@ -379,37 +385,131 @@ public sealed class LiaSessionWriter(
             }
         }
 
-        foreach (var q in served.Where(q => !answeredIds.Contains(q.Id)))
+        var unanswered = served.Where(q => !answeredIds.Contains(q.Id)).ToList();
+        if (unanswered.Count > 0)
         {
+            // ONE round-trip for all (up to 60) unanswered items via unnest over parameter arrays,
+            // rather than a loop of individual INSERTs. This whole method runs while HOLDING the
+            // session row's FOR UPDATE lock, and since Task 7 every GET /session/{id} takes that same
+            // lock — so 60 sequential round-trips here directly serialize against the candidate's own
+            // polling. ON CONFLICT DO NOTHING keeps the same idempotency the per-item version had.
             await using var command = session.Connection.CreateCommand();
             command.Transaction = session.Transaction;
             command.CommandText = """
                 INSERT INTO "lia_responses"
                     ("id", "session_id", "question_id", "subtest", "item_number", "user_answer", "is_correct",
                      "answered_at", "time_spent_ms", "updated_at")
-                VALUES (@id, @sessionId, @questionId, @subtest::"LiaSubtest", @itemNumber, NULL, NULL, @now, 0, @now)
+                SELECT u."id", @sessionId, u."questionId", @subtest::"LiaSubtest", u."itemNumber",
+                       NULL, NULL, @now, 0, @now
+                FROM unnest(@ids, @questionIds, @itemNumbers) AS u("id", "questionId", "itemNumber")
                 ON CONFLICT ("session_id", "question_id") DO NOTHING
                 """;
-            AddParameter(command, "id", Guid.NewGuid().ToString());
             AddParameter(command, "sessionId", sessionId);
-            AddParameter(command, "questionId", q.Id);
             AddParameter(command, "subtest", subtest);
-            AddParameter(command, "itemNumber", q.ItemNumber);
+            AddParameter(command, "ids", unanswered.Select(_ => Guid.NewGuid().ToString()).ToArray());
+            AddParameter(command, "questionIds", unanswered.Select(q => q.Id).ToArray());
+            AddParameter(command, "itemNumbers", unanswered.Select(q => q.ItemNumber).ToArray());
             AddTimestampParameter(command, "now", NowTruncated());
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        return await AdvancePastSubtestAsync(session, sessionId, subtest, cancellationToken);
+        return await AdvancePastSubtestAsync(context, session, sessionId, subtest, cancellationToken);
     }
 
-    // legacy advancePastSubtest (+ recordSubtestEnd folded in): stamp endedAt on the current subtest,
-    // then move to the next subtest's practice phase, or mark full assessment completion.
+    // Locking re-read used by AdvancePastSubtestAsync before it decides anything: the snapshot its
+    // callers hand it can be stale (StartAsync's Gate 2 in particular reads WITHOUT FOR UPDATE), and
+    // this method both stamps timing into subtest_times and moves the state machine forward, so it must
+    // observe the CURRENT row. FOR UPDATE blocks until any concurrent advancer/completer commits.
+    private const string SelectAdvanceStateForUpdateSql = """
+        SELECT "status"::text AS "status", "current_subtest"::text AS "currentSubtest",
+               "subtest_times"::text AS "subtestTimes"
+        FROM "lia_assessment_sessions" WHERE "id" = @sessionId
+        FOR UPDATE
+        """;
+
+    // legacy advancePastSubtest (+ recordSubtestEnd folded in): stamp endedAt AND durationMs on the
+    // current subtest, then move to the next subtest's practice phase, or mark full assessment
+    // completion.
     private async Task<TimeoutAdvanceResult> AdvancePastSubtestAsync(
-        FormMapsDatabaseSession session, string sessionId, string subtest, CancellationToken cancellationToken)
+        RequestContext context, FormMapsDatabaseSession session, string sessionId, string subtest,
+        CancellationToken cancellationToken)
     {
         var idx = LiaSubtestOrder.Order.ToList().IndexOf(subtest);
+        if (idx < 0)
+        {
+            // Guard an unrecognized subtest explicitly. Left unguarded, idx == -1 made the "next
+            // subtest" expression Order[idx + 1] evaluate to Order[0] — silently REWINDING the session
+            // to the first subtest (and re-opening its practice phase) instead of failing. This helper
+            // now has five callers, so an unrecognized value must fail loudly rather than corrupt state.
+            logger.LogError(
+                "lia.session.advance-past-subtest unrecognized subtest={Subtest} sessionId={SessionId}", subtest, sessionId);
+            throw new InvalidOperationException(
+                $"LIA advance-past-subtest: '{subtest}' is not a known LIA subtest (session {sessionId}).");
+        }
+
         var isLast = idx == LiaSubtestOrder.Order.Count - 1;
         var nextSubtest = isLast ? null : LiaSubtestOrder.Order[idx + 1];
+
+        // Re-read the row under a lock FIRST. This serves three purposes at once: it supplies the
+        // authoritative subtest_times (needed for durationMs below), it detects the benign
+        // "someone else already advanced/completed this" races before any write, and it replaces the
+        // narrower post-UPDATE status re-check the isLast branch used to do on its own.
+        string lockedStatus;
+        string? lockedCurrentSubtest;
+        string? lockedSubtestTimes;
+        await using (var command = session.Connection.CreateCommand())
+        {
+            command.Transaction = session.Transaction;
+            command.CommandText = SelectAdvanceStateForUpdateSql;
+            AddParameter(command, "sessionId", sessionId);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                logger.LogError(
+                    "lia.session.advance-past-subtest state re-check found no row sessionId={SessionId}", sessionId);
+                throw new InvalidOperationException(
+                    $"LIA advance-past-subtest state re-check found no row for session {sessionId}");
+            }
+
+            lockedStatus = reader.GetString(0);
+            lockedCurrentSubtest = ReadNullableString(reader, "currentSubtest");
+            lockedSubtestTimes = ReadNullableString(reader, "subtestTimes");
+        }
+
+        if (lockedStatus == "completed")
+        {
+            // Someone else already completed this session first — AlreadyCompleted with NO Completion.
+            // Every caller treats a null Completion as "no audit, still complete" (the transaction that
+            // actually completed it emitted its own audit on its own commit). Returning here also
+            // avoids overwriting that transaction's endedAt/durationMs with our own later timestamps.
+            return new TimeoutAdvanceResult(null, AssessmentComplete: true);
+        }
+
+        if (lockedStatus != "in_progress" || !string.Equals(lockedCurrentSubtest, subtest, StringComparison.Ordinal))
+        {
+            // Benign race, NOT an invariant violation: a concurrent /start, /answer, /timeout or lazy-
+            // expiry GET already advanced past this exact subtest. Without this check (and the matching
+            // WHERE precondition below) both callers would advance, the second overwriting the first's
+            // progress and rewinding current_subtest/current_item/status — permanently wedging the
+            // session, since the one-shot subtest-start guard has already been consumed. Report the
+            // state the winner left behind rather than re-doing its work.
+            logger.LogInformation(
+                "lia.session.advance-past-subtest already advanced by a concurrent caller sessionId={SessionId} subtest={Subtest} status={Status} currentSubtest={CurrentSubtest}",
+                sessionId, subtest, lockedStatus, lockedCurrentSubtest);
+            return new TimeoutAdvanceResult(lockedCurrentSubtest, AssessmentComplete: false);
+        }
+
+        // legacy recordSubtestEnd writes BOTH endedAt and durationMs. durationMs is a wall-clock delta
+        // that cannot be reconstructed once this transaction ends, and LiaResultsAssembler (an
+        // already-live read path) sums it to produce total_time_seconds — so omitting it silently and
+        // permanently reports 0 time spent on every already-shipped results surface. legacy falls back
+        // to `new Date()` when startedAt is missing, which yields ~0 rather than an absent key; mirrored
+        // here as a literal 0 so the key is always present and always a JSON number.
+        var endedAt = NowTruncated();
+        var startedAtIso = ReadSubtestStartedAt(lockedSubtestTimes, subtest);
+        var durationMs = startedAtIso is null
+            ? 0L
+            : (long)Math.Max(0, (endedAt - ParseIsoAsUnspecifiedUtc(startedAtIso)).TotalMilliseconds);
 
         int affected;
         await using (var command = session.Connection.CreateCommand())
@@ -417,9 +517,12 @@ public sealed class LiaSessionWriter(
             command.Transaction = session.Transaction;
             // Build the per-subtest object defensively via jsonb_build_object + COALESCE rather than
             // jsonb_set: jsonb_set silently no-ops (row still matches, "endedAt" never lands) when
-            // subtest_times has no object yet under this subtest's key. That's unreachable from
-            // StartAsync's own Gate 2 today (it requires startedAt to already exist), but this helper is
-            // shared with Task 5's SubmitAnswerAsync where that precondition won't hold.
+            // subtest_times has no object yet under this subtest's key — the NORMAL case when
+            // SubmitAnswerAsync closes out a subtest.
+            //
+            // Both branches carry the state precondition (status + current_subtest) as part of the
+            // WHERE clause, so the conditional UPDATE itself — not just the read above — enforces
+            // "advance past this subtest exactly once".
             if (isLast)
             {
                 // Status is deliberately left as-is here (still "in_progress") — PersistCompletionAsync
@@ -428,8 +531,11 @@ public sealed class LiaSessionWriter(
                 command.CommandText = """
                     UPDATE "lia_assessment_sessions"
                     SET "subtest_times" = "subtest_times" || jsonb_build_object(
-                            @subtest, COALESCE("subtest_times"->@subtest, '{}'::jsonb) || jsonb_build_object('endedAt', @now::text))
+                            @subtest, COALESCE("subtest_times"->@subtest, '{}'::jsonb)
+                                || jsonb_build_object('endedAt', @now::text, 'durationMs', @durationMs))
                     WHERE "id" = @sessionId
+                      AND "status" = 'in_progress'::"LiaSessionStatus"
+                      AND "current_subtest" = @subtest::"LiaSubtest"
                     """;
             }
             else
@@ -437,75 +543,60 @@ public sealed class LiaSessionWriter(
                 command.CommandText = """
                     UPDATE "lia_assessment_sessions"
                     SET "subtest_times" = "subtest_times" || jsonb_build_object(
-                            @subtest, COALESCE("subtest_times"->@subtest, '{}'::jsonb) || jsonb_build_object('endedAt', @now::text)),
+                            @subtest, COALESCE("subtest_times"->@subtest, '{}'::jsonb)
+                                || jsonb_build_object('endedAt', @now::text, 'durationMs', @durationMs)),
                         "current_subtest" = @nextSubtest::"LiaSubtest", "current_item" = 0,
                         "status" = 'practice'::"LiaSessionStatus"
                     WHERE "id" = @sessionId
+                      AND "status" = 'in_progress'::"LiaSessionStatus"
+                      AND "current_subtest" = @subtest::"LiaSubtest"
                     """;
                 AddParameter(command, "nextSubtest", nextSubtest!);
             }
 
             AddParameter(command, "subtest", subtest);
             AddParameter(command, "sessionId", sessionId);
-            AddParameter(command, "now", ToIsoZ(NowTruncated()));
+            AddParameter(command, "now", ToIsoZ(endedAt));
+            AddParameter(command, "durationMs", durationMs);
             affected = await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        // This UPDATE targets the session by primary key only, inside the same transaction that just
-        // confirmed the row exists — 0 rows affected here means the row vanished mid-transaction, which
-        // must never pass silently (processing integrity, matches CompleteAsync's UpdateSql rigor).
+        // 0 rows is now a BENIGN outcome for this specific UPDATE, not a fail-closed violation: the
+        // WHERE clause is an idempotent "only if still on this subtest" guard (like StartAsync's
+        // LockSessionSql), not an invariant that must hold. We hold FOR UPDATE from the read above, so
+        // reaching here should be impossible — but if it happens, someone else advanced and re-doing
+        // their work is the wrong response. Every OTHER 0-row check in this file stays fail-closed.
         if (affected == 0)
         {
-            logger.LogError("lia.session.start advance-past-subtest matched 0 rows sessionId={SessionId}", sessionId);
-            throw new InvalidOperationException($"LIA advance-past-subtest update affected 0 rows for session {sessionId}");
+            logger.LogWarning(
+                "lia.session.advance-past-subtest conditional update matched 0 rows (already advanced) sessionId={SessionId} subtest={Subtest}",
+                sessionId, subtest);
+            // Report what the winner's advance actually means rather than a self-contradictory shape: on
+            // the LAST subtest "someone else advanced past it" IS assessment completion (with no
+            // Completion of our own to hand back — theirs was audited on their own commit); anywhere
+            // else it is simply the next subtest. Returning here also skips the scoring below, which
+            // would otherwise double-score work another transaction already committed.
+            return isLast
+                ? new TimeoutAdvanceResult(null, AssessmentComplete: true)
+                : new TimeoutAdvanceResult(nextSubtest, AssessmentComplete: false);
         }
 
         if (isLast)
         {
-            // Re-read status under a row lock before scoring: the "row" that got us here (StartAsync's
-            // own SELECT, taken before Gate 1) is NOT locked, so it can be stale. A concurrent completer
-            // (another /start racing through Gate 1 first, or a direct /complete) may have already
-            // scored + committed this exact session between our caller's stale read and this point —
-            // Gate 1's own reentry UPDATE serializes on the row but does not refresh that stale snapshot.
-            // If we scored again here, PersistCompletionAsync's status-guarded UPDATE would match 0 rows
-            // and fail-close (throw) for what is actually a benign "someone else already finished it"
-            // race, not a genuine invariant violation. FOR UPDATE here blocks until any such concurrent
-            // completer's transaction commits, so the re-read is guaranteed current.
-            string currentStatus;
-            await using (var statusCommand = session.Connection.CreateCommand())
-            {
-                statusCommand.Transaction = session.Transaction;
-                statusCommand.CommandText = SelectStatusForUpdateSql;
-                AddParameter(statusCommand, "sessionId", sessionId);
-                var statusResult = await statusCommand.ExecuteScalarAsync(cancellationToken);
-                if (statusResult is not string status)
-                {
-                    logger.LogError("lia.session.start advance-past-subtest status re-check found no row sessionId={SessionId}", sessionId);
-                    throw new InvalidOperationException($"LIA advance-past-subtest status re-check found no row for session {sessionId}");
-                }
-
-                currentStatus = status;
-            }
-
-            if (currentStatus == "completed")
-            {
-                // Someone else already completed this session first — return AlreadyCompleted with no
-                // Completion. StartAsync's Gate 2 already treats a null Completion as "no audit, still
-                // AlreadyCompleted" (the completing transaction emitted its own audit on its own commit).
-                return new TimeoutAdvanceResult(null, AssessmentComplete: true);
-            }
-
             // legacy applyTimeout calls completeSession() inline the moment the assessment truly
             // finishes. Coverage is trusted via the state-machine invariant: every subtest is only ever
             // advanced-past once ApplyTimeoutAsync (or a real submit) has fully filled it, so — unlike
             // CompleteAsync's own HTTP-driven entry point, which has no such guarantee — no separate
-            // coverage-gate re-check is needed here before scoring.
+            // coverage-gate re-check is needed here before scoring. The status re-check that used to
+            // live here now happens BEFORE the UPDATE (see the locking read above), which is strictly
+            // stronger: it also stops a concurrent completer's timing data being overwritten.
             var counts = await ReadResponseCountsAsync(session, sessionId, cancellationToken);
-            var completion = await PersistCompletionAsync(session, sessionId, counts, cancellationToken);
+            var completion = await PersistCompletionAsync(
+                session, sessionId, counts, "advance-past-subtest", cancellationToken);
             return new TimeoutAdvanceResult(null, AssessmentComplete: true, completion);
         }
 
-        return new TimeoutAdvanceResult(nextSubtest, isLast);
+        return new TimeoutAdvanceResult(nextSubtest, AssessmentComplete: false);
     }
 
     // ================================================================================================
@@ -548,6 +639,11 @@ public sealed class LiaSessionWriter(
         RequestContext context, string sessionId, string ownerUserId, string subtest,
         CancellationToken cancellationToken = default)
     {
+        // Warm the question catalog BEFORE taking a connection — a lazy first load from inside the
+        // transaction below would need a SECOND pooled connection while this one is held, and
+        // MaxPoolSize is 10. See ILiaQuestionIdResolver.WarmAsync.
+        await questionIdResolver.WarmAsync(context, cancellationToken);
+
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
 
         SubtestStartSessionRow row;
@@ -603,7 +699,9 @@ public sealed class LiaSessionWriter(
         await session.CommitAsync(cancellationToken);
         var itemCount = LiaSubtestOrder.ItemCounts[subtest];
         return new LiaSubtestStartOutcome(LiaSubtestStartStatus.Started, new SubtestStartResult(
-            sessionId, subtest, LiaQuestionServing.FetchAssessmentQuestions(subtest, row.Language, itemCount),
+            sessionId, subtest,
+            await LiaQuestionServing.FetchAssessmentQuestionsAsync(
+                questionIdResolver, context, subtest, row.Language, itemCount, cancellationToken),
             LiaSubtestOrder.TimeSeconds[subtest], ToIsoZ(startedAt)));
     }
 
@@ -635,6 +733,11 @@ public sealed class LiaSessionWriter(
         RequestContext context, string sessionId, string ownerUserId, string questionId, string? answer,
         int timeSpentMs, CancellationToken cancellationToken = default)
     {
+        // Warm the question catalog BEFORE taking a connection — a lazy first load from inside the
+        // transaction below would need a SECOND pooled connection while this one is held, and
+        // MaxPoolSize is 10. See ILiaQuestionIdResolver.WarmAsync.
+        await questionIdResolver.WarmAsync(context, cancellationToken);
+
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
 
         AnswerSessionRow row;
@@ -671,7 +774,8 @@ public sealed class LiaSessionWriter(
 
         // Shared timeout-advance gate (Task 3): a late submit is discarded, never persisted as a real
         // response — the subtest is instead closed out via the SAME path StartAsync's Gate 2 uses.
-        var expiry = await ExpireIfPastDeadlineAsync(session, sessionId, currentSubtest, row.SubtestTimes, cancellationToken);
+        var expiry = await ExpireIfPastDeadlineAsync(
+            context, session, sessionId, currentSubtest, row.SubtestTimes, cancellationToken);
         if (expiry is not null)
         {
             await session.CommitAsync(cancellationToken);
@@ -692,7 +796,8 @@ public sealed class LiaSessionWriter(
                 SessionStatus: expiry.AssessmentComplete ? "completed" : "practice"));
         }
 
-        var question = LiaQuestionServing.FindById(questionId);
+        var question = await LiaQuestionServing.FindByIdAsync(
+            questionIdResolver, context, questionId, cancellationToken);
         if (question is null || question.Subtest != currentSubtest || question.IsPractice)
         {
             return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.QuestionNotFound, null);
@@ -768,28 +873,45 @@ public sealed class LiaSessionWriter(
 
         var subtestComplete = newCurrentItem > itemCount;
         var startedAt = ReadSubtestStartedAt(row.SubtestTimes, currentSubtest);
-        // AssumeUniversal|AdjustToUniversal (not RoundtripKind, which .NET rejects when combined with
-        // AdjustToUniversal): same culture-safe parse ExpireIfPastDeadlineAsync uses.
         var elapsedSeconds = startedAt is null
             ? 0
-            : (DateTime.UtcNow - DateTime.Parse(
-                startedAt, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal))
-                .TotalSeconds;
+            : (NowTruncated() - ParseIsoAsUnspecifiedUtc(startedAt)).TotalSeconds;
         var timeRemaining = Math.Max(0, LiaSubtestOrder.TimeSeconds[currentSubtest] - elapsedSeconds);
 
         string? nextSubtest = null;
         var assessmentComplete = false;
+        LiaCompletionResult? answerDrivenCompletion = null;
         if (subtestComplete)
         {
-            var advanced = await AdvancePastSubtestAsync(session, sessionId, currentSubtest, cancellationToken);
+            var advanced = await AdvancePastSubtestAsync(
+                context, session, sessionId, currentSubtest, cancellationToken);
             nextSubtest = advanced.NextSubtest;
             assessmentComplete = advanced.AssessmentComplete;
+            // This is the DOMINANT completion path — the candidate's own answer to the last item of the
+            // last subtest — and it was the one call site of the five that dropped advanced.Completion
+            // on the floor. Scores were still computed and persisted (PersistCompletionAsync runs
+            // regardless of caller), but the DTO returned no completion and NO audit event was emitted;
+            // the frontend's follow-up POST /complete then hit CompleteAsync's idempotent-replay branch,
+            // which returns early with no write and no audit either — so the audit trail recorded zero
+            // completions for the most common way an assessment finishes.
+            answerDrivenCompletion = advanced.Completion;
         }
 
         await session.CommitAsync(cancellationToken);
+
+        if (answerDrivenCompletion is { } committedCompletion)
+        {
+            // Audit only after the commit above succeeds, mirroring this method's own expiry branch and
+            // every other completion call site — a completion audit can never be emitted for a write
+            // that did not durably persist.
+            logger.LogInformation(
+                "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
+                sessionId, ownerUserId, committedCompletion.GlobalPercentile, committedCompletion.PerformanceLevel);
+        }
+
         return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.Ok, new LiaAnswerResult(
             sessionId, newCurrentItem - 1, itemCount, (int)Math.Round(timeRemaining), subtestComplete, nextSubtest,
-            assessmentComplete));
+            assessmentComplete, Completion: answerDrivenCompletion));
     }
 
     private const string SelectSessionForPracticeAnswerSql = """
@@ -801,6 +923,11 @@ public sealed class LiaSessionWriter(
         RequestContext context, string sessionId, string ownerUserId, string questionId, string answer,
         CancellationToken cancellationToken = default)
     {
+        // Warm the question catalog BEFORE taking a connection — a lazy first load from inside the
+        // transaction below would need a SECOND pooled connection while this one is held, and
+        // MaxPoolSize is 10. See ILiaQuestionIdResolver.WarmAsync.
+        await questionIdResolver.WarmAsync(context, cancellationToken);
+
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
 
         string userId;
@@ -846,7 +973,8 @@ public sealed class LiaSessionWriter(
         // session mark a DIFFERENT subtest's practice complete (and read ITS keys) by submitting e.g.
         // "visual_rotation:3:practice" while sitting on pattern_recognition — both are folded into the
         // same uniform QuestionNotFound outcome used everywhere else in this class.
-        var question = LiaQuestionServing.FindById(questionId);
+        var question = await LiaQuestionServing.FindByIdAsync(
+            questionIdResolver, context, questionId, cancellationToken);
         if (question is null || !question.IsPractice || question.Subtest != currentSubtest)
         {
             return new LiaPracticeAnswerOutcome(LiaPracticeAnswerStatus.QuestionNotFound, null);
@@ -857,7 +985,8 @@ public sealed class LiaSessionWriter(
             : question.CorrectAnswer;
         var isCorrect = LiaAnswerScoring.IsAnswerCorrect(question.Subtest, answer, effectiveAnswer);
 
-        var practiceItems = LiaQuestionServing.FetchPracticeQuestions(question.Subtest, language);
+        var practiceItems = await LiaQuestionServing.FetchPracticeQuestionsAsync(
+            questionIdResolver, context, question.Subtest, language, cancellationToken);
         var next = practiceItems.FirstOrDefault(q => q.ItemNumber > question.ItemNumber);
         var practiceComplete = next is null;
 
@@ -918,6 +1047,11 @@ public sealed class LiaSessionWriter(
         RequestContext context, string sessionId, string ownerUserId, string subtest,
         CancellationToken cancellationToken = default)
     {
+        // Warm the question catalog BEFORE taking a connection — a lazy first load from inside the
+        // transaction below would need a SECOND pooled connection while this one is held, and
+        // MaxPoolSize is 10. See ILiaQuestionIdResolver.WarmAsync.
+        await questionIdResolver.WarmAsync(context, cancellationToken);
+
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
 
         string userId, status, currentSubtest;
@@ -954,7 +1088,7 @@ public sealed class LiaSessionWriter(
         }
 
         var itemCount = LiaSubtestOrder.ItemCounts[subtest];
-        var advanced = await ApplyTimeoutAsync(session, sessionId, subtest, cancellationToken);
+        var advanced = await ApplyTimeoutAsync(context, session, sessionId, subtest, cancellationToken);
         await session.CommitAsync(cancellationToken);
 
         if (advanced.Completion is { } completion)
@@ -1098,6 +1232,11 @@ public sealed class LiaSessionWriter(
     public async Task<SessionDetail?> ReadWithLazyExpiryAsync(
         RequestContext context, string sessionId, string ownerUserId, CancellationToken cancellationToken = default)
     {
+        // Warm the question catalog BEFORE taking a connection — a lazy first load from inside the
+        // transaction below would need a SECOND pooled connection while this one is held, and
+        // MaxPoolSize is 10. See ILiaQuestionIdResolver.WarmAsync.
+        await questionIdResolver.WarmAsync(context, cancellationToken);
+
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
 
         LazySessionRow row;
@@ -1129,7 +1268,8 @@ public sealed class LiaSessionWriter(
         // ApplyTimeoutAsync's already-answered rows and, worse, re-advance a completed session).
         if (row.Status == "in_progress")
         {
-            var expiry = await ExpireIfPastDeadlineAsync(session, sessionId, row.CurrentSubtest, row.SubtestTimesJson, cancellationToken);
+            var expiry = await ExpireIfPastDeadlineAsync(
+                context, session, sessionId, row.CurrentSubtest, row.SubtestTimesJson, cancellationToken);
             if (expiry is not null)
             {
                 await session.CommitAsync(cancellationToken);
@@ -1239,12 +1379,31 @@ public sealed class LiaSessionWriter(
             return null;
         }
 
+        // ValueKind is checked at each level rather than assumed. AdvancePastSubtestAsync now calls this
+        // from the /timeout and normal-answer paths too, so a malformed subtest_times entry (a non-object
+        // under the subtest key, or a non-string startedAt) would otherwise throw out of
+        // TryGetProperty/GetString and 500 the request. Nothing this backend writes can produce that
+        // shape; treating it as "no startedAt" is the same benign fallback a missing key already gets.
         using var doc = JsonDocument.Parse(subtestTimesJson);
-        return doc.RootElement.TryGetProperty(subtest, out var timing)
+        return doc.RootElement.ValueKind == JsonValueKind.Object
+            && doc.RootElement.TryGetProperty(subtest, out var timing)
+            && timing.ValueKind == JsonValueKind.Object
             && timing.TryGetProperty("startedAt", out var startedAt)
+            && startedAt.ValueKind == JsonValueKind.String
             ? startedAt.GetString()
             : null;
     }
+
+    // Single culture-safe parse for every ISO timestamp this class reads back out of subtest_times.
+    // AssumeUniversal|AdjustToUniversal (not RoundtripKind, which .NET rejects when combined with
+    // AdjustToUniversal): a value with no offset info is assumed UTC rather than local server time, and
+    // the result is normalized regardless of whether the source string carried an explicit "Z"/offset.
+    // Kind is then flattened to Unspecified so it subtracts cleanly against NowTruncated(), which is
+    // itself Unspecified-but-UTC to round-trip Postgres `timestamp` columns.
+    private static DateTime ParseIsoAsUnspecifiedUtc(string value) => DateTime.SpecifyKind(
+        DateTime.Parse(
+            value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal),
+        DateTimeKind.Unspecified);
 
     // Thin wrapper around the existing TruncateToMilliseconds truncation pattern (see CompleteAsync's
     // completedAt construction) — reused here rather than re-deriving the truncation logic.
@@ -1324,7 +1483,7 @@ public sealed class LiaSessionWriter(
     // succeeds, so a completion audit can never be emitted for a write that didn't durably persist.
     private async Task<LiaCompletionResult> PersistCompletionAsync(
         FormMapsDatabaseSession session, string sessionId,
-        Dictionary<string, ResponseCount> counts, CancellationToken cancellationToken)
+        Dictionary<string, ResponseCount> counts, string callSite, CancellationToken cancellationToken)
     {
         var scored = LiaCompletionScorer.ScoreCompletion(counts);
         var completedAt = NowTruncated();
@@ -1345,10 +1504,22 @@ public sealed class LiaSessionWriter(
             affected = await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
+        // Fail closed. This UPDATE is guarded by `status <> 'completed'`, so 0 rows means the session was
+        // completed by someone else between our caller's own state check and this write — and our caller
+        // is about to report scores that did not persist. It is NOT unreachable: this helper now runs
+        // from FIVE distinct entry points (POST /complete, POST /answer's normal and expiry branches,
+        // POST /timeout, POST /start's Gate 2, and a lazy-expiry GET /session/{id}), and not all of them
+        // held a row lock at the moment they decided to score. AdvancePastSubtestAsync's own locking
+        // pre-check absorbs the common benign race before it gets here, so anything still reaching this
+        // point is genuinely unexpected. `callSite` is logged because the prefix alone cannot tell an
+        // on-call responder WHICH of those entry points fired.
         if (affected == 0)
         {
-            logger.LogError("lia.session.complete conditional update matched 0 rows sessionId={SessionId}", sessionId);
-            throw new InvalidOperationException($"LIA completion update affected 0 rows for session {sessionId}");
+            logger.LogError(
+                "lia.session.persist-completion conditional update matched 0 rows sessionId={SessionId} callSite={CallSite}",
+                sessionId, callSite);
+            throw new InvalidOperationException(
+                $"LIA completion update affected 0 rows for session {sessionId} (call site: {callSite})");
         }
 
         return new LiaCompletionResult(

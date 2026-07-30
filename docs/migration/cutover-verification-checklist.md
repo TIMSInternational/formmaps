@@ -21,6 +21,38 @@ worked example this was extracted from.
 - [ ] (First batch only) rollback drill executed + timed.
 - [ ] Legacy Node route(s) marked frozen in `completion-roadmap.md`.
 
+## LIA session WRITES (FM-DOTNET-029) — cutover note
+
+The 10 LIA session write/read routes (`/start`, `/answer`, `/timeout`, `/subtest/start`,
+`/practice/answer`, `/violations`, `/complete`, `GET /session/:id`, `GET /access`,
+`GET /practice-questions`) have one flag-flip consideration beyond the generic checklist above.
+
+**Flip with zero in-progress LIA sessions.** Verify first:
+
+```sql
+SELECT count(*) FROM lia_assessment_sessions
+WHERE is_active = true AND status IN ('practice', 'in_progress');
+```
+
+This is now a defense-in-depth practice rather than a hard requirement. It used to be strictly
+mandatory in both directions: the .NET backend synthesized `lia_responses.question_id` as
+`"{subtest}:{itemNumber}:{practice|assessment}"`, which (a) could never satisfy production's real
+`lia_responses_question_id_fkey -> lia_questions(id)` constraint, and (b) was mutually unintelligible
+with the ids legacy Node serves. Both backends now resolve the SAME real `lia_questions.id` through
+the `(subtest, item_number, is_practice)` natural key (see `ILiaQuestionIdResolver`), so ids written
+by either are readable and resolvable by the other, and a mid-session flip in either direction no
+longer corrupts a session's response rows.
+
+What still argues for a quiet window: a session's progress lives in `subtest_times` / `current_item`
+/ `status`, and while both implementations agree on that shape, only one of them is exercised by any
+given request. A flip mid-subtest hands a running clock to a code path that has not been observed
+serving that exact session. Cheap to avoid; not worth the residual risk.
+
+Related operational note: `lia_questions` is read once per process and cached in-process
+(`LiaQuestionCatalogCache`). If that catalog is ever reseeded with fresh uuids, **restart the .NET
+API** — a long-lived process would otherwise keep serving the previous seed's ids, and every
+subsequent `/answer` would fail the foreign key.
+
 ## Wave 2 Batch 1 — worked example (2026-07-27)
 
 Routes: `GET /api/v1/lia/session/:id/results`, `GET /api/v1/lia/user/:id/results`,

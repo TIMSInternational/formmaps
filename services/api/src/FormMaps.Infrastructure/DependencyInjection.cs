@@ -113,6 +113,11 @@ public static class DependencyInjection
         services.AddScoped<IExamHistoryReader, ExamHistoryReader>();
         services.AddScoped<IAllResultsReader, AllResultsReader>();
         services.AddScoped<ILiaResultReader, LiaResultReader>();
+        // Singleton cache + Scoped resolver: the lia_questions natural-key -> real-uuid map is static
+        // reference data that must survive across requests (one query per process, not per answer),
+        // but the resolver that loads it needs the Scoped session factory. See LiaQuestionIdResolver.
+        services.AddSingleton<LiaQuestionCatalogCache>();
+        services.AddScoped<ILiaQuestionIdResolver, LiaQuestionIdResolver>();
         services.AddScoped<ILiaSessionWriter, LiaSessionWriter>();
         services.AddScoped<ILiaSessionReader, LiaSessionReader>();
         services.AddScoped<IPersonalitySessionWriter, PersonalitySessionWriter>();

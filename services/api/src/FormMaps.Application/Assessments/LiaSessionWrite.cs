@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FormMaps.Application.Auth;
 
 namespace FormMaps.Application.Assessments;
 
@@ -10,62 +11,98 @@ public sealed record ClientQuestion(
     [property: JsonPropertyName("question_data")] JsonElement QuestionData,
     [property: JsonPropertyName("is_practice")] bool IsPractice);
 
+/// <summary>
+/// Serves question CONTENT out of the embedded static <see cref="LiaAnswerScoring.BuildQuestionBank"/>
+/// bank, but every served <see cref="ClientQuestion.Id"/> is the REAL, environment-specific
+/// <c>lia_questions.id</c> resolved at runtime through <see cref="ILiaQuestionIdResolver"/>.
+///
+/// The id must be real (not synthesized from the natural key) because <c>lia_responses.question_id</c>
+/// carries an actual foreign key to <c>lia_questions(id)</c>, and that column is what every /answer and
+/// /timeout write lands in — see <see cref="ILiaQuestionIdResolver"/> for the full rationale. This also
+/// makes the ids this backend serves byte-identical to the ones legacy Node serves, so the two can run
+/// side by side (and the feature flag can be flipped back) without either producing ids the other cannot
+/// resolve.
+///
+/// Content (and the scoring answer key) still comes from the static bank, which is unchanged and stays
+/// golden-test-pinned; this type only layers real id resolution on top of it.
+/// </summary>
 public static class LiaQuestionServing
 {
     /// <summary>
     /// legacy fetchPracticeQuestions: all practice items for a subtest, ordered, answer key stripped,
     /// EN question-text swapped in for verbal_reasoning where LiaVerbalEn has an override.
     /// </summary>
-    public static IReadOnlyList<ClientQuestion> FetchPracticeQuestions(string subtest, string language) =>
-        LiaAnswerScoring.BuildQuestionBank()
-            .Where(q => q.Subtest == subtest && q.IsPractice)
-            .OrderBy(q => q.ItemNumber)
-            .Select(q => ToClientQuestion(q, language))
-            .ToList();
+    public static Task<IReadOnlyList<ClientQuestion>> FetchPracticeQuestionsAsync(
+        ILiaQuestionIdResolver resolver, RequestContext context, string subtest, string language,
+        CancellationToken cancellationToken = default) =>
+        ToClientQuestionsAsync(
+            resolver,
+            context,
+            LiaAnswerScoring.BuildQuestionBank()
+                .Where(q => q.Subtest == subtest && q.IsPractice)
+                .OrderBy(q => q.ItemNumber),
+            language,
+            cancellationToken);
 
     /// <summary>
     /// legacy the assessment-items query inside startSession Gate 3 / startSubtest: live (non-practice)
     /// items for a subtest, ordered, capped at the subtest's item count.
     /// </summary>
-    public static IReadOnlyList<ClientQuestion> FetchAssessmentQuestions(string subtest, string language, int take) =>
-        LiaAnswerScoring.BuildQuestionBank()
-            .Where(q => q.Subtest == subtest && !q.IsPractice)
-            .OrderBy(q => q.ItemNumber)
-            .Take(take)
-            .Select(q => ToClientQuestion(q, language))
-            .ToList();
+    public static Task<IReadOnlyList<ClientQuestion>> FetchAssessmentQuestionsAsync(
+        ILiaQuestionIdResolver resolver, RequestContext context, string subtest, string language, int take,
+        CancellationToken cancellationToken = default) =>
+        ToClientQuestionsAsync(
+            resolver,
+            context,
+            LiaAnswerScoring.BuildQuestionBank()
+                .Where(q => q.Subtest == subtest && !q.IsPractice)
+                .OrderBy(q => q.ItemNumber)
+                .Take(take),
+            language,
+            cancellationToken);
 
-    /// <summary>Single-item lookup by subtest+itemNumber (assessment only) — legacy submitAnswer's question fetch.</summary>
-    public static LiaQuestionBankItem? FindAssessmentQuestion(string subtest, int itemNumber) =>
-        LiaAnswerScoring.BuildQuestionBank()
-            .FirstOrDefault(q => q.Subtest == subtest && !q.IsPractice && q.ItemNumber == itemNumber);
-
-    /// <summary>Single-item lookup by id (bank rows are keyed by (subtest,itemNumber,isPractice) — see Note below).</summary>
-    public static LiaQuestionBankItem? FindById(string questionId) => ParseId(questionId) is var (subtest, itemNumber, isPractice)
-        ? LiaAnswerScoring.BuildQuestionBank().FirstOrDefault(
-            q => q.Subtest == subtest && q.ItemNumber == itemNumber && q.IsPractice == isPractice)
-        : null;
-
-    // legacy lia_questions.id is a real DB-generated cuid; the static .NET bank has no such id. Synthesize
-    // a stable, parseable id instead: "{subtest}:{itemNumber}:{practice|assessment}". ClientQuestion.Id and
-    // every /answer, /practice/answer request's question_id use THIS id going forward once the write flag
-    // is on — the frontend never persists a raw id across the cutover boundary (a fresh /start or
-    // /practice call always re-serves current ids), so there is no stale-id compatibility concern.
-    private static string BuildId(LiaQuestionBankItem q) =>
-        $"{q.Subtest}:{q.ItemNumber}:{(q.IsPractice ? "practice" : "assessment")}";
-
-    private static (string Subtest, int ItemNumber, bool IsPractice)? ParseId(string id)
+    /// <summary>
+    /// Single-item lookup by the REAL <c>lia_questions.id</c>, mapped back onto the static content bank
+    /// via <see cref="ILiaQuestionIdResolver.ResolveReverseAsync"/>. A real uuid carries no parseable
+    /// subtest/item information, so this genuinely requires the catalog — an unknown id (forged, stale,
+    /// or from a different environment) resolves to null, which every caller folds into its uniform
+    /// "question not found" outcome.
+    /// </summary>
+    public static async Task<LiaQuestionBankItem?> FindByIdAsync(
+        ILiaQuestionIdResolver resolver, RequestContext context, string questionId,
+        CancellationToken cancellationToken = default)
     {
-        var parts = id.Split(':');
-        if (parts.Length != 3 || !int.TryParse(parts[1], out var itemNumber))
+        if (await resolver.ResolveReverseAsync(context, questionId, cancellationToken) is not { } key)
         {
             return null;
         }
 
-        return (parts[0], itemNumber, parts[2] == "practice");
+        return LiaAnswerScoring.BuildQuestionBank().FirstOrDefault(
+            q => q.Subtest == key.Subtest && q.ItemNumber == key.ItemNumber && q.IsPractice == key.IsPractice);
     }
 
-    private static ClientQuestion ToClientQuestion(LiaQuestionBankItem q, string language)
+    private static async Task<IReadOnlyList<ClientQuestion>> ToClientQuestionsAsync(
+        ILiaQuestionIdResolver resolver, RequestContext context, IEnumerable<LiaQuestionBankItem> items,
+        string language, CancellationToken cancellationToken)
+    {
+        var served = new List<ClientQuestion>();
+        foreach (var q in items)
+        {
+            // Fail loudly, never silently: a null id means the embedded static bank describes a question
+            // the live lia_questions catalog does not contain. Serving it would hand the candidate an id
+            // that violates lia_responses' FK the instant they answer it, so the drift must surface here
+            // (as a 500 with a precise message) rather than as an opaque Postgres 23503 later.
+            var id = await resolver.ResolveAsync(context, q.Subtest, q.ItemNumber, q.IsPractice, cancellationToken)
+                ?? throw new InvalidOperationException(
+                    $"LIA question catalog drift: the embedded question bank contains ({q.Subtest}, item {q.ItemNumber}, "
+                    + $"isPractice={q.IsPractice}) but the live lia_questions table has no such row.");
+            served.Add(ToClientQuestion(id, q, language));
+        }
+
+        return served;
+    }
+
+    private static ClientQuestion ToClientQuestion(string id, LiaQuestionBankItem q, string language)
     {
         var data = q.QuestionData;
         if (q.Subtest == "verbal_reasoning" && language == "en")
@@ -77,7 +114,7 @@ public static class LiaQuestionServing
             }
         }
 
-        return new ClientQuestion(BuildId(q), q.Subtest, q.ItemNumber, data, q.IsPractice);
+        return new ClientQuestion(id, q.Subtest, q.ItemNumber, data, q.IsPractice);
     }
 }
 

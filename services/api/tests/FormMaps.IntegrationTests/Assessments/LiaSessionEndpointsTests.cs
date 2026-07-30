@@ -648,7 +648,10 @@ public class LiaSessionEndpointsTests
         JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
     private static ClientQuestion SampleClientQuestion() => new(
-        Id: "pattern_recognition:1:practice",
+        // A uuid, matching the real lia_questions.id shape the resolver now serves — NOT the old
+        // synthesized "{subtest}:{item}:{kind}" string, so this fixture cannot mislead a reader into
+        // thinking question ids are derivable from the natural key.
+        Id: "3f9a5c21-0b4e-4d7a-9c18-2e6b8d4f1a07",
         Subtest: "pattern_recognition",
         ItemNumber: 1,
         QuestionData: JsonDocument.Parse("{}").RootElement,

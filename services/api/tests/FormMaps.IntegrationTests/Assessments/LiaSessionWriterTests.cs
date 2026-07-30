@@ -5,6 +5,7 @@ using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.Assessments;
@@ -41,10 +42,20 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
 
     public LiaSessionWriterTests(LiaWriteDatabaseFixture fixture) => _fixture = fixture;
 
-    public Task InitializeAsync()
+    // Shared, PRE-WARMED question-catalog cache (one per test class, mirroring the process-wide
+    // singleton production registers). Warming here keeps the resolver's first-load semaphore from
+    // becoming an artificial serialization point inside a test's own concurrency window — production
+    // never sees a cold cache after its first request.
+    private readonly LiaQuestionCatalogCache _catalogCache = new();
+
+    public async Task InitializeAsync()
     {
         _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
-        return Task.CompletedTask;
+        await new LiaQuestionIdResolver(
+                new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()),
+                _catalogCache,
+                NullLogger<LiaQuestionIdResolver>.Instance)
+            .WarmAsync(Ctx(Guid.NewGuid().ToString()));
     }
 
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
@@ -262,7 +273,9 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
-        return (new LiaSessionWriter(factory, logger), logger);
+        var resolver = new LiaQuestionIdResolver(
+            factory, new LiaQuestionCatalogCache(), NullLogger<LiaQuestionIdResolver>.Instance);
+        return (new LiaSessionWriter(factory, resolver, logger), logger);
     }
 
     private static RequestContext Ctx(string userId, string name = "Test User", string email = "test@e.st") =>
@@ -362,12 +375,18 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
         await using var cmd = new NpgsqlCommand(
             """
             INSERT INTO lia_responses (id, session_id, question_id, subtest, item_number, is_correct, updated_at)
-            SELECT @sid || '-' || @sub || '-' || g, @sid, @sub || '-' || g, @sub::"LiaSubtest", g,
+            SELECT @sid || '-' || @sub || '-' || g, @sid, q.id, @sub::"LiaSubtest", g,
                    CASE WHEN g <= @correct THEN true
                         WHEN g <= @correct + @incorrect THEN false
                         ELSE NULL END,
                    now()
             FROM generate_series(1, @total) g
+            -- question_id must be a REAL lia_questions.id: lia_responses now carries the production FK
+            -- lia_responses_question_id_fkey, so a synthesized string is rejected here exactly as it
+            -- would be in prod. Joining the (subtest, item_number, is_practice) natural key yields one
+            -- row per g, preserving the per-session uniqueness lia_responses_session_id_question_id_key needs.
+            JOIN lia_questions q
+              ON q.subtest = @sub::"LiaSubtest" AND q.item_number = g AND q.is_practice = false
             """,
             connection);
         cmd.Parameters.AddWithValue("sid", sessionId);

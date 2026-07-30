@@ -4,6 +4,7 @@ using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.Assessments;
@@ -23,7 +24,24 @@ public sealed class LiaSessionReaderTests : IClassFixture<LiaWriteDatabaseFixtur
     private NpgsqlDataSource _dataSource = null!;
 
     public LiaSessionReaderTests(LiaWriteDatabaseFixture fixture) => _fixture = fixture;
-    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
+    // Shared, PRE-WARMED question-catalog cache (one per test class, mirroring the process-wide
+    // singleton production registers). Warming in InitializeAsync matters for the concurrency tests:
+    // the resolver's first-load semaphore would otherwise serialize the racers at the top of
+    // StartAsync, letting the first one run to completion (and commit the reentry lock) while the
+    // others are still queued — an artificial ordering that is not what those tests pin, and which
+    // production never sees after its first request.
+    private readonly LiaQuestionCatalogCache _catalogCache = new();
+
+    public async Task InitializeAsync()
+    {
+        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
+        await new LiaQuestionIdResolver(
+                new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()),
+                _catalogCache,
+                NullLogger<LiaQuestionIdResolver>.Instance)
+            .WarmAsync(Ctx(Guid.NewGuid().ToString()));
+    }
+
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     // ==============================================================================================
@@ -185,8 +203,10 @@ public sealed class LiaSessionReaderTests : IClassFixture<LiaWriteDatabaseFixtur
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
-        var writer = new LiaSessionWriter(factory, logger);
-        var reader = new LiaSessionReader(factory, writer);
+        var resolver = new LiaQuestionIdResolver(
+            factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
+        var writer = new LiaSessionWriter(factory, resolver, logger);
+        var reader = new LiaSessionReader(factory, writer, resolver);
         return (reader, writer, logger);
     }
 
@@ -349,10 +369,16 @@ public sealed class LiaSessionReaderTests : IClassFixture<LiaWriteDatabaseFixtur
             """
             INSERT INTO lia_responses
                 (id, session_id, question_id, subtest, item_number, user_answer, is_correct, answered_at, time_spent_ms, updated_at)
-            SELECT @sid || '-' || @sub || '-' || g, @sid, @sub || '-' || g, @sub::"LiaSubtest", g,
+            SELECT @sid || '-' || @sub || '-' || g, @sid, q.id, @sub::"LiaSubtest", g,
                    'x', CASE WHEN g <= @correct THEN true ELSE false END,
                    now(), 1000, now()
             FROM generate_series(1, @total) g
+            -- question_id must be a REAL lia_questions.id: lia_responses now carries the production FK
+            -- lia_responses_question_id_fkey, so a synthesized string is rejected here exactly as it
+            -- would be in prod. Joining the (subtest, item_number, is_practice) natural key yields one
+            -- row per g, preserving the per-session uniqueness lia_responses_session_id_question_id_key needs.
+            JOIN lia_questions q
+              ON q.subtest = @sub::"LiaSubtest" AND q.item_number = g AND q.is_practice = false
             """,
             connection);
         cmd.Parameters.AddWithValue("sid", sessionId);
