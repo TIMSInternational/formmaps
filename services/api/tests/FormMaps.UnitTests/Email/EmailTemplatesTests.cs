@@ -53,4 +53,16 @@ public sealed class EmailTemplatesTests
         Assert.Contains("https://app.formmaps.com/dashboard/assessments", msg.Html);
         Assert.Contains("Go to Assessments", msg.Html);
     }
+
+    [Fact]
+    public void ReportEmail_subject_is_raw_studentName_body_escapes_name_and_links_to_dashboard()
+    {
+        var msg = Templates().BuildReportEmail("Ana \"A\" & Co");
+
+        Assert.Equal("FormMaps — Student Report for Ana \"A\" & Co", msg.Subject);
+        Assert.Contains("Student Report: Ana &quot;A&quot; &amp; Co", msg.Html);
+        Assert.Contains("Your latest assessment report is ready. Log in to view your full results.", msg.Html);
+        Assert.Contains("https://app.formmaps.com/dashboard", msg.Html);
+        Assert.Contains("postal-addr", msg.Html); // branded shell present
+    }
 }

@@ -52,6 +52,22 @@ public sealed class EmailTemplates(EmailOptions options)
         return new EmailMessage(subject, Wrap(body));
     }
 
+    /// <summary>Report-ready notification — mirrors sendReportEmail (email.ts:243). studentName is RAW in the
+    /// subject (matches TS) and escaped in the body, same asymmetry as BuildEvaluationInvite. The body content is
+    /// a FIXED canned paragraph in legacy (report.ts always passes the same literal reportHtml) — not a
+    /// caller-supplied parameter, so it isn't one here either.</summary>
+    public EmailMessage BuildReportEmail(string studentName)
+    {
+        var subject = $"FormMaps — Student Report for {studentName}";
+        var body =
+            $"""
+                <h2 style="color:#102B47">Student Report: {EscapeHtml(studentName)}</h2>
+                <p>Your latest assessment report is ready. Log in to view your full results.</p>
+                <p>Log in to view the full report: <a href="{options.FrontendUrl}/dashboard">{options.FrontendUrl}/dashboard</a></p>
+            """;
+        return new EmailMessage(subject, Wrap(body));
+    }
+
     // ── template primitives (lib/email.ts wrap/button) ──────────────────
 
     public string Wrap(string body) =>
