@@ -72,6 +72,7 @@ app.MapIsamsWriteEndpoints();
 app.MapUploadEndpoints();
 app.MapResumeSectionsEndpoints();
 app.MapResumeCrudEndpoints();
+app.MapResumeCrossUserEndpoints();
 app.MapCurriculumFrameworksEndpoints();
 app.MapDataMappingsEndpoints();
 app.MapPrerequisitesEndpoints();
