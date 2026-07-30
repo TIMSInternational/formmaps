@@ -29,7 +29,8 @@ public interface IResumeRepository
     Task<ResumeRow?> FindActiveByIdAsync(string resumeId, CancellationToken cancellationToken = default);
 
     /// <summary>GET /:id fallback branch — findMany{userId, isActive} ORDER BY updatedAt DESC, id ASC → first row,
-    /// or null (endpoint maps to 404 "No resume found").</summary>
+    /// or null (endpoint maps to the shared uniform 404 "Not found", same message as the access-guard-denial
+    /// branches on this endpoint, to avoid an existence-oracle leak).</summary>
     Task<ResumeRow?> FindMostRecentActiveByUserIdAsync(string userId, CancellationToken cancellationToken = default);
 
     /// <summary>PUT /:resumeId — owner-only (existing.userId != caller, NOT canAccessUser), NO isActive filter (a

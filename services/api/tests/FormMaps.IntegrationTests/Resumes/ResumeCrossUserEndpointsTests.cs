@@ -45,6 +45,7 @@ public sealed class ResumeCrossUserEndpointsTests
         using var client = factory.CreateClient();
         var response = await Send(client, HttpMethod.Get, "/api/resume/r1", null, callerId: "someone-else");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("Not found", await MessageOf(response));
     }
 
     [Fact]
@@ -75,6 +76,10 @@ public sealed class ResumeCrossUserEndpointsTests
         using var client = factory.CreateClient();
         var response = await Send(client, HttpMethod.Get, "/api/resume/owner-1", null, callerId: "owner-1");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        // Pins the uniform-404 convention: the fallback-miss branch must use the SAME message as the
+        // access-guard-denial branch above (GetById_direct_hit_denied_by_access_guard_is_404), not a distinct
+        // "No resume found" — a prior review round caught exactly this drift once already.
+        Assert.Equal("Not found", await MessageOf(response));
     }
 
     [Fact]
@@ -192,6 +197,12 @@ public sealed class ResumeCrossUserEndpointsTests
     }
 
     private static StringContent Json(string json) => new(json, Encoding.UTF8, "application/json");
+
+    private static async Task<string?> MessageOf(HttpResponseMessage response)
+    {
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        return doc.RootElement.GetProperty("message").GetString();
+    }
 
     private static Task<HttpResponseMessage> Send(
         HttpClient client, HttpMethod method, string path, HttpContent? content, string callerId, string role = "student")
