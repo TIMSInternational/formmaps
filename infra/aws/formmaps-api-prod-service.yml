@@ -44,6 +44,11 @@ Parameters:
       MUST be a WRITE-CAPABLE, RLS-respecting (non-BYPASSRLS) prod Aurora role
       (see runbook Step-0). This is the single security-critical difference
       from the staging stack, whose role is read-only.
+  DailyApiKeySecretArn:
+    Type: String
+    NoEcho: true
+    Description: >-
+      Full ARN of the Secrets Manager secret containing DAILY_API_KEY (Domain 7a video calling).
   ProdWebOrigin:
     Type: String
     Default: https://app.formmaps.ai
@@ -130,6 +135,7 @@ Resources:
                 Resource:
                   - !Ref JwtSecretArn
                   - !Ref DatabaseUrlSecretArn
+                  - !Ref DailyApiKeySecretArn
       Tags:
         - Key: Project
           Value: formmaps
@@ -166,6 +172,8 @@ Resources:
                 Value: !Ref JwtSecretArn
               - Name: DATABASE_URL
                 Value: !Ref DatabaseUrlSecretArn
+              - Name: DAILY_API_KEY
+                Value: !Ref DailyApiKeySecretArn
       InstanceConfiguration:
         Cpu: !Ref Cpu
         Memory: !Ref Memory

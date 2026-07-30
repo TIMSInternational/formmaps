@@ -21,6 +21,11 @@ Parameters:
     Type: String
     NoEcho: true
     Description: Full ARN of the Secrets Manager secret containing DATABASE_URL.
+  DailyApiKeySecretArn:
+    Type: String
+    NoEcho: true
+    Description: >-
+      Full ARN of the Secrets Manager secret containing DAILY_API_KEY (Domain 7a video calling).
   StagingWebOrigin:
     Type: String
     Default: https://staging.formmaps.ai
@@ -94,6 +99,7 @@ Resources:
                 Resource:
                   - !Ref JwtSecretArn
                   - !Ref DatabaseUrlSecretArn
+                  - !Ref DailyApiKeySecretArn
       Tags:
         - Key: Project
           Value: formmaps
@@ -129,6 +135,8 @@ Resources:
                 Value: !Ref JwtSecretArn
               - Name: DATABASE_URL
                 Value: !Ref DatabaseUrlSecretArn
+              - Name: DAILY_API_KEY
+                Value: !Ref DailyApiKeySecretArn
       InstanceConfiguration:
         Cpu: !Ref Cpu
         Memory: !Ref Memory
