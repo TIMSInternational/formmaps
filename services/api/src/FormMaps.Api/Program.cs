@@ -29,6 +29,7 @@ app.MapGet("/version", () => Results.Ok(new VersionResponse(
 app.MapMigrationEndpoints();
 app.MapRequestContextEndpoints();
 app.MapReportEndpoints();
+app.MapReportEmailEndpoints();
 app.MapExamEndpoints();
 app.MapLiaEndpoints();
 app.MapMilEndpoints();
