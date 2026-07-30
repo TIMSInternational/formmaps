@@ -77,6 +77,7 @@ using FormMaps.Infrastructure.StudentPortfolio;
 using FormMaps.Infrastructure.Video;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
@@ -173,6 +174,13 @@ public static class DependencyInjection
         // Domain 7a: video-call sessions (FM-091..097 — routes/video.ts, 7 of 9 endpoints; schedule/cancel stay
         // Node for their calendar-sync side effect).
         services.AddScoped<IVideoSessionsRepository, VideoSessionsRepository>();
+        // Domain 7a: Daily.co video-provider client (FM-094). First HttpClient-based external integration in
+        // this codebase — 15s timeout matches legacy's AbortSignal.timeout(15000).
+        services.AddHttpClient<IDailyClient, DailyClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.daily.co/v1/");
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
         // FM-DOTNET-080: academic-gaps 3 non-AI reads (summary / student detail / recommendations).
         services.AddScoped<IAcademicGapsReader, AcademicGapsReader>();
         services.AddScoped<IStudentPortfolioRepository, StudentPortfolioRepository>();
