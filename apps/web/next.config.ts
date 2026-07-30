@@ -419,6 +419,19 @@ function shouldRouteSendReportEmailToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SEND_REPORT_EMAIL_TO_DOTNET));
 }
 
+// Resume cross-user completion (Phase F): GET /:id (dual-mode) + PUT/DELETE /:resumeId, co-flipped
+// (path-not-method) via a negative lookahead excluding this router's other single-segment literals
+// (default/ask/upload-and-parse/tailor/extract-job-posting). Default OFF.
+function shouldRouteResumeCrossUserToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_CROSSUSER_TO_DOTNET));
+}
+
+// Resume GET /:id/original (Phase F): independent flag from the CRUD routes above — a new
+// presigned-URL capability, a separate risk surface, isolated for independent rollback. Default OFF.
+function shouldRouteResumeOriginalToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_ORIGINAL_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1160,6 +1173,22 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/reports/send-report-email/:userId",
               destination: `${dotnetApiBaseUrl}/api/v1/reports/send-report-email/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteResumeCrossUserToDotnet()
+        ? [
+            {
+              source: "/api/resume/:id((?!default|ask|upload-and-parse|tailor|extract-job-posting)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/resume/:id`,
+            },
+          ]
+        : []),
+      ...(shouldRouteResumeOriginalToDotnet()
+        ? [
+            {
+              source: "/api/resume/:id/original",
+              destination: `${dotnetApiBaseUrl}/api/resume/:id/original`,
             },
           ]
         : []),
