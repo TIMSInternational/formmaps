@@ -384,6 +384,18 @@ function shouldRouteSchoolAdminConfigScheduleToDotnet() {
   );
 }
 
+// External 360 evaluation rail (FM-DOTNET-043): validate-token (read) + submit-feedback (write) +
+// 360evolutor (read). NO authenticate — the invitation token is the credential. Default OFF.
+function shouldRouteEvalExternalToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_EVAL_EXTERNAL_TO_DOTNET));
+}
+
+// External vocational take rail (FM-DOTNET-043): GET form + POST submit + POST violations. NO
+// authenticate — the invitation token is the credential. Default OFF.
+function shouldRouteVocationalTakeToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_TAKE_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1079,6 +1091,21 @@ const nextConfig: NextConfig = {
         ? [
             { source: "/api/v1/student/course-plan/change-requests", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/change-requests` },
             { source: "/api/v1/student/course-plan/change-requests/:requestId", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/change-requests/:requestId` },
+          ]
+        : []),
+      // Must precede the /evaluation/:path* catch-all below so a flipped route reaches .NET.
+      ...(shouldRouteEvalExternalToDotnet()
+        ? [
+            { source: "/evaluation/validate-token", destination: `${dotnetApiBaseUrl}/evaluation/validate-token` },
+            { source: "/evaluation/submit-feedback", destination: `${dotnetApiBaseUrl}/evaluation/submit-feedback` },
+            { source: "/evaluation/360evolutor/:token", destination: `${dotnetApiBaseUrl}/evaluation/360evolutor/:token` },
+          ]
+        : []),
+      ...(shouldRouteVocationalTakeToDotnet()
+        ? [
+            { source: "/evaluation/vocational/submit", destination: `${dotnetApiBaseUrl}/evaluation/vocational/submit` },
+            { source: "/evaluation/vocational/:token/violations", destination: `${dotnetApiBaseUrl}/evaluation/vocational/:token/violations` },
+            { source: "/evaluation/vocational/:token", destination: `${dotnetApiBaseUrl}/evaluation/vocational/:token` },
           ]
         : []),
     ];
