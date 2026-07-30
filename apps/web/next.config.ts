@@ -432,6 +432,35 @@ function shouldRouteResumeOriginalToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_ORIGINAL_TO_DOTNET));
 }
 
+// Video enabled check (Domain 7a, FM-091): GET /api/v1/video/enabled. Default OFF.
+function shouldRouteVideoEnabledToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VIDEO_ENABLED_TO_DOTNET));
+}
+
+// Video sessions list + create (Domain 7a, FM-092/095): GET+POST /api/v1/video/sessions — forced
+// co-flip, Next rewrites match path not method, same precedent as resume.ts's GET/POST /. Default OFF.
+function shouldRouteVideoSessionsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VIDEO_SESSIONS_TO_DOTNET));
+}
+
+// Video session detail (Domain 7a, FM-093): GET /api/v1/video/sessions/:id. Own path, own flag,
+// independent from the list+create flag above. Default OFF.
+function shouldRouteVideoSessionDetailToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VIDEO_SESSION_DETAIL_TO_DOTNET));
+}
+
+// Video Daily.co signature (Domain 7a, FM-094): POST /api/v1/video/signature — the actual external-call
+// risk surface, isolated for independent rollback. Default OFF.
+function shouldRouteVideoSignatureToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VIDEO_SIGNATURE_TO_DOTNET));
+}
+
+// Video session lifecycle (Domain 7a, FM-096/097): POST /api/v1/video/sessions/:id/end + /start.
+// schedule/cancel are NOT included (calendar-sync side effect stays Node). Default OFF.
+function shouldRouteVideoSessionLifecycleToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VIDEO_SESSION_LIFECYCLE_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1190,6 +1219,24 @@ const nextConfig: NextConfig = {
               source: "/api/resume/:id/original",
               destination: `${dotnetApiBaseUrl}/api/resume/:id/original`,
             },
+          ]
+        : []),
+      ...(shouldRouteVideoEnabledToDotnet()
+        ? [{ source: "/api/v1/video/enabled", destination: `${dotnetApiBaseUrl}/api/v1/video/enabled` }]
+        : []),
+      ...(shouldRouteVideoSessionsToDotnet()
+        ? [{ source: "/api/v1/video/sessions", destination: `${dotnetApiBaseUrl}/api/v1/video/sessions` }]
+        : []),
+      ...(shouldRouteVideoSessionDetailToDotnet()
+        ? [{ source: "/api/v1/video/sessions/:id", destination: `${dotnetApiBaseUrl}/api/v1/video/sessions/:id` }]
+        : []),
+      ...(shouldRouteVideoSignatureToDotnet()
+        ? [{ source: "/api/v1/video/signature", destination: `${dotnetApiBaseUrl}/api/v1/video/signature` }]
+        : []),
+      ...(shouldRouteVideoSessionLifecycleToDotnet()
+        ? [
+            { source: "/api/v1/video/sessions/:id/end", destination: `${dotnetApiBaseUrl}/api/v1/video/sessions/:id/end` },
+            { source: "/api/v1/video/sessions/:id/start", destination: `${dotnetApiBaseUrl}/api/v1/video/sessions/:id/start` },
           ]
         : []),
     ];
