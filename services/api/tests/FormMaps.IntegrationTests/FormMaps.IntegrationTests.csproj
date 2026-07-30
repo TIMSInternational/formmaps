@@ -115,6 +115,8 @@
     <EmbeddedResource Include="Resumes\Data\resume-crud-schema.sql" />
     <!-- Schema-only DDL (users id/email/name only) for the Testcontainers send-report-email recipient lookup harness (Phase F). -->
     <EmbeddedResource Include="Reports\Data\reports-users-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers video sessions reads harness (FM-091..097 Domain 7a). -->
+    <EmbeddedResource Include="Video\Data\video-sessions-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
