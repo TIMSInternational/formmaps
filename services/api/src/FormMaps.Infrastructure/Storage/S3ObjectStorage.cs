@@ -47,6 +47,26 @@ public sealed class S3ObjectStorage(IAmazonS3 client, ObjectStorageOptions optio
         return new StoredObject(key, url);
     }
 
+    public Task<string> GetPresignedReadUrlAsync(
+        string key, int ttlSeconds, bool inline, string contentType, CancellationToken cancellationToken = default)
+    {
+        var request = new GetPreSignedUrlRequest
+        {
+            BucketName = options.Bucket,
+            Key = key,
+            Verb = HttpVerb.GET,
+            Expires = DateTime.UtcNow.AddSeconds(ttlSeconds),
+            ResponseHeaderOverrides = { ContentType = contentType },
+        };
+        if (inline)
+        {
+            request.ResponseHeaderOverrides.ContentDisposition = "inline";
+        }
+
+        // Presigning is a local (offline) signing operation — no network call, same as UploadAndGetUrlAsync.
+        return Task.FromResult(client.GetPreSignedURL(request));
+    }
+
     // {folder}/{unixMs}-{6 base36 chars}{ext} — lib/s3.ts key shape (Date.now() + Math.random().toString(36)).
     private static string BuildKey(string folder, string filename)
     {

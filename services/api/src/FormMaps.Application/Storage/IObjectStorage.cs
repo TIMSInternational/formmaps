@@ -16,6 +16,16 @@ public interface IObjectStorage
     /// </summary>
     Task<StoredObject> UploadAndGetUrlAsync(
         string folder, string filename, byte[] body, string contentType, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Presign a GET for a key that was stored at some earlier time (as opposed to <see cref="UploadAndGetUrlAsync"/>,
+    /// which uploads first). <paramref name="ttlSeconds"/> and <paramref name="inline"/> are caller-controlled —
+    /// unlike the fixed 24h/attachment shape of an upload-time presign, a read of an existing object may need a much
+    /// shorter TTL and an inline (browser-renderable) disposition, e.g. resume.ts's GET /:id/original (300s, inline,
+    /// application/pdf).
+    /// </summary>
+    Task<string> GetPresignedReadUrlAsync(
+        string key, int ttlSeconds, bool inline, string contentType, CancellationToken cancellationToken = default);
 }
 
 /// <summary>The result of an upload: the stored key + its presigned read URL.</summary>
