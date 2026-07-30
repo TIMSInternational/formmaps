@@ -40,6 +40,12 @@ function shouldRoutePersonalityCompleteToDotnet() {
 function shouldRouteLiaResultsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_LIA_RESULTS_TO_DOTNET));
 }
+// LIA session write lifecycle (FM-DOTNET-029): all 7 write endpoints + the 3 reads that share their
+// lazy-expiry logic, cut over together under ONE flag to avoid split-writing lia_assessment_sessions
+// across two backends. Default OFF.
+function shouldRouteLiaSessionToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_LIA_SESSION_TO_DOTNET));
+}
 function shouldRouteMilResultsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_MIL_RESULTS_TO_DOTNET));
 }
@@ -490,6 +496,50 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/lia/user/:userId/results",
               destination: `${dotnetApiBaseUrl}/api/v1/lia/user/:userId/results`,
+            },
+          ]
+        : []),
+      ...(shouldRouteLiaSessionToDotnet()
+        ? [
+            {
+              source: "/api/v1/lia/access",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/access`,
+            },
+            {
+              source: "/api/v1/lia/start",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/start`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/practice",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/practice`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/practice/answer",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/practice/answer`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/subtest/start",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/subtest/start`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/answer",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/answer`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/timeout",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/timeout`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/violations",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/violations`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/complete",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/complete`,
             },
           ]
         : []),
