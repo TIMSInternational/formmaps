@@ -85,4 +85,43 @@ public sealed class ResumeUpdateTests
         using var doc = JsonDocument.Parse(result!);
         Assert.Equal(0, doc.RootElement.GetArrayLength());
     }
+
+    [Fact]
+    public void SanitizeDocumentEdits_non_numeric_page_coerces_to_zero_and_entry_survives()
+    {
+        var result = ResumeUpdate.SanitizeDocumentEdits(
+            J("""{"documentEdits":[{"page":"garbage","runIndex":0,"orig":"a","text":"b"}]}"""));
+        using var doc = JsonDocument.Parse(result!);
+        Assert.Equal(1, doc.RootElement.GetArrayLength());
+        Assert.Equal(0, doc.RootElement[0].GetProperty("page").GetInt32());
+    }
+
+    [Fact]
+    public void SanitizeDocumentEdits_negative_page_drops_entry()
+    {
+        var result = ResumeUpdate.SanitizeDocumentEdits(
+            J("""{"documentEdits":[{"page":-1,"runIndex":0,"orig":"a","text":"b"}]}"""));
+        using var doc = JsonDocument.Parse(result!);
+        Assert.Equal(0, doc.RootElement.GetArrayLength());
+    }
+
+    [Fact]
+    public void SanitizeDocumentEdits_negative_runIndex_drops_entry()
+    {
+        var result = ResumeUpdate.SanitizeDocumentEdits(
+            J("""{"documentEdits":[{"page":0,"runIndex":-1,"orig":"a","text":"b"}]}"""));
+        using var doc = JsonDocument.Parse(result!);
+        Assert.Equal(0, doc.RootElement.GetArrayLength());
+    }
+
+    [Fact]
+    public void SanitizeDocumentEdits_non_canonical_whole_number_page_survives_as_integer()
+    {
+        var result = ResumeUpdate.SanitizeDocumentEdits(
+            J("""{"documentEdits":[{"page":3.0,"runIndex":1e2,"orig":"a","text":"b"}]}"""));
+        using var doc = JsonDocument.Parse(result!);
+        Assert.Equal(1, doc.RootElement.GetArrayLength());
+        Assert.Equal(3, doc.RootElement[0].GetProperty("page").GetInt32());
+        Assert.Equal(100, doc.RootElement[0].GetProperty("runIndex").GetInt32());
+    }
 }

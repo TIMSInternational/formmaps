@@ -73,8 +73,22 @@ public static class ResumeUpdate
 
     private static int CoerceNumberOrZero(JsonElement element, string prop)
     {
-        if (!element.TryGetProperty(prop, out var value)) return 0;
-        return value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var i) ? i : 0;
+        if (!element.TryGetProperty(prop, out var value) || value.ValueKind != JsonValueKind.Number)
+        {
+            return 0;
+        }
+
+        // Match legacy's `Number(e.page) || 0`: any JSON number token is a valid JS Number, but only
+        // finite, whole-number values in int range are usable as page/runIndex. Non-canonical-but-valid
+        // forms like 3.0 or 1e2 must still parse (GetDouble handles that); non-finite, fractional, or
+        // out-of-range values fall through to 0, same as a garbage Number() result would.
+        var d = value.GetDouble();
+        if (!double.IsFinite(d) || d != Math.Truncate(d) || d < int.MinValue || d > int.MaxValue)
+        {
+            return 0;
+        }
+
+        return (int)d;
     }
 
     private static string CoerceStringClamped(JsonElement element, string prop)
