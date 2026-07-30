@@ -98,6 +98,124 @@ public sealed class ResumeRepository(
         return ResumeCreateOutcome.Created(row);
     }
 
+    public async Task<ResumeRow?> FindActiveByIdAsync(string resumeId, CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
+        await using var command = Command(session, $"""
+            SELECT {ResumeColumns} FROM "resumes" WHERE "id" = @id AND "isActive" = true
+            """);
+        AddParameter(command, "id", resumeId);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        return await reader.ReadAsync(cancellationToken) ? MapResume(reader) : null;
+    }
+
+    public async Task<ResumeRow?> FindMostRecentActiveByUserIdAsync(
+        string userId, CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
+        await using var command = Command(session, $"""
+            SELECT {ResumeColumns}
+            FROM "resumes"
+            WHERE "userId" = @uid AND "isActive" = true
+            ORDER BY "updatedAt" DESC, "id" ASC
+            LIMIT 1
+            """);
+        AddParameter(command, "uid", userId);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        return await reader.ReadAsync(cancellationToken) ? MapResume(reader) : null;
+    }
+
+    public async Task<ResumeUpdateOutcome> UpdateAsync(
+        RequestContext context, string resumeId, JsonElement body, CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        var owner = await LoadOwnerAsync(session, resumeId, cancellationToken);
+        if (owner is null || owner != context.Actor!.UserId)
+        {
+            return ResumeUpdateOutcome.NotOwned;
+        }
+
+        var fields = ResumeUpdate.ResolveFields(body);
+        var documentEdits = ResumeUpdate.SanitizeDocumentEdits(body);
+
+        var setClauses = new List<string>();
+        var jsonbColumns = new HashSet<string>(
+            ["personalInfo", "experience", "education", "skills", "sections", "fieldVisibility", "customFields"],
+            StringComparer.Ordinal);
+
+        await using var command = session.Connection.CreateCommand();
+        command.Transaction = session.Transaction;
+
+        foreach (var (key, value) in fields)
+        {
+            var paramName = "p_" + key;
+            setClauses.Add(jsonbColumns.Contains(key)
+                ? $"\"{key}\" = @{paramName}::jsonb"
+                : $"\"{key}\" = @{paramName}");
+            AddParameter(command, paramName, jsonbColumns.Contains(key) ? value.GetRawText() : GetScalar(value));
+        }
+
+        if (documentEdits is not null)
+        {
+            setClauses.Add("\"documentEdits\" = @documentEdits::jsonb");
+            AddParameter(command, "documentEdits", documentEdits);
+        }
+
+        setClauses.Add("\"updatedAt\" = @now");
+        AddTimestamp(command, "now", Now());
+        AddParameter(command, "id", resumeId);
+
+        command.CommandText = $"""
+            UPDATE "resumes" SET {string.Join(", ", setClauses)}
+            WHERE "id" = @id
+            RETURNING {ResumeColumns}
+            """;
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        await reader.ReadAsync(cancellationToken);
+        var row = MapResume(reader);
+        await reader.DisposeAsync();
+        await session.CommitAsync(cancellationToken);
+        return ResumeUpdateOutcome.Updated(row);
+    }
+
+    public async Task<bool> SoftDeleteAsync(
+        RequestContext context, string resumeId, CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        var owner = await LoadOwnerAsync(session, resumeId, cancellationToken);
+        if (owner is null || owner != context.Actor!.UserId)
+        {
+            return false;
+        }
+
+        await using var command = Command(session, """UPDATE "resumes" SET "isActive" = false WHERE "id" = @id""");
+        AddParameter(command, "id", resumeId);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+        await session.CommitAsync(cancellationToken);
+        return true;
+    }
+
+    // findUnique(id) with NO isActive filter — mirrors ResumeSectionsRepository's LoadAsync ownership pattern.
+    private static async Task<string?> LoadOwnerAsync(
+        FormMapsDatabaseSession session, string resumeId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """SELECT "userId" FROM "resumes" WHERE "id" = @id""");
+        AddParameter(command, "id", resumeId);
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result as string;
+    }
+
+    // Scalar (non-jsonb) whitelisted fields are all text columns (name/template/careerField) — pass the JSON
+    // string value straight through; a truthy non-string here fails the same way ResumeCreate's coercion does
+    // (Prisma-style String-column reject), acceptable because PUT's whitelist only ever names String/jsonb columns.
+    private static object GetScalar(JsonElement value) =>
+        value.ValueKind == JsonValueKind.String ? value.GetString()! : value.GetRawText();
+
     private static ResumeRow MapResume(DbDataReader reader) => new(
         Id: reader.GetString(0),
         UserId: reader.GetString(1),

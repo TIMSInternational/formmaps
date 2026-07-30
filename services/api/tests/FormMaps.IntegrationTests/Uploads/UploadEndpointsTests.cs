@@ -345,6 +345,10 @@ public sealed class UploadEndpointsTests
 
             return Task.FromResult(new StoredObject("stored-key", "https://signed/url"));
         }
+
+        public Task<string> GetPresignedReadUrlAsync(
+            string key, int ttlSeconds, bool inline, string contentType, CancellationToken cancellationToken = default) =>
+            Task.FromResult("https://signed/existing-key-url");
     }
 
     private sealed class FakeRepo : IUploadRepository
