@@ -23,6 +23,38 @@ public interface IResumeRepository
     /// success the created full row is returned.</summary>
     Task<ResumeCreateOutcome> CreateAsync(
         RequestContext context, JsonElement body, CancellationToken cancellationToken = default);
+
+    /// <summary>GET /:id direct-lookup branch — findFirst{id, isActive}, no ownership check (the endpoint applies
+    /// IUserAccessGuard.CanAccessUserAsync against the row's userId). Also backs GET /:id/original.</summary>
+    Task<ResumeRow?> FindActiveByIdAsync(string resumeId, CancellationToken cancellationToken = default);
+
+    /// <summary>GET /:id fallback branch — findMany{userId, isActive} ORDER BY updatedAt DESC, id ASC → first row,
+    /// or null (endpoint maps to 404 "No resume found").</summary>
+    Task<ResumeRow?> FindMostRecentActiveByUserIdAsync(string userId, CancellationToken cancellationToken = default);
+
+    /// <summary>PUT /:resumeId — owner-only (existing.userId != caller, NOT canAccessUser), NO isActive filter (a
+    /// soft-deleted resume stays editable). Only whitelisted body keys present get written, plus a sanitized
+    /// documentEdits if present.</summary>
+    Task<ResumeUpdateOutcome> UpdateAsync(
+        RequestContext context, string resumeId, JsonElement body, CancellationToken cancellationToken = default);
+
+    /// <summary>DELETE /:resumeId — same owner-only, no-isActive-filter gate as UpdateAsync. Sets isActive=false.
+    /// Returns false when missing/not-owned (endpoint maps to 404).</summary>
+    Task<bool> SoftDeleteAsync(RequestContext context, string resumeId, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Result of PUT /:resumeId.</summary>
+public sealed record ResumeUpdateOutcome(ResumeUpdateStatus Status, ResumeRow? Row = null)
+{
+    public static readonly ResumeUpdateOutcome NotOwned = new(ResumeUpdateStatus.NotOwned);
+
+    public static ResumeUpdateOutcome Updated(ResumeRow row) => new(ResumeUpdateStatus.Updated, row);
+}
+
+public enum ResumeUpdateStatus
+{
+    Updated,
+    NotOwned,
 }
 
 /// <summary>

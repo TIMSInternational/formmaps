@@ -195,5 +195,17 @@ public sealed class ResumeCrudEndpointsTests
 
         public Task<ResumeCreateOutcome> CreateAsync(RequestContext context, JsonElement body, CancellationToken cancellationToken = default) =>
             Task.FromResult(CreateResult);
+
+        public Task<ResumeRow?> FindActiveByIdAsync(string resumeId, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException("Not exercised by ResumeCrudEndpointsTests (Task 5's endpoint tests cover this).");
+
+        public Task<ResumeRow?> FindMostRecentActiveByUserIdAsync(string userId, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException("Not exercised by ResumeCrudEndpointsTests (Task 5's endpoint tests cover this).");
+
+        public Task<ResumeUpdateOutcome> UpdateAsync(RequestContext context, string resumeId, JsonElement body, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException("Not exercised by ResumeCrudEndpointsTests (Task 5's endpoint tests cover this).");
+
+        public Task<bool> SoftDeleteAsync(RequestContext context, string resumeId, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException("Not exercised by ResumeCrudEndpointsTests (Task 5's endpoint tests cover this).");
     }
 }
