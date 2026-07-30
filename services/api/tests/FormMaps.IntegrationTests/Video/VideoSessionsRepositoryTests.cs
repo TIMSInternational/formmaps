@@ -1,5 +1,6 @@
 using System.Reflection;
 using FormMaps.Application.Auth;
+using FormMaps.Application.Video;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Video;
 using Npgsql;
@@ -75,6 +76,75 @@ public sealed class VideoSessionsRepositoryTests : IClassFixture<VideoSessionsRe
 
         Assert.Equal("vc", (await Repo().FindByRoomNameAsync(Ctx(), "room-x"))!.Id);
         Assert.Null(await Repo().FindByRoomNameAsync(Ctx(), "room-y"));
+    }
+
+    [Fact]
+    public async Task Create_stamps_video_active_1hr_window_and_random_link()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await User(conn, "c1", "Coach"); await User(conn, "s1", "Alice");
+
+        var created = await Repo().CreateAsync(Ctx(), "c1", "s1");
+
+        Assert.StartsWith("formmaps-", created.SessionName);
+        Assert.Equal(32 + "formmaps-".Length, created.SessionName.Length); // 16 bytes → 32 hex chars
+
+        var row = await Repo().GetByIdAsync(Ctx(), created.Id);
+        Assert.Equal("video_active", row!.Status);
+        Assert.Equal("Video Call", row.Topic);
+    }
+
+    [Fact]
+    public async Task End_not_found_forbidden_then_ok()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await User(conn, "c1", "Coach"); await User(conn, "s1", "Alice");
+        await Session(conn, "sess", "c1", "s1", status: "video_active");
+
+        Assert.Equal(SessionMutationOutcomeKind.NotFound, await Repo().EndAsync(Ctx(), "nope", "c1"));
+        Assert.Equal(SessionMutationOutcomeKind.Forbidden, await Repo().EndAsync(Ctx(), "sess", "stranger"));
+        Assert.Equal(SessionMutationOutcomeKind.Ok, await Repo().EndAsync(Ctx(), "sess", "c1"));
+
+        var row = await Repo().GetByIdAsync(Ctx(), "sess");
+        Assert.Equal("completed", row!.Status);
+        Assert.NotNull(row.CompletedAt);
+    }
+
+    [Fact]
+    public async Task Start_not_found_forbidden_not_scheduled_then_ok()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await User(conn, "c1", "Coach"); await User(conn, "s1", "Alice");
+        await Session(conn, "sess", "c1", "s1", status: "scheduled", meetingLink: "room-z");
+        await Session(conn, "active", "c1", "s1", status: "video_active");
+
+        Assert.Equal(SessionMutationOutcomeKind.NotFound, (await Repo().StartAsync(Ctx(), "nope", "c1")).Kind);
+        Assert.Equal(SessionMutationOutcomeKind.Forbidden, (await Repo().StartAsync(Ctx(), "sess", "stranger")).Kind);
+        Assert.Equal(SessionMutationOutcomeKind.NotScheduled, (await Repo().StartAsync(Ctx(), "active", "c1")).Kind);
+
+        var (kind, sessionName) = await Repo().StartAsync(Ctx(), "sess", "c1");
+        Assert.Equal(SessionMutationOutcomeKind.Ok, kind);
+        Assert.Equal("room-z", sessionName);
+        Assert.Equal("video_active", (await Repo().GetByIdAsync(Ctx(), "sess"))!.Status);
+    }
+
+    [Fact]
+    public async Task FindParticipantCandidate_and_assignment_check()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await User(conn, "s1", "Alice");
+        await using (var cmd = new NpgsqlCommand(
+            """INSERT INTO "counselor_student_assignments" ("id","counselorId","studentId","isActive") VALUES (gen_random_uuid()::text,'c1','s1',true)""", conn))
+        {
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        var candidate = await Repo().FindParticipantCandidateAsync(Ctx(), "s1");
+        Assert.Equal("Alice", candidate!.Name);
+        Assert.Null(await Repo().FindParticipantCandidateAsync(Ctx(), "missing"));
+
+        Assert.True(await Repo().HasActiveCounselorAssignmentAsync(Ctx(), "c1", "s1"));
+        Assert.False(await Repo().HasActiveCounselorAssignmentAsync(Ctx(), "c1", "someone-else"));
     }
 
     // ---- helpers ----

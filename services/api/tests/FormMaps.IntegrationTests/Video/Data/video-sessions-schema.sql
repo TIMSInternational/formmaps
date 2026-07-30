@@ -5,6 +5,7 @@ CREATE TABLE "users" (
     "id"       text PRIMARY KEY,
     "name"     text,
     "email"    text,
+    "schoolId" text,
     "isActive" boolean NOT NULL DEFAULT true
 );
 
@@ -35,4 +36,11 @@ CREATE TABLE "counselor_sessions" (
     "createdDate"        timestamp NOT NULL DEFAULT now(),
     "updatedBy"          text,
     "updatedAt"          timestamp NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "counselor_student_assignments" (
+    "id"           text PRIMARY KEY,
+    "counselorId"  text NOT NULL,
+    "studentId"    text NOT NULL,
+    "isActive"     boolean NOT NULL DEFAULT true
 );

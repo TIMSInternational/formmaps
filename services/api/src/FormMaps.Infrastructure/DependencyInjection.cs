@@ -36,6 +36,7 @@ using FormMaps.Application.ParentChildReads;
 using FormMaps.Application.StudentCoursePlan;
 using FormMaps.Application.StudentParents;
 using FormMaps.Application.StudentPortfolio;
+using FormMaps.Application.Video;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
@@ -73,6 +74,7 @@ using FormMaps.Infrastructure.ParentChildReads;
 using FormMaps.Infrastructure.StudentCoursePlan;
 using FormMaps.Infrastructure.StudentParents;
 using FormMaps.Infrastructure.StudentPortfolio;
+using FormMaps.Infrastructure.Video;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -168,6 +170,9 @@ public static class DependencyInjection
         services.AddScoped<ICounselorAlertsRepository, CounselorAlertsRepository>();
         services.AddScoped<ICounselorSessionsRepository, CounselorSessionsRepository>();
         services.AddScoped<ICounselorNotesRepository, CounselorNotesRepository>();
+        // Domain 7a: video-call sessions (FM-091..097 — routes/video.ts, 7 of 9 endpoints; schedule/cancel stay
+        // Node for their calendar-sync side effect).
+        services.AddScoped<IVideoSessionsRepository, VideoSessionsRepository>();
         // FM-DOTNET-080: academic-gaps 3 non-AI reads (summary / student detail / recommendations).
         services.AddScoped<IAcademicGapsReader, AcademicGapsReader>();
         services.AddScoped<IStudentPortfolioRepository, StudentPortfolioRepository>();
