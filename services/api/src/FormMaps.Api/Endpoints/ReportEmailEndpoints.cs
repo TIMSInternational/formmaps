@@ -35,13 +35,13 @@ public static class ReportEmailEndpoints
 
         if (!await userAccessGuard.CanAccessUserAsync(context, userId, ct))
         {
-            return NotFound("Not found");
+            return NotFound();
         }
 
         var recipient = await recipientReader.FindAsync(context, userId, ct);
         if (recipient is null)
         {
-            return NotFound("User not found");
+            return NotFound();
         }
 
         var message = templates.BuildReportEmail(recipient.Name);
@@ -50,6 +50,8 @@ public static class ReportEmailEndpoints
         return Results.Ok(new { success = true, data = new { emailSent, recipient = recipient.Email } });
     }
 
-    private static IResult NotFound(string message) =>
-        Results.Json(new { success = false, message }, statusCode: StatusCodes.Status404NotFound);
+    // IDOR defense: denial reveals nothing about existence — always 404 "Not found", never a
+    // distinct message per branch (matches ReportEndpoints.cs's uniform-404 convention).
+    private static IResult NotFound() =>
+        Results.Json(new { success = false, message = "Not found" }, statusCode: StatusCodes.Status404NotFound);
 }
