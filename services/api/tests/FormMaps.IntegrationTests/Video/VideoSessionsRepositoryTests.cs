@@ -79,6 +79,21 @@ public sealed class VideoSessionsRepositoryTests : IClassFixture<VideoSessionsRe
     }
 
     [Fact]
+    public async Task FindByRoomName_ambiguous_meetingLink_returns_null_not_an_arbitrary_row()
+    {
+        // meetingLink has no uniqueness guarantee. If two distinct sessions collide on the same room name,
+        // FindByRoomNameAsync must refuse (null) rather than silently pick one — picking one would let
+        // POST /signature authorize the caller against the wrong session's participants.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await User(conn, "c1", "Coach"); await User(conn, "s1", "Alice");
+        await User(conn, "c2", "OtherCoach"); await User(conn, "s2", "Bob");
+        await Session(conn, "vc-a", "c1", "s1", meetingLink: "room-collide", topic: "Video Call");
+        await Session(conn, "vc-b", "c2", "s2", meetingLink: "room-collide", topic: "Video Call");
+
+        Assert.Null(await Repo().FindByRoomNameAsync(Ctx(), "room-collide"));
+    }
+
+    [Fact]
     public async Task Create_stamps_video_active_1hr_window_and_random_link()
     {
         await using var conn = await _dataSource.OpenConnectionAsync();

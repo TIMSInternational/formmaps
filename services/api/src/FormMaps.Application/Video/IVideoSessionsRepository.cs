@@ -24,11 +24,18 @@ public interface IVideoSessionsRepository
     Task<IReadOnlyList<VideoSessionRow>> ListForUserAsync(RequestContext context, string userId, CancellationToken cancellationToken = default);
 
     /// <summary>Plain lookup by id — NO topic filter (legacy quirk: GET /sessions/:id and the end/start
-    /// mutations all use prisma.counselorSession.findUnique, which doesn't scope to video-call rows).</summary>
+    /// mutations all use prisma.counselorSession.findUnique, which doesn't scope to video-call rows). This
+    /// also backs EndAsync/StartAsync's own internal id lookups (they query the same unfiltered shape
+    /// directly, not through this method, but the same quirk applies): those mutation routes can act on any
+    /// "counselor_sessions" row, not just video-call ones, matching legacy exactly. Deliberate parity
+    /// decision, not an oversight.</summary>
     Task<VideoSessionRow?> GetByIdAsync(RequestContext context, string sessionId, CancellationToken cancellationToken = default);
 
     /// <summary>Lookup by meetingLink + topic="Video Call" (used only by POST /signature, which legacy
-    /// resolves via findFirst on those two columns instead of an id).</summary>
+    /// resolves via findFirst on those two columns instead of an id). "meetingLink" has no uniqueness
+    /// guarantee, so if two rows share one, this must fail closed (return null) rather than pick an
+    /// arbitrary row — see the implementation's doc-comment for why an arbitrary pick is an auth bypass,
+    /// not just nondeterminism.</summary>
     Task<VideoSessionRow?> FindByRoomNameAsync(RequestContext context, string roomName, CancellationToken cancellationToken = default);
 
     /// <summary>A prospective call participant's directory info, for POST /sessions's validation chain.</summary>

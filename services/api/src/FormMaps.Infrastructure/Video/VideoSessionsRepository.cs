@@ -69,17 +69,33 @@ public sealed class VideoSessionsRepository(
         return await reader.ReadAsync(cancellationToken) ? MapRow(reader) : null;
     }
 
+    /// <summary>
+    /// Lookup by meetingLink + topic="Video Call" for POST /signature, which authorizes the caller against
+    /// whatever row this returns. "meetingLink" has no uniqueness constraint, so if a collision ever put two
+    /// rows behind the same room name, picking an arbitrary one (e.g. via LIMIT 1 with no ORDER BY) would let
+    /// a caller who is a legitimate participant on row A silently get authorized against row B — someone
+    /// else's call. That's the actual vulnerability, not a cosmetic nondeterminism issue. So this queries
+    /// LIMIT 2: if exactly one row matches, return it; if two-or-more match, the room name is ambiguous and
+    /// we return null — identical to "not found" — so the caller-side 404 path handles it. Fail closed, never
+    /// guess.
+    /// </summary>
     public async Task<VideoSessionRow?> FindByRoomNameAsync(RequestContext context, string roomName, CancellationToken cancellationToken = default)
     {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
         await using var command = Command(session, $"""
             SELECT {SelectColumns} FROM {JoinedFrom}
             WHERE cs."meetingLink" = @roomName AND cs."topic" = 'Video Call'
-            LIMIT 1
+            LIMIT 2
             """);
         AddParameter(command, "roomName", roomName);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        return await reader.ReadAsync(cancellationToken) ? MapRow(reader) : null;
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        var row = MapRow(reader);
+        return await reader.ReadAsync(cancellationToken) ? null : row;
     }
 
     public async Task<VideoParticipantCandidate?> FindParticipantCandidateAsync(RequestContext context, string userId, CancellationToken cancellationToken = default)
