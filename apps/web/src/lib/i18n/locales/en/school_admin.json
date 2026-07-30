@@ -510,7 +510,8 @@
     "status": {
       "connected": "Connected",
       "available": "Available",
-      "comingSoon": "Coming Soon"
+      "comingSoon": "Coming Soon",
+      "included": "Included"
     },
     "configure": "Configure",
     "providers": {
