@@ -39,7 +39,12 @@ function CareerCardInner({ career, rank, isFavorite = false, onToggleFavorite, o
   const { t } = useTranslation();
   const prefetch = usePrefetchCareers();
 
-  const matchScore = career.matchScore ?? 0;
+  // Engine floor is ~25, so any 0% on screen means "not scored", never "bad
+  // match" (finding 1). Treat null/≤0 as unscored: suppress the match badge and
+  // show a neutral "Explore" affordance instead of a misleading red 0%.
+  const rawMatchScore = career.matchScore;
+  const isScored = typeof rawMatchScore === "number" && rawMatchScore > 0;
+  const matchScore = isScored ? rawMatchScore : 0;
   const confidence = (career as any).confidence as string | undefined;
   const aiInsight = (career as any).aiInsight as string | undefined;
 
@@ -92,17 +97,28 @@ function CareerCardInner({ career, rank, isFavorite = false, onToggleFavorite, o
           </div>
         </div>
 
-        {/* Match Score Badge */}
-        <div
-          className={`flex flex-col items-center justify-center px-2.5 py-1.5 rounded-lg border ${matchColorClass}`}
-          role="img"
-          aria-label={`${matchScore}% match - ${matchLabel}`}
-        >
-          <span className="text-sm font-bold leading-none" aria-hidden="true">{matchScore}%</span>
-          <span className="text-[9px] font-medium uppercase tracking-wider opacity-80 mt-0.5" aria-hidden="true">
-            {matchLabel}
-          </span>
-        </div>
+        {/* Match Score Badge — only for scored cards; unscored shows Explore */}
+        {isScored ? (
+          <div
+            className={`flex flex-col items-center justify-center px-2.5 py-1.5 rounded-lg border ${matchColorClass}`}
+            role="img"
+            aria-label={`${matchScore}% match - ${matchLabel}`}
+          >
+            <span className="text-sm font-bold leading-none" aria-hidden="true">{matchScore}%</span>
+            <span className="text-[9px] font-medium uppercase tracking-wider opacity-80 mt-0.5" aria-hidden="true">
+              {matchLabel}
+            </span>
+          </div>
+        ) : (
+          <div
+            className="flex items-center justify-center px-2.5 py-1.5 rounded-lg border text-gray-500 bg-gray-50 border-gray-100"
+            aria-label={t("career.explore", "Explore")}
+          >
+            <span className="text-[9px] font-medium uppercase tracking-wider opacity-80">
+              {t("career.explore", "Explore")}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* AI Insight */}
