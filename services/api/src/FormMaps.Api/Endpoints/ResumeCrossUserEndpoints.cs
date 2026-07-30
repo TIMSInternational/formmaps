@@ -49,7 +49,7 @@ public static class ResumeCrossUserEndpoints
 
         var fallback = await repository.FindMostRecentActiveByUserIdAsync(targetUserId, ct);
         return fallback is null
-            ? Results.Json(new { success = false, message = "No resume found" }, statusCode: StatusCodes.Status404NotFound)
+            ? NotFound()
             : Results.Ok(new { success = true, data = ResumeJson(fallback) });
     }
 

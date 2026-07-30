@@ -5,6 +5,7 @@ using FormMaps.Api.Auth;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Resumes;
 using FormMaps.Application.Storage;
+using FormMaps.Domain.Auth;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -74,6 +75,46 @@ public sealed class ResumeCrossUserEndpointsTests
         using var client = factory.CreateClient();
         var response = await Send(client, HttpMethod.Get, "/api/resume/owner-1", null, callerId: "owner-1");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetById_non_privileged_role_is_always_forced_to_self_ignoring_requested_id()
+    {
+        // "other-user-id" is neither a real resume id nor the caller's own id, and the guard would DENY —
+        // but ResumeAccessResolution force-resolves a non-privileged ("student") caller to themselves, so
+        // targetUserId == caller and the guard is never consulted; the caller's own fallback resume is returned.
+        var repo = new FakeRepo { ActiveById = null, MostRecentForUser = Row("r3", "owner-1") };
+        using var factory = new Factory(repo, new FakeGuard(false), new FakeStorage());
+        using var client = factory.CreateClient();
+        var response = await Send(client, HttpMethod.Get, "/api/resume/other-user-id", null, callerId: "owner-1", role: "student");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetById_privileged_role_fallback_cross_user_access_check_is_consulted()
+    {
+        // A privileged role (counselor) resolves "other-user-id" AS the target (unlike a student, who'd be
+        // forced to self) — so this pins that the CanAccessUserAsync check on the resolved id actually
+        // executes: denied -> 404, allowed -> 200 (fallback resume for that resolved target).
+        var fallbackRow = Row("r4", "other-user-id");
+
+        var denyRepo = new FakeRepo { ActiveById = null, MostRecentForUser = fallbackRow };
+        using (var denyFactory = new Factory(denyRepo, new FakeGuard(false), new FakeStorage()))
+        using (var denyClient = denyFactory.CreateClient())
+        {
+            var denyResponse = await Send(
+                denyClient, HttpMethod.Get, "/api/resume/other-user-id", null,
+                callerId: "counselor-1", role: FormMapsRoles.Counselor);
+            Assert.Equal(HttpStatusCode.NotFound, denyResponse.StatusCode);
+        }
+
+        var allowRepo = new FakeRepo { ActiveById = null, MostRecentForUser = fallbackRow };
+        using var allowFactory = new Factory(allowRepo, new FakeGuard(true), new FakeStorage());
+        using var allowClient = allowFactory.CreateClient();
+        var allowResponse = await Send(
+            allowClient, HttpMethod.Get, "/api/resume/other-user-id", null,
+            callerId: "counselor-1", role: FormMapsRoles.Counselor);
+        Assert.Equal(HttpStatusCode.OK, allowResponse.StatusCode);
     }
 
     [Fact]
@@ -152,11 +193,12 @@ public sealed class ResumeCrossUserEndpointsTests
 
     private static StringContent Json(string json) => new(json, Encoding.UTF8, "application/json");
 
-    private static Task<HttpResponseMessage> Send(HttpClient client, HttpMethod method, string path, HttpContent? content, string callerId)
+    private static Task<HttpResponseMessage> Send(
+        HttpClient client, HttpMethod method, string path, HttpContent? content, string callerId, string role = "student")
     {
         var request = new HttpRequestMessage(method, path) { Content = content };
         request.Headers.Add(DevelopmentRequestContextFactory.UserIdHeader, callerId);
-        request.Headers.Add(DevelopmentRequestContextFactory.RoleHeader, "student");
+        request.Headers.Add(DevelopmentRequestContextFactory.RoleHeader, role);
         request.Headers.Add(DevelopmentRequestContextFactory.EmailHeader, "s@e.st");
         request.Headers.Add(DevelopmentRequestContextFactory.NameHeader, "Student");
         request.Headers.Add(DevelopmentRequestContextFactory.PermissionsHeader, "");
