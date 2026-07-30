@@ -290,6 +290,7 @@ public static class SchoolAdminEndpoints
                     lia = report.Completion.Lia,
                     disc = report.Completion.Disc,
                     eval360 = report.Completion.Eval360,
+                    personality = report.Completion.Personality,
                     overall = report.Completion.Overall
                 },
                 pca = new

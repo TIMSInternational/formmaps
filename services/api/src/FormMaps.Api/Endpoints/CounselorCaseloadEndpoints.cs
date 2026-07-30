@@ -95,8 +95,8 @@ public static class CounselorCaseloadEndpoints
             required = s.CreditProgress.Required,
             percentage = s.CreditProgress.Percentage
         },
-        // key "360" is not a valid C# identifier → a dictionary preserves the exact { LIA, PCA, "360" } shape/order.
-        assessmentStatus = new Dictionary<string, string> { ["LIA"] = s.Lia, ["PCA"] = s.Pca, ["360"] = s.Eval360 },
+        // key "360" is not a valid C# identifier → a dictionary preserves the exact { LIA, PCA, "360", Personality } shape/order.
+        assessmentStatus = new Dictionary<string, string> { ["LIA"] = s.Lia, ["PCA"] = s.Pca, ["360"] = s.Eval360, ["Personality"] = s.Personality },
         careerPath = s.CareerPath,
         alertCount = s.AlertCount
     };

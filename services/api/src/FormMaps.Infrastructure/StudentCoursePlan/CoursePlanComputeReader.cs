@@ -94,8 +94,25 @@ public sealed class CoursePlanComputeReader(IFormMapsDatabaseSessionFactory data
             }
         }
 
+        bool personalityCompleted;
+        await using (var command = Command(session, """
+            SELECT EXISTS(SELECT 1 FROM "personality_assessment_sessions"
+                WHERE "user_id" = @u AND "status" = 'completed' AND "is_active" = true)
+            """))
+        {
+            AddParameter(command, "u", userId);
+            personalityCompleted = (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
+        }
+
+        bool legacyUnlockGrandfathered;
+        await using (var command = Command(session, """SELECT "legacyUnlockGrandfathered" FROM "users" WHERE "id" = @u"""))
+        {
+            AddParameter(command, "u", userId);
+            legacyUnlockGrandfathered = (bool)(await command.ExecuteScalarAsync(cancellationToken) ?? false);
+        }
+
         var liaExamTypes = parityDone ? ParityLiaSubtests : completedExamTypes.ToArray();
-        var verdict = StudentCompletion.Compute(liaExamTypes, evalGroupsCompleted, pcaEvalsCompleted);
+        var verdict = StudentCompletion.Compute(liaExamTypes, evalGroupsCompleted, pcaEvalsCompleted, personalityCompleted, legacyUnlockGrandfathered);
         if (!verdict.AllDone)
         {
             return new RecommendationsData(verdict, Done: false, [], EmptySet, [], []);

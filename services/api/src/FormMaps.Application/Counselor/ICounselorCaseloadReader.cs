@@ -26,10 +26,11 @@ public sealed record CaseloadData(
     IReadOnlyList<CaseloadProfile> Profiles,
     IReadOnlyDictionary<string, int> AlertCounts,
     IReadOnlyDictionary<string, double> CourseCredits,
-    double CreditsRequired)
+    double CreditsRequired,
+    IReadOnlyList<string> PersonalityCompletedUserIds)
 {
     public static CaseloadData Empty { get; } = new(
-        [], [], [], [], [], [], new Dictionary<string, int>(), new Dictionary<string, double>(), 120);
+        [], [], [], [], [], [], new Dictionary<string, int>(), new Dictionary<string, double>(), 120, []);
 }
 
 /// <summary>A caseload student (from the active assignment include). createdDate → ISO-Z <c>createdAt</c>.</summary>
@@ -73,6 +74,7 @@ public sealed record EnrichedStudent(
     string Lia,
     string Pca,
     string Eval360,
+    string Personality,
     string? CareerPath,
     int AlertCount);
 

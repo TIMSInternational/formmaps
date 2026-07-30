@@ -85,6 +85,7 @@ public static class EnrichedCaseloadComputer
         var pcaDone = new HashSet<string>(data.PcaEvals.Where(e => e.IsCompleted).Select(e => e.UserId), StringComparer.Ordinal);
         var pcaStarted = new HashSet<string>(data.PcaEvals.Select(e => e.UserId), StringComparer.Ordinal);
         var careerByUser = BuildCareerByUser(data.Profiles);
+        var personalityDone = new HashSet<string>(data.PersonalityCompletedUserIds, StringComparer.Ordinal);
 
         var enriched = new List<EnrichedStudent>(data.Students.Count);
         foreach (var s in data.Students)
@@ -110,6 +111,8 @@ public static class EnrichedCaseloadComputer
                 eval360 = NotStarted;
             }
 
+            var personality = personalityDone.Contains(s.Id) ? Completed : NotStarted;
+
             var alertCount = data.AlertCounts.GetValueOrDefault(s.Id, 0);
             var status = !s.IsActive ? "inactive"
                 : ((gpa is not null && gpa < 2.5) || alertCount > 0) ? "at_risk" : "active";
@@ -122,7 +125,7 @@ public static class EnrichedCaseloadComputer
                 Id: s.Id, Name: s.Name, Email: s.Email, GradeLevel: s.GradeLevel, IsActive: s.IsActive,
                 CreatedAt: s.CreatedAt, Status: status, Gpa: gpa,
                 CreditProgress: new CreditProgress(earned, data.CreditsRequired, percentage),
-                Lia: lia, Pca: pca, Eval360: eval360,
+                Lia: lia, Pca: pca, Eval360: eval360, Personality: personality,
                 CareerPath: careerByUser.GetValueOrDefault(s.Id), AlertCount: alertCount));
         }
 

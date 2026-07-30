@@ -242,7 +242,7 @@ public class SchoolAdminEndpointsTests
             Version: "1",
             GeneratedAt: "2026-07-20T12:34:56.789Z",
             Student: new StudentReportStudent("stu-1", "Ana", "ana@x.test", 11),
-            Completion: new StudentReportCompletion(true, true, false, false),
+            Completion: new StudentReportCompletion(true, true, false, true, false),
             Pca: new StudentReportPca(true, 2, "2026-07-01T00:00:00.000Z"),
             Mil: new StudentReportMil(1, 85.3, [new StudentReportMilSession(
                 "sess-1", "PR", "Completed", true, 85.3, "2026-07-01T00:00:00.000Z", null)]),
@@ -260,6 +260,7 @@ public class SchoolAdminEndpointsTests
         Assert.Equal("2026-07-20T12:34:56.789Z", data.GetProperty("generatedAt").GetString());
         Assert.Equal("stu-1", data.GetProperty("student").GetProperty("id").GetString());
         Assert.False(data.GetProperty("completion").GetProperty("eval360").GetBoolean());
+        Assert.True(data.GetProperty("completion").GetProperty("personality").GetBoolean());
         Assert.Equal(2, data.GetProperty("pca").GetProperty("evaluationCount").GetInt32());
         Assert.Equal(85.3, data.GetProperty("mil").GetProperty("averageScore").GetDouble(), 3);
         Assert.Equal(1, data.GetProperty("mil").GetProperty("sessions").GetArrayLength());

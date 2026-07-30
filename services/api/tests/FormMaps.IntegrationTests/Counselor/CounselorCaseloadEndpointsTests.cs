@@ -48,7 +48,7 @@ public class CounselorCaseloadEndpointsTests
             Grades: [new CaseloadGrade("s1", "A", 4, "c1")],
             PcaSessions: [], EvalGroups: [], PcaEvals: [], Profiles: [],
             AlertCounts: new Dictionary<string, int>(), CourseCredits: new Dictionary<string, double>(),
-            CreditsRequired: 120);
+            CreditsRequired: 120, PersonalityCompletedUserIds: []);
         using var factory = new Factory(new FakeReader(data));
         using var client = factory.CreateClient();
 

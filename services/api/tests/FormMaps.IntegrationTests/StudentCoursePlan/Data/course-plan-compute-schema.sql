@@ -7,7 +7,8 @@
 CREATE TABLE "users" (
     "id"         text PRIMARY KEY,
     "schoolId"   text,
-    "gradeLevel" integer
+    "gradeLevel" integer,
+    "legacyUnlockGrandfathered" boolean NOT NULL DEFAULT false
 );
 
 -- checkAssessmentCompletion loads
@@ -23,6 +24,13 @@ CREATE TABLE "lia_assessment_sessions" (
     "id"        text PRIMARY KEY DEFAULT gen_random_uuid()::text,
     "user_id"   text NOT NULL,
     "status"    text NOT NULL DEFAULT 'not_started',
+    "is_active" boolean NOT NULL DEFAULT true
+);
+
+CREATE TABLE "personality_assessment_sessions" (
+    "id"        text PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    "user_id"   text NOT NULL,
+    "status"    text NOT NULL DEFAULT 'in_progress',
     "is_active" boolean NOT NULL DEFAULT true
 );
 

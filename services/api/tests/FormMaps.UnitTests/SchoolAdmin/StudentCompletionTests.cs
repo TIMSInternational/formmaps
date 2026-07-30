@@ -4,8 +4,9 @@ namespace FormMaps.UnitTests.SchoolAdmin;
 
 /// <summary>
 /// Pins the pure completion verdict (port of computeStudentCompletion): liaCompleted = distinct exam-type
-/// count (>=5 done), pcaCompleted = EXISTENCE of an isCompleted PCA row (not mere row existence), and the 360
-/// THRESHOLD of min(evalTotal, 3) rather than 100%.
+/// count (>=5 done), pcaCompleted = EXISTENCE of an isCompleted PCA row (not mere row existence), the 360
+/// THRESHOLD of min(evalTotal, 3) rather than 100%, and — since 2026-07-30 — personalityCompleted as a
+/// required 4th gate, bypassable only via legacyUnlockGrandfathered.
 /// </summary>
 public sealed class StudentCompletionTests
 {
@@ -15,7 +16,9 @@ public sealed class StudentCompletionTests
         var v = StudentCompletion.Compute(
             ["PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation"],
             [true, true, true],
-            [true]);
+            [true],
+            personalityCompleted: true,
+            legacyUnlockGrandfathered: false);
 
         Assert.Equal(5, v.LiaCompleted);
         Assert.True(v.PcaCompleted);
@@ -27,7 +30,8 @@ public sealed class StudentCompletionTests
     public void Lia_counts_distinct_types_duplicates_do_not_reach_five()
     {
         var v = StudentCompletion.Compute(
-            ["PatternRecognition", "PatternRecognition", "VerbalReasoning"], [true, true, true], [true]);
+            ["PatternRecognition", "PatternRecognition", "VerbalReasoning"], [true, true, true], [true],
+            personalityCompleted: true, legacyUnlockGrandfathered: false);
 
         Assert.Equal(2, v.LiaCompleted);  // distinct, not 3
         Assert.False(v.AllDone);          // <5 lia
@@ -39,13 +43,15 @@ public sealed class StudentCompletionTests
         // 5 groups, only 3 completed -> done (min(5,3)=3). The 5th unresponsive evaluator can't block it.
         var five = StudentCompletion.Compute(
             ["PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation"],
-            [true, true, true, false, false], [true]);
+            [true, true, true, false, false], [true],
+            personalityCompleted: true, legacyUnlockGrandfathered: false);
         Assert.True(five.AllDone);
 
         // 2 groups, only 1 completed -> NOT done (min(2,3)=2, need 2).
         var two = StudentCompletion.Compute(
             ["PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation"],
-            [true, false], [true]);
+            [true, false], [true],
+            personalityCompleted: true, legacyUnlockGrandfathered: false);
         Assert.False(two.AllDone);
     }
 
@@ -56,7 +62,8 @@ public sealed class StudentCompletionTests
         var v = StudentCompletion.Compute(
             ["PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation"],
             [true, true, true],
-            [false]);
+            [false],
+            personalityCompleted: true, legacyUnlockGrandfathered: false);
 
         Assert.False(v.PcaCompleted);
         Assert.False(v.AllDone);
@@ -71,8 +78,9 @@ public sealed class StudentCompletionTests
             .Take(distinctTypes)
             .ToArray();
 
-        // Other gates (3 completed evaluators + a completed PCA) are satisfied, so AllDone tracks the LIA gate.
-        var v = StudentCompletion.Compute(types, [true, true, true], [true]);
+        // Other gates (3 completed evaluators + a completed PCA + Personality) are satisfied, so AllDone tracks the LIA gate.
+        var v = StudentCompletion.Compute(types, [true, true, true], [true],
+            personalityCompleted: true, legacyUnlockGrandfathered: false);
 
         Assert.Equal(distinctTypes, v.LiaCompleted);
         Assert.Equal(expectedDone, v.AllDone);
@@ -89,7 +97,9 @@ public sealed class StudentCompletionTests
         var lia = new[] { "PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation" };
         var groups = Enumerable.Range(0, evalTotal).Select(i => i < evalCompleted).ToList();
 
-        var v = StudentCompletion.Compute(lia, groups, [true]);   // lia + pca satisfied -> AllDone tracks the 360 gate
+        // lia + pca + personality satisfied -> AllDone tracks the 360 gate
+        var v = StudentCompletion.Compute(lia, groups, [true],
+            personalityCompleted: true, legacyUnlockGrandfathered: false);
 
         Assert.Equal(evalCompleted, v.EvalCompleted);
         Assert.Equal(expectedDone, v.AllDone);
@@ -101,9 +111,37 @@ public sealed class StudentCompletionTests
         var v = StudentCompletion.Compute(
             ["PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation"],
             [],
-            [true]);
+            [true],
+            personalityCompleted: true, legacyUnlockGrandfathered: false);
 
         Assert.Equal(0, v.EvalTotal);
         Assert.False(v.AllDone);  // evalTotal > 0 required
+    }
+
+    [Fact]
+    public void Personality_required_when_not_grandfathered()
+    {
+        // MIL 5/5 + 360 3/3 + PCA done, but Personality NOT done -> NOT AllDone (4th assessment is required).
+        var v = StudentCompletion.Compute(
+            ["PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation"],
+            [true, true, true],
+            [true],
+            personalityCompleted: false, legacyUnlockGrandfathered: false);
+
+        Assert.False(v.PersonalityCompleted);
+        Assert.False(v.AllDone);
+    }
+
+    [Fact]
+    public void LegacyUnlockGrandfathered_bypasses_the_personality_requirement()
+    {
+        var v = StudentCompletion.Compute(
+            ["PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation"],
+            [true, true, true],
+            [true],
+            personalityCompleted: false, legacyUnlockGrandfathered: true);
+
+        Assert.False(v.PersonalityCompleted);
+        Assert.True(v.AllDone);
     }
 }

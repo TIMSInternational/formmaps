@@ -301,8 +301,9 @@ public sealed class SchoolAdminReader(
         // super-admin RLS bypass; missing == cross-school -> null -> uniform 404).
         string name, email;
         int? gradeLevel;
+        bool legacyUnlockGrandfathered;
         await using (var command = Command(session, """
-            SELECT "name", "email", "gradeLevel" FROM "users" WHERE "id" = @sid AND "schoolId" = @school
+            SELECT "name", "email", "gradeLevel", "legacyUnlockGrandfathered" FROM "users" WHERE "id" = @sid AND "schoolId" = @school
             """))
         {
             AddParameter(command, "sid", studentId);
@@ -316,6 +317,18 @@ public sealed class SchoolAdminReader(
             name = reader.GetString(0);
             email = reader.GetString(1);
             gradeLevel = NullableInt(reader, 2);
+            legacyUnlockGrandfathered = reader.GetBoolean(3);
+        }
+
+        // personalityCompleted: latest session status='completed' (mirrors personality-session-service.ts checkAccess).
+        bool personalityCompleted;
+        await using (var command = Command(session, """
+            SELECT EXISTS(SELECT 1 FROM "personality_assessment_sessions"
+                WHERE "user_id" = @sid AND "status" = 'completed' AND "is_active" = true)
+            """))
+        {
+            AddParameter(command, "sid", studentId);
+            personalityCompleted = (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
         }
 
         // pcaEvals: isCompleted + updatedAt (existence != completion). No orderBy in legacy; used for count +
@@ -413,7 +426,7 @@ public sealed class SchoolAdminReader(
         }
 
         var liaExamTypes = parityLia ? ParityAllFive : (IReadOnlyList<string>)completedExamTypes;
-        var verdict = StudentCompletion.Compute(liaExamTypes, evalGroupsCompleted, pcaEvalsCompleted);
+        var verdict = StudentCompletion.Compute(liaExamTypes, evalGroupsCompleted, pcaEvalsCompleted, personalityCompleted, legacyUnlockGrandfathered);
 
         var averageScore = completedCount > 0
             ? Math.Round(completedScoreSum / completedCount * 10, MidpointRounding.AwayFromZero) / 10
@@ -428,6 +441,7 @@ public sealed class SchoolAdminReader(
                 Lia: verdict.LiaCompleted >= 5,
                 Disc: verdict.PcaCompleted,
                 Eval360: verdict.EvalTotal > 0 && verdict.EvalCompleted >= Math.Min(verdict.EvalTotal, 3),
+                Personality: verdict.PersonalityCompleted,
                 Overall: verdict.AllDone),
             Pca: new StudentReportPca(
                 Completed: verdict.PcaCompleted,

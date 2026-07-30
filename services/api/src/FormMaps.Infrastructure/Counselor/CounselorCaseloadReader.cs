@@ -168,9 +168,23 @@ public sealed class CounselorCaseloadReader(IFormMapsDatabaseSessionFactory data
             }
         }
 
+        var personalityCompletedUserIds = new List<string>();
+        await using (var command = Command(session, """
+            SELECT "user_id" FROM "personality_assessment_sessions"
+            WHERE "user_id" = ANY(@ids) AND "status" = 'completed' AND "is_active" = true
+            """))
+        {
+            AddParameter(command, "ids", ids);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                personalityCompletedUserIds.Add(reader.GetString(0));
+            }
+        }
+
         var creditsRequired = await ResolveCreditsRequiredAsync(session, schoolId, cancellationToken);
 
-        return new CaseloadData(students, grades, pcaSessions, evalGroups, pcaEvals, profiles, alertCounts, courseCredits, creditsRequired);
+        return new CaseloadData(students, grades, pcaSessions, evalGroups, pcaEvals, profiles, alertCounts, courseCredits, creditsRequired, personalityCompletedUserIds);
     }
 
     // 120 fallback; else the active grad rule set for the school's current academic year (findFirst → id ASC superset).

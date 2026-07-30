@@ -53,6 +53,13 @@ CREATE TABLE "pca_evaluations" (
     "isActive"    boolean NOT NULL DEFAULT true
 );
 
+CREATE TABLE "personality_assessment_sessions" (
+    "id"        text PRIMARY KEY,
+    "user_id"   text NOT NULL,
+    "status"    text NOT NULL DEFAULT 'in_progress',
+    "is_active" boolean NOT NULL DEFAULT true
+);
+
 CREATE TABLE "user_career_profiles" (
     "id"                 text PRIMARY KEY,
     "userId"             text NOT NULL,

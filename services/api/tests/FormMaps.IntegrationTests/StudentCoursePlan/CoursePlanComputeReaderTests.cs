@@ -29,7 +29,7 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
         await using var conn = await _dataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand(
-            """TRUNCATE "users","pca_exam_sessions","lia_assessment_sessions","evaluation_groups","pca_evaluations","course_enrollments","user_preferences","user_settings","user_career_profiles","courses","school_courses","student_grades" """, conn);
+            """TRUNCATE "users","pca_exam_sessions","lia_assessment_sessions","personality_assessment_sessions","evaluation_groups","pca_evaluations","course_enrollments","user_preferences","user_settings","user_career_profiles","courses","school_courses","student_grades" """, conn);
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -61,6 +61,7 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         await EvalGroup(conn, User, completed: true);
         await EvalGroup(conn, User, completed: true);
         await PcaEval(conn, User, completed: true);
+        await PersonalitySession(conn, User, "completed");
 
         await Course_(conn, "c1", title: "Bio");
         await Course_(conn, "c2", title: "Chem");
@@ -183,9 +184,10 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         await LiaSession(conn, User, status: "completed"); // covers all 5 subtests
         await EvalGroup(conn, User, completed: true);
         await PcaEval(conn, User, completed: true);
+        await PersonalitySession(conn, User, "completed");
 
         var data = await Repo().GetRecommendationsAsync(Ctx(), User);
-        Assert.True(data.Done); // parity session → liaCompleted 5; evalTotal 1 → required 1; pca done
+        Assert.True(data.Done); // parity session → liaCompleted 5; evalTotal 1 → required 1; pca done; personality done
         Assert.Equal(5, data.Verdict.LiaCompleted);
     }
 
@@ -206,6 +208,37 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         var data = await Repo().GetRecommendationsAsync(Ctx(), User);
         Assert.Equal(2, data.Verdict.LiaCompleted);
         Assert.False(data.Done);
+    }
+
+    [Fact]
+    public async Task Recommendations_not_done_without_personality_even_when_other_three_are_complete()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await UserRow(conn, User, School, 11);
+        await LiaSession(conn, User, status: "completed");
+        await EvalGroup(conn, User, completed: true);
+        await PcaEval(conn, User, completed: true);
+        // No personality session seeded — the 4th assessment is required since 2026-07-30.
+
+        var data = await Repo().GetRecommendationsAsync(Ctx(), User);
+        Assert.False(data.Done);
+        Assert.False(data.Verdict.PersonalityCompleted);
+    }
+
+    [Fact]
+    public async Task Recommendations_legacyUnlockGrandfathered_is_done_without_personality()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await Exec(conn, """INSERT INTO "users"("id","schoolId","gradeLevel","legacyUnlockGrandfathered") VALUES(@id,@s,@g,true)""",
+            ("id", User), ("s", School), ("g", 11));
+        await LiaSession(conn, User, status: "completed");
+        await EvalGroup(conn, User, completed: true);
+        await PcaEval(conn, User, completed: true);
+        // No personality session seeded — grandfathered students bypass the 4th-assessment requirement.
+
+        var data = await Repo().GetRecommendationsAsync(Ctx(), User);
+        Assert.True(data.Done);
+        Assert.False(data.Verdict.PersonalityCompleted);
     }
 
     [Fact]
@@ -285,6 +318,10 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         Exec(c, """INSERT INTO "lia_assessment_sessions"("id","user_id","status","is_active") VALUES(gen_random_uuid()::text,@u,@s,true)""",
             ("u", user), ("s", status));
 
+    private static Task PersonalitySession(NpgsqlConnection c, string user, string status) =>
+        Exec(c, """INSERT INTO "personality_assessment_sessions"("id","user_id","status","is_active") VALUES(gen_random_uuid()::text,@u,@s,true)""",
+            ("u", user), ("s", status));
+
     private static Task EvalGroup(NpgsqlConnection c, string user, bool completed) =>
         Exec(c, """INSERT INTO "evaluation_groups"("id","evaluatedUserId","isEvaluationCompleted","isActive") VALUES(gen_random_uuid()::text,@u,@d,true)""",
             ("u", user), ("d", completed));
@@ -330,6 +367,7 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         await EvalGroup(c, User, completed: true);
         await EvalGroup(c, User, completed: true);
         await PcaEval(c, User, completed: true);
+        await PersonalitySession(c, User, "completed");
     }
 
     private static Task Course_(NpgsqlConnection c, string id, string title, bool isActive = true, string language = "English") =>

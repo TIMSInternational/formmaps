@@ -12,6 +12,7 @@ CREATE TABLE "users" (
     "schoolId" TEXT,
     "gradeLevel" INTEGER,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "legacyUnlockGrandfathered" BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
@@ -96,6 +97,16 @@ CREATE TABLE "lia_assessment_sessions" (
     "status" TEXT NOT NULL DEFAULT 'not_started',
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     CONSTRAINT "lia_assessment_sessions_pkey" PRIMARY KEY ("id")
+);
+
+-- personality_assessment_sessions: same snake_case column-map convention as lia_assessment_sessions.
+-- Read for the completion gate's 4th assessment (Personality, required alongside MIL/360/PCA since 2026-07-30).
+CREATE TABLE "personality_assessment_sessions" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'in_progress',
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT "personality_assessment_sessions_pkey" PRIMARY KEY ("id")
 );
 
 CREATE TABLE "school_assessment_settings" (

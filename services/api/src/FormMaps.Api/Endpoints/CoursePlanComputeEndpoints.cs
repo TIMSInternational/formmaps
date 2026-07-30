@@ -37,7 +37,8 @@ public static class CoursePlanComputeEndpoints
 
         if (!data.Done)
         {
-            // Gate: no recommendations until all 3 assessments are complete.
+            // Gate: no recommendations until all 4 assessments (MIL, 360, PCA, Personality)
+            // are complete, or the student is legacyUnlockGrandfathered.
             return Results.Ok(new
             {
                 success = true,

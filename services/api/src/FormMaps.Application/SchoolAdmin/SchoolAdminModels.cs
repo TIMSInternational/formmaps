@@ -89,7 +89,7 @@ public sealed record StudentReport(
 
 public sealed record StudentReportStudent(string Id, string Name, string Email, int? GradeLevel);
 
-public sealed record StudentReportCompletion(bool Lia, bool Disc, bool Eval360, bool Overall);
+public sealed record StudentReportCompletion(bool Lia, bool Disc, bool Eval360, bool Personality, bool Overall);
 
 public sealed record StudentReportPca(bool Completed, int EvaluationCount, string? LastCompletedDate);
 

@@ -27,7 +27,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
         _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
         await using var conn = await _dataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand(
-            """TRUNCATE "users","evaluation_groups","pca_evaluations","pca_exam_sessions","lia_assessment_sessions","school_assessment_settings","assessment_schedules" """,
+            """TRUNCATE "users","evaluation_groups","pca_evaluations","pca_exam_sessions","lia_assessment_sessions","personality_assessment_sessions","school_assessment_settings","assessment_schedules" """,
             conn);
         await cmd.ExecuteNonQueryAsync();
     }
@@ -366,6 +366,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
         await SeedGroupAsync(conn, "stu-1", "teacher", isCompleted: true);     // 3 completed -> min(3,3)
         await SeedPcaEvalAsync(conn, "stu-1", isCompleted: true);
         await SeedExamDetailAsync(conn, "stu-1", "PatternRecognition", "Completed", isCompleted: true, scorePercentage: 90);
+        await SeedPersonalityAsync(conn, "stu-1", "completed");
 
         var report = (await Reader().GetStudentReportAsync(Ctx("admin-1"), School, "stu-1"))!;
 
@@ -374,6 +375,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
         Assert.True(report.Completion.Lia);      // parity LIA => liaCompleted 5
         Assert.True(report.Completion.Disc);
         Assert.True(report.Completion.Eval360);  // 3 >= min(3,3)
+        Assert.True(report.Completion.Personality);
         Assert.True(report.Completion.Overall);
         Assert.True(report.Pca.Completed);
         Assert.Equal(1, report.Pca.EvaluationCount);
@@ -382,6 +384,24 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
         Assert.Equal(90d, report.Mil.AverageScore);
         Assert.Equal(3, report.Evaluation360.Total);
         Assert.Equal(3, report.Evaluation360.Completed);
+    }
+
+    [Fact]
+    public async Task StudentReport_legacyUnlockGrandfathered_is_overall_done_without_personality()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUserAsync(conn, "stu-1", School, name: "Ana", email: "ana@e.st", gradeLevel: 11, legacyUnlockGrandfathered: true);
+        await SeedLiaAsync(conn, "stu-1", "completed");
+        await SeedGroupAsync(conn, "stu-1", "self", isCompleted: true);
+        await SeedGroupAsync(conn, "stu-1", "parent", isCompleted: true);
+        await SeedGroupAsync(conn, "stu-1", "teacher", isCompleted: true);
+        await SeedPcaEvalAsync(conn, "stu-1", isCompleted: true);
+        // No personality session seeded at all.
+
+        var report = (await Reader().GetStudentReportAsync(Ctx("admin-1"), School, "stu-1"))!;
+
+        Assert.False(report.Completion.Personality);
+        Assert.True(report.Completion.Overall);
     }
 
     [Fact]
@@ -525,10 +545,11 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
 
     private static async Task SeedUserAsync(
         NpgsqlConnection conn, string id, string? schoolId, string role = "Student",
-        string name = "Student", string email = "s@e.st", int? gradeLevel = null, bool isActive = true)
+        string name = "Student", string email = "s@e.st", int? gradeLevel = null, bool isActive = true,
+        bool legacyUnlockGrandfathered = false)
     {
         await using var cmd = new NpgsqlCommand(
-            """INSERT INTO "users" ("id","name","email","roleName","schoolId","gradeLevel","isActive") VALUES (@id,@n,@e,@r,@s,@g,@a)""",
+            """INSERT INTO "users" ("id","name","email","roleName","schoolId","gradeLevel","isActive","legacyUnlockGrandfathered") VALUES (@id,@n,@e,@r,@s,@g,@a,@lug)""",
             conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("n", name);
@@ -537,6 +558,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
         cmd.Parameters.AddWithValue("s", (object?)schoolId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("g", (object?)gradeLevel ?? DBNull.Value);
         cmd.Parameters.AddWithValue("a", isActive);
+        cmd.Parameters.AddWithValue("lug", legacyUnlockGrandfathered);
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -604,6 +626,17 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     {
         await using var cmd = new NpgsqlCommand(
             """INSERT INTO "lia_assessment_sessions" ("id","user_id","status","is_active") VALUES (@id,@u,@st,@a)""", conn);
+        cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
+        cmd.Parameters.AddWithValue("u", userId);
+        cmd.Parameters.AddWithValue("st", status);
+        cmd.Parameters.AddWithValue("a", isActive);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    private static async Task SeedPersonalityAsync(NpgsqlConnection conn, string userId, string status, bool isActive = true)
+    {
+        await using var cmd = new NpgsqlCommand(
+            """INSERT INTO "personality_assessment_sessions" ("id","user_id","status","is_active") VALUES (@id,@u,@st,@a)""", conn);
         cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
         cmd.Parameters.AddWithValue("u", userId);
         cmd.Parameters.AddWithValue("st", status);

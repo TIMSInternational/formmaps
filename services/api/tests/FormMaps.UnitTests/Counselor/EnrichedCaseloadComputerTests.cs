@@ -94,6 +94,15 @@ public class EnrichedCaseloadComputerTests
         Assert.Equal(expected, s.Pca);
     }
 
+    [Theory]
+    [InlineData(true, "completed")]
+    [InlineData(false, "not_started")]
+    public void Personality_badge_from_completed_user_ids(bool completedListed, string expected)
+    {
+        var s = Single(Data(students: [Student("s1")], personalityCompletedUserIds: completedListed ? ["s1"] : []));
+        Assert.Equal(expected, s.Personality);
+    }
+
     [Fact]
     public void Pca_badge_not_started_with_no_evaluations()
     {
@@ -237,7 +246,8 @@ public class EnrichedCaseloadComputerTests
         IReadOnlyList<CaseloadProfile>? profiles = null,
         Dictionary<string, int>? alertCounts = null,
         Dictionary<string, double>? courseCredits = null,
-        double creditsRequired = 120) =>
+        double creditsRequired = 120,
+        IReadOnlyList<string>? personalityCompletedUserIds = null) =>
         new(students, grades ?? [], pcaSessions ?? [], evalGroups ?? [], pcaEvals ?? [], profiles ?? [],
-            alertCounts ?? new(), courseCredits ?? new(), creditsRequired);
+            alertCounts ?? new(), courseCredits ?? new(), creditsRequired, personalityCompletedUserIds ?? []);
 }
