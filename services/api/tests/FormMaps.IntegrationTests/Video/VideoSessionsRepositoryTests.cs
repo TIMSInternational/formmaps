@@ -87,7 +87,7 @@ public sealed class VideoSessionsRepositoryTests : IClassFixture<VideoSessionsRe
         var created = await Repo().CreateAsync(Ctx(), "c1", "s1");
 
         Assert.StartsWith("formmaps-", created.SessionName);
-        Assert.Equal(32 + "formmaps-".Length, created.SessionName.Length); // 16 bytes → 32 hex chars
+        Assert.Equal(16 + "formmaps-".Length, created.SessionName.Length); // 8 bytes → 16 hex chars
 
         var row = await Repo().GetByIdAsync(Ctx(), created.Id);
         Assert.Equal("video_active", row!.Status);

@@ -120,7 +120,7 @@ public sealed class VideoSessionsRepository(
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
 
         var id = Guid.NewGuid().ToString();
-        var sessionName = $"formmaps-{System.Security.Cryptography.RandomNumberGenerator.GetHexString(32, lowercase: true)}";
+        var sessionName = $"formmaps-{System.Security.Cryptography.RandomNumberGenerator.GetHexString(16, lowercase: true)}";
         var start = Now();
         var end = start.AddHours(1);
 
