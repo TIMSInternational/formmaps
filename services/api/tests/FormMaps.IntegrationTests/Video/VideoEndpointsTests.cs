@@ -66,6 +66,21 @@ public class VideoEndpointsTests
         Assert.True(row.TryGetProperty("completedAt", out _));
     }
 
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public async Task Enabled_reflects_school_flag(bool videoEnabled, bool expected)
+    {
+        var repo = new FakeRepo { VideoEnabled = videoEnabled };
+        using var factory = new Factory(repo, new FakeDaily());
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Get, "/api/v1/video/enabled", role: FormMapsRoles.Counselor, schoolId: "school-1");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(expected, doc.RootElement.GetProperty("data").GetProperty("enabled").GetBoolean());
+    }
+
     [Fact]
     public async Task Signature_returns_503_when_daily_not_configured()
     {
@@ -98,6 +113,36 @@ public class VideoEndpointsTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal("tok-1", doc.RootElement.GetProperty("data").GetProperty("signature").GetString());
+    }
+
+    [Fact]
+    public async Task Signature_returns_403_when_video_disabled_before_room_lookup()
+    {
+        // RoomLookup intentionally left null: a 403 here (rather than the 404 a room-lookup miss would
+        // produce) proves the school-enabled check runs BEFORE FindByRoomNameAsync, not after.
+        var repo = new FakeRepo { VideoEnabled = false };
+        using var factory = new Factory(repo, new FakeDaily());
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Post, "/api/v1/video/signature", body: """{"sessionName":"room-x","role":0}""", role: FormMapsRoles.Counselor, schoolId: "school-1");
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Video calls are not enabled for your school", doc.RootElement.GetProperty("message").GetString());
+    }
+
+    [Fact]
+    public async Task Create_session_returns_403_when_video_disabled_before_participant_lookup()
+    {
+        // Participant intentionally left null: a 403 here (rather than the 404 a participant-lookup miss
+        // would produce) proves the school-enabled check runs BEFORE FindParticipantCandidateAsync.
+        var repo = new FakeRepo { VideoEnabled = false };
+        using var factory = new Factory(repo, new FakeDaily());
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Post, "/api/v1/video/sessions", body: """{"participantId":"p1"}""", role: FormMapsRoles.Counselor, schoolId: "school-1");
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Video calls are not enabled for your school", doc.RootElement.GetProperty("message").GetString());
     }
 
     [Fact]
