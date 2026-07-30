@@ -34,6 +34,10 @@ public sealed class ReportEmailEndpointsTests
         using var client = factory.CreateClient();
         var response = await Send(factory.CreateClient(), "u-1");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        // Uniform message: must be indistinguishable from the missing-recipient 404 below (IDOR — no
+        // existence oracle), pinned by commit 075505f.
+        Assert.Equal("Not found", doc.RootElement.GetProperty("message").GetString());
     }
 
     [Fact]
@@ -42,13 +46,18 @@ public sealed class ReportEmailEndpointsTests
         using var factory = new Factory(new FakeGuard(true), new FakeReader { Recipient = null }, new FakeSender(true));
         var response = await Send(factory.CreateClient(), "u-1");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        // Uniform message: must be indistinguishable from the access-denied 404 above (IDOR — no
+        // existence oracle), pinned by commit 075505f.
+        Assert.Equal("Not found", doc.RootElement.GetProperty("message").GetString());
     }
 
     [Fact]
     public async Task Success_returns_emailSent_true_and_recipient_address()
     {
         var reader = new FakeReader { Recipient = new ReportEmailRecipient("u-1", "student@example.com", "Ana") };
-        using var factory = new Factory(new FakeGuard(true), reader, new FakeSender(true));
+        var sender = new FakeSender(true);
+        using var factory = new Factory(new FakeGuard(true), reader, sender);
         var response = await Send(factory.CreateClient(), "u-1");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -56,6 +65,12 @@ public sealed class ReportEmailEndpointsTests
         var data = doc.RootElement.GetProperty("data");
         Assert.True(data.GetProperty("emailSent").GetBoolean());
         Assert.Equal("student@example.com", data.GetProperty("recipient").GetString());
+
+        // Verify the endpoint actually calls IEmailSender with the recipient's EMAIL (not id/name) and
+        // Task 1's real template content — not just that it reports emailSent:true.
+        Assert.Equal("student@example.com", sender.CapturedTo);
+        Assert.Equal("FormMaps — Student Report for Ana", sender.CapturedSubject);
+        Assert.False(string.IsNullOrWhiteSpace(sender.CapturedHtml));
     }
 
     [Fact]
@@ -113,7 +128,16 @@ public sealed class ReportEmailEndpointsTests
 
     private sealed class FakeSender(bool result) : IEmailSender
     {
-        public Task<bool> SendAsync(string to, string subject, string html, CancellationToken ct = default) =>
-            Task.FromResult(result);
+        public string? CapturedTo { get; private set; }
+        public string? CapturedSubject { get; private set; }
+        public string? CapturedHtml { get; private set; }
+
+        public Task<bool> SendAsync(string to, string subject, string html, CancellationToken ct = default)
+        {
+            CapturedTo = to;
+            CapturedSubject = subject;
+            CapturedHtml = html;
+            return Task.FromResult(result);
+        }
     }
 }

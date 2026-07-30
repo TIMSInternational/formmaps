@@ -9,6 +9,10 @@ namespace FormMaps.Api.Endpoints;
 /// IUserAccessGuard cross-user check, fetch {id,email,name}, send the canned "report ready" email via the
 /// existing IEmailSender/EmailTemplates rail. Dark behind FORMMAPS_ROUTE_SEND_REPORT_EMAIL_TO_DOTNET. No PDF, no
 /// attachment — legacy never generates one for this route.
+/// Byte-for-byte port EXCEPT the 404 message: both the access-denied and missing-recipient branches
+/// return the identical "Not found" body here (see <see cref="NotFound"/>), a deliberate deviation from
+/// whatever distinct per-branch text legacy may emit — collapsing to one message closes an IDOR-style
+/// existence oracle, matching ReportEndpoints.cs's established uniform-404 convention (commit 075505f).
 /// </summary>
 public static class ReportEmailEndpoints
 {
