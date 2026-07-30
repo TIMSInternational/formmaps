@@ -396,6 +396,24 @@ function shouldRouteVocationalTakeToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_TAKE_TO_DOTNET));
 }
 
+// File uploads / S3 rail (FM-DOTNET-088): 6 exact-literal multipart POSTs under /api/v1/upload.
+// Backend merged and staging-canary-verified; this was the missing frontend half. Default OFF.
+function shouldRouteUploadToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_UPLOAD_TO_DOTNET));
+}
+
+// Resume section + template writes (FM-DOTNET-089): PUT /:id/sections/order, POST /:id/sections,
+// DELETE /:id/sections/:sectionId, PUT /:id/template (mounted /api/resume). Default OFF.
+function shouldRouteResumeSectionsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_SECTIONS_TO_DOTNET));
+}
+
+// Resume CRUD list + create (FM-DOTNET-090): GET /default, GET /, POST / (mounted /api/resume;
+// GET/POST / co-flip, path-not-method). Default OFF.
+function shouldRouteResumeCrudToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_CRUD_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1106,6 +1124,30 @@ const nextConfig: NextConfig = {
             { source: "/evaluation/vocational/submit", destination: `${dotnetApiBaseUrl}/evaluation/vocational/submit` },
             { source: "/evaluation/vocational/:token/violations", destination: `${dotnetApiBaseUrl}/evaluation/vocational/:token/violations` },
             { source: "/evaluation/vocational/:token", destination: `${dotnetApiBaseUrl}/evaluation/vocational/:token` },
+          ]
+        : []),
+      ...(shouldRouteUploadToDotnet()
+        ? [
+            { source: "/api/v1/upload/school-logo", destination: `${dotnetApiBaseUrl}/api/v1/upload/school-logo` },
+            { source: "/api/v1/upload/profile-image", destination: `${dotnetApiBaseUrl}/api/v1/upload/profile-image` },
+            { source: "/api/v1/upload/resume", destination: `${dotnetApiBaseUrl}/api/v1/upload/resume` },
+            { source: "/api/v1/upload/course-import", destination: `${dotnetApiBaseUrl}/api/v1/upload/course-import` },
+            { source: "/api/v1/upload/grade-import", destination: `${dotnetApiBaseUrl}/api/v1/upload/grade-import` },
+            { source: "/api/v1/upload/portfolio-attachment", destination: `${dotnetApiBaseUrl}/api/v1/upload/portfolio-attachment` },
+          ]
+        : []),
+      ...(shouldRouteResumeSectionsToDotnet()
+        ? [
+            { source: "/api/resume/:id/sections/order", destination: `${dotnetApiBaseUrl}/api/resume/:id/sections/order` },
+            { source: "/api/resume/:id/sections", destination: `${dotnetApiBaseUrl}/api/resume/:id/sections` },
+            { source: "/api/resume/:id/sections/:sectionId", destination: `${dotnetApiBaseUrl}/api/resume/:id/sections/:sectionId` },
+            { source: "/api/resume/:id/template", destination: `${dotnetApiBaseUrl}/api/resume/:id/template` },
+          ]
+        : []),
+      ...(shouldRouteResumeCrudToDotnet()
+        ? [
+            { source: "/api/resume/default", destination: `${dotnetApiBaseUrl}/api/resume/default` },
+            { source: "/api/resume", destination: `${dotnetApiBaseUrl}/api/resume` },
           ]
         : []),
     ];
