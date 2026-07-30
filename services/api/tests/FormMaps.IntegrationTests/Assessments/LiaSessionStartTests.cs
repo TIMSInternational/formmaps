@@ -44,6 +44,17 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
     // ------------------------------------------------------------------------------------------
     // Adversarial #1: the atomic-increment race Node's own fix addresses. K concurrent /start
     // calls on the SAME in_progress, unlocked session must count exactly K strikes — not fewer.
+    //
+    // Concurrency is deliberately MAX_REENTRIES (3), not 5. At 5 this assertion is not something the
+    // implementation guarantees: StartAsync checks lockedAt and returns Locked BEFORE it reaches the
+    // reentry increment, so once the 4th strike locks the session, a 5th caller that reads its
+    // snapshot after that commit legitimately never increments — making `== 5` true only when all
+    // five happen to read before any of them commits. It passed on timing luck and became visibly
+    // flaky once unrelated work shifted the interleaving. At 3 no caller can short-circuit (lockedAt
+    // stays NULL, status stays in_progress), so exactly-K holds for every possible interleaving,
+    // which is precisely the atomic-increment property this test exists to pin. The lock-on-overflow
+    // behaviour is covered separately by Exceeding_max_reentries_locks_the_session and by
+    // Concurrent_starts_past_the_reentry_limit_lock_the_session_and_lose_no_unlocked_strike below.
     // ------------------------------------------------------------------------------------------
     [Fact]
     public async Task Concurrent_starts_on_the_same_session_count_every_strike_atomically()
@@ -51,7 +62,7 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
         var (userId, sessionId) = await SeedInProgressSessionAsync(reentryCount: 0);
         var (writer, _) = MakeWriter();
 
-        const int concurrency = 5;
+        const int concurrency = 3; // == MAX_REENTRIES: every caller reaches the increment.
         var tasks = Enumerable.Range(0, concurrency)
             .Select(_ => writer.StartAsync(Ctx(userId), userId, "es"))
             .ToArray();
@@ -59,6 +70,33 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
 
         var reentryCount = await ReadReentryCountAsync(sessionId);
         Assert.Equal(concurrency, reentryCount);
+    }
+
+    /// <summary>
+    /// The over-limit race, asserted only on what is actually invariant under every interleaving: the
+    /// session ends LOCKED, at least one caller is told so, and no strike is lost while the session is
+    /// still unlocked (so the count lands in [MAX_REENTRIES+1, K] and never below). Replaces the
+    /// exact-count assertion the 5-way race used to make, which was timing-dependent.
+    /// </summary>
+    [Fact]
+    public async Task Concurrent_starts_past_the_reentry_limit_lock_the_session_and_lose_no_unlocked_strike()
+    {
+        const int maxReentries = 3;
+        var (userId, sessionId) = await SeedInProgressSessionAsync(reentryCount: 0);
+        var (writer, _) = MakeWriter();
+
+        const int concurrency = 5;
+        var outcomes = await Task.WhenAll(Enumerable.Range(0, concurrency)
+            .Select(_ => writer.StartAsync(Ctx(userId), userId, "es")));
+
+        // Someone crossed the limit, so the session must be locked and say so.
+        Assert.Contains(outcomes, o => o.Status == LiaStartStatus.Locked);
+        Assert.True(await ReadLockedAtAsync(sessionId) is not null, "the session should be locked");
+
+        // Every strike taken while the session was unlocked was counted: enough to cross the limit,
+        // never more than the number of callers, and never silently dropped below the threshold.
+        var reentryCount = await ReadReentryCountAsync(sessionId);
+        Assert.InRange(reentryCount, maxReentries + 1, concurrency);
     }
 
     // ------------------------------------------------------------------------------------------
