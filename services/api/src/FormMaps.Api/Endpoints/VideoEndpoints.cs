@@ -83,7 +83,7 @@ public static class VideoEndpoints
         }
 
         var body = await ReadBodyAsync(http, cancellationToken);
-        if (body is null) return InternalError();
+        if (body is null) return BadRequest("Invalid request body");
 
         var sessionName = GetTrimmedString(body.Value, "sessionName");
         if (sessionName is null or { Length: 0 } or { Length: > 200 })
@@ -124,7 +124,7 @@ public static class VideoEndpoints
         if (error is not null) return error;
 
         var body = await ReadBodyAsync(http, cancellationToken);
-        if (body is null) return InternalError();
+        if (body is null) return BadRequest("Invalid request body");
 
         var participantId = GetTrimmedString(body.Value, "participantId");
         if (string.IsNullOrEmpty(participantId)) return BadRequest("participantId is required");
@@ -138,6 +138,10 @@ public static class VideoEndpoints
         var participant = await repository.FindParticipantCandidateAsync(context, participantId, cancellationToken);
         if (participant is null) return NotFound("Participant not found");
 
+        // NormalizedRole (not the raw role string) is deliberate — platform-wide role-normalization
+        // convention used elsewhere in this codebase. It's a strict superset of legacy's raw-string gate
+        // (exactly "counselor"/"school_admin"/"super admin"): variants like "admin", "super_admin",
+        // "superadmin", "schooladmin" also normalize into these buckets. Intentional, not a bug.
         var role = context.Actor?.NormalizedRole ?? "student";
         if (!StaffRoles.Contains(role))
         {
@@ -237,7 +241,7 @@ public static class VideoEndpoints
 
     private static string? GetTrimmedString(JsonElement body, string property) =>
         body.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String
-            ? value.GetString()
+            ? value.GetString()?.Trim()
             : null;
 
     private static async Task<JsonElement?> ReadBodyAsync(HttpContext http, CancellationToken cancellationToken)
@@ -271,5 +275,4 @@ public static class VideoEndpoints
     private static IResult NotFound(string message) => Results.Json(new { success = false, message }, statusCode: StatusCodes.Status404NotFound);
     private static IResult Forbidden(string message) => Results.Json(new { success = false, message }, statusCode: StatusCodes.Status403Forbidden);
     private static IResult BadRequest(string message) => Results.Json(new { success = false, message }, statusCode: StatusCodes.Status400BadRequest);
-    private static IResult InternalError() => Results.Json(new { success = false, message = "Internal server error" }, statusCode: StatusCodes.Status500InternalServerError);
 }

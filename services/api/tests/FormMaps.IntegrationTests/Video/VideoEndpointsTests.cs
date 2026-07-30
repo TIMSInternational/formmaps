@@ -115,6 +115,21 @@ public class VideoEndpointsTests
         Assert.Equal("tok-1", doc.RootElement.GetProperty("data").GetProperty("signature").GetString());
     }
 
+    [Theory]
+    [InlineData("/api/v1/video/signature")]
+    [InlineData("/api/v1/video/sessions")]
+    public async Task Malformed_json_body_is_400_not_500(string path)
+    {
+        var repo = new FakeRepo { VideoEnabled = true };
+        using var factory = new Factory(repo, new FakeDaily());
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Post, path, body: "{not valid json", role: FormMapsRoles.Counselor, schoolId: "school-1");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Invalid request body", doc.RootElement.GetProperty("message").GetString());
+    }
+
     [Fact]
     public async Task Signature_returns_403_when_video_disabled_before_room_lookup()
     {
