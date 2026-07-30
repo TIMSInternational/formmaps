@@ -106,6 +106,7 @@ public static class DependencyInjection
         services.AddScoped<ITimelineReportReader, TimelineReportReader>();
         services.AddScoped<ICoachingReportReader, CoachingReportReader>();
         services.AddScoped<IEvaluationReportReader, EvaluationReportReader>();
+        services.AddScoped<IReportEmailRecipientReader, ReportEmailRecipientReader>();
         services.AddScoped<IExamSessionReader, ExamSessionReader>();
         services.AddScoped<IExamCatalogReader, ExamCatalogReader>();
         services.AddScoped<IExamConfigReader, ExamConfigReader>();

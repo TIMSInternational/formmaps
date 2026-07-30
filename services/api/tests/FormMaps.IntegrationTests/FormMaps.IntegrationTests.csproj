@@ -113,6 +113,8 @@
     <EmbeddedResource Include="College\Data\college-essays-schema.sql" />
     <EmbeddedResource Include="Resumes\Data\resume-sections-schema.sql" />
     <EmbeddedResource Include="Resumes\Data\resume-crud-schema.sql" />
+    <!-- Schema-only DDL (users id/email/name only) for the Testcontainers send-report-email recipient lookup harness (Phase F). -->
+    <EmbeddedResource Include="Reports\Data\reports-users-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
