@@ -8,7 +8,9 @@ namespace FormMaps.Api.Endpoints;
 /// integrity comes entirely from signature verification, not RequestContext. Writes only to
 /// shadow tables (see IBillingShadowRepository) — never touches live billing state. See
 /// spec docs/superpowers/specs/2026-07-31-domain9a-billing-subscriptions-design.md.
-/// Exempted from MutationContentTypeMiddleware/RequestTimeoutMiddleware — see Task 5.
+/// Exempted from JsonBodySanitizationMiddleware (Task 4 fix round 1 — required for real Stripe
+/// signature verification to work, since that middleware can mutate the raw request body). Still
+/// NOT exempted from MutationContentTypeMiddleware/RequestTimeoutMiddleware — that's Task 5's job.
 ///
 /// checkout.session.completed fallback (TEMPORARY, scoped to this task): the real fix — fetching the
 /// live Stripe.Subscription for accurate current_period_end/trial_end via IStripeGateway.GetSubscriptionAsync
@@ -52,6 +54,7 @@ public static class BillingWebhookEndpoints
             {
                 var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
                 if (session?.Mode == "subscription" &&
+                    session.Metadata is not null &&
                     session.Metadata.TryGetValue("userId", out var userId) &&
                     session.Metadata.TryGetValue("planId", out var planId) &&
                     !string.IsNullOrEmpty(session.SubscriptionId))

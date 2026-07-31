@@ -7,6 +7,21 @@ public sealed class JsonBodySanitizationMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext httpContext)
     {
+        // Task 4 fix round 1 (Critical finding, adversarial review): the Stripe billing webhook
+        // verifies HMAC signatures over the exact raw request bytes Stripe sent (see
+        // StripeWebhookVerifier -> Stripe.EventUtility.ConstructEvent). This middleware
+        // re-serializes JSON bodies and swaps in the re-serialized bytes whenever they differ from
+        // the original (e.g. HTML-escaping of &, <, > or different Unicode handling) -- which would
+        // break signature verification for any real Stripe payload containing such characters.
+        // Mirrors the /hubs/messages exemption pattern in MutationContentTypeMiddleware/
+        // RequestTimeoutMiddleware. Scoped to the webhook path only -- does not loosen sanitization
+        // for any other mutation endpoint.
+        if (httpContext.Request.Path.StartsWithSegments("/api/v1/billing/webhook"))
+        {
+            await next(httpContext);
+            return;
+        }
+
         if (!ShouldSanitize(httpContext.Request))
         {
             await next(httpContext);
