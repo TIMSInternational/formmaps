@@ -118,6 +118,33 @@ public class LegacyJwtRequestContextFactoryTests
     }
 
     [Fact]
+    public void Create_authenticates_via_access_token_query_string_on_hub_path_only()
+    {
+        var token = CreateToken([new Claim(JwtRegisteredClaimNames.Sub, "user-123"), new Claim("role", "student")]);
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Path = "/hubs/messages/negotiate";
+        httpContext.Request.QueryString = new QueryString($"?access_token={token}");
+
+        var context = BuildFactory().Create(httpContext);
+
+        Assert.True(context.IsAuthenticated);
+        Assert.Equal("user-123", context.Actor?.UserId);
+    }
+
+    [Fact]
+    public void Query_string_token_is_ignored_outside_the_hub_path()
+    {
+        var token = CreateToken([new Claim(JwtRegisteredClaimNames.Sub, "user-123"), new Claim("role", "student")]);
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Path = "/api/v1/messages/conversations";
+        httpContext.Request.QueryString = new QueryString($"?access_token={token}");
+
+        var context = BuildFactory().Create(httpContext);
+
+        Assert.False(context.IsAuthenticated); // no cookie, no header — query string not honored off-hub
+    }
+
+    [Fact]
     public void Create_allows_development_headers_only_when_no_real_token_is_present()
     {
         var httpContext = new DefaultHttpContext();

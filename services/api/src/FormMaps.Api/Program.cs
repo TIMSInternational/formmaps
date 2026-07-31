@@ -1,6 +1,7 @@
 using FormMaps.Api;
 using FormMaps.Api.Auth;
 using FormMaps.Api.Endpoints;
+using FormMaps.Api.Realtime;
 using FormMaps.Api.Security;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,6 +55,7 @@ app.MapCounselorAlertsEndpoints();
 app.MapCounselorSessionsEndpoints();
 app.MapVideoEndpoints();
 app.MapMessagesEndpoints();
+app.MapHub<MessagesHub>("/hubs/messages").RequireCors(FormMaps.Api.Security.ApiSecurityExtensions.CorsPolicyName);
 app.MapCounselorNotesEndpoints();
 app.MapAcademicGapsEndpoints();
 app.MapStudentPortfolioEndpoints();

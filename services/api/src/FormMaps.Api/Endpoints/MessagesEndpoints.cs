@@ -1,4 +1,5 @@
 // services/api/src/FormMaps.Api/Endpoints/MessagesEndpoints.cs
+using FormMaps.Api.Auth;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Messaging;
 
@@ -21,6 +22,7 @@ public static class MessagesEndpoints
         group.MapPost("/conversations", CreateConversationAsync);
         group.MapGet("/conversations/{id}", GetConversationMessagesAsync);
         group.MapPost("/conversations/{id}", SendMessageAsync);
+        group.MapPost("/realtime-ticket", CreateRealtimeTicketAsync);
         return app;
     }
 
@@ -157,6 +159,19 @@ public static class MessagesEndpoints
                 },
             }, statusCode: StatusCodes.Status201Created),
         };
+    }
+
+    private static IResult CreateRealtimeTicketAsync(
+        IRequestContextAccessor accessor, IProtectedRequestGuard guard, RealtimeTicketFactory ticketFactory)
+    {
+        var context = accessor.Current;
+        var decision = guard.RequireIdentity(context);
+        if (!decision.Allowed) return Deny(decision);
+
+        var ticket = ticketFactory.CreateTicket(context.Actor!);
+        if (ticket is null) return Results.Json(new { success = false, message = "Realtime unavailable" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+
+        return Results.Ok(new { success = true, data = new { ticket, expiresIn = 60 } });
     }
 
     private static object ToJson(ConversationSummary c) => new

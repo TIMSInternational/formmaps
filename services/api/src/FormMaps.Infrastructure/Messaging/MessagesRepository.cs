@@ -14,7 +14,8 @@ namespace FormMaps.Infrastructure.Messaging;
 /// </summary>
 public sealed class MessagesRepository(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
-    TimeProvider timeProvider) : IMessagesRepository
+    TimeProvider timeProvider,
+    IMessagesRealtimeNotifier realtimeNotifier) : IMessagesRepository
 {
     public async Task<int> GetUnreadCountAsync(RequestContext context, string userId, CancellationToken cancellationToken = default)
     {
@@ -397,6 +398,11 @@ public sealed class MessagesRepository(
         }
 
         await session.CommitAsync(cancellationToken);
+
+        await realtimeNotifier.NotifyMessageReceivedAsync(otherId, new
+        {
+            id = messageId, conversationId, senderId = userId, content, createdDate = now,
+        }, cancellationToken);
 
         var message = new MessageRow(messageId, conversationId, userId, senderName, content, null, now);
         return new SendMessageResult(SendMessageStatus.Sent, message, otherId, recipientEmail, senderName, preview);

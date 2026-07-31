@@ -16,7 +16,8 @@ public sealed class MessagesConversationDetailTests : IClassFixture<MessagingDat
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     private MessagesRepository Repo() => new(
-        new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System);
+        new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
+        new NoopRealtimeNotifier());
 
     [Fact]
     public async Task Returns_paginated_messages_and_marks_unread_ones_as_read()

@@ -15,7 +15,8 @@ public sealed class MessagesContactsTests : IClassFixture<MessagingDatabaseFixtu
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     private MessagesRepository Repo() => new(
-        new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System);
+        new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
+        new NoopRealtimeNotifier());
 
     [Fact]
     public async Task Student_only_sees_school_admins_and_their_assigned_counselors()

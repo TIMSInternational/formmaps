@@ -15,7 +15,8 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     private MessagesRepository Repo() => new(
-        new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System);
+        new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
+        new NoopRealtimeNotifier());
 
     [Fact]
     public async Task Lists_my_conversations_with_correct_other_participant_and_unread_count()

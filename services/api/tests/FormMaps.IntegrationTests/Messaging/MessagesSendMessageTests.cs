@@ -16,7 +16,8 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     private MessagesRepository Repo() => new(
-        new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System);
+        new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
+        new NoopRealtimeNotifier());
 
     [Fact]
     public async Task Sends_a_message_and_updates_conversation_preview()

@@ -134,6 +134,17 @@ public sealed class LegacyJwtRequestContextFactory(
             }
         }
 
+        // Browsers cannot set custom headers on a native WebSocket upgrade — SignalR's JS client sends
+        // the accessTokenFactory value as an ?access_token= query parameter instead for exactly this
+        // reason. Scoped to the hub path only: query strings can leak via logs/proxies, so this fallback
+        // must never apply to ordinary REST calls, which always have a header/cookie alternative.
+        if (request.Path.StartsWithSegments("/hubs/messages") &&
+            request.Query.TryGetValue("access_token", out var queryToken) &&
+            !string.IsNullOrWhiteSpace(queryToken))
+        {
+            return new ExtractedToken(TokenSource.AuthorizationBearer, queryToken.ToString());
+        }
+
         return ExtractedToken.None;
     }
 

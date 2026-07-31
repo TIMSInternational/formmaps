@@ -31,7 +31,7 @@ public sealed class MessagesUnreadCountTests : IClassFixture<MessagingDatabaseFi
 
         var repository = new MessagesRepository(
             new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()),
-            TimeProvider.System);
+            TimeProvider.System, new NoopRealtimeNotifier());
 
         var count = await repository.GetUnreadCountAsync(_fixture.Ctx(userId), userId);
 

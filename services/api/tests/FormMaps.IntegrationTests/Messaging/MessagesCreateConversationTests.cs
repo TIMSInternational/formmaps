@@ -14,7 +14,8 @@ public sealed class MessagesCreateConversationTests : IClassFixture<MessagingDat
     public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
     private MessagesRepository Repo() => new(
-        new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System);
+        new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
+        new NoopRealtimeNotifier());
 
     [Fact]
     public async Task Student_can_message_their_assigned_counselor()
