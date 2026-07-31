@@ -180,6 +180,10 @@ public static class DependencyInjection
         // Domain 9a: subscription-billing shadow infrastructure (webhook -> shadow tables only, no live writes).
         services.AddScoped<FormMaps.Application.Billing.IBillingShadowRepository, FormMaps.Infrastructure.Billing.BillingShadowRepository>();
         services.AddScoped<FormMaps.Application.Billing.IStripeWebhookVerifier, FormMaps.Infrastructure.Billing.StripeWebhookVerifier>();
+        // Domain 9a: hourly reconciliation (BillingReconciliationWorker in FormMaps.Workers) diffing
+        // shadow_user_subscriptions against user_subscriptions — the safety net that catches a bug in
+        // the webhook write path above before real users are affected.
+        services.AddScoped<FormMaps.Application.Billing.IBillingReconciliationService, FormMaps.Infrastructure.Billing.BillingReconciliationService>();
         // Domain 7a: Daily.co video-provider client (FM-094). First HttpClient-based external integration in
         // this codebase — 15s timeout matches legacy's AbortSignal.timeout(15000).
         services.AddHttpClient<IDailyClient, DailyClient>(client =>

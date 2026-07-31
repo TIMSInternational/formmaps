@@ -83,4 +83,63 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
     }
+
+    // --- Seed helpers for BillingReconciliationServiceTests (Task 6) ---
+
+    public async Task SeedMatchingSubscriptionAsync(string userId, string stripeSubscriptionId, string status)
+    {
+        await SeedAsync(userId, stripeSubscriptionId, shadowStatus: status, liveStatus: status);
+    }
+
+    public async Task SeedMismatchedSubscriptionAsync(string userId, string shadowStatus, string liveStatus)
+    {
+        await SeedAsync(userId, $"sub_{userId}", shadowStatus, liveStatus);
+    }
+
+    public async Task SeedShadowOnlySubscriptionAsync(string userId, string stripeSubscriptionId)
+    {
+        await using var connection = new NpgsqlConnection(ConnectionString);
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO "shadow_user_subscriptions" ("id", "userId", "status", "stripeSubscriptionId", "isActive")
+            VALUES (@id, @userId, 'active', @subId, true)
+            """;
+        AddParam(command, "id", Guid.NewGuid().ToString());
+        AddParam(command, "userId", userId);
+        AddParam(command, "subId", stripeSubscriptionId);
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private async Task SeedAsync(string userId, string stripeSubscriptionId, string shadowStatus, string liveStatus)
+    {
+        await using var connection = new NpgsqlConnection(ConnectionString);
+        await connection.OpenAsync();
+        await using var plan = connection.CreateCommand();
+        plan.CommandText = """INSERT INTO "subscription_plans" ("id", "name", "price", "interval") VALUES ('plan_1', 'Pro', 29.99, 'month') ON CONFLICT DO NOTHING""";
+        await plan.ExecuteNonQueryAsync();
+
+        await using var live = connection.CreateCommand();
+        live.CommandText = """
+            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive")
+            VALUES (@id, @userId, 'plan_1', @status, @subId, true)
+            """;
+        AddParam(live, "id", Guid.NewGuid().ToString()); AddParam(live, "userId", userId);
+        AddParam(live, "status", liveStatus); AddParam(live, "subId", stripeSubscriptionId);
+        await live.ExecuteNonQueryAsync();
+
+        await using var shadow = connection.CreateCommand();
+        shadow.CommandText = """
+            INSERT INTO "shadow_user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive")
+            VALUES (@id, @userId, 'plan_1', @status, @subId, true)
+            """;
+        AddParam(shadow, "id", Guid.NewGuid().ToString()); AddParam(shadow, "userId", userId);
+        AddParam(shadow, "status", shadowStatus); AddParam(shadow, "subId", stripeSubscriptionId);
+        await shadow.ExecuteNonQueryAsync();
+    }
+
+    private static void AddParam(NpgsqlCommand command, string name, object value)
+    {
+        var p = command.CreateParameter(); p.ParameterName = name; p.Value = value; command.Parameters.Add(p);
+    }
 }
