@@ -98,6 +98,18 @@ public sealed class MessagingDatabaseFixture : IAsyncLifetime
         await cmd.ExecuteNonQueryAsync();
     }
 
+    public async Task SeedBlockAsync(string blockerId, string blockedId)
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """INSERT INTO "user_blocks" ("id","blockerId","blockedId") VALUES (@id,@a,@b)""", conn);
+        cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
+        cmd.Parameters.AddWithValue("a", blockerId);
+        cmd.Parameters.AddWithValue("b", blockedId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
     private static string LoadSchemaDdl()
     {
         var assembly = Assembly.GetExecutingAssembly();

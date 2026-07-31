@@ -147,4 +147,189 @@ public sealed class MessagesRepository(
         DateTime.SpecifyKind(new DateTime(timeProviderTicks(), DateTimeKind.Unspecified), DateTimeKind.Unspecified);
 
     private long timeProviderTicks() => (timeProvider.GetUtcNow().UtcDateTime.Ticks / TimeSpan.TicksPerMillisecond) * TimeSpan.TicksPerMillisecond;
+
+    /// <summary>
+    /// routes/messages.ts POST /conversations. Auth matrix, in legacy's exact order: recipient existence
+    /// (400, oracle-safe) -> bidirectional block (403) -> tenant/role scoping. Privileged callers
+    /// (school_admin/counselor, not super admin) are confined to their own school; a cross-school target
+    /// is reported as RecipientNotFound (same status+message as a genuinely nonexistent recipient) so a
+    /// caller can't distinguish "doesn't exist" from "exists in another school" — same for the student
+    /// -> school_admin cross-school case below. Everything else (unassigned counselor, un-linked child,
+    /// non-counselor/non-admin student target) is a plain Forbidden: those targets are already within the
+    /// caller's own school/reachable directory, so revealing their existence isn't an oracle leak.
+    /// </summary>
+    public async Task<CreateConversationResult> CreateConversationAsync(
+        RequestContext context, string userId, string role, string? schoolId, string targetId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        var currentSchoolId = schoolId;
+        var (targetSchoolId, targetRole) = await LookupUserAsync(session, targetId, cancellationToken);
+        if (targetRole is null)
+            return new CreateConversationResult(CreateConversationStatus.RecipientNotFound, null, "Recipient not found");
+
+        if (await IsBlockedBetweenAsync(session, userId, targetId, cancellationToken))
+            return new CreateConversationResult(CreateConversationStatus.Blocked, null, "You cannot message this user");
+
+        var sameSchool = currentSchoolId is not null && currentSchoolId == targetSchoolId;
+        var privilegedRoles = new[] { "school_admin", "super admin", "counselor" };
+        var isPrivileged = privilegedRoles.Contains(role);
+        var isSuperAdmin = role == "super admin";
+
+        if (isPrivileged && !isSuperAdmin)
+        {
+            if (!sameSchool) return new CreateConversationResult(CreateConversationStatus.RecipientNotFound, null, "Recipient not found");
+        }
+        else if (!isSuperAdmin)
+        {
+            if (role == "student")
+            {
+                var normalizedTargetRole = targetRole.ToLowerInvariant();
+                if (normalizedTargetRole == "counselor")
+                {
+                    var assigned = await HasActiveAssignmentAsync(session, userId, targetId, cancellationToken);
+                    if (!assigned) return new CreateConversationResult(CreateConversationStatus.Forbidden, null, "You are not assigned to this counselor");
+                }
+                else if (normalizedTargetRole == "school_admin")
+                {
+                    if (!sameSchool) return new CreateConversationResult(CreateConversationStatus.RecipientNotFound, null, "Recipient not found");
+                }
+                else
+                {
+                    return new CreateConversationResult(CreateConversationStatus.Forbidden, null, "You can only message your assigned counselor or school admin");
+                }
+            }
+
+            if (role == "parent")
+            {
+                var childIds = await GetLinkedChildIdsAsync(session, userId, cancellationToken);
+                if (childIds.Count == 0)
+                    return new CreateConversationResult(CreateConversationStatus.Forbidden, null, "No linked children found");
+                var anyAssigned = false;
+                foreach (var childId in childIds)
+                {
+                    if (await HasActiveAssignmentAsync(session, childId, targetId, cancellationToken)) { anyAssigned = true; break; }
+                }
+                if (!anyAssigned)
+                    return new CreateConversationResult(CreateConversationStatus.Forbidden, null, "This user is not assigned to any of your children");
+            }
+        }
+
+        var (participantAId, participantBId) = string.CompareOrdinal(userId, targetId) < 0 ? (userId, targetId) : (targetId, userId);
+
+        var existing = await FindConversationRowAsync(session, participantAId, participantBId, cancellationToken);
+        if (existing is not null)
+        {
+            await session.CommitAsync(cancellationToken);
+            return new CreateConversationResult(CreateConversationStatus.Existing, ToSummary(existing, userId), null);
+        }
+
+        var newId = Guid.NewGuid().ToString();
+        await using (var insert = Command(session, """
+            INSERT INTO "conversations" ("id", "participantAId", "participantBId") VALUES (@id, @pa, @pb)
+            """))
+        {
+            AddParameter(insert, "id", newId);
+            AddParameter(insert, "pa", participantAId);
+            AddParameter(insert, "pb", participantBId);
+            await insert.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        // Re-read (joined with users, for the response) while the transaction is still open — querying
+        // through `session` after CommitAsync would reuse an already-completed DbTransaction and throw.
+        var created = await FindConversationRowAsync(session, participantAId, participantBId, cancellationToken)
+            ?? throw new InvalidOperationException("conversation vanished immediately after insert");
+        await session.CommitAsync(cancellationToken);
+        return new CreateConversationResult(CreateConversationStatus.Created, ToSummary(created, userId), null);
+    }
+
+    private sealed record ConversationRow(
+        string Id, string ParticipantAId, string ParticipantBId, string? AName, string AEmail,
+        string? BName, string BEmail, string? LastMessagePreview, DateTime? LastMessageAt);
+
+    private static ConversationSummary ToSummary(ConversationRow row, string userId)
+    {
+        var iAmA = row.ParticipantAId == userId;
+        return new ConversationSummary(
+            row.Id,
+            iAmA ? row.ParticipantBId : row.ParticipantAId,
+            iAmA ? row.BName : row.AName,
+            iAmA ? row.BEmail : row.AEmail,
+            row.LastMessagePreview, row.LastMessageAt, 0);
+    }
+
+    private static async Task<ConversationRow?> FindConversationRowAsync(
+        FormMapsDatabaseSession session, string participantAId, string participantBId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """
+            SELECT c."id", c."participantAId", c."participantBId", ua."name", ua."email", ub."name", ub."email",
+                   c."lastMessagePreview", c."lastMessageAt"
+            FROM "conversations" c
+            JOIN "users" ua ON ua."id" = c."participantAId"
+            JOIN "users" ub ON ub."id" = c."participantBId"
+            WHERE c."participantAId" = @pa AND c."participantBId" = @pb
+            """);
+        AddParameter(command, "pa", participantAId);
+        AddParameter(command, "pb", participantBId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken)) return null;
+        return new ConversationRow(
+            reader.GetString(0), reader.GetString(1), reader.GetString(2),
+            reader.IsDBNull(3) ? null : reader.GetString(3), reader.GetString(4),
+            reader.IsDBNull(5) ? null : reader.GetString(5), reader.GetString(6),
+            reader.IsDBNull(7) ? null : reader.GetString(7),
+            reader.IsDBNull(8) ? null : reader.GetDateTime(8));
+    }
+
+    private static async Task<(string? SchoolId, string? RoleName)> LookupUserAsync(
+        FormMapsDatabaseSession session, string userId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """SELECT "schoolId", "roleName" FROM "users" WHERE "id" = @id AND "isActive" = true""");
+        AddParameter(command, "id", userId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken)) return (null, null);
+        return (reader.IsDBNull(0) ? null : reader.GetString(0), reader.GetString(1));
+    }
+
+    private static async Task<bool> IsBlockedBetweenAsync(
+        FormMapsDatabaseSession session, string a, string b, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """
+            SELECT 1 FROM "user_blocks"
+            WHERE "isActive" = true AND (("blockerId" = @a AND "blockedId" = @b) OR ("blockerId" = @b AND "blockedId" = @a))
+            LIMIT 1
+            """);
+        AddParameter(command, "a", a);
+        AddParameter(command, "b", b);
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is not null;
+    }
+
+    private static async Task<bool> HasActiveAssignmentAsync(
+        FormMapsDatabaseSession session, string studentId, string counselorId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """
+            SELECT 1 FROM "counselor_student_assignments"
+            WHERE "studentId" = @studentId AND "counselorId" = @counselorId AND "isActive" = true LIMIT 1
+            """);
+        AddParameter(command, "studentId", studentId);
+        AddParameter(command, "counselorId", counselorId);
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is not null;
+    }
+
+    private static async Task<IReadOnlyList<string>> GetLinkedChildIdsAsync(
+        FormMapsDatabaseSession session, string parentUserId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """
+            SELECT "studentId" FROM "student_parent_links"
+            WHERE "parentUserId" = @parentUserId AND "isActive" = true AND "isAccepted" = true
+            """);
+        AddParameter(command, "parentUserId", parentUserId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var ids = new List<string>();
+        while (await reader.ReadAsync(cancellationToken)) ids.Add(reader.GetString(0));
+        return ids;
+    }
 }

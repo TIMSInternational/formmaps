@@ -18,6 +18,7 @@ public static class MessagesEndpoints
         group.MapGet("/unread-count", GetUnreadCountAsync);
         group.MapGet("/contacts", GetContactsAsync);
         group.MapGet("/conversations", ListConversationsAsync);
+        group.MapPost("/conversations", CreateConversationAsync);
         return app;
     }
 
@@ -70,6 +71,43 @@ public static class MessagesEndpoints
             }),
         });
     }
+
+    public sealed record CreateConversationRequest(string? RecipientId, string? CounselorId);
+
+    private static async Task<IResult> CreateConversationAsync(
+        IRequestContextAccessor accessor, IProtectedRequestGuard guard, IMessagesRepository repository,
+        CreateConversationRequest? body, CancellationToken cancellationToken)
+    {
+        var context = accessor.Current;
+        var decision = guard.RequireIdentity(context);
+        if (!decision.Allowed) return Deny(decision);
+
+        var targetId = body?.RecipientId ?? body?.CounselorId;
+        if (string.IsNullOrWhiteSpace(targetId)) return BadRequestResult("recipientId is required");
+
+        var role = context.Actor!.NormalizedRole.ToLowerInvariant();
+        var result = await repository.CreateConversationAsync(
+            context, context.Tenant!.UserId, role, context.Tenant.SchoolId, targetId, cancellationToken);
+
+        return result.Status switch
+        {
+            CreateConversationStatus.Created => Results.Json(new { success = true, data = ToJson(result.Data!) }, statusCode: StatusCodes.Status201Created),
+            CreateConversationStatus.Existing => Results.Ok(new { success = true, data = ToJson(result.Data!) }),
+            CreateConversationStatus.Blocked => Forbidden(result.Error!),
+            CreateConversationStatus.Forbidden => Forbidden(result.Error!),
+            CreateConversationStatus.RecipientNotFound => BadRequestResult(result.Error!),
+            _ => BadRequestResult(result.Error ?? "Invalid request"),
+        };
+    }
+
+    private static object ToJson(ConversationSummary c) => new
+    {
+        id = c.Id,
+        otherParticipant = new { id = c.OtherParticipantId, name = c.OtherParticipantName, email = c.OtherParticipantEmail },
+        lastMessagePreview = c.LastMessagePreview,
+        lastMessageAt = c.LastMessageAt,
+        unreadCount = c.UnreadCount,
+    };
 
     private static IResult Deny(GuardDecision decision) =>
         Results.Json(new { success = false, code = decision.Code, message = decision.Message }, statusCode: decision.StatusCode);
