@@ -89,6 +89,7 @@ public interface ILiaSessionWriter
         RequestContext context,
         string userId,
         string language,
+        LiaDeviceInfo? deviceInfo = null,
         CancellationToken cancellationToken = default);
 
     Task<LiaSubtestStartOutcome> StartSubtestAsync(

@@ -773,13 +773,17 @@ public class LiaSessionEndpointsTests
         public LiaSaveViolationsOutcome SaveViolationsOutcome { get; set; } = new(LiaSaveViolationsStatus.Ok, 0);
 
         public Task<LiaStartOutcome> StartAsync(
-            RequestContext context, string userId, string language, CancellationToken cancellationToken = default)
+            RequestContext context, string userId, string language, LiaDeviceInfo? deviceInfo = null,
+            CancellationToken cancellationToken = default)
         {
             StartCalls++;
             LastOwnerUserId = userId;
             LastLanguage = language;
+            LastDeviceInfo = deviceInfo;
             return Task.FromResult(StartOutcome);
         }
+
+        public LiaDeviceInfo? LastDeviceInfo { get; private set; }
 
         public Task<LiaSubtestStartOutcome> StartSubtestAsync(
             RequestContext context, string sessionId, string ownerUserId, string subtest, CancellationToken cancellationToken = default)

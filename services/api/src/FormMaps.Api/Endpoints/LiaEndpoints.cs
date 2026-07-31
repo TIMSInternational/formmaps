@@ -90,7 +90,8 @@ public static class LiaEndpoints
         }
 
         var language = body?.Language == "en" ? "en" : "es";
-        var outcome = await writer.StartAsync(context, context.Tenant!.UserId, language, cancellationToken);
+        var deviceInfo = ParseDeviceInfo(body?.DeviceInfo);
+        var outcome = await writer.StartAsync(context, context.Tenant!.UserId, language, deviceInfo, cancellationToken);
         return outcome.Status switch
         {
             LiaStartStatus.Started => Results.Ok(new { success = true, data = outcome.Payload }),
@@ -533,7 +534,31 @@ public static class LiaEndpoints
             statusCode: StatusCodes.Status404NotFound);
     }
 
-    public sealed record StartRequest([property: JsonPropertyName("language")] string? Language);
+    public sealed record StartRequest(
+        [property: JsonPropertyName("language")] string? Language,
+        [property: JsonPropertyName("device_info")] JsonElement? DeviceInfo);
+
+    // Mirrors legacy Node's routes/lia.ts /start handler byte-for-byte: never throws on malformed
+    // input, userAgent truncated to 300 chars, screen dimensions default to 0.
+    private static LiaDeviceInfo? ParseDeviceInfo(JsonElement? raw)
+    {
+        if (raw is not { ValueKind: JsonValueKind.Object } el) return null;
+
+        var userAgent = el.TryGetProperty("userAgent", out var ua) && ua.ValueKind == JsonValueKind.String
+            ? ua.GetString() ?? ""
+            : "";
+        if (userAgent.Length > 300) userAgent = userAgent[..300];
+
+        return new LiaDeviceInfo(userAgent, ReadInt(el, "screenWidth"), ReadInt(el, "screenHeight"));
+    }
+
+    private static int ReadInt(JsonElement el, string propertyName)
+    {
+        if (!el.TryGetProperty(propertyName, out var value)) return 0;
+        if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var n)) return n;
+        if (value.ValueKind == JsonValueKind.String && int.TryParse(value.GetString(), out var n2)) return n2;
+        return 0;
+    }
 
     public sealed record SubtestStartRequest([property: JsonPropertyName("subtest")] string Subtest);
 

@@ -12,6 +12,16 @@ public sealed record ClientQuestion(
     [property: JsonPropertyName("is_practice")] bool IsPractice);
 
 /// <summary>
+/// Optional device fingerprint captured at LIA session start, for proctoring. Mirrors legacy Node's
+/// shape byte-for-byte (routes/lia.ts's /start handler): userAgent truncated to 300 chars, screen
+/// dimensions default to 0 when absent/invalid — never throws on malformed input.
+/// </summary>
+public sealed record LiaDeviceInfo(
+    [property: JsonPropertyName("userAgent")] string UserAgent,
+    [property: JsonPropertyName("screenWidth")] int ScreenWidth,
+    [property: JsonPropertyName("screenHeight")] int ScreenHeight);
+
+/// <summary>
 /// Serves question CONTENT out of the embedded static <see cref="LiaAnswerScoring.BuildQuestionBank"/>
 /// bank, but every served <see cref="ClientQuestion.Id"/> is the REAL, environment-specific
 /// <c>lia_questions.id</c> resolved at runtime through <see cref="ILiaQuestionIdResolver"/>.

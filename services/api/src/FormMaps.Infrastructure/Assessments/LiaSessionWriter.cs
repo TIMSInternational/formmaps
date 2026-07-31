@@ -183,15 +183,16 @@ public sealed class LiaSessionWriter(
     private const string CreateSessionSql = """
         INSERT INTO "lia_assessment_sessions"
             ("id", "user_id", "status", "current_subtest", "current_item", "practice_completed",
-             "subtest_times", "language", "updated_at")
+             "subtest_times", "language", "device_info", "updated_at")
         VALUES (@id, @userId, 'practice'::"LiaSessionStatus", @firstSubtest::"LiaSubtest", 0, @practiceCompleted::jsonb,
-                '{}'::jsonb, @language, @now)
+                '{}'::jsonb, @language, @deviceInfo::jsonb, @now)
         """;
 
     private const int MaxReentries = 3; // legacy MAX_REENTRIES (lib/proctoring.ts).
 
     public async Task<LiaStartOutcome> StartAsync(
-        RequestContext context, string userId, string language, CancellationToken cancellationToken = default)
+        RequestContext context, string userId, string language, LiaDeviceInfo? deviceInfo = null,
+        CancellationToken cancellationToken = default)
     {
         // Warm the question catalog BEFORE taking a connection — a lazy first load from inside the
         // transaction below would need a SECOND pooled connection while this one is held, and
@@ -324,6 +325,8 @@ public sealed class LiaSessionWriter(
             AddParameter(command, "firstSubtest", firstSubtest);
             AddParameter(command, "practiceCompleted", practiceCompletedJson);
             AddParameter(command, "language", language);
+            AddParameter(command, "deviceInfo",
+                deviceInfo is null ? DBNull.Value : JsonSerializer.Serialize(deviceInfo, JsonOptions));
             AddTimestampParameter(command, "now", NowTruncated());
             await command.ExecuteNonQueryAsync(cancellationToken);
         }

@@ -146,6 +146,37 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
     }
 
     [Fact]
+    public async Task Fresh_start_with_device_info_persists_it_verbatim()
+    {
+        var userId = Guid.NewGuid().ToString();
+        await SeedUserAsync(userId);
+        var (writer, _) = MakeWriter();
+        var deviceInfo = new LiaDeviceInfo("Mozilla/5.0 (Test)", 1920, 1080);
+
+        var outcome = await writer.StartAsync(Ctx(userId), userId, "es", deviceInfo);
+
+        Assert.Equal(LiaStartStatus.Started, outcome.Status);
+        var persisted = await ReadDeviceInfoAsync(outcome.Payload!.SessionId);
+        Assert.NotNull(persisted);
+        Assert.Equal("Mozilla/5.0 (Test)", persisted!.Value.GetProperty("userAgent").GetString());
+        Assert.Equal(1920, persisted.Value.GetProperty("screenWidth").GetInt32());
+        Assert.Equal(1080, persisted.Value.GetProperty("screenHeight").GetInt32());
+    }
+
+    [Fact]
+    public async Task Fresh_start_without_device_info_leaves_the_column_null()
+    {
+        var userId = Guid.NewGuid().ToString();
+        await SeedUserAsync(userId);
+        var (writer, _) = MakeWriter();
+
+        var outcome = await writer.StartAsync(Ctx(userId), userId, "es");
+
+        Assert.Equal(LiaStartStatus.Started, outcome.Status);
+        Assert.Null(await ReadDeviceInfoAsync(outcome.Payload!.SessionId));
+    }
+
+    [Fact]
     public async Task In_progress_session_with_a_live_clock_resumes_mid_subtest_without_resetting_it()
     {
         var startedAt = DateTime.UtcNow.AddSeconds(-30); // well within any subtest's time limit.
@@ -506,6 +537,16 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
         cmd.Parameters.AddWithValue("id", sessionId);
         var result = await cmd.ExecuteScalarAsync();
         return result is DBNull ? null : (DateTime?)result;
+    }
+
+    private async Task<JsonElement?> ReadDeviceInfoAsync(string sessionId)
+    {
+        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand("""SELECT "device_info" FROM lia_assessment_sessions WHERE id = @id""", conn);
+        cmd.Parameters.AddWithValue("id", sessionId);
+        var result = await cmd.ExecuteScalarAsync();
+        return result is null or DBNull ? null : JsonDocument.Parse((string)result).RootElement;
     }
 
     private async Task<(string Status, string? CurrentSubtest)> ReadSessionStatusAsync(string sessionId)

@@ -195,7 +195,8 @@ public class LiaCompleteEndpointTests
         public string? LastSessionId { get; private set; }
 
         public Task<LiaStartOutcome> StartAsync(
-            RequestContext context, string userId, string language, CancellationToken cancellationToken = default) =>
+            RequestContext context, string userId, string language, LiaDeviceInfo? deviceInfo = null,
+            CancellationToken cancellationToken = default) =>
             throw new NotImplementedException("StartAsync is not exercised by LiaCompleteEndpointTests");
 
         public Task<LiaSubtestStartOutcome> StartSubtestAsync(
