@@ -39,12 +39,57 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
     }
 
     [Fact]
-    public async Task Lists_conversations_with_both_participantA_and_B_assignment()
+    public async Task Lists_conversations_with_both_participantA_and_B_assignment_branches()
     {
-        // Seed two conversations to ensure both branch paths (participantA and participantB) are tested
-        var (userId1, otherId1, convId1) = await _fixture.SeedConversationAsync();
-        var (userId2, otherId2, convId2) = await _fixture.SeedConversationAsync();
+        // Deterministically test both CASE-WHEN branches by forcing userId into A slot in one conversation and B slot in another
+        var userId = Guid.NewGuid().ToString();
 
+        // Generate otherId1 where userId < otherId1 (userId will be participantA)
+        var otherId1 = Guid.NewGuid().ToString();
+        var userIsAWithOther1 = string.CompareOrdinal(userId, otherId1) < 0;
+
+        // Generate otherId2 with opposite ordering (userId will be participantB if userIsAWithOther1 is true)
+        string otherId2;
+        do
+        {
+            otherId2 = Guid.NewGuid().ToString();
+        } while ((string.CompareOrdinal(userId, otherId2) < 0) == userIsAWithOther1);
+        // Now userId is A with one and B with the other
+
+        // Create users and conversations via direct SQL to force A/B assignment
+        await using var conn = new Npgsql.NpgsqlConnection(_fixture.ConnectionString);
+        await conn.OpenAsync();
+
+        foreach (var id in new[] { userId, otherId1, otherId2 })
+        {
+            await using var userCmd = new Npgsql.NpgsqlCommand(
+                """INSERT INTO "users" ("id","name","email","roleId","roleName","schoolId","isActive") VALUES (@id,@id,@id || '@test.dev','r','student',null,true)""",
+                conn);
+            userCmd.Parameters.AddWithValue("id", id);
+            await userCmd.ExecuteNonQueryAsync();
+        }
+
+        // Create first conversation (userId vs otherId1)
+        var (pa1, pb1) = string.CompareOrdinal(userId, otherId1) < 0 ? (userId, otherId1) : (otherId1, userId);
+        var convId1 = Guid.NewGuid().ToString();
+        await using var cmd1 = new Npgsql.NpgsqlCommand(
+            """INSERT INTO "conversations" ("id","participantAId","participantBId") VALUES (@id,@pa,@pb)""", conn);
+        cmd1.Parameters.AddWithValue("id", convId1);
+        cmd1.Parameters.AddWithValue("pa", pa1);
+        cmd1.Parameters.AddWithValue("pb", pb1);
+        await cmd1.ExecuteNonQueryAsync();
+
+        // Create second conversation (userId vs otherId2)
+        var (pa2, pb2) = string.CompareOrdinal(userId, otherId2) < 0 ? (userId, otherId2) : (otherId2, userId);
+        var convId2 = Guid.NewGuid().ToString();
+        await using var cmd2 = new Npgsql.NpgsqlCommand(
+            """INSERT INTO "conversations" ("id","participantAId","participantBId") VALUES (@id,@pa,@pb)""", conn);
+        cmd2.Parameters.AddWithValue("id", convId2);
+        cmd2.Parameters.AddWithValue("pa", pa2);
+        cmd2.Parameters.AddWithValue("pb", pb2);
+        await cmd2.ExecuteNonQueryAsync();
+
+        // Add messages so we can update preview/timestamp
         await _fixture.SeedMessageAsync(convId1, senderId: otherId1, readAt: null);
         await _fixture.SeedMessageAsync(convId2, senderId: otherId2, readAt: null);
 
@@ -52,20 +97,30 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
         await UpdateConversationPreviewAsync(convId1, "hi", DateTime.UtcNow);
         await UpdateConversationPreviewAsync(convId2, "hi", DateTime.UtcNow);
 
-        var results1 = await Repo().ListConversationsAsync(_fixture.Ctx(userId1), userId1);
-        var results2 = await Repo().ListConversationsAsync(_fixture.Ctx(userId2), userId2);
+        // Query both conversations
+        var results = await Repo().ListConversationsAsync(_fixture.Ctx(userId), userId);
 
-        var conv1 = Assert.Single(results1);
-        var conv2 = Assert.Single(results2);
+        Assert.Equal(2, results.Count);
 
-        // Both should have correct other participant and field resolution
+        // Verify both conversations are returned with correct participant info
+        var conv1 = results.FirstOrDefault(c => c.OtherParticipantId == otherId1);
+        var conv2 = results.FirstOrDefault(c => c.OtherParticipantId == otherId2);
+
+        Assert.NotNull(conv1);
+        Assert.NotNull(conv2);
+
+        // Key assertions: verify field resolution works correctly for BOTH branches
         Assert.Equal(otherId1, conv1.OtherParticipantId);
         Assert.NotNull(conv1.OtherParticipantName);
         Assert.NotNull(conv1.OtherParticipantEmail);
+        Assert.NotNull(conv1.LastMessagePreview);
+        Assert.NotNull(conv1.LastMessageAt);
 
         Assert.Equal(otherId2, conv2.OtherParticipantId);
         Assert.NotNull(conv2.OtherParticipantName);
         Assert.NotNull(conv2.OtherParticipantEmail);
+        Assert.NotNull(conv2.LastMessagePreview);
+        Assert.NotNull(conv2.LastMessageAt);
     }
 
     [Fact]
