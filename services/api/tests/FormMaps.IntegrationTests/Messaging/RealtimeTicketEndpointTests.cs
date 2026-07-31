@@ -234,6 +234,15 @@ public class RealtimeTicketEndpointTests
         using var factory = new Factory();
         using var client = factory.CreateClient();
 
+        // Warm the host BEFORE the clock starts. Every offset below is measured from `mintedAt`, but the
+        // server stamps `exp` when it actually mints -- so any latency between those two instants shifts
+        // the real expiry later than this test believes. The FIRST request to a WebApplicationFactory
+        // builds the whole host and JITs the pipeline, which is sub-second on an idle machine but several
+        // seconds under a loaded parallel suite run; that alone was enough to push the t=65s probe back
+        // inside the real window and fail this test intermittently (observed: green in isolation, red in
+        // the full Messaging run). This throwaway mint absorbs that cost so `mintedAt` is honest.
+        await GetTicketAsync(client);
+
         var mintedAt = DateTime.UtcNow;
         var ticket = await GetTicketAsync(client);
 
