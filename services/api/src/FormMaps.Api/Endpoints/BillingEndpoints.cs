@@ -45,7 +45,7 @@ public static class BillingEndpoints
             return Results.BadRequest(new { success = false, message = "Unknown plan" });
         }
 
-        var customerId = await gateway.GetOrCreateCustomerAsync(context.Tenant!.UserId, email: null, cancellationToken);
+        var customerId = await gateway.GetOrCreateCustomerAsync(context, context.Tenant!.UserId, email: null, cancellationToken);
         var appUrl = configuration["NEXT_PUBLIC_APP_URL"] ?? "https://app.formmaps.com";
         var url = await gateway.CreateCheckoutSessionAsync(
             customerId, plan.StripePriceId, context.Tenant.UserId, body.PlanId,

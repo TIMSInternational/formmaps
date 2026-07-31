@@ -193,6 +193,10 @@ public static class DependencyInjection
         // that same endpoint).
         services.AddScoped<FormMaps.Application.Billing.IStripeGateway, FormMaps.Infrastructure.Billing.StripeGateway>();
         services.AddScoped<FormMaps.Application.Billing.IPlanReader, FormMaps.Infrastructure.Billing.PlanReader>();
+        // Domain 9a Task 8 fix round 1: ILiveCustomerReader -- read-only reader of the LIVE
+        // users."stripeCustomerId" column (caller's own tenant-scoped RLS session), consumed by
+        // StripeGateway.GetOrCreateCustomerAsync to look up an existing Stripe customer before creating one.
+        services.AddScoped<FormMaps.Application.Billing.ILiveCustomerReader, FormMaps.Infrastructure.Billing.LiveCustomerReader>();
         // Domain 7a: Daily.co video-provider client (FM-094). First HttpClient-based external integration in
         // this codebase — 15s timeout matches legacy's AbortSignal.timeout(15000).
         services.AddHttpClient<IDailyClient, DailyClient>(client =>
