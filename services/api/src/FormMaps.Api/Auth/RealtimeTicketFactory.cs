@@ -16,9 +16,19 @@ namespace FormMaps.Api.Auth;
 /// so it validates through the exact same path as LegacyJwtRequestContextFactory -- including the
 /// existing ValidateLifetime=true/RequireExpirationTime=true enforcement, which is what makes the 60s
 /// TTL actually binding rather than a hint.
+///
+/// The 60s TTL is a backstop, not the only defense: the ticket also carries a distinguishing
+/// <see cref="ScopeClaimType"/>=<see cref="HubScopeClaimValue"/> claim. LegacyJwtRequestContextFactory
+/// rejects any token carrying that claim when the request path is NOT /hubs/messages -- otherwise, since
+/// this ticket shares the full session JWT's issuer/audience/secret and only differs by TTL, it would be
+/// a fully valid Authorization: Bearer credential against ANY RequireIdentity REST endpoint for its ~60s
+/// lifetime if it leaked via browser history, a proxy log, or a Referer header.
 /// </summary>
 public sealed class RealtimeTicketFactory(IOptions<LegacyJwtOptions> options)
 {
+    public const string ScopeClaimType = "scope";
+    public const string HubScopeClaimValue = "hub";
+
     private static readonly TimeSpan TicketLifetime = TimeSpan.FromSeconds(60);
     private const string JwtSecretEnvironmentVariable = "JWT_SECRET";
     private readonly LegacyJwtOptions jwtOptions = options.Value;
@@ -40,6 +50,7 @@ public sealed class RealtimeTicketFactory(IOptions<LegacyJwtOptions> options)
             [
                 new Claim(JwtRegisteredClaimNames.Sub, actor.UserId),
                 new Claim("role", actor.Role),
+                new Claim(ScopeClaimType, HubScopeClaimValue),
             ],
             notBefore: now,
             expires: now.Add(TicketLifetime),

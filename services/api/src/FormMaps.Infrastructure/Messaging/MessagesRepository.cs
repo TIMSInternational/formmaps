@@ -399,10 +399,15 @@ public sealed class MessagesRepository(
 
         await session.CommitAsync(cancellationToken);
 
+        // CancellationToken.None, not the request's token: the message is already committed at this
+        // point, so delivery is best-effort -- if the sender disconnects between commit and push, the
+        // request's token would cancel and silently swallow (SignalRMessagesNotifier catches everything)
+        // a push for a message that was, in fact, successfully sent. The recipient just misses the
+        // realtime nudge, not the message.
         await realtimeNotifier.NotifyMessageReceivedAsync(otherId, new
         {
             id = messageId, conversationId, senderId = userId, content, createdDate = now,
-        }, cancellationToken);
+        }, CancellationToken.None);
 
         var message = new MessageRow(messageId, conversationId, userId, senderName, content, null, now);
         return new SendMessageResult(SendMessageStatus.Sent, message, otherId, recipientEmail, senderName, preview);

@@ -50,6 +50,15 @@ public sealed class LegacyJwtRequestContextFactory(
                 BuildValidationParameters(secret),
                 out _);
 
+            // A realtime ticket (RealtimeTicketFactory) shares this same secret/issuer/audience as a
+            // full session JWT and differs only by its short TTL and this scope claim -- reject it
+            // outright off the hub path so a leaked ticket (browser history, proxy log, Referer header)
+            // can't be replayed as a normal Bearer credential against other endpoints for its ~60s life.
+            if (IsHubScopedTicket(principal) && !httpContext.Request.Path.StartsWithSegments("/hubs/messages"))
+            {
+                return RequestContext.Anonymous(token.Source, "hub_ticket_used_outside_hub_path");
+            }
+
             return BuildContext(principal, token.Source);
         }
         catch (SecurityTokenExpiredException)
@@ -147,6 +156,12 @@ public sealed class LegacyJwtRequestContextFactory(
 
         return ExtractedToken.None;
     }
+
+    private static bool IsHubScopedTicket(ClaimsPrincipal principal) =>
+        string.Equals(
+            principal.FindFirst(RealtimeTicketFactory.ScopeClaimType)?.Value,
+            RealtimeTicketFactory.HubScopeClaimValue,
+            StringComparison.Ordinal);
 
     private static string? ReadClaim(ClaimsPrincipal principal, params string[] claimTypes)
     {

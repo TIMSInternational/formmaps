@@ -1,6 +1,7 @@
 // services/api/tests/FormMaps.IntegrationTests/Messaging/RealtimeTicketEndpointTests.cs
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using FormMaps.Api.Auth;
@@ -72,20 +73,65 @@ public class RealtimeTicketEndpointTests
 
         var ticket = await GetTicketAsync(client);
 
+        // Deliberately NOT using AccessTokenProvider: the .NET SignalR client sends that as an
+        // Authorization: Bearer header on every request, even for LongPolling -- which would never
+        // exercise ExtractToken's query-string fallback (the fallback exists for browsers, which can't
+        // set custom headers on a native WebSocket/EventSource handshake). Baking the ticket directly
+        // into the connection URL instead mirrors what a real browser JS client does: it appears in
+        // negotiate/poll/send as a literal ?access_token= query parameter.
+        var url = new Uri(client.BaseAddress!, $"hubs/messages?access_token={Uri.EscapeDataString(ticket)}");
         await using var connection = new HubConnectionBuilder()
-            .WithUrl(new Uri(client.BaseAddress!, "hubs/messages"), options =>
+            .WithUrl(url, options =>
             {
                 options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
                 options.Transports = HttpTransportType.LongPolling;
-                options.AccessTokenProvider = () => Task.FromResult<string?>(ticket);
             })
             .Build();
 
         // OnConnectedAsync calls Context.Abort() (not an exception) when unauthenticated, so a
-        // successful StartAsync here is a real assertion that the query-string token authenticated --
-        // not just that the HTTP handshake succeeded.
+        // successful StartAsync here is NOT by itself proof of authentication -- Context.Abort() doesn't
+        // fail the initial handshake for every transport. The delayed re-check below is the actual
+        // assertion: it catches the case where the connection is silently torn down a moment after
+        // connecting (exactly how the DI-scope bug in MessagesHub.OnConnectedAsync shipped undetected --
+        // every connection "succeeded" at StartAsync and then died ~1-3s later).
         await connection.StartAsync();
         Assert.Equal(HubConnectionState.Connected, connection.State);
+
+        await Task.Delay(TimeSpan.FromSeconds(3));
+        Assert.Equal(HubConnectionState.Connected, connection.State);
+    }
+
+    [Fact]
+    public async Task Connected_client_receives_a_push_sent_through_the_notifier()
+    {
+        using var factory = new Factory();
+        using var client = factory.CreateClient();
+
+        var ticket = await GetTicketAsync(client); // minted for "caller-1"
+        var url = new Uri(client.BaseAddress!, $"hubs/messages?access_token={Uri.EscapeDataString(ticket)}");
+        await using var connection = new HubConnectionBuilder()
+            .WithUrl(url, options =>
+            {
+                options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
+                options.Transports = HttpTransportType.LongPolling;
+            })
+            .Build();
+
+        var received = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
+        connection.On<JsonElement>("messageReceived", payload => received.TrySetResult(payload));
+
+        await connection.StartAsync();
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var notifier = scope.ServiceProvider.GetRequiredService<IMessagesRealtimeNotifier>();
+            await notifier.NotifyMessageReceivedAsync("caller-1", new { id = "m-1", text = "hello" });
+        }
+
+        var completed = await Task.WhenAny(received.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+        Assert.Same(received.Task, completed);
+        var payload = await received.Task;
+        Assert.Equal("m-1", payload.GetProperty("id").GetString());
     }
 
     [Fact]
@@ -138,6 +184,29 @@ public class RealtimeTicketEndpointTests
         var response = await client.PostAsync(
             $"/api/v1/messages/conversations?access_token={ticket}",
             new StringContent("""{"recipientId":"someone"}""", Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Ticket_replayed_as_a_bearer_header_on_a_non_hub_endpoint_is_rejected()
+    {
+        using var factory = new Factory();
+        using var client = factory.CreateClient();
+
+        var ticket = await GetTicketAsync(client);
+
+        // Same secret/issuer/audience as a normal session JWT -- without a distinguishing claim, this
+        // would otherwise be a fully valid Authorization: Bearer credential against ANY RequireIdentity
+        // REST endpoint for its ~60s lifetime, not just the hub. Proves the ticket is scoped by content,
+        // not merely by how LegacyJwtRequestContextFactory.ExtractToken happens to find it.
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/messages/conversations")
+        {
+            Content = new StringContent("""{"recipientId":"someone"}""", Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ticket);
+
+        var response = await client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }

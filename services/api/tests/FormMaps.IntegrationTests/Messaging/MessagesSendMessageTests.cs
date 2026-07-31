@@ -32,6 +32,22 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     }
 
     [Fact]
+    public async Task Notifies_the_recipient_via_the_realtime_notifier_after_commit()
+    {
+        var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();
+        var notifier = new CapturingRealtimeNotifier();
+        var repo = new MessagesRepository(
+            new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System, notifier);
+
+        var result = await repo.SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+
+        Assert.Equal(1, notifier.CallCount);
+        Assert.Equal(otherId, notifier.LastRecipientUserId);
+        var payloadId = notifier.LastPayload!.GetType().GetProperty("id")!.GetValue(notifier.LastPayload) as string;
+        Assert.Equal(result.Message!.Id, payloadId);
+    }
+
+    [Fact]
     public async Task Blocked_pair_cannot_send()
     {
         var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();

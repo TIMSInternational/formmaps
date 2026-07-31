@@ -27,6 +27,27 @@ public sealed class RealtimeTicketFactoryTests
     }
 
     [Fact]
+    public void CreateTicket_carries_a_distinguishing_hub_scope_claim()
+    {
+        // The ticket shares its secret/issuer/audience with a full session JWT and differs only by TTL
+        // -- without this claim, a leaked ticket would be a fully valid Bearer credential against ANY
+        // RequireIdentity REST endpoint for its ~60s life, not just the hub. See
+        // LegacyJwtRequestContextFactory's rejection of this claim off the /hubs/messages path.
+        Environment.SetEnvironmentVariable("JWT_SECRET", "formmaps-test-secret-that-is-at-least-32-bytes");
+        var factory = new RealtimeTicketFactory(Options.Create(new LegacyJwtOptions
+        {
+            Issuer = "formmaps-api", Audience = "formmaps-frontend", ClockSkew = TimeSpan.Zero,
+        }));
+
+        var ticket = factory.CreateTicket(new RequestActor("user-123", "student", null, null));
+
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(ticket);
+        var scopeClaim = jwt.Claims.SingleOrDefault(c => c.Type == RealtimeTicketFactory.ScopeClaimType);
+        Assert.NotNull(scopeClaim);
+        Assert.Equal(RealtimeTicketFactory.HubScopeClaimValue, scopeClaim!.Value);
+    }
+
+    [Fact]
     public void CreateTicket_returns_null_when_JWT_SECRET_is_unset()
     {
         Environment.SetEnvironmentVariable("JWT_SECRET", null);
