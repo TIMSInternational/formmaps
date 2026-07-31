@@ -105,6 +105,44 @@ public sealed class MessagesRepository(
         command.Parameters.Add(parameter);
     }
 
+    public async Task<IReadOnlyList<ConversationSummary>> ListConversationsAsync(
+        RequestContext context, string userId, CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+        await using var command = Command(session, """
+            SELECT
+                c."id",
+                CASE WHEN c."participantAId" = @userId THEN c."participantBId" ELSE c."participantAId" END AS "otherId",
+                CASE WHEN c."participantAId" = @userId THEN ub."name" ELSE ua."name" END AS "otherName",
+                CASE WHEN c."participantAId" = @userId THEN ub."email" ELSE ua."email" END AS "otherEmail",
+                c."lastMessagePreview", c."lastMessageAt",
+                COALESCE(uc."cnt", 0)::int AS "unreadCount"
+            FROM "conversations" c
+            JOIN "users" ua ON ua."id" = c."participantAId"
+            JOIN "users" ub ON ub."id" = c."participantBId"
+            LEFT JOIN (
+                SELECT m."conversationId", count(*) AS "cnt" FROM "messages" m
+                WHERE m."senderId" <> @userId AND m."readAt" IS NULL
+                GROUP BY m."conversationId"
+            ) uc ON uc."conversationId" = c."id"
+            WHERE c."participantAId" = @userId OR c."participantBId" = @userId
+            ORDER BY c."lastMessageAt" DESC NULLS LAST
+            """);
+        AddParameter(command, "userId", userId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var rows = new List<ConversationSummary>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            rows.Add(new ConversationSummary(
+                reader.GetString(0), reader.GetString(1),
+                reader.IsDBNull(2) ? null : reader.GetString(2), reader.GetString(3),
+                reader.IsDBNull(4) ? null : reader.GetString(4),
+                reader.IsDBNull(5) ? null : reader.GetDateTime(5),
+                reader.GetInt32(6)));
+        }
+        return rows;
+    }
+
     private DateTime NowTruncated() =>
         DateTime.SpecifyKind(new DateTime(timeProviderTicks(), DateTimeKind.Unspecified), DateTimeKind.Unspecified);
 
