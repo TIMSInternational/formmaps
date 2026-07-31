@@ -184,6 +184,10 @@ public static class DependencyInjection
         // shadow_user_subscriptions against user_subscriptions — the safety net that catches a bug in
         // the webhook write path above before real users are affected.
         services.AddScoped<FormMaps.Application.Billing.IBillingReconciliationService, FormMaps.Infrastructure.Billing.BillingReconciliationService>();
+        // Domain 9a Task 7: GET /api/v1/billing/status — read-only reader of the LIVE user_subscriptions
+        // table via the caller's own tenant-scoped RLS session (not System()), used by this task's endpoint
+        // and Tasks 8-10's checkout/cancel/portal endpoints to read current status before acting.
+        services.AddScoped<FormMaps.Application.Billing.ILiveSubscriptionReader, FormMaps.Infrastructure.Billing.LiveSubscriptionReader>();
         // Domain 7a: Daily.co video-provider client (FM-094). First HttpClient-based external integration in
         // this codebase — 15s timeout matches legacy's AbortSignal.timeout(15000).
         services.AddHttpClient<IDailyClient, DailyClient>(client =>
