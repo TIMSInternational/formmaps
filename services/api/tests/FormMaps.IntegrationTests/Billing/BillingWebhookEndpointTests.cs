@@ -176,4 +176,22 @@ public class BillingWebhookEndpointTests(BillingDatabaseFixture fixture) : IClas
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Webhook_ContentTypeJson_IsNotBlockedByMutationMiddleware()
+    {
+        await fixture.ResetAsync();
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        var payload = FakeVerifier.SubscriptionCreatedEventJson("evt_mw", "user_mw", "plan_1", "sub_mw");
+
+        var response = await client.PostAsync("/api/v1/billing/webhook",
+            new StringContent(payload, System.Text.Encoding.UTF8, "application/json"));
+
+        // Prior to this task's fix, MutationContentTypeMiddleware's generic JSON handling could
+        // consume/alter the body stream before the endpoint reads it for signature verification.
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var row = await fixture.QueryShadowSubscriptionAsync("user_mw");
+        Assert.Equal("sub_mw", row.StripeSubscriptionId);
+    }
 }
