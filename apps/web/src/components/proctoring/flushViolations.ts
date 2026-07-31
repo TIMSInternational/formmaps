@@ -30,19 +30,33 @@ export interface ViolationFlushConfig {
   requeue?: (violations: LockdownViolation[]) => void;
 }
 
-/** Best-effort authed keepalive POST that survives unload. Requeues on failure. */
-function keepaliveSend(config: ViolationFlushConfig, violations: LockdownViolation[], body: string): boolean {
+export interface PostViolationsOptions {
+  /** Bearer token, if the endpoint is authed. Cookies still carry auth. */
+  token?: string | null;
+  /**
+   * Put violations back into the caller's buffer when the send fails, so the
+   * evidence is retried on the next flush instead of being lost.
+   */
+  requeue?: (violations: LockdownViolation[]) => void;
+}
+
+/**
+ * Best-effort authed keepalive POST that survives unload. Never throws —
+ * flushing must never break the exam flow or unload. Requeues on failure via
+ * `opts.requeue` (never silently lost). Shared by the pagehide/tab-hide
+ * backstop below AND by `useProctoring`'s per-event debounced live flush.
+ */
+export function postViolations(url: string, violations: LockdownViolation[], opts: PostViolationsOptions = {}): void {
+  if (!violations.length) return;
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const token = config.token?.();
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
+  const body = JSON.stringify({ violations });
   try {
-    void fetch(config.url, { method: "POST", keepalive: true, credentials: "include", headers, body })
-      .then((r) => { if (!r.ok) config.requeue?.(violations); })
-      .catch(() => config.requeue?.(violations));
-    return true;
+    void fetch(url, { method: "POST", keepalive: true, credentials: "include", headers, body })
+      .then((r) => { if (!r.ok) opts.requeue?.(violations); })
+      .catch(() => opts.requeue?.(violations));
   } catch {
-    config.requeue?.(violations);
-    return false;
+    opts.requeue?.(violations);
   }
 }
 
@@ -54,10 +68,10 @@ function keepaliveSend(config: ViolationFlushConfig, violations: LockdownViolati
 export function flushViolations(config: ViolationFlushConfig): boolean {
   const violations = config.drain();
   if (!violations.length) return false;
-  const body = JSON.stringify({ violations });
 
   if (config.transport === "beacon" && typeof navigator !== "undefined" && navigator.sendBeacon) {
     try {
+      const body = JSON.stringify({ violations });
       const queued = navigator.sendBeacon(config.url, new Blob([body], { type: "application/json" }));
       if (queued) return true;
       // Beacon refused (e.g. queue/size limit) — fall back to keepalive fetch.
@@ -65,7 +79,8 @@ export function flushViolations(config: ViolationFlushConfig): boolean {
       // sendBeacon threw — fall back to keepalive fetch.
     }
   }
-  return keepaliveSend(config, violations, body);
+  postViolations(config.url, violations, { token: config.token?.(), requeue: config.requeue });
+  return true;
 }
 
 /**

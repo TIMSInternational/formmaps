@@ -168,12 +168,12 @@
       "eval360Complete": "360° Complete",
       "fullyAssessed": "Fully Assessed"
     },
-    "cognitiveProfile": "School Cognitive Profile",
+    "cognitiveProfile": "School MIL Profile",
     "topCareerInterests": "Top Career Interests",
     "careerDataEmpty": "Career data will appear after profile analysis.",
     "aiInsights": "AI Insights",
     "cached": "CACHED",
-    "discDistribution": "DISC Distribution",
+    "discDistribution": "PCA Distribution",
     "aiAnalysisEmpty": "AI analysis will be available once enough students complete their assessments.",
     "topPerformers": {
       "title": "Top Performers",
@@ -327,8 +327,8 @@
     "title": "Reports",
     "subtitle": "Download assessment reports and data exports per student",
     "tabs": {
-      "pca": "PCA / DISC Profile",
-      "mil": "MIL / LIA Cognitive",
+      "pca": "PCA — Personal Competence Analysis",
+      "mil": "MIL / LIA",
       "eval360": "360° Evaluation",
       "360": "360° Evaluation"
     },
@@ -510,12 +510,13 @@
     "status": {
       "connected": "Connected",
       "available": "Available",
-      "comingSoon": "Coming Soon"
+      "comingSoon": "Coming Soon",
+      "included": "Included"
     },
     "configure": "Configure",
     "providers": {
       "isams": "Sync student data, timetables, and grades from iSAMS school management system.",
-      "tims": "DISC personality assessment integration for career orientation and competency mapping.",
+      "tims": "PCA personality assessment integration for career orientation and competency mapping.",
       "google": "Single sign-on and Google Classroom integration for seamless student access.",
       "canvas": "Import grades and assignments from Canvas Learning Management System.",
       "powerschool": "Sync student information system data including demographics and transcripts."

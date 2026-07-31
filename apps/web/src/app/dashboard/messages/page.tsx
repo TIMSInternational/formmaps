@@ -14,6 +14,7 @@ import {
 } from "@/services/messageService";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { isVideoEnabled, createVideoSession } from "@/services/videoService";
+import { useMessagesRealtime } from "@/hooks/useMessagesRealtime";
 import NewConversation from "./_components/NewConversation";
 import ModerationMenu from "@/components/messages/ModerationMenu";
 import { formatMessageTime as formatTime } from "@/lib/dateUtils";
@@ -74,6 +75,14 @@ export default function MessagesPage() {
     }, 15_000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [selectedId, fetchConversations, fetchMessages]);
+
+  // Realtime push (Domain 7b, Task 10): supplements — never replaces — the 15s poll above, which
+  // stays unconditional as the fallback delivery path (no message-replay/ack protocol; a missed
+  // push falls back to the next poll tick). No-op unless the realtime flag is on.
+  useMessagesRealtime(useCallback((payload) => {
+    fetchConversations();
+    if (selectedId === payload.conversationId) fetchMessages(selectedId, true);
+  }, [selectedId, fetchConversations, fetchMessages]));
 
   useEffect(() => { if (selectedId) fetchMessages(selectedId); }, [selectedId, fetchMessages]);
   useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);

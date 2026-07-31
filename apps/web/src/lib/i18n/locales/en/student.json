@@ -53,6 +53,8 @@
     "pending": "Pending",
     "remaining": "Remaining",
     "progress": "Progress",
+    "goalLabel": "Goal",
+    "noGoalSet": "No community service hours goal set for your account",
     "noHoursTitle": "No service hours logged yet",
     "noHoursBody": "Click \"Log Hours\" above to start tracking your community service.",
     "deleteConfirm": "Delete this entry? This cannot be undone.",
@@ -110,6 +112,12 @@
       "subtitle": "Real-time insights on salaries, hiring trends, and in-demand skills.",
       "lastUpdated": "Last updated: Just now",
       "backToDashboard": "Back to Dashboard"
+    },
+    "personality": {
+      "name": "Personality Assessment",
+      "description": "Add your 4-letter personality type for even sharper career matches",
+      "recommended": "Recommended",
+      "completed": "Completed"
     }
   }
 }

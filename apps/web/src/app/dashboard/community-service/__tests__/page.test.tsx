@@ -179,6 +179,48 @@ describe("CommunityServicePage", () => {
     });
   });
 
+  describe("goal display (Task 10)", () => {
+    it("visibly shows the hours goal when totalHoursRequired is nonzero", async () => {
+      setupDefaults();
+      mockUseMyCommunityService.mockReturnValue({
+        data: {
+          totalHoursRequired: 40,
+          totalHoursLogged: 10,
+          totalHoursVerified: 10,
+          entries: [],
+        },
+        isLoading: false,
+        isError: false,
+        refetch: jest.fn(),
+      });
+
+      render(<CommunityServicePage />);
+      const goal = await screen.findByTestId("community-service-goal");
+      expect(goal.textContent).toEqual(expect.stringContaining("40"));
+      expect(goal.textContent).toEqual(expect.stringContaining("hrs"));
+    });
+
+    it("shows a distinct no-goal message instead of a bare 0% when totalHoursRequired is 0", async () => {
+      setupDefaults();
+      mockUseMyCommunityService.mockReturnValue({
+        data: {
+          totalHoursRequired: 0,
+          totalHoursLogged: 0,
+          totalHoursVerified: 0,
+          entries: [],
+        },
+        isLoading: false,
+        isError: false,
+        refetch: jest.fn(),
+      });
+
+      render(<CommunityServicePage />);
+      const goal = await screen.findByTestId("community-service-goal");
+      expect(goal.textContent).toEqual(expect.stringContaining("noGoalSet"));
+      expect(screen.queryByText("0%")).toBeNull();
+    });
+  });
+
   describe("rejection note", () => {
     it("renders the rejection note for a rejected entry", async () => {
       setupDefaults();

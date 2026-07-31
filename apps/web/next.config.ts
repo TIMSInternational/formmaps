@@ -1,736 +1,478 @@
 import type { NextConfig } from "next";
 
-const legacyApiProxyTarget =
-  process.env.API_PROXY_TARGET || "https://5t8ch34ijm.us-east-1.awsapprunner.com";
+// ── FormMaps → .NET migration: personality domain prod cutover (Milestone-1) ──
+// The .NET backend serves the SAME /api/v1/personality/* paths. A route is proxied to
+// .NET only when BOTH FORMMAPS_DOTNET_API_BASE_URL is set AND that route's per-route flag
+// is on, so this whole block is INERT (dark) until the base URL is configured and a flag is
+// flipped. Each flag maps to a distinct path (Next rewrites match by path, not method),
+// giving per-route, instant rollback (set the flag to 0, or unset the base URL as a global
+// kill-switch). Helpers ported verbatim from the monorepo apps/web/next.config.ts, proven
+// on the staging .NET service.
 const dotnetApiBaseUrl = process.env.FORMMAPS_DOTNET_API_BASE_URL?.replace(/\/+$/, "");
 
 function isEnabled(value: string | undefined) {
   return value === "1" || value?.toLowerCase() === "true";
 }
 
-function shouldRouteBenchmarkReportToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_BENCHMARK_REPORT_TO_DOTNET)
-  );
-}
-
-function shouldRouteUserReportToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_USER_REPORT_TO_DOTNET)
-  );
-}
-
-function shouldRoutePcaReportToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_PCA_REPORT_TO_DOTNET)
-  );
-}
-
-function shouldRouteLiaReportToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_LIA_REPORT_TO_DOTNET)
-  );
-}
-
-function shouldRouteTimelineReportToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_TIMELINE_REPORT_TO_DOTNET)
-  );
-}
-
-function shouldRouteCoachingReportToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_COACHING_REPORT_TO_DOTNET)
-  );
-}
-
-function shouldRouteEvaluationReportToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_EVALUATION_REPORT_TO_DOTNET)
-  );
-}
-
-function shouldRoutePcaExamSessionToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_SESSION_TO_DOTNET)
-  );
-}
-
-function shouldRoutePcaExamCompletedToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_COMPLETED_EXAMS_TO_DOTNET)
-  );
-}
-
-function shouldRoutePcaExamCatalogToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_CATALOG_TO_DOTNET)
-  );
-}
-
-function shouldRouteLiaResultsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_LIA_RESULTS_TO_DOTNET)
-  );
-}
-
-function shouldRouteLiaCompleteToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_LIA_COMPLETE_TO_DOTNET)
-  );
-}
-
-function shouldRouteMilResultsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_MIL_RESULTS_TO_DOTNET)
-  );
-}
-
-function shouldRoutePersonalityResultsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_RESULTS_TO_DOTNET)
-  );
-}
-
 function shouldRoutePersonalityAccessToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_ACCESS_TO_DOTNET)
-  );
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_ACCESS_TO_DOTNET));
 }
-
 function shouldRoutePersonalitySessionToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_SESSION_TO_DOTNET)
-  );
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_SESSION_TO_DOTNET));
 }
-
+function shouldRoutePersonalityResultsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_RESULTS_TO_DOTNET));
+}
 function shouldRoutePersonalityStartToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_START_TO_DOTNET)
-  );
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_START_TO_DOTNET));
 }
-
 function shouldRoutePersonalityAnswerToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_ANSWER_TO_DOTNET)
-  );
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_ANSWER_TO_DOTNET));
 }
-
 function shouldRoutePersonalityCompleteToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_COMPLETE_TO_DOTNET)
-  );
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PERSONALITY_COMPLETE_TO_DOTNET));
 }
 
-function shouldRouteAssessmentTimelineToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ASSESSMENT_TIMELINE_TO_DOTNET)
-  );
+// ── Wave 2 Batch 1: LIA/MIL results reads + pca-exam catalog/config reads ──
+// Ported verbatim from the monorepo apps/web/next.config.ts (G13 — rewrites
+// only take effect in THIS file, which is what app.formmaps.com actually
+// deploys from).
+function shouldRouteLiaResultsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_LIA_RESULTS_TO_DOTNET));
 }
-
+// LIA session write lifecycle (FM-DOTNET-029): all 7 write endpoints + the 3 reads that share their
+// lazy-expiry logic, cut over together under ONE flag to avoid split-writing lia_assessment_sessions
+// across two backends. Default OFF.
+function shouldRouteLiaSessionToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_LIA_SESSION_TO_DOTNET));
+}
+function shouldRouteMilResultsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_MIL_RESULTS_TO_DOTNET));
+}
 function shouldRoutePcaExamConfigToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_CONFIG_TO_DOTNET)
-  );
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_CONFIG_TO_DOTNET));
 }
 
-function shouldRoutePcaExamStatisticsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_STATISTICS_TO_DOTNET)
-  );
+// ── Wave 2 Batch 2: pca-exam session/history/completed-exams reads ──
+function shouldRoutePcaExamSessionToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_SESSION_TO_DOTNET));
 }
-
 function shouldRoutePcaExamHistoryToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_HISTORY_TO_DOTNET)
-  );
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_HISTORY_TO_DOTNET));
+}
+function shouldRoutePcaExamCompletedExamsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_COMPLETED_EXAMS_TO_DOTNET));
 }
 
-function shouldRoutePcaExamAllResultsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_ALL_RESULTS_TO_DOTNET)
-  );
+// ── Wave 2 Batch 3: test-scores (superscore/college-fit) + question360 reads ──
+function shouldRouteTestScoresReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TEST_SCORES_READS_TO_DOTNET));
+}
+function shouldRouteQuestion360ReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_QUESTION360_READS_TO_DOTNET));
 }
 
-function shouldRoutePcaExamStartToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_START_TO_DOTNET)
-  );
-}
-
-function shouldRoutePcaExamSubmitToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_SUBMIT_TO_DOTNET)
-  );
-}
-
-function shouldRouteVocationalScoreRecomputeToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_SCORE_RECOMPUTE_TO_DOTNET)
-  );
-}
-
-function shouldRouteVocationalIntegratedRecomputeToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_INTEGRATED_RECOMPUTE_TO_DOTNET)
-  );
-}
-
-function shouldRouteVocationalScoreReadToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_SCORE_READ_TO_DOTNET)
-  );
-}
-
-function shouldRouteVocationalIntegratedReadToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_INTEGRATED_READ_TO_DOTNET)
-  );
-}
-
-function shouldRouteVocationalCatalogToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_CATALOG_TO_DOTNET)
-  );
-}
-
-function shouldRouteTestScoresSuperscoreToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TEST_SCORES_SUPERSCORE_TO_DOTNET)
-  );
-}
-
-function shouldRouteTestScoresCollegeFitToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TEST_SCORES_COLLEGE_FIT_TO_DOTNET)
-  );
-}
-
-function shouldRouteTestScoresStudentViewToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TEST_SCORES_STUDENT_VIEW_TO_DOTNET)
-  );
-}
-
-// FM-DOTNET test-scores bare-path list + writes (GET / list, POST /, PUT /:id, DELETE /:id). One flag gates
-// the whole bare-path router because Next rewrites match by PATH, not method (the bare path and the /:id path
-// cannot be split by verb).
-function shouldRouteTestScoresWriteToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TEST_SCORES_WRITE_TO_DOTNET)
-  );
-}
-
-// School-admin READS (FM-DOTNET sub-slice 1): the six straightforward school-scoped reads cut over as one
-// group behind a single flag (low-risk, no dual-write). The deferred /results/:studentId report,
-// /results/export CSV, /assessments/pipeline, and the polyglot /assessments/insights stay on Node (fall
-// through to the /api/:path* catch-all).
+// ── Wave 2 Batch 4: school-admin reads (overview/results/pca-status/status) ──
+// /assessments/config + /assessments/schedule stay dark — those paths also
+// carry Node-only PUTs (Next matches by path not method).
 function shouldRouteSchoolAdminReadsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_READS_TO_DOTNET)
-  );
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_READS_TO_DOTNET));
 }
 
-// School-admin CONFIG + SCHEDULE writes (FM-DOTNET-044): the /assessments/config and /assessments/schedule
-// paths each serve a GET (read, FM-039) AND a PUT (write, FM-044). Next rewrites match by PATH not method, so
-// both methods cut over together under ONE flag — the only non-split-brain design (same rationale as
-// question360). FM-039 deliberately left these two paths on Node because their PUTs were still Node-only; now
-// that both PUTs are .NET-capable the paths can flip. Default off (dark).
+// ── Reports domain: benchmark/user-report/pca/lia/timeline/coaching/evaluation reads ──
+// .NET server code for all 7 was already deployed before Wave 2 batch numbering existed;
+// this block was never ported into this file until now. Ported verbatim from the
+// monorepo apps/web/next.config.ts (lines 11-57 / 813-868), proven on staging.
+function shouldRouteBenchmarkReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_BENCHMARK_REPORT_TO_DOTNET));
+}
+function shouldRouteUserReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_USER_REPORT_TO_DOTNET));
+}
+function shouldRoutePcaReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCA_REPORT_TO_DOTNET));
+}
+function shouldRouteLiaReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_LIA_REPORT_TO_DOTNET));
+}
+function shouldRouteTimelineReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TIMELINE_REPORT_TO_DOTNET));
+}
+function shouldRouteCoachingReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COACHING_REPORT_TO_DOTNET));
+}
+function shouldRouteEvaluationReportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_EVALUATION_REPORT_TO_DOTNET));
+}
+
+// ── Calendar writes (FM-DOTNET-047/048): academic-years/assessment-periods/holidays ──
+// All 12 calendar endpoints cut over as a write-coupled slice; blue-canary write-verified in prod.
+function shouldRouteCalendarToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_CALENDAR_TO_DOTNET));
+}
+
+// ── School-analytics reads (FM-DOTNET-049): overview/trends/performance-trends/top-performers ──
+// Ported verbatim from ~/formmaps/apps/web/next.config.ts (lines 316-323 / 1222-1245) — that copy
+// is NOT a deploy target (no linked Vercel project), this file is. /trends and /performance-trends
+// hit the identical service call.
+function shouldRouteSchoolAnalyticsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ANALYTICS_TO_DOTNET));
+}
+
+// ── Vocational-360 reads (FM-DOTNET-033/034): catalog (instrument/questionnaire, no per-user
+// gate) + result reads (score/integrated, canAccessUser-gated). Two flags so catalog (no IDOR
+// risk) and result reads (per-user) can be flipped/rolled back independently. Recompute WRITES
+// and /recommendations (Bedrock) stay Node — not part of this cutover.
+function shouldRouteVocationalCatalogToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_CATALOG_TO_DOTNET));
+}
+function shouldRouteVocationalResultReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_RESULT_READS_TO_DOTNET));
+}
+
+// Vocational recompute WRITES (FM-DOTNET-032/036): authenticate-only + canAccessUser, no
+// permission-gate tier. Two independent flags (score vs. integrated), each its own POST-only
+// path, default OFF.
+function shouldRouteVocationalScoreRecomputeToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_SCORE_RECOMPUTE_TO_DOTNET));
+}
+function shouldRouteVocationalIntegratedRecomputeToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_INTEGRATED_RECOMPUTE_TO_DOTNET));
+}
+
+// ── School-manage-reads (FM-DOTNET-050): dashboard/stats, counselor-assignments/all, notes,
+// counselor-workload. The 4 GET-only paths with no write sharing their path. FM-051
+// (school/profile+settings) and FM-052 (users+counselor-assign) are DELIBERATELY excluded —
+// both co-flip a GET and a PUT/POST/DELETE on the identical literal path (path-not-method),
+// same trap as the calendar slice; not safe to cut over as reads-only.
+function shouldRouteSchoolReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_READS_TO_DOTNET));
+}
+
+// ── School profile + settings (FM-DOTNET-051): GET+PUT /school/profile, GET+PUT /settings. Both
+// paths co-flip a read and a write on the identical literal path (path-not-method) — write-coupled,
+// like calendar. gate = school:manage permission.
+function shouldRouteSchoolProfileToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_PROFILE_TO_DOTNET));
+}
+
+// ── School users cluster (FM-DOTNET-052): GET /users, PUT /users/:userId/grade-level,
+// POST+DELETE /counselors/:counselorId/assign-students, GET /counselors/:counselorId/students.
+// ONE flag co-flips all 5 (path-not-method on 2 of the 3 sub-paths). gate = school:users permission.
+function shouldRouteSchoolUsersToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET));
+}
+
+// ── iSAMS integration reads (FM-DOTNET-053): /status + /jobs, no write sharing either path.
+// The POST configure/sync/test paths stay Node (vendor boundary, SSRF-hardened undici client) —
+// not part of this cutover.
+function shouldRouteIsamsReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ISAMS_READS_TO_DOTNET));
+}
+
+// ── Course catalog CRUD (FM-DOTNET-054 GET+POST /courses, FM-DOTNET-061 PUT+DELETE
+// /courses/:courseId) — ONE flag gates all 4. Next.js rewrites match by PATH not method, so the
+// exact-literal /courses source co-flips GET+POST together, and the :courseId param source
+// co-flips PUT+DELETE together — deliberate (FM-061 completed FM-054's originally-deferred
+// PUT/DELETE under the SAME flag). The negative lookahead on :courseId excludes
+// /courses/pathways, /courses/import, /courses/ai-import and their sub-paths (courseIds are
+// UUIDs, never equal to those literals — a safety belt, not a real collision risk). Distinct
+// methods (PUT/DELETE) from the co-flipped literal's siblings (pathways/import are GET/POST) →
+// no ASP.NET route-matching ambiguity on the .NET side. Default OFF (dark).
+function shouldRouteSchoolCoursesToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_COURSES_TO_DOTNET));
+}
+
+// ── Course pathways (FM-DOTNET-058): GET /courses/pathways, the one TRUE pure read in the
+// curriculum cluster. The other 4 cluster slices (frameworks, data-mappings, prerequisites,
+// course-import) all co-flip reads+writes under one flag each — deliberately excluded here,
+// same as calendar/FM-051/FM-052/FM-054, pending their own write-verification harnesses.
+function shouldRoutePathwaysToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PATHWAYS_TO_DOTNET));
+}
+
+// ── Curriculum frameworks (FM-DOTNET-055): GET+PUT /curriculum/frameworks, GET .../:type/courses,
+// PUT .../:type/courses/:courseId. All 4 co-flip under one flag (path-not-method on the first pair).
+function shouldRouteCurriculumFrameworksToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_CURRICULUM_FRAMEWORKS_TO_DOTNET));
+}
+
+// ── Prerequisites (FM-DOTNET-057): GET /courses/:courseId/prerequisite-chain (courses:read),
+// PUT /courses/:courseId/prerequisites (courses:write), GET /prerequisites/{check,eligible,missing}
+// (curriculum:manage). One flag co-flips all 5. Data-mappings (FM-056) and course-import
+// (FM-059/060) remain dark — the cluster's only delete + an unresolved canary-engine gap.
+function shouldRoutePrerequisitesToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PREREQUISITES_TO_DOTNET));
+}
+
+// ── Data mappings (FM-DOTNET-056/061): GET+POST /data-mappings, POST /data-mappings/bulk-approve,
+// PUT+DELETE /data-mappings/:id (negative lookahead excludes bulk-approve/ai-suggest). One flag,
+// courses cluster's only real hard-delete. ai-suggest (Bedrock) stays Node.
+function shouldRouteDataMappingsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_DATA_MAPPINGS_TO_DOTNET));
+}
+
+// ── Course import (FM-DOTNET-059/060): POST /courses/import, GET /courses/import/:jobId,
+// GET /courses/import/:jobId/download-failures. One flag, all courses:write. Import is
+// synchronous despite the 202 status — the job is already "completed" by the time POST returns.
+function shouldRouteCourseImportToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COURSE_IMPORT_TO_DOTNET));
+}
+
+// ── Counselor dashboard reads (FM-DOTNET-067) + enriched caseload (FM-DOTNET-068) — all GET-only,
+// no write anywhere on any of these 5 paths. Counselor writes (availability/alerts/sessions/notes,
+// FM-069-072) and student/parent CRUD (FM-073-078) deliberately excluded — write-coupled.
+function shouldRouteCounselorDashboardToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_DASHBOARD_TO_DOTNET));
+}
+function shouldRouteCounselorCaseloadToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_CASELOAD_TO_DOTNET));
+}
+// ── Counselor notes CRUD (FM-DOTNET-072): GET+POST /students/:studentId/notes, PUT+DELETE
+// /notes/:noteId, PUT /notes/:noteId/complete-followup — ONE flag co-flips all 5 (path-not-method).
+// GET/POST/DELETE use a raw-role check (counselor/school_admin/Super Admin, no school-ownership
+// check); PUT + complete-followup require permission counselor:notes (school_admin lacks it).
+// Availability/alerts/sessions (FM-069-071) deliberately excluded — no safe round-trippable write
+// path via the API alone (no create endpoint for alerts/sessions; availability is a singleton
+// upsert with no delete). Default OFF (dark).
+function shouldRouteCounselorNotesToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_NOTES_TO_DOTNET));
+}
+// ── Counselor availability (FM-DOTNET-069): GET+PUT /me/availability, one flag (path-not-method).
+// Full-overwrite upsert — no merge, no delete. Cutover captures+restores the real row's fields.
+function shouldRouteCounselorAvailabilityToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_AVAILABILITY_TO_DOTNET));
+}
+// ── Counselor alerts (FM-DOTNET-070): GET /me/alerts, PUT /me/alerts/:id/read. Two distinct
+// paths under one flag. No create endpoint — mark-read is idempotent, seeded via Tier-2 SQL.
+function shouldRouteCounselorAlertsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_ALERTS_TO_DOTNET));
+}
+// ── Counselor sessions (FM-DOTNET-071): GET /me/sessions, PUT /me/sessions/:id/complete. Two
+// distinct paths under one flag. cancel stays Node (calendar-sync side effect).
+function shouldRouteCounselorSessionsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_SESSIONS_TO_DOTNET));
+}
+// ── Parent child-link-scoped reads (FM-DOTNET-079) — GET progress + GET course-plan, both
+// gated by an accepted+active StudentParentLink. Pure reads, no write on either path.
+function shouldRouteParentChildReadsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PARENT_CHILD_READS_TO_DOTNET));
+}
+
+// ── Academic gaps reads (FM-DOTNET-080): summary/students/recommendations, all pure GETs.
+// The 4th sibling route /ai-recommendations/:studentId (Bedrock) is a distinct literal segment
+// and stays Node permanently by design — not part of this cutover.
+function shouldRouteAcademicGapsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ACADEMIC_GAPS_TO_DOTNET));
+}
+
+// ── Student portfolio CRUD (FM-DOTNET-073): GET+POST /portfolio, GET /portfolio/summary,
+// PUT+DELETE /portfolio/:id — ONE flag co-flips all 5. /portfolio/summary MUST precede
+// /portfolio/:id (the :id param would otherwise swallow "summary"). Self-scoped
+// (req.userId) — no server-side permission gate on this endpoint at all, only identity.
+// Default OFF (dark).
+function shouldRouteStudentPortfolioToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_PORTFOLIO_TO_DOTNET));
+}
+
+// ── Student community-service CRUD (FM-DOTNET-075): GET+POST /community-service,
+// PUT+DELETE /community-service/:id — ONE flag co-flips both paths (Next matches
+// path-not-method). Self-scoped (req.userId) — no server-side permission gate at all,
+// only identity. Edit/delete additionally gated on isActive + status=="pending" server-side.
+// Default OFF (dark).
+function shouldRouteCommunityServiceToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COMMUNITY_SERVICE_TO_DOTNET));
+}
+
+// ── College applications CRUD (FM-DOTNET-081): GET+POST /college/students/:studentId/applications,
+// PUT+DELETE /college/applications/:id — ONE flag co-flips both paths. Access via ICollegeAccessResolver
+// (student self / counselor with active assignment / school_admin same-school / super admin) — any
+// failure collapses to a uniform 404. Soft-delete. Default OFF (dark).
+function shouldRouteCollegeApplicationsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_APPLICATIONS_TO_DOTNET));
+}
+
+// ── College search + favorites (FM-DOTNET-082): GET /college/search (no access gate),
+// GET+POST /college/students/:studentId/list, PUT+DELETE /college/list/:id — ONE flag
+// co-flips all three paths. Favorites reuse ICollegeAccessResolver. Soft-delete. Default OFF.
+function shouldRouteCollegeFavoritesToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_FAVORITES_TO_DOTNET));
+}
+
+// ── College essays + comments (FM-DOTNET-083): GET+POST /college/students/:studentId/essays,
+// PUT+DELETE /college/essays/:id, POST+GET /college/essays/:id/comments — ONE flag co-flips
+// all three paths. Reuses ICollegeAccessResolver. Soft-delete on essays; comments have no delete.
+// Default OFF.
+function shouldRouteCollegeEssaysToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_ESSAYS_TO_DOTNET));
+}
+
+// ── Student applications core CRUD (FM-DOTNET-074): GET+POST /student/applications,
+// GET /student/applications/deadlines, GET+PUT+DELETE /student/applications/:id — ONE flag
+// co-flips three paths (/applications/deadlines MUST precede /applications/:id). Self-scoped
+// (RequireIdentity only). Soft-delete. Writes the same student_applications table as college.ts
+// (FM-081), same as legacy Node's two independent route surfaces. Default OFF.
+function shouldRouteStudentApplicationsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_APPLICATIONS_TO_DOTNET));
+}
+
+// ── Student parent-links CRUD (FM-DOTNET-076): GET /student/parents, POST /student/parents/invite,
+// DELETE /student/parents/:parentLinkId, POST /student/parents/:parentLinkId/resend — ONE flag
+// co-flips four paths (/parents/invite MUST precede /parents/:parentLinkId). Self-scoped. NOT
+// SES-coupled (mints a token only, no email). Delete gate = ownership-only (no isActive check).
+// Default OFF.
+function shouldRouteStudentParentsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_PARENTS_TO_DOTNET));
+}
+
+// ── Student application essays + checklist (FM-DOTNET-077): GET+POST /student/applications/:id/essays,
+// PUT /student/applications/:id/essays/:eid, GET+POST /student/applications/:id/checklist,
+// PUT /student/applications/:id/checklist/:cid — ONE flag co-flips all four paths. Self-scoped +
+// application-ownership check. Zero delete endpoints — no Tier-2 check needed. AI siblings
+// (ai-review, checklist/generate) stay Node. Default OFF.
+function shouldRouteStudentEssaysChecklistToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_ESSAYS_CHECKLIST_TO_DOTNET));
+}
+
+// ── Course-plan compute reads (FM-DOTNET-086): GET /student/course-plan/recommendations,
+// GET /student/course-plan/eligibility — ONE flag co-flips both. Self-scoped, pure reads,
+// no writes at all. Default OFF.
+function shouldRouteStudentCoursePlanComputeToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COURSE_PLAN_COMPUTE_TO_DOTNET));
+}
+
+// ── Parent portal (FM-DOTNET-078): GET /parent/profile, GET /parent/notifications,
+// PUT /parent/notifications/read-all, PUT /parent/notifications/:id/read,
+// GET /parent/evaluations/pending, DELETE /parent/:parentLinkId — ONE flag co-flips all six.
+// Self-scoped (RequireIdentity, caller's own identity). :parentLinkId excludes the 6 sibling
+// top-level /parent/* segments (profile/notifications/invite/onboarding/children/evaluations)
+// so it never swallows them. invite/resend + onboarding + children reads stay Node. Default OFF.
+function shouldRouteParentPortalToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PARENT_PORTAL_TO_DOTNET));
+}
+
+// ── Course-plan CRUD (FM-DOTNET-084): GET /student/course-plan, POST /student/course-plan/courses,
+// DELETE /student/course-plan/courses/:courseId — ONE flag co-flips all three. Self-scoped,
+// gated on requireSchoolMembership + a current academic year. Hard delete (deleteMany).
+// Default OFF.
+function shouldRouteStudentCoursePlanToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COURSE_PLAN_TO_DOTNET));
+}
+
+// ── Course change-requests CRUD (FM-DOTNET-085): POST+GET /student/course-plan/change-requests,
+// DELETE /student/course-plan/change-requests/:requestId — ONE flag co-flips both paths.
+// Self-scoped, gated on requireSchoolMembership only (no current-year gate). Soft-cancel
+// (status=cancelled, only from pending). Default OFF.
+function shouldRouteStudentChangeRequestsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_CHANGE_REQUESTS_TO_DOTNET));
+}
+
+// ── School-admin email writes (FM-DOTNET-045): POST /assessments/send-reminders
+// (no DB write, fans out reminder emails) + POST /assessments/setup-360 (bulk-INSERT
+// evaluation_groups then fires 360-eval invite emails). ONE flag, both paths distinct
+// literals so no co-flip risk with the read-only /assessments/status. Emails are
+// best-effort (IEmailSender never throws). Default OFF.
+function shouldRouteSchoolAdminEmailWritesToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_EMAIL_WRITES_TO_DOTNET));
+}
+
+// School-admin CONFIG/SCHEDULE writes (FM-DOTNET-044): PUT /assessments/config + PUT /assessments/schedule.
+// GET(read, FM-039) + PUT(write, FM-044) flip together under one flag (path-not-method). Default OFF.
 function shouldRouteSchoolAdminConfigScheduleToDotnet() {
   return Boolean(
     dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_CONFIG_SCHEDULE_TO_DOTNET)
   );
 }
 
-// School-admin EMAIL writes (FM-DOTNET-045): POST /assessments/send-reminders + /assessments/setup-360. These
-// send SES email (send-reminders) and bulk-create evaluation_groups + fire invites (setup-360). POST-only paths
-// (no GET twin), so no path-not-method coupling — one flag. Default off (dark). Cutover prereq: the prod App
-// Runner role needs ses:SendEmail + a verified SES sender identity.
-function shouldRouteSchoolAdminEmailWritesToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_EMAIL_WRITES_TO_DOTNET)
-  );
-}
-
-// question360 (FM-DOTNET question360) — ONE flag covers the WHOLE surface: all 5 GET reads + all 6 writes. A
-// single flag is the only design with no misconfigurable state: Next rewrites match by PATH not method, so the
-// `/api/question360/:id` rewrite cannot distinguish GET (read) from PUT/DELETE (write), and `/bulk-create`
-// matches the `/:id` shape — splitting reads and writes onto two flags would route writes to .NET whenever the
-// reads flag was on regardless of a writes flag. So reads + writes are one surface that cuts over together.
-// Default OFF (this replaces the FM-038 reads-only flag; renaming is safe — it was default-off, never set in prod).
-function shouldRouteQuestion360ToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_QUESTION360_TO_DOTNET)
-  );
-}
-
-// FM-DOTNET capstone — the token-gated external write rail. Two flags (one per tree) give independent prod
-// rollback of the two highest-risk write paths. These paths are under /evaluation/* (NOT /api/*) — the .NET
-// service mounts them at /evaluation and /evaluation/vocational, matching the legacy Express mount. Both
-// default OFF (dark). Each tree's reads + writes cut over together (path-not-method rewrites).
-function shouldRouteVocationalTakeToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_TAKE_TO_DOTNET)
-  );
-}
-
+// External 360 evaluation rail (FM-DOTNET-043): validate-token (read) + submit-feedback (write) +
+// 360evolutor (read). NO authenticate — the invitation token is the credential. Default OFF.
 function shouldRouteEvalExternalToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_EVAL_EXTERNAL_TO_DOTNET)
-  );
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_EVAL_EXTERNAL_TO_DOTNET));
 }
 
-// FM-DOTNET Phase-B — the gradebook transcript read (routes/school-gradebook.ts GET
-// /gradebook/students/:studentId, mounted under /api/v1/school-admin). GET-only (the grade writes in that
-// file stay Node), so there is no path-not-method coupling. Default OFF (dark). Its path prefix
-// (gradebook/students) is disjoint from the school-admin /results and /assessments rewrites.
-function shouldRouteGradebookReadToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_GRADEBOOK_READ_TO_DOTNET)
-  );
+// External vocational take rail (FM-DOTNET-043): GET form + POST submit + POST violations. NO
+// authenticate — the invitation token is the credential. Default OFF.
+function shouldRouteVocationalTakeToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VOCATIONAL_TAKE_TO_DOTNET));
 }
 
-// School-admin CALENDAR reads + writes (FM-DOTNET-048) — the whole /calendar/* surface (3 GET reads from
-// FM-047 + the 9 writes ported here) cuts over under ONE flag. Next rewrites match by PATH not method, and the
-// bare /calendar/academic-years, /assessment-periods, /holidays paths each serve BOTH a GET (read) AND a POST
-// (create), so reads and writes MUST flip together — the only non-split-brain design (same rationale as
-// config/schedule and question360). FM-047 deliberately shipped the reads dark WITHOUT a rewrite for exactly
-// this reason; FM-048 co-ports the writes and adds the rewrite. Default off (dark).
-function shouldRouteSchoolAdminCalendarToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_CALENDAR_TO_DOTNET)
-  );
-}
-
-// School-admin ANALYTICS reads (FM-DOTNET-049) — routes/school.ts /analytics/{overview,trends,
-// performance-trends,top-performers}, mounted under /api/v1/school-admin. All four are method-unambiguous GETs
-// (no POST/PUT twin on these paths), so this is a straight read cut-over (not dark) behind ONE flag. Default OFF.
-function shouldRouteSchoolAnalyticsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ANALYTICS_TO_DOTNET)
-  );
-}
-
-// School:manage READS (FM-DOTNET-050) — routes/school.ts /dashboard/stats, /counselor-assignments/all, /notes,
-// /counselor-workload, mounted under /api/v1/school-admin. All four are method-unambiguous GETs (no POST/PUT twin
-// on these paths), so this is a straight read cut-over (not dark) behind ONE flag. Default OFF. Disjoint from the
-// /results, /assessments, /gradebook, /calendar and /analytics rewrite blocks.
-function shouldRouteSchoolReadsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_READS_TO_DOTNET)
-  );
-}
-
-// School:manage PROFILE + SETTINGS reads + writes (FM-DOTNET-051) — routes/school.ts /school/profile and
-// /settings, mounted under /api/v1/school-admin. Each path serves a GET (read) AND a PUT (write), so both methods
-// cut over together under ONE flag — Next rewrites match by PATH not method, so a reads-only flag would drag the
-// PUTs to .NET too (the only non-split-brain design; same rationale as config/schedule, calendar, question360).
-// This slice is the .NET write-owner for the schools table's profile/settings columns. Default OFF (dark).
-// Disjoint from the /results, /assessments, /gradebook, /calendar, /analytics and FM-050 read rewrite blocks.
-function shouldRouteSchoolProfileSettingsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_PROFILE_SETTINGS_TO_DOTNET)
-  );
-}
-
-// School:users CLUSTER (FM-DOTNET-052) — routes/school.ts GET /users, PUT /users/:userId/grade-level,
-// POST+DELETE /counselors/:counselorId/assign-students, GET /counselors/:counselorId/students, mounted under
-// /api/v1/school-admin. Reads + writes cut over TOGETHER under ONE flag — Next rewrites match by PATH not method,
-// and /counselors/:counselorId/assign-students serves BOTH POST and DELETE, so a method-split is impossible (same
-// rationale as calendar / profile-settings). This slice is the .NET write-owner for users.gradeLevel and the
-// counselor_student_assignments table via the school:users routes. Default OFF (dark). Disjoint from every other
-// school-admin rewrite block: FM-050 uses /dashboard/stats, /counselor-assignments/all, /notes,
-// /counselor-workload; FM-049 uses /analytics/*; none match /users or /counselors/*.
-function shouldRouteSchoolUsersToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET)
-  );
-}
-
-// iSAMS integration READS (FM-DOTNET-053) — routes/school.ts GET /integrations/isams/status and
-// /integrations/isams/jobs, mounted under /api/v1/school-admin. READS-ONLY: the POST configure/sync/test paths
-// (/integrations/isams, /integrations/isams/sync, /integrations/isams/test) stay in Node (vendor boundary) and are
-// deliberately NOT rewritten. Both rewritten paths are GET-only with NO sibling write on the same path, so there is
-// NO path-not-method hazard. Default OFF (dark). Disjoint from every other school-admin rewrite block. More specific
-// than the /api/:path* catch-all → placed before it.
-function shouldRouteIsamsReadsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ISAMS_READS_TO_DOTNET)
-  );
-}
-
-// iSAMS integration CONFIGURE write (FM-DOTNET-087) — routes/school.ts POST /integrations/isams (the exact
-// literal), mounted under /api/v1/school-admin. A WRITE-ONLY cut-over of the single configure path: the
-// isamsConfig upsert + AES-256-GCM credential encryption. The /integrations/isams/status + /jobs reads (FM-053)
-// and the /sync + /test writes (which stay Node — the SSRF-hardened undici vendor client; sync creates user rows)
-// live on DISTINCT paths, so the exact /integrations/isams literal has NO path-not-method hazard. Default OFF
-// (dark). More specific than the /api/:path* catch-all → placed before it.
-function shouldRouteIsamsConfigureToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ISAMS_CONFIGURE_TO_DOTNET)
-  );
-}
-
-// File uploads (FM-DOTNET-088) — routes/upload.ts, mounted /api/v1/upload. Six POST endpoints (school-logo,
-// profile-image, resume, course-import, grade-import, portfolio-attachment), all multipart `multer.single("file")`
-// + authenticate + tenantContext (self-scoped). ONE flag cuts the whole router over; each is a distinct POST path
-// with no sibling on the same path → NO path-not-method hazard. Default OFF (dark). Each literal is disjoint from
-// every other rewrite block and more specific than the /api/:path* catch-all → placed before it.
+// File uploads / S3 rail (FM-DOTNET-088): 6 exact-literal multipart POSTs under /api/v1/upload.
+// Backend merged and staging-canary-verified; this was the missing frontend half. Default OFF.
 function shouldRouteUploadToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_UPLOAD_TO_DOTNET)
-  );
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_UPLOAD_TO_DOTNET));
 }
 
-// Resume section + template writes (FM-DOTNET-089) — routes/resume.ts, mounted /api/resume. Four self-scoped,
-// non-AI routes: PUT /:id/sections/order, POST /:id/sections, DELETE /:id/sections/:sectionId, PUT /:id/template.
-// Each carries a unique 2nd path segment ("sections"/"template") so none collide with the resume CRUD, the
-// cross-user GET /:id/original, or the AI /:id/ai-edit routes (all of which stay Node). /sections/order must
-// precede /sections/:sectionId (Next first-match). Default OFF (dark); before the /api/:path* catch-all.
+// Resume section + template writes (FM-DOTNET-089): PUT /:id/sections/order, POST /:id/sections,
+// DELETE /:id/sections/:sectionId, PUT /:id/template (mounted /api/resume). Default OFF.
 function shouldRouteResumeSectionsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_SECTIONS_TO_DOTNET)
-  );
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_SECTIONS_TO_DOTNET));
 }
 
-// Resume CRUD list + create (FM-DOTNET-090) — routes/resume.ts, mounted /api/resume. Three self-scoped, non-AI
-// routes: GET /default (a static empty-resume shape), GET / (list the caller's own active resumes) and POST /
-// (create). GET / and POST / share the exact /api/resume path — Next matches path-not-method, so ONE flag co-flips
-// them; /default is a distinct exact literal. None collide with the Node-only single-segment GET /:id (other than
-// the "default" literal, which the .NET side now serves), the cross-user GET /:id/original, PUT/DELETE /:resumeId
-// or the AI /:id/... routes. Default OFF (dark); before the /api/:path* catch-all.
+// Resume CRUD list + create (FM-DOTNET-090): GET /default, GET /, POST / (mounted /api/resume;
+// GET/POST / co-flip, path-not-method). Default OFF.
 function shouldRouteResumeCrudToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_CRUD_TO_DOTNET)
-  );
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_CRUD_TO_DOTNET));
 }
 
-// Counselor dashboard self-contained READS (FM-DOTNET-067) — routes/counselor.ts, mounted under /api/v1/counselor.
-// Four counselor:dashboard GETs: /dashboard, /dashboard/change-requests, /me/students/:studentId, /students/:studentId.
-// All are GET-only (no sibling write shares any of these paths) → NO path-not-method hazard, a straight read cut-over.
-// The enriched caseload GET /me/students (listEnrichedStudents) is DEFERRED (stays Node) — the :studentId param needs a
-// trailing segment, so /me/students/:studentId does NOT match the bare /me/students. The 4-segment AI sub-path
-// /me/students/:studentId/graduation-plan/generate is NOT matched by the 1-segment :studentId param either. Onboarding
-// verify/complete stay in Node. Distinct paths, disjoint from every other rewrite block; more specific than the
-// /api/:path* catch-all below, so they must precede it. Default OFF (dark).
-function shouldRouteCounselorDashboardToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_DASHBOARD_TO_DOTNET)
-  );
+// Report send-report-email (Phase F): byte-for-byte port, no PDF/attachment. Default OFF.
+function shouldRouteSendReportEmailToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SEND_REPORT_EMAIL_TO_DOTNET));
 }
 
-// Counselor enriched caseload READ (FM-DOTNET-068) — routes/counselor.ts GET /me/students (listEnrichedStudents), the
-// deferred companion to FM-067, on its OWN flag. The EXACT literal /me/students (no trailing segment) — distinct from
-// /me/students/:studentId (FM-067) which requires a segment, and from the 4-segment AI sub-path. GET-only → no
-// path-not-method hazard. Default OFF (dark). More specific than the /api/:path* catch-all → placed before it.
-function shouldRouteCounselorCaseloadToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_CASELOAD_TO_DOTNET)
-  );
+// Resume cross-user completion (Phase F): GET /:id (dual-mode) + PUT/DELETE /:resumeId, co-flipped
+// (path-not-method) via a negative lookahead excluding this router's other single-segment literals
+// (default/ask/upload-and-parse/tailor/extract-job-posting). Default OFF.
+function shouldRouteResumeCrossUserToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_CROSSUSER_TO_DOTNET));
 }
 
-// Counselor availability GET+PUT (FM-DOTNET-069) — routes/counselor.ts /me/availability. First counselor WRITE slice.
-// GET (read) and PUT (upsert) share the EXACT literal /me/availability, so ONE flag co-flips both (Next matches
-// path-not-method, same rationale as calendar / profile-settings). Distinct from every other counselor path. Default
-// OFF (dark). More specific than the /api/:path* catch-all → placed before it.
-function shouldRouteCounselorAvailabilityToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_AVAILABILITY_TO_DOTNET)
-  );
+// Resume GET /:id/original (Phase F): independent flag from the CRUD routes above — a new
+// presigned-URL capability, a separate risk surface, isolated for independent rollback. Default OFF.
+function shouldRouteResumeOriginalToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RESUME_ORIGINAL_TO_DOTNET));
 }
 
-// Counselor alerts (FM-DOTNET-070) — GET /me/alerts + PUT /me/alerts/:id/read. Two DIFFERENT paths under one flag.
-// GET /me/alerts is exact-literal (no trailing segment → does not match /me/alerts/:id/read); the PUT is the 3-seg
-// /me/alerts/:id/read. Neither collides with any other counselor path. Default OFF (dark). Precedes the /api/:path*
-// catch-all. (The GET's ?studentId IDOR is closed in the .NET handler, not the rewrite.)
-function shouldRouteCounselorAlertsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_ALERTS_TO_DOTNET)
-  );
+// Video enabled check (Domain 7a, FM-091): GET /api/v1/video/enabled. Default OFF.
+function shouldRouteVideoEnabledToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VIDEO_ENABLED_TO_DOTNET));
 }
 
-// Counselor sessions (FM-DOTNET-071) — GET /me/sessions + PUT /me/sessions/:id/complete. Two paths, one flag.
-// ⚠️ PUT /me/sessions/:id/cancel is DELIBERATELY NOT rewritten — its syncRecordSafe calendar-sync side-effect stays
-// in Node. The exact literal /me/sessions and the 4-seg /me/sessions/:id/complete are disjoint from /me/sessions/:id/
-// cancel (different last segment) and from every other counselor path. Default OFF (dark). Precede the /api/:path*
-// catch-all.
-function shouldRouteCounselorSessionsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_SESSIONS_TO_DOTNET)
-  );
+// Video sessions list + create (Domain 7a, FM-092/095): GET+POST /api/v1/video/sessions — forced
+// co-flip, Next rewrites match path not method, same precedent as resume.ts's GET/POST /. Default OFF.
+function shouldRouteVideoSessionsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VIDEO_SESSIONS_TO_DOTNET));
 }
 
-// Counselor notes CRUD (FM-DOTNET-072) — routes/counselor.ts GET+POST /students/:studentId/notes, PUT+DELETE
-// /notes/:noteId, PUT /notes/:noteId/complete-followup. ONE flag co-flips all three paths (Next matches path-not-
-// method, so GET+POST on /students/:id/notes and PUT+DELETE on /notes/:id are inseparable — one flag is the only
-// non-split-brain design). Auth is asymmetric inside the handlers (GET/POST/DELETE = inline role check; PUT +
-// complete-followup = counselor:notes). Disjoint from every other counselor path (the 2-seg /students/:id and
-// /me/students/:id dashboard reads don't match the 3-seg /students/:id/notes; no other counselor path starts
-// /notes). Default OFF (dark). All precede the /api/:path* catch-all.
-function shouldRouteCounselorNotesToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_COUNSELOR_NOTES_TO_DOTNET)
-  );
+// Video session detail (Domain 7a, FM-093): GET /api/v1/video/sessions/:id. Own path, own flag,
+// independent from the list+create flag above. The rewrite source below excludes the literal
+// "schedule" segment via negative lookahead (same pattern as resume cross-user) because
+// :id would otherwise also match POST /sessions/schedule — that route stays on Node (its
+// calendar-sync side effect was never ported to .NET) and has no .NET handler, so an
+// unguarded :id match would silently 404/break scheduling once this flag is flipped on.
+// Do not remove the exclusion as "redundant" — it is load-bearing.
+function shouldRouteVideoSessionDetailToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VIDEO_SESSION_DETAIL_TO_DOTNET));
 }
 
-// Student portfolio CRUD (FM-DOTNET-073) — routes/student.ts /portfolio (GET+POST), /portfolio/summary (GET),
-// /portfolio/:id (PUT+DELETE), mounted /api/v1/student. Self-scoped (req.userId). ONE flag co-flips all three paths
-// (Next matches path-not-method). /portfolio/summary MUST precede /portfolio/:id (the :id param would otherwise
-// swallow "summary"); the exact /portfolio (no trailing segment) matches neither. Default OFF (dark). All precede the
-// /api/:path* catch-all.
-function shouldRouteStudentPortfolioToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_PORTFOLIO_TO_DOTNET)
-  );
+// Video Daily.co signature (Domain 7a, FM-094): POST /api/v1/video/signature — the actual external-call
+// risk surface, isolated for independent rollback. Default OFF.
+function shouldRouteVideoSignatureToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VIDEO_SIGNATURE_TO_DOTNET));
 }
 
-// Student applications core CRUD (FM-DOTNET-074) — routes/student.ts /applications (GET+POST), /applications/deadlines
-// (GET), /applications/:id (GET+PUT+DELETE), mounted /api/v1/student. Self-scoped. ONE flag co-flips the three paths
-// (path-not-method). /applications/deadlines MUST precede /applications/:id (else :id swallows "deadlines"); the exact
-// /applications matches neither. The 3-seg AI/sub-resource paths (/applications/:id/essays, /checklist, /classify,
-// /essays/:eid/ai-review, /checklist/generate) are NOT matched by the 2-seg /:id param → they stay Node (essays +
-// checklist = later slices; classify/ai-review/checklist-generate = Bedrock). Default OFF (dark).
-function shouldRouteStudentApplicationsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_APPLICATIONS_TO_DOTNET)
-  );
+// Video session lifecycle (Domain 7a, FM-096/097): POST /api/v1/video/sessions/:id/end + /start.
+// schedule/cancel are NOT included (calendar-sync side effect stays Node). Default OFF.
+function shouldRouteVideoSessionLifecycleToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VIDEO_SESSION_LIFECYCLE_TO_DOTNET));
 }
 
-// Student community-service CRUD (FM-DOTNET-075) — routes/student.ts /community-service (GET+POST) + /community-service/:id
-// (PUT+DELETE), mounted /api/v1/student. Self-scoped. ONE flag co-flips both paths (path-not-method). The exact
-// /community-service (no trailing segment) does not match the 2-seg /community-service/:id. Default OFF (dark).
-function shouldRouteStudentCommunityServiceToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COMMUNITY_SERVICE_TO_DOTNET)
-  );
-}
-
-// Student parent-links CRUD (FM-DOTNET-076) — routes/student.ts GET /parents, POST /parents/invite, DELETE
-// /parents/:parentLinkId, POST /parents/:parentLinkId/resend, mounted /api/v1/student. Self-scoped; NOT email-coupled
-// (invite/resend mint a token + return an invitationUrl). ONE flag co-flips the four paths (path-not-method). The
-// literal /parents/invite MUST precede /parents/:parentLinkId (else :parentLinkId swallows "invite"); the 3-seg
-// /parents/:parentLinkId/resend is disjoint; the exact /parents matches none. Default OFF (dark).
-function shouldRouteStudentParentsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_PARENTS_TO_DOTNET)
-  );
-}
-
-// Student application ESSAYS + CHECKLIST (FM-DOTNET-077) — routes/student.ts, mounted /api/v1/student. The non-AI
-// application sub-resources: GET+POST /applications/:id/essays, PUT /applications/:id/essays/:eid, GET+POST
-// /applications/:id/checklist, PUT /applications/:id/checklist/:cid. ONE flag co-flips the four paths (Next matches
-// path-not-method). The AI siblings stay Node (Bedrock): POST /applications/:id/essays/:eid/ai-review is a 5-seg path
-// excluded by segment count (essays/:eid is single-segment); POST /applications/:id/checklist/generate would collide
-// with /checklist/:cid (both a single trailing segment), so :cid carries a ((?!generate)[^/]+) negative-lookahead
-// (the FM-061 pattern — checklist ids are UUIDs, never "generate"). Disjoint from the FM-074 /applications/:id (2-seg)
-// block (a 4-seg path can't match a 2-seg source). Default OFF (dark). All precede the /api/:path* catch-all.
-function shouldRouteStudentEssaysChecklistToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_ESSAYS_CHECKLIST_TO_DOTNET)
-  );
-}
-
-// Parent portal self-scoped surface (FM-DOTNET-078) — routes/parent.ts, mounted /api/v1/parent. The authenticated,
-// caller-owned endpoints: GET /profile, GET /notifications, PUT /notifications/read-all, PUT /notifications/:id/read,
-// GET /evaluations/pending, DELETE /:parentLinkId. ONE flag co-flips the six paths (Next matches path-not-method).
-// The onboarding flow (anonymous + auth-cookie write), POST /invite + POST /:parentLinkId/resend (SES email), and the
-// child-link-scoped child reads (/children/:id/progress + course-plan — a later slice) stay Node. The DELETE
-// /:parentLinkId source is a single-segment catch-all, so it carries a negative-lookahead excluding every sibling
-// literal — critically `invite` (POST stays Node) — plus profile/notifications/onboarding/children/evaluations for
-// defence-in-depth (parentLinkIds are UUIDs, never these words). Default OFF (dark). All precede the /api/:path*
-// catch-all.
-function shouldRouteParentPortalToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PARENT_PORTAL_TO_DOTNET)
-  );
-}
-
-// Parent child-link-scoped reads (FM-DOTNET-079) — routes/parent.ts, mounted /api/v1/parent: GET
-// /children/:studentId/progress and GET /children/:studentId/course-plan. ONE flag co-flips the two paths. Both are
-// 3-segment literals (distinct endings), so they collide with nothing — disjoint from the FM-078 /:parentLinkId
-// single-seg catch-all (whose lookahead already excludes `children`) and from each other. Both gated in .NET by an
-// accepted+active parent-child link (IDOR corpus #1); course-plan reads the plan/target/course-plan as SYSTEM
-// (runAsSystem). Default OFF (dark). Both precede the /api/:path* catch-all.
-function shouldRouteParentChildReadsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PARENT_CHILD_READS_TO_DOTNET)
-  );
-}
-
-// Academic-gaps non-AI reads (FM-DOTNET-080) — routes/academic-gaps.ts, mounted /api/v1/school-admin/academic-gaps:
-// GET /summary, GET /students/:studentId, GET /recommendations/:studentId. ONE flag co-flips all three. The 4th route
-// GET /ai-recommendations/:studentId (Bedrock) is a DISTINCT literal segment and is NOT rewritten — it stays Node
-// (and keeps its aiLimiter). The three sources are method-unambiguous GETs on disjoint literal prefixes (/summary,
-// /students/:id, /recommendations/:id) — no mutual collision, and /ai-recommendations/:id does not match any of them.
-// Disjoint from every other school-admin block; more specific than the /api/:path* catch-all, so they must precede it.
-// Default OFF (dark).
-function shouldRouteAcademicGapsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ACADEMIC_GAPS_TO_DOTNET)
-  );
-}
-
-// College applications CRUD (FM-DOTNET-081) — routes/college.ts Feature 1, mounted /api/v1/college. ONE flag co-flips
-// the two paths (Next matches PATH not method): GET+POST /students/:studentId/applications and PUT+DELETE
-// /applications/:id. The single-segment :id/:studentId sources do NOT capture the college.ts list/essays siblings
-// (…/students/:id/list, …/students/:id/essays) nor any /applications/:id/<seg> (there are none) — those stay Node.
-// More specific than the /api/:path* catch-all, so they must precede it. Default OFF (dark).
-function shouldRouteCollegeApplicationsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_APPLICATIONS_TO_DOTNET)
-  );
-}
-
-// College search + favorites (FM-DOTNET-082) — routes/college.ts Feature 2, mounted /api/v1/college. ONE flag co-flips
-// three paths (Next matches PATH not method): GET /search (no access), GET+POST /students/:studentId/list, PUT+DELETE
-// /list/:id. Distinct from the FM-081 /students/:id/applications + /applications/:id sources (different last segment /
-// prefix) and from the college.ts /essays siblings that stay Node — no collision, no negative-lookahead. More specific
-// than the /api/:path* catch-all, so they must precede it. Default OFF (dark).
-function shouldRouteCollegeFavoritesToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_FAVORITES_TO_DOTNET)
-  );
-}
-
-// College essays + comments (FM-DOTNET-083) — routes/college.ts Feature 3, mounted /api/v1/college. ONE flag co-flips
-// three paths (Next matches PATH not method): GET+POST /students/:studentId/essays, PUT+DELETE /essays/:id, POST+GET
-// /essays/:id/comments. COMPLETES the college.ts mini-phase. The single-segment :id on /essays/:id does NOT swallow the
-// two-segment /essays/:id/comments (Next :params match exactly one segment) → no negative-lookahead needed. Disjoint
-// from the FM-081 /students/:id/applications + /applications/:id and the FM-082 /search + /students/:id/list + /list/:id
-// sources (different last segment / prefix) — no collision. More specific than the /api/:path* catch-all, so they must
-// precede it. Default OFF (dark).
-function shouldRouteCollegeEssaysToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_COLLEGE_ESSAYS_TO_DOTNET)
-  );
-}
-
-// Student course-planning CRUD (FM-DOTNET-084) — routes/course-plan.ts, mounted /api/v1/student. ONE flag co-flips
-// three PATHS (Next matches PATH not method): GET /course-plan, POST /course-plan/courses, DELETE
-// /course-plan/courses/:courseId. The bare /course-plan literal is EXACT — it does NOT match /course-plan/courses nor
-// the same router's Node-only /course-plan/change-requests, /course-plan/recommendations, /course-plan/eligibility
-// siblings (later slices). Disjoint from every /portfolio,/applications,... student source. More specific than the
-// /api/:path* catch-all, so they must precede it. Default OFF (dark).
-function shouldRouteStudentCoursePlanToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COURSE_PLAN_TO_DOTNET)
-  );
-}
-
-// Student course change-requests CRUD (FM-DOTNET-085) — routes/course-plan.ts L92-143, mounted /api/v1/student. ONE
-// flag co-flips two PATHS (Next matches PATH not method): POST+GET /course-plan/change-requests, DELETE
-// /course-plan/change-requests/:requestId. Disjoint from the FM-084 /course-plan[/courses] sources and the Node-only
-// /course-plan/recommendations + /course-plan/eligibility siblings (later slice) — no collision. More specific than the
-// /api/:path* catch-all, so they must precede it. Default OFF (dark).
-function shouldRouteStudentChangeRequestsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_CHANGE_REQUESTS_TO_DOTNET)
-  );
-}
-
-// Student course-plan recommendations + eligibility (FM-DOTNET-086) — routes/course-plan.ts L149-200, mounted
-// /api/v1/student. ONE flag co-flips two GET PATHS: /course-plan/recommendations, /course-plan/eligibility. COMPLETES
-// the course-plan.ts mini-phase. LOCAL keyword scoring, NOT Bedrock (the aiLimiter'd recs live in course.ts → Node).
-// Disjoint from the FM-084 /course-plan[/courses] + FM-085 /course-plan/change-requests sources. More specific than the
-// /api/:path* catch-all, so they must precede it. Default OFF (dark).
-function shouldRouteStudentCoursePlanComputeToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_COURSE_PLAN_COMPUTE_TO_DOTNET)
-  );
-}
-
-// School-courses GET + POST /courses (FM-DOTNET-054) — routes/school-courses.ts, mounted under /api/v1/school-admin.
-// ONE flag gates the EXACT literal path /courses (GET list + POST create cut over TOGETHER — Next rewrites match by
-// PATH not method, and the bare /courses serves both GET and POST). Because the source is the exact literal /courses
-// (no trailing segment), it does NOT match /courses/:courseId, /courses/pathways, /courses/import, /courses/ai-import,
-// /courses/import/:jobId, etc. — those un-ported siblings stay on Node (fall through to the /api/:path* catch-all).
-// The PUT/DELETE /courses/:courseId writes are deliberately NOT ported (that :courseId path collides with the
-// siblings above). Default OFF (dark). Disjoint from every other school-admin rewrite block.
-function shouldRouteSchoolCoursesToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_COURSES_TO_DOTNET)
-  );
-}
-
-// Curriculum FRAMEWORKS (FM-DOTNET-055) — routes/school-courses.ts, mounted under /api/v1/school-admin: the FOUR
-// /curriculum/frameworks endpoints ONLY (GET+PUT /curriculum/frameworks, GET /curriculum/frameworks/:type/courses,
-// PUT /curriculum/frameworks/:type/courses/:courseId). The /courses, /data-mapping, /prerequisite and AI routes on the
-// same router stay on Node (fall through to the /api/:path* catch-all). Reads + writes flip together under ONE flag —
-// Next rewrites match by PATH not method, and /curriculum/frameworks serves BOTH GET and PUT, so a method-split is
-// impossible. The three path shapes have DISTINCT segment counts (…/frameworks, …/frameworks/:type/courses,
-// …/frameworks/:type/courses/:courseId) → no mutual collision; all disjoint from /courses/* and every other
-// school-admin block; more specific than the /api/:path* catch-all, so they must precede it. Default OFF (dark).
-function shouldRouteCurriculumFrameworksToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_CURRICULUM_FRAMEWORKS_TO_DOTNET)
-  );
-}
-
-// Data-mappings (FM-DOTNET-056) — routes/school-courses.ts, mounted under /api/v1/school-admin: EXACTLY the two
-// literal paths GET+POST /data-mappings (co-flip; path-not-method) and POST /data-mappings/bulk-approve. Both sources
-// are EXACT literals (no trailing segment / wildcard), so /data-mappings does NOT match /data-mappings/:id nor
-// /data-mappings/ai-suggest, and /data-mappings/bulk-approve is its own literal — NO collision with the un-ported
-// PUT/DELETE /data-mappings/:id or the /data-mappings/ai-suggest (Bedrock) route, which stay on Node (fall through to
-// the /api/:path* catch-all). Disjoint from /courses/*, /curriculum/* and every other school-admin block; more
-// specific than the /api/:path* catch-all, so they must precede it. Default OFF (dark).
-function shouldRouteDataMappingsToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_DATA_MAPPINGS_TO_DOTNET)
-  );
-}
-
-// Prerequisites (FM-DOTNET-057) — routes/school-courses.ts, mounted under /api/v1/school-admin: 5 specific paths —
-// GET /courses/:courseId/prerequisite-chain, PUT /courses/:courseId/prerequisites, and GET
-// /prerequisites/{check/:studentId/:courseId, eligible/:studentId, missing/:studentId/:courseId}. The two /courses/:id/*
-// sub-paths are MORE specific than the deferred bare /courses/:courseId (PUT/DELETE) — no collision. The /prerequisites/*
-// block is disjoint from every other school-admin route. All five precede the /api/:path* catch-all. Default OFF (dark).
-function shouldRoutePrerequisitesToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_PREREQUISITES_TO_DOTNET)
-  );
-}
-
-// Derived pathways (FM-DOTNET-058) — routes/school-courses.ts, mounted under /api/v1/school-admin: ONE path,
-// GET /courses/pathways (curriculum:manage). The literal "pathways" segment is MORE specific than the deferred bare
-// /courses/:courseId (PUT/DELETE, still Node) and is disjoint from the FM-054 exact /courses and every other route,
-// so it is collision-free (no negative-lookahead needed). Must precede the /api/:path* catch-all. Default OFF (dark).
-function shouldRoutePathwaysToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PATHWAYS_TO_DOTNET)
-  );
-}
-
-// Course bulk-import CORE (FM-DOTNET-059) — routes/school-courses.ts, mounted under /api/v1/school-admin: TWO paths,
-// POST /courses/import + GET /courses/import/:jobId (both courses:write). The third route
-// (/courses/import/:jobId/download-failures) is DEFERRED to FM-060 and stays Node — NOT rewritten here. The literal
-// "import" (2-seg) and "import/:jobId" (3-seg) segments are MORE specific than the deferred bare /courses/:courseId
-// (still Node) and disjoint from /courses (exact), /courses/pathways and /courses/:courseId/prerequisite* → collision-
-// free (no negative-lookahead needed). Both precede the /api/:path* catch-all. Default OFF (dark).
-function shouldRouteCourseImportToDotnet() {
-  return Boolean(
-    dotnetApiBaseUrl &&
-      isEnabled(process.env.FORMMAPS_ROUTE_COURSE_IMPORT_TO_DOTNET)
-  );
+// Messaging (Domain 7b, Task 10): all REST endpoints (unread-count, contacts, conversations
+// list/create, conversation messages/send, broadcast, realtime-ticket) gated by ONE flag as a
+// single unit -- unlike other domains' per-route flags, these ship/rollback together since the
+// SignalR realtime path (wired separately via NEXT_PUBLIC_FORMMAPS_ROUTE_MESSAGES_REALTIME_TO_DOTNET)
+// depends on the REST endpoints already being live on .NET. Default OFF.
+function shouldRouteMessagesToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_MESSAGES_TO_DOTNET));
 }
 
 const nextConfig: NextConfig = {
@@ -809,14 +551,252 @@ const nextConfig: NextConfig = {
    * http://localhost:3001 (direct, same-site) and never hits this rewrite.
    */
   async rewrites() {
-    const afterFiles = [
-      ...(shouldRouteBenchmarkReportToDotnet()
+    const target = process.env.API_PROXY_TARGET || "https://5t8ch34ijm.us-east-1.awsapprunner.com";
+    // Personality → .NET (dark until FORMMAPS_DOTNET_API_BASE_URL is set + a flag is on).
+    // MUST precede the /api/:path* catch-all below so a flipped route reaches .NET. The
+    // /session/:sessionId sub-paths (results/answer/complete) precede the bare
+    // /session/:sessionId (Next matches array order, first match wins).
+    const personalityRewrites = [
+      ...(shouldRoutePersonalityAccessToDotnet()
+        ? [{ source: "/api/v1/personality/access", destination: `${dotnetApiBaseUrl}/api/v1/personality/access` }]
+        : []),
+      ...(shouldRoutePersonalityResultsToDotnet()
+        ? [{ source: "/api/v1/personality/session/:sessionId/results", destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId/results` }]
+        : []),
+      ...(shouldRoutePersonalityAnswerToDotnet()
+        ? [{ source: "/api/v1/personality/session/:sessionId/answer", destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId/answer` }]
+        : []),
+      ...(shouldRoutePersonalityCompleteToDotnet()
+        ? [{ source: "/api/v1/personality/session/:sessionId/complete", destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId/complete` }]
+        : []),
+      ...(shouldRoutePersonalitySessionToDotnet()
+        ? [{ source: "/api/v1/personality/session/:sessionId", destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId` }]
+        : []),
+      ...(shouldRoutePersonalityResultsToDotnet()
+        ? [{ source: "/api/v1/personality/user/:userId/results", destination: `${dotnetApiBaseUrl}/api/v1/personality/user/:userId/results` }]
+        : []),
+      ...(shouldRoutePersonalityStartToDotnet()
+        ? [{ source: "/api/v1/personality/start", destination: `${dotnetApiBaseUrl}/api/v1/personality/start` }]
+        : []),
+      ...(shouldRouteLiaResultsToDotnet()
         ? [
             {
-              source: "/api/v1/reports/benchmark",
-              destination: `${dotnetApiBaseUrl}/api/v1/reports/benchmark`,
+              source: "/api/v1/lia/session/:sessionId/results",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/results`,
+            },
+            {
+              source: "/api/v1/lia/user/:userId/results",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/user/:userId/results`,
             },
           ]
+        : []),
+      ...(shouldRouteLiaSessionToDotnet()
+        ? [
+            {
+              source: "/api/v1/lia/access",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/access`,
+            },
+            {
+              source: "/api/v1/lia/start",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/start`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/practice",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/practice`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/practice/answer",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/practice/answer`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/subtest/start",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/subtest/start`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/answer",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/answer`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/timeout",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/timeout`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/violations",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/violations`,
+            },
+            {
+              source: "/api/v1/lia/session/:sessionId/complete",
+              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/complete`,
+            },
+          ]
+        : []),
+      ...(shouldRouteMilResultsToDotnet()
+        ? [
+            {
+              source: "/api/v1/mil/results/:userId",
+              destination: `${dotnetApiBaseUrl}/api/v1/mil/results/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaExamConfigToDotnet()
+        ? [
+            {
+              source: "/api/pcaexam/exams/:examId/instructions",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/exams/:examId/instructions`,
+            },
+            {
+              source: "/api/pcaexam/exam-config/:examId",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/exam-config/:examId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaExamSessionToDotnet()
+        ? [
+            {
+              source: "/api/pcaexam/session/:sessionId",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/session/:sessionId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaExamHistoryToDotnet()
+        ? [
+            {
+              source: "/api/pcaexam/history/:userId",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/history/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRoutePcaExamCompletedExamsToDotnet()
+        ? [
+            {
+              source: "/api/pcaexam/completed-exams/:userId",
+              destination: `${dotnetApiBaseUrl}/api/pcaexam/completed-exams/:userId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteTestScoresReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/test-scores/superscore",
+              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/superscore`,
+            },
+            {
+              source: "/api/v1/test-scores/college-fit",
+              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/college-fit`,
+            },
+            {
+              source: "/api/v1/test-scores/students/:id/test-scores",
+              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/students/:id/test-scores`,
+            },
+          ]
+        : []),
+      ...(shouldRouteQuestion360ReadsToDotnet()
+        ? [
+            {
+              source: "/api/question360/GetQuestions",
+              destination: `${dotnetApiBaseUrl}/api/question360/GetQuestions`,
+            },
+            {
+              source: "/api/question360/all",
+              destination: `${dotnetApiBaseUrl}/api/question360/all`,
+            },
+            {
+              source: "/api/question360/category/:category",
+              destination: `${dotnetApiBaseUrl}/api/question360/category/:category`,
+            },
+            {
+              source: "/api/question360/sub-questions/:parentQuestionId",
+              destination: `${dotnetApiBaseUrl}/api/question360/sub-questions/:parentQuestionId`,
+            },
+            {
+              source: "/api/question360/:id",
+              destination: `${dotnetApiBaseUrl}/api/question360/:id`,
+            },
+          ]
+        : []),
+      ...(shouldRouteSchoolAdminReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/evaluations/overview",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/evaluations/overview`,
+            },
+            {
+              source: "/api/v1/school-admin/results/:studentId/pca-status",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results/:studentId/pca-status`,
+            },
+            {
+              source: "/api/v1/school-admin/results",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results`,
+            },
+            {
+              source: "/api/v1/school-admin/assessments/status",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/status`,
+            },
+          ]
+        : []),
+      // GET(read, FM-039) + PUT(write, FM-044) flipping together under one flag (path-not-method).
+      ...(shouldRouteSchoolAdminConfigScheduleToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/assessments/config",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/config`,
+            },
+            {
+              source: "/api/v1/school-admin/assessments/schedule",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/schedule`,
+            },
+          ]
+        : []),
+      ...(shouldRouteSchoolAdminEmailWritesToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/assessments/send-reminders",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/send-reminders`,
+            },
+            {
+              source: "/api/v1/school-admin/assessments/setup-360",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/setup-360`,
+            },
+          ]
+        : []),
+      ...(shouldRouteCalendarToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/calendar/academic-years",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/academic-years/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years/:id`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/academic-years/:id/set-current",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years/:id/set-current`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/assessment-periods",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/assessment-periods`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/assessment-periods/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/assessment-periods/:id`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/holidays",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/holidays`,
+            },
+            {
+              source: "/api/v1/school-admin/calendar/holidays/:id",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/holidays/:id`,
+            },
+          ]
+        : []),
+      ...(shouldRouteBenchmarkReportToDotnet()
+        ? [{ source: "/api/v1/reports/benchmark", destination: `${dotnetApiBaseUrl}/api/v1/reports/benchmark` }]
         : []),
       ...(shouldRouteUserReportToDotnet()
         ? [
@@ -827,20 +807,10 @@ const nextConfig: NextConfig = {
           ]
         : []),
       ...(shouldRoutePcaReportToDotnet()
-        ? [
-            {
-              source: "/api/v1/reports/pca/:userId",
-              destination: `${dotnetApiBaseUrl}/api/v1/reports/pca/:userId`,
-            },
-          ]
+        ? [{ source: "/api/v1/reports/pca/:userId", destination: `${dotnetApiBaseUrl}/api/v1/reports/pca/:userId` }]
         : []),
       ...(shouldRouteLiaReportToDotnet()
-        ? [
-            {
-              source: "/api/v1/reports/lia/:userId",
-              destination: `${dotnetApiBaseUrl}/api/v1/reports/lia/:userId`,
-            },
-          ]
+        ? [{ source: "/api/v1/reports/lia/:userId", destination: `${dotnetApiBaseUrl}/api/v1/reports/lia/:userId` }]
         : []),
       ...(shouldRouteTimelineReportToDotnet()
         ? [
@@ -866,363 +836,6 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      ...(shouldRoutePcaExamSessionToDotnet()
-        ? [
-            {
-              source: "/api/pcaexam/session/:sessionId",
-              destination: `${dotnetApiBaseUrl}/api/pcaexam/session/:sessionId`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePcaExamCompletedToDotnet()
-        ? [
-            {
-              source: "/api/pcaexam/completed-exams/:userId",
-              destination: `${dotnetApiBaseUrl}/api/pcaexam/completed-exams/:userId`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePcaExamCatalogToDotnet()
-        ? [
-            {
-              source: "/api/pcaexam/exams",
-              destination: `${dotnetApiBaseUrl}/api/pcaexam/exams`,
-            },
-            {
-              source: "/api/pcaexam/exams/:examId",
-              destination: `${dotnetApiBaseUrl}/api/pcaexam/exams/:examId`,
-            },
-          ]
-        : []),
-      ...(shouldRouteLiaResultsToDotnet()
-        ? [
-            {
-              source: "/api/v1/lia/session/:sessionId/results",
-              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/results`,
-            },
-            {
-              source: "/api/v1/lia/user/:userId/results",
-              destination: `${dotnetApiBaseUrl}/api/v1/lia/user/:userId/results`,
-            },
-          ]
-        : []),
-      // POST /api/v1/lia/session/:sessionId/complete — the FIRST authored WRITE routed to .NET.
-      // Default OFF; the prod route-flip stays deferred until the take/submit slice owns the whole
-      // session lifecycle (porting only /complete while Node owns /start,/answer,/timeout is a
-      // dual-write on lia_assessment_sessions — fine only for the flag-gated staging proof).
-      ...(shouldRouteLiaCompleteToDotnet()
-        ? [
-            {
-              source: "/api/v1/lia/session/:sessionId/complete",
-              destination: `${dotnetApiBaseUrl}/api/v1/lia/session/:sessionId/complete`,
-            },
-          ]
-        : []),
-      ...(shouldRouteMilResultsToDotnet()
-        ? [
-            {
-              source: "/api/v1/mil/results/:userId",
-              destination: `${dotnetApiBaseUrl}/api/v1/mil/results/:userId`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePersonalityResultsToDotnet()
-        ? [
-            {
-              source: "/api/v1/personality/session/:sessionId/results",
-              destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId/results`,
-            },
-            {
-              source: "/api/v1/personality/user/:userId/results",
-              destination: `${dotnetApiBaseUrl}/api/v1/personality/user/:userId/results`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePersonalityAccessToDotnet()
-        ? [
-            {
-              source: "/api/v1/personality/access",
-              destination: `${dotnetApiBaseUrl}/api/v1/personality/access`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePersonalitySessionToDotnet()
-        ? [
-            {
-              source: "/api/v1/personality/session/:sessionId",
-              destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId`,
-            },
-          ]
-        : []),
-      // Personality WRITE lifecycle (FM-DOTNET-030) — start / answer / complete. Default OFF. Because
-      // .NET owns the whole lifecycle there is no dual-write, so (unlike LIA) this domain is
-      // prod-cut-over-able once validated. Each flag is independent so the flip can be staged.
-      ...(shouldRoutePersonalityStartToDotnet()
-        ? [
-            {
-              source: "/api/v1/personality/start",
-              destination: `${dotnetApiBaseUrl}/api/v1/personality/start`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePersonalityAnswerToDotnet()
-        ? [
-            {
-              source: "/api/v1/personality/session/:sessionId/answer",
-              destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId/answer`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePersonalityCompleteToDotnet()
-        ? [
-            {
-              source: "/api/v1/personality/session/:sessionId/complete",
-              destination: `${dotnetApiBaseUrl}/api/v1/personality/session/:sessionId/complete`,
-            },
-          ]
-        : []),
-      ...(shouldRouteAssessmentTimelineToDotnet()
-        ? [
-            {
-              source: "/api/v1/assessments/me/timeline/stats",
-              destination: `${dotnetApiBaseUrl}/api/v1/assessments/me/timeline/stats`,
-            },
-            {
-              source: "/api/v1/assessments/me/timeline",
-              destination: `${dotnetApiBaseUrl}/api/v1/assessments/me/timeline`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePcaExamConfigToDotnet()
-        ? [
-            {
-              source: "/api/pcaexam/exams/:examId/instructions",
-              destination: `${dotnetApiBaseUrl}/api/pcaexam/exams/:examId/instructions`,
-            },
-            {
-              source: "/api/pcaexam/exam-config/:examId",
-              destination: `${dotnetApiBaseUrl}/api/pcaexam/exam-config/:examId`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePcaExamStatisticsToDotnet()
-        ? [
-            {
-              source: "/api/pcaexam/statistics/:examId",
-              destination: `${dotnetApiBaseUrl}/api/pcaexam/statistics/:examId`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePcaExamHistoryToDotnet()
-        ? [
-            {
-              source: "/api/pcaexam/history/:userId",
-              destination: `${dotnetApiBaseUrl}/api/pcaexam/history/:userId`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePcaExamAllResultsToDotnet()
-        ? [
-            {
-              source: "/api/pcaexam/all-results",
-              destination: `${dotnetApiBaseUrl}/api/pcaexam/all-results`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePcaExamStartToDotnet()
-        ? [
-            {
-              source: "/api/pcaexam/exams/:examId/start",
-              destination: `${dotnetApiBaseUrl}/api/pcaexam/exams/:examId/start`,
-            },
-          ]
-        : []),
-      ...(shouldRoutePcaExamSubmitToDotnet()
-        ? [
-            {
-              source: "/api/pcaexam/submit",
-              destination: `${dotnetApiBaseUrl}/api/pcaexam/submit`,
-            },
-          ]
-        : []),
-      ...(shouldRouteVocationalScoreRecomputeToDotnet()
-        ? [
-            {
-              source: "/api/v1/vocational360/score/:evaluatedUserId/recompute",
-              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/score/:evaluatedUserId/recompute`,
-            },
-          ]
-        : []),
-      ...(shouldRouteVocationalIntegratedRecomputeToDotnet()
-        ? [
-            {
-              source: "/api/v1/vocational360/integrated/:evaluatedUserId/recompute",
-              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/integrated/:evaluatedUserId/recompute`,
-            },
-          ]
-        : []),
-      ...(shouldRouteVocationalScoreReadToDotnet()
-        ? [
-            {
-              source: "/api/v1/vocational360/score/:evaluatedUserId",
-              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/score/:evaluatedUserId`,
-            },
-          ]
-        : []),
-      ...(shouldRouteVocationalIntegratedReadToDotnet()
-        ? [
-            {
-              source: "/api/v1/vocational360/integrated/:evaluatedUserId",
-              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/integrated/:evaluatedUserId`,
-            },
-          ]
-        : []),
-      ...(shouldRouteVocationalCatalogToDotnet()
-        ? [
-            {
-              source: "/api/v1/vocational360/instrument",
-              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/instrument`,
-            },
-            {
-              source: "/api/v1/vocational360/questionnaire",
-              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/questionnaire`,
-            },
-          ]
-        : []),
-      ...(shouldRouteTestScoresSuperscoreToDotnet()
-        ? [
-            {
-              source: "/api/v1/test-scores/superscore",
-              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/superscore`,
-            },
-          ]
-        : []),
-      ...(shouldRouteTestScoresCollegeFitToDotnet()
-        ? [
-            {
-              source: "/api/v1/test-scores/college-fit",
-              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/college-fit`,
-            },
-          ]
-        : []),
-      ...(shouldRouteTestScoresStudentViewToDotnet()
-        ? [
-            {
-              source: "/api/v1/test-scores/students/:id/test-scores",
-              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/students/:id/test-scores`,
-            },
-          ]
-        : []),
-      // FM-DOTNET test-scores bare-path list + writes. Placed AFTER the superscore/college-fit/student-view
-      // rewrites so those literal reads win when their own flags are on. NOTE: the "/:id" rewrite also matches
-      // GET /superscore and /college-fit (single-segment) — those resolve to the SAME .NET endpoints, so
-      // enabling this flag also routes those two reads to .NET even when their dedicated flags are off
-      // (harmless; identical backend). There is no legacy GET /:id route. Must precede the /api/:path* catch-all.
-      ...(shouldRouteTestScoresWriteToDotnet()
-        ? [
-            {
-              source: "/api/v1/test-scores",
-              destination: `${dotnetApiBaseUrl}/api/v1/test-scores`,
-            },
-            {
-              source: "/api/v1/test-scores/:id",
-              destination: `${dotnetApiBaseUrl}/api/v1/test-scores/:id`,
-            },
-          ]
-        : []),
-      // School-admin READS (FM-DOTNET sub-slice 1). More specific than the /api/:path* catch-all below, so
-      // these must precede it. ONLY the four method-unambiguous GET paths are wired here. The GET readers for
-      // /assessments/config and /assessments/schedule are also built + staged + tested, but their rewrites are
-      // DEFERRED to the config/schedule WRITE slice: Next rewrites match by PATH not method, and those two
-      // paths also serve a PUT write (still Node-only) — flipping them would route the PUT to .NET (no handler).
-      // /results/:studentId/pca-status precedes the (deferred) rich /results/:studentId and does not shadow the
-      // exact /results list source.
-      ...(shouldRouteSchoolAdminReadsToDotnet()
-        ? [
-            {
-              source: "/api/v1/school-admin/evaluations/overview",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/evaluations/overview`,
-            },
-            // sub-slice 2: /results/export (literal) + /results/:studentId/pca-status MUST precede the
-            // /results/:studentId report route below (Next matches in array order; same segment count for
-            // export vs :studentId). All GET-only, so they cut over with the sub-slice-1 flag.
-            {
-              source: "/api/v1/school-admin/results/export",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results/export`,
-            },
-            {
-              source: "/api/v1/school-admin/results/:studentId/pca-status",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results/:studentId/pca-status`,
-            },
-            {
-              source: "/api/v1/school-admin/results",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results`,
-            },
-            {
-              source: "/api/v1/school-admin/results/:studentId",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/results/:studentId`,
-            },
-            {
-              source: "/api/v1/school-admin/assessments/status",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/status`,
-            },
-            {
-              source: "/api/v1/school-admin/assessments/pipeline",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/pipeline`,
-            },
-          ]
-        : []),
-      // FM-DOTNET Phase-B gradebook transcript read (GET-only; the grade writes stay Node). Its prefix
-      // (/school-admin/gradebook/students) is disjoint from the /results and /assessments rewrites above, and
-      // it must precede the /api/:path* catch-all below.
-      ...(shouldRouteGradebookReadToDotnet()
-        ? [
-            {
-              source: "/api/v1/school-admin/gradebook/students/:studentId",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/gradebook/students/:studentId`,
-            },
-          ]
-        : []),
-      // School-admin CALENDAR reads + writes (FM-DOTNET-048) — the /calendar/* surface (3 GET reads + 9 writes)
-      // flips together under ONE flag (path-not-method: the bare paths serve both GET and POST). The
-      // /:id/set-current path precedes the /:id path (Next matches array order; both are :id-shaped so the more
-      // specific 4-segment route must come first). All must precede the /api/:path* catch-all below.
-      ...(shouldRouteSchoolAdminCalendarToDotnet()
-        ? [
-            {
-              source: "/api/v1/school-admin/calendar/academic-years",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years`,
-            },
-            {
-              source: "/api/v1/school-admin/calendar/academic-years/:id/set-current",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years/:id/set-current`,
-            },
-            {
-              source: "/api/v1/school-admin/calendar/academic-years/:id",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/academic-years/:id`,
-            },
-            {
-              source: "/api/v1/school-admin/calendar/assessment-periods",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/assessment-periods`,
-            },
-            {
-              source: "/api/v1/school-admin/calendar/assessment-periods/:id",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/assessment-periods/:id`,
-            },
-            {
-              source: "/api/v1/school-admin/calendar/holidays",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/holidays`,
-            },
-            {
-              source: "/api/v1/school-admin/calendar/holidays/:id",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/calendar/holidays/:id`,
-            },
-          ]
-        : []),
-      // School-admin ANALYTICS reads (FM-DOTNET-049) — four method-unambiguous GET paths under
-      // /school-admin/analytics. Disjoint from the /results, /assessments and /gradebook rewrites; more specific
-      // than the /api/:path* catch-all below, so these must precede it. /trends and /performance-trends hit the
-      // same .NET backend (identical service call).
       ...(shouldRouteSchoolAnalyticsToDotnet()
         ? [
             {
@@ -1243,10 +856,40 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // School:manage READS (FM-DOTNET-050) — the four method-unambiguous GET paths under /school-admin. Each is a
-      // distinct literal (dashboard/stats, counselor-assignments/all, notes, counselor-workload), disjoint from the
-      // /results, /assessments, /gradebook, /calendar and /analytics rewrites; more specific than the /api/:path*
-      // catch-all below, so these must precede it. No write shares any of these paths (straight read cut-over).
+      ...(shouldRouteVocationalCatalogToDotnet()
+        ? [
+            { source: "/api/v1/vocational360/instrument", destination: `${dotnetApiBaseUrl}/api/v1/vocational360/instrument` },
+            { source: "/api/v1/vocational360/questionnaire", destination: `${dotnetApiBaseUrl}/api/v1/vocational360/questionnaire` },
+          ]
+        : []),
+      ...(shouldRouteVocationalResultReadsToDotnet()
+        ? [
+            {
+              source: "/api/v1/vocational360/score/:evaluatedUserId",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/score/:evaluatedUserId`,
+            },
+            {
+              source: "/api/v1/vocational360/integrated/:evaluatedUserId",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/integrated/:evaluatedUserId`,
+            },
+          ]
+        : []),
+      ...(shouldRouteVocationalScoreRecomputeToDotnet()
+        ? [
+            {
+              source: "/api/v1/vocational360/score/:evaluatedUserId/recompute",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/score/:evaluatedUserId/recompute`,
+            },
+          ]
+        : []),
+      ...(shouldRouteVocationalIntegratedRecomputeToDotnet()
+        ? [
+            {
+              source: "/api/v1/vocational360/integrated/:evaluatedUserId/recompute",
+              destination: `${dotnetApiBaseUrl}/api/v1/vocational360/integrated/:evaluatedUserId/recompute`,
+            },
+          ]
+        : []),
       ...(shouldRouteSchoolReadsToDotnet()
         ? [
             {
@@ -1267,10 +910,7 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // School:manage PROFILE + SETTINGS (FM-DOTNET-051) — /school/profile + /settings, each GET(read)+PUT(write)
-      // flipping together under one flag (path-not-method). Both are distinct literals, disjoint from every other
-      // school-admin rewrite block; more specific than the /api/:path* catch-all below, so they must precede it.
-      ...(shouldRouteSchoolProfileSettingsToDotnet()
+      ...(shouldRouteSchoolProfileToDotnet()
         ? [
             {
               source: "/api/v1/school-admin/school/profile",
@@ -1282,10 +922,6 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // School:users CLUSTER (FM-DOTNET-052) — /users (GET), /users/:userId/grade-level (PUT),
-      // /counselors/:counselorId/assign-students (POST + DELETE, path-not-method), /counselors/:counselorId/students
-      // (GET). Reads + writes flip together under one flag. All are distinct path shapes, disjoint from every other
-      // school-admin rewrite block; more specific than the /api/:path* catch-all below, so they must precede it.
       ...(shouldRouteSchoolUsersToDotnet()
         ? [
             {
@@ -1306,390 +942,6 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // Counselor dashboard self-contained READS (FM-DOTNET-067) — /dashboard, /dashboard/change-requests,
-      // /me/students/:studentId, /students/:studentId (all counselor:dashboard GETs). One flag. All GET-only with no
-      // sibling write on any path → no path-not-method hazard. The bare /me/students (enriched caseload) is DEFERRED
-      // and intentionally NOT rewritten (the :studentId param requires a trailing segment). change-requests is listed
-      // first, but exact literals don't shadow each other regardless. Distinct paths, disjoint from every other rewrite
-      // block; more specific than the /api/:path* catch-all below, so they must precede it.
-      ...(shouldRouteCounselorDashboardToDotnet()
-        ? [
-            {
-              source: "/api/v1/counselor/dashboard/change-requests",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/dashboard/change-requests`,
-            },
-            {
-              source: "/api/v1/counselor/dashboard",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/dashboard`,
-            },
-            {
-              source: "/api/v1/counselor/me/students/:studentId",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/students/:studentId`,
-            },
-            {
-              source: "/api/v1/counselor/students/:studentId",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/students/:studentId`,
-            },
-          ]
-        : []),
-      // Counselor enriched caseload READ (FM-DOTNET-068) — the EXACT literal /me/students (listEnrichedStudents),
-      // own flag. GET-only; distinct from /me/students/:studentId (needs a trailing segment). More specific than the
-      // /api/:path* catch-all → precedes it.
-      ...(shouldRouteCounselorCaseloadToDotnet()
-        ? [
-            {
-              source: "/api/v1/counselor/me/students",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/students`,
-            },
-          ]
-        : []),
-      // Counselor availability GET+PUT (FM-DOTNET-069) — exact literal /me/availability, one flag co-flips read+write
-      // (path-not-method). Distinct from every other counselor path; precedes the /api/:path* catch-all.
-      ...(shouldRouteCounselorAvailabilityToDotnet()
-        ? [
-            {
-              source: "/api/v1/counselor/me/availability",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/availability`,
-            },
-          ]
-        : []),
-      // Counselor alerts (FM-DOTNET-070) — GET /me/alerts + PUT /me/alerts/:id/read, one flag, two rewrites. Exact
-      // /me/alerts does not match the 3-seg /me/alerts/:id/read; both precede the /api/:path* catch-all.
-      ...(shouldRouteCounselorAlertsToDotnet()
-        ? [
-            {
-              source: "/api/v1/counselor/me/alerts",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/alerts`,
-            },
-            {
-              source: "/api/v1/counselor/me/alerts/:id/read",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/alerts/:id/read`,
-            },
-          ]
-        : []),
-      // Counselor sessions (FM-DOTNET-071) — GET /me/sessions + PUT /me/sessions/:id/complete, one flag. The 4-seg
-      // /me/sessions/:id/complete does NOT match /me/sessions/:id/cancel (stays Node — calendar side-effect). Both
-      // precede the /api/:path* catch-all; disjoint from every other counselor path.
-      ...(shouldRouteCounselorSessionsToDotnet()
-        ? [
-            {
-              source: "/api/v1/counselor/me/sessions",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/sessions`,
-            },
-            {
-              source: "/api/v1/counselor/me/sessions/:id/complete",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/sessions/:id/complete`,
-            },
-          ]
-        : []),
-      // Counselor notes CRUD (FM-DOTNET-072) — GET+POST /students/:studentId/notes, PUT+DELETE /notes/:noteId, PUT
-      // /notes/:noteId/complete-followup. One flag, three rewrites. The 3-seg /students/:studentId/notes does NOT
-      // match the 2-seg dashboard reads /students/:studentId or /me/students/:studentId. The 2-seg /notes/:noteId and
-      // 3-seg /notes/:noteId/complete-followup are disjoint from every other counselor path. All precede /api/:path*.
-      ...(shouldRouteCounselorNotesToDotnet()
-        ? [
-            {
-              source: "/api/v1/counselor/students/:studentId/notes",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/students/:studentId/notes`,
-            },
-            {
-              source: "/api/v1/counselor/notes/:noteId/complete-followup",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/notes/:noteId/complete-followup`,
-            },
-            {
-              source: "/api/v1/counselor/notes/:noteId",
-              destination: `${dotnetApiBaseUrl}/api/v1/counselor/notes/:noteId`,
-            },
-          ]
-        : []),
-      // Student portfolio CRUD (FM-DOTNET-073) — GET+POST /portfolio, GET /portfolio/summary, PUT+DELETE
-      // /portfolio/:id, one flag. /portfolio/summary precedes /portfolio/:id (else :id swallows "summary"); the exact
-      // /portfolio matches neither. All precede the /api/:path* catch-all; disjoint from every other student path.
-      ...(shouldRouteStudentPortfolioToDotnet()
-        ? [
-            {
-              source: "/api/v1/student/portfolio/summary",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio/summary`,
-            },
-            {
-              source: "/api/v1/student/portfolio/:id",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio/:id`,
-            },
-            {
-              source: "/api/v1/student/portfolio",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio`,
-            },
-          ]
-        : []),
-      // Student applications core CRUD (FM-DOTNET-074) — GET+POST /applications, GET /applications/deadlines,
-      // GET+PUT+DELETE /applications/:id, one flag. /applications/deadlines precedes /applications/:id (else :id
-      // swallows "deadlines"); the exact /applications matches neither. The 3-seg sub-resource paths (essays,
-      // checklist, classify, ai-review) are NOT matched by the 2-seg :id and stay Node. All precede /api/:path*.
-      ...(shouldRouteStudentApplicationsToDotnet()
-        ? [
-            {
-              source: "/api/v1/student/applications/deadlines",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/applications/deadlines`,
-            },
-            {
-              source: "/api/v1/student/applications/:id",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id`,
-            },
-            {
-              source: "/api/v1/student/applications",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/applications`,
-            },
-          ]
-        : []),
-      // Student community-service CRUD (FM-DOTNET-075) — GET+POST /community-service, PUT+DELETE /community-service/:id,
-      // one flag. The exact /community-service matches neither the 2-seg /:id. Both precede /api/:path*; disjoint from
-      // every other student path.
-      ...(shouldRouteStudentCommunityServiceToDotnet()
-        ? [
-            {
-              source: "/api/v1/student/community-service/:id",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/community-service/:id`,
-            },
-            {
-              source: "/api/v1/student/community-service",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/community-service`,
-            },
-          ]
-        : []),
-      // Student parent-links CRUD (FM-DOTNET-076) — GET /parents, POST /parents/invite, DELETE /parents/:parentLinkId,
-      // POST /parents/:parentLinkId/resend, one flag. /parents/invite (literal) precedes /parents/:parentLinkId (else
-      // :parentLinkId swallows "invite"); the 3-seg .../resend and the exact /parents are disjoint. All precede
-      // /api/:path*.
-      ...(shouldRouteStudentParentsToDotnet()
-        ? [
-            {
-              source: "/api/v1/student/parents/invite",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/parents/invite`,
-            },
-            {
-              source: "/api/v1/student/parents/:parentLinkId/resend",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/parents/:parentLinkId/resend`,
-            },
-            {
-              source: "/api/v1/student/parents/:parentLinkId",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/parents/:parentLinkId`,
-            },
-            {
-              source: "/api/v1/student/parents",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/parents`,
-            },
-          ]
-        : []),
-      // Student application ESSAYS + CHECKLIST (FM-DOTNET-077) — GET+POST /applications/:id/essays, PUT
-      // /applications/:id/essays/:eid, GET+POST /applications/:id/checklist, PUT /applications/:id/checklist/:cid, one
-      // flag. The AI siblings stay Node: /essays/:eid/ai-review is a 5-seg path (excluded by segment count), and
-      // /checklist/generate collides with /checklist/:cid (same shape) so :cid uses a ((?!generate)[^/]+) negative-
-      // lookahead (FM-061 pattern; cids are UUIDs). Disjoint from the FM-074 /applications/:id block. All precede
-      // /api/:path*.
-      ...(shouldRouteStudentEssaysChecklistToDotnet()
-        ? [
-            {
-              source: "/api/v1/student/applications/:id/essays/:eid",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/essays/:eid`,
-            },
-            {
-              source: "/api/v1/student/applications/:id/essays",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/essays`,
-            },
-            {
-              source: "/api/v1/student/applications/:id/checklist/:cid((?!generate)[^/]+)",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist/:cid`,
-            },
-            {
-              source: "/api/v1/student/applications/:id/checklist",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist`,
-            },
-          ]
-        : []),
-      // Parent portal self-scoped surface (FM-DOTNET-078) — GET /profile, GET /notifications, PUT
-      // /notifications/read-all, PUT /notifications/:id/read, GET /evaluations/pending, DELETE /:parentLinkId, one
-      // flag. The DELETE /:parentLinkId single-seg catch-all excludes every sibling literal via a negative-lookahead
-      // (critically `invite`, whose POST stays Node). Onboarding, invite/resend (SES), and the /children reads stay
-      // Node. Specific paths precede the catch-all; all precede /api/:path*.
-      ...(shouldRouteParentPortalToDotnet()
-        ? [
-            {
-              source: "/api/v1/parent/profile",
-              destination: `${dotnetApiBaseUrl}/api/v1/parent/profile`,
-            },
-            {
-              source: "/api/v1/parent/notifications/read-all",
-              destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications/read-all`,
-            },
-            {
-              source: "/api/v1/parent/notifications/:id/read",
-              destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications/:id/read`,
-            },
-            {
-              source: "/api/v1/parent/notifications",
-              destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications`,
-            },
-            {
-              source: "/api/v1/parent/evaluations/pending",
-              destination: `${dotnetApiBaseUrl}/api/v1/parent/evaluations/pending`,
-            },
-            {
-              source: "/api/v1/parent/:parentLinkId((?!profile|notifications|invite|onboarding|children|evaluations)[^/]+)",
-              destination: `${dotnetApiBaseUrl}/api/v1/parent/:parentLinkId`,
-            },
-          ]
-        : []),
-      // Parent child-link-scoped reads (FM-DOTNET-079) — GET /children/:studentId/progress + GET
-      // /children/:studentId/course-plan, one flag. Both 3-seg literals, disjoint from the FM-078 /:parentLinkId
-      // catch-all and from each other. Precede /api/:path*.
-      ...(shouldRouteParentChildReadsToDotnet()
-        ? [
-            {
-              source: "/api/v1/parent/children/:studentId/progress",
-              destination: `${dotnetApiBaseUrl}/api/v1/parent/children/:studentId/progress`,
-            },
-            {
-              source: "/api/v1/parent/children/:studentId/course-plan",
-              destination: `${dotnetApiBaseUrl}/api/v1/parent/children/:studentId/course-plan`,
-            },
-          ]
-        : []),
-      // Academic-gaps non-AI reads (FM-DOTNET-080) — routes/academic-gaps.ts, mounted /api/v1/school-admin/academic-gaps.
-      // GET /summary, /students/:studentId, /recommendations/:studentId under ONE flag. The /ai-recommendations/:studentId
-      // (Bedrock) sibling is a distinct literal and is deliberately NOT rewritten (stays Node). All three literals are
-      // disjoint from each other and from every other school-admin block; more specific than the /api/:path* catch-all
-      // below, so they must precede it.
-      ...(shouldRouteAcademicGapsToDotnet()
-        ? [
-            {
-              source: "/api/v1/school-admin/academic-gaps/summary",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/summary`,
-            },
-            {
-              source: "/api/v1/school-admin/academic-gaps/students/:studentId",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/students/:studentId`,
-            },
-            {
-              source: "/api/v1/school-admin/academic-gaps/recommendations/:studentId",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/recommendations/:studentId`,
-            },
-          ]
-        : []),
-      // College applications CRUD (FM-DOTNET-081) — routes/college.ts Feature 1, mounted /api/v1/college. GET+POST
-      // /students/:studentId/applications and PUT+DELETE /applications/:id under ONE flag (path-not-method co-flip).
-      // Single-segment sources — no collision with the college.ts list/essays/search siblings; those stay Node. More
-      // specific than the /api/:path* catch-all below, so they must precede it.
-      ...(shouldRouteCollegeApplicationsToDotnet()
-        ? [
-            {
-              source: "/api/v1/college/students/:studentId/applications",
-              destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/applications`,
-            },
-            {
-              source: "/api/v1/college/applications/:id",
-              destination: `${dotnetApiBaseUrl}/api/v1/college/applications/:id`,
-            },
-          ]
-        : []),
-      // College search + favorites (FM-DOTNET-082) — routes/college.ts Feature 2, mounted /api/v1/college. GET /search
-      // + GET/POST /students/:studentId/list + PUT/DELETE /list/:id under ONE flag (path-not-method co-flip). Disjoint
-      // from the FM-081 applications sources and the Node-only /essays siblings. More specific than the /api/:path*
-      // catch-all below, so they must precede it.
-      ...(shouldRouteCollegeFavoritesToDotnet()
-        ? [
-            {
-              source: "/api/v1/college/search",
-              destination: `${dotnetApiBaseUrl}/api/v1/college/search`,
-            },
-            {
-              source: "/api/v1/college/students/:studentId/list",
-              destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/list`,
-            },
-            {
-              source: "/api/v1/college/list/:id",
-              destination: `${dotnetApiBaseUrl}/api/v1/college/list/:id`,
-            },
-          ]
-        : []),
-      // College essays + comments (FM-DOTNET-083) — routes/college.ts Feature 3, mounted /api/v1/college. GET+POST
-      // /students/:studentId/essays + PUT+DELETE /essays/:id + POST+GET /essays/:id/comments under ONE flag (path-not-
-      // method co-flip). COMPLETES the college.ts mini-phase. The single-segment /essays/:id does NOT match the
-      // two-segment /essays/:id/comments (Next :params are one segment) — no lookahead needed. Disjoint from the FM-081
-      // applications + FM-082 search/list sources. More specific than the /api/:path* catch-all below, so they precede it.
-      ...(shouldRouteCollegeEssaysToDotnet()
-        ? [
-            {
-              source: "/api/v1/college/students/:studentId/essays",
-              destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/essays`,
-            },
-            {
-              source: "/api/v1/college/essays/:id/comments",
-              destination: `${dotnetApiBaseUrl}/api/v1/college/essays/:id/comments`,
-            },
-            {
-              source: "/api/v1/college/essays/:id",
-              destination: `${dotnetApiBaseUrl}/api/v1/college/essays/:id`,
-            },
-          ]
-        : []),
-      // Student course-planning CRUD (FM-DOTNET-084) — routes/course-plan.ts, mounted /api/v1/student. GET /course-plan
-      // + POST /course-plan/courses + DELETE /course-plan/courses/:courseId under ONE flag (path-not-method co-flip).
-      // The bare /course-plan literal is EXACT — it does NOT match /course-plan/courses or the Node-only /course-plan/
-      // change-requests, /course-plan/recommendations, /course-plan/eligibility siblings (later slices). Disjoint from
-      // every other student source. More specific than the /api/:path* catch-all below, so they must precede it.
-      ...(shouldRouteStudentCoursePlanToDotnet()
-        ? [
-            {
-              source: "/api/v1/student/course-plan",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan`,
-            },
-            {
-              source: "/api/v1/student/course-plan/courses",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/courses`,
-            },
-            {
-              source: "/api/v1/student/course-plan/courses/:courseId",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/courses/:courseId`,
-            },
-          ]
-        : []),
-      // Student course change-requests CRUD (FM-DOTNET-085) — routes/course-plan.ts, mounted /api/v1/student. POST+GET
-      // /course-plan/change-requests + DELETE /course-plan/change-requests/:requestId under ONE flag (path-not-method
-      // co-flip). Disjoint from the FM-084 /course-plan[/courses] sources and the Node-only /course-plan/recommendations
-      // + /course-plan/eligibility siblings (later slice). More specific than the /api/:path* catch-all, so they precede it.
-      ...(shouldRouteStudentChangeRequestsToDotnet()
-        ? [
-            {
-              source: "/api/v1/student/course-plan/change-requests",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/change-requests`,
-            },
-            {
-              source: "/api/v1/student/course-plan/change-requests/:requestId",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/change-requests/:requestId`,
-            },
-          ]
-        : []),
-      // Student course-plan recommendations + eligibility (FM-DOTNET-086) — routes/course-plan.ts, mounted
-      // /api/v1/student. GET /course-plan/recommendations + GET /course-plan/eligibility under ONE flag. COMPLETES the
-      // course-plan.ts mini-phase. Exact-literal sources, disjoint from the FM-084 /course-plan[/courses] + FM-085
-      // /change-requests sources. More specific than the /api/:path* catch-all below, so they must precede it.
-      ...(shouldRouteStudentCoursePlanComputeToDotnet()
-        ? [
-            {
-              source: "/api/v1/student/course-plan/recommendations",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/recommendations`,
-            },
-            {
-              source: "/api/v1/student/course-plan/eligibility",
-              destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/eligibility`,
-            },
-          ]
-        : []),
-      // iSAMS integration READS (FM-DOTNET-053) — /integrations/isams/status + /integrations/isams/jobs, both
-      // method-unambiguous GETs (no write shares either path; a straight read cut-over, not dark). READS-ONLY: the
-      // POST /integrations/isams (configure), /integrations/isams/sync and /integrations/isams/test paths are NOT
-      // rewritten — they stay Node (vendor boundary). Both literals are disjoint from every other school-admin
-      // rewrite block; more specific than the /api/:path* catch-all below, so they must precede it.
       ...(shouldRouteIsamsReadsToDotnet()
         ? [
             {
@@ -1702,100 +954,6 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // iSAMS integration CONFIGURE write (FM-DOTNET-087) — POST /integrations/isams (the exact literal): the
-      // isamsConfig upsert + credential encryption. Distinct path from the /status + /jobs reads (FM-053) above and
-      // the Node-only /sync + /test writes, so NO path-not-method hazard. Default OFF (dark); precedes the
-      // /api/:path* catch-all below.
-      ...(shouldRouteIsamsConfigureToDotnet()
-        ? [
-            {
-              source: "/api/v1/school-admin/integrations/isams",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/integrations/isams`,
-            },
-          ]
-        : []),
-      // File uploads (FM-DOTNET-088) — the six /api/v1/upload/* POST endpoints, all multipart → S3, under one flag.
-      // Each an exact literal, disjoint from every other rewrite; more specific than the /api/:path* catch-all below.
-      ...(shouldRouteUploadToDotnet()
-        ? [
-            {
-              source: "/api/v1/upload/school-logo",
-              destination: `${dotnetApiBaseUrl}/api/v1/upload/school-logo`,
-            },
-            {
-              source: "/api/v1/upload/profile-image",
-              destination: `${dotnetApiBaseUrl}/api/v1/upload/profile-image`,
-            },
-            {
-              source: "/api/v1/upload/resume",
-              destination: `${dotnetApiBaseUrl}/api/v1/upload/resume`,
-            },
-            {
-              source: "/api/v1/upload/course-import",
-              destination: `${dotnetApiBaseUrl}/api/v1/upload/course-import`,
-            },
-            {
-              source: "/api/v1/upload/grade-import",
-              destination: `${dotnetApiBaseUrl}/api/v1/upload/grade-import`,
-            },
-            {
-              source: "/api/v1/upload/portfolio-attachment",
-              destination: `${dotnetApiBaseUrl}/api/v1/upload/portfolio-attachment`,
-            },
-          ]
-        : []),
-      // Resume section + template writes (FM-DOTNET-089) — /api/resume section/template routes. /sections/order
-      // precedes /sections/:sectionId (first-match). Unique 2nd segments ("sections"/"template") → no collision with
-      // the Node-only resume CRUD / cross-user / AI routes. One flag; before the /api/:path* catch-all.
-      ...(shouldRouteResumeSectionsToDotnet()
-        ? [
-            {
-              source: "/api/resume/:id/sections/order",
-              destination: `${dotnetApiBaseUrl}/api/resume/:id/sections/order`,
-            },
-            {
-              source: "/api/resume/:id/sections/:sectionId",
-              destination: `${dotnetApiBaseUrl}/api/resume/:id/sections/:sectionId`,
-            },
-            {
-              source: "/api/resume/:id/sections",
-              destination: `${dotnetApiBaseUrl}/api/resume/:id/sections`,
-            },
-            {
-              source: "/api/resume/:id/template",
-              destination: `${dotnetApiBaseUrl}/api/resume/:id/template`,
-            },
-          ]
-        : []),
-      // Resume CRUD list + create (FM-DOTNET-090) — /api/resume/default (static shape), GET /api/resume (list) and
-      // POST /api/resume (create). /default is an exact literal; the bare /api/resume matches only the exact path
-      // (GET+POST co-flip, path-not-method). Disjoint from the resume-sections block above (multi-segment) and from
-      // the Node-only single-segment GET /:id / PUT/DELETE /:resumeId (only the "default" literal is rewritten). One
-      // flag; before the /api/:path* catch-all.
-      ...(shouldRouteResumeCrudToDotnet()
-        ? [
-            {
-              source: "/api/resume/default",
-              destination: `${dotnetApiBaseUrl}/api/resume/default`,
-            },
-            {
-              source: "/api/resume",
-              destination: `${dotnetApiBaseUrl}/api/resume`,
-            },
-          ]
-        : []),
-      // School-courses GET + POST /courses (FM-DOTNET-054) + PUT/DELETE /courses/:courseId (FM-DOTNET-061), one flag.
-      // The exact literal /courses (GET+POST). The 2-segment /courses/:courseId (PUT/DELETE update/soft-delete) uses a
-      // NEGATIVE-LOOKAHEAD so it does NOT swallow the Node-only 2-seg siblings — /courses/ai-import (POST, Bedrock →
-      // Node) and, regardless of their own flags' state, /courses/import (FM-059) and /courses/pathways (FM-058) which
-      // have their own rewrites. Next.js rewrites match by PATH NOT METHOD, so without the lookahead a courses-flag flip
-      // would misroute POST /courses/ai-import to the .NET group (no POST /courses/:courseId handler → 404/405, breaking
-      // the AI import). courseIds are UUIDs so they never equal those literals; the lookahead is the safety belt.
-      // 3-segment siblings (/courses/:courseId/prerequisite-chain FM-057, /courses/import/:jobId FM-059, /courses/
-      // ai-import/confirm) are NOT matched by the 1-segment [^/]+ param. Distinct METHODS from the co-flipped literals
-      // (pathways/import = GET/POST, these = PUT/DELETE) → no ASP.NET ambiguity on the .NET side.
-      // ⚠️ CUTOVER: verify this rewrite in formmaps-platform/frontend/next.config.ts (the live prod frontend) — this
-      // monorepo apps/web copy is the staging/reference artifact; the negative-lookahead is not exercised by CI.
       ...(shouldRouteSchoolCoursesToDotnet()
         ? [
             {
@@ -1808,53 +966,22 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // Curriculum FRAMEWORKS (FM-DOTNET-055) — the four /curriculum/frameworks endpoints under /school-admin, all
-      // gated by one flag (reads + writes flip together; /curriculum/frameworks serves GET and PUT). The three path
-      // shapes have distinct segment counts, but the most-specific (…/:courseId) is listed first anyway. All disjoint
-      // from /courses/* and every other school-admin block; more specific than the /api/:path* catch-all below.
+      ...(shouldRoutePathwaysToDotnet()
+        ? [{ source: "/api/v1/school-admin/courses/pathways", destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/pathways` }]
+        : []),
       ...(shouldRouteCurriculumFrameworksToDotnet()
         ? [
-            {
-              source:
-                "/api/v1/school-admin/curriculum/frameworks/:type/courses/:courseId",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/curriculum/frameworks/:type/courses/:courseId`,
-            },
+            { source: "/api/v1/school-admin/curriculum/frameworks", destination: `${dotnetApiBaseUrl}/api/v1/school-admin/curriculum/frameworks` },
             {
               source: "/api/v1/school-admin/curriculum/frameworks/:type/courses",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/curriculum/frameworks/:type/courses`,
             },
             {
-              source: "/api/v1/school-admin/curriculum/frameworks",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/curriculum/frameworks`,
+              source: "/api/v1/school-admin/curriculum/frameworks/:type/courses/:courseId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/curriculum/frameworks/:type/courses/:courseId`,
             },
           ]
         : []),
-      // Data-mappings (FM-DOTNET-056 GET+POST /data-mappings + POST /bulk-approve) + PUT/DELETE /data-mappings/:id
-      // (FM-DOTNET-061), one flag. /data-mappings (GET+POST) and /data-mappings/bulk-approve (POST) are exact literals.
-      // The 2-segment /data-mappings/:id (PUT/DELETE update/hard-delete) uses a NEGATIVE-LOOKAHEAD so it does NOT swallow
-      // the Node-only /data-mappings/ai-suggest (POST, Bedrock → Node) or /data-mappings/bulk-approve (its own rewrite) —
-      // rewrites match by PATH NOT METHOD, so without it a flag flip would misroute POST /data-mappings/ai-suggest to the
-      // .NET group (no handler → break). mapping ids are UUIDs so never equal those literals; the lookahead is the belt.
-      // ⚠️ CUTOVER: verify in formmaps-platform/frontend/next.config.ts (live prod frontend) — not exercised by CI here.
-      ...(shouldRouteDataMappingsToDotnet()
-        ? [
-            {
-              source: "/api/v1/school-admin/data-mappings/bulk-approve",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings/bulk-approve`,
-            },
-            {
-              source: "/api/v1/school-admin/data-mappings",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings`,
-            },
-            {
-              source: "/api/v1/school-admin/data-mappings/:id((?!bulk-approve|ai-suggest)[^/]+)",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings/:id`,
-            },
-          ]
-        : []),
-      // Prerequisites (FM-DOTNET-057) — 5 paths. The two /courses/:courseId/* sub-paths are MORE specific than the
-      // deferred bare /courses/:courseId (PUT/DELETE, still Node) → no collision. The /prerequisites/* trio is disjoint
-      // from every other route. All more specific than the /api/:path* catch-all below, so all must precede it. Dark.
       ...(shouldRoutePrerequisitesToDotnet()
         ? [
             {
@@ -1879,158 +1006,279 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // Derived pathways (FM-DOTNET-058) — GET /courses/pathways. Literal "pathways" segment is more specific than the
-      // deferred bare /courses/:courseId (still Node) and disjoint from the FM-054 exact /courses → collision-free.
-      // More specific than the /api/:path* catch-all below, so it must precede it. Dark.
-      ...(shouldRoutePathwaysToDotnet()
+      ...(shouldRouteDataMappingsToDotnet()
         ? [
+            { source: "/api/v1/school-admin/data-mappings", destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings` },
             {
-              source: "/api/v1/school-admin/courses/pathways",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/pathways`,
+              source: "/api/v1/school-admin/data-mappings/bulk-approve",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings/bulk-approve`,
+            },
+            {
+              source: "/api/v1/school-admin/data-mappings/:id((?!bulk-approve|ai-suggest)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/data-mappings/:id`,
             },
           ]
         : []),
-      // Course bulk-import (FM-DOTNET-059 CORE + FM-DOTNET-060 failures CSV) — POST /courses/import + GET
-      // /courses/import/:jobId + GET /courses/import/:jobId/download-failures, all under one flag. The literal "import"
-      // segments are more specific than the deferred bare /courses/:courseId (still Node) and disjoint from /courses,
-      // /courses/pathways and /courses/:courseId/prerequisite* → collision-free. The 4-segment /download-failures does
-      // not overlap the 3-segment :jobId (a param captures one segment), but is listed first as the more specific path.
-      // All more specific than the /api/:path* catch-all below → must precede it. Dark.
       ...(shouldRouteCourseImportToDotnet()
         ? [
+            { source: "/api/v1/school-admin/courses/import", destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/import` },
             {
-              source: "/api/v1/school-admin/courses/import",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/import`,
+              source: "/api/v1/school-admin/courses/import/:jobId((?!download-failures)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/import/:jobId`,
             },
             {
               source: "/api/v1/school-admin/courses/import/:jobId/download-failures",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/import/:jobId/download-failures`,
             },
-            {
-              source: "/api/v1/school-admin/courses/import/:jobId",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/import/:jobId`,
-            },
           ]
         : []),
-      // School-admin CONFIG + SCHEDULE (FM-DOTNET-044) — /assessments/config + /assessments/schedule, each
-      // GET(read, FM-039) + PUT(write, FM-044) flipping together under one flag (path-not-method). Same .NET
-      // backend; both paths are 3-segment literals so no ordering hazard vs the reads routes above.
-      ...(shouldRouteSchoolAdminConfigScheduleToDotnet()
+      ...(shouldRouteCounselorDashboardToDotnet()
+        ? [
+            { source: "/api/v1/counselor/dashboard/change-requests", destination: `${dotnetApiBaseUrl}/api/v1/counselor/dashboard/change-requests` },
+            { source: "/api/v1/counselor/dashboard", destination: `${dotnetApiBaseUrl}/api/v1/counselor/dashboard` },
+            { source: "/api/v1/counselor/me/students/:studentId", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/students/:studentId` },
+            { source: "/api/v1/counselor/students/:studentId", destination: `${dotnetApiBaseUrl}/api/v1/counselor/students/:studentId` },
+          ]
+        : []),
+      ...(shouldRouteCounselorCaseloadToDotnet()
+        ? [{ source: "/api/v1/counselor/me/students", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/students` }]
+        : []),
+      ...(shouldRouteCounselorNotesToDotnet()
+        ? [
+            { source: "/api/v1/counselor/students/:studentId/notes", destination: `${dotnetApiBaseUrl}/api/v1/counselor/students/:studentId/notes` },
+            { source: "/api/v1/counselor/notes/:noteId", destination: `${dotnetApiBaseUrl}/api/v1/counselor/notes/:noteId` },
+            { source: "/api/v1/counselor/notes/:noteId/complete-followup", destination: `${dotnetApiBaseUrl}/api/v1/counselor/notes/:noteId/complete-followup` },
+          ]
+        : []),
+      ...(shouldRouteCounselorAvailabilityToDotnet()
+        ? [{ source: "/api/v1/counselor/me/availability", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/availability` }]
+        : []),
+      ...(shouldRouteCounselorAlertsToDotnet()
+        ? [
+            { source: "/api/v1/counselor/me/alerts", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/alerts` },
+            { source: "/api/v1/counselor/me/alerts/:id/read", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/alerts/:id/read` },
+          ]
+        : []),
+      ...(shouldRouteCounselorSessionsToDotnet()
+        ? [
+            { source: "/api/v1/counselor/me/sessions", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/sessions` },
+            { source: "/api/v1/counselor/me/sessions/:id/complete", destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/sessions/:id/complete` },
+          ]
+        : []),
+      ...(shouldRouteParentChildReadsToDotnet()
+        ? [
+            { source: "/api/v1/parent/children/:studentId/progress", destination: `${dotnetApiBaseUrl}/api/v1/parent/children/:studentId/progress` },
+            { source: "/api/v1/parent/children/:studentId/course-plan", destination: `${dotnetApiBaseUrl}/api/v1/parent/children/:studentId/course-plan` },
+          ]
+        : []),
+      ...(shouldRouteAcademicGapsToDotnet()
         ? [
             {
-              source: "/api/v1/school-admin/assessments/config",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/config`,
+              source: "/api/v1/school-admin/academic-gaps/summary",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/summary`,
             },
             {
-              source: "/api/v1/school-admin/assessments/schedule",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/schedule`,
+              source: "/api/v1/school-admin/academic-gaps/students/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/students/:studentId`,
+            },
+            {
+              source: "/api/v1/school-admin/academic-gaps/recommendations/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/academic-gaps/recommendations/:studentId`,
             },
           ]
         : []),
-      // School-admin EMAIL writes (FM-DOTNET-045) — POST /assessments/send-reminders + /assessments/setup-360
-      // (SES reminder emails / eval-group bulk-create + invites). POST-only, one flag, default off (dark).
-      ...(shouldRouteSchoolAdminEmailWritesToDotnet()
+      ...(shouldRouteStudentPortfolioToDotnet()
         ? [
-            {
-              source: "/api/v1/school-admin/assessments/send-reminders",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/send-reminders`,
-            },
-            {
-              source: "/api/v1/school-admin/assessments/setup-360",
-              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/setup-360`,
-            },
+            { source: "/api/v1/student/portfolio", destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio` },
+            { source: "/api/v1/student/portfolio/summary", destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio/summary` },
+            { source: "/api/v1/student/portfolio/:id", destination: `${dotnetApiBaseUrl}/api/v1/student/portfolio/:id` },
           ]
         : []),
-      // question360 (FM-DOTNET question360) — the WHOLE surface (5 reads + 6 writes) under ONE flag; reads +
-      // writes cut over together (path-not-method: /:id can't split GET from PUT/DELETE). All literal + 2-segment
-      // routes MUST precede the /:id catch-all (Next matches in array order) so /GetQuestions, /all, /bulk-create,
-      // /:id/activate, etc. are not swallowed by :id. All hit the same .NET backend.
-      ...(shouldRouteQuestion360ToDotnet()
+      ...(shouldRouteCommunityServiceToDotnet()
         ? [
-            {
-              source: "/api/question360/GetQuestions",
-              destination: `${dotnetApiBaseUrl}/api/question360/GetQuestions`,
-            },
-            {
-              source: "/api/question360/all",
-              destination: `${dotnetApiBaseUrl}/api/question360/all`,
-            },
-            {
-              source: "/api/question360/category/:category",
-              destination: `${dotnetApiBaseUrl}/api/question360/category/:category`,
-            },
-            {
-              source: "/api/question360/sub-questions/:parentQuestionId",
-              destination: `${dotnetApiBaseUrl}/api/question360/sub-questions/:parentQuestionId`,
-            },
-            {
-              source: "/api/question360/bulk-create",
-              destination: `${dotnetApiBaseUrl}/api/question360/bulk-create`,
-            },
-            {
-              source: "/api/question360/:id/activate",
-              destination: `${dotnetApiBaseUrl}/api/question360/:id/activate`,
-            },
-            {
-              source: "/api/question360/:id/deactivate",
-              destination: `${dotnetApiBaseUrl}/api/question360/:id/deactivate`,
-            },
-            {
-              source: "/api/question360",
-              destination: `${dotnetApiBaseUrl}/api/question360`,
-            },
-            {
-              source: "/api/question360/:id",
-              destination: `${dotnetApiBaseUrl}/api/question360/:id`,
-            },
+            { source: "/api/v1/student/community-service", destination: `${dotnetApiBaseUrl}/api/v1/student/community-service` },
+            { source: "/api/v1/student/community-service/:id", destination: `${dotnetApiBaseUrl}/api/v1/student/community-service/:id` },
           ]
         : []),
-      // FM-DOTNET capstone — token-gated external write rail. These /evaluation/* paths MUST precede the
-      // /evaluation/:path* legacy catch-all below. Vocational tree first: literal /submit precedes /:token (a
-      // token could otherwise be "submit"; the destination path is identical so .NET method-routes correctly
-      // either way, but literal-first keeps intent explicit). /:token/violations is 2-segment (no shadow).
-      ...(shouldRouteVocationalTakeToDotnet()
+      ...(shouldRouteCollegeApplicationsToDotnet()
         ? [
-            {
-              source: "/evaluation/vocational/submit",
-              destination: `${dotnetApiBaseUrl}/evaluation/vocational/submit`,
-            },
-            {
-              source: "/evaluation/vocational/:token/violations",
-              destination: `${dotnetApiBaseUrl}/evaluation/vocational/:token/violations`,
-            },
-            {
-              source: "/evaluation/vocational/:token",
-              destination: `${dotnetApiBaseUrl}/evaluation/vocational/:token`,
-            },
+            { source: "/api/v1/college/students/:studentId/applications", destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/applications` },
+            { source: "/api/v1/college/applications/:id", destination: `${dotnetApiBaseUrl}/api/v1/college/applications/:id` },
           ]
         : []),
-      // External 360 tree. validate-token + submit-feedback are literals; 360evolutor/:token is a distinct
-      // literal-prefixed segment. All precede the /evaluation/:path* catch-all and the /evaluation/vocational
-      // rewrites above are more specific, so no collision.
+      ...(shouldRouteCollegeFavoritesToDotnet()
+        ? [
+            { source: "/api/v1/college/search", destination: `${dotnetApiBaseUrl}/api/v1/college/search` },
+            { source: "/api/v1/college/students/:studentId/list", destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/list` },
+            { source: "/api/v1/college/list/:id", destination: `${dotnetApiBaseUrl}/api/v1/college/list/:id` },
+          ]
+        : []),
+      ...(shouldRouteCollegeEssaysToDotnet()
+        ? [
+            { source: "/api/v1/college/students/:studentId/essays", destination: `${dotnetApiBaseUrl}/api/v1/college/students/:studentId/essays` },
+            { source: "/api/v1/college/essays/:id", destination: `${dotnetApiBaseUrl}/api/v1/college/essays/:id` },
+            { source: "/api/v1/college/essays/:id/comments", destination: `${dotnetApiBaseUrl}/api/v1/college/essays/:id/comments` },
+          ]
+        : []),
+      ...(shouldRouteStudentApplicationsToDotnet()
+        ? [
+            { source: "/api/v1/student/applications/deadlines", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/deadlines` },
+            { source: "/api/v1/student/applications", destination: `${dotnetApiBaseUrl}/api/v1/student/applications` },
+            { source: "/api/v1/student/applications/:id", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id` },
+          ]
+        : []),
+      ...(shouldRouteStudentParentsToDotnet()
+        ? [
+            { source: "/api/v1/student/parents/invite", destination: `${dotnetApiBaseUrl}/api/v1/student/parents/invite` },
+            { source: "/api/v1/student/parents", destination: `${dotnetApiBaseUrl}/api/v1/student/parents` },
+            { source: "/api/v1/student/parents/:parentLinkId", destination: `${dotnetApiBaseUrl}/api/v1/student/parents/:parentLinkId` },
+            { source: "/api/v1/student/parents/:parentLinkId/resend", destination: `${dotnetApiBaseUrl}/api/v1/student/parents/:parentLinkId/resend` },
+          ]
+        : []),
+      ...(shouldRouteStudentEssaysChecklistToDotnet()
+        ? [
+            { source: "/api/v1/student/applications/:id/essays", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/essays` },
+            { source: "/api/v1/student/applications/:id/essays/:eid", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/essays/:eid` },
+            { source: "/api/v1/student/applications/:id/checklist", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist` },
+            { source: "/api/v1/student/applications/:id/checklist/:cid", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist/:cid` },
+          ]
+        : []),
+      ...(shouldRouteStudentCoursePlanComputeToDotnet()
+        ? [
+            { source: "/api/v1/student/course-plan/recommendations", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/recommendations` },
+            { source: "/api/v1/student/course-plan/eligibility", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/eligibility` },
+          ]
+        : []),
+      ...(shouldRouteParentPortalToDotnet()
+        ? [
+            { source: "/api/v1/parent/profile", destination: `${dotnetApiBaseUrl}/api/v1/parent/profile` },
+            { source: "/api/v1/parent/notifications", destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications` },
+            { source: "/api/v1/parent/notifications/read-all", destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications/read-all` },
+            { source: "/api/v1/parent/notifications/:id/read", destination: `${dotnetApiBaseUrl}/api/v1/parent/notifications/:id/read` },
+            { source: "/api/v1/parent/evaluations/pending", destination: `${dotnetApiBaseUrl}/api/v1/parent/evaluations/pending` },
+            { source: "/api/v1/parent/:parentLinkId((?!profile|notifications|invite|onboarding|children|evaluations)[^/]+)", destination: `${dotnetApiBaseUrl}/api/v1/parent/:parentLinkId` },
+          ]
+        : []),
+      ...(shouldRouteStudentCoursePlanToDotnet()
+        ? [
+            { source: "/api/v1/student/course-plan", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan` },
+            { source: "/api/v1/student/course-plan/courses", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/courses` },
+            { source: "/api/v1/student/course-plan/courses/:courseId", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/courses/:courseId` },
+          ]
+        : []),
+      ...(shouldRouteStudentChangeRequestsToDotnet()
+        ? [
+            { source: "/api/v1/student/course-plan/change-requests", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/change-requests` },
+            { source: "/api/v1/student/course-plan/change-requests/:requestId", destination: `${dotnetApiBaseUrl}/api/v1/student/course-plan/change-requests/:requestId` },
+          ]
+        : []),
+      // Must precede the /evaluation/:path* catch-all below so a flipped route reaches .NET.
       ...(shouldRouteEvalExternalToDotnet()
         ? [
+            { source: "/evaluation/validate-token", destination: `${dotnetApiBaseUrl}/evaluation/validate-token` },
+            { source: "/evaluation/submit-feedback", destination: `${dotnetApiBaseUrl}/evaluation/submit-feedback` },
+            { source: "/evaluation/360evolutor/:token", destination: `${dotnetApiBaseUrl}/evaluation/360evolutor/:token` },
+          ]
+        : []),
+      ...(shouldRouteVocationalTakeToDotnet()
+        ? [
+            { source: "/evaluation/vocational/submit", destination: `${dotnetApiBaseUrl}/evaluation/vocational/submit` },
+            { source: "/evaluation/vocational/:token/violations", destination: `${dotnetApiBaseUrl}/evaluation/vocational/:token/violations` },
+            { source: "/evaluation/vocational/:token", destination: `${dotnetApiBaseUrl}/evaluation/vocational/:token` },
+          ]
+        : []),
+      ...(shouldRouteUploadToDotnet()
+        ? [
+            { source: "/api/v1/upload/school-logo", destination: `${dotnetApiBaseUrl}/api/v1/upload/school-logo` },
+            { source: "/api/v1/upload/profile-image", destination: `${dotnetApiBaseUrl}/api/v1/upload/profile-image` },
+            { source: "/api/v1/upload/resume", destination: `${dotnetApiBaseUrl}/api/v1/upload/resume` },
+            { source: "/api/v1/upload/course-import", destination: `${dotnetApiBaseUrl}/api/v1/upload/course-import` },
+            { source: "/api/v1/upload/grade-import", destination: `${dotnetApiBaseUrl}/api/v1/upload/grade-import` },
+            { source: "/api/v1/upload/portfolio-attachment", destination: `${dotnetApiBaseUrl}/api/v1/upload/portfolio-attachment` },
+          ]
+        : []),
+      ...(shouldRouteResumeSectionsToDotnet()
+        ? [
+            { source: "/api/resume/:id/sections/order", destination: `${dotnetApiBaseUrl}/api/resume/:id/sections/order` },
+            { source: "/api/resume/:id/sections", destination: `${dotnetApiBaseUrl}/api/resume/:id/sections` },
+            { source: "/api/resume/:id/sections/:sectionId", destination: `${dotnetApiBaseUrl}/api/resume/:id/sections/:sectionId` },
+            { source: "/api/resume/:id/template", destination: `${dotnetApiBaseUrl}/api/resume/:id/template` },
+          ]
+        : []),
+      ...(shouldRouteResumeCrudToDotnet()
+        ? [
+            { source: "/api/resume/default", destination: `${dotnetApiBaseUrl}/api/resume/default` },
+            { source: "/api/resume", destination: `${dotnetApiBaseUrl}/api/resume` },
+          ]
+        : []),
+      ...(shouldRouteSendReportEmailToDotnet()
+        ? [
             {
-              source: "/evaluation/validate-token",
-              destination: `${dotnetApiBaseUrl}/evaluation/validate-token`,
-            },
-            {
-              source: "/evaluation/submit-feedback",
-              destination: `${dotnetApiBaseUrl}/evaluation/submit-feedback`,
-            },
-            {
-              source: "/evaluation/360evolutor/:token",
-              destination: `${dotnetApiBaseUrl}/evaluation/360evolutor/:token`,
+              source: "/api/v1/reports/send-report-email/:userId",
+              destination: `${dotnetApiBaseUrl}/api/v1/reports/send-report-email/:userId`,
             },
           ]
         : []),
-      { source: "/api/:path*", destination: `${legacyApiProxyTarget}/api/:path*` },
-      { source: "/authapi/:path*", destination: `${legacyApiProxyTarget}/authapi/:path*` },
-      { source: "/evaluation/:path*", destination: `${legacyApiProxyTarget}/evaluation/:path*` },
+      ...(shouldRouteResumeCrossUserToDotnet()
+        ? [
+            {
+              source: "/api/resume/:id((?!default|ask|upload-and-parse|tailor|extract-job-posting)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/resume/:id`,
+            },
+          ]
+        : []),
+      ...(shouldRouteResumeOriginalToDotnet()
+        ? [
+            {
+              source: "/api/resume/:id/original",
+              destination: `${dotnetApiBaseUrl}/api/resume/:id/original`,
+            },
+          ]
+        : []),
+      ...(shouldRouteVideoEnabledToDotnet()
+        ? [{ source: "/api/v1/video/enabled", destination: `${dotnetApiBaseUrl}/api/v1/video/enabled` }]
+        : []),
+      ...(shouldRouteVideoSessionsToDotnet()
+        ? [{ source: "/api/v1/video/sessions", destination: `${dotnetApiBaseUrl}/api/v1/video/sessions` }]
+        : []),
+      ...(shouldRouteVideoSessionDetailToDotnet()
+        ? [
+            {
+              source: "/api/v1/video/sessions/:id((?!schedule)[^/]+)",
+              destination: `${dotnetApiBaseUrl}/api/v1/video/sessions/:id`,
+            },
+          ]
+        : []),
+      ...(shouldRouteVideoSignatureToDotnet()
+        ? [{ source: "/api/v1/video/signature", destination: `${dotnetApiBaseUrl}/api/v1/video/signature` }]
+        : []),
+      ...(shouldRouteVideoSessionLifecycleToDotnet()
+        ? [
+            { source: "/api/v1/video/sessions/:id/end", destination: `${dotnetApiBaseUrl}/api/v1/video/sessions/:id/end` },
+            { source: "/api/v1/video/sessions/:id/start", destination: `${dotnetApiBaseUrl}/api/v1/video/sessions/:id/start` },
+          ]
+        : []),
+      // Messaging (Domain 7b, Task 10) -- must precede the /api/:path* catch-all below so a
+      // flipped route reaches .NET. All 6 paths gated by the single FORMMAPS_ROUTE_MESSAGES_TO_DOTNET
+      // flag (see shouldRouteMessagesToDotnet above).
+      ...(shouldRouteMessagesToDotnet()
+        ? [
+            { source: "/api/v1/messages/unread-count", destination: `${dotnetApiBaseUrl}/api/v1/messages/unread-count` },
+            { source: "/api/v1/messages/contacts", destination: `${dotnetApiBaseUrl}/api/v1/messages/contacts` },
+            { source: "/api/v1/messages/conversations", destination: `${dotnetApiBaseUrl}/api/v1/messages/conversations` },
+            { source: "/api/v1/messages/conversations/:id", destination: `${dotnetApiBaseUrl}/api/v1/messages/conversations/:id` },
+            { source: "/api/v1/messages/broadcast", destination: `${dotnetApiBaseUrl}/api/v1/messages/broadcast` },
+            { source: "/api/v1/messages/realtime-ticket", destination: `${dotnetApiBaseUrl}/api/v1/messages/realtime-ticket` },
+          ]
+        : []),
     ];
-
     return {
-      afterFiles,
+      afterFiles: [
+        ...personalityRewrites,
+        { source: "/api/:path*", destination: `${target}/api/:path*` },
+        { source: "/authapi/:path*", destination: `${target}/authapi/:path*` },
+        { source: "/evaluation/:path*", destination: `${target}/evaluation/:path*` },
+      ],
     };
   },
 

@@ -97,6 +97,7 @@ export interface CheckAccessResponse {
   has_completed: boolean;
   existing_session_id?: string;
   reason?: string;
+  locked?: boolean;
 }
 
 export interface StartSessionRequest {
@@ -108,6 +109,18 @@ export interface StartSessionResponse {
   session_id: string;
   current_subtest: LIASubtest;
   practice_questions: LIAQuestion[];
+  // Resume metadata (server-authoritative timer). Absent on a fresh start.
+  //  - "mid_subtest": the subtest clock is still live — resume in place at
+  //    `current_item` with the ORIGINAL `started_at`/`time_limit_seconds` and
+  //    the full assessment bank in `questions` (client positions at the next
+  //    unanswered item; the clock never resets).
+  //  - "next_subtest": the prior subtest expired server-side and was advanced —
+  //    resume at the next subtest's practice (`practice_questions`).
+  resume_mode?: "mid_subtest" | "next_subtest";
+  current_item?: number;
+  started_at?: string;
+  time_limit_seconds?: number;
+  questions?: LIAQuestion[];
 }
 
 export interface SubmitPracticeAnswerResponse {
@@ -133,6 +146,10 @@ export interface SubmitAnswerResponse {
   subtest_complete: boolean;
   next_subtest?: LIASubtest;
   assessment_complete: boolean;
+  // Set when the server rejected the submit because the subtest clock expired:
+  // the answer was NOT persisted; the subtest was timed out and advanced.
+  timed_out?: boolean;
+  session_status?: string;
 }
 
 export interface CompleteSessionResponse {

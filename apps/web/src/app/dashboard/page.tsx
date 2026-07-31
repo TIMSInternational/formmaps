@@ -60,8 +60,11 @@ export default function DashboardPage() {
   const { data: assessmentProgress } = useAssessmentProgress(
     userRole !== Roles.COACH ? user?.id || "" : ""
   );
+  // percentageComplete (server-driven, accounts for legacyUnlockGrandfathered) rather
+  // than a raw completedAssessments/totalAssessments compare — see CareerExplorer.tsx
+  // for the same reasoning.
   const allAssessmentsComplete =
-    assessmentProgress?.overallCompletion?.completedAssessments === 3;
+    assessmentProgress?.overallCompletion?.percentageComplete === 100;
 
   if (userRole === Roles.COACH) {
     const CoachDashboard = dynamic(
@@ -140,7 +143,7 @@ export default function DashboardPage() {
                   <p className="text-sm text-muted-foreground max-w-sm mb-4">
                     {t(
                       "dashboard.completeAllAssessments",
-                      "Complete all 3 assessments (PCA, LIA, and 360° Evaluation) to unlock your personalized career matches and recommendations."
+                      "Complete all 4 assessments (PCA, LIA, 360° Evaluation, and Personality) to unlock your personalized career matches and recommendations."
                     )}
                   </p>
                   <Link

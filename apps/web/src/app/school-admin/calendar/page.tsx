@@ -386,7 +386,7 @@ export default function AcademicCalendarPage() {
             {showAssessmentForm && (
               <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", flexDirection: "column", gap: 6 }}>
                 <select value={assessmentType} onChange={e => setAssessmentType(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }}>
-                  {["PCA","MIL","360"].map(t => <option key={t} value={t}>{t}</option>)}
+                  {["PCA","MIL","360","Personality"].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
                 <select value={assessmentGrade} onChange={e => setAssessmentGrade(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }}>
                   {["9","10","11","12"].map(g => <option key={g} value={g}>{t("calendar.assessmentsSection.gradeOption", { grade: g })}</option>)}

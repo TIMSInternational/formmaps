@@ -35,6 +35,7 @@ import {
   Brain,
   Scale,
   Clock,
+  Sparkles,
   Map,
   University,
   BookMarked,
@@ -75,6 +76,7 @@ const NAV_SECTIONS: NavSection[] = [
           { label: "dashboard.pcaAssessment", href: "/dashboard/assessments/pca", icon: Brain },
           { label: "dashboard.liaAssessment", href: "/dashboard/assessments/lia", icon: Scale },
           { label: "dashboard.evaluationTitle", href: "/dashboard/assessments/evaluation", icon: Target },
+          { label: "dashboard.personalityTitle", href: "/dashboard/assessments/personality", icon: Sparkles },
           { label: "dashboard.timeline", href: "/dashboard/timeline", icon: Clock },
         ],
       },
@@ -95,10 +97,15 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    label: "nav.tools",
+    label: "nav.buildTools",
     items: [
       { label: "dashboard.resumeBuilder", href: "/dashboard/resumes", icon: ClipboardList },
       { label: "dashboard.portfolio", href: "/dashboard/portfolio", icon: FolderOpen },
+    ],
+  },
+  {
+    label: "nav.myRecords",
+    items: [
       { label: "nav.applications", href: "/dashboard/applications", icon: Target },
       { label: "nav.testScores", href: "/dashboard/test-scores", icon: FileText },
       { label: "nav.transcript", href: "/dashboard/transcript", icon: BookOpen },

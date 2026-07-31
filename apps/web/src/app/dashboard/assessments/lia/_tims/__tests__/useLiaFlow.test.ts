@@ -1,7 +1,8 @@
 /**
  * useLiaFlow — tims state-machine semantics: overview gating, start →
  * general-instructions, practice → assessment, between-subtest transitions
- * skip the intro, completion drains violations and ends lockdown.
+ * show the next subtest's intro before practice (instructions before every
+ * subtest), completion drains violations and ends lockdown.
  */
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useLiaFlow } from "../useLiaFlow";
@@ -58,6 +59,24 @@ describe("useLiaFlow", () => {
     api.checkAccess.mockResolvedValue({ has_access: false, has_completed: true });
     const { result: r2 } = renderHook(() => useLiaFlow(makeCallbacks()));
     await waitFor(() => expect(r2.current.phase).toBe("already-completed"));
+  });
+
+  it("lands on locked when checkAccess reports a locked in-progress session", async () => {
+    api.checkAccess.mockResolvedValue({ has_access: true, has_completed: false, locked: true });
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("locked"));
+  });
+
+  it("begin() surfaces the locked phase on a session_locked 409 (defense in depth)", async () => {
+    const lockedError = Object.assign(new Error("Locked"), {
+      status: 409,
+      data: { success: false, error: "session_locked" },
+    });
+    api.start.mockRejectedValue(lockedError);
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    expect(result.current.phase).toBe("locked");
   });
 
   it("begin() starts the session, activates lockdown, and shows general instructions", async () => {
@@ -180,7 +199,7 @@ describe("useLiaFlow", () => {
     expect(res?.error).toBe(true);
   });
 
-  it("subtest completion goes straight to the NEXT subtest's practice (intro skipped)", async () => {
+  it("subtest completion lands on the NEXT subtest's intro, then practice via startPractice (instructions before every subtest)", async () => {
     api.start.mockResolvedValue({ session_id: "s1", current_subtest: "pattern_recognition", practice_questions: [] });
     api.startSubtest.mockResolvedValue({
       session_id: "s1",
@@ -200,9 +219,56 @@ describe("useLiaFlow", () => {
     await act(() => result.current.begin());
     await act(() => result.current.startAssessment());
     await act(() => result.current.submitAssessmentAnswer("3"));
-    expect(result.current.phase).toBe("practice");
+    expect(result.current.phase).toBe("subtest-intro");
     expect(result.current.currentSubtest).toBe("verbal_reasoning");
     expect(result.current.practiceQuestions).toHaveLength(1);
+    act(() => result.current.startPractice());
+    expect(result.current.phase).toBe("practice");
+  });
+
+  it("completing subtest N shows its intro (not the timer) — timer only starts when startAssessment runs for N+1", async () => {
+    api.start.mockResolvedValue({ session_id: "s1", current_subtest: "pattern_recognition", practice_questions: [] });
+    api.startSubtest.mockResolvedValueOnce({
+      session_id: "s1",
+      subtest: "pattern_recognition",
+      questions: [Q("a1")],
+      time_limit_seconds: 180,
+      started_at: new Date().toISOString(),
+    });
+    api.submitAnswer.mockResolvedValue({
+      subtest_complete: true,
+      assessment_complete: false,
+      next_subtest: "verbal_reasoning",
+    });
+    api.getPracticeQuestions.mockResolvedValue([Q("vp1", "verbal_reasoning")]);
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    await act(() => result.current.startAssessment());
+    expect(api.startSubtest).toHaveBeenCalledTimes(1);
+
+    await act(() => result.current.submitAssessmentAnswer("3"));
+
+    // Instructions before every subtest: land on the intro, not practice.
+    expect(result.current.phase).toBe("subtest-intro");
+    expect(result.current.currentSubtest).toBe("verbal_reasoning");
+    // Timer must NOT run during the intro — no additional subtest/start call.
+    expect(api.startSubtest).toHaveBeenCalledTimes(1);
+
+    act(() => result.current.startPractice());
+    expect(result.current.phase).toBe("practice");
+    expect(api.startSubtest).toHaveBeenCalledTimes(1); // still not started
+
+    api.startSubtest.mockResolvedValueOnce({
+      session_id: "s1",
+      subtest: "verbal_reasoning",
+      questions: [Q("b1", "verbal_reasoning")],
+      time_limit_seconds: 200,
+      started_at: new Date().toISOString(),
+    });
+    await act(() => result.current.startAssessment());
+    expect(result.current.phase).toBe("assessment");
+    expect(api.startSubtest).toHaveBeenCalledTimes(2); // clock starts only now
   });
 
   it("final completion saves violations, completes, ends lockdown", async () => {
@@ -226,6 +292,78 @@ describe("useLiaFlow", () => {
     expect(api.complete).toHaveBeenCalledWith("s1");
     expect(cb.onLockdownEnd).toHaveBeenCalled();
     expect(result.current.phase).toBe("completed");
+  });
+
+  it("resume_mode 'mid_subtest' enters assessment directly at the stored position with the ORIGINAL started_at (clock never resets)", async () => {
+    // Task-3 behavior change: resume-in-place supersedes delete+practice-reset (see 2026-07-25 plan)
+    const cb = makeCallbacks();
+    const original = new Date(Date.now() - 40_000).toISOString(); // 40s already elapsed
+    api.start.mockResolvedValue({
+      session_id: "s1",
+      current_subtest: "pattern_recognition",
+      practice_questions: [],
+      resume_mode: "mid_subtest",
+      current_item: 5, // 4 answered → resume at array index 4
+      started_at: original,
+      time_limit_seconds: 180,
+      questions: Array.from({ length: 60 }, (_, i) => ({ ...Q(`a${i + 1}`), item_number: i + 1 })),
+    });
+    const { result } = renderHook(() => useLiaFlow(cb));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    expect(result.current.phase).toBe("assessment");
+    expect(result.current.assessmentQuestions).toHaveLength(60);
+    expect(result.current.currentQuestionIndex).toBe(4); // next unanswered
+    expect(result.current.timeLimitSeconds).toBe(180);
+    expect(result.current.subtestStartTime?.toISOString()).toBe(original);
+    expect(cb.onLockdownBegin).toHaveBeenCalled();
+  });
+
+  // Task-4: intro before every new subtest — supersedes the direct-practice landing
+  it("resume_mode 'next_subtest' lands on the subtest intro (prior subtest expired server-side), then practice via startPractice", async () => {
+    api.start.mockResolvedValue({
+      session_id: "s1",
+      current_subtest: "verbal_reasoning",
+      practice_questions: [Q("vp1", "verbal_reasoning")],
+      resume_mode: "next_subtest",
+    });
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    expect(result.current.phase).toBe("subtest-intro");
+    expect(result.current.currentSubtest).toBe("verbal_reasoning");
+    expect(result.current.practiceQuestions).toHaveLength(1);
+    // Timer must NOT run during the intro — no subtest/start call yet.
+    expect(api.startSubtest).not.toHaveBeenCalled();
+    act(() => result.current.startPractice());
+    expect(result.current.phase).toBe("practice");
+  });
+
+  it("a timed_out submit response advances like a timeout (the late answer was not saved)", async () => {
+    api.start.mockResolvedValue({ session_id: "s1", current_subtest: "pattern_recognition", practice_questions: [] });
+    api.startSubtest.mockResolvedValue({
+      session_id: "s1",
+      subtest: "pattern_recognition",
+      questions: [Q("a1"), Q("a2")],
+      time_limit_seconds: 180,
+      started_at: new Date().toISOString(),
+    });
+    // Server rejected the answer (clock expired), advanced to the next subtest.
+    api.submitAnswer.mockResolvedValue({
+      timed_out: true,
+      subtest_complete: true,
+      assessment_complete: false,
+      next_subtest: "verbal_reasoning",
+      session_status: "practice",
+    });
+    api.getPracticeQuestions.mockResolvedValue([Q("vp1", "verbal_reasoning")]);
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    await act(() => result.current.startAssessment());
+    await act(() => result.current.submitAssessmentAnswer("3"));
+    expect(result.current.phase).toBe("subtest-intro");
+    expect(result.current.currentSubtest).toBe("verbal_reasoning");
   });
 
   it("timeout marks remaining questions and advances", async () => {
@@ -252,7 +390,7 @@ describe("useLiaFlow", () => {
       subtest: "pattern_recognition",
       unanswered_question_ids: ["a1", "a2", "a3"],
     });
-    expect(result.current.phase).toBe("practice");
+    expect(result.current.phase).toBe("subtest-intro");
     expect(result.current.currentSubtest).toBe("verbal_reasoning");
   });
 });

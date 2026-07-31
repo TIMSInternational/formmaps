@@ -7,13 +7,28 @@ export async function saveIsamsConfig(schoolId: string, payload: Record<string, 
   );
 }
 
-export async function getIsamsStatus(schoolId: string) {
+export interface IsamsStatus {
+  configured: boolean;
+  enabled: boolean;
+  connected: boolean;
+  lastSyncAt: string | null;
+}
+
+export async function getIsamsStatus(schoolId: string): Promise<IsamsStatus> {
   try {
-    return await apiRequest(
+    const res = await apiRequest(
       `/api/v1/school-admin/integrations/isams/status?schoolId=${encodeURIComponent(schoolId)}`
     );
+    // apiRequest resolves to the {success, data} envelope — unwrap it.
+    const status = res?.data ?? res;
+    return {
+      configured: !!status?.configured,
+      enabled: !!status?.enabled,
+      connected: !!status?.connected,
+      lastSyncAt: status?.lastSyncAt ?? null,
+    };
   } catch {
-    return { connected: false };
+    return { configured: false, enabled: false, connected: false, lastSyncAt: null };
   }
 }
 

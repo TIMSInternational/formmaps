@@ -147,7 +147,7 @@
   "assessments": {
     "overallCompletion": "Avance General de Evaluaciones",
     "assessmentsCompleted": "{{completed}}/{{total}} evaluaciones completadas",
-    "pcaTitle": "Evaluación Cognitiva PCA",
+    "pcaTitle": "Evaluación PCA",
     "pcaCompleted": "{{n}}/5 completadas",
     "milTitle": "Evaluación MIL / LIA",
     "eval360Title": "Evaluación 360°",

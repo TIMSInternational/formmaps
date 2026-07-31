@@ -53,6 +53,8 @@
     "pending": "Pendientes",
     "remaining": "Restantes",
     "progress": "Progreso",
+    "goalLabel": "Meta",
+    "noGoalSet": "No hay una meta de horas de servicio comunitario configurada para tu cuenta",
     "noHoursTitle": "Aún no hay horas registradas",
     "noHoursBody": "Haz clic en \"Registrar Horas\" para comenzar a rastrear tu servicio comunitario.",
     "deleteConfirm": "¿Eliminar esta entrada? Esta acción no se puede deshacer.",
@@ -110,6 +112,12 @@
       "subtitle": "Información en tiempo real sobre salarios, tendencias de contratación y habilidades demandadas.",
       "lastUpdated": "Última actualización: Ahora mismo",
       "backToDashboard": "Volver al Panel"
+    },
+    "personality": {
+      "name": "Evaluación de Personalidad",
+      "description": "Agrega tu tipo de personalidad de 4 letras para coincidencias de carrera aún más precisas",
+      "recommended": "Recomendado",
+      "completed": "Completado"
     }
   }
 }

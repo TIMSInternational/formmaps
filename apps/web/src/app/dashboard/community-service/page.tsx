@@ -223,17 +223,31 @@ export default function CommunityServicePage() {
             </div>
             <p className="text-xs font-medium text-muted-foreground">{t("communityService.progress")}</p>
           </div>
-          <p className="text-2xl font-bold text-foreground mb-2">
-            {Math.round(progress)}%
-          </p>
-          <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 1.5, ease: "easeOut" }}
-              className="h-full rounded-full bg-indigo-500"
-            />
-          </div>
+          {totalRequired > 0 ? (
+            <>
+              <p className="text-2xl font-bold text-foreground mb-1">
+                {Math.round(progress)}%
+              </p>
+              <p
+                data-testid="community-service-goal"
+                className="text-[11px] font-medium text-muted-foreground mb-2"
+              >
+                {t("communityService.goalLabel")}: {totalRequired} hrs
+              </p>
+              <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                  className="h-full rounded-full bg-indigo-500"
+                />
+              </div>
+            </>
+          ) : (
+            <p data-testid="community-service-goal" className="text-xs text-muted-foreground mt-1">
+              {t("communityService.noGoalSet")}
+            </p>
+          )}
         </div>
       </motion.div>
 

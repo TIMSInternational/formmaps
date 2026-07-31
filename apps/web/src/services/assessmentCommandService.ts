@@ -19,6 +19,7 @@ export interface PipelineStudent {
   mil: "done" | "in_progress" | "not_started";
   eval360: "done" | "in_progress" | "not_started";
   eval360Detail: { total: number; completed: number };
+  personality: "done" | "not_started";
 }
 
 export interface InsightsData {

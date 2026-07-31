@@ -58,7 +58,7 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {[
                 { label: "MIL", value: completion.byComponent.lia },
-                { label: "DISC", value: completion.byComponent.disc },
+                { label: "PCA", value: completion.byComponent.disc },
                 { label: "360", value: completion.byComponent.eval360 },
               ].map(c => (
                 <span key={c.label} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)" }}>
@@ -149,7 +149,7 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 14 }}>
           {agg.discDistribution && (
             <div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 4 }}>DISC Distribution</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 4 }}>PCA Distribution</div>
               <div style={{ display: "flex", gap: 6 }}>
                 {Object.entries(agg.discDistribution).map(([k, v]) => (
                   <span key={k} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)" }}>

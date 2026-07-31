@@ -21,7 +21,7 @@ import {
 import { RequireChromium } from "@/components/proctoring/RequireChromium";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
 import { useProctoring } from "@/components/proctoring/useProctoring";
-import { installViolationFlush } from "@/components/proctoring/flushViolations";
+import { installViolationFlush, postViolations } from "@/components/proctoring/flushViolations";
 import type { LockdownViolation } from "@/components/proctoring/types";
 import { PersonalityItemCard } from "./_components/PersonalityItemCard";
 
@@ -30,7 +30,7 @@ type Phase = "loading" | "error" | "already-completed" | "running" | "completing
 export default function PersonalityAssessmentPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { language: storeLanguage, setAssessmentActive } = useGlobalStore();
+  const { language: storeLanguage, setAssessmentActive, user } = useGlobalStore();
   const language: "es" | "en" = storeLanguage === "english" ? "en" : "es";
 
   const [phase, setPhase] = useState<Phase>("loading");
@@ -40,7 +40,21 @@ export default function PersonalityAssessmentPage() {
   const [answeredNumbers, setAnsweredNumbers] = useState<Set<number>>(new Set());
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const proctoring = useProctoring();
+  const proctoring = useProctoring({
+    onFlush: (v) => {
+      if (!sessionId) return;
+      postViolations(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/api/v1/personality/session/${sessionId}/violations`,
+        v,
+        {
+          token: useGlobalStore.getState().user.accessToken,
+          // Failed live-flush violations go back into the buffer so the
+          // pagehide/tab-hide backstop below re-sends them — no evidence loss.
+          requeue: (failed) => { proctoring.violations.current.unshift(...failed); },
+        },
+      );
+    },
+  });
   // Destructure the individually-stable callbacks/ref. Depending on the whole
   // `proctoring` object would churn these effects every render (its elapsed
   // clock ticks each second), re-firing begin()/tearing down mid-exam.
@@ -180,9 +194,10 @@ export default function PersonalityAssessmentPage() {
   const progressPct = useMemo(() => (total > 0 ? Math.round((answeredCount / total) * 100) : 0), [answeredCount, total]);
 
   // Wrap a live runner in the browser gate + proctoring chrome.
+  const watermark = user?.email ? { email: user.email } : undefined;
   const proctored = (node: ReactNode) => (
     <RequireChromium>
-      <ProctoredShell proctoring={proctoring}>{node}</ProctoredShell>
+      <ProctoredShell proctoring={proctoring} watermark={watermark}>{node}</ProctoredShell>
     </RequireChromium>
   );
 

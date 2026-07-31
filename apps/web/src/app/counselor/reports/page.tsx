@@ -48,8 +48,8 @@ export default function CounselorReportsPage() {
   });
 
   const tabs: { key: TabKey; label: string; icon: React.ElementType }[] = [
-    { key: "pca", label: "PCA / DISC Profile", icon: Target },
-    { key: "mil", label: "MIL / LIA Cognitive", icon: Brain },
+    { key: "pca", label: "PCA Assessment", icon: Target },
+    { key: "mil", label: "MIL / LIA Assessment", icon: Brain },
     { key: "academic", label: "Full Academic Summary", icon: BarChart3 },
   ];
 

@@ -3,8 +3,9 @@
 /**
  * LIA flow state machine — the tims-suite LIAEvaluation orchestration:
  * overview → general-instructions → subtest-intro → practice → assessment,
- * with between-subtest transitions going straight to practice (intro skipped),
- * timeout marking, and auto-completion on the last subtest.
+ * with between-subtest transitions showing the next subtest's intro before
+ * practice (instructions before every subtest), timeout marking, and
+ * auto-completion on the last subtest.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -19,6 +20,7 @@ export type LiaPhase =
   | "loading"
   | "overview"
   | "already-completed"
+  | "locked"
   | "general-instructions"
   | "subtest-intro"
   | "practice"
@@ -82,7 +84,7 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
       .then((access) => {
         if (cancelled) return;
         setHasResumableSession(!!access.existing_session_id && !access.has_completed);
-        setPhase(access.has_completed ? "already-completed" : "overview");
+        setPhase(access.locked ? "locked" : access.has_completed ? "already-completed" : "overview");
       })
       .catch(() => {
         if (!cancelled) setSessionError("access_check_failed");
@@ -103,12 +105,39 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
       });
       setSessionId(result.session_id);
       setCurrentSubtest(result.current_subtest);
-      setPracticeQuestions(result.practice_questions);
       onLockdownBegin();
-      setPhase("general-instructions");
+      if (result.resume_mode === "mid_subtest") {
+        // Server-authoritative timer: the subtest clock is still live. Enter the
+        // assessment phase directly at the stored position with the ORIGINAL
+        // started_at — LIATimer is server-anchored, so the countdown shows the
+        // true remaining time (never a fresh full clock).
+        const questions = result.questions ?? [];
+        setAssessmentQuestions(questions);
+        // current_item is 1-based (items answered + 1); the next unanswered item
+        // sits at array index current_item - 1. Clamp defensively.
+        const resumeIndex = Math.max(0, Math.min((result.current_item ?? 1) - 1, Math.max(0, questions.length - 1)));
+        setCurrentQuestionIndex(resumeIndex);
+        setSubtestStartTime(result.started_at ? new Date(result.started_at) : new Date());
+        setTimeLimitSeconds(result.time_limit_seconds ?? 0);
+        questionStartTimeRef.current = Date.now();
+        setPhase("assessment");
+      } else if (result.resume_mode === "next_subtest") {
+        // The prior subtest expired server-side and was advanced. Land on the
+        // intro (not practice directly) — instructions show before every new
+        // subtest, including this resume path. The timer stays off until
+        // startAssessment runs.
+        setPracticeQuestions(result.practice_questions);
+        setCurrentQuestionIndex(0);
+        setPhase("subtest-intro");
+      } else {
+        setPracticeQuestions(result.practice_questions);
+        setPhase("general-instructions");
+      }
     } catch (err) {
       const status = (err as Error & { status?: number })?.status;
-      if (status === 409) setPhase("already-completed");
+      const errorCode = (err as Error & { data?: { error?: string } })?.data?.error;
+      if (errorCode === "session_locked") setPhase("locked");
+      else if (status === 409) setPhase("already-completed");
       else setSessionError("start_failed");
     }
   }, [language, onLockdownBegin]);
@@ -163,8 +192,10 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
     async (nextSubtest: LIASubtest) => {
       if (!sessionId) return;
       // Phase first, then swap data — prevents rendering the old subtest's
-      // items against the new subtest (tims ordering).
-      setPhase("practice");
+      // items against the new subtest (tims ordering). Land on the intro (not
+      // practice directly) so instructions show before every subtest, not
+      // only the first — the timer stays off until startAssessment runs.
+      setPhase("subtest-intro");
       setAssessmentQuestions([]);
       setCurrentSubtest(nextSubtest);
       setCurrentQuestionIndex(0);
@@ -203,7 +234,10 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
           answer,
           time_spent_ms: timeSpentMs,
         });
-        if (result.subtest_complete) {
+        // A `timed_out` response means the server rejected this answer because
+        // the subtest clock expired and advanced the session — jump to the next
+        // phase exactly as the timeout handler does (the answer was not saved).
+        if (result.timed_out || result.subtest_complete) {
           if (result.assessment_complete) await finishAssessment();
           else if (result.next_subtest) await advanceToNextSubtest(result.next_subtest);
         } else {
@@ -238,7 +272,7 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
     setPhase("loading");
     liaAssessmentApi
       .checkAccess()
-      .then((access) => setPhase(access.has_completed ? "already-completed" : "overview"))
+      .then((access) => setPhase(access.locked ? "locked" : access.has_completed ? "already-completed" : "overview"))
       .catch(() => setSessionError("access_check_failed"));
   }, []);
 

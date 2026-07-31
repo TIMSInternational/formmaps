@@ -5,6 +5,7 @@ import {
   Brain,
   BookOpen,
   Users,
+  Sparkles,
   CheckCircle2,
   Circle,
   RotateCw,
@@ -95,7 +96,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
               {(() => {
                 const pct = assessmentProgress?.overallCompletion?.percentageComplete ?? 0;
                 const completed = assessmentProgress?.overallCompletion?.completedAssessments ?? 0;
-                const total = assessmentProgress?.overallCompletion?.totalAssessments ?? 3;
+                const total = assessmentProgress?.overallCompletion?.totalAssessments ?? 4;
                 return (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
@@ -115,7 +116,7 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
               <CardTitle className="flex items-center justify-between text-base">
                 <div className="flex items-center gap-2">
                   <Brain className="h-4 w-4 text-indigo-600" />
-                  {t("assessments.pcaTitle", "PCA Cognitive Assessment")}
+                  {t("assessments.pcaTitle", "PCA Assessment")}
                 </div>
                 {(() => {
                   const examStatuses = milHistory?.examStatus ?? [];
@@ -285,6 +286,30 @@ export function AssessmentsTab({ isLoading, assessmentProgress, milHistory, eval
                   </div>
                 );
               })()}
+            </CardContent>
+          </Card>
+
+          {/* Personality Assessment */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-base">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-indigo-600" />
+                  {t("assessments.personalityTitle", "Personality Assessment")}
+                </div>
+                <StatusBadge status={assessmentProgress?.personalityAssessment?.status ?? "not_started"} />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {assessmentProgress?.personalityAssessment?.status === "completed" ? (
+                <p className="text-sm text-gray-600">
+                  {t("assessments.personalityCompleted", "Student has completed the Personality Assessment.")}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-4">
+                  {t("assessments.personalityNotStarted", "Student has not completed the Personality Assessment.")}
+                </p>
+              )}
             </CardContent>
           </Card>
         </>

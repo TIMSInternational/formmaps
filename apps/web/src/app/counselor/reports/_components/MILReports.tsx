@@ -46,13 +46,13 @@ export function MILReports({ student }: { student: ReportStudent }) {
     try {
       const blob = new Blob([JSON.stringify({
         student: { name: student.name, email: student.email },
-        type: "MIL / LIA Cognitive Profile",
+        type: "MIL / LIA Profile",
         generatedAt: new Date().toISOString(),
         ...milData,
       }, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-      a.download = `MIL-Cognitive-${student.name.replace(/\s+/g, "-")}.json`; a.click();
-      toast.success("Cognitive profile downloaded");
+      a.download = `MIL-Profile-${student.name.replace(/\s+/g, "-")}.json`; a.click();
+      toast.success("MIL profile downloaded");
     } catch { toast.error("Failed"); }
     setDownloading(null);
   };
@@ -77,7 +77,7 @@ export function MILReports({ student }: { student: ReportStudent }) {
 
   return (
     <div>
-      <StudentInfoHeader student={student} icon={Brain} iconColor="#2E9098" subtitle="MIL / LIA Cognitive Assessment" />
+      <StudentInfoHeader student={student} icon={Brain} iconColor="#2E9098" subtitle="MIL / LIA Assessment" />
       <div className="p-5 space-y-5">
         {!fetched ? (
           <div className="space-y-3">
@@ -124,7 +124,7 @@ export function MILReports({ student }: { student: ReportStudent }) {
             >
               <div className="text-sm font-semibold flex items-center gap-2">
                 <Brain className="h-4 w-4 text-[#2E9098]" />
-                Cognitive Profile
+                MIL Profile
               </div>
               <div className="space-y-2.5">
                 {cognitiveScores.map((s) => {

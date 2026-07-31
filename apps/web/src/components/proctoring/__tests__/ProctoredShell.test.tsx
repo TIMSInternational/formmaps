@@ -83,4 +83,32 @@ describe("ProctoredShell", () => {
     expect(screen.getByTestId("runner")).toBeInTheDocument();
     expect(screen.queryByText(/Secure Mode/i)).not.toBeInTheDocument();
   });
+
+  describe("screenshot-deterrent watermark", () => {
+    it("tiles the watermark (>=4 nodes) with the email when `watermark` is passed", () => {
+      render(
+        <ProctoredShell proctoring={mkProctoring()} watermark={{ email: "s@e.st" }}>
+          <div data-testid="runner">exam</div>
+        </ProctoredShell>,
+      );
+      const tiles = screen.getAllByText(
+        (_content, el) => !!el && el.tagName.toLowerCase() === "span" && (el.textContent ?? "").includes("s@e.st"),
+      );
+      expect(tiles.length).toBeGreaterThanOrEqual(4);
+
+      const overlay = tiles[0].closest('[aria-hidden="true"]');
+      expect(overlay).not.toBeNull();
+      expect(overlay).toHaveClass("pointer-events-none");
+      expect(overlay).toHaveClass("select-none");
+    });
+
+    it("omits the watermark entirely when `watermark` is not passed", () => {
+      render(
+        <ProctoredShell proctoring={mkProctoring()}>
+          <div data-testid="runner">exam</div>
+        </ProctoredShell>,
+      );
+      expect(screen.queryByText(/s@e\.st/)).not.toBeInTheDocument();
+    });
+  });
 });

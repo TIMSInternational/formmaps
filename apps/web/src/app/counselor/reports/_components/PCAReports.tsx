@@ -54,9 +54,9 @@ export function PCAReports({ student }: { student: ReportStudent }) {
       const blob = await getPcaChartBlob(String(pcaData.pcaCod));
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a"); a.href = url;
-      a.download = `DISC-Chart-${student.name.replace(/\s+/g, "-")}.png`; a.click();
+      a.download = `PCA-Chart-${student.name.replace(/\s+/g, "-")}.png`; a.click();
       URL.revokeObjectURL(url);
-      toast.success("DISC chart downloaded");
+      toast.success("PCA chart downloaded");
     } catch { toast.error("Failed to download chart"); }
     setDownloading(null);
   };
@@ -96,7 +96,7 @@ export function PCAReports({ student }: { student: ReportStudent }) {
     try {
       const report = {
         student: { name: student.name, email: student.email, id: student.id },
-        type: "PCA DISC Profile Report",
+        type: "PCA Profile Report",
         generatedAt: new Date().toISOString(),
         disc: pcaData ? {
           workAdaptation: { D: pcaData.pcaD1, I: pcaData.pcaI1, S: pcaData.pcaS1, C: pcaData.pcaC1 },
@@ -116,7 +116,7 @@ export function PCAReports({ student }: { student: ReportStudent }) {
 
   return (
     <div>
-      <StudentInfoHeader student={student} icon={Target} iconColor="#8b5cf6" subtitle="PCA / DISC Profile Report" />
+      <StudentInfoHeader student={student} icon={Target} iconColor="#8b5cf6" subtitle="PCA Assessment Report" />
       <div className="p-5 space-y-5">
         {!fetched ? (
           <div className="space-y-3">
@@ -141,7 +141,7 @@ export function PCAReports({ student }: { student: ReportStudent }) {
             >
               <div className="text-sm font-semibold flex items-center gap-2">
                 <Target className="h-4 w-4 text-violet-500" />
-                DISC Profile — Work Adaptation
+                PCA Profile — Work Adaptation
               </div>
               <div className="space-y-2.5">
                 {discScores.map((s) => (

@@ -256,11 +256,11 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
         </View>
       </CleanEditorialLayout>
 
-      {/* 3. Cognitive Profile */}
+      {/* 3. MIL Profile */}
       <CleanEditorialLayout
          pageNum={3}
          totalPages={8}
-         title="Cognitive Profile"
+         title="MIL Profile"
       >
           {/* Top Section: Chart & Narrative */}
           <View style={{ flexDirection: 'row', gap: 32, marginBottom: 32, alignItems: 'center' }}>
@@ -272,7 +272,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
 
                {/* Summary Narrative */}
                <View style={{ flex: 1 }}>
-                   <SectionTitle title="Cognitive Synergy" />
+                   <SectionTitle title="MIL Synergy" />
                    <Text style={{ fontSize: 10, color: modernColors.textPrimary, lineHeight: 1.6, textAlign: 'justify' }}>
                        {data.cognitiveSynergy}
                    </Text>

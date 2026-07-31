@@ -23,7 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InviteParentPanel } from "@/components/school-admin/InviteParentPanel";
-import { useStudent } from "@/hooks/useSchoolAdmin";
+import { useStudent, useStudentReport } from "@/hooks/useSchoolAdmin";
 import {
   useStudentCoursePlan,
   useSchoolAdminAddCourse,
@@ -84,6 +84,7 @@ export default function StudentDetailsPage() {
   const { data: pcaDISC, isLoading: pcaDISCLoading } = useStudentPCAResult(studentId);
   const registerPCA = useRegisterPCA(studentId);
   const { data: evalGroups } = useStudentEvalGroups(studentId);
+  const { data: studentReport } = useStudentReport(studentId);
   const { data: gapsData } = useStudentAcademicGaps(studentId);
   const { data: recsData } = useStudentRecommendations(studentId);
   const { data: transcriptData } = useStudentTranscript(studentId);
@@ -159,6 +160,8 @@ export default function StudentDetailsPage() {
   const pcaTotal = 1;
   const evalTotal = evalGroups?.length ?? 0;
   const evalCompleted = evalGroups?.filter((g) => g.isEvaluationCompleted).length ?? 0;
+  const personalityCompleted = studentReport?.completion.personality ? 1 : 0;
+  const personalityTotal = 1;
 
   return (
     <div className="space-y-6">
@@ -240,7 +243,7 @@ export default function StudentDetailsPage() {
         {[
           { label: "GPA", value: gpaData?.gpaWeighted?.toFixed(2) ?? gpaData?.gpaUnweighted?.toFixed(2) ?? "\u2014", icon: Award, color: "#f59e0b" },
           { label: "Credits", value: `${plan?.graduationProgress?.totalCreditsEarned ?? gpaData?.totalCredits ?? "0"} / ${plan?.graduationProgress?.totalCreditsRequired ?? "0"}`, icon: GraduationCap, color: "#2E9098" },
-          { label: "Assessments", value: `${milCompleted + pcaCompleted + evalCompleted} / ${milTotal + pcaTotal + evalTotal}`, icon: FileText, color: "#14b8a6" },
+          { label: "Assessments", value: `${milCompleted + pcaCompleted + evalCompleted + personalityCompleted} / ${milTotal + pcaTotal + evalTotal + personalityTotal}`, icon: FileText, color: "#14b8a6" },
           { label: "Last Seen", value: student.lastActive ? format(new Date(student.lastActive), "MMM do") : "Never", icon: Activity, color: "#2E9098" },
         ].map((stat) => (
           <div key={stat.label} style={{
@@ -290,6 +293,8 @@ export default function StudentDetailsPage() {
             pcaTotal={pcaTotal}
             evalCompleted={evalCompleted}
             evalTotal={evalTotal}
+            personalityCompleted={personalityCompleted}
+            personalityTotal={personalityTotal}
             evalGroups={evalGroups}
           />
         </TabsContent>
@@ -301,6 +306,7 @@ export default function StudentDetailsPage() {
             pcaDISCLoading={pcaDISCLoading}
             registerPCA={registerPCA}
             student={{ id: student.id, name: student.name, email: student.email }}
+            studentReport={studentReport}
           />
         </TabsContent>
 

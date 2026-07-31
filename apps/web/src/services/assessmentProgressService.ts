@@ -14,6 +14,7 @@ import {
   UserEvaluationProgress,
 } from "./evaluationService";
 import { checkPCAStatus } from "./pcaService";
+import { personalityApi } from "./personalityService";
 
 interface MILEnhancedData {
   completedExams: number;
@@ -37,6 +38,21 @@ interface MILEnhancedData {
   }>;
 }
 
+// Single 360-completion rule, mirroring the server's gate
+// (computeStudentCompletion in api/src/services/assessmentService.ts):
+// a student needs at most 3 completed evaluators, never more than were
+// actually invited. One unresponsive evaluator must never permanently lock
+// a student out — this is why "3-of-4 done" must read as complete, not
+// "one of each relation type" (self/parent/teacher/sibling-friend), which
+// is what this file used to require and is the exact bug Madhav reported.
+export function EVAL_REQUIRED_RULE(evalTotal: number): number {
+  return Math.min(evalTotal, 3);
+}
+
+export function isEvalComplete(evalCompleted: number, evalTotal: number): boolean {
+  return evalTotal > 0 && evalCompleted >= EVAL_REQUIRED_RULE(evalTotal);
+}
+
 export interface AssessmentOverallProgress {
   milAssessment: {
     status: "not_started" | "in_progress" | "completed";
@@ -54,6 +70,19 @@ export interface AssessmentOverallProgress {
     status: "not_started" | "in_progress" | "completed";
     progress?: number;
     lastActivity?: string;
+  };
+  /**
+   * The personality assessment — became a required 4th assessment (alongside
+   * MIL/360/PCA) in the career/university-unlock gate on 2026-07-30. `gating: true`
+   * reflects that; the one exception is a student already unlocked under the old
+   * 3-assessment rule at cutover (server-side `legacyUnlockGrandfathered`), which
+   * `overallCompletion` below already accounts for via the server's own verdict.
+   */
+  personalityAssessment: {
+    key: "personality";
+    gating: boolean;
+    status: "not_started" | "in_progress" | "completed";
+    hasAccess: boolean;
   };
   overallCompletion: {
     totalAssessments: number;
@@ -152,29 +181,17 @@ export async function getUserAssessmentProgress(
       evaluationProgress = getUserEvaluationProgressSummary(evaluationGroups);
 
       if (evaluationGroups.length > 0) {
-        // Check if 360° evaluation is complete:
-        // - Self-evaluation must be completed
-        // - At least one from each group type (Parent, Teacher, SiblingFriend) must be completed
-        // Self-evaluation has groupType "Parent" but relation "Self"
-        const gt = (g: EvaluationGroupProgress) => (g.groupType || "").toLowerCase();
-        const rel = (g: EvaluationGroupProgress) => (g.relation || "").toLowerCase();
-        const selfCompleted = evaluationGroups.some(
-          (g) => (gt(g) === "self" || rel(g) === "self") && g.isEvaluationCompleted
-        );
-        const parentCompleted = evaluationGroups.some(
-          (g) => gt(g) === "parent" && rel(g) !== "self" && g.isEvaluationCompleted
-        );
-        const teacherCompleted = evaluationGroups.some(
-          (g) => gt(g) === "teacher" && g.isEvaluationCompleted
-        );
-        const otherCompleted = evaluationGroups.some(
-          (g) => (gt(g) === "siblingfriend" || gt(g) === "other") && g.isEvaluationCompleted
-        );
+        // 360° evaluation is complete once evalCompleted >= min(evalTotal, 3) —
+        // the SAME threshold the server unlocks careers/course-plan with (see
+        // EVAL_REQUIRED_RULE above). Requiring one-of-each relation type here
+        // let one unresponsive evaluator lock a student out forever even after
+        // the server had already unlocked them (3-of-4 done read as "pending").
+        const evalTotal = evaluationGroups.length;
+        const evalCompleted = evaluationGroups.filter((g) => g.isEvaluationCompleted).length;
 
-        evaluationStatus =
-          selfCompleted && parentCompleted && teacherCompleted && otherCompleted
-            ? "completed"
-            : "in_progress";
+        evaluationStatus = isEvalComplete(evalCompleted, evalTotal)
+          ? "completed"
+          : "in_progress";
 
         const latestGroup = evaluationGroups.sort(
           (a, b) =>
@@ -220,20 +237,60 @@ export async function getUserAssessmentProgress(
       // Keep default values
     }
 
-    // Calculate overall completion
-    const assessmentStatuses = [milStatus, evaluationStatus, pcaStatus];
-    const completedCount = assessmentStatuses.filter(
-      (status) => status === "completed"
-    ).length;
-    const inProgressCount = assessmentStatuses.filter(
-      (status) => status === "in_progress"
-    ).length;
+    // Fetch personality access. Never throws: any failure falls back to "not_started".
+    let personalityStatus: "not_started" | "in_progress" | "completed" = "not_started";
+    let personalityHasAccess = false;
 
+    try {
+      const access = await personalityApi.getAccess();
+      personalityHasAccess = access.has_access;
+      personalityStatus = access.has_completed
+        ? "completed"
+        : access.existing_session_id
+          ? "in_progress"
+          : "not_started";
+    } catch {
+      // Keep defaults — a personality-service outage must never break the
+      // rest of progress tracking.
+    }
+
+    // Overall completion (4 assessments: MIL, 360, PCA, Personality) is fetched from
+    // the server's own verdict (GET /api/v1/assessment/completion → checkAssessmentCompletion)
+    // rather than re-derived here, so this client-side tally can never drift from the
+    // server's actual unlock decision — critically including legacyUnlockGrandfathered,
+    // which only the server can evaluate. Falls back to a client-derived 3-of-3 estimate
+    // (the pre-2026-07-30 shape, personality excluded) if the endpoint is unreachable, so
+    // an outage degrades progress display rather than breaking it.
+    let completedCount = 0;
     let overallPercentage = 0;
-    if (completedCount > 0) {
-      overallPercentage = (completedCount / 3) * 100;
-    } else if (inProgressCount > 0) {
-      overallPercentage = (inProgressCount / 3) * 30; // 30% for in progress
+    let totalAssessments = 4;
+    let personalityGates = true;
+
+    try {
+      const completionJson = await apiRequest<{
+        data?: { allDone: boolean; readyForInsights: boolean; personalityCompleted: boolean };
+      }>("/api/v1/assessment/completion");
+      const serverCompletion = completionJson.data;
+      if (!serverCompletion) throw new Error("no completion data");
+
+      const nonPersonalityStatuses = [milStatus, evaluationStatus, pcaStatus];
+      const nonPersonalityCompleted = nonPersonalityStatuses.filter((s) => s === "completed").length;
+      completedCount = nonPersonalityCompleted + (personalityStatus === "completed" ? 1 : 0);
+      overallPercentage = serverCompletion.allDone ? 100 : (completedCount / 4) * 100;
+      // The student is grandfathered if the server says allDone despite Personality
+      // not actually being complete — the only way that combination can occur.
+      personalityGates = !(serverCompletion.allDone && !serverCompletion.personalityCompleted);
+    } catch {
+      totalAssessments = 3;
+      const assessmentStatuses = [milStatus, evaluationStatus, pcaStatus];
+      const nonPersonalityCompletedCount = assessmentStatuses.filter((s) => s === "completed").length;
+      const inProgressCount = assessmentStatuses.filter((s) => s === "in_progress").length;
+      completedCount = nonPersonalityCompletedCount;
+      if (nonPersonalityCompletedCount > 0) {
+        overallPercentage = (nonPersonalityCompletedCount / 3) * 100;
+      } else if (inProgressCount > 0) {
+        overallPercentage = (inProgressCount / 3) * 30; // 30% for in progress
+      }
     }
 
     return {
@@ -254,8 +311,14 @@ export async function getUserAssessmentProgress(
         progress: pcaProgress,
         lastActivity: pcaLastActivity,
       },
+      personalityAssessment: {
+        key: "personality",
+        gating: personalityGates,
+        status: personalityStatus,
+        hasAccess: personalityHasAccess,
+      },
       overallCompletion: {
-        totalAssessments: 3,
+        totalAssessments,
         completedAssessments: completedCount,
         percentageComplete: Math.round(overallPercentage),
       },

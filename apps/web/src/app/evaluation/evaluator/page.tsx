@@ -16,7 +16,7 @@ import { VocationalEvaluator } from "./_components/VocationalEvaluator";
 import { RequireChromium } from "@/components/proctoring/RequireChromium";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
 import { useProctoring } from "@/components/proctoring/useProctoring";
-import { installViolationFlush, flushViolations } from "@/components/proctoring/flushViolations";
+import { installViolationFlush, flushViolations, postViolations } from "@/components/proctoring/flushViolations";
 import type { LockdownViolation } from "@/components/proctoring/types";
 
 export default function EvaluatorPage() {
@@ -50,7 +50,21 @@ export default function EvaluatorPage() {
   // Proctoring: the evaluator flow is unauthenticated (token-scoped), so
   // violations flush to the token endpoint via sendBeacon, which survives a
   // killed tab and needs no auth header.
-  const proctoring = useProctoring();
+  const proctoring = useProctoring({
+    onFlush: (v) => {
+      if (!token) return;
+      postViolations(
+        `${API_BASE_URL}/evaluation/vocational/${token}/violations`,
+        v,
+        {
+          // Unauthenticated, token-scoped endpoint — no auth header, matching
+          // the pagehide/tab-hide backstop below. Failed live-flush violations
+          // go back into the buffer so that backstop re-sends them.
+          requeue: (failed) => { proctoring.violations.current.unshift(...failed); },
+        },
+      );
+    },
+  });
   // Destructure the individually-stable callbacks/ref. Depending on the whole
   // `proctoring` object would churn these effects every render (its elapsed
   // clock ticks each second), re-firing begin()/tearing down and disabling
@@ -267,10 +281,14 @@ export default function EvaluatorPage() {
     }
   };
 
-  // Wrap an interactive runner in the browser gate + proctoring chrome.
+  // Wrap an interactive runner in the browser gate + proctoring chrome. This
+  // flow is token-scoped (may have no authed user) — the evaluator's own
+  // email is only known once the 360 evaluation data loads; omit the
+  // watermark otherwise (e.g. the vocational-evaluator branch, or before load).
+  const watermark = evaluatorData?.evaluatorEmail ? { email: evaluatorData.evaluatorEmail } : undefined;
   const proctored = (node: ReactNode) => (
     <RequireChromium>
-      <ProctoredShell proctoring={proctoring}>{node}</ProctoredShell>
+      <ProctoredShell proctoring={proctoring} watermark={watermark}>{node}</ProctoredShell>
     </RequireChromium>
   );
 

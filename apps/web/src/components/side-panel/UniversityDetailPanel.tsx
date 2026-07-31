@@ -151,7 +151,7 @@ export function UniversityDetailPanel({
           <SectionLabel icon={BarChart3} label={t("Match Breakdown", "Desglose")} />
           <div className="grid grid-cols-2 gap-2">
             {[
-              { label: t("Cognitive", "Cognitivo"), value: matchBreakdown.academicMatch },
+              { label: t("MIL", "MIL"), value: matchBreakdown.academicMatch },
               { label: t("Career", "Carrera"), value: matchBreakdown.careerAlignment },
               { label: t("Personality", "Personalidad"), value: matchBreakdown.personalityMatch },
               { label: t("Preferences", "Preferencias"), value: matchBreakdown.preferencesMatch },

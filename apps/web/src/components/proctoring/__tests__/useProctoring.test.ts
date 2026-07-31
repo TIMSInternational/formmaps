@@ -1,6 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { useProctoring } from "../useProctoring";
 import { useLockdown } from "@/app/dashboard/assessments/lia/_tims/useLockdown";
+import type { LockdownViolation } from "../types";
 
 function setHidden(v: boolean) {
   Object.defineProperty(document, "hidden", { configurable: true, get: () => v });
@@ -49,5 +50,62 @@ describe("useProctoring", () => {
     });
     expect(drained.some((v) => v.type === "tab_switch")).toBe(true);
     expect(result.current.violations.current).toHaveLength(0);
+  });
+
+  describe("debounced per-event flush", () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    it("fires onFlush with the buffered violations within the debounce window and drains the buffer", () => {
+      const onFlush = jest.fn();
+      const { result } = renderHook(() => useProctoring({ onFlush }));
+      act(() => result.current.begin());
+      act(() => setHidden(true)); // records a "tab_switch" violation
+
+      expect(onFlush).not.toHaveBeenCalled();
+      act(() => {
+        jest.advanceTimersByTime(2001);
+      });
+
+      expect(onFlush).toHaveBeenCalledTimes(1);
+      const flushed = onFlush.mock.calls[0][0] as LockdownViolation[];
+      expect(flushed.some((v) => v.type === "tab_switch")).toBe(true);
+      expect(result.current.violations.current).toHaveLength(0);
+    });
+
+    it("coalesces two rapid violations into ONE flush call", () => {
+      const onFlush = jest.fn();
+      const { result } = renderHook(() => useProctoring({ onFlush }));
+      act(() => result.current.begin());
+      act(() => setHidden(true)); // violation #1: tab_switch
+      act(() => {
+        document.dispatchEvent(new Event("contextmenu")); // violation #2: context_menu
+      });
+
+      act(() => {
+        jest.advanceTimersByTime(2001);
+      });
+
+      expect(onFlush).toHaveBeenCalledTimes(1);
+      const flushed = onFlush.mock.calls[0][0] as LockdownViolation[];
+      expect(flushed.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("honors a custom flushDebounceMs", () => {
+      const onFlush = jest.fn();
+      const { result } = renderHook(() => useProctoring({ onFlush, flushDebounceMs: 500 }));
+      act(() => result.current.begin());
+      act(() => setHidden(true));
+
+      act(() => {
+        jest.advanceTimersByTime(499);
+      });
+      expect(onFlush).not.toHaveBeenCalled();
+
+      act(() => {
+        jest.advanceTimersByTime(2);
+      });
+      expect(onFlush).toHaveBeenCalledTimes(1);
+    });
   });
 });

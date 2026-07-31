@@ -6,7 +6,7 @@ import type { AssessmentSchedule } from "@/services/assessmentCommandService";
 
 const GRADES = [9, 10, 11, 12];
 const GRADE_LABELS: Record<number, string> = { 9: "Freshman", 10: "Sophomore", 11: "Junior", 12: "Senior" };
-const ASSESSMENT_TYPES = ["PCA", "MIL", "360"] as const;
+const ASSESSMENT_TYPES = ["PCA", "MIL", "360", "Personality"] as const;
 
 export interface ScheduleSaveItem {
   gradeLevel: number;

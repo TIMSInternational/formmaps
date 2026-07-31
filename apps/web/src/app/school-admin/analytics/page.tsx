@@ -34,14 +34,15 @@ export default function AnalyticsPage() {
   const avgGpa = (o?.averageProgressScore ?? 0) > 0 ? ((o!.averageProgressScore) / 25).toFixed(2) : "\u2014";
 
   // Pipeline analysis by grade
-  const gradeStats: Record<number, { total: number; pcaDone: number; milDone: number; evalDone: number }> = {};
+  const gradeStats: Record<number, { total: number; pcaDone: number; milDone: number; evalDone: number; personalityDone: number }> = {};
   for (const st of students) {
     const g = st.gradeLevel || 0;
-    if (!gradeStats[g]) gradeStats[g] = { total: 0, pcaDone: 0, milDone: 0, evalDone: 0 };
+    if (!gradeStats[g]) gradeStats[g] = { total: 0, pcaDone: 0, milDone: 0, evalDone: 0, personalityDone: 0 };
     gradeStats[g].total++;
     if (Object.values(st.pca).every(v => v === "done")) gradeStats[g].pcaDone++;
     if (st.mil === "done") gradeStats[g].milDone++;
     if (st.eval360 === "done") gradeStats[g].evalDone++;
+    if (st.personality === "done") gradeStats[g].personalityDone++;
   }
   const gradeLabels: Record<number, string> = {
     0: t("analytics.gradeLabels.0"),
@@ -55,8 +56,9 @@ export default function AnalyticsPage() {
   const pcaFullDone = students.filter(st => Object.values(st.pca).every(v => v === "done")).length;
   const milDone = students.filter(st => st.mil === "done").length;
   const evalDone = students.filter(st => st.eval360 === "done").length;
+  const personalityDone = students.filter(st => st.personality === "done").length;
   const fullyComplete = students.filter(st =>
-    Object.values(st.pca).every(v => v === "done") && st.mil === "done" && st.eval360 === "done"
+    Object.values(st.pca).every(v => v === "done") && st.mil === "done" && st.eval360 === "done" && st.personality === "done"
   ).length;
 
   // Insights data
@@ -84,6 +86,7 @@ export default function AnalyticsPage() {
         ["PCA Complete", pcaFullDone],
         ["MIL Complete", milDone],
         ["360 Complete", evalDone],
+        ["Personality Complete", personalityDone],
         ["Fully Complete", fullyComplete],
       ];
       const csv = rows.map(r => r.join(",")).join("\n");
@@ -94,7 +97,7 @@ export default function AnalyticsPage() {
       a.click(); URL.revokeObjectURL(url);
       toast.success(t("analytics.exportedSuccess"));
     } catch { toast.error(t("analytics.exportFailed")); }
-  }, [totalStudents, atRisk, counselorCoverage, completionRate, avgGpa, pcaFullDone, milDone, evalDone, fullyComplete]);
+  }, [totalStudents, atRisk, counselorCoverage, completionRate, avgGpa, pcaFullDone, milDone, evalDone, personalityDone, fullyComplete]);
 
   if (statsLoading && overviewLoading) {
     return (
@@ -184,11 +187,12 @@ export default function AnalyticsPage() {
                           {gradeLabels[g] || t("analytics.topPerformers.gradeLabel", { grade })} ({t("analytics.students", { count: data.total })})
                         </span>
                       </div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
                         {[
                           { label: "PCA", done: data.pcaDone, color: "#8b5cf6" },
                           { label: "MIL/LIA", done: data.milDone, color: "#2E9098" },
                           { label: "360°", done: data.evalDone, color: "#14b8a6" },
+                          { label: "Personality", done: data.personalityDone, color: "#6366f1" },
                         ].map((a) => {
                           const pct = data.total > 0 ? Math.round((a.done / data.total) * 100) : 0;
                           return (
@@ -230,6 +234,7 @@ export default function AnalyticsPage() {
               { label: t("analytics.pipeline.pcaComplete"), done: pcaFullDone, total: totalStudents, color: "#8b5cf6" },
               { label: t("analytics.pipeline.milComplete"), done: milDone, total: totalStudents, color: "#2E9098" },
               { label: t("analytics.pipeline.eval360Complete"), done: evalDone, total: totalStudents, color: "#14b8a6" },
+              { label: t("analytics.pipeline.personalityComplete", "Personality Complete"), done: personalityDone, total: totalStudents, color: "#6366f1" },
               { label: t("analytics.pipeline.fullyAssessed"), done: fullyComplete, total: totalStudents, color: "#10b981" },
             ].map((item) => {
               const pct = item.total > 0 ? Math.round((item.done / item.total) * 100) : 0;

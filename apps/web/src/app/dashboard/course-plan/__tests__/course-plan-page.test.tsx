@@ -152,6 +152,47 @@ describe("Student course plan page", () => {
     expect(screen.getByRole("button", { name: /add studio art i/i })).toBeInTheDocument();
   });
 
+  // Task 5 (Madhav fix-wave, item 6): the lock card used to require ALL
+  // invited evaluators before dropping "360°" from the "Still needed" list.
+  // The server's own gate unlocks at min(evalTotal, 3) — a student who
+  // finished 3-of-4 must not see 360° listed as still needed, and the
+  // denominator shown for an incomplete 360° must be the min(evalTotal,3)
+  // requirement, never the raw evalTotal.
+  it("drops 360° from 'Still needed' once evalCompleted meets min(evalTotal,3), even mid-4 invites", async () => {
+    mockRecs.mockResolvedValue({
+      data: [],
+      locked: true, // still locked overall — LIA is short — but 360° itself is done
+      completion: { allDone: false, liaCompleted: 2, pcaCompleted: true, evalCompleted: 3, evalTotal: 4 },
+    });
+    renderPage();
+    expect(await screen.findByText(/unlock your personalized graduation plan/i)).toBeInTheDocument();
+    expect(screen.getByText(/still needed/i)).toHaveTextContent(/LIA 2\/5/);
+    expect(screen.queryByText(/360°/)).not.toBeInTheDocument();
+  });
+
+  it("shows the min(evalTotal,3) denominator (not the raw evalTotal) when 360° is still incomplete", async () => {
+    mockRecs.mockResolvedValue({
+      data: [],
+      locked: true,
+      completion: { allDone: false, liaCompleted: 5, pcaCompleted: true, evalCompleted: 2, evalTotal: 4 },
+    });
+    renderPage();
+    expect(await screen.findByText(/unlock your personalized graduation plan/i)).toBeInTheDocument();
+    expect(screen.getByText(/360° 2\/3/)).toBeInTheDocument();
+    expect(screen.queryByText(/360° 2\/4/)).not.toBeInTheDocument();
+  });
+
+  it("is satisfied by the min rule when exactly 2 of 2 invited evaluators complete", async () => {
+    mockRecs.mockResolvedValue({
+      data: [],
+      locked: true, // PCA still missing keeps the card locked
+      completion: { allDone: false, liaCompleted: 5, pcaCompleted: false, evalCompleted: 2, evalTotal: 2 },
+    });
+    renderPage();
+    expect(await screen.findByText(/unlock your personalized graduation plan/i)).toBeInTheDocument();
+    expect(screen.queryByText(/360°/)).not.toBeInTheDocument();
+  });
+
   it("renders a draft plan with proposed items, rationale, and gap report", async () => {
     mockTarget.mockResolvedValue({
       universityName: "MIT", universityId: "u-mit", major: "Computer Science",

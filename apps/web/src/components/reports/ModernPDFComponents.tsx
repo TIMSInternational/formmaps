@@ -485,7 +485,7 @@ export const ModernCoverPage = ({ title, subtitle, userName, date }: { title: st
                    </View>
                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                        <Text style={{ fontSize: 11, color: '#2dd4bf', fontFamily: 'Helvetica-Bold', width: 24 }}>02</Text>
-                       <Text style={{ fontSize: 11, color: '#cbd5e1' }}>Cognitive Dimensions</Text>
+                       <Text style={{ fontSize: 11, color: '#cbd5e1' }}>MIL Dimensions</Text>
                    </View>
                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                        <Text style={{ fontSize: 11, color: '#2dd4bf', fontFamily: 'Helvetica-Bold', width: 24 }}>03</Text>

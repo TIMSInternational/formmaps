@@ -9,7 +9,7 @@ import { useCareerList } from "@/hooks/useCareerQueries";
 import { useTimsCareerScoring } from "@/hooks/useTimsQueries";
 import { useFavorites } from "@/hooks/useFavorites";
 import { motion } from "motion/react";
-import { Compass, SearchX, Lock, CheckCircle2, Circle, ArrowRight } from "lucide-react";
+import { Compass, SearchX, Lock, CheckCircle2, Circle, ArrowRight, Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/empty-state/EmptyState";
 import { ActiveFilterPills, type FilterPill } from "@/components/filters/ActiveFilterPills";
 import { useSidePanel } from "@/components/side-panel/SidePanel";
@@ -25,8 +25,12 @@ export default function CareerExplorer() {
   const { t } = useTranslation();
   const { user } = useGlobalStore();
   const { data: assessmentProgress, isLoading: assessmentLoading } = useAssessmentProgress(user?.id || "");
+  // percentageComplete (not a raw completedAssessments/totalAssessments compare) is
+  // deliberately used here — it's already server-driven and accounts for
+  // legacyUnlockGrandfathered, where completedAssessments can be 3-of-4 (Personality
+  // not done) while the student is still genuinely unlocked.
   const allAssessmentsComplete =
-    assessmentProgress?.overallCompletion?.completedAssessments === 3;
+    assessmentProgress?.overallCompletion?.percentageComplete === 100;
 
   const [filters, setFilters] = useState<{
     search?: string;
@@ -34,6 +38,11 @@ export default function CareerExplorer() {
     education?: string;
     sort?: string;
   }>({});
+
+  // Personality became a required 4th assessment (alongside PCA/LIA/360) on
+  // 2026-07-30 — see personalityAssessment.gating and the required checklist below.
+  const personalityStatus = assessmentProgress?.personalityAssessment?.status || "not_started";
+  const personalityCompleted = personalityStatus === "completed";
 
   const { data: timsData, isLoading: timsLoading } = useTimsCareerScoring();
   const { data: listData, isLoading: listLoading } = useCareerList({
@@ -129,6 +138,7 @@ export default function CareerExplorer() {
     const pcaStatus = assessmentProgress?.pcaAssessment?.status || "not_started";
     const milStatus = assessmentProgress?.milAssessment?.status || "not_started";
     const evalStatus = assessmentProgress?.evaluationAssessment?.status || "not_started";
+    const personalityGateStatus = assessmentProgress?.personalityAssessment?.status || "not_started";
 
     const assessments = [
       {
@@ -149,6 +159,12 @@ export default function CareerExplorer() {
         status: evalStatus,
         href: "/dashboard/assessments/evaluation",
       },
+      {
+        name: t("career.gate.personality", "Personality Assessment"),
+        description: t("career.gate.personalityDesc", "Resolve your 4-letter personality type"),
+        status: personalityGateStatus,
+        href: "/dashboard/assessments/personality",
+      },
     ];
 
     const completedCount = assessments.filter((a) => a.status === "completed").length;
@@ -163,15 +179,15 @@ export default function CareerExplorer() {
             {t("career.gate.title", "Complete Your Assessments")}
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-            {t("career.gate.subtitle", "Finish all 3 assessments to unlock personalized career matches tailored to your unique profile.")}
+            {t("career.gate.subtitle", "Finish all 4 assessments to unlock personalized career matches tailored to your unique profile.")}
           </p>
         </div>
 
         {/* Progress indicator */}
         <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground">
-          <span>{completedCount}/3 {t("career.gate.completed", "completed")}</span>
+          <span>{completedCount}/4 {t("career.gate.completed", "completed")}</span>
           <div className="flex gap-1.5">
-            {[0, 1, 2].map((i) => (
+            {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
                 className={`w-8 h-2 rounded-full transition-colors ${
@@ -227,7 +243,7 @@ export default function CareerExplorer() {
         </div>
 
         {/* CTA */}
-        {completedCount < 3 && (() => {
+        {completedCount < 4 && (() => {
           const next = assessments.find((a) => a.status !== "completed");
           return next ? (
             <div className="text-center pt-2">
@@ -263,6 +279,18 @@ export default function CareerExplorer() {
           <p className="text-[11px] text-muted-foreground/70 ml-0 sm:ml-[3.25rem] leading-relaxed">
             {t("career.explorer.disclaimer", "These match estimates are based on your assessment data and are for informational guidance only — not a guarantee of employment and not a substitute for professional career counseling.")}
           </p>
+          {/* Reachable only for a legacyUnlockGrandfathered student (Personality is required for
+              everyone else to have reached this unlocked view at all) — nudge to still complete it. */}
+          {!personalityCompleted && (
+            <Link
+              href="/dashboard/assessments/personality"
+              className="inline-flex items-center gap-1.5 ml-0 sm:ml-[3.25rem] w-fit text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-full transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {t("career.personality.description", "Add your 4-letter personality type for even sharper career matches")}
+              <span className="font-semibold">{t("career.personality.recommended", "Recommended")}</span>
+            </Link>
+          )}
         </div>
       </div>
 

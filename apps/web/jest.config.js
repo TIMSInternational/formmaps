@@ -21,4 +21,8 @@ module.exports = {
   // Playwright e2e specs use their own runner — jest must not pick them up
   testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
   setupFilesAfterEnv: ['@testing-library/jest-dom'],
+  // Forces TZ to a fixed negative-UTC-offset zone before any test environment
+  // is created — see jest.global-setup.js for why this is the only mechanism
+  // that actually works (process.env.TZ mutations inside beforeAll() do not).
+  globalSetup: '<rootDir>/jest.global-setup.js',
 };

@@ -7,7 +7,7 @@ it("marks 360 ready and PCA/MIL missing", () => {
     integrated={{ status: "not_ready", missing: ["pca", "mil"] }} />);
   expect(screen.getByText(/360/)).toBeInTheDocument();
   expect(screen.getByText(/PCA \(Professional Competencies\)/)).toBeInTheDocument();
-  expect(screen.getByText(/MIL \(Cognitive\)/)).toBeInTheDocument();
+  expect(screen.getByText(/^MIL$/)).toBeInTheDocument();
   // 360 row shows a ready indicator (aria-label or text)
   expect(screen.getByLabelText(/360 Evaluation ready/i)).toBeInTheDocument();
 });

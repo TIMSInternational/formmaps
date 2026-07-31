@@ -57,12 +57,12 @@ function DiscChartImage({ pcaCod }: { pcaCod: string }) {
   if (failed) return null;
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">DISC Profile Graph</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">PCA Profile Graph</h3>
       <div style={{ textAlign: "center" }}>
         {src ? (
           <img
             src={src}
-            alt="DISC Profile Graph"
+            alt="PCA Profile Graph"
             style={{ maxWidth: "100%", borderRadius: 8, border: "1px solid #e5e7eb" }}
           />
         ) : (
@@ -306,12 +306,12 @@ export default function PCAResultsPanel({
                   {/* DISC Profile Scores */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      DISC Profile Scores
+                      PCA Profile Scores
                     </h3>
                     {!hasDISCScores(results) ? (
                       <div className="flex items-center gap-3 py-8 justify-center text-gray-500">
                         <AlertCircle className="h-5 w-5" />
-                        <span className="text-sm font-medium">Results not available — DISC scores are incomplete or still processing.</span>
+                        <span className="text-sm font-medium">Results not available — PCA scores are incomplete or still processing.</span>
                       </div>
                     ) : (
                     <>

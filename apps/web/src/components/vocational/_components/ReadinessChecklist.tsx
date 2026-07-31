@@ -30,7 +30,7 @@ export function ReadinessChecklist({ score, integrated }: { score: VocationalSco
       <ul className="space-y-3">
         <Row label="360 Evaluation" ready={ready360} hint="Needs the student plus at least one other evaluator (parent, teacher, or peer)." />
         <Row label="PCA (Professional Competencies)" ready={pcaReady} hint="Complete the PCA assessment." />
-        <Row label="MIL (Cognitive)" ready={milReady} hint="Complete the MIL cognitive exams." />
+        <Row label="MIL" ready={milReady} hint="Complete the MIL cognitive exams." />
       </ul>
     </div>
   );

@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
           <p>We collect information you provide directly when creating an account, completing assessments, or using our platform:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li><strong>Account information:</strong> name, email address, school affiliation, grade level, role</li>
-            <li><strong>Assessment data:</strong> responses to personality (DISC/PCA), cognitive (MIL/LIA), and 360-degree evaluations</li>
+            <li><strong>Assessment data:</strong> responses to personality (PCA), labor intelligence (MIL/LIA), and 360-degree evaluations</li>
             <li><strong>Academic data:</strong> transcripts, test scores, GPA, course plans</li>
             <li><strong>Career exploration:</strong> career interests, university preferences, resume content</li>
             <li><strong>Usage data:</strong> pages visited, features used, session duration</li>
