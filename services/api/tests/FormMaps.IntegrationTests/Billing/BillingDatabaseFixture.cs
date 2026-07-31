@@ -146,6 +146,20 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
         await shadow.ExecuteNonQueryAsync();
     }
 
+    /// <summary>Seeds a subscription_plans row with a non-null stripePriceId for checkout-session tests (Task 8).</summary>
+    public async Task SeedPlanAsync(string planId, decimal price, string interval)
+    {
+        await using var connection = new NpgsqlConnection(ConnectionString);
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO "subscription_plans" ("id", "name", "price", "interval", "stripePriceId")
+            VALUES (@id, 'Test Plan', @price, @interval, 'price_test_123')
+            """;
+        AddParam(command, "id", planId); AddParam(command, "price", price); AddParam(command, "interval", interval);
+        await command.ExecuteNonQueryAsync();
+    }
+
     private static void AddParam(NpgsqlCommand command, string name, object value)
     {
         var p = command.CreateParameter(); p.ParameterName = name; p.Value = value; command.Parameters.Add(p);

@@ -188,6 +188,11 @@ public static class DependencyInjection
         // table via the caller's own tenant-scoped RLS session (not System()), used by this task's endpoint
         // and Tasks 8-10's checkout/cancel/portal endpoints to read current status before acting.
         services.AddScoped<FormMaps.Application.Billing.ILiveSubscriptionReader, FormMaps.Infrastructure.Billing.LiveSubscriptionReader>();
+        // Domain 9a Task 8: IStripeGateway (real Stripe.net wrapper, used by POST /checkout-session and
+        // the checkout.session.completed webhook retrofit) + IPlanReader (subscription_plans lookup for
+        // that same endpoint).
+        services.AddScoped<FormMaps.Application.Billing.IStripeGateway, FormMaps.Infrastructure.Billing.StripeGateway>();
+        services.AddScoped<FormMaps.Application.Billing.IPlanReader, FormMaps.Infrastructure.Billing.PlanReader>();
         // Domain 7a: Daily.co video-provider client (FM-094). First HttpClient-based external integration in
         // this codebase — 15s timeout matches legacy's AbortSignal.timeout(15000).
         services.AddHttpClient<IDailyClient, DailyClient>(client =>

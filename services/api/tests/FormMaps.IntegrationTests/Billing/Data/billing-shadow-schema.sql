@@ -45,6 +45,8 @@ CREATE TABLE IF NOT EXISTS "subscription_plans" (
     "interval" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true
 );
+-- Domain 9a Task 8: read by IPlanReader to resolve the Stripe Price id for POST /checkout-session.
+ALTER TABLE "subscription_plans" ADD COLUMN IF NOT EXISTS "stripePriceId" TEXT;
 
 CREATE TABLE IF NOT EXISTS "user_subscriptions" (
     "id" TEXT PRIMARY KEY,

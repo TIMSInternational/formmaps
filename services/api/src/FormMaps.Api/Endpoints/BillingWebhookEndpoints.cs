@@ -12,11 +12,10 @@ namespace FormMaps.Api.Endpoints;
 /// signature verification to work, since that middleware can mutate the raw request body). Still
 /// NOT exempted from MutationContentTypeMiddleware/RequestTimeoutMiddleware — that's Task 5's job.
 ///
-/// checkout.session.completed fallback (TEMPORARY, scoped to this task): the real fix — fetching the
-/// live Stripe.Subscription for accurate current_period_end/trial_end via IStripeGateway.GetSubscriptionAsync
-/// — doesn't exist until Task 8. Until then, this handler falls back to the checkout event's own embedded
-/// fields (subscription id, hardcoded "active" status, no period-end data). Task 8 must delete this
-/// fallback branch and replace it with a real subscription fetch.
+/// checkout.session.completed (Task 8 retrofit): fetches the live Stripe.Subscription for accurate
+/// status/current_period_end/trial_end via IStripeGateway.GetSubscriptionAsync, replacing the Task 4
+/// temporary fallback that constructed a StripeSubscriptionLite from the checkout event's own embedded
+/// fields (subscription id, hardcoded "active" status, no period-end data).
 /// </summary>
 public static class BillingWebhookEndpoints
 {
@@ -28,7 +27,7 @@ public static class BillingWebhookEndpoints
 
     private static async Task<IResult> HandleWebhookAsync(
         HttpRequest request, IStripeWebhookVerifier verifier, IBillingShadowRepository repository,
-        IConfiguration configuration, CancellationToken cancellationToken)
+        IStripeGateway gateway, IConfiguration configuration, CancellationToken cancellationToken)
     {
         request.EnableBuffering();
         using var reader = new StreamReader(request.Body, leaveOpen: true);
@@ -59,7 +58,7 @@ public static class BillingWebhookEndpoints
                     session.Metadata.TryGetValue("planId", out var planId) &&
                     !string.IsNullOrEmpty(session.SubscriptionId))
                 {
-                    var lite = new StripeSubscriptionLite(session.SubscriptionId, "active", null, null, null, false);
+                    var lite = await gateway.GetSubscriptionAsync(session.SubscriptionId, cancellationToken);
                     await repository.ApplySubscriptionEventAsync(stripeEvent.Id, stripeEvent.Type, userId, planId, lite, cancellationToken);
                 }
                 break;

@@ -25,6 +25,10 @@ public class BillingWebhookEndpointTests(BillingDatabaseFixture fixture) : IClas
             {
                 services.AddSingleton(fixture.SessionFactory);
                 services.AddScoped<IStripeWebhookVerifier>(_ => new FakeVerifier());
+                // Task 8 retrofit: checkout.session.completed now calls IStripeGateway.GetSubscriptionAsync
+                // instead of building a StripeSubscriptionLite from the checkout event's embedded fields.
+                // Without this override the real StripeGateway would attempt a live network call to Stripe.
+                services.AddScoped<IStripeGateway>(_ => new FakeStripeGateway());
             });
         });
 
@@ -55,6 +59,7 @@ public class BillingWebhookEndpointTests(BillingDatabaseFixture fixture) : IClas
             {
                 services.AddSingleton(fixture.SessionFactory);
                 services.AddScoped<IStripeWebhookVerifier>(_ => new RejectingVerifier());
+                services.AddScoped<IStripeGateway>(_ => new FakeStripeGateway());
             });
         });
         using var client = factory.CreateClient();
@@ -109,6 +114,7 @@ public class BillingWebhookEndpointTests(BillingDatabaseFixture fixture) : IClas
             builder.ConfigureTestServices(services =>
             {
                 services.AddSingleton(fixture.SessionFactory);
+                services.AddScoped<IStripeGateway>(_ => new FakeStripeGateway());
             });
         });
         using var client = factory.CreateClient();
