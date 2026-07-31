@@ -188,8 +188,12 @@ public class BillingWebhookEndpointTests(BillingDatabaseFixture fixture) : IClas
         var response = await client.PostAsync("/api/v1/billing/webhook",
             new StringContent(payload, System.Text.Encoding.UTF8, "application/json"));
 
-        // Prior to this task's fix, MutationContentTypeMiddleware's generic JSON handling could
-        // consume/alter the body stream before the endpoint reads it for signature verification.
+        // Verifies MutationContentTypeMiddleware does not 415 a JSON-content-type webhook request
+        // and RequestTimeoutMiddleware does not otherwise block it, so the request reaches the
+        // endpoint and the correct shadow subscription row is written. This does not exercise
+        // body-byte integrity through signature verification (FakeVerifier performs no HMAC check) --
+        // that proof lives separately in Task 4's Webhook_RealSignatureVerification_SurvivesBodyMutatingCharacters
+        // test, which uses the real verifier.
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var row = await fixture.QueryShadowSubscriptionAsync("user_mw");
         Assert.Equal("sub_mw", row.StripeSubscriptionId);
