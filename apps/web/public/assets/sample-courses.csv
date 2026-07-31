@@ -1,0 +1,8 @@
+Code,Name,Department,Credits,GradeLevels,Description,FrameworkType,Prerequisites,Corequisites
+MATH101,Algebra I,Mathematics,1,9,Introduction to algebraic concepts,,,
+MATH201,Algebra II,Mathematics,1,"10,11",Advanced algebra building on Algebra I,,MATH101,
+ENG201,World Literature,English,1,"10,11",Survey of world literary works,,AP,,
+SCI101,Biology,Science,1.5,9,Study of living organisms,,,,
+SCI201,Chemistry,Science,1.5,10,Introduction to chemistry,IB,SCI101,
+HIS101,World History,History,1,"9,10",Survey of major world historical events,,,,
+HIS201,US History,History,1,"11,12",History of the United States,,HIS101,

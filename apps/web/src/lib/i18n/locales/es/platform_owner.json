@@ -1,0 +1,449 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "users": "Usuarios",
+    "schools": "Escuelas",
+    "coaches": "Coaches",
+    "courses": "Cursos",
+    "careers": "Carreras",
+    "questions": "Preguntas 360",
+    "transactions": "Transacciones",
+    "payouts": "Pagos",
+    "plans": "Planes",
+    "analytics": "Análisis"
+  },
+  "dashboard": {
+    "title": "Panel de control",
+    "subtitle": "Vista general de la plataforma y accesos rápidos",
+    "modulesLabel": "Módulos",
+    "modules": {
+      "users": { "label": "Usuarios", "description": "Gestionar todos los usuarios de la plataforma" },
+      "schools": { "label": "Instituciones", "description": "Gestión de instituciones" },
+      "coaches": { "label": "Coaches", "description": "Perfiles e invitaciones de coaches" },
+      "courses": { "label": "Cursos", "description": "Contenido de aprendizaje" },
+      "careers": { "label": "Carreras", "description": "Base de datos de carreras" },
+      "questions": { "label": "Preguntas 360", "description": "Preguntas de evaluación" },
+      "plans": { "label": "Planes", "description": "Niveles de suscripción" },
+      "transactions": { "label": "Transacciones", "description": "Historial de pagos" },
+      "payouts": { "label": "Pagos a coaches", "description": "Pagos a coaches" },
+      "analytics": { "label": "Analíticas", "description": "Métricas de la plataforma" },
+      "settings": { "label": "Configuración", "description": "Configuración del sistema" }
+    }
+  },
+  "sidebar": {
+    "administratorRole": "Administrador"
+  },
+  "stats": {
+    "totalUsers": "Total de usuarios",
+    "newThisMonth": "nuevos este mes",
+    "totalRevenue": "Ingresos totales",
+    "collectedThisMonth": "recaudados este mes",
+    "growth": "Crecimiento",
+    "platformGrowthRate": "tasa de crecimiento de la plataforma",
+    "fromLastMonth": "respecto al mes anterior"
+  },
+  "revenue": {
+    "trendTitle": "Tendencia de ingresos (12 meses)",
+    "thisMonth": "Este mes",
+    "newUsers": "Nuevos usuarios",
+    "noRevenue": "Sin ingresos registrados aún",
+    "recentActivity": "Actividad reciente"
+  },
+  "quickStats": {
+    "title": "Estadísticas rápidas",
+    "activeSchools": "Instituciones activas",
+    "totalCoaches": "Total de coaches",
+    "pendingInvites": "Invitaciones pendientes",
+    "totalStudents": "Total de estudiantes"
+  },
+  "analytics": {
+    "title": "Analíticas",
+    "subtitle": "Información e indicadores de desempeño",
+    "unavailableTitle": "Analíticas no disponibles",
+    "unavailableDesc": "No se pudieron cargar los datos.",
+    "tryAgain": "Intentar de nuevo",
+    "exportCsv": "Exportar CSV",
+    "period": {
+      "last7Days": "Últimos 7 días",
+      "last30Days": "Últimos 30 días",
+      "last12Months": "Últimos 12 meses"
+    },
+    "tabs": {
+      "performance": "Rendimiento",
+      "userBehavior": "Comportamiento del usuario"
+    },
+    "stats": {
+      "revenuePerUser": "Ingresos / Usuario",
+      "avgLifetimeValue": "valor promedio de vida",
+      "avgTransaction": "Transacción promedio",
+      "totalTransactions": "{{count}} transacciones en total",
+      "coachRating": "Calificación de coaches",
+      "coachesCount": "{{count}} coaches",
+      "coachSessions": "Sesiones de coaches",
+      "totalSessionsDelivered": "sesiones realizadas en total"
+    },
+    "charts": {
+      "revenueVsTransactions": "Ingresos vs. Transacciones",
+      "monthlyComparison": "Comparativa mensual",
+      "revenueSeriesLabel": "Ingresos ($)",
+      "transactionsSeriesLabel": "Transacciones",
+      "userGrowth": "Crecimiento de usuarios",
+      "newRegistrations": "Nuevos registros en el tiempo",
+      "newUsersSeriesLabel": "Nuevos usuarios",
+      "topCoaches": "Mejores coaches",
+      "byRevenueAndRating": "Por ingresos y calificación",
+      "coachSessions": "{{count}} sesiones",
+      "noCoachData": "Sin datos de coaches",
+      "topCourses": "Mejores cursos",
+      "courseEnrolled": "{{count}} inscritos",
+      "noCourseData": "Sin datos de inscripción a cursos",
+      "transactionVolume": "Volumen de transacciones"
+    }
+  },
+  "telemetry": {
+    "unavailableTitle": "Datos de telemetría no disponibles",
+    "unavailableDesc": "La API de telemetría aún no está configurada. Los eventos se están recopilando localmente.",
+    "stats": {
+      "dailyUsers": "Usuarios diarios",
+      "activeWithin24h": "Activos en las últimas 24h",
+      "weeklyUsers": "Usuarios semanales",
+      "activePast7Days": "Activos en los últimos 7 días",
+      "retentionRate": "Tasa de retención",
+      "returningUsers": "Usuarios recurrentes",
+      "avgDuration": "Duración promedio",
+      "timeOnSite": "Tiempo en el sitio"
+    },
+    "engagement": {
+      "pageViews": "Vistas de página",
+      "pagesPerSession": "Páginas/Sesión",
+      "bounceRate": "Tasa de rebote",
+      "completion": "Completación",
+      "completionValue": "Alta"
+    },
+    "charts": {
+      "newVsReturning": "Nuevos vs. Recurrentes",
+      "totalUsersLabel": "Total de usuarios",
+      "newLabel": "Nuevos: ",
+      "returningLabel": "Recurrentes: ",
+      "topPages": "Páginas más visitadas",
+      "topPagesDesc": "Páginas con mayor número de visitas",
+      "noPageData": "Sin datos de vistas de página",
+      "eventBreakdown": "Desglose de eventos",
+      "eventBreakdownDesc": "Distribución de acciones de usuarios",
+      "noEventData": "Sin datos de eventos",
+      "totalEventsLabel": "Eventos",
+      "completionRates": "Tasas de completación",
+      "userJourneyMilestones": "Hitos del recorrido del usuario",
+      "resumeBuilder": "Constructor de CV",
+      "assessments": "Evaluaciones",
+      "coachOnboarding": "Alta de coaches",
+      "profileSetup": "Configuración de perfil",
+      "dauTrend": "Tendencia de usuarios activos diarios",
+      "dauTrendDesc": "Historial de usuarios activos en 30 días"
+    }
+  },
+  "schools": {
+    "searchPlaceholder": "Buscar instituciones...",
+    "loadingSchools": "Cargando instituciones...",
+    "noSchoolsFound": "No se encontraron instituciones. ¡Invita una para comenzar!",
+    "videoOnTitle": "Desactivar videollamadas",
+    "videoOffTitle": "Activar videollamadas",
+    "videoOn": "Sí",
+    "videoOff": "No",
+    "resend": "Reenviar",
+    "table": {
+      "name": "Nombre",
+      "admin": "Administrador",
+      "students": "Estudiantes",
+      "status": "Estado",
+      "contractEnd": "Fin de contrato",
+      "video": "Video",
+      "actions": "Acciones"
+    },
+    "pagination": {
+      "pageOf": "Página {{page}} de {{total}}"
+    }
+  },
+  "users": {
+    "emailLabel": "Correo electrónico",
+    "roleLabel": "Rol",
+    "roleSelectPlaceholder": "Seleccionar rol",
+    "roles": {
+      "student": "Estudiante",
+      "coach": "Coach",
+      "admin": "Administrador"
+    },
+    "creating": "Creando...",
+    "joinedOn": "Se unió el {{date}}",
+    "detailActions": "Acciones",
+    "copyEmail": "Copiar correo",
+    "deactivateUser": "Desactivar usuario",
+    "pagination": {
+      "showingPage": "Mostrando página {{page}} de {{total}}"
+    }
+  },
+  "courses": {
+    "title": "Información de cursos",
+    "subtitle": "Vista general del catálogo de Coursera que impulsa las recomendaciones a estudiantes",
+    "searchPlaceholder": "Buscar en el catálogo...",
+    "stats": {
+      "inCatalog": "Cursos en el catálogo",
+      "categories": "Categorías",
+      "aiRecommended": "Recomendados por IA",
+      "source": "Fuente"
+    },
+    "search": {
+      "resultsFor": "Resultados de búsqueda — \"{{term}}\"",
+      "noMatch": "Ningún curso coincide con tu búsqueda"
+    },
+    "aiRecommended": {
+      "sectionTitle": "Recomendados por IA para estudiantes",
+      "sectionDesc": "Cursos que la IA selecciona según los perfiles de carrera de los estudiantes del catálogo completo",
+      "noRecommendations": "Las recomendaciones se generan cuando los estudiantes completan sus evaluaciones"
+    },
+    "categories": {
+      "sectionTitle": "Desglose por categorías",
+      "sectionDesc": "Distribución de {{count}} cursos entre categorías"
+    },
+    "sample": {
+      "sectionTitle": "Muestra del catálogo",
+      "sectionDesc": "Una muestra de los cursos disponibles para estudiantes — los {{count}} cursos son utilizados por el motor de recomendación de IA"
+    }
+  },
+  "careers": {
+    "title": "Información de carreras",
+    "subtitle": "Base de datos de carreras utilizada para la orientación vocacional con IA",
+    "searchPlaceholder": "Buscar carreras...",
+    "stats": {
+      "total": "Total de carreras",
+      "clusters": "Clústeres de carrera",
+      "avgPerCluster": "Promedio por clúster",
+      "largestCluster": "Clúster más grande"
+    },
+    "search": {
+      "resultsFor": "Resultados de \"{{term}}\"",
+      "noMatch": "Sin carreras que coincidan"
+    },
+    "clusters": {
+      "sectionTitle": "Por clúster de carrera",
+      "noData": "Sin datos de clúster"
+    },
+    "largest": {
+      "sectionTitle": "Clústeres más grandes",
+      "careersCount": "{{count}} carreras"
+    },
+    "sample": {
+      "sectionTitle": "Muestra de la base de datos",
+      "sectionDesc": "Las {{count}} carreras son analizadas por la IA para orientar a los estudiantes según sus perfiles de evaluación"
+    },
+    "remote": "Remoto"
+  },
+  "questions": {
+    "title": "Preguntas 360°",
+    "subtitle": "Gestionar las preguntas de evaluación para los ciclos de retroalimentación",
+    "addQuestion": "Agregar pregunta",
+    "allRelations": "Todas las relaciones",
+    "searchPlaceholder": "Buscar preguntas...",
+    "categoryPlaceholder": "Categoría",
+    "allCategories": "Todas las categorías",
+    "noQuestionsTitle": "No se encontraron preguntas",
+    "noQuestionsDesc": "Ajusta tu búsqueda o filtros, o agrega una nueva pregunta.",
+    "pagination": {
+      "showingPage": "Página {{page}} de {{total}} ({{count}} en total)"
+    },
+    "toast": {
+      "invalidDataFormat": "Formato de datos no válido",
+      "failedToLoad": "Error al cargar preguntas",
+      "englishRequired": "El texto de la pregunta en inglés es obligatorio",
+      "updatedSuccess": "Pregunta actualizada correctamente",
+      "createdSuccess": "Pregunta creada correctamente",
+      "deletedSuccess": "Pregunta eliminada correctamente",
+      "deactivated": "Pregunta desactivada",
+      "activated": "Pregunta activada",
+      "failedToUpdateStatus": "Error al actualizar el estado",
+      "failedToUpdate": "Error al actualizar la pregunta",
+      "failedToCreate": "Error al crear la pregunta",
+      "failedToDelete": "Error al eliminar la pregunta"
+    },
+    "confirm": {
+      "deleteTitle": "Eliminar pregunta",
+      "deleteDesc": "¿Estás seguro de que quieres eliminar esta pregunta? Esta acción no se puede deshacer.",
+      "deleteLabel": "Eliminar"
+    },
+    "card": {
+      "active": "Activa",
+      "inactive": "Inactiva",
+      "subQuestion": "Subpregunta",
+      "editButton": "Editar",
+      "moreOptions": "Más opciones",
+      "deactivate": "Desactivar",
+      "activate": "Activar",
+      "delete": "Eliminar"
+    },
+    "form": {
+      "editTitle": "Editar pregunta",
+      "addTitle": "Agregar nueva pregunta",
+      "formDesc": "Configura los detalles y traducciones de la pregunta de evaluación.",
+      "relationType": "Tipo de relación",
+      "category": "Categoría",
+      "englishText": "Texto en inglés",
+      "required": "*",
+      "englishPlaceholder": "p. ej. ¿Qué tan efectivamente se comunica esta persona?",
+      "spanishText": "Texto en español (opcional)",
+      "spanishPlaceholder": "p. ej. ¿Con qué eficacia se comunica esta persona?",
+      "questionNumber": "Número de pregunta",
+      "type": "Tipo",
+      "mainQuestion": "Pregunta principal",
+      "subQuestion": "Subpregunta",
+      "parentQuestion": "Pregunta padre",
+      "parentPlaceholder": "Seleccionar pregunta padre",
+      "cancelButton": "Cancelar",
+      "saveChanges": "Guardar cambios",
+      "createButton": "Crear pregunta"
+    }
+  },
+  "plans": {
+    "title": "Planes y precios",
+    "subtitle": "Gestionar los niveles de suscripción y opciones de facturación",
+    "createButton": "Crear nuevo plan",
+    "emptyTitle": "Sin planes activos",
+    "emptyDesc": "Crea tu primer plan de suscripción para empezar a recibir pagos de los usuarios.",
+    "emptyCreateButton": "Crear plan",
+    "popular": "Popular",
+    "perPeriod": {
+      "once": "única vez",
+      "monthly": "mes",
+      "yearly": "año"
+    },
+    "moreFeatures": "+ {{count}} características más",
+    "statusActive": "Activo",
+    "statusInactive": "Inactivo",
+    "toast": {
+      "failedToLoad": "Error al cargar los planes de suscripción",
+      "validationError": "Por favor ingresa un nombre y precio válidos",
+      "updatedSuccess": "Plan actualizado correctamente",
+      "createdSuccess": "Plan creado correctamente",
+      "deletedSuccess": "Plan eliminado correctamente",
+      "failedToUpdate": "Error al actualizar el plan",
+      "failedToCreate": "Error al crear el plan",
+      "failedToDelete": "Error al eliminar el plan"
+    },
+    "confirm": {
+      "deleteTitle": "Eliminar plan",
+      "deleteDesc": "¿Estás seguro de que quieres eliminar este plan? Esta acción no se puede deshacer.",
+      "deleteLabel": "Eliminar"
+    },
+    "form": {
+      "editTitle": "Editar plan",
+      "createTitle": "Crear plan de suscripción",
+      "editDesc": "Actualiza los detalles de este nivel de suscripción.",
+      "createDesc": "Define un nuevo nivel de precios para tus usuarios.",
+      "planName": "Nombre del plan",
+      "planNamePlaceholder": "p. ej. Pro Mensual",
+      "price": "Precio",
+      "billingInterval": "Intervalo de facturación",
+      "intervalMonthly": "Mensual",
+      "intervalYearly": "Anual",
+      "intervalOneTime": "Pago único",
+      "features": "Características",
+      "addFeature": "Agregar",
+      "featurePlaceholder": "p. ej. Acceso ilimitado",
+      "cancelButton": "Cancelar",
+      "saveChanges": "Guardar cambios",
+      "createButton": "Crear plan"
+    }
+  },
+  "transactions": {
+    "stats": {
+      "totalRevenue": "Ingresos totales",
+      "totalTransactions": "Total de transacciones",
+      "activeUsers": "Usuarios activos",
+      "activeCoaches": "Coaches activos"
+    },
+    "tabs": {
+      "all": "Todas",
+      "completed": "Completadas",
+      "pending": "Pendientes",
+      "failed": "Fallidas",
+      "refunded": "Reembolsadas"
+    },
+    "pagination": {
+      "showingPage": "Mostrando página {{page}} de {{total}}"
+    },
+    "toast": {
+      "noTransactions": "No hay transacciones para exportar",
+      "exportSuccess": "Transacciones exportadas"
+    }
+  },
+  "payouts": {
+    "stats": {
+      "totalPaidOut": "Total pagado",
+      "totalPayouts": "Total de pagos",
+      "avgCommission": "Comisión promedio",
+      "commissionRate": "Tasa de comisión"
+    },
+    "filter": {
+      "placeholder": "Filtrar por estado",
+      "allStatuses": "Todos los estados",
+      "pending": "Pendiente",
+      "processing": "En proceso",
+      "completed": "Completado",
+      "failed": "Fallido"
+    },
+    "pagination": {
+      "showingPage": "Mostrando página {{page}} de {{total}}"
+    },
+    "rejectDialog": {
+      "title": "Rechazar pago",
+      "reasonPlaceholder": "Ingresa un motivo para el rechazo...",
+      "cancelButton": "Cancelar",
+      "rejectButton": "Rechazar pago"
+    }
+  },
+  "settings": {
+    "title": "Configuración de la plataforma",
+    "subtitle": "Gestionar configuración global, pagos y protocolos de seguridad",
+    "saveButton": "Guardar cambios",
+    "toast": {
+      "savedSuccess": "Configuración actualizada correctamente",
+      "saveFailed": "Error al guardar la configuración"
+    },
+    "general": {
+      "sectionTitle": "Información general",
+      "sectionDesc": "Datos básicos de la plataforma y marca",
+      "siteName": "Nombre del sitio",
+      "supportEmail": "Correo de soporte",
+      "maintenanceMode": "Modo de mantenimiento",
+      "maintenanceModeDesc": "Deshabilitar temporalmente el acceso para todos los usuarios excepto administradores"
+    },
+    "legal": {
+      "sectionTitle": "Legal y soporte",
+      "sectionDesc": "Enlaces externos y configuración de políticas",
+      "privacyUrl": "URL de la política de privacidad",
+      "termsUrl": "URL de los términos de servicio",
+      "helpUrl": "URL del centro de ayuda"
+    },
+    "finance": {
+      "sectionTitle": "Finanzas",
+      "sectionDesc": "Tarifas y pagos",
+      "platformFee": "Tarifa de la plataforma (%)",
+      "platformFeeDesc": "Porcentaje que se toma de cada transacción",
+      "currency": "Moneda",
+      "payoutSchedule": "Calendario de pagos",
+      "scheduleWeekly": "Semanal",
+      "scheduleBiweekly": "Quincenal",
+      "scheduleMonthly": "Mensual"
+    },
+    "security": {
+      "sectionTitle": "Seguridad",
+      "sectionDesc": "Controles de acceso",
+      "sessionTimeout": "Tiempo de expiración de sesión (minutos)"
+    },
+    "system": {
+      "sectionTitle": "Sistema",
+      "sectionDesc": "Almacenamiento y límites",
+      "maxUpload": "Tamaño máximo de carga (MB)",
+      "maxUploadDesc": "Límite para la carga de archivos de usuarios"
+    }
+  }
+}
