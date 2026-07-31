@@ -12,6 +12,20 @@ public sealed class MutationContentTypeMiddleware(RequestDelegate next)
 
     public async Task InvokeAsync(HttpContext httpContext)
     {
+        // Task 10 prereq (Task 9 adversarial review, confirmed from source): the real browser
+        // @microsoft/signalr JS client sends `Content-Type: text/plain` on its hub-negotiate POST
+        // (and on LongPolling sends), which this middleware would otherwise 415 -- no .NET test
+        // client caught this because the .NET SignalR test client sends no Content-Type at all.
+        // RequestTimeoutMiddleware.cs already exempts this same path for an analogous reason
+        // (long-lived hub connections don't fit this middleware's assumptions either); mirroring
+        // that precedent here. Scoped to the hub path only -- does not loosen the check for any
+        // other mutation endpoint.
+        if (httpContext.Request.Path.StartsWithSegments("/hubs/messages"))
+        {
+            await next(httpContext);
+            return;
+        }
+
         if (IsMutation(httpContext.Request.Method) &&
             !IsAllowedContentType(httpContext.Request.ContentType))
         {

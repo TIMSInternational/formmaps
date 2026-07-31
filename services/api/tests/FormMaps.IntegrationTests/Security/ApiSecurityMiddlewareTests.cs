@@ -60,6 +60,37 @@ public class ApiSecurityMiddlewareTests
     }
 
     [Fact]
+    public async Task Hub_negotiate_requests_with_text_plain_content_type_are_not_rejected()
+    {
+        // Task 10 prereq regression test: the real @microsoft/signalr JS client sends
+        // `Content-Type: text/plain` on POST /hubs/messages/negotiate. Confirms the scoped
+        // exemption in MutationContentTypeMiddleware lets this through instead of 415'ing it.
+        using var factory = new SecurityApiFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsync(
+            "/hubs/messages/negotiate?negotiateVersion=1",
+            new StringContent("", Encoding.UTF8, "text/plain"));
+
+        Assert.NotEqual(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Ordinary_mutation_endpoints_still_reject_text_plain_content_type()
+    {
+        // Confirms the /hubs/messages exemption is scoped, not a blanket loosening of the
+        // Content-Type guard: an unrelated mutation endpoint must still 415 on text/plain.
+        using var factory = new SecurityApiFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsync(
+            "/api/v1/messages/conversations",
+            new StringContent("plain text", Encoding.UTF8, "text/plain"));
+
+        Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Json_requests_over_configured_body_limit_are_rejected()
     {
         using var factory = new SecurityApiFactory(new Dictionary<string, string?>
