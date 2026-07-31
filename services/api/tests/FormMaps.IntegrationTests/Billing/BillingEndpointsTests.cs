@@ -151,6 +151,17 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Fact]
+    public async Task PostCancelSubscription_Anonymous_Returns401()
+    {
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     private static void AddDevIdentity(HttpClient client, string userId, string role)
     {
         client.DefaultRequestHeaders.Add(DevelopmentRequestContextFactory.UserIdHeader, userId);
