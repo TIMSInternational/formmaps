@@ -162,6 +162,32 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task PostBillingPortal_AuthenticatedUser_ReturnsPortalUrl()
+    {
+        await fixture.ResetAsync();
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_portal", "student");
+
+        var response = await client.PostAsync("/api/v1/billing/portal", null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.StartsWith("https://billing.stripe.com/", body.RootElement.GetProperty("data").GetProperty("url").GetString());
+    }
+
+    [Fact]
+    public async Task PostBillingPortal_Anonymous_Returns401()
+    {
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsync("/api/v1/billing/portal", null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     private static void AddDevIdentity(HttpClient client, string userId, string role)
     {
         client.DefaultRequestHeaders.Add(DevelopmentRequestContextFactory.UserIdHeader, userId);

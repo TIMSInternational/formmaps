@@ -23,6 +23,7 @@ public static class BillingEndpoints
         group.MapGet("/status", GetStatusAsync);
         group.MapPost("/checkout-session", CreateCheckoutSessionAsync);
         group.MapPost("/cancel-subscription", CancelSubscriptionAsync);
+        group.MapPost("/portal", CreateBillingPortalAsync);
         return app;
     }
 
@@ -99,6 +100,21 @@ public static class BillingEndpoints
 
         await gateway.CancelSubscriptionAsync(row.StripeSubscriptionId, cancellationToken);
         return Results.Ok(new { success = true, message = "Subscription cancellation requested" });
+    }
+
+    private static async Task<IResult> CreateBillingPortalAsync(
+        IRequestContextAccessor accessor, IProtectedRequestGuard guard, IStripeGateway gateway,
+        IConfiguration configuration, CancellationToken cancellationToken)
+    {
+        var context = accessor.Current;
+        var decision = guard.RequireIdentity(context);
+        if (!decision.Allowed) return Deny(decision);
+
+        var customerId = await gateway.GetOrCreateCustomerAsync(context, context.Tenant!.UserId, email: null, cancellationToken);
+        var appUrl = configuration["NEXT_PUBLIC_APP_URL"] ?? "https://app.formmaps.com";
+        var url = await gateway.CreateBillingPortalSessionAsync(customerId, returnUrl: $"{appUrl}/dashboard/settings", cancellationToken);
+
+        return Results.Ok(new { success = true, data = new { url } });
     }
 
     private static IResult Deny(GuardDecision decision) =>
