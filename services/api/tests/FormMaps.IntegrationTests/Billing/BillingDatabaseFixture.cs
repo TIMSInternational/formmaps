@@ -96,6 +96,12 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
         await SeedAsync(userId, $"sub_{userId}", shadowStatus, liveStatus);
     }
 
+    /// <summary>Seeds matching status but differing isActive between shadow and live, for Reconcile_IsActiveDiffers_ReportsMismatch.</summary>
+    public async Task SeedIsActiveMismatchedSubscriptionAsync(string userId, bool shadowIsActive, bool liveIsActive)
+    {
+        await SeedAsync(userId, $"sub_{userId}", shadowStatus: "active", liveStatus: "active", shadowIsActive: shadowIsActive, liveIsActive: liveIsActive);
+    }
+
     public async Task SeedShadowOnlySubscriptionAsync(string userId, string stripeSubscriptionId)
     {
         await using var connection = new NpgsqlConnection(ConnectionString);
@@ -111,7 +117,7 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
         await command.ExecuteNonQueryAsync();
     }
 
-    private async Task SeedAsync(string userId, string stripeSubscriptionId, string shadowStatus, string liveStatus)
+    private async Task SeedAsync(string userId, string stripeSubscriptionId, string shadowStatus, string liveStatus, bool shadowIsActive = true, bool liveIsActive = true)
     {
         await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
@@ -122,19 +128,21 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
         await using var live = connection.CreateCommand();
         live.CommandText = """
             INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive")
-            VALUES (@id, @userId, 'plan_1', @status, @subId, true)
+            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive)
             """;
         AddParam(live, "id", Guid.NewGuid().ToString()); AddParam(live, "userId", userId);
         AddParam(live, "status", liveStatus); AddParam(live, "subId", stripeSubscriptionId);
+        AddParam(live, "isActive", liveIsActive);
         await live.ExecuteNonQueryAsync();
 
         await using var shadow = connection.CreateCommand();
         shadow.CommandText = """
             INSERT INTO "shadow_user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive")
-            VALUES (@id, @userId, 'plan_1', @status, @subId, true)
+            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive)
             """;
         AddParam(shadow, "id", Guid.NewGuid().ToString()); AddParam(shadow, "userId", userId);
         AddParam(shadow, "status", shadowStatus); AddParam(shadow, "subId", stripeSubscriptionId);
+        AddParam(shadow, "isActive", shadowIsActive);
         await shadow.ExecuteNonQueryAsync();
     }
 
