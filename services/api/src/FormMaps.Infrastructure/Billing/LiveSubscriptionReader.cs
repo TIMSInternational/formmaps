@@ -14,7 +14,7 @@ namespace FormMaps.Infrastructure.Billing;
 public sealed class LiveSubscriptionReader(IFormMapsDatabaseSessionFactory databaseSessionFactory) : ILiveSubscriptionReader
 {
     private const string SubscriptionSql = """
-        SELECT "status", "isActive", "nextBillingDate", "planId"
+        SELECT "status", "isActive", "nextBillingDate", "planId", "stripeSubscriptionId"
         FROM "user_subscriptions"
         WHERE "userId" = @userId
         """;
@@ -37,7 +37,8 @@ public sealed class LiveSubscriptionReader(IFormMapsDatabaseSessionFactory datab
             ReadNullableString(reader, "status"),
             reader.GetBoolean(reader.GetOrdinal("isActive")),
             ReadNullableDateTimeOffsetUtc(reader, "nextBillingDate"),
-            ReadNullableString(reader, "planId"));
+            ReadNullableString(reader, "planId"),
+            ReadNullableString(reader, "stripeSubscriptionId"));
     }
 
     private static void AddUserId(DbCommand command, string userId)

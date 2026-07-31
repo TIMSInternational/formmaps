@@ -114,6 +114,43 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Fact]
+    public async Task PostCancelSubscription_ActiveSubscription_CallsGatewayCancel_Returns200()
+    {
+        await fixture.ResetAsync();
+        await fixture.SeedMatchingSubscriptionAsync("user_cancel", "sub_cancel", "active");
+        var gateway = new FakeStripeGateway();
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment(Environments.Development);
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton(fixture.SessionFactory);
+                services.AddScoped<IStripeGateway>(_ => gateway);
+            });
+        });
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_cancel", "student");
+
+        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(gateway.CancelCalled);
+    }
+
+    [Fact]
+    public async Task PostCancelSubscription_NoSubscription_Returns400()
+    {
+        await fixture.ResetAsync();
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_no_sub_cancel", "student");
+
+        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     private static void AddDevIdentity(HttpClient client, string userId, string role)
     {
         client.DefaultRequestHeaders.Add(DevelopmentRequestContextFactory.UserIdHeader, userId);

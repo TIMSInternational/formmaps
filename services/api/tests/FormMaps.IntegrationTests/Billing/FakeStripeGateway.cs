@@ -16,6 +16,10 @@ public sealed class FakeStripeGateway : IStripeGateway
 {
     public int GetOrCreateCustomerCalls { get; private set; }
 
+    /// <summary>Set true when CancelSubscriptionAsync is invoked -- Task 9's cancel-endpoint test asserts on this
+    /// to confirm the gateway was actually called, not just that the endpoint returned 200.</summary>
+    public bool CancelCalled { get; private set; }
+
     public Task<string> GetOrCreateCustomerAsync(RequestContext context, string userId, string? email, CancellationToken cancellationToken = default)
     {
         GetOrCreateCustomerCalls++;
@@ -28,8 +32,11 @@ public sealed class FakeStripeGateway : IStripeGateway
     public Task<string> CreateBillingPortalSessionAsync(string customerId, string returnUrl, CancellationToken cancellationToken = default) =>
         Task.FromResult("https://billing.stripe.com/session/fake");
 
-    public Task CancelSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default) =>
-        Task.CompletedTask;
+    public Task CancelSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default)
+    {
+        CancelCalled = true;
+        return Task.CompletedTask;
+    }
 
     public Task<StripeSubscriptionLite> GetSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default) =>
         Task.FromResult(new StripeSubscriptionLite(stripeSubscriptionId, "active", DateTimeOffset.UtcNow.AddDays(30).ToUnixTimeSeconds(), null, null, false));

@@ -9,7 +9,12 @@ namespace FormMaps.Application.Billing;
 /// same RLS identity as any other authenticated .NET read). Read-only: Node still owns all writes to
 /// user_subscriptions until cutover.
 /// </summary>
-public sealed record LiveSubscriptionRow(string? Status, bool IsActive, DateTimeOffset? NextBillingDate, string? PlanId);
+/// <remarks>
+/// Domain 9a Task 9 adds <see cref="StripeSubscriptionId"/>: Task 7 didn't need it for GET /status, but
+/// POST /cancel-subscription must pass the live Stripe subscription id (not the internal <see
+/// cref="PlanId"/>) to <c>IStripeGateway.CancelSubscriptionAsync</c>.
+/// </remarks>
+public sealed record LiveSubscriptionRow(string? Status, bool IsActive, DateTimeOffset? NextBillingDate, string? PlanId, string? StripeSubscriptionId);
 
 public interface ILiveSubscriptionReader
 {

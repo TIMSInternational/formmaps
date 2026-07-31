@@ -11,7 +11,9 @@ namespace FormMaps.Api.Endpoints;
 /// ILiveSubscriptionReader, unlike the shadow-table webhook/reconciliation code in this same domain.
 /// POST /checkout-session (Task 8) validates planId against subscription_plans via IPlanReader, then
 /// calls IStripeGateway to create/reuse a Stripe customer and start a subscription-mode Checkout
-/// session. Tasks 9-10 add cancel/portal to the same group.
+/// session. POST /cancel-subscription (Task 9) reads the live row's stripeSubscriptionId via
+/// ILiveSubscriptionReader and calls IStripeGateway.CancelSubscriptionAsync. Task 10 adds the billing
+/// portal to the same group.
 /// </summary>
 public static class BillingEndpoints
 {
@@ -20,6 +22,7 @@ public static class BillingEndpoints
         var group = app.MapGroup("/api/v1/billing").WithTags("Billing");
         group.MapGet("/status", GetStatusAsync);
         group.MapPost("/checkout-session", CreateCheckoutSessionAsync);
+        group.MapPost("/cancel-subscription", CancelSubscriptionAsync);
         return app;
     }
 
@@ -78,6 +81,24 @@ public static class BillingEndpoints
                 nextBillingDate = row?.NextBillingDate,
             },
         });
+    }
+
+    private static async Task<IResult> CancelSubscriptionAsync(
+        IRequestContextAccessor accessor, IProtectedRequestGuard guard, IStripeGateway gateway,
+        ILiveSubscriptionReader reader, CancellationToken cancellationToken)
+    {
+        var context = accessor.Current;
+        var decision = guard.RequireIdentity(context);
+        if (!decision.Allowed) return Deny(decision);
+
+        var row = await reader.GetForUserAsync(context, context.Tenant!.UserId, cancellationToken);
+        if (row?.StripeSubscriptionId is null)
+        {
+            return Results.BadRequest(new { success = false, message = "No active subscription" });
+        }
+
+        await gateway.CancelSubscriptionAsync(row.StripeSubscriptionId, cancellationToken);
+        return Results.Ok(new { success = true, message = "Subscription cancellation requested" });
     }
 
     private static IResult Deny(GuardDecision decision) =>
