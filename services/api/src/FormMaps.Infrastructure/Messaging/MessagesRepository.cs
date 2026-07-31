@@ -126,7 +126,7 @@ public sealed class MessagesRepository(
                 GROUP BY m."conversationId"
             ) uc ON uc."conversationId" = c."id"
             WHERE c."participantAId" = @userId OR c."participantBId" = @userId
-            ORDER BY c."lastMessageAt" DESC NULLS LAST
+            ORDER BY c."lastMessageAt" DESC NULLS FIRST
             """);
         AddParameter(command, "userId", userId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
