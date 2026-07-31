@@ -466,6 +466,15 @@ function shouldRouteVideoSessionLifecycleToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_VIDEO_SESSION_LIFECYCLE_TO_DOTNET));
 }
 
+// Messaging (Domain 7b, Task 10): all REST endpoints (unread-count, contacts, conversations
+// list/create, conversation messages/send, broadcast, realtime-ticket) gated by ONE flag as a
+// single unit -- unlike other domains' per-route flags, these ship/rollback together since the
+// SignalR realtime path (wired separately via NEXT_PUBLIC_FORMMAPS_ROUTE_MESSAGES_REALTIME_TO_DOTNET)
+// depends on the REST endpoints already being live on .NET. Default OFF.
+function shouldRouteMessagesToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_MESSAGES_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1247,6 +1256,19 @@ const nextConfig: NextConfig = {
         ? [
             { source: "/api/v1/video/sessions/:id/end", destination: `${dotnetApiBaseUrl}/api/v1/video/sessions/:id/end` },
             { source: "/api/v1/video/sessions/:id/start", destination: `${dotnetApiBaseUrl}/api/v1/video/sessions/:id/start` },
+          ]
+        : []),
+      // Messaging (Domain 7b, Task 10) -- must precede the /api/:path* catch-all below so a
+      // flipped route reaches .NET. All 6 paths gated by the single FORMMAPS_ROUTE_MESSAGES_TO_DOTNET
+      // flag (see shouldRouteMessagesToDotnet above).
+      ...(shouldRouteMessagesToDotnet()
+        ? [
+            { source: "/api/v1/messages/unread-count", destination: `${dotnetApiBaseUrl}/api/v1/messages/unread-count` },
+            { source: "/api/v1/messages/contacts", destination: `${dotnetApiBaseUrl}/api/v1/messages/contacts` },
+            { source: "/api/v1/messages/conversations", destination: `${dotnetApiBaseUrl}/api/v1/messages/conversations` },
+            { source: "/api/v1/messages/conversations/:id", destination: `${dotnetApiBaseUrl}/api/v1/messages/conversations/:id` },
+            { source: "/api/v1/messages/broadcast", destination: `${dotnetApiBaseUrl}/api/v1/messages/broadcast` },
+            { source: "/api/v1/messages/realtime-ticket", destination: `${dotnetApiBaseUrl}/api/v1/messages/realtime-ticket` },
           ]
         : []),
     ];
