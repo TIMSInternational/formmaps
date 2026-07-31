@@ -117,6 +117,8 @@
     <EmbeddedResource Include="Reports\Data\reports-users-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers video sessions reads harness (FM-091..097 Domain 7a). -->
     <EmbeddedResource Include="Video\Data\video-sessions-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers messaging unread-count reads harness (FM-DOTNET-098 Domain 7b). -->
+    <EmbeddedResource Include="Messaging\messaging-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>

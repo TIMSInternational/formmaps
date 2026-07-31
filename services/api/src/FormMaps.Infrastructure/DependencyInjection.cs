@@ -37,6 +37,7 @@ using FormMaps.Application.StudentCoursePlan;
 using FormMaps.Application.StudentParents;
 using FormMaps.Application.StudentPortfolio;
 using FormMaps.Application.Video;
+using FormMaps.Application.Messaging;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
@@ -75,6 +76,7 @@ using FormMaps.Infrastructure.StudentCoursePlan;
 using FormMaps.Infrastructure.StudentParents;
 using FormMaps.Infrastructure.StudentPortfolio;
 using FormMaps.Infrastructure.Video;
+using FormMaps.Infrastructure.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -173,6 +175,8 @@ public static class DependencyInjection
         // Domain 7a: video-call sessions (FM-091..097 — routes/video.ts, 7 of 9 endpoints; schedule/cancel stay
         // Node for their calendar-sync side effect).
         services.AddScoped<IVideoSessionsRepository, VideoSessionsRepository>();
+        // Domain 7b: messaging (FM-DOTNET-098+; routes/messages.ts, all 7 endpoints under /api/v1/messages).
+        services.AddScoped<IMessagesRepository, MessagesRepository>();
         // Domain 7a: Daily.co video-provider client (FM-094). First HttpClient-based external integration in
         // this codebase — 15s timeout matches legacy's AbortSignal.timeout(15000).
         services.AddHttpClient<IDailyClient, DailyClient>(client =>

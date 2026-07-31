@@ -53,6 +53,7 @@ app.MapCounselorAvailabilityEndpoints();
 app.MapCounselorAlertsEndpoints();
 app.MapCounselorSessionsEndpoints();
 app.MapVideoEndpoints();
+app.MapMessagesEndpoints();
 app.MapCounselorNotesEndpoints();
 app.MapAcademicGapsEndpoints();
 app.MapStudentPortfolioEndpoints();
