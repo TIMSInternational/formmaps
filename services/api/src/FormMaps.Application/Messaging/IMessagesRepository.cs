@@ -16,4 +16,8 @@ public interface IMessagesRepository
     Task<CreateConversationResult> CreateConversationAsync(
         RequestContext context, string userId, string role, string? schoolId, string targetId,
         CancellationToken cancellationToken = default);
+
+    Task<ConversationMessagesResult> GetConversationMessagesAsync(
+        RequestContext context, string userId, string conversationId, int page, int limit,
+        CancellationToken cancellationToken = default);
 }

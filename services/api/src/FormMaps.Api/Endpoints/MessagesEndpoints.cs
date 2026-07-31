@@ -19,6 +19,7 @@ public static class MessagesEndpoints
         group.MapGet("/contacts", GetContactsAsync);
         group.MapGet("/conversations", ListConversationsAsync);
         group.MapPost("/conversations", CreateConversationAsync);
+        group.MapGet("/conversations/{id}", GetConversationMessagesAsync);
         return app;
     }
 
@@ -98,6 +99,32 @@ public static class MessagesEndpoints
             CreateConversationStatus.RecipientNotFound => BadRequestResult(result.Error!),
             _ => BadRequestResult(result.Error ?? "Invalid request"),
         };
+    }
+
+    private static async Task<IResult> GetConversationMessagesAsync(
+        IRequestContextAccessor accessor, IProtectedRequestGuard guard, IMessagesRepository repository,
+        string id, HttpRequest request, CancellationToken cancellationToken)
+    {
+        var context = accessor.Current;
+        var decision = guard.RequireIdentity(context);
+        if (!decision.Allowed) return Deny(decision);
+
+        var page = Math.Max(1, int.TryParse(request.Query["page"], out var p) ? p : 1);
+        var limit = Math.Min(100, Math.Max(1, int.TryParse(request.Query["limit"], out var l) ? l : 50));
+
+        var result = await repository.GetConversationMessagesAsync(context, context.Tenant!.UserId, id, page, limit, cancellationToken);
+        if (result.Status == ConversationMessagesStatus.NotFound) return NotFound("Conversation not found");
+
+        var pg = result.Page!;
+        return Results.Ok(new
+        {
+            success = true,
+            data = new
+            {
+                data = pg.Data.Select(m => new { id = m.Id, conversationId = m.ConversationId, senderId = m.SenderId, sender = new { id = m.SenderId, name = m.SenderName }, content = m.Content, readAt = m.ReadAt, createdDate = m.CreatedDate }),
+                total = pg.Total, page = pg.Page, limit = pg.Limit, totalPages = pg.TotalPages,
+            },
+        });
     }
 
     private static object ToJson(ConversationSummary c) => new

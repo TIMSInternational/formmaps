@@ -257,6 +257,92 @@ public sealed class MessagesRepository(
         return new CreateConversationResult(CreateConversationStatus.Created, ToSummary(created, userId), null);
     }
 
+    /// <summary>
+    /// routes/messages.ts GET /conversations/:id. RLS on "conversations" is participant-scoped, so a
+    /// non-participant's lookup finds no row and collapses legacy's 403 "Access denied" into 404 "Conversation
+    /// not found" -- deliberate divergence, see the plan's Global Constraints. The SELECT that builds the
+    /// returned page runs BEFORE the mark-as-read UPDATE (matching legacy's Promise.all-then-updateMany
+    /// ordering), so messages in the returned page reflect ReadAt as of read time, not after marking.
+    /// Legacy's `prisma.message.updateMany` bumps `updatedAt` via Prisma's `@updatedAt` on Message even
+    /// though the update's `data` only sets `readAt` -- Prisma Client stamps `@updatedAt` fields on every
+    /// write path (update/updateMany/upsert). This raw-SQL UPDATE sets "updatedAt" = @now explicitly to
+    /// match that behavior.
+    /// </summary>
+    public async Task<ConversationMessagesResult> GetConversationMessagesAsync(
+        RequestContext context, string userId, string conversationId, int page, int limit,
+        CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        // RLS hides this row entirely for non-participants in production (see plan's Global Constraints for
+        // the resulting 404-collapses-403 divergence from legacy). Also filtered explicitly here, matching
+        // every other method in this class (ListConversationsAsync, CreateConversationAsync): RLS is
+        // defense-in-depth, not the sole gate -- an explicit participant check keeps this correct even when
+        // the connecting role bypasses RLS (e.g. a superuser, as Testcontainers' default Postgres role is).
+        var exists = await ConversationExistsAsync(session, conversationId, userId, cancellationToken);
+        if (!exists) return new ConversationMessagesResult(ConversationMessagesStatus.NotFound, null);
+
+        var offset = (page - 1) * limit;
+        int total;
+        await using (var countCmd = Command(session, """SELECT count(*)::int FROM "messages" WHERE "conversationId" = @cid"""))
+        {
+            AddParameter(countCmd, "cid", conversationId);
+            total = (int)(await countCmd.ExecuteScalarAsync(cancellationToken))!;
+        }
+
+        var rows = new List<MessageRow>();
+        await using (var listCmd = Command(session, """
+            SELECT m."id", m."conversationId", m."senderId", u."name", m."content", m."readAt", m."createdDate"
+            FROM "messages" m JOIN "users" u ON u."id" = m."senderId"
+            WHERE m."conversationId" = @cid ORDER BY m."createdDate" ASC OFFSET @offset LIMIT @limit
+            """))
+        {
+            AddParameter(listCmd, "cid", conversationId);
+            AddParameter(listCmd, "offset", offset);
+            AddParameter(listCmd, "limit", limit);
+            await using var reader = await listCmd.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                rows.Add(new MessageRow(
+                    reader.GetString(0), reader.GetString(1), reader.GetString(2),
+                    reader.IsDBNull(3) ? null : reader.GetString(3), reader.GetString(4),
+                    reader.IsDBNull(5) ? null : reader.GetDateTime(5), reader.GetDateTime(6)));
+            }
+        }
+
+        var now = NowTruncated();
+        await using (var markReadCmd = Command(session, """
+            UPDATE "messages" SET "readAt" = @now, "updatedAt" = @now
+            WHERE "conversationId" = @cid AND "senderId" <> @userId AND "readAt" IS NULL
+            """))
+        {
+            AddParameter(markReadCmd, "cid", conversationId);
+            AddParameter(markReadCmd, "userId", userId);
+            AddTimestamp(markReadCmd, "now", now);
+            await markReadCmd.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await session.CommitAsync(cancellationToken);
+
+        var totalPages = (int)Math.Ceiling(total / (double)limit);
+        return new ConversationMessagesResult(
+            ConversationMessagesStatus.Ok,
+            new ConversationMessagesPage(rows, total, page, limit, totalPages));
+    }
+
+    private static async Task<bool> ConversationExistsAsync(
+        FormMapsDatabaseSession session, string conversationId, string userId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """
+            SELECT 1 FROM "conversations"
+            WHERE "id" = @id AND ("participantAId" = @userId OR "participantBId" = @userId)
+            LIMIT 1
+            """);
+        AddParameter(command, "id", conversationId);
+        AddParameter(command, "userId", userId);
+        return await command.ExecuteScalarAsync(cancellationToken) is not null;
+    }
+
     private sealed record ConversationRow(
         string Id, string ParticipantAId, string ParticipantBId, string? AName, string AEmail,
         string? BName, string BEmail, string? LastMessagePreview, DateTime? LastMessageAt);
