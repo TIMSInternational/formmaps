@@ -84,6 +84,18 @@ export async function getPCACompetences(
   }
 }
 
+// The vendor proxy embeds the TIMS CoKey secret as a query param on this field
+// (e.g. "...PdfReport?CoKey=SECRET&PcaCod=..."). It must never linger in client
+// state/React DevTools — stripped defensively here since the proxy itself lives
+// outside this repo and can't be fixed at the source. Matches any casing.
+const REP_LINK_KEYS = ["repLink", "RepLink", "replink"];
+
+function stripRepLink(data: Record<string, unknown>): Record<string, unknown> {
+  const cleaned = { ...data };
+  for (const key of REP_LINK_KEYS) delete cleaned[key];
+  return cleaned;
+}
+
 /**
  * Get PCA vs JCA Analysis / Gap Analysis (via backend proxy)
  */
@@ -97,7 +109,7 @@ export async function getPCAVsJCAAnalysis(
       method: "POST",
       data: { UserId: userId, JcaCodExt: jcaCodExt, AnlsTip: anlsTip },
     });
-    return (res?.data || res) as Record<string, unknown>;
+    return stripRepLink((res?.data || res) as Record<string, unknown>);
   } catch (err: unknown) {
     const apiErr = err as ApiError;
     if (apiErr?.status === 401 || apiErr?.status === 403) return null;
