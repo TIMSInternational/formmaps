@@ -11,7 +11,8 @@ import type { NextConfig } from "next";
 const dotnetApiBaseUrl = process.env.FORMMAPS_DOTNET_API_BASE_URL?.replace(/\/+$/, "");
 
 function isEnabled(value: string | undefined) {
-  return value === "1" || value?.toLowerCase() === "true";
+  const trimmed = value?.trim();
+  return trimmed === "1" || trimmed?.toLowerCase() === "true";
 }
 
 function shouldRoutePersonalityAccessToDotnet() {
