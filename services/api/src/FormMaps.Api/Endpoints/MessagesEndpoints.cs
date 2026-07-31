@@ -20,6 +20,7 @@ public static class MessagesEndpoints
         group.MapGet("/conversations", ListConversationsAsync);
         group.MapPost("/conversations", CreateConversationAsync);
         group.MapGet("/conversations/{id}", GetConversationMessagesAsync);
+        group.MapPost("/conversations/{id}", SendMessageAsync);
         return app;
     }
 
@@ -125,6 +126,37 @@ public static class MessagesEndpoints
                 total = pg.Total, page = pg.Page, limit = pg.Limit, totalPages = pg.TotalPages,
             },
         });
+    }
+
+    public sealed record SendMessageRequest(string Content);
+
+    private static async Task<IResult> SendMessageAsync(
+        IRequestContextAccessor accessor, IProtectedRequestGuard guard, IMessagesRepository repository,
+        string id, SendMessageRequest? body, CancellationToken cancellationToken)
+    {
+        var context = accessor.Current;
+        var decision = guard.RequireIdentity(context);
+        if (!decision.Allowed) return Deny(decision);
+
+        if (string.IsNullOrWhiteSpace(body?.Content) || body.Content.Length > 5000)
+            return BadRequestResult("content: required, max 5000 characters");
+
+        var result = await repository.SendMessageAsync(context, context.Tenant!.UserId, id, body.Content, cancellationToken);
+        return result.Status switch
+        {
+            SendMessageStatus.NotFound => NotFound("Conversation not found"),
+            SendMessageStatus.Blocked => Forbidden("You cannot message this user"),
+            _ => Results.Json(new
+            {
+                success = true,
+                data = new
+                {
+                    id = result.Message!.Id, conversationId = result.Message.ConversationId, senderId = result.Message.SenderId,
+                    sender = new { id = result.Message.SenderId, name = result.Message.SenderName },
+                    content = result.Message.Content, readAt = result.Message.ReadAt, createdDate = result.Message.CreatedDate,
+                },
+            }, statusCode: StatusCodes.Status201Created),
+        };
     }
 
     private static object ToJson(ConversationSummary c) => new

@@ -330,6 +330,78 @@ public sealed class MessagesRepository(
             new ConversationMessagesPage(rows, total, page, limit, totalPages));
     }
 
+    /// <summary>
+    /// routes/messages.ts POST /conversations/:id. Legacy checks `isParticipant` explicitly and returns a
+    /// distinct 403 "Access denied"; this port collapses that into the same NotFound as a missing conversation
+    /// id, matching GetConversationMessagesAsync's deliberate 404-collapses-403 divergence (see that method's
+    /// doc comment and the plan's Global Constraints). The check itself is explicit here (not left to RLS)
+    /// for the same defense-in-depth reason as ConversationExistsAsync below -- the connecting role in tests
+    /// (and potentially some production paths) can bypass RLS, so this must not be the only gate.
+    /// </summary>
+    public async Task<SendMessageResult> SendMessageAsync(
+        RequestContext context, string userId, string conversationId, string content,
+        CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        var conversation = await FindConversationRowAsync(session, conversationId, cancellationToken);
+        if (conversation is null || (conversation.ParticipantAId != userId && conversation.ParticipantBId != userId))
+            return new SendMessageResult(SendMessageStatus.NotFound, null, null, null, null, null);
+
+        var otherId = conversation.ParticipantAId == userId ? conversation.ParticipantBId : conversation.ParticipantAId;
+        if (await IsBlockedBetweenAsync(session, userId, otherId, cancellationToken))
+            return new SendMessageResult(SendMessageStatus.Blocked, null, null, null, null, null);
+
+        var preview = content.Length > 100 ? content[..97] + "..." : content;
+        var now = NowTruncated();
+        var messageId = Guid.NewGuid().ToString();
+
+        await using (var insert = Command(session, """
+            INSERT INTO "messages" ("id", "conversationId", "senderId", "content", "createdDate", "updatedAt")
+            VALUES (@id, @cid, @sid, @content, @now, @now)
+            """))
+        {
+            AddParameter(insert, "id", messageId);
+            AddParameter(insert, "cid", conversationId);
+            AddParameter(insert, "sid", userId);
+            AddParameter(insert, "content", content);
+            AddTimestamp(insert, "now", now);
+            await insert.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await using (var update = Command(session, """
+            UPDATE "conversations" SET "lastMessageAt" = @now, "lastMessagePreview" = @preview, "updatedAt" = @now WHERE "id" = @cid
+            """))
+        {
+            AddParameter(update, "cid", conversationId);
+            AddParameter(update, "preview", preview);
+            AddTimestamp(update, "now", now);
+            await update.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        var recipientEmail = conversation.ParticipantAId == userId ? conversation.BEmail : conversation.AEmail;
+        var senderName = (conversation.ParticipantAId == userId ? conversation.AName : conversation.BName) ?? "";
+
+        await using (var outbox = Command(session, """
+            INSERT INTO "notification_outbox" ("id", "type", "payload", "due_at")
+            VALUES (@id, 'unread_message', @payload::jsonb, @dueAt)
+            """))
+        {
+            AddParameter(outbox, "id", Guid.NewGuid().ToString());
+            AddParameter(outbox, "payload", System.Text.Json.JsonSerializer.Serialize(new
+            {
+                messageId, recipientEmail, senderName, preview,
+            }));
+            AddTimestamp(outbox, "dueAt", now.AddMinutes(5));
+            await outbox.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await session.CommitAsync(cancellationToken);
+
+        var message = new MessageRow(messageId, conversationId, userId, senderName, content, null, now);
+        return new SendMessageResult(SendMessageStatus.Sent, message, otherId, recipientEmail, senderName, preview);
+    }
+
     private static async Task<bool> ConversationExistsAsync(
         FormMapsDatabaseSession session, string conversationId, string userId, CancellationToken cancellationToken)
     {
@@ -358,19 +430,37 @@ public sealed class MessagesRepository(
             row.LastMessagePreview, row.LastMessageAt, 0);
     }
 
+    /// <summary>
+    /// Looks up a conversation row (joined with both participants' users, for the fields CreateConversationAsync
+    /// and SendMessageAsync both need) either by participant pair or by conversation id. The two lookups share
+    /// this one query builder rather than existing as near-duplicate methods -- see the two thin overloads below.
+    /// </summary>
     private static async Task<ConversationRow?> FindConversationRowAsync(
-        FormMapsDatabaseSession session, string participantAId, string participantBId, CancellationToken cancellationToken)
+        FormMapsDatabaseSession session, string? conversationId, string? participantAId, string? participantBId,
+        CancellationToken cancellationToken)
     {
-        await using var command = Command(session, """
+        var whereClause = conversationId is not null
+            ? """WHERE c."id" = @id"""
+            : """WHERE c."participantAId" = @pa AND c."participantBId" = @pb""";
+
+        await using var command = Command(session, $"""
             SELECT c."id", c."participantAId", c."participantBId", ua."name", ua."email", ub."name", ub."email",
                    c."lastMessagePreview", c."lastMessageAt"
             FROM "conversations" c
             JOIN "users" ua ON ua."id" = c."participantAId"
             JOIN "users" ub ON ub."id" = c."participantBId"
-            WHERE c."participantAId" = @pa AND c."participantBId" = @pb
+            {whereClause}
             """);
-        AddParameter(command, "pa", participantAId);
-        AddParameter(command, "pb", participantBId);
+        if (conversationId is not null)
+        {
+            AddParameter(command, "id", conversationId);
+        }
+        else
+        {
+            AddParameter(command, "pa", participantAId!);
+            AddParameter(command, "pb", participantBId!);
+        }
+
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         if (!await reader.ReadAsync(cancellationToken)) return null;
         return new ConversationRow(
@@ -380,6 +470,14 @@ public sealed class MessagesRepository(
             reader.IsDBNull(7) ? null : reader.GetString(7),
             reader.IsDBNull(8) ? null : reader.GetDateTime(8));
     }
+
+    private static Task<ConversationRow?> FindConversationRowAsync(
+        FormMapsDatabaseSession session, string participantAId, string participantBId, CancellationToken cancellationToken) =>
+        FindConversationRowAsync(session, conversationId: null, participantAId, participantBId, cancellationToken);
+
+    private static Task<ConversationRow?> FindConversationRowAsync(
+        FormMapsDatabaseSession session, string conversationId, CancellationToken cancellationToken) =>
+        FindConversationRowAsync(session, conversationId, participantAId: null, participantBId: null, cancellationToken);
 
     private static async Task<(string? SchoolId, string? RoleName)> LookupUserAsync(
         FormMapsDatabaseSession session, string userId, CancellationToken cancellationToken)

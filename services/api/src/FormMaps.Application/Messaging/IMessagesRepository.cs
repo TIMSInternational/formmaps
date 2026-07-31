@@ -20,4 +20,8 @@ public interface IMessagesRepository
     Task<ConversationMessagesResult> GetConversationMessagesAsync(
         RequestContext context, string userId, string conversationId, int page, int limit,
         CancellationToken cancellationToken = default);
+
+    Task<SendMessageResult> SendMessageAsync(
+        RequestContext context, string userId, string conversationId, string content,
+        CancellationToken cancellationToken = default);
 }
