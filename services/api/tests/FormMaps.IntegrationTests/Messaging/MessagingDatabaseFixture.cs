@@ -49,7 +49,7 @@ public sealed class MessagingDatabaseFixture : IAsyncLifetime
         var (pa, pb) = string.CompareOrdinal(a, b) < 0 ? (a, b) : (b, a);
         var conversationId = Guid.NewGuid().ToString();
         await using var convCmd = new NpgsqlCommand(
-            """INSERT INTO "conversations" ("id","participantAId","participantBId") VALUES (@id,@pa,@pb)""", conn);
+            """INSERT INTO "conversations" ("id","participantAId","participantBId","updatedAt") VALUES (@id,@pa,@pb,now())""", conn);
         convCmd.Parameters.AddWithValue("id", conversationId);
         convCmd.Parameters.AddWithValue("pa", pa);
         convCmd.Parameters.AddWithValue("pb", pb);
@@ -62,7 +62,7 @@ public sealed class MessagingDatabaseFixture : IAsyncLifetime
         await using var conn = new NpgsqlConnection(ConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
-            """INSERT INTO "messages" ("id","conversationId","senderId","content","readAt") VALUES (@id,@cid,@sid,'hi',@readAt)""",
+            """INSERT INTO "messages" ("id","conversationId","senderId","content","readAt","updatedAt") VALUES (@id,@cid,@sid,'hi',@readAt,now())""",
             conn);
         cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
         cmd.Parameters.AddWithValue("cid", conversationId);

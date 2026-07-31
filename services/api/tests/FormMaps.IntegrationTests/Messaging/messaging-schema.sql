@@ -4,17 +4,21 @@ CREATE TABLE "users" (
   "roleId" text NOT NULL DEFAULT '', "roleName" text NOT NULL, "schoolId" text, "isActive" boolean NOT NULL DEFAULT true
 );
 
+-- "updatedAt" is NOT NULL with NO database default in production (verified against formmaps_dev:
+-- \d conversations / \d messages). Prisma's @updatedAt is application-managed, not a DB default —
+-- unlike "createdDate" @default(now()), which IS a real DB default (DEFAULT CURRENT_TIMESTAMP).
+-- Do not add DEFAULT now() back to "updatedAt": every writer must bind it explicitly, matching prod.
 CREATE TABLE "conversations" (
   "id" text PRIMARY KEY, "participantAId" text NOT NULL, "participantBId" text NOT NULL,
   "lastMessageAt" timestamp, "lastMessagePreview" text, "isActive" boolean NOT NULL DEFAULT true,
-  "createdDate" timestamp NOT NULL DEFAULT now(), "updatedAt" timestamp NOT NULL DEFAULT now(),
+  "createdDate" timestamp NOT NULL DEFAULT now(), "updatedAt" timestamp NOT NULL,
   UNIQUE ("participantAId", "participantBId")
 );
 
 CREATE TABLE "messages" (
   "id" text PRIMARY KEY, "conversationId" text NOT NULL REFERENCES "conversations"("id") ON DELETE CASCADE,
   "senderId" text NOT NULL, "content" text NOT NULL, "readAt" timestamp, "isActive" boolean NOT NULL DEFAULT true,
-  "createdDate" timestamp NOT NULL DEFAULT now(), "updatedAt" timestamp NOT NULL DEFAULT now()
+  "createdDate" timestamp NOT NULL DEFAULT now(), "updatedAt" timestamp NOT NULL
 );
 
 CREATE TABLE "user_blocks" (

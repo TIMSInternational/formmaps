@@ -69,6 +69,59 @@ public sealed class MessagesCreateConversationTests : IClassFixture<MessagingDat
     }
 
     [Fact]
+    public async Task Blocked_pair_cannot_create_a_conversation_when_target_blocked_the_caller()
+    {
+        // Reverse direction of the previous test: here the TARGET (b) is the blocker and the CALLER
+        // (a) is blocked. The block check must be symmetric (minor-safety/harassment-prevention), so
+        // a blocked caller can't route around a block simply by being the one who initiates.
+        var schoolId = Guid.NewGuid().ToString();
+        var a = await _fixture.SeedUserAsync(schoolId, "counselor");
+        var b = await _fixture.SeedUserAsync(schoolId, "school_admin");
+        await _fixture.SeedBlockAsync(b, a);
+
+        var result = await Repo().CreateConversationAsync(_fixture.Ctx(a, schoolId), a, "counselor", schoolId, b);
+
+        Assert.Equal(CreateConversationStatus.Blocked, result.Status);
+    }
+
+    [Fact]
+    public async Task RecipientNotFound_paths_are_indistinguishable_from_each_other()
+    {
+        // The whole point of hiding cross-school targets behind "Recipient not found" is that a
+        // caller can't tell "doesn't exist" apart from "exists, but in another school". Assert all
+        // three triggering scenarios produce the exact same status AND the exact same error message.
+        var schoolA = Guid.NewGuid().ToString();
+        var schoolB = Guid.NewGuid().ToString();
+
+        // Scenario 1: privileged caller (school_admin) targets a genuinely nonexistent user.
+        var admin = await _fixture.SeedUserAsync(schoolA, "school_admin");
+        var nonexistentTargetResult = await Repo().CreateConversationAsync(
+            _fixture.Ctx(admin, schoolA), admin, "school_admin", schoolA, Guid.NewGuid().ToString());
+
+        // Scenario 2: privileged caller (school_admin) targets a real user in a different school.
+        var otherSchoolAdmin = await _fixture.SeedUserAsync(schoolB, "school_admin");
+        var crossSchoolPrivilegedResult = await Repo().CreateConversationAsync(
+            _fixture.Ctx(admin, schoolA), admin, "school_admin", schoolA, otherSchoolAdmin);
+
+        // Scenario 3: student caller targets a real school_admin in a different school.
+        var student = await _fixture.SeedUserAsync(schoolA, "student");
+        var crossSchoolStudentResult = await Repo().CreateConversationAsync(
+            _fixture.Ctx(student, schoolA), student, "student", schoolA, otherSchoolAdmin);
+
+        Assert.Equal(CreateConversationStatus.RecipientNotFound, nonexistentTargetResult.Status);
+        Assert.Equal(CreateConversationStatus.RecipientNotFound, crossSchoolPrivilegedResult.Status);
+        Assert.Equal(CreateConversationStatus.RecipientNotFound, crossSchoolStudentResult.Status);
+
+        Assert.Equal(nonexistentTargetResult.Error, crossSchoolPrivilegedResult.Error);
+        Assert.Equal(nonexistentTargetResult.Error, crossSchoolStudentResult.Error);
+        Assert.Equal("Recipient not found", nonexistentTargetResult.Error);
+
+        Assert.Null(nonexistentTargetResult.Data);
+        Assert.Null(crossSchoolPrivilegedResult.Data);
+        Assert.Null(crossSchoolStudentResult.Data);
+    }
+
+    [Fact]
     public async Task Second_call_returns_the_existing_conversation_not_a_duplicate()
     {
         var schoolId = Guid.NewGuid().ToString();

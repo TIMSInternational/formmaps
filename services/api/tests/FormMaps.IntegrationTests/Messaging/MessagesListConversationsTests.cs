@@ -73,7 +73,7 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
         var (pa1, pb1) = string.CompareOrdinal(userId, otherId1) < 0 ? (userId, otherId1) : (otherId1, userId);
         var convId1 = Guid.NewGuid().ToString();
         await using var cmd1 = new Npgsql.NpgsqlCommand(
-            """INSERT INTO "conversations" ("id","participantAId","participantBId") VALUES (@id,@pa,@pb)""", conn);
+            """INSERT INTO "conversations" ("id","participantAId","participantBId","updatedAt") VALUES (@id,@pa,@pb,now())""", conn);
         cmd1.Parameters.AddWithValue("id", convId1);
         cmd1.Parameters.AddWithValue("pa", pa1);
         cmd1.Parameters.AddWithValue("pb", pb1);
@@ -83,7 +83,7 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
         var (pa2, pb2) = string.CompareOrdinal(userId, otherId2) < 0 ? (userId, otherId2) : (otherId2, userId);
         var convId2 = Guid.NewGuid().ToString();
         await using var cmd2 = new Npgsql.NpgsqlCommand(
-            """INSERT INTO "conversations" ("id","participantAId","participantBId") VALUES (@id,@pa,@pb)""", conn);
+            """INSERT INTO "conversations" ("id","participantAId","participantBId","updatedAt") VALUES (@id,@pa,@pb,now())""", conn);
         cmd2.Parameters.AddWithValue("id", convId2);
         cmd2.Parameters.AddWithValue("pa", pa2);
         cmd2.Parameters.AddWithValue("pb", pb2);
@@ -138,7 +138,7 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
         await conn.OpenAsync();
         var (pa, pb) = string.CompareOrdinal(userId, otherId2) < 0 ? (userId, otherId2) : (otherId2, userId);
         await using var cmd = new Npgsql.NpgsqlCommand(
-            """INSERT INTO "conversations" ("id","participantAId","participantBId") VALUES (@id,@pa,@pb)""", conn);
+            """INSERT INTO "conversations" ("id","participantAId","participantBId","updatedAt") VALUES (@id,@pa,@pb,now())""", conn);
         cmd.Parameters.AddWithValue("id", convIdNoMsg);
         cmd.Parameters.AddWithValue("pa", pa);
         cmd.Parameters.AddWithValue("pb", pb);

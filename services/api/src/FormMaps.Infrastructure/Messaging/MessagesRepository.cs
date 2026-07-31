@@ -1,3 +1,4 @@
+using System.Data;
 using System.Data.Common;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
@@ -101,6 +102,15 @@ public sealed class MessagesRepository(
     {
         var parameter = command.CreateParameter();
         parameter.ParameterName = name;
+        parameter.Value = value;
+        command.Parameters.Add(parameter);
+    }
+
+    private static void AddTimestamp(DbCommand command, string name, DateTime value)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.DbType = DbType.DateTime2;
         parameter.Value = value;
         command.Parameters.Add(parameter);
     }
@@ -226,13 +236,16 @@ public sealed class MessagesRepository(
         }
 
         var newId = Guid.NewGuid().ToString();
+        var now = NowTruncated();
         await using (var insert = Command(session, """
-            INSERT INTO "conversations" ("id", "participantAId", "participantBId") VALUES (@id, @pa, @pb)
+            INSERT INTO "conversations" ("id", "participantAId", "participantBId", "createdDate", "updatedAt")
+            VALUES (@id, @pa, @pb, @now, @now)
             """))
         {
             AddParameter(insert, "id", newId);
             AddParameter(insert, "pa", participantAId);
             AddParameter(insert, "pb", participantBId);
+            AddTimestamp(insert, "now", now);
             await insert.ExecuteNonQueryAsync(cancellationToken);
         }
 
