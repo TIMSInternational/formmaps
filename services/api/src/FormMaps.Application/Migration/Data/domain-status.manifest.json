@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "lastUpdated": "2026-07-31",
+  "howToKeepThisCurrent": "This file is the single source of truth for GET /api/v1/migration/roadmap (see MigrationRoadmapProvider.cs). It is domain-grained (one entry per product domain), not task-grained -- for per-slice code-completion detail see agentic-migration.manifest.json. Update ONE entry whenever a domain's real-world status changes: (1) status changes when a domain's .NET port is code-complete/in-progress/deferred; (2) liveInProd flips only once its FORMMAPS_ROUTE_*_TO_DOTNET flag(s) are verified serving real production traffic (a Vercel env flip + confirmed canary/curl check), NOT just merged to main -- git history under-counts prod state because the live frontend deploys via direct `vercel --prod`, not a merge gate. Bump lastVerified on the entry and lastUpdated at the top of this file. Reference this file in the commit that completes or cuts over a domain, e.g. `docs(migration): mark <domain> live in domain-status manifest`.",
+  "domains": [
+    {
+      "domain": "platform-health",
+      "currentOwner": ".NET",
+      "targetOwner": ".NET",
+      "firstMove": "Health and version endpoints live in the .NET service from the shell's first commit; not flag-gated.",
+      "risk": "low",
+      "status": "completed",
+      "liveInProd": true,
+      "lastVerified": "2026-07-17",
+      "note": "Foundational to the .NET service itself -- live for as long as the .NET API has been deployed at all."
+    },
+    {
+      "domain": "request-context-and-tenant",
+      "currentOwner": ".NET",
+      "targetOwner": ".NET",
+      "firstMove": "JWT-compatible request context, fail-closed tenant guard, security middleware, and RLS-safe database sessions are in place.",
+      "risk": "high",
+      "status": "completed",
+      "liveInProd": true,
+      "lastVerified": "2026-07-17",
+      "note": "Foundational -- every other live domain below depends on this being in prod."
+    },
+    {
+      "domain": "audit-events",
+      "currentOwner": "legacy-node-api",
+      "targetOwner": ".NET",
+      "firstMove": "Add application audit abstraction before persistent audit storage.",
+      "risk": "medium",
+      "status": "planned",
+      "liveInProd": false,
+      "lastVerified": "2026-07-17",
+      "note": "No work started; unchanged since the original roadmap draft."
+    },
+    {
+      "domain": "reports-and-dashboards",
+      "currentOwner": ".NET",
+      "targetOwner": ".NET",
+      "firstMove": "All 7 read-only report endpoints (benchmark, user-report, pca, lia, timeline, coaching, evaluation) ported and cut over.",
+      "risk": "medium",
+      "status": "completed",
+      "liveInProd": true,
+      "lastVerified": "2026-07-27",
+      "note": "LIVE on prod traffic since Wave 2 Batch 5 (2026-07-27); anon canary + Playwright confirmed real .NET-served responses."
+    },
+    {
+      "domain": "assessments-and-readiness",
+      "currentOwner": "mixed",
+      "targetOwner": ".NET",
+      "firstMove": "Personality domain fully cut over; most pca-exam/LIA/MIL/vocational/question360 reads and the token-gated external eval rail (FM-043) are live. LIA session /complete (FM-029) and vocational recompute writes remain dark by design.",
+      "risk": "high",
+      "status": "started",
+      "liveInProd": false,
+      "lastVerified": "2026-07-30",
+      "note": "Partial: large read surface + FM-043 live in prod as of 2026-07-30; FM-029 and most other writes deliberately still dark. liveInProd is domain-level (false = not ALL of it live)."
+    },
+    {
+      "domain": "schools-rosters-organizations",
+      "currentOwner": "mixed",
+      "targetOwner": ".NET",
+      "firstMove": "Most read surfaces (school-admin, school-analytics, school-manage, iSAMS status/jobs, course pathways) are code-complete and cut over; roster/course/calendar CRUD and writes remain mostly dark.",
+      "risk": "medium",
+      "status": "started",
+      "liveInProd": false,
+      "lastVerified": "2026-07-28",
+      "note": "Partial: reads live through Wave 2 Batches 4/6/8/9/10 (2026-07-27..28); writes/CRUD mostly dark."
+    },
+    {
+      "domain": "student-counselor-parent-workflows",
+      "currentOwner": "mixed",
+      "targetOwner": ".NET",
+      "firstMove": "Counselor dashboard + enriched caseload reads and parent child-link reads are live; counselor writes and student/parent CRUD are code-complete but mostly still dark.",
+      "risk": "high",
+      "status": "started",
+      "liveInProd": false,
+      "lastVerified": "2026-07-28",
+      "note": "Partial: read slices live as of 2026-07-28; CRUD/write slices (portfolio, applications, community-service, notes, availability, alerts, sessions) are code-complete per the task manifest but not confirmed flipped live."
+    },
+    {
+      "domain": "billing-and-integrations",
+      "currentOwner": "legacy-node-api",
+      "targetOwner": ".NET",
+      "firstMove": "Defer until core identity, tenant context, and reporting cutover are stable.",
+      "risk": "high",
+      "status": "deferred",
+      "liveInProd": false,
+      "lastVerified": "2026-07-17",
+      "note": "No work started; deliberately sequenced after Messaging/Video per the approved master sequencing design."
+    },
+    {
+      "domain": "documents-and-resume",
+      "currentOwner": ".NET",
+      "targetOwner": ".NET",
+      "firstMove": "Phase F: uploads/S3 rail, resume sections+template+CRUD, cross-user resume read/write, and report-email (report.ts) all ported.",
+      "risk": "medium",
+      "status": "completed",
+      "liveInProd": true,
+      "lastVerified": "2026-07-30",
+      "note": "Added 2026-07-31 -- absent from the original 8-domain list despite being a full completed domain (FM-088/89/90 + resume.ts/report.ts), deployed and flag-live as of 2026-07-30."
+    },
+    {
+      "domain": "video",
+      "currentOwner": ".NET",
+      "targetOwner": ".NET",
+      "firstMove": "Domain 7a: session enabled-check, sessions CRUD, signature, and start/end lifecycle ported behind their FORMMAPS_ROUTE_VIDEO_*_TO_DOTNET flags.",
+      "risk": "medium",
+      "status": "completed",
+      "liveInProd": true,
+      "lastVerified": "2026-07-30",
+      "note": "Added 2026-07-31 (Domain 7a) -- deployed and flags live in prod as of 2026-07-30."
+    },
+    {
+      "domain": "messaging",
+      "currentOwner": "legacy-node-api",
+      "targetOwner": ".NET",
+      "firstMove": "Domain 7b: SignalR MessagesHub + REST CRUD + realtime broadcast ported behind one dark flag (FORMMAPS_ROUTE_MESSAGES_TO_DOTNET); poll remains the fallback.",
+      "risk": "high",
+      "status": "completed",
+      "liveInProd": false,
+      "lastVerified": "2026-07-31",
+      "note": "Added 2026-07-31 (Domain 7b) -- code-complete and pushed 2026-07-31, but NOT deployed/flagged. The textbook case this manifest exists for: code-complete is not the same as live."
+    }
+  ]
+}

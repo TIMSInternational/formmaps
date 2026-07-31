@@ -1,76 +1,51 @@
+using System.Reflection;
+using System.Text.Json;
+
 namespace FormMaps.Application.Migration;
 
+/// <summary>
+/// Loads GET /api/v1/migration/roadmap's domain list from the embedded domain-status.manifest.json
+/// (formmaps#12/#13), the same load-once-from-embedded-JSON pattern used by PersonalityProfileBank /
+/// LiaPercentileMapper / LiaVerbalEn. Replaces a hardcoded array that had gone silently stale (e.g.
+/// showing "planned" for domains shipped weeks earlier) with a single, hand-maintained source of
+/// truth -- see the manifest's own "howToKeepThisCurrent" field for how it's kept accurate.
+/// </summary>
 public sealed class MigrationRoadmapProvider : IMigrationRoadmapProvider
 {
-    private static readonly MigrationDomainStatus[] Roadmap =
-    [
-        new(
-            Domain: "platform-health",
-            CurrentOwner: ".NET",
-            TargetOwner: ".NET",
-            FirstMove: "Keep health and version endpoints in the .NET service.",
-            Risk: "low",
-            Status: "started"),
+    private static readonly JsonSerializerOptions LoadOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+    };
 
-        new(
-            Domain: "request-context-and-tenant",
-            CurrentOwner: "legacy-node-api",
-            TargetOwner: ".NET",
-            FirstMove: "JWT-compatible request context, fail-closed tenant guard, security middleware, and RLS-safe database sessions are in place.",
-            Risk: "high",
-            Status: "completed"),
-
-        new(
-            Domain: "audit-events",
-            CurrentOwner: "legacy-node-api",
-            TargetOwner: ".NET",
-            FirstMove: "Add application audit abstraction before persistent audit storage.",
-            Risk: "medium",
-            Status: "planned"),
-
-        new(
-            Domain: "reports-and-dashboards",
-            CurrentOwner: "legacy-node-api",
-            TargetOwner: ".NET",
-            FirstMove: "GET /api/v1/reports/benchmark is implemented; route flag and canary harness are ready; staging smoke is the active gate.",
-            Risk: "medium",
-            Status: "started"),
-
-        new(
-            Domain: "assessments-and-readiness",
-            CurrentOwner: "legacy-node-api",
-            TargetOwner: ".NET",
-            FirstMove: "Migrate read APIs before scoring or write workflows.",
-            Risk: "high",
-            Status: "planned"),
-
-        new(
-            Domain: "schools-rosters-organizations",
-            CurrentOwner: "legacy-node-api",
-            TargetOwner: ".NET",
-            FirstMove: "Migrate read-only school and roster queries before writes.",
-            Risk: "medium",
-            Status: "planned"),
-
-        new(
-            Domain: "student-counselor-parent-workflows",
-            CurrentOwner: "legacy-node-api",
-            TargetOwner: ".NET",
-            FirstMove: "Migrate assignment-scoped and own-record read APIs first.",
-            Risk: "high",
-            Status: "planned"),
-
-        new(
-            Domain: "billing-and-integrations",
-            CurrentOwner: "legacy-node-api",
-            TargetOwner: ".NET",
-            FirstMove: "Defer until core identity, tenant context, and reporting cutover are stable.",
-            Risk: "high",
-            Status: "deferred")
-    ];
+    private static readonly IReadOnlyList<MigrationDomainStatus> Roadmap = Load();
 
     public IReadOnlyList<MigrationDomainStatus> GetRoadmap()
     {
         return Roadmap;
+    }
+
+    private static IReadOnlyList<MigrationDomainStatus> Load()
+    {
+        var assembly = typeof(MigrationRoadmapProvider).Assembly;
+        var resourceName = assembly.GetManifestResourceNames()
+            .Single(name => name.EndsWith("domain-status.manifest.json", StringComparison.Ordinal));
+
+        using var stream = assembly.GetManifestResourceStream(resourceName)
+            ?? throw new InvalidOperationException("Embedded domain-status.manifest.json not found.");
+
+        var manifest = JsonSerializer.Deserialize<DomainStatusManifest>(stream, LoadOptions)
+            ?? throw new InvalidOperationException("domain-status.manifest.json failed to deserialize.");
+
+        return manifest.Domains
+            .Select(d => new MigrationDomainStatus(
+                Domain: d.Domain,
+                CurrentOwner: d.CurrentOwner,
+                TargetOwner: d.TargetOwner,
+                FirstMove: d.FirstMove,
+                Risk: d.Risk,
+                Status: d.Status,
+                LiveInProd: d.LiveInProd,
+                LastVerified: d.LastVerified))
+            .ToList();
     }
 }

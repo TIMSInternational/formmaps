@@ -15,6 +15,10 @@
     <EmbeddedResource Include="Assessments\Data\lia-question-bank.json" />
     <!-- LIA-core EN verbal-reasoning question TEXT bank (extracted from legacy verbal-en.ts VERBAL_EN; certified human-reviewed content). -->
     <EmbeddedResource Include="Assessments\Data\lia-verbal-en.json" />
+    <!-- Single source of truth for GET /api/v1/migration/roadmap (formmaps#12/#13): domain-grained
+         code-completion + live-in-prod status, hand-maintained per the update convention documented
+         inside the file itself and in docs/migration/domain-status-manifest.md. -->
+    <EmbeddedResource Include="Migration\Data\domain-status.manifest.json" />
   </ItemGroup>
 
   <PropertyGroup>
