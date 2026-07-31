@@ -540,4 +540,180 @@ public sealed class MessagesRepository(
         while (await reader.ReadAsync(cancellationToken)) ids.Add(reader.GetString(0));
         return ids;
     }
+
+    private static readonly Dictionary<string, string[]> BroadcastRoleMap = new()
+    {
+        ["students"] = ["student", "Student"],
+        ["parents"] = ["parent", "Parent"],
+        ["counselors"] = ["counselor", "Counselor"],
+        ["staff"] = ["school_admin", "counselor", "coach", "Coach"],
+    };
+
+    /// <summary>
+    /// routes/messages.ts POST /broadcast. Authorization boundary lives entirely in application SQL, not
+    /// RLS: GetSchoolRecipientsAsync always filters by schoolId+roleName+isActive explicitly, and for a
+    /// counselor broadcasting to "students" the resolved (possibly empty) assignment-id list is ALWAYS
+    /// passed through as restrictToIds -- never skipped or left null for that combination -- so an empty
+    /// assignment list yields zero recipients rather than falling through to the whole school.
+    /// </summary>
+    public async Task<int> BroadcastAsync(
+        RequestContext context, string userId, string role, string schoolId, string recipientGroup, string content,
+        CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+        var roles = BroadcastRoleMap[recipientGroup];
+
+        IReadOnlyList<string>? restrictToIds = null;
+        if (role == "counselor" && recipientGroup == "students")
+        {
+            restrictToIds = await GetAssignedStudentIdsAsync(session, userId, cancellationToken);
+        }
+
+        var recipients = await GetSchoolRecipientsAsync(session, schoolId, roles, userId, restrictToIds, cancellationToken);
+        if (recipients.Count == 0) { await session.CommitAsync(cancellationToken); return 0; }
+
+        var blockedIds = await GetBlockedIdsAsync(session, userId, recipients.Select(r => r.Id).ToList(), cancellationToken);
+        var filtered = recipients.Where(r => !blockedIds.Contains(r.Id)).ToList();
+
+        var preview = content.Length > 100 ? content[..97] + "..." : content;
+        var now = NowTruncated();
+        var senderName = await GetUserNameAsync(session, userId, cancellationToken) ?? "";
+
+        const int chunkSize = 20;
+        var created = 0;
+        for (var i = 0; i < filtered.Count; i += chunkSize)
+        {
+            var chunk = filtered.Skip(i).Take(chunkSize);
+            foreach (var recipient in chunk)
+            {
+                var (pa, pb) = string.CompareOrdinal(userId, recipient.Id) < 0 ? (userId, recipient.Id) : (recipient.Id, userId);
+                var conversationId = await UpsertConversationAsync(session, pa, pb, now, preview, cancellationToken);
+                await using (var insert = Command(session, """
+                    INSERT INTO "messages" ("id", "conversationId", "senderId", "content", "createdDate", "updatedAt")
+                    VALUES (@id, @cid, @sid, @content, @now, @now)
+                    """))
+                {
+                    AddParameter(insert, "id", Guid.NewGuid().ToString());
+                    AddParameter(insert, "cid", conversationId);
+                    AddParameter(insert, "sid", userId);
+                    AddParameter(insert, "content", content);
+                    AddTimestamp(insert, "now", now);
+                    await insert.ExecuteNonQueryAsync(cancellationToken);
+                }
+                await using (var outbox = Command(session, """
+                    INSERT INTO "notification_outbox" ("id", "type", "payload", "due_at")
+                    VALUES (@id, 'unread_message', @payload::jsonb, @dueAt)
+                    """))
+                {
+                    AddParameter(outbox, "id", Guid.NewGuid().ToString());
+                    AddParameter(outbox, "payload", System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        messageId = Guid.NewGuid().ToString(), recipientEmail = recipient.Email, senderName, preview,
+                    }));
+                    AddTimestamp(outbox, "dueAt", now.AddMinutes(5));
+                    await outbox.ExecuteNonQueryAsync(cancellationToken);
+                }
+            }
+            created += chunk.Count();
+        }
+
+        await session.CommitAsync(cancellationToken);
+        return created;
+    }
+
+    private sealed record RecipientRow(string Id, string Email);
+
+    private static async Task<IReadOnlyList<string>> GetAssignedStudentIdsAsync(
+        FormMapsDatabaseSession session, string counselorId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """
+            SELECT "studentId" FROM "counselor_student_assignments" WHERE "counselorId" = @counselorId AND "isActive" = true
+            """);
+        AddParameter(command, "counselorId", counselorId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var ids = new List<string>();
+        while (await reader.ReadAsync(cancellationToken)) ids.Add(reader.GetString(0));
+        return ids;
+    }
+
+    private static async Task<IReadOnlyList<RecipientRow>> GetSchoolRecipientsAsync(
+        FormMapsDatabaseSession session, string schoolId, string[] roles, string excludeUserId,
+        IReadOnlyList<string>? restrictToIds, CancellationToken cancellationToken)
+    {
+        var sql = """
+            SELECT "id", "email" FROM "users"
+            WHERE "schoolId" = @schoolId AND "roleName" = ANY(@roles) AND "isActive" = true AND "id" <> @excludeUserId
+            """ + (restrictToIds is not null ? """ AND "id" = ANY(@restrictToIds)""" : "") + """
+             LIMIT 500
+            """;
+        await using var command = Command(session, sql);
+        AddParameter(command, "schoolId", schoolId);
+        AddParameter(command, "roles", roles);
+        AddParameter(command, "excludeUserId", excludeUserId);
+        if (restrictToIds is not null) AddParameter(command, "restrictToIds", restrictToIds.ToArray());
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var rows = new List<RecipientRow>();
+        while (await reader.ReadAsync(cancellationToken)) rows.Add(new RecipientRow(reader.GetString(0), reader.GetString(1)));
+        return rows;
+    }
+
+    private static async Task<ISet<string>> GetBlockedIdsAsync(
+        FormMapsDatabaseSession session, string userId, IReadOnlyList<string> candidateIds, CancellationToken cancellationToken)
+    {
+        if (candidateIds.Count == 0) return new HashSet<string>();
+        await using var command = Command(session, """
+            SELECT "blockerId", "blockedId" FROM "user_blocks"
+            WHERE "isActive" = true AND (
+                ("blockerId" = @userId AND "blockedId" = ANY(@candidateIds)) OR
+                ("blockedId" = @userId AND "blockerId" = ANY(@candidateIds))
+            )
+            """);
+        AddParameter(command, "userId", userId);
+        AddParameter(command, "candidateIds", candidateIds.ToArray());
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var ids = new HashSet<string>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var blockerId = reader.GetString(0);
+            var blockedId = reader.GetString(1);
+            ids.Add(blockerId == userId ? blockedId : blockerId);
+        }
+        return ids;
+    }
+
+    private static async Task<string?> GetUserNameAsync(FormMapsDatabaseSession session, string userId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """SELECT "name" FROM "users" WHERE "id" = @id""");
+        AddParameter(command, "id", userId);
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result as string;
+    }
+
+    /// <summary>
+    /// "updatedAt" has NO database default on "conversations" (NOT NULL, application-managed -- see
+    /// messaging-schema.sql's header comment and Task 4/6's fix for the same gap). Both the INSERT branch
+    /// AND the ON CONFLICT DO UPDATE branch bind it explicitly here: a rebroadcast into an existing
+    /// conversation only bumps "lastMessageAt"/"lastMessagePreview" in the legacy Prisma upsert's `update`
+    /// clause, but Prisma's @updatedAt stamps every write path regardless -- this raw SQL must match that
+    /// by bumping "updatedAt" on the DO UPDATE too, not just on first insert.
+    /// </summary>
+    private static async Task<string> UpsertConversationAsync(
+        FormMapsDatabaseSession session, string participantAId, string participantBId, DateTime now, string preview,
+        CancellationToken cancellationToken)
+    {
+        await using var upsert = Command(session, """
+            INSERT INTO "conversations" ("id", "participantAId", "participantBId", "lastMessageAt", "lastMessagePreview", "updatedAt")
+            VALUES (@id, @pa, @pb, @now, @preview, @now)
+            ON CONFLICT ("participantAId", "participantBId")
+            DO UPDATE SET "lastMessageAt" = @now, "lastMessagePreview" = @preview, "updatedAt" = @now
+            RETURNING "id"
+            """);
+        AddParameter(upsert, "id", Guid.NewGuid().ToString());
+        AddParameter(upsert, "pa", participantAId);
+        AddParameter(upsert, "pb", participantBId);
+        AddTimestamp(upsert, "now", now);
+        AddParameter(upsert, "preview", preview);
+        var result = await upsert.ExecuteScalarAsync(cancellationToken);
+        return (string)result!;
+    }
 }

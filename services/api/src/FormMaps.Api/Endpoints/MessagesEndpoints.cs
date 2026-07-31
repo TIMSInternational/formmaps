@@ -22,6 +22,7 @@ public static class MessagesEndpoints
         group.MapPost("/conversations", CreateConversationAsync);
         group.MapGet("/conversations/{id}", GetConversationMessagesAsync);
         group.MapPost("/conversations/{id}", SendMessageAsync);
+        group.MapPost("/broadcast", BroadcastAsync);
         group.MapPost("/realtime-ticket", CreateRealtimeTicketAsync);
         return app;
     }
@@ -159,6 +160,32 @@ public static class MessagesEndpoints
                 },
             }, statusCode: StatusCodes.Status201Created),
         };
+    }
+
+    public sealed record BroadcastRequest(string RecipientGroup, string Content);
+    private static readonly string[] BroadcastGroups = ["students", "parents", "counselors", "staff"];
+
+    private static async Task<IResult> BroadcastAsync(
+        IRequestContextAccessor accessor, IProtectedRequestGuard guard, IMessagesRepository repository,
+        BroadcastRequest? body, CancellationToken cancellationToken)
+    {
+        var context = accessor.Current;
+        var decision = guard.RequireIdentity(context);
+        if (!decision.Allowed) return Deny(decision);
+
+        var role = context.Actor!.NormalizedRole.ToLowerInvariant();
+        if (role is not ("school_admin" or "super admin" or "counselor"))
+            return Forbidden("Only school admins and counselors can broadcast");
+
+        if (body is null || !BroadcastGroups.Contains(body.RecipientGroup) || string.IsNullOrWhiteSpace(body.Content) || body.Content.Length > 5000)
+            return BadRequestResult("Invalid broadcast request");
+
+        if (string.IsNullOrWhiteSpace(context.Tenant!.SchoolId))
+            return BadRequestResult("No school linked");
+
+        var count = await repository.BroadcastAsync(
+            context, context.Tenant.UserId, role, context.Tenant.SchoolId, body.RecipientGroup, body.Content, cancellationToken);
+        return Results.Ok(new { success = true, data = new { recipientCount = count } });
     }
 
     private static IResult CreateRealtimeTicketAsync(

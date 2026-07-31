@@ -24,4 +24,8 @@ public interface IMessagesRepository
     Task<SendMessageResult> SendMessageAsync(
         RequestContext context, string userId, string conversationId, string content,
         CancellationToken cancellationToken = default);
+
+    Task<int> BroadcastAsync(
+        RequestContext context, string userId, string role, string schoolId, string recipientGroup, string content,
+        CancellationToken cancellationToken = default);
 }
