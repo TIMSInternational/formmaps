@@ -181,23 +181,22 @@ public sealed class MessagesEndpointAdversarialTests
     }
 
     [Fact]
-    public async Task Angle6_effective_ticket_window_is_60s_plus_the_configured_30s_clock_skew_documented_not_fixed()
+    public async Task Angle6_clock_skew_still_extends_every_token_past_its_exp_which_is_why_the_ticket_ttl_is_30s()
     {
-        // DOCUMENTED FINDING (Task 9), deliberately NOT fixed -- this test pins the real behavior so a
-        // future tightening is a conscious change rather than an accident.
+        // This pins the MECHANISM behind Task 9's finding, which is now fixed by shortening the ticket
+        // TTL rather than by changing the skew. A token 10s past `exp` is still accepted, because
+        // LegacyJwtOptions.ClockSkew (30s) is applied to EVERY token including the realtime ticket
+        // (LegacyJwtRequestContextFactory.cs:115). That is intentional and must stay: the same skew
+        // covers `nbf`, and a ticket is routinely minted by one instance and validated by another behind
+        // the load balancer, so zeroing it would reject FRESH tickets on ordinary clock drift.
         //
-        // Confirmed by wall clock, not just by this forged token: minting a REAL ticket via
-        // POST /api/v1/messages/realtime-ticket and then sleeping before connecting gives
-        //   61s wait -> HubConnectionState.Connected
-        //   95s wait -> HubConnectionState.Disconnected
+        // The consequence is that a ticket's real window is TTL + skew. Originally TTL was 60s, giving
+        // ~90s -- measured by wall clock at the time: a real ticket still connected 61s after minting,
+        // and only failed at 95s. RealtimeTicketFactory.TicketLifetime is now 30s so 30 + 30 lands on
+        // the intended ~60s; that end-to-end number is pinned by RealtimeTicketEndpointTests
+        // .Ticket_effective_hub_window_is_bounded_at_about_60_seconds_including_clock_skew.
         //
-        // LegacyJwtOptions.ClockSkew defaults to 30s and is applied to EVERY token, including the
-        // realtime ticket (LegacyJwtRequestContextFactory.cs:115). So the ticket documented as "60s" is
-        // in practice accepted for up to ~90s. Not fixed because: (a) the ticket is scope-restricted to
-        // /hubs/messages, where the only capability it grants is joining a push-only group for its own
-        // `sub`; (b) 30s is already a deliberate tightening of MS Identity's 300s default; and
-        // (c) forcing zero skew for tickets would make hub connects fail on any clock drift between the
-        // instance that minted the ticket and the instance that validates it behind the load balancer.
+        // If this test ever fails, the skew changed -- and the ticket TTL must be re-derived to match.
         using var factory = new Factory(new CapturingMessagesRepository(null));
         using var client = factory.CreateClient();
 
@@ -216,7 +215,7 @@ public sealed class MessagesEndpointAdversarialTests
     public async Task Angle6_token_expired_beyond_the_clock_skew_is_rejected_on_the_hub()
     {
         // The other side of the boundary asserted above: 31s past expiry (just outside the 30s skew) is
-        // already rejected, so the window really is bounded at 60s + skew and does not extend further.
+        // already rejected, so the window really is bounded at TTL + skew and does not extend further.
         using var factory = new Factory(new CapturingMessagesRepository(null));
         using var client = factory.CreateClient();
 

@@ -198,7 +198,15 @@ public static class MessagesEndpoints
         var ticket = ticketFactory.CreateTicket(context.Actor!);
         if (ticket is null) return Results.Json(new { success = false, message = "Realtime unavailable" }, statusCode: StatusCodes.Status503ServiceUnavailable);
 
-        return Results.Ok(new { success = true, data = new { ticket, expiresIn = 60 } });
+        // Derived from the factory's TTL rather than hard-coded, so the advertised number and the real
+        // one can never drift apart again -- they did: this said 60 while the effective window was ~90
+        // (see RealtimeTicketFactory.TicketLifetime). Clients should fetch a ticket per connect attempt
+        // rather than caching it for the full window.
+        return Results.Ok(new
+        {
+            success = true,
+            data = new { ticket, expiresIn = (int)RealtimeTicketFactory.TicketLifetime.TotalSeconds },
+        });
     }
 
     private static object ToJson(ConversationSummary c) => new

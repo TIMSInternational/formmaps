@@ -20,7 +20,8 @@ namespace FormMaps.IntegrationTests.Messaging;
 
 /// <summary>
 /// End-to-end coverage for the two security-critical properties of Task 7's realtime layer:
-/// 1. POST /api/v1/messages/realtime-ticket mints a genuinely short-lived (~60s) ticket, gated behind
+/// 1. POST /api/v1/messages/realtime-ticket mints a genuinely short-lived ticket (30s TTL, ~60s once
+///    ClockSkew is counted — see RealtimeTicketFactory.TicketLifetime), gated behind
 ///    the normal cookie/header identity guard like any other messages endpoint.
 /// 2. That ticket authenticates a REAL SignalR connection to /hubs/messages via the query-string
 ///    fallback -- and the SAME query-string fallback is inert everywhere else, proven both by a raw
@@ -45,7 +46,7 @@ public class RealtimeTicketEndpointTests
     }
 
     [Fact]
-    public async Task Authenticated_request_mints_a_ticket_that_expires_in_about_60_seconds()
+    public async Task Authenticated_request_mints_a_ticket_that_expires_in_about_30_seconds()
     {
         using var factory = new Factory();
         using var client = factory.CreateClient();
@@ -55,14 +56,17 @@ public class RealtimeTicketEndpointTests
 
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var data = doc.RootElement.GetProperty("data");
-        Assert.Equal(60, data.GetProperty("expiresIn").GetInt32());
+
+        // The advertised expiresIn must equal the real TTL -- these drifted apart once (60 advertised,
+        // ~90 effective), which is the bug RealtimeTicketFactory.TicketLifetime now documents.
+        Assert.Equal(30, data.GetProperty("expiresIn").GetInt32());
 
         var ticket = data.GetProperty("ticket").GetString();
         Assert.NotNull(ticket);
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(ticket);
         Assert.Equal("caller-1", jwt.Subject);
-        Assert.True(jwt.ValidTo <= DateTime.UtcNow.AddSeconds(65));
-        Assert.True(jwt.ValidTo > DateTime.UtcNow.AddSeconds(30));
+        Assert.True(jwt.ValidTo <= DateTime.UtcNow.AddSeconds(35), $"ValidTo was {jwt.ValidTo:O}");
+        Assert.True(jwt.ValidTo > DateTime.UtcNow.AddSeconds(15), $"ValidTo was {jwt.ValidTo:O}");
     }
 
     [Fact]
@@ -209,6 +213,74 @@ public class RealtimeTicketEndpointTests
         var response = await client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Task 9 follow-up regression test. The bug this pins: the ticket's TTL is NOT the whole story --
+    /// LegacyJwtOptions.ClockSkew (30s) is applied to every token including this one, so the EFFECTIVE
+    /// acceptance window is TTL + skew. With the original 60s TTL that was ~90s, and a ticket was still
+    /// accepted a full 61s after minting (measured, not theorised). The TTL is now 30s so that 30 + 30
+    /// lands on the ~60s the design always intended.
+    ///
+    /// Deliberately wall-clock rather than a forged token with a hand-picked `exp`: a forged token proves
+    /// only that lifetime validation runs, and would have passed happily against the buggy 60s TTL. Only
+    /// minting a REAL ticket through the REAL endpoint and letting real time pass measures the number
+    /// that actually shipped. Both probes reuse ONE ticket measured from a single mint instant, so the
+    /// whole test costs ~70s rather than 110s.
+    /// </summary>
+    [Fact]
+    public async Task Ticket_effective_hub_window_is_bounded_at_about_60_seconds_including_clock_skew()
+    {
+        using var factory = new Factory();
+        using var client = factory.CreateClient();
+
+        var mintedAt = DateTime.UtcNow;
+        var ticket = await GetTicketAsync(client);
+
+        // Comfortably INSIDE the intended window (30s TTL + 30s skew = ~60s): must still connect, so a
+        // future over-tightening that breaks legitimate browsers fails here rather than in production.
+        await DelayUntilAsync(mintedAt, TimeSpan.FromSeconds(45));
+        Assert.Equal(HubConnectionState.Connected, await TryConnectAsync(factory, client, ticket));
+
+        // Just PAST it. Against the original 60s TTL this connected (60 + 30 = 90s of runway) -- that is
+        // precisely the bug, and this assertion is what catches its return.
+        await DelayUntilAsync(mintedAt, TimeSpan.FromSeconds(65));
+        Assert.NotEqual(HubConnectionState.Connected, await TryConnectAsync(factory, client, ticket));
+    }
+
+    private static async Task DelayUntilAsync(DateTime start, TimeSpan offsetFromStart)
+    {
+        var remaining = start + offsetFromStart - DateTime.UtcNow;
+        if (remaining > TimeSpan.Zero) await Task.Delay(remaining);
+    }
+
+    private static async Task<HubConnectionState> TryConnectAsync(Factory factory, HttpClient client, string ticket)
+    {
+        var url = new Uri(client.BaseAddress!, $"hubs/messages?access_token={Uri.EscapeDataString(ticket)}");
+        await using var connection = new HubConnectionBuilder()
+            .WithUrl(url, options =>
+            {
+                options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
+                options.Transports = HttpTransportType.LongPolling;
+            })
+            .Build();
+
+        var closed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        connection.Closed += _ => { closed.TrySetResult(); return Task.CompletedTask; };
+
+        try
+        {
+            await connection.StartAsync();
+        }
+        catch
+        {
+            return HubConnectionState.Disconnected;
+        }
+
+        // Context.Abort() during OnConnectedAsync does not fail the LongPolling handshake -- the teardown
+        // arrives a moment later, so a bare post-StartAsync state read would report a false Connected.
+        await Task.WhenAny(closed.Task, Task.Delay(TimeSpan.FromSeconds(3)));
+        return connection.State;
     }
 
     private static async Task<string> GetTicketAsync(HttpClient client)
