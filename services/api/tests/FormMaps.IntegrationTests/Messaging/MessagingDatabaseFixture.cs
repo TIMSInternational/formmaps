@@ -71,6 +71,33 @@ public sealed class MessagingDatabaseFixture : IAsyncLifetime
         await cmd.ExecuteNonQueryAsync();
     }
 
+    public async Task<string> SeedUserAsync(string? schoolId, string role)
+    {
+        var id = Guid.NewGuid().ToString();
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """INSERT INTO "users" ("id","name","email","roleId","roleName","schoolId","isActive") VALUES (@id,@id,@id || '@test.dev','r',@role,@schoolId,true)""",
+            conn);
+        cmd.Parameters.AddWithValue("id", id);
+        cmd.Parameters.AddWithValue("role", role);
+        cmd.Parameters.AddWithValue("schoolId", (object?)schoolId ?? DBNull.Value);
+        await cmd.ExecuteNonQueryAsync();
+        return id;
+    }
+
+    public async Task SeedAssignmentAsync(string counselorId, string studentId)
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """INSERT INTO "counselor_student_assignments" ("id","counselorId","studentId") VALUES (@id,@c,@s)""", conn);
+        cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
+        cmd.Parameters.AddWithValue("c", counselorId);
+        cmd.Parameters.AddWithValue("s", studentId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
     private static string LoadSchemaDdl()
     {
         var assembly = Assembly.GetExecutingAssembly();

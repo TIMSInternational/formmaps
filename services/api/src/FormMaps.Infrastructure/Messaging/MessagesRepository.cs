@@ -31,6 +31,64 @@ public sealed class MessagesRepository(
         return (int)result!;
     }
 
+    public async Task<IReadOnlyList<ContactRow>> GetContactsAsync(
+        RequestContext context, string userId, string role, string? schoolId, string? search,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(schoolId)) return [];
+
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+        var privileged = role is "school_admin" or "super admin" or "counselor";
+
+        var sqlBuilder = new System.Text.StringBuilder();
+        sqlBuilder.Append("""SELECT u."id", u."name", u."email", u."roleName" FROM "users" u WHERE u."schoolId" = @schoolId AND u."isActive" = true AND u."id" <> @userId""");
+
+        if (!string.IsNullOrWhiteSpace(search))
+            sqlBuilder.Append(""" AND (u."name" ILIKE @search OR u."email" ILIKE @search)""");
+
+        if (!privileged)
+            sqlBuilder.Append(""" AND (u."roleName" = 'school_admin' OR u."id" = ANY(@assignedIds))""");
+
+        sqlBuilder.Append(""" ORDER BY u."name" ASC LIMIT 20""");
+
+        var sql = sqlBuilder.ToString();
+
+        await using var command = Command(session, sql);
+        AddParameter(command, "schoolId", schoolId);
+        AddParameter(command, "userId", userId);
+        if (!string.IsNullOrWhiteSpace(search)) AddParameter(command, "search", $"%{search}%");
+        if (!privileged)
+        {
+            var assignedIds = await GetAssignedCounselorIdsAsync(session, userId, cancellationToken);
+            AddParameter(command, "assignedIds", assignedIds.ToArray());
+        }
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var rows = new List<ContactRow>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            rows.Add(new ContactRow(
+                reader.GetString(0),
+                reader.IsDBNull(1) ? null : reader.GetString(1),
+                reader.GetString(2),
+                reader.GetString(3)));
+        }
+        return rows;
+    }
+
+    private static async Task<IReadOnlyList<string>> GetAssignedCounselorIdsAsync(
+        FormMapsDatabaseSession session, string studentId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """
+            SELECT "counselorId" FROM "counselor_student_assignments" WHERE "studentId" = @studentId AND "isActive" = true
+            """);
+        AddParameter(command, "studentId", studentId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var ids = new List<string>();
+        while (await reader.ReadAsync(cancellationToken)) ids.Add(reader.GetString(0));
+        return ids;
+    }
+
     private static DbCommand Command(FormMapsDatabaseSession session, string sql)
     {
         var command = session.Connection.CreateCommand();

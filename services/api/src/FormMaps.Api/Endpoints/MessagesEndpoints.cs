@@ -16,6 +16,7 @@ public static class MessagesEndpoints
     {
         var group = app.MapGroup("/api/v1/messages").WithTags("Messages");
         group.MapGet("/unread-count", GetUnreadCountAsync);
+        group.MapGet("/contacts", GetContactsAsync);
         return app;
     }
 
@@ -29,6 +30,21 @@ public static class MessagesEndpoints
 
         var count = await repository.GetUnreadCountAsync(context, context.Tenant!.UserId, cancellationToken);
         return Results.Ok(new { success = true, data = new { unreadCount = count } });
+    }
+
+    private static async Task<IResult> GetContactsAsync(
+        IRequestContextAccessor accessor, IProtectedRequestGuard guard, IMessagesRepository repository,
+        HttpRequest request, CancellationToken cancellationToken)
+    {
+        var context = accessor.Current;
+        var decision = guard.RequireIdentity(context);
+        if (!decision.Allowed) return Deny(decision);
+
+        var role = (context.Actor!.NormalizedRole).ToLowerInvariant();
+        var search = request.Query.TryGetValue("search", out var s) ? s.ToString() : null;
+        var contacts = await repository.GetContactsAsync(
+            context, context.Tenant!.UserId, role, context.Tenant.SchoolId, search, cancellationToken);
+        return Results.Ok(new { success = true, data = contacts });
     }
 
     private static IResult Deny(GuardDecision decision) =>
