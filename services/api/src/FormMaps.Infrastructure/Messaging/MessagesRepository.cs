@@ -588,12 +588,19 @@ public sealed class MessagesRepository(
             {
                 var (pa, pb) = string.CompareOrdinal(userId, recipient.Id) < 0 ? (userId, recipient.Id) : (recipient.Id, userId);
                 var conversationId = await UpsertConversationAsync(session, pa, pb, now, preview, cancellationToken);
+                // ONE id, bound to both the message row and the outbox payload below. These were two
+                // separate Guid.NewGuid() calls until this fix, so every broadcast enqueued a payload
+                // pointing at a message that does not exist -- and notificationOutboxService's
+                // handleUnreadMessage does `findUnique({ id: payload.messageId })` then `if (!msg) return`,
+                // so every broadcast notification email was silently dropped. SendMessageAsync always did
+                // this correctly; only this loop was wrong.
+                var messageId = Guid.NewGuid().ToString();
                 await using (var insert = Command(session, """
                     INSERT INTO "messages" ("id", "conversationId", "senderId", "content", "createdDate", "updatedAt")
                     VALUES (@id, @cid, @sid, @content, @now, @now)
                     """))
                 {
-                    AddParameter(insert, "id", Guid.NewGuid().ToString());
+                    AddParameter(insert, "id", messageId);
                     AddParameter(insert, "cid", conversationId);
                     AddParameter(insert, "sid", userId);
                     AddParameter(insert, "content", content);
@@ -608,7 +615,7 @@ public sealed class MessagesRepository(
                     AddParameter(outbox, "id", Guid.NewGuid().ToString());
                     AddParameter(outbox, "payload", System.Text.Json.JsonSerializer.Serialize(new
                     {
-                        messageId = Guid.NewGuid().ToString(), recipientEmail = recipient.Email, senderName, preview,
+                        messageId, recipientEmail = recipient.Email, senderName, preview,
                     }));
                     AddTimestamp(outbox, "dueAt", now.AddMinutes(5));
                     await outbox.ExecuteNonQueryAsync(cancellationToken);

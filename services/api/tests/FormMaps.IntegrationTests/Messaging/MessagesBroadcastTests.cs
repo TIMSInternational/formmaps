@@ -185,4 +185,55 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         var result = await cmd.ExecuteScalarAsync();
         Assert.Equal(2, (int)result!);
     }
+
+    [Fact]
+    public async Task Outbox_payload_messageId_resolves_to_the_real_message_row_that_was_inserted()
+    {
+        // Regression test for the bug that made every broadcast notification email a silent no-op: the
+        // outbox payload's messageId was a FRESH Guid.NewGuid(), unrelated to the id the "messages"
+        // INSERT actually used. Nothing caught it because the sibling test above only COUNTS outbox rows
+        // by preview -- it never checks the id inside the payload points at anything real. The consumer
+        // (api/src/services/notificationOutboxService.ts handleUnreadMessage) does
+        // findUnique({ id: payload.messageId }) and returns silently on a miss, so a dangling id costs
+        // the recipient their email with no error and no log anywhere.
+        var schoolId = Guid.NewGuid().ToString();
+        var preview = $"broadcast-{Guid.NewGuid()}"; // unique: the fixture container is shared per class
+        var admin = await _fixture.SeedUserAsync(schoolId, "school_admin");
+        await _fixture.SeedUserAsync(schoolId, "student");
+        await _fixture.SeedUserAsync(schoolId, "student");
+
+        var count = await Repo().BroadcastAsync(
+            _fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", preview);
+        Assert.Equal(2, count);
+
+        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await conn.OpenAsync();
+
+        // Every outbox row for this broadcast must JOIN to a real "messages" row -- and that row must be
+        // this broadcast's message (same content, same sender), not merely some row that happens to exist.
+        await using (var joined = new NpgsqlCommand(
+            """
+            SELECT count(*)::int FROM "notification_outbox" o
+            JOIN "messages" m ON m."id" = o."payload"->>'messageId'
+            WHERE o."payload"->>'preview' = @preview AND m."content" = @preview AND m."senderId" = @sender
+            """, conn))
+        {
+            joined.Parameters.AddWithValue("preview", preview);
+            joined.Parameters.AddWithValue("sender", admin);
+            Assert.Equal(2, (int)(await joined.ExecuteScalarAsync())!);
+        }
+
+        // ...and none may dangle. Asserted separately so a future regression that drops outbox rows
+        // entirely fails on the count above rather than passing vacuously here.
+        await using (var dangling = new NpgsqlCommand(
+            """
+            SELECT count(*)::int FROM "notification_outbox" o
+            LEFT JOIN "messages" m ON m."id" = o."payload"->>'messageId'
+            WHERE o."payload"->>'preview' = @preview AND m."id" IS NULL
+            """, conn))
+        {
+            dangling.Parameters.AddWithValue("preview", preview);
+            Assert.Equal(0, (int)(await dangling.ExecuteScalarAsync())!);
+        }
+    }
 }
