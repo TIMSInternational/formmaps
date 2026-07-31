@@ -122,6 +122,8 @@
     <EmbeddedResource Include="Video\Data\video-sessions-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers messaging unread-count reads harness (FM-DOTNET-098 Domain 7b). -->
     <EmbeddedResource Include="Messaging\messaging-schema.sql" />
+    <!-- Schema-only DDL (shadow_* tables + minimal live-side stubs) for the Testcontainers billing shadow-repository write harness (Domain 9a, Task 3). -->
+    <EmbeddedResource Include="Billing\Data\billing-shadow-schema.sql" />
     <!-- Stub schema (one row per table the role script grants against) for the DB-role GRANT verification harness (formmaps#10). -->
     <EmbeddedResource Include="DbRole\Data\dotnet-service-role-stub-schema.sql" />
     <!-- The REAL production role-creation script, embedded by reference so edits to it are exercised here too (formmaps#10). -->
