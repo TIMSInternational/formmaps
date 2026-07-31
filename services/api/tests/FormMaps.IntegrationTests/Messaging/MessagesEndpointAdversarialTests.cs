@@ -234,48 +234,13 @@ public sealed class MessagesEndpointAdversarialTests
         await AssertHubConnectionRejectedAsync(factory, client, forged);
     }
 
-    // =========================================================================
-    // Handoff to Task 10 (frontend wiring) -- NOT an access-control gap; recorded here because it is
-    // only observable through the real HTTP pipeline.
-    // =========================================================================
-
-    [Fact]
-    public async Task Task10_handoff_hub_negotiate_with_the_browser_clients_text_plain_content_type_is_415()
-    {
-        // MutationContentTypeMiddleware (Security/ApiSecurityExtensions.cs:99) allows only
-        // application/json and multipart/form-data on POST/PUT/PATCH/DELETE, and is registered globally
-        // with NO hub exemption -- unlike RequestTimeoutMiddleware, which explicitly exempts
-        // /hubs/messages (Security/RequestTimeoutMiddleware.cs:20).
-        //
-        // The browser SignalR JS client posts negotiate (and every LongPolling send) with
-        // "Content-Type: text/plain;charset=UTF-8", so it is rejected 415 before reaching the hub. No
-        // .NET test client exercised this: the .NET SignalR client sends no Content-Type on negotiate,
-        // and IsAllowedContentType returns true for a MISSING content type -- which is exactly why
-        // Tasks 1-8 never saw it. This is fail-CLOSED (it blocks, never grants), so it is a Task 10
-        // blocker, not a security gap.
-        using var factory = new Factory(new CapturingMessagesRepository(null));
-        using var client = factory.CreateClient();
-
-        var ticket = Mint(TimeSpan.FromSeconds(60), hubScoped: true);
-        var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"/hubs/messages/negotiate?negotiateVersion=1&access_token={Uri.EscapeDataString(ticket)}")
-        {
-            Content = new StringContent("", Encoding.UTF8, "text/plain"),
-        };
-
-        var response = await client.SendAsync(request);
-
-        Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
-
-        // Control: the identical request with no Content-Type at all negotiates successfully, proving
-        // the 415 is caused solely by the browser client's text/plain header.
-        var control = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"/hubs/messages/negotiate?negotiateVersion=1&access_token={Uri.EscapeDataString(ticket)}");
-        var controlResponse = await client.SendAsync(control);
-        Assert.Equal(HttpStatusCode.OK, controlResponse.StatusCode);
-    }
+    // The Task 10 handoff finding that used to live here (the real browser @microsoft/signalr client
+    // sends Content-Type: text/plain on hub negotiate, which MutationContentTypeMiddleware 415'd) was
+    // FIXED by that middleware's scoped /hubs/messages exemption. The handoff test that pinned the old
+    // 415 is therefore gone; the corrected behaviour -- and, just as importantly, that the exemption did
+    // not loosen the guard for anything else -- is covered by ApiSecurityMiddlewareTests
+    // .Hub_negotiate_requests_with_text_plain_content_type_are_not_rejected and
+    // .Ordinary_mutation_endpoints_still_reject_text_plain_content_type.
 
     // =========================================================================
     // Helpers
