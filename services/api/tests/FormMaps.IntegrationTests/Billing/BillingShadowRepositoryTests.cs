@@ -60,15 +60,55 @@ public sealed class BillingShadowRepositoryTests : IClassFixture<BillingDatabase
     public async Task ApplySubscriptionEvent_DuplicateEventId_IsNoOp_ReturnsFalse()
     {
         var repository = Repository();
-        var sub = new StripeSubscriptionLite("sub_test2", "active", 1893456000, null, null, false);
+        // Second call uses a DIFFERENT status than the first. If dedup were broken and the write path
+        // re-ran on the "duplicate" call, the shadow row would show "past_due" afterwards — asserting the
+        // row still shows "active" is what actually proves the write was skipped, not just that the
+        // (idempotent) upsert produced the same row twice.
+        var firstSub = new StripeSubscriptionLite("sub_test2", "active", 1893456000, null, null, false);
+        var secondSub = new StripeSubscriptionLite("sub_test2", "past_due", 1893456000, null, null, false);
 
         var first = await repository.ApplySubscriptionEventAsync(
-            "evt_dup", "checkout.session.completed", "user_2", "plan_1", sub, CancellationToken.None);
+            "evt_dup", "checkout.session.completed", "user_2", "plan_1", firstSub, CancellationToken.None);
         var second = await repository.ApplySubscriptionEventAsync(
-            "evt_dup", "checkout.session.completed", "user_2", "plan_1", sub, CancellationToken.None);
+            "evt_dup", "checkout.session.completed", "user_2", "plan_1", secondSub, CancellationToken.None);
 
         Assert.True(first);
         Assert.False(second);
+        var row = await QueryShadowSubscriptionAsync("user_2");
+        Assert.Equal("active", row.Status);
+    }
+
+    [Fact]
+    public async Task ApplySubscriptionEvent_ConcurrentDuplicateDelivery_OneWins_OtherReturnsFalse()
+    {
+        // Two truly concurrent deliveries of the same eventId (Stripe does retry/redeliver) racing through
+        // separate session/factory instances against the same underlying Testcontainers Postgres. Both can
+        // pass the fast-path SELECT dedup check before either commits; the shadow_stripe_events PRIMARY KEY
+        // is the real guarantee. Proves the loser gets the documented `false` return, not an unhandled
+        // PostgresException, and that only one write survives.
+        var sub = new StripeSubscriptionLite("sub_test4", "active", 1893456000, null, null, false);
+
+        var task1 = Repository().ApplySubscriptionEventAsync(
+            "evt_concurrent", "checkout.session.completed", "user_4", "plan_1", sub, CancellationToken.None);
+        var task2 = Repository().ApplySubscriptionEventAsync(
+            "evt_concurrent", "checkout.session.completed", "user_4", "plan_1", sub, CancellationToken.None);
+
+        var results = await Task.WhenAll(task1, task2);
+
+        Assert.Contains(true, results);
+        Assert.Contains(false, results);
+        Assert.Equal(1, results.Count(r => r));
+
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var subCountCmd = new NpgsqlCommand(
+            """SELECT COUNT(*) FROM "shadow_user_subscriptions" WHERE "userId" = @userId""", conn);
+        subCountCmd.Parameters.AddWithValue("userId", "user_4");
+        Assert.Equal(1L, await subCountCmd.ExecuteScalarAsync());
+
+        await using var eventCountCmd = new NpgsqlCommand(
+            """SELECT COUNT(*) FROM "shadow_stripe_events" WHERE "id" = @id""", conn);
+        eventCountCmd.Parameters.AddWithValue("id", "evt_concurrent");
+        Assert.Equal(1L, await eventCountCmd.ExecuteScalarAsync());
     }
 
     [Fact]

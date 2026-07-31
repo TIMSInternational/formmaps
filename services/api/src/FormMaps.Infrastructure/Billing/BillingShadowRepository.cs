@@ -2,6 +2,7 @@ using System.Data.Common;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Billing;
 using FormMaps.Application.Data;
+using Npgsql;
 
 namespace FormMaps.Infrastructure.Billing;
 
@@ -67,7 +68,16 @@ public sealed class BillingShadowRepository(IFormMapsDatabaseSessionFactory data
         }, cancellationToken);
     }
 
-    /// <summary>Runs `write` then records the event id LAST — matches legacy's rollback-on-failure idempotency guarantee. Returns false without running `write` if eventId was already processed.</summary>
+    /// <summary>
+    /// Runs `write` then records the event id LAST — matches legacy's rollback-on-failure idempotency guarantee.
+    /// Returns false without running `write` if eventId was already processed. The leading SELECT is a fast-path
+    /// dedup check only, not the source of truth: it's a plain read under ReadCommitted (not Serializable), so two
+    /// truly concurrent deliveries of the same eventId can both pass it. The real guarantee comes from "id" being
+    /// PRIMARY KEY on shadow_stripe_events — the losing transaction's final INSERT hits a unique-violation, which
+    /// we catch here and translate into the documented `false` return instead of letting it propagate. The
+    /// transaction is never committed in that case, so `write`'s state change rolls back too (DisposeAsync rolls
+    /// back any transaction that wasn't committed) — no partial/duplicate write survives.
+    /// </summary>
     private async Task<bool> RunTransactionAsync(string eventId, string eventType, Func<FormMapsDatabaseSession, Task> write, CancellationToken cancellationToken)
     {
         await using var session = await databaseSessionFactory.OpenWritableAsync(RequestContext.System(), cancellationToken);
@@ -86,7 +96,17 @@ public sealed class BillingShadowRepository(IFormMapsDatabaseSessionFactory data
             """);
         AddParameter(recordEvent, "id", eventId);
         AddParameter(recordEvent, "eventType", eventType);
-        await recordEvent.ExecuteNonQueryAsync(cancellationToken);
+
+        try
+        {
+            await recordEvent.ExecuteNonQueryAsync(cancellationToken);
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            // Concurrent redelivery of the same eventId raced us to the event-row insert and won.
+            // Don't commit: session.DisposeAsync() rolls back the whole transaction, including `write`.
+            return false;
+        }
 
         await session.CommitAsync(cancellationToken);
         return true;
