@@ -55,6 +55,7 @@ app.MapCounselorAlertsEndpoints();
 app.MapCounselorSessionsEndpoints();
 app.MapVideoEndpoints();
 app.MapMessagesEndpoints();
+app.MapBillingWebhookEndpoints();
 app.MapHub<MessagesHub>("/hubs/messages").RequireCors(FormMaps.Api.Security.ApiSecurityExtensions.CorsPolicyName);
 app.MapCounselorNotesEndpoints();
 app.MapAcademicGapsEndpoints();

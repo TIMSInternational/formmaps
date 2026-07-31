@@ -177,6 +177,9 @@ public static class DependencyInjection
         services.AddScoped<IVideoSessionsRepository, VideoSessionsRepository>();
         // Domain 7b: messaging (FM-DOTNET-098+; routes/messages.ts, all 7 endpoints under /api/v1/messages).
         services.AddScoped<IMessagesRepository, MessagesRepository>();
+        // Domain 9a: subscription-billing shadow infrastructure (webhook -> shadow tables only, no live writes).
+        services.AddScoped<FormMaps.Application.Billing.IBillingShadowRepository, FormMaps.Infrastructure.Billing.BillingShadowRepository>();
+        services.AddScoped<FormMaps.Application.Billing.IStripeWebhookVerifier, FormMaps.Infrastructure.Billing.StripeWebhookVerifier>();
         // Domain 7a: Daily.co video-provider client (FM-094). First HttpClient-based external integration in
         // this codebase — 15s timeout matches legacy's AbortSignal.timeout(15000).
         services.AddHttpClient<IDailyClient, DailyClient>(client =>
