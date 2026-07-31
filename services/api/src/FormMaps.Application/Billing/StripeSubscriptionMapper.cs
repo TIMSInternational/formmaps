@@ -1,6 +1,15 @@
 namespace FormMaps.Application.Billing;
 
-/// <summary>Minimal shape needed to derive a SubscriptionRecord — mirrors StripeSubscriptionLike in legacy stripeSubscriptions.ts.</summary>
+/// <summary>
+/// Minimal shape needed to derive a SubscriptionRecord — mirrors StripeSubscriptionLike in legacy stripeSubscriptions.ts.
+/// </summary>
+/// <remarks>
+/// Positional parameter order is deliberate and load-bearing: <c>ItemCurrentPeriodEndUnixSeconds</c> comes
+/// before <c>TrialEndUnixSeconds</c>. This matches the fallback priority used by
+/// <see cref="StripeSubscriptionMapper.ResolvePeriodEndUnixSeconds"/>: current period end, then item current
+/// period end, then trial end (current → item → trial). Any future construction of this record — positionally
+/// or otherwise — must preserve this order/priority; do not reorder Item and Trial relative to each other.
+/// </remarks>
 public sealed record StripeSubscriptionLite(
     string Id,
     string? Status,
