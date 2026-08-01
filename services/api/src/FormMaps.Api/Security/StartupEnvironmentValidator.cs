@@ -33,6 +33,20 @@ public static class StartupEnvironmentValidator
             errors.Add("ConnectionStrings:FormMaps, Database:ConnectionString, or DATABASE_URL is required in Production.");
         }
 
+        var stripeSecretKey = configuration["STRIPE_SECRET_KEY"] ?? Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY");
+
+        if (string.IsNullOrWhiteSpace(stripeSecretKey))
+        {
+            errors.Add("STRIPE_SECRET_KEY is required in Production.");
+        }
+
+        var stripeWebhookSecret = configuration["STRIPE_WEBHOOK_SECRET"] ?? Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET");
+
+        if (string.IsNullOrWhiteSpace(stripeWebhookSecret))
+        {
+            errors.Add("STRIPE_WEBHOOK_SECRET is required in Production.");
+        }
+
         if (errors.Count > 0)
         {
             throw new InvalidOperationException(

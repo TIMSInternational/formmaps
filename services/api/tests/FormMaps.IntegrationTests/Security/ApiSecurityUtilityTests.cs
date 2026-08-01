@@ -48,7 +48,9 @@ public class ApiSecurityUtilityTests
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["JWT_SECRET"] = "formmaps-production-secret-at-least-32-bytes",
-                ["DATABASE_URL"] = "Host=localhost;Database=formmaps;Username=user;Password=pass"
+                ["DATABASE_URL"] = "Host=localhost;Database=formmaps;Username=user;Password=pass",
+                ["STRIPE_SECRET_KEY"] = "sk_test_formmaps_placeholder",
+                ["STRIPE_WEBHOOK_SECRET"] = "whsec_formmaps_placeholder"
             })
             .Build();
 
