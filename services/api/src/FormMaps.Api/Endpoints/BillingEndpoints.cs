@@ -12,8 +12,13 @@ namespace FormMaps.Api.Endpoints;
 /// POST /checkout-session (Task 8) validates planId against subscription_plans via IPlanReader, then
 /// calls IStripeGateway to create/reuse a Stripe customer and start a subscription-mode Checkout
 /// session. POST /cancel-subscription (Task 9) reads the live row's stripeSubscriptionId via
-/// ILiveSubscriptionReader and calls IStripeGateway.CancelSubscriptionAsync. Task 10 adds the billing
-/// portal to the same group.
+/// ILiveSubscriptionReader and calls IStripeGateway.CancelSubscriptionAsync. POST /portal (Task 10)
+/// reads the live users."stripeCustomerId" via ILiveCustomerReader.
+///
+/// Response-code convention (aligned across the group in the Domain 9a final-review fix wave, Important
+/// 10): "the resource you are acting on does not exist" is 404 with a message, matching legacy
+/// stripe.ts — "No active subscription found" for cancel, "No billing account found" for portal. 400 is
+/// reserved for a malformed/unknown REQUEST (missing or unrecognised planId on checkout-session).
 /// </summary>
 public static class BillingEndpoints
 {
@@ -125,15 +130,30 @@ public static class BillingEndpoints
         return Results.Ok(new { success = true, message = "Subscription will cancel at the end of the current period" });
     }
 
+    /// <remarks>
+    /// Domain 9a final-review fix wave (Important 7 / Important 10). This used to call
+    /// <c>IStripeGateway.GetOrCreateCustomerAsync</c>, whose create branch runs whenever the user has no
+    /// Stripe customer on file — so merely VISITING the billing portal minted a brand-new Stripe customer.
+    /// Combined with the documented read-only-live-tables constraint (a newly created customer id cannot be
+    /// persisted back to <c>users."stripeCustomerId"</c> until cutover), every such visit orphaned a real
+    /// Stripe customer that nothing could ever find again. Legacy stripe.ts does not create here at all: it
+    /// reads <c>user.stripeCustomerId</c> and returns 404 "No billing account found" when it is missing.
+    /// This now uses the read-only <see cref="ILiveCustomerReader" /> and does the same.
+    /// </remarks>
     private static async Task<IResult> CreateBillingPortalAsync(
         IRequestContextAccessor accessor, IProtectedRequestGuard guard, IStripeGateway gateway,
-        IConfiguration configuration, CancellationToken cancellationToken)
+        ILiveCustomerReader customerReader, IConfiguration configuration, CancellationToken cancellationToken)
     {
         var context = accessor.Current;
         var decision = guard.RequireIdentity(context);
         if (!decision.Allowed) return Deny(decision);
 
-        var customerId = await gateway.GetOrCreateCustomerAsync(context, context.Tenant!.UserId, email: null, cancellationToken);
+        var customerId = await customerReader.GetStripeCustomerIdAsync(context, context.Tenant!.UserId, cancellationToken);
+        if (string.IsNullOrWhiteSpace(customerId))
+        {
+            return Results.Json(new { success = false, message = "No billing account found" }, statusCode: StatusCodes.Status404NotFound);
+        }
+
         var appUrl = configuration["NEXT_PUBLIC_APP_URL"] ?? "https://app.formmaps.com";
         var url = await gateway.CreateBillingPortalSessionAsync(customerId, returnUrl: $"{appUrl}/dashboard/settings", cancellationToken);
 

@@ -59,9 +59,25 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
         await using var cmd = new NpgsqlCommand(
             """
             TRUNCATE "shadow_user_subscriptions", "shadow_payments", "shadow_stripe_events",
-                     "user_subscriptions", "subscription_plans", "stripe_events" CASCADE
+                     "user_subscriptions", "subscription_plans", "stripe_events", "users" CASCADE
             """, conn);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>
+    /// Seeds a live users row, optionally with a Stripe customer id on file. Added for the final-review fix
+    /// wave (Important 7): POST /portal reads this column via ILiveCustomerReader and 404s when it is
+    /// absent, instead of minting a new Stripe customer it could never persist.
+    /// </summary>
+    public async Task SeedUserAsync(string userId, string? stripeCustomerId)
+    {
+        await using var connection = new NpgsqlConnection(ConnectionString);
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = """INSERT INTO "users" ("id", "stripeCustomerId") VALUES (@id, @customerId)""";
+        AddParam(command, "id", userId);
+        AddParam(command, "customerId", (object?)stripeCustomerId ?? DBNull.Value);
+        await command.ExecuteNonQueryAsync();
     }
 
     public async Task<(string StripeSubscriptionId, string Status, bool IsActive, DateTimeOffset? NextBillingDate)> QueryShadowSubscriptionAsync(string userId)

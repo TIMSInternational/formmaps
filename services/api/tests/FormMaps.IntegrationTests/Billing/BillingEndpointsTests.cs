@@ -218,10 +218,20 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     }
 
     [Fact]
-    public async Task PostBillingPortal_AuthenticatedUser_ReturnsPortalUrl()
+    public async Task PostBillingPortal_ExistingStripeCustomer_ReturnsPortalUrl()
     {
         await fixture.ResetAsync();
-        using var factory = CreateFactory();
+        await fixture.SeedUserAsync("user_portal", stripeCustomerId: "cus_on_file");
+        var gateway = new FakeStripeGateway();
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment(Environments.Development);
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton(fixture.SessionFactory);
+                services.AddScoped<IStripeGateway>(_ => gateway);
+            });
+        });
         using var client = factory.CreateClient();
         AddDevIdentity(client, "user_portal", "student");
 
@@ -230,6 +240,48 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.StartsWith("https://billing.stripe.com/", body.RootElement.GetProperty("data").GetProperty("url").GetString());
+        Assert.True(gateway.BillingPortalCalled);
+        // The endpoint must never take the create-a-customer path here (Important 7).
+        Assert.Equal(0, gateway.GetOrCreateCustomerCalls);
+    }
+
+    [Theory]
+    [InlineData("user_portal_null_customer", true)]
+    [InlineData("user_portal_no_row", false)]
+    public async Task PostBillingPortal_NoStripeCustomerOnFile_Returns404_WithoutCreatingOne(string userId, bool seedUserRow)
+    {
+        // Final-review fix wave (Important 7 / Important 10). This endpoint used to call
+        // GetOrCreateCustomerAsync unconditionally, so simply opening the billing portal CREATED a real
+        // Stripe customer -- and under the read-only-live-tables constraint that new id could never be
+        // written back to users."stripeCustomerId", orphaning it permanently. Legacy stripe.ts reads the
+        // column and 404s "No billing account found". Both misses are covered: a users row whose
+        // stripeCustomerId is NULL, and no users row at all.
+        await fixture.ResetAsync();
+        if (seedUserRow)
+        {
+            await fixture.SeedUserAsync(userId, stripeCustomerId: null);
+        }
+
+        var gateway = new FakeStripeGateway();
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment(Environments.Development);
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton(fixture.SessionFactory);
+                services.AddScoped<IStripeGateway>(_ => gateway);
+            });
+        });
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, userId, "student");
+
+        var response = await client.PostAsync("/api/v1/billing/portal", null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.False(gateway.BillingPortalCalled);
+        Assert.Equal(0, gateway.GetOrCreateCustomerCalls);
+        var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("No billing account found", body.RootElement.GetProperty("message").GetString());
     }
 
     [Fact]

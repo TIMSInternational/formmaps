@@ -59,6 +59,14 @@ CREATE TABLE IF NOT EXISTS "user_subscriptions" (
     "isActive" BOOLEAN NOT NULL DEFAULT true
 );
 
+-- Domain 9a final-review fix wave (Important 7): POST /portal now reads the LIVE
+-- users."stripeCustomerId" through ILiveCustomerReader instead of creating a Stripe customer, so the
+-- fixture needs the two columns LiveCustomerReader selects on.
+CREATE TABLE IF NOT EXISTS "users" (
+    "id" TEXT PRIMARY KEY,
+    "stripeCustomerId" TEXT UNIQUE
+);
+
 CREATE TABLE IF NOT EXISTS "stripe_events" (
     "id" TEXT PRIMARY KEY,
     "eventType" TEXT NOT NULL,
