@@ -64,15 +64,19 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
         await cmd.ExecuteNonQueryAsync();
     }
 
-    public async Task<(string StripeSubscriptionId, string Status, bool IsActive)> QueryShadowSubscriptionAsync(string userId)
+    public async Task<(string StripeSubscriptionId, string Status, bool IsActive, DateTimeOffset? NextBillingDate)> QueryShadowSubscriptionAsync(string userId)
     {
         await using var conn = await _dataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand(
-            """SELECT "stripeSubscriptionId", "status", "isActive" FROM "shadow_user_subscriptions" WHERE "userId" = @userId""", conn);
+            """SELECT "stripeSubscriptionId", "status", "isActive", "nextBillingDate" FROM "shadow_user_subscriptions" WHERE "userId" = @userId""", conn);
         cmd.Parameters.AddWithValue("userId", userId);
         await using var reader = await cmd.ExecuteReaderAsync();
         await reader.ReadAsync();
-        return (reader.GetString(0), reader.GetString(1), reader.GetBoolean(2));
+        return (
+            reader.GetString(0),
+            reader.GetString(1),
+            reader.GetBoolean(2),
+            reader.IsDBNull(3) ? null : new DateTimeOffset(DateTime.SpecifyKind(reader.GetDateTime(3), DateTimeKind.Utc)));
     }
 
     private static string LoadSchemaDdl()
@@ -102,6 +106,18 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
         await SeedAsync(userId, $"sub_{userId}", shadowStatus: "active", liveStatus: "active", shadowIsActive: shadowIsActive, liveIsActive: liveIsActive);
     }
 
+    /// <summary>
+    /// Seeds identical shadow/live rows apart from nextBillingDate, for the final-review fix wave's
+    /// Important 2 coverage. A null <paramref name="shadowNextBilling" /> reproduces exactly what
+    /// Important 1's bug wrote: live has a real renewal date, shadow has NULL.
+    /// </summary>
+    public async Task SeedNextBillingDateMismatchedSubscriptionAsync(
+        string userId, DateTimeOffset? shadowNextBilling, DateTimeOffset? liveNextBilling)
+    {
+        await SeedAsync(userId, $"sub_{userId}", shadowStatus: "active", liveStatus: "active",
+            shadowNextBilling: shadowNextBilling, liveNextBilling: liveNextBilling);
+    }
+
     public async Task SeedShadowOnlySubscriptionAsync(string userId, string stripeSubscriptionId)
     {
         await using var connection = new NpgsqlConnection(ConnectionString);
@@ -117,7 +133,10 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
         await command.ExecuteNonQueryAsync();
     }
 
-    private async Task SeedAsync(string userId, string stripeSubscriptionId, string shadowStatus, string liveStatus, bool shadowIsActive = true, bool liveIsActive = true)
+    private async Task SeedAsync(
+        string userId, string stripeSubscriptionId, string shadowStatus, string liveStatus,
+        bool shadowIsActive = true, bool liveIsActive = true,
+        DateTimeOffset? shadowNextBilling = null, DateTimeOffset? liveNextBilling = null)
     {
         await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
@@ -127,22 +146,24 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
 
         await using var live = connection.CreateCommand();
         live.CommandText = """
-            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive")
-            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive)
+            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive", "nextBillingDate")
+            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive, @nextBilling)
             """;
         AddParam(live, "id", Guid.NewGuid().ToString()); AddParam(live, "userId", userId);
         AddParam(live, "status", liveStatus); AddParam(live, "subId", stripeSubscriptionId);
         AddParam(live, "isActive", liveIsActive);
+        AddParam(live, "nextBilling", (object?)liveNextBilling ?? DBNull.Value);
         await live.ExecuteNonQueryAsync();
 
         await using var shadow = connection.CreateCommand();
         shadow.CommandText = """
-            INSERT INTO "shadow_user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive")
-            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive)
+            INSERT INTO "shadow_user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive", "nextBillingDate")
+            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive, @nextBilling)
             """;
         AddParam(shadow, "id", Guid.NewGuid().ToString()); AddParam(shadow, "userId", userId);
         AddParam(shadow, "status", shadowStatus); AddParam(shadow, "subId", stripeSubscriptionId);
         AddParam(shadow, "isActive", shadowIsActive);
+        AddParam(shadow, "nextBilling", (object?)shadowNextBilling ?? DBNull.Value);
         await shadow.ExecuteNonQueryAsync();
     }
 

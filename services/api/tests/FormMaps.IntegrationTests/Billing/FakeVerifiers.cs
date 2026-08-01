@@ -25,6 +25,28 @@ public sealed class FakeVerifier : IStripeWebhookVerifier
           }}
         }
         """;
+
+    /// <summary>
+    /// A customer.subscription.updated/deleted payload carrying a real items[0].current_period_end — the
+    /// field Stripe.net 52.2.0 exposes as SubscriptionItem.CurrentPeriodEnd and the one the shadow write
+    /// path derives nextBillingDate from. Added for the final-review fix wave (Important 1).
+    /// </summary>
+    public static string SubscriptionLifecycleEventJson(
+        string eventId, string eventType, string stripeSubscriptionId, string status,
+        long itemCurrentPeriodEndUnixSeconds, bool cancelAtPeriodEnd) => $$$"""
+        {
+          "id": "{{{eventId}}}",
+          "type": "{{{eventType}}}",
+          "data": { "object": {
+            "id": "{{{stripeSubscriptionId}}}", "object": "subscription", "status": "{{{status}}}",
+            "cancel_at_period_end": {{{(cancelAtPeriodEnd ? "true" : "false")}}},
+            "items": { "object": "list", "data": [
+              { "id": "si_{{{stripeSubscriptionId}}}", "object": "subscription_item",
+                "current_period_end": {{{itemCurrentPeriodEndUnixSeconds}}} }
+            ]}
+          }}
+        }
+        """;
 }
 
 public sealed class RejectingVerifier : IStripeWebhookVerifier

@@ -1,12 +1,14 @@
-using FormMaps.Infrastructure.Billing;
+using FormMaps.Application.Billing;
 using Stripe;
 
 namespace FormMaps.UnitTests.Billing;
 
 /// <summary>
 /// Domain 9a Task 8 fix round 1 (Finding 2). Regression guard for the Stripe.Subscription ->
-/// StripeSubscriptionLite extraction (StripeGateway.MapToLite), the piece of GetSubscriptionAsync that
-/// isn't covered by any FakeStripeGateway-substituted integration test. Constructs real Stripe.net SDK
+/// StripeSubscriptionLite extraction, which the final-review fix wave (Important 1) moved from
+/// StripeGateway.MapToLite to StripeSubscriptionMapper.ToLite so the customer.subscription.updated/deleted
+/// webhook branch could share it instead of hand-building the record with null period-end fields. Not
+/// covered by any FakeStripeGateway-substituted integration test. Constructs real Stripe.net SDK
 /// objects directly (Stripe.Subscription/StripeList/SubscriptionItem are plain POCOs with public
 /// parameterless constructors -- confirmed via reflection against the installed Stripe.net 52.2.0
 /// package) rather than hitting a live API, mirroring StripeSubscriptionMapperTests.cs's pattern one
@@ -14,10 +16,10 @@ namespace FormMaps.UnitTests.Billing;
 /// (Subscription.CurrentPeriodEnd moved onto SubscriptionItem) -- this test exists so a future SDK bump
 /// that shifts the shape again fails loudly here instead of silently in production.
 /// </summary>
-public class StripeGatewaySubscriptionMappingTests
+public class StripeSubscriptionLiteMappingTests
 {
     [Fact]
-    public void MapToLite_PopulatesItemPeriodEndAndTrialEnd_LeavesCurrentPeriodEndNull()
+    public void ToLite_PopulatesItemPeriodEndAndTrialEnd_LeavesCurrentPeriodEndNull()
     {
         var itemPeriodEnd = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
         var trialEnd = new DateTime(2026, 8, 15, 0, 0, 0, DateTimeKind.Utc);
@@ -34,7 +36,7 @@ public class StripeGatewaySubscriptionMappingTests
             },
         };
 
-        var lite = StripeGateway.MapToLite(sub);
+        var lite = StripeSubscriptionMapper.ToLite(sub);
 
         // Field order matches StripeSubscriptionLite's real positional order: Id, Status,
         // CurrentPeriodEndUnixSeconds, ItemCurrentPeriodEndUnixSeconds, TrialEndUnixSeconds, CancelAtPeriodEnd.
@@ -47,7 +49,7 @@ public class StripeGatewaySubscriptionMappingTests
     }
 
     [Fact]
-    public void MapToLite_NoItemsNoTrialEnd_BothNullableFieldsNull()
+    public void ToLite_NoItemsNoTrialEnd_BothNullableFieldsNull()
     {
         var sub = new Subscription
         {
@@ -58,7 +60,7 @@ public class StripeGatewaySubscriptionMappingTests
             Items = new StripeList<SubscriptionItem> { Data = [] },
         };
 
-        var lite = StripeGateway.MapToLite(sub);
+        var lite = StripeSubscriptionMapper.ToLite(sub);
 
         Assert.Equal("sub_no_items", lite.Id);
         Assert.Equal("active", lite.Status);
@@ -69,7 +71,7 @@ public class StripeGatewaySubscriptionMappingTests
     }
 
     [Fact]
-    public void MapToLite_NullItemsCollection_DoesNotThrow_ItemPeriodEndNull()
+    public void ToLite_NullItemsCollection_DoesNotThrow_ItemPeriodEndNull()
     {
         var sub = new Subscription
         {
@@ -79,7 +81,7 @@ public class StripeGatewaySubscriptionMappingTests
             Items = null,
         };
 
-        var lite = StripeGateway.MapToLite(sub);
+        var lite = StripeSubscriptionMapper.ToLite(sub);
 
         Assert.Null(lite.ItemCurrentPeriodEndUnixSeconds);
     }

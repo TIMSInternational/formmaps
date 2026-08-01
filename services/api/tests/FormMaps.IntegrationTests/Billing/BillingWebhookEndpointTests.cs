@@ -184,6 +184,39 @@ public class BillingWebhookEndpointTests(BillingDatabaseFixture fixture) : IClas
     }
 
     [Fact]
+    public async Task Webhook_SubscriptionUpdated_KeepsNextBillingDateFromTheEvent()
+    {
+        // Final-review fix wave (Important 1). The customer.subscription.updated/deleted branch used to
+        // build `new StripeSubscriptionLite(sub.Id, sub.Status, null, null, null, sub.CancelAtPeriodEnd)`,
+        // hardcoding every period-end field to null -- so the most common lifecycle event of all, a
+        // renewal, overwrote a correct nextBillingDate with NULL. Before the fix this test's final
+        // assertion failed with NextBillingDate == null.
+        await fixture.ResetAsync();
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+
+        // Bootstrap the shadow row (the update branch is an UPDATE ... WHERE stripeSubscriptionId).
+        var created = FakeVerifier.SubscriptionCreatedEventJson("evt_nbd_create", "user_nbd", "plan_1", "sub_nbd");
+        var createResponse = await client.PostAsync("/api/v1/billing/webhook",
+            new StringContent(created, Encoding.UTF8, "application/json"));
+        Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
+
+        var renewalPeriodEnd = new DateTimeOffset(2027, 3, 1, 0, 0, 0, TimeSpan.Zero);
+        var updated = FakeVerifier.SubscriptionLifecycleEventJson(
+            eventId: "evt_nbd_update", eventType: "customer.subscription.updated",
+            stripeSubscriptionId: "sub_nbd", status: "active",
+            itemCurrentPeriodEndUnixSeconds: renewalPeriodEnd.ToUnixTimeSeconds(), cancelAtPeriodEnd: false);
+
+        var response = await client.PostAsync("/api/v1/billing/webhook",
+            new StringContent(updated, Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var row = await fixture.QueryShadowSubscriptionAsync("user_nbd");
+        Assert.Equal("active", row.Status);
+        Assert.Equal(renewalPeriodEnd, row.NextBillingDate);
+    }
+
+    [Fact]
     public async Task Webhook_ContentTypeJson_IsNotBlockedByMutationMiddleware()
     {
         await fixture.ResetAsync();

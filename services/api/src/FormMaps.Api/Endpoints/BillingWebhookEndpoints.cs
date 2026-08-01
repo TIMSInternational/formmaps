@@ -69,7 +69,14 @@ public static class BillingWebhookEndpoints
                 var sub = stripeEvent.Data.Object as Stripe.Subscription;
                 if (sub is not null)
                 {
-                    var lite = new StripeSubscriptionLite(sub.Id, sub.Status, null, null, null, sub.CancelAtPeriodEnd);
+                    // Final-review fix wave (Important 1): this used to hand-build the lite record as
+                    // `new StripeSubscriptionLite(sub.Id, sub.Status, null, null, null, sub.CancelAtPeriodEnd)`,
+                    // hardcoding all three period-end fields to null. StripeSubscriptionMapper.ToRecord
+                    // resolves nextBillingDate from exactly those fields, so every customer.subscription.updated
+                    // event -- i.e. every renewal, the single most common lifecycle event -- wrote a NULL
+                    // nextBillingDate over the correct one. StripeSubscriptionMapper.ToLite extracts them
+                    // properly from the real Stripe.Subscription already on hand.
+                    var lite = StripeSubscriptionMapper.ToLite(sub);
                     await repository.MarkSubscriptionCancelledAsync(stripeEvent.Id, stripeEvent.Type, sub.Id, lite, cancellationToken);
                 }
                 break;

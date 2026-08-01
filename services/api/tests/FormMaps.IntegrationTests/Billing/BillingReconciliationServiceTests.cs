@@ -60,6 +60,42 @@ public class BillingReconciliationServiceTests(BillingDatabaseFixture fixture)
     }
 
     [Fact]
+    public async Task Reconcile_NextBillingDateDiffers_ReportsMismatch()
+    {
+        // Final-review fix wave (Important 2). Reproduces exactly what Important 1's bug wrote: live holds
+        // the real renewal date, shadow holds NULL because the webhook hardcoded the period-end fields.
+        // Before this fix reconciliation compared only status/cancelAtPeriodEnd/isActive and reported
+        // ZERO mismatches for this row -- the safety net could not see the bug it exists to catch.
+        await fixture.ResetAsync();
+        var liveNextBilling = new DateTimeOffset(2027, 3, 1, 0, 0, 0, TimeSpan.Zero);
+        await fixture.SeedNextBillingDateMismatchedSubscriptionAsync(
+            userId: "user_nbd_mismatch", shadowNextBilling: null, liveNextBilling: liveNextBilling);
+        var service = new BillingReconciliationService(fixture.SessionFactory);
+
+        var result = await service.ReconcileAsync(CancellationToken.None);
+
+        var mismatch = Assert.Single(result.Mismatches);
+        Assert.Equal("nextBillingDate", mismatch.Field);
+        Assert.Null(mismatch.ShadowValue);
+        Assert.Equal(liveNextBilling.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture), mismatch.LiveValue);
+    }
+
+    [Fact]
+    public async Task Reconcile_MatchingNextBillingDate_NoMismatch()
+    {
+        // Guards the opposite direction: equal timestamps must NOT produce a spurious hourly Error log.
+        await fixture.ResetAsync();
+        var nextBilling = new DateTimeOffset(2027, 3, 1, 0, 0, 0, TimeSpan.Zero);
+        await fixture.SeedNextBillingDateMismatchedSubscriptionAsync(
+            userId: "user_nbd_match", shadowNextBilling: nextBilling, liveNextBilling: nextBilling);
+        var service = new BillingReconciliationService(fixture.SessionFactory);
+
+        var result = await service.ReconcileAsync(CancellationToken.None);
+
+        Assert.Empty(result.Mismatches);
+    }
+
+    [Fact]
     public async Task Reconcile_ShadowRowWithNoLiveCounterpart_ReportsMismatch()
     {
         await fixture.ResetAsync();

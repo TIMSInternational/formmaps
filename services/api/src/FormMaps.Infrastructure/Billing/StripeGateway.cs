@@ -100,38 +100,10 @@ public sealed class StripeGateway(IConfiguration configuration, ILiveCustomerRea
     {
         var service = new SubscriptionService(Client());
         var sub = await service.GetAsync(stripeSubscriptionId, cancellationToken: cancellationToken);
-        return MapToLite(sub);
+        // The Stripe.Subscription -> StripeSubscriptionLite extraction lives in
+        // StripeSubscriptionMapper.ToLite (FormMaps.Application.Billing) as of the Domain 9a final-review
+        // fix wave, so the webhook endpoint can share it instead of hand-rolling the record. See that
+        // method's remarks for the SDK-version notes that used to live here.
+        return StripeSubscriptionMapper.ToLite(sub);
     }
-
-    /// <summary>
-    /// Pure Stripe.Subscription -> StripeSubscriptionLite extraction, pulled out of GetSubscriptionAsync
-    /// (Domain 9a Task 8 fix round 1, Finding 2) so it's directly unit-testable without a live Stripe API
-    /// call -- Stripe.Subscription/StripeList/SubscriptionItem are plain POCOs with public parameterless
-    /// constructors and settable properties (confirmed via reflection against the installed Stripe.net
-    /// 52.2.0 package), so tests can `new Stripe.Subscription { ... }` directly. This exact mapping
-    /// (Items/TrialEnd extraction) already broke once due to an SDK version change -- see the
-    /// CurrentPeriodEnd note below -- hence the regression guard.
-    /// </summary>
-    /// <remarks>
-    /// Stripe.net 52.2.0's Subscription no longer exposes a top-level CurrentPeriodEnd -- Stripe moved
-    /// current_period_end onto each subscription item. StripeSubscriptionMapper.ResolvePeriodEndUnixSeconds
-    /// already falls back current -> item -> trial (see its remarks), so leaving
-    /// CurrentPeriodEndUnixSeconds null here and populating ItemCurrentPeriodEndUnixSeconds from the
-    /// first item is the accurate mapping for this SDK version, not a placeholder.
-    /// </remarks>
-    public static StripeSubscriptionLite MapToLite(Subscription sub)
-    {
-        var itemPeriodEnd = sub.Items?.Data?.FirstOrDefault()?.CurrentPeriodEnd;
-
-        return new StripeSubscriptionLite(
-            sub.Id,
-            sub.Status,
-            CurrentPeriodEndUnixSeconds: null,
-            ItemCurrentPeriodEndUnixSeconds: itemPeriodEnd is { } periodEnd ? ToUnixSeconds(periodEnd) : null,
-            TrialEndUnixSeconds: sub.TrialEnd is { } trialEnd ? ToUnixSeconds(trialEnd) : null,
-            CancelAtPeriodEnd: sub.CancelAtPeriodEnd);
-    }
-
-    private static long ToUnixSeconds(DateTime value) =>
-        new DateTimeOffset(DateTime.SpecifyKind(value, DateTimeKind.Utc)).ToUnixTimeSeconds();
 }
