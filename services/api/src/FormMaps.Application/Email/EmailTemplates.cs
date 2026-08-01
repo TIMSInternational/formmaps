@@ -3,9 +3,11 @@ using System.Text;
 namespace FormMaps.Application.Email;
 
 /// <summary>
-/// Pure HTML email builders — faithful port of the live TS lib/email.ts template helpers (wrap/button/escapeHtml)
-/// and the two senders this slice needs (sendEvaluationInviteEmail, sendAssessmentReminderEmail). Deterministic
-/// given <see cref="EmailOptions"/> so the subjects, escaped names, list items, and button URLs are byte-testable.
+/// Pure HTML email builders — faithful port of the live TS lib/email.ts template helpers (wrap/button/escapeHtml),
+/// the senders this slice needs (sendEvaluationInviteEmail, sendAssessmentReminderEmail, sendReportEmail,
+/// sendPasswordResetEmail), and the two inline auth-notification templates embedded at their call sites in
+/// authService.ts (account-locked, password-changed). Deterministic given <see cref="EmailOptions"/> so the
+/// subjects, escaped names, list items, and button URLs are byte-testable.
 /// </summary>
 public sealed class EmailTemplates(EmailOptions options)
 {
@@ -64,6 +66,62 @@ public sealed class EmailTemplates(EmailOptions options)
                 <h2 style="color:#102B47">Student Report: {EscapeHtml(studentName)}</h2>
                 <p>Your latest assessment report is ready. Log in to view your full results.</p>
                 <p>Log in to view the full report: <a href="{options.FrontendUrl}/dashboard">{options.FrontendUrl}/dashboard</a></p>
+            """;
+        return new EmailMessage(subject, Wrap(body));
+    }
+
+    /// <summary>Password reset link — mirrors sendPasswordResetEmail (email.ts:267-274). NOTE: legacy interpolates
+    /// {name} into this body RAW (no escapeHtml call, unlike every other sender in email.ts) — a latent XSS gap.
+    /// This port deliberately deviates and always escapes userName, per the plan's explicit security requirement;
+    /// subject and all other copy are byte-faithful.</summary>
+    public EmailMessage BuildPasswordReset(string userName, string resetUrl)
+    {
+        const string subject = "FormMaps — Password Reset";
+        var body =
+            $"""
+                <h2 style="color:#102B47">Hello {EscapeHtml(userName)},</h2>
+                <p>We received a request to reset your password.</p>
+                {Button(resetUrl, "Reset Password")}
+                <p>If you did not request this, you can safely ignore this email. The link expires in 1 hour.</p>
+            """;
+        return new EmailMessage(subject, Wrap(body));
+    }
+
+    /// <summary>Account-lockout notice — mirrors the inline HTML sent from authService.ts login() right after a
+    /// 5th failed attempt locks the account (~line 83-90). Legacy sends this as a bare, unwrapped
+    /// Arial/#333 div (not via wrap()/button()) with a plain inline &lt;a&gt; link — this port normalizes it onto
+    /// the same Wrap/Button/Navy primitives the rest of this file already uses (per the plan's explicit
+    /// instruction), preserving every line of legacy copy verbatim. No user-controlled input here (only the
+    /// server-generated forgotPasswordUrl), so there is nothing to escape.</summary>
+    public EmailMessage BuildAccountLocked(string forgotPasswordUrl)
+    {
+        const string subject = "FormMaps — Account Locked";
+        var body =
+            $"""
+                <h2 style="color:#102B47">Account Temporarily Locked</h2>
+                <p>Your FormMaps account was locked after multiple failed login attempts. It will be unlocked automatically in 15 minutes.</p>
+                <p>If this wasn't you, we recommend resetting your password immediately.</p>
+                {Button(forgotPasswordUrl, "Reset Password")}
+                <p>This is an automated security notification from FormMaps.</p>
+            """;
+        return new EmailMessage(subject, Wrap(body));
+    }
+
+    /// <summary>Password-changed notice — mirrors the inline HTML sent from authService.ts changePassword()
+    /// (~line 225-232). Legacy already escapes the name (escapeHtml(user.name)), so that part carries over as-is;
+    /// same Wrap/Navy normalization as BuildAccountLocked applies here (legacy is a bare unwrapped div). The
+    /// changedByAdmin ternary ("changed by an administrator" vs "successfully updated") matches legacy's
+    /// isAdminAction check exactly.</summary>
+    public EmailMessage BuildPasswordChanged(string userName, bool changedByAdmin)
+    {
+        const string subject = "FormMaps — Password Changed";
+        var reason = changedByAdmin ? "changed by an administrator" : "successfully updated";
+        var body =
+            $"""
+                <h2 style="color:#102B47">Password Changed</h2>
+                <p>Hi {EscapeHtml(userName)},</p>
+                <p>Your password was {reason}. If you did not make this change, please contact support immediately.</p>
+                <p>This is an automated security notification from FormMaps.</p>
             """;
         return new EmailMessage(subject, Wrap(body));
     }
