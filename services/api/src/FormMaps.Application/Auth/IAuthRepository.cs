@@ -57,6 +57,17 @@ public sealed record ChangeRoleResult(
 public sealed record SchoolInviteRow(string Id, string AdminEmail, DateTimeOffset? InvitationTokenExpiresAt);
 
 /// <summary>
+/// Password-reset-token lookup result backing forgot/reset-password (authService.ts's
+/// requestPasswordReset/resetPassword). Deliberately NOT the collapsed-null pattern used by
+/// <see cref="RotateResult"/>/<see cref="ChangeRoleResult"/> -- same reasoning as
+/// <see cref="SchoolInviteRow"/>: <c>ExpiresAt</c>, <c>UsedAt</c>, and <c>UserIsActive</c> are
+/// returned as-is, unfiltered, so Task 12's endpoint handler can perform the expired/already-used/
+/// inactive-user checks itself and return three distinct error messages for three distinct causes,
+/// rather than this method collapsing all of them into a single null and losing that distinction.
+/// </summary>
+public sealed record ResetTokenRow(string Id, string UserId, DateTimeOffset ExpiresAt, DateTimeOffset? UsedAt, bool UserIsActive);
+
+/// <summary>
 /// Domain 10 (Auth) login + lockout reads/writes, backing routes/auth.ts's login flow. Runs entirely
 /// under <see cref="RequestContext.System"/> -- these are pre-auth operations (there is no caller
 /// identity yet), matching the plan's Global Constraints for this task. Grows in Tasks 7-10 with
@@ -156,4 +167,38 @@ public interface IAuthRepository
     /// `status` to `"active"`. Does not touch `isActive`.
     /// </summary>
     Task ActivateSchoolAsync(string schoolId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Marks every currently-unused password-reset token for <paramref name="userId"/> as used, per
+    /// authService.ts's requestPasswordReset invalidating any previously-issued, still-live reset
+    /// token whenever a new one is requested -- at most one live reset token per user at a time.
+    /// </summary>
+    Task InvalidatePriorResetTokensAsync(string userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Persists a new password-reset token. <paramref name="sha256Hex"/> is already the SHA-256 hex
+    /// digest of the raw token handed to the user -- the raw-token hashing happens in Task 12's
+    /// endpoint handler (authService.ts's <c>hashResetToken</c>), not here; this repository only
+    /// ever sees/stores the digest.
+    /// </summary>
+    Task CreatePasswordResetTokenAsync(string userId, string sha256Hex, TimeSpan lifetime, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Looks up a password-reset token by its SHA-256 hex digest. Returns <c>null</c> only for an
+    /// unknown digest -- see <see cref="ResetTokenRow"/> for why expired/already-used/inactive-user
+    /// cases still return a row rather than collapsing to null.
+    /// </summary>
+    Task<ResetTokenRow?> FindResetTokenAsync(string sha256Hex, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Applies a validated password reset: updates the password, marks the reset token used, and
+    /// revokes every active refresh token for <paramref name="userId"/> (logging out every existing
+    /// session) -- all three writes in a single transaction, all-or-nothing. Task 12's endpoint
+    /// handler has already resolved and validated <paramref name="resetTokenId"/>/<paramref
+    /// name="userId"/> via <see cref="FindResetTokenAsync"/> before calling this; this method trusts
+    /// that already happened. A partial failure must never leave the password changed while an old
+    /// session stays valid -- see AuthRepository.ApplyPasswordResetAsync's doc comment for exactly
+    /// how that guarantee is implemented.
+    /// </summary>
+    Task ApplyPasswordResetAsync(string resetTokenId, string userId, string newHash, string clientIp, CancellationToken cancellationToken = default);
 }

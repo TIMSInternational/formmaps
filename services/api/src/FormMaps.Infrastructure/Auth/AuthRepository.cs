@@ -629,6 +629,140 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
         await session.CommitAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Marks every currently-unused "password_reset_tokens" row for userId as used, per
+    /// authService.ts's requestPasswordReset invalidating any previously-issued, still-live reset
+    /// token whenever a new one is requested -- at most one live reset token per user at a time.
+    /// "updatedAt" = now() bound explicitly, same NOT-NULL-no-database-default column as every
+    /// other write in this domain.
+    /// </summary>
+    public async Task InvalidatePriorResetTokensAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+        await using var command = Command(session, """
+            UPDATE "password_reset_tokens" SET "usedAt" = now(), "updatedAt" = now()
+            WHERE "userId" = @userId AND "usedAt" IS NULL
+            """);
+        AddParameter(command, "userId", userId);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+        await session.CommitAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Persists a new password-reset token keyed by its SHA-256 hex digest -- the raw-token hashing
+    /// happens in Task 12's endpoint handler (authService.ts's hashResetToken), not here; this
+    /// repository only ever sees/stores the digest. "password_reset_tokens"."updatedAt" is NOT NULL
+    /// with no database default (see auth-schema.sql's header comment) -- bound explicitly.
+    /// </summary>
+    public async Task CreatePasswordResetTokenAsync(string userId, string sha256Hex, TimeSpan lifetime, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+        await using var command = Command(session, """
+            INSERT INTO "password_reset_tokens" ("id","userId","token","expiresAt","updatedAt")
+            VALUES (gen_random_uuid()::text, @userId, @token, @expiresAt, now())
+            """);
+        AddParameter(command, "userId", userId);
+        AddParameter(command, "token", sha256Hex);
+        AddParameter(command, "expiresAt", DateTime.UtcNow.Add(lifetime));
+        await command.ExecuteNonQueryAsync(cancellationToken);
+        await session.CommitAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Looks up a password-reset token by its SHA-256 hex digest, joined to the owning user's
+    /// CURRENT "isActive" (matching RotateRefreshTokenAsync's TOCTOU-safety convention of always
+    /// re-checking current state rather than a cached value). Returns null only for an unknown
+    /// digest -- see <see cref="ResetTokenRow"/>'s doc comment for why expired/already-used/
+    /// inactive-user cases still return a row rather than collapsing to null: that check is
+    /// deliberately Task 12's job, same convention as FindSchoolByInvitationTokenAsync's expiry
+    /// check.
+    /// </summary>
+    public async Task<ResetTokenRow?> FindResetTokenAsync(string sha256Hex, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+        await using var command = Command(session, """
+            SELECT prt."id", prt."userId", prt."expiresAt", prt."usedAt", u."isActive"
+            FROM "password_reset_tokens" prt JOIN "users" u ON u."id" = prt."userId"
+            WHERE prt."token" = @token
+            """);
+        AddParameter(command, "token", sha256Hex);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken)) return null;
+
+        return new ResetTokenRow(
+            reader.GetString(0), reader.GetString(1),
+            new DateTimeOffset(reader.GetDateTime(2), TimeSpan.Zero),
+            reader.IsDBNull(3) ? null : new DateTimeOffset(reader.GetDateTime(3), TimeSpan.Zero),
+            reader.GetBoolean(4));
+    }
+
+    /// <summary>
+    /// Single writable session, single transaction, three writes in this exact order -- update
+    /// password, mark the reset token used, revoke every currently-active refresh token -- committed
+    /// once at the end. This ordering/atomicity IS the security property this method exists to
+    /// provide: a partial failure must never leave the password changed while an old session stays
+    /// valid (mirrors legacy's `$transaction([...])` exactly).
+    ///
+    /// Deliberately NO explicit try/catch-rollback here. <see cref="FormMapsDatabaseSession"/>'s
+    /// source was read to resolve this: it exposes only <c>CommitAsync</c> and <c>DisposeAsync</c> --
+    /// there is no <c>RollbackAsync</c> method on that type. Its <c>DisposeAsync</c> simply disposes
+    /// the underlying <c>DbTransaction</c> (then the connection) without committing, and disposing an
+    /// uncommitted <c>DbTransaction</c>/<c>NpgsqlTransaction</c> performs an implicit ROLLBACK -- this
+    /// was verified empirically against a real Testcontainers postgres:16-alpine instance for this
+    /// exact three-statement shape before writing this method (see this task's report): the first two
+    /// writes execute for real, the third fails with a genuine Postgres-raised exception, and with NO
+    /// rollback call anywhere, disposing the still-open transaction rolls back all three. Same idiom
+    /// BillingShadowRepository.RunTransactionAsync already relies on ("Don't commit:
+    /// session.DisposeAsync() rolls back the whole transaction, including `write`"). So: if ANY of the
+    /// three ExecuteNonQueryAsync calls below throws, the exception simply propagates out of this
+    /// method -- CommitAsync is never reached, the `await using var session` above disposes on the way
+    /// out, and every write in this transaction rolls back, not just the one that failed.
+    ///
+    /// "updatedAt" = now() bound explicitly on all three UPDATEs -- "users"/"password_reset_tokens"/
+    /// "refresh_tokens" all have this NOT-NULL-no-database-default column (see auth-schema.sql's
+    /// header comment / every prior write method in this class). This task's brief's illustrative
+    /// version of this method omitted the bind on all three statements, which would 500 with a
+    /// not-null violation on every real call -- caught and fixed here before implementing.
+    /// </summary>
+    public async Task ApplyPasswordResetAsync(string resetTokenId, string userId, string newHash, string clientIp, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        await using (var updatePassword = Command(session, """
+            UPDATE "users" SET "password" = @hash, "passwordNeedsMigration" = false, "updatedAt" = now()
+            WHERE "id" = @userId
+            """))
+        {
+            AddParameter(updatePassword, "hash", newHash);
+            AddParameter(updatePassword, "userId", userId);
+            await updatePassword.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await using (var consumeToken = Command(session, """
+            UPDATE "password_reset_tokens" SET "usedAt" = now(), "updatedAt" = now() WHERE "id" = @id
+            """))
+        {
+            AddParameter(consumeToken, "id", resetTokenId);
+            await consumeToken.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await using (var revokeSessions = Command(session, """
+            UPDATE "refresh_tokens" SET "isRevoked" = true, "revokedAt" = now(), "revokedByIp" = @ip, "updatedAt" = now()
+            WHERE "userId" = @userId AND "isRevoked" = false
+            """))
+        {
+            AddParameter(revokeSessions, "userId", userId);
+            AddParameter(revokeSessions, "ip", clientIp);
+            await revokeSessions.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await session.CommitAsync(cancellationToken);
+    }
+
     private static DbCommand Command(FormMapsDatabaseSession session, string sql)
     {
         var command = session.Connection.CreateCommand();

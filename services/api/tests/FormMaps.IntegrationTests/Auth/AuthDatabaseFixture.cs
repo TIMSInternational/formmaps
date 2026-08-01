@@ -252,6 +252,66 @@ public sealed class AuthDatabaseFixture : IAsyncLifetime
         return (long)(await cmd.ExecuteScalarAsync())!;
     }
 
+    /// <summary>
+    /// Seeds a "password_reset_tokens" row directly, bypassing CreatePasswordResetTokenAsync, for
+    /// AuthRepositoryResetPasswordTests (Task 10) -- lets tests construct expired/used tokens that
+    /// the repository's own writer never produces. "updatedAt" bound explicitly (inline now()),
+    /// same NOT-NULL-no-database-default column as every other table in this fixture.
+    /// </summary>
+    public async Task<string> SeedPasswordResetTokenAsync(
+        string userId, string sha256Hex, DateTimeOffset expiresAt, DateTimeOffset? usedAt = null, string? id = null)
+    {
+        var tokenId = id ?? Guid.NewGuid().ToString();
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "password_reset_tokens" ("id","userId","token","expiresAt","usedAt","updatedAt")
+            VALUES (@id,@userId,@token,@expiresAt,@usedAt,now())
+            """, conn);
+        cmd.Parameters.AddWithValue("id", tokenId);
+        cmd.Parameters.AddWithValue("userId", userId);
+        cmd.Parameters.AddWithValue("token", sha256Hex);
+        cmd.Parameters.AddWithValue("expiresAt", expiresAt.UtcDateTime);
+        cmd.Parameters.AddWithValue("usedAt", (object?)usedAt?.UtcDateTime ?? DBNull.Value);
+        await cmd.ExecuteNonQueryAsync();
+        return tokenId;
+    }
+
+    /// <summary>
+    /// Reads back a user's current "password" hash for AuthRepositoryResetPasswordTests' (Task 10)
+    /// atomicity proof -- verifying the password UPDATE genuinely rolled back (not just that an
+    /// exception was thrown) when a later statement in the same ApplyPasswordResetAsync transaction
+    /// fails. Not exposed by any repository read method that surfaces the raw hash post-reset, so
+    /// this is a direct verification read, same in spirit as this fixture's other raw-SQL helpers
+    /// (e.g. GetPasswordNeedsMigrationAsync above).
+    /// </summary>
+    public async Task<string?> GetUserPasswordHashAsync(string userId)
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand("""SELECT "password" FROM "users" WHERE "id" = @id""", conn);
+        cmd.Parameters.AddWithValue("id", userId);
+        var result = await cmd.ExecuteScalarAsync();
+        return result as string;
+    }
+
+    /// <summary>
+    /// Counts currently-active (non-revoked) "refresh_tokens" rows for a user, for
+    /// AuthRepositoryResetPasswordTests' (Task 10) ApplyPasswordResetAsync happy-path (asserts 0
+    /// after a successful reset -- every session logged out) and atomicity-proof (asserts unchanged
+    /// after a rolled-back attempt) tests.
+    /// </summary>
+    public async Task<long> CountActiveRefreshTokensAsync(string userId)
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """SELECT COUNT(*) FROM "refresh_tokens" WHERE "userId" = @userId AND "isRevoked" = false""", conn);
+        cmd.Parameters.AddWithValue("userId", userId);
+        return (long)(await cmd.ExecuteScalarAsync())!;
+    }
+
     private static string LoadSchemaDdl()
     {
         var assembly = Assembly.GetExecutingAssembly();
