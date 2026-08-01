@@ -120,9 +120,12 @@ public class BillingWebhookEndpointTests(BillingDatabaseFixture fixture) : IClas
         using var client = factory.CreateClient();
 
         // planId contains '&' -- a character JsonBodySanitizationMiddleware's re-serialization would
-        // otherwise rewrite, mutating the bytes the signature was computed over. api_version must
-        // match the installed Stripe.net package's compiled ApiVersion (Stripe.StripeConfiguration.
-        // ApiVersion) or EventUtility's default-overload compatibility check NREs on deserializing it.
+        // otherwise rewrite, mutating the bytes the signature was computed over. api_version is pinned to
+        // the installed Stripe.net package's compiled ApiVersion (Stripe.StripeConfiguration.ApiVersion)
+        // because that was the ONLY value the strict default overload accepted; the final-review fix wave
+        // (Important 4) relaxed that, and the mismatched-version case is covered by
+        // Webhook_RealSignatureVerification_AcceptsAnOlderAccountApiVersion below. Left as-is here so
+        // this test keeps testing body-byte integrity and nothing else.
         var payload = """
             {
               "id": "evt_sig_real_1",
@@ -150,6 +153,122 @@ public class BillingWebhookEndpointTests(BillingDatabaseFixture fixture) : IClas
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var row = await fixture.QueryShadowSubscriptionAsync("user_sig_1");
         Assert.Equal("sub_sig_1", row.StripeSubscriptionId);
+    }
+
+    [Fact]
+    public async Task Webhook_RealSignatureVerification_AcceptsAnOlderAccountApiVersion()
+    {
+        // Final-review fix wave (Important 4). A webhook endpoint receives events serialised with whatever
+        // API version the Stripe ACCOUNT is pinned to, which legitimately lags the version Stripe.net was
+        // compiled against. EventUtility.ConstructEvent's default overload throws StripeException on that
+        // difference alone -- and this endpoint, which can only see "a StripeException came out of Verify",
+        // reported it as 400 "Invalid webhook signature" even though the signature was perfectly valid.
+        // Stripe would then retry the event for days against an endpoint that could never accept it.
+        // This test uses the REAL StripeWebhookVerifier (no IStripeWebhookVerifier override) with a
+        // correctly computed signature and a deliberately older api_version; before the fix it got a 400.
+        await fixture.ResetAsync();
+        const string webhookSecret = "whsec_test_secret_for_api_version_mismatch";
+        const string olderAccountApiVersion = "2020-08-27";
+        Assert.NotEqual(olderAccountApiVersion, StripeConfiguration.ApiVersion);
+
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment(Environments.Development);
+            builder.ConfigureAppConfiguration((_, configBuilder) =>
+            {
+                configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["STRIPE_WEBHOOK_SECRET"] = webhookSecret
+                });
+            });
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton(fixture.SessionFactory);
+                services.AddScoped<IStripeGateway>(_ => new FakeStripeGateway());
+            });
+        });
+        using var client = factory.CreateClient();
+
+        // Triple-brace holes, not double: the JSON body's own nested-object "}}" would otherwise collide
+        // with a double-brace interpolation delimiter (CS9007) -- same convention as FakeVerifier.
+        var payload = $$$"""
+            {
+              "id": "evt_old_api_version_1",
+              "object": "event",
+              "type": "checkout.session.completed",
+              "api_version": "{{{olderAccountApiVersion}}}",
+              "data": { "object": {
+                "id": "cs_evt_old_api_version_1", "object": "checkout.session", "mode": "subscription",
+                "metadata": { "userId": "user_old_api", "planId": "plan_old_api" },
+                "subscription": "sub_old_api", "customer": "cus_test"
+              }}
+            }
+            """;
+
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+        var signature = EventUtility.ComputeSignature(webhookSecret, timestamp, payload);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/billing/webhook")
+        {
+            Content = new StringContent(payload, Encoding.UTF8, "application/json")
+        };
+        request.Headers.Add("Stripe-Signature", $"t={timestamp},v1={signature}");
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var row = await fixture.QueryShadowSubscriptionAsync("user_old_api");
+        Assert.Equal("sub_old_api", row.StripeSubscriptionId);
+    }
+
+    [Fact]
+    public async Task Webhook_RealSignatureVerification_StillRejectsATamperedSignature()
+    {
+        // The guard on the fix above: relaxing throwOnApiVersionMismatch must not relax the HMAC check.
+        // Same request as the test above, with the v1 signature replaced by a forgery.
+        await fixture.ResetAsync();
+        const string webhookSecret = "whsec_test_secret_for_api_version_mismatch";
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment(Environments.Development);
+            builder.ConfigureAppConfiguration((_, configBuilder) =>
+            {
+                configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["STRIPE_WEBHOOK_SECRET"] = webhookSecret
+                });
+            });
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton(fixture.SessionFactory);
+                services.AddScoped<IStripeGateway>(_ => new FakeStripeGateway());
+            });
+        });
+        using var client = factory.CreateClient();
+
+        var payload = """
+            {
+              "id": "evt_forged_1",
+              "object": "event",
+              "type": "checkout.session.completed",
+              "api_version": "2020-08-27",
+              "data": { "object": {
+                "id": "cs_evt_forged_1", "object": "checkout.session", "mode": "subscription",
+                "metadata": { "userId": "user_forged", "planId": "plan_forged" },
+                "subscription": "sub_forged", "customer": "cus_test"
+              }}
+            }
+            """;
+
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/billing/webhook")
+        {
+            Content = new StringContent(payload, Encoding.UTF8, "application/json")
+        };
+        request.Headers.Add("Stripe-Signature", $"t={timestamp},v1={new string('0', 64)}");
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
