@@ -52,4 +52,96 @@ public class AuthCookieWriterTests
         Assert.Contains("refresh_token=", setCookies);
         Assert.Contains("logged_in=", setCookies);
     }
+
+    [Fact]
+    public void SetAuthCookies_EachCookie_HasSameSiteLax()
+    {
+        var context = new DefaultHttpContext();
+        AuthCookieWriter.SetAuthCookies(context.Response, "access.jwt.token", "refresh-token-value", accessExpiresSeconds: 3600);
+
+        var cookieLines = context.Response.Headers.SetCookie;
+        var accessCookie = cookieLines.First(c => c!.StartsWith("access_token="));
+        var refreshCookie = cookieLines.First(c => c!.StartsWith("refresh_token="));
+        var loggedInCookie = cookieLines.First(c => c!.StartsWith("logged_in="));
+
+        Assert.Contains("samesite=lax", accessCookie!.ToLowerInvariant());
+        Assert.Contains("samesite=lax", refreshCookie!.ToLowerInvariant());
+        Assert.Contains("samesite=lax", loggedInCookie!.ToLowerInvariant());
+    }
+
+    [Fact]
+    public void SetAuthCookies_PathScoping_AccessTokenAndLoggedInUseRootPath()
+    {
+        var context = new DefaultHttpContext();
+        AuthCookieWriter.SetAuthCookies(context.Response, "access.jwt.token", "refresh-token-value", accessExpiresSeconds: 3600);
+
+        var cookieLines = context.Response.Headers.SetCookie;
+        var accessCookie = cookieLines.First(c => c!.StartsWith("access_token="));
+        var loggedInCookie = cookieLines.First(c => c!.StartsWith("logged_in="));
+
+        Assert.Contains("path=/", accessCookie!);
+        Assert.Contains("path=/", loggedInCookie!);
+    }
+
+    [Fact]
+    public void SetAuthCookies_PathScoping_RefreshTokenUsesAuthApiPath()
+    {
+        var context = new DefaultHttpContext();
+        AuthCookieWriter.SetAuthCookies(context.Response, "access.jwt.token", "refresh-token-value", accessExpiresSeconds: 3600);
+
+        var cookieLines = context.Response.Headers.SetCookie;
+        var refreshCookie = cookieLines.First(c => c!.StartsWith("refresh_token="));
+
+        Assert.Contains("path=/authapi", refreshCookie!);
+    }
+
+    [Fact]
+    public void SetAuthCookies_InProduction_SetsSecureFlag()
+    {
+        var originalEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        try
+        {
+            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Production");
+            var context = new DefaultHttpContext();
+            AuthCookieWriter.SetAuthCookies(context.Response, "access.jwt.token", "refresh-token-value", accessExpiresSeconds: 3600);
+
+            var cookieLines = context.Response.Headers.SetCookie;
+            var accessCookie = cookieLines.First(c => c!.StartsWith("access_token="));
+            var refreshCookie = cookieLines.First(c => c!.StartsWith("refresh_token="));
+            var loggedInCookie = cookieLines.First(c => c!.StartsWith("logged_in="));
+
+            Assert.Contains("secure", accessCookie!.ToLowerInvariant());
+            Assert.Contains("secure", refreshCookie!.ToLowerInvariant());
+            Assert.Contains("secure", loggedInCookie!.ToLowerInvariant());
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", originalEnv);
+        }
+    }
+
+    [Fact]
+    public void SetAuthCookies_InDevelopment_DoesNotSetSecureFlag()
+    {
+        var originalEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        try
+        {
+            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
+            var context = new DefaultHttpContext();
+            AuthCookieWriter.SetAuthCookies(context.Response, "access.jwt.token", "refresh-token-value", accessExpiresSeconds: 3600);
+
+            var cookieLines = context.Response.Headers.SetCookie;
+            var accessCookie = cookieLines.First(c => c!.StartsWith("access_token="));
+            var refreshCookie = cookieLines.First(c => c!.StartsWith("refresh_token="));
+            var loggedInCookie = cookieLines.First(c => c!.StartsWith("logged_in="));
+
+            Assert.DoesNotContain("secure", accessCookie!.ToLowerInvariant());
+            Assert.DoesNotContain("secure", refreshCookie!.ToLowerInvariant());
+            Assert.DoesNotContain("secure", loggedInCookie!.ToLowerInvariant());
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", originalEnv);
+        }
+    }
 }
