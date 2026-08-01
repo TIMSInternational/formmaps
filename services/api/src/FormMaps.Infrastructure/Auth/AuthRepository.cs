@@ -107,6 +107,134 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
         return language == "es" ? "es" : "en";
     }
 
+    /// <summary>
+    /// "refresh_tokens"."updatedAt" is NOT NULL with NO database default (same app-managed-timestamp
+    /// convention as "login_attempts"/"users" -- see auth-schema.sql's header comment and
+    /// RecordFailedLoginAsync above). Bound explicitly (inline now()) on this INSERT.
+    /// </summary>
+    public async Task<string> CreateRefreshTokenAsync(string userId, string clientIp, CancellationToken cancellationToken = default)
+    {
+        var token = RefreshTokenGenerator.Generate();
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+        await using var command = Command(session, """
+            INSERT INTO "refresh_tokens" ("id","userId","token","expiresAt","createdByIp","updatedAt")
+            VALUES (gen_random_uuid()::text, @userId, @token, @expiresAt, @ip, now())
+            """);
+        AddParameter(command, "userId", userId);
+        AddParameter(command, "token", token);
+        AddParameter(command, "expiresAt", DateTime.UtcNow.AddDays(14));
+        AddParameter(command, "ip", clientIp);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+        await session.CommitAsync(cancellationToken);
+        return token;
+    }
+
+    /// <summary>
+    /// Single-use rotation. Ordering within this one session/transaction is deliberate and is the
+    /// highest-risk logic in this domain:
+    ///   1. Look up the presented token (and its owning user's CURRENT "isActive", not a cached
+    ///      value from login time -- this is the TOCTOU-safety re-check) in one JOINed SELECT.
+    ///   2. If unknown, stop (nothing to revoke, nothing to commit besides the read).
+    ///   3. If revoked/expired/inactive-user, revoke the row anyway (matches legacy: a token
+    ///      presented after it's gone stale still gets marked revoked on the attempt that discovers
+    ///      it, closing any window where a stale-but-not-yet-revoked row could be replayed) and
+    ///      commit, returning null.
+    ///   4. Otherwise revoke-old THEN create-new, both inside the same still-open transaction,
+    ///      committed once at the end. Revoking old before minting new is what makes the token
+    ///      single-use: if two concurrent requests race to rotate the same token, only one can
+    ///      observe "not yet revoked" under the row lock the UPDATE takes -- see the report for the
+    ///      full concurrency walkthrough.
+    /// "refresh_tokens"."updatedAt" is bound explicitly on the new-token INSERT (same NOT-NULL-no-
+    /// default gap as CreateRefreshTokenAsync above), and "updatedAt" = now() is added to the
+    /// revoke UPDATE (RevokeTokenRowAsync) to keep the app-managed timestamp current on every actual
+    /// row mutation, matching RecordFailedLoginAsync's established convention.
+    /// </summary>
+    public async Task<RotateResult?> RotateRefreshTokenAsync(string oldToken, string clientIp, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        await using var lookup = Command(session, """
+            SELECT rt."id", rt."userId", rt."expiresAt", rt."isRevoked", u."isActive"
+            FROM "refresh_tokens" rt JOIN "users" u ON u."id" = rt."userId"
+            WHERE rt."token" = @token
+            """);
+        AddParameter(lookup, "token", oldToken);
+
+        string tokenId;
+        string userId;
+        DateTime expiresAt;
+        bool isRevoked;
+        bool userIsActive;
+        await using (var reader = await lookup.ExecuteReaderAsync(cancellationToken))
+        {
+            if (!await reader.ReadAsync(cancellationToken)) return null; // unknown token -- nothing to revoke, nothing to commit
+
+            tokenId = reader.GetString(0);
+            userId = reader.GetString(1);
+            expiresAt = reader.GetDateTime(2);
+            isRevoked = reader.GetBoolean(3);
+            userIsActive = reader.GetBoolean(4);
+        }
+
+        if (isRevoked || expiresAt < DateTime.UtcNow || !userIsActive)
+        {
+            // Revoke on any invalid presentation too (matches legacy: expired/inactive-user tokens
+            // get marked revoked on the attempt that discovers them, not just left dangling).
+            await RevokeTokenRowAsync(session, tokenId, clientIp, cancellationToken);
+            await session.CommitAsync(cancellationToken);
+            return null;
+        }
+
+        // Revoke-old-THEN-create-new, single-use enforced by this exact ordering within one transaction.
+        await RevokeTokenRowAsync(session, tokenId, clientIp, cancellationToken);
+
+        var newToken = RefreshTokenGenerator.Generate();
+        await using var insert = Command(session, """
+            INSERT INTO "refresh_tokens" ("id","userId","token","expiresAt","createdByIp","updatedAt")
+            VALUES (gen_random_uuid()::text, @userId, @token, @expiresAt, @ip, now())
+            """);
+        AddParameter(insert, "userId", userId);
+        AddParameter(insert, "token", newToken);
+        AddParameter(insert, "expiresAt", DateTime.UtcNow.AddDays(14));
+        AddParameter(insert, "ip", clientIp);
+        await insert.ExecuteNonQueryAsync(cancellationToken);
+
+        await session.CommitAsync(cancellationToken);
+        return new RotateResult(newToken, userId);
+    }
+
+    /// <summary>
+    /// "updatedAt" = now() added to this UPDATE -- it doesn't crash without it (UPDATE only touches
+    /// the columns it SETs), but leaving the app-managed timestamp stale after actually mutating the
+    /// row would violate the convention every other write path in this domain follows.
+    /// </summary>
+    public async Task RevokeAllRefreshTokensAsync(string userId, string clientIp, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+        await using var command = Command(session, """
+            UPDATE "refresh_tokens" SET "isRevoked" = true, "revokedAt" = now(), "revokedByIp" = @ip, "updatedAt" = now()
+            WHERE "userId" = @userId AND "isRevoked" = false
+            """);
+        AddParameter(command, "userId", userId);
+        AddParameter(command, "ip", clientIp);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+        await session.CommitAsync(cancellationToken);
+    }
+
+    /// <summary>See RevokeAllRefreshTokensAsync's remark re: "updatedAt" = now() on row mutation.</summary>
+    private static async Task RevokeTokenRowAsync(FormMapsDatabaseSession session, string tokenId, string clientIp, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """
+            UPDATE "refresh_tokens" SET "isRevoked" = true, "revokedAt" = now(), "revokedByIp" = @ip, "updatedAt" = now() WHERE "id" = @id
+            """);
+        AddParameter(command, "id", tokenId);
+        AddParameter(command, "ip", clientIp);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
     private static DbCommand Command(FormMapsDatabaseSession session, string sql)
     {
         var command = session.Connection.CreateCommand();

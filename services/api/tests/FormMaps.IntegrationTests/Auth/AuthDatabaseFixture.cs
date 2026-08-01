@@ -92,6 +92,42 @@ public sealed class AuthDatabaseFixture : IAsyncLifetime
         return userId;
     }
 
+    /// <summary>
+    /// Seeds an already-expired "refresh_tokens" row for AuthRepositoryRefreshTests (Task 7),
+    /// bypassing CreateRefreshTokenAsync (which always mints a future expiresAt). "updatedAt" is
+    /// bound explicitly (inline now()) -- same NOT-NULL-no-database-default column as "users"/
+    /// "login_attempts" (see auth-schema.sql's header comment).
+    /// </summary>
+    public async Task SeedExpiredRefreshTokenAsync(string userId, string token)
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "refresh_tokens" ("id","userId","token","expiresAt","updatedAt")
+            VALUES (gen_random_uuid()::text, @userId, @token, @expiresAt, now())
+            """, conn);
+        cmd.Parameters.AddWithValue("userId", userId);
+        cmd.Parameters.AddWithValue("token", token);
+        cmd.Parameters.AddWithValue("expiresAt", DateTime.UtcNow.AddDays(-1));
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>
+    /// Flips a previously-seeded user's "isActive" to false, simulating an admin deactivating the
+    /// account mid-session, for AuthRepositoryRefreshTests' TOCTOU-safety test (Task 7). "updatedAt"
+    /// bound explicitly, same NOT-NULL-no-default column.
+    /// </summary>
+    public async Task DeactivateUserAsync(string userId)
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """UPDATE "users" SET "isActive" = false, "updatedAt" = now() WHERE "id" = @id""", conn);
+        cmd.Parameters.AddWithValue("id", userId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
     private static string LoadSchemaDdl()
     {
         var assembly = Assembly.GetExecutingAssembly();
