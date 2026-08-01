@@ -11,9 +11,20 @@ namespace FormMaps.Infrastructure.Billing;
 /// code (checkout endpoint, webhook handler) depends on the interface, never on Stripe.net types
 /// directly, so tests substitute FakeStripeGateway instead of hitting the live Stripe API.
 /// </summary>
-public sealed class StripeGateway(IConfiguration configuration, ILiveCustomerReader liveCustomerReader) : IStripeGateway
+/// <remarks>
+/// The optional <paramref name="stripeClient" /> parameter is a test seam, not a DI registration: no
+/// <c>IStripeClient</c> is registered in FormMaps.Infrastructure.DependencyInjection, so the container
+/// falls through to the parameter's default (null) and this class keeps building its own client lazily
+/// from STRIPE_SECRET_KEY at call time -- deliberately lazy, since Stripe.net's StripeClient constructor
+/// throws on an empty api key and STRIPE_SECRET_KEY is legitimately unset in dev/test. Tests pass a
+/// StripeClient wired to a fake IHttpClient so they can assert on the exact request this gateway issues
+/// (see StripeGatewayCancelSubscriptionTests) without any live network call.
+/// </remarks>
+public sealed class StripeGateway(IConfiguration configuration, ILiveCustomerReader liveCustomerReader, IStripeClient? stripeClient = null) : IStripeGateway
 {
     private readonly string _apiKey = configuration["STRIPE_SECRET_KEY"] ?? string.Empty;
+
+    private IStripeClient Client() => stripeClient ?? new StripeClient(_apiKey);
 
     /// <inheritdoc cref="IStripeGateway.GetOrCreateCustomerAsync" />
     public async Task<string> GetOrCreateCustomerAsync(RequestContext context, string userId, string? email, CancellationToken cancellationToken = default)
@@ -27,7 +38,7 @@ public sealed class StripeGateway(IConfiguration configuration, ILiveCustomerRea
             return existingCustomerId;
         }
 
-        var service = new CustomerService(new StripeClient(_apiKey));
+        var service = new CustomerService(Client());
         var customer = await service.CreateAsync(new CustomerCreateOptions
         {
             Email = email,
@@ -38,7 +49,7 @@ public sealed class StripeGateway(IConfiguration configuration, ILiveCustomerRea
 
     public async Task<string> CreateCheckoutSessionAsync(string customerId, string priceId, string userId, string planId, string successUrl, string cancelUrl, CancellationToken cancellationToken = default)
     {
-        var service = new SessionService(new StripeClient(_apiKey));
+        var service = new SessionService(Client());
         var session = await service.CreateAsync(new SessionCreateOptions
         {
             Customer = customerId,
@@ -53,7 +64,7 @@ public sealed class StripeGateway(IConfiguration configuration, ILiveCustomerRea
 
     public async Task<string> CreateBillingPortalSessionAsync(string customerId, string returnUrl, CancellationToken cancellationToken = default)
     {
-        var service = new Stripe.BillingPortal.SessionService(new StripeClient(_apiKey));
+        var service = new Stripe.BillingPortal.SessionService(Client());
         var session = await service.CreateAsync(new Stripe.BillingPortal.SessionCreateOptions
         {
             Customer = customerId,
@@ -62,15 +73,32 @@ public sealed class StripeGateway(IConfiguration configuration, ILiveCustomerRea
         return session.Url;
     }
 
+    /// <summary>
+    /// Schedules cancellation at the END of the period the user already paid for -- NOT an immediate
+    /// cancel. Ports legacy stripe.ts's `stripe.subscriptions.update(subId, { cancel_at_period_end: true })`
+    /// (POST /api/stripe/cancel-subscription).
+    /// </summary>
+    /// <remarks>
+    /// Domain 9a final-review fix wave (Critical 1). This previously called
+    /// <c>SubscriptionService.CancelAsync</c>, which issues <c>DELETE /v1/subscriptions/{id}</c> and
+    /// terminates the subscription IMMEDIATELY -- an irreversible loss of already-paid-for access, and a
+    /// silent behaviour divergence from legacy Node. <c>UpdateAsync</c> with
+    /// <see cref="SubscriptionUpdateOptions.CancelAtPeriodEnd" /> issues
+    /// <c>POST /v1/subscriptions/{id}</c> with <c>cancel_at_period_end=true</c> instead; Stripe then emits
+    /// the customer.subscription.updated/deleted webhooks that sync the final state.
+    /// </remarks>
     public async Task CancelSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default)
     {
-        var service = new SubscriptionService(new StripeClient(_apiKey));
-        await service.CancelAsync(stripeSubscriptionId, cancellationToken: cancellationToken);
+        var service = new SubscriptionService(Client());
+        await service.UpdateAsync(
+            stripeSubscriptionId,
+            new SubscriptionUpdateOptions { CancelAtPeriodEnd = true },
+            cancellationToken: cancellationToken);
     }
 
     public async Task<StripeSubscriptionLite> GetSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default)
     {
-        var service = new SubscriptionService(new StripeClient(_apiKey));
+        var service = new SubscriptionService(Client());
         var sub = await service.GetAsync(stripeSubscriptionId, cancellationToken: cancellationToken);
         return MapToLite(sub);
     }

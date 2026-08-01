@@ -17,8 +17,20 @@ public sealed class FakeStripeGateway : IStripeGateway
     public int GetOrCreateCustomerCalls { get; private set; }
 
     /// <summary>Set true when CancelSubscriptionAsync is invoked -- Task 9's cancel-endpoint test asserts on this
-    /// to confirm the gateway was actually called, not just that the endpoint returned 200.</summary>
+    /// to confirm the gateway was actually called, not just that the endpoint returned 200. The final-review fix
+    /// wave (Critical 1) also asserts the NEGATIVE: a non-cancellable live row must leave this false, i.e. the
+    /// endpoint's status filter short-circuits before Stripe is ever contacted. The cancel-at-period-end vs
+    /// immediate-cancel semantics themselves are not observable through this interface (IStripeGateway takes no
+    /// options) -- that is pinned one layer down against the real StripeGateway in
+    /// FormMaps.UnitTests.Billing.StripeGatewayCancelSubscriptionTests.</summary>
     public bool CancelCalled { get; private set; }
+
+    /// <summary>The subscription id passed to the last CancelSubscriptionAsync call, if any.</summary>
+    public string? CancelledSubscriptionId { get; private set; }
+
+    /// <summary>Set true when CreateBillingPortalSessionAsync is invoked -- the final-review fix wave (Important 7)
+    /// asserts this stays false when the caller has no Stripe customer on file.</summary>
+    public bool BillingPortalCalled { get; private set; }
 
     public Task<string> GetOrCreateCustomerAsync(RequestContext context, string userId, string? email, CancellationToken cancellationToken = default)
     {
@@ -29,12 +41,16 @@ public sealed class FakeStripeGateway : IStripeGateway
     public Task<string> CreateCheckoutSessionAsync(string customerId, string priceId, string userId, string planId, string successUrl, string cancelUrl, CancellationToken cancellationToken = default) =>
         Task.FromResult($"https://checkout.stripe.com/pay/cs_fake_{userId}");
 
-    public Task<string> CreateBillingPortalSessionAsync(string customerId, string returnUrl, CancellationToken cancellationToken = default) =>
-        Task.FromResult("https://billing.stripe.com/session/fake");
+    public Task<string> CreateBillingPortalSessionAsync(string customerId, string returnUrl, CancellationToken cancellationToken = default)
+    {
+        BillingPortalCalled = true;
+        return Task.FromResult("https://billing.stripe.com/session/fake");
+    }
 
     public Task CancelSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default)
     {
         CancelCalled = true;
+        CancelledSubscriptionId = stripeSubscriptionId;
         return Task.CompletedTask;
     }
 

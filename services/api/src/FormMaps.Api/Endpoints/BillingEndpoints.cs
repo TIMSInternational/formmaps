@@ -84,6 +84,27 @@ public static class BillingEndpoints
         });
     }
 
+    /// <summary>
+    /// Statuses legacy stripe.ts treats as cancellable — <c>status: { in: ["active","trialing","past_due"] }</c>
+    /// combined with <c>isActive: true</c> in its userSubscription.findFirst filter.
+    /// </summary>
+    private static readonly HashSet<string> CancellableStatuses =
+        new(StringComparer.Ordinal) { "active", "trialing", "past_due" };
+
+    /// <remarks>
+    /// Domain 9a final-review fix wave (Critical 1 / Important 10). Two changes here:
+    /// (a) the live row is now filtered by legacy's own cancellable-status set before the gateway is
+    /// called, so an already-cancelled/incomplete subscription no longer gets re-sent to Stripe (which
+    /// answers with an error the endpoint would surface as a 500); (b) the "nothing to cancel" response
+    /// is 404, matching legacy's `res.status(404) "No active subscription found"`, not the 400 this
+    /// endpoint previously returned.
+    ///
+    /// A row that passes the status filter but carries no <c>stripeSubscriptionId</c> falls into the same
+    /// 404 branch. Legacy handles that case by flipping the live row to cancelled directly in the DB;
+    /// .NET cannot, because live tables are read-only from this service until cutover (see this plan's
+    /// Global Constraints), and returning success without doing anything would be a lie. Deferred to
+    /// cutover, when the write path unlocks.
+    /// </remarks>
     private static async Task<IResult> CancelSubscriptionAsync(
         IRequestContextAccessor accessor, IProtectedRequestGuard guard, IStripeGateway gateway,
         ILiveSubscriptionReader reader, CancellationToken cancellationToken)
@@ -93,13 +114,15 @@ public static class BillingEndpoints
         if (!decision.Allowed) return Deny(decision);
 
         var row = await reader.GetForUserAsync(context, context.Tenant!.UserId, cancellationToken);
-        if (row?.StripeSubscriptionId is null)
+        var cancellable = row is { IsActive: true, Status: not null, StripeSubscriptionId: not null }
+            && CancellableStatuses.Contains(row.Status);
+        if (!cancellable)
         {
-            return Results.BadRequest(new { success = false, message = "No active subscription" });
+            return Results.Json(new { success = false, message = "No active subscription found" }, statusCode: StatusCodes.Status404NotFound);
         }
 
-        await gateway.CancelSubscriptionAsync(row.StripeSubscriptionId, cancellationToken);
-        return Results.Ok(new { success = true, message = "Subscription cancellation requested" });
+        await gateway.CancelSubscriptionAsync(row!.StripeSubscriptionId!, cancellationToken);
+        return Results.Ok(new { success = true, message = "Subscription will cancel at the end of the current period" });
     }
 
     private static async Task<IResult> CreateBillingPortalAsync(

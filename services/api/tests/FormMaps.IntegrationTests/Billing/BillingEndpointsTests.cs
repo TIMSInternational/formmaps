@@ -136,11 +136,14 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(gateway.CancelCalled);
+        Assert.Equal("sub_cancel", gateway.CancelledSubscriptionId);
     }
 
     [Fact]
-    public async Task PostCancelSubscription_NoSubscription_Returns400()
+    public async Task PostCancelSubscription_NoSubscription_Returns404()
     {
+        // Final-review fix wave (Important 10): legacy stripe.ts answers this case with
+        // res.status(404) "No active subscription found"; this endpoint previously returned 400.
         await fixture.ResetAsync();
         using var factory = CreateFactory();
         using var client = factory.CreateClient();
@@ -148,7 +151,59 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
 
         var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostCancelSubscription_AlreadyCancelledSubscription_Returns404_WithoutCallingStripe()
+    {
+        // Final-review fix wave (Critical 1, second half): without legacy's
+        // status IN (active, trialing, past_due) AND isActive filter, this row would be handed straight
+        // to Stripe again -- Stripe errors on re-cancelling, and the endpoint would surface that as a 500.
+        await fixture.ResetAsync();
+        await fixture.SeedMatchingSubscriptionAsync("user_recancel", "sub_recancel", "cancelled");
+        var gateway = new FakeStripeGateway();
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment(Environments.Development);
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton(fixture.SessionFactory);
+                services.AddScoped<IStripeGateway>(_ => gateway);
+            });
+        });
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_recancel", "student");
+
+        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.False(gateway.CancelCalled);
+    }
+
+    [Fact]
+    public async Task PostCancelSubscription_InactiveSubscription_Returns404_WithoutCallingStripe()
+    {
+        // Same filter, other half: status is still "active" but the live row is isActive = false.
+        await fixture.ResetAsync();
+        await fixture.SeedIsActiveMismatchedSubscriptionAsync("user_inactive_cancel", shadowIsActive: false, liveIsActive: false);
+        var gateway = new FakeStripeGateway();
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment(Environments.Development);
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton(fixture.SessionFactory);
+                services.AddScoped<IStripeGateway>(_ => gateway);
+            });
+        });
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_inactive_cancel", "student");
+
+        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.False(gateway.CancelCalled);
     }
 
     [Fact]
