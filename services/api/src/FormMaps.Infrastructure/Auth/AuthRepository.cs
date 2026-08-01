@@ -473,6 +473,162 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
         return new ChangeRoleResult(userId, name, email, oldRoleId, oldRoleName, roleId, newRoleName);
     }
 
+    private const string SchoolAdminRoleName = "school_admin";
+
+    /// <summary>
+    /// Per authService.ts's `prisma.school.findFirst({ where: { invitationToken: invToken, isActive:
+    /// true } })`. Deliberately does NOT filter on "invitationTokenExpiresAt" -- see
+    /// <see cref="SchoolInviteRow"/>'s doc comment for why the expiry check is a separate concern
+    /// left to the caller.
+    /// </summary>
+    public async Task<SchoolInviteRow?> FindSchoolByInvitationTokenAsync(string token, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+        await using var command = Command(session, """
+            SELECT "id","adminEmail","invitationTokenExpiresAt"
+            FROM "schools" WHERE "invitationToken" = @token AND "isActive" = true
+            """);
+        AddParameter(command, "token", token);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken)) return null;
+
+        return new SchoolInviteRow(
+            reader.GetString(0), reader.GetString(1),
+            reader.IsDBNull(2) ? null : new DateTimeOffset(reader.GetDateTime(2), TimeSpan.Zero));
+    }
+
+    /// <summary>
+    /// Find-or-create, per authService.ts's `let adminRole = await prisma.role.findFirst({ where: {
+    /// name: ROLES.SchoolAdmin, isActive: true } }); if (!adminRole) adminRole = await
+    /// prisma.role.create({ data: { name: ROLES.SchoolAdmin, description: "School Admin role" } });`.
+    /// Opens a writable session unconditionally (same as every other write path in this class) even
+    /// though the find-only branch performs no write -- simplest to reason about, and the
+    /// transaction commits either way. "roles"."updatedAt" is NOT NULL with no database default
+    /// (see auth-schema.sql's header comment) -- bound explicitly (inline now()) on the INSERT.
+    /// </summary>
+    public async Task<string> EnsureSchoolAdminRoleAsync(CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        await using (var lookup = Command(session, """SELECT "id" FROM "roles" WHERE "name" = @name AND "isActive" = true"""))
+        {
+            AddParameter(lookup, "name", SchoolAdminRoleName);
+            var existingId = (string?)await lookup.ExecuteScalarAsync(cancellationToken);
+            if (existingId is not null)
+            {
+                await session.CommitAsync(cancellationToken);
+                return existingId;
+            }
+        }
+
+        await using var insert = Command(session, """
+            INSERT INTO "roles" ("id","name","description","updatedAt")
+            VALUES (gen_random_uuid()::text, @name, 'School Admin role', now())
+            RETURNING "id"
+            """);
+        AddParameter(insert, "name", SchoolAdminRoleName);
+        var roleId = (string)(await insert.ExecuteScalarAsync(cancellationToken))!;
+
+        await session.CommitAsync(cancellationToken);
+        return roleId;
+    }
+
+    /// <summary>
+    /// Update-if-exists / create-if-not by email, per authService.ts's `let user = await
+    /// prisma.user.findUnique({ where: { email } }); if (user) { user = await prisma.user.update({
+    /// where: { id: user.id }, data: { name, password: hashedPassword, roleId: adminRole.id,
+    /// roleName: adminRole.name, schoolId: school.id, passwordNeedsMigration: false } }); } else {
+    /// user = await prisma.user.create({ data: { name, email, password: hashedPassword, roleId:
+    /// adminRole.id, roleName: adminRole.name, schoolId: school.id } }); }`. The update branch fetches
+    /// the existing user's current "isActive" rather than assuming true -- legacy's update data
+    /// shape never touches "isActive", so this must reflect whatever it already was, not silently
+    /// reactivate/deactivate the account as a side effect of registration completion.
+    /// <paramref name="email"/> must already be normalized by the caller (see interface doc).
+    /// "users"."updatedAt" is NOT NULL with no database default -- bound explicitly on both the
+    /// UPDATE and the INSERT.
+    /// </summary>
+    public async Task<AuthUserRow> UpsertSchoolAdminUserAsync(
+        string schoolId, string email, string name, string passwordHash, string roleId, string roleName,
+        CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        string? existingId = null;
+        var existingIsActive = true;
+        await using (var lookup = Command(session, """SELECT "id","isActive" FROM "users" WHERE "email" = @email"""))
+        {
+            AddParameter(lookup, "email", email);
+            await using var reader = await lookup.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                existingId = reader.GetString(0);
+                existingIsActive = reader.GetBoolean(1);
+            }
+        }
+
+        string userId;
+        bool isActive;
+        if (existingId is not null)
+        {
+            userId = existingId;
+            isActive = existingIsActive;
+            await using var update = Command(session, """
+                UPDATE "users"
+                SET "name" = @name, "password" = @password, "roleId" = @roleId, "roleName" = @roleName,
+                    "schoolId" = @schoolId, "passwordNeedsMigration" = false, "updatedAt" = now()
+                WHERE "id" = @id
+                """);
+            AddParameter(update, "name", name);
+            AddParameter(update, "password", passwordHash);
+            AddParameter(update, "roleId", roleId);
+            AddParameter(update, "roleName", roleName);
+            AddParameter(update, "schoolId", schoolId);
+            AddParameter(update, "id", userId);
+            await update.ExecuteNonQueryAsync(cancellationToken);
+        }
+        else
+        {
+            isActive = true;
+            await using var insert = Command(session, """
+                INSERT INTO "users" ("id","name","email","password","roleId","roleName","schoolId","updatedAt")
+                VALUES (gen_random_uuid()::text, @name, @email, @password, @roleId, @roleName, @schoolId, now())
+                RETURNING "id"
+                """);
+            AddParameter(insert, "name", name);
+            AddParameter(insert, "email", email);
+            AddParameter(insert, "password", passwordHash);
+            AddParameter(insert, "roleId", roleId);
+            AddParameter(insert, "roleName", roleName);
+            AddParameter(insert, "schoolId", schoolId);
+            userId = (string)(await insert.ExecuteScalarAsync(cancellationToken))!;
+        }
+
+        await session.CommitAsync(cancellationToken);
+        return new AuthUserRow(userId, name, email, passwordHash, roleId, roleName, schoolId, isActive);
+    }
+
+    /// <summary>
+    /// Per authService.ts's `await prisma.school.update({ where: { id: school.id }, data: {
+    /// invitationToken: null, status: "active" } });` -- clears the single-use invitation token and
+    /// flips "status" to "active". Does not touch "isActive". "schools"."updatedAt" is NOT NULL with
+    /// no database default -- bound explicitly.
+    /// </summary>
+    public async Task ActivateSchoolAsync(string schoolId, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+        await using var command = Command(session, """
+            UPDATE "schools" SET "invitationToken" = NULL, "status" = 'active', "updatedAt" = now()
+            WHERE "id" = @schoolId
+            """);
+        AddParameter(command, "schoolId", schoolId);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+        await session.CommitAsync(cancellationToken);
+    }
+
     private static DbCommand Command(FormMapsDatabaseSession session, string sql)
     {
         var command = session.Connection.CreateCommand();

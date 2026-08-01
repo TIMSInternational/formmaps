@@ -70,15 +70,16 @@ public sealed class AuthDatabaseFixture : IAsyncLifetime
     /// </summary>
     public async Task<string> SeedUserAsync(
         string email, string? passwordHash, bool isActive, string? id = null,
-        string name = "Test User", string roleId = "role_student", string roleName = "student", string? schoolId = null)
+        string name = "Test User", string roleId = "role_student", string roleName = "student", string? schoolId = null,
+        bool passwordNeedsMigration = false)
     {
         var userId = id ?? Guid.NewGuid().ToString();
         await using var conn = new NpgsqlConnection(ConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "users" ("id","name","email","password","roleId","roleName","schoolId","isActive","updatedAt")
-            VALUES (@id,@name,@email,@password,@roleId,@roleName,@schoolId,@isActive,now())
+            INSERT INTO "users" ("id","name","email","password","roleId","roleName","schoolId","isActive","passwordNeedsMigration","updatedAt")
+            VALUES (@id,@name,@email,@password,@roleId,@roleName,@schoolId,@isActive,@passwordNeedsMigration,now())
             """, conn);
         cmd.Parameters.AddWithValue("id", userId);
         cmd.Parameters.AddWithValue("name", name);
@@ -88,8 +89,25 @@ public sealed class AuthDatabaseFixture : IAsyncLifetime
         cmd.Parameters.AddWithValue("roleName", roleName);
         cmd.Parameters.AddWithValue("schoolId", (object?)schoolId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("isActive", isActive);
+        cmd.Parameters.AddWithValue("passwordNeedsMigration", passwordNeedsMigration);
         await cmd.ExecuteNonQueryAsync();
         return userId;
+    }
+
+    /// <summary>
+    /// Reads back "passwordNeedsMigration" for AuthRepositorySchoolAdminRegistrationTests' (Task 9)
+    /// existing-email-update test -- verifies UpsertSchoolAdminUserAsync clears this flag on the
+    /// update branch, matching legacy's `data: { ..., passwordNeedsMigration: false }`. Not exposed
+    /// by any repository read method (AuthUserRow doesn't carry it), so this is a direct
+    /// verification read, same in spirit as this fixture's other raw-SQL helpers.
+    /// </summary>
+    public async Task<bool> GetPasswordNeedsMigrationAsync(string userId)
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand("""SELECT "passwordNeedsMigration" FROM "users" WHERE "id" = @id""", conn);
+        cmd.Parameters.AddWithValue("id", userId);
+        return (bool)(await cmd.ExecuteScalarAsync())!;
     }
 
     /// <summary>
@@ -171,6 +189,67 @@ public sealed class AuthDatabaseFixture : IAsyncLifetime
         cmd.Parameters.AddWithValue("status", status);
         cmd.Parameters.AddWithValue("isActive", isActive);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>
+    /// Seeds a "schools" row for AuthRepositorySchoolAdminRegistrationTests (Task 9) -- an invited
+    /// school with an admin email and (optionally-expiring) invitation token, matching the
+    /// touched-column subset in auth-schema.sql. "updatedAt" bound explicitly (inline now()), same
+    /// NOT-NULL-no-database-default column as every other table in this fixture.
+    /// </summary>
+    public async Task<string> SeedSchoolAsync(
+        string adminEmail, string? invitationToken, DateTimeOffset? invitationTokenExpiresAt = null,
+        bool isActive = true, string? id = null, string name = "Test School", string status = "invited")
+    {
+        var schoolId = id ?? Guid.NewGuid().ToString();
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "schools" ("id","name","adminEmail","status","invitationToken","invitationTokenExpiresAt","isActive","updatedAt")
+            VALUES (@id,@name,@adminEmail,@status,@invitationToken,@invitationTokenExpiresAt,@isActive,now())
+            """, conn);
+        cmd.Parameters.AddWithValue("id", schoolId);
+        cmd.Parameters.AddWithValue("name", name);
+        cmd.Parameters.AddWithValue("adminEmail", adminEmail);
+        cmd.Parameters.AddWithValue("status", status);
+        cmd.Parameters.AddWithValue("invitationToken", (object?)invitationToken ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("invitationTokenExpiresAt", (object?)invitationTokenExpiresAt?.UtcDateTime ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("isActive", isActive);
+        await cmd.ExecuteNonQueryAsync();
+        return schoolId;
+    }
+
+    /// <summary>
+    /// Reads back a "schools" row's "status"/"invitationToken" for AuthRepositorySchoolAdminRegistrationTests'
+    /// (Task 9) ActivateSchoolAsync verification. Neither column is exposed by any repository read
+    /// method (ActivateSchoolAsync is write-only, and FindSchoolByInvitationTokenAsync can no longer
+    /// find the row once its token has been cleared), so this is a direct verification read, same in
+    /// spirit as this fixture's other raw-SQL helpers.
+    /// </summary>
+    public async Task<(string Status, string? InvitationToken)> GetSchoolStatusAsync(string schoolId)
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand("""SELECT "status","invitationToken" FROM "schools" WHERE "id" = @id""", conn);
+        cmd.Parameters.AddWithValue("id", schoolId);
+        await using var reader = await cmd.ExecuteReaderAsync();
+        await reader.ReadAsync();
+        return (reader.GetString(0), reader.IsDBNull(1) ? null : reader.GetString(1));
+    }
+
+    /// <summary>
+    /// Counts "roles" rows by name for AuthRepositorySchoolAdminRegistrationTests' (Task 9)
+    /// EnsureSchoolAdminRoleAsync no-duplicate-on-second-call test -- verifies the find-or-create
+    /// only ever inserts once for a given role name.
+    /// </summary>
+    public async Task<long> CountRolesByNameAsync(string name)
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand("""SELECT COUNT(*) FROM "roles" WHERE "name" = @name""", conn);
+        cmd.Parameters.AddWithValue("name", name);
+        return (long)(await cmd.ExecuteScalarAsync())!;
     }
 
     private static string LoadSchemaDdl()

@@ -41,6 +41,22 @@ public sealed record ChangeRoleResult(
     string Id, string Name, string Email, string OldRoleId, string OldRoleName, string NewRoleId, string NewRoleName);
 
 /// <summary>
+/// Invitation-token lookup result backing school-admin registration completion (authService.ts's
+/// completeSchoolAdminRegistration). Deliberately NOT the collapsed-null pattern used elsewhere in
+/// this file (<see cref="RotateResult"/>, <see cref="ChangeRoleResult"/>): <c>InvitationTokenExpiresAt</c>
+/// is returned as-is, unfiltered, because legacy performs the expiry check as a SEPARATE step AFTER
+/// the find --
+/// <c>const school = await prisma.school.findFirst({ where: { invitationToken: invToken, isActive: true } });
+/// if (!school) return { success: false, status: 400, message: "Invalid invitation token" };
+/// if (school.invitationTokenExpiresAt &amp;&amp; school.invitationTokenExpiresAt &lt; new Date()) return
+/// { success: false, status: 400, message: "Invitation token has expired" };</c> -- two distinct error
+/// messages for two distinct causes. Folding the expiry check into this method (returning null for
+/// both "unknown token" and "found but expired") would destroy that distinction. Task 12 must
+/// perform the expiry comparison itself using this field.
+/// </summary>
+public sealed record SchoolInviteRow(string Id, string AdminEmail, DateTimeOffset? InvitationTokenExpiresAt);
+
+/// <summary>
 /// Domain 10 (Auth) login + lockout reads/writes, backing routes/auth.ts's login flow. Runs entirely
 /// under <see cref="RequestContext.System"/> -- these are pre-auth operations (there is no caller
 /// identity yet), matching the plan's Global Constraints for this task. Grows in Tasks 7-10 with
@@ -101,4 +117,43 @@ public interface IAuthRepository
 
     /// <summary>Change-role happy path, per authService.ts's changeRole; see <see cref="ChangeRoleResult"/>.</summary>
     Task<ChangeRoleResult?> ChangeRoleAsync(string userId, string roleId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Looks up an invited school by its (still-live) invitation token, per authService.ts's
+    /// `prisma.school.findFirst({ where: { invitationToken: invToken, isActive: true } })`. Returns
+    /// <c>null</c> only for an unknown token or an inactive school -- NOT for an expired one; see
+    /// <see cref="SchoolInviteRow"/> for why the expiry check is deliberately left to the caller.
+    /// </summary>
+    Task<SchoolInviteRow?> FindSchoolByInvitationTokenAsync(string token, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Find-or-create for the <c>school_admin</c> role, per authService.ts's
+    /// `let adminRole = await prisma.role.findFirst({ where: { name: ROLES.SchoolAdmin, isActive: true } });
+    /// if (!adminRole) adminRole = await prisma.role.create({ data: { name: ROLES.SchoolAdmin,
+    /// description: "School Admin role" } });`. Returns the existing role's id on every call after
+    /// the first; never creates a second `school_admin` row once one exists and is active.
+    /// </summary>
+    Task<string> EnsureSchoolAdminRoleAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update-if-exists / create-if-not for the school admin user by (already-normalized) email, per
+    /// authService.ts's `let user = await prisma.user.findUnique({ where: { email } }); if (user) {
+    /// ...update... } else { ...create... }`. The update branch also clears
+    /// `passwordNeedsMigration` to <c>false</c>, matching legacy exactly -- a lazily-migrated bcrypt
+    /// hash getting overwritten by registration completion should not still be flagged for
+    /// migration. <paramref name="email"/> must already be normalized (trim+lowercase) by the
+    /// caller -- this method does not normalize it, same caller-responsibility convention as
+    /// <see cref="ChangeEmailAsync"/>'s <c>newEmail</c> parameter.
+    /// </summary>
+    Task<AuthUserRow> UpsertSchoolAdminUserAsync(
+        string schoolId, string email, string name, string passwordHash, string roleId, string roleName,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Activates a school on successful registration completion, per authService.ts's
+    /// `await prisma.school.update({ where: { id: school.id }, data: { invitationToken: null,
+    /// status: "active" } });` -- clears the (now-consumed, single-use) invitation token and flips
+    /// `status` to `"active"`. Does not touch `isActive`.
+    /// </summary>
+    Task ActivateSchoolAsync(string schoolId, CancellationToken cancellationToken = default);
 }
