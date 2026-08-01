@@ -485,6 +485,17 @@ function shouldRouteBillingToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_BILLING_TO_DOTNET));
 }
 
+// Auth session issuance (Domain 10): ALL of /authapi/* as one unit, not per-route. Login/refresh/
+// logout are not independently cuttable (a session minted by one backend must remain
+// refreshable/revocable by whichever backend is live) -- see the Domain 10 spec's "Rollout shape"
+// section for why this is one flag over the whole prefix, not N flags like Video's five
+// independent slices. Same single-flag-for-whole-prefix convention as Messaging/Billing above.
+// Default OFF; the existing undifferentiated /authapi/:path* rewrite below remains the
+// OFF-state/fallback route to Node.
+function shouldRouteAuthToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_AUTH_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1297,6 +1308,17 @@ const nextConfig: NextConfig = {
       afterFiles: [
         ...personalityRewrites,
         { source: "/api/:path*", destination: `${target}/api/:path*` },
+        // Auth session issuance (Domain 10) -- ALL of /authapi/* as one unit, not per-route.
+        // Login/refresh/logout are not independently cuttable (a session minted by one backend
+        // must remain refreshable/revocable by whichever backend is live) -- see the Domain 10
+        // spec's "Rollout shape" section for why this is one flag over the whole prefix, not N
+        // flags like Video's five independent slices. MUST precede the undifferentiated
+        // /authapi/:path* fallback below so a flipped route reaches .NET (afterFiles rewrites
+        // match in array order, first match wins -- verified against this codebase's Next.js
+        // v16.0.3 resolveRewrites/route-resolution source, not just assumed).
+        ...(shouldRouteAuthToDotnet()
+          ? [{ source: "/authapi/:path*", destination: `${dotnetApiBaseUrl}/authapi/:path*` }]
+          : []),
         { source: "/authapi/:path*", destination: `${target}/authapi/:path*` },
         { source: "/evaluation/:path*", destination: `${target}/evaluation/:path*` },
       ],
