@@ -61,6 +61,37 @@ public sealed class AuthDatabaseFixture : IAsyncLifetime
         await cmd.ExecuteNonQueryAsync();
     }
 
+    /// <summary>
+    /// Seeds a "users" row for AuthRepositoryLoginTests (Task 6). "roleId"/"roleName" have no FK
+    /// constraint in auth-schema.sql (touched-column subset only), so arbitrary placeholder values
+    /// are fine here -- no "roles" row is required for FindUserByEmailAsync/GetLanguageAsync, which
+    /// never join "roles". "updatedAt" is bound explicitly (inline now()) since the table has NO
+    /// database default for it, matching this fixture's real schema.
+    /// </summary>
+    public async Task<string> SeedUserAsync(
+        string email, string? passwordHash, bool isActive, string? id = null,
+        string name = "Test User", string roleId = "role_student", string roleName = "student", string? schoolId = null)
+    {
+        var userId = id ?? Guid.NewGuid().ToString();
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "users" ("id","name","email","password","roleId","roleName","schoolId","isActive","updatedAt")
+            VALUES (@id,@name,@email,@password,@roleId,@roleName,@schoolId,@isActive,now())
+            """, conn);
+        cmd.Parameters.AddWithValue("id", userId);
+        cmd.Parameters.AddWithValue("name", name);
+        cmd.Parameters.AddWithValue("email", email);
+        cmd.Parameters.AddWithValue("password", (object?)passwordHash ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("roleId", roleId);
+        cmd.Parameters.AddWithValue("roleName", roleName);
+        cmd.Parameters.AddWithValue("schoolId", (object?)schoolId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("isActive", isActive);
+        await cmd.ExecuteNonQueryAsync();
+        return userId;
+    }
+
     private static string LoadSchemaDdl()
     {
         var assembly = Assembly.GetExecutingAssembly();
