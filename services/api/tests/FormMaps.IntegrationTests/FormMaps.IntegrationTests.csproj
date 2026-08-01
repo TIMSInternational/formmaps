@@ -128,6 +128,8 @@
     <EmbeddedResource Include="DbRole\Data\dotnet-service-role-stub-schema.sql" />
     <!-- The REAL production role-creation script, embedded by reference so edits to it are exercised here too (formmaps#10). -->
     <EmbeddedResource Include="..\..\..\..\infra\aws\sql\dotnet-service-role.sql" Link="DbRole\Data\dotnet-service-role.sql" />
+    <!-- Schema-only DDL mirroring the live Node/Prisma auth tables (users/roles/refresh_tokens/login_attempts/password_reset_tokens/user_settings + touched-column schools subset) for the Testcontainers IAuthRepository harness (Domain 10, Task 5). -->
+    <EmbeddedResource Include="Auth\Data\auth-schema.sql" />
   </ItemGroup>
 
   <ItemGroup>
