@@ -129,3 +129,29 @@ CREATE TABLE IF NOT EXISTS "password_reset_tokens" (
 );
 CREATE INDEX IF NOT EXISTS "password_reset_tokens_userId_idx" ON "password_reset_tokens" ("userId");
 CREATE INDEX IF NOT EXISTS "password_reset_tokens_token_idx" ON "password_reset_tokens" ("token");
+
+-- Touched-column subset mirroring Prisma's UserSubscription model (@@map("user_subscriptions"),
+-- api/prisma/schema.prisma in formmaps-platform -- verified against that file directly, Task 8).
+-- Added for AuthRepositoryProfileTests' latest-active-subscription-status join in
+-- GetProfileAsync (authService.ts's getProfile: `subscriptions: { where: { isActive: true },
+-- orderBy: { createdDate: "desc" }, take: 1, select: { status: true } }`). No FK to "users" or a
+-- "subscription_plans" table -- same no-FK-in-fixture convention as "users"."roleId"/"schoolId"
+-- (see SeedUserAsync's remark above). The real model's `@@unique([userId])` is kept: production
+-- only ever has one subscription row per user (upserted in place), so the ORDER BY/LIMIT in the
+-- join is defensive, matching legacy's Prisma query shape rather than relying on the constraint.
+-- "updatedAt" NOT NULL no-default, same app-managed-timestamp convention as every table above.
+CREATE TABLE IF NOT EXISTS "user_subscriptions" (
+    "id" TEXT PRIMARY KEY,
+    "userId" TEXT NOT NULL UNIQUE,
+    "planId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'active',
+    "nextBillingDate" TIMESTAMPTZ,
+    "stripeSubscriptionId" TEXT UNIQUE,
+    "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT false,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdBy" TEXT,
+    "createdDate" TIMESTAMPTZ NOT NULL DEFAULT now(),
+    "updatedBy" TEXT,
+    "updatedAt" TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "user_subscriptions_planId_idx" ON "user_subscriptions" ("planId");

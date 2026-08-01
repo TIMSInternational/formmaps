@@ -56,7 +56,7 @@ public sealed class AuthDatabaseFixture : IAsyncLifetime
         await using var conn = await _dataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand(
             """
-            TRUNCATE "password_reset_tokens","login_attempts","refresh_tokens","user_settings","users","schools","roles" CASCADE
+            TRUNCATE "password_reset_tokens","login_attempts","refresh_tokens","user_subscriptions","user_settings","users","schools","roles" CASCADE
             """, conn);
         await cmd.ExecuteNonQueryAsync();
     }
@@ -125,6 +125,51 @@ public sealed class AuthDatabaseFixture : IAsyncLifetime
         await using var cmd = new NpgsqlCommand(
             """UPDATE "users" SET "isActive" = false, "updatedAt" = now() WHERE "id" = @id""", conn);
         cmd.Parameters.AddWithValue("id", userId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>
+    /// Seeds a "roles" row for AuthRepositoryProfileTests' ChangeRoleAsync happy-path test (Task
+    /// 8) -- e.g. `fixture.SeedRoleAsync("teacher")`. "updatedAt" bound explicitly (inline now()),
+    /// same NOT-NULL-no-database-default column as every other table in this fixture.
+    /// </summary>
+    public async Task<string> SeedRoleAsync(string name, string? id = null, bool isActive = true)
+    {
+        var roleId = id ?? Guid.NewGuid().ToString();
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "roles" ("id","name","isActive","updatedAt")
+            VALUES (@id,@name,@isActive,now())
+            """, conn);
+        cmd.Parameters.AddWithValue("id", roleId);
+        cmd.Parameters.AddWithValue("name", name);
+        cmd.Parameters.AddWithValue("isActive", isActive);
+        await cmd.ExecuteNonQueryAsync();
+        return roleId;
+    }
+
+    /// <summary>
+    /// Seeds a "user_subscriptions" row for AuthRepositoryProfileTests' GetProfileAsync
+    /// latest-active-subscription-status test (Task 8). "planId" has no FK in this fixture (same
+    /// no-FK convention as "users"."roleId"/"schoolId" -- see SeedUserAsync's remark above), so an
+    /// arbitrary placeholder is fine. "updatedAt" bound explicitly, same NOT-NULL-no-database-
+    /// default column as every other table here.
+    /// </summary>
+    public async Task SeedSubscriptionAsync(string userId, string status, bool isActive = true, string planId = "plan_test")
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "user_subscriptions" ("id","userId","planId","status","isActive","updatedAt")
+            VALUES (gen_random_uuid()::text, @userId, @planId, @status, @isActive, now())
+            """, conn);
+        cmd.Parameters.AddWithValue("userId", userId);
+        cmd.Parameters.AddWithValue("planId", planId);
+        cmd.Parameters.AddWithValue("status", status);
+        cmd.Parameters.AddWithValue("isActive", isActive);
         await cmd.ExecuteNonQueryAsync();
     }
 

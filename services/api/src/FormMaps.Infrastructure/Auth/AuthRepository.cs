@@ -280,6 +280,199 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
         return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Profile read backing GET /auth/profile (authService.ts's getProfile). Joins the latest
+    /// "isActive" = true "user_subscriptions" row for this user via a correlated subquery
+    /// (ordered by "createdDate" DESC, LIMIT 1) -- defensive against the real schema's
+    /// @@unique([userId]) ever being relaxed, matching legacy's Prisma query shape exactly rather
+    /// than relying on that constraint. Falls back to "none" when no active subscription row
+    /// exists, matching legacy's `user.subscriptions[0]?.status || "none"`.
+    /// </summary>
+    public async Task<ProfileRow?> GetProfileAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+        await using var command = Command(session, """
+            SELECT u."id", u."name", u."email", u."roleId", u."roleName", u."schoolId",
+                (SELECT us."status" FROM "user_subscriptions" us
+                 WHERE us."userId" = u."id" AND us."isActive" = true
+                 ORDER BY us."createdDate" DESC LIMIT 1) AS "subscriptionStatus"
+            FROM "users" u
+            WHERE u."id" = @userId
+            """);
+        AddParameter(command, "userId", userId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken)) return null;
+
+        return new ProfileRow(
+            reader.GetString(0), reader.GetString(1), reader.GetString(2),
+            reader.GetString(3), reader.GetString(4),
+            reader.IsDBNull(5) ? null : reader.GetString(5),
+            reader.IsDBNull(6) ? "none" : reader.GetString(6));
+    }
+
+    /// <summary>
+    /// Looks up a user by id (companion to FindUserByEmailAsync above, keyed by id instead of
+    /// email). Used by Task 12 to resolve the acting caller's role/school for authorization checks
+    /// and the target user for change-email/change-password/change-role.
+    /// </summary>
+    public async Task<AuthUserRow?> FindUserByIdWithRoleAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+        await using var command = Command(session, """
+            SELECT "id","name","email","password","roleId","roleName","schoolId","isActive"
+            FROM "users" WHERE "id" = @userId
+            """);
+        AddParameter(command, "userId", userId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken)) return null;
+
+        return new AuthUserRow(
+            reader.GetString(0), reader.GetString(1), reader.GetString(2),
+            reader.IsDBNull(3) ? null : reader.GetString(3),
+            reader.GetString(4), reader.GetString(5),
+            reader.IsDBNull(6) ? null : reader.GetString(6),
+            reader.GetBoolean(7));
+    }
+
+    /// <summary>
+    /// Persists a new password hash. Task 12's change-password endpoint has already authorized
+    /// the change and verified the old password per authService.ts's changePassword ordering --
+    /// this method trusts that already happened. Also clears "passwordNeedsMigration", matching
+    /// legacy's `data: { password: hashed, passwordNeedsMigration: false }` exactly: a
+    /// lazily-migrated bcrypt hash getting overwritten by a real change-password call should not
+    /// still be flagged for migration. "updatedAt" = now() bound explicitly -- same NOT-NULL-no-
+    /// database-default column as every other write in this domain (see auth-schema.sql's header
+    /// comment / RecordFailedLoginAsync's remark above).
+    /// </summary>
+    public async Task UpdatePasswordAsync(string userId, string newHash, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+        await using var command = Command(session, """
+            UPDATE "users" SET "password" = @password, "passwordNeedsMigration" = false, "updatedAt" = now()
+            WHERE "id" = @userId
+            """);
+        AddParameter(command, "userId", userId);
+        AddParameter(command, "password", newHash);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+        await session.CommitAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Change-email happy/same-email/conflict, per authService.ts's changeEmail. Role-scoping and
+    /// existence-hiding rules (uniform 403 before target lookup, cross-school 404, school_admin
+    /// scoped to own school) are NOT this method's concern -- see IAuthRepository's remarks; Task
+    /// 12's endpoint layer authorizes the caller before calling this.
+    ///
+    /// Two-layer conflict guard, mirroring Task 7's TOCTOU-safety idiom (see
+    /// RotateRefreshTokenAsync's class-level remark for the same class of bug):
+    ///   1. Pre-check `SELECT 1 ... WHERE "email" = @newEmail AND "id" != @userId` -- deliberately
+    ///      NOT scoped to "isActive" = true, since the DB unique constraint on "users"."email"
+    ///      spans inactive (soft-deleted) users too; scoping the pre-check to active-only would
+    ///      miss an inactive duplicate and 500 on the real constraint instead of a clean Conflict
+    ///      (see ChangeEmail_AgainstInactiveDuplicate_StillConflict).
+    ///   2. The pre-check alone is NOT a sufficient guard -- a second caller can pass its own
+    ///      pre-check for the SAME new email in the window between the two callers' pre-checks and
+    ///      either one's UPDATE committing (classic TOCTOU race). The real safety net is catching
+    ///      the Postgres 23505 unique-violation on the UPDATE itself, exactly the way legacy
+    ///      catches Prisma's P2002 in authService.ts's changeEmail
+    ///      (`err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002"`). See
+    ///      ChangeEmail_ConcurrentRaceForSameNewEmail_ExactlyOneWins for the regression test: two
+    ///      real concurrent ChangeEmailAsync calls targeting the same new email, both able to pass
+    ///      the pre-check, exactly one committing and the other caught here.
+    /// "updatedAt" = now() bound explicitly on the UPDATE, same convention as every other write in
+    /// this domain.
+    /// </summary>
+    public async Task<ChangeEmailResult> ChangeEmailAsync(string userId, string newEmail, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        await using var lookup = Command(session, """SELECT "email" FROM "users" WHERE "id" = @userId""");
+        AddParameter(lookup, "userId", userId);
+        var currentEmail = (string?)await lookup.ExecuteScalarAsync(cancellationToken);
+        if (currentEmail is null) return ChangeEmailResult.NotFound;
+        if (currentEmail == newEmail) return ChangeEmailResult.SameEmail;
+
+        await using var dupCheck = Command(session, """
+            SELECT 1 FROM "users" WHERE "email" = @newEmail AND "id" != @userId
+            """);
+        AddParameter(dupCheck, "newEmail", newEmail);
+        AddParameter(dupCheck, "userId", userId);
+        if (await dupCheck.ExecuteScalarAsync(cancellationToken) is not null)
+        {
+            return ChangeEmailResult.Conflict;
+        }
+
+        try
+        {
+            await using var update = Command(session, """
+                UPDATE "users" SET "email" = @newEmail, "updatedAt" = now() WHERE "id" = @userId
+                """);
+            AddParameter(update, "newEmail", newEmail);
+            AddParameter(update, "userId", userId);
+            await update.ExecuteNonQueryAsync(cancellationToken);
+        }
+        catch (Npgsql.PostgresException ex) when (ex.SqlState == "23505")
+        {
+            return ChangeEmailResult.Conflict;
+        }
+
+        await session.CommitAsync(cancellationToken);
+        return ChangeEmailResult.Ok;
+    }
+
+    /// <summary>
+    /// Change-role happy path, per authService.ts's changeRole. Collapses ALL invalid cases to
+    /// null -- target user not found, role id not found/inactive (mirrors legacy's
+    /// `prisma.role.findFirst({ where: { id: roleId, isActive: true } })`), or the user already
+    /// has this role -- same collapsed-null contract as RotateRefreshTokenAsync's RotateResult
+    /// (see that record's doc comment); Task 12's endpoint layer maps null to its own specific
+    /// 4xx/message the same way it already must for RotateResult. "updatedAt" = now() bound
+    /// explicitly on the UPDATE, same convention as every other write in this domain.
+    /// </summary>
+    public async Task<ChangeRoleResult?> ChangeRoleAsync(string userId, string roleId, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        string name, email, oldRoleId, oldRoleName;
+        await using (var userLookup = Command(session, """
+            SELECT "name","email","roleId","roleName" FROM "users" WHERE "id" = @userId
+            """))
+        {
+            AddParameter(userLookup, "userId", userId);
+            await using var reader = await userLookup.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken)) return null; // target user not found
+
+            name = reader.GetString(0);
+            email = reader.GetString(1);
+            oldRoleId = reader.GetString(2);
+            oldRoleName = reader.GetString(3);
+        }
+
+        if (oldRoleId == roleId) return null; // already has this role
+
+        await using var roleLookup = Command(session, """SELECT "name" FROM "roles" WHERE "id" = @roleId AND "isActive" = true""");
+        AddParameter(roleLookup, "roleId", roleId);
+        var newRoleName = (string?)await roleLookup.ExecuteScalarAsync(cancellationToken);
+        if (newRoleName is null) return null; // role not found / inactive
+
+        await using var update = Command(session, """
+            UPDATE "users" SET "roleId" = @roleId, "roleName" = @roleName, "updatedAt" = now()
+            WHERE "id" = @userId
+            """);
+        AddParameter(update, "roleId", roleId);
+        AddParameter(update, "roleName", newRoleName);
+        AddParameter(update, "userId", userId);
+        await update.ExecuteNonQueryAsync(cancellationToken);
+
+        await session.CommitAsync(cancellationToken);
+        return new ChangeRoleResult(userId, name, email, oldRoleId, oldRoleName, roleId, newRoleName);
+    }
+
     private static DbCommand Command(FormMapsDatabaseSession session, string sql)
     {
         var command = session.Connection.CreateCommand();
