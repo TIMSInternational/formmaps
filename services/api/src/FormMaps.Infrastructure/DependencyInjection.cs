@@ -270,6 +270,17 @@ public static class DependencyInjection
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();
         services.AddScoped<ISchoolAdminWriter, SchoolAdminWriter>();
+        // Domain 10 (Auth) Task 13: signup/unsubscribe/admin-set-password (routes/auth-admin.ts's
+        // in-scope slice). IAuthRepository/AccessTokenFactory (Tasks 6-12's login/refresh/profile/
+        // change-*/school-admin-registration/forgot-reset-password slice) remain unregistered here --
+        // a pre-existing, out-of-scope gap this task does not touch. IAuthAdminRepository MUST be
+        // registered, though: leaving it unregistered would crash EVERY WebApplicationFactory<Program>
+        // test in this assembly at host-startup (AuthorizationPolicyCache eagerly walks every mapped
+        // endpoint's metadata, including AuthAdminEndpoints' now that Program.cs maps it) -- confirmed
+        // empirically this task: AuthEndpointsTests (Task 12's file, unmodified) went from 43/43
+        // passing to 43/43 failing the moment MapAuthAdminEndpoints() was wired in, until this line
+        // was added.
+        services.AddScoped<IAuthAdminRepository, AuthAdminRepository>();
 
         // Outbound email (SES v2) — the FIRST outbound integration. EmailOptions mirrors lib/email.ts env constants.
         var emailOptions = new EmailOptions(
