@@ -476,6 +476,15 @@ function shouldRouteMessagesToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_MESSAGES_TO_DOTNET));
 }
 
+// Billing (Domain 9a): GET /status, POST /checkout-session, /cancel-subscription, /portal --
+// gated by ONE flag as a single unit, same convention as Messaging above. The webhook endpoint
+// (POST /api/v1/billing/webhook) is NOT included here -- Stripe calls it directly against the
+// .NET API's own public URL, it never goes through this Next.js rewrite layer. Default OFF;
+// not yet flipped -- shadow-mode observation window has not started.
+function shouldRouteBillingToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_BILLING_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1270,6 +1279,17 @@ const nextConfig: NextConfig = {
             { source: "/api/v1/messages/conversations/:id", destination: `${dotnetApiBaseUrl}/api/v1/messages/conversations/:id` },
             { source: "/api/v1/messages/broadcast", destination: `${dotnetApiBaseUrl}/api/v1/messages/broadcast` },
             { source: "/api/v1/messages/realtime-ticket", destination: `${dotnetApiBaseUrl}/api/v1/messages/realtime-ticket` },
+          ]
+        : []),
+      // Billing (Domain 9a) -- must precede the /api/:path* catch-all below so a flipped route
+      // reaches .NET. All 4 REST paths gated by the single FORMMAPS_ROUTE_BILLING_TO_DOTNET flag
+      // (see shouldRouteBillingToDotnet above). The webhook path is intentionally excluded.
+      ...(shouldRouteBillingToDotnet()
+        ? [
+            { source: "/api/v1/billing/status", destination: `${dotnetApiBaseUrl}/api/v1/billing/status` },
+            { source: "/api/v1/billing/checkout-session", destination: `${dotnetApiBaseUrl}/api/v1/billing/checkout-session` },
+            { source: "/api/v1/billing/cancel-subscription", destination: `${dotnetApiBaseUrl}/api/v1/billing/cancel-subscription` },
+            { source: "/api/v1/billing/portal", destination: `${dotnetApiBaseUrl}/api/v1/billing/portal` },
           ]
         : []),
     ];
