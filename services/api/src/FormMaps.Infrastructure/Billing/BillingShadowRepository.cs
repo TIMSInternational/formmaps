@@ -2,6 +2,7 @@ using System.Data.Common;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Billing;
 using FormMaps.Application.Data;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 
 namespace FormMaps.Infrastructure.Billing;
@@ -16,7 +17,9 @@ namespace FormMaps.Infrastructure.Billing;
 /// policies (.NET-internal, not tenant-scoped legacy tables), so writes run under
 /// RequestContext.System() -> TenantGucPlanResolver's IsSystem branch -> bypass-RLS mode.
 /// </summary>
-public sealed class BillingShadowRepository(IFormMapsDatabaseSessionFactory databaseSessionFactory) : IBillingShadowRepository
+public sealed class BillingShadowRepository(
+    IFormMapsDatabaseSessionFactory databaseSessionFactory,
+    ILogger<BillingShadowRepository> logger) : IBillingShadowRepository
 {
     public async Task<bool> ApplySubscriptionEventAsync(
         string eventId, string eventType, string userId, string? planId, StripeSubscriptionLite subscription,
@@ -65,7 +68,8 @@ public sealed class BillingShadowRepository(IFormMapsDatabaseSessionFactory data
             AddParameter(update, "cancelAtPeriodEnd", record.CancelAtPeriodEnd);
             AddParameter(update, "isActive", record.IsActive);
             AddParameter(update, "stripeSubscriptionId", stripeSubscriptionId);
-            await update.ExecuteNonQueryAsync(cancellationToken);
+            var affected = await update.ExecuteNonQueryAsync(cancellationToken);
+            WarnIfNoShadowRowMatched(affected, eventId, eventType, stripeSubscriptionId);
         }, cancellationToken);
     }
 
@@ -82,8 +86,36 @@ public sealed class BillingShadowRepository(IFormMapsDatabaseSessionFactory data
                 WHERE "stripeSubscriptionId" = @stripeSubscriptionId
                 """);
             AddParameter(update, "stripeSubscriptionId", stripeSubscriptionId);
-            await update.ExecuteNonQueryAsync(cancellationToken);
+            var affected = await update.ExecuteNonQueryAsync(cancellationToken);
+            WarnIfNoShadowRowMatched(affected, eventId, eventType, stripeSubscriptionId);
         }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Both by-subscription-id updates are <c>UPDATE ... WHERE "stripeSubscriptionId" = ...</c>, which
+    /// affects 0 rows when no shadow row exists for that subscription yet. The event is still recorded as
+    /// processed (correctly — the update genuinely had nothing to apply, and re-running it on redelivery
+    /// would not change that), so without this the outcome is completely invisible.
+    /// </summary>
+    /// <remarks>
+    /// Domain 9a final-review fix wave (Important 6). Warning, not Error, and explicitly not a failure:
+    /// the shadow table starts empty, so EVERY pre-existing subscriber's first
+    /// customer.subscription.updated lands here. That is the expected steady state during shadow-mode
+    /// backfill, and it is exactly what legacy stripeService.ts logs too
+    /// ("Subscription event for unknown local sub" when updateMany's count is 0). What would NOT be
+    /// expected is this continuing to fire for a subscription the shadow table has already seen — hence
+    /// the subscription id in the structured payload.
+    /// </remarks>
+    private void WarnIfNoShadowRowMatched(int affectedRows, string eventId, string eventType, string stripeSubscriptionId)
+    {
+        if (affectedRows > 0)
+        {
+            return;
+        }
+
+        logger.LogWarning(
+            "billing.shadow.subscription-event matched 0 shadow rows (unknown local sub) eventId={EventId} eventType={EventType} stripeSubscriptionId={StripeSubscriptionId}",
+            eventId, eventType, stripeSubscriptionId);
     }
 
     /// <summary>
