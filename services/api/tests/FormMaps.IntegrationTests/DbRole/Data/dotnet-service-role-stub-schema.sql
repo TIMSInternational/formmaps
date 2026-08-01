@@ -1,6 +1,6 @@
 -- Minimal stub schema for verifying infra/aws/sql/dotnet-service-role.sql's GRANTs. This is
 -- privilege-boundary testing, not data-shape testing, so every table is just "id text primary
--- key" -- what matters is that the exact 78 table names here match the exact 78 table names the
+-- key" -- what matters is that the exact 82 table names here match the exact 82 table names the
 -- role script grants against (kept in sync by hand; see DbRoleGrantsTests for the assertion that
 -- catches drift between the two lists).
 CREATE TABLE "academic_terms" (id text PRIMARY KEY);
@@ -58,6 +58,10 @@ CREATE TABLE "school_course_import_jobs" (id text PRIMARY KEY);
 CREATE TABLE "school_courses" (id text PRIMARY KEY);
 CREATE TABLE "school_framework_course_overrides" (id text PRIMARY KEY);
 CREATE TABLE "schools" (id text PRIMARY KEY);
+-- Domain 9a shadow-mode billing tables (infra/aws/sql/billing-shadow-tables.sql).
+CREATE TABLE "shadow_payments" (id text PRIMARY KEY);
+CREATE TABLE "shadow_stripe_events" (id text PRIMARY KEY);
+CREATE TABLE "shadow_user_subscriptions" (id text PRIMARY KEY);
 CREATE TABLE "student_alerts" (id text PRIMARY KEY);
 CREATE TABLE "student_applications" (id text PRIMARY KEY);
 CREATE TABLE "student_course_plans" (id text PRIMARY KEY);
@@ -66,6 +70,8 @@ CREATE TABLE "student_graduation_targets" (id text PRIMARY KEY);
 CREATE TABLE "student_parent_links" (id text PRIMARY KEY);
 CREATE TABLE "student_portfolio_items" (id text PRIMARY KEY);
 CREATE TABLE "student_test_scores" (id text PRIMARY KEY);
+-- Domain 9a: read-only plan catalog (PlanReader).
+CREATE TABLE "subscription_plans" (id text PRIMARY KEY);
 CREATE TABLE "universities" (id text PRIMARY KEY);
 CREATE TABLE "university_favorites" (id text PRIMARY KEY);
 CREATE TABLE "user_blocks" (id text PRIMARY KEY);

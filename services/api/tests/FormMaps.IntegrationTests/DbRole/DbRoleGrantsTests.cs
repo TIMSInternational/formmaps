@@ -109,6 +109,83 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
         Assert.Equal(1, deleted);
     }
 
+    /// <summary>
+    /// Domain 9a final-review fix wave (Critical 2). The four tables Domain 9a made the .NET service depend on
+    /// had no GRANT in dotnet-service-role.sql, so the least-privilege role would have failed every billing
+    /// webhook write and every reconciliation/plan read with 42501 the moment it replaced the legacy shared
+    /// credential. Unlike the representative-table tests above, this one names each table explicitly and pins
+    /// its exact verb set, because "the shadow tables are writable but the plan catalog is not" is the actual
+    /// invariant, not a sample of one.
+    /// </summary>
+    [Theory]
+    [InlineData("shadow_user_subscriptions", true, true, true, false)]
+    [InlineData("shadow_stripe_events", true, true, true, false)]
+    [InlineData("shadow_payments", true, true, true, false)]
+    [InlineData("subscription_plans", true, false, false, false)]
+    public async Task Domain9a_billing_tables_have_exactly_the_privileges_the_service_needs(
+        string table, bool canSelect, bool canInsert, bool canUpdate, bool canDelete)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'DELETE')
+            """,
+            connection);
+        command.Parameters.AddWithValue("table", table);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.Equal(canSelect, reader.GetBoolean(0));
+        Assert.Equal(canInsert, reader.GetBoolean(1));
+        Assert.Equal(canUpdate, reader.GetBoolean(2));
+        Assert.Equal(canDelete, reader.GetBoolean(3));
+    }
+
+    /// <summary>
+    /// Drift guard in the direction the fixture cannot catch on its own. A table granted by the script but
+    /// missing from the stub schema already fails loudly (the GRANT errors during fixture init); the reverse --
+    /// a table the service touches that made it into the stub schema but NOT into any GRANT list, which is
+    /// exactly how Domain 9a's four tables were missed -- would otherwise pass silently.
+    /// </summary>
+    [Fact]
+    public async Task Every_table_in_the_schema_is_granted_at_least_select()
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            // has_table_privilege is passed the relation OID rather than a formatted name: Postgres does not
+            // guarantee WHERE-clause evaluation order, so the name form gets evaluated against catalog rows the
+            // schemaname filter was meant to exclude and fails with 42P01 on e.g. pg_statistic.
+            """
+            SELECT c.relname
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = 'public'
+              AND c.relkind = 'r'
+              AND NOT has_table_privilege('formmaps_dotnet_svc', c.oid, 'SELECT')
+            ORDER BY c.relname
+            """,
+            connection);
+
+        var ungranted = new List<string>();
+        await using (var reader = await command.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                ungranted.Add(reader.GetString(0));
+            }
+        }
+
+        Assert.True(ungranted.Count == 0, $"tables in the stub schema with no GRANT in dotnet-service-role.sql: {string.Join(", ", ungranted)}");
+    }
+
     [Fact]
     public async Task Role_cannot_create_tables_or_other_objects_in_the_schema()
     {

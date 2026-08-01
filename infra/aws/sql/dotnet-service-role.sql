@@ -15,10 +15,16 @@
 --
 -- Table scope was derived by grepping services/api/src for every raw-SQL
 -- FROM / JOIN / INSERT INTO / UPDATE / DELETE FROM target (both plain and
--- C#-escaped-quote string forms), then classifying each of the 78 tables
+-- C#-escaped-quote string forms), then classifying each of the 82 tables
 -- found into one of three buckets below by which verbs actually appear
 -- against it in the current codebase (as of 2026-07-31). See the maintenance
 -- note at the bottom for how to re-derive this list as the service grows.
+--
+-- Domain 9a (subscription-billing shadow mode) added four of those 82:
+-- `subscription_plans` (read-only -- PlanReader), and the `shadow_*` trio
+-- (read/write -- written by the Stripe webhook handler, read back by the
+-- reconciliation worker). See the note above section 4 for why
+-- `shadow_payments` is granted even though no .NET code writes it yet.
 --
 -- What this role does NOT get, by design
 -- ---------------------------------------
@@ -121,6 +127,9 @@ GRANT SELECT ON TABLE
     public."reviews",
     public."student_grades",
     public."student_graduation_targets",
+    -- Domain 9a: the subscription plan catalog, read by PlanReader to resolve a
+    -- plan's Stripe Price id for POST /api/v1/billing/checkout-session.
+    public."subscription_plans",
     public."universities",
     public."user_blocks",
     public."user_career_profiles",
@@ -136,6 +145,16 @@ GRANT SELECT ON TABLE
 -- ---------------------------------------------------------------------------
 -- 4. Read/write tables where the service creates and updates rows but never
 --    deletes them (verified: INSERT and/or UPDATE hits, no DELETE FROM hit).
+--
+--    Domain 9a note on the `shadow_*` trio: these are .NET-internal shadow
+--    tables (infra/aws/sql/billing-shadow-tables.sql), written only by
+--    BillingShadowRepository under the Stripe webhook and read back by
+--    BillingReconciliationService. `shadow_user_subscriptions` and
+--    `shadow_stripe_events` have live INSERT/UPDATE/SELECT hits today.
+--    `shadow_payments` does NOT yet -- it is created by the same DDL and
+--    reserved for the Domain 9b one-time/booking payment paths. It is granted
+--    here so the whole shadow set moves as one unit rather than requiring an
+--    ops re-run mid-domain; if 9b is dropped, drop this grant with it.
 -- ---------------------------------------------------------------------------
 GRANT SELECT, INSERT, UPDATE ON TABLE
     public."application_checklists",
@@ -171,6 +190,9 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     public."school_courses",
     public."school_framework_course_overrides",
     public."schools",
+    public."shadow_payments",
+    public."shadow_stripe_events",
+    public."shadow_user_subscriptions",
     public."student_alerts",
     public."student_applications",
     public."student_parent_links",
