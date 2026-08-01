@@ -551,6 +551,39 @@ public class AuthEndpointsTests
         Assert.False(repo.ChangeRoleWasCalled);
     }
 
+    // Regression test (post-review fix): legacy's changeRole (authService.ts:299-304) checks role
+    // validity/existence FIRST, THEN checks whether the user already has that role. For the overlap
+    // case -- a roleId that is simultaneously the user's CURRENT role AND has since been deactivated
+    // -- legacy says "Role not found" (role-validity check fails before the same-role check ever
+    // runs). An earlier draft of this handler checked same-role BEFORE role validity and would have
+    // wrongly said "User already has this role" for this exact case. Proves the fixed ordering.
+    [Fact]
+    public async Task ChangeRole_role_is_current_and_inactive_is_role_not_found_not_already_has_role()
+    {
+        var repo = new FakeAuthRepository
+        {
+            UserById = new AuthUserRow("u2", "Bob", "bob@example.test", null, "role_deactivated", FormMapsRoles.Student, null, true),
+            RoleIsValid = false, // the roleId is now inactive/deleted, even though it's still the user's current role
+        };
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-role")
+        {
+            // Same roleId as the user's CURRENT role -- the overlap case.
+            Content = JsonBody(new { userId = "u2", roleId = "role_deactivated" }),
+        };
+        AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.SuperAdmin, permissions: "admin:users");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Role not found", doc.RootElement.GetProperty("message").GetString());
+        // Role-invalidity is caught before the same-role check and before ever calling the
+        // mutating ChangeRoleAsync -- this is the ordering being proved, not just the message.
+        Assert.False(repo.ChangeRoleWasCalled);
+    }
+
     [Fact]
     public async Task ChangeRole_repository_null_after_already_has_role_excluded_means_role_not_found()
     {
@@ -916,6 +949,7 @@ public class AuthEndpointsTests
         public ProfileRow? Profile { get; set; }
         public ChangeEmailResult ChangeEmailResult { get; set; } = ChangeEmailResult.Ok;
         public ChangeRoleResult? ChangeRoleResult { get; set; }
+        public bool RoleIsValid { get; set; } = true;
         public SchoolInviteRow? SchoolInvite { get; set; }
         public string EnsureSchoolAdminRoleId { get; set; } = "role_school_admin";
         public AuthUserRow? UpsertedSchoolAdminUser { get; set; }
@@ -996,6 +1030,9 @@ public class AuthEndpointsTests
             ChangeRoleWasCalled = true;
             return Task.FromResult(ChangeRoleResult);
         }
+
+        public Task<bool> RoleExistsAndActiveAsync(string roleId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(RoleIsValid);
 
         public Task<SchoolInviteRow?> FindSchoolByInvitationTokenAsync(string token, CancellationToken cancellationToken = default) =>
             Task.FromResult(SchoolInvite);

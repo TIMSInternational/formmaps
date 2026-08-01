@@ -473,6 +473,23 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
         return new ChangeRoleResult(userId, name, email, oldRoleId, oldRoleName, roleId, newRoleName);
     }
 
+    /// <summary>
+    /// Standalone role-validity check, added post-review (Task 12 fix) -- see this method's
+    /// interface doc comment for why it exists: it lets the endpoint layer check role validity
+    /// BEFORE any same-role comparison, matching authService.ts's changeRole precedence exactly,
+    /// independent of <see cref="ChangeRoleAsync"/>'s own internal (inverted) check order. Read-only,
+    /// same query <see cref="ChangeRoleAsync"/> already runs internally.
+    /// </summary>
+    public async Task<bool> RoleExistsAndActiveAsync(string roleId, CancellationToken cancellationToken = default)
+    {
+        var context = RequestContext.System();
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+        await using var command = Command(session, """SELECT 1 FROM "roles" WHERE "id" = @roleId AND "isActive" = true""");
+        AddParameter(command, "roleId", roleId);
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+        return result is not null;
+    }
+
     private const string SchoolAdminRoleName = "school_admin";
 
     /// <summary>

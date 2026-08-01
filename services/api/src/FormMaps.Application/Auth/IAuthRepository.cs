@@ -130,6 +130,22 @@ public interface IAuthRepository
     Task<ChangeRoleResult?> ChangeRoleAsync(string userId, string roleId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Standalone "is this role id a currently-active role" check -- added in Task 12 (post-review
+    /// fix) as a lightweight, unambiguous precondition check so the endpoint layer can reproduce
+    /// authService.ts's changeRole precedence exactly: legacy checks role validity FIRST
+    /// (`prisma.role.findFirst({ where: { id: roleId, isActive: true } })`, "Role not found" if
+    /// missing) and ONLY THEN checks whether the user already has that role ("User already has this
+    /// role"). <see cref="ChangeRoleAsync"/>'s own internal ordering checks same-role BEFORE role
+    /// validity (the inverse), which is why its collapsed <c>null</c> return cannot, by itself,
+    /// reproduce legacy's exact precedence for the overlap case (a roleId that is simultaneously the
+    /// user's current role AND has since been deactivated) -- see task-12-report.md's fix addendum.
+    /// This method mirrors <see cref="ChangeRoleAsync"/>'s own role-lookup query exactly
+    /// (`SELECT "name" FROM "roles" WHERE "id" = @roleId AND "isActive" = true`), just callable in
+    /// isolation, before any same-role comparison.
+    /// </summary>
+    Task<bool> RoleExistsAndActiveAsync(string roleId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Looks up an invited school by its (still-live) invitation token, per authService.ts's
     /// `prisma.school.findFirst({ where: { invitationToken: invToken, isActive: true } })`. Returns
     /// <c>null</c> only for an unknown token or an inactive school -- NOT for an expired one; see

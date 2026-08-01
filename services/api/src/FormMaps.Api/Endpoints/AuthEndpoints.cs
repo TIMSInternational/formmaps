@@ -263,6 +263,25 @@ public static class AuthEndpoints
         // action a priori (self-service calls never populate it), and the caller's role is checked
         // off the ALREADY-authenticated context.Actor -- no DB round-trip needed to know it -- before
         // any target lookup happens.
+        // Review finding (JWT-trust trade-off, reviewed, accepted as a documented trade-off -- not
+        // fixed, per explicit human decision -- distinct from this file's numbered "item 2"
+        // elsewhere, which is about newEmail normalization): legacy re-reads the REQUESTER's
+        // role/schoolId live from the DB for this check
+        // (authService.ts:198: `const requester = await prisma.user.findUnique({ where: { id:
+        // requesterId }, select: { roleName: true, schoolId: true } });`) rather than trusting
+        // whatever role/school was stamped into the JWT at login time. This handler instead trusts
+        // `context.Actor!.NormalizedRole`/`context.Tenant!.SchoolId` -- the JWT-derived request
+        // context RequestContextMiddleware already populated for this request -- with NO live DB
+        // re-read of the caller's current role/school. That is a real, deliberate divergence from
+        // legacy's specific extra hardening on this one route (and changeEmail's, below): if an
+        // admin's role/school were changed by another admin mid-session, this handler would keep
+        // honoring the OLD role/school baked into their still-valid access token until it expires or
+        // they re-authenticate, whereas legacy would see the change on its very next request. This
+        // was raised in review and explicitly decided by Federico (human partner): accept this as
+        // the same framework-wide JWT-trust trade-off already used everywhere else in this .NET port
+        // (RequestContextMiddleware's whole design, ChangeRoleAsync's "admin:users" permission gate
+        // just below, every other RequireIdentity-gated endpoint in this codebase) rather than add a
+        // one-off live DB re-read just for these two routes. Not fixed; documented per that decision.
         AuthUserRow target;
         bool isAdminAction;
         if (!string.IsNullOrWhiteSpace(body.Email))
@@ -350,6 +369,15 @@ public static class AuthEndpoints
 
         // Legacy's changeEmail ALREADY does role-check-before-target-lookup correctly for both
         // branches -- no reordering needed here (unlike change-password above).
+        //
+        // Review finding (JWT-trust trade-off, reviewed, accepted -- not fixed, per explicit human
+        // decision): same as ChangePasswordAsync above -- legacy re-reads the REQUESTER's
+        // role/schoolId live from the DB here too (authService.ts:253: `const requester = await
+        // prisma.user.findUnique({ where: { id: requesterId }, select: { roleName: true, schoolId:
+        // true } });`), while this handler trusts the JWT-derived `context.Actor!.NormalizedRole`/
+        // `context.Tenant!.SchoolId` with no live re-read. Accepted as the same framework-wide
+        // JWT-trust trade-off used everywhere else in this port (see the fuller writeup on
+        // ChangePasswordAsync above and task-12-report.md's fix addendum); not fixed.
         AuthUserRow target;
         if (body.UserId != context.Tenant!.UserId)
         {
@@ -426,16 +454,34 @@ public static class AuthEndpoints
         var target = await repository.FindUserByIdWithRoleAsync(body.UserId, cancellationToken);
         if (target is null) return NotFound("User not found");
 
-        // Item 3: ChangeRoleAsync's collapsed-null return folds "role not found/inactive" and "user
-        // already has this role" into ONE null (plus "target not found", which we've already
-        // resolved above by pre-fetching the target ourselves). Rather than guess which of the two
-        // remaining legacy messages/statuses a null return means, this handler removes the ambiguity
-        // structurally: "already has this role" is checked HERE, against the target we already
-        // fetched, before ever calling ChangeRoleAsync. That means once we do call it, the ONLY
-        // remaining legacy cause for a null result is "role not found/inactive" -- so that null can
-        // be mapped unambiguously to legacy's "Role not found" message, with no guessing involved.
+        // Item 3 (post-review fix): ChangeRoleAsync's collapsed-null return folds "role not
+        // found/inactive" and "user already has this role" into ONE null (plus "target not found",
+        // already resolved above by pre-fetching the target ourselves). Rather than guess which of
+        // the two remaining legacy messages a null return means, this handler removes the ambiguity
+        // structurally -- but the PRECEDENCE of the two remaining checks matters and must match
+        // legacy exactly: authService.ts's changeRole (authService.ts:299-304) checks role
+        // validity/existence FIRST ("Role not found" if the role id is missing/inactive), and ONLY
+        // THEN checks whether the user already has that role ("User already has this role"). An
+        // earlier draft of this handler checked same-role BEFORE role validity (mirroring
+        // ChangeRoleAsync's OWN internal order, which is itself inverted from legacy) -- the two
+        // orderings only diverge for the overlap case, a roleId that is simultaneously the user's
+        // CURRENT role AND has since been deactivated: legacy says "Role not found" for that case
+        // (role validity fails first), the earlier draft said "User already has this role" (wrong).
+        // Fixed by checking role validity via the standalone RoleExistsAndActiveAsync BEFORE the
+        // same-role comparison, matching legacy's order exactly; only once role validity is
+        // confirmed does the same-role short-circuit apply. See
+        // ChangeRole_role_is_current_and_inactive_is_role_not_found_not_already_has_role for the
+        // regression test proving this ordering, and task-12-report.md's fix addendum for the full
+        // writeup.
+        var roleIsValid = await repository.RoleExistsAndActiveAsync(body.RoleId, cancellationToken);
+        if (!roleIsValid) return BadRequest("Role not found");
+
         if (target.RoleId == body.RoleId) return BadRequest("User already has this role");
 
+        // By this point role validity and non-same-role are both already confirmed, so a null here
+        // can only be a genuine TOCTOU race (e.g. the role was deactivated or the user's role
+        // changed between the checks above and this call) -- not a designed disambiguation path.
+        // "Role not found" is the safe, defensible fallback for that residual race window.
         var result = await repository.ChangeRoleAsync(body.UserId, body.RoleId, cancellationToken);
         if (result is null) return BadRequest("Role not found");
 
