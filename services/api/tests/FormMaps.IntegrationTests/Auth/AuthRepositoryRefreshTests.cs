@@ -69,6 +69,29 @@ public class AuthRepositoryRefreshTests(AuthDatabaseFixture fixture)
     }
 
     [Fact]
+    public async Task RotateRefreshToken_ConcurrentRotationOfSameToken_ExactlyOneWins()
+    {
+        await fixture.ResetAsync();
+        var userId = await fixture.SeedUserAsync(email: "f@example.com", passwordHash: "h", isActive: true);
+        var repo = CreateRepository();
+        var original = await repo.CreateRefreshTokenAsync(userId, "1.1.1.1", CancellationToken.None);
+
+        // Two simultaneous rotation attempts against the SAME token, from the SAME repo instance --
+        // each call opens its own connection/transaction via the session factory (see
+        // NpgsqlFormMapsDatabaseSessionFactory.OpenAsync), so this genuinely races at the DB level,
+        // not just in-process. Without the FOR UPDATE lock on the lookup SELECT, both requests could
+        // read "isRevoked" = false before either commits and both mint a replacement token --
+        // defeating single-use rotation. With the lock, the loser blocks until the winner commits,
+        // then re-reads "isRevoked" = true and returns null.
+        var results = await Task.WhenAll(
+            repo.RotateRefreshTokenAsync(original, "1.1.1.1", CancellationToken.None),
+            repo.RotateRefreshTokenAsync(original, "2.2.2.2", CancellationToken.None));
+
+        Assert.Equal(1, results.Count(r => r is not null));
+        Assert.Equal(1, results.Count(r => r is null));
+    }
+
+    [Fact]
     public async Task RevokeAllRefreshTokens_MultipleActiveSessions_AllStopRotating()
     {
         await fixture.ResetAsync();

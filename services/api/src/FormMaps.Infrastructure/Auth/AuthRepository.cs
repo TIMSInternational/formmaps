@@ -134,21 +134,34 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
     /// Single-use rotation. Ordering within this one session/transaction is deliberate and is the
     /// highest-risk logic in this domain:
     ///   1. Look up the presented token (and its owning user's CURRENT "isActive", not a cached
-    ///      value from login time -- this is the TOCTOU-safety re-check) in one JOINed SELECT.
+    ///      value from login time -- this is the TOCTOU-safety re-check) in one JOINed SELECT --
+    ///      <c>FOR UPDATE</c>, taking the row lock BEFORE the validity check runs. Same idiom as
+    ///      PcaExamWriter.SubmitExamAsync/LiaSessionWriter's SelectForUpdateSql: a second concurrent
+    ///      rotation attempt for the SAME token blocks on this lock until the first transaction
+    ///      commits, then (READ COMMITTED semantics) re-reads the now-current, post-commit row, so
+    ///      it observes "isRevoked" = true rather than the stale value it would have seen with a
+    ///      plain (non-locking) SELECT. Fix round 1 (Critical, post-review): the original draft used
+    ///      a plain SELECT here, which let two simultaneous requests both read "isRevoked" = false
+    ///      before either committed and both mint a replacement token -- defeating single-use
+    ///      rotation as a theft-detection signal. See AuthRepositoryRefreshTests'
+    ///      RotateRefreshToken_ConcurrentRotationOfSameToken_ExactlyOneWins for the regression test.
     ///   2. If unknown, stop (nothing to revoke, nothing to commit besides the read).
     ///   3. If revoked/expired/inactive-user, revoke the row anyway (matches legacy: a token
     ///      presented after it's gone stale still gets marked revoked on the attempt that discovers
     ///      it, closing any window where a stale-but-not-yet-revoked row could be replayed) and
     ///      commit, returning null.
     ///   4. Otherwise revoke-old THEN create-new, both inside the same still-open transaction,
-    ///      committed once at the end. Revoking old before minting new is what makes the token
-    ///      single-use: if two concurrent requests race to rotate the same token, only one can
-    ///      observe "not yet revoked" under the row lock the UPDATE takes -- see the report for the
-    ///      full concurrency walkthrough.
+    ///      committed once at the end. The revoke here uses a CONDITIONAL UPDATE (WHERE "id" = @id
+    ///      AND "isRevoked" = false) and fails closed (throws) on 0 rows affected -- same
+    ///      belt-and-suspenders idiom as PcaExamWriter's completion UPDATE: the FOR UPDATE lock
+    ///      above already makes this unreachable in practice (nothing else can have flipped
+    ///      "isRevoked" on a row we are holding locked), so 0 rows here means the row vanished out
+    ///      from under an active lock -- an invariant violation, not a normal race outcome -- and
+    ///      minting a replacement token for that case must never happen silently.
     /// "refresh_tokens"."updatedAt" is bound explicitly on the new-token INSERT (same NOT-NULL-no-
-    /// default gap as CreateRefreshTokenAsync above), and "updatedAt" = now() is added to the
-    /// revoke UPDATE (RevokeTokenRowAsync) to keep the app-managed timestamp current on every actual
-    /// row mutation, matching RecordFailedLoginAsync's established convention.
+    /// default gap as CreateRefreshTokenAsync above), and "updatedAt" = now() is added to every
+    /// revoke UPDATE to keep the app-managed timestamp current on every actual row mutation,
+    /// matching RecordFailedLoginAsync's established convention.
     /// </summary>
     public async Task<RotateResult?> RotateRefreshTokenAsync(string oldToken, string clientIp, CancellationToken cancellationToken = default)
     {
@@ -159,6 +172,7 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
             SELECT rt."id", rt."userId", rt."expiresAt", rt."isRevoked", u."isActive"
             FROM "refresh_tokens" rt JOIN "users" u ON u."id" = rt."userId"
             WHERE rt."token" = @token
+            FOR UPDATE OF rt
             """);
         AddParameter(lookup, "token", oldToken);
 
@@ -181,14 +195,23 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
         if (isRevoked || expiresAt < DateTime.UtcNow || !userIsActive)
         {
             // Revoke on any invalid presentation too (matches legacy: expired/inactive-user tokens
-            // get marked revoked on the attempt that discovers them, not just left dangling).
+            // get marked revoked on the attempt that discovers them, not just left dangling). Plain
+            // (unconditional) revoke here -- this is idempotent bookkeeping on an already-invalid
+            // row, not the single-use state transition, so there is no race to guard against and no
+            // replacement token is ever minted off the back of it.
             await RevokeTokenRowAsync(session, tokenId, clientIp, cancellationToken);
             await session.CommitAsync(cancellationToken);
             return null;
         }
 
-        // Revoke-old-THEN-create-new, single-use enforced by this exact ordering within one transaction.
-        await RevokeTokenRowAsync(session, tokenId, clientIp, cancellationToken);
+        // Revoke-old-THEN-create-new, single-use enforced by the FOR UPDATE lock above plus this
+        // ordering within one transaction. Conditional UPDATE + fail-closed 0-row check: see the
+        // class doc above this method for why 0 rows here is an invariant violation, not a race.
+        var revoked = await RevokeTokenRowForRotationAsync(session, tokenId, clientIp, cancellationToken);
+        if (revoked == 0)
+        {
+            throw new InvalidOperationException($"Refresh token rotation revoke-old update affected 0 rows for token id {tokenId}");
+        }
 
         var newToken = RefreshTokenGenerator.Generate();
         await using var insert = Command(session, """
@@ -224,7 +247,12 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
         await session.CommitAsync(cancellationToken);
     }
 
-    /// <summary>See RevokeAllRefreshTokensAsync's remark re: "updatedAt" = now() on row mutation.</summary>
+    /// <summary>
+    /// Unconditional revoke -- used for the invalid-token bookkeeping path (already-revoked/expired/
+    /// inactive-user) in RotateRefreshTokenAsync, where re-marking an already-revoked row is
+    /// idempotent and never gates minting a replacement token. See RevokeAllRefreshTokensAsync's
+    /// remark re: "updatedAt" = now() on row mutation.
+    /// </summary>
     private static async Task RevokeTokenRowAsync(FormMapsDatabaseSession session, string tokenId, string clientIp, CancellationToken cancellationToken)
     {
         await using var command = Command(session, """
@@ -233,6 +261,23 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
         AddParameter(command, "id", tokenId);
         AddParameter(command, "ip", clientIp);
         await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Conditional revoke used ONLY for the single-use state transition inside
+    /// RotateRefreshTokenAsync's valid-token path -- guards "isRevoked" = false in the WHERE clause
+    /// (same idiom as PcaExamWriter.SubmitExamAsync's completion UPDATE guarding "isCompleted" =
+    /// false) so the caller can fail closed if 0 rows are affected. Returns the affected row count.
+    /// </summary>
+    private static async Task<int> RevokeTokenRowForRotationAsync(FormMapsDatabaseSession session, string tokenId, string clientIp, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """
+            UPDATE "refresh_tokens" SET "isRevoked" = true, "revokedAt" = now(), "revokedByIp" = @ip, "updatedAt" = now()
+            WHERE "id" = @id AND "isRevoked" = false
+            """);
+        AddParameter(command, "id", tokenId);
+        AddParameter(command, "ip", clientIp);
+        return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static DbCommand Command(FormMapsDatabaseSession session, string sql)
