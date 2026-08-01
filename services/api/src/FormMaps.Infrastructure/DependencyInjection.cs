@@ -281,6 +281,11 @@ public static class DependencyInjection
         // passing to 43/43 failing the moment MapAuthAdminEndpoints() was wired in, until this line
         // was added.
         services.AddScoped<IAuthAdminRepository, AuthAdminRepository>();
+        // Domain 10 (Auth) Task 14: closes the gap called out in the Task 13 comment above --
+        // IAuthRepository (Tasks 6-12's login/refresh/profile/change-*/school-admin-registration/
+        // forgot-reset-password slice) is now registered too. Same Scoped lifetime as every other
+        // repository in this method (depends on the Scoped IFormMapsDatabaseSessionFactory).
+        services.AddScoped<IAuthRepository, AuthRepository>();
 
         // Outbound email (SES v2) — the FIRST outbound integration. EmailOptions mirrors lib/email.ts env constants.
         var emailOptions = new EmailOptions(

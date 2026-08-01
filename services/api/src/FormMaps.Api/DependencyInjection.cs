@@ -27,6 +27,15 @@ public static class DependencyInjection
         services.AddScoped<IMessagesRealtimeNotifier, SignalRMessagesNotifier>();
         services.AddScoped<RealtimeTicketFactory>();
 
+        // Domain 10 (Auth) Task 14: AccessTokenFactory lives in FormMaps.Api.Auth (Api layer, like
+        // RealtimeTicketFactory above), so it's registered here rather than in
+        // FormMaps.Infrastructure's DependencyInjection (which cannot reference the Api project --
+        // see the SignalR comment above for the reference-direction rule). It only depends on
+        // IOptions<LegacyJwtOptions> (already bound above) and holds no per-request state, so
+        // Singleton is safe -- same lifetime as the sibling LegacyJwtRequestContextFactory, which
+        // reads the same options type.
+        services.AddSingleton<AccessTokenFactory>();
+
         return services;
     }
 }
