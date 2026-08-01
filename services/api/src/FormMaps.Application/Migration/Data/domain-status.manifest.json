@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-07-31",
+  "lastUpdated": "2026-08-01",
   "howToKeepThisCurrent": "This file is the single source of truth for GET /api/v1/migration/roadmap (see MigrationRoadmapProvider.cs). It is domain-grained (one entry per product domain), not task-grained -- for per-slice code-completion detail see agentic-migration.manifest.json. Update ONE entry whenever a domain's real-world status changes: (1) status changes when a domain's .NET port is code-complete/in-progress/deferred; (2) liveInProd flips only once its FORMMAPS_ROUTE_*_TO_DOTNET flag(s) are verified serving real production traffic (a Vercel env flip + confirmed canary/curl check), NOT just merged to main -- git history under-counts prod state because the live frontend deploys via direct `vercel --prod`, not a merge gate. Bump lastVerified on the entry and lastUpdated at the top of this file. Reference this file in the commit that completes or cuts over a domain, e.g. `docs(migration): mark <domain> live in domain-status manifest`.",
   "domains": [
     {
@@ -123,6 +123,17 @@
       "liveInProd": false,
       "lastVerified": "2026-07-31",
       "note": "Added 2026-07-31 (Domain 7b) -- code-complete and pushed 2026-07-31, but NOT deployed/flagged. The textbook case this manifest exists for: code-complete is not the same as live."
+    },
+    {
+      "domain": "auth",
+      "currentOwner": "legacy-node-api",
+      "targetOwner": ".NET",
+      "firstMove": "Domain 10: full session-issuance surface (login, refresh rotation, logout, profile, change-password/email/role, school-admin registration completion, forgot/reset-password, signup, unsubscribe, admin set-password) ported behind a single FORMMAPS_ROUTE_AUTH_TO_DOTNET flag covering all of /authapi/*.",
+      "risk": "high",
+      "status": "completed",
+      "liveInProd": false,
+      "lastVerified": "2026-08-01",
+      "note": "Added 2026-07-31 (Domain 10 spec/plan approved) -- the highest-risk entry in this file: every OTHER liveInProd:true domain's request-context-and-tenant foundation depends on whichever backend issues the JWT this domain mints. Coach-management CRUD (signup-coach*, coaches, invite-coach) deliberately excluded -- deferred to a future Coaching domain, see the Domain 10 spec's scope section."
     }
   ]
 }
