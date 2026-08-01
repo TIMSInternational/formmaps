@@ -216,6 +216,63 @@ public class BillingWebhookEndpointTests(BillingDatabaseFixture fixture) : IClas
         Assert.Equal(renewalPeriodEnd, row.NextBillingDate);
     }
 
+    [Theory]
+    [InlineData("current")]
+    [InlineData("legacy")]
+    public async Task Webhook_InvoicePaymentFailed_SetsShadowStatusToPastDue(string invoiceShape)
+    {
+        // Final-review fix wave (Important 3). BillingShadowRepository's class summary claimed
+        // invoice.payment_failed was ported, but HandleWebhookAsync's switch had no case for it, so a
+        // failed renewal left the shadow row reading "active" forever. Both invoice serialisations are
+        // covered: the current API nests the subscription id under parent.subscription_details, while an
+        // account pinned to an older version (the shape legacy Node reads) puts it at the invoice root,
+        // where Stripe.net 52.2.0 maps it to no property at all.
+        await fixture.ResetAsync();
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+
+        var userId = $"user_pf_{invoiceShape}";
+        var subscriptionId = $"sub_pf_{invoiceShape}";
+        var created = FakeVerifier.SubscriptionCreatedEventJson($"evt_pf_create_{invoiceShape}", userId, "plan_1", subscriptionId);
+        var createResponse = await client.PostAsync("/api/v1/billing/webhook",
+            new StringContent(created, Encoding.UTF8, "application/json"));
+        Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
+        Assert.Equal("active", (await fixture.QueryShadowSubscriptionAsync(userId)).Status);
+
+        var payload = invoiceShape == "current"
+            ? FakeVerifier.InvoicePaymentFailedEventJson($"evt_pf_{invoiceShape}", subscriptionId)
+            : FakeVerifier.LegacyShapeInvoicePaymentFailedEventJson($"evt_pf_{invoiceShape}", subscriptionId);
+
+        var response = await client.PostAsync("/api/v1/billing/webhook",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("past_due", (await fixture.QueryShadowSubscriptionAsync(userId)).Status);
+    }
+
+    [Fact]
+    public async Task Webhook_InvoicePaymentFailedWithNoSubscription_Returns200NoCrash()
+    {
+        // A one-off (non-subscription) invoice carries no subscription id in either shape. Must be
+        // acknowledged, not 500'd -- Stripe retries non-2xx indefinitely.
+        await fixture.ResetAsync();
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+
+        var payload = """
+            {
+              "id": "evt_pf_no_sub",
+              "type": "invoice.payment_failed",
+              "data": { "object": { "id": "in_one_off", "object": "invoice" } }
+            }
+            """;
+
+        var response = await client.PostAsync("/api/v1/billing/webhook",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     [Fact]
     public async Task Webhook_ContentTypeJson_IsNotBlockedByMutationMiddleware()
     {

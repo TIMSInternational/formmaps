@@ -9,7 +9,8 @@ namespace FormMaps.Infrastructure.Billing;
 /// <summary>
 /// Shadow-table writer for Domain 9a. Ports the subscription-only paths of legacy
 /// applyStripeWebhookEvent (stripeService.ts) — checkout.session.completed (subscription mode),
-/// customer.subscription.updated/deleted, invoice.payment_failed. Booking/payment-intent paths
+/// customer.subscription.updated/deleted, and (as of the final-review fix wave, Important 3)
+/// invoice.payment_failed via <see cref="MarkSubscriptionPastDueAsync" />. Booking/payment-intent paths
 /// are Domain 9b, out of scope here. Idempotency: event row written LAST in the same transaction,
 /// exactly matching legacy's DB-based dedup (see stripe.ts:344-390). Shadow tables have no RLS
 /// policies (.NET-internal, not tenant-scoped legacy tables), so writes run under
@@ -63,6 +64,23 @@ public sealed class BillingShadowRepository(IFormMapsDatabaseSessionFactory data
             AddParameter(update, "nextBillingDate", (object?)record.NextBillingDate?.UtcDateTime ?? DBNull.Value);
             AddParameter(update, "cancelAtPeriodEnd", record.CancelAtPeriodEnd);
             AddParameter(update, "isActive", record.IsActive);
+            AddParameter(update, "stripeSubscriptionId", stripeSubscriptionId);
+            await update.ExecuteNonQueryAsync(cancellationToken);
+        }, cancellationToken);
+    }
+
+    /// <inheritdoc cref="IBillingShadowRepository.MarkSubscriptionPastDueAsync" />
+    public async Task<bool> MarkSubscriptionPastDueAsync(
+        string eventId, string eventType, string stripeSubscriptionId, CancellationToken cancellationToken = default)
+    {
+        return await RunTransactionAsync(eventId, eventType, async session =>
+        {
+            // Exactly legacy's `data: { status: "past_due" }` — no other column is touched, because the
+            // invoice event carries no subscription object to derive one from.
+            await using var update = Command(session, """
+                UPDATE "shadow_user_subscriptions" SET "status" = 'past_due', "updatedAt" = now()
+                WHERE "stripeSubscriptionId" = @stripeSubscriptionId
+                """);
             AddParameter(update, "stripeSubscriptionId", stripeSubscriptionId);
             await update.ExecuteNonQueryAsync(cancellationToken);
         }, cancellationToken);

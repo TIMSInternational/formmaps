@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FormMaps.Application.Billing;
 using Stripe;
 
@@ -16,6 +17,10 @@ namespace FormMaps.Api.Endpoints;
 /// status/current_period_end/trial_end via IStripeGateway.GetSubscriptionAsync, replacing the Task 4
 /// temporary fallback that constructed a StripeSubscriptionLite from the checkout event's own embedded
 /// fields (subscription id, hardcoded "active" status, no period-end data).
+///
+/// Handled event types: checkout.session.completed, customer.subscription.updated,
+/// customer.subscription.deleted, invoice.payment_failed. Anything else is acknowledged with 200 and
+/// ignored (Stripe retries non-2xx forever, so silence must be a 200, not a 4xx).
 /// </summary>
 public static class BillingWebhookEndpoints
 {
@@ -81,8 +86,58 @@ public static class BillingWebhookEndpoints
                 }
                 break;
             }
+            case "invoice.payment_failed":
+            {
+                // Final-review fix wave (Important 3). BillingShadowRepository's class summary claimed this
+                // event was ported, but no case existed for it. Legacy stripeService.ts sets exactly one
+                // column on the matching subscription: status = "past_due".
+                var subscriptionId = ResolveInvoiceSubscriptionId(stripeEvent.Data.Object as Invoice);
+                if (!string.IsNullOrEmpty(subscriptionId))
+                {
+                    await repository.MarkSubscriptionPastDueAsync(stripeEvent.Id, stripeEvent.Type, subscriptionId, cancellationToken);
+                }
+                break;
+            }
         }
 
         return Results.Ok(new { received = true });
+    }
+
+    /// <summary>
+    /// Where the subscription id lives on an invoice depends on the API version the event was serialised
+    /// with, and a webhook endpoint receives whatever version the Stripe ACCOUNT is pinned to — not
+    /// necessarily the one Stripe.net 52.2.0 compiles against.
+    /// </summary>
+    /// <remarks>
+    /// Stripe.net 52.2.0's <see cref="Invoice" /> has no top-level SubscriptionId property at all
+    /// (confirmed by reflection against the installed package): the current API shape nests it at
+    /// <c>parent.subscription_details.subscription</c>, surfaced as
+    /// <c>Invoice.Parent.SubscriptionDetails.SubscriptionId</c>. Older API versions — the shape legacy
+    /// stripeService.ts reads, as <c>invoice.subscription</c> — put it at the invoice root, where the
+    /// current SDK simply does not map it. Both were verified against the real SDK; the raw-JSON fallback
+    /// is what keeps a legitimately older-versioned account's payment_failed events from silently
+    /// no-oping.
+    /// </remarks>
+    private static string? ResolveInvoiceSubscriptionId(Invoice? invoice)
+    {
+        if (invoice is null)
+        {
+            return null;
+        }
+
+        var fromParent = invoice.Parent?.SubscriptionDetails?.SubscriptionId;
+        if (!string.IsNullOrEmpty(fromParent))
+        {
+            return fromParent;
+        }
+
+        if (invoice.RawJsonElement is { ValueKind: JsonValueKind.Object } raw &&
+            raw.TryGetProperty("subscription", out var legacy) &&
+            legacy.ValueKind == JsonValueKind.String)
+        {
+            return legacy.GetString();
+        }
+
+        return null;
     }
 }

@@ -47,6 +47,39 @@ public sealed class FakeVerifier : IStripeWebhookVerifier
           }}
         }
         """;
+
+    /// <summary>
+    /// invoice.payment_failed in the CURRENT Stripe API shape, where the subscription id is nested at
+    /// parent.subscription_details.subscription (Stripe.net 52.2.0's
+    /// Invoice.Parent.SubscriptionDetails.SubscriptionId). Added for the final-review fix wave (Important 3).
+    /// </summary>
+    public static string InvoicePaymentFailedEventJson(string eventId, string stripeSubscriptionId) => $$$"""
+        {
+          "id": "{{{eventId}}}",
+          "type": "invoice.payment_failed",
+          "data": { "object": {
+            "id": "in_{{{eventId}}}", "object": "invoice",
+            "parent": { "type": "subscription_details",
+                        "subscription_details": { "subscription": "{{{stripeSubscriptionId}}}" } }
+          }}
+        }
+        """;
+
+    /// <summary>
+    /// The same event as an OLDER account-pinned API version serialises it: subscription id at the invoice
+    /// root, which is the shape legacy stripeService.ts reads and which Stripe.net 52.2.0 does not map onto
+    /// any Invoice property.
+    /// </summary>
+    public static string LegacyShapeInvoicePaymentFailedEventJson(string eventId, string stripeSubscriptionId) => $$$"""
+        {
+          "id": "{{{eventId}}}",
+          "type": "invoice.payment_failed",
+          "data": { "object": {
+            "id": "in_{{{eventId}}}", "object": "invoice",
+            "subscription": "{{{stripeSubscriptionId}}}"
+          }}
+        }
+        """;
 }
 
 public sealed class RejectingVerifier : IStripeWebhookVerifier
