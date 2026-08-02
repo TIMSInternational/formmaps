@@ -36,6 +36,15 @@ jobs:
 
   build-test:
     runs-on: ubuntu-latest
+    # formmaps#36. The Test step runs the WHOLE solution including
+    # FormMaps.IntegrationTests (Testcontainers). The last fully successful run
+    # took 50m44s on 2026-07-31; Domains 9a and 10 have since added 170
+    # integration tests, and runs now exceed an hour without completing.
+    # Without this, GitHub's 6-hour default applies and a stuck run occupies a
+    # runner for the rest of the afternoon before reporting anything useful.
+    # This does not fix the underlying runtime problem -- it makes it fail with
+    # a signal instead of silently. Lower it once #36 lands a real budget.
+    timeout-minutes: 75
 
     steps:
       - name: Checkout
