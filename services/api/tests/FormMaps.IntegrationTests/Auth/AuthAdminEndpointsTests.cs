@@ -644,8 +644,8 @@ public class AuthAdminEndpointsTests
         public Task<ResetTokenRow?> FindResetTokenAsync(string sha256Hex, CancellationToken cancellationToken = default) =>
             Task.FromResult<ResetTokenRow?>(null);
 
-        public Task ApplyPasswordResetAsync(string resetTokenId, string userId, string newHash, string clientIp, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+        public Task<bool> ApplyPasswordResetAsync(string resetTokenId, string userId, string newHash, string clientIp, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
     }
 
     private sealed class FakeAuthAdminRepository : IAuthAdminRepository

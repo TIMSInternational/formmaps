@@ -215,6 +215,11 @@ public interface IAuthRepository
     /// that already happened. A partial failure must never leave the password changed while an old
     /// session stays valid -- see AuthRepository.ApplyPasswordResetAsync's doc comment for exactly
     /// how that guarantee is implemented.
+    ///
+    /// Returns <c>false</c> when the token was already consumed between the caller's
+    /// <see cref="FindResetTokenAsync"/> check and this call -- single-use enforcement, added by the
+    /// final whole-branch review. The caller must map <c>false</c> to the same "Invalid or expired
+    /// reset token" 400 it already returns when the pre-check fails, NOT to a 500.
     /// </summary>
-    Task ApplyPasswordResetAsync(string resetTokenId, string userId, string newHash, string clientIp, CancellationToken cancellationToken = default);
+    Task<bool> ApplyPasswordResetAsync(string resetTokenId, string userId, string newHash, string clientIp, CancellationToken cancellationToken = default);
 }

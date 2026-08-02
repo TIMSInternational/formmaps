@@ -744,7 +744,7 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
     /// version of this method omitted the bind on all three statements, which would 500 with a
     /// not-null violation on every real call -- caught and fixed here before implementing.
     /// </summary>
-    public async Task ApplyPasswordResetAsync(string resetTokenId, string userId, string newHash, string clientIp, CancellationToken cancellationToken = default)
+    public async Task<bool> ApplyPasswordResetAsync(string resetTokenId, string userId, string newHash, string clientIp, CancellationToken cancellationToken = default)
     {
         var context = RequestContext.System();
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
@@ -759,12 +759,33 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
             await updatePassword.ExecuteNonQueryAsync(cancellationToken);
         }
 
+        // Single-use enforcement (final whole-branch review finding, Important). Guarded on
+        // "usedAt" IS NULL and checked for 0 rows, mirroring RevokeTokenRowForRotationAsync's
+        // conditional-UPDATE idiom for the structurally identical single-use refresh-token
+        // transition. Task 12's handler pre-checks UsedAt via FindResetTokenAsync, but that read
+        // runs in a SEPARATE read-only transaction with no row lock, so two concurrent requests
+        // presenting the SAME valid token could both pass the pre-check and both apply a reset --
+        // defeating single-use exactly the way the un-guarded refresh rotation would have. Task 10
+        // flagged this ("no FOR UPDATE on reset-token read, out of this task's scope") and deferred
+        // it to Task 12, which did not pick it up; it fell through the gap between the two tasks.
+        //
+        // The guarded UPDATE closes the race without needing FOR UPDATE on the read: the loser
+        // blocks on this row's write lock, then (READ COMMITTED) re-evaluates the WHERE against the
+        // winner's committed row, sees "usedAt" set, and matches 0 rows. Unlike the rotation case,
+        // 0 rows here is a REAL concurrent-use outcome rather than an invariant violation, so this
+        // returns false for the caller to map onto the normal "Invalid or expired reset token" 400
+        // instead of throwing. Returning without CommitAsync rolls back the password update above --
+        // see this method's remark on dispose-without-commit.
         await using (var consumeToken = Command(session, """
-            UPDATE "password_reset_tokens" SET "usedAt" = now(), "updatedAt" = now() WHERE "id" = @id
+            UPDATE "password_reset_tokens" SET "usedAt" = now(), "updatedAt" = now()
+            WHERE "id" = @id AND "usedAt" IS NULL
             """))
         {
             AddParameter(consumeToken, "id", resetTokenId);
-            await consumeToken.ExecuteNonQueryAsync(cancellationToken);
+            if (await consumeToken.ExecuteNonQueryAsync(cancellationToken) == 0)
+            {
+                return false;
+            }
         }
 
         await using (var revokeSessions = Command(session, """
@@ -778,6 +799,7 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
         }
 
         await session.CommitAsync(cancellationToken);
+        return true;
     }
 
     private static DbCommand Command(FormMapsDatabaseSession session, string sql)

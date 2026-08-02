@@ -655,7 +655,13 @@ public static class AuthEndpoints
         // as the revokedByIp marker for the sessions this specific flow revokes (authService.ts:421:
         // `revokedByIp: "password-reset"`), NOT the requester's real client IP -- reproduced exactly,
         // even though AuthCookieWriter.GetClientIp(httpContext.Request) is available here.
-        await repository.ApplyPasswordResetAsync(resetToken.Id, resetToken.UserId, hashed, "password-reset", cancellationToken);
+        // Final whole-branch review (Important): the FindResetTokenAsync check above runs in its own
+        // read-only transaction, so it cannot by itself enforce single-use -- two concurrent requests
+        // carrying the same valid token both pass it. ApplyPasswordResetAsync now consumes the token
+        // with a guarded UPDATE and returns false if it lost that race; collapse that onto the exact
+        // same message legacy uses for every other invalid-token cause.
+        var applied = await repository.ApplyPasswordResetAsync(resetToken.Id, resetToken.UserId, hashed, "password-reset", cancellationToken);
+        if (!applied) return BadRequest("Invalid or expired reset token");
 
         return Results.Ok(new { success = true, message = "Password reset successfully" });
     }

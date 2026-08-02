@@ -873,6 +873,32 @@ public class AuthEndpointsTests
         Assert.Equal("Password reset successfully", doc.RootElement.GetProperty("message").GetString());
     }
 
+    /// <summary>
+    /// Final whole-branch review regression (Important). The token passes the FindResetTokenAsync
+    /// pre-check but is consumed by a concurrent request before the guarded consume UPDATE runs, so
+    /// ApplyPasswordResetAsync returns false. That must surface as the same collapsed 400 legacy
+    /// returns for every other invalid-token cause -- never a 500, and never a success response for
+    /// a reset that rolled back.
+    /// </summary>
+    [Fact]
+    public async Task ResetPassword_losing_the_single_use_race_is_400_not_500()
+    {
+        var repo = new FakeAuthRepository
+        {
+            ResetToken = new ResetTokenRow("rt1", "u1", DateTimeOffset.UtcNow.AddHours(1), null, true),
+            ApplyPasswordResetResult = false,
+        };
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsync("/authapi/reset-password", JsonBody(new { token = "good-token", password = "NewPass1$" }));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.True(repo.ApplyPasswordResetWasCalled);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Invalid or expired reset token", doc.RootElement.GetProperty("message").GetString());
+    }
+
     [Fact]
     public async Task ResetPassword_weak_password_is_400_before_any_token_lookup()
     {
@@ -1075,13 +1101,19 @@ public class AuthEndpointsTests
             return Task.FromResult(ResetToken);
         }
 
-        public Task ApplyPasswordResetAsync(string resetTokenId, string userId, string newHash, string clientIp, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Set false to simulate losing the single-use race (the guarded consume UPDATE matching
+        /// 0 rows), so the handler's "Invalid or expired reset token" mapping can be asserted.
+        /// </summary>
+        public bool ApplyPasswordResetResult { get; set; } = true;
+
+        public Task<bool> ApplyPasswordResetAsync(string resetTokenId, string userId, string newHash, string clientIp, CancellationToken cancellationToken = default)
         {
             ApplyPasswordResetWasCalled = true;
             LastApplyResetTokenId = resetTokenId;
             LastApplyUserId = userId;
             LastApplyClientIp = clientIp;
-            return Task.CompletedTask;
+            return Task.FromResult(ApplyPasswordResetResult);
         }
     }
 }

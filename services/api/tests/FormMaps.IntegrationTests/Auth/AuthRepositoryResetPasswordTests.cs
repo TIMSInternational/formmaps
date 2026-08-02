@@ -55,6 +55,56 @@ public class AuthRepositoryResetPasswordTests(AuthDatabaseFixture fixture)
         Assert.Equal(0, await fixture.CountActiveRefreshTokensAsync(userId));
     }
 
+    /// <summary>
+    /// Final whole-branch review regression (Important). Two simultaneous resets presenting the
+    /// SAME still-unused token must not both apply. Each call opens its own connection/transaction
+    /// via the session factory, so this genuinely races at the DB level. Before the guarded
+    /// consume UPDATE (WHERE "usedAt" IS NULL + 0-row check), both callers' unconditional
+    /// `SET "usedAt" = now() WHERE "id" = @id` would succeed and both would commit a password
+    /// change -- defeating single-use exactly the way an unguarded refresh rotation would (compare
+    /// AuthRepositoryRefreshTests.RotateRefreshToken_ConcurrentRotationOfSameToken_ExactlyOneWins).
+    /// </summary>
+    [Fact]
+    public async Task ApplyPasswordReset_ConcurrentUseOfSameToken_ExactlyOneWins()
+    {
+        await fixture.ResetAsync();
+        var userId = await fixture.SeedUserAsync(email: "reset-race@example.com", passwordHash: "original-hash", isActive: true);
+        var repo = CreateRepository();
+        var tokenId = await fixture.SeedPasswordResetTokenAsync(userId, "digest-race", DateTimeOffset.UtcNow.AddHours(1));
+
+        var results = await Task.WhenAll(
+            repo.ApplyPasswordResetAsync(tokenId, userId, "hash-from-a", "1.1.1.1", CancellationToken.None),
+            repo.ApplyPasswordResetAsync(tokenId, userId, "hash-from-b", "2.2.2.2", CancellationToken.None));
+
+        Assert.Equal(1, results.Count(r => r));
+        Assert.Equal(1, results.Count(r => !r));
+
+        // The loser rolled back entirely -- the stored hash is one of the two candidates, never
+        // left as the original, and the token is consumed exactly once.
+        var finalHash = await fixture.GetUserPasswordHashAsync(userId);
+        Assert.Contains(finalHash, new[] { "hash-from-a", "hash-from-b" });
+        Assert.NotNull((await repo.FindResetTokenAsync("digest-race", CancellationToken.None))!.UsedAt);
+    }
+
+    /// <summary>
+    /// Final whole-branch review regression (Important). Re-presenting an already-consumed token
+    /// directly to the repository (bypassing the endpoint's FindResetTokenAsync pre-check) must
+    /// return false and leave the password untouched, rather than silently re-applying.
+    /// </summary>
+    [Fact]
+    public async Task ApplyPasswordReset_AlreadyConsumedToken_ReturnsFalse_AndLeavesPasswordUnchanged()
+    {
+        await fixture.ResetAsync();
+        var userId = await fixture.SeedUserAsync(email: "reset-replay@example.com", passwordHash: "original-hash", isActive: true);
+        var repo = CreateRepository();
+        var tokenId = await fixture.SeedPasswordResetTokenAsync(userId, "digest-replay", DateTimeOffset.UtcNow.AddHours(1));
+
+        Assert.True(await repo.ApplyPasswordResetAsync(tokenId, userId, "first-hash", "1.1.1.1", CancellationToken.None));
+
+        Assert.False(await repo.ApplyPasswordResetAsync(tokenId, userId, "replayed-hash", "1.1.1.1", CancellationToken.None));
+        Assert.Equal("first-hash", await fixture.GetUserPasswordHashAsync(userId));
+    }
+
     [Fact]
     public async Task InvalidatePriorResetTokens_ThenCreateNew_OnlyThePriorTokenIsMarkedUsed()
     {
