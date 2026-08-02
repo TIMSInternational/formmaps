@@ -1,6 +1,6 @@
 -- Minimal stub schema for verifying infra/aws/sql/dotnet-service-role.sql's GRANTs. This is
 -- privilege-boundary testing, not data-shape testing, so every table is just "id text primary
--- key" -- what matters is that the exact 82 table names here match the exact 82 table names the
+-- key" -- what matters is that the exact 86 table names here match the exact 86 table names the
 -- role script grants against (kept in sync by hand; see DbRoleGrantsTests for the assertion that
 -- catches drift between the two lists).
 CREATE TABLE "academic_terms" (id text PRIMARY KEY);
@@ -38,9 +38,11 @@ CREATE TABLE "isams_sync_jobs" (id text PRIMARY KEY);
 CREATE TABLE "lia_assessment_sessions" (id text PRIMARY KEY);
 CREATE TABLE "lia_questions" (id text PRIMARY KEY);
 CREATE TABLE "lia_responses" (id text PRIMARY KEY);
+CREATE TABLE "login_attempts" (id text PRIMARY KEY);
 CREATE TABLE "messages" (id text PRIMARY KEY);
 CREATE TABLE "notification_outbox" (id text PRIMARY KEY);
 CREATE TABLE "notifications" (id text PRIMARY KEY);
+CREATE TABLE "password_reset_tokens" (id text PRIMARY KEY);
 CREATE TABLE "pca_evaluations" (id text PRIMARY KEY);
 CREATE TABLE "pca_exam_answers" (id text PRIMARY KEY);
 CREATE TABLE "pca_exam_sessions" (id text PRIMARY KEY);
@@ -50,8 +52,10 @@ CREATE TABLE "pca_results" (id text PRIMARY KEY);
 CREATE TABLE "personality_assessment_sessions" (id text PRIMARY KEY);
 CREATE TABLE "personality_responses" (id text PRIMARY KEY);
 CREATE TABLE "questions_360" (id text PRIMARY KEY);
+CREATE TABLE "refresh_tokens" (id text PRIMARY KEY);
 CREATE TABLE "resumes" (id text PRIMARY KEY);
 CREATE TABLE "reviews" (id text PRIMARY KEY);
+CREATE TABLE "roles" (id text PRIMARY KEY);
 CREATE TABLE "school_assessment_settings" (id text PRIMARY KEY);
 CREATE TABLE "school_course_import_errors" (id text PRIMARY KEY);
 CREATE TABLE "school_course_import_jobs" (id text PRIMARY KEY);
