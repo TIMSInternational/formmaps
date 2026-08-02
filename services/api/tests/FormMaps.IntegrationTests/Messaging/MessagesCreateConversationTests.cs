@@ -17,6 +17,34 @@ public sealed class MessagesCreateConversationTests : IClassFixture<MessagingDat
         new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
         new NoopRealtimeNotifier());
 
+    /// <summary>
+    /// formmaps#40. Pins parity with legacy, which looks the recipient up with a bare
+    /// `prisma.user.findUnique({ where: { id } })` and does NOT filter on isActive
+    /// (routes/messages.ts:206-207).
+    ///
+    /// The port had added `AND "isActive" = true`, so this case returned 400 "Recipient not
+    /// found" on .NET while succeeding on Node -- an undocumented divergence that would have
+    /// surfaced the moment FORMMAPS_ROUTE_MESSAGES_TO_DOTNET flipped. Tightening this may well be
+    /// correct, but it belongs in a separate change applied to BOTH backends; a flag flip must be
+    /// behaviour-neutral.
+    ///
+    /// If someone later decides deliberately to reject inactive recipients, this test SHOULD fail
+    /// and should be updated alongside legacy -- that is the point of pinning it.
+    /// </summary>
+    [Fact]
+    public async Task Conversation_with_a_deactivated_recipient_succeeds_matching_legacy()
+    {
+        var schoolId = Guid.NewGuid().ToString();
+        var student = await _fixture.SeedUserAsync(schoolId, "student");
+        var counselor = await _fixture.SeedUserAsync(schoolId, "counselor", isActive: false);
+        await _fixture.SeedAssignmentAsync(counselor, student);
+
+        var result = await Repo().CreateConversationAsync(_fixture.Ctx(student, schoolId), student, "student", schoolId, counselor);
+
+        Assert.Equal(CreateConversationStatus.Created, result.Status);
+        Assert.Equal(counselor, result.Data!.OtherParticipantId);
+    }
+
     [Fact]
     public async Task Student_can_message_their_assigned_counselor()
     {

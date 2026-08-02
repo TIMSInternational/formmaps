@@ -490,10 +490,31 @@ public sealed class MessagesRepository(
         FormMapsDatabaseSession session, string conversationId, CancellationToken cancellationToken) =>
         FindConversationRowAsync(session, conversationId, participantAId: null, participantBId: null, cancellationToken);
 
+    /// <summary>
+    /// Deliberately NOT filtered on "isActive" -- matches legacy exactly
+    /// (routes/messages.ts:206-207, a bare `prisma.user.findUnique({ where: { id } })`).
+    ///
+    /// formmaps#40. This previously carried `AND "isActive" = true`, which made
+    /// POST /conversations against a deactivated user return 400 "Recipient not found" on .NET
+    /// while succeeding on Node. That is arguably the better behaviour, and it is consistent with
+    /// /contacts already excluding inactive users -- but it was an undocumented divergence
+    /// introduced by the port, not a decision anyone made.
+    ///
+    /// Resolved toward legacy on migration grounds rather than product grounds: the cardinal rule
+    /// for every domain in this migration is that flipping a flag is behaviour-neutral, so that
+    /// when something breaks you know whether it was the port or a change. The risk is asymmetric
+    /// too -- matching legacy means a message can be addressed to a deactivated account that
+    /// cannot read it (harmless); keeping the tightening means a flow that worked yesterday 400s
+    /// the moment FORMMAPS_ROUTE_MESSAGES_TO_DOTNET flips, which is a cutover regression.
+    ///
+    /// Tightening this is a fine idea, but it belongs in a separate change applied to BOTH
+    /// backends, not smuggled in as a side effect of the port. Blocking is unaffected: the caller
+    /// still runs IsBlockedBetweenAsync, and RLS still applies.
+    /// </summary>
     private static async Task<(string? SchoolId, string? RoleName)> LookupUserAsync(
         FormMapsDatabaseSession session, string userId, CancellationToken cancellationToken)
     {
-        await using var command = Command(session, """SELECT "schoolId", "roleName" FROM "users" WHERE "id" = @id AND "isActive" = true""");
+        await using var command = Command(session, """SELECT "schoolId", "roleName" FROM "users" WHERE "id" = @id""");
         AddParameter(command, "id", userId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         if (!await reader.ReadAsync(cancellationToken)) return (null, null);

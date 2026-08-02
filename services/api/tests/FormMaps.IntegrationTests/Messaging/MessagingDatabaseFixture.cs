@@ -71,17 +71,22 @@ public sealed class MessagingDatabaseFixture : IAsyncLifetime
         await cmd.ExecuteNonQueryAsync();
     }
 
-    public async Task<string> SeedUserAsync(string? schoolId, string role)
+    /// <summary>
+    /// <paramref name="isActive"/> defaults to true so every existing caller is unchanged.
+    /// Pass false to cover the deactivated-recipient contract (formmaps#40).
+    /// </summary>
+    public async Task<string> SeedUserAsync(string? schoolId, string role, bool isActive = true)
     {
         var id = Guid.NewGuid().ToString();
         await using var conn = new NpgsqlConnection(ConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
-            """INSERT INTO "users" ("id","name","email","roleId","roleName","schoolId","isActive") VALUES (@id,@id,@id || '@test.dev','r',@role,@schoolId,true)""",
+            """INSERT INTO "users" ("id","name","email","roleId","roleName","schoolId","isActive") VALUES (@id,@id,@id || '@test.dev','r',@role,@schoolId,@isActive)""",
             conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("role", role);
         cmd.Parameters.AddWithValue("schoolId", (object?)schoolId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("isActive", isActive);
         await cmd.ExecuteNonQueryAsync();
         return id;
     }
