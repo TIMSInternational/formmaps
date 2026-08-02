@@ -134,7 +134,9 @@ GRANT SELECT ON TABLE
     public."user_blocks",
     public."user_career_profiles",
     public."user_preferences",
-    public."user_settings",
+    -- NOTE: "user_settings" moved to the SELECT/INSERT/UPDATE tier below (Domain 10) --
+    -- AuthAdminRepository.SignupAsync does INSERT INTO "user_settings". Read-only here would
+    -- have failed every signup.
     public."user_subscriptions",
     public."vocational_dimensions",
     public."vocational_instruments",
@@ -178,12 +180,21 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     public."messages",
     public."notification_outbox",
     public."notifications",
+    -- ---------------------------------------------------------------------
+    -- Domain 10 (Auth): session issuance. AuthRepository/AuthAdminRepository
+    -- read and write these on every login, refresh, logout, password reset and
+    -- signup. "login_attempts" is in the full-CRUD tier below instead -- it is
+    -- the only auth table the service DELETEs from.
+    -- ---------------------------------------------------------------------
+    public."password_reset_tokens",
     public."pca_exam_answers",
     public."pca_exam_sessions",
     public."personality_assessment_sessions",
     public."personality_responses",
     public."questions_360",
+    public."refresh_tokens",   -- Domain 10: created on login, rotated on refresh, revoked on logout
     public."resumes",
+    public."roles",            -- Domain 10: EnsureSchoolAdminRoleAsync / EnsureRoleAsync find-or-create
     public."school_assessment_settings",
     public."school_course_import_errors",
     public."school_course_import_jobs",
@@ -199,6 +210,7 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     public."student_portfolio_items",
     public."student_test_scores",
     public."university_favorites",
+    public."user_settings",    -- Domain 10: INSERT by AuthAdminRepository.SignupAsync (moved from the read-only tier)
     public."users",
     public."vocational_integrated_results",
     public."vocational_responses",
@@ -208,7 +220,8 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
 -- ---------------------------------------------------------------------------
 -- 5. Full-CRUD tables -- the service also deletes rows here (verified:
 --    DELETE FROM hits in services/api/src, e.g. calendar/holiday and
---    academic-year cleanup, course-plan removal, data-mapping deletion).
+--    academic-year cleanup, course-plan removal, data-mapping deletion, and
+--    Domain 10's login-attempt counter reset).
 -- ---------------------------------------------------------------------------
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
     public."academic_terms",
@@ -217,6 +230,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
     public."counselor_student_assignments",
     public."data_mappings",
     public."holidays",
+    -- Domain 10: AuthRepository.ClearLoginAttemptsAsync does
+    -- DELETE FROM "login_attempts" WHERE "email" = @email on every successful
+    -- login, so this needs DELETE, not just the upsert/lock UPDATE.
+    public."login_attempts",
     public."student_course_plans"
     TO formmaps_dotnet_svc;
 
