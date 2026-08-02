@@ -1316,6 +1316,26 @@ const nextConfig: NextConfig = {
         // /authapi/:path* fallback below so a flipped route reaches .NET (afterFiles rewrites
         // match in array order, first match wins -- verified against this codebase's Next.js
         // v16.0.3 resolveRewrites/route-resolution source, not just assumed).
+        // Coach-management carve-out (final-review finding, Critical). auth-admin.ts mounts 10
+        // routes under /authapi, but Domain 10 deliberately ported only 3 of them (POST /signup,
+        // GET /unsubscribe, PUT /admin/set-password) -- AuthAdminEndpoints' own doc comment says
+        // signup-coach/signup-coach-bulk/coaches/coach/:id/invite-coach are "explicitly OUT of
+        // scope here -- a future Coaching domain's problem". The flag below rewrites the WHOLE
+        // /authapi prefix though, so without these carve-outs flipping it would send those 7
+        // never-ported paths to .NET and 404 every one of them. The live frontend really does call
+        // them (apps/web/src/services/coachService.ts): coaches, coaches/:id, invite-coach,
+        // invite-coach-bulk, signup-coach-bulk. These entries are deliberately UNCONDITIONAL --
+        // they pin coach management to Node regardless of flag state, and must stay until a
+        // Coaching domain ports them. invite-coach-bulk has no legacy route either; it is listed
+        // so its (pre-existing) 404 keeps coming from Node rather than changing origin on flip.
+        { source: "/authapi/signup-coach", destination: `${target}/authapi/signup-coach` },
+        { source: "/authapi/signup-coach-bulk", destination: `${target}/authapi/signup-coach-bulk` },
+        { source: "/authapi/invite-coach", destination: `${target}/authapi/invite-coach` },
+        { source: "/authapi/invite-coach-bulk", destination: `${target}/authapi/invite-coach-bulk` },
+        { source: "/authapi/coaches", destination: `${target}/authapi/coaches` },
+        { source: "/authapi/coaches/:coachId/deactivate", destination: `${target}/authapi/coaches/:coachId/deactivate` },
+        { source: "/authapi/coaches/:coachId", destination: `${target}/authapi/coaches/:coachId` },
+        { source: "/authapi/coach/:coachId", destination: `${target}/authapi/coach/:coachId` },
         ...(shouldRouteAuthToDotnet()
           ? [{ source: "/authapi/:path*", destination: `${dotnetApiBaseUrl}/authapi/:path*` }]
           : []),
