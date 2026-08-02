@@ -49,9 +49,32 @@ public sealed class RealtimeTicketFactory(IOptions<LegacyJwtOptions> options)
     private const string JwtSecretEnvironmentVariable = "JWT_SECRET";
     private readonly LegacyJwtOptions jwtOptions = options.Value;
 
+    /// <summary>
+    /// Resolves the signing secret through the SAME precedence the validating side uses --
+    /// <see cref="LegacyJwtRequestContextFactory.ResolveSecret"/>: <c>LegacyJwt:SecretOverride</c>
+    /// first, then the <c>JWT_SECRET</c> environment variable.
+    ///
+    /// formmaps#41. This method previously read the environment variable ONLY, ignoring
+    /// SecretOverride. Configuring an override would therefore have signed tickets with one key
+    /// and validated them with another, and every realtime ticket would fail validation --
+    /// meaning EVERY SignalR hub connection silently stops working. The symptom is nasty: REST is
+    /// unaffected and the frontend's 15s poll fallback keeps messages flowing, so it presents as
+    /// "messaging feels laggy" rather than "the hub is down", and would be attributed to almost
+    /// anything else.
+    ///
+    /// Keeping the two resolutions textually identical is the point. If one gains a source, the
+    /// other must too.
+    /// </summary>
+    private string? ResolveSecret()
+    {
+        return string.IsNullOrWhiteSpace(jwtOptions.SecretOverride)
+            ? Environment.GetEnvironmentVariable(JwtSecretEnvironmentVariable)
+            : jwtOptions.SecretOverride;
+    }
+
     public string? CreateTicket(RequestActor actor)
     {
-        var secret = Environment.GetEnvironmentVariable(JwtSecretEnvironmentVariable);
+        var secret = ResolveSecret();
         if (string.IsNullOrWhiteSpace(secret)) return null;
 
         var handler = new JwtSecurityTokenHandler();

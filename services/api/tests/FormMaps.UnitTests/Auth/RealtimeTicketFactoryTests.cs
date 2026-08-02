@@ -2,11 +2,102 @@ using System.IdentityModel.Tokens.Jwt;
 using FormMaps.Api.Auth;
 using FormMaps.Application.Auth;
 using Microsoft.Extensions.Options;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FormMaps.UnitTests.Auth;
 
 public sealed class RealtimeTicketFactoryTests
 {
+    /// <summary>
+    /// formmaps#41 regression. The ticket factory must resolve its signing secret through the SAME
+    /// precedence as the validating side (LegacyJwtRequestContextFactory.ResolveSecret):
+    /// LegacyJwt:SecretOverride first, then JWT_SECRET.
+    ///
+    /// Before the fix this read the environment variable only. With an override configured, tickets
+    /// were signed with the env secret and validated against the override, so EVERY hub connection
+    /// failed -- while REST kept working and the 15s poll fallback masked it as "messaging feels
+    /// laggy" rather than "the hub is down".
+    ///
+    /// Asserts on the actual signature, not merely that a token came back: the ticket must verify
+    /// under the override key and must NOT verify under the environment key.
+    /// </summary>
+    [Fact]
+    public void CreateTicket_signs_with_SecretOverride_when_configured_not_the_environment_variable()
+    {
+        const string envSecret = "env-secret-that-is-at-least-32-bytes-long!!";
+        const string overrideSecret = "override-secret-at-least-32-bytes-long!!!!";
+        var previous = Environment.GetEnvironmentVariable("JWT_SECRET");
+        try
+        {
+            Environment.SetEnvironmentVariable("JWT_SECRET", envSecret);
+            var factory = new RealtimeTicketFactory(Options.Create(new LegacyJwtOptions
+            {
+                Issuer = "formmaps-api",
+                Audience = "formmaps-frontend",
+                ClockSkew = TimeSpan.Zero,
+                SecretOverride = overrideSecret,
+            }));
+
+            var ticket = factory.CreateTicket(new RequestActor("user-123", "student", "user@test.dev", "Test User"));
+            Assert.NotNull(ticket);
+
+            Assert.True(VerifiesUnder(ticket!, overrideSecret), "ticket should verify under SecretOverride");
+            Assert.False(VerifiesUnder(ticket!, envSecret), "ticket must NOT verify under the env secret when an override is set");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("JWT_SECRET", previous);
+        }
+    }
+
+    /// <summary>Falls back to JWT_SECRET when no override is configured -- the common path.</summary>
+    [Fact]
+    public void CreateTicket_falls_back_to_the_environment_variable_when_no_override_is_set()
+    {
+        const string envSecret = "env-secret-that-is-at-least-32-bytes-long!!";
+        var previous = Environment.GetEnvironmentVariable("JWT_SECRET");
+        try
+        {
+            Environment.SetEnvironmentVariable("JWT_SECRET", envSecret);
+            var factory = new RealtimeTicketFactory(Options.Create(new LegacyJwtOptions
+            {
+                Issuer = "formmaps-api",
+                Audience = "formmaps-frontend",
+                ClockSkew = TimeSpan.Zero,
+                SecretOverride = null,
+            }));
+
+            var ticket = factory.CreateTicket(new RequestActor("user-123", "student", "user@test.dev", "Test User"));
+            Assert.NotNull(ticket);
+            Assert.True(VerifiesUnder(ticket!, envSecret), "ticket should verify under JWT_SECRET");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("JWT_SECRET", previous);
+        }
+    }
+
+    private static bool VerifiesUnder(string token, string secret)
+    {
+        try
+        {
+            new JwtSecurityTokenHandler().ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = false,
+            }, out _);
+            return true;
+        }
+        catch (SecurityTokenException)
+        {
+            return false;
+        }
+    }
+
     [Fact]
     public void CreateTicket_mints_a_short_lived_token_carrying_the_actors_identity()
     {
