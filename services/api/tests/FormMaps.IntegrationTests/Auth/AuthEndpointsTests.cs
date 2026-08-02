@@ -26,8 +26,15 @@ namespace FormMaps.IntegrationTests.Auth;
 /// wrote (AuthRepositoryLoginTests, AuthRepositoryRefreshTests, AuthRepositoryProfileTests,
 /// AuthRepositorySchoolAdminRegistrationTests, AuthRepositoryResetPasswordTests).
 /// </summary>
-public class AuthEndpointsTests
+[Collection(nameof(JwtSecretCollection))]
+public class AuthEndpointsTests : IDisposable
 {
+    // formmaps#37: restores whatever JWT_SECRET was before this class ran. Membership in
+    // JwtSecretCollection serializes these classes; this scope stops the value leaking
+    // between them (ApiSecurityUtilityTests asserts it is ABSENT).
+    private readonly JwtSecretScope jwtSecretScope = new(Secret);
+    public void Dispose() => jwtSecretScope.Dispose();
+
     private const string Secret = "formmaps-test-secret-that-is-at-least-32-bytes";
 
     // ---- Login ----

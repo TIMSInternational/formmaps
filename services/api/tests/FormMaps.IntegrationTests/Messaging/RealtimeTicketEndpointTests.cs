@@ -29,10 +29,18 @@ namespace FormMaps.IntegrationTests.Messaging;
 ///    all. This exercises the actual ASP.NET Core pipeline (middleware order, DI scoping into the hub's
 ///    OnConnectedAsync), not just the isolated ExtractToken unit added to LegacyJwtRequestContextFactoryTests.
 /// </summary>
-public class RealtimeTicketEndpointTests
+[Collection(nameof(JwtSecretCollection))]
+public class RealtimeTicketEndpointTests : IDisposable
 {
-    public RealtimeTicketEndpointTests() =>
-        Environment.SetEnvironmentVariable("JWT_SECRET", "formmaps-test-secret-that-is-at-least-32-bytes-long");
+    // formmaps#37: restores whatever JWT_SECRET was before this class ran. Membership in
+    // JwtSecretCollection serializes these classes; this scope stops the value leaking
+    // between them (ApiSecurityUtilityTests asserts it is ABSENT).
+    private const string Secret = "formmaps-test-secret-that-is-at-least-32-bytes-long";
+
+    // The scope replaces this class's previous bare constructor
+    // Environment.SetEnvironmentVariable call, which never restored the prior value.
+    private readonly JwtSecretScope jwtSecretScope = new(Secret);
+    public void Dispose() => jwtSecretScope.Dispose();
 
     [Fact]
     public async Task Anonymous_request_is_401()

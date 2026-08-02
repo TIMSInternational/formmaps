@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace FormMaps.IntegrationTests.Security;
 
+[Collection(nameof(JwtSecretCollection))]
 public class ApiSecurityUtilityTests
 {
     [Fact]

@@ -23,8 +23,15 @@ namespace FormMaps.IntegrationTests.Auth;
 ///   3. PasswordHasher.Verify is truly bcryptjs-interoperable in both directions.
 /// If any test here fails, that is a real regression in Tasks 1-14, not a spec for new work.
 /// </summary>
-public class CrossIssuerInteropTests
+[Collection(nameof(JwtSecretCollection))]
+public class CrossIssuerInteropTests : IDisposable
 {
+    // formmaps#37: restores whatever JWT_SECRET was before this class ran. Membership in
+    // JwtSecretCollection serializes these classes; this scope stops the value leaking
+    // between them (ApiSecurityUtilityTests asserts it is ABSENT).
+    private readonly JwtSecretScope jwtSecretScope = new(Secret);
+    public void Dispose() => jwtSecretScope.Dispose();
+
     private const string Secret = "formmaps-test-secret-that-is-at-least-32-bytes";
     private const string Issuer = "formmaps-api";
     private const string Audience = "formmaps-frontend";

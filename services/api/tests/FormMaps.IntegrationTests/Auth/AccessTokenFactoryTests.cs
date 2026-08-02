@@ -12,8 +12,15 @@ namespace FormMaps.IntegrationTests.Auth;
 // request hits. This is an interop test by construction, not by assertion: if the claim shapes
 // ever diverge, LegacyJwtRequestContextFactory.Create rejects the token exactly as it would reject
 // any other malformed token.
-public class AccessTokenFactoryTests
+[Collection(nameof(JwtSecretCollection))]
+public class AccessTokenFactoryTests : IDisposable
 {
+    // formmaps#37: restores whatever JWT_SECRET was before this class ran. Membership in
+    // JwtSecretCollection serializes these classes; this scope stops the value leaking
+    // between them (ApiSecurityUtilityTests asserts it is ABSENT).
+    private readonly JwtSecretScope jwtSecretScope = new(Secret);
+    public void Dispose() => jwtSecretScope.Dispose();
+
     private const string Secret = "formmaps-test-secret-that-is-at-least-32-bytes";
     private const string Issuer = "formmaps-api";
     private const string Audience = "formmaps-frontend";

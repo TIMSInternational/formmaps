@@ -25,8 +25,15 @@ namespace FormMaps.IntegrationTests.Messaging;
 /// that live in the endpoint/middleware layer rather than in MessagesRepository's SQL (which
 /// <see cref="MessagesAdversarialAccessTests"/> covers against a real database).
 /// </summary>
-public sealed class MessagesEndpointAdversarialTests
+[Collection(nameof(JwtSecretCollection))]
+public sealed class MessagesEndpointAdversarialTests : IDisposable
 {
+    // formmaps#37: restores whatever JWT_SECRET was before this class ran. Membership in
+    // JwtSecretCollection serializes these classes; this scope stops the value leaking
+    // between them (ApiSecurityUtilityTests asserts it is ABSENT).
+    private readonly JwtSecretScope jwtSecretScope = new(Secret);
+    public void Dispose() => jwtSecretScope.Dispose();
+
     private const string Secret = "formmaps-test-secret-that-is-at-least-32-bytes-long";
     private const string Issuer = "formmaps-api";
     private const string Audience = "formmaps-frontend";
