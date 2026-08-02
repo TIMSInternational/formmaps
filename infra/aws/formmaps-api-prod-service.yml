@@ -49,6 +49,27 @@ Parameters:
     NoEcho: true
     Description: >-
       Full ARN of the Secrets Manager secret containing DAILY_API_KEY (Domain 7a video calling).
+  StripeSecretKeyArn:
+    Type: String
+    NoEcho: true
+    Description: >-
+      Full ARN of the Secrets Manager secret containing STRIPE_SECRET_KEY
+      (Domain 9a billing). REQUIRED: StartupEnvironmentValidator throws in
+      Production when this is absent, so the service will not boot without it
+      (formmaps#73). Safe to reuse the legacy Node API's existing secret -- same
+      Stripe account, and .NET only reads. Today that is
+      arn:aws:secretsmanager:us-east-1:747814092517:secret:nexa/api/STRIPE_SECRET_KEY-5uebSE
+  StripeWebhookSecretArn:
+    Type: String
+    NoEcho: true
+    Description: >-
+      Full ARN of the Secrets Manager secret containing STRIPE_WEBHOOK_SECRET
+      (Domain 9a billing). REQUIRED: the service will not boot without it.
+      MUST NOT reuse the legacy Node API's webhook secret. Domain 9a's design is
+      a SECOND Stripe endpoint pointing at .NET, and Stripe issues a distinct
+      signing secret per endpoint -- reusing Node's makes .NET reject every event
+      as an invalid signature. Create the endpoint first (formmaps#43), then
+      store THAT endpoint's signing secret here.
   ProdWebOrigin:
     Type: String
     Default: https://app.formmaps.ai
@@ -136,6 +157,11 @@ Resources:
                   - !Ref JwtSecretArn
                   - !Ref DatabaseUrlSecretArn
                   - !Ref DailyApiKeySecretArn
+                  # This Resource list is an explicit allow-list. Adding a secret to
+                  # RuntimeEnvironmentSecrets WITHOUT adding it here makes App Runner
+                  # fail to fetch it and the deployment fail -- keep the two in sync.
+                  - !Ref StripeSecretKeyArn
+                  - !Ref StripeWebhookSecretArn
       Tags:
         - Key: Project
           Value: formmaps
@@ -174,6 +200,10 @@ Resources:
                 Value: !Ref DatabaseUrlSecretArn
               - Name: DAILY_API_KEY
                 Value: !Ref DailyApiKeySecretArn
+              - Name: STRIPE_SECRET_KEY
+                Value: !Ref StripeSecretKeyArn
+              - Name: STRIPE_WEBHOOK_SECRET
+                Value: !Ref StripeWebhookSecretArn
       InstanceConfiguration:
         Cpu: !Ref Cpu
         Memory: !Ref Memory

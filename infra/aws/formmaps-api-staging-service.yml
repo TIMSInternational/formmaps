@@ -26,6 +26,24 @@ Parameters:
     NoEcho: true
     Description: >-
       Full ARN of the Secrets Manager secret containing DAILY_API_KEY (Domain 7a video calling).
+  StripeSecretKeyArn:
+    Type: String
+    NoEcho: true
+    Description: >-
+      Full ARN of the Secrets Manager secret containing STRIPE_SECRET_KEY
+      (Domain 9a billing). REQUIRED even on staging: this service runs with
+      ASPNETCORE_ENVIRONMENT=Production, so StartupEnvironmentValidator throws
+      when it is absent and the service will not boot (formmaps#73).
+      Use Stripe TEST-mode keys here, never the live keys prod uses.
+  StripeWebhookSecretArn:
+    Type: String
+    NoEcho: true
+    Description: >-
+      Full ARN of the Secrets Manager secret containing STRIPE_WEBHOOK_SECRET
+      (Domain 9a billing). REQUIRED -- see StripeSecretKeyArn. Must be the
+      signing secret of the Stripe endpoint pointing at THIS service, not
+      prod's and not the legacy Node API's; Stripe issues a distinct secret per
+      endpoint and a mismatched one rejects every event as an invalid signature.
   StagingWebOrigin:
     Type: String
     Default: https://staging.formmaps.ai
@@ -100,6 +118,11 @@ Resources:
                   - !Ref JwtSecretArn
                   - !Ref DatabaseUrlSecretArn
                   - !Ref DailyApiKeySecretArn
+                  # Explicit allow-list. A secret added to RuntimeEnvironmentSecrets
+                  # but missing here makes App Runner fail to fetch it and the
+                  # deployment fail -- keep the two lists in sync.
+                  - !Ref StripeSecretKeyArn
+                  - !Ref StripeWebhookSecretArn
       Tags:
         - Key: Project
           Value: formmaps
@@ -137,6 +160,10 @@ Resources:
                 Value: !Ref DatabaseUrlSecretArn
               - Name: DAILY_API_KEY
                 Value: !Ref DailyApiKeySecretArn
+              - Name: STRIPE_SECRET_KEY
+                Value: !Ref StripeSecretKeyArn
+              - Name: STRIPE_WEBHOOK_SECRET
+                Value: !Ref StripeWebhookSecretArn
       InstanceConfiguration:
         Cpu: !Ref Cpu
         Memory: !Ref Memory
