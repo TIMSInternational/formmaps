@@ -7,6 +7,33 @@ on:
       - main
 
 jobs:
+  # ─── GITLEAKS (secret scanning) ─────────────────────────────────────────────
+  # formmaps#74. The legacy Node repo has run gitleaks since before this repo
+  # existed (formmaps-platform/.github/workflows/ci.yml). Every domain migrated
+  # to .NET was therefore moving from a repo where a committed secret gets caught
+  # to one where it does not -- and this repo is PUBLIC where that one is private.
+  #
+  # fetch-depth: 0 is load-bearing, not boilerplate: the monorepo consolidation
+  # imported 879 commits of frontend history that have never been scanned here.
+  # A shallow clone scans only recent commits and reports a false all-clear.
+  gitleaks:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    # gitleaks-action's PR scan calls GET /repos/.../pulls/{n}/commits, which
+    # 403s without pull-requests:read. Mirrors the legacy job's permissions.
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build-test:
     runs-on: ubuntu-latest
 

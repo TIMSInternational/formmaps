@@ -1,0 +1,38 @@
+# gitleaks configuration — formmaps#74
+#
+# Extends the default ruleset rather than replacing it. The allowlist below is
+# deliberately narrow: it matches the SPECIFIC literal test vectors that a
+# full-history scan flagged, not whole files and not "anything under tests/".
+# A blanket test-path exclusion would hide a real credential pasted into a test
+# file, which is a common way secrets actually leak.
+#
+# Baseline established 2026-08-02: a full-history scan (1,383 commits, ~39 MB,
+# including the 879 frontend commits imported during the monorepo consolidation)
+# found exactly 3 findings, all of them the fixtures allowlisted here. No real
+# credential has ever been committed to this repository.
+#
+# If a new finding appears, it is new. Do not add to this list without first
+# confirming the value is genuinely synthetic AND rotating it if it is not.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+[rules.allowlist]
+regexTarget = "match"
+regexes = [
+  # services/api/tests/FormMaps.UnitTests/Security/AesGcmFieldCipherTests.cs
+  # AES-256-GCM golden vector: the 32-byte key 0x00,0x01,...,0x1f expressed as
+  # base64 and as hex. An incrementing byte sequence — a canonical test vector,
+  # not a generated key. Present as both encodings because the test asserts the
+  # Node <-> .NET cipher interop accepts either.
+  '''AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=''',
+  '''000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f''',
+
+  # apps/web/src/services/__tests__/authService.login-language.test.ts
+  # Fake JWT whose signature segment is the literal string "signature".
+  # Payload decodes to {"sub":"1","exp":9999999999}. Cannot validate against
+  # any key.
+  '''eyJhbGciOiJIUzI1NiJ9\.eyJzdWIiOiIxIiwiZXhwIjo5OTk5OTk5OTk5fQ\.signature''',
+]
