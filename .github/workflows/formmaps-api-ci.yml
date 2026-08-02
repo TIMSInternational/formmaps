@@ -61,8 +61,142 @@ jobs:
       - name: Build
         run: dotnet build services/api/FormMaps.slnx --no-restore
 
-      - name: Test
-        run: dotnet test services/api/FormMaps.slnx --no-build --verbosity normal
+      # Integration tests moved to the sharded `integration` job below (#36).
+      # This step keeps the fast, deterministic suites on the critical path so a
+      # compile-level or logic-level break is reported in ~2 minutes rather than
+      # waiting on Testcontainers.
+      - name: Test (unit + contract)
+        run: >-
+          dotnet test services/api/FormMaps.slnx --no-build --verbosity normal
+          --filter "FullyQualifiedName!~FormMaps.IntegrationTests"
 
       - name: Build API container
         run: docker build -f services/api/Dockerfile services/api
+
+  # ─── INTEGRATION TESTS, SHARDED ─────────────────────────────────────────────
+  # formmaps#36. The suite is 2,368 Testcontainers-backed tests at ~1.30s each,
+  # so a single run costs ~51 minutes -- which matches the last fully successful
+  # CI run exactly (50m44s, 2026-07-31). It is not a hang; it is linear cost that
+  # outgrew the budget when Domains 9a and 10 added 170 tests.
+  #
+  # Splitting by top-level namespace turns ~51 minutes of wall-clock into ~6
+  # parallel jobs of roughly 400 tests each (~9 min + build). Shards are balanced
+  # by measured test count, listed explicitly rather than globbed so that a NEW
+  # namespace fails the coverage check below instead of being silently skipped.
+  integration:
+    name: Integration (${{ matrix.shard.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard:
+          - name: assessments
+            filter: "FullyQualifiedName~FormMaps.IntegrationTests.Assessments."
+          - name: auth-counselor-students
+            filter: "FullyQualifiedName~FormMaps.IntegrationTests.Auth.|FullyQualifiedName~FormMaps.IntegrationTests.Counselor.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolStudents."
+          - name: messaging-college-plan
+            filter: "FullyQualifiedName~FormMaps.IntegrationTests.Messaging.|FullyQualifiedName~FormMaps.IntegrationTests.StudentCoursePlan.|FullyQualifiedName~FormMaps.IntegrationTests.College.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolAdmin."
+          - name: school-courses-users-calendar
+            filter: "FullyQualifiedName~FormMaps.IntegrationTests.SchoolCourses.|FullyQualifiedName~FormMaps.IntegrationTests.Resumes.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolUsers.|FullyQualifiedName~FormMaps.IntegrationTests.StudentApplicationSubResources.|FullyQualifiedName~FormMaps.IntegrationTests.Calendar.|FullyQualifiedName~FormMaps.IntegrationTests.DataMappings."
+          - name: reports-billing-video
+            filter: "FullyQualifiedName~FormMaps.IntegrationTests.Prerequisites.|FullyQualifiedName~FormMaps.IntegrationTests.Reports.|FullyQualifiedName~FormMaps.IntegrationTests.CourseImport.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolProfile.|FullyQualifiedName~FormMaps.IntegrationTests.CurriculumFrameworks.|FullyQualifiedName~FormMaps.IntegrationTests.Billing.|FullyQualifiedName~FormMaps.IntegrationTests.Video.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolReads.|FullyQualifiedName~FormMaps.IntegrationTests.ParentPortal.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolAnalytics."
+          - name: remainder
+            filter: "FullyQualifiedName~FormMaps.IntegrationTests.AcademicGaps.|FullyQualifiedName~FormMaps.IntegrationTests.StudentApplications.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsWrites.|FullyQualifiedName~FormMaps.IntegrationTests.StudentPortfolio.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsReads.|FullyQualifiedName~FormMaps.IntegrationTests.StudentParents.|FullyQualifiedName~FormMaps.IntegrationTests.Uploads.|FullyQualifiedName~FormMaps.IntegrationTests.CommunityService.|FullyQualifiedName~FormMaps.IntegrationTests.ParentChildReads.|FullyQualifiedName~FormMaps.IntegrationTests.Gradebook.|FullyQualifiedName~FormMaps.IntegrationTests.Security.|FullyQualifiedName~FormMaps.IntegrationTests.DbRole.|FullyQualifiedName~FormMaps.IntegrationTests.Data.|FullyQualifiedName~FormMaps.IntegrationTests.Pathways.|FullyQualifiedName~FormMaps.IntegrationTests.ScaffoldTests"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore services/api/FormMaps.slnx
+
+      - name: Build
+        run: dotnet build services/api/FormMaps.slnx --no-restore
+
+      - name: Test (${{ matrix.shard.name }})
+        run: >-
+          dotnet test services/api/tests/FormMaps.IntegrationTests --no-build --verbosity normal
+          --filter "${{ matrix.shard.filter }}"
+
+  # Guards the explicit shard list above. Every test must land in exactly one
+  # shard; a namespace added without updating the matrix would otherwise run
+  # nowhere and look green. Compares the total discovered count against the sum
+  # actually selected by the shard filters.
+  integration-coverage:
+    name: Integration shard coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        run: dotnet build services/api/tests/FormMaps.IntegrationTests
+
+      - name: Every integration test belongs to exactly one shard
+        run: |
+          set -euo pipefail
+          cd services/api
+          dotnet test tests/FormMaps.IntegrationTests --list-tests --no-build --nologo -v q \
+            | grep -oE "FormMaps\.IntegrationTests\.[A-Za-z0-9_]+\." | sort -u > /tmp/ns.txt
+          # namespaces named in the matrix above
+          cat > /tmp/sharded.txt <<'NS'
+          FormMaps.IntegrationTests.Assessments.
+          FormMaps.IntegrationTests.Auth.
+          FormMaps.IntegrationTests.Counselor.
+          FormMaps.IntegrationTests.SchoolStudents.
+          FormMaps.IntegrationTests.Messaging.
+          FormMaps.IntegrationTests.StudentCoursePlan.
+          FormMaps.IntegrationTests.College.
+          FormMaps.IntegrationTests.SchoolAdmin.
+          FormMaps.IntegrationTests.SchoolCourses.
+          FormMaps.IntegrationTests.Resumes.
+          FormMaps.IntegrationTests.SchoolUsers.
+          FormMaps.IntegrationTests.StudentApplicationSubResources.
+          FormMaps.IntegrationTests.Calendar.
+          FormMaps.IntegrationTests.DataMappings.
+          FormMaps.IntegrationTests.Prerequisites.
+          FormMaps.IntegrationTests.Reports.
+          FormMaps.IntegrationTests.CourseImport.
+          FormMaps.IntegrationTests.SchoolProfile.
+          FormMaps.IntegrationTests.CurriculumFrameworks.
+          FormMaps.IntegrationTests.Billing.
+          FormMaps.IntegrationTests.Video.
+          FormMaps.IntegrationTests.SchoolReads.
+          FormMaps.IntegrationTests.ParentPortal.
+          FormMaps.IntegrationTests.SchoolAnalytics.
+          FormMaps.IntegrationTests.AcademicGaps.
+          FormMaps.IntegrationTests.StudentApplications.
+          FormMaps.IntegrationTests.IsamsWrites.
+          FormMaps.IntegrationTests.StudentPortfolio.
+          FormMaps.IntegrationTests.IsamsReads.
+          FormMaps.IntegrationTests.StudentParents.
+          FormMaps.IntegrationTests.Uploads.
+          FormMaps.IntegrationTests.CommunityService.
+          FormMaps.IntegrationTests.ParentChildReads.
+          FormMaps.IntegrationTests.Gradebook.
+          FormMaps.IntegrationTests.Security.
+          FormMaps.IntegrationTests.DbRole.
+          FormMaps.IntegrationTests.Data.
+          FormMaps.IntegrationTests.Pathways.
+          FormMaps.IntegrationTests.ScaffoldTests
+          NS
+          sed -i 's/^[[:space:]]*//' /tmp/sharded.txt
+          sort -u -o /tmp/sharded.txt /tmp/sharded.txt
+          if ! missing=$(comm -23 /tmp/ns.txt /tmp/sharded.txt) || [ -n "$missing" ]; then
+            echo "::error::These integration namespaces are in no shard and would never run:"
+            echo "$missing"
+            exit 1
+          fi
+          echo "All $(wc -l < /tmp/ns.txt) integration namespaces are covered by a shard."
