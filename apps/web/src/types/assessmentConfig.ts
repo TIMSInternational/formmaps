@@ -87,7 +87,13 @@ export interface SchoolUsersResponse {
 export interface StaffInvitePayload {
   email: string;
   name: string;
-  role: "counselor" | "teacher" | "staff" | "coach";
+  /**
+   * Wire field name must stay `roleName` — that is what POST
+   * /api/v1/school-admin/staff/invite validates. Sending `role` instead made
+   * zod strip the key and silently default every invite to counselor, granting
+   * student-record access to teachers, staff and coaches (formmaps#79).
+   */
+  roleName: "counselor" | "teacher" | "staff" | "coach";
 }
 
 export interface BulkStaffInvitePayload {

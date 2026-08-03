@@ -51,7 +51,7 @@ export function StaffPanel() {
   const handleInvite = async () => {
     if (!inviteForm.name || !inviteForm.email) { toast.error("Name and email required"); return; }
     try {
-      const result = await inviteStaff.mutateAsync({ name: inviteForm.name, email: inviteForm.email, role: inviteForm.role as "counselor" | "staff" }) as { emailSent?: boolean };
+      const result = await inviteStaff.mutateAsync({ name: inviteForm.name, email: inviteForm.email, roleName: inviteForm.role as "counselor" | "coach" | "staff" }) as { emailSent?: boolean };
       if (result?.emailSent === false) {
         toast.error("Account created, but the invitation email could not be sent. Check the address, then use Resend.");
       } else {

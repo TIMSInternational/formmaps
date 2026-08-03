@@ -83,7 +83,7 @@ export function InvitePanel() {
         if (selectedRole === "student") {
           await inviteStudent.mutateAsync({ email: row.email, name: row.name });
         } else {
-          await inviteStaff.mutateAsync({ email: row.email, name: row.name, role: selectedRole });
+          await inviteStaff.mutateAsync({ email: row.email, name: row.name, roleName: selectedRole });
         }
         successCount++;
       } catch (err: any) {
