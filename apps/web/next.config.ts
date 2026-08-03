@@ -80,6 +80,22 @@ function shouldRouteSchoolAdminReadsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_ADMIN_READS_TO_DOTNET));
 }
 
+// ── FM-DOTNET-046 Phase-B: the gradebook transcript read ──
+// routes/school-gradebook.ts GET /gradebook/students/:studentId, mounted under
+// /api/v1/school-admin. GET-only (the grade writes in that file stay Node), so
+// there is no path-not-method coupling. Default OFF (dark). Its path prefix
+// (gradebook/students) is disjoint from the school-admin /results and
+// /assessments rewrites.
+//
+// formmaps#61: this helper and its rewrite were written on 2026-07-20 in
+// 2b668627, then destroyed by 0cf9e038 ("remove dead apps/web snapshot") during
+// the monorepo consolidation -- the .NET server side survived, the 21 lines of
+// frontend wiring did not, leaving the endpoint unreachable through
+// app.formmaps.com at any flag value. Restored verbatim, not re-authored.
+function shouldRouteGradebookReadToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_GRADEBOOK_READ_TO_DOTNET));
+}
+
 // ── Reports domain: benchmark/user-report/pca/lia/timeline/coaching/evaluation reads ──
 // .NET server code for all 7 was already deployed before Wave 2 batch numbering existed;
 // this block was never ported into this file until now. Ported verbatim from the
@@ -756,6 +772,17 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/assessments/status",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/assessments/status`,
+            },
+          ]
+        : []),
+      // FM-DOTNET-046 Phase-B gradebook transcript read (GET-only; the grade writes stay Node). Its prefix
+      // (/school-admin/gradebook/students) is disjoint from the /results and /assessments rewrites above, and
+      // it must precede the /api/:path* catch-all below.
+      ...(shouldRouteGradebookReadToDotnet()
+        ? [
+            {
+              source: "/api/v1/school-admin/gradebook/students/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/gradebook/students/:studentId`,
             },
           ]
         : []),
