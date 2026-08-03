@@ -53,6 +53,7 @@ CREATE TABLE "personality_assessment_sessions" (id text PRIMARY KEY);
 CREATE TABLE "personality_responses" (id text PRIMARY KEY);
 CREATE TABLE "questions_360" (id text PRIMARY KEY);
 CREATE TABLE "refresh_tokens" (id text PRIMARY KEY);
+CREATE TABLE "reports" (id text PRIMARY KEY);
 CREATE TABLE "resumes" (id text PRIMARY KEY);
 CREATE TABLE "reviews" (id text PRIMARY KEY);
 CREATE TABLE "roles" (id text PRIMARY KEY);

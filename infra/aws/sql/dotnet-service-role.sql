@@ -131,7 +131,10 @@ GRANT SELECT ON TABLE
     -- plan's Stripe Price id for POST /api/v1/billing/checkout-session.
     public."subscription_plans",
     public."universities",
-    public."user_blocks",
+    -- NOTE: "user_blocks" moved to the SELECT/INSERT/UPDATE tier below (#63/#80) --
+    -- Messaging only ever READ blocks, which is why SELECT was right here. Porting
+    -- moderation adds POST/DELETE /api/v1/moderation/block/:userId, which upserts
+    -- and soft-deletes rows, so read-only would fail every block and unblock.
     public."user_career_profiles",
     public."user_preferences",
     -- NOTE: "user_settings" moved to the SELECT/INSERT/UPDATE tier below (Domain 10) --
@@ -164,6 +167,13 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     public."assessment_schedules",
     public."coaches",
     public."college_essays",
+    -- #63/#80: moderation port. `reports` is INSERTed by POST /moderation/report and
+    -- SELECTed by GET /moderation/reports; `user_blocks` is upserted by
+    -- POST /block/:userId and soft-deleted (UPDATE isActive=false) by DELETE. Both
+    -- moved/added here from the read-only tier. Not needed until the port lands, but
+    -- granting late means an ops re-run mid-domain -- the exact failure #29 hit.
+    public."reports",
+    public."user_blocks",
     public."community_service_entries",
     public."conversations",
     public."counselor_availabilities",
