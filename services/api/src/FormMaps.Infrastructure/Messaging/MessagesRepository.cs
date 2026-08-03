@@ -510,6 +510,24 @@ public sealed class MessagesRepository(
     /// Tightening this is a fine idea, but it belongs in a separate change applied to BOTH
     /// backends, not smuggled in as a side effect of the port. Blocking is unaffected: the caller
     /// still runs IsBlockedBetweenAsync, and RLS still applies.
+    ///
+    /// WARNING — do NOT copy this lookup into a moderation (block/report) port. See formmaps#80.
+    /// This runs inside the caller's RLS session, and "users" is ENABLE + FORCE ROW LEVEL SECURITY
+    /// with a self-or-same-school policy. A coach has no schoolId, so app.current_school_id is ''
+    /// and the policy's school branch fails its own &lt;&gt; '' guard: a coach and a school student are
+    /// mutually INVISIBLE here. That is tolerable for messaging, where the caller treats an
+    /// unreadable row as "recipient not found" and the pre-existing behaviour is preserved on both
+    /// backends. It is NOT tolerable for a safety action — reproduced against real policies, it made
+    /// blocking and reporting silently fail on every coach&lt;-&gt;student thread, so a student who
+    /// blocked a coach stayed messageable by that coach.
+    ///
+    /// When moderation is ported (formmaps#63), mirror legacy's canModerateUser instead: resolve
+    /// existence OUTSIDE the caller's tenant scope, then require a real relationship (same non-empty
+    /// school OR a shared conversation), and collapse "absent" and "ineligible" into one response so
+    /// the endpoint is not a user-existence oracle. A safety action must never depend on the actor
+    /// being able to see the target in the tenant sense — that inverts the security property.
+    /// Legacy reference: api/src/services/moderationService.ts (canModerateUser), with a real-policy
+    /// test at api/src/__tests__/rls/moderation-cross-tenant.integration.test.ts.
     /// </summary>
     private static async Task<(string? SchoolId, string? RoleName)> LookupUserAsync(
         FormMapsDatabaseSession session, string userId, CancellationToken cancellationToken)
