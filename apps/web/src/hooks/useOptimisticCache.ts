@@ -19,11 +19,7 @@ import {
  * and proved the shape; this module is that shape, extracted, so the remaining hooks
  * do not each hand-roll it.
  *
- * `useGradebookQueries.ts` is the canonical consumer. Do NOT copy
- * `useAssessmentMutations.ts` — its `onError` refetches instead of restoring a
- * snapshot, which is the one thing an optimistic update must never do. (It is also
- * entirely dead: nothing imports it, and none of its four `mutationFn`s calls an API.
- * It only looks like a working example.)
+ * `useGradebookQueries.ts` is the canonical consumer.
  *
  * The three rules this module exists to enforce:
  *
