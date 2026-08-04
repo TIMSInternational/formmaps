@@ -76,12 +76,17 @@ export interface StudentParentLink {
   parentUserId?: string;
 }
 
+// Field names are the `notifications` table's, because GET /parent/notifications
+// returns the rows unmapped. This used to declare `body` and `createdAt`, neither of
+// which the API sends — see the note on getParentNotifications.
 export interface ParentNotification {
   id: string;
   title: string;
-  body: string;
-  type: "evaluation" | "grade" | "alert" | "meeting" | "system";
+  message: string;
+  /** Free text in the DB; TYPE_CONFIG falls back to `system` for anything unlisted. */
+  type: "evaluation" | "grade" | "alert" | "meeting" | "system" | (string & {});
   isRead: boolean;
-  createdAt: string;
-  actionUrl?: string;
+  createdDate: string;
+  relatedEntityId?: string | null;
+  relatedEntityType?: string | null;
 }

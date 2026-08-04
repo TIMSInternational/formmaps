@@ -36,7 +36,7 @@ export interface PortfolioItem {
   totalHours?: number;
   achievements?: string[];
   attachments: PortfolioAttachment[];
-  createdAt: string;
+  createdDate: string;
   updatedAt: string;
 }
 

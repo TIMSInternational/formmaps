@@ -207,10 +207,10 @@ export default function StudentDetailsPage() {
             <span>{student.email}</span>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 20, marginTop: 8 }}>
-            {(student.createdAt || student.joinedAt) && (
+            {student.joinedAt && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, color: "var(--admin-font-secondary)" }}>
                 <Calendar style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
-                <span>{t("schoolAdmin.students.joined", "Joined")} {format(new Date(student.createdAt || student.joinedAt!), "MMM d, yyyy")}</span>
+                <span>{t("schoolAdmin.students.joined", "Joined")} {format(new Date(student.joinedAt), "MMM d, yyyy")}</span>
               </div>
             )}
             {(student as unknown as { gradeLevel?: string }).gradeLevel && (

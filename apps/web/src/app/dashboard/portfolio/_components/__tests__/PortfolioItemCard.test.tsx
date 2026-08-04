@@ -40,7 +40,7 @@ const ITEM: PortfolioItem = {
   startDate: "2024-09",
   isCurrent: true,
   attachments: [],
-  createdAt: "2024-09-01T00:00:00Z",
+  createdDate: "2024-09-01T00:00:00Z",
   updatedAt: "2024-09-01T00:00:00Z",
 };
 

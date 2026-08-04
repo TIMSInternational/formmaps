@@ -16,7 +16,7 @@ export interface CommunityServiceEntry {
   verifiedBy?: string;
   verifiedAt?: string;
   note?: string;
-  createdAt: string;
+  createdDate: string;
 }
 
 export interface CommunityServiceSummary {

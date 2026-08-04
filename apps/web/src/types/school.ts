@@ -11,7 +11,7 @@ export interface School {
   contractStart?: string;
   contractEnd?: string;
   videoCallsEnabled?: boolean;
-  createdAt?: string;
+  createdDate?: string;
   updatedAt?: string;
 }
 

@@ -171,7 +171,8 @@ export interface University {
   programCount?: number;
   isActive: boolean;
   isFeatured?: boolean;
-  createdAt: string;
+  // The API returns the `universities` row as-is; its column is createdDate.
+  createdDate: string;
   updatedAt: string;
 }
 

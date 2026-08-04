@@ -105,7 +105,7 @@ export function useLogCommunityService() {
         // Not a guess: the column defaults to `pending` and nothing on the create path
         // can set it otherwise.
         status: "pending",
-        createdAt: new Date().toISOString(),
+        createdDate: new Date().toISOString(),
       };
 
       const context = await optimistic.patch<CommunityServiceSummary>(mineFilter, (current) =>

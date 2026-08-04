@@ -157,9 +157,16 @@ export async function resendMyParentInvite(
 
 // ─── Parent Notifications ────────────────────────────────────────────────────
 
+// GET /parent/notifications answers with a paginated envelope — the body is
+// `{ data: { data: [...], total, page, limit } }`, so `res.data` is the ENVELOPE, not
+// the rows. Returning it as-is handed the page an object where it expected an array,
+// and the page's `Array.isArray(...) ? ... : []` guard then rendered "all caught up"
+// no matter how many notifications the parent had.
 export async function getParentNotifications(): Promise<ParentNotification[]> {
   const res = await apiRequest("/api/v1/parent/notifications");
-  return res.data ?? res;
+  const envelope = res.data ?? res;
+  const rows = Array.isArray(envelope) ? envelope : envelope?.data;
+  return Array.isArray(rows) ? rows : [];
 }
 
 export async function markParentNotificationRead(id: string): Promise<void> {

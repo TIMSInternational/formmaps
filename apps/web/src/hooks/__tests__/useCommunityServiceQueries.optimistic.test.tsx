@@ -53,7 +53,7 @@ const entry = (over: Partial<CommunityServiceEntry> & { id: string }): Community
   hours: 4,
   date: "2026-05-01",
   status: "pending",
-  createdAt: "2026-05-01T00:00:00.000Z",
+  createdDate: "2026-05-01T00:00:00.000Z",
   ...over,
 });
 

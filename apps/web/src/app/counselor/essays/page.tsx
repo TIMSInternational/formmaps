@@ -29,12 +29,15 @@ interface Essay {
   updatedAt: string;
 }
 
+// GET /college/essays/:id/comments returns essay_comments rows with an `author` join —
+// it does not flatten them. This used to declare authorName / authorRole / createdAt,
+// none of which the API sends, so every comment rendered a blank name, a blank role
+// badge and "Invalid Date".
 interface Comment {
   id: string;
-  authorName: string;
-  authorRole: string;
+  author?: { id: string; name: string | null; roleName: string | null } | null;
   content: string;
-  createdAt: string;
+  createdDate: string;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -317,16 +320,16 @@ export default function EssaysPage() {
                                         border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)",
                                       }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{comment.authorName}</span>
+                                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{comment.author?.name ?? "Unknown"}</span>
                                           <span style={{
                                             fontSize: 9, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
                                             background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
                                             textTransform: "uppercase", border: "1px solid var(--admin-border-default)",
                                           }}>
-                                            {comment.authorRole}
+                                            {comment.author?.roleName ?? "—"}
                                           </span>
                                           <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginLeft: "auto" }}>
-                                            {new Date(comment.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                            {comment.createdDate && new Date(comment.createdDate).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                                           </span>
                                         </div>
                                         <p style={{ fontSize: 12, color: "var(--admin-font-secondary)", lineHeight: 1.5, margin: 0 }}>{comment.content}</p>

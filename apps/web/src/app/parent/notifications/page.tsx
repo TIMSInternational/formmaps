@@ -24,7 +24,7 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const TYPE_CONFIG: Record<
-  ParentNotification["type"],
+  string,
   { icon: React.ElementType; color: string; bg: string }
 > = {
   evaluation: { icon: FileCheck, color: "text-indigo-600", bg: "bg-indigo-50" },
@@ -34,14 +34,23 @@ const TYPE_CONFIG: Record<
   system: { icon: Info, color: "text-gray-600", bg: "bg-gray-100" },
 };
 
+// date-fns v4's formatDistanceToNow THROWS a RangeError on an invalid date rather than
+// rendering something odd, so an unparseable timestamp would take the whole page down
+// with it. Notifications are worth showing without their age.
+function relativeTime(value: string | null | undefined): string {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : formatDistanceToNow(date, { addSuffix: true });
+}
+
 export default function ParentNotificationsPage() {
   const { t } = useTranslation("parent");
   const { data: notifications, isLoading } = useParentNotifications();
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
 
-  const list = Array.isArray(notifications) ? notifications : [];
-  const unreadCount = list.filter((n: any) => !n.isRead).length;
+  const list: ParentNotification[] = notifications ?? [];
+  const unreadCount = list.filter((n) => !n.isRead).length;
 
   return (
     <div className="space-y-6">
@@ -127,12 +136,10 @@ export default function ParentNotificationsPage() {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
-                      {notif.body}
+                      {notif.message}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1.5">
-                      {formatDistanceToNow(new Date(notif.createdAt), {
-                        addSuffix: true,
-                      })}
+                      {relativeTime(notif.createdDate)}
                     </p>
                   </div>
 

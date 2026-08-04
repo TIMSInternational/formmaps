@@ -40,7 +40,8 @@ export interface Course {
   careerPaths: string[];
   recommendedScore: number;
   isActive: boolean;
-  createdAt: string;
+  // The API returns the `courses` row as-is; its column is createdDate.
+  createdDate: string;
   updatedAt: string;
 }
 

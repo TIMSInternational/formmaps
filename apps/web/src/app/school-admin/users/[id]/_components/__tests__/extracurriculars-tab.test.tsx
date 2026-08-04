@@ -63,7 +63,7 @@ const baseEntry: CommunityServiceEntry = {
   hours: 10,
   date: "2025-01-01",
   status: "pending",
-  createdAt: "2025-01-01T00:00:00Z",
+  createdDate: "2025-01-01T00:00:00Z",
 };
 
 function buildSummary(overrides: Partial<CommunityServiceSummary> = {}): CommunityServiceSummary {

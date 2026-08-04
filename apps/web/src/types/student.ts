@@ -6,8 +6,8 @@ export interface Student {
   email: string;
   status: StudentStatus;
   avatar?: string;
+  /** The user's creation date, aliased by the API. There is no `createdAt` on the wire. */
   joinedAt?: string;
-  createdAt?: string;
   lastActive?: string;
   completedAssessments: number;
   averageScore: number;
