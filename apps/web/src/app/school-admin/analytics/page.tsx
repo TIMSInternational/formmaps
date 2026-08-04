@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -153,9 +154,9 @@ export default function AnalyticsPage() {
                 <stat.icon style={{ width: 16, height: 16, color: stat.color }} />
               </div>
               {stat.label === "At-Risk Students" && atRisk > 0 && (
-                <a href="/school-admin/users" style={{ fontSize: 10, color: "#ef4444", fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 2 }}>
+                <Link href="/school-admin/users" style={{ fontSize: 10, color: "#ef4444", fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 2 }}>
                   View <ChevronRight style={{ width: 10, height: 10 }} />
-                </a>
+                </Link>
               )}
             </div>
             <div style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)", letterSpacing: "-0.02em" }}>{stat.value}</div>

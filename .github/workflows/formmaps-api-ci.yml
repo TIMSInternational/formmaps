@@ -241,3 +241,56 @@ jobs:
             exit 1
           fi
           echo "All $(wc -l < /tmp/ns.txt) integration namespaces are covered by a shard."
+
+  # ─── FRONTEND (apps/web) ────────────────────────────────────────────────────
+  # formmaps#96. Until now the only jobs in this repo were the .NET ones above,
+  # so apps/web's 786 jest tests never ran in CI at all -- including every #89
+  # optimistic-rollback test, which exists precisely to catch the case a human
+  # will not click through. The only frontend gate was Vercel's build on push to
+  # main, which catches a type error but runs neither jest nor eslint, and
+  # reports after the merge rather than before it.
+  #
+  # Kept separate from build-test rather than bolted onto it: that job routinely
+  # runs over an hour on Testcontainers, and a 2-minute frontend break should not
+  # queue behind it.
+  web:
+    name: Frontend (apps/web)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      # `next build` (Vercel) already type-checks, but only after a merge to main.
+      # This is the same check on the PR, and it is the cheapest of the three.
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # Errors fail the job; warnings do not. The tree is at 0 errors as of #96
+      # (three were cleared to introduce this job: two raw <a> tags that should
+      # have been next/link, and an eslint-disable naming a rule from a plugin
+      # that is not installed -- which is itself an error).
+      #
+      # Deliberately NOT --max-warnings 0. The 28 remaining warnings are all dead
+      # eslint-disable directives, and `eslint --fix` does not delete those lines,
+      # it blanks them -- 220 lines of whitespace churn across 23 files. Not worth
+      # coupling to this gate; clean them up as those files are touched.
+      - name: Lint
+        run: npx eslint src
+
+      - name: Test
+        run: npx jest --ci

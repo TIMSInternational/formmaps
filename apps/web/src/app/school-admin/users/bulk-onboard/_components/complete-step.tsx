@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import {
   FileSpreadsheet,
@@ -155,7 +156,7 @@ export function CompleteStep({ onboardResult, onReset, card }: CompleteStepProps
 
       {/* Actions */}
       <div className="flex gap-3 justify-center flex-wrap">
-        <a
+        <Link
           href="/school-admin/users"
           style={{
             height: 42, borderRadius: 8, padding: "0 24px", fontSize: 14, fontWeight: 700,
@@ -167,7 +168,7 @@ export function CompleteStep({ onboardResult, onReset, card }: CompleteStepProps
         >
           <Users style={{ width: 16, height: 16 }} />
           View Students
-        </a>
+        </Link>
         <button
           onClick={onReset}
           style={{

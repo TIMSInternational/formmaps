@@ -31,7 +31,8 @@ function renderPage() {
 
 function card(name: string) {
   const heading = screen.getByRole("heading", { name });
-  // eslint-disable-next-line testing-library/no-node-access
+  // No eslint-disable for testing-library/no-node-access here: that plugin is not
+  // installed, so disabling one of its rules IS the error ("rule definition not found").
   return heading.closest("div[style]")?.parentElement as HTMLElement;
 }
 
