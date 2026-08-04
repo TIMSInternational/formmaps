@@ -461,7 +461,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                 onMouseEnter={(e) => { if (selectedNote?.id !== n.id) e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
                 onMouseLeave={(e) => { if (selectedNote?.id !== n.id) e.currentTarget.style.background = "transparent"; }}>
                 <div style={{ fontSize: 12, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.content.slice(0, 60)}{n.content.length > 60 ? "..." : ""}</div>
-                <div style={{ fontSize: 10, color: "var(--admin-font-light)", marginTop: 2 }}>{formatNoteDate(n.createdAt)} · {n.type}</div>
+                <div style={{ fontSize: 10, color: "var(--admin-font-light)", marginTop: 2 }}>{formatNoteDate(n.createdDate)} · {n.type}</div>
               </button>
             ))}
           </div>

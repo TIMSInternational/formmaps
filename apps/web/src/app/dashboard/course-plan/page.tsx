@@ -129,7 +129,6 @@ export default function CoursePlanPage() {
   const handleRemove = async (enrollment: PlanEnrollment) => {
     setBusyId(enrollment.courseId);
     try {
-      // The API removes planned entries by courseId
       await removeMutation.mutateAsync(enrollment.courseId);
     } catch { /* hook toasts */ } finally { setBusyId(null); }
   };

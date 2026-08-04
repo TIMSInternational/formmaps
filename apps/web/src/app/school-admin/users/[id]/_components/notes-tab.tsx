@@ -158,7 +158,7 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>
-                          {note.createdAt && format(new Date(note.createdAt), "MMM d, yyyy")}
+                          {note.createdDate && format(new Date(note.createdDate), "MMM d, yyyy")}
                         </span>
                         <button
                           className="opacity-0 group-hover:opacity-100 transition-opacity"

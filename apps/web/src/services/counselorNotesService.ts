@@ -54,8 +54,12 @@ export async function deleteNote(noteId: string): Promise<void> {
   });
 }
 
-// Mark follow-up as completed
-export async function completeFollowUp(noteId: string): Promise<CounselorNote> {
+// Mark follow-up as completed.
+// This route answers with a PARTIAL row, not the whole note, so callers must merge it
+// into what they already hold rather than substituting it.
+export async function completeFollowUp(
+  noteId: string
+): Promise<Pick<CounselorNote, "id" | "followUpCompleted" | "followUpCompletedAt">> {
   const res = await apiRequest(
     `/api/v1/counselor/notes/${noteId}/complete-followup`,
     { method: "PUT" }

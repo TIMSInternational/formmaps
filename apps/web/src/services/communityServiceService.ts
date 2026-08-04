@@ -10,13 +10,24 @@ import { apiRequest } from "@/lib/api/apiClient";
 // Backend shapes differ per endpoint (student: {data:[…],totalHours};
 // admin: bare entries[]) and hours come back as Decimal strings. Normalize
 // everything into the CommunityServiceSummary the pages render.
+/**
+ * Coerce one entry's `hours` out of the Decimal string Prisma serialises it as.
+ *
+ * Exported because the write endpoints echo the row back in that same raw form, and
+ * formmaps#89 puts those rows straight into the React Query cache instead of
+ * refetching. A string sneaking through there does not merely render oddly — it turns
+ * the running hour totals into string concatenation.
+ */
+export function normalizeEntry(entry: CommunityServiceEntry): CommunityServiceEntry {
+  return { ...entry, hours: Number((entry as { hours: unknown }).hours) || 0 };
+}
+
 function toSummary(payload: unknown): CommunityServiceSummary {
   const p = (payload ?? {}) as Record<string, unknown>;
   const rawEntries = Array.isArray(payload) ? payload : (p.entries ?? p.data ?? []);
-  const entries = (Array.isArray(rawEntries) ? rawEntries : []).map((e) => ({
-    ...(e as CommunityServiceEntry),
-    hours: Number((e as { hours: unknown }).hours) || 0,
-  }));
+  const entries = (Array.isArray(rawEntries) ? rawEntries : []).map((e) =>
+    normalizeEntry(e as CommunityServiceEntry),
+  );
   const logged =
     typeof p.totalHoursLogged === "number" ? p.totalHoursLogged :
     typeof p.totalHours === "number" ? p.totalHours :

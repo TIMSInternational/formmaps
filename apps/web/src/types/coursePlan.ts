@@ -89,7 +89,10 @@ export interface CourseChangeRequest {
   status: ChangeRequestStatus;
   studentNote?: string;
   counselorNote?: string;
-  createdAt: string;
+  // `createdDate`, not `createdAt` — these endpoints return the course_change_requests
+  // row as-is, and that is the column's name. Same mistake CounselorNote carried;
+  // nothing renders it yet, which is why it went unnoticed there too.
+  createdDate: string;
   reviewedAt?: string;
   reviewedBy?: string;
 }

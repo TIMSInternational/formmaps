@@ -56,11 +56,13 @@ export async function addCourseToPlan(payload: {
   });
 }
 
-// Remove course from plan
-export async function removeCourseFromPlan(
-  enrollmentId: string
-): Promise<void> {
-  await apiRequest(`/api/v1/student/course-plan/courses/${enrollmentId}`, {
+// Remove course from plan.
+// Keyed by COURSE id, not enrollment id: the route is
+// DELETE /course-plan/courses/:courseId and it deletes the caller's planned rows for
+// that course. The parameter used to be named `enrollmentId`, which is what the single
+// caller has a comment apologising for.
+export async function removeCourseFromPlan(courseId: string): Promise<void> {
+  await apiRequest(`/api/v1/student/course-plan/courses/${courseId}`, {
     method: "DELETE",
   });
 }

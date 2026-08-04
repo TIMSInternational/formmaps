@@ -115,7 +115,7 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-400">
-                        {note.createdAt && format(new Date(note.createdAt), "MMM d, yyyy")}
+                        {note.createdDate && format(new Date(note.createdDate), "MMM d, yyyy")}
                       </span>
                       <Button
                         variant="ghost"
