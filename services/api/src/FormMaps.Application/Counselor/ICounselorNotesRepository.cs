@@ -25,8 +25,11 @@ public interface ICounselorNotesRepository
         RequestContext context, string studentId, string? typeFilter, int page, int limit,
         CancellationToken cancellationToken = default);
 
-    /// <summary>Create a note (studentId/authorId + validated body). Returns the created row (no author join).</summary>
-    Task<NoteRow> CreateAsync(
+    /// <summary>
+    /// Create a note (studentId/authorId + validated body). Returns the created row WITH the author's name —
+    /// the same join the list read does, so the response is shape-identical to a listed row (formmaps#89).
+    /// </summary>
+    Task<NoteListItem> CreateAsync(
         RequestContext context, string studentId, string authorId, CreateNoteInput input,
         CancellationToken cancellationToken = default);
 

@@ -25,6 +25,16 @@ public sealed class CounselorNotesRepository(
         "followUpCompletedAt", "tags", "isActive", "createdBy", "createdDate", "updatedBy", "updatedAt"
         """;
 
+    // n.-qualified — for the create CTE's JOIN to users. Same shape as ListSelectColumns;
+    // named separately so the list query and the insert can diverge without surprising
+    // each other, since MapRow reads them positionally.
+    private const string InsertedSelectColumns =
+        """
+        n."id", n."studentId", n."authorId", n."type", n."content", n."isPrivate", n."followUpDate",
+        n."followUpCompleted", n."followUpCompletedAt", n."tags", n."isActive", n."createdBy", n."createdDate",
+        n."updatedBy", n."updatedAt"
+        """;
+
     // n.-qualified — for the list query's JOIN to users (bare "id" would be ambiguous).
     private const string ListSelectColumns =
         """
@@ -94,19 +104,35 @@ public sealed class CounselorNotesRepository(
         return new NotesPage(rows, total);
     }
 
-    public async Task<NoteRow> CreateAsync(
+    public async Task<NoteListItem> CreateAsync(
         RequestContext context, string studentId, string authorId, CreateNoteInput input,
         CancellationToken cancellationToken = default)
     {
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
 
+        // The author name comes back with the insert (CTE + join) rather than in a second
+        // round trip. Node gained the same join in formmaps#89: the client now drops this
+        // response straight into its cache in place of the optimistic row instead of
+        // refetching, so a create that omits authorName renders an author-less note.
+        //
+        // LEFT, not INNER, and that is load-bearing. The INSERT inside the CTE has already
+        // happened by the time the join runs, so an inner join that matches nothing yields
+        // zero rows and the caller sees a 500 for a note that WAS created — whereupon the
+        // client rolls back its optimistic row and the user writes the note again. A
+        // display-only join must never be able to report a completed write as failed.
+        // AuthorName is nullable precisely so this degrades instead of throwing.
         await using var command = Command(session, $"""
-            INSERT INTO "counselor_notes"
-                ("id", "studentId", "authorId", "type", "content", "isPrivate", "followUpDate", "tags",
-                 "createdDate", "updatedAt")
-            VALUES
-                (gen_random_uuid()::text, @sid, @aid, @type, @content, @isPrivate, @followUpDate, @tags, @now, @now)
-            RETURNING {SelectColumns}
+            WITH inserted AS (
+                INSERT INTO "counselor_notes"
+                    ("id", "studentId", "authorId", "type", "content", "isPrivate", "followUpDate", "tags",
+                     "createdDate", "updatedAt")
+                VALUES
+                    (gen_random_uuid()::text, @sid, @aid, @type, @content, @isPrivate, @followUpDate, @tags, @now, @now)
+                RETURNING {SelectColumns}
+            )
+            SELECT {InsertedSelectColumns}, u."name"
+            FROM inserted n
+            LEFT JOIN "users" u ON u."id" = n."authorId"
             """);
         AddParameter(command, "sid", studentId);
         AddParameter(command, "aid", authorId);
@@ -119,10 +145,10 @@ public sealed class CounselorNotesRepository(
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         await reader.ReadAsync(cancellationToken);
-        var row = MapRow(reader);
+        var item = new NoteListItem(MapRow(reader), reader.IsDBNull(15) ? null : reader.GetString(15));
         await reader.DisposeAsync();
         await session.CommitAsync(cancellationToken);
-        return row;
+        return item;
     }
 
     public async Task<UpdateNoteResult> UpdateAsync(

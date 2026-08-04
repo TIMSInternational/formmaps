@@ -87,8 +87,17 @@ public sealed class CounselorNotesRepositoryTests : IClassFixture<CounselorNotes
         var input = new CreateNoteInput("academic", "hello", IsPrivate: true,
             FollowUpDate: new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc), Tags: ["x", "y"]);
 
-        var row = await Repo().CreateAsync(Ctx(), "s1", Counselor, input);
+        await User(conn, Counselor, "Ada Counselor");
 
+        var created = await Repo().CreateAsync(Ctx(), "s1", Counselor, input);
+
+        // The author name comes back with the insert, so the create response is
+        // shape-identical to a listed row (formmaps#89). Asserted against a seeded name
+        // rather than merely non-empty, so a join that silently returned the wrong row
+        // would still fail.
+        Assert.Equal("Ada Counselor", created.AuthorName);
+
+        var row = created.Note;
         Assert.Equal("s1", row.StudentId);
         Assert.Equal(Counselor, row.AuthorId);
         Assert.Equal("academic", row.Type);
@@ -98,6 +107,25 @@ public sealed class CounselorNotesRepositoryTests : IClassFixture<CounselorNotes
         Assert.False(row.FollowUpCompleted);
         Assert.NotNull(row.FollowUpDate);
         Assert.False(string.IsNullOrEmpty(row.Id));
+    }
+
+    [Fact]
+    public async Task Create_still_succeeds_when_the_author_row_is_not_joinable()
+    {
+        // The INSERT has already happened by the time the author join runs. With an INNER
+        // join a miss yields zero rows and the caller gets a 500 for a note that WAS
+        // created — the client then rolls back its optimistic row and the user writes the
+        // note again, producing duplicates. The join is LEFT so this degrades to a null
+        // name instead. No users row is seeded here, which is exactly that case.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var input = new CreateNoteInput("general", "orphan", IsPrivate: false,
+            FollowUpDate: null, Tags: []);
+
+        var created = await Repo().CreateAsync(Ctx(), "s1", "ghost-author", input);
+
+        Assert.Null(created.AuthorName);
+        Assert.Equal("orphan", created.Note.Content);
+        Assert.False(string.IsNullOrEmpty(created.Note.Id));
     }
 
     [Fact]

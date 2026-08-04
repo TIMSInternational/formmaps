@@ -139,6 +139,33 @@ public class CounselorNotesEndpointsTests
     // ---- POST ----
 
     [Fact]
+    public async Task Post_returns_the_author_joined_shape_so_the_client_can_cache_it()
+    {
+        // formmaps#89 has the client drop this response straight into its React Query cache
+        // in place of the optimistic row, instead of invalidating and refetching. That makes
+        // the shape load-bearing: any field the LIST endpoint returns and this one omits
+        // blanks out on the just-created note until something else forces a refetch.
+        //
+        // `authorName` is the field that actually differed. Node gained the same join in
+        // formmaps#89; this keeps the .NET port at parity, so flipping
+        // FORMMAPS_ROUTE_COUNSELOR_NOTES_TO_DOTNET cannot reintroduce the gap.
+        var repo = new FakeRepo { Access = true };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Post, NotesPath, body: """{"content":"hi"}""");
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var row = doc.RootElement.GetProperty("data");
+        Assert.Equal("Author", row.GetProperty("authorName").GetString());
+        Assert.Equal("Author", row.GetProperty("author").GetProperty("name").GetString());
+        // createdDate, not createdAt — the client renders the note's date from it.
+        Assert.True(row.TryGetProperty("createdDate", out _));
+        Assert.False(row.TryGetProperty("createdAt", out _));
+    }
+
+    [Fact]
     public async Task Post_applies_defaults_and_returns_201()
     {
         var repo = new FakeRepo { Access = true };
@@ -154,7 +181,10 @@ public class CounselorNotesEndpointsTests
         Assert.Equal("hi", repo.LastCreate.Content);
 
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.False(doc.RootElement.GetProperty("data").TryGetProperty("author", out _)); // no author on create
+        // Create DOES carry the author as of formmaps#89 — this used to assert the opposite,
+        // mirroring Node's old no-join behaviour. Node now joins too, so the parity target
+        // moved; see Post_returns_the_author_joined_shape_so_the_client_can_cache_it.
+        Assert.True(doc.RootElement.GetProperty("data").TryGetProperty("author", out _));
     }
 
     [Fact]
@@ -405,12 +435,12 @@ public class CounselorNotesEndpointsTests
             return Task.FromResult(Page);
         }
 
-        public Task<NoteRow> CreateAsync(
+        public Task<NoteListItem> CreateAsync(
             RequestContext context, string studentId, string authorId, CreateNoteInput input,
             CancellationToken cancellationToken = default)
         {
             LastCreate = input;
-            return Task.FromResult(SampleRow("created"));
+            return Task.FromResult(SampleItem("created", "Author"));
         }
 
         public Task<UpdateNoteResult> UpdateAsync(

@@ -119,8 +119,12 @@ public static class CounselorNotesEndpoints
             return InternalError();
         }
 
-        var note = await repository.CreateAsync(context, studentId, context.Actor!.UserId, input, cancellationToken);
-        return Results.Json(new { success = true, data = NoteJson(note) }, statusCode: StatusCodes.Status201Created);
+        var created = await repository.CreateAsync(context, studentId, context.Actor!.UserId, input, cancellationToken);
+        // Author-joined, matching the GET — see NoteWithAuthorJson. Node does the same as of
+        // formmaps#89, which has the client cache this response rather than refetch.
+        return Results.Json(
+            new { success = true, data = NoteWithAuthorJson(created) },
+            statusCode: StatusCodes.Status201Created);
     }
 
     private static async Task<IResult> UpdateNoteAsync(
@@ -233,7 +237,8 @@ public static class CounselorNotesEndpoints
         };
     }
 
-    // POST/PUT: the raw counselor_notes record (no author join).
+    // PUT: the raw counselor_notes record (no author join). POST joins the author — see
+    // CreateNoteAsync — because its response is cached client-side instead of refetched.
     private static object NoteJson(NoteRow n) => new
     {
         id = n.Id,
