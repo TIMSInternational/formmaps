@@ -153,14 +153,18 @@ export async function reviewChangeRequest(
 
 // ─── School Admin: directly edit a student's course plan ─────────────────────
 
+// Returns the created plan row (#94). The route only stores courseId + term + status;
+// courseCode/courseName/credits are sent by the caller but ignored server-side, since
+// they live on the school's course record and are joined back in on read.
 export async function schoolAdminAddCourseToPlan(
   studentId: string,
   payload: { courseId: string; gradeLevel: number; semester: string }
-): Promise<void> {
-  await apiRequest(
+): Promise<{ id: string }> {
+  const json = await apiRequest(
     `/api/v1/school-admin/students/${studentId}/course-plan/courses`,
     { method: "POST", data: payload }
   );
+  return json.data ?? json;
 }
 
 export async function schoolAdminRemoveCourseFromPlan(

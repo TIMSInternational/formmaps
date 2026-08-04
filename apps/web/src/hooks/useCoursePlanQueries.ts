@@ -24,6 +24,8 @@ import type {
   CourseChangeRequestPayload,
   CourseChangeRequestsResponse,
   ChangeRequestReviewPayload,
+  StudentCourseEnrollment,
+  StudentCoursePlanResponse,
 } from "@/types/coursePlan";
 import { toast } from "sonner";
 import {
@@ -37,17 +39,12 @@ import {
 
 // ── formmaps#89: optimistic course-plan writes ──────────────────────────────────
 //
-// Six of the ten mutations here update the cache before the server answers. The other
-// four deliberately do not, and the reasons are recorded at each one rather than left
-// for the next reader to rediscover:
-//
-//   useCounselorAddCourse / useCounselorRemoveCourse
-//       The counselor read endpoint returns a shape the UI cannot read (see
-//       useStudentCoursePlan below), so there is no correct cache to patch yet.
-//   useSchoolAdminAddCourse / useSchoolAdminRemoveCourse
-//       The endpoints they call do not exist in either backend — these writes 404
-//       every time. Showing the row first would turn a visible failure into a row
-//       that appears and vanishes.
+// All ten mutations here update the cache before the server answers. Six landed with
+// #89; the other four were blocked on defects underneath them and were converted once
+// those were fixed — the counselor pair by #95 (its read endpoint returned a shape the
+// UI could not parse, so there was no correct cache to patch) and the school-admin
+// pair by #94 (the endpoints they call did not exist in either backend, so every one
+// of those writes 404'd).
 //
 // The general rules live in useOptimisticCache.ts.
 
@@ -103,12 +100,10 @@ export function useMyCoursePlan() {
 
 // Counselor- or school-admin-facing: get a specific student's course plan.
 //
-// NOTE: the two roles hit different endpoints that return DIFFERENT shapes. The
-// school-admin one matches StudentCoursePlanResponse; the counselor one
-// (/counselor/me/students/:id/course-sequence) returns a bare { data, total }
-// envelope, so `planData?.plan` is undefined and the counselor's course-plan tab
-// renders an empty sequence. Tracked separately — do not paper over it with an
-// optimistic update.
+// The two roles still hit different endpoints, but as of #95 both return the same
+// StudentCoursePlanResponse from the same reader. The counselor route used to answer
+// with a bare { data, total } envelope, which left `planData.plan` undefined and the
+// counselor's course-plan tab empty for every student.
 export function useStudentCoursePlan(studentId?: string) {
   return useQuery({
     queryKey: coursePlanKeys.studentPlan(studentId ?? ""),
@@ -212,34 +207,107 @@ export function useRemoveCourseFromPlan() {
 }
 
 // ─── Counselor direct edit hooks ─────────────────────────────────────────────
+//
+// Optimistic since #95 made the counselor read return the same shape as the
+// school-admin one; before that there was no correctly-shaped cache entry to patch.
 
-// Left pessimistic on purpose. The counselor course-plan read returns a { data, total }
-// envelope while the UI reads `planData.plan.enrollments`, so there is no cache entry
-// in the shape an optimistic insert would have to produce. Fix the read shape first;
-// patching the broken one would just be a second thing to unpick.
+/**
+ * Insert a planned course into a cached StudentCoursePlanResponse.
+ *
+ * Everything the row needs is on the client already: the caller picked the course out
+ * of a catalog it has loaded, and the server stores nothing but courseId + term +
+ * status. `credits` and `category` are the exception — they come from the school's
+ * course record, so they are left at their empty values rather than guessed, and the
+ * reconcile fills them in. A wrong credit count would move the graduation-progress
+ * bar, which is the one number on this screen people act on.
+ */
+function insertPlannedCourse(
+  current: StudentCoursePlanResponse,
+  course: { courseId: string; gradeLevel: number; semester: string; courseCode?: string; courseName?: string; credits?: number },
+): StudentCoursePlanResponse | undefined {
+  const rows = current.plan?.enrollments;
+  if (!rows) return undefined;
+  const pending: StudentCourseEnrollment = {
+    id: optimisticId(),
+    courseId: course.courseId,
+    courseCode: course.courseCode ?? "",
+    courseName: course.courseName ?? "",
+    category: "",
+    credits: course.credits ?? 0,
+    gradeLevel: course.gradeLevel,
+    semester: course.semester,
+    status: "planned",
+  };
+  return { ...current, plan: { ...current.plan, enrollments: [...rows, pending] } };
+}
+
+function removeEnrollment(
+  current: StudentCoursePlanResponse,
+  enrollmentId: string,
+): StudentCoursePlanResponse | undefined {
+  const rows = current.plan?.enrollments;
+  if (!rows) return undefined;
+  return {
+    ...current,
+    plan: { ...current.plan, enrollments: removeBy(rows, (e) => e.id === enrollmentId) },
+  };
+}
+
 export function useCounselorAddCourse(studentId: string) {
   const qc = useQueryClient();
+  const optimistic = useOptimisticCache();
+
   return useMutation({
     mutationFn: (payload: { courseId: string; gradeLevel: number; semester: string }) =>
       counselorAddCourseToPlan(studentId, payload),
-    onSuccess: () => {
+
+    onMutate: (payload) =>
+      optimistic.patch<StudentCoursePlanResponse>(
+        { queryKey: coursePlanKeys.studentPlan(studentId) },
+        (current) => insertPlannedCourse(current, payload),
+      ),
+
+    // The POST returns the created row but not the course's credits or category, and
+    // graduationProgress is recomputed server-side — so this one still reconciles.
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: coursePlanKeys.studentPlan(studentId) });
-      toast.success("Course added to student's plan");
     },
-    onError: (err: Error) => toast.error(err.message),
+
+    onSuccess: () => toast.success("Course added to student's plan"),
+    onError: (err: Error, _payload, context) => {
+      optimistic.rollback(context);
+      toast.error(err.message);
+    },
   });
 }
 
 export function useCounselorRemoveCourse(studentId: string) {
   const qc = useQueryClient();
+  const optimistic = useOptimisticCache();
+
   return useMutation({
     mutationFn: (enrollmentId: string) =>
       counselorRemoveCourseFromPlan(studentId, enrollmentId),
-    onSuccess: () => {
+
+    onMutate: (enrollmentId) =>
+      optimistic.patch<StudentCoursePlanResponse>(
+        { queryKey: coursePlanKeys.studentPlan(studentId) },
+        (current) => removeEnrollment(current, enrollmentId),
+      ),
+
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: coursePlanKeys.studentPlan(studentId) });
-      toast.success("Course removed from student's plan");
     },
-    onError: (err: Error) => toast.error(err.message),
+
+    onSuccess: () => toast.success("Course removed from student's plan"),
+
+    // The endpoint 404s when the enrollment is not the named student's — worth the
+    // rollback, since the plan now also renders completed grades, which have ids the
+    // delete route will not match.
+    onError: (err: Error, _enrollmentId, context) => {
+      optimistic.rollback(context);
+      toast.error(err.message);
+    },
   });
 }
 
@@ -405,32 +473,65 @@ export function useReviewChangeRequest(studentId: string) {
 
 // ── School Admin hooks ──────────────────────────────────────────────────────
 
-// Left pessimistic on purpose: POST /school-admin/students/:id/course-plan/courses
-// does not exist in either backend, so this 404s every time it is clicked. An
-// optimistic insert would show the course landing in the plan before the failure.
+// Optimistic since #94 built the endpoints these call; until then every click 404'd.
+//
+// The caller passes courseCode/courseName/credits alongside the courseId. The server
+// ignores them — it stores only courseId + term + status and joins the rest back in on
+// read — but they are exactly what the optimistic row needs to render properly, so the
+// placeholder here is more complete than the counselor one.
 export function useSchoolAdminAddCourse(studentId: string) {
   const qc = useQueryClient();
+  const optimistic = useOptimisticCache();
+
   return useMutation({
     mutationFn: (payload: { courseId: string; courseCode: string; courseName: string; credits: number; gradeLevel: number; semester: string }) =>
       schoolAdminAddCourseToPlan(studentId, payload),
-    onSuccess: () => {
+
+    onMutate: (payload) =>
+      optimistic.patch<StudentCoursePlanResponse>(
+        { queryKey: coursePlanKeys.studentPlan(studentId) },
+        (current) => insertPlannedCourse(current, payload),
+      ),
+
+    // graduationProgress is recomputed server-side from the school's rule set, so it
+    // is not guessed here and the reconcile is what corrects it.
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: coursePlanKeys.studentPlan(studentId) });
-      toast.success("Course added to plan");
     },
-    onError: (err: Error) => toast.error(err.message),
+
+    onSuccess: () => toast.success("Course added to plan"),
+    onError: (err: Error, _payload, context) => {
+      optimistic.rollback(context);
+      toast.error(err.message);
+    },
   });
 }
 
-// Same as above — the DELETE route does not exist either.
 export function useSchoolAdminRemoveCourse(studentId: string) {
   const qc = useQueryClient();
+  const optimistic = useOptimisticCache();
+
   return useMutation({
     mutationFn: (enrollmentId: string) => schoolAdminRemoveCourseFromPlan(studentId, enrollmentId),
-    onSuccess: () => {
+
+    onMutate: (enrollmentId) =>
+      optimistic.patch<StudentCoursePlanResponse>(
+        { queryKey: coursePlanKeys.studentPlan(studentId) },
+        (current) => removeEnrollment(current, enrollmentId),
+      ),
+
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: coursePlanKeys.studentPlan(studentId) });
-      toast.success("Course removed from plan");
     },
-    onError: (err: Error) => toast.error(err.message),
+
+    onSuccess: () => toast.success("Course removed from plan"),
+
+    // 404s when the id is not a plan row belonging to this student — which includes
+    // every completed-grade row the plan view also renders.
+    onError: (err: Error, _enrollmentId, context) => {
+      optimistic.rollback(context);
+      toast.error(err.message);
+    },
   });
 }
 

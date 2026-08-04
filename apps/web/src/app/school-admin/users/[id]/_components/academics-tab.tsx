@@ -24,8 +24,11 @@ interface AcademicsTabProps {
   recsData: any;
   transcriptData?: TranscriptData;
   coursePlan: StudentCoursePlanResponse | undefined;
-  adminAdd: UseMutationResult<void, Error, { courseId: string; courseCode: string; courseName: string; credits: number; gradeLevel: number; semester: string }>;
-  adminRemove: UseMutationResult<void, Error, string>;
+  // Loose in the result and context slots: these hooks are optimistic (#89) so they
+  // carry a rollback context, and the add now resolves with the created row (#94).
+  // This component reads neither — it only calls mutate and reads isPending.
+  adminAdd: UseMutationResult<unknown, Error, { courseId: string; courseCode: string; courseName: string; credits: number; gradeLevel: number; semester: string }, unknown>;
+  adminRemove: UseMutationResult<unknown, Error, string, unknown>;
 }
 
 export function AcademicsTab({

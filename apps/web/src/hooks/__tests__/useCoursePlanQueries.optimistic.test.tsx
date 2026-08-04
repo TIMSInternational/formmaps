@@ -1,7 +1,8 @@
 /**
  * useCoursePlanQueries.optimistic.test.tsx — formmaps#89.
  *
- * Six of this file's ten mutations became optimistic. What is pinned here:
+ * All ten of this file's mutations are optimistic — six with #89, and the four direct
+ * plan edits once #94 and #95 removed what was blocking them. What is pinned here:
  *
  *  - the student's plan add/remove, including that remove mirrors the SERVER's delete
  *    predicate (courseId AND status "planned") rather than a looser guess, so the
@@ -24,6 +25,10 @@ import {
   useCancelChangeRequest,
   useReviewChangeRequest,
   useSchoolAdminReviewChangeRequest,
+  useCounselorAddCourse,
+  useCounselorRemoveCourse,
+  useSchoolAdminAddCourse,
+  useSchoolAdminRemoveCourse,
   coursePlanKeys,
 } from "../useCoursePlanQueries";
 import {
@@ -33,8 +38,17 @@ import {
   cancelChangeRequest,
   reviewChangeRequest,
   reviewSchoolAdminStudentChangeRequest,
+  counselorAddCourseToPlan,
+  counselorRemoveCourseFromPlan,
+  schoolAdminAddCourseToPlan,
+  schoolAdminRemoveCourseFromPlan,
 } from "@/services/coursePlanService";
-import type { CourseChangeRequest, CourseChangeRequestsResponse } from "@/types/coursePlan";
+import type {
+  CourseChangeRequest,
+  CourseChangeRequestsResponse,
+  StudentCourseEnrollment,
+  StudentCoursePlanResponse,
+} from "@/types/coursePlan";
 
 jest.mock("@/services/coursePlanService", () => ({
   getMyCoursePlan: jest.fn(),
@@ -444,5 +458,145 @@ describe("#89 reviewing a request moves it out of the pending queue", () => {
     expect(
       qc.getQueryData<CourseChangeRequestsResponse>(coursePlanKeys.studentRequests(STUDENT, "pending"))!.data,
     ).toHaveLength(1);
+  });
+});
+
+// ── The four that were blocked, now unblocked ────────────────────────────────────
+//
+// These stayed pessimistic through #89 because of defects underneath them: the
+// counselor read returned a shape the UI could not parse (#95), and the school-admin
+// endpoints did not exist at all (#94). Both fixed, so all ten mutations in the file
+// are now optimistic — and these four share one cache key, `studentPlan(studentId)`,
+// in the StudentCoursePlanResponse shape both roles now return.
+
+describe("#89 direct edits to a student's plan (counselor and school-admin)", () => {
+  const planKey = coursePlanKeys.studentPlan(STUDENT);
+
+  const enrollment = (id: string, over: Partial<StudentCourseEnrollment> = {}): StudentCourseEnrollment => ({
+    id,
+    courseId: `c-${id}`,
+    courseCode: "MATH101",
+    courseName: "Algebra",
+    category: "Math",
+    credits: 3,
+    gradeLevel: 11,
+    semester: "Fall",
+    status: "planned",
+    ...over,
+  });
+
+  const studentPlan = (enrollments: StudentCourseEnrollment[]): StudentCoursePlanResponse => ({
+    plan: {
+      studentId: STUDENT,
+      gradeLevel: 11,
+      enrollments,
+      graduationProgress: { totalCreditsEarned: 12, totalCreditsRequired: 24, percentage: 50, isOnTrack: true },
+    },
+    recommendations: [],
+  });
+
+  const seedPlan = (qc: QueryClient) => qc.setQueryData(planKey, studentPlan([enrollment("e-1")]));
+  const rows = (qc: QueryClient) =>
+    qc.getQueryData<StudentCoursePlanResponse>(planKey)!.plan.enrollments;
+
+  const ADD = { courseId: "c-new", gradeLevel: 11, semester: "Spring" };
+  const ADMIN_ADD = { ...ADD, courseCode: "BIO101", courseName: "Biology", credits: 4 };
+
+  it("counselor: the course appears before the server answers", async () => {
+    const { qc, wrapper } = harness(seedPlan);
+    (counselorAddCourseToPlan as jest.Mock).mockReturnValue(new Promise(() => {}));
+    const { result } = renderHook(() => useCounselorAddCourse(STUDENT), { wrapper });
+
+    act(() => { result.current.mutate(ADD); });
+
+    await waitFor(() => expect(rows(qc)).toHaveLength(2));
+    expect(rows(qc)[1]).toMatchObject({ courseId: "c-new", gradeLevel: 11, semester: "Spring", status: "planned" });
+  });
+
+  it("counselor: does not guess credits, which would move the graduation bar", async () => {
+    // Credits live on the school's course record, and graduationProgress is computed
+    // from the school's rule set. A wrong credit count moves the one number on this
+    // screen anyone acts on, so it stays 0 until the reconcile fills it in.
+    const { qc, wrapper } = harness(seedPlan);
+    (counselorAddCourseToPlan as jest.Mock).mockReturnValue(new Promise(() => {}));
+    const { result } = renderHook(() => useCounselorAddCourse(STUDENT), { wrapper });
+
+    act(() => { result.current.mutate(ADD); });
+
+    await waitFor(() => expect(rows(qc)).toHaveLength(2));
+    expect(rows(qc)[1].credits).toBe(0);
+    expect(qc.getQueryData<StudentCoursePlanResponse>(planKey)!.plan.graduationProgress)
+      .toMatchObject({ totalCreditsEarned: 12, percentage: 50 });
+  });
+
+  it("counselor: the row goes away immediately on remove, and comes back on 404", async () => {
+    const { qc, wrapper } = harness(seedPlan);
+    (counselorRemoveCourseFromPlan as jest.Mock).mockRejectedValue(new Error("Not found"));
+    const { result } = renderHook(() => useCounselorRemoveCourse(STUDENT), { wrapper });
+
+    act(() => { result.current.mutate("e-1"); });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(rows(qc).map((e) => e.id)).toEqual(["e-1"]);
+  });
+
+  it("counselor: rolls back a failed add", async () => {
+    const { qc, wrapper } = harness(seedPlan);
+    const before = qc.getQueryData(planKey);
+    (counselorAddCourseToPlan as jest.Mock).mockRejectedValue(new Error("No current academic year"));
+    const { result } = renderHook(() => useCounselorAddCourse(STUDENT), { wrapper });
+
+    act(() => { result.current.mutate(ADD); });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(qc.getQueryData(planKey)).toEqual(before);
+  });
+
+  it("school-admin: renders the course name it already has, rather than an empty row", async () => {
+    // The school-admin caller passes code/name/credits alongside the id — the server
+    // ignores them, but they are exactly what makes the placeholder readable.
+    const { qc, wrapper } = harness(seedPlan);
+    (schoolAdminAddCourseToPlan as jest.Mock).mockReturnValue(new Promise(() => {}));
+    const { result } = renderHook(() => useSchoolAdminAddCourse(STUDENT), { wrapper });
+
+    act(() => { result.current.mutate(ADMIN_ADD); });
+
+    await waitFor(() => expect(rows(qc)).toHaveLength(2));
+    expect(rows(qc)[1]).toMatchObject({ courseCode: "BIO101", courseName: "Biology", credits: 4 });
+  });
+
+  it("school-admin: removes immediately and restores on failure", async () => {
+    const { qc, wrapper } = harness(seedPlan);
+    const before = qc.getQueryData(planKey);
+    (schoolAdminRemoveCourseFromPlan as jest.Mock).mockRejectedValue(new Error("Not found"));
+    const { result } = renderHook(() => useSchoolAdminRemoveCourse(STUDENT), { wrapper });
+
+    act(() => { result.current.mutate("e-1"); });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(qc.getQueryData(planKey)).toEqual(before);
+  });
+
+  it("does not invent a plan when the student's plan is not cached", async () => {
+    const { qc, wrapper } = harness(() => {});
+    (counselorAddCourseToPlan as jest.Mock).mockReturnValue(new Promise(() => {}));
+    const { result } = renderHook(() => useCounselorAddCourse(STUDENT), { wrapper });
+
+    act(() => { result.current.mutate(ADD); });
+
+    await waitFor(() => expect(result.current.isPending).toBe(true));
+    expect(qc.getQueryData(planKey)).toBeUndefined();
+  });
+
+  it("still reconciles, because the server recomputes graduation progress", async () => {
+    const { qc, wrapper } = harness(seedPlan);
+    const invalidate = jest.spyOn(qc, "invalidateQueries");
+    (counselorAddCourseToPlan as jest.Mock).mockResolvedValue({ id: "real-1" });
+    const { result } = renderHook(() => useCounselorAddCourse(STUDENT), { wrapper });
+
+    act(() => { result.current.mutate(ADD); });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: planKey });
   });
 });
