@@ -11,6 +11,7 @@ import { Roles } from "@/lib/permissions";
 import { roleHomeMap } from "@/lib/roleUtils";
 import { findRouteRule, resolveRedirect } from "@/lib/routePermissions";
 import { initSentry } from "@/lib/sentry";
+import { reportWebVitals } from "@/lib/webVitals";
 import { toast } from "sonner";
 
 interface AuthWrapperProps {
@@ -30,6 +31,12 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
   // Initialize Sentry error tracking (no-op if NEXT_PUBLIC_SENTRY_DSN is not set)
   useEffect(() => { initSentry(); }, []);
+
+  // formmaps#90. Core Web Vitals -> the existing telemetry channel. `web-vitals` was a
+  // dependency nothing imported, so the app had zero field performance data and the
+  // "is the client slow?" question had no evidence behind it. Idempotent, and the
+  // library is dynamically imported so it stays out of the initial bundle.
+  useEffect(() => { reportWebVitals(); }, []);
 
   // Wait for zustand persist hydration before making routing decisions
   const [hasHydrated, setHasHydrated] = useState(false);

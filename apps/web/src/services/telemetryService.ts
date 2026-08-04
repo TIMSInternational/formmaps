@@ -31,7 +31,12 @@ export type TelemetryEventType =
   | "career_explore"
   | "coach_view"
   | "search"
-  | "error";
+  | "error"
+  // formmaps#90 — Core Web Vitals (LCP/INP/CLS/TTFB/FCP), sent by lib/webVitals.ts.
+  // The backend keeps its OWN allow-list and silently drops unrecognised types with a
+  // 200, so this must stay in step with VALID_EVENTS in api/src/routes/telemetry.ts or
+  // the events disappear without any error.
+  | "web_vital";
 
 export interface TelemetryEvent {
   type: TelemetryEventType;
