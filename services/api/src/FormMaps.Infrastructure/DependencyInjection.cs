@@ -188,6 +188,10 @@ public static class DependencyInjection
         // table via the caller's own tenant-scoped RLS session (not System()), used by this task's endpoint
         // and Tasks 8-10's checkout/cancel/portal endpoints to read current status before acting.
         services.AddScoped<FormMaps.Application.Billing.ILiveSubscriptionReader, FormMaps.Infrastructure.Billing.LiveSubscriptionReader>();
+        // formmaps#30: the write half of the same table, used ONLY by POST /cancel-subscription so it can
+        // cancel a locally-active row that has no stripeSubscriptionId instead of 404-ing on it. Requires
+        // the SELECT+UPDATE grant on user_subscriptions in infra/aws/sql/dotnet-service-role.sql.
+        services.AddScoped<FormMaps.Application.Billing.ILiveSubscriptionWriter, FormMaps.Infrastructure.Billing.LiveSubscriptionWriter>();
         // Domain 9a Task 8: IStripeGateway (real Stripe.net wrapper, used by POST /checkout-session and
         // the checkout.session.completed webhook retrofit) + IPlanReader (subscription_plans lookup for
         // that same endpoint).

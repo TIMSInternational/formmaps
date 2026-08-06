@@ -9,7 +9,9 @@ namespace FormMaps.Infrastructure.Billing;
 /// Domain 9a Task 7. Opens a read-only session via the caller's own RequestContext (tenant-scoped RLS
 /// GUCs applied), mirroring SubscriptionGuard's read of the same table -- NOT RequestContext.System(),
 /// which the shadow-table repository/reconciliation worker use since shadow_* tables are .NET-internal
-/// and not tenant-scoped. user_subscriptions is Node-owned legacy data; this is read-only.
+/// and not tenant-scoped. user_subscriptions is Node-owned legacy data; this class is read-only. (The
+/// one .NET write to that table lives in LiveSubscriptionWriter, added by formmaps#30 for
+/// POST /cancel-subscription — see ILiveSubscriptionWriter for why.)
 /// </summary>
 public sealed class LiveSubscriptionReader(IFormMapsDatabaseSessionFactory databaseSessionFactory) : ILiveSubscriptionReader
 {

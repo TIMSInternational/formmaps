@@ -122,6 +122,10 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     [InlineData("shadow_stripe_events", true, true, true, false)]
     [InlineData("shadow_payments", true, true, true, false)]
     [InlineData("subscription_plans", true, false, false, false)]
+    // formmaps#30: POST /cancel-subscription now UPDATEs the caller's own live row (LiveSubscriptionWriter),
+    // so this table moved out of the SELECT-only tier -- but to SELECT+UPDATE, NOT the SELECT/INSERT/UPDATE
+    // tier: .NET has no code path that creates a subscription and must not be able to mint one.
+    [InlineData("user_subscriptions", true, false, true, false)]
     public async Task Domain9a_billing_tables_have_exactly_the_privileges_the_service_needs(
         string table, bool canSelect, bool canInsert, bool canUpdate, bool canDelete)
     {

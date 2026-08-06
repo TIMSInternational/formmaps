@@ -137,7 +137,150 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(gateway.CancelCalled);
         Assert.Equal("sub_cancel", gateway.CancelledSubscriptionId);
+
+        // formmaps#30 added the local write to this branch (legacy stripe.ts sets cancelAtPeriodEnd on
+        // the row as well as scheduling at Stripe). Status/isActive must NOT change -- the
+        // customer.subscription.* webhook flips those when Stripe actually ends the subscription.
+        var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Subscription will cancel at the end of the current period", body.RootElement.GetProperty("message").GetString());
+        var row = await fixture.QueryLiveSubscriptionAsync("user_cancel");
+        Assert.NotNull(row);
+        Assert.True(row!.Value.CancelAtPeriodEnd);
+        Assert.Equal("active", row.Value.Status);
+        Assert.True(row.Value.IsActive);
+        Assert.True(row.Value.UpdatedAt.Year > 2000, "updatedAt was not bound by the writer");
     }
+
+    /// <summary>
+    /// formmaps#30, the reported bug. A live row that is active but was never linked to Stripe (comped or
+    /// manually granted, a pre-Stripe legacy row, a direct insert) answered 404 "No active subscription
+    /// found", leaving the user with an entitlement they could not revoke. Legacy stripe.ts cancels such a
+    /// row directly in the database and answers 200 "Subscription cancelled"; this now matches, and makes
+    /// NO Stripe call, because there is nothing at Stripe to cancel.
+    /// </summary>
+    [Fact]
+    public async Task PostCancelSubscription_ActiveRowWithNoStripeId_Cancels_Returns200_WithoutCallingStripe()
+    {
+        await fixture.ResetAsync();
+        await fixture.SeedLiveSubscriptionAsync("user_no_stripe_id", stripeSubscriptionId: null);
+        var gateway = new FakeStripeGateway();
+        using var factory = FactoryWith(gateway);
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_no_stripe_id", "student");
+
+        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.False(gateway.CancelCalled);
+        var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.True(body.RootElement.GetProperty("success").GetBoolean());
+        Assert.Equal("Subscription cancelled", body.RootElement.GetProperty("message").GetString());
+
+        var row = await fixture.QueryLiveSubscriptionAsync("user_no_stripe_id");
+        Assert.NotNull(row);
+        Assert.Equal("cancelled", row!.Value.Status);
+        Assert.False(row.Value.IsActive);
+        Assert.True(row.Value.UpdatedAt.Year > 2000, "updatedAt was not bound by the writer");
+    }
+
+    /// <summary>
+    /// formmaps#30 idempotency, second half. The local row is active with a Stripe id, but Stripe no
+    /// longer has that subscription (a missed customer.subscription.deleted). The real gateway classifies
+    /// that as AlreadyGone rather than throwing; the endpoint must finish the local cancellation and
+    /// answer 200 rather than surfacing a 500 that would leave the user stuck forever.
+    /// </summary>
+    [Fact]
+    public async Task PostCancelSubscription_StripeNoLongerHasTheSubscription_Cancels_Returns200_NotA500()
+    {
+        await fixture.ResetAsync();
+        await fixture.SeedLiveSubscriptionAsync("user_stripe_gone", stripeSubscriptionId: "sub_gone");
+        var gateway = new FakeStripeGateway { CancelOutcome = StripeCancelOutcome.AlreadyGone };
+        using var factory = FactoryWith(gateway);
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_stripe_gone", "student");
+
+        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(gateway.CancelCalled);
+        var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Subscription cancelled", body.RootElement.GetProperty("message").GetString());
+
+        var row = await fixture.QueryLiveSubscriptionAsync("user_stripe_gone");
+        Assert.Equal("cancelled", row!.Value.Status);
+        Assert.False(row.Value.IsActive);
+    }
+
+    /// <summary>
+    /// formmaps#30. Another user's row must be untouchable, and NOT merely because the caller cannot see
+    /// it. This fixture applies no RLS policies at all (see BillingDatabaseFixture) -- so if the endpoint
+    /// leaned on tenant visibility instead of its own explicit <c>"userId" = caller</c> predicates, the
+    /// victim's row would be found and cancelled here and this test would fail. That is the point: the
+    /// production RLS policy on user_subscriptions (api/prisma/rls/003-fk-users.sql) also admits any user
+    /// in the SAME SCHOOL as the row's owner, so visibility alone was never sufficient.
+    /// </summary>
+    [Fact]
+    public async Task PostCancelSubscription_AnotherUsersSubscription_Returns404_AndLeavesItUntouched()
+    {
+        await fixture.ResetAsync();
+        await fixture.SeedLiveSubscriptionAsync("victim_user", stripeSubscriptionId: null);
+        var gateway = new FakeStripeGateway();
+        using var factory = FactoryWith(gateway);
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "attacker_user", "school_admin");
+
+        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.False(gateway.CancelCalled);
+
+        var victim = await fixture.QueryLiveSubscriptionAsync("victim_user");
+        Assert.NotNull(victim);
+        Assert.Equal("active", victim!.Value.Status);
+        Assert.True(victim.Value.IsActive);
+        Assert.False(victim.Value.CancelAtPeriodEnd);
+        Assert.Equal(2000, victim.Value.UpdatedAt.Year); // the seeded sentinel: nothing wrote this row
+    }
+
+    /// <summary>
+    /// formmaps#30, the other half of "not by visibility alone". The test above is denied by the READ, so
+    /// it cannot say anything about the WRITE. Here the caller legitimately owns a cancellable row and a
+    /// second user's row also exists: the endpoint must cancel exactly one. With no RLS in this fixture, a
+    /// LiveSubscriptionWriter whose UPDATE dropped its own <c>"userId" = @userId</c> predicate would cancel
+    /// both, and only this test would notice.
+    /// </summary>
+    [Fact]
+    public async Task PostCancelSubscription_CancelsOnlyTheCallersRow_NeverAnotherUsers()
+    {
+        await fixture.ResetAsync();
+        await fixture.SeedLiveSubscriptionAsync("owner_user", stripeSubscriptionId: null);
+        await fixture.SeedLiveSubscriptionAsync("bystander_user", stripeSubscriptionId: null);
+        using var factory = FactoryWith(new FakeStripeGateway());
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "owner_user", "student");
+
+        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var owner = await fixture.QueryLiveSubscriptionAsync("owner_user");
+        Assert.Equal("cancelled", owner!.Value.Status);
+
+        var bystander = await fixture.QueryLiveSubscriptionAsync("bystander_user");
+        Assert.Equal("active", bystander!.Value.Status);
+        Assert.True(bystander.Value.IsActive);
+        Assert.Equal(2000, bystander.Value.UpdatedAt.Year); // seeded sentinel: the UPDATE never reached this row
+    }
+
+    private WebApplicationFactory<Program> FactoryWith(IStripeGateway gateway) =>
+        new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment(Environments.Development);
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton(fixture.SessionFactory);
+                services.AddScoped(_ => gateway);
+            });
+        });
 
     [Fact]
     public async Task PostCancelSubscription_NoSubscription_Returns404()

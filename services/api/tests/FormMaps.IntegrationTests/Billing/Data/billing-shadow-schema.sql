@@ -58,6 +58,11 @@ CREATE TABLE IF NOT EXISTS "user_subscriptions" (
     "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT false,
     "isActive" BOOLEAN NOT NULL DEFAULT true
 );
+-- formmaps#30: LiveSubscriptionWriter binds "updatedAt" on every UPDATE, matching the real Prisma
+-- @updatedAt column (NOT NULL, no DB default). Declared NOT NULL here too -- with a DEFAULT only so the
+-- existing seed helpers, which never mention the column, keep working; an UPDATE that forgot the bind
+-- would still leave a stale value, which the writer's own test asserts against.
+ALTER TABLE "user_subscriptions" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now();
 
 -- Domain 9a final-review fix wave (Important 7): POST /portal now reads the LIVE
 -- users."stripeCustomerId" through ILiveCustomerReader instead of creating a Stripe customer, so the

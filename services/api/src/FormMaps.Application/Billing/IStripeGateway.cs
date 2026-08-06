@@ -3,6 +3,29 @@ using FormMaps.Application.Auth;
 namespace FormMaps.Application.Billing;
 
 /// <summary>
+/// Outcome of <see cref="IStripeGateway.CancelSubscriptionAsync" /> (formmaps#30). Stripe answers a
+/// cancel of a subscription it has already fully canceled with an HTTP error, which used to surface
+/// from this endpoint as a 500. That is not an error condition from the caller's point of view: the
+/// thing they asked to stop is already stopped. The gateway classifies it instead of throwing so the
+/// endpoint can finish the local cancellation and answer 200, exactly like legacy Node.
+/// </summary>
+public enum StripeCancelOutcome
+{
+    /// <summary>Stripe accepted cancel_at_period_end = true; access lasts until the paid period ends.</summary>
+    Scheduled,
+
+    /// <summary>
+    /// Stripe asserts the subscription is already canceled (a 400 naming a canceled subscription).
+    /// Nothing to do there, and ending the local grant is safe precisely because Stripe has confirmed
+    /// billing stopped. This does NOT cover "Stripe does not have that id at all" (404 /
+    /// resource_missing): that means the API key addresses a different Stripe account and the
+    /// subscription may still be live and billing, so it propagates as an error rather than reaching
+    /// this outcome. See StripeGateway.IsAlreadyGone.
+    /// </summary>
+    AlreadyGone,
+}
+
+/// <summary>
 /// Domain 9a Task 8. Thin wrapper over the real Stripe.net SDK -- the only place in this codebase that
 /// talks to the live Stripe API for subscription checkout/read/cancel operations. Consumed by this
 /// task's POST /checkout-session endpoint, and retrofitted into Task 4's webhook handler (replacing its
@@ -33,7 +56,12 @@ public interface IStripeGateway
 
     Task<string> CreateBillingPortalSessionAsync(string customerId, string returnUrl, CancellationToken cancellationToken = default);
 
-    Task CancelSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Schedules cancel-at-period-end on the Stripe subscription. Returns
+    /// <see cref="StripeCancelOutcome.AlreadyGone" /> instead of throwing when Stripe has no live
+    /// subscription with that id (formmaps#30 idempotency).
+    /// </summary>
+    Task<StripeCancelOutcome> CancelSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default);
 
     Task<StripeSubscriptionLite> GetSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default);
 }

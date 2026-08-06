@@ -87,14 +87,54 @@ public sealed class StripeGateway(IConfiguration configuration, ILiveCustomerRea
     /// <c>POST /v1/subscriptions/{id}</c> with <c>cancel_at_period_end=true</c> instead; Stripe then emits
     /// the customer.subscription.updated/deleted webhooks that sync the final state.
     /// </remarks>
-    public async Task CancelSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default)
+    public async Task<StripeCancelOutcome> CancelSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default)
     {
         var service = new SubscriptionService(Client());
-        await service.UpdateAsync(
-            stripeSubscriptionId,
-            new SubscriptionUpdateOptions { CancelAtPeriodEnd = true },
-            cancellationToken: cancellationToken);
+        try
+        {
+            await service.UpdateAsync(
+                stripeSubscriptionId,
+                new SubscriptionUpdateOptions { CancelAtPeriodEnd = true },
+                cancellationToken: cancellationToken);
+            return StripeCancelOutcome.Scheduled;
+        }
+        catch (StripeException exception) when (IsAlreadyGone(exception))
+        {
+            // formmaps#30 idempotency. Stripe itself confirms this subscription is already cancelled
+            // (400 "You cannot update a canceled subscription") -- typically a missed
+            // customer.subscription.deleted webhook left the local row stale. Rethrowing surfaces as a
+            // 500 and leaves the user permanently unable to cancel; the caller instead finishes the
+            // local cancellation and answers 200. Note this is Stripe ASSERTING the subscription ended,
+            // which is why ending the local grant is safe here and is NOT safe for a 404 -- see
+            // IsAlreadyGone's remarks.
+            return StripeCancelOutcome.AlreadyGone;
+        }
     }
+
+    /// <summary>
+    /// The ONE shape that actually means "this subscription is already cancelled": a 400 invalid_request
+    /// whose message names a canceled subscription. Stripe never forgets a subscription id -- a cancelled
+    /// one stays retrievable and answers 400. It does NOT 404.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <c>resource_missing</c> / HTTP 404 is deliberately NOT matched here (formmaps#30). It does not mean
+    /// the subscription ended; it means the id is not in the Stripe account this API key addresses -- a
+    /// test-vs-live key mismatch (formmaps#43, #73), a rotated key on a different account, or a
+    /// staging-seeded id in a prod row. In exactly that case the subscription is very likely still LIVE
+    /// and still billing the customer, so treating it as "already gone" would end the local entitlement
+    /// and destroy the only record of a charge that keeps recurring. Letting the StripeException
+    /// propagate to a 500 preserves the row, keeps the charge reconcilable, and surfaces the
+    /// misconfiguration -- the exception message ("No such subscription: sub_...") names the id.
+    /// </para>
+    /// <para>
+    /// Any other StripeException (auth, rate limit, card, network) still propagates and still becomes a
+    /// 500, which is correct. Mirrors stripeSubscriptionAlreadyGone in the Node twin
+    /// (formmaps-platform api/src/routes/stripe.ts).
+    /// </para>
+    /// </remarks>
+    private static bool IsAlreadyGone(StripeException exception) =>
+        (exception.StripeError?.Message ?? string.Empty).Contains("canceled subscription", StringComparison.OrdinalIgnoreCase);
 
     public async Task<StripeSubscriptionLite> GetSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default)
     {

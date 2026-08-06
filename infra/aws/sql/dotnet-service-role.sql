@@ -140,11 +140,26 @@ GRANT SELECT ON TABLE
     -- NOTE: "user_settings" moved to the SELECT/INSERT/UPDATE tier below (Domain 10) --
     -- AuthAdminRepository.SignupAsync does INSERT INTO "user_settings". Read-only here would
     -- have failed every signup.
-    public."user_subscriptions",
+    -- NOTE: "user_subscriptions" moved to its own SELECT/UPDATE grant below (formmaps#30) --
+    -- POST /api/v1/billing/cancel-subscription now UPDATEs the caller's own row (cancelAtPeriodEnd,
+    -- or status/isActive when there is no Stripe subscription to cancel). Read-only here would fail
+    -- every cancellation with 42501 the moment FORMMAPS_ROUTE_BILLING_TO_DOTNET is flipped.
     public."vocational_dimensions",
     public."vocational_instruments",
     public."vocational_question_variants",
     public."vocational_questions"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
+-- 3b. Read + update, never insert, never delete (formmaps#30).
+--     "user_subscriptions" rows are still CREATED exclusively by legacy Node's Stripe webhook; the
+--     .NET service only ever flips columns on a row that already exists, on the caller's own row, in
+--     LiveSubscriptionWriter. So it gets UPDATE without INSERT rather than being folded into the
+--     SELECT/INSERT/UPDATE tier below -- granting INSERT here would hand .NET the ability to mint
+--     entitlements it has no code path for. DbRoleGrantsTests pins this exact verb set.
+-- ---------------------------------------------------------------------------
+GRANT SELECT, UPDATE ON TABLE
+    public."user_subscriptions"
     TO formmaps_dotnet_svc;
 
 -- ---------------------------------------------------------------------------

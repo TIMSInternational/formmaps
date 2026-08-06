@@ -47,11 +47,18 @@ public sealed class FakeStripeGateway : IStripeGateway
         return Task.FromResult("https://billing.stripe.com/session/fake");
     }
 
-    public Task CancelSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// formmaps#30. Set to <see cref="StripeCancelOutcome.AlreadyGone" /> to simulate Stripe no longer
+    /// having the subscription (deleted / already canceled) -- the real gateway classifies that instead of
+    /// throwing, and the endpoint must finish the local cancellation and answer 200 rather than 500.
+    /// </summary>
+    public StripeCancelOutcome CancelOutcome { get; set; } = StripeCancelOutcome.Scheduled;
+
+    public Task<StripeCancelOutcome> CancelSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default)
     {
         CancelCalled = true;
         CancelledSubscriptionId = stripeSubscriptionId;
-        return Task.CompletedTask;
+        return Task.FromResult(CancelOutcome);
     }
 
     public Task<StripeSubscriptionLite> GetSubscriptionAsync(string stripeSubscriptionId, CancellationToken cancellationToken = default) =>

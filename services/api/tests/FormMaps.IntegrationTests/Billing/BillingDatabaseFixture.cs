@@ -95,6 +95,57 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
             reader.IsDBNull(3) ? null : new DateTimeOffset(DateTime.SpecifyKind(reader.GetDateTime(3), DateTimeKind.Utc)));
     }
 
+    /// <summary>
+    /// formmaps#30. Seeds ONLY a live user_subscriptions row (no shadow twin), with a caller-chosen
+    /// stripeSubscriptionId that may be null -- the exact shape the cancel endpoint used to 404 on:
+    /// active locally, never linked to Stripe (comped/manual grant, pre-Stripe legacy row, direct insert).
+    /// </summary>
+    public async Task SeedLiveSubscriptionAsync(
+        string userId, string? stripeSubscriptionId, string status = "active", bool isActive = true)
+    {
+        await using var connection = new NpgsqlConnection(ConnectionString);
+        await connection.OpenAsync();
+        await using var plan = connection.CreateCommand();
+        plan.CommandText = """INSERT INTO "subscription_plans" ("id", "name", "price", "interval") VALUES ('plan_1', 'Pro', 29.99, 'month') ON CONFLICT DO NOTHING""";
+        await plan.ExecuteNonQueryAsync();
+
+        await using var live = connection.CreateCommand();
+        live.CommandText = """
+            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive", "updatedAt")
+            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive, TIMESTAMPTZ '2000-01-01 00:00:00Z')
+            """;
+        AddParam(live, "id", Guid.NewGuid().ToString());
+        AddParam(live, "userId", userId);
+        AddParam(live, "status", status);
+        AddParam(live, "subId", (object?)stripeSubscriptionId ?? DBNull.Value);
+        AddParam(live, "isActive", isActive);
+        await live.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>
+    /// formmaps#30. Reads back the live row the cancel endpoint is supposed to have written. The
+    /// <c>UpdatedAt</c> comes back too: the seed helpers plant a year-2000 sentinel, so a writer that
+    /// forgot to bind "updatedAt" is visible instead of being masked by the column default.
+    /// </summary>
+    public async Task<(string Status, bool IsActive, bool CancelAtPeriodEnd, DateTimeOffset UpdatedAt)?> QueryLiveSubscriptionAsync(string userId)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand(
+            """SELECT "status", "isActive", "cancelAtPeriodEnd", "updatedAt" FROM "user_subscriptions" WHERE "userId" = @userId""", conn);
+        cmd.Parameters.AddWithValue("userId", userId);
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync())
+        {
+            return null;
+        }
+
+        return (
+            reader.GetString(0),
+            reader.GetBoolean(1),
+            reader.GetBoolean(2),
+            new DateTimeOffset(DateTime.SpecifyKind(reader.GetDateTime(3), DateTimeKind.Utc)));
+    }
+
     private static string LoadSchemaDdl()
     {
         var assembly = Assembly.GetExecutingAssembly();
@@ -162,8 +213,8 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
 
         await using var live = connection.CreateCommand();
         live.CommandText = """
-            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive", "nextBillingDate")
-            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive, @nextBilling)
+            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive", "nextBillingDate", "updatedAt")
+            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive, @nextBilling, TIMESTAMPTZ '2000-01-01 00:00:00Z')
             """;
         AddParam(live, "id", Guid.NewGuid().ToString()); AddParam(live, "userId", userId);
         AddParam(live, "status", liveStatus); AddParam(live, "subId", stripeSubscriptionId);
