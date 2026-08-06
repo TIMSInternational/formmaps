@@ -101,7 +101,7 @@
     "dev": "next dev --turbopack -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src",
     "test": "jest",
     "test:watch": "jest --watch",
     "i18n:check-parity": "node scripts/check-i18n-parity.mjs",
