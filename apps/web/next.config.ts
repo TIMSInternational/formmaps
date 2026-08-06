@@ -1330,6 +1330,34 @@ const nextConfig: NextConfig = {
             { source: "/api/v1/billing/portal", destination: `${dotnetApiBaseUrl}/api/v1/billing/portal` },
           ]
         : []),
+      // Migration roadmap (issue #82) -- must precede the /api/:path* catch-all below, which
+      // otherwise swallows this path (`:path*` matches "v1/migration/roadmap") and sends it to
+      // Node, which has no such route. That is the live 404: the response from
+      // app.formmaps.com/api/v1/migration/roadmap carries Node's `ratelimit-policy: 3000;w=900`
+      // header and Express's "Cannot GET" body, while the same path 200s directly against the
+      // .NET service. afterFiles rewrites match in array order, first match wins, so appending
+      // here -- inside personalityRewrites, which is spread ahead of the catch-all -- is what
+      // makes this rule reachable at all.
+      //
+      // Deliberately NOT flag-gated, same precedent as the coach-management carve-outs below.
+      // Two reasons: (1) this endpoint is the instrument used to verify which backend owns a
+      // domain immediately after a deploy, so it cannot sit behind a flag that has not been
+      // flipped yet -- it must be trustworthy before any cutover flag is touched; (2) it steals
+      // no traffic to gate in the first place -- /api/v1/migration is a .NET-only MapGroup
+      // (services/api/src/FormMaps.Api/Endpoints/MigrationEndpoints.cs) and Node serves nothing
+      // under that prefix, so the worst case on flip-back is the 404 it already returns today.
+      //
+      // Still guarded on dotnetApiBaseUrl: when FORMMAPS_DOTNET_API_BASE_URL is unset the
+      // template would render the literal destination "undefined/api/..." , which is not a valid
+      // rewrite destination and fails `next build`. The guard keeps the block inert (and the
+      // build green) wherever the base URL is not configured, e.g. local dev.
+      //
+      // Prefix rather than the exact /roadmap path because .NET owns the whole /api/v1/migration
+      // MapGroup and Node owns none of it, so the prefix is the real service boundary and a
+      // second endpoint added to that group will not need another frontend redeploy.
+      ...(dotnetApiBaseUrl
+        ? [{ source: "/api/v1/migration/:path*", destination: `${dotnetApiBaseUrl}/api/v1/migration/:path*` }]
+        : []),
     ];
     return {
       afterFiles: [
