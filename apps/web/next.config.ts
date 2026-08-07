@@ -1328,6 +1328,27 @@ const nextConfig: NextConfig = {
             { source: "/api/v1/billing/checkout-session", destination: `${dotnetApiBaseUrl}/api/v1/billing/checkout-session` },
             { source: "/api/v1/billing/cancel-subscription", destination: `${dotnetApiBaseUrl}/api/v1/billing/cancel-subscription` },
             { source: "/api/v1/billing/portal", destination: `${dotnetApiBaseUrl}/api/v1/billing/portal` },
+            // Issue #98: the four /api/v1/billing entries above move ZERO traffic on their own. Nothing
+            // in apps/web/src has ever called /api/v1/billing -- the app calls the LEGACY paths
+            // (subscriptionStatusService.ts -> /api/stripe/cancel-subscription, subscriptionService.ts
+            // -> /api/stripe/billing-portal), so the whole Domain 9a REST surface was unreachable and
+            // flipping FORMMAPS_ROUTE_BILLING_TO_DOTNET was a no-op. .NET now serves those two legacy
+            // spellings from the same handler delegates (BillingEndpoints.MapBillingEndpoints), which is
+            // why these stay source == destination like every other pair in this file -- no remapping
+            // rewrite is invented here, there being no precedent for one across all 189 pairs.
+            //
+            // MUST STAY INSIDE THIS FLAG GUARD. apps/web auto-deploys to production on push to main, and
+            // /api/stripe/cancel-subscription is a LIVE path real paying customers hit today. An ungated
+            // entry would divert live billing traffic to a .NET service that is not deployed yet, the
+            // moment main is pushed. Inside the guard these are inert until FORMMAPS_ROUTE_BILLING_TO_DOTNET
+            // is deliberately set (with a base URL configured), and the flag stays the instant rollback.
+            //
+            // Per-path, never an /api/stripe/:path* prefix: Node exclusively owns /api/stripe/config,
+            // /api/stripe/status/:sessionId, /api/stripe/user/:userId and
+            // /api/stripe/create-checkout-session -- .NET has no twin for any of them, so a prefix rule
+            // would 404 all four the instant the flag flipped.
+            { source: "/api/stripe/cancel-subscription", destination: `${dotnetApiBaseUrl}/api/stripe/cancel-subscription` },
+            { source: "/api/stripe/billing-portal", destination: `${dotnetApiBaseUrl}/api/stripe/billing-portal` },
           ]
         : []),
       // Migration roadmap (issue #82) -- must precede the /api/:path* catch-all below, which

@@ -31,6 +31,21 @@ namespace FormMaps.IntegrationTests.Billing;
 [Collection(nameof(BillingDatabaseCollection))]
 public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixture<WebApplicationFactory<Program>>
 {
+    /// <summary>
+    /// issue #98. The frontend has never called <c>/api/v1/billing/*</c> -- apps/web calls the LEGACY
+    /// paths (<c>subscriptionStatusService.ts</c> -> /api/stripe/cancel-subscription,
+    /// <c>subscriptionService.ts</c> -> /api/stripe/billing-portal), so the whole v1 surface was
+    /// unreachable dead code and flipping FORMMAPS_ROUTE_BILLING_TO_DOTNET moved zero traffic. .NET now
+    /// ALSO serves the legacy spellings from the SAME handler delegate. Every cancel/portal case below is
+    /// parameterised over both spellings: the two paths must stay behaviourally identical, and a
+    /// per-path assertion is the only thing that catches an alias silently drifting (or being dropped).
+    /// Note the portal's legacy spelling is "billing-portal", NOT "portal".
+    /// </summary>
+    private const string CancelV1Path = "/api/v1/billing/cancel-subscription";
+    private const string CancelLegacyPath = "/api/stripe/cancel-subscription";
+    private const string PortalV1Path = "/api/v1/billing/portal";
+    private const string PortalLegacyPath = "/api/stripe/billing-portal";
+
     private WebApplicationFactory<Program> CreateFactory() => new WebApplicationFactory<Program>()
         .WithWebHostBuilder(builder =>
         {
@@ -114,8 +129,10 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
-    public async Task PostCancelSubscription_ActiveSubscription_CallsGatewayCancel_Returns200()
+    [Theory]
+    [InlineData(CancelV1Path)]
+    [InlineData(CancelLegacyPath)]
+    public async Task PostCancelSubscription_ActiveSubscription_CallsGatewayCancel_Returns200(string path)
     {
         await fixture.ResetAsync();
         await fixture.SeedMatchingSubscriptionAsync("user_cancel", "sub_cancel", "active");
@@ -132,7 +149,7 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "user_cancel", "student");
 
-        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+        var response = await client.PostAsync(path, null);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(gateway.CancelCalled);
@@ -158,8 +175,10 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     /// row directly in the database and answers 200 "Subscription cancelled"; this now matches, and makes
     /// NO Stripe call, because there is nothing at Stripe to cancel.
     /// </summary>
-    [Fact]
-    public async Task PostCancelSubscription_ActiveRowWithNoStripeId_Cancels_Returns200_WithoutCallingStripe()
+    [Theory]
+    [InlineData(CancelV1Path)]
+    [InlineData(CancelLegacyPath)]
+    public async Task PostCancelSubscription_ActiveRowWithNoStripeId_Cancels_Returns200_WithoutCallingStripe(string path)
     {
         await fixture.ResetAsync();
         await fixture.SeedLiveSubscriptionAsync("user_no_stripe_id", stripeSubscriptionId: null);
@@ -168,7 +187,7 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "user_no_stripe_id", "student");
 
-        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+        var response = await client.PostAsync(path, null);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.False(gateway.CancelCalled);
@@ -189,8 +208,10 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     /// that as AlreadyGone rather than throwing; the endpoint must finish the local cancellation and
     /// answer 200 rather than surfacing a 500 that would leave the user stuck forever.
     /// </summary>
-    [Fact]
-    public async Task PostCancelSubscription_StripeNoLongerHasTheSubscription_Cancels_Returns200_NotA500()
+    [Theory]
+    [InlineData(CancelV1Path)]
+    [InlineData(CancelLegacyPath)]
+    public async Task PostCancelSubscription_StripeNoLongerHasTheSubscription_Cancels_Returns200_NotA500(string path)
     {
         await fixture.ResetAsync();
         await fixture.SeedLiveSubscriptionAsync("user_stripe_gone", stripeSubscriptionId: "sub_gone");
@@ -199,7 +220,7 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "user_stripe_gone", "student");
 
-        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+        var response = await client.PostAsync(path, null);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(gateway.CancelCalled);
@@ -219,8 +240,10 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     /// production RLS policy on user_subscriptions (api/prisma/rls/003-fk-users.sql) also admits any user
     /// in the SAME SCHOOL as the row's owner, so visibility alone was never sufficient.
     /// </summary>
-    [Fact]
-    public async Task PostCancelSubscription_AnotherUsersSubscription_Returns404_AndLeavesItUntouched()
+    [Theory]
+    [InlineData(CancelV1Path)]
+    [InlineData(CancelLegacyPath)]
+    public async Task PostCancelSubscription_AnotherUsersSubscription_Returns404_AndLeavesItUntouched(string path)
     {
         await fixture.ResetAsync();
         await fixture.SeedLiveSubscriptionAsync("victim_user", stripeSubscriptionId: null);
@@ -229,7 +252,7 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "attacker_user", "school_admin");
 
-        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+        var response = await client.PostAsync(path, null);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.False(gateway.CancelCalled);
@@ -249,8 +272,10 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     /// LiveSubscriptionWriter whose UPDATE dropped its own <c>"userId" = @userId</c> predicate would cancel
     /// both, and only this test would notice.
     /// </summary>
-    [Fact]
-    public async Task PostCancelSubscription_CancelsOnlyTheCallersRow_NeverAnotherUsers()
+    [Theory]
+    [InlineData(CancelV1Path)]
+    [InlineData(CancelLegacyPath)]
+    public async Task PostCancelSubscription_CancelsOnlyTheCallersRow_NeverAnotherUsers(string path)
     {
         await fixture.ResetAsync();
         await fixture.SeedLiveSubscriptionAsync("owner_user", stripeSubscriptionId: null);
@@ -259,7 +284,7 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "owner_user", "student");
 
-        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+        var response = await client.PostAsync(path, null);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var owner = await fixture.QueryLiveSubscriptionAsync("owner_user");
@@ -282,8 +307,10 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
             });
         });
 
-    [Fact]
-    public async Task PostCancelSubscription_NoSubscription_Returns404()
+    [Theory]
+    [InlineData(CancelV1Path)]
+    [InlineData(CancelLegacyPath)]
+    public async Task PostCancelSubscription_NoSubscription_Returns404(string path)
     {
         // Final-review fix wave (Important 10): legacy stripe.ts answers this case with
         // res.status(404) "No active subscription found"; this endpoint previously returned 400.
@@ -292,13 +319,15 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "user_no_sub_cancel", "student");
 
-        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+        var response = await client.PostAsync(path, null);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
-    public async Task PostCancelSubscription_AlreadyCancelledSubscription_Returns404_WithoutCallingStripe()
+    [Theory]
+    [InlineData(CancelV1Path)]
+    [InlineData(CancelLegacyPath)]
+    public async Task PostCancelSubscription_AlreadyCancelledSubscription_Returns404_WithoutCallingStripe(string path)
     {
         // Final-review fix wave (Critical 1, second half): without legacy's
         // status IN (active, trialing, past_due) AND isActive filter, this row would be handed straight
@@ -318,14 +347,16 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "user_recancel", "student");
 
-        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+        var response = await client.PostAsync(path, null);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.False(gateway.CancelCalled);
     }
 
-    [Fact]
-    public async Task PostCancelSubscription_InactiveSubscription_Returns404_WithoutCallingStripe()
+    [Theory]
+    [InlineData(CancelV1Path)]
+    [InlineData(CancelLegacyPath)]
+    public async Task PostCancelSubscription_InactiveSubscription_Returns404_WithoutCallingStripe(string path)
     {
         // Same filter, other half: status is still "active" but the live row is isActive = false.
         await fixture.ResetAsync();
@@ -343,25 +374,29 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "user_inactive_cancel", "student");
 
-        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+        var response = await client.PostAsync(path, null);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.False(gateway.CancelCalled);
     }
 
-    [Fact]
-    public async Task PostCancelSubscription_Anonymous_Returns401()
+    [Theory]
+    [InlineData(CancelV1Path)]
+    [InlineData(CancelLegacyPath)]
+    public async Task PostCancelSubscription_Anonymous_Returns401(string path)
     {
         using var factory = CreateFactory();
         using var client = factory.CreateClient();
 
-        var response = await client.PostAsync("/api/v1/billing/cancel-subscription", null);
+        var response = await client.PostAsync(path, null);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Fact]
-    public async Task PostBillingPortal_ExistingStripeCustomer_ReturnsPortalUrl()
+    [Theory]
+    [InlineData(PortalV1Path)]
+    [InlineData(PortalLegacyPath)]
+    public async Task PostBillingPortal_ExistingStripeCustomer_ReturnsPortalUrl(string path)
     {
         await fixture.ResetAsync();
         await fixture.SeedUserAsync("user_portal", stripeCustomerId: "cus_on_file");
@@ -378,7 +413,7 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "user_portal", "student");
 
-        var response = await client.PostAsync("/api/v1/billing/portal", null);
+        var response = await client.PostAsync(path, null);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
@@ -389,9 +424,11 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     }
 
     [Theory]
-    [InlineData("user_portal_null_customer", true)]
-    [InlineData("user_portal_no_row", false)]
-    public async Task PostBillingPortal_NoStripeCustomerOnFile_Returns404_WithoutCreatingOne(string userId, bool seedUserRow)
+    [InlineData(PortalV1Path, "user_portal_null_customer", true)]
+    [InlineData(PortalV1Path, "user_portal_no_row", false)]
+    [InlineData(PortalLegacyPath, "user_portal_null_customer", true)]
+    [InlineData(PortalLegacyPath, "user_portal_no_row", false)]
+    public async Task PostBillingPortal_NoStripeCustomerOnFile_Returns404_WithoutCreatingOne(string path, string userId, bool seedUserRow)
     {
         // Final-review fix wave (Important 7 / Important 10). This endpoint used to call
         // GetOrCreateCustomerAsync unconditionally, so simply opening the billing portal CREATED a real
@@ -418,7 +455,7 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, userId, "student");
 
-        var response = await client.PostAsync("/api/v1/billing/portal", null);
+        var response = await client.PostAsync(path, null);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.False(gateway.BillingPortalCalled);
@@ -427,13 +464,86 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         Assert.Equal("No billing account found", body.RootElement.GetProperty("message").GetString());
     }
 
-    [Fact]
-    public async Task PostBillingPortal_Anonymous_Returns401()
+    /// <summary>
+    /// issue #98, the config-key bug. The endpoint built the Stripe portal return URL from
+    /// <c>configuration["NEXT_PUBLIC_APP_URL"]</c>, which is NOT one of formmaps-api-prod's runtime env
+    /// keys (ASPNETCORE_ENVIRONMENT, ASPNETCORE_URLS, CORS_ORIGINS, FRONTEND_BASE_URL,
+    /// LegacyJwt__Audience, LegacyJwt__Issuer -- verified with apprunner describe-service), so the value
+    /// always came from the hard-coded literal and the variable was decorative.
+    ///
+    /// FRONTEND_BASE_URL is deliberately set to a SENTINEL host here rather than left unset: with it
+    /// unset, FrontendUrl falls back (localhost:3000 outside Production) and the assertion would still
+    /// pass against a hard-coded string, proving nothing about whether configuration is read at all. The
+    /// sentinel can only appear in the captured URL if the env var is genuinely the source.
+    ///
+    /// The path is legacy stripe.ts:387's <c>/dashboard/subscriptions</c>, not <c>/dashboard/settings</c>.
+    ///
+    /// FrontendUrl reads the process-wide environment variable directly (not IConfiguration), so
+    /// builder.UseSetting cannot drive it -- hence the scoped set/restore, same pattern as JwtSecretScope.
+    /// </summary>
+    [Theory]
+    [InlineData(PortalV1Path)]
+    [InlineData(PortalLegacyPath)]
+    public async Task PostBillingPortal_ReturnUrl_ComesFromFrontendBaseUrl_AndPointsAtSubscriptions(string path)
+    {
+        const string Sentinel = "https://sentinel-frontend.invalid";
+        await fixture.ResetAsync();
+        await fixture.SeedUserAsync("user_portal_returnurl", stripeCustomerId: "cus_on_file");
+        var gateway = new FakeStripeGateway();
+
+        using (new EnvironmentVariableScope("FRONTEND_BASE_URL", Sentinel))
+        {
+            using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment(Environments.Development);
+                builder.ConfigureTestServices(services =>
+                {
+                    services.AddSingleton(fixture.SessionFactory);
+                    services.AddScoped<IStripeGateway>(_ => gateway);
+                });
+            });
+            using var client = factory.CreateClient();
+            AddDevIdentity(client, "user_portal_returnurl", "student");
+
+            var response = await client.PostAsync(path, null);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        Assert.True(gateway.BillingPortalCalled);
+        Assert.Equal($"{Sentinel}/dashboard/subscriptions", gateway.CapturedReturnUrl);
+    }
+
+    /// <summary>
+    /// Sets a process-wide environment variable for the scope and restores the previous value -- including
+    /// restoring "unset". Same shape as <see cref="JwtSecretScope" />; kept local because FRONTEND_BASE_URL
+    /// has no other test-side reader or writer in this suite (verified by grep), so there is nothing to
+    /// serialize a shared collection against.
+    /// </summary>
+    private sealed class EnvironmentVariableScope : IDisposable
+    {
+        private readonly string name;
+        private readonly string? previousValue;
+
+        public EnvironmentVariableScope(string name, string? value)
+        {
+            this.name = name;
+            previousValue = Environment.GetEnvironmentVariable(name);
+            Environment.SetEnvironmentVariable(name, value);
+        }
+
+        public void Dispose() => Environment.SetEnvironmentVariable(name, previousValue);
+    }
+
+    [Theory]
+    [InlineData(PortalV1Path)]
+    [InlineData(PortalLegacyPath)]
+    public async Task PostBillingPortal_Anonymous_Returns401(string path)
     {
         using var factory = CreateFactory();
         using var client = factory.CreateClient();
 
-        var response = await client.PostAsync("/api/v1/billing/portal", null);
+        var response = await client.PostAsync(path, null);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }

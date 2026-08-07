@@ -32,6 +32,14 @@ public sealed class FakeStripeGateway : IStripeGateway
     /// asserts this stays false when the caller has no Stripe customer on file.</summary>
     public bool BillingPortalCalled { get; private set; }
 
+    /// <summary>The returnUrl handed to the last CreateBillingPortalSessionAsync call, if any. Added for
+    /// issue #98: the endpoint used to build this from configuration["NEXT_PUBLIC_APP_URL"], a variable
+    /// that is NOT set on formmaps-api-prod, so the value silently came from a hard-coded literal and no
+    /// test could tell the difference. It now comes from FRONTEND_BASE_URL via FrontendUrl, and the path
+    /// is legacy stripe.ts's /dashboard/subscriptions rather than /dashboard/settings -- neither is
+    /// observable without capturing the argument here.</summary>
+    public string? CapturedReturnUrl { get; private set; }
+
     public Task<string> GetOrCreateCustomerAsync(RequestContext context, string userId, string? email, CancellationToken cancellationToken = default)
     {
         GetOrCreateCustomerCalls++;
@@ -44,6 +52,7 @@ public sealed class FakeStripeGateway : IStripeGateway
     public Task<string> CreateBillingPortalSessionAsync(string customerId, string returnUrl, CancellationToken cancellationToken = default)
     {
         BillingPortalCalled = true;
+        CapturedReturnUrl = returnUrl;
         return Task.FromResult("https://billing.stripe.com/session/fake");
     }
 

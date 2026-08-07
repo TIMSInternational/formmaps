@@ -1,6 +1,6 @@
+using FormMaps.Api.Auth;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Billing;
-using Microsoft.Extensions.Configuration;
 
 namespace FormMaps.Api.Endpoints;
 
@@ -26,11 +26,37 @@ public static class BillingEndpoints
 {
     public static IEndpointRouteBuilder MapBillingEndpoints(this IEndpointRouteBuilder app)
     {
+        // Shared handler references, bound to BOTH path spellings below (issue #98). Held in locals and
+        // reused rather than repeating the method group per group, so the aliases are the same delegate
+        // instance and cannot drift: there is exactly one implementation of each behaviour, and no way to
+        // "fix" one path without fixing the other.
+        var cancelSubscription = CancelSubscriptionAsync;
+        var billingPortal = CreateBillingPortalAsync;
+
         var group = app.MapGroup("/api/v1/billing").WithTags("Billing");
         group.MapGet("/status", GetStatusAsync);
         group.MapPost("/checkout-session", CreateCheckoutSessionAsync);
-        group.MapPost("/cancel-subscription", CancelSubscriptionAsync);
-        group.MapPost("/portal", CreateBillingPortalAsync);
+        group.MapPost("/cancel-subscription", cancelSubscription);
+        group.MapPost("/portal", billingPortal);
+
+        // Legacy-path aliases (issue #98). The /api/v1/billing surface above was unreachable dead code:
+        // apps/web has never called it -- subscriptionStatusService.ts posts to
+        // /api/stripe/cancel-subscription and subscriptionService.ts posts to /api/stripe/billing-portal
+        // (grep "v1/billing" over apps/web/src returns nothing), so flipping
+        // FORMMAPS_ROUTE_BILLING_TO_DOTNET moved zero traffic. .NET therefore ADOPTS the legacy paths
+        // rather than the frontend being rewritten or next.config.ts inventing a remapping rewrite --
+        // all 189 existing rewrite pairs in that file are source==destination, so a remapping rule would
+        // be a novel shape with no precedent here.
+        //
+        // Deliberately per-path, NOT an /api/stripe prefix group: Node still exclusively owns
+        // /api/stripe/config, /api/stripe/status/:sessionId, /api/stripe/user/:userId and
+        // /api/stripe/create-checkout-session, none of which have a .NET twin. Only the two paths whose
+        // behaviour is ported and verified are listed. Note the portal's legacy spelling is
+        // "billing-portal", not "portal".
+        var legacy = app.MapGroup("/api/stripe").WithTags("Billing");
+        legacy.MapPost("/cancel-subscription", cancelSubscription);
+        legacy.MapPost("/billing-portal", billingPortal);
+
         return app;
     }
 
@@ -38,7 +64,7 @@ public static class BillingEndpoints
 
     private static async Task<IResult> CreateCheckoutSessionAsync(
         IRequestContextAccessor accessor, IProtectedRequestGuard guard, IStripeGateway gateway,
-        IPlanReader planReader, CreateCheckoutSessionRequest? body, IConfiguration configuration,
+        IPlanReader planReader, CreateCheckoutSessionRequest? body,
         CancellationToken cancellationToken)
     {
         var context = accessor.Current;
@@ -57,7 +83,15 @@ public static class BillingEndpoints
         }
 
         var customerId = await gateway.GetOrCreateCustomerAsync(context, context.Tenant!.UserId, email: null, cancellationToken);
-        var appUrl = configuration["NEXT_PUBLIC_APP_URL"] ?? "https://app.formmaps.com";
+        // issue #98: this used to read configuration["NEXT_PUBLIC_APP_URL"], which is not among
+        // formmaps-api-prod's env keys (ASPNETCORE_ENVIRONMENT, ASPNETCORE_URLS, CORS_ORIGINS,
+        // FRONTEND_BASE_URL, LegacyJwt__Audience, LegacyJwt__Issuer -- verified via apprunner
+        // describe-service), so it always fell through to a hard-coded literal and the env var was
+        // decorative. FRONTEND_BASE_URL is the variable that IS set (to https://app.formmaps.com), and
+        // FrontendUrl is this codebase's single reader for it. Behaviour in production is unchanged --
+        // both resolve to https://app.formmaps.com -- but the value is now actually configurable, and
+        // dev/test correctly get http://localhost:3000 instead of pointing at production.
+        var appUrl = FrontendUrl.BaseUrl();
         var url = await gateway.CreateCheckoutSessionAsync(
             customerId, plan.StripePriceId, context.Tenant.UserId, body.PlanId,
             successUrl: $"{appUrl}/dashboard?checkout=success", cancelUrl: $"{appUrl}/dashboard?checkout=cancelled",
@@ -173,7 +207,7 @@ public static class BillingEndpoints
     /// </remarks>
     private static async Task<IResult> CreateBillingPortalAsync(
         IRequestContextAccessor accessor, IProtectedRequestGuard guard, IStripeGateway gateway,
-        ILiveCustomerReader customerReader, IConfiguration configuration, CancellationToken cancellationToken)
+        ILiveCustomerReader customerReader, CancellationToken cancellationToken)
     {
         var context = accessor.Current;
         var decision = guard.RequireIdentity(context);
@@ -185,8 +219,12 @@ public static class BillingEndpoints
             return Results.Json(new { success = false, message = "No billing account found" }, statusCode: StatusCodes.Status404NotFound);
         }
 
-        var appUrl = configuration["NEXT_PUBLIC_APP_URL"] ?? "https://app.formmaps.com";
-        var url = await gateway.CreateBillingPortalSessionAsync(customerId, returnUrl: $"{appUrl}/dashboard/settings", cancellationToken);
+        // issue #98, same NEXT_PUBLIC_APP_URL-is-never-set bug as CreateCheckoutSessionAsync above; see
+        // that comment. The return path also now matches legacy stripe.ts:387, which sends the user back
+        // to /dashboard/subscriptions after Stripe's portal, not /dashboard/settings -- a one-line
+        // difference that would otherwise have dropped users on a different page than Node does.
+        var url = await gateway.CreateBillingPortalSessionAsync(
+            customerId, returnUrl: FrontendUrl.Build("/dashboard/subscriptions"), cancellationToken);
 
         return Results.Ok(new { success = true, data = new { url } });
     }
