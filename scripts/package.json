@@ -1,0 +1,11 @@
+{
+  "name": "@formmaps/scripts",
+  "private": true,
+  "type": "module",
+  "//": "Scoped to scripts/ only. These are standalone Node >=22 tools run directly with native TypeScript type stripping (`node scripts/<name>.ts`) -- they are not part of the apps/web workspace and are not bundled. Without this file Node reparses each script as ESM and prints MODULE_TYPELESS_PACKAGE_JSON, and tsc treats `import.meta` as a CommonJS error. Deliberately NOT set on the root package.json, which would change module resolution for the whole repo.",
+  "scripts": {
+    "test": "node --test route-fingerprint-sweep.test.ts",
+    "sweep": "node route-fingerprint-sweep.ts",
+    "sweep:live": "node route-fingerprint-sweep.ts --live"
+  }
+}

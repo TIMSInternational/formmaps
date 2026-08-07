@@ -1,0 +1,165 @@
+{
+  "_provenance": {
+    "recordedAt": "2026-08-06T20:26Z",
+    "recordedBy": "issue #38 lane B9 -- routing fingerprint sweep",
+    "how": "curl -s -D - -o /dev/null --max-time 20 <url>; header names lowercased, values verbatim",
+    "why": "The classifier unit tests must run with NO network. These are real responses, not hand-written ones, so a change in either origin's header surface shows up as a fixture that no longer matches production rather than as a test that silently keeps passing.",
+    "note": "Header VALUES that are per-request (date, etag, x-vercel-id, ratelimit-remaining, ratelimit-reset, x-envoy-upstream-service-time) are kept verbatim from the recorded response and are NOT load-bearing for classification. Only `x-formmaps-service` and the presence of any `ratelimit-*` header are."
+  },
+  "dotnet404": {
+    "_description": "REAL .NET 404. Recorded against the .NET origin DIRECTLY (formmaps-api-prod App Runner service) because no .NET-routed path reachable through app.formmaps.com returns 404 today -- every .NET-flagged path in the live deploy is authenticated and answers 401 first, and /api/v1/migration/* (the one unconditional .NET rewrite) is still served by Node because the frontend deploy carrying issue #82 has not landed. This fixture is what a .NET 404 looks like once it can be reached through the proxy.",
+    "_url": "https://zt9tppuwei.us-east-1.awsapprunner.com/api/v1/zzz-not-a-route",
+    "status": 404,
+    "headers": {
+      "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
+      "content-length": "0",
+      "date": "Thu, 06 Aug 2026 20:26:48 GMT",
+      "expires": "0",
+      "pragma": "no-cache",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "server": "envoy",
+      "strict-transport-security": "max-age=31536000; includeSubDomains",
+      "x-content-type-options": "nosniff",
+      "x-formmaps-service": "formmaps-api",
+      "x-envoy-upstream-service-time": "2"
+    }
+  },
+  "dotnet401ThroughProxy": {
+    "_description": "REAL .NET 401 as seen through app.formmaps.com. Proves the fingerprint survives the Vercel proxy and an auth rejection -- no token and no real path params were needed to obtain it.",
+    "_url": "https://app.formmaps.com/api/v1/personality/access",
+    "status": 401,
+    "headers": {
+      "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 06 Aug 2026 20:25:28 GMT",
+      "expires": "0",
+      "permissions-policy": "camera=(self), microphone=(self), geolocation=()",
+      "pragma": "no-cache",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "server": "Vercel",
+      "strict-transport-security": "max-age=31536000; includeSubDomains",
+      "x-content-type-options": "nosniff",
+      "x-envoy-upstream-service-time": "2",
+      "x-formmaps-service": "formmaps-api",
+      "x-frame-options": "DENY",
+      "x-vercel-cache": "MISS",
+      "x-vercel-id": "cle1::btckg-1786047928335-6330043f3700",
+      "x-xss-protection": "0"
+    }
+  },
+  "node401": {
+    "_description": "REAL Node 401 as seen through app.formmaps.com. /api/v1/lia/access has a .NET rewrite behind FORMMAPS_ROUTE_LIA_SESSION_TO_DOTNET; the response carries Node's rate-limiter headers and no x-formmaps-service, i.e. this path is NOT effectively routed to .NET in the live deploy.",
+    "_url": "https://app.formmaps.com/api/v1/lia/access",
+    "status": 401,
+    "headers": {
+      "access-control-allow-credentials": "true",
+      "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
+      "content-type": "application/json; charset=utf-8",
+      "cross-origin-opener-policy": "same-origin",
+      "cross-origin-resource-policy": "same-origin",
+      "date": "Thu, 06 Aug 2026 20:26:58 GMT",
+      "etag": "W/\"2f-VwoH6g/NSC3v0iJZlTnsI5fj3wE\"",
+      "origin-agent-cluster": "?1",
+      "permissions-policy": "camera=(self), microphone=(self), geolocation=()",
+      "pragma": "no-cache",
+      "ratelimit-limit": "3000",
+      "ratelimit-policy": "3000;w=900",
+      "ratelimit-remaining": "2994",
+      "ratelimit-reset": "820",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "server": "Vercel",
+      "vary": "Origin",
+      "x-content-type-options": "nosniff",
+      "x-dns-prefetch-control": "off",
+      "x-download-options": "noopen",
+      "x-envoy-upstream-service-time": "3",
+      "x-frame-options": "DENY",
+      "x-permitted-cross-domain-policies": "none",
+      "x-vercel-cache": "MISS",
+      "x-vercel-id": "cle1::cjmfh-1786048018173-7ede4cc633fb",
+      "x-xss-protection": "0"
+    }
+  },
+  "node404": {
+    "_description": "REAL Node 404 as seen through app.formmaps.com. This is /api/v1/migration/roadmap -- issue #82's live symptom. The path HAS an unconditional .NET rewrite in apps/web/next.config.ts, yet the response is Node's. That is exactly the 'flag/rewrite is in the source but the deploy carrying it has not landed' case the sweep exists to surface, and it is why a run today is a smoke test of the script and not a baseline.",
+    "_url": "https://app.formmaps.com/api/v1/migration/roadmap",
+    "status": 404,
+    "headers": {
+      "access-control-allow-credentials": "true",
+      "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
+      "content-type": "text/html; charset=utf-8",
+      "cross-origin-opener-policy": "same-origin",
+      "cross-origin-resource-policy": "same-origin",
+      "date": "Thu, 06 Aug 2026 20:30:28 GMT",
+      "origin-agent-cluster": "?1",
+      "permissions-policy": "camera=(self), microphone=(self), geolocation=()",
+      "pragma": "no-cache",
+      "ratelimit-limit": "3000",
+      "ratelimit-policy": "3000;w=900",
+      "ratelimit-remaining": "2998",
+      "ratelimit-reset": "652",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "server": "Vercel",
+      "vary": "Origin",
+      "x-content-type-options": "nosniff",
+      "x-dns-prefetch-control": "off",
+      "x-download-options": "noopen",
+      "x-envoy-upstream-service-time": "3",
+      "x-frame-options": "DENY",
+      "x-permitted-cross-domain-policies": "none",
+      "x-vercel-cache": "MISS",
+      "x-vercel-id": "cle1::6c2lg-1786048227965-e383fef1518e",
+      "x-xss-protection": "0"
+    }
+  },
+  "ambiguousBothMarkers": {
+    "_description": "SYNTHETIC. Not observed in production. Constructed by taking the real .NET 404 above and adding the real Node ratelimit-* headers to it. This is the shape a misconfiguration would produce -- e.g. Node put in front of .NET, a shared edge middleware stamping the rate-limit headers on every response, or a stale CDN entry merging two origins. The classifier MUST refuse to guess here.",
+    "status": 404,
+    "headers": {
+      "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
+      "date": "Thu, 06 Aug 2026 20:26:48 GMT",
+      "ratelimit-limit": "3000",
+      "ratelimit-policy": "3000;w=900",
+      "ratelimit-remaining": "2999",
+      "ratelimit-reset": "900",
+      "server": "Vercel",
+      "x-content-type-options": "nosniff",
+      "x-formmaps-service": "formmaps-api"
+    }
+  },
+  "neitherMarker": {
+    "_description": "REAL. A Vercel edge response that never reached either origin -- an HTML page route, not an API path. Neither marker is present, so the sweep learned nothing about which backend owns the path and MUST say so rather than defaulting to Node.",
+    "_url": "https://app.formmaps.com/",
+    "status": 200,
+    "headers": {
+      "accept-ranges": "bytes",
+      "access-control-allow-origin": "*",
+      "age": "165513",
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-disposition": "inline",
+      "content-type": "text/html; charset=utf-8",
+      "date": "Thu, 06 Aug 2026 20:30:29 GMT",
+      "etag": "\"20790fc5d92bcc771aaded9826b43601\"",
+      "permissions-policy": "camera=(self), microphone=(self), geolocation=()",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "server": "Vercel",
+      "strict-transport-security": "max-age=31536000; includeSubDomains",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY",
+      "x-matched-path": "/",
+      "x-nextjs-prerender": "1",
+      "x-nextjs-stale-time": "300",
+      "x-vercel-cache": "HIT",
+      "x-vercel-id": "cle1::vn9xx-1786048228225-06a903ae1b9f",
+      "x-xss-protection": "0"
+    }
+  },
+  "unexpectedServiceValue": {
+    "_description": "SYNTHETIC. x-formmaps-service present but carrying a value that is not `formmaps-api`. Some other service answered. Classifying this as .NET on header-name-presence alone would be wrong, so the classifier treats it as investigate.",
+    "status": 200,
+    "headers": {
+      "server": "envoy",
+      "x-formmaps-service": "some-other-service"
+    }
+  }
+}
