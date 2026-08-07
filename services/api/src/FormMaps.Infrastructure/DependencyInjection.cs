@@ -166,6 +166,9 @@ public static class DependencyInjection
         services.AddScoped<ISchoolStudentsWriter, SchoolStudentsWriter>();
         // FM-DOTNET-066: school:manage review writes (PUT /community-service/{id}/verify, PUT .../change-requests/{id}/review).
         services.AddScoped<ISchoolStudentsReviewWriter, SchoolStudentsReviewWriter>();
+        // formmaps#107: school:manage course-plan writes (POST/DELETE .../course-plan/courses) — the two routes the
+        // #94 fix added to Node only. Ships DARK; without them the school-admin course-plan flag re-opens #94.
+        services.AddScoped<ISchoolStudentsCoursePlanWriter, SchoolStudentsCoursePlanWriter>();
         services.AddScoped<ICounselorDashboardReader, CounselorDashboardReader>();
         services.AddScoped<ICounselorCaseloadReader, CounselorCaseloadReader>();
         services.AddScoped<ICounselorAvailabilityRepository, CounselorAvailabilityRepository>();

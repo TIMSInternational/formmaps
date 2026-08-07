@@ -148,8 +148,11 @@ CREATE TABLE "student_course_plans" (
     "courseId"       text NOT NULL,
     "status"         text,
     "sortOrder"      integer NOT NULL DEFAULT 0,
+    "notes"          text,                              -- #107 (in the raw row the 201 echoes back)
     "isActive"       boolean NOT NULL DEFAULT true,
+    "createdBy"      text,                              -- #107 (POST .../course-plan/courses sets it to req.userId)
     "createdDate"    timestamp NOT NULL DEFAULT now(),  -- FM-066 (review approved+add creates a plan row)
+    "updatedBy"      text,                              -- #107 (never set on create; present in the raw row)
     "updatedAt"      timestamp NOT NULL DEFAULT now()   -- FM-066
 );
 
