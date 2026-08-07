@@ -125,7 +125,7 @@ jobs:
           - name: reports-billing-video
             filter: "FullyQualifiedName~FormMaps.IntegrationTests.Prerequisites.|FullyQualifiedName~FormMaps.IntegrationTests.Reports.|FullyQualifiedName~FormMaps.IntegrationTests.CourseImport.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolProfile.|FullyQualifiedName~FormMaps.IntegrationTests.CurriculumFrameworks.|FullyQualifiedName~FormMaps.IntegrationTests.Billing.|FullyQualifiedName~FormMaps.IntegrationTests.Video.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolReads.|FullyQualifiedName~FormMaps.IntegrationTests.ParentPortal.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolAnalytics."
           - name: remainder
-            filter: "FullyQualifiedName~FormMaps.IntegrationTests.AcademicGaps.|FullyQualifiedName~FormMaps.IntegrationTests.StudentApplications.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsWrites.|FullyQualifiedName~FormMaps.IntegrationTests.StudentPortfolio.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsReads.|FullyQualifiedName~FormMaps.IntegrationTests.StudentParents.|FullyQualifiedName~FormMaps.IntegrationTests.Uploads.|FullyQualifiedName~FormMaps.IntegrationTests.CommunityService.|FullyQualifiedName~FormMaps.IntegrationTests.ParentChildReads.|FullyQualifiedName~FormMaps.IntegrationTests.Gradebook.|FullyQualifiedName~FormMaps.IntegrationTests.Security.|FullyQualifiedName~FormMaps.IntegrationTests.DbRole.|FullyQualifiedName~FormMaps.IntegrationTests.Data.|FullyQualifiedName~FormMaps.IntegrationTests.Pathways.|FullyQualifiedName~FormMaps.IntegrationTests.ScaffoldTests"
+            filter: "FullyQualifiedName~FormMaps.IntegrationTests.AcademicGaps.|FullyQualifiedName~FormMaps.IntegrationTests.StudentApplications.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsWrites.|FullyQualifiedName~FormMaps.IntegrationTests.StudentPortfolio.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsReads.|FullyQualifiedName~FormMaps.IntegrationTests.StudentParents.|FullyQualifiedName~FormMaps.IntegrationTests.Uploads.|FullyQualifiedName~FormMaps.IntegrationTests.CommunityService.|FullyQualifiedName~FormMaps.IntegrationTests.ParentChildReads.|FullyQualifiedName~FormMaps.IntegrationTests.Gradebook.|FullyQualifiedName~FormMaps.IntegrationTests.Security.|FullyQualifiedName~FormMaps.IntegrationTests.DbRole.|FullyQualifiedName~FormMaps.IntegrationTests.Data.|FullyQualifiedName~FormMaps.IntegrationTests.Pathways.|FullyQualifiedName~FormMaps.IntegrationTests.ScaffoldTests|FullyQualifiedName~FormMaps.IntegrationTests.TestSupport."
 
     steps:
       - name: Checkout
@@ -232,6 +232,7 @@ jobs:
           FormMaps.IntegrationTests.Data.
           FormMaps.IntegrationTests.Pathways.
           FormMaps.IntegrationTests.ScaffoldTests.
+          FormMaps.IntegrationTests.TestSupport.
           NS
           sed -i 's/^[[:space:]]*//' /tmp/sharded.txt
           sort -u -o /tmp/sharded.txt /tmp/sharded.txt
