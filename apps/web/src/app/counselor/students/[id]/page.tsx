@@ -51,8 +51,14 @@ export default function CounselorStudentDetailPage() {
   const createNote = useCreateNote();
   const deleteNote = useDeleteNote();
 
-  // Course plan
-  const { data: coursePlan, isLoading: planLoading } = useStudentCoursePlan(studentId);
+  // Course plan. formmaps#95: the counselor read endpoint returns rows carrying no
+  // gradeLevel of their own, so the student's own grade is what places them in the
+  // grid. Passed from here rather than resolved inside the service because this page
+  // is what knows the student.
+  const { data: coursePlan, isLoading: planLoading } = useStudentCoursePlan(
+    studentId,
+    student?.gradeLevel
+  );
   const counselorAdd = useCounselorAddCourse(studentId);
   const counselorRemove = useCounselorRemoveCourse(studentId);
   const { data: recsData } = useStudentRecommendations(studentId);
