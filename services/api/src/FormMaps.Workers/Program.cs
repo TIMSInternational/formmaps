@@ -1,4 +1,8 @@
 using FormMaps.Infrastructure;
+// formmaps#99: BillingReconciliationWorker moved to FormMaps.Infrastructure.Billing so FormMaps.Api can
+// host it (the Dockerfile publishes only FormMaps.Api, so this standalone host has never been deployed).
+// This host keeps hosting it too — FormMaps.Workers.csproj already references FormMaps.Infrastructure.
+using FormMaps.Infrastructure.Billing;
 using FormMaps.Workers;
 
 var builder = Host.CreateApplicationBuilder(args);

@@ -15,6 +15,13 @@
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
+    <!-- formmaps#99: BackgroundService, for BillingReconciliationWorker. That worker used to live in
+         FormMaps.Workers, which services/api/Dockerfile never publishes (it publishes ONLY
+         FormMaps.Api), so Domain 9a's hourly shadow-vs-live diff had never run in any deployed
+         environment. Hosting it from FormMaps.Api needs BackgroundService available here, since
+         FormMaps.Api references Application + Infrastructure only (see FormMaps.Api.csproj). Pinned
+         to the same 10.0.10 line as the other Microsoft.Extensions.* references above. -->
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.10" />
     <PackageReference Include="Npgsql" Version="10.0.3" />

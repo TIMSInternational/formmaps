@@ -4,6 +4,7 @@ using FormMaps.Application.Migration;
 using FormMaps.Api.Auth;
 using FormMaps.Api.Realtime;
 using FormMaps.Infrastructure;
+using FormMaps.Infrastructure.Billing;
 
 namespace FormMaps.Api;
 
@@ -35,6 +36,23 @@ public static class DependencyInjection
         // Singleton is safe -- same lifetime as the sibling LegacyJwtRequestContextFactory, which
         // reads the same options type.
         services.AddSingleton<AccessTokenFactory>();
+
+        // formmaps#99: Domain 9a's hourly shadow-vs-live reconciliation. It lived in FormMaps.Workers,
+        // which services/api/Dockerfile NEVER publishes (it publishes only src/FormMaps.Api) and for
+        // which no image / App Runner service exists -- so the job had never run in any deployed
+        // environment and #44's pre-cutover observation window was measuring nothing. The worker now
+        // lives in FormMaps.Infrastructure.Billing and is hosted by the API process itself, in the
+        // existing container, off the existing DATABASE_URL secret -- no new Dockerfile, ECR repo or
+        // service. It is registered HERE, not in FormMaps.Infrastructure's DependencyInjection: which
+        // process actually RUNS a BackgroundService is a composition-root decision, and
+        // AddFormMapsInfrastructure is shared by two roots (this one and FormMaps.Workers/Program.cs,
+        // which keeps its own AddHostedService<BillingReconciliationWorker>() call). Note the stale
+        // comment at FormMaps.Infrastructure/DependencyInjection.cs still says the worker lives in
+        // FormMaps.Workers -- it no longer does. Double-registering is harmless if it ever happens
+        // anyway: AddHostedService uses TryAddEnumerable, which de-dupes on (IHostedService, impl type).
+        // The worker no-ops (one log, then exit) when public.shadow_user_subscriptions is absent, which
+        // is still the case in production -- see BillingReconciliationWorker.ShadowTablesExistAsync.
+        services.AddHostedService<BillingReconciliationWorker>();
 
         return services;
     }
