@@ -64,6 +64,16 @@ CREATE TABLE IF NOT EXISTS "user_subscriptions" (
 -- would still leave a stale value, which the writer's own test asserts against.
 ALTER TABLE "user_subscriptions" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now();
 
+-- formmaps#108: LiveSubscriptionReader and LiveSubscriptionWriter now both resolve the target row with
+-- ORDER BY "createdDate" DESC, "id" LIMIT 1, because @@unique([userId]) is declared in schema.prisma but
+-- appears in NO migration, so production may hold several rows for one user. The column is real -- the
+-- Prisma model declares createdDate DateTime @default(now()) and legacy Node already orders by it
+-- (api/src/routes/user.ts:314) -- it was simply missing from this live-side stub, which made every read
+-- of user_subscriptions fail with 42703 undefined_column the moment the ORDER BY landed.
+-- DEFAULT now() so the existing seed helpers, which never mention the column, keep working; the
+-- duplicate-row tests set it explicitly to pin the ordering.
+ALTER TABLE "user_subscriptions" ADD COLUMN IF NOT EXISTS "createdDate" TIMESTAMPTZ NOT NULL DEFAULT now();
+
 -- Domain 9a final-review fix wave (Important 7): POST /portal now reads the LIVE
 -- users."stripeCustomerId" through ILiveCustomerReader instead of creating a Stripe customer, so the
 -- fixture needs the two columns LiveCustomerReader selects on.

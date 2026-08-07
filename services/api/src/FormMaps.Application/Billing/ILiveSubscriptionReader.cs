@@ -13,8 +13,15 @@ namespace FormMaps.Application.Billing;
 /// Domain 9a Task 9 adds <see cref="StripeSubscriptionId"/>: Task 7 didn't need it for GET /status, but
 /// POST /cancel-subscription must pass the live Stripe subscription id (not the internal <see
 /// cref="PlanId"/>) to <c>IStripeGateway.CancelSubscriptionAsync</c>.
+///
+/// <para>formmaps#108 adds <see cref="Id"/>. schema.prisma declares <c>@@unique([userId])</c> on
+/// user_subscriptions, but NO migration ever created that constraint -- api/prisma/migrations only ever
+/// emitted the PK, a NON-unique <c>user_subscriptions_userId_idx</c> and the two FKs -- so production may
+/// legitimately hold more than one row per user and the constraint must not be assumed. Exposing the row
+/// id makes "which of the user's rows did this read resolve to" answerable by the caller and by tests,
+/// instead of being an invisible property of heap order.</para>
 /// </remarks>
-public sealed record LiveSubscriptionRow(string? Status, bool IsActive, DateTimeOffset? NextBillingDate, string? PlanId, string? StripeSubscriptionId);
+public sealed record LiveSubscriptionRow(string? Status, bool IsActive, DateTimeOffset? NextBillingDate, string? PlanId, string? StripeSubscriptionId, string Id);
 
 public interface ILiveSubscriptionReader
 {

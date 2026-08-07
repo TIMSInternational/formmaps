@@ -15,10 +15,22 @@ namespace FormMaps.Infrastructure.Billing;
 /// </summary>
 public sealed class LiveSubscriptionReader(IFormMapsDatabaseSessionFactory databaseSessionFactory) : ILiveSubscriptionReader
 {
+    /// <summary>
+    /// formmaps#108. ORDER BY + LIMIT 1 are load-bearing, not cosmetic. schema.prisma's
+    /// <c>@@unique([userId])</c> on user_subscriptions exists in NO migration (api/prisma/migrations
+    /// creates only the PK, the NON-unique "user_subscriptions_userId_idx" and the FKs), so production
+    /// may hold several rows for one user. Without an ORDER BY this SELECT returned whichever row the
+    /// scan reached first -- heap order, which changes under VACUUM/UPDATE -- so GET /status could report
+    /// a stale cancelled row while an active one existed. <c>createdDate DESC</c> mirrors legacy
+    /// api/src/routes/user.ts:314 (<c>findFirst orderBy: { createdDate: "desc" }</c>); <c>"id"</c> is the
+    /// tie-break that makes same-millisecond rows deterministic too, since createdDate alone is not unique.
+    /// </summary>
     private const string SubscriptionSql = """
-        SELECT "status", "isActive", "nextBillingDate", "planId", "stripeSubscriptionId"
+        SELECT "id", "status", "isActive", "nextBillingDate", "planId", "stripeSubscriptionId"
         FROM "user_subscriptions"
         WHERE "userId" = @userId
+        ORDER BY "createdDate" DESC, "id"
+        LIMIT 1
         """;
 
     public async Task<LiveSubscriptionRow?> GetForUserAsync(RequestContext context, string userId, CancellationToken cancellationToken = default)
@@ -40,7 +52,8 @@ public sealed class LiveSubscriptionReader(IFormMapsDatabaseSessionFactory datab
             reader.GetBoolean(reader.GetOrdinal("isActive")),
             ReadNullableDateTimeOffsetUtc(reader, "nextBillingDate"),
             ReadNullableString(reader, "planId"),
-            ReadNullableString(reader, "stripeSubscriptionId"));
+            ReadNullableString(reader, "stripeSubscriptionId"),
+            reader.GetString(reader.GetOrdinal("id")));
     }
 
     private static void AddUserId(DbCommand command, string userId)
