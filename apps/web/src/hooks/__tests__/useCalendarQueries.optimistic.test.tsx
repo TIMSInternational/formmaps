@@ -234,6 +234,70 @@ describe("#89 academic years", () => {
     expect(edited.isCurrent).toBe(true);
   });
 
+  it("replaces the whole term set when the payload carries terms", async () => {
+    // A body carrying `terms` makes the writer DELETE every academic_terms row for the
+    // year and re-INSERT the set (CalendarWriter.cs: DELETE FROM "academic_terms" WHERE
+    // "academicYearId" = @id, then INSERT). So the surviving ids are new server ids that
+    // nothing echoes back — keeping the OLD ids would leave the assessment-period
+    // <Select> offering values that no longer exist.
+    const { qc, wrapper } = harness((client) =>
+      client.setQueryData(calendarKeys.academicYears(), [
+        year({
+          id: "y-2",
+          startDate: "2025-08-01T00:00:00.000Z",
+          terms: [
+            { id: "t-old-1", name: "Old S1", startDate: "2025-08-01", endDate: "2025-12-20", sortOrder: 0 },
+            { id: "t-old-2", name: "Old S2", startDate: "2026-01-10", endDate: "2026-06-15", sortOrder: 1 },
+            { id: "t-old-3", name: "Old S3", startDate: "2026-06-16", endDate: "2026-07-15", sortOrder: 2 },
+          ],
+        }),
+      ]),
+    );
+    mockUpdateYear.mockReturnValue(inFlight());
+    const { result } = renderHook(() => useUpdateAcademicYear(), { wrapper });
+
+    act(() => {
+      result.current.mutate({
+        id: "y-2",
+        payload: {
+          terms: [
+            { name: "New S1", startDate: "2025-08-01", endDate: "2025-12-20" },
+            { name: "New S2", startDate: "2026-01-10", endDate: "2026-06-15" },
+          ],
+        },
+      });
+    });
+
+    await waitFor(() => expect(years(qc)[0].terms).toHaveLength(2));
+    const terms = years(qc)[0].terms;
+    expect(terms.map((t) => t.name)).toEqual(["New S1", "New S2"]);
+    // sortOrder is the array index the writer inserts by, which is also the reader's
+    // ORDER BY "sortOrder" ASC — so the sub-rows render in the order they were entered.
+    expect(terms.map((t) => t.sortOrder)).toEqual([0, 1]);
+    // Every id is a fresh placeholder: no old id survives, and none collide.
+    expect(terms.every((t) => t.id.startsWith("optimistic-"))).toBe(true);
+    expect(new Set(terms.map((t) => t.id)).size).toBe(2);
+  });
+
+  it("keeps the existing terms, ids and all, when the payload leaves them out", async () => {
+    // No `terms` key means the writer never touches academic_terms, so re-issuing
+    // placeholder ids here would break the period <Select> on a rename.
+    const seeded = [
+      { id: "t-1", name: "S1", startDate: "2025-08-01", endDate: "2025-12-20", sortOrder: 0 },
+      { id: "t-2", name: "S2", startDate: "2026-01-10", endDate: "2026-06-15", sortOrder: 1 },
+    ];
+    const { qc, wrapper } = harness((client) =>
+      client.setQueryData(calendarKeys.academicYears(), [year({ id: "y-2", terms: seeded })]),
+    );
+    mockUpdateYear.mockReturnValue(inFlight());
+    const { result } = renderHook(() => useUpdateAcademicYear(), { wrapper });
+
+    act(() => { result.current.mutate({ id: "y-2", payload: { name: "Renamed" } }); });
+
+    await waitFor(() => expect(years(qc)[0].name).toBe("Renamed"));
+    expect(years(qc)[0].terms).toEqual(seeded);
+  });
+
   it("restores the previous year when an edit fails", async () => {
     const { qc, wrapper } = harness(seedYears);
     const before = qc.getQueryData(calendarKeys.academicYears());
@@ -506,6 +570,37 @@ describe("#89 holidays", () => {
 
     await waitFor(() => expect(holidays(qc)).toHaveLength(3));
     expect(holidays(qc).map((h) => h.name)).toEqual(["Fall Break", "Winter Break", "Founders Day"]);
+  });
+
+  it("leaves the list untouched, reference and order, when every entry is dropped", async () => {
+    // When normalisation discards ALL of them there is nothing to show, and the hook
+    // declines the entry rather than rewriting it. Declining matters twice: React Query
+    // compares by reference, so handing back a new array re-renders the holiday panel for
+    // no change at all — and the rewrite would be a re-SORT, which would silently reorder
+    // a cached list the reader had handed back in some other order.
+    const unsorted = [
+      holiday({ id: "h-2", name: "Winter Break", date: "2025-12-24T00:00:00.000Z" }),
+      holiday({ id: "h-1", name: "Fall Break", date: "2025-10-20T00:00:00.000Z" }),
+    ];
+    const { qc, wrapper } = harness((client) =>
+      client.setQueryData(calendarKeys.holidays(), unsorted),
+    );
+    const before = holidays(qc);
+    mockCreateHolidays.mockReturnValue(inFlight());
+    const { result } = renderHook(() => useCreateHolidays(), { wrapper });
+
+    act(() => {
+      result.current.mutate({
+        holidays: [
+          { name: "   ", date: "2026-02-02", type: "school" },
+          { name: "Bad Date", date: "not-a-date", type: "school" },
+        ],
+      });
+    });
+
+    await waitFor(() => expect(result.current.isPending).toBe(true));
+    expect(holidays(qc)).toBe(before);
+    expect(holidays(qc).map((h) => h.id)).toEqual(["h-2", "h-1"]);
   });
 
   it("restores the previous list when the batch fails", async () => {

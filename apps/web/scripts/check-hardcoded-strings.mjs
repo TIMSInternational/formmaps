@@ -157,7 +157,38 @@ function main() {
       process.exit(1);
     }
 
-    console.log("[i18n-hardcoded] No new hardcoded strings found.");
+    // formmaps#113 — the staleness ratchet. Without this the gate is near-inert.
+    //
+    // The fingerprint is `${file}::${text}` with NO line number, so once a string is
+    // translated its baseline entry becomes a permanent licence to re-hardcode that exact
+    // string in that exact file, invisibly, forever. Measured on the 2026-06-28 baseline:
+    // 346 of its 843 entries were already resolved, and re-hardcoding one of them
+    // (AdminSidebar.tsx "Collapse sidebar" — literally the baseline's first entry) exited 0
+    // reporting "New findings: 0" while the found-count silently rose 497 -> 498.
+    //
+    // So a resolved entry is not a neutral leftover, it is an open hole. Failing here makes
+    // the baseline self-pruning: fix a string, regenerate, and the licence is revoked in the
+    // same commit. The cost is that improving i18n requires re-running one command — the
+    // standard snapshot-test ratchet, deliberately preferred over a gate that rots silently.
+    if (resolvedCount > 0) {
+      const resolved = baselineFindings.filter((finding) => !currentFingerprints.has(fingerprint(finding)));
+      console.error(
+        `[i18n-hardcoded] ERROR: ${resolvedCount} baseline finding(s) no longer exist, so the baseline is stale.`,
+      );
+      console.error("  Each stale entry is a standing licence to silently re-hardcode that exact string in");
+      console.error("  that exact file: the fingerprint carries no line number, so such a regression would");
+      console.error("  pass this check unnoticed. See formmaps#113.");
+      for (const finding of resolved.slice(0, 25)) {
+        console.error(`  - ${finding.file} "${finding.text}"`);
+      }
+      if (resolved.length > 25) {
+        console.error(`  ...and ${resolved.length - 25} more`);
+      }
+      console.error("  Fix: npm run i18n:check-hardcoded    (regenerates the baseline), then commit it.");
+      process.exit(1);
+    }
+
+    console.log("[i18n-hardcoded] No new hardcoded strings found, and the baseline has no stale entries.");
   } else if (dryRun) {
     console.log(`[i18n-hardcoded] Mode: DRY-RUN — baseline NOT written (pass without --dry-run to update).`);
   } else {

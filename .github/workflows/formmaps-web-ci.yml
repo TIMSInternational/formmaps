@@ -1,0 +1,174 @@
+name: formmaps-web-ci
+
+# Triggers deliberately mirror formmaps-api-ci.yml. There is NO `paths:` filter,
+# and that is a decision rather than an omission: `main` currently has no branch
+# protection and no rulesets, but once these jobs become required checks, a
+# `paths: apps/web/**` filter means a .NET-only PR never runs them, they sit
+# "Expected -- waiting for status", and the PR can never merge. The whole thing
+# is ~2 minutes; paying it on every PR is cheaper than that trap.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+# Nothing here writes to the repo, publishes a package, or assumes a cloud role.
+# Least privilege, matching the gitleaks job in formmaps-api-ci.yml.
+permissions:
+  contents: read
+
+# formmaps-api-ci.yml has no concurrency group, which is why superseded pushes
+# keep whole runners busy. Scoped per-workflow so a web push never cancels an
+# in-flight .NET integration matrix. PR runs are cancellable; main pushes are
+# not, so every commit on main keeps a real result instead of "cancelled".
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Bumping this is a deliberate act. There is no .nvmrc and no `engines` field
+  # in apps/web/package.json, so this literal and the one in
+  # formmaps-api-staging-deploy.yml are the only places the expected Node version
+  # is written down. Next 16 requires >= 20.9; 22 is what the previous job used.
+  NODE_VERSION: '22'
+
+jobs:
+  web:
+    name: Frontend (apps/web)
+    runs-on: ubuntu-latest
+    # The equivalent job measured 1m54s end to end before the move (jest itself:
+    # ~12-23s for 144 suites). 20 minutes is ~10x headroom -- generous, but
+    # bounded, so a hung run reports instead of squatting on a runner until
+    # GitHub's 6-hour default fires.
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      # v5 rather than v4. The last run of the old job logged "Node.js 20 is
+      # deprecated ... actions/checkout@v4, actions/setup-node@v4 are being
+      # forced to run on Node.js 24". The gitleaks job in formmaps-api-ci.yml is
+      # already on checkout@v5; this matches it.
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # BOTH lockfiles, and the ROOT one is the load-bearing half. The repo root
+      # package.json declares `workspaces: ["apps/web"]`, so `npm ci` run from
+      # apps/web walks UP and installs from the ROOT package-lock.json -- not
+      # from apps/web/package-lock.json. Verified: adding a devDependency to
+      # apps/web/package.json and syncing ONLY apps/web/package-lock.json still
+      # fails `npm ci` with EUSAGE "Missing ... from lock file"; syncing the root
+      # lockfile fixes it. The old job keyed the cache on apps/web's lockfile
+      # alone, which is the one npm does not read.
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      # tsconfig.json includes `**/*.ts` / `**/*.tsx` from the app root, so this
+      # covers middleware.ts and next.config.ts as well as src/. `incremental` is
+      # on, but *.tsbuildinfo is gitignored, so a CI checkout always type-checks
+      # cold and can never pass off a stale buildinfo as a clean run.
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # `.` and not `src`. The old job ran `eslint src`, which left 25 files
+      # unlinted -- including middleware.ts (auth + routing) and next.config.ts
+      # (~80KB, every FORMMAPS_ROUTE_* flag), plus e2e/, scripts/, __mocks__/ and
+      # the config files. Nothing reported that gap; a new top-level directory
+      # simply got zero coverage forever.
+      #
+      # Widening is free: measured on this tree, `eslint .` lints 1029 files vs
+      # `eslint src`'s 1004 and returns the identical 28 problems / 0 errors.
+      # eslint.config.mjs already carries the right global ignores.
+      #
+      # Deliberately NOT --max-warnings 0. All 28 warnings are dead
+      # eslint-disable directives; `eslint --fix` blanks those lines rather than
+      # deleting them (~220 lines of whitespace churn across 23 files). Errors
+      # fail the job, warnings do not. Clean them up as the files are touched.
+      - name: Lint
+        run: npm run lint
+
+      # The floor is the point of this step. jest discovers suites by glob, so an
+      # ADDED test is picked up automatically and needs no registration --
+      # structurally safer than the .NET shard matrix next door. What a glob
+      # cannot catch is suites silently DISAPPEARING: widen testPathIgnorePatterns
+      # in jest.config.js, or break the `@/` moduleNameMapper, and jest reports a
+      # cheerful green over a fraction of the suite. `jest --ci` alone only fails
+      # at literally zero.
+      #
+      # 144 is the count as of this workflow landing (948 tests). It is a ratchet:
+      # adding suites is free, and lowering the number has to be a deliberate line
+      # in a diff someone reviews.
+      #
+      # THIS IS THE ONE PLACE THIS WORKFLOW REPEATS THE .NET "register it in two
+      # places" FOOTGUN, and it does so knowingly -- the alternative is a gate
+      # that cannot tell 144 suites from 3. It fails LOUD, naming the file and the
+      # variable, where the .NET version of this mistake fails silent.
+      - name: Test
+        env:
+          MIN_TEST_SUITES: '144'
+        run: |
+          set -euo pipefail
+          discovered=$(npx jest --listTests --silent | grep -c . || true)
+          if [ "$discovered" -lt "$MIN_TEST_SUITES" ]; then
+            echo "::error::jest discovered $discovered test suites, expected at least $MIN_TEST_SUITES."
+            echo "::error::Suites vanished rather than failed. Check testPathIgnorePatterns and"
+            echo "::error::moduleNameMapper in apps/web/jest.config.js. If the drop is intentional,"
+            echo "::error::lower MIN_TEST_SUITES in .github/workflows/formmaps-web-ci.yml in the"
+            echo "::error::same commit."
+            exit 1
+          fi
+          echo "jest discovered $discovered test suites (floor $MIN_TEST_SUITES)."
+          npx jest --ci
+
+  # Split out so an i18n regression is legible on its own and does not sit behind
+  # the type-check. Both scripts already exist in apps/web/package.json; neither
+  # has ever been wired to CI, and check-hardcoded-strings.mjs has a dedicated
+  # `--fail-on-new` CI mode plus a committed baseline
+  # (scripts/i18n-hardcoded-baseline.json) that was clearly written for exactly
+  # this job and then never got one.
+  i18n:
+    name: i18n (apps/web)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      # Exits 0 on this tree. Its "untranslated candidates" section is
+      # report-only by design and does not affect the exit code.
+      - name: Locale key parity
+        run: npm run i18n:check-parity
+
+      # Exits 0 on this tree as of the commit that adds this workflow. It exited
+      # 1 immediately before it: one new finding at
+      # src/app/school-admin/users/[id]/_components/assessments-tab.tsx:321
+      # "Personality Assessment", fixed in the same commit by routing it through
+      # the existing t("dashboard.personalityTitle") key.
+      - name: No new hardcoded strings
+        run: npm run i18n:check-hardcoded:ci
