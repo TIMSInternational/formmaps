@@ -4,6 +4,7 @@ import { normalizeRole } from "@/lib/roleUtils";
 import { Roles } from "@/lib/permissions";
 import type {
   StudentCoursePlanResponse,
+  StudentCourseEnrollment,
   MyCourseRecommendationsResponse,
   CourseChangeRequestPayload,
   CourseChangeRequestsResponse,
@@ -17,19 +18,107 @@ export async function getMyCoursePlan(): Promise<StudentCoursePlanResponse> {
   return json.data ?? json;
 }
 
+// A row as the counselor `/course-sequence` endpoint actually returns it. Note what
+// is NOT here: no gradeLevel, no credits, no category, and the term field is `term`,
+// not `semester`. `term` is `String?` in the schema, so it really can be null.
+interface CourseSequenceRow {
+  id: string;
+  academicYearId?: string;
+  term?: string | null;
+  courseId: string;
+  courseCode?: string | null;
+  courseName?: string | null;
+  status?: string | null;
+  sortOrder?: number;
+  notes?: string | null;
+}
+
+// formmaps#95: the counselor and school-admin endpoints return DIFFERENT shapes and
+// are both typed StudentCoursePlanResponse, so nothing complained while every
+// counselor saw an empty Course Plan grid.
+//
+//   school_admin -> { plan: { studentId, gradeLevel, enrollments[], ... }, recommendations }
+//   counselor    -> { data: [...bare rows], total }
+//
+// SequenceBuilder reads `planData.plan`, which was undefined for counselors.
+//
+// The field defaults below are NOT invented — they mirror exactly what the
+// school-admin reader (schoolStudentsService.getStudentCoursePlan) already does for
+// its own planned rows, so both roles render by the same convention:
+//
+//   semester:   p.term || "Fall"          <- load-bearing: `term` is nullable, and
+//                                            SequenceBuilder calls
+//                                            `e.semester.toLowerCase()` UNGUARDED.
+//                                            A null here is a crash, not a blank cell.
+//   gradeLevel: user.gradeLevel || 11     <- the row carries no grade of its own.
+//   credits/category: 0 / ""              <- the school-admin reader falls back to
+//                                            these whenever the course lookup misses.
+//
+// KNOWN DIVERGENCE, deliberately not papered over: `/course-sequence` returns rows
+// for EVERY active academic year, while the school-admin reader filters to the
+// current year and additionally merges completed StudentGrade rows and
+// graduationProgress. So a counselor viewing a multi-year plan sees those extra rows
+// stamped with the student's current grade, and no graduation-progress card (the
+// SequenceBuilder guards that on `gradProg &&`, so it simply does not render).
+// Making the two genuinely identical needs the backend fix in formmaps#95 option 2.
+export function normalizeCourseSequence(
+  studentId: string,
+  rows: CourseSequenceRow[],
+  studentGradeLevel?: number
+): StudentCoursePlanResponse {
+  const gradeLevel = studentGradeLevel || 11;
+  return {
+    plan: {
+      studentId,
+      gradeLevel,
+      enrollments: rows.map((r) => ({
+        id: r.id,
+        courseId: r.courseId,
+        courseCode: r.courseCode || "",
+        courseName: r.courseName || "",
+        category: "",
+        credits: 0,
+        gradeLevel,
+        semester: r.term || "Fall",
+        status: (r.status || "planned") as StudentCourseEnrollment["status"],
+      })),
+    },
+    recommendations: [],
+  };
+}
+
 // Get a specific student's course plan (counselor or school-admin facing).
 // Endpoint chosen by role — firing the counselor endpoint as an admin is a
 // guaranteed 403 (it 404s/403s for non-counselors), not a useful fallback.
+//
+// `studentGradeLevel` is only consulted on the counselor branch; the school-admin
+// payload already carries a real gradeLevel per enrollment and is passed through
+// untouched.
 export async function getStudentCoursePlan(
-  studentId: string
+  studentId: string,
+  studentGradeLevel?: number
 ): Promise<StudentCoursePlanResponse> {
   const role = normalizeRole(useGlobalStore.getState().user.role);
-  const path =
-    role === Roles.COUNSELOR
-      ? `/api/v1/counselor/me/students/${studentId}/course-sequence`
-      : `/api/v1/school-admin/students/${studentId}/course-plan`;
+  const isCounselor = role === Roles.COUNSELOR;
+  const path = isCounselor
+    ? `/api/v1/counselor/me/students/${studentId}/course-sequence`
+    : `/api/v1/school-admin/students/${studentId}/course-plan`;
   const json = await apiRequest(path);
-  return json.data ?? json;
+  const payload = json.data ?? json;
+
+  if (!isCounselor) return payload;
+
+  // Only reshape the bare-rows envelope. If the counselor route ever starts
+  // returning a real `plan` (the option-2 backend fix), pass it straight through
+  // rather than flattening a correct response into an approximated one.
+  if (payload && typeof payload === "object" && "plan" in payload) return payload;
+
+  const rows: CourseSequenceRow[] = Array.isArray(payload?.data)
+    ? payload.data
+    : Array.isArray(payload)
+      ? payload
+      : [];
+  return normalizeCourseSequence(studentId, rows, studentGradeLevel);
 }
 
 // Get course recommendations for student (student-facing). Keeps the sibling
