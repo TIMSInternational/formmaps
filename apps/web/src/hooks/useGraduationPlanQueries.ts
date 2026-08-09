@@ -293,10 +293,12 @@ export function useReviewGraduationPlan(studentId: string) {
                 plan: {
                   ...current.plan,
                   status: payload.status,
-                  // Only when one was written: an approval carries no note, and
-                  // blanking the field would erase the note from an earlier rejection
-                  // that the server keeps.
-                  ...(payload.note ? { reviewNote: payload.note } : {}),
+                  // Mirrors the server exactly. `reviewPlan` writes
+                  // `reviewNote: (note || "").slice(0, 1000) || null` on the approve
+                  // path, so an approval submitted without a note CLEARS the field
+                  // rather than leaving whatever was there — keeping a stale note here
+                  // would show the counselor a note the reconcile then removes.
+                  reviewNote: payload.note ?? null,
                 },
               }
             : undefined,

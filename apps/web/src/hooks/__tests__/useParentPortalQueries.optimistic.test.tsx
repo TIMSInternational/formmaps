@@ -609,3 +609,148 @@ describe("#89 the writes that are deliberately not optimistic", () => {
     expect(qc.getQueryData(parentKeys.notifications())).toBe(before);
   });
 });
+
+describe("#89 rule 3 — a list that has not loaded yet stays absent", () => {
+  /**
+   * The failure this guards against is a one-item flash: a mutation that finds no
+   * cached list and helpfully writes `[theNewRow]` renders a panel showing exactly one
+   * guardian, which then jumps to the full list the moment the real fetch lands.
+   *
+   * The subtle part is BUILDING the case. `setQueryData(key, undefined)` does not
+   * register a query at all, so a test written that way asserts nothing — the filter
+   * matches zero entries and the hook is never even given the chance to misbehave.
+   * The real-world shape is a query that IS registered, with an observer, whose first
+   * fetch is still in flight: `getQueryState` exists, `data` is undefined. So the read
+   * hook is rendered against a queryFn that never settles and is deliberately NOT
+   * awaited to success — and the registration is asserted, so the fixture cannot rot
+   * back into the vacuous version without a test failing.
+   */
+  it("does not invent a parent list when the first fetch is still in flight", async () => {
+    mockListParents.mockReset().mockImplementation(NEVER);
+    mockInvite.mockReturnValue(NEVER());
+    const { qc, result } = await mount(() => ({
+      list: useStudentParents(STUDENT),
+      invite: useInviteParent(),
+    }));
+
+    // Registered, observed, and genuinely data-less — the negative control that stops
+    // this test from passing for the wrong reason.
+    await waitFor(() => expect(qc.getQueryState(STUDENT_PARENTS_KEY)).toBeDefined());
+    expect(result.current.list.isPending).toBe(true);
+    expect(qc.getQueryData(STUDENT_PARENTS_KEY)).toBeUndefined();
+
+    act(() => { result.current.invite.mutate(INVITE); });
+
+    await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+    expect(qc.getQueryData(STUDENT_PARENTS_KEY)).toBeUndefined();
+  });
+
+  it("does not invent a notification list when the first fetch is still in flight", async () => {
+    mockListNotifications.mockReset().mockImplementation(NEVER);
+    mockMarkRead.mockReturnValue(NEVER());
+    const { qc, result } = await mount(() => ({
+      list: useParentNotifications(),
+      markRead: useMarkNotificationRead(),
+    }));
+
+    await waitFor(() => expect(qc.getQueryState(parentKeys.notifications())).toBeDefined());
+    expect(result.current.list.isPending).toBe(true);
+
+    act(() => { result.current.markRead.mutate("n-1"); });
+
+    await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+    expect(qc.getQueryData(parentKeys.notifications())).toBeUndefined();
+  });
+});
+
+describe("#89 the patch is scoped to the student it belongs to", () => {
+  /**
+   * `studentParentsFilter` prefix-matches `['parent','student-parents',studentId]`. If
+   * that filter were ever widened — to `parentKeys.all`, say, which is the natural
+   * "just invalidate everything" reflex — an invite sent from one student's panel would
+   * splice a guardian into every other student's cached list, and a revoke would delete
+   * a row the server keeps. Both are invisible in a single-student test.
+   */
+  const OTHER = "stu-2";
+  const OTHER_KEY = ["parent", "student-parents", OTHER];
+
+  const byStudent = () =>
+    mockListParents.mockReset().mockImplementation((id: string) =>
+      Promise.resolve(
+        id === STUDENT ? [link("p-1"), link("p-2")] : [link("o-1"), link("o-2")],
+      ),
+    );
+
+  it("does not add an invited guardian to another student's list", async () => {
+    byStudent();
+    mockInvite.mockReturnValue(NEVER());
+    const { qc, result } = await mount(() => ({
+      mine: useStudentParents(STUDENT),
+      other: useStudentParents(OTHER),
+      invite: useInviteParent(),
+    }));
+    await waitFor(() => expect(result.current.mine.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.other.isSuccess).toBe(true));
+    const otherBefore = qc.getQueryData(OTHER_KEY);
+
+    act(() => { result.current.invite.mutate(INVITE); });
+
+    // The invite landed where it belongs …
+    await waitFor(() => expect(links(qc)).toHaveLength(3));
+    // … and nowhere else. Same reference, so not even a re-render was spent on it.
+    expect(qc.getQueryData(OTHER_KEY)).toBe(otherBefore);
+    expect(links(qc, OTHER_KEY).map((p) => p.id)).toEqual(["o-1", "o-2"]);
+  });
+
+  it("does not remove a revoked guardian from another student's list", async () => {
+    // Mirrors the server's predicate: the DELETE is scoped to (studentId, linkId), so
+    // an id that happens to collide across students must survive on the other student.
+    mockListParents
+      .mockReset()
+      .mockImplementation((id: string) =>
+        Promise.resolve(
+          id === STUDENT ? [link("dup"), link("p-2")] : [link("dup"), link("o-2")],
+        ),
+      );
+    mockRevoke.mockReturnValue(NEVER());
+    const { qc, result } = await mount(() => ({
+      mine: useStudentParents(STUDENT),
+      other: useStudentParents(OTHER),
+      revoke: useRevokeParentAccess(),
+    }));
+    await waitFor(() => expect(result.current.mine.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.other.isSuccess).toBe(true));
+
+    act(() => {
+      result.current.revoke.mutate({ studentId: STUDENT, parentLinkId: "dup" });
+    });
+
+    await waitFor(() => expect(links(qc).map((p) => p.id)).toEqual(["p-2"]));
+    expect(links(qc, OTHER_KEY).map((p) => p.id)).toEqual(["dup", "o-2"]);
+  });
+
+  it("does not splice a self-invite into a student-parents list", async () => {
+    // `myParentsFilter` and `studentParentsFilter` share the `['parent']` root, so a
+    // filter written one segment short would match both.
+    mockInviteMine.mockReturnValue(NEVER());
+    const { qc, result } = await mount(() => ({
+      mine: useMyParents(),
+      admin: useStudentParents(STUDENT),
+      invite: useInviteMyParent(),
+    }));
+    await waitFor(() => expect(result.current.mine.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.admin.isSuccess).toBe(true));
+    const adminBefore = qc.getQueryData(STUDENT_PARENTS_KEY);
+
+    act(() => {
+      result.current.invite.mutate({
+        name: "Maria Gonzalez",
+        email: "maria@example.com",
+        relationship: "mother",
+      });
+    });
+
+    await waitFor(() => expect(links(qc, MY_PARENTS_KEY)).toHaveLength(3));
+    expect(qc.getQueryData(STUDENT_PARENTS_KEY)).toBe(adminBefore);
+  });
+});

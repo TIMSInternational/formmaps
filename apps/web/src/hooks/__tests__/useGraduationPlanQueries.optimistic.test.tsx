@@ -451,7 +451,17 @@ describe("#89 the counselor's review closes the card on the click", () => {
     expect(cachedStudentPlan(qc)?.plan?.reviewNote).toBe("Too many honors");
   });
 
-  it("does not blank an earlier note when approving without one", async () => {
+  it("clears the note when approving without one, exactly as the server does", async () => {
+    // Mirrors `reviewPlan`'s approve path, which writes
+    // `reviewNote: (note || "").slice(0, 1000) || null` — an approval with no note
+    // NULLS the field. Carrying a previous note across would put text on screen that
+    // the reconcile then takes away.
+    //
+    // The seeded state is defensive rather than observed: a plan only reaches
+    // "proposed" as a freshly generated row (`generateDraftPlan` supersedes the old
+    // row and creates a new one with a null note), so a proposed plan carrying a note
+    // is not a state today's server can produce. Pinned anyway, because the cost of
+    // mirroring is nil and the cost of drifting is a phantom note.
     const { qc, wrapper } = await harness({
       studentPlan: studentPlan({ reviewNote: "Fix the science sequence" }),
     });
@@ -461,7 +471,7 @@ describe("#89 the counselor's review closes the card on the click", () => {
     act(() => { result.current.mutate({ status: "approved" }); });
 
     await waitFor(() => expect(cachedStudentPlan(qc)?.plan?.status).toBe("approved"));
-    expect(cachedStudentPlan(qc)?.plan?.reviewNote).toBe("Fix the science sequence");
+    expect(cachedStudentPlan(qc)?.plan?.reviewNote).toBeNull();
   });
 
   it("restores the proposed plan when the review fails", async () => {

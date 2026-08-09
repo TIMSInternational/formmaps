@@ -318,7 +318,7 @@ export function AssessmentsTab({
 
       {/* Personality — status only (full narrative lives on the student's own results page) */}
       <Card>
-        <CardHeader icon={Sparkles} color="#6366f1" title="Personality Assessment" badge={
+        <CardHeader icon={Sparkles} color="#6366f1" title={t("dashboard.personalityTitle")} badge={
           studentReport?.completion.personality ? (
             <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(99,102,241,0.1)", color: "#6366f1", marginLeft: 4 }}>
               Complete

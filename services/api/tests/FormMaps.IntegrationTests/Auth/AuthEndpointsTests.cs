@@ -1092,7 +1092,35 @@ public class AuthEndpointsTests : IDisposable
 
         public async Task InvalidatePriorResetTokensAsync(string userId, CancellationToken cancellationToken = default)
         {
-            if (ForgotPasswordGate is not null) await ForgotPasswordGate.Task;
+            // Bounded on purpose (issue #36). This runs on the endpoint's FIRE-AND-FORGET background
+            // task, not on the test's own path, and only
+            // ForgotPassword_responds_before_the_background_work_completes releases the gate -- at the
+            // END of that test, after several assertions. If any of those assertions fails, SetResult()
+            // is never reached, and a bare `await Gate.Task` parks this continuation for the remaining
+            // lifetime of the test PROCESS, keeping the fake repo and the WebApplicationFactory host it
+            // closed over alive. That is a host-retention channel in exactly the dimension #36 is
+            // trying to measure, and it is invisible because the test has already gone red and moved
+            // on. WaitAsync rather than WhenAny+Task.Delay: WhenAny leaves the losing delay's timer
+            // armed for the full 30 s after the gate opens, and a stray timer per run is precisely the
+            // kind of retention #36 is chasing. The catch is required, not defensive padding -- nobody
+            // awaits this background task, so an escaping TimeoutException would surface later as an
+            // unobserved task exception rather than as a test failure.
+            if (ForgotPasswordGate is not null)
+            {
+                try
+                {
+                    await ForgotPasswordGate.Task.WaitAsync(TimeSpan.FromSeconds(30), cancellationToken);
+                }
+                catch (TimeoutException)
+                {
+                    // The owning test failed before releasing the gate. Fall through and let this
+                    // background task finish so it stops holding the host alive.
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            }
+
             InvalidatePriorResetTokensWasCalled = true;
         }
 

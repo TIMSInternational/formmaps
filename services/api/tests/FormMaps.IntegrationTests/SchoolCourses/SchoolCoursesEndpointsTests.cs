@@ -82,7 +82,20 @@ public class SchoolCoursesEndpointsTests
     {
         var reader = new FakeReader();
         using var client = Client(reader, new FakeWriter(), new FakeScope(School));
-        await client.SendAsync(Auth(HttpMethod.Get, CoursesPath + query, permission: FormMapsPermissions.CoursesRead));
+        var response = await client.SendAsync(Auth(HttpMethod.Get, CoursesPath + query, permission: FormMapsPermissions.CoursesRead));
+
+        // Check we actually reached the reader before dereferencing it (issue #36). Previously this
+        // line was `reader.LastQuery!.Page`, so a request that never made it to the handler failed as a
+        // bare NullReferenceException with no status code and no hint -- which is exactly how it
+        // presented when it flaked during a full-suite run on a loaded box (this case took 1 m 28 s
+        // there and 754 ms in isolation). The null-forgiving `!` suppresses the compiler warning, not
+        // the dereference. The message below is the difference between "environment starved the
+        // request" and "the pagination clamp regressed".
+        Assert.True(
+            reader.LastQuery is not null,
+            $"the request never reached the courses reader, so pagination could not be asserted. " +
+            $"HTTP {(int)response.StatusCode} {response.StatusCode} for query '{query}'.");
+
         Assert.Equal(expPage, reader.LastQuery!.Page);
         Assert.Equal(expLimit, reader.LastQuery.Limit);
     }

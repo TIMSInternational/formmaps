@@ -31,7 +31,6 @@ import type {
 import {
   keyParams,
   optimisticId,
-  patchBy,
   patchEnvelope,
   removeBy,
   useOptimisticCache,
@@ -49,7 +48,7 @@ import {
 //   uploadSchoolLogo    -> NO. The URL is assigned by S3. See the hook.
 //   inviteStaff         -> YES, as a placeholder row. See the hook.
 //   bulkInviteStaff     -> NO. The server decides which of N invites succeed.
-//   updateUserRole      -> YES. The new role is the argument.
+//   updateUserRole      -> NO. The endpoint does not exist. See the hook.
 //   assignStudents      -> PARTLY. See the hook: the pairs yes, the caseload rows no.
 //   unassignStudents    -> YES. A removal invents nothing.
 //
@@ -312,43 +311,37 @@ export function useBulkInviteStaff() {
 }
 
 export function useUpdateUserRole() {
-  const optimistic = useOptimisticCache();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: string }) =>
       updateUserRole(userId, role),
 
-    onMutate: ({ userId, role }) =>
-      optimistic.patch<SchoolUsersCache>(userListFilter, (current, key) => {
-        const params = keyParams<UserListParams>(key);
-        // A role change can move the user OUT of a role-filtered list. Patching the row
-        // in place there would leave a Counselor row sitting in a list filtered to
-        // Staff until the refetch landed, so it is removed instead — through
-        // patchEnvelope, so the "Total Users" card does not disagree with the table.
-        //
-        // The mirror image — the user now belonging to a filtered list they were not
-        // in — is left to the reconcile: their row lives in a different cache entry and
-        // their position in this one depends on a createdDate this entry never held.
-        const stillMatches = matchesRoleFilter(params.role, role.toLowerCase());
-        return patchEnvelope(current, (rows) =>
-          stillMatches
-            ? patchBy(
-                rows,
-                (user) => user.id === userId,
-                (user) => ({ ...user, role: role as SchoolRole, roleName: role }),
-              )
-            : removeBy(rows, (user) => user.id === userId),
-        );
-      }),
-
-    // The endpoint answers with no body, so a refetch is still needed for what the role
-    // change moved server-side (a demoted counselor's assignment counts).
+    // NO optimistic update — and NOT because the patch is hard. It is the easy one: the
+    // new role is right there in the argument. The reason is that
+    // PUT /api/v1/school-admin/users/:userId/role DOES NOT EXIST.
+    //
+    // Neither backend serves it. The legacy router mounted at /api/v1/school-admin
+    // (api/src/routes/school.ts) carries PUT /users/:userId/grade-level and no role
+    // path; no other router mounted on that prefix declares one either. The .NET port
+    // (SchoolUsersEndpoints.cs) maps exactly grade-level plus the two assign-students
+    // verbs. The unrelated PUT /api/role/:id router is role-CRUD behind admin:roles,
+    // not a per-user role assignment. So this call 404s.
+    //
+    // formmaps#111 is this same mistake made four times over: mutations predicted
+    // against endpoints nobody had built, so users watch a row change and then snap
+    // back. An optimistic update is a PROMISE that the write will land, and this one
+    // cannot keep it — the more convincing the patch, the worse the lie. It stays
+    // pessimistic until the endpoint exists, at which point the patch belongs here,
+    // removal-from-a-role-filtered-list and all (a role change can move a user OUT of
+    // a filtered list, so patching in place would strand a Counselor row in a list
+    // filtered to Staff — that is the shape to restore, not a plain patchBy).
+    //
+    // Note this hook currently has no UI caller; it is exported and unused. That is why
+    // the dead optimistic path was never seen in production, not a reason to keep it.
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: schoolProfileKeys.users() });
     },
-
-    onError: (_err, _vars, context) => optimistic.rollback(context),
   });
 }
 
