@@ -40,11 +40,22 @@ import {
 // ── formmaps#89: optimistic course-plan writes ──────────────────────────────────
 //
 // All ten mutations here update the cache before the server answers. Six landed with
-// #89; the other four were blocked on defects underneath them and were converted once
-// those were fixed — the counselor pair by #95 (its read endpoint returned a shape the
-// UI could not parse, so there was no correct cache to patch) and the school-admin
-// pair by #94 (the endpoints they call did not exist in either backend, so every one
-// of those writes 404'd).
+// #89; the other four were converted on the stated premise that the defects beneath
+// them had been fixed. VERIFIED AGAINST PRODUCTION 2026-08-07 — that premise was only
+// half true:
+//
+//   counselor pair (#95)     — now genuinely sound. Its read endpoint returned a shape
+//                              the UI could not parse, so there was no correct cache to
+//                              patch; `normalizeCourseSequence` supplies one as of this
+//                              change.
+//   school-admin pair (#94)  — STILL BROKEN. #94 is open. The two endpoints exist in
+//                              .NET (deployed 2026-08-07) but the edge routes that path
+//                              to Node, whose `main` does not have them, so the writes
+//                              still 404. The optimistic insert therefore shows the
+//                              course landing in the plan a moment before it vanishes —
+//                              precisely the behaviour #94 said it was avoiding by
+//                              keeping these pessimistic. Tracked separately; do not
+//                              treat these two as reconciled.
 //
 // The general rules live in useOptimisticCache.ts.
 
@@ -100,14 +111,24 @@ export function useMyCoursePlan() {
 
 // Counselor- or school-admin-facing: get a specific student's course plan.
 //
-// The two roles still hit different endpoints, but as of #95 both return the same
-// StudentCoursePlanResponse from the same reader. The counselor route used to answer
-// with a bare { data, total } envelope, which left `planData.plan` undefined and the
-// counselor's course-plan tab empty for every student.
-export function useStudentCoursePlan(studentId?: string) {
+// CORRECTION (formmaps#95): an earlier version of this comment claimed both roles
+// "return the same StudentCoursePlanResponse from the same reader". They do not, and
+// never did — measured against production 2026-08-07, the counselor route still
+// answers with a bare `{ data, total }` envelope, which left `planData.plan`
+// undefined and the counselor's course-plan tab empty for every student. The
+// reshaping now happens client-side in `coursePlanService.normalizeCourseSequence`;
+// read its comment for the field defaults and for what still diverges.
+//
+// `studentGradeLevel` is in the query key on purpose. The counselor rows carry no
+// grade of their own, so it is an INPUT to the cached value, not a render-time
+// detail: leaving it out would let a plan normalized before the student detail
+// resolved (grade defaulted to 11) be served afterwards as though it were correct.
+// The extra key segment is a suffix, so the mutations' prefix filters
+// (`coursePlanKeys.studentPlan(id)`) still match for patch, rollback and invalidate.
+export function useStudentCoursePlan(studentId?: string, studentGradeLevel?: number) {
   return useQuery({
-    queryKey: coursePlanKeys.studentPlan(studentId ?? ""),
-    queryFn: () => getStudentCoursePlan(studentId!),
+    queryKey: [...coursePlanKeys.studentPlan(studentId ?? ""), studentGradeLevel ?? null],
+    queryFn: () => getStudentCoursePlan(studentId!, studentGradeLevel),
     enabled: !!studentId,
     staleTime: 5 * 60 * 1000,
   });
