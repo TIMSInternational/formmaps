@@ -577,6 +577,65 @@ describe("#89 direct edits to a student's plan (counselor and school-admin)", ()
     expect(qc.getQueryData(planKey)).toEqual(before);
   });
 
+  it("school-admin: rolls back a failed add", async () => {
+    // This is the path production takes on EVERY school-admin add today: the Node
+    // routes exist on main but the deployed image predates them, so the POST 404s.
+    const { qc, wrapper } = harness(seedPlan);
+    const before = qc.getQueryData(planKey);
+    (schoolAdminAddCourseToPlan as jest.Mock).mockRejectedValue(new Error("The requested resource was not found."));
+    const { result } = renderHook(() => useSchoolAdminAddCourse(STUDENT), { wrapper });
+
+    act(() => { result.current.mutate(ADMIN_ADD); });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(qc.getQueryData(planKey)).toEqual(before);
+  });
+
+  // formmaps#111. SequenceBuilder submits a multi-select add as N synchronous mutate()
+  // calls against this one key, so two adds genuinely overlap on one cache entry —
+  // the flow useOptimisticCache's header assumes the app does not have. Under snapshot
+  // rollback the undo is not commutative: the second add snapshots a cache that already
+  // holds the first's placeholder, so the first failing wipes the second's row (and the
+  // second failing would restore the first's row for a write that failed). Undoing by
+  // the row's own pendingId is order-independent.
+  it("school-admin: two overlapping adds — a failure removes only its own row", async () => {
+    const { qc, wrapper } = harness(seedPlan);
+    (schoolAdminAddCourseToPlan as jest.Mock).mockImplementation(
+      (_studentId: string, payload: { courseId: string }) =>
+        payload.courseId === "c-first"
+          ? Promise.reject(new Error("No current academic year"))
+          : new Promise(() => {}),
+    );
+    const { result } = renderHook(() => useSchoolAdminAddCourse(STUDENT), { wrapper });
+
+    await act(async () => {
+      result.current.mutate({ ...ADMIN_ADD, courseId: "c-first" });
+      result.current.mutate({ ...ADMIN_ADD, courseId: "c-second" });
+    });
+
+    // Both placeholders went in; only the failed one comes out. The still-in-flight
+    // second row must survive, and the failed first row must not be left behind.
+    await waitFor(() => expect(rows(qc).map((e) => e.courseId)).toEqual(["c-e-1", "c-second"]));
+  });
+
+  it("counselor: two overlapping adds — a failure removes only its own row", async () => {
+    const { qc, wrapper } = harness(seedPlan);
+    (counselorAddCourseToPlan as jest.Mock).mockImplementation(
+      (_studentId: string, payload: { courseId: string }) =>
+        payload.courseId === "c-first"
+          ? Promise.reject(new Error("No current academic year"))
+          : new Promise(() => {}),
+    );
+    const { result } = renderHook(() => useCounselorAddCourse(STUDENT), { wrapper });
+
+    await act(async () => {
+      result.current.mutate({ ...ADD, courseId: "c-first" });
+      result.current.mutate({ ...ADD, courseId: "c-second" });
+    });
+
+    await waitFor(() => expect(rows(qc).map((e) => e.courseId)).toEqual(["c-e-1", "c-second"]));
+  });
+
   it("does not invent a plan when the student's plan is not cached", async () => {
     const { qc, wrapper } = harness(() => {});
     (counselorAddCourseToPlan as jest.Mock).mockReturnValue(new Promise(() => {}));

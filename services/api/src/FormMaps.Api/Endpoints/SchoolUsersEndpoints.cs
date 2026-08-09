@@ -18,6 +18,12 @@ namespace FormMaps.Api.Endpoints;
 /// grade-level does NOT resolve the caller's schoolId at all (the service reads admin+target schoolIds itself). The
 /// route <c>data</c> envelope wraps the raw service result verbatim — including the nested {success:true} for
 /// unassign (legacy <c>res.json({ success:true, data:result })</c> where result is itself {success:true}).</para>
+///
+/// <para><b>formmaps#114 adds a SIXTH route to the cluster: PUT /users/{userId}/role.</b> Same flag
+/// (FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET co-flips the whole cluster, so this route exists in BOTH backends or the
+/// UI breaks on flip), same <c>school:users</c> gate, same AuthorizeIdentityAndPermission path as grade-level.
+/// Its authorization rule is the point of it: see <see cref="PutRoleAsync"/> and
+/// <see cref="FormMaps.Application.SchoolUsers.RoleChangeGuard"/>.</para>
 /// </summary>
 public static class SchoolUsersEndpoints
 {
@@ -27,6 +33,7 @@ public static class SchoolUsersEndpoints
 
         group.MapGet("/users", GetUsersAsync);
         group.MapPut("/users/{userId}/grade-level", PutGradeLevelAsync);
+        group.MapPut("/users/{userId}/role", PutRoleAsync);
         group.MapPost("/counselors/{counselorId}/assign-students", PostAssignStudentsAsync);
         group.MapDelete("/counselors/{counselorId}/assign-students", DeleteAssignStudentsAsync);
         group.MapGet("/counselors/{counselorId}/students", GetCounselorStudentsAsync);
@@ -128,6 +135,74 @@ public static class SchoolUsersEndpoints
             ? Results.Ok(new { success = true, data = new { userId, gradeLevel = rawGrade } })
             : Results.Ok(new { success = true, data = new { userId } });
     }
+
+    // ---------------------------------------------------------------- PUT /users/{userId}/role
+
+    /// <summary>
+    /// formmaps#114. A school admin may move a STAFF member between STAFF roles inside their OWN school, and nothing
+    /// else. Five guards: G1 the <c>school:users</c> permission (below); G2 self / G3 tenant / G5 the target's
+    /// CURRENT role (<see cref="FormMaps.Application.SchoolUsers.RoleChangeGuard"/>, inside the writer's session);
+    /// G4 the destination allowlist (<see cref="RoleChangeRequest"/>).
+    ///
+    /// <para><b>Strictness is hand-written, and that is deliberate.</b> Node gets it from
+    /// <c>z.object({...}).strict()</c>. System.Text.Json IGNORES unknown properties by default, which is precisely
+    /// the pre-formmaps#79 failure mode — so binding this body to a POCO would reproduce that privilege bug in .NET.
+    /// <see cref="RoleChangeRequest.Parse"/> rejects a non-object root, an absent/non-string roleName, ANY extra
+    /// property, and any value outside the allowlist.</para>
+    ///
+    /// <para><b>Known parity gap, flagged rather than hidden:</b> the Node route also writes an
+    /// <c>audit_logs</c> row (USER_ROLE_CHANGE) and revokes the target's refresh tokens. .NET has NO audit_logs
+    /// writer and NO revocation helper anywhere in services/api/src, so both disappear the moment the flag flips.
+    /// Tracked as a follow-up; not silently absorbed here.</para>
+    /// </summary>
+    private static async Task<IResult> PutRoleAsync(
+        HttpContext http,
+        string userId,
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolUsersWriter writer,
+        CancellationToken cancellationToken)
+    {
+        // Same authorize path as grade-level (NOT AuthorizeWithScopeAsync): the writer reads BOTH schoolIds itself,
+        // so pre-resolving the caller's would be a second, divergent source of truth for G3.
+        var (context, error) = AuthorizeIdentityAndPermission(accessor, guard);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        var parsed = RoleChangeRequest.Parse(await ReadBodyAsync(http, cancellationToken));
+        if (parsed.Error is not null)
+        {
+            return Results.Json(new { success = false, message = parsed.Error }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var result = await writer.UpdateUserRoleAsync(context, context.Actor!.UserId, userId, parsed.RoleName!, cancellationToken);
+
+        // ONE arm per guard, so no guard can be silently folded into another. Messages and codes are pinned to the
+        // Node twin's, character for character.
+        return result.Status switch
+        {
+            RoleUpdateStatus.SelfChange => Forbidden("Cannot change your own role"),
+            RoleUpdateStatus.CrossSchool => Forbidden("Cannot modify users from another school"),
+            RoleUpdateStatus.ProtectedAdminTarget => Forbidden("Cannot change an administrator's role"),
+            RoleUpdateStatus.ProtectedStudentTarget => Forbidden("Cannot change a student's role"),
+            RoleUpdateStatus.TargetNotFound => Results.Json(
+                new { success = false, message = "User not found" }, statusCode: StatusCodes.Status404NotFound),
+            RoleUpdateStatus.RoleNotFound => Results.Json(
+                new { success = false, message = "Role not found" }, statusCode: StatusCodes.Status400BadRequest),
+            RoleUpdateStatus.NoChange => Results.Json(
+                new { success = false, message = "User already has this role" }, statusCode: StatusCodes.Status400BadRequest),
+            _ => Results.Ok(new
+            {
+                success = true,
+                data = new { userId, roleName = result.RoleName, previousRoleName = result.PreviousRoleName }
+            }),
+        };
+    }
+
+    private static IResult Forbidden(string message) =>
+        Results.Json(new { success = false, message }, statusCode: StatusCodes.Status403Forbidden);
 
     // ---------------------------------------------------------------- POST/DELETE /counselors/{counselorId}/assign-students
 

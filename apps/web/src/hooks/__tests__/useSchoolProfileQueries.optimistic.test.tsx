@@ -537,85 +537,152 @@ describe("#89 bulk invite — the other deliberate skip", () => {
 });
 
 // ════════════════════════════════════════════════════════════════════════════════
-describe("#89 role change — the third deliberate skip, because the endpoint is missing", () => {
+describe("#114 role change — the endpoint exists now, so the patch is honest", () => {
   /**
-   * These four assertions look backwards for a #89 suite: they demand that NOTHING
-   * changes optimistically. That is the point.
+   * This suite replaces four assertions that demanded NOTHING change optimistically.
+   * They were right at the time: PUT /api/v1/school-admin/users/:userId/role existed
+   * in neither backend, and an optimistic patch is a promise the write will land.
    *
-   * updateUserRole() PUTs /api/v1/school-admin/users/:userId/role, and no backend
-   * serves that path. The legacy router mounted on /api/v1/school-admin declares
-   * /users/:userId/grade-level and no role route; the .NET SchoolUsersEndpoints maps
-   * grade-level plus the two assign-students verbs and nothing else. The call 404s.
+   * formmaps#114 built the route in BOTH backends, under the one flag that co-flips
+   * the whole school:users cluster, so the promise can now be kept. The old comment
+   * specified the exact shape to restore and it is followed literally here: patch in
+   * place where the filter still matches, REMOVE from a list filtered to the role
+   * being left (total included), and roll back on failure.
    *
-   * An optimistic patch here is a promise the write will land, and this one always
-   * breaks it — formmaps#111 is four mutations that made exactly this promise, so
-   * users watch rows appear and vanish. The tests below pin the skip so a future
-   * "finish the conversion" pass has to notice the endpoint before undoing it.
-   *
-   * When the route is built, delete this describe and restore the optimistic suite:
-   * patch the row in an unfiltered list, REMOVE it from a list filtered to the role it
-   * just left (total included), keep it when the ILIKE filter still matches, and roll
-   * back on failure.
+   * Note the request also changed shape — `roleName`, not `role`. The service was
+   * sending `{ role }`, which is formmaps#79's bug verbatim, invisible only because
+   * the request 404'd first.
    */
-  it("does not touch an unfiltered list while the request is in flight", async () => {
+  it("shows the new role immediately in an unfiltered list, in BOTH spellings", async () => {
     const { qc, wrapper } = harness();
     await seedUsers(wrapper, undefined, userPage([user("u-1"), user("u-2")]));
     // Never settles, so anything in the cache below is an optimistic write.
     mockUpdateRole.mockReturnValue(new Promise(() => {}));
     const { result } = renderHook(() => useUpdateUserRole(), { wrapper });
 
-    act(() => { result.current.mutate({ userId: "u-1", role: "staff" }); });
+    act(() => { result.current.mutate({ userId: "u-1", roleName: "staff" }); });
 
     await waitFor(() => expect(result.current.isPending).toBe(true));
-    // Both spellings, because the table reads `roleName || role` — neither may move.
-    expect(rows(qc)[0].role).toBe("counselor");
-    expect((rows(qc)[0] as SchoolUser & { roleName?: string }).roleName).toBe("counselor");
+    // Both, because the table reads `roleName || role`; a stale `role` would show the
+    // user the role they just left.
+    expect(rows(qc)[0].role).toBe("staff");
+    expect((rows(qc)[0] as SchoolUser & { roleName?: string }).roleName).toBe("staff");
+    // The row nobody touched is untouched.
     expect(rows(qc)[1].role).toBe("counselor");
+    expect(rows(qc).map((u) => u.id)).toEqual(["u-1", "u-2"]);
   });
 
-  it("does not drop the user out of a list filtered to the role they would be leaving", async () => {
+  it("REMOVES the user from a list filtered to the role they just left, total included", async () => {
+    // The subtlety the whole patch exists for: patching in place here would strand a
+    // Staff row in a list filtered to Counselor until the refetch landed.
     const { qc, wrapper } = harness();
     const counselorsOnly = { role: "counselor", limit: 100 };
     await seedUsers(wrapper, counselorsOnly, userPage([user("u-1"), user("u-2")]));
     mockUpdateRole.mockReturnValue(new Promise(() => {}));
     const { result } = renderHook(() => useUpdateUserRole(), { wrapper });
 
-    act(() => { result.current.mutate({ userId: "u-1", role: "staff" }); });
+    act(() => { result.current.mutate({ userId: "u-1", roleName: "staff" }); });
 
     await waitFor(() => expect(result.current.isPending).toBe(true));
-    expect(rows(qc, counselorsOnly).map((u) => u.id)).toEqual(["u-1", "u-2"]);
-    // The count above the table stays put too.
-    expect(qc.getQueryData<SchoolUsersResponse>(usersKey(counselorsOnly))!.total).toBe(2);
+    expect(rows(qc, counselorsOnly).map((u) => u.id)).toEqual(["u-2"]);
+    // The count above the table comes down with the row, or it keeps claiming a user
+    // that is no longer listed.
+    expect(qc.getQueryData<SchoolUsersResponse>(usersKey(counselorsOnly))!.total).toBe(1);
   });
 
-  it("leaves the cache byte-identical when the request fails, having never patched it", async () => {
-    // The 404 this endpoint really returns. With no onMutate there is nothing to roll
-    // back, so the cache must be untouched at every point — not merely restored.
+  it("KEEPS the user when the server's substring filter still matches the new role", async () => {
+    // The server filter is `"roleName" ILIKE '%role%'` — a SUBSTRING match, not
+    // equality. A counselor becoming a "coach" still matches the "co" filter, so
+    // removing them would be a lie the refetch immediately contradicts.
+    const { qc, wrapper } = harness();
+    const coFilter = { role: "co", limit: 100 };
+    await seedUsers(wrapper, coFilter, userPage([user("u-1"), user("u-2")]));
+    mockUpdateRole.mockReturnValue(new Promise(() => {}));
+    const { result } = renderHook(() => useUpdateUserRole(), { wrapper });
+
+    act(() => { result.current.mutate({ userId: "u-1", roleName: "coach" }); });
+
+    await waitFor(() => expect(result.current.isPending).toBe(true));
+    expect(rows(qc, coFilter).map((u) => u.id)).toEqual(["u-1", "u-2"]);
+    expect((rows(qc, coFilter)[0] as SchoolUser & { roleName?: string }).roleName).toBe("coach");
+  });
+
+  it("moves ONE row — the other users in the same entry keep their roles and their places", async () => {
+    // Negative control for the row predicate. A patch that matched every row (or
+    // removed every row) would satisfy all three tests above, because each of those
+    // only ever looks at the user being changed.
+    //
+    // NOT asserted here: that an entry the user does not appear in is left
+    // reference-identical. It cannot be — React Query's setQueryData applies
+    // structural sharing, so writing an equal-but-distinct envelope is folded back
+    // onto the previous reference and is unobservable from the cache. The
+    // `if (!row) return undefined` short-circuit in the hook is therefore an
+    // optimisation, and this suite does not pretend to cover it.
+    const { qc, wrapper } = harness();
+    await seedUsers(
+      wrapper,
+      undefined,
+      userPage([
+        user("u-1"),
+        user("u-2", { roleName: "teacher" }),
+        user("u-3", { roleName: "coach" }),
+      ]),
+    );
+    mockUpdateRole.mockReturnValue(new Promise(() => {}));
+    const { result } = renderHook(() => useUpdateUserRole(), { wrapper });
+
+    act(() => { result.current.mutate({ userId: "u-2", roleName: "staff" }); });
+
+    await waitFor(() => expect(result.current.isPending).toBe(true));
+    expect(rows(qc).map((u) => u.id)).toEqual(["u-1", "u-2", "u-3"]);
+    expect(
+      rows(qc).map((u) => (u as SchoolUser & { roleName?: string }).roleName),
+    ).toEqual(["counselor", "staff", "coach"]);
+    expect(qc.getQueryData<SchoolUsersResponse>(usersKey())!.total).toBe(3);
+  });
+
+  it("rolls the removal back when the server refuses — a 403 must not eat the row", async () => {
+    // The refusal this endpoint is BUILT to return: G5 rejects changing an
+    // administrator's role. The row must come back, not vanish because the client
+    // predicted a write the server declined.
     const { qc, wrapper } = harness();
     const counselorsOnly = { role: "counselor", limit: 100 };
     await seedUsers(wrapper, counselorsOnly, userPage([user("u-1"), user("u-2")]));
     stubInvalidate(qc);
-    const before = qc.getQueryData(usersKey(counselorsOnly));
-    mockUpdateRole.mockRejectedValue(new Error("404 Not Found"));
+    const before = qc.getQueryData<SchoolUsersResponse>(usersKey(counselorsOnly));
+    mockUpdateRole.mockRejectedValue(new Error("403 Cannot change an administrator's role"));
     const { result } = renderHook(() => useUpdateUserRole(), { wrapper });
 
-    act(() => { result.current.mutate({ userId: "u-1", role: "staff" }); });
+    act(() => { result.current.mutate({ userId: "u-1", roleName: "staff" }); });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(rows(qc, counselorsOnly).map((u) => u.id)).toEqual(["u-1", "u-2"]);
+    expect(qc.getQueryData<SchoolUsersResponse>(usersKey(counselorsOnly))!.total).toBe(2);
     expect(qc.getQueryData(usersKey(counselorsOnly))).toEqual(before);
-    // Identity, not just equality: an optimistic patch followed by a rollback would
-    // restore an equal object, and `toEqual` alone cannot tell the two apart.
-    expect(qc.getQueryData(usersKey(counselorsOnly))).toBe(before);
   });
 
-  it("invalidates the user list, which is where the derived counts live", async () => {
+  it("sends roleName, never role — formmaps#79's field-name bug, which 404s no longer hide", async () => {
+    const { wrapper } = harness();
+    await seedUsers(wrapper, undefined, userPage([user("u-1")]));
+    mockUpdateRole.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useUpdateUserRole(), { wrapper });
+
+    act(() => { result.current.mutate({ userId: "u-1", roleName: "teacher" }); });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    // The service signature is (userId, roleName); the body it builds is asserted in
+    // the service's own suite. Here we pin that the hook forwards the role through.
+    expect(mockUpdateRole).toHaveBeenCalledWith("u-1", "teacher");
+  });
+
+  it("still invalidates the user list, which is where the derived counts live", async () => {
     const { qc, wrapper } = harness();
     await seedUsers(wrapper, undefined, userPage([user("u-1")]));
     const invalidate = stubInvalidate(qc);
     mockUpdateRole.mockResolvedValue(undefined);
     const { result } = renderHook(() => useUpdateUserRole(), { wrapper });
 
-    act(() => { result.current.mutate({ userId: "u-1", role: "staff" }); });
+    act(() => { result.current.mutate({ userId: "u-1", roleName: "staff" }); });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidate).toHaveBeenCalledWith({ queryKey: schoolProfileKeys.users() });

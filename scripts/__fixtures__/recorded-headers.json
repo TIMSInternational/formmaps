@@ -7,7 +7,7 @@
     "note": "Header VALUES that are per-request (date, etag, x-vercel-id, ratelimit-remaining, ratelimit-reset, x-envoy-upstream-service-time) are kept verbatim from the recorded response and are NOT load-bearing for classification. Only `x-formmaps-service` and the presence of any `ratelimit-*` header are."
   },
   "dotnet404": {
-    "_description": "REAL .NET 404. Recorded against the .NET origin DIRECTLY (formmaps-api-prod App Runner service) because no .NET-routed path reachable through app.formmaps.com returns 404 today -- every .NET-flagged path in the live deploy is authenticated and answers 401 first, and /api/v1/migration/* (the one unconditional .NET rewrite) is still served by Node because the frontend deploy carrying issue #82 has not landed. This fixture is what a .NET 404 looks like once it can be reached through the proxy.",
+    "_description": "REAL .NET 404. Recorded against the .NET origin DIRECTLY (formmaps-api-prod App Runner service) because no .NET-routed path reachable through app.formmaps.com returns 404 today -- every .NET-flagged path in the live deploy is authenticated and answers 401 first, and /api/v1/migration/* (the one unconditional .NET rewrite) was at that time still served by Node because the frontend deploy carrying issue #82 had not landed. This fixture is what a .NET 404 looks like once it can be reached through the proxy.",
     "_url": "https://zt9tppuwei.us-east-1.awsapprunner.com/api/v1/zzz-not-a-route",
     "status": 404,
     "headers": {
@@ -81,7 +81,7 @@
     }
   },
   "node404": {
-    "_description": "REAL Node 404 as seen through app.formmaps.com. This is /api/v1/migration/roadmap -- issue #82's live symptom. The path HAS an unconditional .NET rewrite in apps/web/next.config.ts, yet the response is Node's. That is exactly the 'flag/rewrite is in the source but the deploy carrying it has not landed' case the sweep exists to surface, and it is why a run today is a smoke test of the script and not a baseline.",
+    "_description": "REAL Node 404 as seen through app.formmaps.com on 2026-08-06. This is /api/v1/migration/roadmap -- issue #82's live symptom, SINCE FIXED (see dotnetSentinel200 for the same URL after the deploy landed). The path HAS an unconditional .NET rewrite in apps/web/next.config.ts, yet the response was Node's. That is exactly the 'flag/rewrite is in the source but the deploy carrying it has not landed' case the sweep exists to surface. KEPT DELIBERATELY: it is the not-a-baseline half of the baseline-sentinel tests, and the only recorded example of that state. Do not delete it as stale -- the state it records is the one the banner must still be able to detect if it ever recurs.",
     "_url": "https://app.formmaps.com/api/v1/migration/roadmap",
     "status": 404,
     "headers": {
@@ -109,6 +109,30 @@
       "x-permitted-cross-domain-policies": "none",
       "x-vercel-cache": "MISS",
       "x-vercel-id": "cle1::6c2lg-1786048227965-e383fef1518e",
+      "x-xss-protection": "0"
+    }
+  },
+  "dotnetSentinel200": {
+    "_description": "REAL .NET 200 for the baseline sentinel, recorded 2026-08-09 through app.formmaps.com. Same URL as node404 above, after the frontend deploy carrying issue #82 landed: x-formmaps-service: formmaps-api, no ratelimit-* headers. This is the pair that makes the NOT-A-BASELINE banner conditional -- node404 is the state where the banner must fire, this is the state where it must not.",
+    "_url": "https://app.formmaps.com/api/v1/migration/roadmap",
+    "status": 200,
+    "headers": {
+      "cache-control": "no-store, no-cache, must-revalidate, max-age=0",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sun, 09 Aug 2026 00:47:22 GMT",
+      "expires": "0",
+      "permissions-policy": "camera=(self), microphone=(self), geolocation=()",
+      "pragma": "no-cache",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "server": "Vercel",
+      "strict-transport-security": "max-age=31536000; includeSubDomains",
+      "vary": "Accept-Encoding",
+      "x-content-type-options": "nosniff",
+      "x-envoy-upstream-service-time": "4",
+      "x-formmaps-service": "formmaps-api",
+      "x-frame-options": "DENY",
+      "x-vercel-cache": "MISS",
+      "x-vercel-id": "cle1::srglz-1786236442602-e3641dabf1e8",
       "x-xss-protection": "0"
     }
   },

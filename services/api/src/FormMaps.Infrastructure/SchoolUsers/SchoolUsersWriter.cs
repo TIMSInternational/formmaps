@@ -56,6 +56,78 @@ public sealed class SchoolUsersWriter(IFormMapsDatabaseSessionFactory databaseSe
         return GradeLevelUpdateStatus.Updated;
     }
 
+    /// <summary>
+    /// formmaps#114 — PUT /users/{userId}/role. Port of schoolService.ts updateUserRole. The whole point of this
+    /// method is the authorization rule, not the write: see <see cref="RoleChangeGuard"/>, which holds G2/G3/G5 and
+    /// is unit tested in its own right. Everything here is the I/O around it.
+    ///
+    /// <para><b>AUDIT PARITY GAP, stated loudly rather than left to be discovered.</b> The Node route writes an
+    /// <c>audit_logs</c> row (<c>USER_ROLE_CHANGE</c>, from → to) and revokes the target's refresh tokens on every
+    /// successful role change. .NET does NEITHER: there is no audit_logs writer anywhere in services/api/src, and no
+    /// token-revocation helper either. So the moment FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET flips, privilege changes
+    /// stop being logged and stop revoking refresh tokens. That is a real regression in observability and in
+    /// containment, tracked as a follow-up; it is NOT fixed by this method.</para>
+    /// </summary>
+    public async Task<RoleUpdateResult> UpdateUserRoleAsync(
+        RequestContext context, string callerId, string targetUserId, string roleName,
+        CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+
+        // Caller + target read in the SAME writable session, so the guard decides on the same snapshot the UPDATE
+        // then writes against — a read-then-write consistency the legacy two-query split does not guarantee.
+        var callerSchoolId = await ReadSchoolIdAsync(session, callerId, cancellationToken);
+        var (targetExists, targetSchoolId, targetRoleName) = await ReadUserRoleRowAsync(session, targetUserId, cancellationToken);
+
+        var status = RoleChangeGuard.Evaluate(
+            callerId, targetUserId, callerSchoolId, targetSchoolId, targetRoleName, targetExists, roleName);
+        if (status != RoleUpdateStatus.Updated)
+        {
+            // Guard rejection — nothing committed. The session disposes without CommitAsync.
+            return new RoleUpdateResult(status, null, targetRoleName);
+        }
+
+        // Resolve the Role row by name (case-insensitive, active only). NOT inviteStaff's `if (!role) create`
+        // fallback: auto-creating a Role row from a user-supplied name is a write into the permission model itself.
+        // With G4 in front, a missing row is a seed defect → 400, matching authService.changeRole.
+        string? roleId = null;
+        string? resolvedRoleName = null;
+        await using (var lookup = Command(session, """SELECT "id", "name" FROM "roles" WHERE lower("name") = @name AND "isActive" = true LIMIT 1"""))
+        {
+            AddParameter(lookup, "name", roleName);
+            await using var reader = await lookup.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                roleId = reader.GetString(0);
+                resolvedRoleName = reader.GetString(1);
+            }
+        }
+
+        if (roleId is null)
+        {
+            return new RoleUpdateResult(RoleUpdateStatus.RoleNotFound, null, targetRoleName);
+        }
+
+        // BOTH columns in one statement. Prisma's @updatedAt bumps updatedAt in Node; set it explicitly here or the
+        // column goes stale (the same note UpdateUserGradeLevelAsync carries).
+        await using var command = Command(session, """
+            UPDATE "users" SET "roleId" = @roleId, "roleName" = @roleName, "updatedAt" = now() WHERE "id" = @target
+            """);
+        AddParameter(command, "roleId", roleId);
+        AddParameter(command, "roleName", resolvedRoleName!);
+        AddParameter(command, "target", targetUserId);
+        var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+        if (affected == 0)
+        {
+            // The target existed a moment ago (we just read its row), so 0 rows means it vanished mid-request.
+            // Legacy prisma.update throws P2025 → route catch → uniform 500. Replicate the throw.
+            throw new InvalidOperationException("role UPDATE affected no rows (target vanished mid-request)");
+        }
+
+        await session.CommitAsync(cancellationToken);
+        return new RoleUpdateResult(RoleUpdateStatus.Updated, resolvedRoleName, targetRoleName);
+    }
+
     public async Task<AssignStudentsResult> AssignStudentsAsync(
         RequestContext context, string adminSchoolId, string counselorId, IReadOnlyList<string> ids, string assignedBy,
         CancellationToken cancellationToken = default)
@@ -190,6 +262,26 @@ public sealed class SchoolUsersWriter(IFormMapsDatabaseSessionFactory databaseSe
         }
 
         return found != ids.Count ? "One or more students are not in your school" : null;
+    }
+
+    // schoolId AND roleName for the #114 target, in one round trip. Existence is returned separately from a null
+    // schoolId: "no such user" (→404) and "user with no school" (→403) are DIFFERENT outcomes here, unlike
+    // grade-level where both collapse into CrossSchool.
+    private static async Task<(bool Exists, string? SchoolId, string? RoleName)> ReadUserRoleRowAsync(
+        FormMapsDatabaseSession session, string userId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """SELECT "schoolId", "roleName" FROM "users" WHERE "id" = @uid""");
+        AddParameter(command, "uid", userId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return (false, null, null);
+        }
+
+        return (
+            true,
+            reader.IsDBNull(0) ? null : reader.GetString(0),
+            reader.IsDBNull(1) ? null : reader.GetString(1));
     }
 
     private static async Task<string?> ReadSchoolIdAsync(

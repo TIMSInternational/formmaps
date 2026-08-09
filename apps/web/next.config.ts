@@ -174,8 +174,11 @@ function shouldRouteSchoolProfileToDotnet() {
 }
 
 // ── School users cluster (FM-DOTNET-052): GET /users, PUT /users/:userId/grade-level,
-// POST+DELETE /counselors/:counselorId/assign-students, GET /counselors/:counselorId/students.
-// ONE flag co-flips all 5 (path-not-method on 2 of the 3 sub-paths). gate = school:users permission.
+// PUT /users/:userId/role (formmaps#114), POST+DELETE /counselors/:counselorId/assign-students,
+// GET /counselors/:counselorId/students.
+// ONE flag co-flips all 6 (path-not-method on 2 of the 4 sub-paths). gate = school:users permission.
+// Because it is one flag, every route here must exist in BOTH backends: a Node-only route dies the
+// moment the flag flips, a .NET-only route 404s until it does.
 function shouldRouteSchoolUsersToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET));
 }
@@ -979,6 +982,13 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/users/:userId/grade-level",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/users/:userId/grade-level`,
+            },
+            // formmaps#114. Needs its OWN entry — Next matches rewrites by PATH, and
+            // /role is a distinct literal path from /grade-level. Both backends serve
+            // it, so this flag stays safe to flip in either direction.
+            {
+              source: "/api/v1/school-admin/users/:userId/role",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/users/:userId/role`,
             },
             {
               source: "/api/v1/school-admin/counselors/:counselorId/assign-students",

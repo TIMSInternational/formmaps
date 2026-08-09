@@ -223,3 +223,53 @@ describe("next.config rewrites -- legacy /api/stripe billing paths -> .NET (issu
     }
   });
 });
+
+// ════════════════════════════════════════════════════════════════════════════════
+describe("next.config rewrites -- PUT /school-admin/users/:userId/role co-flips with its cluster (formmaps#114)", () => {
+  const ROLE = "/api/v1/school-admin/users/:userId/role";
+  const GRADE = "/api/v1/school-admin/users/:userId/grade-level";
+  const USERS_FLAG = "FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET";
+
+  it("rewrites the role path to .NET when the school-users flag is on", async () => {
+    const afterFiles = await loadAfterFiles({
+      FORMMAPS_DOTNET_API_BASE_URL: DOTNET,
+      [USERS_FLAG]: "1",
+    });
+
+    // Its OWN entry: Next matches by PATH, not method, and /role is a distinct literal
+    // path from /grade-level. Relying on the grade-level rule would silently send every
+    // role change to Node while the rest of the cluster went to .NET.
+    expect(afterFiles).toContainEqual({ source: ROLE, destination: `${DOTNET}${ROLE}` });
+  });
+
+  it("moves in lockstep with the rest of the cluster — one flag, both paths, same origin", async () => {
+    // This is the parity mechanism itself. ONE flag co-flips the whole school:users
+    // cluster, which is why formmaps#114 had to build the route in BOTH backends: a
+    // Node-only route dies the moment this flips, a .NET-only route 404s until it does.
+    const on = await loadAfterFiles({ FORMMAPS_DOTNET_API_BASE_URL: DOTNET, [USERS_FLAG]: "1" });
+    const off = await loadAfterFiles({ FORMMAPS_DOTNET_API_BASE_URL: DOTNET, [USERS_FLAG]: undefined });
+
+    const roleOn = on.find((r) => r.source === ROLE);
+    const gradeOn = on.find((r) => r.source === GRADE);
+    expect(roleOn).toBeDefined();
+    expect(gradeOn).toBeDefined();
+    expect(roleOn!.destination.startsWith(DOTNET)).toBe(gradeOn!.destination.startsWith(DOTNET));
+
+    // Flag off: neither path is rewritten, so both fall through to the Node catch-all.
+    expect(off.some((r) => r.source === ROLE)).toBe(false);
+    expect(off.some((r) => r.source === GRADE)).toBe(false);
+  });
+
+  it("sits BEFORE the Node catch-all, or the rule would never match", async () => {
+    const afterFiles = await loadAfterFiles({
+      FORMMAPS_DOTNET_API_BASE_URL: DOTNET,
+      [USERS_FLAG]: "1",
+    });
+
+    const roleIndex = afterFiles.findIndex((r) => r.source === ROLE);
+    const catchAllIndex = afterFiles.findIndex((r) => r.source === CATCH_ALL);
+    expect(roleIndex).toBeGreaterThanOrEqual(0);
+    expect(catchAllIndex).toBeGreaterThanOrEqual(0);
+    expect(roleIndex).toBeLessThan(catchAllIndex);
+  });
+});

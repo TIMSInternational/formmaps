@@ -41,6 +41,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useSchoolCourses } from "@/hooks/useCurriculumQueries";
+import { isOptimisticId } from "@/hooks/useOptimisticCache";
 import type {
   StudentCoursePlanResponse,
   StudentCourseEnrollment,
@@ -201,8 +202,15 @@ function CourseCell({
                 </p>
               </div>
             </div>
-            {/* Remove button — only for planned courses that don't already have pending remove */}
-            {!readOnly && c.status === "planned" && !hasPendingRemove && (
+            {/* Remove button — only for planned courses that don't already have a
+                pending remove, and never for a row that is still in flight.
+                formmaps#111: an optimistic row's `id` is a client-minted placeholder
+                (`optimistic-…`), not a plan-row id, so handing it to onRemove issues a
+                DELETE for an enrollment that cannot exist — a guaranteed 404 whose
+                error toast is indistinguishable from a real failure. Hidden rather than
+                disabled because it is gone within one round trip, and because the
+                reconcile in onSettled swaps in the real id right after. */}
+            {!readOnly && c.status === "planned" && !hasPendingRemove && !isOptimisticId(c.id) && (
               <button
                 onClick={() => onRemove(c)}
                 disabled={isRemovePending}

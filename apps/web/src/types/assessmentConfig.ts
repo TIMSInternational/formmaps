@@ -84,6 +84,19 @@ export interface SchoolUsersResponse {
   totalPages: number;
 }
 
+/**
+ * The four roles a school admin may hand out — the server's allowlist, identical
+ * in both backends, for POST /staff/invite and PUT /users/:userId/role alike.
+ *
+ * Deliberately NOT `SchoolRole` above, and the difference IS the authorization
+ * rule: `SchoolRole` CONTAINS the two values the server must refuse
+ * (`school_admin` — a school admin minting another admin is the privilege
+ * escalation — and `student`) and OMITS two it accepts (`teacher`, `coach`).
+ * Widening this union to match `SchoolRole` would make the client offer exactly
+ * the moves the server exists to reject. See formmaps#114.
+ */
+export type StaffRoleName = "counselor" | "teacher" | "staff" | "coach";
+
 export interface StaffInvitePayload {
   email: string;
   name: string;
@@ -93,7 +106,7 @@ export interface StaffInvitePayload {
    * zod strip the key and silently default every invite to counselor, granting
    * student-record access to teachers, staff and coaches (formmaps#79).
    */
-  roleName: "counselor" | "teacher" | "staff" | "coach";
+  roleName: StaffRoleName;
 }
 
 export interface BulkStaffInvitePayload {

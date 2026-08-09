@@ -24,6 +24,7 @@ import type {
   SchoolUser,
   SchoolUsersResponse,
   StaffInvitePayload,
+  StaffRoleName,
   BulkStaffInvitePayload,
   StudentAssignPayload,
   CounselorStudentsResponse,
@@ -48,7 +49,9 @@ import {
 //   uploadSchoolLogo    -> NO. The URL is assigned by S3. See the hook.
 //   inviteStaff         -> YES, as a placeholder row. See the hook.
 //   bulkInviteStaff     -> NO. The server decides which of N invites succeed.
-//   updateUserRole      -> NO. The endpoint does not exist. See the hook.
+//   updateUserRole      -> YES, since formmaps#114 built the endpoint in BOTH backends.
+//                          A REMOVE-from-a-filtered-list patch, not a plain patchBy: a
+//                          role change can move a row out of the list being viewed.
 //   assignStudents      -> PARTLY. See the hook: the pairs yes, the caseload rows no.
 //   unassignStudents    -> YES. A removal invents nothing.
 //
@@ -311,37 +314,61 @@ export function useBulkInviteStaff() {
 }
 
 export function useUpdateUserRole() {
+  const optimistic = useOptimisticCache();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
-      updateUserRole(userId, role),
+    // `roleName`, not `role` — the wire field name is load-bearing. The service used
+    // to send `{ role }` here, which is formmaps#79's bug verbatim; it was invisible
+    // only because the endpoint 404'd before a body was parsed. Both backends now
+    // reject an unknown key with a 400 rather than defaulting silently.
+    mutationFn: ({ userId, roleName }: { userId: string; roleName: StaffRoleName }) =>
+      updateUserRole(userId, roleName),
 
-    // NO optimistic update — and NOT because the patch is hard. It is the easy one: the
-    // new role is right there in the argument. The reason is that
-    // PUT /api/v1/school-admin/users/:userId/role DOES NOT EXIST.
+    // The pessimistic hold is GONE: formmaps#114 built
+    // PUT /api/v1/school-admin/users/:userId/role in BOTH backends (legacy
+    // routes/school.ts and .NET SchoolUsersEndpoints.cs), under the one flag that
+    // co-flips the whole school:users cluster, so the write really does land at every
+    // flag value. This is the patch the old comment specified, restored literally.
     //
-    // Neither backend serves it. The legacy router mounted at /api/v1/school-admin
-    // (api/src/routes/school.ts) carries PUT /users/:userId/grade-level and no role
-    // path; no other router mounted on that prefix declares one either. The .NET port
-    // (SchoolUsersEndpoints.cs) maps exactly grade-level plus the two assign-students
-    // verbs. The unrelated PUT /api/role/:id router is role-CRUD behind admin:roles,
-    // not a per-user role assignment. So this call 404s.
-    //
-    // formmaps#111 is this same mistake made four times over: mutations predicted
-    // against endpoints nobody had built, so users watch a row change and then snap
-    // back. An optimistic update is a PROMISE that the write will land, and this one
-    // cannot keep it — the more convincing the patch, the worse the lie. It stays
-    // pessimistic until the endpoint exists, at which point the patch belongs here,
-    // removal-from-a-role-filtered-list and all (a role change can move a user OUT of
-    // a filtered list, so patching in place would strand a Counselor row in a list
-    // filtered to Staff — that is the shape to restore, not a plain patchBy).
-    //
-    // Note this hook currently has no UI caller; it is exported and unused. That is why
-    // the dead optimistic path was never seen in production, not a reason to keep it.
+    // It is a REMOVE-from-a-filtered-list patch, not a plain patchBy, and that is the
+    // whole subtlety: a role change can move a row OUT of the list being viewed.
+    // Patching in place would strand a Counselor row in a list filtered to Staff.
+    onMutate: ({ userId, roleName }) => {
+      const next = roleName.toLowerCase();
+
+      return optimistic.patch<SchoolUsersCache>(userListFilter, (current, key) => {
+        const params = keyParams<UserListParams>(key);
+        const row = current.data.find((u) => u.id === userId);
+        // Not in this entry — decline rather than rewrite it with an equal copy.
+        if (!row) return undefined;
+
+        // Still matches the filter this entry is keyed by → patch in place. Both
+        // spellings are written because the table reads `roleName || role`; leaving
+        // either stale shows the user the role they just left.
+        if (matchesRoleFilter(params.role, next)) {
+          return patchEnvelope(current, (rows) =>
+            rows.map((u) =>
+              u.id === userId ? { ...u, roleName: next, role: next as SchoolRole } : u,
+            ),
+          );
+        }
+
+        // No longer matches → the refetch will drop it, so drop it now. patchEnvelope
+        // carries `total` down with it, so the count above the table does not keep
+        // claiming a row that is no longer listed.
+        return patchEnvelope(current, (rows) => removeBy(rows, (u) => u.id === userId));
+      });
+    },
+
+    // Still invalidated as well as patched: the server owns the canonical roleName
+    // casing (it echoes the Role row's own `name`), and a role change moves the
+    // per-role counts every filtered entry derives.
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: schoolProfileKeys.users() });
     },
+
+    onError: (_err, _vars, context) => optimistic.rollback(context),
   });
 }
 

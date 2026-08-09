@@ -35,9 +35,12 @@
  *       frontend wiring were deleted by an unrelated commit, leaving the endpoint
  *       unreachable at ANY flag value;
  *   (c) the flag is on and the rewrite exists in source, but the frontend deploy
- *       carrying that rewrite has not landed. /api/v1/migration/roadmap is in
- *       exactly this state as this is written: the rewrite is unconditional in
- *       apps/web/next.config.ts and the live response is still Node's 404 (#82).
+ *       carrying that rewrite has not landed, so the DEPLOYED config is older than
+ *       the config this script parses. /api/v1/migration/roadmap was in exactly
+ *       this state until #82 shipped (its rewrite is unconditional in
+ *       apps/web/next.config.ts, yet the live response was still Node's 404). That
+ *       is why that path is now used as the baseline sentinel — see BASELINE
+ *       SENTINEL below.
  *
  * Distinguishing (a) from (b)/(c) requires evidence this script does not have.
  * What it CAN do is narrow it: the static half of the sweep reports, per flag,
@@ -106,14 +109,32 @@
  *
  *
  * ---------------------------------------------------------------------------
- * THIS SCRIPT DOES NOT RECORD A BASELINE.
+ * BASELINE SENTINEL — IS THIS RUN A REFERENCE MEASUREMENT?
  * ---------------------------------------------------------------------------
- * Every live run prints a NOT-A-BASELINE banner and refuses to write a results file
- * unless you pass --out explicitly. The sweep is only meaningful AFTER the frontend
- * deploy carrying #82 lands. Until then /api/v1/migration/roadmap 404s from Node
- * even though its rewrite is unconditional in source, which proves the deployed
- * config is older than the config this script parses. Any run before that deploy is
- * a smoke test of the script, not a measurement of production.
+ * A sweep is only a baseline if the DEPLOYED frontend config is at least as new as
+ * the config this script parses. That is not a thing the script can assume; it is a
+ * thing it MEASURES, using the same fingerprint as everything else.
+ *
+ * The sentinel is /api/v1/migration/roadmap. Its rewrite is unconditional in
+ * apps/web/next.config.ts — no flag gates it — so the ONLY reason Node could answer
+ * it is that the deploy carrying that rewrite has not landed. That was the state
+ * #82 described; it was fixed and the sentinel now answers from .NET in production.
+ *
+ * So the banner is conditional, and it reports one of three states:
+ *
+ *   .NET answered the sentinel  -> the deployed config carries the unconditional
+ *                                  rewrite. This run IS a baseline.
+ *   Node answered the sentinel  -> the deploy has not landed. NOT a baseline; every
+ *                                  `node` reading below is ambiguous between "flag
+ *                                  off" and "the deploy has not landed".
+ *   offline / probe failed /    -> UNDETERMINED. The script says so and claims
+ *   ambiguous fingerprint          neither. A timeout, a DNS failure or an edge
+ *                                  response must never be laundered into "this is a
+ *                                  valid baseline" — that is the exact failure this
+ *                                  banner exists to prevent, in the other direction.
+ *
+ * An offline run (no --live) never probes anything, so it can never be a baseline
+ * and is never claimed to be one.
  *
  *
  * ---------------------------------------------------------------------------
@@ -863,22 +884,149 @@ export async function probeAll(
   return out;
 }
 
-// ── 7. CLI ────────────────────────────────────────────────────────────────────
+// ── 6b. the baseline sentinel ─────────────────────────────────────────────────
 
-export const NOT_A_BASELINE_BANNER = [
-  "=".repeat(78),
-  "THIS RUN IS NOT A BASELINE.",
-  "",
-  "The sweep only means something once the frontend deploy carrying issue #82 has",
-  "landed. Until then /api/v1/migration/roadmap 404s from Node even though its",
-  "rewrite is unconditional in apps/web/next.config.ts -- which proves the DEPLOYED",
-  "config is older than the config this script just parsed. Every `node` reading",
-  "below is therefore ambiguous between 'flag off' and 'the deploy has not landed'.",
-  "",
-  "Treat today's output as a smoke test of this script. Re-run it after the deploy",
-  "and use THAT as the reference.",
-  "=".repeat(78),
-].join("\n");
+/**
+ * The one path whose .NET rewrite is UNCONDITIONAL in apps/web/next.config.ts. No
+ * flag gates it, so which origin answers it is a direct read on whether the deployed
+ * frontend config is at least as new as the parsed one. See BASELINE SENTINEL in the
+ * header comment.
+ */
+export const BASELINE_SENTINEL_PATH = "/api/v1/migration/roadmap";
+
+export type BaselineState = "baseline" | "not-a-baseline" | "undetermined";
+
+export interface BaselineCheck {
+  state: BaselineState;
+  reason:
+    | "offline"
+    | "sentinel-dotnet"
+    | "sentinel-node"
+    | "sentinel-ambiguous"
+    | "sentinel-error";
+  /** The sentinel's own classification, when one was obtained. */
+  measured: Classification | null;
+  httpStatus: number | null;
+  error: string | null;
+}
+
+/**
+ * Probe the sentinel and decide whether this run is a reference measurement.
+ *
+ * `live: false` short-circuits without any network call — an offline run parses
+ * source and probes nothing, so it cannot be a baseline and must not claim to be.
+ *
+ * A thrown fetch (timeout, DNS, offline laptop) and an ambiguous fingerprint both
+ * land on `undetermined`, NEVER on `baseline`. Silently upgrading a network failure
+ * into "this is a valid baseline" would be the same class of bug as the stale
+ * unconditional banner this replaced, just pointing the other way.
+ */
+export async function checkBaseline(opts: {
+  live: boolean;
+  origin: string;
+  timeoutMs: number;
+  fetcher: Fetcher;
+}): Promise<BaselineCheck> {
+  if (!opts.live) {
+    return {
+      state: "undetermined",
+      reason: "offline",
+      measured: null,
+      httpStatus: null,
+      error: null,
+    };
+  }
+
+  let res: ProbeResponse;
+  try {
+    res = await opts.fetcher(`${opts.origin}${BASELINE_SENTINEL_PATH}`, opts.timeoutMs);
+  } catch (err) {
+    return {
+      state: "undetermined",
+      reason: "sentinel-error",
+      measured: null,
+      httpStatus: null,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+
+  const measured = classifyOrigin(res.headers);
+  if (measured.origin === "dotnet") {
+    return { state: "baseline", reason: "sentinel-dotnet", measured, httpStatus: res.status, error: null };
+  }
+  if (measured.origin === "node") {
+    return { state: "not-a-baseline", reason: "sentinel-node", measured, httpStatus: res.status, error: null };
+  }
+  return {
+    state: "undetermined",
+    reason: "sentinel-ambiguous",
+    measured,
+    httpStatus: res.status,
+    error: null,
+  };
+}
+
+const RULE = "=".repeat(78);
+
+/** Render the banner that matches what the sentinel actually said. */
+export function formatBaselineBanner(check: BaselineCheck): string {
+  const lines: string[] = [RULE];
+
+  if (check.state === "not-a-baseline") {
+    lines.push(
+      "THIS RUN IS NOT A BASELINE.",
+      "",
+      `The baseline sentinel ${BASELINE_SENTINEL_PATH} was answered by NODE [${check.httpStatus}],`,
+      "even though its rewrite is unconditional in apps/web/next.config.ts. No flag",
+      "value can produce that, so the DEPLOYED config is older than the config this",
+      "script just parsed -- the shape of issue #82. Every `node` reading below is",
+      "therefore ambiguous between 'flag off' and 'the deploy has not landed'.",
+      "",
+      "Treat today's output as a smoke test of this script. Re-run it after the deploy",
+      "and use THAT as the reference.",
+    );
+  } else if (check.state === "baseline") {
+    lines.push(
+      "THIS RUN IS A BASELINE.",
+      "",
+      `The baseline sentinel ${BASELINE_SENTINEL_PATH} was answered by .NET [${check.httpStatus}],`,
+      "so the deployed frontend config carries the unconditional rewrite and is at",
+      "least as new as the config this script just parsed. The readings below are a",
+      "measurement of production and can be cited as one.",
+      "",
+      "CAVEATS 1-3 above still apply: a `node` reading is still effective routing, not",
+      "proof that a flag is off.",
+    );
+  } else if (check.reason === "offline") {
+    lines.push(
+      "BASELINE STATUS: UNDETERMINED (offline run).",
+      "",
+      "Nothing was probed, so this run makes no claim about production in either",
+      "direction. It is a plan plus static analysis of the working tree. Pass --live to",
+      `probe, which also checks the sentinel ${BASELINE_SENTINEL_PATH} and`,
+      "reports whether the resulting sweep is a baseline.",
+    );
+  } else {
+    lines.push(
+      "BASELINE STATUS: UNDETERMINED.",
+      "",
+      `The baseline sentinel ${BASELINE_SENTINEL_PATH} gave no usable answer,`,
+      "so this run is NOT being called a baseline -- and is NOT being called invalid",
+      "either. Deliberately no verdict:",
+      check.reason === "sentinel-error"
+        ? `  the probe failed outright -- ${check.error}`
+        : `  the fingerprint was ambiguous [${check.httpStatus}] -- ${check.measured?.detail ?? ""}`,
+      "",
+      "A network failure is not evidence that the deploy landed. Fix the probe and",
+      "re-run before citing anything below as a reference.",
+    );
+  }
+
+  lines.push(RULE);
+  return lines.join("\n");
+}
+
+// ── 7. CLI ────────────────────────────────────────────────────────────────────
 
 export function readEndpointFiles(dir: string): { name: string; source: string }[] {
   if (!existsSync(dir)) return [];
@@ -891,9 +1039,10 @@ function formatText(
   results: FlagResult[],
   unrouted: UnroutedGroup[],
   live: boolean,
+  baseline: BaselineCheck,
 ): string {
   const lines: string[] = [];
-  lines.push(NOT_A_BASELINE_BANNER, "");
+  lines.push(formatBaselineBanner(baseline), "");
   lines.push(`flags found: ${results.length}   (parsed live from ${PATHS.nextConfig})`);
   lines.push(`mode: ${live ? "LIVE (GET through " + PROXY_ORIGIN + ")" : "OFFLINE (plan + static analysis only; pass --live to probe)"}`);
   lines.push("");
@@ -972,12 +1121,23 @@ export async function main(argv: string[]): Promise<number> {
   const unrouted = findUnroutedGroups(groups, rewrites);
   const manifest = readDomainManifest(readFileSync(PATHS.domainManifest, "utf8"));
 
+  const timeoutMs = numArg("--timeout", 20000);
+
+  // Measured, not assumed. The sentinel probe runs before the sweep so the banner at
+  // the top of the report describes the same deploy the readings below came from.
+  const baseline = await checkBaseline({
+    live,
+    origin: PROXY_ORIGIN,
+    timeoutMs,
+    fetcher: httpFetcher,
+  });
+
   let results = buildPlan(flags, manifest);
   if (live) {
     results = await probeAll(results, {
       origin: PROXY_ORIGIN,
       concurrency: numArg("--concurrency", 4),
-      timeoutMs: numArg("--timeout", 20000),
+      timeoutMs,
       fetcher: httpFetcher,
     });
   }
@@ -985,13 +1145,24 @@ export async function main(argv: string[]): Promise<number> {
   if (asJson) {
     console.log(
       JSON.stringify(
-        { notABaseline: true, live, flagCount: results.length, results, unroutedDotnetGroups: unrouted },
+        {
+          baseline,
+          // Kept for consumers that read the old field. It is now the MEASURED answer:
+          // true only when the sentinel proved the deployed config is stale. An
+          // undetermined run is not a baseline and is not asserted to be one either,
+          // which is why the `baseline.state` field above is the one to read.
+          notABaseline: baseline.state !== "baseline",
+          live,
+          flagCount: results.length,
+          results,
+          unroutedDotnetGroups: unrouted,
+        },
         null,
         2,
       ),
     );
   } else {
-    console.log(formatText(results, unrouted, live));
+    console.log(formatText(results, unrouted, live, baseline));
   }
 
   // Exit code is informational only — this is a reporting tool, and failing CI on a

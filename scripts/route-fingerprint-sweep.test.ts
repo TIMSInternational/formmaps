@@ -37,6 +37,9 @@ import {
   buildPlan,
   reconcile,
   probeAll,
+  checkBaseline,
+  formatBaselineBanner,
+  BASELINE_SENTINEL_PATH,
   DUMMY_ID,
   DUMMY_CATCHALL,
   type FlagResult,
@@ -500,6 +503,129 @@ test("a fetch failure becomes investigate, never a node reading", async () => {
   assert.equal(out[0].verdict, "investigate");
   assert.equal(out[0].measured, null);
   assert.match(out[0].error ?? "", /ETIMEDOUT/);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. the baseline sentinel — the banner must assert only what it measured
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// History this guards: the banner used to be an unconditional string constant that
+// said "THIS RUN IS NOT A BASELINE" on every run, because at the time it was written
+// /api/v1/migration/roadmap really was answered by Node. #82 fixed that on
+// 2026-08-07 (the same URL now returns 200 with x-formmaps-service: formmaps-api —
+// see the dotnetSentinel200 fixture) and the banner kept telling readers to discard a
+// run that had become valid. A stale WARNING is not a safe default: it trains the
+// reader to skip the banner, and the next time the warning is true it gets skipped too.
+
+const BASELINE_OPTS = { origin: "https://app.formmaps.com", timeoutMs: 1000 };
+
+test("sentinel answered by .NET => this run IS a baseline, and the banner says so", async () => {
+  const called: string[] = [];
+  const check = await checkBaseline({
+    ...BASELINE_OPTS,
+    live: true,
+    fetcher: async (url) => {
+      called.push(url);
+      return recorded.dotnetSentinel200;
+    },
+  });
+
+  // it probed the sentinel, exactly once, at the sentinel path
+  assert.deepEqual(called, [`https://app.formmaps.com${BASELINE_SENTINEL_PATH}`]);
+  assert.equal(BASELINE_SENTINEL_PATH, "/api/v1/migration/roadmap");
+
+  assert.equal(check.state, "baseline");
+  assert.equal(check.reason, "sentinel-dotnet");
+  assert.equal(check.measured?.origin, "dotnet");
+  assert.equal(check.httpStatus, 200);
+
+  const banner = formatBaselineBanner(check);
+  assert.match(banner, /THIS RUN IS A BASELINE\./);
+  // the whole point: the stale warning must be GONE, not merely accompanied.
+  assert.ok(!banner.includes("NOT A BASELINE"), `stale warning still printed:\n${banner}`);
+  assert.ok(!banner.includes("smoke test"), `still telling the reader to discard the run:\n${banner}`);
+});
+
+test("sentinel answered by NODE => NOT a baseline, banner fires (the #82 state)", async () => {
+  // node404 is the real pre-#82 response for this exact URL. If the deploy ever
+  // regresses, the banner must come back on its own.
+  const check = await checkBaseline({
+    ...BASELINE_OPTS,
+    live: true,
+    fetcher: async () => recorded.node404,
+  });
+
+  assert.equal(check.state, "not-a-baseline");
+  assert.equal(check.reason, "sentinel-node");
+  assert.equal(check.measured?.origin, "node");
+
+  const banner = formatBaselineBanner(check);
+  assert.match(banner, /THIS RUN IS NOT A BASELINE\./);
+  assert.match(banner, /smoke test/);
+  assert.ok(!/THIS RUN IS A BASELINE\./.test(banner));
+});
+
+test("NEGATIVE CONTROL: a failed sentinel probe is UNDETERMINED, never a baseline", async () => {
+  // The dangerous direction of the fix. A timeout, a DNS failure or an offline laptop
+  // must not be laundered into "the deploy landed, this run is a reference".
+  const check = await checkBaseline({
+    ...BASELINE_OPTS,
+    live: true,
+    fetcher: async () => {
+      throw new Error("ETIMEDOUT");
+    },
+  });
+
+  assert.equal(check.state, "undetermined");
+  assert.notEqual(check.state, "baseline");
+  assert.equal(check.reason, "sentinel-error");
+  assert.equal(check.measured, null);
+  assert.match(check.error ?? "", /ETIMEDOUT/);
+
+  const banner = formatBaselineBanner(check);
+  assert.match(banner, /UNDETERMINED/);
+  assert.match(banner, /ETIMEDOUT/);
+  // claims neither way
+  assert.ok(!/THIS RUN IS A BASELINE\./.test(banner));
+  assert.ok(!/THIS RUN IS NOT A BASELINE\./.test(banner));
+});
+
+test("NEGATIVE CONTROL: an ambiguous sentinel fingerprint is UNDETERMINED, not a baseline", async () => {
+  for (const key of ["ambiguousBothMarkers", "neitherMarker"] as const) {
+    const check = await checkBaseline({
+      ...BASELINE_OPTS,
+      live: true,
+      fetcher: async () => recorded[key],
+    });
+    assert.equal(check.state, "undetermined", `${key} must not decide the baseline question`);
+    assert.equal(check.reason, "sentinel-ambiguous");
+    assert.equal(check.measured?.origin, "investigate");
+
+    const banner = formatBaselineBanner(check);
+    assert.ok(!/THIS RUN IS A BASELINE\./.test(banner), `${key} produced a baseline claim`);
+    assert.ok(!/THIS RUN IS NOT A BASELINE\./.test(banner), `${key} produced a not-a-baseline claim`);
+  }
+});
+
+test("an OFFLINE run probes nothing and claims neither", async () => {
+  let calls = 0;
+  const check = await checkBaseline({
+    ...BASELINE_OPTS,
+    live: false,
+    fetcher: async () => {
+      calls += 1;
+      return recorded.dotnetSentinel200;
+    },
+  });
+
+  assert.equal(calls, 0, "an offline run must not touch the network");
+  assert.equal(check.state, "undetermined");
+  assert.equal(check.reason, "offline");
+
+  const banner = formatBaselineBanner(check);
+  assert.match(banner, /UNDETERMINED \(offline run\)/);
+  assert.ok(!/THIS RUN IS A BASELINE\./.test(banner));
+  assert.ok(!/THIS RUN IS NOT A BASELINE\./.test(banner));
 });
 
 test("probeAll probes every eligible flag exactly once regardless of concurrency", async () => {

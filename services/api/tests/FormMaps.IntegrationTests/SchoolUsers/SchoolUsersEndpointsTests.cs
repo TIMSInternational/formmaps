@@ -27,6 +27,7 @@ public class SchoolUsersEndpointsTests
 {
     private const string UsersPath = "/api/v1/school-admin/users";
     private const string GradePath = "/api/v1/school-admin/users/u-1/grade-level";
+    private const string RolePath = "/api/v1/school-admin/users/u-1/role";
     private const string AssignPath = "/api/v1/school-admin/counselors/c-1/assign-students";
     private const string StudentsPath = "/api/v1/school-admin/counselors/c-1/students";
     private const string School = "school-1";
@@ -37,6 +38,10 @@ public class SchoolUsersEndpointsTests
     {
         new object[] { "GET", UsersPath },
         new object[] { "PUT", GradePath },
+        // formmaps#114 review: the role route was MISSING from this list, so its 401 and its
+        // school:users 403 were asserted nowhere — the guard existed only in prose. One line here
+        // buys both gates for it, via the two [MemberData(nameof(AllRoutes))] theories below.
+        new object[] { "PUT", RolePath },
         new object[] { "POST", AssignPath },
         new object[] { "DELETE", AssignPath },
         new object[] { "GET", StudentsPath },
@@ -203,6 +208,74 @@ public class SchoolUsersEndpointsTests
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.Equal("Cannot modify users from another school", await MessageAsync(response));
+    }
+
+    // ---- PUT role (formmaps#114) ----
+    //
+    // WHY THESE EXIST. Before this block, all 58 of #114's .NET tests targeted two PURE FUNCTIONS
+    // (RoleChangeGuard, RoleChangeRequest). Nothing exercised PutRoleAsync, so its status/message
+    // mapping — where every refusal actually becomes an HTTP response — was untested. A review
+    // rewrote `RoleUpdateStatus.CrossSchool => Forbidden(...)` to `Results.Ok(new { success = true })`,
+    // turning a cross-tenant refusal into a reported SUCCESS, and FormMaps.UnitTests stayed
+    // 1040/1040 and this file stayed 36/36 GREEN. A guard nothing can observe failing is not a guard.
+    //
+    // Each test below therefore asserts on the RESPONSE, not on the pure function, and the whole
+    // block is designed so that making any refusal return 200 reds it.
+
+    [Theory]
+    [InlineData(RoleUpdateStatus.CrossSchool, HttpStatusCode.Forbidden, "Cannot modify users from another school")]
+    [InlineData(RoleUpdateStatus.SelfChange, HttpStatusCode.Forbidden, "Cannot change your own role")]
+    [InlineData(RoleUpdateStatus.ProtectedAdminTarget, HttpStatusCode.Forbidden, "Cannot change an administrator's role")]
+    [InlineData(RoleUpdateStatus.ProtectedStudentTarget, HttpStatusCode.Forbidden, "Cannot change a student's role")]
+    [InlineData(RoleUpdateStatus.TargetNotFound, HttpStatusCode.NotFound, "User not found")]
+    [InlineData(RoleUpdateStatus.RoleNotFound, HttpStatusCode.BadRequest, "Role not found")]
+    [InlineData(RoleUpdateStatus.NoChange, HttpStatusCode.BadRequest, "User already has this role")]
+    public async Task Role_every_refusal_is_reported_as_a_refusal(
+        RoleUpdateStatus status, HttpStatusCode expectedCode, string expectedMessage)
+    {
+        var writer = new FakeWriter { RoleResult = new RoleUpdateResult(status, null, null) };
+        using var client = Client(new FakeReader(), writer, new FakeScope(School));
+
+        var response = await client.SendAsync(Auth(HttpMethod.Put, RolePath, """{"roleName":"counselor"}"""));
+
+        Assert.Equal(expectedCode, response.StatusCode);
+        Assert.Equal(expectedMessage, await MessageAsync(response));
+        // The refusal must not also be reported as a success in the envelope.
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.False(doc.RootElement.GetProperty("success").GetBoolean());
+    }
+
+    [Fact]
+    public async Task Role_happy_path_is_200_and_forwards_the_normalized_role_to_the_writer()
+    {
+        var writer = new FakeWriter { RoleResult = new RoleUpdateResult(RoleUpdateStatus.Updated, "counselor", "teacher") };
+        using var client = Client(new FakeReader(), writer, new FakeScope(School));
+
+        var response = await client.SendAsync(Auth(HttpMethod.Put, RolePath, """{"roleName":"Counselor"}"""));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(writer.RoleCalled);
+        Assert.Equal("u-1", writer.LastRoleTargetUserId);
+        // Case-folded by RoleChangeRequest before it ever reaches the writer.
+        Assert.Equal("counselor", writer.LastRoleName);
+    }
+
+    [Theory]
+    [InlineData("""{"roleName":"school_admin"}""")]   // THE escalation this endpoint exists to prevent
+    [InlineData("""{"roleName":"student"}""")]
+    [InlineData("""{"roleName":"  coach  "}""")]      // padded: rejected, and must not reach the writer
+    [InlineData("""{"roleName":"counselor","role":"school_admin"}""")]   // .strict() smuggle
+    [InlineData("""{"role":"counselor"}""")]          // the historical frontend payload
+    public async Task Role_rejected_bodies_never_reach_the_writer(string body)
+    {
+        var writer = new FakeWriter();
+        using var client = Client(new FakeReader(), writer, new FakeScope(School));
+
+        var response = await client.SendAsync(Auth(HttpMethod.Put, RolePath, body));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        // The point: a 400 that still wrote would be a silent privilege change.
+        Assert.False(writer.RoleCalled);
     }
 
     // ---- POST/DELETE assign ----
@@ -448,12 +521,16 @@ public class SchoolUsersEndpointsTests
         public GradeLevelUpdateStatus GradeStatus { get; init; } = GradeLevelUpdateStatus.Updated;
         public AssignStudentsResult AssignResult { get; init; } = new(null, 0, "c-1");
         public UnassignStudentsResult UnassignResult { get; init; } = new(null);
+        public RoleUpdateResult RoleResult { get; init; } = new(RoleUpdateStatus.Updated, "counselor", "teacher");
 
         public int? LastGradeLevel { get; private set; }
         public bool GradeCalled { get; private set; }
         public bool AssignCalled { get; private set; }
         public bool UnassignCalled { get; private set; }
         public IReadOnlyList<string>? LastIds { get; private set; }
+        public bool RoleCalled { get; private set; }
+        public string? LastRoleName { get; private set; }
+        public string? LastRoleTargetUserId { get; private set; }
 
         public Task<GradeLevelUpdateStatus> UpdateUserGradeLevelAsync(
             RequestContext context, string callerId, string targetUserId, int? gradeLevel, CancellationToken cancellationToken = default)
@@ -461,6 +538,24 @@ public class SchoolUsersEndpointsTests
             GradeCalled = true;
             LastGradeLevel = gradeLevel;
             return Task.FromResult(GradeStatus);
+        }
+
+        // formmaps#114. Added to unbreak the build: the interface gained UpdateUserRoleAsync and this
+        // fake was never updated, so `dotnet build FormMaps.slnx` failed with CS0535 while
+        // `dotnet build src/FormMaps.Api` + UnitTests (the gate that was actually run) could not see it.
+        //
+        // RoleCalled / LastRoleName exist so a route-level test can assert the endpoint DID or DID NOT
+        // reach the writer. That distinction is the gap the audit found: every current .NET test for
+        // #114 targets the two pure functions (RoleChangeGuard, RoleChangeRequest), so making
+        // PutRoleAsync return success on a cross-tenant refusal left all 1040 unit tests green.
+        public Task<RoleUpdateResult> UpdateUserRoleAsync(
+            RequestContext context, string callerId, string targetUserId, string roleName,
+            CancellationToken cancellationToken = default)
+        {
+            RoleCalled = true;
+            LastRoleName = roleName;
+            LastRoleTargetUserId = targetUserId;
+            return Task.FromResult(RoleResult);
         }
 
         public Task<AssignStudentsResult> AssignStudentsAsync(

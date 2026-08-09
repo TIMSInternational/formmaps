@@ -4,6 +4,7 @@ import type {
   SchoolUser,
   SchoolUsersResponse,
   StaffInvitePayload,
+  StaffRoleName,
   BulkStaffInvitePayload,
   StudentAssignPayload,
   CounselorStudent,
@@ -104,10 +105,24 @@ export async function bulkInviteStaff(payload: BulkStaffInvitePayload): Promise<
   return toCamel(data);
 }
 
-export async function updateUserRole(userId: string, role: string): Promise<void> {
+/**
+ * PUT /api/v1/school-admin/users/:userId/role — formmaps#114.
+ *
+ * The wire field is `roleName`, NOT `role`. This function used to send `{ role }`,
+ * which is formmaps#79's bug verbatim; it was harmless only because the endpoint
+ * did not exist yet and the request 404'd before a body was ever parsed. Both
+ * backends now validate strictly (`.strict()` in zod, a hand-written extra-key
+ * rejection in .NET), so `role` is a loud 400 rather than a silent privilege
+ * grant — but it is still a broken client, so the name must stay `roleName`.
+ *
+ * `roleName` is deliberately typed to the four STAFF roles, not `SchoolRole`:
+ * that union contains the two values the server must refuse (school_admin,
+ * student) and omits two it accepts (teacher, coach).
+ */
+export async function updateUserRole(userId: string, roleName: StaffRoleName): Promise<void> {
   await apiRequest(`/api/v1/school-admin/users/${userId}/role`, {
     method: "PUT",
-    data: { role },
+    data: { roleName },
   });
 }
 

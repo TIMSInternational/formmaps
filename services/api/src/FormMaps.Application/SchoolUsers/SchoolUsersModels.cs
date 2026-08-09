@@ -38,6 +38,41 @@ public enum GradeLevelUpdateStatus
 }
 
 /// <summary>
+/// updateUserRole outcome (formmaps#114 — PUT /users/{userId}/role). ONE MEMBER PER GUARD, deliberately: the
+/// endpoint maps each to its own status + message, so no guard can be silently collapsed into another during a
+/// refactor. Mirrors schoolService.ts updateUserRole's discriminated returns exactly.
+/// </summary>
+public enum RoleUpdateStatus
+{
+    /// <summary>The row was updated (→200).</summary>
+    Updated,
+
+    /// <summary>G2 — caller === target (→403 "Cannot change your own role").</summary>
+    SelfChange,
+
+    /// <summary>No users row matched the target id (→404 "User not found").</summary>
+    TargetNotFound,
+
+    /// <summary>G3 — falsy or differing schoolId (→403 "Cannot modify users from another school").</summary>
+    CrossSchool,
+
+    /// <summary>G5 — the target currently holds school_admin / Super Admin (→403 "Cannot change an administrator's role").</summary>
+    ProtectedAdminTarget,
+
+    /// <summary>G5 — the target currently holds student / parent / anything unrecognised (→403 "Cannot change a student's role"; fail-closed).</summary>
+    ProtectedStudentTarget,
+
+    /// <summary>No active Role row by that name (→400 "Role not found"). NOT auto-created — that would be a write into the permission model itself.</summary>
+    RoleNotFound,
+
+    /// <summary>The target already holds the requested role (→400 "User already has this role") — pinned identically in Node.</summary>
+    NoChange,
+}
+
+/// <summary>updateUserRole result: the outcome plus, on <see cref="RoleUpdateStatus.Updated"/>, the { roleName, previousRoleName } the response (and the Node twin's audit row) want.</summary>
+public sealed record RoleUpdateResult(RoleUpdateStatus Status, string? RoleName, string? PreviousRoleName);
+
+/// <summary>
 /// assignStudentsToCounselor result. <see cref="Error"/> non-null = a service {error} branch (→400): "studentIds[]
 /// must contain student ids" / "Counselor not in your school" / "One or more students are not in your school".
 /// Else the { assigned, counselorId } success payload (assigned = deduped validated id count, 0 when nothing valid).

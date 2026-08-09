@@ -27,6 +27,21 @@ public interface ISchoolUsersWriter
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// updateUserRole (formmaps#114): reads caller + target (schoolId AND roleName) in ONE writable session, applies
+    /// <see cref="RoleChangeGuard"/> (G2 self / target-missing / G3 tenant / G5 source-role / idempotence), resolves
+    /// the ACTIVE Role row by name — never creating one — then UPDATEs users.roleId AND users.roleName plus
+    /// updatedAt in that same transaction. <paramref name="roleName"/> is already lowercased and allowlisted by
+    /// <see cref="RoleChangeRequest"/> (G4). Nothing is committed on any guard rejection.
+    ///
+    /// <para><b>Both columns or neither.</b> roleName is the authorization-bearing field (Node's getPermissions reads
+    /// it at token issuance; roleId is never consulted for authorization) while roleId is a required FK. Writing only
+    /// roleName dangles the FK; writing only roleId is a complete authorization no-op.</para>
+    /// </summary>
+    Task<RoleUpdateResult> UpdateUserRoleAsync(
+        RequestContext context, string callerId, string targetUserId, string roleName,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// assignStudentsToCounselor: counselor-in-school check + student validation, then (one writable tx) deactivate
     /// each student's OTHER active assignment and upsert-activate the (counselor, student) rows. <paramref name="ids"/>
     /// is the already-normalized (trimmed, deduped) id list. assignedBy is set on INSERT only.

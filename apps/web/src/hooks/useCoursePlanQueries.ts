@@ -40,13 +40,25 @@ import {
 // ── formmaps#89: optimistic course-plan writes ──────────────────────────────────
 //
 // All ten mutations here update the cache before the server answers. Six landed with
-// #89; the other four were blocked on defects underneath them and were converted once
-// those were fixed — the counselor pair by #95 (its read endpoint returned a shape the
-// UI could not parse, so there was no correct cache to patch) and the school-admin
-// pair by #94 (the endpoints they call did not exist in either backend, so every one
-// of those writes 404'd).
+// #89; the other four were blocked on defects underneath them:
+//   - the counselor pair, by #95 — its read endpoint returned a shape the UI could not
+//     parse, so there was no correctly-shaped cache entry to patch. Genuinely fixed and
+//     deployed; nothing outstanding.
+//   - the school-admin pair, by #94 — the endpoints did not exist in either backend, so
+//     every one of those writes 404'd. FIXED IN SOURCE ONLY. As of 2026-08-08 the Node
+//     routes exist on main but are NOT in the deployed image, and the .NET twin is
+//     shipped dark with no rewrite, so both writes still 404 in production. See the
+//     block above useSchoolAdminAddCourse for the full state and for why #111 kept
+//     them optimistic regardless.
 //
-// The general rules live in useOptimisticCache.ts.
+// Do not restate "#94 landed" as though it settled the question — an earlier version of
+// this comment did exactly that, and the gap between "merged" and "deployed" is what
+// #111 was filed to correct.
+//
+// The general rules live in useOptimisticCache.ts, including the concurrency caveat its
+// header documents — the two add mutations here opt out of it deliberately, because
+// SequenceBuilder's multi-select submit is precisely the overlapping-writes flow that
+// caveat assumes the app does not have.
 
 export const coursePlanKeys = {
   all: ["course-plan"] as const,
@@ -220,15 +232,26 @@ export function useRemoveCourseFromPlan() {
  * course record, so they are left at their empty values rather than guessed, and the
  * reconcile fills them in. A wrong credit count would move the graduation-progress
  * bar, which is the one number on this screen people act on.
+ *
+ * `pendingId` is minted by the CALLER rather than here (formmaps#111) so that the
+ * mutation's onError can undo this one row by id instead of restoring a whole-cache
+ * snapshot. SequenceBuilder submits a multi-select add as N synchronous mutate() calls
+ * against this single key, and snapshot rollback is not commutative under that: with
+ * adds A then B, B snapshots a cache that already holds A's placeholder, so A failing
+ * discards B's row and B failing RESTORES A's row for a write that failed — leaving a
+ * course on screen nobody successfully added, carrying an optimistic id and a
+ * real-looking Remove button. Undoing by id is order-independent: each add can only
+ * ever remove itself.
  */
 function insertPlannedCourse(
   current: StudentCoursePlanResponse,
   course: { courseId: string; gradeLevel: number; semester: string; courseCode?: string; courseName?: string; credits?: number },
+  pendingId: string,
 ): StudentCoursePlanResponse | undefined {
   const rows = current.plan?.enrollments;
   if (!rows) return undefined;
   const pending: StudentCourseEnrollment = {
-    id: optimisticId(),
+    id: pendingId,
     courseId: course.courseId,
     courseCode: course.courseCode ?? "",
     courseName: course.courseName ?? "",
@@ -261,11 +284,14 @@ export function useCounselorAddCourse(studentId: string) {
     mutationFn: (payload: { courseId: string; gradeLevel: number; semester: string }) =>
       counselorAddCourseToPlan(studentId, payload),
 
-    onMutate: (payload) =>
-      optimistic.patch<StudentCoursePlanResponse>(
+    onMutate: async (payload) => {
+      const pendingId = optimisticId();
+      const context = await optimistic.patch<StudentCoursePlanResponse>(
         { queryKey: coursePlanKeys.studentPlan(studentId) },
-        (current) => insertPlannedCourse(current, payload),
-      ),
+        (current) => insertPlannedCourse(current, payload, pendingId),
+      );
+      return { ...context, pendingId };
+    },
 
     // The POST returns the created row but not the course's credits or category, and
     // graduationProgress is recomputed server-side — so this one still reconciles.
@@ -274,8 +300,20 @@ export function useCounselorAddCourse(studentId: string) {
     },
 
     onSuccess: () => toast.success("Course added to student's plan"),
+
+    // Targeted undo, NOT optimistic.rollback — see insertPlannedCourse for why snapshot
+    // rollback corrupts the cache when SequenceBuilder submits several adds at once.
+    // This is strictly narrower than a snapshot restore: it only knows about the one
+    // key patched above, so any future onMutate that patches additional keys must undo
+    // those here too.
     onError: (err: Error, _payload, context) => {
-      optimistic.rollback(context);
+      const pendingId = context?.pendingId;
+      if (pendingId) {
+        optimistic.replace<StudentCoursePlanResponse>(
+          { queryKey: coursePlanKeys.studentPlan(studentId) },
+          (current) => removeEnrollment(current, pendingId),
+        );
+      }
       toast.error(err.message);
     },
   });
@@ -473,7 +511,33 @@ export function useReviewChangeRequest(studentId: string) {
 
 // ── School Admin hooks ──────────────────────────────────────────────────────
 
-// Optimistic since #94 built the endpoints these call; until then every click 404'd.
+// STATE OF THESE TWO ENDPOINTS AS OF 2026-08-08 — read this before changing them.
+//
+// The routes these call now EXIST IN SOURCE in both backends: legacy Node at
+// api/src/routes/school-students.ts:187 (POST) and :209 (DELETE), added by #94's fix
+// (2c7e0367, 2026-08-04, on main), and .NET at SchoolStudentsCoursePlanWriteEndpoints.cs
+// :32-33, added by #107.
+//
+// They are NOT REACHABLE IN PRODUCTION YET, and that is the part the previous comment
+// here got wrong — it claimed #94 had landed, which was true of the repo and false of
+// the running system, and that is what #111 was filed about. Two separate reasons:
+//   - Node: the deployed nexa-api image is deploy-20260730-…-dfbeca5a, a 07-30 build
+//     that predates 2c7e0367 by five days. Until that image is redeployed, both calls
+//     404 in prod.
+//   - .NET: shipped dark on purpose. There is no next.config.ts rewrite for
+//     /api/v1/school-admin/students/:studentId/course-plan (reads or writes), so every
+//     request on this surface goes to legacy Node regardless of any flag. Wiring that
+//     flag is #107's open decision, and the reads and both writes must be flipped
+//     together or #94's symptom re-opens on the .NET side.
+//
+// These stay OPTIMISTIC anyway (#111 resolution). Reverting to pessimistic would not
+// make the feature work: apiClient does not retry 4xx (lib/api/apiClient.ts:196-200),
+// so the 404 comes back in one round trip and onError shows a failure toast either way.
+// The only difference is a ~200ms placeholder row before that toast, which is not worth
+// two rewrites plus the standing risk that the re-conversion never happens. The real
+// fix for the production 404 is the Node deploy, which is an ops decision, not this
+// file's. What IS this file's problem is behaving correctly when a write fails — which
+// is permanent, not prod-only — and that is what the targeted rollback below is for.
 //
 // The caller passes courseCode/courseName/credits alongside the courseId. The server
 // ignores them — it stores only courseId + term + status and joins the rest back in on
@@ -487,11 +551,14 @@ export function useSchoolAdminAddCourse(studentId: string) {
     mutationFn: (payload: { courseId: string; courseCode: string; courseName: string; credits: number; gradeLevel: number; semester: string }) =>
       schoolAdminAddCourseToPlan(studentId, payload),
 
-    onMutate: (payload) =>
-      optimistic.patch<StudentCoursePlanResponse>(
+    onMutate: async (payload) => {
+      const pendingId = optimisticId();
+      const context = await optimistic.patch<StudentCoursePlanResponse>(
         { queryKey: coursePlanKeys.studentPlan(studentId) },
-        (current) => insertPlannedCourse(current, payload),
-      ),
+        (current) => insertPlannedCourse(current, payload, pendingId),
+      );
+      return { ...context, pendingId };
+    },
 
     // graduationProgress is recomputed server-side from the school's rule set, so it
     // is not guessed here and the reconcile is what corrects it.
@@ -500,8 +567,20 @@ export function useSchoolAdminAddCourse(studentId: string) {
     },
 
     onSuccess: () => toast.success("Course added to plan"),
+
+    // Targeted undo, NOT optimistic.rollback — see insertPlannedCourse. This is the
+    // path prod takes on EVERY add today (the 404 above), and it is also the path a
+    // 400 "No current academic year" takes after the deploy, so it has to be correct
+    // for several adds at once. Strictly narrower than a snapshot restore: it only
+    // undoes the one key patched above.
     onError: (err: Error, _payload, context) => {
-      optimistic.rollback(context);
+      const pendingId = context?.pendingId;
+      if (pendingId) {
+        optimistic.replace<StudentCoursePlanResponse>(
+          { queryKey: coursePlanKeys.studentPlan(studentId) },
+          (current) => removeEnrollment(current, pendingId),
+        );
+      }
       toast.error(err.message);
     },
   });
