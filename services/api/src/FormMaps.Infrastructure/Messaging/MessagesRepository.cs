@@ -214,13 +214,23 @@ public sealed class MessagesRepository(
 
             if (role == "parent")
             {
-                var childIds = await GetLinkedChildIdsAsync(session, userId, cancellationToken);
+                // formmaps#121. Both lookups run on a SYSTEM session, not the caller's. A parent has NO schoolId:
+                // student_parent_links did not admit them at all before prisma/rls/009-parent-links.sql, and
+                // counselor_student_assignments is school-inherit so it still does not. On the caller's own session
+                // childIds came back empty and every parent got "No linked children found" — parents could not open
+                // a conversation with their child's counselor at all. Both predicates are self-scoped and are the
+                // authorization: parentUserId is the authenticated caller's own id, and the assignment check is
+                // confined to the child ids that first query proved plus the single counselor being messaged. The
+                // system session therefore cannot widen past what was already checked.
+                await using var parentLinkSession =
+                    await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
+                var childIds = await GetLinkedChildIdsAsync(parentLinkSession, userId, cancellationToken);
                 if (childIds.Count == 0)
                     return new CreateConversationResult(CreateConversationStatus.Forbidden, null, "No linked children found");
                 var anyAssigned = false;
                 foreach (var childId in childIds)
                 {
-                    if (await HasActiveAssignmentAsync(session, childId, targetId, cancellationToken)) { anyAssigned = true; break; }
+                    if (await HasActiveAssignmentAsync(parentLinkSession, childId, targetId, cancellationToken)) { anyAssigned = true; break; }
                 }
                 if (!anyAssigned)
                     return new CreateConversationResult(CreateConversationStatus.Forbidden, null, "This user is not assigned to any of your children");

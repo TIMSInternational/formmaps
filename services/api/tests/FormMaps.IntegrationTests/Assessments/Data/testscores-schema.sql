@@ -53,14 +53,20 @@ CREATE TABLE "counselor_student_assignments" (
     CONSTRAINT "counselor_student_assignments_pkey" PRIMARY KEY ("id")
 );
 
+-- formmaps#121: "parentUserId" and "isAccepted" were missing here. They exist in the real schema and are what
+-- the parent gate now matches on — the old fixture could only express an email match, which is precisely the
+-- shape the bug had. See formmaps#125: this whole file is hand-written and carries no RLS, so it cannot catch
+-- the tenant-isolation half of that bug either.
 CREATE TABLE "student_parent_links" (
     "id" TEXT NOT NULL,
     "studentId" TEXT NOT NULL,
     "parentEmail" TEXT NOT NULL,
+    "parentUserId" TEXT,
+    "isAccepted" BOOLEAN NOT NULL DEFAULT false,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     CONSTRAINT "student_parent_links_pkey" PRIMARY KEY ("id")
 );
 
 CREATE INDEX "student_test_scores_userId_idx" ON "student_test_scores"("userId");
 CREATE INDEX "counselor_student_assignments_pair_idx" ON "counselor_student_assignments"("counselorId", "studentId");
-CREATE INDEX "student_parent_links_pair_idx" ON "student_parent_links"("studentId", "parentEmail");
+CREATE INDEX "student_parent_links_pair_idx" ON "student_parent_links"("studentId", "parentUserId");
