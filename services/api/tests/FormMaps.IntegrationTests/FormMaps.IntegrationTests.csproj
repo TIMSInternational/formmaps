@@ -7,6 +7,55 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <!-- ===================================================================================
+       formmaps#36: make an unproductive run END, with a name attached, instead of sitting
+       there. `dotnet test` on this project prints NOTHING until the final summary, so a run
+       that has stopped completing tests is indistinguishable from one that is merely slow.
+       #36 was filed after ~50 minutes of exactly that.
+
+       MEASURED, 2026-08-10, this project, no-build, whole project in one process:
+         - mean duration of tests that build an ASP.NET host climbed 4.0 s -> 50.2 s over the
+           run (buckets of 200 completions), while tests that only touch Postgres stayed FLAT
+           at ~30 ms. The cost is host construction, not any fixture and not the database.
+         - a serial control loop measured host build + one request at 2.0 s (10th host) rising
+           to 3.8 s (290th). xunit runs collections 12-wide, so 12 concurrent builds of a
+           2-4 s CPU-bound thing is where the ~50 s per test comes from.
+         - the run stopped completing tests entirely, and the 7 tests in flight at that moment
+           were in 7 DIFFERENT namespaces and all 7 were host-building endpoint tests. There is
+           no single culprit class to fix.
+
+       So there is no small change that makes ~2,470 tests in ONE process fast == that is what
+       the sharded `integration` matrix in .github/workflows/formmaps-api-ci.yml is for. What
+       these two properties buy is that the unsharded run TERMINATES and says something:
+       vstest aborts and writes a Sequence_*.xml naming the tests that were in flight. That
+       Sequence.xml is what identified the 7-namespace spread above. A hang carries no
+       information; an abort carries the list.
+
+       TIMEOUT SIZING. 10 minutes is inactivity: the clock resets on every completed test,
+       so it does not cap the run, only a run that has stopped producing results. The slowest
+       single legitimate test observed on a loaded box was 58 s, and
+       RealtimeTicketEndpointTests deliberately sleeps ~65 s of wall clock, so 10 minutes is
+       ~9x the worst honest case. It also lands well inside the 30-minute shard cap in
+       formmaps-api-ci.yml, which matters: hitting the cap kills the job with no artifact,
+       hitting this writes the Sequence.xml first.
+
+       DUMP TYPE none IS DELIBERATE. The testhost carries >1 GB of working set by then, so a
+       full hang dump is a multi-gigabyte CI artifact. Sequence.xml is emitted either way and
+       is the part that names the tests.
+
+       AssemblyMetadata below is what lets ContainerStartupTimeoutTests assert these survived,
+       since MSBuild properties are otherwise invisible at runtime.
+       =================================================================================== -->
+  <PropertyGroup>
+    <VSTestBlameHang>true</VSTestBlameHang>
+    <VSTestBlameHangTimeout>10m</VSTestBlameHangTimeout>
+    <VSTestBlameHangDumpType>none</VSTestBlameHangDumpType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="FormMapsBlameHangTimeout" Value="$(VSTestBlameHangTimeout)" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.10" />

@@ -27,6 +27,7 @@ public class SchoolUsersEndpointsTests
 {
     private const string UsersPath = "/api/v1/school-admin/users";
     private const string GradePath = "/api/v1/school-admin/users/u-1/grade-level";
+    private const string RolePath = "/api/v1/school-admin/users/u-1/role";
     private const string AssignPath = "/api/v1/school-admin/counselors/c-1/assign-students";
     private const string StudentsPath = "/api/v1/school-admin/counselors/c-1/students";
     private const string School = "school-1";
@@ -37,6 +38,7 @@ public class SchoolUsersEndpointsTests
     {
         new object[] { "GET", UsersPath },
         new object[] { "PUT", GradePath },
+        new object[] { "PUT", RolePath },
         new object[] { "POST", AssignPath },
         new object[] { "DELETE", AssignPath },
         new object[] { "GET", StudentsPath },
@@ -356,6 +358,101 @@ public class SchoolUsersEndpointsTests
         Assert.Equal(25, reader.LastLimit);
     }
 
+    // ---- PUT /users/{userId}/role (formmaps#114) ----
+
+    [Fact]
+    public async Task Role_route_exists_and_forwards_the_validated_lowercased_roleName()
+    {
+        // The whole point of #114: before this endpoint existed the route 404'd, so a flag flip would have broken
+        // the web client's useUpdateUserRole outright. Also pins .toLowerCase() running BEFORE the enum.
+        var writer = new FakeWriter { RoleResult = new UserRoleUpdateResult(RoleUpdateStatus.Updated, "counselor", "teacher") };
+        using var client = Client(new FakeReader(), writer, new FakeScope(School));
+
+        var response = await client.SendAsync(Auth(HttpMethod.Put, RolePath, """{"roleName":"Counselor"}"""));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(writer.RoleCalled);
+        Assert.Equal("counselor", writer.LastRoleName);
+        Assert.Equal("u-1", writer.LastRoleTargetUserId);
+        // actorEmail for the audit row comes off the request context, never the body.
+        Assert.Equal("admin@example.test", writer.LastRoleCallerEmail);
+
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var data = doc.RootElement.GetProperty("data");
+        Assert.Equal("u-1", data.GetProperty("userId").GetString());
+        Assert.Equal("counselor", data.GetProperty("roleName").GetString());
+        Assert.Equal("teacher", data.GetProperty("previousRoleName").GetString());
+        Assert.Equal(3, data.EnumerateObject().Count());
+    }
+
+    // formmaps#79 verbatim: the frontend was sending { role } to this URL. .strict() must make that a loud 400,
+    // never a silent strip. zod reports roleName's own "Required" first (shape keys are parsed before the
+    // unrecognized-key check), so that — not the unrecognized-key message — is what the client sees.
+    [Theory]
+    [InlineData("""{"role":"teacher"}""", "Required")]
+    [InlineData("""{}""", "Required")]
+    [InlineData("""{"roleName":"teacher","extra":1}""", "Unrecognized key(s) in object: 'extra'")]
+    [InlineData("""{"roleName":"school_admin"}""", "Invalid enum value. Expected 'counselor' | 'teacher' | 'staff' | 'coach', received 'school_admin'")]
+    [InlineData("""{"roleName":"student"}""", "Invalid enum value. Expected 'counselor' | 'teacher' | 'staff' | 'coach', received 'student'")]
+    [InlineData("""{"roleName":123}""", "Expected string, received number")]
+    [InlineData("""[]""", "Expected object, received array")]
+    public async Task Role_invalid_body_is_400_and_never_reaches_the_writer(string body, string message)
+    {
+        var writer = new FakeWriter();
+        using var client = Client(new FakeReader(), writer, new FakeScope(School));
+
+        var response = await client.SendAsync(Auth(HttpMethod.Put, RolePath, body));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(message, await MessageAsync(response));
+        Assert.False(writer.RoleCalled);
+    }
+
+    [Fact]
+    public async Task Role_malformed_json_is_400_invalid_request_body()
+    {
+        var writer = new FakeWriter();
+        using var client = Client(new FakeReader(), writer, new FakeScope(School));
+        var response = await client.SendAsync(Auth(HttpMethod.Put, RolePath, "{not json"));
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("Invalid request body", await MessageAsync(response));
+        Assert.False(writer.RoleCalled);
+    }
+
+    // Legacy `res.status(result.status || 403)` — every service branch, mapped.
+    [Theory]
+    [InlineData(RoleUpdateStatus.InvalidRole, HttpStatusCode.BadRequest, "Invalid role")]
+    [InlineData(RoleUpdateStatus.RoleNotFound, HttpStatusCode.BadRequest, "Role not found")]
+    [InlineData(RoleUpdateStatus.NoChange, HttpStatusCode.BadRequest, "User already has this role")]
+    [InlineData(RoleUpdateStatus.TargetNotFound, HttpStatusCode.NotFound, "User not found")]
+    [InlineData(RoleUpdateStatus.SelfRoleChange, HttpStatusCode.Forbidden, "Cannot change your own role")]
+    [InlineData(RoleUpdateStatus.CrossSchool, HttpStatusCode.Forbidden, "Cannot modify users from another school")]
+    [InlineData(RoleUpdateStatus.SourceIsAdministrator, HttpStatusCode.Forbidden, "Cannot change an administrator's role")]
+    [InlineData(RoleUpdateStatus.SourceIsNotChangeable, HttpStatusCode.Forbidden, "Cannot change a student's role")]
+    public async Task Role_service_branches_map_to_legacy_status_and_message(
+        RoleUpdateStatus status, HttpStatusCode expected, string message)
+    {
+        var writer = new FakeWriter { RoleResult = new UserRoleUpdateResult(status) };
+        using var client = Client(new FakeReader(), writer, new FakeScope(School));
+
+        var response = await client.SendAsync(Auth(HttpMethod.Put, RolePath, """{"roleName":"teacher"}"""));
+
+        Assert.Equal(expected, response.StatusCode);
+        Assert.Equal(message, await MessageAsync(response));
+    }
+
+    [Fact]
+    public void The_real_writer_still_resolves_from_the_container()
+    {
+        // Every other test in this file swaps ISchoolUsersWriter for a fake, so none of them would notice that the
+        // REAL SchoolUsersWriter gained a constructor dependency (IAuthRepository, for #120's revocation) that the
+        // container cannot satisfy — the route would 500 on its first production request instead. Resolve it.
+        using var factory = new UnpatchedFactory();
+        using var scope = factory.Services.CreateScope();
+        Assert.IsType<FormMaps.Infrastructure.SchoolUsers.SchoolUsersWriter>(
+            scope.ServiceProvider.GetRequiredService<ISchoolUsersWriter>());
+    }
+
     // ---- helpers ----
 
     private static HttpClient Client(FakeReader reader, FakeWriter writer, FakeScope scope) =>
@@ -392,6 +489,20 @@ public class SchoolUsersEndpointsTests
     {
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         return doc.RootElement.GetProperty("message").GetString();
+    }
+
+    /// <summary>
+    /// The production DI graph, with nothing swapped out — used only by the container-resolution test. The
+    /// connection string is a syntactically valid placeholder: NpgsqlDataSource is built eagerly during
+    /// resolution but does not dial the server, and the test never executes a query.
+    /// </summary>
+    private sealed class UnpatchedFactory : WebApplicationFactory<Program>
+    {
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.UseEnvironment(Environments.Development);
+            builder.UseSetting("ConnectionStrings:FormMaps", "Host=localhost;Database=unused;Username=unused;Password=unused");
+        }
     }
 
     private sealed class Factory(FakeReader reader, FakeWriter writer, FakeScope scope) : WebApplicationFactory<Program>
@@ -448,11 +559,16 @@ public class SchoolUsersEndpointsTests
         public GradeLevelUpdateStatus GradeStatus { get; init; } = GradeLevelUpdateStatus.Updated;
         public AssignStudentsResult AssignResult { get; init; } = new(null, 0, "c-1");
         public UnassignStudentsResult UnassignResult { get; init; } = new(null);
+        public UserRoleUpdateResult RoleResult { get; init; } = new(RoleUpdateStatus.Updated, "counselor", "teacher");
 
         public int? LastGradeLevel { get; private set; }
         public bool GradeCalled { get; private set; }
         public bool AssignCalled { get; private set; }
         public bool UnassignCalled { get; private set; }
+        public bool RoleCalled { get; private set; }
+        public string? LastRoleName { get; private set; }
+        public string? LastRoleTargetUserId { get; private set; }
+        public string? LastRoleCallerEmail { get; private set; }
         public IReadOnlyList<string>? LastIds { get; private set; }
 
         public Task<GradeLevelUpdateStatus> UpdateUserGradeLevelAsync(
@@ -461,6 +577,17 @@ public class SchoolUsersEndpointsTests
             GradeCalled = true;
             LastGradeLevel = gradeLevel;
             return Task.FromResult(GradeStatus);
+        }
+
+        public Task<UserRoleUpdateResult> UpdateUserRoleAsync(
+            RequestContext context, string callerId, string callerEmail, string targetUserId, string roleName,
+            string clientIp, CancellationToken cancellationToken = default)
+        {
+            RoleCalled = true;
+            LastRoleName = roleName;
+            LastRoleTargetUserId = targetUserId;
+            LastRoleCallerEmail = callerEmail;
+            return Task.FromResult(RoleResult);
         }
 
         public Task<AssignStudentsResult> AssignStudentsAsync(
