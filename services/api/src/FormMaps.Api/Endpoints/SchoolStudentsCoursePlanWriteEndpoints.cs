@@ -75,8 +75,25 @@ public static class SchoolStudentsCoursePlanWriteEndpoints
                 new { success = false, message = "courseId required" }, statusCode: StatusCodes.Status400BadRequest);
         }
 
+        // #122 — the planned grade. Mirrors Node's lib/coursePlanGrade.ts exactly: ABSENT is legal and
+        // means "unknown"; only a value that was SENT and is nonsense is a 400.
+        //
+        // DOCUMENTED LOW divergence, same class as ResolveTerm's below: Node validates this AFTER its
+        // student/academic-year lookups, so a request that is BOTH gradeLevel-invalid AND has no
+        // student school gets "Student has no school" there and the gradeLevel message here. Those
+        // checks live inside the writer's single transaction, so matching the order would mean
+        // threading a raw value through the writer purely to re-order two 400s. Unreachable from the
+        // UI, and neither response writes a row.
+        var (gradeLevel, gradeError) = ResolveGradeLevel(b);
+        if (gradeError is not null)
+        {
+            return Results.Json(
+                new { success = false, message = gradeError }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
         var result = await writer.CreateCoursePlanCourseAsync(
-            context, studentId, Qs(courseIdElement), ResolveTerm(b), context.Actor?.UserId, cancellationToken);
+            context, studentId, Qs(courseIdElement), ResolveTerm(b), gradeLevel, context.Actor?.UserId,
+            cancellationToken);
 
         return result.Status switch
         {
@@ -164,6 +181,58 @@ public static class SchoolStudentsCoursePlanWriteEndpoints
     }
 
     /// <summary>
+    /// The planned grade (#122) — a faithful port of Node's <c>parsePlannedGradeLevel</c>
+    /// (api/src/lib/coursePlanGrade.ts). Returns (value, null) on success — where a null VALUE means
+    /// the caller sent nothing, which is legal — or (null, message) for a 400.
+    ///
+    /// <para>Accepts a JSON number or a numeric STRING, because the field crosses the wire from a
+    /// &lt;select&gt; and which of the two arrives depends on the control. Range is 1-12 rather than
+    /// 9-12: K-8 schools exist in the data. Nonsense is refused loudly instead of being coerced into a
+    /// plausible grade — silent coercion is exactly what kept the original bug invisible.</para>
+    /// </summary>
+    private const int MinPlannedGrade = 1;
+    private const int MaxPlannedGrade = 12;
+
+    private static (int? Value, string? Error) ResolveGradeLevel(JsonElement body)
+    {
+        if (!body.TryGetProperty("gradeLevel", out var raw)
+            || raw.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return (null, null);
+        }
+
+        double? numeric = raw.ValueKind switch
+        {
+            JsonValueKind.Number => raw.TryGetDouble(out var d) ? d : null,
+            // "" is the empty-input case Node treats as absent, not as invalid.
+            JsonValueKind.String => string.IsNullOrEmpty(raw.GetString())
+                ? null
+                : double.TryParse(raw.GetString(), System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out var s) ? s : double.NaN,
+            _ => double.NaN,
+        };
+
+        if (raw.ValueKind == JsonValueKind.String && string.IsNullOrEmpty(raw.GetString()))
+        {
+            return (null, null);
+        }
+
+        if (numeric is null || double.IsNaN(numeric.Value) || numeric.Value != Math.Floor(numeric.Value)
+            || double.IsInfinity(numeric.Value))
+        {
+            return (null, "gradeLevel must be a whole number");
+        }
+
+        var value = (int)numeric.Value;
+        if (value < MinPlannedGrade || value > MaxPlannedGrade)
+        {
+            return (null, $"gradeLevel must be between {MinPlannedGrade} and {MaxPlannedGrade}");
+        }
+
+        return (value, null);
+    }
+
+    /// <summary>
     /// lib/query.ts <c>qs</c>: an array yields <c>String(val[0] ?? "")</c>; anything else non-nullish yields
     /// <c>String(val)</c>. Only reached for a JS-truthy value (so never false/0/""/null). An empty ARRAY is truthy in
     /// JS yet qs-stringifies to "" — that path is preserved.
@@ -187,6 +256,7 @@ public static class SchoolStudentsCoursePlanWriteEndpoints
         schoolId = p.SchoolId,
         academicYearId = p.AcademicYearId,
         term = p.Term,
+        gradeLevel = p.GradeLevel,
         courseId = p.CourseId,
         status = p.Status,
         sortOrder = p.SortOrder,

@@ -93,6 +93,7 @@ CREATE TABLE "student_course_plans" (
     "studentId" text NOT NULL,
     "courseId"  text NOT NULL,
     "term"      text,
+    "gradeLevel" integer,                              -- #122
     "status"    text NOT NULL DEFAULT 'planned',
     "sortOrder" integer NOT NULL DEFAULT 0,
     "isActive"  boolean NOT NULL DEFAULT true

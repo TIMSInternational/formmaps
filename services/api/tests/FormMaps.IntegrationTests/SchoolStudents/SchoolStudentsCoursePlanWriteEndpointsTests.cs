@@ -157,6 +157,56 @@ public class SchoolStudentsCoursePlanWriteEndpointsTests
         Assert.Equal(expected, writer.LastTerm);
     }
 
+    // ---- POST gradeLevel (#122) ----
+    //
+    // The planned grade was DROPPED by both backends, so a course added to "Grade 9 Fall" rendered
+    // under the student's own grade. These mirror Node's lib/coursePlanGrade.ts rules exactly — the
+    // two implementations disagreeing is the same class of bug, just deferred to the flag flip.
+
+    [Theory]
+    [InlineData("""{"courseId":"c1","gradeLevel":9}""", 9)]        // number
+    [InlineData("""{"courseId":"c1","gradeLevel":"9"}""", 9)]      // numeric string — a <select> may send either
+    [InlineData("""{"courseId":"c1","gradeLevel":1}""", 1)]        // range is 1-12, not 9-12: K-8 schools exist
+    [InlineData("""{"courseId":"c1","gradeLevel":12}""", 12)]
+    [InlineData("""{"courseId":"c1"}""", null)]                    // ABSENT is legal and means "unknown"
+    [InlineData("""{"courseId":"c1","gradeLevel":null}""", null)]
+    [InlineData("""{"courseId":"c1","gradeLevel":""}""", null)]    // empty input, not invalid input
+    public async Task Post_forwards_the_planned_gradeLevel(string body, int? expected)
+    {
+        var writer = new FakeWriter { Result = Created() };
+        using var f = new Factory(new FakeReader { StudentInSchool = true }, writer, new FakeScope(School));
+        using var c = f.CreateClient();
+
+        var response = await Post(c, CoursesPath, body);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        // Asserts the endpoint FORWARDED it. Without this the writer could drop the column again and
+        // every other assertion here would still pass — which is how the original bug survived.
+        Assert.Equal(expected, writer.LastGradeLevel);
+    }
+
+    [Theory]
+    [InlineData("""{"courseId":"c1","gradeLevel":0}""")]           // below range
+    [InlineData("""{"courseId":"c1","gradeLevel":13}""")]          // above range
+    [InlineData("""{"courseId":"c1","gradeLevel":-1}""")]
+    [InlineData("""{"courseId":"c1","gradeLevel":9.5}""")]         // not a whole number
+    [InlineData("""{"courseId":"c1","gradeLevel":"nine"}""")]      // not numeric
+    [InlineData("""{"courseId":"c1","gradeLevel":true}""")]
+    [InlineData("""{"courseId":"c1","gradeLevel":{}}""")]
+    public async Task Post_rejects_a_sent_but_nonsense_gradeLevel(string body)
+    {
+        var writer = new FakeWriter { Result = Created() };
+        using var f = new Factory(new FakeReader { StudentInSchool = true }, writer, new FakeScope(School));
+        using var c = f.CreateClient();
+
+        var response = await Post(c, CoursesPath, body);
+
+        // Refused LOUDLY rather than coerced into a plausible grade — silent coercion is what kept
+        // this invisible. And nothing is written.
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.False(writer.CreateCalled);
+    }
+
     // ---- POST writer outcomes ----
 
     [Fact]
@@ -204,6 +254,13 @@ public class SchoolStudentsCoursePlanWriteEndpointsTests
         Assert.Equal(School, data.GetProperty("schoolId").GetString());
         Assert.Equal("ay1", data.GetProperty("academicYearId").GetString());
         Assert.Equal("Fall", data.GetProperty("term").GetString());
+        // #122 — the planned grade, null here because this fixture row carries none. Its POSITION is
+        // part of the contract: Prisma emits schema-declaration order, so legacy returns it between
+        // `term` and `courseId`, and a parity consumer reading positionally would break otherwise.
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("gradeLevel").ValueKind);
+        Assert.Equal(
+            new[] { "term", "gradeLevel", "courseId" },
+            data.EnumerateObject().Select(x => x.Name).SkipWhile(n => n != "term").Take(3).ToArray());
         Assert.Equal("c1", data.GetProperty("courseId").GetString());
         Assert.Equal("planned", data.GetProperty("status").GetString());
         Assert.Equal(0, data.GetProperty("sortOrder").GetInt32());
@@ -212,7 +269,7 @@ public class SchoolStudentsCoursePlanWriteEndpointsTests
         Assert.Equal("admin-1", data.GetProperty("createdBy").GetString());
         Assert.Equal(JsonValueKind.Null, data.GetProperty("updatedBy").ValueKind);
         // exactly the 14 model columns — no courseCode/courseName/credits enrichment
-        Assert.Equal(14, data.EnumerateObject().Count());
+        Assert.Equal(15, data.EnumerateObject().Count()); // 14 + gradeLevel (#122)
         Assert.Equal("admin-1", writer.LastCreatedBy);
         Assert.Equal("c1", writer.LastCourseId);
     }
@@ -296,7 +353,7 @@ public class SchoolStudentsCoursePlanWriteEndpointsTests
     private static CoursePlanCourseCreateResult Created() => new(
         CoursePlanCourseCreateStatus.Created,
         new StudentCoursePlanRow(
-            "p1", "s1", School, "ay1", "Fall", "c1", "planned", 0, null, true, "admin-1",
+            "p1", "s1", School, "ay1", "Fall", null, "c1", "planned", 0, null, true, "admin-1",
             "2026-01-01T00:00:00.000Z", null, "2026-01-01T00:00:00.000Z"));
 
     private static StringContent Json(string s) => new(s, Encoding.UTF8, "application/json");
@@ -392,13 +449,19 @@ public class SchoolStudentsCoursePlanWriteEndpointsTests
         public string? LastDeleteStudentId { get; private set; }
         public string? LastEnrollmentId { get; private set; }
 
+        // #122 — captured so a test can assert the endpoint actually FORWARDED the parsed grade.
+        // Without this the writer could silently drop it again and every existing assertion would
+        // still pass, which is how the original bug survived.
+        public int? LastGradeLevel { get; private set; }
+
         public Task<CoursePlanCourseCreateResult> CreateCoursePlanCourseAsync(
-            RequestContext context, string studentId, string courseId, string? term, string? createdBy,
-            CancellationToken cancellationToken = default)
+            RequestContext context, string studentId, string courseId, string? term, int? gradeLevel,
+            string? createdBy, CancellationToken cancellationToken = default)
         {
             CreateCalled = true;
             LastCourseId = courseId;
             LastTerm = term;
+            LastGradeLevel = gradeLevel;
             LastCreatedBy = createdBy;
             return Task.FromResult(Result);
         }

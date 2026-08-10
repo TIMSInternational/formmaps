@@ -25,8 +25,14 @@ public interface ISchoolStudentsCoursePlanWriter
     /// (→ 400 "No current academic year") when that school has no isCurrent year. Neither early return writes a row
     /// (the session is disposed without a commit). On success the FULL raw row is returned for the 201 body.
     /// </summary>
+    /// <param name="gradeLevel">
+    /// The grade the course is planned for (#122), already validated by the endpoint. NULL means the
+    /// caller sent nothing, which is legal and means "unknown" — the reader then falls back to the
+    /// student's current grade. Dropping this (which both backends did) makes every course render in
+    /// the student's own grade, collapsing a four-year plan into one row of the grid.
+    /// </param>
     Task<CoursePlanCourseCreateResult> CreateCoursePlanCourseAsync(
-        RequestContext context, string studentId, string courseId, string? term, string? createdBy,
+        RequestContext context, string studentId, string courseId, string? term, int? gradeLevel, string? createdBy,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -66,6 +72,11 @@ public sealed record StudentCoursePlanRow(
     string SchoolId,
     string AcademicYearId,
     string? Term,
+    // The grade the course is PLANNED FOR (#122). Sits between Term and CourseId because Prisma emits
+    // columns in schema-declaration order and the column was declared there — verified against the
+    // live prod response: {... "term":"Fall","gradeLevel":9,"courseId":... }. Nullable: rows written
+    // before the column existed have no value, and the reader falls back to the student's own grade.
+    int? GradeLevel,
     string CourseId,
     string? Status,
     int SortOrder,

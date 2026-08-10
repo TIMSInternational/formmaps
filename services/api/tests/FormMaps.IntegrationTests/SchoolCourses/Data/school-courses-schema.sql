@@ -39,6 +39,7 @@ CREATE TABLE "student_course_plans" (
     "studentId"      text,
     "schoolId"       text,
     "academicYearId" text,
+    "gradeLevel"    integer,
     "courseId"       text NOT NULL,
     "status"         text NOT NULL DEFAULT 'planned',
     "isActive"       boolean NOT NULL DEFAULT true
