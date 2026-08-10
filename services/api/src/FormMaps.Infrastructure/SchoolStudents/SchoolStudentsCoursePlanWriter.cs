@@ -23,12 +23,12 @@ public sealed class SchoolStudentsCoursePlanWriter(IFormMapsDatabaseSessionFacto
 {
     // Prisma schema field order (term BEFORE courseId) — this is the raw row legacy echoes at 201.
     private const string PlanProjection = """
-        "id", "studentId", "schoolId", "academicYearId", "term", "courseId", "status", "sortOrder", "notes",
-        "isActive", "createdBy", "createdDate", "updatedBy", "updatedAt"
+        "id", "studentId", "schoolId", "academicYearId", "term", "gradeLevel", "courseId", "status", "sortOrder",
+        "notes", "isActive", "createdBy", "createdDate", "updatedBy", "updatedAt"
         """;
 
     public async Task<CoursePlanCourseCreateResult> CreateCoursePlanCourseAsync(
-        RequestContext context, string studentId, string courseId, string? term, string? createdBy,
+        RequestContext context, string studentId, string courseId, string? term, int? gradeLevel, string? createdBy,
         CancellationToken cancellationToken = default)
     {
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
@@ -56,9 +56,9 @@ public sealed class SchoolStudentsCoursePlanWriter(IFormMapsDatabaseSessionFacto
         StudentCoursePlanRow row;
         await using (var insert = Command(session, $"""
             INSERT INTO "student_course_plans"
-                ("id", "studentId", "schoolId", "academicYearId", "term", "courseId", "status", "sortOrder",
-                 "isActive", "createdBy", "createdDate", "updatedAt")
-            VALUES (gen_random_uuid()::text, @student, @school, @ay, @term, @course, 'planned', 0, true,
+                ("id", "studentId", "schoolId", "academicYearId", "term", "gradeLevel", "courseId", "status",
+                 "sortOrder", "isActive", "createdBy", "createdDate", "updatedAt")
+            VALUES (gen_random_uuid()::text, @student, @school, @ay, @term, @grade, @course, 'planned', 0, true,
                     @createdBy, @now, @now)
             RETURNING {PlanProjection}
             """))
@@ -68,6 +68,10 @@ public sealed class SchoolStudentsCoursePlanWriter(IFormMapsDatabaseSessionFacto
             AddParameter(insert, "ay", academicYearId);
             // `term: req.body.semester || req.body.term` — undefined → Prisma omits the nullable column → NULL.
             AddParameter(insert, "term", term is null ? DBNull.Value : term);
+            // #122. NULL when the caller sent nothing — legal, and means "unknown"; the reader then
+            // falls back to the student's current grade. Dropping this column entirely is what made a
+            // course added to "Grade 9 Fall" reappear under the student's own grade.
+            AddParameter(insert, "grade", gradeLevel is null ? DBNull.Value : gradeLevel.Value);
             AddParameter(insert, "course", courseId);
             AddParameter(insert, "createdBy", string.IsNullOrEmpty(createdBy) ? DBNull.Value : createdBy);
             AddTimestamp(insert, "now", Now());
@@ -110,15 +114,18 @@ public sealed class SchoolStudentsCoursePlanWriter(IFormMapsDatabaseSessionFacto
         SchoolId: r.GetString(2),
         AcademicYearId: r.GetString(3),
         Term: r.IsDBNull(4) ? null : r.GetString(4),
-        CourseId: r.GetString(5),
-        Status: r.IsDBNull(6) ? null : r.GetString(6),
-        SortOrder: r.GetInt32(7),
-        Notes: r.IsDBNull(8) ? null : r.GetString(8),
-        IsActive: r.GetBoolean(9),
-        CreatedBy: r.IsDBNull(10) ? null : r.GetString(10),
-        CreatedDate: IsoZ(r.GetDateTime(11)),
-        UpdatedBy: r.IsDBNull(12) ? null : r.GetString(12),
-        UpdatedAt: IsoZ(r.GetDateTime(13)));
+        // #122 — every ordinal below shifts by one; the projection puts "gradeLevel" here because
+        // Prisma emits schema-declaration order and that is what legacy returns.
+        GradeLevel: r.IsDBNull(5) ? null : r.GetInt32(5),
+        CourseId: r.GetString(6),
+        Status: r.IsDBNull(7) ? null : r.GetString(7),
+        SortOrder: r.GetInt32(8),
+        Notes: r.IsDBNull(9) ? null : r.GetString(9),
+        IsActive: r.GetBoolean(10),
+        CreatedBy: r.IsDBNull(11) ? null : r.GetString(11),
+        CreatedDate: IsoZ(r.GetDateTime(12)),
+        UpdatedBy: r.IsDBNull(13) ? null : r.GetString(13),
+        UpdatedAt: IsoZ(r.GetDateTime(14)));
 
     // ---------------------------------------------------------------- helpers
 

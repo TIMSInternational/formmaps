@@ -24,6 +24,7 @@ CREATE TABLE "student_course_plans" (
     "schoolId"       text NOT NULL,
     "academicYearId" text NOT NULL,
     "term"           text,
+    "gradeLevel"     integer,                          -- #122 (grade the course is PLANNED for)
     "courseId"       text NOT NULL,
     "status"         text NOT NULL DEFAULT 'planned',
     "sortOrder"      integer NOT NULL DEFAULT 0,

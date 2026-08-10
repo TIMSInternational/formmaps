@@ -54,7 +54,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
         await SeedAcademicYear(conn, "ay-b", SchoolB, isCurrent: true); // DIFFERENT current year per school
 
         var result = await Writer().CreateCoursePlanCourseAsync(
-            SuperAdminCtx(), "student-b", "course-1", term: "Fall", createdBy: "admin-super");
+            SuperAdminCtx(), "student-b", "course-1", term: "Fall", gradeLevel: null, createdBy: "admin-super");
 
         Assert.Equal(CoursePlanCourseCreateStatus.Created, result.Status);
         Assert.Equal(SchoolB, result.Row!.SchoolId);
@@ -78,7 +78,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
 
         var result = await Writer().CreateCoursePlanCourseAsync(
-            Ctx(), "student-1", "course-1", term: "Spring", createdBy: "admin-a");
+            Ctx(), "student-1", "course-1", term: "Spring", gradeLevel: null, createdBy: "admin-a");
 
         var row = result.Row!;
         Assert.False(string.IsNullOrEmpty(row.Id));
@@ -104,7 +104,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
         await SeedUser(conn, "student-1", schoolId: null); // student exists but has no school
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
 
-        var result = await Writer().CreateCoursePlanCourseAsync(Ctx(), "student-1", "course-1", "Fall", "admin-a");
+        var result = await Writer().CreateCoursePlanCourseAsync(Ctx(), "student-1", "course-1", "Fall", null, "admin-a");
 
         Assert.Equal(CoursePlanCourseCreateStatus.NoStudentSchool, result.Status);
         Assert.Null(result.Row);
@@ -117,7 +117,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
         await using var conn = await _dataSource.OpenConnectionAsync();
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
 
-        var result = await Writer().CreateCoursePlanCourseAsync(Ctx(), "ghost", "course-1", "Fall", "admin-a");
+        var result = await Writer().CreateCoursePlanCourseAsync(Ctx(), "ghost", "course-1", "Fall", null, "admin-a");
 
         Assert.Equal(CoursePlanCourseCreateStatus.NoStudentSchool, result.Status);
         Assert.Equal(0, await PlanCount(conn));
@@ -131,7 +131,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: false); // exists but NOT current
         await SeedAcademicYear(conn, "ay-b", SchoolB, isCurrent: true);  // current, but the WRONG school
 
-        var result = await Writer().CreateCoursePlanCourseAsync(Ctx(), "student-1", "course-1", "Fall", "admin-a");
+        var result = await Writer().CreateCoursePlanCourseAsync(Ctx(), "student-1", "course-1", "Fall", null, "admin-a");
 
         Assert.Equal(CoursePlanCourseCreateStatus.NoCurrentAcademicYear, result.Status);
         Assert.Null(result.Row);
@@ -139,6 +139,31 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
     }
 
     // ---- term ----
+
+    // #122 — the writer must actually PERSIST the planned grade, not merely accept it. The endpoint
+    // tests prove it is FORWARDED; without this the column could be dropped from the INSERT and every
+    // one of those would still pass. That gap is exactly how the original bug survived.
+    [Theory]
+    [InlineData(9)]
+    [InlineData(null)]
+    public async Task Create_stores_the_planned_gradeLevel(int? grade)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUser(conn, "student-1", SchoolA);
+        await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
+
+        var result = await Writer().CreateCoursePlanCourseAsync(
+            Ctx(), "student-1", "course-1", "Fall", grade, "admin-a");
+
+        Assert.Equal(CoursePlanCourseCreateStatus.Created, result.Status);
+        Assert.Equal(grade, result.Row!.GradeLevel);   // the row echoed at 201
+
+        // ...and what is actually on disk, which is the half that matters.
+        await using var cmd = new NpgsqlCommand(
+            """SELECT "gradeLevel" FROM "student_course_plans" WHERE "studentId"='student-1'""", conn);
+        var stored = await cmd.ExecuteScalarAsync();
+        Assert.Equal(grade, stored is null or DBNull ? (int?)null : Convert.ToInt32(stored));
+    }
 
     [Theory]
     [InlineData("Spring", "Spring")]  // semester wins
@@ -149,7 +174,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
         await SeedUser(conn, "student-1", SchoolA);
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
 
-        var result = await Writer().CreateCoursePlanCourseAsync(Ctx(), "student-1", "course-1", term, "admin-a");
+        var result = await Writer().CreateCoursePlanCourseAsync(Ctx(), "student-1", "course-1", term, null, "admin-a");
 
         Assert.Equal(expected, result.Row!.Term);
 
@@ -211,7 +236,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true, name: "2025-2026");
         // deliberately NO school_courses row for "course-1"
 
-        var created = await Writer().CreateCoursePlanCourseAsync(Ctx(), "student-1", "course-1", "Fall", "admin-a");
+        var created = await Writer().CreateCoursePlanCourseAsync(Ctx(), "student-1", "course-1", "Fall", null, "admin-a");
         Assert.Equal(CoursePlanCourseCreateStatus.Created, created.Status);
 
         var before = await Reader().GetStudentCoursePlanAsync(Ctx(), "student-1");
