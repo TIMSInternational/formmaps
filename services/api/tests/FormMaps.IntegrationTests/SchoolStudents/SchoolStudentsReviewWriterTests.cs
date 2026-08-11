@@ -126,6 +126,46 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
         Assert.Equal(0, reader.GetInt32(3));
     }
 
+    // #122 — the approved request's grade must be CARRIED THROUGH to the plan row, not dropped.
+    //
+    // This is a round-trip against the real column on purpose. The writer returns the change-request row, never the
+    // plan row, so nothing in the return value or the endpoint's 200 changes whether or not the INSERT carries the
+    // column — which is exactly how this survived two previous rounds of fixing it in Node.
+    [Theory]
+    [InlineData(11)]
+    [InlineData(9)]
+    [InlineData(1)]  // K-8 schools exist in the data; the request column is not restricted to 9-12
+    public async Task Review_approved_add_carries_the_requests_gradeLevel(int requestGrade)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUser(conn, "admin-1", School);
+        // FIXTURE CONTROL: the student's OWN grade is 12 and never equals the request's, so a regression back to
+        // the reader's `?? user.gradeLevel` fallback cannot accidentally satisfy the assertion.
+        await SeedStudent(conn, "s1", School, gradeLevel: 12);
+        await SeedAcademicYear(conn, "ay1", School, isCurrent: true);
+        await SeedChangeRequest(conn, "r1", "s1", School, "add", "pending", gradeLevel: requestGrade);
+
+        await Writer().ReviewChangeRequestAsync(Ctx(), "admin-1", "s1", "r1", "approved", null);
+
+        Assert.Equal(requestGrade, await StoredPlanGradeLevel(conn, "s1"));
+    }
+
+    [Fact]
+    public async Task Review_approved_add_returned_row_still_reports_the_requests_gradeLevel()
+    {
+        // The lookup projection gained a column (#122); the ordinals of the RETURNING projection it feeds are
+        // separate, and this pins that neither read drifted.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUser(conn, "admin-1", School);
+        await SeedAcademicYear(conn, "ay1", School, isCurrent: true);
+        await SeedChangeRequest(conn, "r1", "s1", School, "add", "pending", gradeLevel: 10);
+
+        var row = await Writer().ReviewChangeRequestAsync(Ctx(), "admin-1", "s1", "r1", "approved", null);
+
+        Assert.Equal(10, row!.GradeLevel);
+        Assert.Equal("c1", row.CourseId);
+    }
+
     [Fact]
     public async Task Review_approved_drop_creates_no_plan()
     {
@@ -202,20 +242,40 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
 
     private static async Task SeedChangeRequest(
         NpgsqlConnection conn, string id, string studentId, string schoolId, string action, string status,
-        string courseId = "c1", string? semester = null)
+        string courseId = "c1", string? semester = null, int gradeLevel = 11)
     {
         await using var cmd = new NpgsqlCommand(
             """
             INSERT INTO "course_change_requests" ("id","studentId","schoolId","courseId","credits","gradeLevel","action","status","semester","isActive","createdDate","updatedAt")
-            VALUES (@id,@st,@s,@c,1,11,@a::"CourseChangeAction",@status::"CourseChangeStatus",@sem,true,now(),now())
+            VALUES (@id,@st,@s,@c,1,@g,@a::"CourseChangeAction",@status::"CourseChangeStatus",@sem,true,now(),now())
             """, conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("st", studentId);
         cmd.Parameters.AddWithValue("s", schoolId);
         cmd.Parameters.AddWithValue("c", courseId);
+        cmd.Parameters.AddWithValue("g", gradeLevel);
         cmd.Parameters.AddWithValue("a", action);
         cmd.Parameters.AddWithValue("status", status);
         cmd.Parameters.AddWithValue("sem", (object?)semester ?? DBNull.Value);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    private static async Task SeedStudent(NpgsqlConnection conn, string id, string schoolId, int gradeLevel)
+    {
+        await using var cmd = new NpgsqlCommand(
+            """INSERT INTO "users" ("id","name","email","roleName","schoolId","gradeLevel","isActive") VALUES (@id,@id,@id,'student',@s,@g,true)""", conn);
+        cmd.Parameters.AddWithValue("id", id);
+        cmd.Parameters.AddWithValue("s", schoolId);
+        cmd.Parameters.AddWithValue("g", gradeLevel);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    private static async Task<int?> StoredPlanGradeLevel(NpgsqlConnection conn, string studentId)
+    {
+        await using var cmd = new NpgsqlCommand(
+            """SELECT "gradeLevel" FROM "student_course_plans" WHERE "studentId"=@s""", conn);
+        cmd.Parameters.AddWithValue("s", studentId);
+        var stored = await cmd.ExecuteScalarAsync();
+        return stored is null or DBNull ? null : Convert.ToInt32(stored);
     }
 }

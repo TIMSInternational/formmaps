@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text.Json;
 using FormMaps.Application.Auth;
+using FormMaps.Application.CoursePlan;
 using FormMaps.Application.Data;
 using FormMaps.Application.StudentCoursePlan;
 
@@ -20,11 +21,13 @@ public sealed class StudentCoursePlanRepository(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     TimeProvider timeProvider) : IStudentCoursePlanRepository
 {
-    // Full studentCoursePlan row in schema field order (Prisma findMany passthrough).
+    // Full studentCoursePlan row in schema field order (Prisma findMany passthrough). "gradeLevel" (#122) sits
+    // between "term" and "courseId" because that is where the column was declared in the Prisma schema and this
+    // projection has to reproduce findMany's key order verbatim — see StudentCoursePlanEndpoints.RowJson.
     private const string RowColumns =
         """
-        "id", "studentId", "schoolId", "academicYearId", "term", "courseId", "status", "sortOrder", "notes",
-        "isActive", "createdBy", "createdDate", "updatedBy", "updatedAt"
+        "id", "studentId", "schoolId", "academicYearId", "term", "gradeLevel", "courseId", "status", "sortOrder",
+        "notes", "isActive", "createdBy", "createdDate", "updatedBy", "updatedAt"
         """;
 
     public async Task<CoursePlanView> GetCoursePlanAsync(
@@ -105,6 +108,22 @@ public sealed class StudentCoursePlanRepository(
             return new CreateCoursePlanOutcome(CreateCoursePlanStatus.NoCurrentYear);
         }
 
+        // #122 — the grade the course is PLANNED FOR. This is the .NET twin of Node's routes/course-plan.ts:75,
+        // the student's own self-serve "add course", and it dropped the value exactly like the school-admin writer
+        // #124 fixed: the row was created, the request 201'd, and the reader's `?? user.gradeLevel` fallback
+        // silently re-bucketed the course into the student's CURRENT grade.
+        //
+        // Parsed BEFORE the courseId/term extraction below, because Node parses it after the current-year gate and
+        // before `prisma.studentCoursePlan.create` — so a body that is BOTH grade-invalid and courseId-invalid gets
+        // the 400, not the create's type-500. The rule itself is shared with the school-admin writer
+        // (Application/CoursePlan/PlannedGradeLevel.cs); two writers of one feature disagreeing about what a valid
+        // grade is would be the same class of bug, merely deferred to the flag flip.
+        var (gradeLevel, gradeError) = PlannedGradeLevel.Resolve(body);
+        if (gradeError is not null)
+        {
+            return new CreateCoursePlanOutcome(CreateCoursePlanStatus.InvalidGradeLevel, gradeError);
+        }
+
         // courseId (required String) + semester→term (String?), extracted AFTER the two 400 gates so a Prisma type-500
         // defers past them. courseId must be a JSON string (missing/null/non-string → 500). term: absent/null → NULL;
         // string → value; any other type → 500.
@@ -134,6 +153,16 @@ public sealed class StudentCoursePlanRepository(
             columns.Add("\"term\"");
             values.Add("@term");
             AddParameter(command, "term", term);
+        }
+
+        // #122. Omitted when the caller sent nothing — legal, and means "unknown"; the column defaults to NULL and
+        // the reader falls back to the student's current grade, which is the pre-existing behaviour. Mirrors
+        // Prisma's `gradeLevel: undefined` → column omitted, exactly like `term` above.
+        if (gradeLevel is not null)
+        {
+            columns.Add("\"gradeLevel\"");
+            values.Add("@grade");
+            AddParameter(command, "grade", gradeLevel.Value);
         }
 
         command.CommandText = $"""
@@ -254,15 +283,18 @@ public sealed class StudentCoursePlanRepository(
         SchoolId: reader.GetString(2),
         AcademicYearId: reader.GetString(3),
         Term: reader.IsDBNull(4) ? null : reader.GetString(4),
-        CourseId: reader.GetString(5),
-        Status: reader.IsDBNull(6) ? null : reader.GetString(6),
-        SortOrder: reader.GetInt32(7),
-        Notes: reader.IsDBNull(8) ? null : reader.GetString(8),
-        IsActive: reader.GetBoolean(9),
-        CreatedBy: reader.IsDBNull(10) ? null : reader.GetString(10),
-        CreatedDate: IsoZ(reader.GetDateTime(11)),
-        UpdatedBy: reader.IsDBNull(12) ? null : reader.GetString(12),
-        UpdatedAt: IsoZ(reader.GetDateTime(13)));
+        // #122 — every ordinal below shifts by one; RowColumns puts "gradeLevel" here because Prisma emits
+        // schema-declaration order and that is what legacy's findMany passthrough returns.
+        GradeLevel: reader.IsDBNull(5) ? null : reader.GetInt32(5),
+        CourseId: reader.GetString(6),
+        Status: reader.IsDBNull(7) ? null : reader.GetString(7),
+        SortOrder: reader.GetInt32(8),
+        Notes: reader.IsDBNull(9) ? null : reader.GetString(9),
+        IsActive: reader.GetBoolean(10),
+        CreatedBy: reader.IsDBNull(11) ? null : reader.GetString(11),
+        CreatedDate: IsoZ(reader.GetDateTime(12)),
+        UpdatedBy: reader.IsDBNull(13) ? null : reader.GetString(13),
+        UpdatedAt: IsoZ(reader.GetDateTime(14)));
 
     private DateTime Now() =>
         new DateTime(
