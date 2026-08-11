@@ -3,6 +3,7 @@ using FormMaps.Application.SchoolStudents;
 using FormMaps.Domain.Auth;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.SchoolStudents;
+using FormMaps.IntegrationTests.TestSupport.Rls;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.SchoolStudents;
@@ -20,21 +21,27 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
     private const string SchoolB = "school-b";
 
     private readonly SchoolStudentsDatabaseFixture _fixture;
+
+    /// <summary>Restricted login (NOSUPERUSER NOBYPASSRLS) — the code under test runs on this.</summary>
     private NpgsqlDataSource _dataSource = null!;
+
+    /// <summary>Container superuser — seeding and assertions ONLY.</summary>
+    private NpgsqlDataSource _adminDataSource = null!;
 
     public SchoolStudentsCoursePlanWriterTests(SchoolStudentsDatabaseFixture fixture) => _fixture = fixture;
 
     public async Task InitializeAsync()
     {
-        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            """TRUNCATE "users","academic_years","student_course_plans","school_courses","student_grades","graduation_rule_sets" """,
-            conn);
-        await cmd.ExecuteNonQueryAsync();
+        _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
+        _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
+        await _fixture.TruncateAsync("users", "academic_years", "student_course_plans", "school_courses", "student_grades", "graduation_rule_sets");
     }
 
-    public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+    public async Task DisposeAsync()
+    {
+        await _dataSource.DisposeAsync();
+        await _adminDataSource.DisposeAsync();
+    }
 
     // ---- THE trap: student-scoped, not caller-scoped ----
 
@@ -46,7 +53,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
     [Fact]
     public async Task Create_uses_the_students_school_not_the_callers()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "admin-super", schoolId: null);          // Super Admin: no school of their own
         await SeedUser(conn, "admin-a", SchoolA);                     // a school_admin in the OTHER school
         await SeedUser(conn, "student-b", SchoolB);                   // the target student lives in school B
@@ -73,7 +80,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
     [Fact]
     public async Task Create_returns_the_full_raw_row()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "student-1", SchoolA);
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
 
@@ -100,7 +107,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
     [Fact]
     public async Task Create_no_student_school_inserts_zero_rows()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "student-1", schoolId: null); // student exists but has no school
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
 
@@ -114,7 +121,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
     [Fact]
     public async Task Create_missing_student_row_inserts_zero_rows()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
 
         var result = await Writer().CreateCoursePlanCourseAsync(Ctx(), "ghost", "course-1", "Fall", null, "admin-a");
@@ -126,7 +133,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
     [Fact]
     public async Task Create_no_current_academic_year_inserts_zero_rows()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "student-1", SchoolA);
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: false); // exists but NOT current
         await SeedAcademicYear(conn, "ay-b", SchoolB, isCurrent: true);  // current, but the WRONG school
@@ -148,7 +155,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
     [InlineData(null)]
     public async Task Create_stores_the_planned_gradeLevel(int? grade)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "student-1", SchoolA);
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
 
@@ -170,7 +177,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
     [InlineData(null, null)]          // neither → SQL NULL
     public async Task Create_stores_term(string? term, string? expected)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "student-1", SchoolA);
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
 
@@ -193,11 +200,22 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
     [Fact]
     public async Task Delete_cannot_be_levered_across_students()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "student-a", SchoolA);
         await SeedUser(conn, "student-b", SchoolA);
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
         await SeedPlan(conn, "plan-b", "student-b", SchoolA, "ay-a");
+
+        // formmaps#125 — WHY THIS TEST IS THE ONE THAT MATTERS IN THIS FILE. student_course_plans appears in NONE
+        // of prisma/rls/*.sql, so unlike every other table here it has no policy at all: the row is fully visible
+        // AND fully writable on the caller's own Identity session, as the two counts below state. `"studentId" =
+        // @sid` in the DELETE is therefore not a belt-and-braces predicate over an RLS backstop — it is the entire
+        // defence, and a school-scoped caller (student-a's admin, same tenant as student-b) is exactly the
+        // adversary it has to stop.
+        await using var identity = await OpenIdentitySessionAsync("admin-a", SchoolA);
+        Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(identity));
+        Assert.Equal(1L, await CountAsync(conn, """SELECT count(*) FROM "student_course_plans" """));
+        Assert.Equal(1L, await CountAsync(identity, """SELECT count(*) FROM "student_course_plans" """));
 
         // Caller is authorised for student-a and passes student-b's enrollment id.
         var deleted = await Writer().DeleteCoursePlanCourseAsync(Ctx(), "student-a", "plan-b");
@@ -205,12 +223,18 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
         Assert.False(deleted);                            // → 404 "Not found"
         Assert.Equal(1, await PlanCount(conn));           // student-b's row survives
         Assert.True(await PlanExists(conn, "plan-b"));
+
+        // Positive half: over the SAME seeded data the legitimate owner's delete does go through, so the assertion
+        // above is about the predicate and not about a delete that never works.
+        await SeedPlan(conn, "plan-a", "student-a", SchoolA, "ay-a");
+        Assert.True(await Writer().DeleteCoursePlanCourseAsync(Ctx(), "student-a", "plan-a"));
+        Assert.True(await PlanExists(conn, "plan-b"));
     }
 
     [Fact]
     public async Task Delete_removes_the_matching_row_and_is_idempotent()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "student-a", SchoolA);
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
         await SeedPlan(conn, "plan-a", "student-a", SchoolA, "ay-a");
@@ -231,7 +255,7 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
     [Fact]
     public async Task Round_trip_written_row_is_visible_to_the_reader_then_disappears_on_delete()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "student-1", SchoolA, gradeLevel: 12);
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true, name: "2025-2026");
         // deliberately NO school_courses row for "course-1"
@@ -276,6 +300,25 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
             new RequestActor("admin-super", FormMapsRoles.SuperAdmin, "super@e.st", "Super"),
             schoolId: null, permissions: new[] { "school:manage" },
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
+
+    /// <summary>A raw connection on the RESTRICTED login carrying an Identity caller's GUCs — states what the
+    /// POLICIES do (here: nothing, student_course_plans is unpolicied), independently of any repository.</summary>
+    private async Task<NpgsqlConnection> OpenIdentitySessionAsync(string userId, string? schoolId)
+    {
+        var conn = await _dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand(
+            "SELECT set_config('app.current_school_id', @s, false), set_config('app.current_user_id', @u, false)", conn);
+        cmd.Parameters.AddWithValue("s", schoolId ?? string.Empty);
+        cmd.Parameters.AddWithValue("u", userId);
+        await cmd.ExecuteNonQueryAsync();
+        return conn;
+    }
+
+    private static async Task<long> CountAsync(NpgsqlConnection conn, string sql)
+    {
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        return (long)(await cmd.ExecuteScalarAsync())!;
+    }
 
     private static async Task<int> PlanCount(NpgsqlConnection conn)
     {

@@ -1,6 +1,8 @@
 using FormMaps.Application.Auth;
+using FormMaps.Domain.Auth;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.SchoolStudents;
+using FormMaps.IntegrationTests.TestSupport.Rls;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.SchoolStudents;
@@ -18,27 +20,34 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
     private const string OtherSchool = "school-2";
 
     private readonly SchoolStudentsDatabaseFixture _fixture;
+
+    /// <summary>Restricted login (NOSUPERUSER NOBYPASSRLS) — the code under test runs on this.</summary>
     private NpgsqlDataSource _dataSource = null!;
+
+    /// <summary>Container superuser — seeding and assertions ONLY.</summary>
+    private NpgsqlDataSource _adminDataSource = null!;
 
     public SchoolStudentsReviewWriterTests(SchoolStudentsDatabaseFixture fixture) => _fixture = fixture;
 
     public async Task InitializeAsync()
     {
-        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            """TRUNCATE "users","community_service_entries","course_change_requests","academic_years","student_course_plans" """, conn);
-        await cmd.ExecuteNonQueryAsync();
+        _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
+        _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
+        await _fixture.TruncateAsync("users", "community_service_entries", "course_change_requests", "academic_years", "student_course_plans");
     }
 
-    public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+    public async Task DisposeAsync()
+    {
+        await _dataSource.DisposeAsync();
+        await _adminDataSource.DisposeAsync();
+    }
 
     // ---- verifyCommunityService ----
 
     [Fact]
     public async Task Verify_null_for_missing_or_cross_school()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedEntry(conn, "e-other", OtherSchool);
 
         Assert.Null(await Writer().VerifyCommunityServiceAsync(Ctx(), "nope", "admin-1", School, "verified", null));
@@ -48,10 +57,15 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
     [Fact]
     public async Task Verify_super_admin_null_school_updates_any_entry()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedEntry(conn, "e1", OtherSchool);
 
-        var row = await Writer().VerifyCommunityServiceAsync(Ctx(), "e1", "admin-1", callerSchoolId: null, "verified", "  good work  ");
+        // formmaps#125: the caller MUST be a real Super Admin context, not a school_admin handed a null
+        // callerSchoolId. Production mints the platform-wide caller as a Super Admin actor, and only that resolves
+        // to a bypass GUC plan; with a school-scoped Identity session 002-direct-schoolid.sql hides this
+        // other-school entry outright and the lookup would 404 before the app-layer check was ever reached. The old
+        // superuser fixture could not tell the two callers apart.
+        var row = await Writer().VerifyCommunityServiceAsync(SuperAdminCtx(), "e1", "admin-1", callerSchoolId: null, "verified", "  good work  ");
 
         Assert.NotNull(row);
         Assert.Equal("verified", row!.Status);
@@ -63,7 +77,7 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
     [Fact]
     public async Task Verify_empty_note_stores_null()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedEntry(conn, "e1", School);
         var row = await Writer().VerifyCommunityServiceAsync(Ctx(), "e1", "admin-1", School, "rejected", "");
         Assert.Null(row!.Note);
@@ -73,7 +87,7 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
     [Fact]
     public async Task Verify_long_note_sliced_to_1000()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedEntry(conn, "e1", School);
         var row = await Writer().VerifyCommunityServiceAsync(Ctx(), "e1", "admin-1", School, "verified", new string('x', 1500));
         Assert.Equal(1000, row!.Note!.Length);
@@ -84,7 +98,7 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
     [Fact]
     public async Task Review_null_for_missing_or_wrong_student()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedChangeRequest(conn, "r1", "s1", School, "add", "pending");
 
         Assert.Null(await Writer().ReviewChangeRequestAsync(Ctx(), "admin-1", "s1", "nope", "approved", null));
@@ -94,7 +108,7 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
     [Fact]
     public async Task Review_updates_status_and_optional_counselor_note()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedChangeRequest(conn, "r1", "s1", School, "drop", "pending");
 
         var row = await Writer().ReviewChangeRequestAsync(Ctx(), "admin-1", "s1", "r1", "rejected", "not this term");
@@ -109,7 +123,7 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
     [Fact]
     public async Task Review_approved_add_creates_plan_row()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "admin-1", School);
         await SeedAcademicYear(conn, "ay1", School, isCurrent: true);
         await SeedChangeRequest(conn, "r1", "s1", School, "add", "pending", courseId: "c9", semester: "Spring");
@@ -137,7 +151,7 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
     [InlineData(1)]  // K-8 schools exist in the data; the request column is not restricted to 9-12
     public async Task Review_approved_add_carries_the_requests_gradeLevel(int requestGrade)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "admin-1", School);
         // FIXTURE CONTROL: the student's OWN grade is 12 and never equals the request's, so a regression back to
         // the reader's `?? user.gradeLevel` fallback cannot accidentally satisfy the assertion.
@@ -155,7 +169,7 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
     {
         // The lookup projection gained a column (#122); the ordinals of the RETURNING projection it feeds are
         // separate, and this pins that neither read drifted.
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "admin-1", School);
         await SeedAcademicYear(conn, "ay1", School, isCurrent: true);
         await SeedChangeRequest(conn, "r1", "s1", School, "add", "pending", gradeLevel: 10);
@@ -169,7 +183,7 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
     [Fact]
     public async Task Review_approved_drop_creates_no_plan()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "admin-1", School);
         await SeedAcademicYear(conn, "ay1", School, isCurrent: true);
         await SeedChangeRequest(conn, "r1", "s1", School, "drop", "pending"); // action != add
@@ -182,7 +196,7 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
     [Fact]
     public async Task Review_add_but_rejected_creates_no_plan()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "admin-1", School);
         await SeedAcademicYear(conn, "ay1", School, isCurrent: true);
         await SeedChangeRequest(conn, "r1", "s1", School, "add", "pending");
@@ -201,6 +215,14 @@ public sealed class SchoolStudentsReviewWriterTests : IClassFixture<SchoolStuden
         RequestContext.Authenticated(
             new RequestActor("admin-1", "school_admin", "admin@e.st", "Admin"),
             schoolId: School, permissions: new[] { "school:manage" },
+            tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
+
+    /// <summary>The platform-wide caller as production actually mints it — a Super Admin actor with no school,
+    /// which <see cref="TenantGucPlanResolver"/> resolves to a bypass plan.</summary>
+    private static RequestContext SuperAdminCtx() =>
+        RequestContext.Authenticated(
+            new RequestActor("admin-1", FormMapsRoles.SuperAdmin, "super@e.st", "Super"),
+            schoolId: null, permissions: new[] { "school:manage" },
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
 
     private static async Task<int> PlanCount(NpgsqlConnection conn, string studentId)

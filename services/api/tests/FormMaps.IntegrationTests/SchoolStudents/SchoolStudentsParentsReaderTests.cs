@@ -2,6 +2,7 @@ using FormMaps.Application.Auth;
 using FormMaps.Application.SchoolStudents;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.SchoolStudents;
+using FormMaps.IntegrationTests.TestSupport.Rls;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.SchoolStudents;
@@ -21,26 +22,64 @@ public sealed class SchoolStudentsParentsReaderTests : IClassFixture<SchoolStude
     private static readonly DateTime Now = new(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc);
 
     private readonly SchoolStudentsDatabaseFixture _fixture;
+
+    /// <summary>Restricted login (NOSUPERUSER NOBYPASSRLS) — the reader under test runs on this.</summary>
     private NpgsqlDataSource _dataSource = null!;
+
+    /// <summary>Container superuser — seeding and assertions ONLY.</summary>
+    private NpgsqlDataSource _adminDataSource = null!;
 
     public SchoolStudentsParentsReaderTests(SchoolStudentsDatabaseFixture fixture) => _fixture = fixture;
 
     public async Task InitializeAsync()
     {
-        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand("""TRUNCATE "users","student_parent_links" """, conn);
-        await cmd.ExecuteNonQueryAsync();
+        _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
+        _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
+        await _fixture.TruncateAsync("users", "student_parent_links");
     }
 
-    public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+    public async Task DisposeAsync()
+    {
+        await _dataSource.DisposeAsync();
+        await _adminDataSource.DisposeAsync();
+    }
+
+    // ---- the school-scoped adversary (formmaps#125) ----
+
+    [Fact]
+    public async Task ListParentsForStudent_does_not_leak_a_classmates_links_that_RLS_admits()
+    {
+        // ListParentsForStudentAsync takes NO schoolId and adds NO school predicate — the endpoint gates on
+        // IsStudentInCallerSchool first, and 003-fk-users.sql scopes student_parent_links through the STUDENT's
+        // users row. So every link belonging to any student in this school is admitted to this caller's session,
+        // and `WHERE "studentId" = @id` is the only thing separating one student's guardians from another's. A
+        // school-LESS adversary would prove nothing here: the policy hides those rows by itself.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await SeedUser(conn, "s1", School);
+        await SeedUser(conn, "s2", School);            // classmate, same tenant
+        await SeedUser(conn, "sx", OtherSchool);       // different tenant
+        await SeedLink(conn, "l-mine", "s1", "mine@e.st");
+        await SeedLink(conn, "l-theirs", "s2", "theirs@e.st");
+        await SeedLink(conn, "l-foreign", "sx", "foreign@e.st");
+
+        await using var identity = await OpenIdentitySessionAsync("admin-1", School);
+        Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(identity));
+        // The policy admits both in-school links and hides the out-of-school one. The first number is what makes
+        // the assertion below about the repository and not about RLS.
+        Assert.Equal(3L, await CountAsync(conn, """SELECT count(*) FROM "student_parent_links" """));
+        Assert.Equal(2L, await CountAsync(identity, """SELECT count(*) FROM "student_parent_links" """));
+
+        Assert.Equal(new[] { "l-mine" }, (await Reader().ListParentsForStudentAsync(Ctx(), "s1")).Select(l => l.Id).ToArray());
+        Assert.Equal(new[] { "l-theirs" }, (await Reader().ListParentsForStudentAsync(Ctx(), "s2")).Select(l => l.Id).ToArray());
+        Assert.Empty(await Reader().ListParentsForStudentAsync(Ctx(), "sx")); // RLS, not the predicate
+    }
 
     // ---- IsStudentInCallerSchool ----
 
     [Fact]
     public async Task IsStudentInCallerSchool_true_only_for_same_school_existing_student()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "s1", School);
         await SeedUser(conn, "sx", OtherSchool);
         await SeedUser(conn, "sn", null);
@@ -56,7 +95,7 @@ public sealed class SchoolStudentsParentsReaderTests : IClassFixture<SchoolStude
     [Fact]
     public async Task ListParentsForStudent_derives_status_and_orders_desc()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "s1", School);
         // accepted (regardless of token); expired (token in the past, not accepted); pending (token future);
         // pending (no token). Ordered createdDate DESC.
@@ -84,7 +123,7 @@ public sealed class SchoolStudentsParentsReaderTests : IClassFixture<SchoolStude
     [Fact]
     public async Task ListParents_groups_by_lower_email_keep_first_and_counts_links()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "s1", School, name: "Ada", gradeLevel: 11);
         await SeedUser(conn, "s2", School, name: "Bo", gradeLevel: 12);
         await SeedUser(conn, "sx", OtherSchool);
@@ -116,7 +155,7 @@ public sealed class SchoolStudentsParentsReaderTests : IClassFixture<SchoolStude
     [Fact]
     public async Task ListParents_search_filters_data_but_not_stats()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "s1", School);
         await SeedLink(conn, "l1", "s1", "pat@e.st", parentName: "Pat", isAccepted: true, createdDate: Now.AddDays(-1));
         await SeedLink(conn, "l2", "s1", "mom@e.st", parentName: "Mom", createdDate: Now.AddDays(-2));
@@ -156,6 +195,25 @@ public sealed class SchoolStudentsParentsReaderTests : IClassFixture<SchoolStude
         new(page, limit, (long)(page - 1) * limit, search);
 
     private static DateTime Unspec(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Unspecified);
+
+    /// <summary>A raw connection on the RESTRICTED login carrying an Identity caller's GUCs — states what the
+    /// POLICIES do, independently of any repository.</summary>
+    private async Task<NpgsqlConnection> OpenIdentitySessionAsync(string userId, string? schoolId)
+    {
+        var conn = await _dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand(
+            "SELECT set_config('app.current_school_id', @s, false), set_config('app.current_user_id', @u, false)", conn);
+        cmd.Parameters.AddWithValue("s", schoolId ?? string.Empty);
+        cmd.Parameters.AddWithValue("u", userId);
+        await cmd.ExecuteNonQueryAsync();
+        return conn;
+    }
+
+    private static async Task<long> CountAsync(NpgsqlConnection conn, string sql)
+    {
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        return (long)(await cmd.ExecuteScalarAsync())!;
+    }
 
     private sealed class FixedTimeProvider(DateTime utcNow) : TimeProvider
     {

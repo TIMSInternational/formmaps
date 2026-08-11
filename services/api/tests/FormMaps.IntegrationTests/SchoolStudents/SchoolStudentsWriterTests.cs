@@ -1,6 +1,7 @@
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.SchoolStudents;
+using FormMaps.IntegrationTests.TestSupport.Rls;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.SchoolStudents;
@@ -16,24 +17,32 @@ public sealed class SchoolStudentsWriterTests : IClassFixture<SchoolStudentsData
     private const string OtherSchool = "school-2";
 
     private readonly SchoolStudentsDatabaseFixture _fixture;
+
+    /// <summary>Restricted login (NOSUPERUSER NOBYPASSRLS) — the code under test runs on this.</summary>
     private NpgsqlDataSource _dataSource = null!;
+
+    /// <summary>Container superuser — seeding and assertions ONLY.</summary>
+    private NpgsqlDataSource _adminDataSource = null!;
 
     public SchoolStudentsWriterTests(SchoolStudentsDatabaseFixture fixture) => _fixture = fixture;
 
     public async Task InitializeAsync()
     {
-        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand("""TRUNCATE "users","school_assessment_settings" """, conn);
-        await cmd.ExecuteNonQueryAsync();
+        _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
+        _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
+        await _fixture.TruncateAsync("users", "school_assessment_settings");
     }
 
-    public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+    public async Task DisposeAsync()
+    {
+        await _dataSource.DisposeAsync();
+        await _adminDataSource.DisposeAsync();
+    }
 
     [Fact]
     public async Task DeleteStudent_soft_deletes_own_student()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "s1", School);
 
         Assert.True(await Writer().DeleteStudentAsync(Ctx(), School, "s1"));
@@ -43,7 +52,7 @@ public sealed class SchoolStudentsWriterTests : IClassFixture<SchoolStudentsData
     [Fact]
     public async Task DeleteStudent_false_and_no_write_for_missing_or_cross_school()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "sx", OtherSchool);
 
         Assert.False(await Writer().DeleteStudentAsync(Ctx(), School, "nope")); // missing
@@ -63,7 +72,7 @@ public sealed class SchoolStudentsWriterTests : IClassFixture<SchoolStudentsData
         var second = await Writer().UpdateCourseRequestDeadlineAsync(Ctx(), School, d2);
         Assert.Equal("2026-06-15T12:30:00.000Z", second); // updated, same row
 
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand("""SELECT COUNT(*)::int FROM "school_assessment_settings" WHERE "schoolId"=@s""", conn);
         cmd.Parameters.AddWithValue("s", School);
         Assert.Equal(1, (int)(await cmd.ExecuteScalarAsync())!); // exactly one row (upsert, not duplicate)
