@@ -2,6 +2,7 @@ using FormMaps.Application.Auth;
 using FormMaps.Application.SchoolStudents;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.SchoolStudents;
+using FormMaps.IntegrationTests.TestSupport.Rls;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.SchoolStudents;
@@ -16,32 +17,95 @@ namespace FormMaps.IntegrationTests.SchoolStudents;
 public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolStudentsDatabaseFixture>, IAsyncLifetime
 {
     private const string School = "school-1";
+    private const string OtherSchool = "school-2";
 
     private readonly SchoolStudentsDatabaseFixture _fixture;
+
+    /// <summary>Restricted login (NOSUPERUSER NOBYPASSRLS) — the reader under test runs on this.</summary>
     private NpgsqlDataSource _dataSource = null!;
+
+    /// <summary>Container superuser — seeding and assertions ONLY.</summary>
+    private NpgsqlDataSource _adminDataSource = null!;
 
     public SchoolStudentsCoursePlanReaderTests(SchoolStudentsDatabaseFixture fixture) => _fixture = fixture;
 
     public async Task InitializeAsync()
     {
-        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            """
-            TRUNCATE "users","student_grades","academic_years","graduation_rule_sets","school_courses",
-                     "student_course_plans","course_change_requests","school_assessment_settings"
-            """, conn);
-        await cmd.ExecuteNonQueryAsync();
+        _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
+        _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
+        await _fixture.TruncateAsync(
+            "users", "student_grades", "academic_years", "graduation_rule_sets", "school_courses",
+            "student_course_plans", "course_change_requests", "school_assessment_settings");
     }
 
-    public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+    public async Task DisposeAsync()
+    {
+        await _dataSource.DisposeAsync();
+        await _adminDataSource.DisposeAsync();
+    }
+
+    // ---- the school-scoped adversary (formmaps#125) ----
+
+    [Fact]
+    public async Task ChangeRequests_do_not_leak_a_classmates_requests_that_RLS_admits()
+    {
+        // GetStudentChangeRequestsAsync school-scopes NOTHING: its whole WHERE is
+        // `"studentId" = @id AND "isActive" = true`. 002-direct-schoolid.sql admits every course_change_requests
+        // row carrying the caller's schoolId, so a same-school classmate's request IS visible to this session and
+        // only that studentId predicate keeps it out of the result. Deleting the predicate is the sabotage this
+        // test exists to catch; a school-less adversary would not catch it, because the policy would already have
+        // hidden the row.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await SeedUser(conn, "s1", School);
+        await SeedUser(conn, "s2", School);   // classmate, same tenant
+        await SeedChangeRequest(conn, "r-mine", "s1", School, "c1", credits: 1m, gradeLevel: 11, action: "add", status: "pending");
+        await SeedChangeRequest(conn, "r-theirs", "s2", School, "c2", credits: 1m, gradeLevel: 11, action: "add", status: "pending");
+        await SeedChangeRequest(conn, "r-foreign", "s1", OtherSchool, "c3", credits: 1m, gradeLevel: 11, action: "add", status: "pending");
+
+        await using var identity = await OpenIdentitySessionAsync("admin-1", School);
+        Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(identity));
+        // Negative control for the negative control: all three rows exist; the policy hides exactly the foreign
+        // one and ADMITS the classmate's.
+        Assert.Equal(3L, await CountAsync(conn, """SELECT count(*) FROM "course_change_requests" """));
+        Assert.Equal(2L, await CountAsync(identity, """SELECT count(*) FROM "course_change_requests" """));
+
+        var mine = await Reader().GetStudentChangeRequestsAsync(Ctx(), "s1", null);
+        Assert.Equal(1, mine.Total);
+        Assert.Equal(new[] { "r-mine" }, mine.Data.Select(r => r.Id).ToArray());
+
+        var theirs = await Reader().GetStudentChangeRequestsAsync(Ctx(), "s2", null);
+        Assert.Equal(1, theirs.Total);
+        Assert.Equal(new[] { "r-theirs" }, theirs.Data.Select(r => r.Id).ToArray());
+    }
+
+    [Fact]
+    public async Task CoursePlan_of_a_cross_school_student_is_empty_because_the_user_row_is_invisible()
+    {
+        // GetStudentCoursePlanAsync resolves scope from the STUDENT's own users row and never compares it to the
+        // caller's school — the reader has no cross-tenant gate of its own at all. RLS is the entire defence, and
+        // the plan/grade rows it would have loaded are also school-scoped. Both halves asserted.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await SeedUser(conn, "sx", OtherSchool, gradeLevel: 11);
+        await SeedAcademicYear(conn, "ay-x", OtherSchool, name: "2025-2026", isCurrent: true);
+        await SeedPlan(conn, "p-x", "sx", OtherSchool, "ay-x", "c1", sortOrder: 0);
+        await SeedGrade(conn, "g-x", "sx", "c1", grade: "A", credits: 3, status: "completed", academicYear: "2025-2026", schoolId: OtherSchool);
+
+        Assert.Equal(1L, await CountAsync(conn, """SELECT count(*) FROM "users" WHERE "id" = 'sx'"""));
+
+        // The legitimate reader (an admin of school-2) still sees it — without this half, "returns null" would be
+        // indistinguishable from an empty fixture.
+        Assert.NotNull(await Reader().GetStudentCoursePlanAsync(CtxFor(OtherSchool), "sx"));
+
+        // The school-1 admin does not.
+        Assert.Null(await Reader().GetStudentCoursePlanAsync(Ctx(), "sx"));
+    }
 
     // ---- getStudentCoursePlan ----
 
     [Fact]
     public async Task CoursePlan_null_for_missing_or_no_school_student()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "sn", null);
         Assert.Null(await Reader().GetStudentCoursePlanAsync(Ctx(), "nope"));
         Assert.Null(await Reader().GetStudentCoursePlanAsync(Ctx(), "sn"));
@@ -50,7 +114,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
     [Fact]
     public async Task CoursePlan_merges_grades_then_plans_with_grade_key_asymmetry_and_derived_level()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "s1", School, gradeLevel: 12);
         await SeedAcademicYear(conn, "ay1", School, name: "2025-2026", isCurrent: true);
         await SeedCourse(conn, "c1", School, code: "MATH1", name: "Algebra", department: "Math", credits: 3);
@@ -95,7 +159,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
     [Fact]
     public async Task CoursePlan_isOnTrack_true_when_earned_at_least_half_required()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "s1", School, gradeLevel: 11);
         await SeedAcademicYear(conn, "ay1", School, name: "2025-2026", isCurrent: true);
         await SeedCourse(conn, "c1", School, credits: 6);
@@ -110,7 +174,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
     [Fact]
     public async Task CoursePlan_grade_level_zero_treated_as_eleven_and_no_current_year_drops_plans()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "s1", School, gradeLevel: 0); // JS `|| 11`
         // NO current academic year → plans dropped; grade still contributes.
         await SeedCourse(conn, "c1", School, department: "Sci", credits: 2);
@@ -131,7 +195,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
     public async Task CoursePlan_empty_string_columns_coalesce_like_js_or()
     {
         // MED-1 (folded): TS uses `||` (empty string → default), NOT `??` (null-only).
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "s1", School, gradeLevel: 11);
         await SeedAcademicYear(conn, "ay1", School, name: "2025-2026", isCurrent: true);
         // matched course whose name is EMPTY → grade courseName must fall through to g.courseCode.
@@ -154,7 +218,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
     public async Task CoursePlan_unparseable_academic_year_yields_null_grade_level()
     {
         // MED-2 (folded): parseInt("N/A") → NaN → Math.max(9, x - NaN) = NaN → JSON null (NOT a masked number).
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "s1", School, gradeLevel: 11);
         await SeedAcademicYear(conn, "ay1", School, name: "2025-2026", isCurrent: true);
         await SeedCourse(conn, "c1", School, credits: 1);
@@ -170,7 +234,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
     [Fact]
     public async Task ChangeRequests_passthrough_credits_string_enums_text_and_order()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedChangeRequest(conn, "r1", "s1", School, "c1", credits: 3.50m, gradeLevel: 11, action: "add", status: "pending", createdDate: Utc("2026-01-02"));
         await SeedChangeRequest(conn, "r2", "s1", School, "c2", credits: 1m, gradeLevel: 12, action: "drop", status: "approved", createdDate: Utc("2026-01-05"));
         await SeedChangeRequest(conn, "r3", "s1", School, "c3", credits: 2m, gradeLevel: 10, action: "swap", status: "pending", isActive: false); // excluded
@@ -190,7 +254,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
     [Fact]
     public async Task ChangeRequests_status_filter_matches_enum()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedChangeRequest(conn, "r1", "s1", School, "c1", credits: 1m, gradeLevel: 11, action: "add", status: "pending");
         await SeedChangeRequest(conn, "r2", "s1", School, "c2", credits: 1m, gradeLevel: 11, action: "add", status: "approved");
 
@@ -213,7 +277,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
     [Fact]
     public async Task CourseRequestDeadline_returns_iso_or_null()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedSettings(conn, School, deadline: Utc("2026-05-01"));
         Assert.Equal("2026-05-01T00:00:00.000Z", await Reader().GetCourseRequestDeadlineAsync(Ctx(), School));
 
@@ -235,11 +299,32 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
         new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()),
             new FixedTimeProvider(new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc)));
 
-    private static RequestContext Ctx() =>
+    private static RequestContext Ctx() => CtxFor(School);
+
+    private static RequestContext CtxFor(string schoolId) =>
         RequestContext.Authenticated(
             new RequestActor("admin-1", "school_admin", "admin@e.st", "Admin"),
-            schoolId: School, permissions: new[] { "school:manage" },
+            schoolId: schoolId, permissions: new[] { "school:manage" },
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
+
+    /// <summary>A raw connection on the RESTRICTED login carrying an Identity caller's GUCs — states what the
+    /// POLICIES do, independently of any repository.</summary>
+    private async Task<NpgsqlConnection> OpenIdentitySessionAsync(string userId, string? schoolId)
+    {
+        var conn = await _dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand(
+            "SELECT set_config('app.current_school_id', @s, false), set_config('app.current_user_id', @u, false)", conn);
+        cmd.Parameters.AddWithValue("s", schoolId ?? string.Empty);
+        cmd.Parameters.AddWithValue("u", userId);
+        await cmd.ExecuteNonQueryAsync();
+        return conn;
+    }
+
+    private static async Task<long> CountAsync(NpgsqlConnection conn, string sql)
+    {
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        return (long)(await cmd.ExecuteScalarAsync())!;
+    }
 
     private static DateTime Utc(string date) => DateTime.Parse(date + "T00:00:00Z").ToUniversalTime();
     private static DateTime Unspec(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Unspecified);
@@ -284,9 +369,13 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
         await cmd.ExecuteNonQueryAsync();
     }
 
+    // schoolId defaults to the caller's school: 002-direct-schoolid.sql scopes student_grades on THIS column, so a
+    // row left with another school's id (or none) is invisible to an Identity session and every assertion that
+    // reads it back would pass against an empty set.
     private static async Task SeedGrade(
         NpgsqlConnection conn, string id, string studentId, string courseId, string? grade, decimal credits,
-        string status, string? academicYear = null, string? semester = null, string? courseCode = null)
+        string status, string? academicYear = null, string? semester = null, string? courseCode = null,
+        string schoolId = School)
     {
         await using var cmd = new NpgsqlCommand(
             """
@@ -295,7 +384,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
             """, conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("st", studentId);
-        cmd.Parameters.AddWithValue("sc", School);
+        cmd.Parameters.AddWithValue("sc", schoolId);
         cmd.Parameters.AddWithValue("c", courseId);
         cmd.Parameters.AddWithValue("cc", (object?)courseCode ?? DBNull.Value);
         cmd.Parameters.AddWithValue("g", (object?)grade ?? DBNull.Value);
