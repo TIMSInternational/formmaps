@@ -139,3 +139,29 @@ CREATE TABLE "vocational_integrated_results" (
 CREATE UNIQUE INDEX "vocational_integrated_results_evaluatedUserId_instrumentVersion_key" ON "vocational_integrated_results"("evaluatedUserId", "instrumentVersion");
 
 ALTER TABLE "vocational_responses" ADD CONSTRAINT "vocational_responses_evaluationGroupId_fkey" FOREIGN KEY ("evaluationGroupId") REFERENCES "evaluation_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- ------------------------------------------------------------------------------------------------
+-- audit-events retrofit (plan Task 12 of formmaps#52). Deliberately SIMPLIFIED: table shape only --
+-- no RLS policy and no immutability trigger. Both are proven once, thoroughly, against the real DDL
+-- in FormMaps.IntegrationTests/Audit (plan Tasks 1/4); repeating them across seven unrelated domain
+-- fixtures would only add the DISABLE-TRIGGER reset dance for zero extra coverage. What THIS copy is
+-- for is the wiring question: does VocationalWriter actually persist a row when a score recompute
+-- reaches "ready" -- and, just as importantly, NOT on the two paths that persist nothing (no active
+-- instrument -> never_computed, and self-only -> needs_self_plus_one).
+--
+-- There is deliberately no FK from "subjectId" to any table: the subject of these events is the
+-- evaluated user, and audit_events outlives its subjects by design (a purged user must not take its
+-- audit trail with it), so a reference here would be a shape the production table does not have.
+-- ------------------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "audit_events" (
+    "id" TEXT PRIMARY KEY,
+    "occurredAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+    "eventType" TEXT NOT NULL,
+    "actorUserId" TEXT,
+    "actorRole" TEXT,
+    "schoolId" TEXT,
+    "subjectType" TEXT NOT NULL,
+    "subjectId" TEXT,
+    "outcome" TEXT NOT NULL DEFAULT 'success',
+    "metadata" JSONB
+);

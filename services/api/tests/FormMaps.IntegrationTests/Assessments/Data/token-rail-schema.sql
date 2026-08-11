@@ -187,3 +187,24 @@ ALTER TABLE "vocational_responses" ADD CONSTRAINT "vocational_responses_evaluati
     FOREIGN KEY ("evaluationGroupId") REFERENCES "evaluation_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "evaluation_feedbacks" ADD CONSTRAINT "evaluation_feedbacks_evaluationGroupId_fkey"
     FOREIGN KEY ("evaluationGroupId") REFERENCES "evaluation_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- ------------------------------------------------------------------------------------------------
+-- audit-events retrofit (plan Task 12 of formmaps#52). Same SIMPLIFIED shape as the other retrofit
+-- fixtures (no RLS policy, no immutability trigger -- proven once in FormMaps.IntegrationTests/Audit).
+-- This rail does not write audit_events itself; it is here because a rater's submission triggers
+-- VocationalWriter.RecomputeScoreAsync, which now does. Without the table that write would take
+-- AuditEventWriter's fail-soft branch on every submit test -- green, but proving nothing, and hiding
+-- the one path where the recompute has NO human actor (the rail runs under RequestContext.System()).
+-- ------------------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "audit_events" (
+    "id" TEXT PRIMARY KEY,
+    "occurredAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+    "eventType" TEXT NOT NULL,
+    "actorUserId" TEXT,
+    "actorRole" TEXT,
+    "schoolId" TEXT,
+    "subjectType" TEXT NOT NULL,
+    "subjectId" TEXT,
+    "outcome" TEXT NOT NULL DEFAULT 'success',
+    "metadata" JSONB
+);

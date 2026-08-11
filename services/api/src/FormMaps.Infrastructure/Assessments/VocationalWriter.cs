@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text.Json;
 using FormMaps.Application.Assessments;
+using FormMaps.Application.Audit;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using Microsoft.Extensions.Logging;
@@ -22,6 +23,7 @@ public sealed class VocationalWriter(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     IVocationalReader vocationalReader,
     ICompleteProfileAssembler profileAssembler,
+    IAuditEventWriter auditEventWriter,
     ILogger<VocationalWriter> logger) : IVocationalWriter
 {
     // camelCase jsonb (the stored dimension_scores/rankings/weights_applied keys the frontend reads).
@@ -139,6 +141,21 @@ public sealed class VocationalWriter(
             "audit.assessment.vocational.recomputed evaluatedUserId={SubjectUserId} actorUserId={ActorUserId} instrumentVersion={Version} composite={Composite} band={Band}",
             evaluatedUserId, context.Tenant?.UserId, payload.InstrumentVersion, payload.Composite, payload.Band);
 
+        // Same position as the log line, and for the same reason it sits there: below the "no active
+        // instrument" and "not ready" early returns, and below the commit. Both of those paths persist
+        // nothing, so an event above them would record a score that does not exist.
+        await WriteAuditAsync(
+            "audit.assessment.vocational.recomputed",
+            "vocational_result",
+            evaluatedUserId,
+            context.Tenant?.UserId,
+            new Dictionary<string, object?>
+            {
+                ["instrumentVersion"] = payload.InstrumentVersion,
+                ["composite"] = payload.Composite,
+                ["band"] = payload.Band,
+            });
+
         return new VocationalRecomputeOutcome(VocationalRecomputeStatus.Ready, payload, null);
     }
 
@@ -225,8 +242,84 @@ public sealed class VocationalWriter(
             "audit.assessment.vocational.integrated_recomputed evaluatedUserId={SubjectUserId} actorUserId={ActorUserId} instrumentVersion={Version} integratedComposite={Composite} band={Band}",
             evaluatedUserId, context.Tenant?.UserId, payload.InstrumentVersion, payload.IntegratedComposite, payload.Band);
 
+        // Below the "no active instrument" null return, below the not-ready return (a missing 360/pca/mil
+        // channel persists nothing — the ordinary state for most students), and below the commit. A
+        // DISTINCT subjectType from the score half: the two recomputes write two different tables and are
+        // triggered independently, so collapsing them onto one subject would make an integrated result
+        // indistinguishable from a 360 composite in the trail.
+        await WriteAuditAsync(
+            "audit.assessment.vocational.integrated_recomputed",
+            "vocational_integrated_result",
+            evaluatedUserId,
+            context.Tenant?.UserId,
+            new Dictionary<string, object?>
+            {
+                ["instrumentVersion"] = payload.InstrumentVersion,
+                ["integratedComposite"] = payload.IntegratedComposite,
+                ["band"] = payload.Band,
+            });
+
         return payload;
     }
+
+    // -------------------------------------------------------------------- audit
+
+    /// <summary>
+    /// The durable half of this class's audit (formmaps#52 Task 12). Called immediately after each existing
+    /// <c>audit.assessment.vocational.*</c> log line, and — like that line — only ever AFTER the recompute's
+    /// own commit has succeeded, and therefore only on the paths that actually persisted a result. The
+    /// never_computed and not_ready paths return before this point and leave no row: an audit event here has
+    /// to mean "a score was written", not "a recompute was attempted", because the latter is the ordinary
+    /// state of every 360 that is still collecting raters.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The subject is the EVALUATED USER, not the result row's id: <c>vocational_results</c> /
+    /// <c>vocational_integrated_results</c> are upserted on (evaluatedUserId, instrumentVersion) and a fresh
+    /// <c>Guid</c> is generated for every INSERT attempt, so the row id is not a stable handle on anything.
+    /// The pair that IS stable is carried as subject + <c>instrumentVersion</c> metadata, which is what lets
+    /// a compliance reader reconcile the event against a stored result.
+    /// </para>
+    /// <para>
+    /// The actor is <c>context.Tenant?.UserId</c> — the caller — not the evaluated user, matching the
+    /// existing log line's <c>{ActorUserId}</c> binding. A counselor recomputing a student's score is the
+    /// normal case, and attributing that write to the student would make the trail exonerate whoever
+    /// actually triggered it. On the rater-submission path (<c>VocationalTakeService</c>) this runs under
+    /// <see cref="RequestContext.System()" /> and the actor is null — the honest answer, since no human
+    /// asked for that recompute. <c>ActorRole</c>/<c>SchoolId</c> stay null, keeping the durable row
+    /// congruent with the log line rather than reaching into the <see cref="RequestContext" /> for fields
+    /// this domain has never audited.
+    /// </para>
+    /// <para>
+    /// Metadata is a version string, one score and one band — never a dimension breakdown, a ranking, or a
+    /// free-text response. <c>audit_events</c> is append-only and retained indefinitely; the substance of a
+    /// 360 evaluation has no business there.
+    /// </para>
+    /// <para>
+    /// <see cref="CancellationToken.None" /> is passed deliberately, per
+    /// <see cref="IAuditEventWriter.WriteAsync" />'s contract: this runs after the caller's commit, and
+    /// <c>AuditEventWriter</c> re-throws <see cref="OperationCanceledException" /> rather than swallowing
+    /// it — so passing the request token would let a client disconnecting in the gap between commit and
+    /// audit raise from a recompute that had already been stored. Every other failure is fail-soft-but-alert
+    /// inside the writer, so this call cannot change what the caller sees.
+    /// </para>
+    /// </remarks>
+    private Task WriteAuditAsync(
+        string eventType,
+        string subjectType,
+        string evaluatedUserId,
+        string? actorUserId,
+        IReadOnlyDictionary<string, object?> metadata) =>
+        auditEventWriter.WriteAsync(
+            new AuditEvent(
+                EventType: eventType,
+                ActorUserId: actorUserId,
+                ActorRole: null,
+                SchoolId: null,
+                SubjectType: subjectType,
+                SubjectId: evaluatedUserId,
+                Metadata: metadata),
+            CancellationToken.None);
 
     // profile.lia.mil (keyed by domain) → the five-field MilDomains the integration engine consumes.
     private static MilDomains ToMilDomains(IReadOnlyDictionary<string, int> mil) => new(

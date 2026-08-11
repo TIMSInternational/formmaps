@@ -1,6 +1,8 @@
+using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
+using FormMaps.Infrastructure.Audit;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
@@ -207,12 +209,127 @@ public sealed class IntegratedRecomputeWriterTests : IClassFixture<IntegratedRec
         Assert.Equal(77d, read.IntegratedComposite);      // and the row is the fresh recompute
     }
 
+    // ================================================== audit-events retrofit (formmaps#52 Task 12)
+
+    /// <summary>
+    /// The integrated half of the retrofit. Until now "audit" here meant one structured log line, which no
+    /// compliance surface can query and which a log-retention window eventually deletes; a persisted
+    /// integrated recompute must ALSO leave a durable row in <c>audit_events</c>. The WHOLE row is asserted
+    /// rather than a count, because eight of the nine written columns are TEXT and six are nullable — a
+    /// count stays green for a writer that swapped actorUserId with subjectId or dropped the metadata.
+    /// </summary>
+    [Fact]
+    public async Task Recompute_ready_persists_a_pii_free_row_to_audit_events()
+    {
+        var user = NewUser();
+        var counselor = NewUser();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedInstrumentAsync(conn, "v1");
+        await SeedVocationalScoreAsync(conn, user, "v1", composite: 70m);
+        await SeedCompetencesAsync(conn, user, levels: [4, 4, 4]);
+        await SeedFiveExamsAsync(conn, user, scorePercentage: 60);
+
+        // A counselor recomputing a STUDENT's integrated result: actor and subject deliberately differ, so
+        // a writer that attributed the event to the evaluated user instead of the caller cannot pass.
+        await Writer().RecomputeIntegratedAsync(
+            CtxActedBy(counselor, name: "Ada Lovelace", email: "ada@analytical.engine"), user);
+
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.assessment.vocational.integrated_recomputed", user);
+        Assert.Equal("audit.assessment.vocational.integrated_recomputed", row.EventType);
+        Assert.Equal(counselor, row.ActorUserId);
+        Assert.Equal("vocational_integrated_result", row.SubjectType);   // NOT "vocational_result"
+        Assert.Equal(user, row.SubjectId);
+        Assert.Equal("success", row.Outcome);
+        Assert.False(string.IsNullOrWhiteSpace(row.Id));
+
+        // The three scalars the log line already carried. instrumentVersion is load-bearing: the persisted
+        // row is keyed on (evaluatedUserId, instrumentVersion) and its own id is regenerated on every
+        // upsert, so the version is what makes the event reconcilable against a stored result at all.
+        Assert.NotNull(row.MetadataJson);
+        using var metadata = JsonDocument.Parse(row.MetadataJson!);
+        Assert.Equal("v1", metadata.RootElement.GetProperty("instrumentVersion").GetString());
+        Assert.Equal(77d, metadata.RootElement.GetProperty("integratedComposite").GetDouble());
+        Assert.Equal("moderateHigh", metadata.RootElement.GetProperty("band").GetString());
+
+        // Nothing from the score half leaks onto this subject — the two events are distinct records.
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.vocational.recomputed", user));
+
+        var serialized = string.Join("|", row.Id, row.EventType, row.ActorUserId, row.ActorRole,
+            row.SchoolId, row.SubjectType, row.SubjectId, row.Outcome, row.MetadataJson);
+        Assert.DoesNotContain("Ada Lovelace", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("ada@analytical.engine", serialized, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Negative control: no active instrument → the method returns null before touching anything, so there
+    /// is nothing to audit. An event above the instrument lookup would report an integration that never
+    /// happened for a user who has no integrated result at all.
+    /// </summary>
+    [Fact]
+    public async Task Recompute_never_computed_writes_no_audit_event()
+    {
+        var user = NewUser();
+
+        Assert.Null(await Writer().RecomputeIntegratedAsync(Ctx(user), user));
+
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.vocational.integrated_recomputed", user));
+    }
+
+    /// <summary>
+    /// Negative control: a missing channel → not_ready, nothing persisted, so nothing audited. This is the
+    /// ordinary state for most students (the mil channel needs five completed LIA exams), so an event
+    /// emitted here would make the table's dominant content a record of integrations that never occurred.
+    /// </summary>
+    [Fact]
+    public async Task Recompute_not_ready_writes_no_audit_event()
+    {
+        var user = NewUser();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedInstrumentAsync(conn, "v1");
+        await SeedVocationalScoreAsync(conn, user, "v1", composite: 70m);
+        await SeedCompetencesAsync(conn, user, levels: [4, 4, 4]);   // no LIA exams -> "mil" missing
+
+        Assert.IsType<IntegrationNotReady>(await Writer().RecomputeIntegratedAsync(Ctx(user), user));
+
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.vocational.integrated_recomputed", user));
+    }
+
+    /// <summary>
+    /// The integrated result row is an upsert on (evaluatedUserId, instrumentVersion) — the audit trail is
+    /// not. Two recomputes overwrite one row but must leave TWO events; "who recomputed this, and when" is
+    /// the whole question the table exists to answer, and a writer that deduplicated to match the result
+    /// row would erase the second actor.
+    /// </summary>
+    [Fact]
+    public async Task Recompute_twice_writes_two_audit_events_though_the_result_row_is_upserted()
+    {
+        var user = NewUser();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedInstrumentAsync(conn, "v1");
+        await SeedVocationalScoreAsync(conn, user, "v1", composite: 70m);
+        await SeedCompetencesAsync(conn, user, levels: [4, 4, 4]);
+        await SeedFiveExamsAsync(conn, user, scorePercentage: 60);
+
+        await Writer().RecomputeIntegratedAsync(Ctx(user), user);
+        await Writer().RecomputeIntegratedAsync(Ctx(user), user);
+
+        await using var count = new NpgsqlCommand(
+            """SELECT COUNT(*) FROM "vocational_integrated_results" WHERE "evaluatedUserId" = @uid""", conn);
+        count.Parameters.AddWithValue("uid", user);
+        Assert.Equal(1L, (long)(await count.ExecuteScalarAsync())!);   // one result row (upsert)
+        Assert.Equal(2, await _fixture.CountAuditEventsAsync("audit.assessment.vocational.integrated_recomputed", user));
+    }
+
     // ---------------------------------------------------------------- helpers
 
     private VocationalWriter Writer()
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
-        return new VocationalWriter(factory, new VocationalReader(factory), new CompleteProfileAssembler(factory), NullLogger<VocationalWriter>.Instance);
+        // The audit writer is the REAL one, never a fake: the retrofit's claim is that a row lands in
+        // audit_events, and a substitute cannot prove that.
+        return new VocationalWriter(
+            factory, new VocationalReader(factory), new CompleteProfileAssembler(factory),
+            new AuditEventWriter(factory, NullLogger<AuditEventWriter>.Instance), NullLogger<VocationalWriter>.Instance);
     }
 
     private VocationalReader Reader() =>
@@ -223,6 +340,14 @@ public sealed class IntegratedRecomputeWriterTests : IClassFixture<IntegratedRec
     private static RequestContext Ctx(string userId) =>
         RequestContext.Authenticated(
             new RequestActor(userId, "counselor", $"{userId}@e.st", "Test User"),
+            schoolId: null, permissions: Array.Empty<string>(),
+            tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
+
+    // A caller who is NOT the evaluated user, carrying a real-looking name/email so the PII assertion has
+    // something to catch.
+    private static RequestContext CtxActedBy(string actorUserId, string name, string email) =>
+        RequestContext.Authenticated(
+            new RequestActor(actorUserId, "counselor", email, name),
             schoolId: null, permissions: Array.Empty<string>(),
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
 
