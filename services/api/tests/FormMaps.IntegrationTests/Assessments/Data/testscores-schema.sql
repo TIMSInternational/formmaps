@@ -1,8 +1,27 @@
--- Schema-only harness DDL for the test-scores READS slice (FM-DOTNET-037). Hand-authored from
--- prisma/schema.prisma: student_test_scores (full row the list/student-view returns), a minimal universities
--- catalog (the 9 columns college-fit reads), and the two authorization tables the student-view checks
--- (counselor_student_assignments, student_parent_links). NO foreign keys / RLS policies (schema-only). The
--- fixture pins a NON-UTC server timezone so the ISO-Z timestamp emission is caught if it were tz-dependent.
+-- Harness DDL for the test-scores READS slice (FM-DOTNET-037). Hand-authored from prisma/schema.prisma:
+-- student_test_scores (full row the list/student-view returns), a minimal universities catalog (the 9 columns
+-- college-fit reads), and the two authorization tables the student-view checks (counselor_student_assignments,
+-- student_parent_links). No foreign keys. The fixture pins a NON-UTC server timezone so the ISO-Z timestamp
+-- emission is caught if it were tz-dependent.
+--
+-- formmaps#125: the PRODUCTION RLS policies are now applied on top of this by TestScoreDatabaseFixture, and the
+-- reads run as a NOSUPERUSER NOBYPASSRLS login. `users` had to be added below to make that possible — it is not
+-- read by any query in this slice, but all three policied tables here sub-select it for their school branch
+-- ("owner.schoolId = app.current_school_id"), so without it those policies cannot even be created. Dropping the
+-- policies instead would have left the tables unprotected and every isolation assertion vacuous, which is the
+-- exact failure #125 is about; ProductionRlsPolicies refuses to make that trade silently.
+--
+-- `universities` is deliberately NOT policied: it is a global catalog, unpolicied in production too.
+
+-- Policy-support table (school branch of 003-fk-users.sql) + the tenant key itself (005-sensitive.sql).
+CREATE TABLE "users" (
+    "id"       TEXT NOT NULL,
+    "name"     TEXT NOT NULL DEFAULT '',
+    "email"    TEXT,
+    "schoolId" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
 
 CREATE TABLE "student_test_scores" (
     "id" TEXT NOT NULL,

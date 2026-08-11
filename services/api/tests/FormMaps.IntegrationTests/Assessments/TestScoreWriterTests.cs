@@ -3,6 +3,7 @@ using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Data;
+using FormMaps.IntegrationTests.TestSupport.Rls;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
@@ -19,19 +20,42 @@ namespace FormMaps.IntegrationTests.Assessments;
 public sealed class TestScoreWriterTests : IClassFixture<TestScoreDatabaseFixture>, IAsyncLifetime
 {
     private readonly TestScoreDatabaseFixture _fixture;
+
+    /// <summary>Restricted login (NOSUPERUSER NOBYPASSRLS) — the writer and reader under test.</summary>
     private NpgsqlDataSource _dataSource = null!;
+
+    /// <summary>Container superuser — row-state assertions only.</summary>
+    private NpgsqlDataSource _adminDataSource = null!;
 
     public TestScoreWriterTests(TestScoreDatabaseFixture fixture) => _fixture = fixture;
 
     public async Task InitializeAsync()
     {
-        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand("""TRUNCATE "student_test_scores" """, conn);
-        await cmd.ExecuteNonQueryAsync();
+        // formmaps#125: the restricted (NOSUPERUSER NOBYPASSRLS) login, so these writes run through the real
+        // production policies. Every case here is self-scoped — the caller writes their own scores — which is
+        // precisely what student_test_scores' policy admits, so its WITH CHECK is now under test too: a writer
+        // that bound someone else's userId would be rejected by the database and not only by the assertion.
+        // TRUNCATE goes through the fixture (superuser): issued on this login it would be scoped by the very
+        // policies under test and would silently leave rows behind for the next test.
+        _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
+        _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
+        await _fixture.TruncateAsync("student_test_scores");
     }
 
-    public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+    public async Task DisposeAsync()
+    {
+        await _dataSource.DisposeAsync();
+        await _adminDataSource.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task Harness_runs_as_a_restricted_login_with_the_production_policies_live()
+    {
+        // formmaps#125 tripwire. Without it, "the writes go through the real policies" is a claim in a comment.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(conn), "the app login must not bypass RLS");
+        Assert.Contains("student_test_scores", _fixture.AppliedPolicyTables);
+    }
 
     [Fact]
     public async Task Create_writes_full_row_with_defaults()
@@ -251,9 +275,14 @@ public sealed class TestScoreWriterTests : IClassFixture<TestScoreDatabaseFixtur
             schoolId: null, permissions: Array.Empty<string>(),
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
 
+    /// <summary>
+    /// Reads the TRUE row state as the superuser. It cannot go through the app login: that connection carries no
+    /// GUCs outside a session the factory opened, so student_test_scores' policy hides every row and this would
+    /// return null — an assertion that cannot see a row it is asserting about proves nothing about the write.
+    /// </summary>
     private async Task<bool> IsActiveAsync(string id)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand("""SELECT "isActive" FROM "student_test_scores" WHERE "id" = @id""", conn);
         cmd.Parameters.AddWithValue("id", id);
         return (bool)(await cmd.ExecuteScalarAsync())!;

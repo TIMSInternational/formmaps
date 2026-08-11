@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-08-02",
-  "howToKeepThisCurrent": "This file is the single source of truth for GET /api/v1/migration/roadmap (see MigrationRoadmapProvider.cs). It is domain-grained (one entry per product domain), not task-grained -- for per-slice code-completion detail see agentic-migration.manifest.json. Update ONE entry whenever a domain's real-world status changes: (1) status changes when a domain's .NET port is code-complete/in-progress/deferred; (2) liveInProd flips only once its FORMMAPS_ROUTE_*_TO_DOTNET flag(s) are verified serving real production traffic (a Vercel env flip + confirmed canary/curl check), NOT just merged to main -- git history under-counts prod state because the live frontend deploys via direct `vercel --prod`, not a merge gate. Bump lastVerified on the entry and lastUpdated at the top of this file. Reference this file in the commit that completes or cuts over a domain, e.g. `docs(migration): mark <domain> live in domain-status manifest`.",
+  "lastUpdated": "2026-08-10",
+  "howToKeepThisCurrent": "This file is the single source of truth for GET /api/v1/migration/roadmap (see MigrationRoadmapProvider.cs). It is domain-grained (one entry per product domain), not task-grained -- for per-slice code-completion detail see agentic-migration.manifest.json. Update ONE entry whenever a domain's real-world status changes: (1) status changes when a domain's .NET port is code-complete/in-progress/deferred; (2) liveInProd flips only once its FORMMAPS_ROUTE_*_TO_DOTNET flag(s) are verified serving real production traffic (a Vercel env flip + confirmed canary/curl check), NOT just merged to main -- git history under-counts prod state because the live frontend deploys via direct `vercel --prod`, not a merge gate. Bump lastVerified on the entry and lastUpdated at the top of this file. Reference this file in the commit that completes or cuts over a domain, e.g. `docs(migration): mark <domain> live in domain-status manifest`. (3) RECORD UNCERTAINTY RATHER THAN GUESS. If a flag's production state cannot be established from something committed to this repo, say so in the entry's `note` and leave liveInProd alone -- an uncommitted measurement from a past session is not evidence, and neither is `status`, which tracks code completion only. Do NOT bump `lastVerified` when you merely edited this file; it means 'someone checked prod on this date', so only a real measurement moves it. `note` is deliberately NOT part of the API response shape (MigrationDomainStatus has no Note property), so it is free-form and safe to extend; the file is an EmbeddedResource, so changes to the served fields need a rebuild to take effect.",
   "domains": [
     {
       "domain": "platform-health",
@@ -56,7 +56,7 @@
       "status": "started",
       "liveInProd": false,
       "lastVerified": "2026-07-30",
-      "note": "Partial: large read surface + FM-043 live in prod as of 2026-07-30; FM-029 and most other writes deliberately still dark. liveInProd is domain-level (false = not ALL of it live)."
+      "note": "Partial: large read surface + FM-043 live in prod as of 2026-07-30; FM-029 and most other writes deliberately still dark. liveInProd is domain-level (false = not ALL of it live). Also (formmaps#109, re-verified 2026-08-10): MapAssessmentTimelineEndpoints is registered unconditionally in Program.cs but GET /api/v1/assessments/me/timeline{,/stats} have NO rewrite in apps/web/next.config.ts, so no request reaches the .NET handlers through app.formmaps.com -- Node owns the /api/v1/assessments/* prefix and answers them. The .NET handlers themselves are healthy and guarded (both return 401 missing_identity unauthenticated, measured against a local build). Do not 'fix' this with a prefix rewrite: it would steal live Node routes such as /api/v1/assessments/{id}/report. Mapped-but-unreachable, so it counts as dark."
     },
     {
       "domain": "schools-rosters-organizations",
@@ -67,7 +67,7 @@
       "status": "started",
       "liveInProd": false,
       "lastVerified": "2026-07-28",
-      "note": "Partial: reads live through Wave 2 Batches 4/6/8/9/10 (2026-07-27..28); writes/CRUD mostly dark."
+      "note": "Partial: reads live through Wave 2 Batches 4/6/8/9/10 (2026-07-27..28); writes/CRUD mostly dark. UNCERTAIN as of 2026-08-10 (formmaps#48): the per-flag live-vs-dark split across this domain's 15 FORMMAPS_ROUTE_SCHOOL_*/COURSE_*/CURRICULUM_*/DATA_MAPPINGS/PREREQUISITES/ISAMS/ACADEMIC_GAPS flags is NOT known and is NOT derivable from this repo -- the flags gate rewrites in apps/web/next.config.ts but their VALUES live in Vercel env, so the repo shows only which flags exist, never which are on. A 2026-08-07 fingerprint sweep did measure them, but its output was never committed despite that being its stated acceptance criterion (only the script, scripts/route-fingerprint-sweep.ts, and its offline header fixtures landed), so that measurement cannot be re-derived from git; re-running it requires probing app.formmaps.com. liveInProd stays false because the domain is definitely not FULLY live -- not because the split was measured. Do not flip it, and do not narrow this note, without a committed sweep result."
     },
     {
       "domain": "student-counselor-parent-workflows",

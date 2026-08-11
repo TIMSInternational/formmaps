@@ -179,6 +179,12 @@
     <EmbeddedResource Include="..\..\..\..\infra\aws\sql\dotnet-service-role.sql" Link="DbRole\Data\dotnet-service-role.sql" />
     <!-- Schema-only DDL mirroring the live Node/Prisma auth tables (users/roles/refresh_tokens/login_attempts/password_reset_tokens/user_settings + touched-column schools subset) for the Testcontainers IAuthRepository harness (Domain 10, Task 5). -->
     <EmbeddedResource Include="Auth\Data\auth-schema.sql" />
+    <!-- formmaps#125: byte-for-byte copies of the production RLS policy files (formmaps-platform/api/prisma/rls/*.sql),
+         embedded so converted fixtures assert against the policies Aurora actually enforces rather than a transcription
+         of them. A GLOB, not a list: a policy file copied into that directory MUST get applied, and a hand-maintained
+         list is precisely how one would silently not be. ProductionRlsPoliciesTests cross-checks the glob against
+         ProductionRlsPolicies.VendoredFileNames. See TestSupport/Rls/README.md. -->
+    <EmbeddedResource Include="TestSupport\Rls\*.sql" />
   </ItemGroup>
 
   <ItemGroup>

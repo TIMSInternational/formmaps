@@ -1,10 +1,9 @@
-using System.Reflection;
 using FormMaps.Application.Auth;
 using FormMaps.Application.ParentChildReads;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.ParentChildReads;
+using FormMaps.IntegrationTests.TestSupport.Rls;
 using Npgsql;
-using Testcontainers.PostgreSql;
 
 namespace FormMaps.IntegrationTests.ParentChildReads;
 
@@ -20,30 +19,86 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
     private const string Student = "student-1";
 
     private readonly Fixture _fixture;
+
+    /// <summary>Restricted login (NOSUPERUSER NOBYPASSRLS) — the reader under test.</summary>
     private NpgsqlDataSource _dataSource = null!;
+
+    /// <summary>Container superuser — seeding and assertions only.</summary>
+    private NpgsqlDataSource _adminDataSource = null!;
 
     public ParentChildReaderTests(Fixture fixture) => _fixture = fixture;
 
     public async Task InitializeAsync()
     {
-        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand("""
-            TRUNCATE "users", "student_parent_links", "pca_evaluations", "pca_exam_sessions", "evaluation_groups",
+        _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
+        _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
+        await _fixture.TruncateAsync(
+            "users", "student_parent_links", "pca_evaluations", "pca_exam_sessions", "evaluation_groups",
             "academic_years", "graduation_rule_sets", "student_grades", "graduation_plans", "graduation_plan_items",
-            "student_graduation_targets", "student_course_plans"
-            """, conn);
-        await cmd.ExecuteNonQueryAsync();
+            "student_graduation_targets", "student_course_plans");
     }
 
-    public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+    public async Task DisposeAsync()
+    {
+        await _dataSource.DisposeAsync();
+        await _adminDataSource.DisposeAsync();
+    }
+
+    // ---- harness proof (formmaps#125) ----
+
+    [Fact]
+    public async Task Harness_runs_as_a_restricted_login_with_the_production_policies_live()
+    {
+        // NOTE the data source: the APP login, not the admin one. Every claim below is conditional on this.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(conn), "the app login must not bypass RLS");
+        Assert.Equal(11, _fixture.AppliedPolicyTables.Count);
+        Assert.DoesNotContain("student_course_plans", _fixture.AppliedPolicyTables); // unpolicied in production
+    }
+
+    [Fact]
+    public async Task Every_child_data_table_this_reader_touches_is_invisible_to_the_parents_own_session()
+    {
+        // The property that forces ParentChildReader's System sessions, checked table by table rather than
+        // asserted once in a doc comment. A parent is minted school-LESS, so for each of these both the policy's
+        // owner branch (studentId/userId = me) and its school branch miss. The FIRST loop is the negative
+        // control for the second: the same rows ARE there, seen by the superuser, so an empty result below is
+        // the policy and not an empty fixture.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Student, "Kid", schoolId: "school-1");
+        await Link(conn, "good", Student, Parent, accepted: true);
+        await Grade(conn, "g1", Student, "A", 1m, schoolId: "school-1");
+        await Plan(conn, "p1", Student, "approved", reviewedAt: new DateTime(2026, 5, 1), schoolId: "school-1");
+        await Target(conn, Student, "State U", "CS", active: true);
+        await PcaEval(conn, "e1", Student);
+
+        var tables = new[] { "users", "student_grades", "graduation_plans", "student_graduation_targets", "pca_evaluations" };
+
+        foreach (var table in tables)
+        {
+            Assert.Equal(1L, await CountAsync(conn, $"""SELECT count(*) FROM "{table}" """));
+        }
+
+        await using var identity = await OpenIdentitySessionAsync(Parent, schoolId: null);
+        foreach (var table in tables)
+        {
+            Assert.Equal(0L, await CountAsync(identity, $"""SELECT count(*) FROM "{table}" """));
+        }
+
+        // ...and the one row the parent IS admitted to is their own link (009-parent-links.sql), which is
+        // exactly the row IsLinkedAsync authorizes on. The grant is minimal; this pins that it stays so.
+        Assert.Equal(1L, await CountAsync(identity, """SELECT count(*) FROM "student_parent_links" """));
+
+        // Positive half: the reader, on a system session behind that gate, returns the data anyway.
+        Assert.Equal(ChildProgressOutcome.Ok, (await Repo().GetProgressAsync(Ctx(), Parent, Student)).Outcome);
+    }
 
     // ---- progress: IDOR gate ----
 
     [Fact]
     public async Task Progress_requires_accepted_active_link()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await User(conn, Student, "Kid");
 
         // No link → NotLinked.
@@ -65,7 +120,7 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
     [Fact]
     public async Task Progress_linked_but_student_missing_is_404()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await Link(conn, "l", "ghost", Parent, accepted: true); // link to a non-existent user
         Assert.Equal(ChildProgressOutcome.StudentNotFound, (await Repo().GetProgressAsync(Ctx(), Parent, "ghost")).Outcome);
     }
@@ -75,7 +130,7 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
     [Fact]
     public async Task Progress_computes_gpa_credits_and_badges()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await User(conn, Student, "Kid", gradeLevel: 11, schoolId: "school-1");
         await Link(conn, "l", Student, Parent, accepted: true);
         // required from an active rule set on the current AY = 24.
@@ -112,7 +167,7 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
     [Fact]
     public async Task Progress_percentage_has_no_100_cap()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await User(conn, Student, "Kid", schoolId: "school-1");
         await Link(conn, "l", Student, Parent, accepted: true);
         // No rule set → required stays 120; earned 130 → 108% (uncapped).
@@ -127,7 +182,7 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
     [Fact]
     public async Task Progress_gpa_is_not_school_gated_but_credits_are()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await User(conn, Student, "Kid", schoolId: null); // school-less student
         await Link(conn, "l", Student, Parent, accepted: true);
         await Grade(conn, "g1", Student, grade: "A", credits: 5m); // grade rows carry their own schoolId in prod
@@ -141,7 +196,7 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
     [Fact]
     public async Task Progress_no_gradeable_grades_gpa_null_on_track()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await User(conn, Student, "Kid", schoolId: "school-1");
         await Link(conn, "l", Student, Parent, accepted: true);
 
@@ -155,7 +210,7 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
     [Fact]
     public async Task CoursePlan_requires_link()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await Link(conn, "pending", Student, Parent, accepted: false);
         Assert.False((await Repo().GetCoursePlanAsync(Ctx(), Parent, Student)).Linked);
     }
@@ -163,7 +218,7 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
     [Fact]
     public async Task CoursePlan_shapes_plan_target_and_courses()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await Link(conn, "l", Student, Parent, accepted: true);
         await Plan(conn, "old", Student, status: "approved", reviewedAt: new DateTime(2026, 1, 1), created: new DateTime(2026, 1, 1));
         await Plan(conn, "new", Student, status: "approved", reviewedAt: new DateTime(2026, 5, 1), created: new DateTime(2026, 3, 1));
@@ -187,7 +242,7 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
     [Fact]
     public async Task CoursePlan_inactive_target_collapses_to_null()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await Link(conn, "l", Student, Parent, accepted: true);
         await Target(conn, Student, "MIT", "CS", active: false);
 
@@ -207,6 +262,29 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
             new RequestActor(Parent, "parent", "p@e.st", "Parent"),
             schoolId: null, permissions: Array.Empty<string>(),
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
+
+    /// <summary>
+    /// A raw connection on the restricted login carrying the GUCs the session factory sets for an Identity-mode
+    /// caller — used to state what the POLICIES do, independently of any repository. Session-level rather than
+    /// transaction-local because there is no transaction; safe only because Npgsql sends <c>DISCARD ALL</c> when
+    /// a pooled connection is returned.
+    /// </summary>
+    private async Task<NpgsqlConnection> OpenIdentitySessionAsync(string userId, string? schoolId)
+    {
+        var conn = await _dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand(
+            "SELECT set_config('app.current_school_id', @s, false), set_config('app.current_user_id', @u, false)", conn);
+        cmd.Parameters.AddWithValue("s", schoolId ?? string.Empty);
+        cmd.Parameters.AddWithValue("u", userId);
+        await cmd.ExecuteNonQueryAsync();
+        return conn;
+    }
+
+    private static async Task<long> CountAsync(NpgsqlConnection conn, string sql)
+    {
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        return (long)(await cmd.ExecuteScalarAsync())!;
+    }
 
     private static async Task Exec(NpgsqlConnection conn, string sql, params (string, object?)[] ps)
     {
@@ -242,13 +320,15 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
         Exec(conn, """INSERT INTO "graduation_rule_sets"("id","schoolId","academicYearId","totalCreditsRequired","isActive") VALUES(@id,@s,@ay,@r,true)""",
             ("id", id), ("s", schoolId), ("ay", ayId), ("r", required));
 
-    private static Task Grade(NpgsqlConnection conn, string id, string studentId, string? grade, decimal credits, bool isActive = true) =>
-        Exec(conn, """INSERT INTO "student_grades"("id","studentId","status","grade","credits","isActive") VALUES(@id,@s,'completed',@g,@c,@a)""",
-            ("id", id), ("s", studentId), ("g", grade), ("c", credits), ("a", isActive));
+    // schoolId defaults to null so every existing caller is unchanged; pass one where the tenancy of the row
+    // is the point (formmaps#125), since 002/006 scope these two tables directly on it.
+    private static Task Grade(NpgsqlConnection conn, string id, string studentId, string? grade, decimal credits, bool isActive = true, string? schoolId = null) =>
+        Exec(conn, """INSERT INTO "student_grades"("id","studentId","schoolId","status","grade","credits","isActive") VALUES(@id,@s,@sch,'completed',@g,@c,@a)""",
+            ("id", id), ("s", studentId), ("sch", schoolId), ("g", grade), ("c", credits), ("a", isActive));
 
-    private static Task Plan(NpgsqlConnection conn, string id, string studentId, string status, DateTime? reviewedAt = null, DateTime? created = null) =>
-        Exec(conn, """INSERT INTO "graduation_plans"("id","studentId","status","reviewedAt","createdDate") VALUES(@id,@s,@st,@r,@cr)""",
-            ("id", id), ("s", studentId), ("st", status),
+    private static Task Plan(NpgsqlConnection conn, string id, string studentId, string status, DateTime? reviewedAt = null, DateTime? created = null, string? schoolId = null) =>
+        Exec(conn, """INSERT INTO "graduation_plans"("id","studentId","schoolId","status","reviewedAt","createdDate") VALUES(@id,@s,@sch,@st,@r,@cr)""",
+            ("id", id), ("s", studentId), ("sch", schoolId), ("st", status),
             ("r", reviewedAt is null ? null : DateTime.SpecifyKind(reviewedAt.Value, DateTimeKind.Unspecified)),
             ("cr", DateTime.SpecifyKind(created ?? new DateTime(2026, 1, 1), DateTimeKind.Unspecified)));
 
@@ -264,26 +344,23 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
         Exec(conn, """INSERT INTO "student_course_plans"("id","studentId","courseId","status","sortOrder") VALUES(@id,@s,@c,@st,@so)""",
             ("id", id), ("s", studentId), ("c", courseId), ("st", status), ("so", sortOrder));
 
-    public sealed class Fixture : IAsyncLifetime
+    /// <summary>
+    /// formmaps#125: production policies + a restricted login. Eleven of this fixture's twelve tables are
+    /// policied in production and all eleven are named. The twelfth, <c>student_course_plans</c>, is NOT — it
+    /// appears in none of prisma/rls/*.sql, so it is a genuine production gap rather than an omission here, and
+    /// naming it would fail the fixture. Recorded rather than papered over: a parent's child course plan is read
+    /// on a system session in code, so the missing policy is not currently load-bearing, but nothing stops the
+    /// next reader from leaning on an RLS backstop that does not exist.
+    /// </summary>
+    public sealed class Fixture : RlsEnabledDatabaseFixture
     {
-        private readonly PostgreSqlContainer _container = new PostgreSqlBuilder().WithImage("postgres:16-alpine").Build();
+        protected override string SchemaResourceFileName => "parent-child-reads-schema.sql";
 
-        public string ConnectionString => _container.GetConnectionString();
-
-        public async Task InitializeAsync()
-        {
-            await _container.StartAsync();
-            await using var connection = new NpgsqlConnection(ConnectionString);
-            await connection.OpenAsync();
-            var assembly = Assembly.GetExecutingAssembly();
-            var name = assembly.GetManifestResourceNames()
-                .Single(n => n.EndsWith("parent-child-reads-schema.sql", StringComparison.Ordinal));
-            await using var stream = assembly.GetManifestResourceStream(name)!;
-            using var sr = new StreamReader(stream);
-            await using var cmd = new NpgsqlCommand(await sr.ReadToEndAsync(), connection);
-            await cmd.ExecuteNonQueryAsync();
-        }
-
-        public async Task DisposeAsync() => await _container.DisposeAsync();
+        protected override IReadOnlyCollection<string> PoliciedTables =>
+        [
+            "users", "student_parent_links", "pca_evaluations", "pca_exam_sessions", "evaluation_groups",
+            "academic_years", "graduation_rule_sets", "student_grades", "graduation_plans",
+            "graduation_plan_items", "student_graduation_targets",
+        ];
     }
 }
