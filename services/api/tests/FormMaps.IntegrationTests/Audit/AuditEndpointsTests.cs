@@ -279,6 +279,80 @@ public class AuditEndpointsTests
         Assert.Equal(50, query.Limit);
     }
 
+    // The test above covers ABSENT. This one covers PRESENT-BUT-EMPTY, which is a different wire shape
+    // and the one a UI produces when it renders a filter bar and submits every key it owns regardless of
+    // whether the user picked anything: `?eventType=&actorUserId=&schoolId=`. Those bind to "" rather
+    // than null, and "" is a perfectly good string filter — the reader would append
+    // `AND "eventType" = ''`, which no row can satisfy, and the auditor would get an empty page under a
+    // 200 forever. An empty page is exactly the lie an audit trail exists to prevent, so blank has to
+    // arrive as null.
+    [Fact]
+    public async Task PresentButEmptyParameters_AreTreatedAsAbsent_NotAsAnEmptyStringFilter()
+    {
+        var reader = new FakeAuditEventReader();
+        using var factory = new AuditApiFactory(reader);
+        using var client = factory.CreateClient();
+        var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{Path}?eventType=&actorUserId=&subjectType=&subjectId=&schoolId=&cursor=");
+        AddDevHeaders(request, FormMapsRoles.SuperAdmin);
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var query = Assert.IsType<AuditEventQuery>(reader.LastQuery);
+        Assert.Null(query.EventType);
+        Assert.Null(query.ActorUserId);
+        Assert.Null(query.SubjectType);
+        Assert.Null(query.SubjectId);
+        Assert.Null(query.SchoolId);
+        Assert.Null(query.Cursor);
+    }
+
+    // Whitespace is the same user intent as empty (a text box that was typed into and cleared, a
+    // trimmed-to-nothing value), and `?schoolId=%20` binds to " ", which IsNullOrEmpty would let
+    // straight through into `AND "schoolId" = ' '`. No identifier in audit_events is whitespace, so
+    // nothing reachable is being made unreachable here.
+    [Fact]
+    public async Task WhitespaceOnlyParameters_AreAlsoTreatedAsAbsent()
+    {
+        var reader = new FakeAuditEventReader();
+        using var factory = new AuditApiFactory(reader);
+        using var client = factory.CreateClient();
+        var request = new HttpRequestMessage(
+            HttpMethod.Get, $"{Path}?eventType=%20&schoolId=%20%20&cursor=%20");
+        AddDevHeaders(request, FormMapsRoles.SuperAdmin);
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var query = Assert.IsType<AuditEventQuery>(reader.LastQuery);
+        Assert.Null(query.EventType);
+        Assert.Null(query.SchoolId);
+        Assert.Null(query.Cursor);
+    }
+
+    // Blast-radius control on the two tests above. "Blank means absent" must not become "trim
+    // everything" or "drop short values": a real filter value still has to reach the reader byte for
+    // byte, including one that merely CONTAINS whitespace.
+    [Fact]
+    public async Task NonBlankParameters_AreStillForwardedVerbatim()
+    {
+        var reader = new FakeAuditEventReader();
+        using var factory = new AuditApiFactory(reader);
+        using var client = factory.CreateClient();
+        var request = new HttpRequestMessage(
+            HttpMethod.Get, $"{Path}?eventType=lia.session.completed&schoolId=school%20nine");
+        AddDevHeaders(request, FormMapsRoles.SuperAdmin);
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var query = Assert.IsType<AuditEventQuery>(reader.LastQuery);
+        Assert.Equal("lia.session.completed", query.EventType);
+        Assert.Equal("school nine", query.SchoolId);
+    }
+
     // -------------------------------------------------------------------------------------------
     // Failure mapping
     // -------------------------------------------------------------------------------------------

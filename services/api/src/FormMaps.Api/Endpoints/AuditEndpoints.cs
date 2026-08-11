@@ -71,8 +71,23 @@ public static class AuditEndpoints
                 statusCode: StatusCodes.Status403Forbidden);
         }
 
+        // Blank is ABSENT, not a value to match on. A UI that renders a filter bar and submits every
+        // key it owns sends `?eventType=&schoolId=` when the user has selected nothing; those bind to
+        // "" rather than null, and "" is a perfectly valid string filter as far as the reader is
+        // concerned — it would append `AND "eventType" = ''`, which no row can satisfy, and hand the
+        // auditor a permanently empty page under a 200. "The trail is empty" is the one answer this
+        // endpoint must never give when it isn't true, so the normalization happens HERE, at the
+        // wire boundary, where "the caller did not supply this" is still knowable.
         var query = new AuditEventQuery(
-            eventType, actorUserId, subjectType, subjectId, schoolId, from, to, limit ?? DefaultLimit, cursor);
+            NullIfBlank(eventType),
+            NullIfBlank(actorUserId),
+            NullIfBlank(subjectType),
+            NullIfBlank(subjectId),
+            NullIfBlank(schoolId),
+            from,
+            to,
+            limit ?? DefaultLimit,
+            NullIfBlank(cursor));
 
         AuditEventPage page;
         try
@@ -104,6 +119,19 @@ public static class AuditEndpoints
             nextCursor = page.NextCursor,
         });
     }
+
+    /// <summary>
+    /// Collapses a present-but-blank query-string value to "not supplied".
+    /// </summary>
+    /// <remarks>
+    /// Whitespace, not just empty: <c>?schoolId=%20</c> is the same user intent as <c>?schoolId=</c>,
+    /// and <c>audit_events</c> holds no identifier that is entirely whitespace, so there is no value
+    /// being made unreachable here. Applied to <c>cursor</c> too — a blank cursor means "start at the
+    /// newest event", whereas rejecting it as malformed would 400 the first page of a client that
+    /// always emits the key.
+    /// </remarks>
+    private static string? NullIfBlank(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value;
 
     /// <summary>
     /// Projects a record onto the wire shape explicitly rather than serializing

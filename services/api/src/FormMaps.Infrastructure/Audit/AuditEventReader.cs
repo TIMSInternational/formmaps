@@ -65,9 +65,17 @@ public sealed class AuditEventReader(IFormMapsDatabaseSessionFactory databaseSes
             """);
         var parameters = new List<(string Name, object Value)>();
 
+        // A BLANK STRING FILTER IS NO FILTER. Every string field on AuditEventQuery is nullable, so
+        // "" can only arrive from a caller that turned an absent value into an empty one — a query
+        // string that carries the key with no value is the common case (see AuditEndpoints, which
+        // normalizes there as well). Appending `AND "eventType" = ''` for that is not a narrower
+        // search, it is an unsatisfiable one: no audit row has a blank identifier in any of these
+        // columns, so the caller gets an empty page and a 200 and no way to tell that apart from an
+        // empty trail. Both layers normalize on purpose — the endpoint is not the only thing that can
+        // resolve IAuditEventReader from DI, and this is the layer that owns the SQL.
         void AddFilter(string sqlFragment, string parameterName, object? value)
         {
-            if (value is null)
+            if (value is null || (value is string text && string.IsNullOrWhiteSpace(text)))
             {
                 return;
             }
@@ -173,7 +181,11 @@ public sealed class AuditEventReader(IFormMapsDatabaseSessionFactory databaseSes
     /// </remarks>
     private static (DateTime OccurredAt, string Id)? DecodeCursor(string? cursor)
     {
-        if (string.IsNullOrEmpty(cursor))
+        // Whitespace counts as absent, same reasoning as AddFilter above: `?cursor=` (or `?cursor=%20`)
+        // from a client that always emits the key means "first page", and answering it with a 400
+        // would break the very first request of an otherwise correct caller. This does NOT soften the
+        // rejection of a cursor that has content — a token this reader did not issue still throws.
+        if (string.IsNullOrWhiteSpace(cursor))
         {
             return null;
         }

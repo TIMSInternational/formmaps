@@ -408,6 +408,71 @@ public class AuditEventReaderTests(AuditDatabaseFixture fixture)
         Assert.Null(page.NextCursor);
     }
 
+    // ---------------------------------------------------------------- blank filters
+
+    // Second layer of the present-but-empty fix (AuditEndpoints normalizes at the wire boundary; this
+    // is the layer that owns the SQL, and it is not the only thing that can resolve IAuditEventReader
+    // from DI). A blank string filter is NO filter: appending `AND "eventType" = ''` is not a narrower
+    // search, it is an unsatisfiable one, and it answers "what happened?" with "nothing" — the single
+    // worst thing an audit reader can get wrong.
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("\t")]
+    public async Task QueryAsync_BlankStringFilters_AreIgnored_NotMatchedLiterally(string blank)
+    {
+        await fixture.ResetAsync();
+        await SeedAsync("audit.test.a", "s1");
+        await SeedAsync("audit.test.b", "s2");
+        var reader = MakeReader();
+
+        var page = await reader.QueryAsync(new AuditEventQuery(
+            EventType: blank,
+            ActorUserId: blank,
+            SubjectType: blank,
+            SubjectId: blank,
+            SchoolId: blank));
+
+        // Both rows: the query is equivalent to no filters at all.
+        Assert.Equal(2, page.Items.Count);
+    }
+
+    // Same for the cursor. A client that always emits every key sends `?cursor=` on its FIRST request,
+    // and rejecting that as a token we did not issue would 400 the opening page of an otherwise
+    // correct caller.
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task QueryAsync_BlankCursor_StartsAtTheNewestEvent_InsteadOfThrowing(string blank)
+    {
+        await fixture.ResetAsync();
+        await SeedAsync("audit.test.a", "s1");
+        var reader = MakeReader();
+
+        var page = await reader.QueryAsync(new AuditEventQuery(Cursor: blank));
+
+        Assert.Single(page.Items);
+    }
+
+    // Blast-radius control on both tests above. "Blank is ignored" must not have become "any string
+    // filter is ignored" (which would make every filter test in this file vacuous) or "any cursor is
+    // ignored" (which turns a paging client into an infinite loop). A filter with content still
+    // filters, and a cursor with content that we did not issue is still rejected.
+    [Fact]
+    public async Task QueryAsync_BlankHandling_DoesNotDisableRealFiltersOrCursorValidation()
+    {
+        await fixture.ResetAsync();
+        await SeedAsync("audit.test.a", "s1");
+        await SeedAsync("audit.test.b", "s2");
+        var reader = MakeReader();
+
+        var filtered = await reader.QueryAsync(new AuditEventQuery(EventType: "audit.test.a"));
+        Assert.Single(filtered.Items);
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => reader.QueryAsync(new AuditEventQuery(Cursor: "not-base64!!")));
+    }
+
     // ---------------------------------------------------------------- helpers
 
     private AuditEventReader MakeReader() => new(fixture.SessionFactory);

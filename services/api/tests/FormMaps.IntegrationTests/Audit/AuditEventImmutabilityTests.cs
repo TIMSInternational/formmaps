@@ -52,6 +52,57 @@ public class AuditEventImmutabilityTests(AuditDatabaseFixture fixture)
         Assert.True(await HasCurrentUserPrivilegeAsync(connection, "DELETE"));
     }
 
+    /// <summary>
+    /// Backs the claim <see cref="AuditDatabaseFixture" /> makes about its own reset dance — that
+    /// <c>ResetAsync</c> disabling the immutability trigger is safe because only the table's OWNER can
+    /// do that and the app login is not it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// That claim was previously asserted by nothing, and cited a test
+    /// (<c>Harness_AppLogin_DoesNotBypassRls</c>) that proves an unrelated fact:
+    /// <c>rolsuper OR rolbypassrls = false</c> is about RLS enforcement, not DDL rights. Postgres
+    /// gates <c>ALTER TABLE ... DISABLE TRIGGER</c> on ownership, so the property that matters is
+    /// ownership, and this test checks exactly that.
+    /// </para>
+    /// <para>
+    /// It is also a real regression guard, not just documentation upkeep: if a future fixture change
+    /// ever created the app login as the table owner (or granted it the owning role), every
+    /// immutability assertion in this file would still pass while <c>ResetAsync</c>'s trigger dance
+    /// silently became reachable from the credential shape production runs as.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public async Task AppLogin_CannotDisableTheImmutabilityTrigger_AndDoesNotOwnTheTable()
+    {
+        await fixture.ResetAsync();
+
+        await using var connection = new NpgsqlConnection(fixture.AppConnectionString);
+        await connection.OpenAsync();
+
+        // Catalog half, via pg_has_role rather than a name comparison against the owner: ownership is
+        // INHERITED through role membership, so "current_user is not literally the owner" would be
+        // green for a role that had been GRANTed the owning role and could therefore ALTER the table
+        // at will.
+        Assert.False(await CurrentUserOwnsAuditEventsAsync(connection));
+
+        // Behavioural half. The catalog check is the reason; this is the consequence, and only the
+        // consequence is what the fixture's safety argument actually rests on.
+        await using (var disable = connection.CreateCommand())
+        {
+            disable.CommandText = """ALTER TABLE "audit_events" DISABLE TRIGGER audit_events_immutable""";
+            var ex = await Assert.ThrowsAsync<PostgresException>(() => disable.ExecuteNonQueryAsync());
+            Assert.Equal(PostgresErrorCodes.InsufficientPrivilege, ex.SqlState);
+        }
+
+        // Negative control on the SQLSTATE above: 42501 has to mean "the DISABLE was refused", not
+        // "there is no such trigger" (42704) or "no such table" (42P01) — both of which would be a
+        // catastrophically weaker world reported as a pass. Admin-side, because the app login's
+        // transaction is aborted and because a policy-filtered view cannot answer this.
+        await using var admin = await OpenAdminAsync();
+        Assert.Equal('A', await ReadTriggerEnabledFlagAsync(admin));
+    }
+
     [Fact]
     public async Task DirectUpdate_AsTableOwner_RaisesImmutabilityError()
     {
@@ -341,6 +392,22 @@ public class AuditEventImmutabilityTests(AuditDatabaseFixture fixture)
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT has_table_privilege(current_user, 'audit_events', @privilege)";
         AddParam(command, "privilege", privilege);
+        return (bool)(await command.ExecuteScalarAsync())!;
+    }
+
+    /// <summary>
+    /// True if the connected role owns <c>public.audit_events</c>, directly or by role membership —
+    /// i.e. if it may run <c>ALTER TABLE</c> against it.
+    /// </summary>
+    private static async Task<bool> CurrentUserOwnsAuditEventsAsync(NpgsqlConnection connection)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT pg_catalog.pg_has_role(current_user, c."relowner", 'USAGE')
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relname = 'audit_events' AND n.nspname = 'public'
+            """;
         return (bool)(await command.ExecuteScalarAsync())!;
     }
 

@@ -40,10 +40,33 @@ namespace FormMaps.IntegrationTests.Audit;
 /// </para>
 /// <para>
 /// RESET AND IMMUTABILITY. <c>audit_events</c> refuses DELETE/TRUNCATE by design, so
-/// <see cref="ResetAsync" /> has to disable the trigger, delete, and restore it. That is not a hole in
-/// production: only a superuser can <c>ALTER TABLE ... DISABLE TRIGGER</c>, the app login here provably
-/// cannot (see <c>AuditEventWriterTests.Harness_AppLogin_DoesNotBypassRls</c>), and the schema file says
-/// so out loud.
+/// <see cref="ResetAsync" /> has to disable the trigger, delete, and restore it — on
+/// <see cref="ConnectionString" />, the container superuser, which is also the table's owner.
+/// </para>
+/// <para>
+/// WHY THAT IS NOT A HOLE, stated precisely. Postgres gates <c>ALTER TABLE ... DISABLE TRIGGER</c> on
+/// TABLE OWNERSHIP — membership in the owning role — not on superuser-ness. A superuser passes because
+/// a superuser passes every ownership check, but so would any ordinary non-superuser that happened to
+/// own the table. "Only a superuser can disable it" is therefore the wrong claim; the true one is
+/// "only the owner, or a superuser, can". The app login here is neither: the DDL runs on the superuser
+/// connection BEFORE <c>audit_app</c> exists, so <c>postgres</c> owns <c>audit_events</c>, and
+/// <c>ProductionRlsPolicies.CreateRestrictedLoginAsync</c> grants USAGE + DML + sequence rights and
+/// never ownership. That is ASSERTED, not assumed, by
+/// <c>AuditEventImmutabilityTests.AppLogin_CannotDisableTheImmutabilityTrigger_AndDoesNotOwnTheTable</c>,
+/// which checks it both catalog-side and behaviourally.
+/// </para>
+/// <para>
+/// Do NOT cite <c>Harness_AppLogin_DoesNotBypassRls</c> as the proof (an earlier version of this
+/// comment did). That test asserts <c>rolsuper OR rolbypassrls = false</c> — a statement about who RLS
+/// is enforced for. It says nothing whatsoever about who may run DDL against the table, and the two
+/// privileges are independent: <c>NOBYPASSRLS</c> owners exist.
+/// </para>
+/// <para>
+/// PRODUCTION IS UNASSERTED HERE, deliberately named as such. <c>formmaps_dotnet_svc</c> is granted
+/// SELECT + INSERT by <c>infra/aws/sql/dotnet-service-role.sql</c> and is not created as the owner of
+/// <c>audit_events</c>, but that is a property of how the Aurora database was provisioned and no test
+/// in this suite observes it. The control this suite actually proves is the trigger, which binds the
+/// owner too (see <c>DirectUpdate_AsTableOwner_RaisesImmutabilityError</c>).
 /// </para>
 /// <para>
 /// RESTORE RE-RUNS THE PRODUCTION FILE — it does NOT re-enable the trigger with a hardcoded

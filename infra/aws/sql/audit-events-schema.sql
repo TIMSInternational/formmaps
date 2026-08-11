@@ -31,10 +31,27 @@ CREATE INDEX IF NOT EXISTS "audit_events_occurredAt_id_idx" ON "audit_events" ("
 
 -- ---------------------------------------------------------------------------
 -- RLS: bypass-only. An ordinary tenant-scoped (Identity-mode) RLS session gets
--- ZERO rows and cannot write. Only RequestContext.System() sessions (app.bypass_rls
--- = 'on') can touch this table -- IAuditEventWriter and the audit-read endpoint,
--- both always opened under System(). Stronger than legacy audit_logs (no RLS at
--- all, app-layer-gate-only) by design -- see spec's "Read-access model".
+-- ZERO rows and cannot write. THE CRITERION IS THE GUC AND NOTHING ELSE: any session
+-- with app.bypass_rls = 'on' passes both USING and WITH CHECK, whatever code opened
+-- it. Stronger than legacy audit_logs (no RLS at all, app-layer-gate-only) by design
+-- -- see spec's "Read-access model".
+--
+-- WHO ACTUALLY GETS THAT GUC is wider than "IAuditEventWriter and the audit-read
+-- endpoint", and the difference matters when reading this file as a security control.
+-- TenantGucPlanResolver.Resolve returns Bypass() for
+--     context.IsSystem || context.Actor?.IsSuperAdmin == true
+-- so EVERY authenticated super-admin request gets bypass mode, through ANY repository,
+-- not just the two audit classes. No repository queries audit_events today, but the
+-- database would not stop one that did: a super-admin-scoped session can SELECT from
+-- and INSERT into this table exactly as System() can.
+--
+-- That is a documentation point, not a hole. The privilege ceiling is unchanged --
+-- formmaps_dotnet_svc holds SELECT + INSERT and nothing more (dotnet-service-role.sql),
+-- and the immutability trigger below binds a bypassing super-admin session identically
+-- to every other role. The property RLS gives us here is "no TENANT-scoped session can
+-- see or write audit rows"; it is not "only the audit classes can". The read
+-- AUTHORIZATION gate is the endpoint's super-admin check (see AuditEndpoints), and the
+-- write path is a code convention (IAuditEventWriter), not a DB-enforced one.
 --
 -- Identity mode never sets app.bypass_rls at all (see RlsSessionCommandBuilder), so
 -- current_setting(..., true) returns NULL there and the predicate is NULL -> denied.
