@@ -189,12 +189,19 @@ ALTER TABLE "evaluation_feedbacks" ADD CONSTRAINT "evaluation_feedbacks_evaluati
     FOREIGN KEY ("evaluationGroupId") REFERENCES "evaluation_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- ------------------------------------------------------------------------------------------------
--- audit-events retrofit (plan Task 12 of formmaps#52). Same SIMPLIFIED shape as the other retrofit
--- fixtures (no RLS policy, no immutability trigger -- proven once in FormMaps.IntegrationTests/Audit).
--- This rail does not write audit_events itself; it is here because a rater's submission triggers
--- VocationalWriter.RecomputeScoreAsync, which now does. Without the table that write would take
--- AuditEventWriter's fail-soft branch on every submit test -- green, but proving nothing, and hiding
--- the one path where the recompute has NO human actor (the rail runs under RequestContext.System()).
+-- audit-events retrofit (plan Tasks 12 AND 14 of formmaps#52). Same SIMPLIFIED shape as the other
+-- retrofit fixtures (no RLS policy, no immutability trigger -- proven once, against the real DDL, in
+-- FormMaps.IntegrationTests/Audit).
+--
+-- Task 12 added it for a write this rail only TRIGGERS: a vocational rater's submission runs
+-- VocationalWriter.RecomputeScoreAsync, which audits. Task 14 made the rail an audit writer in its own
+-- right -- EvaluationExternalService.SubmitFeedbackAsync now persists
+-- audit.evaluation.feedback.submitted alongside its long-standing log line.
+--
+-- Either way the table has to exist here or those writes silently take AuditEventWriter's fail-soft
+-- branch: the tests stay green while proving nothing. There is deliberately no FK from "subjectId" to
+-- "evaluation_groups" -- audit_events outlives its subjects by design, that is the production shape,
+-- and evaluation_groups is TRUNCATEd between tests.
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS "audit_events" (
     "id" TEXT PRIMARY KEY,

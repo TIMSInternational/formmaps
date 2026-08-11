@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using FormMaps.Application.Assessments;
+using FormMaps.Application.Audit;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using Microsoft.Extensions.Logging;
@@ -20,8 +21,18 @@ namespace FormMaps.Infrastructure.Assessments;
 /// </summary>
 public sealed class EvaluationExternalService(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
+    IAuditEventWriter auditEventWriter,
     ILogger<EvaluationExternalService> logger) : IEvaluationExternalService
 {
+    /// <summary>
+    /// The audited subject is the evaluation GROUP, not the feedback row the submit creates. The group is the
+    /// thing that pre-exists the submission, the thing the token addresses, and the thing an auditor already
+    /// has an id for when they come asking "was this ever submitted, and when" — the feedback row's id is
+    /// minted by this very call and referenced by nothing outside it. It is also the id the existing log line
+    /// has always carried, so the log and the durable trail stay joinable on the same key.
+    /// </summary>
+    private const string AuditSubjectType = "evaluation_group";
+
     // RATIFIED DIVERGENCE FROM LEGACY (Federico approved): legacy submitFeedback does NOT check
     // tokenExpiryDate/isTokenUsed — only validate-token does. This port CLOSES that expiry-bypass gap
     // (security / compliance tightening) permanently. The const documents the divergence and is kept as the
@@ -116,8 +127,69 @@ public sealed class EvaluationExternalService(
         }
 
         logger.LogInformation("audit.evaluation.feedback.submitted evaluationGroupId={GroupId}", input.EvaluationGroupId);
+        // The durable half of the line above — see WriteFeedbackSubmittedAuditAsync for why it sits HERE:
+        // below both commits and below every guard, so the event means "feedback was stored", not "someone
+        // tried". It cannot fail this request (fail-soft-but-alert inside AuditEventWriter).
+        await WriteFeedbackSubmittedAuditAsync(input.EvaluationGroupId);
         return new FeedbackSubmitResult(FeedbackSubmitStatus.Ok, feedback);
     }
+
+    // -------------------------------------------------------------------- audit
+
+    /// <summary>
+    /// The durable half of this rail's audit (formmaps#52 Task 14). Called immediately after the existing
+    /// <c>audit.evaluation.feedback.submitted</c> log line, which it deliberately mirrors rather than replaces.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// WHY THIS SITE MATTERS. Submit-feedback is the only mutation in the product an ANONYMOUS caller can
+    /// perform: there is no auth principal, no tenant context, and the invitation token is the entire access
+    /// gate. Until now the only record that it ever happened was a log line, so "was feedback ever submitted
+    /// against this group, and when" had no durable answer outside the feedback row itself.
+    /// </para>
+    /// <para>
+    /// THE ACTOR COLUMNS ARE NULL BY DECISION. There is no user id, no role and no school anywhere in scope:
+    /// the rail runs under <see cref="RequestContext.System()" />, and <c>evaluation_groups</c> has no
+    /// <c>schoolId</c> column at all. The only identifier for the human on the other end is their email
+    /// address — precisely the class of value <c>audit_events</c> exists to stay free of — and the evaluated
+    /// student is the SUBJECT of the evaluation, not the actor, so putting either in <c>ActorUserId</c> would
+    /// be a false claim about who acted. "An anonymous holder of a valid token" is honestly encoded as null.
+    /// </para>
+    /// <para>
+    /// Metadata is null for the same reason: the log line has only ever carried the group id, and the extra
+    /// things in scope here (the evaluator's address, the raters' free-text comments) are exactly what must
+    /// not enter an append-only, indefinitely-retained table. <see cref="AuditMetadataGuard" /> would reject
+    /// an email-SHAPED key, but it inspects keys and not values, so the real control is not adding it.
+    /// </para>
+    /// <para>
+    /// WHERE IT SITS: below both commits and below every guard. Each rejection — unresolvable group, a
+    /// vocational instrument, an evaluator-email mismatch, an already-completed group, an expired-or-used
+    /// token, and the loser of the unique race, which returns from inside the transaction — returns before
+    /// this point and leaves no event. An audit row here has to mean "feedback was stored", not "someone
+    /// tried"; otherwise any internet caller holding a group id could manufacture immutable entries claiming
+    /// submissions that never happened.
+    /// </para>
+    /// <para>
+    /// <see cref="CancellationToken.None" /> is passed deliberately, per
+    /// <see cref="IAuditEventWriter.WriteAsync" />'s contract: this runs after the caller's commit, and
+    /// <c>AuditEventWriter</c> re-throws <see cref="OperationCanceledException" /> rather than swallowing it,
+    /// so passing the request token would let an evaluator closing their browser tab in the gap between
+    /// commit and audit raise from a submission that had already been stored. Every other failure is
+    /// fail-soft-but-alert inside the writer (Error, <c>audit.write_failed</c>), so this call cannot change
+    /// what the evaluator sees — which is the point on a live, user-facing path.
+    /// </para>
+    /// </remarks>
+    private Task WriteFeedbackSubmittedAuditAsync(string evaluationGroupId) =>
+        auditEventWriter.WriteAsync(
+            new AuditEvent(
+                EventType: "audit.evaluation.feedback.submitted",
+                ActorUserId: null,
+                ActorRole: null,
+                SchoolId: null,
+                SubjectType: AuditSubjectType,
+                SubjectId: evaluationGroupId,
+                Metadata: null),
+            CancellationToken.None);
 
     public async Task<Evaluator360Form?> Get360EvaluatorFormAsync(string token, CancellationToken cancellationToken = default)
     {
