@@ -89,3 +89,35 @@ CREATE TABLE "student_parent_links" (
 CREATE INDEX "student_test_scores_userId_idx" ON "student_test_scores"("userId");
 CREATE INDEX "counselor_student_assignments_pair_idx" ON "counselor_student_assignments"("counselorId", "studentId");
 CREATE INDEX "student_parent_links_pair_idx" ON "student_parent_links"("studentId", "parentUserId");
+
+-- ------------------------------------------------------------------------------------------------
+-- audit-events retrofit (plan Task 10 of formmaps#52). Deliberately SIMPLIFIED: table shape only --
+-- no RLS policy and no immutability trigger. Both are proven once, thoroughly, against the real DDL
+-- in FormMaps.IntegrationTests/Audit (plan Tasks 1/4); repeating them here would only add the
+-- DISABLE-TRIGGER reset dance to seven unrelated fixtures for zero extra coverage. What THIS copy is
+-- for is the wiring question: does TestScoreWriter actually persist a row when a score is created,
+-- updated and soft-deleted -- and, just as importantly, NOT on the paths that write nothing (a
+-- rejected body, a foreign/missing row, a repeated delete).
+--
+-- It is deliberately absent from TestScoreDatabaseFixture.PoliciedTables: production policies nothing
+-- on audit_events either -- it is locked to bypass-mode sessions by its own RLS policy instead (see
+-- infra/aws/sql/audit-events-schema.sql), which is a shape this simplified copy does not reproduce.
+-- The app login still reaches it here because CreateRestrictedLoginAsync grants ON ALL TABLES after
+-- this file has run.
+--
+-- There is deliberately no FK from "subjectId" to student_test_scores: audit_events outlives its
+-- subjects by design (a hard-deleted score must not take its audit trail with it), so a reference
+-- here would be a shape the production table does not have.
+-- ------------------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "audit_events" (
+    "id" TEXT PRIMARY KEY,
+    "occurredAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+    "eventType" TEXT NOT NULL,
+    "actorUserId" TEXT,
+    "actorRole" TEXT,
+    "schoolId" TEXT,
+    "subjectType" TEXT NOT NULL,
+    "subjectId" TEXT,
+    "outcome" TEXT NOT NULL DEFAULT 'success',
+    "metadata" JSONB
+);

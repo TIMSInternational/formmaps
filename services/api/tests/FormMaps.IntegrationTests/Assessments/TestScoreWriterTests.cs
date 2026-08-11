@@ -2,6 +2,7 @@ using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
+using FormMaps.Infrastructure.Audit;
 using FormMaps.Infrastructure.Data;
 using FormMaps.IntegrationTests.TestSupport.Rls;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -39,7 +40,11 @@ public sealed class TestScoreWriterTests : IClassFixture<TestScoreDatabaseFixtur
         // policies under test and would silently leave rows behind for the next test.
         _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
         _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
-        await _fixture.TruncateAsync("student_test_scores");
+        // audit_events is truncated alongside the scores (formmaps#52 Task 10) so the retrofit's negative
+        // controls can assert on an UNFILTERED count: a create rejected by validation produces no id to
+        // filter by, and "no created event anywhere" is the only form that claim can take. xUnit runs the
+        // tests within a class sequentially, so a table-wide reset here is safe.
+        await _fixture.TruncateAsync("student_test_scores", "audit_events");
     }
 
     public async Task DisposeAsync()
@@ -257,13 +262,177 @@ public sealed class TestScoreWriterTests : IClassFixture<TestScoreDatabaseFixtur
         Assert.Equal(TestScoreWriteStatus.NotFound, outcome.Status);
     }
 
+    // ------------------------------------------------------- audit-events retrofit (formmaps#52 Task 10)
+
+    /// <summary>
+    /// Until now "audit event" here meant one structured log line, which no compliance surface can query
+    /// and which a log-retention window eventually deletes. A create must ALSO persist a row in
+    /// <c>audit_events</c> — and this asserts the whole row, not a count, because eight of the nine
+    /// written columns are TEXT and six are nullable, so a count stays green for a writer that swapped
+    /// actorUserId with subjectId.
+    /// </summary>
+    [Fact]
+    public async Task Create_persists_a_pii_free_row_to_audit_events()
+    {
+        var user = NewUser();
+        var created = (await Writer().CreateAsync(Ctx(user), user, Body("""{"testType":"SAT","satMath":700}"""))).Row!;
+
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.assessment.testscore.created", created.Id);
+        Assert.Equal("audit.assessment.testscore.created", row.EventType);
+        Assert.Equal(user, row.ActorUserId);
+        Assert.Equal("test_score", row.SubjectType);
+        Assert.Equal(created.Id, row.SubjectId); // the GENERATED row id, not anything the caller supplied
+        Assert.Equal("success", row.Outcome);
+        Assert.False(string.IsNullOrWhiteSpace(row.Id));
+
+        // Metadata is SQL NULL, not the JSON null literal: nothing beyond the two ids is logged at this
+        // site today, and the writer binds DBNull rather than the four characters "null" precisely so
+        // that `metadata IS NULL` stays true for a metadata-less event.
+        Assert.Null(row.MetadataJson);
+
+        AssertPiiFree(row, user);
+    }
+
+    /// <summary>
+    /// The update half. Same argument as <see cref="Create_persists_a_pii_free_row_to_audit_events" />:
+    /// the whole row is asserted, and the subject is the score's own id.
+    /// </summary>
+    [Fact]
+    public async Task Update_persists_a_pii_free_row_to_audit_events()
+    {
+        var user = NewUser();
+        var created = (await Writer().CreateAsync(Ctx(user), user, Body("""{"testType":"SAT","satMath":700}"""))).Row!;
+
+        Assert.Equal(TestScoreWriteStatus.Ok,
+            (await Writer().UpdateAsync(Ctx(user), user, created.Id, Body("""{"satMath":800}"""))).Status);
+
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.assessment.testscore.updated", created.Id);
+        Assert.Equal("audit.assessment.testscore.updated", row.EventType);
+        Assert.Equal(user, row.ActorUserId);
+        Assert.Equal("test_score", row.SubjectType);
+        Assert.Equal(created.Id, row.SubjectId);
+        Assert.Equal("success", row.Outcome);
+        Assert.Null(row.MetadataJson);
+        AssertPiiFree(row, user);
+    }
+
+    /// <summary>
+    /// The delete half. The score is only SOFT-deleted, so the audit row and its subject coexist — but
+    /// the event type must still be <c>.deleted</c>, since that is what the user performed and what the
+    /// existing log line already claims.
+    /// </summary>
+    [Fact]
+    public async Task Delete_persists_a_pii_free_row_to_audit_events()
+    {
+        var user = NewUser();
+        var created = (await Writer().CreateAsync(Ctx(user), user, Body("""{"testType":"SAT"}"""))).Row!;
+
+        Assert.True(await Writer().DeleteAsync(Ctx(user), user, created.Id));
+
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.assessment.testscore.deleted", created.Id);
+        Assert.Equal("audit.assessment.testscore.deleted", row.EventType);
+        Assert.Equal(user, row.ActorUserId);
+        Assert.Equal("test_score", row.SubjectType);
+        Assert.Equal(created.Id, row.SubjectId);
+        Assert.Equal("success", row.Outcome);
+        Assert.Null(row.MetadataJson);
+        AssertPiiFree(row, user);
+    }
+
+    /// <summary>
+    /// Negative control: a body rejected by validation never reaches the INSERT, so it must persist no
+    /// audit row. The count is unfiltered on purpose — a rejected create has no id to filter by, and
+    /// "no created event anywhere" is the actual claim. Without this, a writer that audited before the
+    /// validation gate would still satisfy the happy path above while reporting writes that never
+    /// happened.
+    /// </summary>
+    [Fact]
+    public async Task Create_rejected_by_validation_persists_no_audit_event()
+    {
+        var user = NewUser();
+        var outcome = await Writer().CreateAsync(Ctx(user), user, Body("[]"));
+
+        Assert.Equal(TestScoreWriteStatus.ValidationError, outcome.Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.testscore.created"));
+    }
+
+    /// <summary>
+    /// Negative control for the ownership-404 collapse (corpus #8 IDOR). A foreign update/delete changes
+    /// nothing, and an invalid body on one's OWN row changes nothing either — so neither may leave an
+    /// audit row. This one is load-bearing beyond bookkeeping: an event written before the ownership
+    /// gate would record a stranger as having modified a score they cannot even see, and would make the
+    /// audit table itself an existence oracle for rows the 404 exists to hide.
+    /// </summary>
+    [Fact]
+    public async Task Update_and_delete_that_are_rejected_persist_no_audit_event()
+    {
+        var owner = NewUser();
+        var other = NewUser();
+        var created = (await Writer().CreateAsync(Ctx(owner), owner, Body("""{"testType":"SAT"}"""))).Row!;
+
+        Assert.Equal(TestScoreWriteStatus.NotFound,
+            (await Writer().UpdateAsync(Ctx(other), other, created.Id, Body("""{"satMath":700}"""))).Status);
+        Assert.False(await Writer().DeleteAsync(Ctx(other), other, created.Id));
+
+        // Own row, invalid body -> 400 after the ownership gate, still no write and still no event.
+        Assert.Equal(TestScoreWriteStatus.ValidationError,
+            (await Writer().UpdateAsync(Ctx(owner), owner, created.Id, Body("""{"satMath":1}"""))).Status);
+
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.testscore.updated"));
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.testscore.deleted"));
+    }
+
+    /// <summary>
+    /// Idempotency, at the audit layer: the second delete is a 404 that touches nothing, so it must not
+    /// append a second row. A double row here would misreport one deletion as two to every compliance
+    /// surface reading this table.
+    /// </summary>
+    [Fact]
+    public async Task Delete_twice_persists_exactly_one_audit_event()
+    {
+        var user = NewUser();
+        var created = (await Writer().CreateAsync(Ctx(user), user, Body("""{"testType":"SAT"}"""))).Row!;
+
+        Assert.True(await Writer().DeleteAsync(Ctx(user), user, created.Id));
+        Assert.False(await Writer().DeleteAsync(Ctx(user), user, created.Id));
+
+        Assert.Equal(1, await _fixture.CountAuditEventsAsync("audit.assessment.testscore.deleted", created.Id));
+    }
+
     // ---------------------------------------------------------------- helpers
 
-    private TestScoreWriter Writer() =>
-        new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), NullLogger<TestScoreWriter>.Instance);
+    private TestScoreWriter Writer()
+    {
+        var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
+        // The REAL AuditEventWriter (formmaps#52 Task 10), never a fake: the thing under test is that a
+        // create/update/delete lands a row in audit_events, and a substituted writer would make that
+        // assertion about the substitute. It shares the restricted app login, so the retrofit is proven
+        // to work under the same NOSUPERUSER NOBYPASSRLS role production's .NET service runs as.
+        return new TestScoreWriter(
+            factory,
+            new AuditEventWriter(factory, NullLogger<AuditEventWriter>.Instance),
+            NullLogger<TestScoreWriter>.Instance);
+    }
 
     private TestScoreReader Reader() =>
         new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()));
+
+    /// <summary>
+    /// The whole point of the PII-free claim: <see cref="Ctx" /> puts a display name and an email on
+    /// every actor these writes run under, so if the writer ever reached for the RequestContext's actor
+    /// instead of the bare user id, the persisted row would carry it. Every written column is checked,
+    /// not just metadata — the leak would be just as permanent in actorRole or schoolId.
+    /// </summary>
+    private static void AssertPiiFree(TestScoreDatabaseFixture.AuditEventRow row, string userId)
+    {
+        var persisted = string.Join(
+            '|',
+            row.Id, row.EventType, row.ActorUserId, row.ActorRole, row.SchoolId,
+            row.SubjectType, row.SubjectId, row.Outcome, row.MetadataJson);
+
+        Assert.DoesNotContain($"{userId}@e.st", persisted);
+        Assert.DoesNotContain("Test User", persisted);
+    }
 
     private static JsonElement Body(string json) => JsonDocument.Parse(json).RootElement.Clone();
 

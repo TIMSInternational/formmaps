@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text.Json;
 using FormMaps.Application.Assessments;
+using FormMaps.Application.Audit;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using Microsoft.Extensions.Logging;
@@ -17,8 +18,17 @@ namespace FormMaps.Infrastructure.Assessments;
 /// AFTER that ownership gate on PUT, matching legacy. Timestamps are bound tz-independently (Kind=Unspecified +
 /// DbType.DateTime2, matching the Prisma @db.Timestamp columns) and truncated to ms so store == return.
 /// </summary>
+/// <remarks>
+/// formmaps#52 Task 10: the three <c>audit.assessment.testscore.*</c> events this class already emitted
+/// are now DURABLE as well as logged. Each call site keeps its existing <c>logger.LogInformation</c> line
+/// verbatim (log-based alerting still works) and additionally persists a row via
+/// <see cref="IAuditEventWriter" />, fired at the same post-commit point the log line already fires from —
+/// so a row can never claim a write that did not land. All three go through <see cref="WriteAuditAsync" />,
+/// which fixes the subject type and the cancellation contract in one place; only the event type differs.
+/// </remarks>
 public sealed class TestScoreWriter(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
+    IAuditEventWriter auditEventWriter,
     ILogger<TestScoreWriter> logger) : ITestScoreWriter
 {
     public async Task<TestScoreWriteOutcome> CreateAsync(
@@ -75,6 +85,11 @@ public sealed class TestScoreWriter(
         logger.LogInformation(
             "audit.assessment.testscore.created testScoreId={TestScoreId} actorUserId={ActorUserId}", row.Id, userId);
 
+        // Past the validation gate and past the commit: a rejected body reaches neither, which is the
+        // point — an event here would report a write that never happened. The subject is the GENERATED
+        // id, the only handle a later reader has on this row.
+        await WriteAuditAsync("audit.assessment.testscore.created", row.Id, userId);
+
         return new TestScoreWriteOutcome(TestScoreWriteStatus.Created, row, null);
     }
 
@@ -124,6 +139,12 @@ public sealed class TestScoreWriter(
         logger.LogInformation(
             "audit.assessment.testscore.updated testScoreId={TestScoreId} actorUserId={ActorUserId}", id, userId);
 
+        // Below BOTH gates on purpose. The ownership check above collapses missing/foreign/inactive into
+        // one 404 (corpus #8 IDOR); an event emitted before it would record a stranger as having modified
+        // a row they cannot see, and would turn this table into the existence oracle that 404 exists to
+        // deny. The validation gate above it means a rejected body leaves no event either.
+        await WriteAuditAsync("audit.assessment.testscore.updated", id, userId);
+
         return new TestScoreWriteOutcome(TestScoreWriteStatus.Ok, row, null);
     }
 
@@ -151,8 +172,50 @@ public sealed class TestScoreWriter(
         logger.LogInformation(
             "audit.assessment.testscore.deleted testScoreId={TestScoreId} actorUserId={ActorUserId}", id, userId);
 
+        // Inside the branch that actually flipped isActive. The second delete of the same row fails the
+        // ownership-and-active gate above and returns 404 without reaching here, so one deletion produces
+        // exactly one row — a repeat would misreport one deletion as several.
+        await WriteAuditAsync("audit.assessment.testscore.deleted", id, userId);
+
         return true;
     }
+
+    // ------------------------------------------------------------------ audit
+
+    /// <summary>
+    /// The durable half of this class's audit (formmaps#52 Task 10). Called immediately after each
+    /// existing <c>audit.assessment.testscore.*</c> log line, and — like that line — only ever AFTER the
+    /// session's own commit has succeeded.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// No metadata, and no <c>ActorRole</c>/<c>SchoolId</c> either: the three log lines carry exactly the
+    /// score id and the actor id, and the durable row is kept congruent with them rather than reaching
+    /// into the <see cref="RequestContext" /> for fields this domain has never audited. Every remaining
+    /// column on a test score — the scores themselves, the subject, the date — is the student's own
+    /// assessment data and has no business in an indefinitely-retained table.
+    /// </para>
+    /// <para>
+    /// <see cref="CancellationToken.None" /> is passed deliberately, per
+    /// <see cref="IAuditEventWriter.WriteAsync" />'s contract: this runs after the caller's commit, and
+    /// <c>AuditEventWriter</c> re-throws <see cref="OperationCanceledException" /> rather than swallowing
+    /// it — so passing the request token would let a client disconnecting in the gap between commit and
+    /// audit raise from a write that had already succeeded. Every other failure is fail-soft-but-alert
+    /// inside the writer (logged at Error under <c>audit.write_failed</c>, never thrown), so this call
+    /// cannot change what the student sees.
+    /// </para>
+    /// </remarks>
+    private Task WriteAuditAsync(string eventType, string testScoreId, string userId) =>
+        auditEventWriter.WriteAsync(
+            new AuditEvent(
+                EventType: eventType,
+                ActorUserId: userId,
+                ActorRole: null,
+                SchoolId: null,
+                SubjectType: "test_score",
+                SubjectId: testScoreId,
+                Metadata: null),
+            CancellationToken.None);
 
     private static async Task<bool> OwnsActiveRowAsync(
         FormMapsDatabaseSession session, string id, string userId, CancellationToken cancellationToken)
