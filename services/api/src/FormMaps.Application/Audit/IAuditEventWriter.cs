@@ -24,11 +24,25 @@ public sealed record AuditEvent(
 public interface IAuditEventWriter
 {
     /// <summary>
-    /// Persists an audit event. Never throws to the caller -- write failures are logged at Error
-    /// level (prefix "audit.write_failed") and swallowed: an audit outage must never fail a real
-    /// user action (matches legacy's fail-soft semantics), but unlike legacy's plain logger.warn,
-    /// this is distinguishable for future alerting. See the spec's "Failure semantics".
+    /// Persists an audit event. Write failures are logged at Error level (prefix
+    /// "audit.write_failed") and swallowed: an audit outage must never fail a real user action
+    /// (matches legacy's fail-soft semantics), but unlike legacy's plain logger.warn, this is
+    /// distinguishable for future alerting. See the spec's "Failure semantics".
     /// </summary>
+    /// <remarks>
+    /// "Fail-soft" has exactly two documented exceptions, and they are named here rather than left
+    /// for a caller to discover in production:
+    /// <list type="bullet">
+    /// <item><see cref="OperationCanceledException" /> propagates. Cancellation is not an audit
+    /// failure -- the caller is already unwinding. Consequence for the retrofit call sites (plan
+    /// Tasks 8-14), which fire AFTER their own commit: pass <see cref="CancellationToken.None" />,
+    /// not the request token, or a client disconnecting in the gap between commit and audit write
+    /// raises from an operation that already succeeded.</item>
+    /// <item>A null <paramref name="auditEvent" /> throws <see cref="ArgumentNullException" />. That
+    /// is a call-site programming error the nullable annotations already forbid, not a runtime
+    /// condition to absorb.</item>
+    /// </list>
+    /// </remarks>
     Task WriteAsync(AuditEvent auditEvent, CancellationToken cancellationToken = default);
 }
 
