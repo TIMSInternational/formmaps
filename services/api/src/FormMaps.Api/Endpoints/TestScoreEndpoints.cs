@@ -210,6 +210,12 @@ public static class TestScoreEndpoints
         var studentId = id.Length > 100 ? id[..100] : id;
         var role = context.Actor!.Role;
 
+        // formmaps#121. A parent has NO schoolId, so student_test_scores' school-inherit policy admits none of the
+        // child's rows under the parent's own session — the list came back empty even once the gate passed. The
+        // parent link check below is the authorization: explicit, named on parentUserId, and not leaning on RLS.
+        // Only after it passes is the READ widened to a system session, and only for that role. A counselor shares
+        // the student's school, so RLS stays a real backstop on their path and it is left untouched.
+        var readAsParent = false;
         if (string.Equals(role, FormMapsRoles.Counselor, StringComparison.Ordinal))
         {
             if (!await reader.HasActiveCounselorAssignmentAsync(context, context.Actor.UserId, studentId, cancellationToken))
@@ -219,13 +225,14 @@ public static class TestScoreEndpoints
         }
         else if (string.Equals(role, FormMapsRoles.Parent, StringComparison.Ordinal))
         {
-            var parentEmail = (context.Actor.Email ?? string.Empty).Trim().ToLowerInvariant();
-            if (!await reader.HasActiveParentLinkAsync(context, studentId, parentEmail, cancellationToken))
+            if (!await reader.HasActiveParentLinkAsync(context, studentId, context.Actor.UserId, cancellationToken))
             {
                 return Results.Json(
                     new { success = false, message = "Forbidden: no active parent link" },
                     statusCode: StatusCodes.Status403Forbidden);
             }
+
+            readAsParent = true;
         }
         else
         {
@@ -233,7 +240,8 @@ public static class TestScoreEndpoints
         }
 
         var testType = http.Request.Query["testType"].Count > 0 ? http.Request.Query["testType"][0] : null;
-        var data = await reader.ListActiveScoresAsync(context, studentId, string.IsNullOrEmpty(testType) ? null : testType, cancellationToken);
+        var readContext = readAsParent ? RequestContext.System() : context;
+        var data = await reader.ListActiveScoresAsync(readContext, studentId, string.IsNullOrEmpty(testType) ? null : testType, cancellationToken);
         return Results.Ok(new { success = true, data });
     }
 

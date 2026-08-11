@@ -94,6 +94,8 @@ public static class StudentCoursePlanEndpoints
         {
             CreateCoursePlanStatus.NoSchool => BadRequest(NoSchoolMessage),
             CreateCoursePlanStatus.NoCurrentYear => BadRequest("No current academic year"),
+            // #122 — the rule produces two different messages, so the text comes off the outcome, not the status.
+            CreateCoursePlanStatus.InvalidGradeLevel => BadRequest(outcome.Message!),
             CreateCoursePlanStatus.InvalidBody => InternalError(),
             _ => Results.Json(new { success = true }, statusCode: StatusCodes.Status201Created)
         };
@@ -126,6 +128,11 @@ public static class StudentCoursePlanEndpoints
         schoolId = r.SchoolId,
         academicYearId = r.AcademicYearId,
         term = r.Term,
+        // #122 — KEY ORDER IS PART OF THE CONTRACT. Prisma emits columns in schema-declaration order and the column
+        // was declared between `term` and `courseId`; #124 read that position off the live prod response
+        // ({... "term":"Fall","gradeLevel":9,"courseId":... }) and this passthrough must match it, or a parity
+        // consumer reading the row positionally breaks at the flag flip.
+        gradeLevel = r.GradeLevel,
         courseId = r.CourseId,
         status = r.Status,
         sortOrder = r.SortOrder,

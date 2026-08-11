@@ -114,8 +114,13 @@ public class TestScoreEndpointsTests
         await AssertMessage(response, "Forbidden: no active parent link");
     }
 
+    // formmaps#121. Was: "normalizes the caller email for the link check". The email is no longer the identity —
+    // the gate matches parentUserId, which is what acceptance records and what the RLS policies name — so what
+    // needs pinning is that the endpoint passes the CALLER's own user id (never a client-supplied value) and only
+    // then widens the score read to a system session. Both halves matter: the id alone would still return an empty
+    // list under the parent's school-less RLS session, and the system read alone would be an unauthorized widening.
     [Fact]
-    public async Task Student_view_parent_normalizes_the_caller_email_for_the_link_check()
+    public async Task Student_view_parent_gates_on_the_caller_user_id_then_reads_as_system()
     {
         var reader = new FakeReader { ParentAllowed = true, Rows = [] };
         using var factory = new Factory(reader);
@@ -124,7 +129,24 @@ public class TestScoreEndpointsTests
         var response = await Send(client, $"/api/v1/test-scores/students/{Student}/test-scores", FormMapsRoles.Parent, email: "  PARENT@Example.TEST  ");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("parent@example.test", reader.ParentEmail); // trim + lowercase
+        Assert.Equal(Caller, reader.ParentUserId);
+        Assert.Equal(Student, reader.ListedUserId);
+        Assert.True(reader.ListedAsSystem);
+    }
+
+    // The counterpart, and the reason the flag is per-role rather than global: a counselor shares the student's
+    // school, so RLS is a real backstop on their path and must NOT be bypassed.
+    [Fact]
+    public async Task Student_view_counselor_reads_under_the_callers_own_session()
+    {
+        var reader = new FakeReader { CounselorAllowed = true, Rows = [] };
+        using var factory = new Factory(reader);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, $"/api/v1/test-scores/students/{Student}/test-scores", FormMapsRoles.Counselor);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.False(reader.ListedAsSystem);
     }
 
     [Fact]
@@ -219,7 +241,9 @@ public class TestScoreEndpointsTests
 
         public string? CounselorStudentId { get; private set; }
 
-        public string? ParentEmail { get; private set; }
+        public string? ParentUserId { get; private set; }
+
+        public bool ListedAsSystem { get; private set; }
 
         public Task<SuperscoreResult> GetSuperscoreAsync(RequestContext context, CancellationToken cancellationToken = default) =>
             Task.FromResult(Superscore);
@@ -235,9 +259,9 @@ public class TestScoreEndpointsTests
         }
 
         public Task<bool> HasActiveParentLinkAsync(
-            RequestContext context, string studentId, string parentEmail, CancellationToken cancellationToken = default)
+            RequestContext context, string studentId, string parentUserId, CancellationToken cancellationToken = default)
         {
-            ParentEmail = parentEmail;
+            ParentUserId = parentUserId;
             return Task.FromResult(ParentAllowed);
         }
 
@@ -245,6 +269,7 @@ public class TestScoreEndpointsTests
             RequestContext context, string userId, string? testType, CancellationToken cancellationToken = default)
         {
             ListedUserId = userId;
+            ListedAsSystem = context.IsSystem;
             return Task.FromResult(Rows);
         }
     }

@@ -103,8 +103,10 @@ public sealed class SchoolStudentsReviewWriter(IFormMapsDatabaseSessionFactory d
         string action;
         string courseId;
         string? semester;
+        int gradeLevel;
         await using (var lookup = Command(session, """
-            SELECT "studentId", "action"::text, "courseId", "semester" FROM "course_change_requests" WHERE "id" = @id
+            SELECT "studentId", "action"::text, "courseId", "semester", "gradeLevel"
+            FROM "course_change_requests" WHERE "id" = @id
             """))
         {
             AddParameter(lookup, "id", requestId);
@@ -117,6 +119,9 @@ public sealed class SchoolStudentsReviewWriter(IFormMapsDatabaseSessionFactory d
             action = reader.GetString(1);
             courseId = reader.GetString(2);
             semester = reader.IsDBNull(3) ? null : reader.GetString(3);
+            // #122 — the grade the request was FILED FOR. NOT NULL in the schema and read unguarded, exactly as
+            // ReadChangeRequestRow already reads the same column off the UPDATE's RETURNING below.
+            gradeLevel = reader.GetInt32(4);
         }
 
         // data = {status(if provided), reviewedBy, reviewedAt}; counselorNote only if truthy; updatedAt always.
@@ -168,16 +173,24 @@ public sealed class SchoolStudentsReviewWriter(IFormMapsDatabaseSessionFactory d
                     """, "school", adminSchoolId, cancellationToken);
                 if (currentAyId is not null)
                 {
+                    // #122 — "gradeLevel" is a pure CARRY-THROUGH of the request being approved, not anything the
+                    // caller sends: course_change_requests."gradeLevel" is NOT NULL and is the grade the request was
+                    // filed FOR. Dropping it stored NULL, and the reader's `?? user.gradeLevel` fallback then
+                    // re-bucketed an approved grade-11 request into a grade-10 student's grade 10 — the row is
+                    // created and the request 200s either way, which is how this survived. The counselor path
+                    // through the SAME approval (Node's routes/counselor-analytics.ts) carries it too; if only one
+                    // did, the resulting plan would depend on who clicked approve.
                     await using var insert = Command(session, """
                         INSERT INTO "student_course_plans"
-                            ("id", "studentId", "schoolId", "academicYearId", "courseId", "term", "status", "sortOrder", "isActive", "createdDate", "updatedAt")
-                        VALUES (gen_random_uuid()::text, @student, @school, @ay, @course, @term, 'planned', 0, true, @now, @now)
+                            ("id", "studentId", "schoolId", "academicYearId", "courseId", "term", "gradeLevel", "status", "sortOrder", "isActive", "createdDate", "updatedAt")
+                        VALUES (gen_random_uuid()::text, @student, @school, @ay, @course, @term, @grade, 'planned', 0, true, @now, @now)
                         """);
                     AddParameter(insert, "student", studentId);
                     AddParameter(insert, "school", adminSchoolId);
                     AddParameter(insert, "ay", currentAyId);
                     AddParameter(insert, "course", courseId);
                     AddParameter(insert, "term", string.IsNullOrEmpty(semester) ? "Fall" : semester); // cr.semester || "Fall"
+                    AddParameter(insert, "grade", gradeLevel);
                     AddTimestamp(insert, "now", Now());
                     await insert.ExecuteNonQueryAsync(cancellationToken);
                 }

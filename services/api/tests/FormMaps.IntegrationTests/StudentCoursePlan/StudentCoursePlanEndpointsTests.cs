@@ -87,6 +87,60 @@ public class StudentCoursePlanEndpointsTests
         Assert.Equal(JsonValueKind.Null, plan.GetProperty("gradeLevel").ValueKind);
     }
 
+    // ---- gradeLevel (#122) ----
+
+    [Fact]
+    public async Task Get_enrollment_row_echoes_gradeLevel_between_term_and_courseId()
+    {
+        // The enrollments array is a verbatim Prisma findMany passthrough, so KEY ORDER is part of the contract:
+        // Prisma emits schema-declaration order and the column was declared between `term` and `courseId` (#124
+        // verified that position against the live prod response). A parity consumer reading the row positionally
+        // breaks if this drifts, and nothing else in the response would show it.
+        var repo = new FakeRepo { View = new CoursePlanView(true, 11, [SampleRow("p1")], 0) };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+        var response = await Send(client, HttpMethod.Get, PlanPath);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var row = doc.RootElement.GetProperty("data").GetProperty("plan").GetProperty("enrollments")[0];
+
+        Assert.Equal(9, row.GetProperty("gradeLevel").GetInt32()); // the PLANNED grade, not the student's 11
+        Assert.Equal(
+            new[] { "term", "gradeLevel", "courseId" },
+            row.EnumerateObject().Select(x => x.Name).SkipWhile(n => n != "term").Take(3).ToArray());
+        Assert.Equal(15, row.EnumerateObject().Count()); // 14 model columns + gradeLevel (#122)
+    }
+
+    [Fact]
+    public async Task Get_enrollment_row_emits_null_gradeLevel()
+    {
+        // Rows written before the column existed carry no planned grade; the key is still present and null (the
+        // reader falls back to the student's current grade), NOT omitted.
+        var repo = new FakeRepo { View = new CoursePlanView(true, 11, [SampleRow("p1", null)], 0) };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+        var response = await Send(client, HttpMethod.Get, PlanPath);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var row = doc.RootElement.GetProperty("data").GetProperty("plan").GetProperty("enrollments")[0];
+        Assert.Equal(JsonValueKind.Null, row.GetProperty("gradeLevel").ValueKind);
+    }
+
+    [Theory]
+    [InlineData("gradeLevel must be a whole number")]
+    [InlineData("gradeLevel must be between 1 and 12")]
+    public async Task Post_invalid_gradeLevel_is_400_with_the_rules_own_message(string message)
+    {
+        // The rule produces two different messages and Node returns whichever applies, so the endpoint must carry
+        // the text off the outcome rather than deriving one from the status.
+        var repo = new FakeRepo { Create = new CreateCoursePlanOutcome(CreateCoursePlanStatus.InvalidGradeLevel, message) };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+        var response = await Send(client, HttpMethod.Post, CoursesPath, body: """{"courseId":"c1","gradeLevel":99}""");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.False(doc.RootElement.GetProperty("success").GetBoolean());
+        Assert.Equal(message, doc.RootElement.GetProperty("message").GetString());
+    }
+
     [Fact]
     public async Task Post_created_is_201_success_only()
     {
@@ -171,8 +225,10 @@ public class StudentCoursePlanEndpointsTests
 
     // ---- helpers ----
 
-    private static CoursePlanRow SampleRow(string id) => new(
-        id, "student-1", "school-1", "ay-1", "Fall", "course-a", "planned", 0, null, true,
+    // gradeLevel 9 (#122) deliberately DIFFERS from the plan-level gradeLevel 11 the tests use for the student's
+    // CURRENT grade — the whole point of the column is that those two are not the same number.
+    private static CoursePlanRow SampleRow(string id, int? gradeLevel = 9) => new(
+        id, "student-1", "school-1", "ay-1", "Fall", gradeLevel, "course-a", "planned", 0, null, true,
         null, "2026-01-01T00:00:00.000Z", null, "2026-01-01T00:00:00.000Z");
 
     private static Task<HttpResponseMessage> Send(HttpClient client, HttpMethod method, string path, string? body = null)

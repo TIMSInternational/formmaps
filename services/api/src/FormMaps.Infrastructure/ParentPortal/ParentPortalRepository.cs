@@ -46,8 +46,18 @@ public sealed class ParentPortalRepository(
 
         // Linked+accepted children, inner-joined to the child user (a link whose child user is absent is dropped,
         // matching links.filter(byId.has(studentId))). relationship = link.relation.
+        //
+        // SYSTEM session, deliberately (formmaps#121). Both halves of this join are invisible to a parent on an
+        // Identity session: "users" is self-or-same-school and a parent has NO schoolId (their token is minted
+        // schoolId: null), and until prisma/rls/009-parent-links.sql the parent was not admitted to their own
+        // student_parent_links row either. Even with 009 the join to the CHILD's users row still filters to nothing,
+        // so this query returned zero children for a correctly linked parent and the portal rendered an empty card
+        // list. The WHERE clause is the authorization and it is the whole scope: parentUserId is bound to the
+        // authenticated caller's own id, so the system session cannot widen past the caller's own links. Same shape
+        // as ParentChildReader (FM-DOTNET-079), which hit this first.
         var children = new List<ParentChild>();
-        await using (var command = Command(session, """
+        await using var childSession = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
+        await using (var command = Command(childSession, """
             SELECT sp."studentId", sp."relation", u."name", u."gradeLevel"
             FROM "student_parent_links" sp
             JOIN "users" u ON u."id" = sp."studentId"
@@ -171,8 +181,14 @@ public sealed class ParentPortalRepository(
             return Array.Empty<PendingEvaluation>(); // !user?.email → []
         }
 
+        // SYSTEM session, deliberately (formmaps#121). evaluation_groups is admitted to the EVALUATED user or that
+        // user's school; a parent evaluator is neither, and the joined child "users" row is unreadable to them for
+        // the same reason — so this returned nothing and the pending-evaluations page was blank for every parent.
+        // The filter is the caller's OWN email, read from their own users row a few lines above under their own
+        // Identity session; that self-scoping is the authorization and the system session cannot widen past it.
         var rows = new List<PendingEvaluation>();
-        await using (var command = Command(session, """
+        await using var evaluationSession = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
+        await using (var command = Command(evaluationSession, """
             SELECT eg."id", u."name", eg."tokenExpiryDate", eg."invitationToken"
             FROM "evaluation_groups" eg
             LEFT JOIN "users" u ON u."id" = eg."evaluatedUserId"

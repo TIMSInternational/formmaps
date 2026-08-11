@@ -542,17 +542,17 @@ describe("#89 role change — the third deliberate skip, because the endpoint is
    * These four assertions look backwards for a #89 suite: they demand that NOTHING
    * changes optimistically. That is the point.
    *
-   * updateUserRole() PUTs /api/v1/school-admin/users/:userId/role, and no backend
-   * serves that path. The legacy router mounted on /api/v1/school-admin declares
-   * /users/:userId/grade-level and no role route; the .NET SchoolUsersEndpoints maps
-   * grade-level plus the two assign-students verbs and nothing else. The call 404s.
+   * CORRECTED 2026-08-10 (formmaps#114): the premise above was wrong. The route DOES
+   * exist on legacy — api/src/routes/school.ts:92, in the deployed 289776b4 — and a .NET
+   * twin now exists too. The original comment claimed neither backend served it; whoever
+   * wrote it read the legacy router and missed the line.
    *
-   * An optimistic patch here is a promise the write will land, and this one always
-   * breaks it — formmaps#111 is four mutations that made exactly this promise, so
-   * users watch rows appear and vanish. The tests below pin the skip so a future
-   * "finish the conversion" pass has to notice the endpoint before undoing it.
+   * The skip still stands, for a DIFFERENT and smaller reason: this hook has no UI caller,
+   * so there is no interaction to make feel instant, and a role change can move a user out
+   * of a role-filtered list — a naive in-place patch would strand a Counselor row in a list
+   * filtered to Staff. These assertions therefore keep pinning "nothing moves optimistically".
    *
-   * When the route is built, delete this describe and restore the optimistic suite:
+   * When a caller appears, delete this describe and restore the optimistic suite:
    * patch the row in an unfiltered list, REMOVE it from a list filtered to the role it
    * just left (total included), keep it when the ILIKE filter still matches, and roll
    * back on failure.
@@ -564,7 +564,7 @@ describe("#89 role change — the third deliberate skip, because the endpoint is
     mockUpdateRole.mockReturnValue(new Promise(() => {}));
     const { result } = renderHook(() => useUpdateUserRole(), { wrapper });
 
-    act(() => { result.current.mutate({ userId: "u-1", role: "staff" }); });
+    act(() => { result.current.mutate({ userId: "u-1", roleName: "staff" }); });
 
     await waitFor(() => expect(result.current.isPending).toBe(true));
     // Both spellings, because the table reads `roleName || role` — neither may move.
@@ -580,7 +580,7 @@ describe("#89 role change — the third deliberate skip, because the endpoint is
     mockUpdateRole.mockReturnValue(new Promise(() => {}));
     const { result } = renderHook(() => useUpdateUserRole(), { wrapper });
 
-    act(() => { result.current.mutate({ userId: "u-1", role: "staff" }); });
+    act(() => { result.current.mutate({ userId: "u-1", roleName: "staff" }); });
 
     await waitFor(() => expect(result.current.isPending).toBe(true));
     expect(rows(qc, counselorsOnly).map((u) => u.id)).toEqual(["u-1", "u-2"]);
@@ -599,7 +599,7 @@ describe("#89 role change — the third deliberate skip, because the endpoint is
     mockUpdateRole.mockRejectedValue(new Error("404 Not Found"));
     const { result } = renderHook(() => useUpdateUserRole(), { wrapper });
 
-    act(() => { result.current.mutate({ userId: "u-1", role: "staff" }); });
+    act(() => { result.current.mutate({ userId: "u-1", roleName: "staff" }); });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(qc.getQueryData(usersKey(counselorsOnly))).toEqual(before);
@@ -615,7 +615,7 @@ describe("#89 role change — the third deliberate skip, because the endpoint is
     mockUpdateRole.mockResolvedValue(undefined);
     const { result } = renderHook(() => useUpdateUserRole(), { wrapper });
 
-    act(() => { result.current.mutate({ userId: "u-1", role: "staff" }); });
+    act(() => { result.current.mutate({ userId: "u-1", roleName: "staff" }); });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidate).toHaveBeenCalledWith({ queryKey: schoolProfileKeys.users() });

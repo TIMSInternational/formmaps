@@ -264,7 +264,7 @@ public class TestScoreWriteEndpointsTests
         public Task<bool> HasActiveCounselorAssignmentAsync(RequestContext context, string counselorId, string studentId, CancellationToken cancellationToken = default) =>
             Task.FromResult(false);
 
-        public Task<bool> HasActiveParentLinkAsync(RequestContext context, string studentId, string parentEmail, CancellationToken cancellationToken = default) =>
+        public Task<bool> HasActiveParentLinkAsync(RequestContext context, string studentId, string parentUserId, CancellationToken cancellationToken = default) =>
             Task.FromResult(false);
 
         public Task<IReadOnlyList<TestScoreRow>> ListActiveScoresAsync(RequestContext context, string userId, string? testType, CancellationToken cancellationToken = default)

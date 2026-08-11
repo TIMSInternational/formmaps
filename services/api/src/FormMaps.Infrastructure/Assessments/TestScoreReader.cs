@@ -118,16 +118,22 @@ public sealed class TestScoreReader(IFormMapsDatabaseSessionFactory databaseSess
         return await command.ExecuteScalarAsync(cancellationToken) is not null;
     }
 
+    // formmaps#121. Was: parentEmail match on the CALLER's Identity session. Two faults in one line. The email is
+    // not the identity student_parent_links' policies name, so the predicate and the policy disagreed; and on the
+    // caller's own session a school-less parent could not see the row at all, so this returned false for every
+    // parent and the endpoint 403'd "no active parent link". isAccepted is now explicit rather than implied by
+    // parentUserId happening to be null before acceptance.
     public async Task<bool> HasActiveParentLinkAsync(
-        RequestContext context, string studentId, string parentEmail, CancellationToken cancellationToken = default)
+        RequestContext context, string studentId, string parentUserId, CancellationToken cancellationToken = default)
     {
-        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
         await using var command = Command(session, """
             SELECT 1 FROM "student_parent_links"
-            WHERE "studentId" = @studentId AND "parentEmail" = @parentEmail AND "isActive" = true LIMIT 1
+            WHERE "studentId" = @studentId AND "parentUserId" = @parentUserId
+              AND "isActive" = true AND "isAccepted" = true LIMIT 1
             """);
         AddParameter(command, "studentId", studentId);
-        AddParameter(command, "parentEmail", parentEmail);
+        AddParameter(command, "parentUserId", parentUserId);
         return await command.ExecuteScalarAsync(cancellationToken) is not null;
     }
 

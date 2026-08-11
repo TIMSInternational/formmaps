@@ -236,6 +236,106 @@ public sealed class StudentCoursePlanRepositoryTests : IClassFixture<StudentCour
         Assert.Equal("", row.CourseId);
     }
 
+    // ---- gradeLevel (#122) ----
+    //
+    // The student self-serve "add course" (Node's routes/course-plan.ts:75) dropped the planned grade exactly like
+    // the school-admin writer #124 fixed: the row was created, the request 201'd, and the reader's
+    // `?? user.gradeLevel` fallback silently re-bucketed the course into the student's CURRENT grade.
+    //
+    // These are ROUND-TRIPS on purpose. An endpoint-level test that only checks the 201 would still pass with the
+    // column dropped from the INSERT — which is precisely how the original bug survived two rounds of fixing.
+
+    [Theory]
+    [InlineData("""{"courseId":"c1","gradeLevel":9}""", 9)]     // JSON number
+    [InlineData("""{"courseId":"c1","gradeLevel":"9"}""", 9)]   // numeric string — a <select> may send either
+    [InlineData("""{"courseId":"c1","gradeLevel":1}""", 1)]     // range is 1-12, not 9-12: K-8 schools exist
+    [InlineData("""{"courseId":"c1","gradeLevel":12}""", 12)]
+    [InlineData("""{"courseId":"c1"}""", null)]                 // ABSENT is legal and means "unknown"
+    [InlineData("""{"courseId":"c1","gradeLevel":null}""", null)]
+    [InlineData("""{"courseId":"c1","gradeLevel":""}""", null)] // empty input, not invalid input
+    public async Task Create_persists_the_planned_gradeLevel(string body, int? expected)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        // The student's OWN grade is 10 and every planned grade above differs from it, so a regression back to the
+        // fallback cannot accidentally satisfy the assertion.
+        await User(conn, Student, School, gradeLevel: 10);
+        await Year(conn, "ay-current", School, "2025-2026", isCurrent: true);
+
+        var outcome = await Repo().CreateCourseAsync(Ctx(), Student, Body(body));
+        Assert.Equal(CreateCoursePlanStatus.Created, outcome.Status);
+
+        // What is actually ON DISK — the half that matters.
+        Assert.Equal(expected, await StoredGradeLevel(conn, Student));
+
+        // ...and what the reader hands back, which is what reaches the screen.
+        var row = (await Repo().GetCoursePlanAsync(Ctx(), Student, null)).Enrollments.Single();
+        Assert.Equal(expected, row.GradeLevel);
+    }
+
+    [Theory]
+    [InlineData("""{"courseId":"c1","gradeLevel":0}""", "gradeLevel must be between 1 and 12")]    // below range
+    [InlineData("""{"courseId":"c1","gradeLevel":13}""", "gradeLevel must be between 1 and 12")]   // above range
+    [InlineData("""{"courseId":"c1","gradeLevel":-1}""", "gradeLevel must be between 1 and 12")]
+    [InlineData("""{"courseId":"c1","gradeLevel":9.5}""", "gradeLevel must be a whole number")]    // not whole
+    [InlineData("""{"courseId":"c1","gradeLevel":"nine"}""", "gradeLevel must be a whole number")] // not numeric
+    [InlineData("""{"courseId":"c1","gradeLevel":true}""", "gradeLevel must be a whole number")]
+    [InlineData("""{"courseId":"c1","gradeLevel":{}}""", "gradeLevel must be a whole number")]
+    public async Task Create_rejects_a_sent_but_nonsense_gradeLevel(string body, string message)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await User(conn, Student, School, gradeLevel: 10);
+        await Year(conn, "ay-current", School, "2025-2026", isCurrent: true);
+
+        var outcome = await Repo().CreateCourseAsync(Ctx(), Student, Body(body));
+
+        // Refused LOUDLY rather than coerced into a plausible grade — silent coercion is what kept this invisible.
+        Assert.Equal(CreateCoursePlanStatus.InvalidGradeLevel, outcome.Status);
+        Assert.Equal(message, outcome.Message);
+        Assert.Equal(0, await PlanCount(conn)); // and nothing is written
+    }
+
+    [Fact]
+    public async Task Create_invalid_gradeLevel_beats_an_invalid_courseId()
+    {
+        // Node parses the grade after the current-year gate and BEFORE prisma.create, so a body that is both
+        // grade-invalid and courseId-invalid is a 400, not the create's type-500. Pins the gate ORDER, which is the
+        // only observable difference between the two ports here.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await User(conn, Student, School, gradeLevel: 10);
+        await Year(conn, "ay-current", School, "2025-2026", isCurrent: true);
+
+        var outcome = await Repo().CreateCourseAsync(Ctx(), Student, Body("""{"courseId":123,"gradeLevel":99}"""));
+        Assert.Equal(CreateCoursePlanStatus.InvalidGradeLevel, outcome.Status);
+    }
+
+    [Fact]
+    public async Task Create_gradeLevel_is_checked_after_the_two_400_gates()
+    {
+        // ...but NOT before them: a school-less caller sending a nonsense grade still gets NoSchool, matching
+        // Node's ordering (requireSchoolMembership → current year → parse).
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await User(conn, Student, null, gradeLevel: 10);
+
+        var outcome = await Repo().CreateCourseAsync(Ctx(), Student, Body("""{"courseId":"c1","gradeLevel":99}"""));
+        Assert.Equal(CreateCoursePlanStatus.NoSchool, outcome.Status);
+    }
+
+    [Fact]
+    public async Task Get_reads_back_a_stored_gradeLevel_that_differs_from_the_students_own()
+    {
+        // The passthrough must carry the column at all — before #122 it was not even in the projection, so a
+        // correctly-stored value would still have been invisible to every consumer.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await User(conn, Student, School, gradeLevel: 10);
+        await Year(conn, "ay", School, "2025-2026", isCurrent: true);
+        await Plan(conn, "p-planned", Student, School, "ay", "course-a", term: "Fall", gradeLevel: 12);
+        await Plan(conn, "p-legacy", Student, School, "ay", "course-b", term: "Fall", sortOrder: 1); // pre-#122 row
+
+        var rows = (await Repo().GetCoursePlanAsync(Ctx(), Student, null)).Enrollments;
+        Assert.Equal(12, rows[0].GradeLevel); // NOT the student's own 10
+        Assert.Null(rows[1].GradeLevel);      // rows written before the column existed stay unknown
+    }
+
     [Fact]
     public async Task Delete_no_school_returns_NoSchool()
     {
@@ -315,24 +415,41 @@ public sealed class StudentCoursePlanRepositoryTests : IClassFixture<StudentCour
 
     private static async Task Plan(
         NpgsqlConnection conn, string id, string studentId, string schoolId, string academicYearId, string courseId,
-        string? term = null, string status = "planned", int sortOrder = 0, bool isActive = true, string? notes = null)
+        string? term = null, string status = "planned", int sortOrder = 0, bool isActive = true, string? notes = null,
+        int? gradeLevel = null)
     {
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "student_course_plans"("id","studentId","schoolId","academicYearId","term","courseId","status","sortOrder","notes","isActive")
-            VALUES(@id,@s,@sc,@ay,@t,@c,@st,@so,@n,@act)
+            INSERT INTO "student_course_plans"("id","studentId","schoolId","academicYearId","term","gradeLevel","courseId","status","sortOrder","notes","isActive")
+            VALUES(@id,@s,@sc,@ay,@t,@g,@c,@st,@so,@n,@act)
             """, conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("s", studentId);
         cmd.Parameters.AddWithValue("sc", schoolId);
         cmd.Parameters.AddWithValue("ay", academicYearId);
         cmd.Parameters.AddWithValue("t", (object?)term ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("g", (object?)gradeLevel ?? DBNull.Value);
         cmd.Parameters.AddWithValue("c", courseId);
         cmd.Parameters.AddWithValue("st", status);
         cmd.Parameters.AddWithValue("so", sortOrder);
         cmd.Parameters.AddWithValue("n", (object?)notes ?? DBNull.Value);
         cmd.Parameters.AddWithValue("act", isActive);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    private static async Task<int?> StoredGradeLevel(NpgsqlConnection conn, string studentId)
+    {
+        await using var cmd = new NpgsqlCommand(
+            """SELECT "gradeLevel" FROM "student_course_plans" WHERE "studentId"=@s""", conn);
+        cmd.Parameters.AddWithValue("s", studentId);
+        var stored = await cmd.ExecuteScalarAsync();
+        return stored is null or DBNull ? null : Convert.ToInt32(stored);
+    }
+
+    private static async Task<int> PlanCount(NpgsqlConnection conn)
+    {
+        await using var cmd = new NpgsqlCommand("""SELECT COUNT(*)::int FROM "student_course_plans" """, conn);
+        return (int)(await cmd.ExecuteScalarAsync())!;
     }
 
     private static async Task Grade(

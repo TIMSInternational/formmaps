@@ -86,17 +86,28 @@ public sealed class TestScoreReaderTests : IClassFixture<TestScoreDatabaseFixtur
     public async Task Counselor_assignment_and_parent_link_checks()
     {
         var counselor = NewUser();
-        var parentEmail = "parent@example.test";
+        var parent = NewUser();
+        var inactiveParent = NewUser();
+        var pendingParent = NewUser();
+        var strangerParent = NewUser();
         var student = NewUser();
         await using var conn = await _dataSource.OpenConnectionAsync();
         await SeedAssignmentAsync(conn, counselor, student, active: true);
-        await SeedParentLinkAsync(conn, student, parentEmail, active: true);
-        await SeedParentLinkAsync(conn, student, "inactive@example.test", active: false);
+        await SeedParentLinkAsync(conn, student, parent, active: true);
+        await SeedParentLinkAsync(conn, student, inactiveParent, active: false);
+        await SeedParentLinkAsync(conn, student, pendingParent, active: true, accepted: false);
 
         Assert.True(await Reader().HasActiveCounselorAssignmentAsync(Ctx(counselor), counselor, student));
         Assert.False(await Reader().HasActiveCounselorAssignmentAsync(Ctx(counselor), counselor, NewUser()));
-        Assert.True(await Reader().HasActiveParentLinkAsync(Ctx(student), student, parentEmail));
-        Assert.False(await Reader().HasActiveParentLinkAsync(Ctx(student), student, "inactive@example.test"));
+
+        // formmaps#121. The gate matches parentUserId + isActive + isAccepted, and runs on a system session so the
+        // answer is the same whoever asks — the assertions below deliberately run under the PARENT's own context
+        // (a school-less identity that can see none of these rows) to prove the check does not depend on RLS
+        // visibility. A gate that leaned on the caller's session would return false on the first line.
+        Assert.True(await Reader().HasActiveParentLinkAsync(Ctx(parent), student, parent));
+        Assert.False(await Reader().HasActiveParentLinkAsync(Ctx(inactiveParent), student, inactiveParent));
+        Assert.False(await Reader().HasActiveParentLinkAsync(Ctx(pendingParent), student, pendingParent));
+        Assert.False(await Reader().HasActiveParentLinkAsync(Ctx(strangerParent), student, strangerParent));
     }
 
     [Fact]
@@ -243,14 +254,23 @@ public sealed class TestScoreReaderTests : IClassFixture<TestScoreDatabaseFixtur
         await cmd.ExecuteNonQueryAsync();
     }
 
-    private static async Task SeedParentLinkAsync(NpgsqlConnection conn, string studentId, string parentEmail, bool active)
+    // formmaps#121: parentUserId is the identity the gate and the RLS policies both name, so it is now seeded
+    // explicitly. parentEmail is derived rather than passed — nothing authorizes on it any more, and leaving it as
+    // the parameter invited tests that pass an email where a user id is meant.
+    private static async Task SeedParentLinkAsync(
+        NpgsqlConnection conn, string studentId, string parentUserId, bool active, bool accepted = true)
     {
         await using var cmd = new NpgsqlCommand(
-            """INSERT INTO "student_parent_links" ("id","studentId","parentEmail","isActive") VALUES (@id,@s,@e,@a)""", conn);
+            """
+            INSERT INTO "student_parent_links" ("id","studentId","parentUserId","parentEmail","isActive","isAccepted")
+            VALUES (@id,@s,@p,@e,@a,@acc)
+            """, conn);
         cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
         cmd.Parameters.AddWithValue("s", studentId);
-        cmd.Parameters.AddWithValue("e", parentEmail);
+        cmd.Parameters.AddWithValue("p", parentUserId);
+        cmd.Parameters.AddWithValue("e", $"{parentUserId}@example.test");
         cmd.Parameters.AddWithValue("a", active);
+        cmd.Parameters.AddWithValue("acc", accepted);
         await cmd.ExecuteNonQueryAsync();
     }
 }

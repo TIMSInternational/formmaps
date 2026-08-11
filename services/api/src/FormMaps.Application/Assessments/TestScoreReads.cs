@@ -58,7 +58,8 @@ public sealed record TestScoreRow(
 /// <summary>
 /// Read-owner for the authed test-scores READS (legacy routes/test-scores.ts). Superscore + college-fit are
 /// self-scoped (the caller's own active scores); the student-view list is authorized at the endpoint by the
-/// bespoke counselor-assignment / parent-link check. All reads run under the caller's read-only RLS session.
+/// bespoke counselor-assignment / parent-link check. Reads run under the caller's read-only RLS session, EXCEPT
+/// the parent path — see HasActiveParentLinkAsync and formmaps#121.
 /// </summary>
 public interface ITestScoreReader
 {
@@ -69,8 +70,15 @@ public interface ITestScoreReader
     Task<bool> HasActiveCounselorAssignmentAsync(
         RequestContext context, string counselorId, string studentId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// formmaps#121. Matches the link on parentUserId, NOT parentEmail: parentUserId is the identity the
+    /// student_parent_links policies name, and it is what acceptance records. Runs on a SYSTEM session so the answer
+    /// cannot depend on the caller being able to SEE the link — an authorization check enforced by tenant visibility
+    /// silently becomes a no-op wherever the caller happens to be privileged, and conversely fails closed for a
+    /// school-less parent. Same shape as ParentChildReader.IsLinkedAsync (FM-DOTNET-079).
+    /// </summary>
     Task<bool> HasActiveParentLinkAsync(
-        RequestContext context, string studentId, string parentEmail, CancellationToken cancellationToken = default);
+        RequestContext context, string studentId, string parentUserId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<TestScoreRow>> ListActiveScoresAsync(
         RequestContext context, string userId, string? testType, CancellationToken cancellationToken = default);

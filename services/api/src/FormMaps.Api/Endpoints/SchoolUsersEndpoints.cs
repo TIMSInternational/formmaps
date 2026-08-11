@@ -1,4 +1,5 @@
 using System.Text.Json;
+using FormMaps.Api.Auth;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.SchoolAdmin;
@@ -9,9 +10,14 @@ namespace FormMaps.Api.Endpoints;
 
 /// <summary>
 /// school:users cluster (FM-DOTNET-052 — routes/school.ts, mounted under /api/v1/school-admin): GET /users,
-/// PUT /users/:userId/grade-level, POST+DELETE /counselors/:counselorId/assign-students,
-/// GET /counselors/:counselorId/students. All five gate on permission <c>school:users</c> (distinct from the FM-050
+/// PUT /users/:userId/grade-level, PUT /users/:userId/role, POST+DELETE /counselors/:counselorId/assign-students,
+/// GET /counselors/:counselorId/students. All six gate on permission <c>school:users</c> (distinct from the FM-050
 /// reads / FM-051 profile which gate on <c>school:manage</c>).
+///
+/// <para>PUT /users/:userId/role is formmaps#114 + #120: the legacy route has existed and been live since
+/// 289776b4 (school.ts:92) with no .NET twin at all, so on a flag flip the web client's
+/// <c>useUpdateUserRole</c> would have started 404ing — and, once a twin existed, silently stopped writing the
+/// audit row and revoking the re-roled user's sessions unless both were ported with it. Both are.</para>
 ///
 /// <para>No-school handling DIFFERS per route: the two GET reads (/users, /counselors/:id/students) return 200 with
 /// { data: [], total: 0 } (NO page/limit); the two WRITE routes (assign/unassign) return 400 "No school";
@@ -27,6 +33,7 @@ public static class SchoolUsersEndpoints
 
         group.MapGet("/users", GetUsersAsync);
         group.MapPut("/users/{userId}/grade-level", PutGradeLevelAsync);
+        group.MapPut("/users/{userId}/role", PutRoleAsync);
         group.MapPost("/counselors/{counselorId}/assign-students", PostAssignStudentsAsync);
         group.MapDelete("/counselors/{counselorId}/assign-students", DeleteAssignStudentsAsync);
         group.MapGet("/counselors/{counselorId}/students", GetCounselorStudentsAsync);
@@ -128,6 +135,72 @@ public static class SchoolUsersEndpoints
             ? Results.Ok(new { success = true, data = new { userId, gradeLevel = rawGrade } })
             : Results.Ok(new { success = true, data = new { userId } });
     }
+
+    // ---------------------------------------------------------------- PUT /users/{userId}/role
+
+    /// <summary>
+    /// formmaps#114 — a school admin changing a staff member's role. Like grade-level this does NOT resolve the
+    /// caller's schoolId (the writer reads admin + target schoolIds itself, and its G3 has no Super Admin exemption).
+    ///
+    /// <para>Legacy status mapping, reproduced exactly: the service returns <c>{ error, status }</c> and the route
+    /// does <c>res.status(result.status || 403)</c> — so "Invalid role" / "Role not found" / "User already has this
+    /// role" are 400, "User not found" is 404, and the three guard refusals are 403.</para>
+    /// </summary>
+    private static async Task<IResult> PutRoleAsync(
+        HttpContext http,
+        string userId,
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolUsersWriter writer,
+        CancellationToken cancellationToken)
+    {
+        var (context, error) = AuthorizeIdentityAndPermission(accessor, guard);
+        if (error is not null)
+        {
+            return error;
+        }
+
+        var body = await ReadBodyAsync(http, cancellationToken);
+        if (body is null)
+        {
+            // Malformed JSON — legacy body-parser 400s before the handler (grade-level precedent above).
+            return Results.Json(new { success = false, message = "Invalid request body" }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var parsed = UserRoleValidation.Validate(body.Value);
+        if (!parsed.Ok)
+        {
+            return Results.Json(new { success = false, message = parsed.Message }, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var actor = context.Actor!;
+        var result = await writer.UpdateUserRoleAsync(
+            context, actor.UserId, actor.Email ?? string.Empty, userId, parsed.RoleName!,
+            AuthCookieWriter.GetClientIp(http.Request), cancellationToken);
+
+        return result.Status switch
+        {
+            RoleUpdateStatus.Updated => Results.Ok(new
+            {
+                success = true,
+                // Legacy `res.json({ success:true, data: result })` where result is the service's
+                // { userId, roleName, previousRoleName } — key order and all three keys preserved.
+                data = new { userId, roleName = result.RoleName, previousRoleName = result.PreviousRoleName }
+            }),
+            RoleUpdateStatus.InvalidRole => Failure(StatusCodes.Status400BadRequest, "Invalid role"),
+            RoleUpdateStatus.RoleNotFound => Failure(StatusCodes.Status400BadRequest, "Role not found"),
+            RoleUpdateStatus.NoChange => Failure(StatusCodes.Status400BadRequest, "User already has this role"),
+            RoleUpdateStatus.TargetNotFound => Failure(StatusCodes.Status404NotFound, "User not found"),
+            RoleUpdateStatus.SelfRoleChange => Failure(StatusCodes.Status403Forbidden, "Cannot change your own role"),
+            RoleUpdateStatus.CrossSchool => Failure(StatusCodes.Status403Forbidden, "Cannot modify users from another school"),
+            RoleUpdateStatus.SourceIsAdministrator => Failure(StatusCodes.Status403Forbidden, "Cannot change an administrator's role"),
+            RoleUpdateStatus.SourceIsNotChangeable => Failure(StatusCodes.Status403Forbidden, "Cannot change a student's role"),
+            _ => throw new InvalidOperationException($"Unmapped role-update status: {result.Status}")
+        };
+    }
+
+    private static IResult Failure(int statusCode, string message) =>
+        Results.Json(new { success = false, message }, statusCode: statusCode);
 
     // ---------------------------------------------------------------- POST/DELETE /counselors/{counselorId}/assign-students
 

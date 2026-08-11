@@ -314,31 +314,31 @@ export function useUpdateUserRole() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
-      updateUserRole(userId, role),
+    mutationFn: ({ userId, roleName }: { userId: string; roleName: string }) =>
+      updateUserRole(userId, roleName),
 
-    // NO optimistic update — and NOT because the patch is hard. It is the easy one: the
-    // new role is right there in the argument. The reason is that
-    // PUT /api/v1/school-admin/users/:userId/role DOES NOT EXIST.
+    // CORRECTED 2026-08-10 (formmaps#114). The paragraph that stood here asserted "PUT
+    // /api/v1/school-admin/users/:userId/role DOES NOT EXIST. Neither backend serves it."
+    // The .NET half of that was true at the time. The LEGACY half was false when written:
+    // `git show 289776b4:api/src/routes/school.ts` line 92 is that exact route, in the
+    // artifact currently deployed to production. Someone read the router and missed it,
+    // and the wrong conclusion then became the stated justification for this hook's
+    // design. Both backends now serve the route.
     //
-    // Neither backend serves it. The legacy router mounted at /api/v1/school-admin
-    // (api/src/routes/school.ts) carries PUT /users/:userId/grade-level and no role
-    // path; no other router mounted on that prefix declares one either. The .NET port
-    // (SchoolUsersEndpoints.cs) maps exactly grade-level plus the two assign-students
-    // verbs. The unrelated PUT /api/role/:id router is role-CRUD behind admin:roles,
-    // not a per-user role assignment. So this call 404s.
+    // NO optimistic update — and NOT because the patch is hard. It is the easy one: the
+    // new role is right there in the argument. The reason is that this hook still has no
+    // UI caller, so there is no interaction to make feel instant, and a role change can
+    // move a user OUT of a role-filtered list — patching in place would strand a
+    // Counselor row in a list filtered to Staff. When a caller appears, the patch that
+    // belongs here is removal-from-a-filtered-list, not a plain patchBy.
     //
     // formmaps#111 is this same mistake made four times over: mutations predicted
     // against endpoints nobody had built, so users watch a row change and then snap
     // back. An optimistic update is a PROMISE that the write will land, and this one
     // cannot keep it — the more convincing the patch, the worse the lie. It stays
-    // pessimistic until the endpoint exists, at which point the patch belongs here,
-    // removal-from-a-role-filtered-list and all (a role change can move a user OUT of
-    // a filtered list, so patching in place would strand a Counselor row in a list
-    // filtered to Staff — that is the shape to restore, not a plain patchBy).
-    //
-    // Note this hook currently has no UI caller; it is exported and unused. That is why
-    // the dead optimistic path was never seen in production, not a reason to keep it.
+    // Note this hook is exported and unused. That is why the wrong request body
+    // (`{ role }` instead of `{ roleName }`, fixed in schoolProfileService alongside this)
+    // was never seen failing in production — not a reason to leave either wrong.
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: schoolProfileKeys.users() });
     },

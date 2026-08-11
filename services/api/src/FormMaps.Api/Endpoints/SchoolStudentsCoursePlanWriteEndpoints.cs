@@ -1,5 +1,6 @@
 using System.Text.Json;
 using FormMaps.Application.Auth;
+using FormMaps.Application.CoursePlan;
 using FormMaps.Application.SchoolAdmin;
 using FormMaps.Application.SchoolStudents;
 using FormMaps.Domain.Auth;
@@ -185,52 +186,16 @@ public static class SchoolStudentsCoursePlanWriteEndpoints
     /// (api/src/lib/coursePlanGrade.ts). Returns (value, null) on success — where a null VALUE means
     /// the caller sent nothing, which is legal — or (null, message) for a 400.
     ///
-    /// <para>Accepts a JSON number or a numeric STRING, because the field crosses the wire from a
-    /// &lt;select&gt; and which of the two arrives depends on the control. Range is 1-12 rather than
-    /// 9-12: K-8 schools exist in the data. Nonsense is refused loudly instead of being coerced into a
-    /// plausible grade — silent coercion is exactly what kept the original bug invisible.</para>
+    /// <para>The RULE now lives in <see cref="PlannedGradeLevel"/> (FormMaps.Application) rather than
+    /// here. It was private to this endpoint, and the student self-serve twin
+    /// (Infrastructure/StudentCoursePlan/StudentCoursePlanRepository.cs, Node's routes/course-plan.ts)
+    /// could not reach it across the project boundary — Infrastructure does not reference Api. Copying
+    /// it would have recreated the exact drift Node extracted lib/coursePlanGrade.ts to prevent: two
+    /// writers of one feature disagreeing about what a valid grade is, and only finding out at the flag
+    /// flip. Behaviour is unchanged — the body was moved, not rewritten.</para>
     /// </summary>
-    private const int MinPlannedGrade = 1;
-    private const int MaxPlannedGrade = 12;
-
-    private static (int? Value, string? Error) ResolveGradeLevel(JsonElement body)
-    {
-        if (!body.TryGetProperty("gradeLevel", out var raw)
-            || raw.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-        {
-            return (null, null);
-        }
-
-        double? numeric = raw.ValueKind switch
-        {
-            JsonValueKind.Number => raw.TryGetDouble(out var d) ? d : null,
-            // "" is the empty-input case Node treats as absent, not as invalid.
-            JsonValueKind.String => string.IsNullOrEmpty(raw.GetString())
-                ? null
-                : double.TryParse(raw.GetString(), System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture, out var s) ? s : double.NaN,
-            _ => double.NaN,
-        };
-
-        if (raw.ValueKind == JsonValueKind.String && string.IsNullOrEmpty(raw.GetString()))
-        {
-            return (null, null);
-        }
-
-        if (numeric is null || double.IsNaN(numeric.Value) || numeric.Value != Math.Floor(numeric.Value)
-            || double.IsInfinity(numeric.Value))
-        {
-            return (null, "gradeLevel must be a whole number");
-        }
-
-        var value = (int)numeric.Value;
-        if (value < MinPlannedGrade || value > MaxPlannedGrade)
-        {
-            return (null, $"gradeLevel must be between {MinPlannedGrade} and {MaxPlannedGrade}");
-        }
-
-        return (value, null);
-    }
+    private static (int? Value, string? Error) ResolveGradeLevel(JsonElement body) =>
+        PlannedGradeLevel.Resolve(body);
 
     /// <summary>
     /// lib/query.ts <c>qs</c>: an array yields <c>String(val[0] ?? "")</c>; anything else non-nullish yields

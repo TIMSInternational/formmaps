@@ -104,10 +104,15 @@ export async function bulkInviteStaff(payload: BulkStaffInvitePayload): Promise<
   return toCamel(data);
 }
 
-export async function updateUserRole(userId: string, role: string): Promise<void> {
+// formmaps#114. The body key is `roleName`, not `role` — BOTH backends reject `{ role }`
+// with a 400 before doing anything: legacy parses `userRoleSchema` -> `parsed.data.roleName`
+// (api/src/routes/school.ts:94) and .NET binds `RoleName` (SchoolUsersEndpoints.cs:178).
+// The local parameter was also named `role`, which is what made the wrong key read as
+// correct. This stayed invisible only because the calling hook has no non-test callers yet.
+export async function updateUserRole(userId: string, roleName: string): Promise<void> {
   await apiRequest(`/api/v1/school-admin/users/${userId}/role`, {
     method: "PUT",
-    data: { role },
+    data: { roleName },
   });
 }
 

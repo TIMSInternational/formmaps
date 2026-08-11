@@ -1,5 +1,6 @@
 using FormMaps.Application.Auth;
 using FormMaps.Application.SchoolUsers;
+using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.SchoolUsers;
 using Npgsql;
@@ -278,8 +279,14 @@ public sealed class SchoolUsersWriterTests : IClassFixture<SchoolUsersDatabaseFi
 
     // ---- helpers ----
 
-    private SchoolUsersWriter Writer() =>
-        new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()));
+    // The IAuthRepository dependency exists only for the role-change slice's cross-user token revocation
+    // (formmaps#120); none of the grade-level / assign / unassign paths under test here touch it. Its own
+    // real-DB coverage lives in SchoolUsersRoleWriterTests, which runs against an RLS-ON harness.
+    private SchoolUsersWriter Writer()
+    {
+        var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
+        return new SchoolUsersWriter(factory, new AuthRepository(factory));
+    }
 
     private static RequestContext Ctx() =>
         RequestContext.Authenticated(
