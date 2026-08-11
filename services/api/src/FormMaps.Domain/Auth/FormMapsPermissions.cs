@@ -22,4 +22,14 @@ public static class FormMapsPermissions
     public const string CounselorSessions = "counselor:sessions";
     public const string CounselorNotes = "counselor:notes";
     public const string AlertsRead = "alerts:read";
+
+    /// <summary>
+    /// FORWARD-COMPAT MARKER — NOT YET A LIVE GATE. <c>GET /api/v1/audit/events</c> gates on
+    /// <c>RequestActor.IsSuperAdmin</c> instead, because no role in Node's <c>ROLE_PERMISSIONS</c>
+    /// (<c>api/src/lib/auth.ts</c>) can emit this string yet, so consulting it would ship an endpoint
+    /// nobody can reach — the same dead-gate mistake legacy made with <c>admin:settings</c>. Wiring it
+    /// up needs a cross-repo Node change; until then, holding this permission grants nothing, and
+    /// <c>AuditEndpointsTests</c> pins that it does not.
+    /// </summary>
+    public const string AuditRead = "audit:read";
 }
