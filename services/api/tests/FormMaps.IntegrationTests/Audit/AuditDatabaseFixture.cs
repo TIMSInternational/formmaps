@@ -40,12 +40,20 @@ namespace FormMaps.IntegrationTests.Audit;
 /// </para>
 /// <para>
 /// RESET AND IMMUTABILITY. <c>audit_events</c> refuses DELETE/TRUNCATE by design, so
-/// <see cref="ResetAsync" /> has to disable the trigger, delete, and re-enable it. That is not a hole in
+/// <see cref="ResetAsync" /> has to disable the trigger, delete, and restore it. That is not a hole in
 /// production: only a superuser can <c>ALTER TABLE ... DISABLE TRIGGER</c>, the app login here provably
 /// cannot (see <c>AuditEventWriterTests.Harness_AppLogin_DoesNotBypassRls</c>), and the schema file says
-/// so out loud. Re-enable is <c>ENABLE ALWAYS</c>, not plain <c>ENABLE</c> — a plain re-enable would
-/// silently downgrade the trigger for the rest of the container's life and quietly gut
-/// <c>AuditEventImmutabilityTests</c>' session_replication_role case.
+/// so out loud.
+/// </para>
+/// <para>
+/// RESTORE RE-RUNS THE PRODUCTION FILE — it does NOT re-enable the trigger with a hardcoded
+/// <c>ENABLE ALWAYS</c>, and that is not a style preference. A hardcoded re-enable makes the fixture
+/// MANUFACTURE the exact property <c>AuditEventImmutabilityTests</c> exists to verify: every test in
+/// that file calls <see cref="ResetAsync" /> first, so the trigger is <c>ENABLE ALWAYS</c> by the time
+/// the assertions run no matter what <c>infra/aws/sql/audit-events-schema.sql</c> actually says.
+/// Measured, not theorised: with the production file downgraded to plain <c>ENABLE</c>, the
+/// session_replication_role test PASSED. Re-running the real (idempotent) DDL means the trigger's
+/// enabled-state under test always comes from the file that ships.
 /// </para>
 /// </remarks>
 public sealed class AuditDatabaseFixture : IAsyncLifetime
@@ -104,13 +112,22 @@ public sealed class AuditDatabaseFixture : IAsyncLifetime
     {
         await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
-        await using var command = connection.CreateCommand();
-        command.CommandText = """
-            ALTER TABLE "audit_events" DISABLE TRIGGER audit_events_immutable;
-            DELETE FROM "audit_events";
-            ALTER TABLE "audit_events" ENABLE ALWAYS TRIGGER audit_events_immutable;
-            """;
-        await command.ExecuteNonQueryAsync();
+        await using (var clear = connection.CreateCommand())
+        {
+            clear.CommandText = """
+                ALTER TABLE "audit_events" DISABLE TRIGGER audit_events_immutable;
+                DELETE FROM "audit_events";
+                """;
+            await clear.ExecuteNonQueryAsync();
+        }
+
+        // Re-run the production file rather than a hardcoded ENABLE ALWAYS. It is idempotent by
+        // construction (IF NOT EXISTS / OR REPLACE / DROP ... IF EXISTS throughout) and its
+        // DROP TRIGGER + CREATE TRIGGER + ALTER sequence leaves the trigger in exactly the state the
+        // file declares — including, if someone ever weakens it, a weakened one. See the class remarks.
+        await using var restore = connection.CreateCommand();
+        restore.CommandText = LoadSchemaDdl();
+        await restore.ExecuteNonQueryAsync();
     }
 
     public async Task<int> CountRowsAsync(string eventType)
@@ -194,7 +211,13 @@ public sealed class AuditDatabaseFixture : IAsyncLifetime
         command.Parameters.Add(parameter);
     }
 
-    private static string LoadSchemaDdl()
+    /// <summary>
+    /// The REAL production DDL text, read from the embedded copy of
+    /// <c>infra/aws/sql/audit-events-schema.sql</c>. Public because
+    /// <c>AuditEventImmutabilityTests</c> re-applies it mid-test: the file's <c>REVOKE</c> and its
+    /// "Idempotent: safe to run multiple times" header claim are only observable on a SECOND apply.
+    /// </summary>
+    public static string LoadSchemaDdl()
     {
         var assembly = Assembly.GetExecutingAssembly();
         var name = assembly.GetManifestResourceNames()
