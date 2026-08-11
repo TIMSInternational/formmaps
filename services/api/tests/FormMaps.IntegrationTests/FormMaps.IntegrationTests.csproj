@@ -177,6 +177,18 @@
     <EmbeddedResource Include="DbRole\Data\dotnet-service-role-stub-schema.sql" />
     <!-- The REAL production role-creation script, embedded by reference so edits to it are exercised here too (formmaps#10). -->
     <EmbeddedResource Include="..\..\..\..\infra\aws\sql\dotnet-service-role.sql" Link="DbRole\Data\dotnet-service-role.sql" />
+    <!-- The REAL production audit_events DDL (formmaps#52), by reference for the same reason as
+         dotnet-service-role.sql above and NOT as a copy under Audit\Data\. The RLS policy and the
+         immutability trigger in that file are the entire subject of the Audit fixture's tests; a
+         hand-maintained copy would let production drift out from under a green suite, which is the
+         precise failure this repo already hit once (see the #125 note on TestSupport\Rls\*.sql).
+         Carries both delivery mechanisms so either loading style works: the manifest resource name
+         is FormMaps.IntegrationTests.Audit.Data.audit-events-schema.sql (Assembly.GetManifestResourceStream,
+         as DbRoleDatabaseFixture does it), and CopyToOutputDirectory also lands it on disk at
+         <output>\Audit\Data\audit-events-schema.sql for AppContext.BaseDirectory-relative reads. -->
+    <EmbeddedResource Include="..\..\..\..\infra\aws\sql\audit-events-schema.sql"
+                      Link="Audit\Data\audit-events-schema.sql"
+                      CopyToOutputDirectory="PreserveNewest" />
     <!-- Schema-only DDL mirroring the live Node/Prisma auth tables (users/roles/refresh_tokens/login_attempts/password_reset_tokens/user_settings + touched-column schools subset) for the Testcontainers IAuthRepository harness (Domain 10, Task 5). -->
     <EmbeddedResource Include="Auth\Data\auth-schema.sql" />
     <!-- formmaps#125: byte-for-byte copies of the production RLS policy files (formmaps-platform/api/prisma/rls/*.sql),
