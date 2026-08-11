@@ -184,6 +184,11 @@ public static class DependencyInjection
         // bypass-mode sessions only, so this writer opens under RequestContext.System() internally —
         // nothing else should ever INSERT there, and no tenant-scoped session can.
         services.AddScoped<FormMaps.Application.Audit.IAuditEventWriter, FormMaps.Infrastructure.Audit.AuditEventWriter>();
+        // formmaps#52: the matching read path. Also opens under RequestContext.System(), so it reads
+        // ACROSS tenants by construction and its query's schoolId is a filter, not a boundary. The only
+        // authorization gate is the endpoint's super-admin check — anything else resolving this from DI
+        // inherits that responsibility.
+        services.AddScoped<FormMaps.Application.Audit.IAuditEventReader, FormMaps.Infrastructure.Audit.AuditEventReader>();
         // Domain 9a: subscription-billing shadow infrastructure (webhook -> shadow tables only, no live writes).
         services.AddScoped<FormMaps.Application.Billing.IBillingShadowRepository, FormMaps.Infrastructure.Billing.BillingShadowRepository>();
         services.AddScoped<FormMaps.Application.Billing.IStripeWebhookVerifier, FormMaps.Infrastructure.Billing.StripeWebhookVerifier>();
