@@ -1,6 +1,11 @@
 -- Schema-only harness DDL for the enriched caseload reads (FM-DOTNET-068). Hand-written from schema.prisma; only the
 -- columns the reader touches. Decimal credit columns are numeric so ::double precision behaves as in prod; the enum
 -- columns (ExamType/ExamStatus/AlertSeverity) are native so ::text reads back the label.
+--
+-- formmaps#125: this fixture now runs the REAL production policies (CounselorCaseloadDatabaseFixture). That means the
+-- DDL has to carry every column a policy PREDICATE names, not just the ones the reader SELECTs — "student_grades"
+-- gained "schoolId" for exactly that reason (002-direct-schoolid.sql keys it off that column; production has it, which
+-- is why the policy can reference it). Do not drop a column back out to make a policy apply cleanly.
 
 CREATE TABLE "users" (
     "id"          text PRIMARY KEY,
@@ -22,6 +27,7 @@ CREATE TABLE "counselor_student_assignments" (
 CREATE TABLE "student_grades" (
     "id"        text PRIMARY KEY,
     "studentId" text NOT NULL,
+    "schoolId"  text NOT NULL,
     "courseId"  text NOT NULL,
     "grade"     text,
     "credits"   numeric NOT NULL DEFAULT 0,
