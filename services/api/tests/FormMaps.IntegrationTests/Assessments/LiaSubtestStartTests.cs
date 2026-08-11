@@ -1,6 +1,7 @@
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
+using FormMaps.Infrastructure.Audit;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -157,8 +158,17 @@ public sealed class LiaSubtestStartTests : IClassFixture<LiaWriteDatabaseFixture
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        return (new LiaSessionWriter(factory, resolver, logger), logger);
+        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), logger), logger);
     }
+
+    /// <summary>
+    /// The real <see cref="AuditEventWriter"/> (formmaps#52 Task 8), never a fake: the thing under test
+    /// is that a completion lands a row in <c>audit_events</c>, and a substituted writer would make that
+    /// assertion about the substitute. Its own logger is NullLogger — audit-write failures are fail-soft
+    /// and land on that logger, not on this class's CapturingLogger, which asserts the log-line half.
+    /// </summary>
+    private static AuditEventWriter AuditWriter(NpgsqlFormMapsDatabaseSessionFactory factory) =>
+        new(factory, NullLogger<AuditEventWriter>.Instance);
 
     private static RequestContext Ctx(string userId, string name = "Test User", string email = "test@e.st") =>
         RequestContext.Authenticated(

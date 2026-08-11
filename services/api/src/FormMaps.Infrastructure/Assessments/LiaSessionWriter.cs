@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text.Json;
 using FormMaps.Application.Assessments;
+using FormMaps.Application.Audit;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using Microsoft.Extensions.Logging;
@@ -18,11 +19,60 @@ namespace FormMaps.Infrastructure.Assessments;
 /// <c>UPDATE … WHERE status &lt;&gt; 'completed'</c> persists — then a PII-free audit event is emitted
 /// (SOC2 CC7 / ISO A.8.15). The insights (Bedrock) trigger stays polyglot/out of this path.
 /// </summary>
+/// <remarks>
+/// formmaps#52 Task 8: the completion audit is now DURABLE as well as logged. Every one of the six
+/// completion call sites keeps its existing <c>logger.LogInformation</c> line verbatim (log-based
+/// alerting still works) and additionally persists a row via <see cref="IAuditEventWriter" /> — see
+/// <see cref="WriteCompletionAuditAsync" /> for why that is one shared helper rather than six copies.
+/// </remarks>
 public sealed class LiaSessionWriter(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     ILiaQuestionIdResolver questionIdResolver,
+    IAuditEventWriter auditEventWriter,
     ILogger<LiaSessionWriter> logger) : ILiaSessionWriter
 {
+    /// <summary>
+    /// The durable half of this class's completion audit (formmaps#52 Task 8). Called immediately after
+    /// each existing <c>audit.assessment.lia.completed</c> log line, and — like that line — only ever
+    /// AFTER the completion's own commit has succeeded, so a row here can never claim a completion that
+    /// did not persist.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// ONE helper, not six inlined copies. There are six completion paths in this file (CompleteAsync,
+    /// StartAsync's Gate 2, SubmitAnswerAsync's expiry branch, SubmitAnswerAsync's answer-driven
+    /// completion, HandleTimeoutAsync, ReadWithLazyExpiryAsync). They must all emit the SAME event
+    /// shape — an audit trail whose eventType or subjectType depends on which endpoint the candidate
+    /// happened to hit is not an audit trail — and this file's own history is that one of those six
+    /// sites silently dropped its completion for months. A single definition makes that class of drift
+    /// impossible.
+    /// </para>
+    /// <para>
+    /// <see cref="CancellationToken.None" /> is passed deliberately, per
+    /// <see cref="IAuditEventWriter.WriteAsync" />'s contract: this runs after the caller's commit, and
+    /// <c>AuditEventWriter</c> re-throws <see cref="OperationCanceledException" /> rather than
+    /// swallowing it — so passing the request token would let a client disconnecting in the gap between
+    /// commit and audit raise from an operation that had already succeeded. Every other failure is
+    /// fail-soft-but-alert inside the writer (logged at Error, never thrown), so this call cannot change
+    /// the user-visible outcome of a completion.
+    /// </para>
+    /// </remarks>
+    private Task WriteCompletionAuditAsync(string sessionId, string ownerUserId, LiaCompletionResult result) =>
+        auditEventWriter.WriteAsync(
+            new AuditEvent(
+                EventType: "audit.assessment.lia.completed",
+                ActorUserId: ownerUserId,
+                ActorRole: null,
+                SchoolId: null,
+                SubjectType: "lia_session",
+                SubjectId: sessionId,
+                Metadata: new Dictionary<string, object?>
+                {
+                    ["globalPercentile"] = result.GlobalPercentile,
+                    ["performanceLevel"] = result.PerformanceLevel,
+                }),
+            CancellationToken.None);
+
     private static readonly JsonSerializerOptions JsonOptions = new();
 
     private const string SelectForUpdateSql = """
@@ -144,6 +194,7 @@ public sealed class LiaSessionWriter(
         logger.LogInformation(
             "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
             sessionId, ownerUserId, result.GlobalPercentile, result.PerformanceLevel);
+        await WriteCompletionAuditAsync(sessionId, ownerUserId, result);
 
         return new LiaCompleteOutcome(LiaCompleteStatus.Completed, result);
     }
@@ -287,6 +338,7 @@ public sealed class LiaSessionWriter(
                         logger.LogInformation(
                             "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
                             row.Id, userId, completion.GlobalPercentile, completion.PerformanceLevel);
+                        await WriteCompletionAuditAsync(row.Id, userId, completion);
                     }
 
                     return new LiaStartOutcome(LiaStartStatus.AlreadyCompleted, null);
@@ -791,6 +843,7 @@ public sealed class LiaSessionWriter(
                 logger.LogInformation(
                     "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
                     sessionId, ownerUserId, completion.GlobalPercentile, completion.PerformanceLevel);
+                await WriteCompletionAuditAsync(sessionId, ownerUserId, completion);
             }
 
             return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.Ok, new LiaAnswerResult(
@@ -910,6 +963,7 @@ public sealed class LiaSessionWriter(
             logger.LogInformation(
                 "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
                 sessionId, ownerUserId, committedCompletion.GlobalPercentile, committedCompletion.PerformanceLevel);
+            await WriteCompletionAuditAsync(sessionId, ownerUserId, committedCompletion);
         }
 
         return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.Ok, new LiaAnswerResult(
@@ -1102,6 +1156,7 @@ public sealed class LiaSessionWriter(
             logger.LogInformation(
                 "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
                 sessionId, ownerUserId, completion.GlobalPercentile, completion.PerformanceLevel);
+            await WriteCompletionAuditAsync(sessionId, ownerUserId, completion);
         }
 
         return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.Ok, new LiaAnswerResult(
@@ -1288,6 +1343,7 @@ public sealed class LiaSessionWriter(
                     logger.LogInformation(
                         "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
                         sessionId, ownerUserId, completion.GlobalPercentile, completion.PerformanceLevel);
+                    await WriteCompletionAuditAsync(sessionId, ownerUserId, completion);
                 }
 
                 // Re-read the post-expiry state on a FRESH read-only session: the writable transaction

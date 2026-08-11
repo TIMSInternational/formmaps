@@ -93,3 +93,23 @@ CREATE UNIQUE INDEX "lia_responses_session_id_question_id_key" ON "lia_responses
 ALTER TABLE "lia_assessment_sessions" ADD CONSTRAINT "lia_assessment_sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "lia_responses" ADD CONSTRAINT "lia_responses_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "lia_assessment_sessions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "lia_responses" ADD CONSTRAINT "lia_responses_question_id_fkey" FOREIGN KEY ("question_id") REFERENCES "lia_questions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- ------------------------------------------------------------------------------------------------
+-- audit-events retrofit (plan Task 8). Deliberately SIMPLIFIED: table shape only — no RLS policy and
+-- no immutability trigger. Both are proven once, thoroughly, against the real DDL in
+-- FormMaps.IntegrationTests/Audit (plan Tasks 1/4); repeating them here would only add the
+-- DISABLE-TRIGGER reset dance to seven unrelated fixtures for zero extra coverage. What THIS copy is
+-- for is the wiring question: does LiaSessionWriter actually persist a row on every completion path.
+-- ------------------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "audit_events" (
+    "id" TEXT PRIMARY KEY,
+    "occurredAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+    "eventType" TEXT NOT NULL,
+    "actorUserId" TEXT,
+    "actorRole" TEXT,
+    "schoolId" TEXT,
+    "subjectType" TEXT NOT NULL,
+    "subjectId" TEXT,
+    "outcome" TEXT NOT NULL DEFAULT 'success',
+    "metadata" JSONB
+);

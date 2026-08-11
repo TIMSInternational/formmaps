@@ -2,6 +2,7 @@ using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
+using FormMaps.Infrastructure.Audit;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -133,6 +134,10 @@ public sealed class LiaSessionReaderTests : IClassFixture<LiaWriteDatabaseFixtur
         Assert.Equal(LogLevel.Information, audit.Level);
         Assert.Contains(sessionId, audit.Message, StringComparison.Ordinal);
         Assert.Contains(userId, audit.Message, StringComparison.Ordinal);
+
+        // ...and the audit-events retrofit (plan Task 8 of formmaps#52): a completion discovered by a
+        // plain GET is still a completion, and must persist a durable row like every other path.
+        Assert.Equal(1, await _fixture.CountAuditEventsAsync("audit.assessment.lia.completed", sessionId));
     }
 
     // ------------------------------------------------------------------------------------------
@@ -172,6 +177,10 @@ public sealed class LiaSessionReaderTests : IClassFixture<LiaWriteDatabaseFixtur
         Assert.Equal("pattern_recognition", detail!.CurrentSubtest); // untouched — the clock has not expired.
         Assert.DoesNotContain(
             logger.Entries, e => e.Message.StartsWith("audit.assessment.lia.completed", StringComparison.Ordinal));
+
+        // Negative control for the retrofit: no log line AND no persisted row. A durable audit table is
+        // strictly worse than none if a plain read can append a spurious "completed" to it.
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.lia.completed", sessionId));
     }
 
     // ==============================================================================================
@@ -205,10 +214,19 @@ public sealed class LiaSessionReaderTests : IClassFixture<LiaWriteDatabaseFixtur
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        var writer = new LiaSessionWriter(factory, resolver, logger);
+        var writer = new LiaSessionWriter(factory, resolver, AuditWriter(factory), logger);
         var reader = new LiaSessionReader(factory, writer, resolver);
         return (reader, writer, logger);
     }
+
+    /// <summary>
+    /// The real <see cref="AuditEventWriter"/> (formmaps#52 Task 8), never a fake: the thing under test
+    /// is that a completion lands a row in <c>audit_events</c>, and a substituted writer would make that
+    /// assertion about the substitute. Its own logger is NullLogger — audit-write failures are fail-soft
+    /// and land on that logger, not on this class's CapturingLogger, which asserts the log-line half.
+    /// </summary>
+    private static AuditEventWriter AuditWriter(NpgsqlFormMapsDatabaseSessionFactory factory) =>
+        new(factory, NullLogger<AuditEventWriter>.Instance);
 
     private static RequestContext Ctx(string userId, string name = "Test User", string email = "test@e.st") =>
         RequestContext.Authenticated(
