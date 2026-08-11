@@ -28,12 +28,23 @@ public sealed class LiveSubscriptionWriter(IFormMapsDatabaseSessionFactory datab
     /// pinned to ONE row id.
     ///
     /// <para>formmaps#108: this used to be <c>WHERE "userId" = @userId AND ...</c> with no row scope at
-    /// all. schema.prisma's <c>@@unique([userId])</c> on user_subscriptions was never emitted by any
-    /// migration (api/prisma/migrations has only the PK, the NON-unique "user_subscriptions_userId_idx"
-    /// and the FKs), so a user may own several rows in production -- and a userId-only UPDATE silently
-    /// cancelled EVERY one of them, while the reader that decided the request was cancellable had looked
-    /// at exactly one arbitrary row. Legacy api/src/routes/stripe.ts:321 never had this problem: it scopes
-    /// its updateMany by <c>{ id: sub.id, userId }</c>, the id of the row it actually read.</para>
+    /// all. CORRECTED 2026-08-10 -- an earlier version of this comment justified the row scope by claiming
+    /// <c>@@unique([userId])</c> "was never emitted by any migration, so a user may own several rows in
+    /// production". That premise is REFUTED and must not be repeated: production is BELIEVED to carry
+    /// <c>user_subscriptions_userId_key</c> -- inferred from prod having been built by
+    /// <c>prisma db push</c> from schema.prisma:534, plus a <c>\d</c> reading recorded in a 2026-08-07
+    /// comment on formmaps#108. That is not a committed measurement and has not been re-confirmed; see
+    /// LiveSubscriptionReader for the full provenance note. The history was reconciled by
+    /// api/prisma/migrations/20260808000000_user_subscriptions_userid_unique. A user owns at most one row,
+    /// so the multi-row cancel this scope was introduced to prevent is not reachable in prod.</para>
+    ///
+    /// <para>The row scope is KEPT as defence in depth, and it is not merely decorative: it removes the
+    /// writer's dependency on an index it does not control, so a database replayed from a history that
+    /// stops before 2026-08-08 -- or one where the index is dropped during maintenance -- cannot turn a
+    /// single cancel into an UPDATE across every row the user owns while the reader's cancellable decision
+    /// was based on exactly one of them. It also matches legacy api/src/routes/stripe.ts:321, which scopes
+    /// its updateMany by <c>{ id: sub.id, userId }</c> -- the id of the row it actually read -- and so
+    /// never depended on the invariant either.</para>
     ///
     /// <para>The subselect reproduces <see cref="LiveSubscriptionReader" />'s SELECT exactly -- same
     /// predicate, same <c>ORDER BY "createdDate" DESC, "id"</c>, same LIMIT 1 -- so it resolves the SAME

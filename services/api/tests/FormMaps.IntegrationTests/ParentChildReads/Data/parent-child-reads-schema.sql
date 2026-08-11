@@ -1,5 +1,8 @@
--- Schema-only harness DDL for the parent child-link-scoped reads (FM-DOTNET-079), hand-written from schema.prisma.
--- Only the columns the reader queries touch are modelled. totalCreditsRequired + credits are `numeric` (Prisma
+-- Harness DDL for the parent child-link-scoped reads (FM-DOTNET-079), hand-written from schema.prisma.
+-- Only the columns the reader queries touch are modelled, PLUS the columns the production RLS policies name
+-- (formmaps#125): "schoolId" on student_grades / graduation_plans / graduation_plan_items is not read by any
+-- query here, but 002-direct-schoolid.sql and 006-graduation-plans.sql scope all three directly on it, so
+-- without the column the policy cannot even be created. That gap was invisible until the policies were applied. totalCreditsRequired + credits are `numeric` (Prisma
 -- Decimal); scorePercentage is double precision (Prisma Float); timestamps are `timestamp` (no tz).
 
 CREATE TABLE "users" (
@@ -53,6 +56,8 @@ CREATE TABLE "graduation_rule_sets" (
 CREATE TABLE "student_grades" (
     "id"        text PRIMARY KEY,
     "studentId" text NOT NULL,
+    "schoolId"  text,                                  -- #125: 002-direct-schoolid.sql scopes on this
+
     "status"    text NOT NULL DEFAULT 'completed',
     "grade"     text,
     "credits"   numeric NOT NULL DEFAULT 0,
@@ -62,6 +67,8 @@ CREATE TABLE "student_grades" (
 CREATE TABLE "graduation_plans" (
     "id"          text PRIMARY KEY,
     "studentId"   text NOT NULL,
+    "schoolId"    text,                                -- #125: 006-graduation-plans.sql scopes on this
+
     "status"      text NOT NULL DEFAULT 'draft',
     "reviewedAt"  timestamp,
     "isActive"    boolean NOT NULL DEFAULT true,
@@ -71,6 +78,8 @@ CREATE TABLE "graduation_plans" (
 CREATE TABLE "graduation_plan_items" (
     "id"         text PRIMARY KEY,
     "planId"     text NOT NULL,
+    "schoolId"   text,                                 -- #125: 006-graduation-plans.sql scopes on this
+
     "courseCode" text NOT NULL,
     "courseName" text NOT NULL,
     "credits"    numeric NOT NULL DEFAULT 0,

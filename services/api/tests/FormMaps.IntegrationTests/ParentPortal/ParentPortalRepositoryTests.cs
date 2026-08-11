@@ -1,10 +1,9 @@
-using System.Reflection;
 using FormMaps.Application.Auth;
 using FormMaps.Application.ParentPortal;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.ParentPortal;
+using FormMaps.IntegrationTests.TestSupport.Rls;
 using Npgsql;
-using Testcontainers.PostgreSql;
 
 namespace FormMaps.IntegrationTests.ParentPortal;
 
@@ -14,36 +13,75 @@ namespace FormMaps.IntegrationTests.ParentPortal;
 /// unreadOnly + createdDate DESC + skip/take + total; mark-read ownership (missing/not-owned → false = 403) + write;
 /// mark-all count + no-isActive filter; pending scoped by lowercased email + LEFT JOIN name fallback; delete-link
 /// dual-party ownership (parent OR student) → soft delete, wrong party → false (IDOR corpus #28 uniform 403).
+///
+/// <para>formmaps#125: this fixture now runs the PRODUCTION RLS policies and hands the repository a
+/// NOSUPERUSER NOBYPASSRLS login. Before that it could not tell an Identity-session read from a System-session
+/// one — which is how three parent surfaces, this one among them, shipped to production broken with this file
+/// green (formmaps#121). Seeding and assertions still run as the container superuser: an assertion made through
+/// the policies cannot distinguish "row absent" from "row invisible", which would make the negative halves
+/// below pass for the wrong reason.</para>
 /// </summary>
 public sealed class ParentPortalRepositoryTests : IClassFixture<ParentPortalRepositoryTests.Fixture>, IAsyncLifetime
 {
     private const string Parent = "parent-1";
+    private const string School = "school-1";
 
     private readonly Fixture _fixture;
-    private NpgsqlDataSource _dataSource = null!;
+
+    /// <summary>Restricted login. Everything the code under test touches goes through this.</summary>
+    private NpgsqlDataSource _appDataSource = null!;
+
+    /// <summary>Container superuser. Seeding and assertions only — see the class remarks.</summary>
+    private NpgsqlDataSource _adminDataSource = null!;
 
     public ParentPortalRepositoryTests(Fixture fixture) => _fixture = fixture;
 
     public async Task InitializeAsync()
     {
-        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            """TRUNCATE "users", "student_parent_links", "notifications", "evaluation_groups" """, conn);
-        await cmd.ExecuteNonQueryAsync();
+        _appDataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
+        _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
+        await _fixture.TruncateAsync("users", "student_parent_links", "notifications", "evaluation_groups");
     }
 
-    public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+    public async Task DisposeAsync()
+    {
+        await _appDataSource.DisposeAsync();
+        await _adminDataSource.DisposeAsync();
+    }
+
+    // ---- harness proof (formmaps#125) ----
+
+    [Fact]
+    public async Task Harness_runs_as_a_restricted_login_with_the_production_policies_live()
+    {
+        // Anchors every assertion in this file. If the login ever regains SUPERUSER or BYPASSRLS, or the
+        // policies stop being applied, the isolation halves below go vacuously green — this test is the
+        // tripwire for both. MessagesAdversarialAccessTests asserts the OPPOSITE for its own suite and
+        // says so in its name; the two together are the two honest positions, and silence is neither.
+        await using var conn = await _appDataSource.OpenConnectionAsync();
+        Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(conn), "the app login must not bypass RLS");
+
+        Assert.Equal<string>(
+            ["evaluation_groups", "notifications", "student_parent_links", "users"],
+            _fixture.AppliedPolicyTables);
+
+        await using var forced = new NpgsqlCommand(
+            """
+            SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = 'public' AND c.relrowsecurity AND c.relforcerowsecurity
+            """, conn);
+        Assert.Equal(4L, (long)(await forced.ExecuteScalarAsync())!);
+    }
 
     // ---- profile ----
 
     [Fact]
     public async Task Profile_returns_user_and_linked_children()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await User(conn, Parent, "Parent P", "p@e.st");
-        await User(conn, "kid-a", "Kid A", "a@e.st", gradeLevel: 9);
-        await User(conn, "kid-b", "Kid B", "b@e.st", gradeLevel: 11);
+        await User(conn, "kid-a", "Kid A", "a@e.st", gradeLevel: 9, schoolId: School);
+        await User(conn, "kid-b", "Kid B", "b@e.st", gradeLevel: 11, schoolId: School);
         await Link(conn, "l-a", "kid-a", Parent, relation: "father", accepted: true, created: new DateTime(2026, 1, 1));
         await Link(conn, "l-b", "kid-b", Parent, relation: "father", accepted: true, created: new DateTime(2026, 2, 1));
         await Link(conn, "l-pending", "kid-a", Parent, accepted: false);           // not accepted → excluded
@@ -60,6 +98,60 @@ public sealed class ParentPortalRepositoryTests : IClassFixture<ParentPortalRepo
     }
 
     [Fact]
+    public async Task Profile_child_rows_are_unreadable_to_the_parent_under_their_own_session()
+    {
+        // THE #121 BUG, stated as a property of the database rather than of the repository. A parent has NO
+        // schoolId, so 005-sensitive.sql's users policy admits them to exactly one row: their own. The child's
+        // row and (before 009-parent-links.sql) the link row are both invisible. Any implementation of
+        // GetProfileAsync that reads the children on the caller's Identity session therefore returns zero
+        // children for a correctly linked parent — silently, with no error. This test fails if that stops
+        // being true, i.e. if someone "fixes" the policies instead of the code and the System session in
+        // GetProfileAsync becomes an unnecessary widening that nothing forces us to justify.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Parent, "Parent P", "p@e.st");
+        await User(conn, "kid-a", "Kid A", "a@e.st", gradeLevel: 9, schoolId: School);
+        await Link(conn, "l-a", "kid-a", Parent, accepted: true);
+
+        await using var identity = await OpenIdentitySessionAsync(Parent, schoolId: null);
+
+        Assert.Equal(1L, await ScalarAsync(identity, """SELECT count(*) FROM "users" WHERE "id" = 'parent-1'"""));
+        Assert.Equal(0L, await ScalarAsync(identity, """SELECT count(*) FROM "users" WHERE "id" = 'kid-a'"""));
+        Assert.Equal(
+            0L,
+            await ScalarAsync(identity, """
+                SELECT count(*) FROM "student_parent_links" sp JOIN "users" u ON u."id" = sp."studentId"
+                WHERE sp."parentUserId" = 'parent-1'
+                """));
+        // ...while 009-parent-links.sql does admit the parent to the LINK row itself, which is what makes the
+        // repository's WHERE clause a real authorization decision and not a widening.
+        Assert.Equal(
+            1L,
+            await ScalarAsync(identity, """SELECT count(*) FROM "student_parent_links" WHERE "parentUserId" = 'parent-1'"""));
+    }
+
+    [Fact]
+    public async Task Profile_children_do_not_leak_between_parents()
+    {
+        // Both halves, deliberately. GetProfileAsync reads the children on a SYSTEM session, so RLS is not
+        // scoping this — the WHERE clause is. An isolation-only assertion here would pass against an empty
+        // table, so the positive half is what gives the negative half its meaning.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Parent, "Parent P", "p@e.st");
+        await User(conn, "parent-2", "Parent Q", "q@e.st");
+        await User(conn, "kid-mine", "Mine", "m@e.st", schoolId: School);
+        await User(conn, "kid-theirs", "Theirs", "t@e.st", schoolId: School);
+        await Link(conn, "l-mine", "kid-mine", Parent, accepted: true);
+        await Link(conn, "l-theirs", "kid-theirs", "parent-2", accepted: true);
+
+        var mine = await Repo().GetProfileAsync(Ctx(), Parent);
+        Assert.Equal(["kid-mine"], mine.Children.Select(c => c.StudentId));      // CAN see own
+        Assert.DoesNotContain(mine.Children, c => c.StudentId == "kid-theirs");  // CANNOT see the other parent's
+
+        var theirs = await Repo().GetProfileAsync(Ctx("parent-2"), "parent-2");
+        Assert.Equal(["kid-theirs"], theirs.Children.Select(c => c.StudentId));
+    }
+
+    [Fact]
     public async Task Profile_absent_user_reports_not_found()
     {
         var profile = await Repo().GetProfileAsync(Ctx(), "ghost");
@@ -72,7 +164,7 @@ public sealed class ParentPortalRepositoryTests : IClassFixture<ParentPortalRepo
     [Fact]
     public async Task Notifications_scoped_ordered_paged()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await Notif(conn, "old", Parent, created: new DateTime(2026, 1, 1));
         await Notif(conn, "new", Parent, created: new DateTime(2026, 3, 1));
         await Notif(conn, "mid", Parent, created: new DateTime(2026, 2, 1));
@@ -89,9 +181,34 @@ public sealed class ParentPortalRepositoryTests : IClassFixture<ParentPortalRepo
     }
 
     [Fact]
+    public async Task Notifications_do_not_leak_a_same_school_row_that_RLS_would_admit()
+    {
+        // Exercises the WHERE clause where RLS cannot do its job for it. 003-fk-users.sql admits a caller to
+        // any notification whose owner shares their schoolId, so for a SCHOOL-SCOPED caller the policy is
+        // wide open across the school and the repository's own "userId" = @uid is the entire scope. Running
+        // this as the school-less parent would have proved nothing: RLS would have hidden the row anyway.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, "staff", "Staff", "s@e.st", schoolId: School);
+        await User(conn, "student", "Student", "st@e.st", schoolId: School);
+        await Notif(conn, "mine", "staff");
+        await Notif(conn, "classmates", "student");
+
+        // Negative control on the control: the policy really does admit the other row to this caller.
+        await using (var identity = await OpenIdentitySessionAsync("staff", School))
+        {
+            Assert.Equal(2L, await ScalarAsync(identity, """SELECT count(*) FROM "notifications" """));
+        }
+
+        var (rows, total) = await Repo().ListNotificationsAsync(
+            Ctx("staff", School), "staff", unreadOnly: false, skip: 0, take: 20);
+        Assert.Equal(1, total);
+        Assert.Equal(["mine"], rows.Select(r => r.Id));
+    }
+
+    [Fact]
     public async Task Notifications_unreadOnly_filters_read()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await Notif(conn, "unread", Parent, isRead: false);
         await Notif(conn, "read", Parent, isRead: true);
 
@@ -103,7 +220,7 @@ public sealed class ParentPortalRepositoryTests : IClassFixture<ParentPortalRepo
     [Fact]
     public async Task MarkRead_ownership_then_write()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await Notif(conn, "mine", Parent, isRead: false);
         await Notif(conn, "theirs", "other");
 
@@ -119,9 +236,30 @@ public sealed class ParentPortalRepositoryTests : IClassFixture<ParentPortalRepo
     }
 
     [Fact]
+    public async Task MarkRead_denies_a_same_school_notification_that_RLS_admits()
+    {
+        // The app-layer half of MarkRead_ownership_then_write. There the victim row is invisible to the
+        // caller under RLS, so a repository with NO ownership check at all would still have returned false.
+        // Here the policy admits the row (same school) and only the "userId" comparison stands between a
+        // school-scoped caller and marking a classmate's notification read — plus the negative control that
+        // the row was genuinely not written, read back as the superuser.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, "staff", "Staff", "s@e.st", schoolId: School);
+        await User(conn, "student", "Student", "st@e.st", schoolId: School);
+        await Notif(conn, "classmates", "student", isRead: false);
+        await Notif(conn, "mine", "staff", isRead: false);
+
+        Assert.False(await Repo().MarkNotificationReadAsync(Ctx("staff", School), "staff", "classmates"));
+        Assert.True(await Repo().MarkNotificationReadAsync(Ctx("staff", School), "staff", "mine")); // positive half
+
+        Assert.Equal(0L, await ScalarAsync(conn, """SELECT count(*) FROM "notifications" WHERE "id"='classmates' AND "isRead" """));
+        Assert.Equal(1L, await ScalarAsync(conn, """SELECT count(*) FROM "notifications" WHERE "id"='mine' AND "isRead" """));
+    }
+
+    [Fact]
     public async Task MarkAll_counts_only_own_unread()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await Notif(conn, "u1", Parent, isRead: false);
         await Notif(conn, "u2", Parent, isRead: false);
         await Notif(conn, "already", Parent, isRead: true);
@@ -131,14 +269,27 @@ public sealed class ParentPortalRepositoryTests : IClassFixture<ParentPortalRepo
         Assert.Equal(2, count);
     }
 
+    [Fact]
+    public async Task MarkAll_leaves_same_school_rows_that_RLS_admits_untouched()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, "staff", "Staff", "s@e.st", schoolId: School);
+        await User(conn, "student", "Student", "st@e.st", schoolId: School);
+        await Notif(conn, "mine", "staff", isRead: false);
+        await Notif(conn, "classmates", "student", isRead: false);
+
+        Assert.Equal(1, await Repo().MarkAllNotificationsReadAsync(Ctx("staff", School), "staff"));
+        Assert.Equal(0L, await ScalarAsync(conn, """SELECT count(*) FROM "notifications" WHERE "id"='classmates' AND "isRead" """));
+    }
+
     // ---- pending evaluations ----
 
     [Fact]
     public async Task Pending_scoped_by_lowercased_email_with_name_fallback()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await User(conn, Parent, "Parent P", "Parent@E.st"); // mixed-case stored email
-        await User(conn, "kid", "Kid Name", "k@e.st");
+        await User(conn, "kid", "Kid Name", "k@e.st", schoolId: School);
         await EvalGroup(conn, "eg-named", "parent@e.st", "kid", isCompleted: false);
         await EvalGroup(conn, "eg-orphan", "parent@e.st", "ghost", isCompleted: false); // no user → name fallback
         await EvalGroup(conn, "eg-done", "parent@e.st", "kid", isCompleted: true);       // completed → excluded
@@ -152,9 +303,52 @@ public sealed class ParentPortalRepositoryTests : IClassFixture<ParentPortalRepo
     }
 
     [Fact]
+    public async Task Pending_evaluation_rows_are_unreadable_to_the_parent_under_their_own_session()
+    {
+        // Same shape as the profile case: evaluation_groups is keyed on the EVALUATED user or that user's
+        // school, and a parent evaluator is neither, so an Identity-session read returns nothing and the
+        // pending-evaluations page renders blank. The negative control is the second assertion: the same
+        // query DOES return the row once the session bypasses, so the emptiness above is the policy and
+        // not an empty fixture.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Parent, "Parent P", "p@e.st");
+        await User(conn, "kid", "Kid", "k@e.st", schoolId: School);
+        await EvalGroup(conn, "eg", "p@e.st", "kid", isCompleted: false);
+
+        const string Query = """SELECT count(*) FROM "evaluation_groups" WHERE "evaluatorEmail" = 'p@e.st'""";
+
+        await using (var identity = await OpenIdentitySessionAsync(Parent, schoolId: null))
+        {
+            Assert.Equal(0L, await ScalarAsync(identity, Query));
+        }
+
+        await using (var system = await OpenBypassSessionAsync())
+        {
+            Assert.Equal(1L, await ScalarAsync(system, Query));
+        }
+
+        Assert.Equal(["eg"], (await Repo().ListPendingEvaluationsAsync(Ctx(), Parent)).Select(r => r.EvaluationId));
+    }
+
+    [Fact]
+    public async Task Pending_does_not_leak_another_evaluators_rows()
+    {
+        // ListPendingEvaluationsAsync reads on a SYSTEM session, so the email filter is the whole scope.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Parent, "Parent P", "p@e.st");
+        await User(conn, "parent-2", "Parent Q", "q@e.st");
+        await User(conn, "kid", "Kid", "k@e.st", schoolId: School);
+        await EvalGroup(conn, "eg-mine", "p@e.st", "kid", isCompleted: false);
+        await EvalGroup(conn, "eg-theirs", "q@e.st", "kid", isCompleted: false);
+
+        Assert.Equal(["eg-mine"], (await Repo().ListPendingEvaluationsAsync(Ctx(), Parent)).Select(r => r.EvaluationId));
+        Assert.Equal(["eg-theirs"], (await Repo().ListPendingEvaluationsAsync(Ctx("parent-2"), "parent-2")).Select(r => r.EvaluationId));
+    }
+
+    [Fact]
     public async Task Pending_empty_when_no_email()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await User(conn, Parent, "Parent P", email: null);
         await EvalGroup(conn, "eg", "", Parent, isCompleted: false);
         Assert.Empty(await Repo().ListPendingEvaluationsAsync(Ctx(), Parent));
@@ -165,7 +359,7 @@ public sealed class ParentPortalRepositoryTests : IClassFixture<ParentPortalRepo
     [Fact]
     public async Task DeleteLink_parent_or_student_can_delete_others_403()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await Link(conn, "as-parent", "kid", Parent, accepted: true);
         await Link(conn, "as-student", Parent, "some-parent-user", accepted: true); // caller is the STUDENT here
         await Link(conn, "unrelated", "kid2", "other-parent", accepted: true);
@@ -180,31 +374,92 @@ public sealed class ParentPortalRepositoryTests : IClassFixture<ParentPortalRepo
         Assert.Equal(2L, (long)(await check.ExecuteScalarAsync())!);
     }
 
+    [Fact]
+    public async Task DeleteLink_denies_a_same_school_link_that_RLS_admits()
+    {
+        // The app-layer half of the case above. For the school-less parent, "unrelated" is invisible under
+        // RLS, so that assertion cannot distinguish a real ownership check from none at all. A school-scoped
+        // caller IS admitted to every link whose student shares their school by 003-fk-users.sql, and only
+        // the parentUserId/studentId comparison denies the unlink. The row state is read back as the
+        // superuser: DeleteLinkAsync returning false while having written anyway is the failure that matters.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, "staff", "Staff", "s@e.st", schoolId: School);
+        await User(conn, "kid", "Kid", "k@e.st", schoolId: School);
+        await Link(conn, "classmates-link", "kid", "some-parent", accepted: true);
+        await Link(conn, "own-link", "staff", "some-parent", accepted: true);
+
+        await using (var identity = await OpenIdentitySessionAsync("staff", School))
+        {
+            Assert.Equal(2L, await ScalarAsync(identity, """SELECT count(*) FROM "student_parent_links" """));
+        }
+
+        Assert.False(await Repo().DeleteLinkAsync(Ctx("staff", School), "staff", "classmates-link"));
+        Assert.True(await Repo().DeleteLinkAsync(Ctx("staff", School), "staff", "own-link")); // positive half
+
+        Assert.Equal(1L, await ScalarAsync(conn, """SELECT count(*) FROM "student_parent_links" WHERE "id"='classmates-link' AND "isActive" """));
+        Assert.Equal(0L, await ScalarAsync(conn, """SELECT count(*) FROM "student_parent_links" WHERE "id"='own-link' AND "isActive" """));
+    }
+
     // ---- helpers ----
 
     private ParentPortalRepository Repo() =>
-        new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()),
+        new(new NpgsqlFormMapsDatabaseSessionFactory(_appDataSource, new RlsSessionContextApplier()),
             new FixedTimeProvider(new DateTime(2026, 7, 24, 12, 0, 0, DateTimeKind.Utc)));
 
-    private static RequestContext Ctx() =>
+    private static RequestContext Ctx(string userId = Parent, string? schoolId = null) =>
         RequestContext.Authenticated(
-            new RequestActor(Parent, "parent", "p@e.st", "Parent"),
-            schoolId: null, permissions: Array.Empty<string>(),
+            new RequestActor(userId, "parent", $"{userId}@e.st", "Parent"),
+            schoolId, permissions: Array.Empty<string>(),
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
+
+    /// <summary>
+    /// A raw connection on the restricted login with the same GUCs the session factory would set for an
+    /// Identity-mode caller. Used to state what the POLICIES do, independently of any repository.
+    /// <para>These are SESSION-level (<c>is_local=false</c>) rather than the factory's transaction-local
+    /// settings, because there is no transaction here. That is safe only because Npgsql issues
+    /// <c>DISCARD ALL</c> when a pooled connection is returned; if the data source is ever built with
+    /// <c>No Reset On Close=true</c>, these GUCs would leak into the next test and quietly widen it.</para>
+    /// </summary>
+    private async Task<NpgsqlConnection> OpenIdentitySessionAsync(string userId, string? schoolId)
+    {
+        var conn = await _appDataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand(
+            "SELECT set_config('app.current_school_id', @s, false), set_config('app.current_user_id', @u, false)", conn);
+        cmd.Parameters.AddWithValue("s", schoolId ?? string.Empty);
+        cmd.Parameters.AddWithValue("u", userId);
+        await cmd.ExecuteNonQueryAsync();
+        return conn;
+    }
+
+    private async Task<NpgsqlConnection> OpenBypassSessionAsync()
+    {
+        var conn = await _appDataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand("SELECT set_config('app.bypass_rls', 'on', false)", conn);
+        await cmd.ExecuteNonQueryAsync();
+        return conn;
+    }
+
+    private static async Task<long> ScalarAsync(NpgsqlConnection conn, string sql)
+    {
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        return (long)(await cmd.ExecuteScalarAsync())!;
+    }
 
     private sealed class FixedTimeProvider(DateTime utcNow) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => new(DateTime.SpecifyKind(utcNow, DateTimeKind.Utc));
     }
 
-    private static async Task User(NpgsqlConnection conn, string id, string name, string? email, int? gradeLevel = null)
+    private static async Task User(
+        NpgsqlConnection conn, string id, string name, string? email, int? gradeLevel = null, string? schoolId = null)
     {
         await using var cmd = new NpgsqlCommand(
-            """INSERT INTO "users"("id","name","email","gradeLevel") VALUES(@id,@n,@e,@g)""", conn);
+            """INSERT INTO "users"("id","name","email","gradeLevel","schoolId") VALUES(@id,@n,@e,@g,@s)""", conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("n", name);
         cmd.Parameters.AddWithValue("e", (object?)email ?? DBNull.Value);
         cmd.Parameters.AddWithValue("g", (object?)gradeLevel ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("s", (object?)schoolId ?? DBNull.Value);
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -263,26 +518,18 @@ public sealed class ParentPortalRepositoryTests : IClassFixture<ParentPortalRepo
         await cmd.ExecuteNonQueryAsync();
     }
 
-    public sealed class Fixture : IAsyncLifetime
+    /// <summary>
+    /// formmaps#125: production policies + a restricted login. The four tables this fixture models are all
+    /// policied in production (005-sensitive users; 003-fk-users notifications / evaluation_groups /
+    /// student_parent_links; 009-parent-links the parent's own links), so all four are named — naming a
+    /// table production does not policy, or omitting one it does, fails the fixture rather than quietly
+    /// leaving a hole.
+    /// </summary>
+    public sealed class Fixture : RlsEnabledDatabaseFixture
     {
-        private readonly PostgreSqlContainer _container = new PostgreSqlBuilder().WithImage("postgres:16-alpine").Build();
+        protected override string SchemaResourceFileName => "parent-portal-schema.sql";
 
-        public string ConnectionString => _container.GetConnectionString();
-
-        public async Task InitializeAsync()
-        {
-            await _container.StartAsync();
-            await using var connection = new NpgsqlConnection(ConnectionString);
-            await connection.OpenAsync();
-            var assembly = Assembly.GetExecutingAssembly();
-            var name = assembly.GetManifestResourceNames()
-                .Single(n => n.EndsWith("parent-portal-schema.sql", StringComparison.Ordinal));
-            await using var stream = assembly.GetManifestResourceStream(name)!;
-            using var sr = new StreamReader(stream);
-            await using var cmd = new NpgsqlCommand(await sr.ReadToEndAsync(), connection);
-            await cmd.ExecuteNonQueryAsync();
-        }
-
-        public async Task DisposeAsync() => await _container.DisposeAsync();
+        protected override IReadOnlyCollection<string> PoliciedTables =>
+            ["users", "student_parent_links", "notifications", "evaluation_groups"];
     }
 }

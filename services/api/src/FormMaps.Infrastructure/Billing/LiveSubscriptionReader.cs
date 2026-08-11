@@ -16,14 +16,41 @@ namespace FormMaps.Infrastructure.Billing;
 public sealed class LiveSubscriptionReader(IFormMapsDatabaseSessionFactory databaseSessionFactory) : ILiveSubscriptionReader
 {
     /// <summary>
-    /// formmaps#108. ORDER BY + LIMIT 1 are load-bearing, not cosmetic. schema.prisma's
-    /// <c>@@unique([userId])</c> on user_subscriptions exists in NO migration (api/prisma/migrations
-    /// creates only the PK, the NON-unique "user_subscriptions_userId_idx" and the FKs), so production
-    /// may hold several rows for one user. Without an ORDER BY this SELECT returned whichever row the
-    /// scan reached first -- heap order, which changes under VACUUM/UPDATE -- so GET /status could report
-    /// a stale cancelled row while an active one existed. <c>createdDate DESC</c> mirrors legacy
-    /// api/src/routes/user.ts:314 (<c>findFirst orderBy: { createdDate: "desc" }</c>); <c>"id"</c> is the
-    /// tie-break that makes same-millisecond rows deterministic too, since createdDate alone is not unique.
+    /// formmaps#108. ORDER BY + LIMIT 1 are DEFENCE IN DEPTH, not a correctness requirement.
+    ///
+    /// <para>CORRECTED 2026-08-10 -- an earlier version of this comment asserted that
+    /// <c>@@unique([userId])</c> "exists in NO migration, so production may hold several rows for one
+    /// user". That premise is REFUTED and must not be repeated. Production is believed to carry the
+    /// unique index <c>user_subscriptions_userId_key</c>, because prod was built with
+    /// <c>prisma db push</c> straight from schema.prisma, which realises schema.prisma:534's
+    /// <c>@@unique([userId])</c>.
+    ///
+    /// <para>PROVENANCE, stated precisely so the next reader knows what to trust: that is an inference
+    /// from the build method, plus a <c>\d user_subscriptions</c> reading recorded in a 2026-08-07
+    /// comment on formmaps#108. Neither is a committed artefact in this repo, and neither has been
+    /// re-confirmed since. Do NOT upgrade this to "measured" without re-running it -- an earlier
+    /// revision of this comment said exactly that, which is worse than the error it replaced because it
+    /// instructs the reader not to re-derive. An uncommitted measurement from a past session is not
+    /// evidence; that rule is written into domain-status.manifest.json for the same reason.</para>
+    ///
+    /// <para>The migration history was separately reconciled by
+    /// api/prisma/migrations/20260808000000_user_subscriptions_userid_unique, whose
+    /// <c>CREATE UNIQUE INDEX IF NOT EXISTS</c> is a no-op against prod and a real fix for any database
+    /// replayed from prisma/migrations/. So a user owns AT MOST ONE row, and this SELECT's WHERE already
+    /// matches at most one.</para>
+    ///
+    /// <para>The ordering stays anyway because it is free and it removes a silent dependency on an index
+    /// rather than on the query: a database restored from a replay that stops before 2026-08-08, or one
+    /// where the index is dropped during maintenance, still gets a deterministic read instead of heap
+    /// order (which shifts under VACUUM/UPDATE and could surface a stale cancelled row while an active
+    /// one existed). <c>createdDate DESC</c> mirrors legacy api/src/routes/user.ts:314
+    /// (<c>findFirst orderBy: { createdDate: "desc" }</c>); <c>"id"</c> is the tie-break for
+    /// same-millisecond rows, since createdDate alone is not unique.</para>
+    ///
+    /// <para>Separately real and NOT fixed here: user_subscriptions still has other migration/schema
+    /// drift (the stripeSubscriptionId unique, the planId index, and the stripeSubscriptionId /
+    /// cancelAtPeriodEnd COLUMNS are all absent from the history), and ~30 tables have no CREATE TABLE at
+    /// all. That is formmaps#126, not this one.</para>
     /// </summary>
     private const string SubscriptionSql = """
         SELECT "id", "status", "isActive", "nextBillingDate", "planId", "stripeSubscriptionId"

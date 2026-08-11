@@ -11,15 +11,27 @@ namespace FormMaps.IntegrationTests.Billing;
 /// formmaps#108. A DEDICATED Testcontainers harness for the duplicate-row shape that
 /// <see cref="BillingDatabaseFixture" /> cannot reach: its billing-shadow-schema.sql declares
 /// <c>"userId" TEXT NOT NULL UNIQUE</c> on user_subscriptions, so a second row for the same user is
-/// rejected by construction and every test built on it silently assumes a constraint production does not
-/// have.
+/// rejected by construction.
 ///
-/// <para>The DDL below is deliberately the SHAPE PRODUCTION ACTUALLY HAS: schema.prisma:534 declares
-/// <c>@@unique([userId])</c>, but grepping api/prisma/migrations for user_subscriptions finds only the
-/// CREATE TABLE, <c>user_subscriptions_pkey</c>, the NON-unique <c>user_subscriptions_userId_idx</c> and
-/// the two FKs -- no unique index on userId is ever created. So duplicates are possible in prod, and the
-/// reader/writer must behave deterministically WITHOUT one. Columns and types are copied from
-/// api/prisma/migrations/20260505140750_init/migration.sql (TIMESTAMP(3), not TIMESTAMPTZ) so the
+/// <para>CORRECTED 2026-08-10 -- READ THIS BEFORE TRUSTING THE DDL BELOW. An earlier version of this
+/// comment claimed the DDL was "the SHAPE PRODUCTION ACTUALLY HAS", on the premise that
+/// <c>@@unique([userId])</c> is declared in schema.prisma but emitted by no migration. That premise is
+/// REFUTED and must not be repeated. Production is BELIEVED to carry
+/// <c>user_subscriptions_userId_key</c> -- inferred from prod having been built with
+/// <c>prisma db push</c> straight from schema.prisma:534, plus a <c>\d</c> reading recorded in a
+/// 2026-08-07 comment on formmaps#108. That is NOT a committed measurement and has not been
+/// re-confirmed; do not upgrade it to "measured" without re-running it. The migration history was
+/// separately reconciled by api/prisma/migrations/20260808000000_user_subscriptions_userid_unique.
+/// Duplicate rows are therefore not believed reachable in production today -- which is precisely why
+/// these tests keep exercising the duplicate shape rather than deleting it.</para>
+///
+/// <para>This fixture is kept, and its DDL deliberately still omits the unique index, because the
+/// reader's ORDER BY/LIMIT and the writer's row scope are DEFENCE IN DEPTH that must not silently
+/// evaporate: they exist so the billing code does not depend on an index it does not control (a replay
+/// from a history that stops before 2026-08-08, or an index dropped during maintenance). This harness is
+/// the only thing that can go red if someone deletes them as "redundant now that the unique exists" --
+/// so treat it as a CONSTRAINT-ABSENT contract test, not as a model of prod. Columns and types are copied
+/// from api/prisma/migrations/20260505140750_init/migration.sql (TIMESTAMP(3), not TIMESTAMPTZ) so the
 /// nextBillingDate/updatedAt round-trips exercise the same Npgsql type mapping production does.</para>
 ///
 /// <para>The schema is a const rather than an embedded .sql resource on purpose: adding one would mean
@@ -30,9 +42,10 @@ public sealed class LiveSubscriptionDuplicateRowFixture : IAsyncLifetime
 {
     /// <remarks>
     /// stripeSubscriptionId and cancelAtPeriodEnd are declared from schema.prisma, not from a migration:
-    /// no migration in api/prisma/migrations mentions either column (see the class remarks on drift).
-    /// stripeSubscriptionId is left NON-unique here too; only userId's missing unique is under test, and
-    /// the seeds give every row a distinct id anyway.
+    /// no migration in api/prisma/migrations mentions either COLUMN. That particular drift is still real
+    /// and is tracked as formmaps#126 -- unlike the <c>@@unique([userId])</c> claim, which is refuted (see
+    /// the class summary). stripeSubscriptionId is left NON-unique here too; only the absent userId unique
+    /// is under test, and the seeds give every row a distinct id anyway.
     /// </remarks>
     private const string SchemaDdl = """
         CREATE TABLE "user_subscriptions" (
@@ -52,8 +65,10 @@ public sealed class LiveSubscriptionDuplicateRowFixture : IAsyncLifetime
             CONSTRAINT "user_subscriptions_pkey" PRIMARY KEY ("id")
         );
 
-        -- NON-unique, exactly as the init migration creates it. There is deliberately NO
-        -- "user_subscriptions_userId_key" here: production has no such index either.
+        -- NON-unique, exactly as the init migration creates it. "user_subscriptions_userId_key" is
+        -- deliberately OMITTED so the defence-in-depth ordering/row-scope stays exercised. Production
+        -- DOES have that index (see the class summary) -- this omission is the point of the fixture, not
+        -- a claim about prod.
         CREATE INDEX "user_subscriptions_userId_idx" ON "user_subscriptions"("userId");
         """;
 
@@ -84,7 +99,10 @@ public sealed class LiveSubscriptionDuplicateRowFixture : IAsyncLifetime
 
 /// <summary>
 /// formmaps#108. Proves the live user_subscriptions read/write is deterministic when a user owns MORE
-/// THAN ONE row -- the state the missing <c>@@unique([userId])</c> makes reachable in production.
+/// THAN ONE row. That state is NOT reachable in production -- prod carries
+/// <c>user_subscriptions_userId_key</c> (see <see cref="LiveSubscriptionDuplicateRowFixture" />) -- so
+/// read these as a contract on the defence-in-depth ordering and row scope, which must keep working on
+/// any database that lacks the index, not as a description of live data.
 ///
 /// <para>Before the fix, <see cref="LiveSubscriptionReader" />'s SELECT had no ORDER BY and no LIMIT, so
 /// it returned whichever row the scan reached first (heap order), and
@@ -179,8 +197,10 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
         Assert.False(newer.IsActive);
         Assert.NotEqual(UpdatedAtSentinel, newer.UpdatedAt);
 
-        // ...and the OTHER row is untouched. Scoped by userId alone this row was also cancelled, which is
-        // how a user with two rows lost an entitlement they never asked to cancel.
+        // ...and the OTHER row is untouched. Scoped by userId alone this row is also cancelled, i.e. a
+        // user with two rows would lose an entitlement they never asked to cancel. No production user is
+        // known to have hit this -- the unique index prevents the two-row state there; this is the
+        // failure the row scope exists to make impossible on a database without it.
         Assert.Equal("trialing", older.Status);
         Assert.True(older.IsActive);
         Assert.Equal(UpdatedAtSentinel, older.UpdatedAt);
