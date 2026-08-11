@@ -2,6 +2,7 @@ using System.Data;
 using System.Data.Common;
 using System.Text.Json;
 using FormMaps.Application.Assessments;
+using FormMaps.Application.Audit;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using Microsoft.Extensions.Logging;
@@ -21,8 +22,20 @@ namespace FormMaps.Infrastructure.Assessments;
 /// the <c>/complete</c> (timeout) write, guarding on <c>status='Completed'</c> alone would let a timed-out
 /// session be re-submitted — so both the pre-check and the UPDATE guard test <c>isCompleted</c> too.
 /// </summary>
+/// <remarks>
+/// formmaps#52 Task 11: the two <c>audit.assessment.pcaexam.*</c> events this class already emitted are
+/// now DURABLE as well as logged. Both call sites keep their existing <c>logger.LogInformation</c> line
+/// verbatim (log-based alerting still works) and additionally persist a row via
+/// <see cref="IAuditEventWriter" />, fired from the same post-commit point the log line already fires
+/// from — so a row can never claim a write that did not land. Both go through
+/// <see cref="WriteAuditAsync" />, which fixes the subject type and the cancellation contract in one
+/// place. This is a LIVE candidate-facing path: the audit write is fail-soft-but-alert inside
+/// <c>AuditEventWriter</c> (logged at Error under <c>audit.write_failed</c>, never thrown), so an audit
+/// outage cannot fail a candidate's exam start or lose their submitted answers.
+/// </remarks>
 public sealed class PcaExamWriter(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
+    IAuditEventWriter auditEventWriter,
     ILogger<PcaExamWriter> logger) : IPcaExamWriter
 {
     // -------------------------------------------------------------------- start
@@ -125,6 +138,18 @@ public sealed class PcaExamWriter(
         logger.LogInformation(
             "audit.assessment.pcaexam.started sessionId={SessionId} actorUserId={ActorUserId} examId={ExamId}",
             sessionId, userId, examId);
+
+        // Below every gate this method has — the exam lookup AND the retake block — and below the
+        // commit, so the durable row exists only for a session that actually exists. An event emitted
+        // above the retake block would let a barred candidate manufacture an unbounded trail of
+        // "attempts" at an exam they never re-started. The subject is the GENERATED session id, the
+        // only handle a later reader has on this attempt; the actor is the caller, since /start is
+        // self-scoped (the endpoint passes context.Tenant.UserId as userId).
+        await WriteAuditAsync(
+            "audit.assessment.pcaexam.started",
+            sessionId,
+            userId,
+            new Dictionary<string, object?> { ["examId"] = examId });
 
         var payload = new ExamStartPayload(
             SessionId: sessionId,
@@ -278,10 +303,68 @@ public sealed class PcaExamWriter(
             "audit.assessment.pcaexam.submitted sessionId={SessionId} actorUserId={ActorUserId} subjectUserId={SubjectUserId} examId={ExamId} score={Score} correct={Correct} total={Total}",
             sessionId, context.Tenant?.UserId, ownerUserId, examId, scorePercent, correct, totalQuestions);
 
+        // Same position as the log line, and for the same reason it sits there: below the corpus #18
+        // final-session guard, below the conditional UPDATE's fail-closed 0-rows check, and below the
+        // commit. A replayed submit is refused before this point, so one graded exam produces exactly
+        // one row — a second would misreport a refused answer-key replay as a real submission.
+        await WriteAuditAsync(
+            "audit.assessment.pcaexam.submitted",
+            sessionId,
+            context.Tenant?.UserId,
+            new Dictionary<string, object?>
+            {
+                ["score"] = scorePercent,
+                ["correct"] = correct,
+                ["total"] = totalQuestions,
+            });
+
         return new PcaExamSubmitOutcome(
             PcaExamWriteStatus.Ok,
             new ExamSubmitResult(sessionId, scorePercent, correct, totalQuestions, "Completed"));
     }
+
+    // -------------------------------------------------------------------- audit
+
+    /// <summary>
+    /// The durable half of this class's audit (formmaps#52 Task 11). Called immediately after each
+    /// existing <c>audit.assessment.pcaexam.*</c> log line, and — like that line — only ever AFTER the
+    /// session's own commit has succeeded.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The subject is the exam SESSION, not the candidate: a session id identifies one attempt, which
+    /// is what a compliance reader needs to reconcile against the graded row, and it keeps the taker's
+    /// identity out of a column that is queried across tenants. <c>ActorRole</c>/<c>SchoolId</c> stay
+    /// null, keeping the durable row congruent with the log line rather than reaching into the
+    /// <see cref="RequestContext" /> for fields this domain has never audited.
+    /// </para>
+    /// <para>
+    /// Metadata is IDs, counts and one percentage — never a question, an answer, or anything else the
+    /// candidate produced. <c>audit_events</c> is append-only and retained indefinitely; an exam
+    /// response has no business there, and the answer key least of all.
+    /// </para>
+    /// <para>
+    /// <see cref="CancellationToken.None" /> is passed deliberately, per
+    /// <see cref="IAuditEventWriter.WriteAsync" />'s contract: this runs after the caller's commit, and
+    /// <c>AuditEventWriter</c> re-throws <see cref="OperationCanceledException" /> rather than
+    /// swallowing it — so passing the request token would let a candidate closing the tab in the gap
+    /// between commit and audit raise from a submission that had already been graded and stored. Every
+    /// other failure is fail-soft-but-alert inside the writer, so this call cannot change what the
+    /// candidate sees.
+    /// </para>
+    /// </remarks>
+    private Task WriteAuditAsync(
+        string eventType, string sessionId, string? actorUserId, IReadOnlyDictionary<string, object?> metadata) =>
+        auditEventWriter.WriteAsync(
+            new AuditEvent(
+                EventType: eventType,
+                ActorUserId: actorUserId,
+                ActorRole: null,
+                SchoolId: null,
+                SubjectType: "pca_exam_session",
+                SubjectId: sessionId,
+                Metadata: metadata),
+            CancellationToken.None);
 
     // ------------------------------------------------------------------ helpers
 

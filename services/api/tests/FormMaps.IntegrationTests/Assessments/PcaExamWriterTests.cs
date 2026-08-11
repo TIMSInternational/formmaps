@@ -2,8 +2,10 @@ using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
+using FormMaps.Infrastructure.Audit;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.Assessments;
@@ -109,6 +111,89 @@ public sealed class PcaExamWriterTests : IClassFixture<PcaExamWriteDatabaseFixtu
 
         Assert.Equal(PcaExamWriteStatus.Ok, outcome.Status);
         Assert.Equal(2, await CountSessionsAsync(userId, examId)); // a fresh session was created
+    }
+
+    /// <summary>
+    /// The start half of the audit-events retrofit (plan Task 11 of formmaps#52). Until now "audit
+    /// event" here meant one structured log line, which no compliance surface can query and which a
+    /// log-retention window eventually deletes; starting an exam must ALSO persist a row in
+    /// <c>audit_events</c>. The WHOLE row is asserted rather than a count, because eight of the nine
+    /// written columns are TEXT and six are nullable — a count stays green for a writer that swapped
+    /// actorUserId with subjectId, or dropped the metadata entirely.
+    /// </summary>
+    [Fact]
+    public async Task Start_persists_a_pii_free_row_to_audit_events()
+    {
+        var userId = await SeedUserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var examId = await SeedExamAsync(conn, name: "Pattern", type: "PatternRecognition", timeLimitMinutes: 5);
+        await SeedQuestionAsync(conn, examId, 1, 1);
+
+        var (writer, _) = MakeWriter();
+        var outcome = await writer.StartExamAsync(
+            Ctx(userId, name: "Ada Lovelace", email: "ada@analytical.engine"), examId, userId);
+
+        var sessionId = outcome.Payload!.SessionId;
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.assessment.pcaexam.started", sessionId);
+        Assert.Equal("audit.assessment.pcaexam.started", row.EventType);
+        Assert.Equal(userId, row.ActorUserId);
+        Assert.Equal("pca_exam_session", row.SubjectType);
+        Assert.Equal(sessionId, row.SubjectId);
+        Assert.Equal("success", row.Outcome);
+        Assert.False(string.IsNullOrWhiteSpace(row.Id));
+
+        // Metadata carries the one extra id the log line already carried — which exam was started —
+        // and nothing else. Without it the row cannot say WHAT was attempted, only that something was.
+        Assert.NotNull(row.MetadataJson);
+        using var metadata = JsonDocument.Parse(row.MetadataJson!);
+        Assert.Equal(examId, metadata.RootElement.GetProperty("examId").GetString());
+
+        AssertPiiFree(row);
+    }
+
+    /// <summary>
+    /// Negative control: a start rejected because the exam does not exist creates no session, so it
+    /// must persist no audit row. Without this, a writer that emitted the event on entry — before the
+    /// exam lookup — would still satisfy the happy-path test above, and the table would report attempts
+    /// at exams that were never begun.
+    /// </summary>
+    [Fact]
+    public async Task Start_on_a_nonexistent_exam_persists_no_audit_event()
+    {
+        var userId = await SeedUserId();
+        var (writer, _) = MakeWriter();
+
+        var outcome = await writer.StartExamAsync(Ctx(userId), "no-such-exam", userId);
+
+        Assert.Equal(PcaExamWriteStatus.ExamNotFound, outcome.Status);
+        // By ACTOR, not subject: this path never produces a session id to filter on, so "no started
+        // event anywhere attributable to this user" is the only form the claim can take.
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync(
+            "audit.assessment.pcaexam.started", actorUserId: userId));
+    }
+
+    /// <summary>
+    /// Negative control: a retake blocked by an existing completed session creates nothing, so it
+    /// persists nothing. This is the gate-ordering pin for start — an event emitted above the retake
+    /// block would let a candidate manufacture an unbounded audit trail of attempts at an exam they
+    /// are barred from re-taking.
+    /// </summary>
+    [Fact]
+    public async Task Start_that_is_blocked_as_a_retake_persists_no_audit_event()
+    {
+        var userId = await SeedUserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var examId = await SeedExamAsync(conn, name: "Pattern", type: "PatternRecognition", timeLimitMinutes: 5);
+        await SeedQuestionAsync(conn, examId, 1, 1);
+        var sessionId = await SeedSessionAsync(conn, examId, userId, status: "Completed", isCompleted: true);
+
+        var (writer, _) = MakeWriter();
+        var outcome = await writer.StartExamAsync(Ctx(userId), examId, userId);
+
+        Assert.Equal(PcaExamWriteStatus.AlreadyCompleted, outcome.Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.pcaexam.started", subjectId: sessionId));
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync(
+            "audit.assessment.pcaexam.started", actorUserId: userId));
     }
 
     // -------------------------------------------------------------------- submit
@@ -261,6 +346,149 @@ public sealed class PcaExamWriterTests : IClassFixture<PcaExamWriteDatabaseFixtu
         Assert.Contains($"subjectUserId={ownerId}", audit.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The submit half of the audit-events retrofit (plan Task 11). Same argument as
+    /// <see cref="Start_persists_a_pii_free_row_to_audit_events" /> for asserting the whole row, plus
+    /// the three scalars the existing log line carries — score/correct/total — which are what make the
+    /// durable row reconcilable against the graded session without re-reading the exam data itself.
+    /// </summary>
+    [Fact]
+    public async Task Submit_persists_a_pii_free_row_to_audit_events()
+    {
+        var ownerId = await SeedUserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var examId = await SeedExamAsync(conn, name: "Pattern", type: "PatternRecognition", timeLimitMinutes: 5);
+        await SeedQuestionAsync(conn, examId, 1, 1);
+        await SeedQuestionAsync(conn, examId, 2, 2);
+        await SeedQuestionAsync(conn, examId, 3, 3);
+        await SeedQuestionAsync(conn, examId, 4, 4);
+        var sessionId = await SeedSessionAsync(conn, examId, ownerId, status: "InProgress", isCompleted: false);
+
+        // 2 of 4 correct -> an exact 50.0, so the metadata assertion is not a float-formatting test.
+        var answers = new SubmitAnswer[] { new(1, "1", 0), new(2, "9", 0), new(3, "3", 0), new(4, "9", 0) };
+
+        var (writer, _) = MakeWriter();
+        var outcome = await writer.SubmitExamAsync(
+            Ctx(ownerId, name: "Ada Lovelace", email: "ada@analytical.engine"), sessionId, answers, timeTaken: 42);
+
+        Assert.Equal(PcaExamWriteStatus.Ok, outcome.Status);
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.assessment.pcaexam.submitted", sessionId);
+        Assert.Equal("audit.assessment.pcaexam.submitted", row.EventType);
+        Assert.Equal(ownerId, row.ActorUserId);
+        Assert.Equal("pca_exam_session", row.SubjectType);
+        Assert.Equal(sessionId, row.SubjectId);
+        Assert.Equal("success", row.Outcome);
+        Assert.False(string.IsNullOrWhiteSpace(row.Id));
+
+        Assert.NotNull(row.MetadataJson);
+        using var metadata = JsonDocument.Parse(row.MetadataJson!);
+        Assert.Equal(50d, metadata.RootElement.GetProperty("score").GetDouble());
+        Assert.Equal(2, metadata.RootElement.GetProperty("correct").GetInt32());
+        Assert.Equal(4, metadata.RootElement.GetProperty("total").GetInt32());
+
+        AssertPiiFree(row);
+    }
+
+    /// <summary>
+    /// The durable counterpart of
+    /// <see cref="Submit_audit_records_the_caller_as_actor_and_the_owner_as_subject" />: a privileged
+    /// role may submit another user's session (ownership is enforced at the route), and the row that
+    /// outlives the log line must attribute the write to the CALLER. Recording the session owner
+    /// instead would make the audit trail exonerate whoever actually pressed submit — precisely the
+    /// question this table exists to answer.
+    /// </summary>
+    [Fact]
+    public async Task Submit_audit_row_records_the_caller_as_actor_not_the_session_owner()
+    {
+        var ownerId = await SeedUserId();
+        var callerId = await SeedUserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var examId = await SeedExamAsync(conn, name: "Pattern", type: "PatternRecognition", timeLimitMinutes: 5);
+        await SeedQuestionAsync(conn, examId, 1, 1);
+        var sessionId = await SeedSessionAsync(conn, examId, ownerId, status: "InProgress", isCompleted: false);
+
+        var (writer, _) = MakeWriter();
+        var outcome = await writer.SubmitExamAsync(Ctx(callerId), sessionId, [new(1, "1", 0)], timeTaken: 1);
+
+        Assert.Equal(PcaExamWriteStatus.Ok, outcome.Status);
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.assessment.pcaexam.submitted", sessionId);
+        Assert.Equal(callerId, row.ActorUserId);
+        Assert.NotEqual(ownerId, row.ActorUserId);
+    }
+
+    /// <summary>
+    /// CORPUS #18, at the audit layer: a completed session is rejected before any write, so it must
+    /// persist no audit row. A row here would be worse than noise — it would record a submission that
+    /// never happened against a session whose score was never touched, and a compliance reader would
+    /// see two submissions where the answer key was replayed once and refused.
+    /// </summary>
+    [Fact]
+    public async Task Submit_on_a_completed_session_persists_no_audit_event()
+    {
+        var userId = await SeedUserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var examId = await SeedExamAsync(conn, name: "Pattern", type: "PatternRecognition", timeLimitMinutes: 5);
+        await SeedQuestionAsync(conn, examId, 1, 1);
+        await SeedQuestionAsync(conn, examId, 2, 2);
+        var sessionId = await SeedSessionAsync(
+            conn, examId, userId, status: "Completed", isCompleted: true, scorePercentage: 50, correctAnswers: 1);
+
+        var (writer, _) = MakeWriter();
+        var outcome = await writer.SubmitExamAsync(
+            Ctx(userId), sessionId, [new(1, "1", 0), new(2, "2", 0)], timeTaken: 1);
+
+        Assert.Equal(PcaExamWriteStatus.AlreadyCompleted, outcome.Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.pcaexam.submitted", subjectId: sessionId));
+    }
+
+    /// <summary>
+    /// The same control for the OTHER final state. A time-expired session (isCompleted=true,
+    /// status='TimeExpired') is finalized by Node's /complete, not by this writer; a submit against it
+    /// is refused, and refusing it must also mean persisting nothing.
+    /// </summary>
+    [Fact]
+    public async Task Submit_on_a_time_expired_session_persists_no_audit_event()
+    {
+        var userId = await SeedUserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var examId = await SeedExamAsync(conn, name: "Pattern", type: "PatternRecognition", timeLimitMinutes: 5);
+        await SeedQuestionAsync(conn, examId, 1, 1);
+        var sessionId = await SeedSessionAsync(conn, examId, userId, status: "TimeExpired", isCompleted: true);
+
+        var (writer, _) = MakeWriter();
+        var outcome = await writer.SubmitExamAsync(Ctx(userId), sessionId, [new(1, "1", 0)], timeTaken: 1);
+
+        Assert.Equal(PcaExamWriteStatus.AlreadyCompleted, outcome.Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.pcaexam.submitted", subjectId: sessionId));
+    }
+
+    /// <summary>
+    /// Exactly-once, at the audit layer. Two concurrent submits are serialized by the row lock and only
+    /// one scores; the loser 409s. The audit table must show that — one graded exam, one row — or every
+    /// double-click during a timed assessment would look like a repeated submission after the fact.
+    /// </summary>
+    [Fact]
+    public async Task Two_concurrent_submits_persist_exactly_one_audit_event()
+    {
+        var userId = await SeedUserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var examId = await SeedExamAsync(conn, name: "Pattern", type: "PatternRecognition", timeLimitMinutes: 5);
+        await SeedQuestionAsync(conn, examId, 1, 1);
+        await SeedQuestionAsync(conn, examId, 2, 2);
+        var sessionId = await SeedSessionAsync(conn, examId, userId, status: "InProgress", isCompleted: false);
+
+        var (writerA, _) = MakeWriter();
+        var (writerB, _) = MakeWriter();
+        var answers = new SubmitAnswer[] { new(1, "1", 0), new(2, "2", 0) };
+
+        var results = await Task.WhenAll(
+            writerA.SubmitExamAsync(Ctx(userId), sessionId, answers, timeTaken: 1),
+            writerB.SubmitExamAsync(Ctx(userId), sessionId, answers, timeTaken: 1));
+
+        Assert.Equal(1, results.Count(r => r.Status == PcaExamWriteStatus.Ok));
+        Assert.Equal(1, await _fixture.CountAuditEventsAsync("audit.assessment.pcaexam.submitted", subjectId: sessionId));
+    }
+
     [Fact]
     public async Task Submit_on_a_nonexistent_session_is_session_not_found()
     {
@@ -303,16 +531,40 @@ public sealed class PcaExamWriterTests : IClassFixture<PcaExamWriteDatabaseFixtu
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
-        return (new PcaExamWriter(factory, logger), logger);
+        return (new PcaExamWriter(factory, AuditWriter(factory), logger), logger);
     }
 
-    private static RequestContext Ctx(string userId) =>
+    /// <summary>
+    /// The real <see cref="AuditEventWriter"/> (formmaps#52 Task 11), never a fake: the thing under test
+    /// is that a start/submit lands a row in <c>audit_events</c>, and a substituted writer would make
+    /// that assertion about the substitute instead. Its own logger is NullLogger — audit-write failures
+    /// are fail-soft and land on THAT logger, not on this class's CapturingLogger, which asserts the
+    /// log-line half.
+    /// </summary>
+    private static AuditEventWriter AuditWriter(NpgsqlFormMapsDatabaseSessionFactory factory) =>
+        new(factory, NullLogger<AuditEventWriter>.Instance);
+
+    private static RequestContext Ctx(string userId, string? name = null, string? email = null) =>
         RequestContext.Authenticated(
-            new RequestActor(userId, "student", $"{userId}@e.st", "Test User"),
+            new RequestActor(userId, "student", email ?? $"{userId}@e.st", name ?? "Test User"),
             schoolId: null,
             permissions: Array.Empty<string>(),
             tokenSource: TokenSource.DevelopmentHeader,
             isDevelopmentOverride: true);
+
+    /// <summary>
+    /// The persisted row must contain no PII even when the actor in scope carries a real name and
+    /// email — <c>audit_events</c> is append-only and retained indefinitely, so a leak here is
+    /// permanent. Every written column is concatenated so a leak into ANY of them fails, not just the
+    /// one a future reader thought to check.
+    /// </summary>
+    private static void AssertPiiFree(PcaExamWriteDatabaseFixture.AuditEventRow row)
+    {
+        var serialized = string.Join("|", row.Id, row.EventType, row.ActorUserId, row.ActorRole,
+            row.SchoolId, row.SubjectType, row.SubjectId, row.Outcome, row.MetadataJson);
+        Assert.DoesNotContain("Ada Lovelace", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("ada@analytical.engine", serialized, StringComparison.Ordinal);
+    }
 
     private async Task<string> SeedUserId() => await Task.FromResult("u-" + Guid.NewGuid().ToString("N"));
 
