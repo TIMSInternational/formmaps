@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using FormMaps.Application.Assessments;
+using FormMaps.Application.Audit;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using Microsoft.Extensions.Logging;
@@ -22,8 +23,17 @@ namespace FormMaps.Infrastructure.Assessments;
 /// </summary>
 public sealed class Question360Writer(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
+    IAuditEventWriter auditEventWriter,
     ILogger<Question360Writer> logger) : IQuestion360Writer
 {
+    /// <summary>
+    /// One subject type for the whole catalog. Every mutation here targets a row of the same global
+    /// <c>questions_360</c> bank, so the action lives in the event type (created/updated/activated/
+    /// deactivated/deleted/bulk_created) and the subject type stays constant — which is what lets a
+    /// compliance reader ask "everything that ever happened to question X" with a single filter pair.
+    /// </summary>
+    private const string AuditSubjectType = "question_360";
+
     public async Task<Question360WriteOutcome> CreateAsync(
         RequestContext context, JsonElement body, CancellationToken cancellationToken = default)
     {
@@ -38,6 +48,7 @@ public sealed class Question360Writer(
         await session.CommitAsync(cancellationToken);
 
         logger.LogInformation("audit.question360.created questionId={QuestionId}", row.Id);
+        await WriteAuditAsync(context, "audit.question360.created", row.Id);
         return new Question360WriteOutcome(Question360WriteStatus.Created, row, null);
     }
 
@@ -66,6 +77,8 @@ public sealed class Question360Writer(
 
         await session.CommitAsync(cancellationToken);
         logger.LogInformation("audit.question360.updated questionId={QuestionId}", id);
+        // Below the Missing early return above, so this cannot record an edit to a question that does not exist.
+        await WriteAuditAsync(context, "audit.question360.updated", id);
         return new Question360WriteOutcome(Question360WriteStatus.Ok, row, null);
     }
 
@@ -89,6 +102,11 @@ public sealed class Question360Writer(
 
         await session.CommitAsync(cancellationToken);
         logger.LogInformation("audit.question360.{Action} questionId={QuestionId}", isActive ? "activated" : "deactivated", id);
+        // Two event TYPES from one call site, mirroring the log line's {Action} placeholder rather than one
+        // "setActive" event with the flag in metadata: the taxonomy the spec seeds from the existing log lines
+        // lists activated and deactivated separately, and an auditor filtering for deactivations of a question
+        // should not have to know to look inside a metadata blob to find them.
+        await WriteAuditAsync(context, isActive ? "audit.question360.activated" : "audit.question360.deactivated", id);
         return new Question360WriteOutcome(Question360WriteStatus.Ok, row, null);
     }
 
@@ -127,6 +145,9 @@ public sealed class Question360Writer(
 
         await session.CommitAsync(cancellationToken);
         logger.LogInformation("audit.question360.deleted questionId={QuestionId}", id);
+        // Below BOTH of this method's early returns — the child-guard (the parent is still active, so a
+        // "deleted" event would be an immutable claim contradicting the catalog) and Missing.
+        await WriteAuditAsync(context, "audit.question360.deleted", id);
         return Question360DeleteStatus.Deleted;
     }
 
@@ -171,8 +192,73 @@ public sealed class Question360Writer(
         }
 
         logger.LogInformation("audit.question360.bulk_created createdCount={CreatedCount} totalRequested={TotalRequested}", created, total);
+        // ONE summary event for the batch, not one per item, and — uniquely here — with a NULL subject: the
+        // batch is the act, and its items each got a fresh row id that nothing else references. That is the
+        // production column's documented shape ("nullable: bulk operations may have no single subject").
+        //
+        // Also unlike every other site in this class, this fires even when NOTHING was created, mirroring the
+        // unconditional log line above it. The counts are in the metadata, so a createdCount:0 event claims no
+        // write happened; and an admin whose bulk mutation of the global bank wholly failed is precisely what
+        // an auditor asks about. Outcome stays 'success' — it describes the request, which completed and
+        // returned its per-item report; the per-item failures are the report's content, not this call's.
+        await WriteAuditAsync(context, "audit.question360.bulk_created", questionId: null,
+            metadata: new Dictionary<string, object?>
+            {
+                ["createdCount"] = created,
+                ["totalRequested"] = total,
+            });
         return new Question360BulkResult(created, total, errors);
     }
+
+    // -------------------------------------------------------------------- audit
+
+    /// <summary>
+    /// The durable half of this class's audit (formmaps#52 Task 13). Called immediately after each existing
+    /// <c>audit.question360.*</c> log line, and — like that line — only ever AFTER the mutation's own commit,
+    /// and therefore only on the paths that actually changed a row. The Missing branches (no such id on
+    /// update/activate/delete) and the delete child-guard return before this point and leave no event: an
+    /// audit row here has to mean "the catalog changed", not "someone tried".
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// THE ACTOR IS THE WHOLE POINT HERE, more than in any other retrofit target. <c>questions_360</c>
+    /// carries <c>createdBy</c>/<c>updatedBy</c> columns that this writer NEVER populates — deliberately, for
+    /// legacy parity (see the class summary) — so the catalog itself has no record of who changed it, and the
+    /// existing log line carries only the question id. <c>audit_events</c> is therefore the only place the
+    /// identity of whoever mutated the global question bank exists at all. <c>ActorRole</c> is the normalized
+    /// role, not the raw claim, so the trail is filterable on a stable taxonomy rather than on whatever casing
+    /// a token happened to carry.
+    /// </para>
+    /// <para>
+    /// <c>SchoolId</c> stays NULL, and that is a decision rather than an omission. <c>questions_360</c> is a
+    /// GLOBAL reference bank with no <c>schoolId</c> of its own; stamping the acting admin's school onto the
+    /// event would make a cross-tenant mutation look tenant-scoped, and — worse — a compliance query filtered
+    /// by school would then return catalog edits that affected every other school just as much.
+    /// </para>
+    /// <para>
+    /// <see cref="CancellationToken.None" /> is passed deliberately, per
+    /// <see cref="IAuditEventWriter.WriteAsync" />'s contract: this runs after the caller's commit, and
+    /// <c>AuditEventWriter</c> re-throws <see cref="OperationCanceledException" /> rather than swallowing it —
+    /// so passing the request token would let a client disconnecting in the gap between commit and audit raise
+    /// from a mutation that had already been stored. Every other failure is fail-soft-but-alert inside the
+    /// writer (Error, <c>audit.write_failed</c>), so this call cannot change what the caller sees.
+    /// </para>
+    /// </remarks>
+    private Task WriteAuditAsync(
+        RequestContext context,
+        string eventType,
+        string? questionId,
+        IReadOnlyDictionary<string, object?>? metadata = null) =>
+        auditEventWriter.WriteAsync(
+            new AuditEvent(
+                EventType: eventType,
+                ActorUserId: context.Tenant?.UserId,
+                ActorRole: context.Actor?.NormalizedRole,
+                SchoolId: null,
+                SubjectType: AuditSubjectType,
+                SubjectId: questionId,
+                Metadata: metadata),
+            CancellationToken.None);
 
     private static async Task<Question360Row> InsertAsync(
         FormMapsDatabaseSession session, Question360WriteFields fields, CancellationToken cancellationToken)
