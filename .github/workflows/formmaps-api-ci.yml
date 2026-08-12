@@ -125,7 +125,7 @@ jobs:
           - name: reports-billing-video
             filter: "FullyQualifiedName~FormMaps.IntegrationTests.Prerequisites.|FullyQualifiedName~FormMaps.IntegrationTests.Reports.|FullyQualifiedName~FormMaps.IntegrationTests.CourseImport.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolProfile.|FullyQualifiedName~FormMaps.IntegrationTests.CurriculumFrameworks.|FullyQualifiedName~FormMaps.IntegrationTests.Billing.|FullyQualifiedName~FormMaps.IntegrationTests.Video.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolReads.|FullyQualifiedName~FormMaps.IntegrationTests.ParentPortal.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolAnalytics."
           - name: remainder
-            filter: "FullyQualifiedName~FormMaps.IntegrationTests.AcademicGaps.|FullyQualifiedName~FormMaps.IntegrationTests.StudentApplications.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsWrites.|FullyQualifiedName~FormMaps.IntegrationTests.StudentPortfolio.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsReads.|FullyQualifiedName~FormMaps.IntegrationTests.StudentParents.|FullyQualifiedName~FormMaps.IntegrationTests.Uploads.|FullyQualifiedName~FormMaps.IntegrationTests.CommunityService.|FullyQualifiedName~FormMaps.IntegrationTests.ParentChildReads.|FullyQualifiedName~FormMaps.IntegrationTests.Gradebook.|FullyQualifiedName~FormMaps.IntegrationTests.Security.|FullyQualifiedName~FormMaps.IntegrationTests.DbRole.|FullyQualifiedName~FormMaps.IntegrationTests.Data.|FullyQualifiedName~FormMaps.IntegrationTests.Pathways.|FullyQualifiedName~FormMaps.IntegrationTests.ScaffoldTests|FullyQualifiedName~FormMaps.IntegrationTests.TestSupport."
+            filter: "FullyQualifiedName~FormMaps.IntegrationTests.AcademicGaps.|FullyQualifiedName~FormMaps.IntegrationTests.Audit.|FullyQualifiedName~FormMaps.IntegrationTests.StudentApplications.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsWrites.|FullyQualifiedName~FormMaps.IntegrationTests.StudentPortfolio.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsReads.|FullyQualifiedName~FormMaps.IntegrationTests.StudentParents.|FullyQualifiedName~FormMaps.IntegrationTests.Uploads.|FullyQualifiedName~FormMaps.IntegrationTests.CommunityService.|FullyQualifiedName~FormMaps.IntegrationTests.ParentChildReads.|FullyQualifiedName~FormMaps.IntegrationTests.Gradebook.|FullyQualifiedName~FormMaps.IntegrationTests.Security.|FullyQualifiedName~FormMaps.IntegrationTests.DbRole.|FullyQualifiedName~FormMaps.IntegrationTests.Data.|FullyQualifiedName~FormMaps.IntegrationTests.Pathways.|FullyQualifiedName~FormMaps.IntegrationTests.ScaffoldTests|FullyQualifiedName~FormMaps.IntegrationTests.TestSupport."
 
     steps:
       - name: Checkout
@@ -218,6 +218,7 @@ jobs:
           FormMaps.IntegrationTests.ParentPortal.
           FormMaps.IntegrationTests.SchoolAnalytics.
           FormMaps.IntegrationTests.AcademicGaps.
+          FormMaps.IntegrationTests.Audit.
           FormMaps.IntegrationTests.StudentApplications.
           FormMaps.IntegrationTests.IsamsWrites.
           FormMaps.IntegrationTests.StudentPortfolio.
