@@ -63,6 +63,16 @@
          ticket rather than just asserting on HTTP status codes; proves OnConnectedAsync's auth guard. -->
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.10" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.6.0" />
+    <!-- Transitive-override, NOT a package this project calls. Testcontainers pulls SSH.NET for its
+         remote-Docker/SSH transport, which this repo never uses (every fixture talks to a local daemon).
+         SSH.NET <= 2025.1.0 carries GHSA-q939-rpr3-3284 / CVE-2026-48798 (ScpClient.Download() does not
+         validate server-supplied filenames on recursive download -> path traversal), which fails
+         `dotnet restore` as NU1903 under warnings-as-errors on EVERY branch.
+         Upgrading Testcontainers does NOT fix it: 4.9.0 and 4.13.0 both still depend on 2025.1.0, which
+         is inside the affected range. 2026.0.0 is the first patched release, so it has to be pinned here
+         to win the transitive resolution. Remove this line once Testcontainers itself moves past
+         2025.1.0. See #140. -->
+    <PackageReference Include="SSH.NET" Version="2026.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
