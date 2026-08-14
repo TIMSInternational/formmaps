@@ -37,8 +37,20 @@ namespace FormMaps.Api.Insights;
 /// LEGACY_API_BASE_URL, unknown user, missing secret, unreachable Node, non-2xx (429 from Node's
 /// shared per-IP aiLimiter is the realistic one) — logs at Error with userId + source, which is the
 /// full backfill key (legacy generateInsightsBackground(userId)), and the assessment write that
-/// carried the trigger always succeeds. A lost fire is also self-healing: any later gate event
-/// re-fires, and the student's own insights page calls the same route directly.
+/// carried the trigger always succeeds. A lost NON-FINAL fire is self-healing (any later gate event
+/// re-fires), but a lost FINAL-gate fire is NOT: neither frontend references generate-insights or
+/// any lazy generation path (verified 2026-08-14 — zero grep hits in apps/web and the legacy
+/// frontend), so this server-side trigger is the ONLY generation mechanism in the product, and a
+/// failed final fire is recoverable solely via the Error-log backfill key above. That is why the
+/// Error level and the userId in the log line are load-bearing, not decoration.
+///
+/// 429 exposure, decided 2026-08-14: Node's aiLimiter is 10/min per IP shared across all AI
+/// endpoints, and every fire from this class shares one egress IP, so a burst of same-minute
+/// completions (a 360 email campaign, a classroom finishing LIA) can 429 some fires. Chosen
+/// mitigation: an internal-caller exemption in Node's aiLimiter keyGenerator, bundled with the
+/// Node-side personality trigger that formmaps#144 already requires — one Node change, both fixes.
+/// Until that lands, a 429'd final-gate fire needs the manual backfill; the log line carries
+/// everything needed.
 /// </summary>
 public sealed class LegacyApiInsightsTrigger(
     HttpClient httpClient,
