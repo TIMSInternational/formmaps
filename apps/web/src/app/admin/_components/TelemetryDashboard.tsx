@@ -61,7 +61,9 @@ export const TelemetryDashboard = React.memo(function TelemetryDashboard({ perio
     );
   }
 
-  if (error || !analytics) {
+  // A 200 payload without `metrics` must land on the unavailable card, not
+  // TypeError on the destructured `metrics` below.
+  if (error || !analytics?.metrics) {
     return (
       <Card className="border-amber-200 bg-amber-50/50">
         <CardContent className="flex items-center gap-3 py-6">
