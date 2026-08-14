@@ -33,6 +33,16 @@
 # characters. The apply.sh trailer sits at the END of stdout; if you ever see
 # truncation ("--output truncated--"), rerun the file individually or attach
 # an S3/CloudWatch output config — see the runbook.
+#
+# Cancellation note: killing THIS script (job cancel, the workflow's 30-min
+# cap, Ctrl-C) kills only the POLLER — the SSM command already sent keeps
+# executing psql on the bastion, and its SQL may still commit while the run
+# shows cancelled. A trap below issues `aws ssm cancel-command` for any
+# command still in flight, but that is BEST EFFORT: cancel-command is
+# asynchronous, a SIGKILL'd process never runs the trap, and whatever psql
+# already COMMITted stays committed. Treat a cancelled run as state-unknown
+# and re-run verify-grants.sql (runbook: "Cancellation, timeouts, and what
+# they do NOT stop").
 # =============================================================================
 set -euo pipefail
 
@@ -84,6 +94,24 @@ EOF
 
 params="$(jq -n --arg s "$remote_script" '{commands: [$s], executionTimeout: ["900"]}')"
 
+# Best-effort cancellation of an in-flight command when this poller dies
+# (job cancelled, 30-min job cap, Ctrl-C). CMD_ID is set right after
+# send-command and cleared once the command reaches a terminal state, so a
+# normal exit cancels nothing. INT/TERM are trapped to `exit` so the EXIT
+# trap actually fires on GitHub's cancellation signals.
+CMD_ID=""
+cancel_inflight() {
+    if [[ -n "$CMD_ID" ]]; then
+        echo "poller exiting with SSM command ${CMD_ID} still in flight — issuing cancel-command (best effort; SQL already committed on the bastion stays committed)" >&2
+        aws ssm cancel-command \
+            --command-id "$CMD_ID" \
+            --instance-ids "$BASTION_INSTANCE_ID" >/dev/null 2>&1 || true
+    fi
+}
+trap cancel_inflight EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
 cmd_id="$(aws ssm send-command \
     --instance-ids "$BASTION_INSTANCE_ID" \
     --document-name "AWS-RunShellScript" \
@@ -91,6 +119,7 @@ cmd_id="$(aws ssm send-command \
     --timeout-seconds 120 \
     --parameters "$params" \
     --query 'Command.CommandId' --output text)"
+CMD_ID="$cmd_id"
 echo "sent SSM command ${cmd_id} (${MODE} ${FILE}) to ${BASTION_INSTANCE_ID}"
 
 # Poll to a terminal state (up to 15 min; executionTimeout caps the remote
@@ -106,6 +135,14 @@ for _ in $(seq 1 180); do
         *) break ;;
     esac
 done
+
+# Terminal state reached: nothing left to cancel. If the loop instead
+# exhausted its 15 minutes with the command still running, CMD_ID stays set
+# and the EXIT trap cancels the still-in-flight command on the way out.
+case "$status" in
+    Pending|InProgress|Delayed) : ;;
+    *) CMD_ID="" ;;
+esac
 
 out="$(aws ssm get-command-invocation \
     --command-id "$cmd_id" --instance-id "$BASTION_INSTANCE_ID" \

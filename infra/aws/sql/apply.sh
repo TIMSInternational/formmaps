@@ -44,12 +44,18 @@
 #       must exist FIRST or the GRANT aborts with 42P01 undefined_table.
 #       Apply order matters; the runbook prescribes it.
 #   * preflight-checks.sql        READ-ONLY diagnostics; trivially idempotent.
-#   * audit-events-schema.sql     (arrives on main with formmaps#52)
-#       IDEMPOTENT, in the drop-and-recreate style for its policy and trigger
-#       (DROP POLICY/TRIGGER IF EXISTS + CREATE). That style leaves a brief
-#       unprotected window if statements commit one by one — which is exactly
-#       why this script defaults to --single-transaction: the re-apply is
-#       atomic and the window never exists.
+#   * audit-events-schema.sql     PROVISIONAL — this file is NOT on main yet;
+#       it exists only on feat/52-audit-events and lands with formmaps#52, so
+#       this audit vouches for exact content, not a branch tip:
+#       blob 8a76bcca4999041923814ae9f810c93bf303f81c, obtained via
+#         git ls-tree origin/feat/52-audit-events -- infra/aws/sql/audit-events-schema.sql
+#       If the blob that merges to main differs, RE-AUDIT before trusting
+#       this line. As audited: IDEMPOTENT, in the drop-and-recreate style for
+#       its policy and trigger (DROP POLICY/TRIGGER IF EXISTS + CREATE). That
+#       style leaves a brief unprotected window if statements commit one by
+#       one — which is exactly why this script defaults to
+#       --single-transaction: the re-apply is atomic and the window never
+#       exists.
 #   * verify-grants.sql           read-only catalog checks plus one INSERT
 #       probe that is always rolled back; safe to run repeatedly.
 #

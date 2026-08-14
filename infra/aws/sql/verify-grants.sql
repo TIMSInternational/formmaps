@@ -250,9 +250,16 @@ ORDER BY grantee;
 \if :is_dotnet_svc
 \if :audit_events_exists
 -- 4a. Without the bypass GUC, the bypass-only policy must yield ZERO rows,
---     whatever the table actually holds. A non-zero count here means the
---     policy is not doing its job.
+--     whatever the table actually holds. Enforced, not just printed: a
+--     non-zero count means the policy is not doing its job, so this script
+--     raises and exits non-zero and the workflow verification step goes red.
 SELECT count(*) AS rows_visible_without_bypass_guc FROM public.audit_events;
+
+SELECT count(*) > 0 AS rows_leak_without_bypass_guc FROM public.audit_events
+\gset
+\if :rows_leak_without_bypass_guc
+DO $$ BEGIN RAISE EXCEPTION 'HARD FAIL: formmaps_dotnet_svc can see audit_events rows WITHOUT app.bypass_rls=on — the bypass-only policy is not enforcing. Check ENABLE+FORCE ROW LEVEL SECURITY and the audit_events_bypass_only policy (re-apply audit-events-schema.sql) and investigate how the rows became visible.'; END $$;
+\endif
 
 -- 4b. With the bypass GUC, INSERT and SELECT must both work — this is the
 --     write path the fail-soft writer needs (formmaps#137: "confirm a real

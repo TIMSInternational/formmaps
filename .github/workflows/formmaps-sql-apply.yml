@@ -8,10 +8,17 @@
 # Design decisions (see docs/migration/sql-apply-runbook.md for operation):
 #
 #   * workflow_dispatch ONLY, gated by the `production-sql` environment.
-#     CREATE THAT ENVIRONMENT WITH REQUIRED REVIEWERS BEFORE THE FIRST RUN —
-#     GitHub auto-creates missing environments WITHOUT protection rules, so a
-#     first dispatch against a nonexistent environment would not pause for
-#     approval.
+#     CREATE THAT ENVIRONMENT — required reviewers AND a main-only deployment
+#     branch policy — BEFORE MERGING THIS WORKFLOW: GitHub auto-creates
+#     missing environments WITHOUT protection rules, so a first dispatch
+#     against a nonexistent environment would not pause for approval. As a
+#     fail-closed backstop, the job's FIRST step (before any AWS action)
+#     queries the environment's protection rules via the GitHub API and
+#     hard-fails unless a required_reviewers rule provably exists — and also
+#     fails when the API call itself errors, because "cannot verify the gate"
+#     must never degrade into "run anyway". That converts "someone forgot to
+#     create the environment first" from a silent unapproved production run
+#     into a red run.
 #
 #   * Files are applied ONE AT A TIME, each named explicitly in the input.
 #     There is deliberately no "apply everything" option: the legacy repo's
@@ -30,8 +37,15 @@
 #     Only a Secrets Manager secret NAME is forwarded; the bastion resolves it
 #     with its own instance profile.
 #
-#   * AWS auth prefers OIDC (set FORMMAPS_SQL_APPLY_ROLE_ARN); if that
-#     variable is unset it falls back to the documented static-key secrets.
+#   * AWS auth is OIDC ONLY: the job authenticates solely by assuming
+#     vars.FORMMAPS_SQL_APPLY_ROLE_ARN via GitHub's OIDC provider. There is
+#     deliberately NO static-key fallback — repo-scoped standing keys are
+#     usable from any dispatched ref by a workflow copy with the environment
+#     gate stripped, and their blast radius is production DB credentials. The
+#     role's trust policy MUST pin token.actions.githubusercontent.com:sub to
+#     repo:TIMSInternational/formmaps:environment:production-sql (exact JSON
+#     in the runbook), so the approval gate is enforced AWS-side too: a
+#     workflow copy without the environment line cannot assume the role.
 #
 #   * Verification ALWAYS runs, even when an apply step fails, so every run
 #     ends with the true state of roles/grants (infra/aws/sql/verify-grants.sql).
@@ -63,7 +77,8 @@ on:
 
 permissions:
   contents: read
-  id-token: write # OIDC; unused (but harmless) on the static-key fallback path
+  id-token: write # mint the OIDC token that assumes FORMMAPS_SQL_APPLY_ROLE_ARN
+  actions: read # read production-sql protection rules for the fail-closed gate check
 
 concurrency:
   group: formmaps-sql-apply
@@ -77,6 +92,15 @@ jobs:
   apply:
     name: Apply SQL via SSM bastion
     runs-on: ubuntu-latest
+    # 30-minute cap vs worst case: ssm-exec.sh polls up to 15 min per file and
+    # the remote executionTimeout is 900s, so two slow files can consume the
+    # whole budget. If this timeout (or a manual cancel) fires, GitHub kills
+    # the POLLER on the runner — NOT the in-flight SSM command, which keeps
+    # executing psql on the bastion. ssm-exec.sh traps termination and issues
+    # `aws ssm cancel-command` best-effort, but SQL may still have committed
+    # while the run shows cancelled. Treat any cancelled/timed-out run as
+    # state-unknown and re-run verify-grants.sql (runbook: "Cancellation,
+    # timeouts, and what they do NOT stop").
     timeout-minutes: 30
     environment: production-sql
     env:
@@ -84,6 +108,26 @@ jobs:
       ADMIN_DB_SECRET_ID: ${{ vars.FORMMAPS_SQL_ADMIN_DB_SECRET_ID }}
 
     steps:
+      # FIRST, before any AWS action: prove the approval gate exists. GitHub
+      # auto-creates a missing environment WITHOUT protection rules, so a
+      # dispatch against a not-yet-created production-sql would sail through
+      # unapproved. Fail-closed: no proof of a required_reviewers rule — or
+      # any API failure while checking — means no run.
+      - name: Verify production-sql approval gate (fail closed)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! resp="$(gh api "repos/${GITHUB_REPOSITORY}/environments/production-sql" 2>&1)"; then
+            echo "::error::Could not read protection rules for environment 'production-sql' (API said: ${resp}). Failing CLOSED: without proof that required reviewers are configured, this run cannot be distinguished from a dispatch against an auto-created, unprotected environment. Check the environment exists (Settings -> Environments) and that the workflow's GITHUB_TOKEN has actions:read (permissions block above)."
+            exit 1
+          fi
+          if ! printf '%s' "$resp" | jq -e '[.protection_rules[]?.type] | index("required_reviewers") != null' >/dev/null; then
+            echo "::error::Environment 'production-sql' has NO required_reviewers protection rule — it was probably auto-created by a dispatch instead of being set up first. Refusing to touch AWS. Add required reviewers AND a main-only deployment branch policy under Settings -> Environments -> production-sql, then re-run. See docs/migration/sql-apply-runbook.md."
+            exit 1
+          fi
+          echo "production-sql has a required_reviewers protection rule — approval gate verified."
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -98,6 +142,16 @@ jobs:
             echo "::error::confirm must be exactly 'apply-to-production' (got something else). Refusing."
             exit 1
           fi
+          # The browser form cannot produce newlines, but an API dispatch can.
+          # `read` below only consumes the first line, so a multi-line value
+          # would silently DROP every file after line 1 — reject it outright
+          # instead of truncating.
+          case "$SQL_FILES_INPUT" in
+            *$'\n'*|*$'\r'*)
+              echo "::error::sql_files contains a newline/carriage return (API-dispatched?). Multi-line input is rejected — everything after line 1 would otherwise be silently dropped. Put all files on ONE comma-separated line."
+              exit 1
+              ;;
+          esac
           files=""
           role_pos=0
           shadow_pos=0
@@ -148,9 +202,15 @@ jobs:
           echo "files=$files" >> "$GITHUB_OUTPUT"
 
       - name: Require deployment variables
+        env:
+          ROLE_ARN: ${{ vars.FORMMAPS_SQL_APPLY_ROLE_ARN }}
         run: |
           set -euo pipefail
           missing=0
+          if [ -z "${ROLE_ARN:-}" ]; then
+            echo "::error::Repo variable FORMMAPS_SQL_APPLY_ROLE_ARN is not set. AWS auth is OIDC-only — there is deliberately no static-key fallback (see the runbook, 'AWS auth — OIDC only'). Set it to the IAM role whose trust policy pins sub to repo:TIMSInternational/formmaps:environment:production-sql."
+            missing=1
+          fi
           if [ -z "${BASTION_INSTANCE_ID:-}" ]; then
             echo "::error::Repo variable FORMMAPS_SQL_BASTION_INSTANCE_ID is not set. The bastion is deliberately parameterized (the current one is a temporary DELETE-ME instance) — see docs/migration/sql-apply-runbook.md."
             missing=1
@@ -161,20 +221,16 @@ jobs:
           fi
           [ "$missing" -eq 0 ] || exit 1
 
+      # OIDC ONLY — no static-key alternative exists, on purpose: standing
+      # keys in repo secrets would be usable from any dispatched ref by a
+      # workflow copy with the environment gate stripped. Because the role's
+      # trust policy pins :sub to environment:production-sql, this step
+      # succeeding also re-proves AWS-side that the run passed the gate.
       - name: Configure AWS credentials (OIDC)
-        if: ${{ vars.FORMMAPS_SQL_APPLY_ROLE_ARN != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ vars.FORMMAPS_SQL_APPLY_ROLE_ARN }}
-
-      - name: Configure AWS credentials (static-key fallback)
-        if: ${{ vars.FORMMAPS_SQL_APPLY_ROLE_ARN == '' }}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          aws-access-key-id: ${{ secrets.FORMMAPS_SQL_APPLY_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.FORMMAPS_SQL_APPLY_AWS_SECRET_ACCESS_KEY }}
 
       - name: Check bastion is SSM-reachable
         run: |

@@ -21,7 +21,12 @@ workflow_dispatch (named files + typed confirmation)
 GitHub environment gate: production-sql  ← human approval happens HERE
         │
         ▼
-AWS auth (OIDC role, or static-key fallback)
+fail-closed guard: first job step hard-fails unless production-sql
+provably has a required_reviewers protection rule (or the check errors)
+        │
+        ▼
+AWS auth — OIDC ONLY: assume FORMMAPS_SQL_APPLY_ROLE_ARN, whose trust
+policy is pinned AWS-side to environment:production-sql (no static keys)
         │
         ▼
 aws ssm send-command ────────────► bastion (SSM-managed EC2, inside the VPC)
@@ -58,16 +63,32 @@ referenced by name only.
 
 ### 1. GitHub environment (the approval gate)
 
-Create environment **`production-sql`** (Settings → Environments) and add
-**required reviewers** (at minimum one person with production accountability;
-two is better).
+Create environment **`production-sql`** (Settings → Environments) **BEFORE
+merging this workflow**, with BOTH of:
 
-> **Do this before the first dispatch.** GitHub silently auto-creates a
-> missing environment **without protection rules** — a first run against a
-> nonexistent `production-sql` would not pause for approval.
+- **Required reviewers** — at minimum one person with production
+  accountability; two is better. Dispatching then does nothing until a
+  reviewer approves the run.
+- **A deployment branch policy restricted to `main`** — so runs can only use
+  `main`'s scripts and SQL. Be clear about what approval means: **approving a
+  run from a non-main ref means approving that ref's scripts and SQL,
+  wholesale** — the workflow file, `ssm-exec.sh`, `apply.sh`, and every
+  `.sql` payload all come from the dispatched ref, so a reviewer who approves
+  a branch run is signing off that branch's code, not `main`'s.
 
-The environment gate is the approval mechanism: dispatching the workflow does
-nothing until a reviewer approves the run. The run page then permanently
+> **Why "before merging", and why the workflow double-checks:** GitHub
+> silently auto-creates a missing environment **without protection rules** —
+> a first dispatch against a nonexistent `production-sql` would not pause for
+> approval. The workflow therefore fails closed: its **first step**, before
+> any AWS action, queries the environment's protection rules via the GitHub
+> API (`gh api repos/<owner>/<repo>/environments/production-sql`) and
+> hard-fails unless a `required_reviewers` rule exists — and also fails when
+> the API call itself errors (403, network, anything), because "cannot verify
+> the gate" must never degrade into "run anyway". That converts "someone
+> forgot to create the environment first" from a silent unapproved production
+> run into a red run.
+
+The environment gate is the approval mechanism. The run page permanently
 records who dispatched, who approved, which files, and all output — that is
 the audit trail for every production SQL change.
 
@@ -78,24 +99,68 @@ the audit trail for every production SQL change.
 | `FORMMAPS_SQL_BASTION_INSTANCE_ID` | `i-0d3ff4be21026c651` (current) | The running bastion, named `formmaps-tmp-bastion-DELETE-ME`. It is temporary by name — see "Replacing the bastion" below. |
 | `FORMMAPS_SQL_ADMIN_DB_SECRET_ID` | name/ARN of the Secrets Manager secret holding the **nexaadmin** connection info | The *name*, never the value. Applies run as the admin because the app role cannot create tables or grant (#137). |
 | `FORMMAPS_SQL_APP_DB_SECRET_ID` | *(optional)* name/ARN of the secret holding **formmaps_dotnet_svc** credentials | Unlocks the behavioural RLS block in `verify-grants.sql`. Only exists after a password has been set on the role (`ALTER ROLE ... WITH PASSWORD`, done out of band per `dotnet-service-role.sql`). Until then verification runs as admin, catalog-only. |
-| `FORMMAPS_SQL_APPLY_ROLE_ARN` | *(preferred)* ARN of an IAM role trusting GitHub OIDC | When set, the workflow authenticates via OIDC like `formmaps-api-staging-deploy` does. |
+| `FORMMAPS_SQL_APPLY_ROLE_ARN` | **(required)** ARN of the IAM role trusting GitHub OIDC, with the trust policy below | The workflow's ONLY auth path. If unset, the run fails at "Require deployment variables" — it does not fall back to anything. |
 
-### 3. AWS auth — OIDC (preferred) or static keys (fallback)
+### 3. AWS auth — OIDC only (no static keys, deliberately)
 
-**OIDC:** create an IAM role trusting the GitHub OIDC provider
-(`token.actions.githubusercontent.com`), with the trust condition pinned to
-this repo (and ideally to `environment:production-sql`). Put its ARN in
-`FORMMAPS_SQL_APPLY_ROLE_ARN`. Whether the OIDC provider is already registered
-in account 747814092517 cannot be determined from the repo — the staging
-deploy workflow assumes a role the same way, which suggests it is, but confirm
-in IAM before relying on it.
+The workflow authenticates **solely** by assuming the IAM role named in
+`FORMMAPS_SQL_APPLY_ROLE_ARN` via GitHub's OIDC provider
+(`token.actions.githubusercontent.com`). There is **no static-key path**, and
+none may be added back: repo-scoped standing keys
+(`AWS_ACCESS_KEY_ID`/`SECRET_ACCESS_KEY` in repo secrets) are usable from
+**any dispatched ref** by a workflow copy with the `environment:` line
+stripped — no approval gate, no reviewer, no audit trail — and their blast
+radius is production DB credentials (the keys let anyone who can run a
+workflow command the bastion, which holds the admin secret). OIDC with the
+trust policy below turns the approval gate into an AWS-side invariant instead
+of a GitHub-side convention.
 
-**Fallback:** if `FORMMAPS_SQL_APPLY_ROLE_ARN` is unset, the workflow uses
-repo secrets `FORMMAPS_SQL_APPLY_AWS_ACCESS_KEY_ID` and
-`FORMMAPS_SQL_APPLY_AWS_SECRET_ACCESS_KEY` (an IAM user with the same policy).
-Prefer OIDC; static keys are a standing credential.
+**The trust policy is MANDATORY, and it MUST pin `sub` to the environment.**
+The role must trust only tokens minted for this repo's `production-sql`
+environment:
+`token.actions.githubusercontent.com:sub` =
+`repo:TIMSInternational/formmaps:environment:production-sql`. This is
+enforced **AWS-side at AssumeRoleWithWebIdentity time**, so a workflow copy
+with the `environment: production-sql` line stripped cannot assume the role:
+its token's `sub` claim would be
+`repo:TIMSInternational/formmaps:ref:refs/heads/...` (no environment), and
+the condition rejects it. Use exactly this trust policy document:
 
-Minimal policy for the role/user (placeholders, not values):
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "GitHubOIDCProductionSqlEnvironmentOnly",
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+          "token.actions.githubusercontent.com:sub": "repo:TIMSInternational/formmaps:environment:production-sql"
+        }
+      }
+    }
+  ]
+}
+```
+
+Notes on the trust policy:
+
+- `sub` uses `StringEquals` — no wildcards, no `StringLike`. A job only
+  receives this `sub` when it actually runs under the `production-sql`
+  environment (i.e. after the reviewer gate).
+- The OIDC provider must already be registered in IAM (account 747814092517).
+  Whether it is cannot be determined from the repo — the staging deploy
+  workflow assumes a role the same way, which suggests it is, but confirm in
+  IAM before relying on it.
+- Put the role's ARN in `FORMMAPS_SQL_APPLY_ROLE_ARN`. If the variable is
+  unset the run fails fast with a named error; there is no fallback.
+
+Minimal permissions policy for the role (placeholders, not values):
 
 ```json
 {
@@ -118,6 +183,12 @@ Minimal policy for the role/user (placeholders, not values):
         "ssm:DescribeInstanceInformation"
       ],
       "Resource": "*"
+    },
+    {
+      "Sid": "CancelInflightOnAbort",
+      "Effect": "Allow",
+      "Action": "ssm:CancelCommand",
+      "Resource": "*"
     }
   ]
 }
@@ -125,6 +196,8 @@ Minimal policy for the role/user (placeholders, not values):
 
 Note what is absent: no Secrets Manager access, no RDS access, no `ec2:*`. The
 runner never sees a database credential; it only tells the bastion to act.
+`ssm:CancelCommand` exists solely for the best-effort abort trap in
+`ssm-exec.sh` (see "Cancellation, timeouts, and what they do NOT stop").
 
 ### 4. The bastion's own permissions and packages
 
@@ -153,15 +226,21 @@ content, process listings, or logs.
 
 Actions → **formmaps-sql-apply** → Run workflow:
 
-- **sql_files** — comma-separated file names, applied in the order given,
-  stopping at the first failure. Named files only; the workflow refuses globs,
-  paths, and directories. There is deliberately no "all" option — the legacy
-  repo's lesson stands: *"Never `npm run rls:apply` against production — it
-  runs every file."* Every apply names exactly what it applies.
+- **sql_files** — comma-separated file names on **one line**, applied in the
+  order given, stopping at the first failure. Named files only; the workflow
+  refuses globs, paths, and directories. It also **rejects multi-line values
+  outright**: the browser form can't produce them, but an API dispatch can,
+  and the parser would otherwise silently drop every file after line 1 —
+  rejection beats truncation. There is deliberately no "all" option — the
+  legacy repo's lesson stands: *"Never `npm run rls:apply` against production
+  — it runs every file."* Every apply names exactly what it applies.
 - **confirm** — type `apply-to-production`, literally.
 
-Files come from the git ref you dispatch from — normally `main` after the PR
-containing the SQL merges.
+Files come from the git ref you dispatch from. The environment's deployment
+branch policy restricts runs to `main` — normally you dispatch from `main`
+after the PR containing the SQL merges. If that policy is ever loosened to
+allow a branch run, remember what approval means there: **the reviewer is
+approving that branch's scripts and SQL**, not `main`'s (see §1).
 
 ### Canonical first production sequence
 
@@ -188,9 +267,11 @@ Steps 2–4 can be one dispatch (`billing-shadow-tables.sql,dotnet-service-role.
 one dispatch is preserved.
 
 All files are idempotent (verified per file — the audit is recorded in
-`apply.sh`'s header), and `apply.sh` runs each one inside a single
-transaction, so re-running after a failure is always safe and a failed apply
-commits nothing.
+`apply.sh`'s header; the `audit-events-schema.sql` line there is
+**PROVISIONAL**, pinned to the exact blob audited on `feat/52-audit-events` —
+re-audit if the blob that merges differs), and `apply.sh` runs each one
+inside a single transaction, so re-running after a failure is always safe and
+a failed apply commits nothing.
 
 ## Reading the output
 
@@ -267,6 +348,32 @@ The trailer is at the end of stdout and file outputs here are small, so this
 should not bite; if you ever see `--output truncated--`, run files in separate
 dispatches, or add an S3/CloudWatch output config to the `send-command` call.
 
+## Cancellation, timeouts, and what they do NOT stop
+
+Cancelling the run — or hitting the job's 30-minute cap — kills the
+**poller** on the GitHub runner, not the work: an SSM command already sent to
+the bastion keeps executing `psql` regardless. **SQL can still commit while
+the run shows "cancelled".** A cancelled or timed-out run is *state-unknown*,
+not "nothing happened".
+
+Mitigations and their limits:
+
+- `ssm-exec.sh` traps termination (INT/TERM/exit) and issues
+  `aws ssm cancel-command` for any command still in flight. **Best effort
+  only:** cancel-command is asynchronous, a hard-killed runner never gets to
+  run the trap, and anything psql already `COMMIT`ted stays committed.
+  (Applies run `--single-transaction`, so a file killed mid-apply aborts and
+  commits nothing — the real exposure is a file that completed just as you
+  cancelled, plus `verify-grants.sql`'s self-managed transaction.)
+- Budget arithmetic: the job cap is **30 minutes**, but each file's SSM
+  command is allowed up to **15 minutes** (remote `executionTimeout` 900s,
+  matched by the poller's 15-minute ceiling). Two slow files can eat the
+  whole cap, and the timeout then kills the run with a command possibly still
+  in flight. Prefer separate dispatches for files that might be slow.
+- After ANY cancelled or timed-out run: check the command's final status in
+  the SSM console (Run Command → command history), then get ground truth by
+  dispatching `verify-grants.sql` on its own.
+
 ## Rollback posture
 
 The files are additive and idempotent; the default recovery is **fix forward
@@ -317,6 +424,10 @@ runner-side IAM policy's instance ARN needs the new id too if you scoped it
 | Symptom | Meaning / fix |
 |---|---|
 | Run never starts, "waiting for review" | Working as intended — a `production-sql` reviewer must approve. |
+| First step red: "NO required_reviewers protection rule" | The environment was auto-created by a dispatch (or its reviewers were removed) — the fail-closed guard refused to proceed. Add required reviewers + a main-only deployment branch policy (§1), re-run. |
+| First step red: "Could not read protection rules" | The GitHub API call failed (403/404/network) and the guard fails closed by design. Confirm the environment exists and the workflow's `permissions:` block still grants `actions: read`. |
+| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | The trust policy's `sub` pin doesn't match — it must be exactly `repo:TIMSInternational/formmaps:environment:production-sql` (§3) — or the OIDC provider isn't registered in IAM. |
+| Run cancelled / hit the 30-min cap | The in-flight SSM command may have kept running and its SQL may have committed — see "Cancellation, timeouts, and what they do NOT stop". |
 | `42P01 undefined_table` during `dotnet-service-role.sql` | Table-creating files weren't applied first — run `billing-shadow-tables.sql` (and `audit-events-schema.sql` post-#52), then re-apply. Nothing was committed. |
 | `42501 permission denied` in verify section 4 | The grant the section exercises is missing — check the matrix above it for the failing row. |
 | Bastion "not Online in SSM" | Bastion stopped/terminated (it *is* named DELETE-ME) — see "Replacing the bastion". |
