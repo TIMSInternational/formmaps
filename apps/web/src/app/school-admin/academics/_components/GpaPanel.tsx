@@ -31,7 +31,7 @@ function ClassRankingsTab() {
   const { data: rankData, isLoading } = useQuery({
     queryKey: ["class-rankings"],
     queryFn: async () => {
-      const res = await apiRequest("/api/v1/school-admin/class-ranks");
+      const res = await apiRequest("/api/v1/transcript/school-admin/class-ranks");
       return res?.data ?? res;
     },
     staleTime: 1000 * 60 * 5,
