@@ -17,9 +17,10 @@ public interface IIsamsReadsReader
 {
     /// <summary>
     /// getIsamsStatus — the single isams_configs row for the school (unique on schoolId). Returns <c>null</c>
-    /// when NO row exists (the endpoint renders the 2-key { configured:false, enabled:false } shape WITHOUT a
-    /// lastSyncAt key); returns the row's endpoint + lastSyncAt otherwise (the endpoint renders the 3-key shape
-    /// WITH lastSyncAt present, even when the column is NULL). schoolId is guaranteed non-null.
+    /// when NO row exists (the endpoint renders the 3-key { configured:false, enabled:false, connected:false }
+    /// shape WITHOUT a lastSyncAt key); returns the row's endpoint + lastSyncAt + isActive + credentialsEncrypted
+    /// otherwise (the endpoint renders the 4-key shape WITH lastSyncAt present, even when the column is NULL, and
+    /// derives connected — formmaps#145). schoolId is guaranteed non-null.
     /// </summary>
     Task<IsamsConfigStatus?> GetStatusAsync(
         RequestContext context, string schoolId, CancellationToken cancellationToken = default);
