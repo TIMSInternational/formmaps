@@ -192,8 +192,11 @@ function shouldRouteIsamsReadsToDotnet() {
 // exact-literal /courses source co-flips GET+POST together, and the :courseId param source
 // co-flips PUT+DELETE together — deliberate (FM-061 completed FM-054's originally-deferred
 // PUT/DELETE under the SAME flag). The negative lookahead on :courseId excludes
-// /courses/pathways, /courses/import, /courses/ai-import and their sub-paths (courseIds are
-// UUIDs, never equal to those literals — a safety belt, not a real collision risk). Distinct
+// /courses/pathways, /courses/import, /courses/ai-import (courseIds are UUIDs, never equal to
+// those literals — a safety belt) AND /courses/prereq-analysis, which is load-bearing, not a
+// belt: POST /courses/prereq-analysis is a live Node-only literal (curriculumService.ts calls
+// it, .NET has no handler) at the same single-segment depth, so an unguarded :courseId would
+// swallow it on flip and kill AI prerequisite analysis (m2 audit H1). Distinct
 // methods (PUT/DELETE) from the co-flipped literal's siblings (pathways/import are GET/POST) →
 // no ASP.NET route-matching ambiguity on the .NET side. Default OFF (dark).
 function shouldRouteSchoolCoursesToDotnet() {
@@ -345,8 +348,10 @@ function shouldRouteStudentParentsToDotnet() {
 // ── Student application essays + checklist (FM-DOTNET-077): GET+POST /student/applications/:id/essays,
 // PUT /student/applications/:id/essays/:eid, GET+POST /student/applications/:id/checklist,
 // PUT /student/applications/:id/checklist/:cid — ONE flag co-flips all four paths. Self-scoped +
-// application-ownership check. Zero delete endpoints — no Tier-2 check needed. AI siblings
-// (ai-review, checklist/generate) stay Node. Default OFF.
+// application-ownership check. Zero delete endpoints — no Tier-2 check needed. AI siblings stay
+// Node: ai-review by segment depth alone, checklist/generate ONLY via the (?!generate) lookahead
+// on :cid — it is a live Bedrock-backed Node POST at :cid's exact depth, and .NET maps PUT-only
+// on that template, so an unguarded :cid would swallow it on flip → 405 (m2 audit H2). Default OFF.
 function shouldRouteStudentEssaysChecklistToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_STUDENT_ESSAYS_CHECKLIST_TO_DOTNET));
 }
@@ -750,7 +755,11 @@ const nextConfig: NextConfig = {
               destination: `${dotnetApiBaseUrl}/api/question360/sub-questions/:parentQuestionId`,
             },
             {
-              source: "/api/question360/:id",
+              // (?!bulk-create): POST /bulk-create is a WRITE at :id's exact depth
+              // (questions360Service.ts calls it); a bare :id would swallow it under this
+              // READS flag and split question360 writes across two backends — create and
+              // activate/deactivate stay Node while bulk-create moves (m2 audit H3).
+              source: "/api/question360/:id((?!bulk-create)[^/]+)",
               destination: `${dotnetApiBaseUrl}/api/question360/:id`,
             },
           ]
@@ -1009,7 +1018,7 @@ const nextConfig: NextConfig = {
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses`,
             },
             {
-              source: "/api/v1/school-admin/courses/:courseId((?!import|pathways|ai-import)[^/]+)",
+              source: "/api/v1/school-admin/courses/:courseId((?!import|pathways|ai-import|prereq-analysis)[^/]+)",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/:courseId`,
             },
           ]
@@ -1188,7 +1197,7 @@ const nextConfig: NextConfig = {
             { source: "/api/v1/student/applications/:id/essays", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/essays` },
             { source: "/api/v1/student/applications/:id/essays/:eid", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/essays/:eid` },
             { source: "/api/v1/student/applications/:id/checklist", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist` },
-            { source: "/api/v1/student/applications/:id/checklist/:cid", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist/:cid` },
+            { source: "/api/v1/student/applications/:id/checklist/:cid((?!generate)[^/]+)", destination: `${dotnetApiBaseUrl}/api/v1/student/applications/:id/checklist/:cid` },
           ]
         : []),
       ...(shouldRouteStudentCoursePlanComputeToDotnet()
