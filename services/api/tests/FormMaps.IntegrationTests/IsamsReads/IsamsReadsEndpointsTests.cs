@@ -173,6 +173,11 @@ public class IsamsReadsEndpointsTests
     [InlineData(true, "", "enc:v1:abc", false)]            // endpoint "" → false (JS-falsy, unlike C# non-null)
     [InlineData(true, "https://x", null, false)]           // credentials NULL → false
     [InlineData(true, "https://x", "", false)]             // credentials "" → false (JS-falsy)
+    [InlineData(true, " ", "enc:v1:abc", true)]            // endpoint " " → TRUE: JS !! is truthy for
+                                                           // whitespace, which is why the derivation is
+                                                           // IsNullOrEmpty and must never "clean up" to
+                                                           // IsNullOrWhiteSpace — this row pins the
+                                                           // one input where the two diverge
     public async Task Status_connected_truth_table(bool isActive, string? endpoint, string? credentials, bool expected)
     {
         var reader = new FakeReader
