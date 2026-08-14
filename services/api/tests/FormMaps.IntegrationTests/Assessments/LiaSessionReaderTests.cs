@@ -133,6 +133,12 @@ public sealed class LiaSessionReaderTests : IClassFixture<LiaWriteDatabaseFixtur
         Assert.Equal(LogLevel.Information, audit.Level);
         Assert.Contains(sessionId, audit.Message, StringComparison.Ordinal);
         Assert.Contains(userId, audit.Message, StringComparison.Ordinal);
+
+        // formmaps#144: a lazy expiry that completes the assessment fires the polyglot insights
+        // trigger exactly once, for the session OWNER (a plain GET still completes on their behalf).
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal(userId, fire.UserId);
+        Assert.Equal("assessment.lia.completed", fire.Source);
     }
 
     // ------------------------------------------------------------------------------------------
@@ -199,13 +205,17 @@ public sealed class LiaSessionReaderTests : IClassFixture<LiaWriteDatabaseFixtur
     // directory sharing LiaWriteDatabaseFixture keeps these identical).
     // ==============================================================================================
 
+    // Shared across every writer a single test creates, so a test can assert on the insights-trigger
+    // fires (or their absence) regardless of which writer instance completed the session (formmaps#144).
+    private readonly RecordingInsightsTrigger _insightsTrigger = new();
+
     private (ILiaSessionReader reader, ILiaSessionWriter writer, CapturingLogger logger) MakeReaderAndWriter()
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        var writer = new LiaSessionWriter(factory, resolver, logger);
+        var writer = new LiaSessionWriter(factory, resolver, _insightsTrigger, logger);
         var reader = new LiaSessionReader(factory, writer, resolver);
         return (reader, writer, logger);
     }

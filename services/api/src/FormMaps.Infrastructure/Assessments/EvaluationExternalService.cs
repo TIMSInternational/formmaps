@@ -20,6 +20,7 @@ namespace FormMaps.Infrastructure.Assessments;
 /// </summary>
 public sealed class EvaluationExternalService(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
+    IInsightsTrigger insightsTrigger,
     ILogger<EvaluationExternalService> logger) : IEvaluationExternalService
 {
     // RATIFIED DIVERGENCE FROM LEGACY (Federico approved): legacy submitFeedback does NOT check
@@ -57,6 +58,7 @@ public sealed class EvaluationExternalService(
     {
         var system = RequestContext.System();
         object? feedback;
+        string evaluatedUserId;
 
         // (1) Guard + create in a writable bypass session. Guard: id+token+isActive; instrument!=vocational;
         // stored-email == normalized-incoming; not already completed; (CLOSED GAP) not expired/used.
@@ -104,6 +106,7 @@ public sealed class EvaluationExternalService(
                 return new FeedbackSubmitResult(FeedbackSubmitStatus.AlreadySubmitted);
             }
 
+            evaluatedUserId = group.EvaluatedUserId;
             await session.CommitAsync(cancellationToken);
         }
 
@@ -116,6 +119,15 @@ public sealed class EvaluationExternalService(
         }
 
         logger.LogInformation("audit.evaluation.feedback.submitted evaluationGroupId={GroupId}", input.EvaluationGroupId);
+
+        // formmaps#144: a completed 360 is typically the LAST gate event for a student, so legacy fires
+        // checkAndTriggerInsights(result.evaluatedUserId) after every successful submit
+        // (evaluation.ts:161-167) — for the EVALUATED student, not the evaluator. Success path only:
+        // every rejected/replayed submit above returned before reaching here, so retries can never
+        // re-fire. IInsightsTrigger never throws (fail-soft-BUT-LOUD): a failed fire logs at Error
+        // with userId+source for backfill and the evaluator's submit still succeeds.
+        await insightsTrigger.TriggerAsync(evaluatedUserId, "evaluation.feedback.submitted", cancellationToken);
+
         return new FeedbackSubmitResult(FeedbackSubmitStatus.Ok, feedback);
     }
 
