@@ -757,8 +757,10 @@ const nextConfig: NextConfig = {
             {
               // (?!bulk-create): POST /bulk-create is a WRITE at :id's exact depth
               // (questions360Service.ts calls it); a bare :id would swallow it under this
-              // READS flag and split question360 writes across two backends — create and
-              // activate/deactivate stay Node while bulk-create moves (m2 audit H3).
+              // READS flag (m2 audit H3). NOTE this guard only narrows the reads/writes
+              // split — rewrites match by PATH not method, so PUT/DELETE /:id writes still
+              // route to .NET under this flag; only bulk-create returns to Node. If the
+              // flag is on in prod, deploying this is a live cutback of that one route.
               source: "/api/question360/:id((?!bulk-create)[^/]+)",
               destination: `${dotnetApiBaseUrl}/api/question360/:id`,
             },
@@ -1018,7 +1020,7 @@ const nextConfig: NextConfig = {
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses`,
             },
             {
-              source: "/api/v1/school-admin/courses/:courseId((?!import|pathways|ai-import|prereq-analysis)[^/]+)",
+              source: "/api/v1/school-admin/courses/:courseId((?!import|pathways|ai-import|prereq-analysis|ai-recognize)[^/]+)",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/courses/:courseId`,
             },
           ]
