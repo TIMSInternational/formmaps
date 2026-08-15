@@ -95,6 +95,17 @@ Parameters:
       `JWT_AUDIENCE` runtime value (`nexa-frontend`, which overrides the code
       default `formmaps-frontend`). A mismatch 401s every real cookie
       (2026-07-22 P0).
+  LegacyApiBaseUrl:
+    Type: String
+    Default: https://5t8ch34ijm.us-east-1.awsapprunner.com
+    Description: >-
+      Origin of the legacy Node API (App Runner service `nexa-api`), read by
+      FormMaps.Api as LEGACY_API_BASE_URL. formmaps#144: LegacyApiInsightsTrigger
+      POSTs {this}/api/v1/assessment/generate-insights when an assessment leg
+      completes; if it is empty the trigger logs an error and returns, so insights
+      are never generated. It MUST live here rather than being set with
+      `aws apprunner update-service` — this stack owns RuntimeEnvironmentVariables
+      as an explicit list, so a manual value is silently reverted on the next deploy.
   HealthCheckPath:
     Type: String
     Default: /health
@@ -193,6 +204,8 @@ Resources:
                 Value: !Ref LegacyJwtIssuer
               - Name: LegacyJwt__Audience
                 Value: !Ref LegacyJwtAudience
+              - Name: LEGACY_API_BASE_URL
+                Value: !Ref LegacyApiBaseUrl
             RuntimeEnvironmentSecrets:
               - Name: JWT_SECRET
                 Value: !Ref JwtSecretArn
