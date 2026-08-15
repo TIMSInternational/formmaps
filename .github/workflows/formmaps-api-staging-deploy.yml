@@ -93,12 +93,24 @@ jobs:
           DATABASE_URL_SECRET_ARN: ${{ secrets.FORMMAPS_STAGING_DATABASE_URL_SECRET_ARN }}
           DAILY_API_KEY_SECRET_ARN: ${{ secrets.FORMMAPS_STAGING_DAILY_API_KEY_SECRET_ARN }}
           STAGING_WEB_ORIGIN: ${{ vars.FORMMAPS_STAGING_WEB_ORIGIN }}
+          # Added 2026-08-15. The template has required these since 45729997 (2026-08-02) but this
+          # step never passed them, so every dispatch since has died in CreateChangeSet with
+          # "Parameters: [StripeSecretKeyArn, StripeWebhookSecretArn] must have values" — a failure
+          # that only appears AFTER the test suite and image push have already run.
+          STRIPE_SECRET_KEY_ARN: ${{ secrets.FORMMAPS_STAGING_STRIPE_SECRET_KEY_ARN }}
+          STRIPE_WEBHOOK_SECRET_ARN: ${{ secrets.FORMMAPS_STAGING_STRIPE_WEBHOOK_SECRET_ARN }}
         run: |
           set -euo pipefail
           : "${JWT_SECRET_ARN:?Set FORMMAPS_STAGING_JWT_SECRET_ARN in the staging environment.}"
           : "${DATABASE_URL_SECRET_ARN:?Set FORMMAPS_STAGING_DATABASE_URL_SECRET_ARN in the staging environment.}"
           : "${DAILY_API_KEY_SECRET_ARN:?Set FORMMAPS_STAGING_DAILY_API_KEY_SECRET_ARN in the staging environment.}"
           : "${STAGING_WEB_ORIGIN:?Set FORMMAPS_STAGING_WEB_ORIGIN in the staging environment.}"
+          # Guarded like the rest so a missing secret fails here, in seconds, with a name to act on
+          # — rather than 40 minutes later inside CloudFormation. Point these at Stripe TEST-mode
+          # secrets: the service boots with ASPNETCORE_ENVIRONMENT=Production, so
+          # StartupEnvironmentValidator requires them, but staging must never hold the live keys.
+          : "${STRIPE_SECRET_KEY_ARN:?Set FORMMAPS_STAGING_STRIPE_SECRET_KEY_ARN in the staging environment (ARN of a Stripe TEST-mode secret key in Secrets Manager, NOT the live nexa/api/STRIPE_SECRET_KEY).}"
+          : "${STRIPE_WEBHOOK_SECRET_ARN:?Set FORMMAPS_STAGING_STRIPE_WEBHOOK_SECRET_ARN in the staging environment (ARN of the TEST-mode webhook signing secret).}"
           aws cloudformation deploy \
             --stack-name "$SERVICE_STACK_NAME" \
             --template-file infra/aws/formmaps-api-staging-service.yml \
@@ -111,6 +123,8 @@ jobs:
               JwtSecretArn="$JWT_SECRET_ARN" \
               DatabaseUrlSecretArn="$DATABASE_URL_SECRET_ARN" \
               DailyApiKeySecretArn="$DAILY_API_KEY_SECRET_ARN" \
+              StripeSecretKeyArn="$STRIPE_SECRET_KEY_ARN" \
+              StripeWebhookSecretArn="$STRIPE_WEBHOOK_SECRET_ARN" \
               StagingWebOrigin="$STAGING_WEB_ORIGIN"
 
       - name: Read App Runner URL
