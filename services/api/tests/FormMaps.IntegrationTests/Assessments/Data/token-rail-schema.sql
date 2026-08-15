@@ -187,3 +187,31 @@ ALTER TABLE "vocational_responses" ADD CONSTRAINT "vocational_responses_evaluati
     FOREIGN KEY ("evaluationGroupId") REFERENCES "evaluation_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "evaluation_feedbacks" ADD CONSTRAINT "evaluation_feedbacks_evaluationGroupId_fkey"
     FOREIGN KEY ("evaluationGroupId") REFERENCES "evaluation_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- ------------------------------------------------------------------------------------------------
+-- audit-events retrofit (plan Tasks 12 AND 14 of formmaps#52). Same SIMPLIFIED shape as the other
+-- retrofit fixtures (no RLS policy, no immutability trigger -- proven once, against the real DDL, in
+-- FormMaps.IntegrationTests/Audit).
+--
+-- Task 12 added it for a write this rail only TRIGGERS: a vocational rater's submission runs
+-- VocationalWriter.RecomputeScoreAsync, which audits. Task 14 made the rail an audit writer in its own
+-- right -- EvaluationExternalService.SubmitFeedbackAsync now persists
+-- audit.evaluation.feedback.submitted alongside its long-standing log line.
+--
+-- Either way the table has to exist here or those writes silently take AuditEventWriter's fail-soft
+-- branch: the tests stay green while proving nothing. There is deliberately no FK from "subjectId" to
+-- "evaluation_groups" -- audit_events outlives its subjects by design, that is the production shape,
+-- and evaluation_groups is TRUNCATEd between tests.
+-- ------------------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "audit_events" (
+    "id" TEXT PRIMARY KEY,
+    "occurredAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+    "eventType" TEXT NOT NULL,
+    "actorUserId" TEXT,
+    "actorRole" TEXT,
+    "schoolId" TEXT,
+    "subjectType" TEXT NOT NULL,
+    "subjectId" TEXT,
+    "outcome" TEXT NOT NULL DEFAULT 'success',
+    "metadata" JSONB
+);

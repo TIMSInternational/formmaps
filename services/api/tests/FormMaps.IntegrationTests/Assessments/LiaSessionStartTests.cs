@@ -2,6 +2,7 @@ using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
+using FormMaps.Infrastructure.Audit;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -274,6 +275,11 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
         Assert.Contains(sessionId, audit.Message, StringComparison.Ordinal);
         Assert.Contains(userId, audit.Message, StringComparison.Ordinal);
 
+        // ...and the audit-events retrofit (plan Task 8 of formmaps#52): the same completion must also
+        // land a durable row. Asserted per call site, not once, because the failure mode this guards is
+        // exactly "one of the five completion paths was left log-only".
+        Assert.Equal(1, await _fixture.CountAuditEventsAsync("audit.assessment.lia.completed", sessionId));
+
         // formmaps#144: StartAsync's Gate 2 completion fires the polyglot insights trigger exactly
         // once, for the owner, alongside that audit event.
         var gateFire = Assert.Single(_insightsTrigger.Fires);
@@ -471,8 +477,17 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        return (new LiaSessionWriter(factory, resolver, _insightsTrigger, logger), logger);
+        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), _insightsTrigger, logger), logger);
     }
+
+    /// <summary>
+    /// The real <see cref="AuditEventWriter"/> (formmaps#52 Task 8), never a fake: the thing under test
+    /// is that a completion lands a row in <c>audit_events</c>, and a substituted writer would make that
+    /// assertion about the substitute. Its own logger is NullLogger — audit-write failures are fail-soft
+    /// and land on that logger, not on this class's CapturingLogger, which asserts the log-line half.
+    /// </summary>
+    private static AuditEventWriter AuditWriter(NpgsqlFormMapsDatabaseSessionFactory factory) =>
+        new(factory, NullLogger<AuditEventWriter>.Instance);
 
     private static RequestContext Ctx(string userId, string name = "Test User", string email = "test@e.st") =>
         RequestContext.Authenticated(

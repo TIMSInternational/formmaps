@@ -97,3 +97,29 @@ CREATE INDEX "pca_exam_answers_sessionId_idx" ON "pca_exam_answers"("sessionId")
 ALTER TABLE "pca_questions" ADD CONSTRAINT "pca_questions_examId_fkey" FOREIGN KEY ("examId") REFERENCES "pca_exams"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "pca_exam_sessions" ADD CONSTRAINT "pca_exam_sessions_examId_fkey" FOREIGN KEY ("examId") REFERENCES "pca_exams"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "pca_exam_answers" ADD CONSTRAINT "pca_exam_answers_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "pca_exam_sessions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- ------------------------------------------------------------------------------------------------
+-- audit-events retrofit (plan Task 11 of formmaps#52). Deliberately SIMPLIFIED: table shape only --
+-- no RLS policy and no immutability trigger. Both are proven once, thoroughly, against the real DDL
+-- in FormMaps.IntegrationTests/Audit (plan Tasks 1/4); repeating them across seven unrelated domain
+-- fixtures would only add the DISABLE-TRIGGER reset dance for zero extra coverage. What THIS copy is
+-- for is the wiring question: does PcaExamWriter actually persist a row when an exam is started and
+-- when it is submitted -- and, just as importantly, NOT on the paths that write nothing (a missing
+-- exam, a blocked retake, and the corpus #18 replay of a completed or time-expired session).
+--
+-- There is deliberately no FK from "subjectId" to pca_exam_sessions: audit_events outlives its
+-- subjects by design (a purged session must not take its audit trail with it), so a reference here
+-- would be a shape the production table does not have.
+-- ------------------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "audit_events" (
+    "id" TEXT PRIMARY KEY,
+    "occurredAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+    "eventType" TEXT NOT NULL,
+    "actorUserId" TEXT,
+    "actorRole" TEXT,
+    "schoolId" TEXT,
+    "subjectType" TEXT NOT NULL,
+    "subjectId" TEXT,
+    "outcome" TEXT NOT NULL DEFAULT 'success',
+    "metadata" JSONB
+);

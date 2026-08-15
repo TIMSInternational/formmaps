@@ -1,14 +1,32 @@
 -- Minimal stub schema for verifying infra/aws/sql/dotnet-service-role.sql's GRANTs. This is
 -- privilege-boundary testing, not data-shape testing, so every table is just "id text primary
--- key" -- what matters is that the exact 86 table names here match the exact 86 table names the
--- role script grants against (kept in sync by hand; see DbRoleGrantsTests for the assertion that
--- catches drift between the two lists).
+-- key" -- what matters is that the table names here are exactly the table names the role script
+-- grants against.
+--
+-- No exact count is quoted here on purpose: this header carried one for a long time and it was
+-- wrong (it said 86 against an actual 87), as did the two other places in this harness that
+-- quoted one. A hand-maintained number in prose cannot be kept honest, and it is not the
+-- invariant anyway -- set equality between the two lists is, and that is enforced in BOTH
+-- directions by machine:
+--   * granted-but-not-stubbed  -> the GRANT raises 42P01 during DbRoleDatabaseFixture.InitializeAsync,
+--                                 taking the whole class down (verified, not assumed).
+--   * stubbed-but-not-granted  -> DbRoleGrantsTests.Every_table_in_the_schema_is_granted_at_least_select.
 CREATE TABLE "academic_terms" (id text PRIMARY KEY);
 CREATE TABLE "academic_years" (id text PRIMARY KEY);
 CREATE TABLE "application_checklists" (id text PRIMARY KEY);
 CREATE TABLE "application_essays" (id text PRIMARY KEY);
 CREATE TABLE "assessment_periods" (id text PRIMARY KEY);
 CREATE TABLE "assessment_schedules" (id text PRIMARY KEY);
+-- formmaps#52: the audit trail. Stubbed BARE like every other table here -- no RLS policy and no
+-- immutability trigger, unlike the real infra/aws/sql/audit-events-schema.sql. This keeps a
+-- rejected UPDATE/DELETE in DbRoleGrantsTests attributable to the GRANT and to nothing else.
+--
+-- Note what this bareness does NOT do: it is not what stops an over-broad grant from hiding behind
+-- the trigger. Measured -- with the real ENABLE ALWAYS trigger added here AND the grant widened to
+-- UPDATE/DELETE, the behavioural test still failed. The trigger raises P0001 while a missing
+-- privilege raises 42501, and that test asserts the SqlState rather than merely that something
+-- threw. The SqlState assertion is the load-bearing part; do not relax it to Assert.ThrowsAsync.
+CREATE TABLE "audit_events" (id text PRIMARY KEY);
 CREATE TABLE "bookings" (id text PRIMARY KEY);
 CREATE TABLE "category_requirements" (id text PRIMARY KEY);
 CREATE TABLE "coaches" (id text PRIMARY KEY);

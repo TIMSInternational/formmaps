@@ -2,6 +2,7 @@ using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
+using FormMaps.Infrastructure.Audit;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -193,6 +194,11 @@ public sealed class LiaEndToEndSessionTests : IClassFixture<LiaWriteDatabaseFixt
         Assert.Single(audits);
         Assert.Contains($"sessionId={sessionId}", audits[0].Message, StringComparison.Ordinal);
         Assert.Contains($"actorUserId={userId}", audits[0].Message, StringComparison.Ordinal);
+
+        // ...and exactly once durably (audit-events retrofit, plan Task 8 of formmaps#52). This is the
+        // DOMINANT completion path — the candidate answering the last item of the last subtest — so a
+        // missing row here would mean the audit table recorded zero completions for most real runs.
+        Assert.Equal(1, await _fixture.CountAuditEventsAsync("audit.assessment.lia.completed", sessionId));
 
         // Persisted state matches what was reported.
         var (status, rawScores, finalScores, percentiles) = await ReadScoringColumnsAsync(sessionId);
@@ -553,7 +559,7 @@ public sealed class LiaEndToEndSessionTests : IClassFixture<LiaWriteDatabaseFixt
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        return (new LiaSessionWriter(factory, resolver, _insightsTrigger, logger), logger);
+        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), _insightsTrigger, logger), logger);
     }
 
     private (ILiaSessionReader reader, ILiaSessionWriter writer, CapturingLogger logger) MakeReaderAndWriter()
@@ -562,9 +568,18 @@ public sealed class LiaEndToEndSessionTests : IClassFixture<LiaWriteDatabaseFixt
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        var writer = new LiaSessionWriter(factory, resolver, _insightsTrigger, logger);
+        var writer = new LiaSessionWriter(factory, resolver, AuditWriter(factory), _insightsTrigger, logger);
         return (new LiaSessionReader(factory, writer, resolver), writer, logger);
     }
+
+    /// <summary>
+    /// The real <see cref="AuditEventWriter"/> (formmaps#52 Task 8), never a fake: the thing under test
+    /// is that a completion lands a row in <c>audit_events</c>, and a substituted writer would make that
+    /// assertion about the substitute. Its own logger is NullLogger — audit-write failures are fail-soft
+    /// and land on that logger, not on this class's CapturingLogger, which asserts the log-line half.
+    /// </summary>
+    private static AuditEventWriter AuditWriter(NpgsqlFormMapsDatabaseSessionFactory factory) =>
+        new(factory, NullLogger<AuditEventWriter>.Instance);
 
     private static RequestContext Ctx(string userId, string name = "Test User", string email = "test@e.st") =>
         RequestContext.Authenticated(

@@ -13,12 +13,16 @@
 -- `formmaps_dotnet_svc`, scoped to exactly the tables the .NET service reads
 -- and/or writes.
 --
--- Table scope was derived by grepping services/api/src for every raw-SQL
--- FROM / JOIN / INSERT INTO / UPDATE / DELETE FROM target (both plain and
--- C#-escaped-quote string forms), then classifying each of the 82 tables
--- found into one of three buckets below by which verbs actually appear
--- against it in the current codebase (as of 2026-07-31). See the maintenance
--- note at the bottom for how to re-derive this list as the service grows.
+-- Table scope was originally derived by grepping services/api/src for every
+-- raw-SQL FROM / JOIN / INSERT INTO / UPDATE / DELETE FROM target (both plain
+-- and C#-escaped-quote string forms), then classifying each table found into a
+-- bucket below by which verbs actually appear against it. That first pass
+-- found 82 tables; the list has grown since and is no longer that number, so
+-- no current count is quoted here -- a hand-maintained figure in a comment
+-- goes stale silently (this header said 82, the test harness said 78, and the
+-- stub schema said 86, all against the same list). What IS checked by machine
+-- is that the granted set and the test harness's stub schema are the same set,
+-- in both directions -- see the maintenance note at the bottom.
 --
 -- Domain 9a (subscription-billing shadow mode) added four of those 82:
 -- `subscription_plans` (read-only -- PlanReader), and the `shadow_*` trio
@@ -243,6 +247,40 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     TO formmaps_dotnet_svc;
 
 -- ---------------------------------------------------------------------------
+-- 4.5. Audit trail (formmaps#52): append-only. SELECT + INSERT, and
+--    deliberately NOT the UPDATE that the read/write bucket above carries.
+--
+--    `audit_events` is written only by AuditEventWriter (INSERT, one row per
+--    event, under RequestContext.System()) and read only by AuditEventReader
+--    (SELECT, for GET /api/v1/audit/events). No .NET code path updates or
+--    deletes a row, and none ever should: an audit trail whose own service
+--    account can rewrite or erase it answers "what happened?" with whatever
+--    the last writer preferred.
+--
+--    This is the second of two independent locks, not the only one. The table
+--    itself also REVOKEs the mutating verbs from PUBLIC and carries an
+--    ENABLE ALWAYS statement trigger that raises on UPDATE/DELETE/TRUNCATE
+--    even for the table owner and even under
+--    session_replication_role = 'replica' (infra/aws/sql/audit-events-schema.sql).
+--    Keeping both matters: the trigger binds the owner but can be dropped by
+--    whoever owns the table, and this grant binds the service account but not
+--    the owner. Neither subsumes the other.
+--
+--    Note the deliberate asymmetry with section 3b: there, withholding INSERT
+--    stopped .NET minting entitlements it has no code for. Here it is UPDATE
+--    and DELETE being withheld, for a different reason -- not "no code path
+--    needs it" but "no code path may ever have it".
+--
+--    DbRoleGrantsTests.Audit_events_* pins this exact verb set, from the
+--    catalog and behaviourally. Widening this GRANT fails those tests
+--    (measured, both directions: SELECT,INSERT,UPDATE,DELETE and SELECT-only
+--    each turn them red).
+-- ---------------------------------------------------------------------------
+GRANT SELECT, INSERT ON TABLE
+    public."audit_events"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
 -- 5. Full-CRUD tables -- the service also deletes rows here (verified:
 --    DELETE FROM hits in services/api/src, e.g. calendar/holiday and
 --    academic-year cleanup, course-plan removal, data-mapping deletion, and
@@ -277,4 +315,16 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
 --     --include="*.cs" | grep -oE '[a-zA-Z_0-9]+\\?"$|"[a-zA-Z_0-9]+' | tr -d '"\\' | sort -u
 -- then diff INSERT INTO / UPDATE / DELETE FROM hits the same way to re-split
 -- into the read-only / no-delete / full-CRUD buckets.
+--
+-- Do NOT apply that re-derivation blindly. It reports which verbs the code
+-- uses TODAY, which is the right default but is not the rule for every table:
+--   * "user_subscriptions" (3b) and "audit_events" (4.5) are withheld verbs on
+--     purpose, not for lack of a call site. Re-deriving mechanically would
+--     widen both -- audit_events would land in the section-4 bucket and
+--     quietly gain UPDATE, defeating the whole point of the table.
+--   * "shadow_payments" (4) is granted despite having no call site yet.
+-- The tests are the backstop: DbRoleGrantsTests pins those exact verb sets and
+-- also fails if a table in the harness's stub schema has no GRANT here at all
+-- (the reverse -- a GRANT for a table missing from the stub schema -- takes the
+-- fixture down with 42P01 during init). Keep the two lists in sync when editing.
 -- =============================================================================

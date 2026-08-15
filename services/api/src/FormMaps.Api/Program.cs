@@ -86,6 +86,7 @@ app.MapCounselorAlertsEndpoints();
 app.MapCounselorSessionsEndpoints();
 app.MapVideoEndpoints();
 app.MapMessagesEndpoints();
+app.MapAuditEndpoints();
 app.MapAuthEndpoints();
 app.MapAuthAdminEndpoints();
 app.MapBillingWebhookEndpoints();

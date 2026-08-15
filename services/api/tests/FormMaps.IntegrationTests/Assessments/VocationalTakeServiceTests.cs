@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Infrastructure.Assessments;
+using FormMaps.Infrastructure.Audit;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
@@ -35,7 +36,12 @@ public sealed class VocationalTakeServiceTests : IClassFixture<TokenRailDatabase
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var reader = new VocationalReader(factory);
-        var writer = new VocationalWriter(factory, reader, new CompleteProfileAssembler(factory), NullLogger<VocationalWriter>.Instance);
+        // Real AuditEventWriter (formmaps#52 Task 12): a rater's submission fires the best-effort recompute,
+        // which now audits. token-rail-schema.sql carries the simplified audit_events table so that write
+        // actually executes here instead of silently taking AuditEventWriter's fail-soft branch.
+        var writer = new VocationalWriter(
+            factory, reader, new CompleteProfileAssembler(factory),
+            new AuditEventWriter(factory, NullLogger<AuditEventWriter>.Instance), NullLogger<VocationalWriter>.Instance);
         return new VocationalTakeService(factory, reader, writer, NullLogger<VocationalTakeService>.Instance);
     }
 

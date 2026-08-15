@@ -60,3 +60,24 @@ CREATE TABLE "vocational_integrated_results" (
 CREATE UNIQUE INDEX "vocational_instruments_version_key" ON "vocational_instruments"("version");
 CREATE UNIQUE INDEX "vocational_results_evaluatedUserId_instrumentVersion_key" ON "vocational_results"("evaluatedUserId", "instrumentVersion");
 CREATE UNIQUE INDEX "vocational_integrated_results_evaluatedUserId_instrumentVersion_key" ON "vocational_integrated_results"("evaluatedUserId", "instrumentVersion");
+
+-- ------------------------------------------------------------------------------------------------
+-- audit-events retrofit (plan Task 12 of formmaps#52). Deliberately SIMPLIFIED: table shape only --
+-- no RLS policy and no immutability trigger; both are proven once against the real DDL in
+-- FormMaps.IntegrationTests/Audit (plan Tasks 1/4). Here it answers the wiring question for the
+-- INTEGRATED half of VocationalWriter: does RecomputeIntegratedAsync persist a row when the three
+-- channels are present -- and nothing at all when there is no active instrument or a channel is
+-- missing. No FK on "subjectId": audit_events outlives its subjects by design.
+-- ------------------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS "audit_events" (
+    "id" TEXT PRIMARY KEY,
+    "occurredAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+    "eventType" TEXT NOT NULL,
+    "actorUserId" TEXT,
+    "actorRole" TEXT,
+    "schoolId" TEXT,
+    "subjectType" TEXT NOT NULL,
+    "subjectId" TEXT,
+    "outcome" TEXT NOT NULL DEFAULT 'success',
+    "metadata" JSONB
+);

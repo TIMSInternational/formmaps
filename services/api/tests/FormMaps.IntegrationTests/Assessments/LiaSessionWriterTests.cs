@@ -3,6 +3,7 @@ using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
+using FormMaps.Infrastructure.Audit;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -249,6 +250,85 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
         Assert.DoesNotContain("ada@analytical.engine", audit.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The audit-events retrofit (plan Task 8 of formmaps#52). Until now "audit event" meant one
+    /// structured log line, which no compliance surface can query and which a log-retention window
+    /// eventually deletes. The completion must ALSO persist a row in <c>audit_events</c> — and this
+    /// asserts the whole row, not a count, because eight of the nine written columns are TEXT and six
+    /// are nullable, so a count is green for a writer that swapped actorUserId with subjectId.
+    /// </summary>
+    [Fact]
+    public async Task Complete_persists_a_pii_free_row_to_audit_events()
+    {
+        var (userId, sessionId) = await SeedRunAsync(
+            status: "in_progress", allEnded: true, counts: HappyCounts,
+            userName: "Ada Lovelace", userEmail: "ada@analytical.engine");
+        var expected = LiaCompletionScorer.ScoreCompletion(ExpectedCounts(HappyCounts));
+
+        var (writer, _) = MakeWriter();
+        await writer.CompleteAsync(
+            Ctx(userId, name: "Ada Lovelace", email: "ada@analytical.engine"), sessionId, userId);
+
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.assessment.lia.completed", sessionId);
+        Assert.Equal("audit.assessment.lia.completed", row.EventType);
+        Assert.Equal(userId, row.ActorUserId);
+        Assert.Equal("lia_session", row.SubjectType);
+        Assert.Equal(sessionId, row.SubjectId);
+        Assert.Equal("success", row.Outcome);
+        Assert.False(string.IsNullOrWhiteSpace(row.Id));
+
+        // Metadata carries the same two scalars the log line already carried — nothing more.
+        Assert.NotNull(row.MetadataJson);
+        Assert.Contains("globalPercentile", row.MetadataJson!, StringComparison.Ordinal);
+        Assert.Contains(
+            expected.PerformanceLevel, row.MetadataJson!, StringComparison.Ordinal);
+
+        // The whole point of the denylist guard: the persisted row is PII-free even though the actor
+        // in scope carries a real name and email.
+        var serialized = string.Join("|", row.Id, row.EventType, row.ActorUserId, row.ActorRole,
+            row.SchoolId, row.SubjectType, row.SubjectId, row.Outcome, row.MetadataJson);
+        Assert.DoesNotContain("Ada Lovelace", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("ada@analytical.engine", serialized, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Negative control for the test above: a rejected completion writes nothing, so it must persist
+    /// no audit row either. Without this, a writer that emitted an event unconditionally (before the
+    /// coverage gates) would still satisfy the persistence test.
+    /// </summary>
+    [Fact]
+    public async Task Complete_with_incomplete_coverage_persists_no_audit_event()
+    {
+        var counts = new Dictionary<string, (int, int)>(HappyCounts, StringComparer.Ordinal)
+        {
+            ["pattern_recognition"] = (39, 10), // 59 of 60 — one short.
+        };
+        var (userId, sessionId) = await SeedRunAsync(status: "in_progress", allEnded: true, counts: counts);
+
+        var (writer, _) = MakeWriter();
+        var outcome = await writer.CompleteAsync(Ctx(userId), sessionId, userId);
+
+        Assert.Equal(LiaCompleteStatus.IncompleteCoverage, outcome.Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.lia.completed", sessionId));
+    }
+
+    /// <summary>
+    /// Idempotency, at the audit layer: the replay branch performs no write, so it must not append a
+    /// second audit row. A double row here would misreport one assessment as two completions to every
+    /// compliance surface reading this table.
+    /// </summary>
+    [Fact]
+    public async Task Complete_twice_persists_exactly_one_audit_event()
+    {
+        var (userId, sessionId) = await SeedRunAsync(status: "in_progress", allEnded: true, counts: HappyCounts);
+        var (writer, _) = MakeWriter();
+
+        await writer.CompleteAsync(Ctx(userId), sessionId, userId);
+        await writer.CompleteAsync(Ctx(userId), sessionId, userId);
+
+        Assert.Equal(1, await _fixture.CountAuditEventsAsync("audit.assessment.lia.completed", sessionId));
+    }
+
     // ----------------------------------------------------------------------------------------------
     // TOCTOU — two concurrent completions cannot double-score. FOR UPDATE serializes them; the loser
     // re-reads status='completed' and returns the stored scores. Exactly one write.
@@ -294,8 +374,17 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, new LiaQuestionCatalogCache(), NullLogger<LiaQuestionIdResolver>.Instance);
-        return (new LiaSessionWriter(factory, resolver, _insightsTrigger, logger), logger);
+        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), _insightsTrigger, logger), logger);
     }
+
+    /// <summary>
+    /// The real <see cref="AuditEventWriter"/> (formmaps#52 Task 8), never a fake: the thing under test
+    /// is that a completion lands a row in <c>audit_events</c>, and a substituted writer would make that
+    /// assertion about the substitute. Its own logger is NullLogger — audit-write failures are fail-soft
+    /// and land on that logger, not on this class's CapturingLogger, which asserts the log-line half.
+    /// </summary>
+    private static AuditEventWriter AuditWriter(NpgsqlFormMapsDatabaseSessionFactory factory) =>
+        new(factory, NullLogger<AuditEventWriter>.Instance);
 
     private static RequestContext Ctx(string userId, string name = "Test User", string email = "test@e.st") =>
         RequestContext.Authenticated(

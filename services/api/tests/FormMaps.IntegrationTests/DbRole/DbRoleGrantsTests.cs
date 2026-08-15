@@ -10,10 +10,13 @@ namespace FormMaps.IntegrationTests.DbRole;
 public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFixture<DbRoleDatabaseFixture>
 {
     // One representative table per grant tier from the script (kept in sync by hand; a full round-trip over every
-    // one of the 78 tables adds verification depth without adding coverage of a genuinely different code path).
+    // granted table adds verification depth without adding coverage of a genuinely different code path). Tables
+    // whose exact verb set IS the invariant -- the billing tier and audit_events -- are named individually below
+    // instead of being sampled.
     private const string ReadOnlyTable = "universities";
     private const string WriteNoDeleteTable = "users";
     private const string FullCrudTable = "holidays";
+    private const string AuditTable = "audit_events";
 
     [Fact]
     public async Task Role_has_no_elevated_attributes()
@@ -149,6 +152,108 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
         Assert.Equal(canInsert, reader.GetBoolean(1));
         Assert.Equal(canUpdate, reader.GetBoolean(2));
         Assert.Equal(canDelete, reader.GetBoolean(3));
+    }
+
+    /// <summary>
+    /// formmaps#52. The audit trail's grant is its own tier: SELECT + INSERT, never UPDATE, never DELETE.
+    /// This mirrors at the privilege layer what infra/aws/sql/audit-events-schema.sql enforces at the table
+    /// layer (REVOKE + the ENABLE ALWAYS statement trigger), so that the two independent locks agree. The
+    /// forbidden half is the point: audit_events is append-only, and a role that can UPDATE it can rewrite
+    /// history, which is the single property the whole domain exists to provide.
+    ///
+    /// Catalog-level assertion (has_table_privilege), deliberately paired with the behavioural one below --
+    /// this one alone would pass against a grant that Postgres records but the role cannot use, and the
+    /// behavioural one alone cannot distinguish "no privilege" from "some other lock said no".
+    /// </summary>
+    [Fact]
+    public async Task Audit_events_is_granted_select_and_insert_but_never_update_or_delete()
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'DELETE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'TRUNCATE')
+            """,
+            connection);
+        command.Parameters.AddWithValue("table", AuditTable);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.True(reader.GetBoolean(0), "AuditEventReader SELECTs audit_events under RequestContext.System()");
+        Assert.True(reader.GetBoolean(1), "AuditEventWriter INSERTs audit_events; without this every write 42501s");
+        Assert.False(reader.GetBoolean(2), "audit_events is append-only -- UPDATE would let the service rewrite the trail");
+        Assert.False(reader.GetBoolean(3), "audit_events is append-only -- DELETE would let the service erase the trail");
+        Assert.False(reader.GetBoolean(4), "TRUNCATE erases the whole trail in one statement and is never needed by the service");
+    }
+
+    /// <summary>
+    /// The behavioural half of the assertion above, run as the role itself rather than read out of the catalog.
+    /// This fixture's audit_events stub is a bare table (see dotnet-service-role-stub-schema.sql) -- no RLS
+    /// policy, no immutability trigger -- so a rejected UPDATE/DELETE here is attributable to the GRANT and to
+    /// nothing else.
+    ///
+    /// The SqlState checks below are what make that true, not the bare stub on its own, and the difference was
+    /// measured rather than assumed: adding the real ENABLE ALWAYS trigger to the stub while widening the grant
+    /// to UPDATE/DELETE still failed this test, because the trigger raises P0001 and a missing privilege raises
+    /// 42501. A bare Assert.ThrowsAsync&lt;PostgresException&gt; here would have been masked by the trigger and
+    /// would also be equally green for 42P01 (table missing) or a typo. Keep the SqlState assertions.
+    /// </summary>
+    [Fact]
+    public async Task Audit_events_accepts_appends_from_the_role_but_rejects_rewrites_and_erasures()
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand($"""INSERT INTO "{AuditTable}" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        await using (var select = new NpgsqlCommand($"""SELECT count(*) FROM "{AuditTable}" WHERE id = @id""", connection))
+        {
+            select.Parameters.AddWithValue("id", id);
+            Assert.Equal(1L, (long)(await select.ExecuteScalarAsync())!);
+        }
+
+        var update = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand(
+                $"""UPDATE "{AuditTable}" SET id = 'rewritten' WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", update.SqlState); // insufficient_privilege
+
+        var delete = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand($"""DELETE FROM "{AuditTable}" WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", delete.SqlState);
+
+        var truncate = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand($"TRUNCATE TABLE \"{AuditTable}\"", connection);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", truncate.SqlState);
+
+        // The row the role appended is still there, unmodified. Assert.ThrowsAsync only proves an exception was
+        // raised; "the append survived every attempt to rewrite it" is the property the audit trail promises.
+        await using var survived = new NpgsqlCommand(
+            $"""SELECT count(*) FROM "{AuditTable}" WHERE id = @id""", connection);
+        survived.Parameters.AddWithValue("id", id);
+        Assert.Equal(1L, (long)(await survived.ExecuteScalarAsync())!);
     }
 
     /// <summary>

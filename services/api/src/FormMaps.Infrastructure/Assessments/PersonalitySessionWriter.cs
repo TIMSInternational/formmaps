@@ -2,6 +2,7 @@ using System.Data;
 using System.Data.Common;
 using System.Text.Json;
 using FormMaps.Application.Assessments;
+using FormMaps.Application.Audit;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using Microsoft.Extensions.Logging;
@@ -16,9 +17,18 @@ namespace FormMaps.Infrastructure.Assessments;
 /// completed session is never rescored). Durable writes (create, complete) emit a PII-free audit event.
 /// Reuses the shipped PersonalityScoring (FM-027), PersonalityItemBank, and the results reader (FM-017).
 /// </summary>
+/// <remarks>
+/// formmaps#52 Task 9: those two audit events are now DURABLE as well as logged. Both call sites keep
+/// their existing <c>logger.LogInformation</c> line verbatim (log-based alerting still works) and
+/// additionally persist a row via <see cref="IAuditEventWriter" />, fired at the same post-commit point
+/// the log line already fires from — so a row can never claim a write that did not land. Both go through
+/// <see cref="WriteAuditAsync" />, which fixes the subject type and the cancellation contract in one
+/// place; only the event type and the metadata differ between them.
+/// </remarks>
 public sealed class PersonalitySessionWriter(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     IPersonalityResultReader resultReader,
+    IAuditEventWriter auditEventWriter,
     ILogger<PersonalitySessionWriter> logger) : IPersonalitySessionWriter
 {
     private static readonly JsonSerializerOptions JsonOptions = new();
@@ -86,6 +96,12 @@ public sealed class PersonalitySessionWriter(
         logger.LogInformation(
             "audit.assessment.personality.started sessionId={SessionId} actorUserId={ActorUserId} variant={Variant}",
             sessionId, userId, variant);
+
+        // Only the CREATE path audits a start. Resume (above) and the blocked retake (above) reach
+        // neither this line nor the INSERT, which is the point: a refresh mid-assessment must not
+        // report the candidate as having started again.
+        await WriteAuditAsync(
+            "audit.assessment.personality.started", sessionId, userId, new() { ["variant"] = variant });
 
         var payload = new SessionStartPayload(
             SessionId: sessionId,
@@ -299,6 +315,12 @@ public sealed class PersonalitySessionWriter(
                 logger.LogInformation(
                     "audit.assessment.personality.completed sessionId={SessionId} actorUserId={ActorUserId} type={Type}",
                     sessionId, userId, score.Type);
+
+                // Inside the `status != 'completed'` branch on purpose: the idempotent replay below
+                // rescores nothing, so it must not append a second completion event. One assessment,
+                // one row — otherwise every results reload would inflate the compliance record.
+                await WriteAuditAsync(
+                    "audit.assessment.personality.completed", sessionId, userId, new() { ["type"] = score.Type });
             }
         }
 
@@ -311,6 +333,33 @@ public sealed class PersonalitySessionWriter(
     }
 
     // ------------------------------------------------------------------ helpers
+
+    /// <summary>
+    /// The durable half of this class's audit (formmaps#52 Task 9). Called immediately after each
+    /// existing <c>audit.assessment.personality.*</c> log line, and — like that line — only ever AFTER
+    /// the session's own commit has succeeded.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="CancellationToken.None" /> is passed deliberately, per
+    /// <see cref="IAuditEventWriter.WriteAsync" />'s contract: this runs after the caller's commit, and
+    /// <c>AuditEventWriter</c> re-throws <see cref="OperationCanceledException" /> rather than
+    /// swallowing it — so passing the request token would let a candidate closing the tab in the gap
+    /// between commit and audit raise from a start/completion that had already succeeded. Every other
+    /// failure is fail-soft-but-alert inside the writer (logged at Error, never thrown), so this call
+    /// cannot change what the candidate sees.
+    /// </remarks>
+    private Task WriteAuditAsync(
+        string eventType, string sessionId, string userId, Dictionary<string, object?> metadata) =>
+        auditEventWriter.WriteAsync(
+            new AuditEvent(
+                EventType: eventType,
+                ActorUserId: userId,
+                ActorRole: null,
+                SchoolId: null,
+                SubjectType: "personality_session",
+                SubjectId: sessionId,
+                Metadata: metadata),
+            CancellationToken.None);
 
     private static async Task<OwnedSession?> ReadOwnedSessionAsync(
         FormMapsDatabaseSession session, string sessionId, string userId, bool forUpdate, CancellationToken cancellationToken)

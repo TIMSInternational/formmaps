@@ -2,6 +2,7 @@ using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
+using FormMaps.Infrastructure.Audit;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
@@ -27,7 +28,13 @@ public sealed class Question360WriterTests : IClassFixture<Question360DatabaseFi
     {
         _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
         await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand("""TRUNCATE "questions_360" """, conn);
+        // audit_events is truncated alongside questions_360 — the one retrofit fixture in this plan that
+        // needs to be. Sibling retrofits narrow every audit assertion by a freshly-generated per-test id, but
+        // audit.question360.bulk_created deliberately has NO subject (a batch has no single one), so several
+        // tests here would otherwise be counting each other's bulk rows. This is test isolation only; the
+        // table's real append-only/immutability guarantees are proven against the production DDL in
+        // FormMaps.IntegrationTests/Audit (plan Tasks 1/4), not weakened by a TRUNCATE in this fixture.
+        await using var cmd = new NpgsqlCommand("""TRUNCATE "questions_360", "audit_events" """, conn);
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -228,10 +235,235 @@ public sealed class Question360WriterTests : IClassFixture<Question360DatabaseFi
         Assert.Equal("Expected object, received null", result.Errors[0]["error"]!.GetValue<string>());
     }
 
+    // ================================================== audit-events retrofit (formmaps#52 Task 13)
+
+    /// <summary>
+    /// Until now "audit" here meant one structured log line carrying a question id and nothing else — no actor,
+    /// not queryable, and eventually deleted by a log-retention window. It matters more for this writer than
+    /// for any sibling: <c>questions_360</c> has <c>createdBy</c>/<c>updatedBy</c> columns that this writer
+    /// NEVER populates (legacy parity, pinned by the create test above), so after this retrofit
+    /// <c>audit_events</c> is the ONLY record anywhere of who changed the global question bank.
+    /// The WHOLE row is asserted rather than a count, because eight of the nine written columns are TEXT and
+    /// six are nullable — a count stays green for a writer that swapped actorUserId with subjectId.
+    /// </summary>
+    [Fact]
+    public async Task Create_persists_a_pii_free_audit_event_naming_the_actor()
+    {
+        var outcome = await Writer().CreateAsync(AuditCtx(), Body(Valid(1)));
+        var questionId = outcome.Row!.Id;
+
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.question360.created", questionId);
+        Assert.Equal("audit.question360.created", row.EventType);
+        Assert.Equal("admin-audit-1", row.ActorUserId);   // the catalog row itself records no one — see above
+        Assert.Equal("school_admin", row.ActorRole);
+        Assert.Null(row.SchoolId);                        // a GLOBAL catalog row belongs to no school
+        Assert.Equal("question_360", row.SubjectType);
+        Assert.Equal(questionId, row.SubjectId);
+        Assert.Equal("success", row.Outcome);
+        Assert.False(string.IsNullOrWhiteSpace(row.Id));
+
+        // No metadata: the log line carries only the question id, and there is nothing else at this call site
+        // worth persisting into an append-only, indefinitely-retained table. Asserted as SQL NULL rather than
+        // merely "not the question text" — the JSON null literal is a non-NULL column value and would make
+        // "metadata IS NULL" false for every metadata-less event.
+        Assert.Null(row.MetadataJson);
+
+        AssertPiiFree(row);
+    }
+
+    /// <summary>Update audits the same subject under a distinct event type.</summary>
+    [Fact]
+    public async Task Update_persists_an_audit_event()
+    {
+        var created = (await Writer().CreateAsync(AuditCtx(), Body(Valid(1)))).Row!;
+
+        await Writer().UpdateAsync(AuditCtx(), created.Id, Body("""{"category":"new"}"""));
+
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.question360.updated", created.Id);
+        Assert.Equal("question_360", row.SubjectType);
+        Assert.Equal(created.Id, row.SubjectId);
+        Assert.Equal("admin-audit-1", row.ActorUserId);
+        Assert.Null(row.MetadataJson);
+    }
+
+    /// <summary>
+    /// The activate/deactivate call site is ONE log line whose action is a runtime placeholder
+    /// (<c>audit.question360.{Action}</c>), so a retrofit that hardcoded either string would still look wired.
+    /// Both branches are therefore asserted for the event they DO write and for the one they must not.
+    /// </summary>
+    [Fact]
+    public async Task Deactivate_persists_a_deactivated_event_and_not_an_activated_one()
+    {
+        var created = (await Writer().CreateAsync(AuditCtx(), Body(Valid(1)))).Row!;
+
+        await Writer().SetActiveAsync(AuditCtx(), created.Id, isActive: false);
+
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.question360.deactivated", created.Id);
+        Assert.Equal(created.Id, row.SubjectId);
+        Assert.Equal("question_360", row.SubjectType);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.question360.activated", created.Id));
+    }
+
+    /// <inheritdoc cref="Deactivate_persists_a_deactivated_event_and_not_an_activated_one"/>
+    [Fact]
+    public async Task Activate_persists_an_activated_event_and_not_a_deactivated_one()
+    {
+        var created = (await Writer().CreateAsync(AuditCtx(), Body(Valid(1)))).Row!;
+
+        await Writer().SetActiveAsync(AuditCtx(), created.Id, isActive: true);
+
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.question360.activated", created.Id);
+        Assert.Equal(created.Id, row.SubjectId);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.question360.deactivated", created.Id));
+    }
+
+    /// <summary>
+    /// Delete is a SOFT delete, so the catalog row survives and the audit event is the only durable marker of
+    /// the intent. The delete is also idempotent (no isActive precheck — pinned above), and each successful
+    /// call is a separate act by a separate possible actor, so the second one audits too.
+    /// </summary>
+    [Fact]
+    public async Task Delete_persists_a_deleted_event_on_every_successful_call()
+    {
+        var created = (await Writer().CreateAsync(AuditCtx(), Body(Valid(1)))).Row!;
+
+        Assert.Equal(Question360DeleteStatus.Deleted, await Writer().DeleteAsync(AuditCtx(), created.Id));
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.question360.deleted", created.Id);
+        Assert.Equal(created.Id, row.SubjectId);
+        Assert.Equal("question_360", row.SubjectType);
+
+        Assert.Equal(Question360DeleteStatus.Deleted, await Writer().DeleteAsync(AuditCtx(), created.Id));
+        Assert.Equal(2, await _fixture.CountAuditEventsAsync("audit.question360.deleted", created.Id));
+    }
+
+    /// <summary>
+    /// bulk-create is the one site with NO subject: the batch is the act, and its items each already got their
+    /// own row id that nothing else references. One summary event per request — not one per item, which is what
+    /// the count assertion pins — carrying the same two counts the log line does. <c>subjectId</c> NULL is the
+    /// production column's documented shape ("nullable: bulk operations may have no single subject"), not a
+    /// local shortcut.
+    /// </summary>
+    [Fact]
+    public async Task BulkCreate_persists_one_subjectless_event_carrying_the_counts()
+    {
+        var result = await Writer().BulkCreateAsync(AuditCtx(), Body($$"""
+            [
+              {{Valid(1)}},
+              {{Valid(2)}},
+              {"questionEnglishText":"e","questionSpanishText":"s","category":"c","relationType":"r","questionNumber":-2}
+            ]
+            """));
+
+        Assert.Equal(2, result.CreatedCount);
+        Assert.Equal(3, result.TotalRequested);
+
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.question360.bulk_created", subjectId: null);
+        Assert.Equal("audit.question360.bulk_created", row.EventType);
+        Assert.Null(row.SubjectId);
+        Assert.Equal("question_360", row.SubjectType);
+        Assert.Equal("admin-audit-1", row.ActorUserId);
+
+        Assert.NotNull(row.MetadataJson);
+        using var metadata = JsonDocument.Parse(row.MetadataJson!);
+        Assert.Equal(2, metadata.RootElement.GetProperty("createdCount").GetInt32());
+        Assert.Equal(3, metadata.RootElement.GetProperty("totalRequested").GetInt32());
+    }
+
+    /// <summary>
+    /// A batch where NOTHING was created still audits, deliberately — unlike every other site here, where the
+    /// event means "a row changed". The two counts are in the metadata, so a <c>createdCount: 0</c> event
+    /// claims nothing was written; and an admin attempting a bulk mutation of the global bank that wholly
+    /// failed is exactly the thing an auditor asks about. This mirrors the existing log line, which is also
+    /// unconditional.
+    /// </summary>
+    [Fact]
+    public async Task BulkCreate_that_created_nothing_still_records_the_attempt()
+    {
+        var result = await Writer().BulkCreateAsync(AuditCtx(), Body("""["not-an-object"]"""));
+
+        Assert.Equal(0, result.CreatedCount);
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.question360.bulk_created", subjectId: null);
+        using var metadata = JsonDocument.Parse(row.MetadataJson!);
+        Assert.Equal(0, metadata.RootElement.GetProperty("createdCount").GetInt32());
+        Assert.Equal(1, metadata.RootElement.GetProperty("totalRequested").GetInt32());
+    }
+
+    /// <summary>
+    /// Negative control: a missing id short-circuits to Missing BEFORE the commit, so nothing changed and
+    /// nothing may be audited. An event emitted alongside the attempt would let any caller manufacture a
+    /// tamper-proof record of edits to questions that do not exist.
+    /// </summary>
+    [Fact]
+    public async Task Update_missing_id_writes_no_audit_event()
+    {
+        Assert.Equal(Question360WriteStatus.Missing,
+            (await Writer().UpdateAsync(AuditCtx(), "nope", Body("""{"category":"x"}"""))).Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.question360.updated", "nope"));
+    }
+
+    /// <inheritdoc cref="Update_missing_id_writes_no_audit_event"/>
+    [Fact]
+    public async Task SetActive_missing_id_writes_no_audit_event()
+    {
+        Assert.Equal(Question360WriteStatus.Missing, (await Writer().SetActiveAsync(AuditCtx(), "nope", isActive: true)).Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.question360.activated", "nope"));
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.question360.deactivated", "nope"));
+    }
+
+    /// <inheritdoc cref="Update_missing_id_writes_no_audit_event"/>
+    [Fact]
+    public async Task Delete_missing_id_writes_no_audit_event()
+    {
+        Assert.Equal(Question360DeleteStatus.Missing, await Writer().DeleteAsync(AuditCtx(), "nope"));
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.question360.deleted", "nope"));
+    }
+
+    /// <summary>
+    /// Negative control on the OTHER early return out of DeleteAsync: an active sub-question blocks the
+    /// delete before the UPDATE runs at all. The parent is still active afterwards, so a "deleted" event here
+    /// would be a durable, immutable claim that contradicts the catalog.
+    /// </summary>
+    [Fact]
+    public async Task Delete_blocked_by_the_child_guard_writes_no_audit_event()
+    {
+        var parent = (await Writer().CreateAsync(AuditCtx(), Body(Valid(1)))).Row!;
+        await Writer().CreateAsync(AuditCtx(), Body(
+            $$"""{"questionEnglishText":"e","questionSpanishText":"s","category":"c","relationType":"r","questionNumber":2,"isSubQuestion":true,"parentQuestionId":"{{parent.Id}}"}"""));
+
+        Assert.Equal(Question360DeleteStatus.ChildGuard, await Writer().DeleteAsync(AuditCtx(), parent.Id));
+
+        Assert.True(await IsActiveAsync(parent.Id));
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.question360.deleted", parent.Id));
+    }
+
+    /// <summary>
+    /// Negative control on the throwing path: an int4 overflow escapes CreateAsync as a PostgresException
+    /// (legacy → 500) and never reaches the commit, so there is no created event. The audit write sits below
+    /// the commit rather than in a finally, and this is what proves it.
+    /// </summary>
+    [Fact]
+    public async Task Create_that_throws_writes_no_audit_event()
+    {
+        await Assert.ThrowsAsync<PostgresException>(() =>
+            Writer().CreateAsync(AuditCtx(), Body(
+                """{"questionEnglishText":"e","questionSpanishText":"s","category":"c","relationType":"r","questionNumber":9999999999}""")));
+
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand(
+            """SELECT count(*)::int FROM "audit_events" WHERE "eventType" = 'audit.question360.created'""", conn);
+        Assert.Equal(0, (int)(await cmd.ExecuteScalarAsync())!);
+    }
+
     // ---------------------------------------------------------------- helpers
 
-    private Question360Writer Writer() =>
-        new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), NullLogger<Question360Writer>.Instance);
+    private Question360Writer Writer()
+    {
+        var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
+        // The audit writer is the REAL one, never a fake: the retrofit's claim is that a row lands in
+        // audit_events, and a substitute cannot prove that.
+        return new Question360Writer(factory, new AuditEventWriter(factory, NullLogger<AuditEventWriter>.Instance),
+            NullLogger<Question360Writer>.Instance);
+    }
 
     private Question360Reader Reader() =>
         new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()));
@@ -246,6 +478,27 @@ public sealed class Question360WriterTests : IClassFixture<Question360DatabaseFi
             new RequestActor("admin-1", "school_admin", "a@e.st", "Admin"),
             schoolId: null, permissions: ["evaluations:manage"],
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
+
+    /// <summary>
+    /// The context the audit-retrofit tests act under. It differs from <see cref="Ctx"/> in three ways that
+    /// each carry an assertion: a real-looking name and email so the PII check has something to catch; a
+    /// <c>schoolId</c> so "SchoolId stays null" is a proven decision rather than an artifact of there being
+    /// nothing to copy; and a role given in mixed case so the persisted <c>actorRole</c> is shown to be the
+    /// NORMALIZED role, not whatever casing the token happened to carry.
+    /// </summary>
+    private static RequestContext AuditCtx() =>
+        RequestContext.Authenticated(
+            new RequestActor("admin-audit-1", "School_Admin", "grace.hopper@formmaps.test", "Grace Hopper"),
+            schoolId: "school-audit-1", permissions: ["evaluations:manage"],
+            tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
+
+    private static void AssertPiiFree(Question360DatabaseFixture.AuditEventRow row)
+    {
+        var serialized = string.Join("|", row.Id, row.EventType, row.ActorUserId, row.ActorRole,
+            row.SchoolId, row.SubjectType, row.SubjectId, row.Outcome, row.MetadataJson);
+        Assert.DoesNotContain("Grace Hopper", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("grace.hopper@formmaps.test", serialized, StringComparison.Ordinal);
+    }
 
     private async Task<bool> IsActiveAsync(string id)
     {

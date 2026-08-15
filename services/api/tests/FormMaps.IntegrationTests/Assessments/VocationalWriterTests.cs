@@ -2,8 +2,10 @@ using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Assessments;
+using FormMaps.Infrastructure.Audit;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.Assessments;
@@ -207,6 +209,150 @@ public sealed class VocationalWriterTests : IClassFixture<VocationalWriteDatabas
         Assert.Equal(75m, (await ReadResultAsync(userId, "v1")).Composite);
     }
 
+    // ================================================== audit-events retrofit (formmaps#52 Task 12)
+
+    /// <summary>
+    /// Until now "audit" here meant one structured log line, which no compliance surface can query and
+    /// which a log-retention window eventually deletes; a persisted recompute must ALSO leave a durable
+    /// row in <c>audit_events</c>. The WHOLE row is asserted rather than a count, because eight of the
+    /// nine written columns are TEXT and six are nullable — a count stays green for a writer that swapped
+    /// actorUserId with subjectId, or dropped the metadata entirely.
+    /// </summary>
+    [Fact]
+    public async Task Recompute_ready_persists_a_pii_free_row_to_audit_events()
+    {
+        var userId = UserId();
+        var counselorId = UserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var instrumentId = await SeedInstrumentAsync(conn, "v1");
+        await SeedDimensionAsync(conn, instrumentId, "d1", "Dim1", weight: 1);
+        await SeedQuestionAsync(conn, instrumentId, number: 1, type: "likert");
+        var selfGroup = await SeedGroupAsync(conn, userId, "self");
+        await SeedLikertAsync(conn, selfGroup, "v1", "self", 1, "d1", rating: 5);   // 100
+        var parentGroup = await SeedGroupAsync(conn, userId, "parent");
+        await SeedLikertAsync(conn, parentGroup, "v1", "parent", 1, "d1", rating: 3); // 50 -> composite 75
+
+        var (writer, _) = MakeWriter();
+        // A counselor recomputing a STUDENT's score: actor and subject deliberately differ, so a writer
+        // that attributed the event to the evaluated user instead of the caller cannot pass.
+        await writer.RecomputeScoreAsync(CtxActedBy(counselorId, name: "Ada Lovelace", email: "ada@analytical.engine"), userId);
+
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.assessment.vocational.recomputed", userId);
+        Assert.Equal("audit.assessment.vocational.recomputed", row.EventType);
+        Assert.Equal(counselorId, row.ActorUserId);            // the caller, NOT the evaluated user
+        Assert.Equal("vocational_result", row.SubjectType);
+        Assert.Equal(userId, row.SubjectId);
+        Assert.Equal("success", row.Outcome);
+        Assert.False(string.IsNullOrWhiteSpace(row.Id));
+
+        // Metadata is the three scalars the log line already carried. instrumentVersion is load-bearing:
+        // the persisted result is keyed on (evaluatedUserId, instrumentVersion), and the row's own id is
+        // regenerated on every upsert, so the version is what makes the event reconcilable at all.
+        Assert.NotNull(row.MetadataJson);
+        using var metadata = JsonDocument.Parse(row.MetadataJson!);
+        Assert.Equal("v1", metadata.RootElement.GetProperty("instrumentVersion").GetString());
+        Assert.Equal(75d, metadata.RootElement.GetProperty("composite").GetDouble());
+        Assert.Equal("moderateHigh", metadata.RootElement.GetProperty("band").GetString());
+
+        AssertPiiFree(row);
+    }
+
+    /// <summary>
+    /// Negative control: no active instrument → never_computed, nothing persisted, so nothing audited.
+    /// An event emitted above the instrument lookup would let any caller manufacture a recompute trail
+    /// for a user whose score was never computed at all.
+    /// </summary>
+    [Fact]
+    public async Task Recompute_never_computed_writes_no_audit_event()
+    {
+        var userId = UserId();
+        var (writer, _) = MakeWriter();
+
+        var outcome = await writer.RecomputeScoreAsync(Ctx(userId), userId);
+
+        Assert.Equal(VocationalRecomputeStatus.NeverComputed, outcome.Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.vocational.recomputed", userId));
+    }
+
+    /// <summary>
+    /// Negative control: self-only → needs_self_plus_one, nothing persisted, so nothing audited. The
+    /// audit row must mean "a score was written", not "a recompute was attempted" — the two differ on
+    /// exactly this path, which is the common one while a 360 is still collecting raters.
+    /// </summary>
+    [Fact]
+    public async Task Recompute_not_ready_writes_no_audit_event()
+    {
+        var userId = UserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var instrumentId = await SeedInstrumentAsync(conn, "v1");
+        await SeedDimensionAsync(conn, instrumentId, "d1", "Dim1", weight: 1);
+        await SeedQuestionAsync(conn, instrumentId, number: 1, type: "likert");
+        var selfGroup = await SeedGroupAsync(conn, userId, "self");
+        await SeedLikertAsync(conn, selfGroup, "v1", "self", 1, "d1", rating: 5);
+
+        var (writer, _) = MakeWriter();
+        var outcome = await writer.RecomputeScoreAsync(Ctx(userId), userId);
+
+        Assert.Equal(VocationalRecomputeStatus.NotReady, outcome.Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync("audit.assessment.vocational.recomputed", userId));
+    }
+
+    /// <summary>
+    /// The result row is an upsert on (evaluatedUserId, instrumentVersion) — the audit trail is not. Two
+    /// recomputes overwrite one result row but must leave TWO events, because "who recomputed this score,
+    /// and when" is the whole question the table exists to answer, and this write path is also fired
+    /// automatically by every rater submission. A writer that deduplicated to match the result row would
+    /// erase the second actor.
+    /// </summary>
+    [Fact]
+    public async Task Recompute_twice_writes_two_audit_events_though_the_result_row_is_upserted()
+    {
+        var userId = UserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var instrumentId = await SeedInstrumentAsync(conn, "v1");
+        await SeedDimensionAsync(conn, instrumentId, "d1", "Dim1", weight: 1);
+        await SeedQuestionAsync(conn, instrumentId, number: 1, type: "likert");
+        var selfGroup = await SeedGroupAsync(conn, userId, "self");
+        await SeedLikertAsync(conn, selfGroup, "v1", "self", 1, "d1", rating: 5);
+        var parentGroup = await SeedGroupAsync(conn, userId, "parent");
+        await SeedLikertAsync(conn, parentGroup, "v1", "parent", 1, "d1", rating: 3);
+
+        var (writer, _) = MakeWriter();
+        await writer.RecomputeScoreAsync(Ctx(userId), userId);
+        await writer.RecomputeScoreAsync(Ctx(userId), userId);
+
+        Assert.Equal(1, await CountResultsAsync(userId));       // one result row (upsert)
+        Assert.Equal(2, await _fixture.CountAuditEventsAsync("audit.assessment.vocational.recomputed", userId));
+    }
+
+    /// <summary>
+    /// The recompute also runs with NO human actor: <c>VocationalTakeService</c> fires it after a rater
+    /// submits, under <see cref="RequestContext.System()" />. The event must still be written, with a null
+    /// actor — a null here is the honest answer ("the system recomputed this"), and a writer that fell back
+    /// to the evaluated user would fabricate an action the student never took.
+    /// </summary>
+    [Fact]
+    public async Task Recompute_under_a_system_context_audits_with_a_null_actor()
+    {
+        var userId = UserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var instrumentId = await SeedInstrumentAsync(conn, "v1");
+        await SeedDimensionAsync(conn, instrumentId, "d1", "Dim1", weight: 1);
+        await SeedQuestionAsync(conn, instrumentId, number: 1, type: "likert");
+        var selfGroup = await SeedGroupAsync(conn, userId, "self");
+        await SeedLikertAsync(conn, selfGroup, "v1", "self", 1, "d1", rating: 5);
+        var parentGroup = await SeedGroupAsync(conn, userId, "parent");
+        await SeedLikertAsync(conn, parentGroup, "v1", "parent", 1, "d1", rating: 3);
+
+        var (writer, _) = MakeWriter();
+        await writer.RecomputeScoreAsync(RequestContext.System(), userId);
+
+        var row = await _fixture.QuerySingleAuditEventAsync("audit.assessment.vocational.recomputed", userId);
+        Assert.Null(row.ActorUserId);
+        Assert.Equal(userId, row.SubjectId);
+        Assert.Equal("vocational_result", row.SubjectType);
+    }
+
     // ========================================================================= helpers
 
     private (VocationalWriter Writer, CapturingLogger Logger) MakeWriter()
@@ -214,9 +360,20 @@ public sealed class VocationalWriterTests : IClassFixture<VocationalWriteDatabas
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
         // The score recompute (these tests) doesn't touch the reader/assembler; the integrated recompute
-        // (IntegratedRecomputeWriterTests) exercises them.
-        var writer = new VocationalWriter(factory, new VocationalReader(factory), new CompleteProfileAssembler(factory), logger);
+        // (IntegratedRecomputeWriterTests) exercises them. The audit writer is the REAL one, never a fake:
+        // the retrofit's claim is that a row lands in audit_events, and a substitute cannot prove that.
+        var writer = new VocationalWriter(
+            factory, new VocationalReader(factory), new CompleteProfileAssembler(factory),
+            new AuditEventWriter(factory, NullLogger<AuditEventWriter>.Instance), logger);
         return (writer, logger);
+    }
+
+    private static void AssertPiiFree(VocationalWriteDatabaseFixture.AuditEventRow row)
+    {
+        var serialized = string.Join("|", row.Id, row.EventType, row.ActorUserId, row.ActorRole,
+            row.SchoolId, row.SubjectType, row.SubjectId, row.Outcome, row.MetadataJson);
+        Assert.DoesNotContain("Ada Lovelace", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("ada@analytical.engine", serialized, StringComparison.Ordinal);
     }
 
     private static string UserId() => "u-" + Guid.NewGuid().ToString("N");
@@ -224,6 +381,14 @@ public sealed class VocationalWriterTests : IClassFixture<VocationalWriteDatabas
     private static RequestContext Ctx(string userId) =>
         RequestContext.Authenticated(
             new RequestActor(userId, "counselor", $"{userId}@e.st", "Test User"),
+            schoolId: null, permissions: Array.Empty<string>(),
+            tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
+
+    // A caller who is NOT the evaluated user, carrying a real-looking name/email so the PII assertion has
+    // something to catch.
+    private static RequestContext CtxActedBy(string actorUserId, string name, string email) =>
+        RequestContext.Authenticated(
+            new RequestActor(actorUserId, "counselor", email, name),
             schoolId: null, permissions: Array.Empty<string>(),
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
 

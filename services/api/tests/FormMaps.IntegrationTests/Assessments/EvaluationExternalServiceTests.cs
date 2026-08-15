@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FormMaps.Application.Assessments;
 using FormMaps.Infrastructure.Assessments;
+using FormMaps.Infrastructure.Audit;
 using FormMaps.Infrastructure.Data;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
@@ -38,7 +39,17 @@ public sealed class EvaluationExternalServiceTests : IClassFixture<TokenRailData
     private EvaluationExternalService Service()
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
-        return new EvaluationExternalService(factory, _insightsTrigger, NullLogger<EvaluationExternalService>.Instance);
+        // The REAL AuditEventWriter, never a fake (formmaps#52 Task 14). The retrofit's whole claim is that a
+        // row lands in audit_events; a substitute would only prove that a method was called. token-rail-schema
+        // .sql carries the simplified audit_events table so the write really executes here rather than taking
+        // AuditEventWriter's fail-soft branch — which would leave every assertion below vacuously green.
+        // RecordingInsightsTrigger (formmaps#144) is a fake by contrast, and correctly so: the
+        // trigger's real implementation lives in FormMaps.Api and talks HTTP to legacy Node.
+        return new EvaluationExternalService(
+            factory,
+            new AuditEventWriter(factory, NullLogger<AuditEventWriter>.Instance),
+            _insightsTrigger,
+            NullLogger<EvaluationExternalService>.Instance);
     }
 
     // ---- validate-token ----
@@ -306,6 +317,173 @@ public sealed class EvaluationExternalServiceTests : IClassFixture<TokenRailData
     public async Task Get360EvaluatorForm_missing_token_is_null()
     {
         Assert.Null(await Service().Get360EvaluatorFormAsync("nope"));
+    }
+
+    // ================================================== audit-events retrofit (formmaps#52 Task 14)
+    //
+    // Until now "audit" on this rail meant one structured log line carrying an evaluation-group id. This is a
+    // PUBLIC, token-credentialed, NON-TENANT write path — the only mutation in the product an anonymous
+    // caller can perform — so a durable record of "this group was submitted against" is worth more here than
+    // almost anywhere else, and it has to be built out of the two things the rail legitimately knows: the
+    // group id and the fact that the submit succeeded. It knows no user, no role and no school, and the one
+    // identifier it does hold for the human on the other end is an email address, which is exactly what
+    // audit_events must never carry. The tests below pin both halves: the event that IS written, and the
+    // emptiness of the actor columns as a decision rather than an oversight.
+
+    private const string SubmittedEvent = "audit.evaluation.feedback.submitted";
+
+    /// <summary>
+    /// The primary retrofit test: the whole persisted row, not a count. Eight of the nine written columns are
+    /// TEXT and six are nullable, so a count stays green for a writer that swapped subjectId with actorUserId
+    /// or quietly stamped the evaluator's email into an actor column.
+    /// </summary>
+    [Fact]
+    public async Task SubmitFeedback_persists_one_pii_free_audit_event_for_the_group()
+    {
+        var groupId = await SeedGroupAsync(token: "ta1", email: "rater@x.com", groupType: "teacher", expiryHours: 24);
+        var input = new FeedbackSubmitInput(groupId, "ta1", "rater@x.com", new[]
+        {
+            new FeedbackAnswer(1, "Q1", 5, "great", "qid-1", null),
+            new FeedbackAnswer(2, "Q2", 4, null, null, null),
+            new FeedbackAnswer(3, "Q3", 3, null, null, null),
+        });
+
+        Assert.Equal(FeedbackSubmitStatus.Ok, (await Service().SubmitFeedbackAsync(input)).Status);
+
+        var row = await _fixture.QuerySingleAuditEventAsync(SubmittedEvent, groupId);
+        Assert.Equal(SubmittedEvent, row.EventType);
+        Assert.Equal("evaluation_group", row.SubjectType);
+        Assert.Equal(groupId, row.SubjectId);
+        Assert.Equal("success", row.Outcome);
+        Assert.NotEmpty(row.Id);
+
+        // The actor columns are null BY DECISION, not by omission. This rail has no auth principal at all —
+        // every session runs under RequestContext.System() and the token is the whole gate — so there is no
+        // user id, no role and no school to record. Stamping the evaluated student or the group's creator in
+        // here would be a lie about who acted; the truthful answer is "an anonymous holder of a valid token",
+        // and the honest encoding of that is null.
+        Assert.Null(row.ActorUserId);
+        Assert.Null(row.ActorRole);
+        Assert.Null(row.SchoolId);
+
+        // Metadata stays null: the existing log line carries only the group id, and the one extra thing in
+        // scope here is the evaluator's email address. audit_events is append-only and retained indefinitely,
+        // so this is the last table that should learn it. (AuditMetadataGuard would reject an "email"-shaped
+        // KEY, but it inspects keys only — a value smuggled under a bland key would pass, so the real control
+        // is not putting it there.)
+        Assert.Null(row.MetadataJson);
+
+        // Belt-and-braces on that: the rater's address appears in no column of the row, under any key.
+        var everyColumn = string.Join(' ', row.Id, row.EventType, row.ActorUserId, row.ActorRole,
+            row.SchoolId, row.SubjectType, row.SubjectId, row.Outcome, row.MetadataJson);
+        Assert.DoesNotContain("rater@x.com", everyColumn, StringComparison.OrdinalIgnoreCase);
+
+        // ONE event for the submission, not one per answer — three answers went in. QuerySingle already
+        // throws on a second row; this says so in the assertion rather than in an exception message.
+        Assert.Equal(1, await _fixture.CountAuditEventsAsync(SubmittedEvent, groupId));
+    }
+
+    // ---- negative controls: every rejected submit must leave NO event ----
+    //
+    // These matter more than usual on this rail. An audit row here means "an anonymous caller successfully
+    // wrote feedback against this group". If a rejected attempt also produced one, anyone on the internet
+    // holding a group id could manufacture entries in an immutable, indefinitely-retained compliance table —
+    // and the trail would then assert submissions that never happened. Each case below is a DIFFERENT early
+    // return, all of them above the emission point, so together they pin the placement rather than one branch.
+
+    /// <summary>Wrong token: the group is never resolved, so nothing is audited.</summary>
+    [Fact]
+    public async Task SubmitFeedback_invalid_token_writes_no_audit_event()
+    {
+        var groupId = await SeedGroupAsync(token: "ta2", email: "r@x.com", groupType: "teacher", expiryHours: 24);
+        var input = new FeedbackSubmitInput(groupId, "WRONG-TOKEN", "r@x.com", new[] { new FeedbackAnswer(1, "Q", 5, null, null, null) });
+
+        Assert.Equal(FeedbackSubmitStatus.InvalidTokenOrGroup, (await Service().SubmitFeedbackAsync(input)).Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync(SubmittedEvent, groupId));
+    }
+
+    /// <summary>Vocational groups belong to the take-flow; this rail refuses them and audits nothing.</summary>
+    [Fact]
+    public async Task SubmitFeedback_vocational_instrument_writes_no_audit_event()
+    {
+        var groupId = await SeedGroupAsync(token: "ta3", email: "r@x.com", groupType: "teacher", expiryHours: 24, instrument: "vocational");
+        var input = new FeedbackSubmitInput(groupId, "ta3", "r@x.com", new[] { new FeedbackAnswer(1, "Q", 5, null, null, null) });
+
+        Assert.Equal(FeedbackSubmitStatus.VocationalInstrument, (await Service().SubmitFeedbackAsync(input)).Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync(SubmittedEvent, groupId));
+    }
+
+    /// <summary>A token holder submitting under someone else's address is rejected and leaves no trace.</summary>
+    [Fact]
+    public async Task SubmitFeedback_email_mismatch_writes_no_audit_event()
+    {
+        var groupId = await SeedGroupAsync(token: "ta4", email: "rater@x.com", groupType: "teacher", expiryHours: 24);
+        var input = new FeedbackSubmitInput(groupId, "ta4", "someone-else@x.com", new[] { new FeedbackAnswer(1, "Q", 5, null, null, null) });
+
+        Assert.Equal(FeedbackSubmitStatus.EmailMismatch, (await Service().SubmitFeedbackAsync(input)).Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync(SubmittedEvent, groupId));
+    }
+
+    /// <summary>
+    /// A replay against an already-completed group writes nothing, so it audits nothing. Without this the
+    /// trail would accumulate one event per retry for a single real submission.
+    /// </summary>
+    [Fact]
+    public async Task SubmitFeedback_already_completed_writes_no_audit_event()
+    {
+        var groupId = await SeedGroupAsync(token: "ta5", email: "r@x.com", groupType: "teacher", expiryHours: 24, completed: true);
+        var input = new FeedbackSubmitInput(groupId, "ta5", "r@x.com", new[] { new FeedbackAnswer(1, "Q", 5, null, null, null) });
+
+        Assert.Equal(FeedbackSubmitStatus.AlreadySubmitted, (await Service().SubmitFeedbackAsync(input)).Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync(SubmittedEvent, groupId));
+    }
+
+    /// <summary>
+    /// The RATIFIED gap closure (see SubmitFeedback_rejects_expired_token_ratified_gap_closure) has an audit
+    /// consequence worth pinning separately: an expired token writes no feedback row, so it must write no
+    /// audit event either — the trail cannot claim a submission the database does not have.
+    /// </summary>
+    [Fact]
+    public async Task SubmitFeedback_expired_token_writes_no_audit_event()
+    {
+        var groupId = await SeedGroupAsync(token: "ta6", email: "r@x.com", groupType: "teacher", expiryHours: -1);
+        var input = new FeedbackSubmitInput(groupId, "ta6", "r@x.com", new[] { new FeedbackAnswer(1, "Q", 5, null, null, null) });
+
+        Assert.Equal(FeedbackSubmitStatus.TokenExpiredOrUsed, (await Service().SubmitFeedbackAsync(input)).Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync(SubmittedEvent, groupId));
+    }
+
+    /// <summary>
+    /// The one negative control that reaches INTO the transaction: the loser of the unique race returns from
+    /// the 23505 catch, mid-block, before the commit. It proves the emission sits below the commit rather than
+    /// merely below the guard cascade — a `finally`-shaped or pre-commit write would audit a submission that
+    /// was rolled back, and this is the only branch that can tell those apart.
+    /// </summary>
+    [Fact]
+    public async Task SubmitFeedback_lost_unique_race_writes_no_audit_event()
+    {
+        var groupId = await SeedGroupAsync(token: "ta7", email: "r@x.com", groupType: "teacher", expiryHours: 24);
+        await SeedFeedbackRowAsync(groupId, "r@x.com");
+        var input = new FeedbackSubmitInput(groupId, "ta7", "r@x.com", new[] { new FeedbackAnswer(1, "Q", 5, null, null, null) });
+
+        Assert.Equal(FeedbackSubmitStatus.AlreadySubmitted, (await Service().SubmitFeedbackAsync(input)).Status);
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync(SubmittedEvent, groupId));
+    }
+
+    /// <summary>
+    /// The rail's two READ methods audit nothing. v1 deliberately records mutations only (the spec defers
+    /// read/access audit), and validate-token in particular is called on every page load of the evaluator
+    /// form — auditing it would bury the submissions under noise in an append-only table.
+    /// </summary>
+    [Fact]
+    public async Task ValidateToken_and_evaluator_form_write_no_audit_events()
+    {
+        var groupId = await SeedGroupAsync(token: "ta8", email: "r@x.com", groupType: "teacher", expiryHours: 24);
+
+        Assert.True((await Service().ValidateTokenAsync("ta8")).Valid);
+        Assert.NotNull(await Service().Get360EvaluatorFormAsync("ta8"));
+
+        Assert.Equal(0, await _fixture.CountAuditEventsAsync(SubmittedEvent, groupId));
     }
 
     // ---- seed helpers ----
