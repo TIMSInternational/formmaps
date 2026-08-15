@@ -42,6 +42,48 @@ async function loadAfterFiles(env: Record<string, string | undefined>): Promise<
   }
 }
 
+/**
+ * Compiles a Next rewrite `source` into the regex Next itself would match with, so the tests can
+ * ask "which rule actually wins for this request path" rather than only "does this literal string
+ * appear in the array". Handles the three parameter shapes present in this config: `:name`,
+ * `:name*`, and `:name(<inline regex>)`.
+ */
+function sourceToRegExp(source: string): RegExp {
+  let out = "";
+  let i = 0;
+  while (i < source.length) {
+    if (source[i] === ":") {
+      let j = i + 1;
+      while (j < source.length && /[A-Za-z0-9_]/.test(source[j])) j++;
+      if (source[j] === "(") {
+        let depth = 0;
+        let k = j;
+        for (; k < source.length; k++) {
+          if (source[k] === "(") depth++;
+          else if (source[k] === ")" && --depth === 0) break;
+        }
+        out += `(?:${source.slice(j + 1, k)})`;
+        i = k + 1;
+      } else if (source[j] === "*") {
+        out += "(?:.*)";
+        i = j + 1;
+      } else {
+        out += "(?:[^/]+)";
+        i = j;
+      }
+    } else {
+      out += source[i].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      i++;
+    }
+  }
+  return new RegExp(`^${out}$`);
+}
+
+/** afterFiles rewrites match in array order, first match wins -- so this is the rule that runs. */
+function winningRule(afterFiles: Rewrite[], path: string): Rewrite | undefined {
+  return afterFiles.find((r) => sourceToRegExp(r.source).test(path));
+}
+
 describe("next.config rewrites -- /api/v1/migration -> .NET (issue #82)", () => {
   it("routes the migration prefix to the .NET origin when the base URL is configured", async () => {
     const afterFiles = await loadAfterFiles({ FORMMAPS_DOTNET_API_BASE_URL: DOTNET });
@@ -122,48 +164,6 @@ describe("next.config rewrites -- legacy /api/stripe billing paths -> .NET (issu
     FORMMAPS_ROUTE_BILLING_TO_DOTNET: undefined,
   };
 
-  /**
-   * Compiles a Next rewrite `source` into the regex Next itself would match with, so the tests can
-   * ask "which rule actually wins for this request path" rather than only "does this literal string
-   * appear in the array". Handles the three parameter shapes present in this config: `:name`,
-   * `:name*`, and `:name(<inline regex>)`.
-   */
-  function sourceToRegExp(source: string): RegExp {
-    let out = "";
-    let i = 0;
-    while (i < source.length) {
-      if (source[i] === ":") {
-        let j = i + 1;
-        while (j < source.length && /[A-Za-z0-9_]/.test(source[j])) j++;
-        if (source[j] === "(") {
-          let depth = 0;
-          let k = j;
-          for (; k < source.length; k++) {
-            if (source[k] === "(") depth++;
-            else if (source[k] === ")" && --depth === 0) break;
-          }
-          out += `(?:${source.slice(j + 1, k)})`;
-          i = k + 1;
-        } else if (source[j] === "*") {
-          out += "(?:.*)";
-          i = j + 1;
-        } else {
-          out += "(?:[^/]+)";
-          i = j;
-        }
-      } else {
-        out += source[i].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        i++;
-      }
-    }
-    return new RegExp(`^${out}$`);
-  }
-
-  /** afterFiles rewrites match in array order, first match wins -- so this is the rule that runs. */
-  function winningRule(afterFiles: Rewrite[], path: string): Rewrite | undefined {
-    return afterFiles.find((r) => sourceToRegExp(r.source).test(path));
-  }
-
   it("routes both legacy billing paths to .NET when the billing flag is on", async () => {
     const afterFiles = await loadAfterFiles(FLAG_ON);
 
@@ -221,5 +221,98 @@ describe("next.config rewrites -- legacy /api/stripe billing paths -> .NET (issu
       expect(winner!.source).toBe(CATCH_ALL);
       expect(winner!.destination).not.toContain("dotnet.example.test");
     }
+  });
+});
+
+/**
+ * m2 audit H1/H2/H3 -- param-over-literal shadowing at equal segment depth.
+ *
+ * afterFiles rewrites are first-match-wins, and a `:param` compiles to a single-segment,
+ * end-anchored match -- so the only way a flag can steal a path it must not own is a param rule
+ * whose segment depth equals a Node-only literal's. The m2 replay found exactly three:
+ *
+ *   H1  SCHOOL_COURSES           :courseId  swallowed POST /courses/prereq-analysis (no .NET handler)
+ *   H2  STUDENT_ESSAYS_CHECKLIST :cid       swallowed POST .../checklist/generate   (.NET maps PUT only)
+ *   H3  QUESTION360_READS        :id        swallowed POST /bulk-create             (a write, under a READS flag)
+ *
+ * Each is now excluded by a negative lookahead in the source pattern (the idiom the video
+ * :id((?!schedule)[^/]+) rule already used). These tests replay the compiled patterns with each
+ * flag ON and pin the shadowed literal to the Node catch-all, plus the counterpart failure mode:
+ * the lookahead must not over-block a genuine id at the same depth.
+ */
+describe("next.config rewrites -- lookahead guards against param-over-literal shadowing (m2 H1/H2/H3)", () => {
+  // Every flag that owns any path asserted below is explicitly undefined per case (not merely
+  // omitted) for the same reason as the billing FLAG_OFF env above: loadAfterFiles clones the
+  // ambient process.env, so a flag exported in the shell would leak in and flip a control.
+  function flagEnv(flag: string): Record<string, string | undefined> {
+    return {
+      FORMMAPS_DOTNET_API_BASE_URL: DOTNET,
+      FORMMAPS_ROUTE_SCHOOL_COURSES_TO_DOTNET: undefined,
+      FORMMAPS_ROUTE_STUDENT_ESSAYS_CHECKLIST_TO_DOTNET: undefined,
+      FORMMAPS_ROUTE_QUESTION360_READS_TO_DOTNET: undefined,
+      // Owners of H1's pre-existing exclusion literals (pathways / import / ai-import).
+      FORMMAPS_ROUTE_PATHWAYS_TO_DOTNET: undefined,
+      FORMMAPS_ROUTE_COURSE_IMPORT_TO_DOTNET: undefined,
+      [flag]: "1",
+    };
+  }
+
+  function expectNode(afterFiles: Rewrite[], path: string) {
+    const winner = winningRule(afterFiles, path);
+    expect(winner).toBeDefined();
+    expect(winner!.source).toBe(CATCH_ALL);
+    expect(winner!.destination).not.toContain("dotnet.example.test");
+  }
+
+  it("H1: SCHOOL_COURSES on -- /courses/prereq-analysis stays on Node, a real courseId still moves", async () => {
+    const afterFiles = await loadAfterFiles(flagEnv("FORMMAPS_ROUTE_SCHOOL_COURSES_TO_DOTNET"));
+
+    // The shadowed literal: live Node POST (curriculumService.ts), no .NET handler at all.
+    expectNode(afterFiles, "/api/v1/school-admin/courses/prereq-analysis");
+    // Its 2-segment sibling never matched the param -- pinned so the feature can't half-move again.
+    expectNode(afterFiles, "/api/v1/school-admin/courses/prereq-analysis/apply");
+    // The pre-existing exclusions must survive the edit.
+    expectNode(afterFiles, "/api/v1/school-admin/courses/pathways");
+    expectNode(afterFiles, "/api/v1/school-admin/courses/import");
+    expectNode(afterFiles, "/api/v1/school-admin/courses/ai-import");
+
+    // Counterpart failure mode: the guard must not over-block a genuine UUID courseId.
+    const winner = winningRule(afterFiles, "/api/v1/school-admin/courses/3f2504e0-4f89-11d3-9a0c-0305e82c3301");
+    expect(winner).toBeDefined();
+    expect(winner!.destination).toBe(`${DOTNET}/api/v1/school-admin/courses/:courseId`);
+  });
+
+  it("H2: STUDENT_ESSAYS_CHECKLIST on -- checklist/generate stays on Node, a real :cid still moves", async () => {
+    const afterFiles = await loadAfterFiles(flagEnv("FORMMAPS_ROUTE_STUDENT_ESSAYS_CHECKLIST_TO_DOTNET"));
+
+    // The shadowed literal: Bedrock-backed Node POST; .NET maps PUT-only on this template -> 405.
+    expectNode(afterFiles, "/api/v1/student/applications/app_1/checklist/generate");
+    // The other AI sibling was always safe by depth -- pinned as the depth control.
+    expectNode(afterFiles, "/api/v1/student/applications/app_1/essays/essay_1/ai-review");
+
+    // A genuine checklist-item id at the same depth must still reach .NET...
+    const item = winningRule(afterFiles, "/api/v1/student/applications/app_1/checklist/chk_9");
+    expect(item).toBeDefined();
+    expect(item!.destination).toBe(`${DOTNET}/api/v1/student/applications/:id/checklist/:cid`);
+    // ...and so must the checklist collection literal the same flag owns.
+    const list = winningRule(afterFiles, "/api/v1/student/applications/app_1/checklist");
+    expect(list).toBeDefined();
+    expect(list!.destination).toBe(`${DOTNET}/api/v1/student/applications/:id/checklist`);
+  });
+
+  it("H3: QUESTION360_READS on -- the bulk-create WRITE stays on Node, a real :id read still moves", async () => {
+    const afterFiles = await loadAfterFiles(flagEnv("FORMMAPS_ROUTE_QUESTION360_READS_TO_DOTNET"));
+
+    // The shadowed literal: POST /bulk-create is a write (questions360Service.ts) -- moving it
+    // under a READS flag splits question360 writes across two backends.
+    expectNode(afterFiles, "/api/question360/bulk-create");
+    // The sibling writes that were always safe by depth/shape -- pinned as controls.
+    expectNode(afterFiles, "/api/question360/q_123/activate");
+    expectNode(afterFiles, "/api/question360/q_123/deactivate");
+
+    // Counterpart failure mode: a genuine question id must still reach .NET.
+    const winner = winningRule(afterFiles, "/api/question360/q_123");
+    expect(winner).toBeDefined();
+    expect(winner!.destination).toBe(`${DOTNET}/api/question360/:id`);
   });
 });
