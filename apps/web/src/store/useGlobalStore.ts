@@ -788,8 +788,11 @@ export const useGlobalStore = create<GlobalState>()(
             if (response.ok) {
               const json = await response.json();
               const data = json?.data ?? json;
-              if (typeof data.platformFee === "number") {
-                set({ platformFee: data.platformFee });
+              // Settings are sectioned (see AdminSettings in admin/settings/page.tsx):
+              // the fee lives at finance.platformFeePercent, not top-level platformFee.
+              const fee = data?.finance?.platformFeePercent;
+              if (typeof fee === "number") {
+                set({ platformFee: fee });
               }
             }
           } catch {

@@ -62,18 +62,20 @@ const defaultConfig: TelemetryConfig = {
   enabled: true,
 };
 
-// PII fields that should never be included in telemetry
+// PII fields that should never be included in telemetry.
+// Entries MUST be lowercase: sanitizeProperties matches on key.toLowerCase(),
+// so a camelCase entry here can never match and the field leaks through.
 const PII_FIELDS = [
   "email",
   "name",
-  "fullName",
-  "firstName",
-  "lastName",
+  "fullname",
+  "firstname",
+  "lastname",
   "phone",
   "address",
   "password",
   "token",
-  "creditCard",
+  "creditcard",
   "ssn",
 ];
 
