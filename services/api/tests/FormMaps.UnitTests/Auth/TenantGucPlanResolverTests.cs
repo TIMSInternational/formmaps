@@ -65,6 +65,45 @@ public class TenantGucPlanResolverTests
         Assert.Equal(TenantGucPlanMode.Deny, plan.Mode);
     }
 
+    /// <summary>
+    /// This is the RLS leg of the "admin" widening, asserted on the real production decision function
+    /// rather than on any repository. Bypass mode makes
+    /// <see cref="FormMaps.Infrastructure.Data.RlsSessionCommandBuilder"/> emit
+    /// <c>set_config('app.bypass_rls','on')</c>, and every vendored production policy
+    /// (TestSupport/Rls/*.sql) begins with <c>current_setting('app.bypass_rls', true) = 'on'</c> —
+    /// so Bypass is total cross-tenant visibility, not a narrowing. A bare "admin" principal must get
+    /// Identity mode, scoped to its own school, exactly like any other school-level role.
+    /// </summary>
+    [Theory]
+    [InlineData("admin")]
+    [InlineData("Admin")]
+    [InlineData("ADMIN")]
+    public void Resolve_does_not_bypass_rls_for_bare_admin(string role)
+    {
+        var plan = TenantGucPlanResolver.Resolve(BuildContext(role, "school-123"));
+
+        Assert.NotEqual(TenantGucPlanMode.Bypass, plan.Mode);
+        Assert.Equal(TenantGucPlanMode.Identity, plan.Mode);
+        Assert.Equal("school-123", plan.SchoolId);
+        Assert.Equal("user-123", plan.UserId);
+    }
+
+    /// <summary>
+    /// The cross-tenant case specifically: a bare "admin" carrying NO school context must not fall
+    /// back to Bypass. It gets an empty-school identity, and every production policy's
+    /// <c>current_setting('app.current_school_id', true) &lt;&gt; ''</c> guard then makes the
+    /// school-match arm unsatisfiable — so the row set collapses to its own records instead of
+    /// widening to every tenant.
+    /// </summary>
+    [Fact]
+    public void Resolve_does_not_bypass_rls_for_bare_admin_without_school()
+    {
+        var plan = TenantGucPlanResolver.Resolve(BuildContext("admin", schoolId: null));
+
+        Assert.Equal(TenantGucPlanMode.Identity, plan.Mode);
+        Assert.Equal(string.Empty, plan.SchoolId);
+    }
+
     private static RequestContext BuildContext(string role, string? schoolId)
     {
         var actor = new RequestActor(

@@ -121,8 +121,24 @@ public class RolePermissionsTests
     [Fact]
     public void UnknownOrRawAlias_NormalizesBeforeLookup()
     {
-        // "admin" aliases to Super Admin per FormMapsRoles.Normalize — permissions must follow.
-        Assert.Equal(RolePermissions.For(FormMapsRoles.SuperAdmin), RolePermissions.For("admin"));
+        // "admin" aliases to school_admin per FormMapsRoles.Normalize — permissions must follow.
+        Assert.Equal(RolePermissions.For(FormMapsRoles.SchoolAdmin), RolePermissions.For("admin"));
         Assert.Empty(RolePermissions.For("totally-unknown-role").Except(RolePermissions.For(FormMapsRoles.Student)));
+    }
+
+    /// <summary>
+    /// Permissions are baked into the access token at issuance (AuthEndpoints/AuthAdminEndpoints all
+    /// call <see cref="RolePermissions.For"/> on the user's stored roleName), and requirePermission
+    /// gates read them straight off the token. So the platform-only <c>admin:*</c> grants are the
+    /// second, independent leg of the "admin" widening — separate from the RLS-bypass leg — and a
+    /// bare "admin" principal must not receive any of them.
+    /// </summary>
+    [Fact]
+    public void Bare_admin_gets_no_platform_admin_permissions()
+    {
+        var granted = RolePermissions.For("admin");
+
+        Assert.DoesNotContain(granted, p => p.StartsWith("admin:", StringComparison.Ordinal));
+        Assert.NotEqual(RolePermissions.For(FormMapsRoles.SuperAdmin), granted);
     }
 }
