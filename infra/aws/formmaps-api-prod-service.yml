@@ -95,6 +95,22 @@ Parameters:
       `JWT_AUDIENCE` runtime value (`nexa-frontend`, which overrides the code
       default `formmaps-frontend`). A mismatch 401s every real cookie
       (2026-07-22 P0).
+  FrontendBaseUrl:
+    Type: String
+    Default: https://app.formmaps.com
+    Description: >-
+      Public origin of the web app, read by FormMaps.Api as FRONTEND_BASE_URL (link
+      building in outbound mail and redirects). Declared here because it was live on
+      the service but absent from this template — i.e. the next deploy would have
+      silently dropped it. Value matches what is live, so declaring it is a no-op.
+  S3Bucket:
+    Type: String
+    Default: nexa-platform-uploads
+    Description: >-
+      Uploads bucket, read by FormMaps.Api as S3_BUCKET. Same drift as above: live on
+      the service, absent from this template. NOTE staging currently points at this
+      SAME bucket, so staging uploads land in the production bucket — tracked
+      separately, not changed here.
   LegacyApiBaseUrl:
     Type: String
     Default: https://5t8ch34ijm.us-east-1.awsapprunner.com
@@ -206,6 +222,10 @@ Resources:
                 Value: !Ref LegacyJwtAudience
               - Name: LEGACY_API_BASE_URL
                 Value: !Ref LegacyApiBaseUrl
+              - Name: FRONTEND_BASE_URL
+                Value: !Ref FrontendBaseUrl
+              - Name: S3_BUCKET
+                Value: !Ref S3Bucket
             RuntimeEnvironmentSecrets:
               - Name: JWT_SECRET
                 Value: !Ref JwtSecretArn
