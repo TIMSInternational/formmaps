@@ -7,6 +7,10 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace FormMaps.UnitTests.Auth;
 
+// In JwtSecretEnvironmentCollection because every test here mutates the process-wide JWT_SECRET
+// environment variable, which raced against LegacyApiInsightsTriggerTests' identical mutations once
+// that class (formmaps#144) became the second such mutator in this assembly.
+[Collection(JwtSecretEnvironmentCollection.Name)]
 public sealed class RealtimeTicketFactoryTests
 {
     /// <summary>

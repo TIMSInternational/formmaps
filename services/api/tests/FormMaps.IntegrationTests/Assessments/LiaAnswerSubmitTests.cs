@@ -192,6 +192,12 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
         Assert.Equal(LogLevel.Information, audit.Level);
         Assert.Contains(sessionId, audit.Message, StringComparison.Ordinal);
         Assert.Contains(userId, audit.Message, StringComparison.Ordinal);
+
+        // formmaps#144: SubmitAnswerAsync's timeout branch is a completion path too — it must fire
+        // the polyglot insights trigger exactly once, for the owner, alongside that audit event.
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal(userId, fire.UserId);
+        Assert.Equal("assessment.lia.completed", fire.Source);
     }
 
     [Fact]
@@ -367,13 +373,17 @@ public sealed class LiaAnswerSubmitTests : IClassFixture<LiaWriteDatabaseFixture
     // sharing LiaWriteDatabaseFixture keeps these identical).
     // ==============================================================================================
 
+    // Shared across every writer a single test creates, so a test can assert on the insights-trigger
+    // fires (or their absence) regardless of which writer instance completed the session (formmaps#144).
+    private readonly RecordingInsightsTrigger _insightsTrigger = new();
+
     private (ILiaSessionWriter writer, CapturingLogger logger) MakeWriter()
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        return (new LiaSessionWriter(factory, resolver, logger), logger);
+        return (new LiaSessionWriter(factory, resolver, _insightsTrigger, logger), logger);
     }
 
     private static RequestContext Ctx(string userId, string name = "Test User", string email = "test@e.st") =>

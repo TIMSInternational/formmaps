@@ -1,7 +1,9 @@
+using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Messaging;
 using FormMaps.Application.Migration;
 using FormMaps.Api.Auth;
+using FormMaps.Api.Insights;
 using FormMaps.Api.Realtime;
 using FormMaps.Infrastructure;
 using FormMaps.Infrastructure.Billing;
@@ -36,6 +38,23 @@ public static class DependencyInjection
         // Singleton is safe -- same lifetime as the sibling LegacyJwtRequestContextFactory, which
         // reads the same options type.
         services.AddSingleton<AccessTokenFactory>();
+
+        // formmaps#144: the polyglot insights trigger — the funnel signal legacy fires after 360
+        // feedback submits and LIA completions, which the .NET assessment writes were dropping.
+        // The implementation lives in the Api layer (like SignalRMessagesNotifier above) because
+        // minting the short-lived legacy JWT needs LegacyJwtOptions + System.IdentityModel.Tokens.Jwt,
+        // which Infrastructure cannot reference; EvaluationExternalService/LiaSessionWriter
+        // (Infrastructure) consume it through FormMaps.Application's IInsightsTrigger, resolved here
+        // at the composition root. 5s timeout: Node's generate-insights handler only runs the
+        // completion-gate queries inline (generation is backgrounded server-side), so a healthy call
+        // is sub-second — the cap bounds the post-commit latency a Node outage can add to an
+        // assessment write before the trigger's own catch logs the loud Error and lets the write
+        // succeed.
+        services.AddSingleton(new InsightsTriggerOptions(configuration["LEGACY_API_BASE_URL"]));
+        services.AddHttpClient<IInsightsTrigger, LegacyApiInsightsTrigger>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
 
         // formmaps#99: Domain 9a's hourly shadow-vs-live reconciliation. It lived in FormMaps.Workers,
         // which services/api/Dockerfile NEVER publishes (it publishes only src/FormMaps.Api) and for

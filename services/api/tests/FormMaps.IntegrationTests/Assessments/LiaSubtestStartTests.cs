@@ -157,7 +157,7 @@ public sealed class LiaSubtestStartTests : IClassFixture<LiaWriteDatabaseFixture
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        return (new LiaSessionWriter(factory, resolver, logger), logger);
+        return (new LiaSessionWriter(factory, resolver, new RecordingInsightsTrigger(), logger), logger);
     }
 
     private static RequestContext Ctx(string userId, string name = "Test User", string email = "test@e.st") =>
