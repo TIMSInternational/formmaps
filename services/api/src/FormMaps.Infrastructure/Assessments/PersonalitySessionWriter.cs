@@ -15,10 +15,15 @@ namespace FormMaps.Infrastructure.Assessments;
 /// uniform 404); complete is TOCTOU-safe (SELECT … FOR UPDATE + conditional UPDATE) + idempotent (a
 /// completed session is never rescored). Durable writes (create, complete) emit a PII-free audit event.
 /// Reuses the shipped PersonalityScoring (FM-027), PersonalityItemBank, and the results reader (FM-017).
+///
+/// A durable completion also fires the polyglot insights trigger (formmaps#144) — see
+/// <see cref="CompleteAsync"/>. Because .NET owns the whole personality lifecycle there is no Node-side
+/// completion path that could fire it instead, so this writer is the ONLY place the signal can come from.
 /// </summary>
 public sealed class PersonalitySessionWriter(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     IPersonalityResultReader resultReader,
+    IInsightsTrigger insightsTrigger,
     ILogger<PersonalitySessionWriter> logger) : IPersonalitySessionWriter
 {
     private static readonly JsonSerializerOptions JsonOptions = new();
@@ -235,6 +240,11 @@ public sealed class PersonalitySessionWriter(
         string userId,
         CancellationToken cancellationToken = default)
     {
+        // Did THIS call durably complete the session? Stays false on every non-completing path — the
+        // ownership 404, the coverage rejection, and (the load-bearing one) the idempotent replay of an
+        // already-completed session. Read by the post-commit insights fire below.
+        var completedNow = false;
+
         await using (var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken))
         {
             var owned = await ReadOwnedSessionAsync(session, sessionId, userId, forUpdate: true, cancellationToken);
@@ -299,7 +309,24 @@ public sealed class PersonalitySessionWriter(
                 logger.LogInformation(
                     "audit.assessment.personality.completed sessionId={SessionId} actorUserId={ActorUserId} type={Type}",
                     sessionId, userId, score.Type);
+                completedNow = true;
             }
+        }
+
+        // formmaps#144: personality became a REQUIRED leg of the completion gate on 2026-07-30, so a
+        // student who finishes personality LAST has their gate flip here and nowhere else — with no fire
+        // they would never generate insights at all. The sibling fires live in LiaSessionWriter
+        // (EmitCompletionCommittedAsync) and EvaluationExternalService; unlike LIA there is no Node-side
+        // twin for personality (this writer owns the whole lifecycle), so this is the only possible
+        // source. Ordering + exactly-once follow the same rules as those two: fired ONLY after the
+        // completing transaction has committed (the writable session block above has closed), and ONLY
+        // when THIS call performed the completion — the idempotent-replay branch (a completed session is
+        // never rescored) must not re-signal, which is what keeps retried /complete calls from re-firing.
+        // IInsightsTrigger never throws (fail-soft-BUT-LOUD): a failed fire logs at Error with
+        // userId+source for backfill, and the student's completion still succeeds.
+        if (completedNow)
+        {
+            await insightsTrigger.TriggerAsync(userId, "assessment.personality.completed", cancellationToken);
         }
 
         // Return via the shipped read path (legacy completeSession returns getResults). The committed row

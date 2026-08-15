@@ -14,6 +14,10 @@ namespace FormMaps.IntegrationTests.Assessments;
 /// dual-write; these pin: start create/resume/retake, answer upsert + server-derived dimension + strict
 /// A/B + status/ownership guards, and complete happy/idempotent/coverage/TOCTOU. Regression corpus:
 /// #12 (strict A/B -> InvalidChoice, retake -> AlreadyCompleted), #19 (coverage), #25 (idempotency).
+///
+/// Every completion path also pins the formmaps#144 insights trigger against the REAL FOR UPDATE
+/// serialization: a durable completion fires exactly once for the owner, and replays / rejections /
+/// the loser of a concurrent race fire nothing.
 /// </summary>
 public sealed class PersonalitySessionWriterTests : IClassFixture<PersonalityWriteDatabaseFixture>, IAsyncLifetime
 {
@@ -222,6 +226,13 @@ public sealed class PersonalitySessionWriterTests : IClassFixture<PersonalityWri
         Assert.DoesNotContain("\"WinningPole\"", responseJson, StringComparison.Ordinal);
 
         Assert.Contains(logger.Entries, e => e.Message.StartsWith("audit.assessment.personality.completed", StringComparison.Ordinal));
+
+        // formmaps#144: a durable completion fires the polyglot insights trigger for the owner.
+        // Personality has been a REQUIRED leg of the completion gate since 2026-07-30 and .NET owns its
+        // whole lifecycle, so a student finishing personality LAST has no other path to a fire.
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal(userId, fire.UserId);
+        Assert.Equal("assessment.personality.completed", fire.Source);
     }
 
     [Fact]
@@ -242,6 +253,9 @@ public sealed class PersonalitySessionWriterTests : IClassFixture<PersonalityWri
         Assert.Equal(PersonalityWriteStatus.Ok, second.Status);
         Assert.Equal(first.Result!.Type, second.Result!.Type); // same resolved type
         Assert.Equal(updatedAtAfterFirst, updatedAtAfterSecond); // no second write (no rescore)
+        // formmaps#144: the idempotent replay must not re-fire the insights trigger either — retried
+        // /complete calls are the routine client behavior the replay branch exists for.
+        Assert.Single(_insightsTrigger.Fires);
     }
 
     [Fact]
@@ -260,6 +274,8 @@ public sealed class PersonalitySessionWriterTests : IClassFixture<PersonalityWri
         Assert.Equal("in_progress", row.Status); // untouched
         Assert.Null(row.ResolvedType);
         Assert.DoesNotContain(logger.Entries, e => e.Message.StartsWith("audit.assessment.personality.completed", StringComparison.Ordinal));
+        // ... and must NOT fire the insights trigger (formmaps#144): no durable completion, no signal.
+        Assert.Empty(_insightsTrigger.Fires);
     }
 
     [Fact]
@@ -276,6 +292,8 @@ public sealed class PersonalitySessionWriterTests : IClassFixture<PersonalityWri
 
         Assert.Equal(PersonalityWriteStatus.SessionNotFound, outcome.Status);
         Assert.Equal("in_progress", (await ReadSessionAsync(sessionId)).Status);
+        // formmaps#144: a denied completion signals nothing — least of all for the stranger's own id.
+        Assert.Empty(_insightsTrigger.Fires);
     }
 
     [Fact]
@@ -297,15 +315,24 @@ public sealed class PersonalitySessionWriterTests : IClassFixture<PersonalityWri
         var row = await ReadSessionAsync(sessionId);
         Assert.Equal("completed", row.Status);
         Assert.Equal(row.CompletedAt, row.UpdatedAt); // one write set both to the same instant
+        // formmaps#144: exactly ONE insights-trigger fire — the loser of the race took the
+        // idempotent-replay branch (its FOR UPDATE re-read sees 'completed'), which must not re-signal.
+        Assert.Single(_insightsTrigger.Fires);
     }
 
     // ========================================================================= helpers
+
+    // Shared across every writer a single test creates, so a test can assert on the insights-trigger
+    // fires (or their absence) regardless of which writer instance completed the session (formmaps#144).
+    private readonly RecordingInsightsTrigger _insightsTrigger = new();
 
     private (PersonalitySessionWriter Writer, CapturingLogger Logger) MakeWriter()
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
-        return (new PersonalitySessionWriter(factory, new PersonalityResultReader(factory), logger), logger);
+        return (
+            new PersonalitySessionWriter(factory, new PersonalityResultReader(factory), _insightsTrigger, logger),
+            logger);
     }
 
     private static RequestContext Ctx(string userId) =>
