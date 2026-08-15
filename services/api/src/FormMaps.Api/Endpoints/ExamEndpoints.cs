@@ -108,7 +108,10 @@ public static class ExamEndpoints
         }
 
         // NOTE: legacy fires checkAssessmentCompletion -> generateInsightsBackground (Bedrock) after
-        // responding; that fire-and-forget insight trigger stays polyglot / out of the .NET write path.
+        // responding. The .NET mirror of that fire now lives INSIDE the writer, post-commit
+        // (PcaExamWriter.SubmitExamAsync, formmaps#144) rather than here — generation itself is still
+        // polyglot (Node/Bedrock), but the "check this student now" signal is the writer's, so it
+        // cannot be lost by an endpoint that forgets to send it.
         var outcome = await writer.SubmitExamAsync(context, sessionId, answers, timeTaken, cancellationToken);
         return outcome.Status switch
         {

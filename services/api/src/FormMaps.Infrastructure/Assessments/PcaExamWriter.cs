@@ -20,9 +20,15 @@ namespace FormMaps.Infrastructure.Assessments;
 /// A <b>time-expired</b> session has <c>isCompleted=true, status='TimeExpired'</c>: because Node still owns
 /// the <c>/complete</c> (timeout) write, guarding on <c>status='Completed'</c> alone would let a timed-out
 /// session be re-submitted — so both the pre-check and the UPDATE guard test <c>isCompleted</c> too.
+///
+/// A durable submit completes a pca_exam_sessions row, which advances the LIA/cognitive leg of the
+/// completion gate (5 distinct completed examTypes), so it also fires the polyglot insights trigger
+/// (formmaps#144) — the same fire legacy's examRouter POST /submit performs. See
+/// <see cref="SubmitExamAsync"/>.
 /// </summary>
 public sealed class PcaExamWriter(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
+    IInsightsTrigger insightsTrigger,
     ILogger<PcaExamWriter> logger) : IPcaExamWriter
 {
     // -------------------------------------------------------------------- start
@@ -277,6 +283,29 @@ public sealed class PcaExamWriter(
         logger.LogInformation(
             "audit.assessment.pcaexam.submitted sessionId={SessionId} actorUserId={ActorUserId} subjectUserId={SubjectUserId} examId={ExamId} score={Score} correct={Correct} total={Total}",
             sessionId, context.Tenant?.UserId, ownerUserId, examId, scorePercent, correct, totalQuestions);
+
+        // formmaps#144: the UPDATE above set pca_exam_sessions."isCompleted" = true, which feeds the
+        // LIA/cognitive leg of the completion gate — `liaCompleted >= 5` counted as DISTINCT "examType"
+        // over `WHERE "userId" = @u AND "isActive" = true AND "isCompleted" = true`
+        // (CoursePlanComputeReader.cs; StudentCompletion.Compute). The 5th distinct exam type submitted
+        // by a student closes that leg, so this is a genuine gate event, not just a score write.
+        //
+        // This mirrors legacy examRouter POST /submit, which fires the SAME trigger after responding
+        // (routes/assessment.ts:85-89 — checkAssessmentCompletion → generateInsightsBackground). So
+        // unlike the VocationalTakeService fire, this one is strict legacy parity, not a divergence.
+        // It was missing here only because /api/pcaexam/submit has no next.config.ts rewrite yet and
+        // Node still serves it in production — i.e. this is a LATENT gap that becomes a live silent
+        // funnel break the moment a PCAEXAM submit flag is added. Wiring it now keeps the flag flip a
+        // pure routing change.
+        //
+        // Subject, not actor: the trigger is about whose gate moved, and a privileged role may submit
+        // another user's session (hence the distinct ids in the audit line above) — so it fires for
+        // ownerUserId. Exactly-once: the isCompleted/status pre-check and the conditional UPDATE (which
+        // throws on 0 rows) mean only the call that durably completed the session reaches here; a
+        // replay returned AlreadyCompleted long before. Ordering: strictly after CommitAsync.
+        // IInsightsTrigger never throws (fail-soft-BUT-LOUD): a failed fire logs at Error with
+        // userId+source for backfill and the student's submission still succeeds.
+        await insightsTrigger.TriggerAsync(ownerUserId, "assessment.pcaexam.submitted", cancellationToken);
 
         return new PcaExamSubmitOutcome(
             PcaExamWriteStatus.Ok,

@@ -17,8 +17,13 @@ namespace FormMaps.Infrastructure.Assessments;
 /// Reuses the shipped PersonalityScoring (FM-027), PersonalityItemBank, and the results reader (FM-017).
 ///
 /// A durable completion also fires the polyglot insights trigger (formmaps#144) — see
-/// <see cref="CompleteAsync"/>. Because .NET owns the whole personality lifecycle there is no Node-side
-/// completion path that could fire it instead, so this writer is the ONLY place the signal can come from.
+/// <see cref="CompleteAsync"/>. A Node-side completion path DOES still exist
+/// (personality-session-service.ts completeSession, reached whenever
+/// FORMMAPS_ROUTE_PERSONALITY_COMPLETE_TO_DOTNET is off), but it fires no trigger of its own — legacy
+/// never wired personality into the funnel at all (zero insights references in that file). So this
+/// writer is the only place the signal comes from *today*, by absence on the Node side rather than by
+/// .NET exclusivity; if that route is ever served by Node again, personality completions there are
+/// still silent. Closing that requires the Node-side change formmaps#144 also calls for.
 /// </summary>
 public sealed class PersonalitySessionWriter(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
@@ -316,10 +321,11 @@ public sealed class PersonalitySessionWriter(
         // formmaps#144: personality became a REQUIRED leg of the completion gate on 2026-07-30, so a
         // student who finishes personality LAST has their gate flip here and nowhere else — with no fire
         // they would never generate insights at all. The sibling fires live in LiaSessionWriter
-        // (EmitCompletionCommittedAsync) and EvaluationExternalService; unlike LIA there is no Node-side
-        // twin for personality (this writer owns the whole lifecycle), so this is the only possible
-        // source. Ordering + exactly-once follow the same rules as those two: fired ONLY after the
-        // completing transaction has committed (the writable session block above has closed), and ONLY
+        // (EmitCompletionCommittedAsync), EvaluationExternalService, VocationalTakeService and
+        // PcaExamWriter. Node's own completeSession twin exists but fires nothing (see the class doc),
+        // so today this is the only source in practice. Ordering + exactly-once follow the same rules as
+        // the siblings: fired ONLY after the completing transaction has committed (the writable session
+        // block above has closed), and ONLY
         // when THIS call performed the completion — the idempotent-replay branch (a completed session is
         // never rescored) must not re-signal, which is what keeps retried /complete calls from re-firing.
         // IInsightsTrigger never throws (fail-soft-BUT-LOUD): a failed fire logs at Error with

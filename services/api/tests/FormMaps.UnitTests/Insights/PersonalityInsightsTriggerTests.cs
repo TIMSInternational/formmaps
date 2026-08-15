@@ -10,9 +10,11 @@ namespace FormMaps.UnitTests.Insights;
 /// <summary>
 /// Unit tests for the personality half of the polyglot insights funnel (formmaps#144) — the trigger call
 /// <c>PersonalitySessionWriter.CompleteAsync</c> was missing. Personality became a REQUIRED leg of the
-/// completion gate on 2026-07-30, and .NET owns the WHOLE personality lifecycle (no Node-side twin can
-/// fire it instead), so a student who completed personality LAST generated no insights at all: their gate
-/// flipped in a writer that sent no signal, and the funnel has no lazy/on-read generation path.
+/// completion gate on 2026-07-30 (StudentCompletion.Compute — allLiaDone &amp;&amp; allEvalDone &amp;&amp;
+/// pcaCompleted &amp;&amp; personalityCompleted), so a student who completed personality LAST generated no
+/// insights at all: their gate flipped in a writer that sent no signal, and the funnel has no
+/// lazy/on-read generation path. Node's completeSession twin still exists but has never fired the
+/// trigger either, so this fix is the only signal on either side.
 ///
 /// These pin the four properties that make the fix correct, driven against a scripted in-memory
 /// <see cref="ScriptedPersonalityDatabase"/> (no Testcontainers — the real-Postgres behavior of this

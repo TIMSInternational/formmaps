@@ -31,12 +31,16 @@ public sealed class VocationalTakeServiceTests : IClassFixture<TokenRailDatabase
 
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
+    // Shared across every service instance a single test creates, so a test can assert on the
+    // formmaps#144 insights-trigger fires (or their absence) regardless of which instance submitted.
+    private readonly RecordingInsightsTrigger _insightsTrigger = new();
+
     private VocationalTakeService Service()
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var reader = new VocationalReader(factory);
         var writer = new VocationalWriter(factory, reader, new CompleteProfileAssembler(factory), NullLogger<VocationalWriter>.Instance);
-        return new VocationalTakeService(factory, reader, writer, NullLogger<VocationalTakeService>.Instance);
+        return new VocationalTakeService(factory, reader, writer, _insightsTrigger, NullLogger<VocationalTakeService>.Instance);
     }
 
     // ---- submit ----
@@ -62,6 +66,13 @@ public sealed class VocationalTakeServiceTests : IClassFixture<TokenRailDatabase
         var (completed, tokenUsed) = await GroupFlagsAsync(conn, groupId);
         Assert.True(completed);
         Assert.True(tokenUsed);
+
+        // formmaps#144: flipping isEvaluationCompleted is a 360-leg gate event (the gate counts ALL
+        // active evaluation_groups for the student, with no instrument filter), so a successful
+        // vocational submit signals — once, for the EVALUATED student, never the anonymous evaluator.
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal("stu-1", fire.UserId);
+        Assert.Equal("evaluation.vocational.submitted", fire.Source);
     }
 
     [Fact]
@@ -137,6 +148,11 @@ public sealed class VocationalTakeServiceTests : IClassFixture<TokenRailDatabase
 
         await SeedGroupAsync(token: "other", groupType: "other", expiryHours: 24, instrument: "vocational", instrumentVersion: "v1");
         Assert.Equal(VocationalSubmitStatus.InvalidGroup, (await Service().SubmitAsync("other", ok)).Status);
+
+        // formmaps#144: not one of these five rejections is a gate event — nothing was flipped, so
+        // nothing may signal. The already-completed replay is the load-bearing case: a resubmitted
+        // token must never re-fire the trigger for a student whose gate moved on an earlier call.
+        Assert.Empty(_insightsTrigger.Fires);
     }
 
     [Fact]

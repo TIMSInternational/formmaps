@@ -16,11 +16,16 @@ namespace FormMaps.Infrastructure.Assessments;
 /// NON-TENANT, FAIL-CLOSED — every session is opened with <see cref="RequestContext.System()"/> (GUC bypass);
 /// the token-validated group.id is the ONLY access gate. Reuses the shipped questionnaire read
 /// (<see cref="IVocationalReader"/>) and the best-effort score recompute (<see cref="IVocationalWriter"/>).
+///
+/// A successful submit completes an evaluation_groups row, which is a 360-leg gate event, so it also
+/// fires the polyglot insights trigger (formmaps#144) — see <see cref="SubmitAsync"/> for why this
+/// deliberately diverges from legacy, which fires nothing here.
 /// </summary>
 public sealed class VocationalTakeService(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     IVocationalReader vocationalReader,
     IVocationalWriter vocationalWriter,
+    IInsightsTrigger insightsTrigger,
     ILogger<VocationalTakeService> logger) : IVocationalTakeService
 {
     public async Task<VocationalFormResult> GetFormAsync(string token, CancellationToken cancellationToken = default)
@@ -159,6 +164,32 @@ public sealed class VocationalTakeService(
         }
 
         logger.LogInformation("audit.evaluation.vocational.submitted evaluationGroupId={GroupId} count={Count}", group.Id, answers.Count);
+
+        // formmaps#144: FlipGroupCompletedAsync above set evaluation_groups."isEvaluationCompleted" — the
+        // SAME column the 360 leg of the completion gate counts. That leg is
+        // `evalTotal > 0 && evalCompleted >= min(evalTotal, 3)` over ALL active groups for the student with
+        // NO instrument filter (StudentCompletion.Compute; the query is CoursePlanComputeReader.cs's
+        // `SELECT "isEvaluationCompleted" FROM "evaluation_groups" WHERE "evaluatedUserId" = @u AND
+        // "isActive" = true`), so a vocational group counts toward both totals exactly like a 360 one.
+        // A student whose LAST outstanding evaluator is vocational therefore has the whole gate open here
+        // and nowhere else.
+        //
+        // DELIBERATE DIVERGENCE FROM LEGACY: legacy vocationalTakeService.ts flips the same column
+        // (:97) and fires nothing — only routes/evaluation.ts's submit-feedback calls
+        // checkAndTriggerInsights. That is a legacy BUG, not a design choice: the two paths write the
+        // same gate column, so only one of them signalling means insights silently never generate for
+        // vocational-completed students. #144 is about closing every silent gate flip, so this port
+        // fixes it rather than reproducing it. Fire for the EVALUATED student (never the evaluator —
+        // this is an anonymous, non-tenant rail with no auth principal).
+        //
+        // Exactly-once: every reject/replay path above (not-found, expired, ALREADY-COMPLETED,
+        // invalid-group, bad-answer, incomplete) returned before this point, so a resubmitted token
+        // cannot re-fire. Ordering: after the flip transaction committed, so the signal can never
+        // describe a write that rolled back. IInsightsTrigger never throws (fail-soft-BUT-LOUD): a
+        // failed fire logs at Error with userId+source for backfill and the evaluator's submit still
+        // succeeds — same contract as the recompute above, which is likewise non-fatal.
+        await insightsTrigger.TriggerAsync(group.EvaluatedUserId, "evaluation.vocational.submitted", cancellationToken);
+
         return new VocationalSubmitResult(VocationalSubmitStatus.Ok, answers.Count);
     }
 

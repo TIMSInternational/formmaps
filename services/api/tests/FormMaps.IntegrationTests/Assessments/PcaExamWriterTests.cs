@@ -166,6 +166,13 @@ public sealed class PcaExamWriterTests : IClassFixture<PcaExamWriteDatabaseFixtu
         Assert.False(a2.IsCorrect);
 
         Assert.Contains(logger.Entries, e => e.Message.StartsWith("audit.assessment.pcaexam.submitted", StringComparison.Ordinal));
+
+        // formmaps#144: completing a pca_exam_sessions row advances the LIA/cognitive leg of the gate
+        // (>= 5 DISTINCT completed examTypes), so a durable submit signals exactly once for the owner —
+        // the same fire legacy's examRouter POST /submit performs (routes/assessment.ts:85-89).
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal(userId, fire.UserId);
+        Assert.Equal("assessment.pcaexam.submitted", fire.Source);
     }
 
     [Fact]
@@ -218,6 +225,9 @@ public sealed class PcaExamWriterTests : IClassFixture<PcaExamWriteDatabaseFixtu
         Assert.Equal(50, row.ScorePercentage);                 // NOT rescored to 100
         Assert.Equal(1, row.CorrectAnswers);
         Assert.DoesNotContain(logger.Entries, e => e.Message.StartsWith("audit.assessment.pcaexam.submitted", StringComparison.Ordinal));
+        // formmaps#144: no durable completion, no signal — a replay must not re-fire the trigger for a
+        // student whose gate already moved on the original submit.
+        Assert.Empty(_insightsTrigger.Fires);
     }
 
     [Fact]
@@ -238,6 +248,7 @@ public sealed class PcaExamWriterTests : IClassFixture<PcaExamWriteDatabaseFixtu
         Assert.Equal(PcaExamWriteStatus.AlreadyCompleted, outcome.Status);
         Assert.Equal(0, await CountAnswersAsync(sessionId));
         Assert.Equal("TimeExpired", (await ReadSessionAsync(sessionId)).Status); // untouched
+        Assert.Empty(_insightsTrigger.Fires); // formmaps#144: rejected write, no gate movement, no signal
     }
 
     [Fact]
@@ -259,6 +270,13 @@ public sealed class PcaExamWriterTests : IClassFixture<PcaExamWriteDatabaseFixtu
         var audit = Assert.Single(logger.Entries, e => e.Message.StartsWith("audit.assessment.pcaexam.submitted", StringComparison.Ordinal));
         Assert.Contains($"actorUserId={callerId}", audit.Message, StringComparison.Ordinal);
         Assert.Contains($"subjectUserId={ownerId}", audit.Message, StringComparison.Ordinal);
+
+        // formmaps#144: the audit splits actor from subject, and the insights trigger follows the
+        // SUBJECT — it is about whose completion gate moved. Firing for the privileged caller would
+        // both miss the student who actually finished an exam and pointlessly re-check a stranger.
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal(ownerId, fire.UserId);
+        Assert.NotEqual(callerId, fire.UserId);
     }
 
     [Fact]
@@ -295,15 +313,25 @@ public sealed class PcaExamWriterTests : IClassFixture<PcaExamWriteDatabaseFixtu
         Assert.Equal(1, results.Count(r => r.Status == PcaExamWriteStatus.AlreadyCompleted));
         Assert.Equal(2, await CountAnswersAsync(sessionId)); // only the winner's rows (no duplicates)
         Assert.Equal("Completed", (await ReadSessionAsync(sessionId)).Status);
+
+        // formmaps#144: exactly ONE insights-trigger fire against the REAL FOR UPDATE serialization.
+        // The loser rejects at the isCompleted pre-check, well before the post-commit fire, so the two
+        // tasks never touch the recorder concurrently.
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal(userId, fire.UserId);
     }
 
     // ========================================================================= helpers
+
+    // Shared across every writer a single test creates, so a test can assert on the formmaps#144
+    // insights-trigger fires (or their absence) regardless of which writer instance submitted.
+    private readonly RecordingInsightsTrigger _insightsTrigger = new();
 
     private (PcaExamWriter Writer, CapturingLogger Logger) MakeWriter()
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
-        return (new PcaExamWriter(factory, logger), logger);
+        return (new PcaExamWriter(factory, _insightsTrigger, logger), logger);
     }
 
     private static RequestContext Ctx(string userId) =>
