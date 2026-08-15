@@ -17,10 +17,12 @@ namespace FormMaps.Api.Endpoints;
 /// 1-key { configured:false }; jobs → { data:[] }.</para>
 ///
 /// <para>Status has THREE distinct 200 shapes: (1) no-school → { configured:false } (1 key, before the reader is
-/// called); (2) school but NO config row → { configured:false, enabled:false } (2 keys, NO lastSyncAt — legacy
-/// config=null ⇒ lastSyncAt:undefined ⇒ JSON drops it); (3) config row → { configured:true, enabled:&lt;bool&gt;,
-/// lastSyncAt:&lt;iso|null&gt; } (3 keys, lastSyncAt PRESENT even when null). enabled = JS !!config.endpoint
-/// (null/""→false, non-empty→true).</para>
+/// called); (2) school but NO config row → { configured:false, enabled:false, connected:false } (3 keys, NO
+/// lastSyncAt — legacy config=null ⇒ lastSyncAt:undefined ⇒ JSON drops it, but connected:false is KEPT); (3)
+/// config row → { configured:true, enabled:&lt;bool&gt;, connected:&lt;bool&gt;, lastSyncAt:&lt;iso|null&gt; }
+/// (4 keys, lastSyncAt PRESENT even when null). enabled = JS !!config.endpoint (null/""→false, non-empty→true);
+/// connected = JS !!(config.isActive &amp;&amp; config.endpoint &amp;&amp; config.credentialsEncrypted)
+/// (formmaps#145 — the field the UI gates on; "" is falsy exactly like null).</para>
 /// </summary>
 public static class IsamsReadsEndpoints
 {
@@ -55,14 +57,19 @@ public static class IsamsReadsEndpoints
 
         var status = await reader.GetStatusAsync(context, schoolId, cancellationToken);
 
-        // Shape 2 — school but NO config row → { configured:false, enabled:false } WITHOUT a lastSyncAt key.
+        // Shape 2 — school but NO config row → { configured:false, enabled:false, connected:false } WITHOUT a
+        // lastSyncAt key. connected IS present: legacy !!(config?.isActive && …) → false when config is null,
+        // and false survives JSON.stringify (only lastSyncAt:undefined is dropped).
         if (status is null)
         {
-            return Results.Ok(new { success = true, data = new { configured = false, enabled = false } });
+            return Results.Ok(new { success = true, data = new { configured = false, enabled = false, connected = false } });
         }
 
-        // Shape 3 — config row → { configured:true, enabled, lastSyncAt } with lastSyncAt PRESENT (even if null).
-        // enabled = JS !!config.endpoint: null/"" → false, non-empty string → true.
+        // Shape 3 — config row → { configured:true, enabled, connected, lastSyncAt } with lastSyncAt PRESENT
+        // (even if null). enabled = JS !!config.endpoint: null/"" → false, non-empty string → true.
+        // connected (formmaps#145 — the UI gates on it; legacy schoolService.ts:506-508):
+        //   !!(config?.isActive && config?.endpoint && config?.credentialsEncrypted)
+        // JS !! makes "" falsy exactly like null ⇒ IsNullOrEmpty (NOT IsNullOrWhiteSpace) on both strings.
         return Results.Ok(new
         {
             success = true,
@@ -70,6 +77,9 @@ public static class IsamsReadsEndpoints
             {
                 configured = true,
                 enabled = !string.IsNullOrEmpty(status.Endpoint),
+                connected = status.IsActive
+                    && !string.IsNullOrEmpty(status.Endpoint)
+                    && !string.IsNullOrEmpty(status.CredentialsEncrypted),
                 lastSyncAt = status.LastSyncAt,
             }
         });
