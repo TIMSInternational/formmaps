@@ -7,8 +7,9 @@ namespace FormMaps.IntegrationTests.IsamsReads;
 
 /// <summary>
 /// Real-DB (Testcontainers, NON-UTC container tz, native SyncJobStatus enum) tests for
-/// <see cref="IsamsReadsReader"/>. Pins the two iSAMS reads: status (no-config → null; endpoint/lastSyncAt
-/// passthrough incl. NULL endpoint, empty endpoint and NULL lastSyncAt; school scoping) and jobs (empty → [];
+/// <see cref="IsamsReadsReader"/>. Pins the two iSAMS reads: status (no-config → null; endpoint/lastSyncAt/
+/// isActive/credentialsEncrypted passthrough incl. NULL endpoint, empty endpoint, NULL lastSyncAt, inactive
+/// config and NULL/empty credentials — formmaps#145; school scoping) and jobs (empty → [];
 /// full-row camelCase passthrough; nullable startedAt/finishedAt → null ISO-Z; createdDate-DESC + id-ASC
 /// tie-break; LIMIT 20; native-enum status passthrough; details null AND string; school scoping).
 /// </summary>
@@ -89,6 +90,47 @@ public sealed class IsamsReadsReaderTests : IClassFixture<IsamsReadsDatabaseFixt
         Assert.NotNull(status);
         Assert.Equal("https://x", status!.Endpoint);
         Assert.Null(status.LastSyncAt);
+    }
+
+    [Fact]
+    public async Task Status_isActive_false_and_credentials_passthrough()
+    {
+        // formmaps#145 — the endpoint derives `connected` from these raw columns; the reader only passes through.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedConfig(conn, "cfg1", School, endpoint: "https://x", lastSyncAt: null,
+            isActive: false, credentialsEncrypted: "enc:v1:abc");
+
+        var status = await Reader().GetStatusAsync(Ctx(), School);
+
+        Assert.NotNull(status);
+        Assert.False(status!.IsActive);
+        Assert.Equal("enc:v1:abc", status.CredentialsEncrypted);
+    }
+
+    [Fact]
+    public async Task Status_isActive_true_and_credentials_null_passthrough()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedConfig(conn, "cfg1", School, endpoint: "https://x", lastSyncAt: null);   // defaults: active, no creds
+
+        var status = await Reader().GetStatusAsync(Ctx(), School);
+
+        Assert.NotNull(status);
+        Assert.True(status!.IsActive);
+        Assert.Null(status.CredentialsEncrypted);
+    }
+
+    [Fact]
+    public async Task Status_credentials_empty_string_passthrough()
+    {
+        // "" must survive as "" (NOT null): the endpoint owns the JS-falsy "" → connected:false derivation.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedConfig(conn, "cfg1", School, endpoint: "https://x", lastSyncAt: null, credentialsEncrypted: "");
+
+        var status = await Reader().GetStatusAsync(Ctx(), School);
+
+        Assert.NotNull(status);
+        Assert.Equal("", status!.CredentialsEncrypted);
     }
 
     [Fact]
@@ -248,17 +290,20 @@ public sealed class IsamsReadsReaderTests : IClassFixture<IsamsReadsDatabaseFixt
     private static DateTime Unspec(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Unspecified);
 
     private static async Task SeedConfig(
-        NpgsqlConnection conn, string id, string schoolId, string? endpoint, DateTime? lastSyncAt)
+        NpgsqlConnection conn, string id, string schoolId, string? endpoint, DateTime? lastSyncAt,
+        bool isActive = true, string? credentialsEncrypted = null)
     {
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "isams_configs" ("id","schoolId","endpoint","lastSyncAt","updatedAt")
-            VALUES (@id,@s,@e,@l,now())
+            INSERT INTO "isams_configs" ("id","schoolId","endpoint","lastSyncAt","isActive","credentialsEncrypted","updatedAt")
+            VALUES (@id,@s,@e,@l,@a,@c,now())
             """, conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("s", schoolId);
         cmd.Parameters.AddWithValue("e", (object?)endpoint ?? DBNull.Value);
         cmd.Parameters.AddWithValue("l", lastSyncAt is null ? DBNull.Value : Unspec(lastSyncAt.Value));
+        cmd.Parameters.AddWithValue("a", isActive);
+        cmd.Parameters.AddWithValue("c", (object?)credentialsEncrypted ?? DBNull.Value);
         await cmd.ExecuteNonQueryAsync();
     }
 

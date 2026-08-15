@@ -12,8 +12,9 @@ namespace FormMaps.Infrastructure.IsamsReads;
 /// configure/sync/test stay in Node (vendor boundary) — no vendor HTTP client, no field-encryption code here.
 /// Runs under the caller's read-only RLS session; every query is explicitly school-scoped on "schoolId".
 ///
-/// <para>Status: <c>SELECT "endpoint","lastSyncAt" FROM "isams_configs" WHERE "schoolId"=@sid</c> (unique) —
-/// 0 rows ⇒ null (endpoint renders the 2-key no-config shape); 1 row ⇒ raw endpoint + lastSyncAt (ISO-Z|null).
+/// <para>Status: <c>SELECT "endpoint","lastSyncAt","isActive","credentialsEncrypted" FROM "isams_configs" WHERE
+/// "schoolId"=@sid</c> (unique) — 0 rows ⇒ null (endpoint renders the no-config shape); 1 row ⇒ raw endpoint +
+/// lastSyncAt (ISO-Z|null) + isActive + credentialsEncrypted (the endpoint derives connected — formmaps#145).
 /// Jobs: <c>SELECT &lt;all columns&gt; ... ORDER BY "createdDate" DESC, "id" ASC LIMIT 20</c> — the id-ASC
 /// tie-break is a documented deterministic superset of the legacy single-field orderBy (FM-032). Timestamps are
 /// ISO-Z (Prisma Date→JSON); nullable startedAt/finishedAt → null; the native SyncJobStatus enum is read as its
@@ -27,7 +28,8 @@ public sealed class IsamsReadsReader(IFormMapsDatabaseSessionFactory databaseSes
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
         await using var command = Command(session, """
-            SELECT "endpoint", "lastSyncAt" FROM "isams_configs" WHERE "schoolId" = @school
+            SELECT "endpoint", "lastSyncAt", "isActive", "credentialsEncrypted"
+            FROM "isams_configs" WHERE "schoolId" = @school
             """);
         AddParameter(command, "school", schoolId);
 
@@ -39,7 +41,9 @@ public sealed class IsamsReadsReader(IFormMapsDatabaseSessionFactory databaseSes
 
         return new IsamsConfigStatus(
             Endpoint: reader.IsDBNull(0) ? null : reader.GetString(0),
-            LastSyncAt: reader.IsDBNull(1) ? null : IsoZ(reader.GetDateTime(1)));
+            LastSyncAt: reader.IsDBNull(1) ? null : IsoZ(reader.GetDateTime(1)),
+            IsActive: reader.GetBoolean(2),
+            CredentialsEncrypted: reader.IsDBNull(3) ? null : reader.GetString(3));
     }
 
     public async Task<IReadOnlyList<IsamsSyncJobRow>> GetSyncJobsAsync(

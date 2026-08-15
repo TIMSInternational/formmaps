@@ -1,0 +1,290 @@
+# =============================================================================
+# formmaps-sql-apply — applies explicitly named files from infra/aws/sql/ to
+# the production Aurora cluster (nexa-aurora-enc, us-east-1) through the
+# SSM-managed bastion. Closes the gap in formmaps#137: until this workflow,
+# NO pipeline applied those files, so #52's audit writer fail-softed into a
+# missing table and the #44 billing soak never started.
+#
+# Design decisions (see docs/migration/sql-apply-runbook.md for operation):
+#
+#   * workflow_dispatch ONLY, gated by the `production-sql` environment.
+#     CREATE THAT ENVIRONMENT — required reviewers AND a main-only deployment
+#     branch policy — BEFORE MERGING THIS WORKFLOW: GitHub auto-creates
+#     missing environments WITHOUT protection rules, so a first dispatch
+#     against a nonexistent environment would not pause for approval. As a
+#     fail-closed backstop, the job's FIRST step (before any AWS action)
+#     queries the environment's protection rules via the GitHub API and
+#     hard-fails unless a required_reviewers rule provably exists — and also
+#     fails when the API call itself errors, because "cannot verify the gate"
+#     must never degrade into "run anyway". That converts "someone forgot to
+#     create the environment first" from a silent unapproved production run
+#     into a red run.
+#
+#   * Files are applied ONE AT A TIME, each named explicitly in the input.
+#     There is deliberately no "apply everything" option: the legacy repo's
+#     standing lesson is "Never npm run rls:apply against production — it runs
+#     every file". Order in the input is the order applied; the run stops at
+#     the first failure.
+#
+#   * Aurora is PubliclyAccessible:false, so the runner NEVER connects to it.
+#     Instead: AWS auth -> `aws ssm send-command` to the bastion
+#     (repo variable FORMMAPS_SQL_BASTION_INSTANCE_ID; the current instance is
+#     a temporary DELETE-ME box, so the id is parameterized and the runbook
+#     documents pointing at a replacement) -> psql on the bastion -> output
+#     captured back via get-command-invocation.
+#
+#   * Database credentials never transit GitHub or the SSM command document.
+#     Only a Secrets Manager secret NAME is forwarded; the bastion resolves it
+#     with its own instance profile.
+#
+#   * AWS auth is OIDC ONLY: the job authenticates solely by assuming
+#     vars.FORMMAPS_SQL_APPLY_ROLE_ARN via GitHub's OIDC provider. There is
+#     deliberately NO static-key fallback — repo-scoped standing keys are
+#     usable from any dispatched ref by a workflow copy with the environment
+#     gate stripped, and their blast radius is production DB credentials. The
+#     role's trust policy MUST pin token.actions.githubusercontent.com:sub to
+#     repo:TIMSInternational/formmaps:environment:production-sql (exact JSON
+#     in the runbook), so the approval gate is enforced AWS-side too: a
+#     workflow copy without the environment line cannot assume the role.
+#
+#   * Verification ALWAYS runs, even when an apply step fails, so every run
+#     ends with the true state of roles/grants (infra/aws/sql/verify-grants.sql).
+#     Note the identity caveat baked into that file: verifying row visibility
+#     as nexaadmin proves nothing — rds_superuser bypasses RLS.
+# =============================================================================
+name: formmaps-sql-apply
+
+run-name: "sql-apply: ${{ inputs.sql_files }} (by @${{ github.actor }})"
+
+on:
+  workflow_dispatch:
+    inputs:
+      sql_files:
+        description: >-
+          Comma-separated file names from infra/aws/sql/ to apply, in order
+          (e.g. "billing-shadow-tables.sql,dotnet-service-role.sql"). Each file
+          must be named explicitly — no globs, no directories, no "all".
+          Table-creating files go before dotnet-service-role.sql (its GRANTs
+          reference them). Files are taken from the git ref you dispatch from.
+        required: true
+        type: string
+      confirm:
+        description: >-
+          Type exactly "apply-to-production" to acknowledge this runs SQL
+          against the production database.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write # mint the OIDC token that assumes FORMMAPS_SQL_APPLY_ROLE_ARN
+  actions: read # read production-sql protection rules for the fail-closed gate check
+
+concurrency:
+  group: formmaps-sql-apply
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  SQL_DIR: infra/aws/sql
+
+jobs:
+  apply:
+    name: Apply SQL via SSM bastion
+    runs-on: ubuntu-latest
+    # 30-minute cap vs worst case: ssm-exec.sh polls up to 15 min per file and
+    # the remote executionTimeout is 900s, so two slow files can consume the
+    # whole budget. If this timeout (or a manual cancel) fires, GitHub kills
+    # the POLLER on the runner — NOT the in-flight SSM command, which keeps
+    # executing psql on the bastion. ssm-exec.sh traps termination and issues
+    # `aws ssm cancel-command` best-effort, but SQL may still have committed
+    # while the run shows cancelled. Treat any cancelled/timed-out run as
+    # state-unknown and re-run verify-grants.sql (runbook: "Cancellation,
+    # timeouts, and what they do NOT stop").
+    timeout-minutes: 30
+    environment: production-sql
+    env:
+      BASTION_INSTANCE_ID: ${{ vars.FORMMAPS_SQL_BASTION_INSTANCE_ID }}
+      ADMIN_DB_SECRET_ID: ${{ vars.FORMMAPS_SQL_ADMIN_DB_SECRET_ID }}
+
+    steps:
+      # FIRST, before any AWS action: prove the approval gate exists. GitHub
+      # auto-creates a missing environment WITHOUT protection rules, so a
+      # dispatch against a not-yet-created production-sql would sail through
+      # unapproved. Fail-closed: no proof of a required_reviewers rule — or
+      # any API failure while checking — means no run.
+      - name: Verify production-sql approval gate (fail closed)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! resp="$(gh api "repos/${GITHUB_REPOSITORY}/environments/production-sql" 2>&1)"; then
+            echo "::error::Could not read protection rules for environment 'production-sql' (API said: ${resp}). Failing CLOSED: without proof that required reviewers are configured, this run cannot be distinguished from a dispatch against an auto-created, unprotected environment. Check the environment exists (Settings -> Environments) and that the workflow's GITHUB_TOKEN has actions:read (permissions block above)."
+            exit 1
+          fi
+          if ! printf '%s' "$resp" | jq -e '[.protection_rules[]?.type] | index("required_reviewers") != null' >/dev/null; then
+            echo "::error::Environment 'production-sql' has NO required_reviewers protection rule — it was probably auto-created by a dispatch instead of being set up first. Refusing to touch AWS. Add required reviewers AND a main-only deployment branch policy under Settings -> Environments -> production-sql, then re-run. See docs/migration/sql-apply-runbook.md."
+            exit 1
+          fi
+          echo "production-sql has a required_reviewers protection rule — approval gate verified."
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate inputs
+        id: validate
+        env:
+          SQL_FILES_INPUT: ${{ inputs.sql_files }}
+          CONFIRM_INPUT: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM_INPUT" != "apply-to-production" ]; then
+            echo "::error::confirm must be exactly 'apply-to-production' (got something else). Refusing."
+            exit 1
+          fi
+          # The browser form cannot produce newlines, but an API dispatch can.
+          # `read` below only consumes the first line, so a multi-line value
+          # would silently DROP every file after line 1 — reject it outright
+          # instead of truncating.
+          case "$SQL_FILES_INPUT" in
+            *$'\n'*|*$'\r'*)
+              echo "::error::sql_files contains a newline/carriage return (API-dispatched?). Multi-line input is rejected — everything after line 1 would otherwise be silently dropped. Put all files on ONE comma-separated line."
+              exit 1
+              ;;
+          esac
+          files=""
+          role_pos=0
+          shadow_pos=0
+          audit_pos=0
+          pos=0
+          IFS=',' read -ra parts <<< "$SQL_FILES_INPUT"
+          for raw in "${parts[@]}"; do
+            f="$(printf '%s' "$raw" | tr -d '[:space:]')"
+            [ -n "$f" ] || continue
+            if ! printf '%s' "$f" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]*\.sql$'; then
+              echo "::error::'$f' is not a bare .sql file name from $SQL_DIR. No paths, globs, or directories."
+              exit 1
+            fi
+            case "$f" in
+              */*|*..*)
+                echo "::error::'$f' looks path-like. Refusing."
+                exit 1
+                ;;
+            esac
+            if [ ! -f "$SQL_DIR/$f" ]; then
+              echo "::error::$SQL_DIR/$f does not exist on ref '${GITHUB_REF_NAME}'. Did you dispatch from the right branch?"
+              exit 1
+            fi
+            pos=$((pos + 1))
+            case "$f" in
+              dotnet-service-role.sql)   role_pos=$pos ;;
+              billing-shadow-tables.sql) shadow_pos=$pos ;;
+              audit-events-schema.sql)   audit_pos=$pos ;;
+            esac
+            files="$files $f"
+          done
+          files="${files# }"
+          if [ -z "$files" ]; then
+            echo "::error::sql_files resolved to an empty list."
+            exit 1
+          fi
+          # Ordering tripwire, not a hard block (tables may already exist from
+          # an earlier run): dotnet-service-role.sql GRANTs on the shadow_*
+          # trio and audit_events, so creating them must come first on a fresh
+          # database or the GRANT aborts with 42P01.
+          if [ "$role_pos" -gt 0 ] && [ "$shadow_pos" -gt "$role_pos" ]; then
+            echo "::warning::billing-shadow-tables.sql is listed AFTER dotnet-service-role.sql. On a database without the shadow tables, the role file's GRANT will fail (42P01)."
+          fi
+          if [ "$role_pos" -gt 0 ] && [ "$audit_pos" -gt "$role_pos" ]; then
+            echo "::warning::audit-events-schema.sql is listed AFTER dotnet-service-role.sql. On a database without audit_events, the role file's GRANT will fail (42P01)."
+          fi
+          echo "applying, in order: $files"
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+
+      - name: Require deployment variables
+        env:
+          ROLE_ARN: ${{ vars.FORMMAPS_SQL_APPLY_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          missing=0
+          if [ -z "${ROLE_ARN:-}" ]; then
+            echo "::error::Repo variable FORMMAPS_SQL_APPLY_ROLE_ARN is not set. AWS auth is OIDC-only — there is deliberately no static-key fallback (see the runbook, 'AWS auth — OIDC only'). Set it to the IAM role whose trust policy pins sub to repo:TIMSInternational/formmaps:environment:production-sql."
+            missing=1
+          fi
+          if [ -z "${BASTION_INSTANCE_ID:-}" ]; then
+            echo "::error::Repo variable FORMMAPS_SQL_BASTION_INSTANCE_ID is not set. The bastion is deliberately parameterized (the current one is a temporary DELETE-ME instance) — see docs/migration/sql-apply-runbook.md."
+            missing=1
+          fi
+          if [ -z "${ADMIN_DB_SECRET_ID:-}" ]; then
+            echo "::error::Repo variable FORMMAPS_SQL_ADMIN_DB_SECRET_ID is not set. It must name (not contain) the Secrets Manager secret holding the admin (nexaadmin) connection info — see the runbook."
+            missing=1
+          fi
+          [ "$missing" -eq 0 ] || exit 1
+
+      # OIDC ONLY — no static-key alternative exists, on purpose: standing
+      # keys in repo secrets would be usable from any dispatched ref by a
+      # workflow copy with the environment gate stripped. Because the role's
+      # trust policy pins :sub to environment:production-sql, this step
+      # succeeding also re-proves AWS-side that the run passed the gate.
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ vars.FORMMAPS_SQL_APPLY_ROLE_ARN }}
+
+      - name: Check bastion is SSM-reachable
+        run: |
+          set -euo pipefail
+          ping="$(aws ssm describe-instance-information \
+            --filters "Key=InstanceIds,Values=${BASTION_INSTANCE_ID}" \
+            --query 'InstanceInformationList[0].PingStatus' --output text)"
+          if [ "$ping" != "Online" ]; then
+            echo "::error::Bastion ${BASTION_INSTANCE_ID} is not Online in SSM (got: ${ping}). If the DELETE-ME bastion is gone, point FORMMAPS_SQL_BASTION_INSTANCE_ID at a replacement — requirements are in docs/migration/sql-apply-runbook.md."
+            exit 1
+          fi
+          echo "bastion ${BASTION_INSTANCE_ID} is Online"
+
+      - name: Apply selected SQL files on the bastion
+        id: apply
+        env:
+          FILES: ${{ steps.validate.outputs.files }}
+          DB_SECRET_ID: ${{ vars.FORMMAPS_SQL_ADMIN_DB_SECRET_ID }}
+        run: |
+          set -euo pipefail
+          for f in $FILES; do
+            mode=apply
+            # verify-grants.sql manages its own transaction/probe; run it in
+            # verify mode even when someone lists it for a verify-only run.
+            [ "$f" = "verify-grants.sql" ] && mode=verify
+            echo ""
+            echo "=============================================================="
+            echo ">>> ${mode}: ${f}"
+            echo "=============================================================="
+            bash "$SQL_DIR/ssm-exec.sh" "$f" "$mode"
+          done
+
+      # ALWAYS runs — even when an apply fails — so every run ends with the
+      # true state of roles and grants. Uses the app-role secret when
+      # configured (which unlocks verify-grants.sql's behavioural RLS block);
+      # otherwise falls back to the admin secret, where only the catalog
+      # checks are meaningful: nexaadmin is rds_superuser and RLS does not
+      # apply to it, so row-visibility observed through it proves NOTHING
+      # about app-role behaviour (formmaps#137).
+      - name: Verify grants (always runs)
+        if: always()
+        env:
+          APP_DB_SECRET_ID: ${{ vars.FORMMAPS_SQL_APP_DB_SECRET_ID }}
+        run: |
+          set -euo pipefail
+          if ! aws sts get-caller-identity >/dev/null 2>&1; then
+            echo "::error::AWS credentials were never established in this run, so verification cannot reach the database. Fix the failure above and re-run."
+            exit 1
+          fi
+          if [ -n "${APP_DB_SECRET_ID:-}" ]; then
+            export DB_SECRET_ID="$APP_DB_SECRET_ID"
+            echo "verify identity: app role (FORMMAPS_SQL_APP_DB_SECRET_ID) — behavioural RLS block will run."
+          else
+            export DB_SECRET_ID="$ADMIN_DB_SECRET_ID"
+            echo "::warning::Verifying with the ADMIN secret. Grant-existence checks are still authoritative (they name the role explicitly), but the behavioural RLS block self-skips — nexaadmin is rds_superuser and bypasses RLS, so nothing it observes proves app-role behaviour. Set FORMMAPS_SQL_APP_DB_SECRET_ID to run the full proof (formmaps#137)."
+          fi
+          bash "$SQL_DIR/ssm-exec.sh" verify-grants.sql verify

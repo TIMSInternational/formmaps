@@ -78,8 +78,13 @@ public sealed class CounselorCaseloadReaderTests
             ],
             _fixture.AppliedPolicyTables);
 
-        // Stated, not merely omitted: production policies NOTHING on these two, so the reader's own WHERE is the
-        // only thing scoping them. If a policy refresh ever covers them this fails and the comment gets updated.
+        // Stated, not merely omitted: both are unpolicied HERE, so the reader's own WHERE is the only thing these
+        // tests exercise. They are unpolicied for DIFFERENT reasons (formmaps#135):
+        //   school_courses                 — POLICIED IN PRODUCTION by pilot.sql, which this harness does not
+        //                                    vendor. This assertion describes the harness, not production, and is
+        //                                    expected to flip when pilot.sql is vendored.
+        //   personality_assessment_sessions — policied by no file at all, but tracked as PENDING debt in
+        //                                    api/scripts/check-rls-coverage.mjs, not undocumented.
         Assert.DoesNotContain("school_courses", _fixture.AppliedPolicyTables);
         Assert.DoesNotContain("personality_assessment_sessions", _fixture.AppliedPolicyTables);
     }

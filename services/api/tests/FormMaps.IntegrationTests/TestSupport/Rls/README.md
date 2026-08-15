@@ -14,7 +14,38 @@ formmaps#125 exists because three parent surfaces shipped to production with an 
 exactly that failure mode one level up: the tests would then assert against *someone's idea* of the
 policy rather than the policy. Copies cannot say something the production file does not say.
 
-`pilot.sql` is deliberately NOT vendored — it is a scratch file, not part of the applied set.
+`pilot.sql` is NOT vendored — but **not** because it is unused. It policies `school_courses` and
+`student_course_plans`, and it **is** applied to production. Do not restore the old wording here
+("a scratch file, not part of the applied set"); that claim was false and it propagated into four
+fixtures before anyone checked it (formmaps#135).
+
+Evidence, recorded so this is not re-litigated from the file names:
+
+* `api/scripts/apply-rls.ts` globs `prisma/rls/*.sql`, so it applies `pilot.sql`; legacy CI runs it.
+* `api/scripts/check-rls-coverage.mjs` globs the same directory, so its coverage gate counts
+  `pilot.sql`'s policies. Neither table appears in that script's `EXEMPT`/`PENDING`/`ESCALATED`
+  lists, and a tenant-scoped table that is neither policied nor listed fails the build. Legacy CI
+  is green, so those two tables are clearing the gate *on pilot's policies*.
+* `docs/ops/rls-prod-apply-14.md` records a real production measurement either side of the #117
+  apply — `BEFORE 72/72/72`, `AFTER 86/86/86`. Counting the policy files at that commit gives 70
+  and 84 **without** pilot, 72 and 86 **with** it. The offset is exactly pilot's two policies at
+  both ends.
+
+So the honest statement is: **production policies these two tables; this harness does not yet
+reproduce that.** Any fixture creating either table is therefore testing an app-layer predicate
+with no RLS backstop *in the fixture*, while production has one — the test understates production
+rather than overstating it.
+
+Vendoring it is the fix, and it is not a one-line change. `ApplyAsync` applies a policy to any
+table present in `pg_class`, so vendoring immediately policies these tables in **every** fixture
+whose DDL creates them — currently 10 schema files for `school_courses` and 5 for
+`student_course_plans`. Two hazards to clear first:
+
+* `ParentChildReads/Data/parent-child-reads-schema.sql` creates `student_course_plans` with **no
+  `schoolId` column**, and that fixture is converted — so vendoring as-is fails its init with
+  `42703` and takes the whole class down. It needs the column, and its seeds need a matching value.
+* Every seeded row in an affected converted fixture needs a `schoolId` matching the session GUC, or
+  the row becomes invisible and the failure looks like a broken query rather than a seeding gap.
 
 ## Refreshing
 

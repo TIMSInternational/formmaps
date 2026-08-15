@@ -6,7 +6,7 @@
       "path": "/api/v1/school-admin/integrations/isams/status",
       "anonExpectedStatus": 401,
       "authedExpectedStatus": 200,
-      "authedShapeKeys": ["configured", "enabled"]
+      "authedShapeKeys": ["configured", "enabled", "connected"]
     },
     {
       "label": "isams-jobs",

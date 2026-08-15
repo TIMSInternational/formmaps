@@ -100,6 +100,12 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
         Assert.Equal(expected.PerformanceLevel, row.PerformanceLevel);
         var persistedFinal = DeserializeDoubles(row.FinalScores);
         Assert.Equal(expected.FinalScores.OrderBy(k => k.Key), persistedFinal.OrderBy(k => k.Key));
+
+        // formmaps#144: a durable completion fires the polyglot insights trigger for the owner —
+        // the funnel signal legacy completeSession sends (lia-results-service.ts:130-138).
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal(userId, fire.UserId);
+        Assert.Equal("assessment.lia.completed", fire.Source);
     }
 
     // ----------------------------------------------------------------------------------------------
@@ -132,6 +138,9 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
             second.Result!.ResponseCounts.OrderBy(k => k.Key));
         // The second call performed NO write: updated_at is byte-identical (a re-UPDATE would bump it).
         Assert.Equal(updatedAtAfterFirst, updatedAtAfterSecond);
+        // formmaps#144: the idempotent replay must not re-fire the insights trigger either — retried
+        // /complete calls are the routine client behavior the replay branch exists for.
+        Assert.Single(_insightsTrigger.Fires);
     }
 
     // ----------------------------------------------------------------------------------------------
@@ -160,6 +169,8 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
         // A rejected completion must NOT emit a completion audit event (nothing was written).
         Assert.DoesNotContain(
             logger.Entries, e => e.Message.StartsWith("audit.assessment.lia.completed", StringComparison.Ordinal));
+        // ... and must NOT fire the insights trigger (formmaps#144): no durable completion, no signal.
+        Assert.Empty(_insightsTrigger.Fires);
     }
 
     // ----------------------------------------------------------------------------------------------
@@ -343,11 +354,19 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
         Assert.Equal("completed", row.Status);
         // completed_at == updated_at proves a single write set both to the same instant.
         Assert.Equal(row.CompletedAt, row.UpdatedAt);
+
+        // formmaps#144: exactly ONE insights-trigger fire — the loser of the race took the
+        // idempotent-replay branch, which must not re-signal.
+        Assert.Single(_insightsTrigger.Fires);
     }
 
     // ==============================================================================================
     // Helpers
     // ==============================================================================================
+
+    // Shared across every writer a single test creates, so a test can assert on the insights-trigger
+    // fires (or their absence) regardless of which writer instance completed the session (formmaps#144).
+    private readonly RecordingInsightsTrigger _insightsTrigger = new();
 
     private (LiaSessionWriter Writer, CapturingLogger Logger) MakeWriter()
     {
@@ -355,7 +374,7 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, new LiaQuestionCatalogCache(), NullLogger<LiaQuestionIdResolver>.Instance);
-        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), logger), logger);
+        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), _insightsTrigger, logger), logger);
     }
 
     /// <summary>

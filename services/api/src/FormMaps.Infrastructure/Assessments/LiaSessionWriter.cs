@@ -17,25 +17,32 @@ namespace FormMaps.Infrastructure.Assessments;
 /// (idempotency — the tims fix that stopped double-scoring/double-billing), coverage is gated (every
 /// subtest fully answered), the shipped engines score, and a conditional
 /// <c>UPDATE … WHERE status &lt;&gt; 'completed'</c> persists — then a PII-free audit event is emitted
-/// (SOC2 CC7 / ISO A.8.15). The insights (Bedrock) trigger stays polyglot/out of this path.
+/// (SOC2 CC7 / ISO A.8.15) and the polyglot insights trigger fires (formmaps#144: generation itself
+/// stays in Node/Bedrock; <see cref="IInsightsTrigger"/> only carries the post-commit "check this
+/// student now" signal — see <see cref="EmitCompletionCommittedAsync"/>).
 /// </summary>
 /// <remarks>
-/// formmaps#52 Task 8: the completion audit is now DURABLE as well as logged. Every one of the six
-/// completion call sites keeps its existing <c>logger.LogInformation</c> line verbatim (log-based
-/// alerting still works) and additionally persists a row via <see cref="IAuditEventWriter" /> — see
-/// <see cref="WriteCompletionAuditAsync" /> for why that is one shared helper rather than six copies.
+/// formmaps#52 Task 8: the completion audit is now DURABLE as well as logged. The existing
+/// <c>audit.assessment.lia.completed</c> <c>logger.LogInformation</c> line survives verbatim (log-based
+/// alerting still works) and is additionally persisted as a row via <see cref="IAuditEventWriter" /> —
+/// see <see cref="WriteCompletionAuditAsync" /> for why that is one shared helper rather than six copies.
+/// All six completion call sites reach the log line, the durable row AND the formmaps#144 insights
+/// trigger through the single <see cref="EmitCompletionCommittedAsync" /> post-commit emit point, which
+/// is also where the ordering between the last two is decided and justified.
 /// </remarks>
 public sealed class LiaSessionWriter(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     ILiaQuestionIdResolver questionIdResolver,
     IAuditEventWriter auditEventWriter,
+    IInsightsTrigger insightsTrigger,
     ILogger<LiaSessionWriter> logger) : ILiaSessionWriter
 {
     /// <summary>
-    /// The durable half of this class's completion audit (formmaps#52 Task 8). Called immediately after
-    /// each existing <c>audit.assessment.lia.completed</c> log line, and — like that line — only ever
-    /// AFTER the completion's own commit has succeeded, so a row here can never claim a completion that
-    /// did not persist.
+    /// The durable half of this class's completion audit (formmaps#52 Task 8). Called from
+    /// <see cref="EmitCompletionCommittedAsync"/>, immediately after the existing
+    /// <c>audit.assessment.lia.completed</c> log line it mirrors rather than replaces, and — like that
+    /// line — only ever AFTER the completion's own commit has succeeded, so a row here can never claim a
+    /// completion that did not persist.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -45,7 +52,8 @@ public sealed class LiaSessionWriter(
     /// shape — an audit trail whose eventType or subjectType depends on which endpoint the candidate
     /// happened to hit is not an audit trail — and this file's own history is that one of those six
     /// sites silently dropped its completion for months. A single definition makes that class of drift
-    /// impossible.
+    /// impossible. All six now reach it through the single <see cref="EmitCompletionCommittedAsync"/>
+    /// call site, which makes that guarantee structural rather than a convention six callers must keep.
     /// </para>
     /// <para>
     /// <see cref="CancellationToken.None" /> is passed deliberately, per
@@ -189,14 +197,55 @@ public sealed class LiaSessionWriter(
         var result = await PersistCompletionAsync(session, sessionId, counts, "complete", cancellationToken);
         await session.CommitAsync(cancellationToken);
 
+        await EmitCompletionCommittedAsync(sessionId, ownerUserId, result, cancellationToken);
+
+        return new LiaCompleteOutcome(LiaCompleteStatus.Completed, result);
+    }
+
+    /// <summary>
+    /// Post-commit completion emit, shared by every path that durably completes a session (the
+    /// HTTP-driven <see cref="CompleteAsync"/> plus the timeout-advance completions StartAsync's
+    /// Gate 2 / SubmitAnswerAsync (both branches) / HandleTimeoutAsync / ReadWithLazyExpiryAsync
+    /// reach through AdvancePastSubtestAsync). Callers invoke it ONLY after their completing
+    /// transaction commits, and ONLY with the <see cref="LiaCompletionResult"/> their own transaction
+    /// persisted — an idempotent replay or a lost advance race (null Completion) emits NOTHING,
+    /// because the transaction that actually completed the session emitted on its own commit. That
+    /// per-completion-exactly-once rule is what keeps submit retries from re-firing the trigger.
+    /// </summary>
+    /// <remarks>
+    /// ORDER OF THE THREE EMITS (the formmaps#52 + formmaps#144 merge). Log line, then the DURABLE audit
+    /// row, then the insights trigger. The last two are independent by construction — neither can suppress
+    /// the other, because <c>AuditEventWriter</c> swallows every failure except
+    /// <see cref="OperationCanceledException" /> (and <see cref="WriteCompletionAuditAsync" /> passes
+    /// <see cref="CancellationToken.None" />, which makes that one unreachable) while
+    /// <c>LegacyApiInsightsTrigger</c> swallows everything including cancellation. So the order is decided
+    /// by what is actually lost if the process dies mid-emit: the audit row is the durable, DB-immutable
+    /// compliance record, whereas the trigger is a best-effort cross-service HTTP call with a 5s cap whose
+    /// only durable footprint is a backfillable Error log. Emitting the audit FIRST keeps the window
+    /// between "completion committed" and "audit row committed" as short as a single INSERT, instead of
+    /// stretching it across a Node round-trip (or, on a Node outage, the full trigger timeout). Deliberately
+    /// no shared try/catch around the pair: each call owns its own documented failure semantics, and a
+    /// caller-side catch would let the trigger's swallow-everything posture hide a genuine audit-side
+    /// programming error that <c>AuditEventWriter</c> means to propagate.
+    /// </remarks>
+    private async Task EmitCompletionCommittedAsync(
+        string sessionId, string actorUserId, LiaCompletionResult completion, CancellationToken cancellationToken)
+    {
         // Audit (SOC2 CC7.2 / ISO A.8.15): actor/action/subject/outcome — IDs only, never PII. Emitted
         // only after the durable write commits, so it can never claim a completion that did not persist.
         logger.LogInformation(
             "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
-            sessionId, ownerUserId, result.GlobalPercentile, result.PerformanceLevel);
-        await WriteCompletionAuditAsync(sessionId, ownerUserId, result);
+            sessionId, actorUserId, completion.GlobalPercentile, completion.PerformanceLevel);
 
-        return new LiaCompleteOutcome(LiaCompleteStatus.Completed, result);
+        // formmaps#52 Task 8: the DURABLE half of the log line above — same actor, same subject, same
+        // commit-first guarantee. First of the two side effects, per the ordering note on this method.
+        await WriteCompletionAuditAsync(sessionId, actorUserId, completion);
+
+        // formmaps#144: completing LIA may make the student insight-ready — the polyglot mirror of
+        // legacy completeSession's own trigger (services/lia/lia-results-service.ts:130-138).
+        // IInsightsTrigger never throws (fail-soft-BUT-LOUD): a failed fire logs at Error with
+        // userId+source for backfill, and the assessment write that carried it still succeeds.
+        await insightsTrigger.TriggerAsync(actorUserId, "assessment.lia.completed", cancellationToken);
     }
 
     // ================================================================================================
@@ -332,13 +381,10 @@ public sealed class LiaSessionWriter(
                 {
                     if (expiry.Completion is { } completion)
                     {
-                        // Audit only after the commit above succeeds, mirroring CompleteAsync's own
-                        // ordering — a completion audit can never be emitted for a write that didn't
-                        // durably persist.
-                        logger.LogInformation(
-                            "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
-                            row.Id, userId, completion.GlobalPercentile, completion.PerformanceLevel);
-                        await WriteCompletionAuditAsync(row.Id, userId, completion);
+                        // Only after the commit above succeeds, and only for OUR OWN completion —
+                        // see EmitCompletionCommittedAsync for the shared ordering/exactly-once rule
+                        // (log line, then the durable audit row, then the insights trigger).
+                        await EmitCompletionCommittedAsync(row.Id, userId, completion, cancellationToken);
                     }
 
                     return new LiaStartOutcome(LiaStartStatus.AlreadyCompleted, null);
@@ -837,13 +883,9 @@ public sealed class LiaSessionWriter(
 
             if (expiry.Completion is { } completion)
             {
-                // Audit only after the commit above succeeds, mirroring CompleteAsync's / StartAsync's
-                // own ordering — a completion audit can never be emitted for a write that did not
-                // durably persist.
-                logger.LogInformation(
-                    "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
-                    sessionId, ownerUserId, completion.GlobalPercentile, completion.PerformanceLevel);
-                await WriteCompletionAuditAsync(sessionId, ownerUserId, completion);
+                // Only after the commit above succeeds, and only for OUR OWN completion — see
+                // EmitCompletionCommittedAsync for the shared ordering/exactly-once rule.
+                await EmitCompletionCommittedAsync(sessionId, ownerUserId, completion, cancellationToken);
             }
 
             return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.Ok, new LiaAnswerResult(
@@ -957,13 +999,9 @@ public sealed class LiaSessionWriter(
 
         if (answerDrivenCompletion is { } committedCompletion)
         {
-            // Audit only after the commit above succeeds, mirroring this method's own expiry branch and
-            // every other completion call site — a completion audit can never be emitted for a write
-            // that did not durably persist.
-            logger.LogInformation(
-                "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
-                sessionId, ownerUserId, committedCompletion.GlobalPercentile, committedCompletion.PerformanceLevel);
-            await WriteCompletionAuditAsync(sessionId, ownerUserId, committedCompletion);
+            // Only after the commit above succeeds, mirroring this method's own expiry branch — see
+            // EmitCompletionCommittedAsync for the shared ordering/exactly-once rule.
+            await EmitCompletionCommittedAsync(sessionId, ownerUserId, committedCompletion, cancellationToken);
         }
 
         return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.Ok, new LiaAnswerResult(
@@ -1150,13 +1188,9 @@ public sealed class LiaSessionWriter(
 
         if (advanced.Completion is { } completion)
         {
-            // Audit only after the commit above succeeds, mirroring CompleteAsync's / StartAsync's /
-            // SubmitAnswerAsync's own ordering — a completion audit can never be emitted for a write
-            // that did not durably persist.
-            logger.LogInformation(
-                "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
-                sessionId, ownerUserId, completion.GlobalPercentile, completion.PerformanceLevel);
-            await WriteCompletionAuditAsync(sessionId, ownerUserId, completion);
+            // Only after the commit above succeeds, and only for OUR OWN completion — see
+            // EmitCompletionCommittedAsync for the shared ordering/exactly-once rule.
+            await EmitCompletionCommittedAsync(sessionId, ownerUserId, completion, cancellationToken);
         }
 
         return new LiaSubmitAnswerOutcome(LiaSubmitAnswerStatus.Ok, new LiaAnswerResult(
@@ -1334,16 +1368,11 @@ public sealed class LiaSessionWriter(
 
                 if (expiry.Completion is { } completion)
                 {
-                    // Audit only after the commit above succeeds, mirroring CompleteAsync's /
-                    // StartAsync's / SubmitAnswerAsync's / HandleTimeoutAsync's own ordering — a
-                    // completion audit can never be emitted for a write that did not durably persist.
-                    // ownerUserId is the actor: a lazy expiry discovered by a plain GET still completes
-                    // the assessment on the session owner's behalf, same as every other lazy-expiry
-                    // call site in this class.
-                    logger.LogInformation(
-                        "audit.assessment.lia.completed sessionId={SessionId} actorUserId={ActorUserId} globalPercentile={GlobalPercentile} performanceLevel={PerformanceLevel}",
-                        sessionId, ownerUserId, completion.GlobalPercentile, completion.PerformanceLevel);
-                    await WriteCompletionAuditAsync(sessionId, ownerUserId, completion);
+                    // Only after the commit above succeeds — see EmitCompletionCommittedAsync for the
+                    // shared ordering/exactly-once rule. ownerUserId is the actor: a lazy expiry
+                    // discovered by a plain GET still completes the assessment on the session owner's
+                    // behalf, same as every other lazy-expiry call site in this class.
+                    await EmitCompletionCommittedAsync(sessionId, ownerUserId, completion, cancellationToken);
                 }
 
                 // Re-read the post-expiry state on a FRESH read-only session: the writable transaction

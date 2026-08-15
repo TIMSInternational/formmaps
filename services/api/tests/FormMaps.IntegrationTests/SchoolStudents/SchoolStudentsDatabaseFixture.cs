@@ -13,13 +13,18 @@ namespace FormMaps.IntegrationTests.SchoolStudents;
 /// on them, and naming one fails the fixture:</para>
 /// <list type="bullet">
 /// <item><c>schools</c> — the tenant root itself; there is no schoolId column to scope it by.</item>
-/// <item><c>school_courses</c> — appears in none of prisma/rls/*.sql despite carrying a non-null schoolId. Every
-/// read of it in this domain is explicitly <c>"schoolId" = @school</c>-filtered in SQL, so the app layer is the only
-/// gate. Recorded here rather than assumed.</item>
-/// <item><c>student_course_plans</c> — the production gap already recorded in <c>ParentChildReaderTests.Fixture</c>.
-/// It is load-bearing HERE in a way it is not there: <c>SchoolStudentsCoursePlanWriter.DeleteCoursePlanCourseAsync</c>
-/// has no RLS backstop whatsoever, so its <c>"studentId" = @sid</c> predicate is the ONLY thing standing between a
-/// caller authorised for student A and student B's plan row.</item>
+/// <item><c>school_courses</c> — policied IN PRODUCTION by prisma/rls/pilot.sql, which this harness does not yet
+/// vendor (formmaps#135). It is therefore unpolicied HERE, not in production; the previous comment said the latter
+/// and was wrong. Every read of it in this domain is explicitly <c>"schoolId" = @school</c>-filtered in SQL, so
+/// within this fixture the app layer is the only gate and that is all these tests can prove.</item>
+/// <item><c>student_course_plans</c> — also policied in production by pilot.sql and also not vendored here
+/// (formmaps#135). What <c>ParentChildReaderTests.Fixture</c> and this fixture recorded as "a production gap" was
+/// a gap in the HARNESS, not in production. The consequence for this domain is unchanged and still worth stating:
+/// <c>SchoolStudentsCoursePlanWriter.DeleteCoursePlanCourseAsync</c> has no RLS backstop IN THIS FIXTURE, so its
+/// <c>"studentId" = @sid</c> predicate is the only thing these tests exercise between a caller authorised for
+/// student A and student B's plan row. Production additionally has pilot.sql's tenant policy — but that policy is
+/// keyed on <c>schoolId</c>, so it does NOT separate two students of the SAME school. The app predicate remains the
+/// only defence for the same-school case either way, which is why this one is load-bearing.</item>
 /// </list>
 /// </summary>
 public sealed class SchoolStudentsDatabaseFixture : RlsEnabledDatabaseFixture

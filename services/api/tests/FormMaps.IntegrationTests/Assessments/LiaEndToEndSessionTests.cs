@@ -211,6 +211,12 @@ public sealed class LiaEndToEndSessionTests : IClassFixture<LiaWriteDatabaseFixt
         var timing = await ReadSubtestTimingAsync(sessionId, "visual_rotation");
         Assert.NotNull(timing.EndedAt);
         Assert.True(timing.DurationMs >= 30_000, $"durationMs should reflect the ~40s clock, was {timing.DurationMs}.");
+
+        // formmaps#144: the dominant completion path fires the polyglot insights trigger exactly once,
+        // for the owner, alongside the audit event it shares an emit point with.
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal(userId, fire.UserId);
+        Assert.Equal("assessment.lia.completed", fire.Source);
     }
 
     /// <summary>
@@ -231,6 +237,11 @@ public sealed class LiaEndToEndSessionTests : IClassFixture<LiaWriteDatabaseFixt
         Assert.Equal(answered.Result!.Completion!.GlobalPercentile, replayed.Result!.GlobalPercentile);
         Assert.Equal(answered.Result.Completion.PerformanceLevel, replayed.Result.PerformanceLevel);
         Assert.Equal(answered.Result.Completion.CompletedAt, replayed.Result.CompletedAt);
+
+        // formmaps#144: the frontend's routine follow-up /complete is the everyday retry case — the
+        // insights trigger belongs to the /answer that actually completed the session, exactly once.
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal(userId, fire.UserId);
     }
 
     // ==============================================================================================
@@ -538,13 +549,17 @@ public sealed class LiaEndToEndSessionTests : IClassFixture<LiaWriteDatabaseFixt
     // identical rather than sharing a base class).
     // ==============================================================================================
 
+    // Shared across every writer a single test creates, so a test can assert on the insights-trigger
+    // fires (or their absence) regardless of which writer instance completed the session (formmaps#144).
+    private readonly RecordingInsightsTrigger _insightsTrigger = new();
+
     private (ILiaSessionWriter writer, CapturingLogger logger) MakeWriter()
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), logger), logger);
+        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), _insightsTrigger, logger), logger);
     }
 
     private (ILiaSessionReader reader, ILiaSessionWriter writer, CapturingLogger logger) MakeReaderAndWriter()
@@ -553,7 +568,7 @@ public sealed class LiaEndToEndSessionTests : IClassFixture<LiaWriteDatabaseFixt
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        var writer = new LiaSessionWriter(factory, resolver, AuditWriter(factory), logger);
+        var writer = new LiaSessionWriter(factory, resolver, AuditWriter(factory), _insightsTrigger, logger);
         return (new LiaSessionReader(factory, writer, resolver), writer, logger);
     }
 

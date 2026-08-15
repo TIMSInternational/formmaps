@@ -280,6 +280,12 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
         // exactly "one of the five completion paths was left log-only".
         Assert.Equal(1, await _fixture.CountAuditEventsAsync("audit.assessment.lia.completed", sessionId));
 
+        // formmaps#144: StartAsync's Gate 2 completion fires the polyglot insights trigger exactly
+        // once, for the owner, alongside that audit event.
+        var gateFire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal(userId, gateFire.UserId);
+        Assert.Equal("assessment.lia.completed", gateFire.Source);
+
         // Strongest check (would have failed before this fix): a subsequent /complete call hits
         // CompleteAsync's idempotent status=='completed' branch (BuildStoredResult) — before the fix
         // that would return the fallback defaults (0 / "insufficient" / epoch) because nothing had
@@ -461,13 +467,17 @@ public sealed class LiaSessionStartTests : IClassFixture<LiaWriteDatabaseFixture
     // wiring; every test class in this directory sharing LiaWriteDatabaseFixture keeps these identical).
     // ==============================================================================================
 
+    // Shared across every writer a single test creates, so a test can assert on the insights-trigger
+    // fires (or their absence) regardless of which writer instance completed the session (formmaps#144).
+    private readonly RecordingInsightsTrigger _insightsTrigger = new();
+
     private (ILiaSessionWriter writer, CapturingLogger logger) MakeWriter()
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), logger), logger);
+        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), _insightsTrigger, logger), logger);
     }
 
     /// <summary>

@@ -17,10 +17,12 @@ namespace FormMaps.IntegrationTests.IsamsReads;
 /// <summary>
 /// Guard chain + HTTP mapping for the two iSAMS reads (reader + scope resolver faked; DB behavior is proven by
 /// IsamsReadsReaderTests). Pins: anon → 401; missing school:manage → 403 (analytics:school does NOT substitute);
-/// the THREE distinct status 200 shapes (no-school 1-key { configured:false }; school+no-config 2-key
-/// { configured:false, enabled:false } with NO lastSyncAt key; config-row 3-key { configured:true, enabled,
-/// lastSyncAt } with lastSyncAt PRESENT even when null); the JS-truthy enabled derivation (endpoint null/""→false,
-/// non-empty→true); and jobs (no-school → []; full-row camelCase passthrough).
+/// the THREE distinct status 200 shapes (no-school 1-key { configured:false }; school+no-config 3-key
+/// { configured:false, enabled:false, connected:false } with NO lastSyncAt key; config-row 4-key
+/// { configured:true, enabled, connected, lastSyncAt } with lastSyncAt PRESENT even when null); the JS-truthy
+/// enabled derivation (endpoint null/""→false, non-empty→true); the JS-truthy connected derivation
+/// (formmaps#145 — legacy !!(isActive &amp;&amp; endpoint &amp;&amp; credentialsEncrypted), "" falsy exactly like
+/// null); and jobs (no-school → []; full-row camelCase passthrough).
 /// </summary>
 public class IsamsReadsEndpointsTests
 {
@@ -74,9 +76,11 @@ public class IsamsReadsEndpointsTests
     }
 
     [Fact]
-    public async Task Status_school_no_config_returns_configured_false_enabled_false_no_lastSyncAt()
+    public async Task Status_school_no_config_returns_configured_enabled_connected_false_no_lastSyncAt()
     {
-        // Reader returns null → shape 2: { configured:false, enabled:false } WITHOUT a lastSyncAt key.
+        // Reader returns null → shape 2: { configured:false, enabled:false, connected:false } WITHOUT a
+        // lastSyncAt key. connected IS present (formmaps#145): legacy !!(config?.isActive && …) → false when
+        // config is null, and false survives JSON.stringify while lastSyncAt:undefined is dropped.
         var reader = new FakeReader { Status = null };
         using var factory = new Factory(reader, new FakeScope(School));
         using var client = factory.CreateClient();
@@ -86,16 +90,21 @@ public class IsamsReadsEndpointsTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var data = doc.RootElement.GetProperty("data");
-        Assert.Equal(2, data.EnumerateObject().Count());
+        Assert.Equal(3, data.EnumerateObject().Count());
         Assert.False(data.GetProperty("configured").GetBoolean());
         Assert.False(data.GetProperty("enabled").GetBoolean());
+        Assert.False(data.GetProperty("connected").GetBoolean());
         Assert.False(data.TryGetProperty("lastSyncAt", out _));   // key ABSENT in shape 2
     }
 
     [Fact]
     public async Task Status_config_with_endpoint_and_lastSyncAt_returns_shape_3()
     {
-        var reader = new FakeReader { Status = new IsamsConfigStatus("https://x", "2026-01-02T03:04:05.000Z") };
+        var reader = new FakeReader
+        {
+            Status = new IsamsConfigStatus(
+                "https://x", "2026-01-02T03:04:05.000Z", IsActive: true, CredentialsEncrypted: "enc:v1:abc"),
+        };
         using var factory = new Factory(reader, new FakeScope(School));
         using var client = factory.CreateClient();
 
@@ -104,16 +113,21 @@ public class IsamsReadsEndpointsTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var data = doc.RootElement.GetProperty("data");
-        Assert.Equal(3, data.EnumerateObject().Count());
+        Assert.Equal(4, data.EnumerateObject().Count());
         Assert.True(data.GetProperty("configured").GetBoolean());
         Assert.True(data.GetProperty("enabled").GetBoolean());              // non-empty endpoint → true
+        Assert.True(data.GetProperty("connected").GetBoolean());            // active + endpoint + credentials
         Assert.Equal("2026-01-02T03:04:05.000Z", data.GetProperty("lastSyncAt").GetString());
     }
 
     [Fact]
     public async Task Status_config_endpoint_null_disables_and_lastSyncAt_null_key_present()
     {
-        var reader = new FakeReader { Status = new IsamsConfigStatus(Endpoint: null, LastSyncAt: null) };
+        var reader = new FakeReader
+        {
+            Status = new IsamsConfigStatus(
+                Endpoint: null, LastSyncAt: null, IsActive: true, CredentialsEncrypted: "enc:v1:abc"),
+        };
         using var factory = new Factory(reader, new FakeScope(School));
         using var client = factory.CreateClient();
 
@@ -121,9 +135,10 @@ public class IsamsReadsEndpointsTests
 
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var data = doc.RootElement.GetProperty("data");
-        Assert.Equal(3, data.EnumerateObject().Count());
+        Assert.Equal(4, data.EnumerateObject().Count());
         Assert.True(data.GetProperty("configured").GetBoolean());
         Assert.False(data.GetProperty("enabled").GetBoolean());            // null endpoint → false
+        Assert.False(data.GetProperty("connected").GetBoolean());          // null endpoint kills connected too
         // lastSyncAt key PRESENT (shape 3) even though the value is null — the distinction from shape 2.
         Assert.True(data.TryGetProperty("lastSyncAt", out var last));
         Assert.Equal(JsonValueKind.Null, last.ValueKind);
@@ -132,7 +147,11 @@ public class IsamsReadsEndpointsTests
     [Fact]
     public async Task Status_config_endpoint_empty_string_disables()
     {
-        var reader = new FakeReader { Status = new IsamsConfigStatus(Endpoint: "", LastSyncAt: null) };
+        var reader = new FakeReader
+        {
+            Status = new IsamsConfigStatus(
+                Endpoint: "", LastSyncAt: null, IsActive: true, CredentialsEncrypted: "enc:v1:abc"),
+        };
         using var factory = new Factory(reader, new FakeScope(School));
         using var client = factory.CreateClient();
 
@@ -141,6 +160,40 @@ public class IsamsReadsEndpointsTests
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var data = doc.RootElement.GetProperty("data");
         Assert.False(data.GetProperty("enabled").GetBoolean());            // empty endpoint → false
+    }
+
+    // formmaps#145 — the UI gates on `connected`. Legacy (schoolService.ts:506-508):
+    //   connected: !!(config?.isActive && config?.endpoint && config?.credentialsEncrypted)
+    // Pins the FULL truth table on the WIRE (exact lowercase key — JsonDocument.GetProperty is case-sensitive),
+    // including the JS !! coercion: "" is falsy exactly like null for BOTH endpoint and credentials.
+    [Theory]
+    [InlineData(true, "https://x", "enc:v1:abc", true)]    // active + endpoint + credentials → connected
+    [InlineData(false, "https://x", "enc:v1:abc", false)]  // isActive false → never connected
+    [InlineData(true, null, "enc:v1:abc", false)]          // endpoint NULL → false
+    [InlineData(true, "", "enc:v1:abc", false)]            // endpoint "" → false (JS-falsy, unlike C# non-null)
+    [InlineData(true, "https://x", null, false)]           // credentials NULL → false
+    [InlineData(true, "https://x", "", false)]             // credentials "" → false (JS-falsy)
+    [InlineData(true, " ", "enc:v1:abc", true)]            // endpoint " " → TRUE: JS !! is truthy for
+                                                           // whitespace, which is why the derivation is
+                                                           // IsNullOrEmpty and must never "clean up" to
+                                                           // IsNullOrWhiteSpace — this row pins the
+                                                           // one input where the two diverge
+    public async Task Status_connected_truth_table(bool isActive, string? endpoint, string? credentials, bool expected)
+    {
+        var reader = new FakeReader
+        {
+            Status = new IsamsConfigStatus(
+                Endpoint: endpoint, LastSyncAt: null, IsActive: isActive, CredentialsEncrypted: credentials),
+        };
+        using var factory = new Factory(reader, new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, StatusPath);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var data = doc.RootElement.GetProperty("data");
+        Assert.Equal(expected, data.GetProperty("connected").GetBoolean());
     }
 
     // ---- jobs ----

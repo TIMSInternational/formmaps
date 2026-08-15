@@ -3,12 +3,17 @@ namespace FormMaps.Application.IsamsReads;
 /// <summary>
 /// getIsamsStatus result (schoolService.ts:391 — <c>prisma.isamsConfig.findUnique({ where:{ schoolId } })</c>).
 /// Present ONLY when a config row exists (the reader returns <c>null</c> otherwise). Carries the raw scalar
-/// columns the endpoint needs to derive the status envelope — the endpoint owns the JS-truthy <c>enabled</c>
-/// derivation (<c>!!config.endpoint</c>: null/""/whitespace-vs-nonempty) and always emits the lastSyncAt key.
+/// columns the endpoint needs to derive the status envelope — the endpoint owns the JS-truthy derivations
+/// (<c>enabled</c> = <c>!!config.endpoint</c>; <c>connected</c> = <c>!!(config.isActive &amp;&amp;
+/// config.endpoint &amp;&amp; config.credentialsEncrypted)</c>, formmaps#145 — the field the UI gates on) and
+/// always emits the lastSyncAt key.
 /// </summary>
 /// <param name="Endpoint">The endpoint column (nullable). JS <c>!!config.endpoint</c> ⇒ enabled = non-empty string.</param>
 /// <param name="LastSyncAt">The lastSyncAt column as ISO-Z, or <c>null</c> when the column is NULL.</param>
-public sealed record IsamsConfigStatus(string? Endpoint, string? LastSyncAt);
+/// <param name="IsActive">The isActive column (NOT NULL, default true). First conjunct of <c>connected</c>.</param>
+/// <param name="CredentialsEncrypted">The credentialsEncrypted column (nullable), raw — "" and NULL are distinct
+/// (both JS-falsy). Feeds ONLY the <c>connected</c> truthiness; the endpoint never serializes the value.</param>
+public sealed record IsamsConfigStatus(string? Endpoint, string? LastSyncAt, bool IsActive, string? CredentialsEncrypted);
 
 /// <summary>
 /// One getIsamsSyncJobs row (schoolService.ts:475 — <c>prisma.isamsSyncJob.findMany</c>). A verbatim passthrough

@@ -172,6 +172,12 @@ public sealed class LiaTimeoutViolationsTests : IClassFixture<LiaWriteDatabaseFi
         // ...and the audit-events retrofit (plan Task 8 of formmaps#52): the explicit POST /timeout
         // completion path must persist a durable row too, not just the log line.
         Assert.Equal(1, await _fixture.CountAuditEventsAsync("audit.assessment.lia.completed", sessionId));
+
+        // formmaps#144: the explicit POST /timeout completion fires the polyglot insights trigger
+        // exactly once, for the owner, alongside that audit event.
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal(userId, fire.UserId);
+        Assert.Equal("assessment.lia.completed", fire.Source);
     }
 
     // ==============================================================================================
@@ -351,13 +357,17 @@ public sealed class LiaTimeoutViolationsTests : IClassFixture<LiaWriteDatabaseFi
     // LiaSessionStartTests.cs as noted per-helper.
     // ==============================================================================================
 
+    // Shared across every writer a single test creates, so a test can assert on the insights-trigger
+    // fires (or their absence) regardless of which writer instance completed the session (formmaps#144).
+    private readonly RecordingInsightsTrigger _insightsTrigger = new();
+
     private (ILiaSessionWriter writer, CapturingLogger logger) MakeWriter()
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), logger), logger);
+        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), _insightsTrigger, logger), logger);
     }
 
     /// <summary>

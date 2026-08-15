@@ -35,4 +35,16 @@ regexes = [
   # Payload decodes to {"sub":"1","exp":9999999999}. Cannot validate against
   # any key.
   '''eyJhbGciOiJIUzI1NiJ9\.eyJzdWIiOiIxIiwiZXhwIjo5OTk5OTk5OTk5fQ\.signature''',
+
+  # docs/superpowers/plans/2026-07-27-wave3-infra-gates.md
+  # App Runner SERVICE IDs for formmaps-api-prod and formmaps-api-staging — the
+  # trailing segment of the service ARN, which the runbook builds to call
+  # `aws apprunner update-service`. Flagged only because they are 32 hex chars
+  # (entropy 3.84 / 3.58); they are resource identifiers, not credentials. They
+  # grant nothing: every call carrying them still authenticates with IAM, and the
+  # ARN they sit in is visible to anyone who can already call DescribeService.
+  # The staging id and the account id are on main already; only the prod id is new.
+  # Nothing to rotate — an App Runner service id is not a rotatable secret.
+  '''8bd33e9ff2d34265af9c75a6d4a01ef4''',
+  '''03ad64cdfc934080a9d21d0984a6fe91''',
 ]

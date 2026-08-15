@@ -86,7 +86,21 @@ the same thing; convert those opportunistically when touching them.
 
 ## Known production gap found on the way
 
-`student_course_plans` appears in **none** of `prisma/rls/*.sql`. It holds per-student course selections
-and is unpolicied in production. It is not currently load-bearing — the parent path reads it under a
-system session with a code-level gate — but nothing stops the next reader assuming an RLS backstop that
-does not exist. Recorded in `ParentChildReaderTests.Fixture` and asserted there so it cannot be assumed.
+**CORRECTED (formmaps#135).** This section previously read "`student_course_plans` appears in **none**
+of `prisma/rls/*.sql` … and is unpolicied in production." Both halves were wrong, and the error
+propagated into four fixtures before anyone checked it.
+
+`student_course_plans` **is** in `prisma/rls/*.sql` — in `pilot.sql`, together with `school_courses`.
+And `pilot.sql` **is** applied to production: `apply-rls.ts` and `check-rls-coverage.mjs` both glob the
+whole directory, and the production measurement in `docs/ops/rls-prod-apply-14.md` matches the
+pilot-inclusive policy count exactly at two independent snapshots. See `README.md` for the full
+evidence.
+
+What remains true is the *shape* of the hazard, so keep reading it that way: this harness does not
+vendor `pilot.sql`, so in a fixture these two tables carry no policy even though production policies
+them. A test over them proves the app-layer predicate only. That understates production — which is the
+safe direction — but it means **"unpolicied here" must never be written down as "unpolicied in
+production."** That substitution is the whole of #135.
+
+If you are converting a fixture that creates either table, say so explicitly in the fixture doc:
+*policied in production by `pilot.sql`, which this harness does not yet vendor (#135)*.

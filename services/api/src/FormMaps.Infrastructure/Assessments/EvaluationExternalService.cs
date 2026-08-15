@@ -22,6 +22,7 @@ namespace FormMaps.Infrastructure.Assessments;
 public sealed class EvaluationExternalService(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     IAuditEventWriter auditEventWriter,
+    IInsightsTrigger insightsTrigger,
     ILogger<EvaluationExternalService> logger) : IEvaluationExternalService
 {
     /// <summary>
@@ -68,6 +69,7 @@ public sealed class EvaluationExternalService(
     {
         var system = RequestContext.System();
         object? feedback;
+        string evaluatedUserId;
 
         // (1) Guard + create in a writable bypass session. Guard: id+token+isActive; instrument!=vocational;
         // stored-email == normalized-incoming; not already completed; (CLOSED GAP) not expired/used.
@@ -115,6 +117,7 @@ public sealed class EvaluationExternalService(
                 return new FeedbackSubmitResult(FeedbackSubmitStatus.AlreadySubmitted);
             }
 
+            evaluatedUserId = group.EvaluatedUserId;
             await session.CommitAsync(cancellationToken);
         }
 
@@ -127,10 +130,35 @@ public sealed class EvaluationExternalService(
         }
 
         logger.LogInformation("audit.evaluation.feedback.submitted evaluationGroupId={GroupId}", input.EvaluationGroupId);
+
         // The durable half of the line above — see WriteFeedbackSubmittedAuditAsync for why it sits HERE:
         // below both commits and below every guard, so the event means "feedback was stored", not "someone
         // tried". It cannot fail this request (fail-soft-but-alert inside AuditEventWriter).
+        //
+        // ORDERED BEFORE THE TRIGGER (formmaps#52 + formmaps#144 merge). The two calls below are
+        // independent by construction — neither can suppress the other, because AuditEventWriter swallows
+        // every failure but OperationCanceledException (and this call passes CancellationToken.None, which
+        // makes that one unreachable) while LegacyApiInsightsTrigger swallows everything including
+        // cancellation. So the order is decided by what is lost if the process dies mid-emit: the audit row
+        // is the durable, DB-immutable compliance record and the trigger is a best-effort cross-service
+        // HTTP call with a 5s cap, so running the audit first keeps the window between "feedback committed"
+        // and "audit row committed" as short as a single INSERT instead of stretching it across a Node
+        // round-trip (or a Node outage). A lost trigger is recoverable from its own Error log; a lost audit
+        // row is not.
         await WriteFeedbackSubmittedAuditAsync(input.EvaluationGroupId);
+
+        // formmaps#144: a completed 360 is typically the LAST gate event for a student, so legacy fires
+        // checkAndTriggerInsights(result.evaluatedUserId) after every successful submit
+        // (evaluation.ts:161-167) — for the EVALUATED student, not the evaluator. Success path only:
+        // every rejected/replayed submit above returned before reaching here, so retries can never
+        // re-fire. IInsightsTrigger never throws (fail-soft-BUT-LOUD): a failed fire logs at Error
+        // with userId+source for backfill and the evaluator's submit still succeeds.
+        //
+        // Deliberately NOT wrapped in a caller-side try/catch alongside the audit write above: each call
+        // owns its own documented failure semantics, and a shared catch would let this one's swallow-
+        // everything posture hide a genuine audit-side programming error the writer means to propagate.
+        await insightsTrigger.TriggerAsync(evaluatedUserId, "evaluation.feedback.submitted", cancellationToken);
+
         return new FeedbackSubmitResult(FeedbackSubmitStatus.Ok, feedback);
     }
 

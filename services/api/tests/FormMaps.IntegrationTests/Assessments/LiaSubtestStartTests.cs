@@ -158,7 +158,7 @@ public sealed class LiaSubtestStartTests : IClassFixture<LiaWriteDatabaseFixture
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), logger), logger);
+        return (new LiaSessionWriter(factory, resolver, AuditWriter(factory), new RecordingInsightsTrigger(), logger), logger);
     }
 
     /// <summary>

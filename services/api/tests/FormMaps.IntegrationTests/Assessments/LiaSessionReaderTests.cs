@@ -138,6 +138,12 @@ public sealed class LiaSessionReaderTests : IClassFixture<LiaWriteDatabaseFixtur
         // ...and the audit-events retrofit (plan Task 8 of formmaps#52): a completion discovered by a
         // plain GET is still a completion, and must persist a durable row like every other path.
         Assert.Equal(1, await _fixture.CountAuditEventsAsync("audit.assessment.lia.completed", sessionId));
+
+        // formmaps#144: a lazy expiry that completes the assessment fires the polyglot insights
+        // trigger exactly once, for the session OWNER (a plain GET still completes on their behalf).
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal(userId, fire.UserId);
+        Assert.Equal("assessment.lia.completed", fire.Source);
     }
 
     // ------------------------------------------------------------------------------------------
@@ -208,13 +214,17 @@ public sealed class LiaSessionReaderTests : IClassFixture<LiaWriteDatabaseFixtur
     // directory sharing LiaWriteDatabaseFixture keeps these identical).
     // ==============================================================================================
 
+    // Shared across every writer a single test creates, so a test can assert on the insights-trigger
+    // fires (or their absence) regardless of which writer instance completed the session (formmaps#144).
+    private readonly RecordingInsightsTrigger _insightsTrigger = new();
+
     private (ILiaSessionReader reader, ILiaSessionWriter writer, CapturingLogger logger) MakeReaderAndWriter()
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
         var logger = new CapturingLogger();
         var resolver = new LiaQuestionIdResolver(
             factory, _catalogCache, NullLogger<LiaQuestionIdResolver>.Instance);
-        var writer = new LiaSessionWriter(factory, resolver, AuditWriter(factory), logger);
+        var writer = new LiaSessionWriter(factory, resolver, AuditWriter(factory), _insightsTrigger, logger);
         var reader = new LiaSessionReader(factory, writer, resolver);
         return (reader, writer, logger);
     }

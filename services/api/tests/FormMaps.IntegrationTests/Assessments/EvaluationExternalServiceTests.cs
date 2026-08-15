@@ -32,6 +32,10 @@ public sealed class EvaluationExternalServiceTests : IClassFixture<TokenRailData
 
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
+    // Shared across every Service() a single test creates, so a test can assert on the trigger fires
+    // (or their absence) regardless of which service instance performed the submit (formmaps#144).
+    private readonly RecordingInsightsTrigger _insightsTrigger = new();
+
     private EvaluationExternalService Service()
     {
         var factory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
@@ -39,9 +43,12 @@ public sealed class EvaluationExternalServiceTests : IClassFixture<TokenRailData
         // row lands in audit_events; a substitute would only prove that a method was called. token-rail-schema
         // .sql carries the simplified audit_events table so the write really executes here rather than taking
         // AuditEventWriter's fail-soft branch — which would leave every assertion below vacuously green.
+        // RecordingInsightsTrigger (formmaps#144) is a fake by contrast, and correctly so: the
+        // trigger's real implementation lives in FormMaps.Api and talks HTTP to legacy Node.
         return new EvaluationExternalService(
             factory,
             new AuditEventWriter(factory, NullLogger<AuditEventWriter>.Instance),
+            _insightsTrigger,
             NullLogger<EvaluationExternalService>.Instance);
     }
 
@@ -125,6 +132,47 @@ public sealed class EvaluationExternalServiceTests : IClassFixture<TokenRailData
         var input = new FeedbackSubmitInput(groupId, "WRONG-TOKEN", "r@x.com", new[] { new FeedbackAnswer(1, "Q", 5, null, null, null) });
         var result = await Service().SubmitFeedbackAsync(input);
         Assert.Equal(FeedbackSubmitStatus.InvalidTokenOrGroup, result.Status);
+    }
+
+    // ---- insights trigger (formmaps#144) ----
+
+    [Fact]
+    public async Task SubmitFeedback_fires_the_insights_trigger_for_the_evaluated_user_after_the_flip()
+    {
+        // Legacy fires checkAndTriggerInsights(result.evaluatedUserId) after every successful submit
+        // (evaluation.ts:161-167) — the EVALUATED student's gate may have flipped, not the evaluator's.
+        var groupId = await SeedGroupAsync(
+            token: "tt1", email: "rater@x.com", groupType: "teacher", expiryHours: 24, evaluatedUserId: "stu-360");
+        var input = new FeedbackSubmitInput(groupId, "tt1", "rater@x.com", new[] { new FeedbackAnswer(1, "Q", 5, null, null, null) });
+
+        var result = await Service().SubmitFeedbackAsync(input);
+
+        Assert.Equal(FeedbackSubmitStatus.Ok, result.Status);
+        var fire = Assert.Single(_insightsTrigger.Fires);
+        Assert.Equal("stu-360", fire.UserId);
+        Assert.Equal("evaluation.feedback.submitted", fire.Source);
+    }
+
+    [Fact]
+    public async Task SubmitFeedback_does_not_fire_the_trigger_on_a_rejected_or_replayed_submit()
+    {
+        // Idempotency at the .NET layer: the gate can flip once but submits can retry — a replayed
+        // submit resolves AlreadySubmitted and must NOT re-fire (legacy's trigger also runs only on
+        // the success path). Rejected guards (expired here) must fire nothing either.
+        var groupId = await SeedGroupAsync(
+            token: "tt2", email: "rater@x.com", groupType: "teacher", expiryHours: 24, evaluatedUserId: "stu-361");
+        var input = new FeedbackSubmitInput(groupId, "tt2", "rater@x.com", new[] { new FeedbackAnswer(1, "Q", 4, null, null, null) });
+
+        Assert.Equal(FeedbackSubmitStatus.Ok, (await Service().SubmitFeedbackAsync(input)).Status);
+        Assert.Equal(FeedbackSubmitStatus.AlreadySubmitted, (await Service().SubmitFeedbackAsync(input)).Status);
+
+        var expiredGroup = await SeedGroupAsync(
+            token: "tt3", email: "rater@x.com", groupType: "teacher", expiryHours: -1, evaluatedUserId: "stu-361");
+        var expired = new FeedbackSubmitInput(expiredGroup, "tt3", "rater@x.com", new[] { new FeedbackAnswer(1, "Q", 4, null, null, null) });
+        Assert.Equal(FeedbackSubmitStatus.TokenExpiredOrUsed, (await Service().SubmitFeedbackAsync(expired)).Status);
+
+        var fire = Assert.Single(_insightsTrigger.Fires); // the FIRST submit only
+        Assert.Equal("stu-361", fire.UserId);
     }
 
     [Fact]
