@@ -66,9 +66,14 @@ public sealed class SchoolStudentsReaderTests : IClassFixture<SchoolStudentsData
             },
             _fixture.AppliedPolicyTables.ToArray());
 
-        // The three the fixture models that production policies NOTHING on. Asserted rather than assumed so a
-        // future policy file that closes one of these gaps shows up here instead of silently changing the meaning
-        // of the app-layer tests below.
+        // The three this fixture models that are unpolicied HERE. Asserted rather than assumed so a future policy
+        // file that closes one shows up here instead of silently changing the meaning of the app-layer tests below.
+        // NOT all three are unpolicied in production, and the distinction matters (formmaps#135):
+        //   schools              — genuinely unpolicied; the tenant root, no schoolId to scope it by.
+        //   school_courses       — POLICIED IN PRODUCTION by pilot.sql, which this harness does not vendor.
+        //   student_course_plans — likewise policied in production by pilot.sql.
+        // So the last two assertions describe the harness, not production. They are expected to flip when
+        // pilot.sql is vendored; that is the point of asserting them.
         Assert.DoesNotContain("school_courses", _fixture.AppliedPolicyTables);
         Assert.DoesNotContain("student_course_plans", _fixture.AppliedPolicyTables);
         Assert.DoesNotContain("schools", _fixture.AppliedPolicyTables);

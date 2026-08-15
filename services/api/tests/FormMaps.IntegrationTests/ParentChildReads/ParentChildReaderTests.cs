@@ -53,7 +53,12 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
         await using var conn = await _dataSource.OpenConnectionAsync();
         Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(conn), "the app login must not bypass RLS");
         Assert.Equal(11, _fixture.AppliedPolicyTables.Count);
-        Assert.DoesNotContain("student_course_plans", _fixture.AppliedPolicyTables); // unpolicied in production
+        // Unpolicied HERE, not in production: pilot.sql policies student_course_plans and pilot.sql IS applied to
+        // production — this harness just does not vendor it (formmaps#135). Expected to flip when it does.
+        // Vendoring will ALSO break this fixture until its DDL gains a schoolId column on student_course_plans:
+        // pilot.sql's predicate names it, and the column is absent from parent-child-reads-schema.sql, so
+        // ApplyAsync would fail with 42703 at init. See TestSupport/Rls/README.md.
+        Assert.DoesNotContain("student_course_plans", _fixture.AppliedPolicyTables);
     }
 
     [Fact]

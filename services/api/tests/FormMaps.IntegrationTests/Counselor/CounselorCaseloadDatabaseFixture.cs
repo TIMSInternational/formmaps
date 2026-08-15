@@ -13,16 +13,22 @@ namespace FormMaps.IntegrationTests.Counselor;
 /// unassigned same-school counselor out. See
 /// <c>CounselorCaseloadReaderTests.Caseload_gate_denies_an_unassigned_same_school_counselor</c>.</para>
 ///
-/// <para>TWO OF THE TWELVE TABLES ARE DELIBERATELY ABSENT from <see cref="PoliciedTables"/> because production
-/// policies NOTHING on them, which is worth stating rather than leaving as a silent omission:</para>
+/// <para>TWO OF THE TWELVE TABLES ARE ABSENT from <see cref="PoliciedTables"/>. The previous version of this
+/// comment said both were unpolicied in production; BOTH halves of that were wrong (formmaps#135), and the two
+/// are wrong for different reasons — do not re-merge them into one claim:</para>
 /// <list type="bullet">
 ///   <item><description><c>school_courses</c> — the per-school course catalogue, with a non-null direct
-///   <c>schoolId</c>, i.e. exactly the shape 002-direct-schoolid.sql exists for. Its import siblings
-///   (<c>school_course_import_jobs</c>, <c>school_course_import_errors</c>) ARE policied and so is
-///   <c>school_framework_course_overrides</c>, and it is not on 005-sensitive.sql's INTENTIONALLY UNPOLICIED
-///   list. The reader's own <c>"schoolId" = @school</c> is the only thing scoping it.</description></item>
+///   <c>schoolId</c>, i.e. exactly the shape 002-direct-schoolid.sql exists for. It IS policied in production —
+///   by prisma/rls/pilot.sql, which this harness does not yet vendor. So it is unpolicied HERE only, and the
+///   reader's own <c>"schoolId" = @school</c> is all these tests exercise. The old reasoning ("not on
+///   005-sensitive.sql's INTENTIONALLY UNPOLICIED list") pointed at the right anomaly and drew the wrong
+///   conclusion: the absence meant the policy lived in a file nobody had vendored, not that none existed.</description></item>
 ///   <item><description><c>personality_assessment_sessions</c> — FK-to-user (<c>user_id</c>), the shape
-///   003-fk-users.sql exists for, and likewise undocumented as an exemption.</description></item>
+///   003-fk-users.sql exists for. Genuinely policied by NO file, pilot.sql included — but it is NOT undocumented,
+///   as this comment used to claim. api/scripts/check-rls-coverage.mjs carries it in PENDING with the reason
+///   "#77 — assessment session data; personality is LIVE in .NET, so needs a read-path audit on both backends".
+///   PENDING is acknowledged debt that reports loudly without failing CI, which is a different thing from an
+///   exemption and a different thing again from school_courses above.</description></item>
 /// </list>
 /// <para>Both are asserted absent by the harness-proof test so a future policy refresh that adds them turns this
 /// into a failing test rather than a quietly stale comment.</para>
