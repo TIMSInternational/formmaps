@@ -56,6 +56,23 @@ Parameters:
     Type: String
     Default: formmaps-frontend
     Description: Legacy JWT audience expected by the .NET API.
+  S3Bucket:
+    Type: String
+    Default: nexa-platform-uploads
+    Description: >-
+      Uploads bucket, read by FormMaps.Api as S3_BUCKET. Declared here because it was
+      live on the service but absent from this template — the next deploy would have
+      silently dropped it. NOTE this is the SAME bucket prod uses, so staging uploads
+      land in the production bucket — tracked separately, not changed here.
+  SesFromEmail:
+    Type: String
+    Default: noreply@formmaps.com
+    Description: >-
+      From-address for outbound SES mail, read by FormMaps.Api as SES_FROM_EMAIL.
+      Live on staging but absent from this template. PROD DELIBERATELY NOT CHANGED in
+      the same commit: prod has no SES_FROM_EMAIL at all, and setting it there may turn
+      a silent no-send into a thrown error if the prod instance role lacks ses:SendEmail
+      — that is being root-caused separately (the two SES traps, formmaps#144-adjacent).
   LegacyApiBaseUrl:
     Type: String
     Default: https://5t8ch34ijm.us-east-1.awsapprunner.com
@@ -166,6 +183,10 @@ Resources:
                 Value: !Ref LegacyJwtAudience
               - Name: LEGACY_API_BASE_URL
                 Value: !Ref LegacyApiBaseUrl
+              - Name: S3_BUCKET
+                Value: !Ref S3Bucket
+              - Name: SES_FROM_EMAIL
+                Value: !Ref SesFromEmail
             RuntimeEnvironmentSecrets:
               - Name: JWT_SECRET
                 Value: !Ref JwtSecretArn
