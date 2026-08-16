@@ -100,6 +100,42 @@ the audit trail for every production SQL change.
 | `FORMMAPS_SQL_ADMIN_DB_SECRET_ID` | name/ARN of the Secrets Manager secret holding the **nexaadmin** connection info | The *name*, never the value. Applies run as the admin because the app role cannot create tables or grant (#137). |
 | `FORMMAPS_SQL_APP_DB_SECRET_ID` | *(optional)* name/ARN of the secret holding **formmaps_dotnet_svc** credentials | Unlocks the behavioural RLS block in `verify-grants.sql`. Only exists after a password has been set on the role (`ALTER ROLE ... WITH PASSWORD`, done out of band per `dotnet-service-role.sql`). Until then verification runs as admin, catalog-only. |
 | `FORMMAPS_SQL_APPLY_ROLE_ARN` | **(required)** ARN of the IAM role trusting GitHub OIDC, with the trust policy below | The workflow's ONLY auth path. If unset, the run fails at "Require deployment variables" — it does not fall back to anything. |
+| `FORMMAPS_SQL_DB_HOST` | *(optional)* the Aurora cluster writer endpoint | Connection **coordinate**, not a credential. Fills in only what the connection secret does not carry; the secret always wins. Required when the secret id names an RDS-managed secret — see "Rotating master password" below. |
+| `FORMMAPS_SQL_DB_NAME` | *(optional)* `nexa` | Same rule as `FORMMAPS_SQL_DB_HOST`. |
+| `FORMMAPS_SQL_DB_PORT` | *(optional)* defaults to `5432` | Same rule; only needed for a non-default port. |
+
+#### Rotating master password — why the coordinate variables exist
+
+The master password is **RDS-managed and rotates on a schedule** (weekly on
+this cluster). RDS keeps exactly one copy current, in the secret it owns:
+`rds!cluster-<id>`. Anything else is a snapshot that starts drifting the
+moment it is written.
+
+Point `FORMMAPS_SQL_ADMIN_DB_SECRET_ID` **at that managed secret**, and supply
+`FORMMAPS_SQL_DB_HOST` + `FORMMAPS_SQL_DB_NAME` alongside it. A managed secret
+contains only `username` and `password` — that is the whole reason `apply.sh`
+used to reject it, and the whole reason the pipeline was pointed at a
+hand-maintained copy instead. That copy went **~2 months stale** and every run
+died with `FATAL: password authentication failed` until someone re-synced it by
+hand (2026-08-16). Coordinates are not secret and do not rotate, so splitting
+them out of the secret is what makes the managed secret usable — and after
+that the pipeline survives every rotation with no human step.
+
+Two things to get right:
+
+- **The bastion instance profile needs `secretsmanager:GetSecretValue` on the
+  managed secret's ARN**, plus `kms:Decrypt` on its key — a different ARN from
+  the hand-made secret's. `grant-bastion-secret-read.sh` does this.
+- **Do not type `rds!cluster-...` into an interactive zsh prompt.** `!` is
+  history expansion, and zsh applies it inside double quotes too. Set the
+  variable through the GitHub UI or `gh variable set` with the value
+  single-quoted. The workflow and scripts never re-expand it.
+
+The workflow fails the run at "Require deployment variables" — **before** the
+approval gate spends a reviewer — if the secret id looks like a managed secret
+and the coordinates are missing. `apply.sh` fails the same case with a named
+error even if reached directly. When coordinates do come from the environment,
+the run log says so: `coordinates from environment (secret did not supply): …`.
 
 ### 3. AWS auth — OIDC only (no static keys, deliberately)
 
@@ -457,7 +493,9 @@ runner-side IAM policy's instance ARN needs the new id too if you scoped it
 | `P0001` "formmaps_dotnet_svc holds …, which this script cannot clear" | The role already carries SUPERUSER, REPLICATION or BYPASSRLS. The script refuses rather than reporting success over a role it cannot constrain — re-running will not help. Follow the `HINT` on the error. |
 | `42501 permission denied` in verify section 4 | The grant the section exercises is missing — check the matrix above it for the failing row. |
 | Bastion "not Online in SSM" | Bastion stopped/terminated (it *is* named DELETE-ME) — see "Replacing the bastion". |
-| `AccessDeniedException` fetching the secret | The **bastion instance profile** (not the runner role) lacks `secretsmanager:GetSecretValue`/`kms:Decrypt`. |
+| `AccessDeniedException` fetching the secret | The **bastion instance profile** (not the runner role) lacks `secretsmanager:GetSecretValue`/`kms:Decrypt`. Switching `FORMMAPS_SQL_ADMIN_DB_SECRET_ID` to the RDS-managed secret changes the ARN, so the old grant does not cover it — re-run `grant-bastion-secret-read.sh`. |
+| `FATAL: password authentication failed` | The secret holds a stale password. If the secret id is a hand-maintained copy, that is the known failure mode — it drifts every time RDS rotates the master (weekly). Fix it durably by pointing at `rds!cluster-<id>` and setting `FORMMAPS_SQL_DB_HOST`/`FORMMAPS_SQL_DB_NAME` (§2, "Rotating master password"), not by re-syncing the copy again. |
+| `connection secret is missing: PGHOST, PGDATABASE` | The secret is RDS-managed (username+password only) and the coordinate variables are unset. Set `FORMMAPS_SQL_DB_HOST` and `FORMMAPS_SQL_DB_NAME` (§2). Nothing ran. |
 | `missing dependency on bastion: psql` | Install the postgres client on the bastion (`dnf install postgresql16`). |
 | Verify step red with `HARD FAIL` | A real mismatch on an existing object (wrong verbs, BYPASSRLS on the role, RLS not forced, trigger not ENABLE ALWAYS). The message names the file to re-apply. |
 | `--output truncated--` in captured output | SSM's 24k output cap — run files in separate dispatches. |

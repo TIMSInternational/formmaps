@@ -29,8 +29,19 @@
 #       the connection secret. Accepted shapes:
 #         a) a libpq URI:  postgres://user:pass@host:5432/dbname?sslmode=require
 #         b) RDS-style JSON: {"host":..,"port":..,"dbname":..,"username":..,"password":..}
+#         c) RDS-MANAGED:  {"username":..,"password":..} and nothing else --
+#            valid only together with the coordinate variables below. This is
+#            the shape of `rds!cluster-<id>`, the secret RDS itself rotates.
+#   FORMMAPS_SQL_DB_HOST       (optional) cluster endpoint, used only when the
+#       secret does not carry `host`. The secret always wins if it does.
+#   FORMMAPS_SQL_DB_NAME       (optional) database name, same precedence rule.
+#   FORMMAPS_SQL_DB_PORT       (optional) port; defaults to 5432 if neither the
+#       secret nor this variable supplies one.
 #   AWS_DEFAULT_REGION         region for the AWS CLI (workflow sets us-east-1)
 #   PGSSLMODE                  defaults to 'require' unless the secret says otherwise
+#
+# Credentials come from the secret and ONLY from the secret. The variables
+# above are connection coordinates -- not secret, and they do not rotate.
 #
 # Idempotency audit of the files this pipeline applies (verified 2026-08-14,
 # per the formmaps#137 requirement to check the claim rather than repeat it):
@@ -104,13 +115,30 @@ done
 # The password is NEVER placed on a command line (visible in `ps`) and NEVER
 # echoed. python3 parses both accepted secret shapes and emits shell-quoted
 # `export` lines which we eval.
+#
+# Connection COORDINATES (host/port/dbname) may also come from the environment:
+#   FORMMAPS_SQL_DB_HOST / FORMMAPS_SQL_DB_PORT / FORMMAPS_SQL_DB_NAME
+# These fill gaps ONLY -- whatever the secret supplies always wins, so a secret
+# carrying the full connection shape behaves exactly as it did before.
+#
+# Why this exists: the RDS-managed master secret (`rds!cluster-<id>`) is the
+# only copy of the master password that is always current -- RDS rotates it on
+# a schedule (weekly here) and updates that secret in place. But a managed
+# secret carries ONLY username+password, by design. Before this, apply.sh
+# rejected it for missing host/dbname, so the pipeline had to point at a
+# HAND-MAINTAINED copy instead, which is a password that nothing keeps in
+# sync. That copy went ~2 months stale and every run died with
+# `FATAL: password authentication failed` until someone re-synced it by hand
+# (2026-08-16). Coordinates are not secret and they do not rotate; splitting
+# them out is what lets the secret id point at the managed secret and stay
+# correct across every rotation. See the runbook, "Rotating master password".
 # ---------------------------------------------------------------------------
 secret="$(aws secretsmanager get-secret-value \
     --secret-id "$FORMMAPS_SQL_DB_SECRET_ID" \
     --query SecretString --output text)"
 
 exports="$(printf %s "$secret" | python3 -c '
-import json, sys, shlex
+import json, os, sys, shlex
 from urllib.parse import urlsplit, parse_qs, unquote
 
 raw = sys.stdin.read().strip()
@@ -119,7 +147,9 @@ if raw.startswith(("postgres://", "postgresql://")):
     u = urlsplit(raw)
     vals = {
         "PGHOST": u.hostname or "",
-        "PGPORT": str(u.port or 5432),
+        # No 5432 default here -- it is applied AFTER the env fallback below,
+        # so an explicit FORMMAPS_SQL_DB_PORT is not shadowed by the default.
+        "PGPORT": str(u.port) if u.port else "",
         "PGDATABASE": (u.path or "/").lstrip("/"),
         "PGUSER": unquote(u.username or ""),
         "PGPASSWORD": unquote(u.password or ""),
@@ -137,21 +167,47 @@ else:
         return default
     vals = {
         "PGHOST": pick("host"),
-        "PGPORT": pick("port", default="5432"),
+        "PGPORT": pick("port"),
         "PGDATABASE": pick("dbname", "database", "db"),
         "PGUSER": pick("username", "user"),
         "PGPASSWORD": pick("password"),
     }
 
+# Coordinates only. Credentials are never taken from the environment -- a
+# password reaching this script by any route other than the secret would
+# defeat the point of fetching a secret at all.
+fallback = {
+    "PGHOST": os.environ.get("FORMMAPS_SQL_DB_HOST", "").strip(),
+    "PGPORT": os.environ.get("FORMMAPS_SQL_DB_PORT", "").strip(),
+    "PGDATABASE": os.environ.get("FORMMAPS_SQL_DB_NAME", "").strip(),
+}
+filled = sorted(k for k, v in fallback.items() if v and not vals.get(k))
+for k in filled:
+    vals[k] = fallback[k]
+
+vals["PGPORT"] = vals.get("PGPORT") or "5432"
+
 missing = [k for k in ("PGHOST", "PGDATABASE", "PGUSER", "PGPASSWORD") if not vals.get(k)]
 if missing:
-    sys.exit("connection secret is missing: " + ", ".join(missing))
+    sys.exit(
+        "connection secret is missing: " + ", ".join(missing) +
+        " -- a managed RDS secret carries only username/password, so supply "
+        "host/dbname via FORMMAPS_SQL_DB_HOST / FORMMAPS_SQL_DB_NAME "
+        "(FORMMAPS_SQL_DB_PORT optional, defaults 5432)")
+
 for k, v in vals.items():
     print(f"export {k}={shlex.quote(v)}")
+# Provenance, so a run log says where the coordinates came from. Host/port/
+# dbname only -- never the user, never the password.
+print("export FORMMAPS_SQL_COORD_FALLBACK=" + shlex.quote(",".join(filled)))
 ')"
 unset secret
 eval "$exports"
 unset exports
+
+if [[ -n "${FORMMAPS_SQL_COORD_FALLBACK:-}" ]]; then
+    echo "coordinates from environment (secret did not supply): $FORMMAPS_SQL_COORD_FALLBACK"
+fi
 export PGSSLMODE="${PGSSLMODE:-require}"
 export PGCONNECT_TIMEOUT=15
 

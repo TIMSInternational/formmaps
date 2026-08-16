@@ -25,6 +25,15 @@
 #   DB_SECRET_ID          (required) Secrets Manager id/ARN of the connection
 #                         secret the bastion should use (admin for applies,
 #                         app role for behavioural verification)
+#   DB_HOST / DB_NAME     (optional) connection coordinates forwarded to
+#   DB_PORT               apply.sh as FORMMAPS_SQL_DB_{HOST,NAME,PORT}. Needed
+#                         only when DB_SECRET_ID points at an RDS-MANAGED
+#                         secret (`rds!cluster-<id>`), which carries just
+#                         username+password. Whatever the secret supplies wins;
+#                         these fill the gaps. Not secret, and they do not
+#                         rotate -- which is the whole point: the secret id can
+#                         then be the managed secret that RDS keeps current,
+#                         instead of a hand-maintained copy that goes stale.
 #   SQL_DIR               directory holding the .sql files (default infra/aws/sql)
 #   AWS_REGION            default us-east-1
 #   GITHUB_RUN_ID / GITHUB_STEP_SUMMARY   optional; used for traceability
@@ -55,6 +64,9 @@ MODE="${2:-apply}"
 : "${DB_SECRET_ID:?DB_SECRET_ID must be set (see FORMMAPS_SQL_ADMIN_DB_SECRET_ID / FORMMAPS_SQL_APP_DB_SECRET_ID)}"
 SQL_DIR="${SQL_DIR:-infra/aws/sql}"
 REGION="${AWS_REGION:-us-east-1}"
+DB_HOST="${DB_HOST:-}"
+DB_PORT="${DB_PORT:-}"
+DB_NAME="${DB_NAME:-}"
 
 # Strict validation: everything below is interpolated into a remote shell
 # script, so refuse anything outside a known-safe character set.
@@ -64,6 +76,11 @@ REGION="${AWS_REGION:-us-east-1}"
 [[ "$BASTION_INSTANCE_ID" =~ ^(i|mi)-[0-9a-f]{8,17}$ ]] || die "'$BASTION_INSTANCE_ID' does not look like an instance id"
 [[ "$DB_SECRET_ID" =~ ^[A-Za-z0-9:/_+=.@!-]+$ ]] || die "DB_SECRET_ID contains unexpected characters"
 [[ "$REGION" =~ ^[a-z0-9-]+$ ]] || die "'$REGION' does not look like a region"
+# Interpolated into the remote script below, same as everything else here, so
+# they get the same treatment: an explicit allow-list, not an escape attempt.
+[[ -z "$DB_HOST" || "$DB_HOST" =~ ^[A-Za-z0-9.-]+$ ]] || die "DB_HOST contains unexpected characters"
+[[ -z "$DB_PORT" || "$DB_PORT" =~ ^[0-9]{1,5}$ ]] || die "DB_PORT is not a port number"
+[[ -z "$DB_NAME" || "$DB_NAME" =~ ^[A-Za-z0-9_-]+$ ]] || die "DB_NAME contains unexpected characters"
 [[ -f "$SQL_DIR/$FILE" ]] || die "$SQL_DIR/$FILE does not exist on this ref"
 [[ -f "$SQL_DIR/apply.sh" ]] || die "$SQL_DIR/apply.sh does not exist on this ref"
 
@@ -86,6 +103,9 @@ printf %s '$APPLY_B64' | base64 -d > "\$workdir/apply.sh"
 printf %s '$SQL_B64' | base64 -d > "\$workdir/$FILE"
 chmod 0700 "\$workdir/apply.sh"
 export FORMMAPS_SQL_DB_SECRET_ID='$DB_SECRET_ID'
+export FORMMAPS_SQL_DB_HOST='$DB_HOST'
+export FORMMAPS_SQL_DB_PORT='$DB_PORT'
+export FORMMAPS_SQL_DB_NAME='$DB_NAME'
 export AWS_DEFAULT_REGION='$REGION'
 cd "\$workdir"
 exec ./apply.sh $VERIFY_FLAG'$FILE'
