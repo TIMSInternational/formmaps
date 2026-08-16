@@ -33,6 +33,10 @@
 -- What this role does NOT get, by design
 -- ---------------------------------------
 --   * SUPERUSER, CREATEDB, CREATEROLE, REPLICATION -- never needed by an app role.
+--     Note the split in how that is enforced (section 1): CREATEDB/CREATEROLE
+--     are actively pinned off on every run, while SUPERUSER/REPLICATION are
+--     verified-and-refused rather than cleared, because clearing them needs a
+--     privilege RDS does not hand out. Same for BYPASSRLS below.
 --   * BYPASSRLS -- the app already has its own bypass mechanism: the
 --     `app.bypass_rls` session GUC, set per-request by
 --     RlsSessionCommandBuilder / NpgsqlFormMapsDatabaseSessionFactory and read
@@ -50,10 +54,18 @@
 --
 -- How to run
 -- ----------
--- Run once per environment (local/dev, staging, prod) by a role that owns
--- the tables (or is itself a superuser), connected to the target database:
+-- Run once per environment (local/dev, staging, prod) by a role that owns the
+-- tables and has CREATEROLE, connected to the target database:
 --
 --   psql "<admin-connection-string>" -f infra/aws/sql/dotnet-service-role.sql
+--
+-- A SUPERUSER is deliberately NOT required, because production is RDS and RDS
+-- has none to offer: the master user is granted the `rds_superuser` ROLE, never
+-- the SUPERUSER attribute. Every statement below stays inside what a
+-- table-owning CREATEROLE role can do -- see section 1 for the one place that
+-- constraint is load-bearing. The integration harness applies this file as
+-- exactly such a role (DbRoleDatabaseFixture), so a superuser-only statement
+-- added here fails in CI rather than half-way through a production run.
 --
 -- This script is idempotent -- rerunning it is safe and will not error if the
 -- role or grants already exist.
@@ -75,8 +87,33 @@
 \set ON_ERROR_STOP on
 
 -- ---------------------------------------------------------------------------
--- 1. Create the role (idempotent) and pin its attributes even if it already
---    existed with something looser.
+-- 1. Create the role (idempotent), then pin what can be pinned and verify the
+--    rest, in case it already existed with something looser.
+--
+--    Only NOCREATEDB / NOCREATEROLE are pinnable by ALTER ROLE here. SUPERUSER,
+--    REPLICATION and BYPASSRLS are superuser-only to change *in either
+--    direction* -- naming NOSUPERUSER in an ALTER is still "changing the
+--    SUPERUSER attribute" as far as Postgres is concerned -- and on RDS nobody
+--    holds the SUPERUSER attribute: the master user is granted the
+--    `rds_superuser` ROLE, never the attribute (`pg_roles.rolsuper = false`).
+--    So the ALTER that used to stand here failed for every role that could
+--    plausibly run this script:
+--
+--      ERROR:  permission denied to alter role
+--      DETAIL: Only roles with the SUPERUSER attribute may change the
+--              SUPERUSER attribute.
+--
+--    and because apply.sh wraps the whole file in one transaction, that single
+--    statement rolled the entire run back -- no role, no grants. (Measured
+--    against production 2026-08-16 as nexaadmin; see formmaps#137.)
+--
+--    Dropping the three costs nothing on the create path: they are already the
+--    defaults on a fresh CREATE ROLE, and the CREATE above still spells them
+--    out for the reader. What the ALTER genuinely owed us was the
+--    already-exists-and-is-looser case, so that is now a verification instead
+--    of a silent no-op: if the role somehow carries one of the three, fail
+--    loudly rather than let the script report success over a role it did not
+--    actually constrain.
 -- ---------------------------------------------------------------------------
 DO $$
 BEGIN
@@ -93,8 +130,31 @@ BEGIN
 END
 $$;
 
-ALTER ROLE formmaps_dotnet_svc
-    NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+ALTER ROLE formmaps_dotnet_svc NOCREATEDB NOCREATEROLE;
+
+DO $$
+DECLARE
+    elevated text;
+BEGIN
+    SELECT concat_ws(', ',
+               CASE WHEN rolsuper       THEN 'SUPERUSER'   END,
+               CASE WHEN rolreplication THEN 'REPLICATION' END,
+               CASE WHEN rolbypassrls   THEN 'BYPASSRLS'   END)
+      INTO elevated
+      FROM pg_roles
+     WHERE rolname = 'formmaps_dotnet_svc';
+
+    IF coalesce(elevated, '') <> '' THEN
+        RAISE EXCEPTION
+            'formmaps_dotnet_svc holds %, which this script cannot clear', elevated
+            USING HINT =
+                'Only a role with the SUPERUSER attribute may clear SUPERUSER, '
+                'REPLICATION or BYPASSRLS, and on RDS no such role exists. Have a '
+                'true superuser clear it, or DROP ROLE formmaps_dotnet_svc (it owns '
+                'no objects -- this script grants only, never creates) and re-run.';
+    END IF;
+END
+$$;
 
 -- ---------------------------------------------------------------------------
 -- 2. Connect + schema usage only. No CREATE on the schema (no DDL rights).
