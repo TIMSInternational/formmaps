@@ -41,6 +41,86 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
         Assert.False(reader.GetBoolean(4), "must not bypass RLS -- the app's own app.bypass_rls GUC handles that");
     }
 
+    /// <summary>
+    /// formmaps#137. Pins the fixture's applier as a NON-superuser, because every other test in this class asserts
+    /// only the script's outcome -- none of them would notice the fixture quietly going back to applying as the
+    /// container's default superuser, and that gap is exactly what let a superuser-only statement reach production.
+    /// RDS has no superuser to apply as: the master user holds the `rds_superuser` ROLE, never the attribute.
+    /// </summary>
+    [Fact]
+    public async Task Script_is_applied_by_a_role_without_the_superuser_attribute()
+    {
+        await using var connection = new NpgsqlConnection(fixture.ApplyConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            "SELECT rolsuper, rolcreaterole FROM pg_roles WHERE rolname = current_user", connection);
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.False(reader.GetBoolean(0), "the applier must model RDS's master user, which has no SUPERUSER attribute");
+        Assert.True(reader.GetBoolean(1), "...but it does have CREATEROLE, which is how it creates the service role at all");
+    }
+
+    /// <summary>
+    /// The `ALTER ROLE ... NOCREATEDB NOCREATEROLE` that survives in section 1 earns its place only in the
+    /// already-exists-and-is-looser case -- on a fresh CREATE ROLE both are false anyway. So that is what this
+    /// asserts: loosen the role behind the script's back, re-apply, and the attributes come back pinned.
+    /// </summary>
+    [Fact]
+    public async Task Reapplying_the_script_re_pins_a_role_that_drifted_looser()
+    {
+        await using var admin = new NpgsqlConnection(fixture.AdminConnectionString);
+        await admin.OpenAsync();
+
+        await using (var loosen = new NpgsqlCommand(
+            "ALTER ROLE formmaps_dotnet_svc CREATEDB CREATEROLE", admin))
+        {
+            await loosen.ExecuteNonQueryAsync();
+        }
+
+        await fixture.ReapplyRoleScriptAsync();
+
+        await using var command = new NpgsqlCommand(
+            "SELECT rolcreatedb, rolcreaterole FROM pg_roles WHERE rolname = 'formmaps_dotnet_svc'", admin);
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.False(reader.GetBoolean(0), "re-applying must clear CREATEDB that drifted in");
+        Assert.False(reader.GetBoolean(1), "re-applying must clear CREATEROLE that drifted in");
+    }
+
+    /// <summary>
+    /// The other half of section 1: SUPERUSER, REPLICATION and BYPASSRLS cannot be cleared by any role RDS offers,
+    /// so the script verifies them instead of pretending to pin them. A silent pass there would be the worst
+    /// outcome -- the script would report success over a role carrying BYPASSRLS, which defeats every RLS policy
+    /// the tenant-isolation design rests on. It must abort instead.
+    /// </summary>
+    [Fact]
+    public async Task Reapplying_the_script_aborts_on_an_attribute_it_cannot_clear()
+    {
+        await using var admin = new NpgsqlConnection(fixture.AdminConnectionString);
+        await admin.OpenAsync();
+
+        await using (var loosen = new NpgsqlCommand("ALTER ROLE formmaps_dotnet_svc BYPASSRLS", admin))
+        {
+            await loosen.ExecuteNonQueryAsync();
+        }
+
+        try
+        {
+            var exception = await Assert.ThrowsAsync<PostgresException>(fixture.ReapplyRoleScriptAsync);
+
+            Assert.Equal("P0001", exception.SqlState); // raise_exception
+            Assert.Contains("BYPASSRLS", exception.MessageText, StringComparison.Ordinal);
+        }
+        finally
+        {
+            await using var restore = new NpgsqlCommand("ALTER ROLE formmaps_dotnet_svc NOBYPASSRLS", admin);
+            await restore.ExecuteNonQueryAsync();
+        }
+    }
+
     [Fact]
     public async Task Role_can_select_from_every_grant_tier()
     {

@@ -43,6 +43,12 @@
 #       trio (and, once formmaps#52 merges, audit_events), so those tables
 #       must exist FIRST or the GRANT aborts with 42P01 undefined_table.
 #       Apply order matters; the runbook prescribes it.
+#       It also carries ONE deliberate non-idempotent exit (added 2026-08-16):
+#       a DO block that RAISEs P0001 if formmaps_dotnet_svc already holds
+#       SUPERUSER / REPLICATION / BYPASSRLS. Those cannot be cleared by any
+#       role RDS offers, so the script refuses rather than reporting success
+#       over a role it did not constrain. Re-running cannot clear that state;
+#       see the script's section 1 for the two ways out.
 #   * preflight-checks.sql        READ-ONLY diagnostics; trivially idempotent.
 #   * audit-events-schema.sql     PROVISIONAL — this file is NOT on main yet;
 #       it exists only on feat/52-audit-events and lands with formmaps#52, so

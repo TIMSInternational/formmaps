@@ -117,14 +117,15 @@ of a GitHub-side convention.
 
 **The trust policy is MANDATORY, and it MUST pin `sub` to the environment.**
 The role must trust only tokens minted for this repo's `production-sql`
-environment:
-`token.actions.githubusercontent.com:sub` =
-`repo:TIMSInternational/formmaps:environment:production-sql`. This is
-enforced **AWS-side at AssumeRoleWithWebIdentity time**, so a workflow copy
-with the `environment: production-sql` line stripped cannot assume the role:
-its token's `sub` claim would be
-`repo:TIMSInternational/formmaps:ref:refs/heads/...` (no environment), and
-the condition rejects it. Use exactly this trust policy document:
+environment — i.e. `token.actions.githubusercontent.com:sub` must end in
+`:environment:production-sql`. This is enforced **AWS-side at
+AssumeRoleWithWebIdentity time**, so a workflow copy with the
+`environment: production-sql` line stripped cannot assume the role: its
+token's `sub` would end in `:ref:refs/heads/...` instead, and the condition
+rejects it. What comes *before* that suffix is the part this repo does not
+spell the obvious way — see the immutable-subject note below the policy, and
+check it against the live API before writing the policy. Use exactly this
+trust policy document:
 
 ```json
 {
@@ -140,7 +141,10 @@ the condition rejects it. Use exactly this trust policy document:
       "Condition": {
         "StringEquals": {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": "repo:TIMSInternational/formmaps:environment:production-sql"
+          "token.actions.githubusercontent.com:sub": [
+            "repo:TIMSInternational@305569681/formmaps@1301900742:environment:production-sql",
+            "repo:TIMSInternational/formmaps:environment:production-sql"
+          ]
         }
       }
     }
@@ -150,9 +154,29 @@ the condition rejects it. Use exactly this trust policy document:
 
 Notes on the trust policy:
 
-- `sub` uses `StringEquals` — no wildcards, no `StringLike`. A job only
-  receives this `sub` when it actually runs under the `production-sql`
-  environment (i.e. after the reviewer gate).
+- **⚠️ This repo mints an IMMUTABLE subject, so the plain-name `sub` above is
+  not the whole story.** Measured 2026-08-16:
+
+  ```
+  gh api repos/TIMSInternational/formmaps/actions/oidc/customization/sub
+  → {"use_default":true,"use_immutable_subject":false,
+     "sub_claim_prefix":"repo:TIMSInternational@305569681/formmaps@1301900742"}
+  ```
+
+  The prefix carries the numeric org id (`305569681`) and repo id
+  (`1301900742`), so the token's real `sub` is
+  `repo:TIMSInternational@305569681/formmaps@1301900742:environment:production-sql`
+  and a trust policy pinning only the plain-name form **never matches** —
+  that is what "Not authorized to perform sts:AssumeRoleWithWebIdentity" was.
+  Note `use_immutable_subject` reads `false` while the prefix is already the
+  immutable form; trust the `sub_claim_prefix` field, not that flag. Run the
+  command above against the target repo rather than assuming either form.
+  `formmaps-sql-apply` now pins **both** exact strings.
+- `sub` uses `StringEquals` — no wildcards, no `StringLike`. `StringEquals`
+  accepts a *list*, which is how both forms are pinned without loosening
+  anything; do not collapse it to `StringLike`. A job only receives this `sub`
+  when it actually runs under the `production-sql` environment (i.e. after the
+  reviewer gate).
 - The OIDC provider must already be registered in IAM (account 747814092517).
   Whether it is cannot be determined from the repo — the staging deploy
   workflow assumes a role the same way, which suggests it is, but confirm in
@@ -426,9 +450,11 @@ runner-side IAM policy's instance ARN needs the new id too if you scoped it
 | Run never starts, "waiting for review" | Working as intended — a `production-sql` reviewer must approve. |
 | First step red: "NO required_reviewers protection rule" | The environment was auto-created by a dispatch (or its reviewers were removed) — the fail-closed guard refused to proceed. Add required reviewers + a main-only deployment branch policy (§1), re-run. |
 | First step red: "Could not read protection rules" | The GitHub API call failed (403/404/network) and the guard fails closed by design. Confirm the environment exists and the workflow's `permissions:` block still grants `actions: read`. |
-| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | The trust policy's `sub` pin doesn't match — it must be exactly `repo:TIMSInternational/formmaps:environment:production-sql` (§3) — or the OIDC provider isn't registered in IAM. |
+| `Not authorized to perform sts:AssumeRoleWithWebIdentity` | The trust policy's `sub` pin doesn't match — this repo mints an **immutable subject** (`repo:TIMSInternational@305569681/formmaps@1301900742:environment:production-sql`), so a policy pinning only the plain-name form never matches; pin both (§3) — or the OIDC provider isn't registered in IAM. |
 | Run cancelled / hit the 30-min cap | The in-flight SSM command may have kept running and its SQL may have committed — see "Cancellation, timeouts, and what they do NOT stop". |
 | `42P01 undefined_table` during `dotnet-service-role.sql` | Table-creating files weren't applied first — run `billing-shadow-tables.sql` (and `audit-events-schema.sql` post-#52), then re-apply. Nothing was committed. |
+| `42501 permission denied to alter role` / "Only roles with the SUPERUSER attribute may change the SUPERUSER attribute" | Fixed 2026-08-16. `dotnet-service-role.sql` used to `ALTER ROLE ... NOSUPERUSER NOREPLICATION NOBYPASSRLS`, and **`nexaadmin` is not a superuser** — RDS grants the `rds_superuser` *role*, never the *attribute*, so those three cannot be set or cleared by anyone here. Single-transaction mode meant nothing was committed. If you see this again, some new statement needs a privilege RDS does not grant; it is not a credentials problem. |
+| `P0001` "formmaps_dotnet_svc holds …, which this script cannot clear" | The role already carries SUPERUSER, REPLICATION or BYPASSRLS. The script refuses rather than reporting success over a role it cannot constrain — re-running will not help. Follow the `HINT` on the error. |
 | `42501 permission denied` in verify section 4 | The grant the section exercises is missing — check the matrix above it for the failing row. |
 | Bastion "not Online in SSM" | Bastion stopped/terminated (it *is* named DELETE-ME) — see "Replacing the bastion". |
 | `AccessDeniedException` fetching the secret | The **bastion instance profile** (not the runner role) lacks `secretsmanager:GetSecretValue`/`kms:Decrypt`. |
