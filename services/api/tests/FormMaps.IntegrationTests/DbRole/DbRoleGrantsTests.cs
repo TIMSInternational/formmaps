@@ -345,6 +345,14 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     [Fact]
     public async Task Every_table_in_the_schema_is_granted_at_least_select()
     {
+        // The single documented exception, and it stays a NAMED one rather than relaxing the check to "has any
+        // privilege": audit_logs is INSERT-only on purpose (role script section 4.6 — the service writes the legacy
+        // role-change trail and never reads it). Broadening the rule instead would let a table that genuinely needs
+        // SELECT pass with only an INSERT grant, which is the same class of miss this test exists to catch. The
+        // exception is not a hole either — the test below pins audit_logs' exact verb set, so "excluded here" cannot
+        // degrade into "ungranted entirely".
+        var insertOnly = new[] { "audit_logs" };
+
         await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
         await connection.OpenAsync();
 
@@ -372,7 +380,100 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
             }
         }
 
+        ungranted.RemoveAll(insertOnly.Contains);
+
         Assert.True(ungranted.Count == 0, $"tables in the stub schema with no GRANT in dotnet-service-role.sql: {string.Join(", ", ungranted)}");
+    }
+
+    /// <summary>
+    /// formmaps#120/#128. The legacy trail's grant is INSERT and nothing else. SchoolUsersWriter.cs:214 ports
+    /// legacy's USER_ROLE_CHANGE audit row into the same transaction as the role UPDATE, so without INSERT every
+    /// admin role change 42501s — but only from the moment DATABASE_URL is repointed at formmaps_dotnet_svc. Until
+    /// then the service uses the legacy shared credential, which has full CRUD here, so the gap is invisible in
+    /// production and shows up mid-cutover. verify-grants.sql flagged it as KNOWN-GAP from 2026-08-14 and the
+    /// 2026-08-17 production run reported it live (expected INSERT=t, actual f).
+    ///
+    /// The withheld verbs matter as much as the granted one, and more here than for audit_events: audit_logs has no
+    /// RLS and no immutability trigger (005-sensitive.sql's unpolicied list), so this GRANT is the only thing
+    /// standing between the service and a rewritable audit trail. #128's acceptance criterion is INSERT-only.
+    /// SELECT is withheld too — no .NET code path reads this table, and the INSERT does not need it (no RETURNING,
+    /// no ON CONFLICT).
+    /// </summary>
+    [Fact]
+    public async Task Legacy_audit_logs_is_granted_insert_and_nothing_else()
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', 'public.audit_logs', 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.audit_logs', 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.audit_logs', 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.audit_logs', 'DELETE'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.audit_logs', 'TRUNCATE')
+            """,
+            connection);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.True(reader.GetBoolean(0), "SchoolUsersWriter INSERTs audit_logs; without this every role change 42501s at cutover");
+        Assert.False(reader.GetBoolean(1), "no .NET code path reads audit_logs, and the INSERT does not need SELECT");
+        Assert.False(reader.GetBoolean(2), "audit trail: UPDATE would let the service rewrite role-change history");
+        Assert.False(reader.GetBoolean(3), "audit trail: DELETE would let the service erase role-change history");
+        Assert.False(reader.GetBoolean(4), "TRUNCATE erases the whole trail in one statement");
+    }
+
+    /// <summary>
+    /// The behavioural half of the assertion above, run as the role itself. Unlike audit_events there is no
+    /// immutability trigger behind this grant, so a rejected UPDATE/DELETE here is attributable to the GRANT and to
+    /// nothing else — and the SqlState assertions keep it that way rather than passing on any thrown exception.
+    /// </summary>
+    [Fact]
+    public async Task Role_can_append_to_legacy_audit_logs_but_not_rewrite_it()
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand("""INSERT INTO "audit_logs" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        // Withheld SELECT is a real constraint, not an oversight -- prove the role cannot read back what it wrote.
+        var select = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""SELECT count(*) FROM "audit_logs" """, connection);
+            await command.ExecuteScalarAsync();
+        });
+        Assert.Equal("42501", select.SqlState);
+
+        var update = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""UPDATE "audit_logs" SET id = 'rewritten' WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", update.SqlState);
+
+        var delete = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""DELETE FROM "audit_logs" WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", delete.SqlState);
+
+        // Read the survivor as admin, since the role deliberately cannot.
+        await using var admin = new NpgsqlConnection(fixture.AdminConnectionString);
+        await admin.OpenAsync();
+        await using var survived = new NpgsqlCommand("""SELECT count(*) FROM "audit_logs" WHERE id = @id""", admin);
+        survived.Parameters.AddWithValue("id", id);
+        Assert.Equal(1L, (long)(await survived.ExecuteScalarAsync())!);
     }
 
     [Fact]

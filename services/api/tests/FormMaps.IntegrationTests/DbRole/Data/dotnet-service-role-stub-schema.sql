@@ -27,6 +27,10 @@ CREATE TABLE "assessment_schedules" (id text PRIMARY KEY);
 -- privilege raises 42501, and that test asserts the SqlState rather than merely that something
 -- threw. The SqlState assertion is the load-bearing part; do not relax it to Assert.ThrowsAsync.
 CREATE TABLE "audit_events" (id text PRIMARY KEY);
+-- The LEGACY trail (section 4.6 of the role script), INSERT-only. It is the one
+-- table in this schema deliberately granted WITHOUT SELECT, which is why
+-- Every_table_in_the_schema_is_granted_at_least_select names it explicitly.
+CREATE TABLE "audit_logs" (id text PRIMARY KEY);
 CREATE TABLE "bookings" (id text PRIMARY KEY);
 CREATE TABLE "category_requirements" (id text PRIMARY KEY);
 CREATE TABLE "coaches" (id text PRIMARY KEY);
