@@ -72,11 +72,26 @@ Parameters:
       store THAT endpoint's signing secret here.
   ProdWebOrigin:
     Type: String
-    Default: https://app.formmaps.ai
+    Default: https://app.formmaps.com
     Description: >-
-      Prod frontend origin allowed by CORS. CONFIRM the exact prod Vercel
-      domain (app.formmaps.ai vs app.formmaps.com) before deploying — a
-      mismatch makes the browser block every cross-origin call.
+      Prod frontend origin allowed by CORS. A mismatch here makes the browser
+      block every cross-origin call from the real frontend, which presents as a
+      total outage rather than as a config error.
+
+      RESOLVED 2026-08-17. This defaulted to https://app.formmaps.ai, which
+      does not exist: `dig app.formmaps.ai` returns NO record (nor does the
+      apex, formmaps.ai). app.formmaps.com resolves to 76.76.21.21 (Vercel) and
+      serves 200, and the RUNNING production legacy API agrees --
+      FRONTEND_BASE_URL=https://app.formmaps.com, with CORS_ORIGINS listing
+      formmaps.com / www.formmaps.com / app.formmaps.com and no .ai variant at
+      all. So the old default would have CORS-blocked the entire frontend on
+      the first prod deploy, and it disagreed with FrontendBaseUrl below, which
+      was already correct.
+
+      formmaps-api-prod-deploy.yml still passes this explicitly from the repo
+      variable FORMMAPS_PROD_WEB_ORIGIN and refuses to run if it is unset. Keep
+      it that way: a correct default is a safety net, not a reason to let a
+      CORS origin be decided by whatever a template happened to ship with.
   LegacyJwtIssuer:
     Type: String
     Default: nexa-api
