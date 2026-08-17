@@ -1,0 +1,335 @@
+# =============================================================================
+# formmaps-api-prod-deploy — builds the .NET API image and deploys it to the
+# production App Runner service (formmaps-api-prod, us-east-1).
+#
+# Why this exists: until now NO prod deploy path existed in this repo. The only
+# deploy workflow was formmaps-api-staging-deploy.yml, and prod images were
+# built by hand (the running one is prod-20260810-f2ecccfe). That gap is what
+# separated "merged" from "live" for every merged PR — #138/#149/#150 and the
+# Wave-2 retires included.
+#
+# Modelled on formmaps-api-staging-deploy.yml, with four deliberate
+# differences, each of which is a lesson already paid for elsewhere in this
+# repo:
+#
+#   1. APPROVAL GATE, VERIFIED FAIL-CLOSED. Same pattern as
+#      formmaps-sql-apply.yml: the FIRST step, before any AWS action, queries
+#      the `production` environment's protection rules and hard-fails unless a
+#      required_reviewers rule provably exists — and also fails when the API
+#      call itself errors, because "cannot verify the gate" must never degrade
+#      into "deploy anyway". GitHub auto-creates a missing environment WITHOUT
+#      protection rules, so without this a first dispatch would sail through
+#      unapproved. The bootstrap's IAM trust policy pins
+#      :sub to environment:production as the AWS-side half of the same
+#      invariant.
+#
+#   2. EVERY REQUIRED INPUT IS VALIDATED BEFORE THE BUILD. Staging validated
+#      its secrets inside the deploy step, i.e. after `npm run api:test` and a
+#      full image build+push had already run. The Stripe parameters were
+#      missing there from 2026-08-02 and every dispatch since died in
+#      CreateChangeSet — ~40 minutes in, for a variable that could have been
+#      checked in one second. All guards here run in the first job step.
+#
+#   3. SERIALISED. App Runner refuses concurrent updates to a service, so two
+#      overlapping deploys mean one fails partway. cancel-in-progress is false:
+#      cancelling a prod deploy mid-flight is worse than queueing behind it.
+#
+#   4. NO AUTHENTICATED CANARY. Staging mints a short-lived JWT in-CI from its
+#      JWT secret to run an authenticated benchmark. Doing that in prod means
+#      pulling the production JWT signing secret into a runner and minting a
+#      school_admin token; the informational value does not justify it. The
+#      health canary below is unauthenticated and BLOCKING, which is the part
+#      that actually gates the deploy.
+#
+# ROLLBACK: App Runner keeps previously deployed images, and the shared ECR
+# repository's lifecycle policy expires only `staging-`-prefixed tags, so every
+# prod image is retained. To roll back, redeploy the service stack with a prior
+# ImageIdentifier (`prod-<sha>`) — see docs/migration/prod-api-deploy-runbook.md.
+# =============================================================================
+name: formmaps-api-prod-deploy
+
+run-name: "prod-deploy: ${{ github.sha }} (by @${{ github.actor }})"
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: >-
+          Type exactly "deploy-to-production" to acknowledge this replaces the
+          running production API.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write # mint the OIDC token that assumes formmaps-github-deploy-prod
+  actions: read # read the production environment's protection rules
+
+concurrency:
+  group: formmaps-api-prod-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  BOOTSTRAP_STACK_NAME: formmaps-api-prod-bootstrap
+  SERVICE_STACK_NAME: formmaps-api-prod
+  SERVICE_NAME: formmaps-api-prod
+
+jobs:
+  deploy:
+    name: Deploy production API
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production
+
+    steps:
+      # ---------------------------------------------------------------------
+      # FIRST, before anything else: prove the approval gate exists at all.
+      # ---------------------------------------------------------------------
+      - name: Verify production approval gate (fail closed)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! resp="$(gh api "repos/${GITHUB_REPOSITORY}/environments/production" 2>&1)"; then
+            echo "::error::Could not read protection rules for environment 'production' (API said: ${resp}). Failing CLOSED: without proof that required reviewers are configured, this run cannot be distinguished from a dispatch against an auto-created, unprotected environment. Create the environment (Settings -> Environments -> production) with required reviewers AND a main-only deployment branch policy, then re-run."
+            exit 1
+          fi
+          if ! printf '%s' "$resp" | jq -e '[.protection_rules[]?.type] | index("required_reviewers") != null' >/dev/null; then
+            echo "::error::Environment 'production' has NO required_reviewers protection rule — it was probably auto-created by a dispatch instead of being set up first. Refusing to touch AWS or build an image. Add required reviewers AND a main-only deployment branch policy, then re-run. See docs/migration/prod-api-deploy-runbook.md."
+            exit 1
+          fi
+          echo "production has a required_reviewers protection rule — approval gate verified."
+
+      # ---------------------------------------------------------------------
+      # SECOND: every required input, checked before a single expensive step.
+      # See design note 2 in the header for why this is not inside the deploy
+      # step where staging put it.
+      # ---------------------------------------------------------------------
+      - name: Validate inputs and required configuration
+        env:
+          CONFIRM_INPUT: ${{ inputs.confirm }}
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          JWT_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_JWT_SECRET_ARN }}
+          DATABASE_URL_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_DATABASE_URL_SECRET_ARN }}
+          DAILY_API_KEY_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_DAILY_API_KEY_SECRET_ARN }}
+          STRIPE_SECRET_KEY_ARN: ${{ secrets.FORMMAPS_PROD_STRIPE_SECRET_KEY_ARN }}
+          STRIPE_WEBHOOK_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN }}
+          PROD_WEB_ORIGIN: ${{ vars.FORMMAPS_PROD_WEB_ORIGIN }}
+          PROD_FRONTEND_BASE_URL: ${{ vars.FORMMAPS_PROD_FRONTEND_BASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM_INPUT" != "deploy-to-production" ]; then
+            echo "::error::confirm must be exactly 'deploy-to-production'. Refusing."
+            exit 1
+          fi
+          : "${AWS_ACCOUNT_ID:?Set repo variable AWS_ACCOUNT_ID.}"
+          : "${JWT_SECRET_ARN:?Set FORMMAPS_PROD_JWT_SECRET_ARN in the production environment.}"
+          : "${DATABASE_URL_SECRET_ARN:?Set FORMMAPS_PROD_DATABASE_URL_SECRET_ARN in the production environment.}"
+          : "${DAILY_API_KEY_SECRET_ARN:?Set FORMMAPS_PROD_DAILY_API_KEY_SECRET_ARN in the production environment.}"
+          # LIVE Stripe keys here, unlike staging — this service serves real
+          # customers. StartupEnvironmentValidator requires both, so a missing
+          # one is a boot failure, not a degraded mode.
+          : "${STRIPE_SECRET_KEY_ARN:?Set FORMMAPS_PROD_STRIPE_SECRET_KEY_ARN in the production environment (ARN of the LIVE Stripe secret key).}"
+          # NOTE: this must be the signing secret of the SECOND Stripe endpoint,
+          # the one pointing at .NET — NOT the legacy Node endpoint's. Stripe
+          # issues a distinct secret per endpoint, so reusing Node's makes .NET
+          # reject every event as an invalid signature and the #44 shadow soak
+          # silently stays empty. See formmaps#43.
+          : "${STRIPE_WEBHOOK_SECRET_ARN:?Set FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN in the production environment (signing secret of the .NET Stripe endpoint, formmaps#43 — NOT the legacy Node endpoint).}"
+          # The CORS origin has no safe default. formmaps-api-prod-service.yml
+          # ships ProdWebOrigin=https://app.formmaps.ai and
+          # FrontendBaseUrl=https://app.formmaps.com — two different hosts, and
+          # at most one of them is right. A wrong ProdWebOrigin makes the
+          # browser block every cross-origin call from the real frontend, which
+          # looks like a total outage. So it is required here rather than
+          # inherited from a default nobody has confirmed.
+          : "${PROD_WEB_ORIGIN:?Set repo variable FORMMAPS_PROD_WEB_ORIGIN to the exact prod frontend origin (scheme + host, no trailing slash). That default is NOT confirmed — see the runbook.}"
+          case "$PROD_WEB_ORIGIN" in
+            https://*) ;;
+            *) echo "::error::FORMMAPS_PROD_WEB_ORIGIN must be an https:// origin, got '$PROD_WEB_ORIGIN'."; exit 1 ;;
+          esac
+          case "$PROD_WEB_ORIGIN" in
+            */) echo "::error::FORMMAPS_PROD_WEB_ORIGIN must not end with a trailing slash."; exit 1 ;;
+          esac
+          # FrontendBaseUrl defaults to the same host unless deliberately split.
+          # Warn rather than fail: a split is legitimate (e.g. links point at an
+          # apex while the app runs on a subdomain), it just should not happen
+          # by accident, which is exactly how the template's two defaults ended
+          # up disagreeing.
+          if [ -n "${PROD_FRONTEND_BASE_URL:-}" ] && [ "$PROD_FRONTEND_BASE_URL" != "$PROD_WEB_ORIGIN" ]; then
+            echo "::warning::FORMMAPS_PROD_FRONTEND_BASE_URL ($PROD_FRONTEND_BASE_URL) differs from FORMMAPS_PROD_WEB_ORIGIN ($PROD_WEB_ORIGIN). Intentional splits are fine; an accidental one means emailed links and CORS disagree."
+          fi
+          echo "all required production configuration is present."
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The same suite CI runs, re-run against the exact commit being shipped.
+      # Deliberately not skippable: "CI was green on the PR" is a claim about a
+      # merge preview, not about this SHA.
+      - name: Test API
+        run: npm run api:test
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/formmaps-github-deploy-prod
+
+      - name: Read bootstrap outputs
+        id: bootstrap
+        run: |
+          set -euo pipefail
+          ECR_REPOSITORY_URI="$(aws cloudformation describe-stacks \
+            --stack-name "$BOOTSTRAP_STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='EcrRepositoryUri'].OutputValue | [0]" \
+            --output text)"
+          ECR_ACCESS_ROLE_ARN="$(aws cloudformation describe-stacks \
+            --stack-name "$BOOTSTRAP_STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='AppRunnerEcrAccessRoleArn'].OutputValue | [0]" \
+            --output text)"
+          if [ -z "$ECR_REPOSITORY_URI" ] || [ "$ECR_REPOSITORY_URI" = "None" ]; then
+            echo "::error::Missing EcrRepositoryUri output from $BOOTSTRAP_STACK_NAME. Deploy infra/aws/formmaps-api-prod-bootstrap.yml first."
+            exit 1
+          fi
+          if [ -z "$ECR_ACCESS_ROLE_ARN" ] || [ "$ECR_ACCESS_ROLE_ARN" = "None" ]; then
+            echo "::error::Missing AppRunnerEcrAccessRoleArn output from $BOOTSTRAP_STACK_NAME."
+            exit 1
+          fi
+          ECR_REGISTRY="${ECR_REPOSITORY_URI%/*}"
+          {
+            echo "ecr_repository_uri=$ECR_REPOSITORY_URI"
+            echo "ecr_registry=$ECR_REGISTRY"
+            echo "ecr_access_role_arn=$ECR_ACCESS_ROLE_ARN"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Login to ECR
+        run: |
+          set -euo pipefail
+          aws ecr get-login-password --region "$AWS_REGION" \
+            | docker login --username AWS --password-stdin "${{ steps.bootstrap.outputs.ecr_registry }}"
+
+      # `prod-<sha>` is the immutable handle a rollback names; `prod-latest` is
+      # a convenience pointer only. Never deploy from `prod-latest` — it moves.
+      - name: Build and push API image
+        id: image
+        run: |
+          set -euo pipefail
+          IMAGE_TAG="prod-${GITHUB_SHA}"
+          IMAGE_URI="${{ steps.bootstrap.outputs.ecr_repository_uri }}:${IMAGE_TAG}"
+          docker build -f services/api/Dockerfile -t "$IMAGE_URI" services/api
+          docker tag "$IMAGE_URI" "${{ steps.bootstrap.outputs.ecr_repository_uri }}:prod-latest"
+          docker push "$IMAGE_URI"
+          docker push "${{ steps.bootstrap.outputs.ecr_repository_uri }}:prod-latest"
+          echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+      # Record the image the service is running BEFORE we replace it, so the
+      # rollback target is in the run log rather than something to reconstruct
+      # from ECR timestamps under pressure.
+      - name: Record current image (rollback target)
+        id: previous
+        run: |
+          set -euo pipefail
+          PREVIOUS="$(aws cloudformation describe-stacks \
+            --stack-name "$SERVICE_STACK_NAME" \
+            --query "Stacks[0].Parameters[?ParameterKey=='ImageIdentifier'].ParameterValue | [0]" \
+            --output text 2>/dev/null || echo "None")"
+          if [ -z "$PREVIOUS" ] || [ "$PREVIOUS" = "None" ]; then
+            echo "no existing $SERVICE_STACK_NAME stack — this is a first deploy, there is nothing to roll back to."
+            PREVIOUS=""
+          else
+            echo "currently deployed image (rollback target): $PREVIOUS"
+          fi
+          echo "image_uri=$PREVIOUS" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy App Runner service stack
+        env:
+          JWT_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_JWT_SECRET_ARN }}
+          DATABASE_URL_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_DATABASE_URL_SECRET_ARN }}
+          DAILY_API_KEY_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_DAILY_API_KEY_SECRET_ARN }}
+          STRIPE_SECRET_KEY_ARN: ${{ secrets.FORMMAPS_PROD_STRIPE_SECRET_KEY_ARN }}
+          STRIPE_WEBHOOK_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN }}
+          PROD_WEB_ORIGIN: ${{ vars.FORMMAPS_PROD_WEB_ORIGIN }}
+          PROD_FRONTEND_BASE_URL: ${{ vars.FORMMAPS_PROD_FRONTEND_BASE_URL }}
+        run: |
+          set -euo pipefail
+          # FrontendBaseUrl follows the CORS origin unless deliberately split
+          # (validated/warned in the first step).
+          FRONTEND_BASE_URL="${PROD_FRONTEND_BASE_URL:-$PROD_WEB_ORIGIN}"
+          aws cloudformation deploy \
+            --stack-name "$SERVICE_STACK_NAME" \
+            --template-file infra/aws/formmaps-api-prod-service.yml \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              ServiceName="$SERVICE_NAME" \
+              ImageIdentifier="${{ steps.image.outputs.image_uri }}" \
+              EcrAccessRoleArn="${{ steps.bootstrap.outputs.ecr_access_role_arn }}" \
+              JwtSecretArn="$JWT_SECRET_ARN" \
+              DatabaseUrlSecretArn="$DATABASE_URL_SECRET_ARN" \
+              DailyApiKeySecretArn="$DAILY_API_KEY_SECRET_ARN" \
+              StripeSecretKeyArn="$STRIPE_SECRET_KEY_ARN" \
+              StripeWebhookSecretArn="$STRIPE_WEBHOOK_SECRET_ARN" \
+              ProdWebOrigin="$PROD_WEB_ORIGIN" \
+              FrontendBaseUrl="$FRONTEND_BASE_URL"
+
+      - name: Read App Runner URL
+        id: service
+        run: |
+          set -euo pipefail
+          SERVICE_URL="$(aws cloudformation describe-stacks \
+            --stack-name "$SERVICE_STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='ServiceUrl'].OutputValue | [0]" \
+            --output text)"
+          if [ -z "$SERVICE_URL" ] || [ "$SERVICE_URL" = "None" ]; then
+            echo "::error::Missing ServiceUrl output from $SERVICE_STACK_NAME."
+            exit 1
+          fi
+          echo "base_url=https://$SERVICE_URL" >> "$GITHUB_OUTPUT"
+
+      # BLOCKING, unlike staging's informational benchmark. `aws cloudformation
+      # deploy` returns when the stack settles, which is not the same as the new
+      # container serving traffic, so this polls rather than checking once.
+      - name: Health canary
+        env:
+          BASE_URL: ${{ steps.service.outputs.base_url }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            code="$(curl -sS -o /tmp/health.out -w '%{http_code}' --max-time 10 "$BASE_URL/health" || echo 000)"
+            if [ "$code" = "200" ]; then
+              echo "health OK after ${attempt} attempt(s): $(cat /tmp/health.out)"
+              exit 0
+            fi
+            echo "attempt ${attempt}: HTTP ${code}"
+            sleep 10
+          done
+          echo "::error::Health check never returned 200 at ${BASE_URL}/health after 30 attempts (~5 min). The deploy may be serving errors. Roll back with the image named in the 'Record current image' step — see docs/migration/prod-api-deploy-runbook.md."
+          exit 1
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### formmaps-api prod deploy"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| commit | \`${GITHUB_SHA}\` |"
+            echo "| image deployed | \`${{ steps.image.outputs.image_uri }}\` |"
+            echo "| rollback target | \`${{ steps.previous.outputs.image_uri || 'none — first deploy' }}\` |"
+            echo "| service URL | ${{ steps.service.outputs.base_url || 'n/a' }} |"
+            echo "| result | ${{ job.status }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
