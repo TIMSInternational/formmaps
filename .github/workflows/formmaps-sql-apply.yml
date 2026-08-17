@@ -106,6 +106,17 @@ jobs:
     env:
       BASTION_INSTANCE_ID: ${{ vars.FORMMAPS_SQL_BASTION_INSTANCE_ID }}
       ADMIN_DB_SECRET_ID: ${{ vars.FORMMAPS_SQL_ADMIN_DB_SECRET_ID }}
+      # Connection coordinates, job-level so BOTH the apply loop and the
+      # always-runs verify step get them. Optional: they fill only what the
+      # connection secret does not carry, and the secret always wins.
+      # Setting these is what lets FORMMAPS_SQL_ADMIN_DB_SECRET_ID point at the
+      # RDS-MANAGED master secret (`rds!cluster-<id>`), which holds just
+      # username+password and is rotated by RDS itself. The alternative — a
+      # hand-maintained copy of the password — is what silently went ~2 months
+      # stale and broke every run with FATAL: password authentication failed.
+      DB_HOST: ${{ vars.FORMMAPS_SQL_DB_HOST }}
+      DB_PORT: ${{ vars.FORMMAPS_SQL_DB_PORT }}
+      DB_NAME: ${{ vars.FORMMAPS_SQL_DB_NAME }}
 
     steps:
       # FIRST, before any AWS action: prove the approval gate exists. GitHub
@@ -219,6 +230,18 @@ jobs:
             echo "::error::Repo variable FORMMAPS_SQL_ADMIN_DB_SECRET_ID is not set. It must name (not contain) the Secrets Manager secret holding the admin (nexaadmin) connection info — see the runbook."
             missing=1
           fi
+          # An RDS-MANAGED secret (rds!cluster-<id>) carries only
+          # username+password. Catch that misconfiguration HERE rather than
+          # after a reviewer has already approved the run and the bastion has
+          # fetched the secret — an approval is the expensive part.
+          case "${ADMIN_DB_SECRET_ID:-}" in
+            *rds!cluster-*)
+              if [ -z "${DB_HOST:-}" ] || [ -z "${DB_NAME:-}" ]; then
+                echo "::error::FORMMAPS_SQL_ADMIN_DB_SECRET_ID names an RDS-MANAGED secret, which contains only username+password. Also set repo variables FORMMAPS_SQL_DB_HOST and FORMMAPS_SQL_DB_NAME (FORMMAPS_SQL_DB_PORT optional, defaults 5432) — see the runbook, 'Rotating master password'."
+                missing=1
+              fi
+              ;;
+          esac
           [ "$missing" -eq 0 ] || exit 1
 
       # OIDC ONLY — no static-key alternative exists, on purpose: standing
