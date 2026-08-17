@@ -341,6 +341,45 @@ GRANT SELECT, INSERT ON TABLE
     TO formmaps_dotnet_svc;
 
 -- ---------------------------------------------------------------------------
+-- 4.6. LEGACY audit trail (formmaps#120/#128): INSERT and nothing else.
+--
+--    Not to be confused with 4.5. `audit_events` is the new immutable trail
+--    this service owns; `audit_logs` is the LEGACY table that legacy Node
+--    still writes and that admin surfaces still read. While both backends are
+--    live they must write the SAME table or the role-change history splits in
+--    two, so SchoolUsersWriter ports legacy's
+--    `audit(req, "USER_ROLE_CHANGE", "User", userId, { from, to })` verbatim --
+--    SchoolUsersWriter.cs:214, inside the same transaction as the role UPDATE.
+--
+--    Why this grant did not exist until now, and what it cost: nothing here
+--    granted anything on audit_logs, and the service currently connects with
+--    the legacy Node shared credential, which has full CRUD on it. So the
+--    write works TODAY and would have started failing with 42501 at the exact
+--    moment the DATABASE_URL secret was repointed at formmaps_dotnet_svc --
+--    i.e. during the credential cutover, on a code path (role change) that
+--    only fires for admins. verify-grants.sql has flagged it as KNOWN-GAP
+--    since 2026-08-14; the 2026-08-17 production run reported it again
+--    (expected INSERT=t, actual f) now that the role finally exists.
+--
+--    INSERT ONLY, deliberately:
+--      * no SELECT -- no .NET code path reads audit_logs (verified: zero
+--        FROM/JOIN hits in services/api/src). The INSERT itself does not need
+--        it either: no RETURNING, no ON CONFLICT, no read of existing rows.
+--      * no UPDATE/DELETE -- same reasoning as 4.5, and formmaps#128's
+--        acceptance criterion is precisely that an app role be INSERT-only
+--        here. `formmaps_app` currently holds DELETE+UPDATE on this table;
+--        this role must not repeat that.
+--    Unlike audit_events, audit_logs has no RLS and no immutability trigger
+--    (it is on 005-sensitive.sql's deliberately-unpolicied list), so this
+--    GRANT is the ONLY lock standing between the service and a rewritable
+--    audit trail. That is the reason to keep it this narrow, not a reason to
+--    widen it to match audit_events.
+-- ---------------------------------------------------------------------------
+GRANT INSERT ON TABLE
+    public."audit_logs"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
 -- 5. Full-CRUD tables -- the service also deletes rows here (verified:
 --    DELETE FROM hits in services/api/src, e.g. calendar/holiday and
 --    academic-year cleanup, course-plan removal, data-mapping deletion, and

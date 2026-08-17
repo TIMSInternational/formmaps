@@ -133,14 +133,25 @@ WITH checks(tbl, priv, expected, hard, why) AS (
     ('public.shadow_payments', 'SELECT', true, true, 'granted with the trio (dotnet-service-role.sql sec 4 note)'),
     ('public.shadow_payments', 'INSERT', true, true, 'granted with the trio'),
     ('public.shadow_payments', 'UPDATE', true, true, 'granted with the trio'),
-    -- formmaps#128 / cutover: SchoolUsersWriter.cs does INSERT INTO
-    -- "audit_logs" (role-change audit rows), but as of 2026-08-14
-    -- dotnet-service-role.sql grants NOTHING on audit_logs. Today this works
-    -- only because the .NET service still runs on the legacy shared
-    -- credential; the moment DATABASE_URL flips to formmaps_dotnet_svc, every
-    -- role change 42501s. hard=false: reported as KNOWN-GAP, does not fail
-    -- the run — fixing it means adding the grant to dotnet-service-role.sql.
-    ('public.audit_logs', 'INSERT', true, false, 'KNOWN-GAP: SchoolUsersWriter INSERTs audit_logs; no grant in dotnet-service-role.sql — breaks at credential cutover')
+    -- formmaps#120/#128 / cutover: SchoolUsersWriter.cs:214 does INSERT INTO
+    -- "audit_logs" (role-change audit rows). This was a KNOWN-GAP from
+    -- 2026-08-14 — nothing granted anything on audit_logs, so the write worked
+    -- only because the service still runs on the legacy shared credential, and
+    -- would have started 42501ing the moment DATABASE_URL flipped to
+    -- formmaps_dotnet_svc. The 2026-08-17 production run reported it live
+    -- (expected t, actual f) once the role finally existed;
+    -- dotnet-service-role.sql section 4.6 now grants it.
+    --
+    -- Promoted to hard=true in both directions. The withheld verbs carry more
+    -- weight here than for audit_events: audit_logs has NO RLS and NO
+    -- immutability trigger (005-sensitive.sql's unpolicied list), so this
+    -- grant is the only lock between the service and a rewritable trail.
+    -- #128's acceptance criterion is INSERT-only. SELECT is withheld too --
+    -- no .NET path reads the table and the INSERT does not need it.
+    ('public.audit_logs', 'INSERT', true,  true, 'formmaps#120: SchoolUsersWriter role-change rows (sec 4.6)'),
+    ('public.audit_logs', 'SELECT', false, true, 'withheld: no .NET read path; INSERT needs no SELECT'),
+    ('public.audit_logs', 'UPDATE', false, true, 'formmaps#128: INSERT-only — UPDATE would make the trail rewritable'),
+    ('public.audit_logs', 'DELETE', false, true, 'formmaps#128: INSERT-only — DELETE would let the service erase it')
 )
 SELECT tbl,
        priv,
