@@ -1,0 +1,242 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Bootstrap resources for the FormMaps .NET API PRODUCTION deployment
+  (formmaps#137 follow-on). Creates the two IAM roles the prod deploy needs
+  and nothing else.
+
+# =============================================================================
+# Why this does NOT create an ECR repository
+# -----------------------------------------------------------------------------
+# formmaps-api-staging-bootstrap.yml already creates one, and its name is
+# deliberately environment-NEUTRAL (`formmaps-api`, not `formmaps-api-staging`).
+# Environments are separated by TAG PREFIX, not by repository: staging pushes
+# `staging-<sha>` / `staging-latest`, prod pushes `prod-<sha>` / `prod-latest`.
+# The existing prod image in the account, `prod-20260810-f2ecccfe`, already
+# follows that convention.
+#
+# That is also visible in the staging bootstrap's own lifecycle policy: rule 2
+# expires old images with the `staging-` prefix ONLY, so `prod-`-tagged images
+# are retained indefinitely — which is exactly what you want when the rollback
+# procedure is "redeploy a previous ImageIdentifier". Creating a second
+# repository here would either collide on the name or fragment the image
+# history and silently break that rollback path.
+#
+# The consequence to be aware of: one repository, two writers. The staging
+# deploy role can push `prod-`-prefixed tags if someone changes its workflow,
+# because ECR has no tag-prefix-scoped IAM condition. The separation is a
+# convention enforced by the two workflows, not by IAM. It is called out here
+# so nobody mistakes it for a guarantee.
+#
+# DEPENDENCY: deploy formmaps-api-staging-bootstrap FIRST (or otherwise ensure
+# the `formmaps-api` repository exists). This stack references that repository
+# by constructed ARN and does not create it, so it will deploy successfully
+# even if the repository is missing — the failure would surface later, at
+# `docker push`, which is the wrong time to learn about it.
+# =============================================================================
+
+Parameters:
+  RepositoryName:
+    Type: String
+    Default: formmaps-api
+    Description: >-
+      ECR repository holding FormMaps API images. Must match the staging
+      bootstrap's RepositoryName — this stack references it, never creates it.
+
+  GitHubRepository:
+    Type: String
+    Default: TIMSInternational/formmaps
+    Description: GitHub owner/repository allowed to assume the prod deploy role.
+
+  GitHubRepositorySubject:
+    Type: String
+    Default: TIMSInternational@305569681/formmaps@1301900742
+    Description: >-
+      Immutable GitHub OIDC repository subject (numeric org id + repo id). This
+      repo mints an immutable subject, so a trust policy pinning only the
+      plain-name form never matches. Verify before deploying:
+      gh api repos/<owner>/<repo>/actions/oidc/customization/sub
+
+  ServiceName:
+    Type: String
+    Default: formmaps-api-prod
+    Description: >-
+      Must match the ServiceName used by formmaps-api-prod-service.yml — the
+      instance role it creates is named ${ServiceName}-instance, and the deploy
+      role below is scoped to exactly that name.
+
+  ServiceStackName:
+    Type: String
+    Default: formmaps-api-prod
+    Description: CloudFormation stack name for the prod App Runner service.
+
+Resources:
+  # Role App Runner assumes to pull the private image. Separate from staging's
+  # so that revoking one environment's pull access cannot affect the other.
+  AppRunnerEcrAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: formmaps-apprunner-ecr-access-prod
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: build.apprunner.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess
+      Tags:
+        - Key: Project
+          Value: formmaps
+        - Key: Environment
+          Value: production
+
+  GitHubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: formmaps-github-deploy-prod
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                # ENVIRONMENT-ONLY, deliberately narrower than staging's.
+                #
+                # The staging role also trusts `ref:refs/heads/main`, so a
+                # staging deploy can run without an environment. Prod must not:
+                # the `production` environment IS the approval gate, and a
+                # branch-ref subject is minted by any job on main, including one
+                # in a workflow copy with the `environment:` line deleted.
+                # Pinning environment-only makes the reviewer gate an AWS-side
+                # invariant rather than a GitHub-side convention.
+                #
+                # Both subject forms are pinned because this repo mints an
+                # immutable subject. StringEquals accepts a list, so this needs
+                # no wildcard — do NOT relax it to StringLike.
+                token.actions.githubusercontent.com:sub:
+                  - !Sub repo:${GitHubRepository}:environment:production
+                  - !Sub repo:${GitHubRepositorySubject}:environment:production
+      Policies:
+        - PolicyName: formmaps-prod-deploy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadBootstrapOutputs
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:GetTemplate
+                Resource:
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*
+              - Sid: ManageServiceStack
+                Effect: Allow
+                Action:
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:CreateStack
+                  - cloudformation:DeleteChangeSet
+                  - cloudformation:DescribeChangeSet
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DescribeStacks
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:GetTemplate
+                  - cloudformation:GetTemplateSummary
+                  - cloudformation:UpdateStack
+                  - cloudformation:ValidateTemplate
+                Resource:
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ServiceStackName}/*
+              # No DeleteStack. Prod teardown is not a thing a dispatched
+              # workflow should be able to do, and nothing in the deploy path
+              # needs it.
+              - Sid: PushApiImages
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:CompleteLayerUpload
+                  - ecr:DescribeImages
+                  - ecr:DescribeRepositories
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${RepositoryName}
+              - Sid: GetEcrAuthorizationToken
+                Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              - Sid: ManageAppRunnerService
+                Effect: Allow
+                Action:
+                  - apprunner:DescribeService
+                  - apprunner:ListOperations
+                  - apprunner:ListTagsForResource
+                  - apprunner:StartDeployment
+                  - apprunner:TagResource
+                  - apprunner:UntagResource
+                  - apprunner:UpdateService
+                  - apprunner:CreateService
+                Resource: "*"
+              # apprunner:DeleteService is deliberately absent, for the same
+              # reason as cloudformation:DeleteStack. If the prod service ever
+              # genuinely needs deleting, that is a console/CLI action taken by
+              # a human with their own credentials, not something a dispatch
+              # with an approval can reach.
+              - Sid: ManageAppRunnerInstanceRole
+                Effect: Allow
+                Action:
+                  - iam:CreateRole
+                  - iam:DeleteRolePolicy
+                  - iam:GetRole
+                  - iam:GetRolePolicy
+                  - iam:ListRolePolicies
+                  - iam:PutRolePolicy
+                  - iam:TagRole
+                  - iam:UntagRole
+                  - iam:UpdateAssumeRolePolicy
+                Resource:
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ServiceName}-instance
+              # iam:DeleteRole omitted for the same reason (staging grants it;
+              # prod does not need it, and a deploy that can delete its own
+              # instance role can strip the running service's permissions).
+              - Sid: PassAppRunnerRoles
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !GetAtt AppRunnerEcrAccessRole.Arn
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ServiceName}-instance
+      Tags:
+        - Key: Project
+          Value: formmaps
+        - Key: Environment
+          Value: production
+
+Outputs:
+  EcrRepositoryName:
+    Description: ECR repository name (created by the STAGING bootstrap, shared).
+    Value: !Ref RepositoryName
+
+  EcrRepositoryUri:
+    Description: >-
+      ECR repository URI. Constructed rather than read from the repository
+      resource, because this stack references the repository instead of owning
+      it. Same shape the staging bootstrap outputs.
+    Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RepositoryName}
+
+  AppRunnerEcrAccessRoleArn:
+    Description: Role App Runner uses to pull private ECR images in production.
+    Value: !GetAtt AppRunnerEcrAccessRole.Arn
+
+  GitHubDeployRoleArn:
+    Description: >-
+      Role GitHub Actions assumes through OIDC for prod deploys. Trusts ONLY
+      tokens minted for the `production` environment.
+    Value: !GetAtt GitHubDeployRole.Arn
