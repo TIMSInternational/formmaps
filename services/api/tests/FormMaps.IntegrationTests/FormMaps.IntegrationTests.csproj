@@ -103,6 +103,10 @@
     <EmbeddedResource Include="Assessments\Data\question360-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers token-gated external write rail harness (FM-DOTNET capstone). -->
     <EmbeddedResource Include="Assessments\Data\token-rail-schema.sql" />
+    <!-- The Node/.NET observable-behaviour contract for the formmaps#107 course-plan writes. Duplicated byte for
+         byte in the legacy repo at api/src/__tests__/contracts/; both repos' drivers run every case in it.
+         Verified identical at salvage time: sha256 353d63d89b6e0d985187f13cdf92be8638c47df39a291483cdc9353271828517. -->
+    <EmbeddedResource Include="SchoolStudents\Data\school-admin-course-plan-writes.parity.json" />
     <!-- Schema-only DDL for the Testcontainers gradebook transcript read harness (FM-DOTNET Phase-B). -->
     <EmbeddedResource Include="Gradebook\Data\gradebook-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers school academic-calendar reads harness (FM-DOTNET-047 Phase-B). -->

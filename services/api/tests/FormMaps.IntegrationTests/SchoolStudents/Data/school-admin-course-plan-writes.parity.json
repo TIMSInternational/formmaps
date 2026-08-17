@@ -1,0 +1,383 @@
+{
+  "contract": "formmaps#107 — school-admin course-plan WRITES, Node/.NET observable-behaviour parity",
+  "version": 2,
+  "why": [
+    "Two backends serve these two paths: legacy Node (api/src/routes/school-students.ts:187/209) and .NET",
+    "(services/api/src/FormMaps.Api/Endpoints/SchoolStudentsCoursePlanWriteEndpoints.cs). There is currently NO",
+    "next.config.ts rewrite and NO FORMMAPS_ROUTE_* flag for /api/v1/school-admin/students/*, so every request",
+    "falls through the /api/:path* catch-all to Node and the .NET code is shipped dark. The day someone wires the",
+    "rewrite, the backend behind these paths changes mid-flight for live clients. This file is the single",
+    "definition of what must NOT change when that happens.",
+    "",
+    "THIS FILE IS DUPLICATED, BYTE FOR BYTE, IN BOTH REPOS:",
+    "  monorepo: services/api/tests/FormMaps.IntegrationTests/SchoolStudents/Data/school-admin-course-plan-writes.parity.json",
+    "  legacy:   api/src/__tests__/contracts/school-admin-course-plan-writes.parity.json",
+    "Each repo has a driver test that runs EVERY case below against its own implementation. A change to one",
+    "backend's behaviour reds that backend's driver. A change to this file reds the digest assertion in the repo",
+    "where it was edited, which is the prompt to copy it across. The digest cannot prove the other repo is in",
+    "sync (nothing running in one repo can see the other) — it only makes a one-sided edit loud instead of silent."
+  ],
+  "digest": {
+    "sha256": "b06a5b6ccf866122456d94181e5d0cf7fdb716e1576f0440b4a090da1f49a169",
+    "computedOver": "SHA-256, lowercase hex, of: this file's text, with every CR (0x0D) removed so CRLF and LF checkouts agree, with the one line whose trimmed text starts with the sha256 key itself dropped, and the remaining lines re-joined with a single LF."
+  },
+  "permission": "school:manage",
+  "routes": {
+    "add": {
+      "method": "POST",
+      "path": "/api/v1/school-admin/students/{studentId}/course-plan/courses"
+    },
+    "remove": {
+      "method": "DELETE",
+      "path": "/api/v1/school-admin/students/{studentId}/course-plan/courses/{enrollmentId}"
+    }
+  },
+  "gateOrder": [
+    "identity            -> 401",
+    "permission          -> 403 Insufficient permissions",
+    "studentInCallerScho -> 404 Not found",
+    "body/courseId       -> 400 courseId required",
+    "student has school  -> 400 Student has no school",
+    "current acad. year  -> 400 No current academic year"
+  ],
+  "gateOrderIsLoadBearing": "The 404 gate MUST run before the body check, or a cross-school caller learns from the status code whether their body was even read. Case add_cross_school_empty_body is the pin.",
+  "ids": {
+    "schoolId": "s1",
+    "adminUserId": "admin-1",
+    "adminWithoutSchoolUserId": "admin-noschool",
+    "superAdminUserId": "super-1",
+    "studentInSchool": "stu-s1",
+    "studentOtherSchool": "stu-s2",
+    "studentNoSchool": "stu-none",
+    "enrollmentId": "plan-1",
+    "courseId": "c-1"
+  },
+  "createdRowFields": [
+    "academicYearId",
+    "courseId",
+    "createdBy",
+    "createdDate",
+    "gradeLevel",
+    "id",
+    "isActive",
+    "notes",
+    "schoolId",
+    "sortOrder",
+    "status",
+    "studentId",
+    "term",
+    "updatedAt",
+    "updatedBy"
+  ],
+  "createdRowFieldsNote": "Sorted, and compared as a SET. Both backends return the created plan row raw, with no school_courses enrichment. Field ORDER is deliberately NOT asserted: on the Node side the order comes from the test's Prisma stub rather than from the route, so asserting it would be evidence about the stub, not about the route. v2 (2026-08-17) added gradeLevel: formmaps#122 gave BOTH backends a planned-grade column on this write (legacy api/src/routes/school-students.ts:203,209 via parsePlannedGradeLevel; .NET StudentCoursePlanRow.GradeLevel), so the 14-field v1 set was stale on both sides. It stayed green on the Node side only because that driver stubs Prisma and the stub was frozen at v1 - the .NET driver, which serialises the real record, is what caught it.",
+  "actors": {
+    "anonymous": "no credentials at all",
+    "admin_no_permission": "authenticated school_admin WITHOUT school:manage",
+    "admin": "school_admin with school:manage, own schoolId = ids.schoolId",
+    "admin_without_school": "school_admin with school:manage whose own user row has schoolId null",
+    "super_admin": "raw role string \"Super Admin\", no schoolId of their own"
+  },
+  "students": {
+    "in_school": "belongs to ids.schoolId",
+    "other_school": "belongs to some other school",
+    "no_school": "exists but has schoolId null"
+  },
+  "worldDefaults": {
+    "currentAcademicYear": true,
+    "planRowExists": true
+  },
+  "expectWriteValues": {
+    "none": "the create/delete collaborator must NOT have been invoked at all",
+    "create": "create invoked exactly once with expect.create",
+    "delete": "delete invoked exactly once with expect.delete",
+    "unspecified": "no assertion — the two stacks put this check on different sides of the collaborator boundary (Node checks in the route before calling Prisma; .NET checks inside the writer), so only the HTTP result is comparable"
+  },
+  "cases": [
+    {
+      "id": "add_anonymous_is_401",
+      "route": "add",
+      "actor": "anonymous",
+      "student": "in_school",
+      "body": { "courseId": "c-1" },
+      "expect": { "status": 401, "message": null, "write": "none" }
+    },
+    {
+      "id": "add_without_school_manage_is_403",
+      "route": "add",
+      "actor": "admin_no_permission",
+      "student": "in_school",
+      "body": { "courseId": "c-1" },
+      "expect": { "status": 403, "message": "Insufficient permissions", "write": "none" }
+    },
+    {
+      "id": "add_cross_school_is_404",
+      "route": "add",
+      "actor": "admin",
+      "student": "other_school",
+      "body": { "courseId": "c-1" },
+      "expect": { "status": 404, "message": "Not found", "write": "none" }
+    },
+    {
+      "id": "add_cross_school_empty_body_is_404_not_400",
+      "route": "add",
+      "actor": "admin",
+      "student": "other_school",
+      "body": {},
+      "expect": { "status": 404, "message": "Not found", "write": "none" }
+    },
+    {
+      "id": "add_caller_without_a_school_is_404",
+      "route": "add",
+      "actor": "admin_without_school",
+      "student": "in_school",
+      "body": { "courseId": "c-1" },
+      "expect": { "status": 404, "message": "Not found", "write": "none" }
+    },
+    {
+      "id": "add_student_without_a_school_is_404_for_a_school_admin",
+      "route": "add",
+      "actor": "admin",
+      "student": "no_school",
+      "body": { "courseId": "c-1" },
+      "expect": { "status": 404, "message": "Not found", "write": "none" }
+    },
+    {
+      "id": "add_super_admin_bypasses_the_school_gate",
+      "route": "add",
+      "actor": "super_admin",
+      "student": "other_school",
+      "body": { "courseId": "c-1" },
+      "expect": {
+        "status": 201,
+        "message": null,
+        "write": "create",
+        "create": { "studentId": "stu-s2", "courseId": "c-1", "term": null, "createdBy": "super-1" }
+      }
+    },
+    {
+      "id": "add_super_admin_student_without_a_school_is_400",
+      "route": "add",
+      "actor": "super_admin",
+      "student": "no_school",
+      "body": { "courseId": "c-1" },
+      "expect": { "status": 400, "message": "Student has no school", "write": "unspecified" }
+    },
+    {
+      "id": "add_without_a_current_academic_year_is_400",
+      "route": "add",
+      "actor": "admin",
+      "student": "in_school",
+      "world": { "currentAcademicYear": false },
+      "body": { "courseId": "c-1" },
+      "expect": { "status": 400, "message": "No current academic year", "write": "unspecified" }
+    },
+    {
+      "id": "add_absent_courseId_is_400",
+      "route": "add",
+      "actor": "admin",
+      "student": "in_school",
+      "body": {},
+      "expect": { "status": 400, "message": "courseId required", "write": "none" }
+    },
+    {
+      "id": "add_no_body_at_all_is_400",
+      "route": "add",
+      "actor": "admin",
+      "student": "in_school",
+      "body": null,
+      "expect": { "status": 400, "message": "courseId required", "write": "none" }
+    },
+    {
+      "id": "add_null_courseId_is_400",
+      "route": "add",
+      "actor": "admin",
+      "student": "in_school",
+      "body": { "courseId": null },
+      "expect": { "status": 400, "message": "courseId required", "write": "none" }
+    },
+    {
+      "id": "add_empty_string_courseId_is_400",
+      "route": "add",
+      "actor": "admin",
+      "student": "in_school",
+      "body": { "courseId": "" },
+      "expect": { "status": 400, "message": "courseId required", "write": "none" }
+    },
+    {
+      "id": "add_zero_courseId_is_400",
+      "route": "add",
+      "actor": "admin",
+      "student": "in_school",
+      "body": { "courseId": 0 },
+      "expect": { "status": 400, "message": "courseId required", "write": "none" }
+    },
+    {
+      "id": "add_false_courseId_is_400",
+      "route": "add",
+      "actor": "admin",
+      "student": "in_school",
+      "body": { "courseId": false },
+      "expect": { "status": 400, "message": "courseId required", "write": "none" }
+    },
+    {
+      "id": "add_semester_wins_over_term",
+      "route": "add",
+      "actor": "admin",
+      "student": "in_school",
+      "body": { "courseId": "c-1", "semester": "Spring", "term": "Fall" },
+      "expect": {
+        "status": 201,
+        "message": null,
+        "write": "create",
+        "create": { "studentId": "stu-s1", "courseId": "c-1", "term": "Spring", "createdBy": "admin-1" }
+      }
+    },
+    {
+      "id": "add_empty_semester_falls_back_to_term",
+      "route": "add",
+      "actor": "admin",
+      "student": "in_school",
+      "body": { "courseId": "c-1", "semester": "", "term": "Fall" },
+      "expect": {
+        "status": 201,
+        "message": null,
+        "write": "create",
+        "create": { "studentId": "stu-s1", "courseId": "c-1", "term": "Fall", "createdBy": "admin-1" }
+      }
+    },
+    {
+      "id": "add_term_is_used_when_semester_is_absent",
+      "route": "add",
+      "actor": "admin",
+      "student": "in_school",
+      "body": { "courseId": "c-1", "term": "Fall" },
+      "expect": {
+        "status": 201,
+        "message": null,
+        "write": "create",
+        "create": { "studentId": "stu-s1", "courseId": "c-1", "term": "Fall", "createdBy": "admin-1" }
+      }
+    },
+    {
+      "id": "add_neither_semester_nor_term_writes_null",
+      "route": "add",
+      "actor": "admin",
+      "student": "in_school",
+      "body": { "courseId": "c-1" },
+      "expect": {
+        "status": 201,
+        "message": null,
+        "write": "create",
+        "create": { "studentId": "stu-s1", "courseId": "c-1", "term": null, "createdBy": "admin-1" }
+      }
+    },
+    {
+      "id": "add_happy_returns_the_raw_created_row",
+      "route": "add",
+      "actor": "admin",
+      "student": "in_school",
+      "body": { "courseId": "c-1", "semester": "Fall" },
+      "expect": {
+        "status": 201,
+        "message": null,
+        "write": "create",
+        "create": { "studentId": "stu-s1", "courseId": "c-1", "term": "Fall", "createdBy": "admin-1" },
+        "envelope": "success_true_with_created_row"
+      }
+    },
+    {
+      "id": "remove_anonymous_is_401",
+      "route": "remove",
+      "actor": "anonymous",
+      "student": "in_school",
+      "expect": { "status": 401, "message": null, "write": "none" }
+    },
+    {
+      "id": "remove_without_school_manage_is_403",
+      "route": "remove",
+      "actor": "admin_no_permission",
+      "student": "in_school",
+      "expect": { "status": 403, "message": "Insufficient permissions", "write": "none" }
+    },
+    {
+      "id": "remove_cross_school_is_404_even_though_the_row_exists",
+      "route": "remove",
+      "actor": "admin",
+      "student": "other_school",
+      "expect": { "status": 404, "message": "Not found", "write": "none" }
+    },
+    {
+      "id": "remove_caller_without_a_school_is_404",
+      "route": "remove",
+      "actor": "admin_without_school",
+      "student": "in_school",
+      "expect": { "status": 404, "message": "Not found", "write": "none" }
+    },
+    {
+      "id": "remove_happy_is_200_and_binds_the_delete_to_the_student",
+      "route": "remove",
+      "actor": "admin",
+      "student": "in_school",
+      "expect": {
+        "status": 200,
+        "message": null,
+        "write": "delete",
+        "delete": { "studentId": "stu-s1", "enrollmentId": "plan-1" },
+        "envelope": "success_true_only"
+      }
+    },
+    {
+      "id": "remove_nothing_matched_is_404",
+      "route": "remove",
+      "actor": "admin",
+      "student": "in_school",
+      "world": { "planRowExists": false },
+      "expect": { "status": 404, "message": "Not found", "write": "unspecified" }
+    },
+    {
+      "id": "remove_super_admin_bypasses_the_school_gate",
+      "route": "remove",
+      "actor": "super_admin",
+      "student": "other_school",
+      "expect": {
+        "status": 200,
+        "message": null,
+        "write": "delete",
+        "delete": { "studentId": "stu-s2", "enrollmentId": "plan-1" },
+        "envelope": "success_true_only"
+      }
+    }
+  ],
+  "antiLever": "remove_happy and remove_super_admin both assert the delete carries the studentId from the URL. Without that predicate an admin who can reach ONE student could delete any plan row in the system by guessing its id, because the 404 gate only ever checks the student.",
+  "sanctionedDivergences": [
+    {
+      "id": "error_envelope_code_field",
+      "severity": "cosmetic",
+      "what": ".NET adds a `code` field to its 401/403 bodies (missing_identity / missing_permission); Node emits only { success, message }.",
+      "why_not_driven": "Additive, global to every ported .NET endpoint, and non-breaking for a client that reads success/message. The cases above therefore assert status for 401 and status+message for 403, and never assert the absence of extra fields on an error body."
+    },
+    {
+      "id": "unauthenticated_message_text",
+      "severity": "cosmetic",
+      "what": "Node 401 says \"No token provided\" / \"Invalid or expired token\"; .NET says \"Authenticated identity is required.\"",
+      "why_not_driven": "The 401 cases pin status only (message: null)."
+    },
+    {
+      "id": "malformed_json_ordering",
+      "severity": "low",
+      "what": "Node mounts express.json() app-wide, so a malformed body throws BEFORE auth: an anonymous caller sending `{bad` gets 500 from Node and 401 from .NET. Authenticated, both 500.",
+      "why_not_driven": ".NET's ordering is strictly safer (it leaks nothing to an unauthenticated caller), so pinning Node's is not wanted. Documented so nobody files it as a regression."
+    },
+    {
+      "id": "non_string_semester_or_term",
+      "severity": "low",
+      "what": "A non-string semester/term (e.g. the number 5) reaches Prisma's String? validation in Node and 500s; .NET treats a non-string as absent and writes NULL, returning 201.",
+      "why_not_driven": "Unreachable from the UI (coursePlanService.ts types both as string). This is the one divergence where .NET SUCCEEDS where Node FAILS, so a flip turns an error into a write — worth knowing, not worth freezing Node's 500 into a contract."
+    }
+  ],
+  "notDrivenHere": [
+    "The plan row is stamped with the STUDENT's schoolId, never the caller's (a Super Admin has none, and a row carrying the wrong school is invisible to the reader, which filters on studentId+schoolId+academicYearId). Node: pinned in school-students-course-plan-writes.test.ts. .NET: pinned in SchoolStudentsCoursePlanWriterTests.Create_uses_the_students_school_not_the_callers.",
+    "Column defaults on INSERT (status 'planned', sortOrder 0, isActive true, notes null). Node gets them from Prisma's schema defaults; .NET writes them as SQL literals. Same reason — one side's assertion lives below the collaborator boundary these drivers stub out.",
+    "RLS. Neither driver exercises a policy. The .NET writer's Testcontainers fixture connects as a superuser, where policies do not bind at all; do not cite it as proof the writes are RLS-safe."
+  ]
+}
