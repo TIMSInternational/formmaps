@@ -75,6 +75,13 @@
 #       exists.
 #   * verify-grants.sql           read-only catalog checks plus one INSERT
 #       probe that is always rolled back; safe to run repeatedly.
+#   * 360-invitation-recovery.sql READ-ONLY diagnostics (15 SELECTs, zero
+#       mutating statements, zero transaction control — checked, not assumed).
+#       MUST run in --verify mode, and the workflow routes it there. Its whole
+#       design is that each statement stands alone: if one query names a column
+#       production turns out not to have, the rest must still run and still
+#       produce numbers. Under --single-transaction with ON_ERROR_STOP the
+#       first such query aborts the file and the run tells you nothing.
 #
 # No file is ever applied that was not explicitly named — this script takes
 # exactly one filename, and the workflow refuses globs and directories. The

@@ -276,9 +276,22 @@ jobs:
           set -euo pipefail
           for f in $FILES; do
             mode=apply
-            # verify-grants.sql manages its own transaction/probe; run it in
-            # verify mode even when someone lists it for a verify-only run.
-            [ "$f" = "verify-grants.sql" ] && mode=verify
+            # "verify" mode means: no --single-transaction. Two different
+            # reasons a file needs it, and neither is about writing:
+            #
+            #   verify-grants.sql          manages its own BEGIN/ROLLBACK probe.
+            #   360-invitation-recovery.sql is read-only diagnostics whose whole
+            #     design is that each statement stands alone — if one query
+            #     references a column production turns out not to have, the
+            #     REST must still run and still produce numbers. Under
+            #     --single-transaction with ON_ERROR_STOP the first such query
+            #     aborts the file and you learn nothing.
+            #
+            # Both are read-only, so dropping the transaction wrapper costs no
+            # atomicity. Do NOT add a file here that writes.
+            case "$f" in
+              verify-grants.sql|360-invitation-recovery.sql) mode=verify ;;
+            esac
             echo ""
             echo "=============================================================="
             echo ">>> ${mode}: ${f}"
