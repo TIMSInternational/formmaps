@@ -14,13 +14,13 @@
 #
 #   1. APPROVAL GATE, VERIFIED FAIL-CLOSED. Same pattern as
 #      formmaps-sql-apply.yml: the FIRST step, before any AWS action, queries
-#      the `production` environment's protection rules and hard-fails unless a
+#      the `production-api` environment's protection rules and hard-fails unless a
 #      required_reviewers rule provably exists — and also fails when the API
 #      call itself errors, because "cannot verify the gate" must never degrade
 #      into "deploy anyway". GitHub auto-creates a missing environment WITHOUT
 #      protection rules, so without this a first dispatch would sail through
 #      unapproved. The bootstrap's IAM trust policy pins
-#      :sub to environment:production as the AWS-side half of the same
+#      :sub to environment:production-api as the AWS-side half of the same
 #      invariant.
 #
 #   2. EVERY REQUIRED INPUT IS VALIDATED BEFORE THE BUILD. Staging validated
@@ -63,7 +63,7 @@ on:
 permissions:
   contents: read
   id-token: write # mint the OIDC token that assumes formmaps-github-deploy-prod
-  actions: read # read the production environment's protection rules
+  actions: read # read the production-api environment's protection rules
 
 concurrency:
   group: formmaps-api-prod-deploy
@@ -80,7 +80,7 @@ jobs:
     name: Deploy production API
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    environment: production
+    environment: production-api
 
     steps:
       # ---------------------------------------------------------------------
@@ -91,15 +91,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if ! resp="$(gh api "repos/${GITHUB_REPOSITORY}/environments/production" 2>&1)"; then
-            echo "::error::Could not read protection rules for environment 'production' (API said: ${resp}). Failing CLOSED: without proof that required reviewers are configured, this run cannot be distinguished from a dispatch against an auto-created, unprotected environment. Create the environment (Settings -> Environments -> production) with required reviewers AND a main-only deployment branch policy, then re-run."
+          if ! resp="$(gh api "repos/${GITHUB_REPOSITORY}/environments/production-api" 2>&1)"; then
+            echo "::error::Could not read protection rules for environment 'production-api' (API said: ${resp}). Failing CLOSED: without proof that required reviewers are configured, this run cannot be distinguished from a dispatch against an auto-created, unprotected environment. Create the environment (Settings -> Environments -> production-api) with required reviewers AND a main-only deployment branch policy, then re-run."
             exit 1
           fi
           if ! printf '%s' "$resp" | jq -e '[.protection_rules[]?.type] | index("required_reviewers") != null' >/dev/null; then
-            echo "::error::Environment 'production' has NO required_reviewers protection rule — it was probably auto-created by a dispatch instead of being set up first. Refusing to touch AWS or build an image. Add required reviewers AND a main-only deployment branch policy, then re-run. See docs/migration/prod-api-deploy-runbook.md."
+            echo "::error::Environment 'production-api' has NO required_reviewers protection rule — it was probably auto-created by a dispatch instead of being set up first. Refusing to touch AWS or build an image. Add required reviewers AND a main-only deployment branch policy, then re-run. See docs/migration/prod-api-deploy-runbook.md."
             exit 1
           fi
-          echo "production has a required_reviewers protection rule — approval gate verified."
+          echo "production-api has a required_reviewers protection rule — approval gate verified."
 
       # ---------------------------------------------------------------------
       # SECOND: every required input, checked before a single expensive step.
@@ -124,19 +124,19 @@ jobs:
             exit 1
           fi
           : "${AWS_ACCOUNT_ID:?Set repo variable AWS_ACCOUNT_ID.}"
-          : "${JWT_SECRET_ARN:?Set FORMMAPS_PROD_JWT_SECRET_ARN in the production environment.}"
-          : "${DATABASE_URL_SECRET_ARN:?Set FORMMAPS_PROD_DATABASE_URL_SECRET_ARN in the production environment.}"
-          : "${DAILY_API_KEY_SECRET_ARN:?Set FORMMAPS_PROD_DAILY_API_KEY_SECRET_ARN in the production environment.}"
+          : "${JWT_SECRET_ARN:?Set FORMMAPS_PROD_JWT_SECRET_ARN in the production-api environment.}"
+          : "${DATABASE_URL_SECRET_ARN:?Set FORMMAPS_PROD_DATABASE_URL_SECRET_ARN in the production-api environment.}"
+          : "${DAILY_API_KEY_SECRET_ARN:?Set FORMMAPS_PROD_DAILY_API_KEY_SECRET_ARN in the production-api environment.}"
           # LIVE Stripe keys here, unlike staging — this service serves real
           # customers. StartupEnvironmentValidator requires both, so a missing
           # one is a boot failure, not a degraded mode.
-          : "${STRIPE_SECRET_KEY_ARN:?Set FORMMAPS_PROD_STRIPE_SECRET_KEY_ARN in the production environment (ARN of the LIVE Stripe secret key).}"
+          : "${STRIPE_SECRET_KEY_ARN:?Set FORMMAPS_PROD_STRIPE_SECRET_KEY_ARN in the production-api environment (ARN of the LIVE Stripe secret key).}"
           # NOTE: this must be the signing secret of the SECOND Stripe endpoint,
           # the one pointing at .NET — NOT the legacy Node endpoint's. Stripe
           # issues a distinct secret per endpoint, so reusing Node's makes .NET
           # reject every event as an invalid signature and the #44 shadow soak
           # silently stays empty. See formmaps#43.
-          : "${STRIPE_WEBHOOK_SECRET_ARN:?Set FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN in the production environment (signing secret of the .NET Stripe endpoint, formmaps#43 — NOT the legacy Node endpoint).}"
+          : "${STRIPE_WEBHOOK_SECRET_ARN:?Set FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN in the production-api environment (signing secret of the .NET Stripe endpoint, formmaps#43 — NOT the legacy Node endpoint).}"
           # The CORS origin has no safe default. formmaps-api-prod-service.yml
           # ships ProdWebOrigin=https://app.formmaps.ai and
           # FrontendBaseUrl=https://app.formmaps.com — two different hosts, and
