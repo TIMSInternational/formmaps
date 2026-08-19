@@ -17,18 +17,41 @@ Wave-2 retires were all "merged" and none of them were running.
 
 ## One-time setup (none of this is done by the workflow)
 
-### 1. The `production` GitHub environment
+### 1. The `production-api` GitHub environment
 
 **Create it before the first dispatch.** GitHub auto-creates a missing
 environment *without* protection rules, so a dispatch against a nonexistent
-`production` would deploy with no approval at all. The workflow's first step
+`production-api` would deploy with no approval at all. The workflow's first step
 checks for a `required_reviewers` rule via the API and fails closed if it is
 absent or unreadable — but that is a backstop, not a substitute.
 
-Settings → Environments → **production**:
+Settings → Environments → **production-api**:
 
 - **Required reviewers** — at least one.
 - **Deployment branches** — `main` only.
+
+#### ⚠️ Why `production-api` and not `production`
+
+**GitHub environment names are not case sensitive**, and this repo already has a
+`Production` environment — **Vercel's**, with live frontend deployments. So
+`production` and `Production` are the *same* environment, and an earlier plan to
+"create the `production` environment" would instead have attached a required-
+reviewers gate to the environment Vercel deploys the frontend through. GitHub
+documents protection rules as applying to "a job that references an
+environment" and does not say whether deployments created through the REST
+Deployments API — which is how Vercel creates them — are gated too. Not a
+question worth answering on the production frontend.
+
+A distinct all-lowercase name avoids that collision and a second one: the
+bootstrap trust policy pins `:sub` with **`StringEquals`**, and IAM string
+conditions **are** case sensitive. A `Production` environment mints
+`…:environment:Production`, which would never match a lowercase condition — and
+that failure lands *after* a reviewer approval has been spent.
+
+`production-api` follows the convention `production-sql` already established
+here. If you rename it, change all four places together: this workflow's
+`environment:`, its gate's API path, and **both** `:sub` values in
+`infra/aws/formmaps-api-prod-bootstrap.yml`.
 
 ### 2. Bootstrap stack
 
@@ -59,7 +82,7 @@ immutable form. Trust the prefix field. The bootstrap pins both forms.
 
 ### 3. Environment secrets and variables
 
-Secrets, on the **production** environment:
+Secrets, on the **production-api** environment:
 
 | Secret | Notes |
 |---|---|
@@ -94,7 +117,7 @@ Confirm the real Vercel production domain and set it before dispatching.
 ## Deploying
 
 Actions → **formmaps-api-prod-deploy** → Run workflow → type
-`deploy-to-production` → Run. Then approve at the `production` gate.
+`deploy-to-production` → Run. Then approve at the `production-api` gate.
 
 What happens, in order — the first two steps run before anything expensive:
 

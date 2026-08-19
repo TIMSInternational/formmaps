@@ -109,7 +109,7 @@ Resources:
                 #
                 # The staging role also trusts `ref:refs/heads/main`, so a
                 # staging deploy can run without an environment. Prod must not:
-                # the `production` environment IS the approval gate, and a
+                # the `production-api` environment IS the approval gate, and a
                 # branch-ref subject is minted by any job on main, including one
                 # in a workflow copy with the `environment:` line deleted.
                 # Pinning environment-only makes the reviewer gate an AWS-side
@@ -119,8 +119,8 @@ Resources:
                 # immutable subject. StringEquals accepts a list, so this needs
                 # no wildcard — do NOT relax it to StringLike.
                 token.actions.githubusercontent.com:sub:
-                  - !Sub repo:${GitHubRepository}:environment:production
-                  - !Sub repo:${GitHubRepositorySubject}:environment:production
+                  - !Sub repo:${GitHubRepository}:environment:production-api
+                  - !Sub repo:${GitHubRepositorySubject}:environment:production-api
       Policies:
         - PolicyName: formmaps-prod-deploy
           PolicyDocument:
@@ -238,5 +238,5 @@ Outputs:
   GitHubDeployRoleArn:
     Description: >-
       Role GitHub Actions assumes through OIDC for prod deploys. Trusts ONLY
-      tokens minted for the `production` environment.
+      tokens minted for the `production-api` environment.
     Value: !GetAtt GitHubDeployRole.Arn
