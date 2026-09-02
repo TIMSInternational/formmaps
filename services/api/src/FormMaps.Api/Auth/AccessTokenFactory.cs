@@ -16,14 +16,19 @@ public sealed record AccessTokenClaims(
 /// with the full claim shape (name/email/schoolId/permissions) and the configurable session TTL,
 /// not the 30s hub-ticket TTL.
 ///
-/// The "permissions" claim is written as a single claim whose value is a JSON-serialized string
-/// array (e.g. <c>["a","b"]</c>), NOT System.IdentityModel.Tokens.Jwt's JsonClaimValueTypes.JsonArray
-/// value type. This matches exactly what LegacyJwtRequestContextFactory.ParsePermissionClaim already
-/// parses from Node-issued tokens (a value starting with '[' is JSON-array-deserialized; anything
-/// else is treated as one literal permission) -- see LegacyJwtRequestContextFactoryTests, which pins
-/// both a JSON-array-string single claim and repeated single-value claims as already-supported
-/// shapes. A token from this factory MUST validate unchanged through LegacyJwtRequestContextFactory
-/// -- see AccessTokenFactoryTests for the enforced round-trip.
+/// The "permissions" claim is written with JsonClaimValueTypes.JsonArray so the wire payload carries a
+/// real JSON array -- <c>"permissions":["a","b"]</c> -- which is byte-for-byte the shape Node's
+/// <c>jwt.sign({ permissions: string[] })</c> produces (legacy lib/auth.ts generateAccessToken). That
+/// direction is the one that matters: after FORMMAPS_ROUTE_AUTH_TO_DOTNET flips, every route still
+/// owned by Node validates THIS token, and Node's authenticate middleware assigns the claim straight to
+/// <c>req.permissions</c> and calls <c>.includes(permission)</c> on it. Written as a plain string claim
+/// (the previous shape) that became a substring test over <c>"[\"a\",\"b\"]"</c> and a string
+/// leaked to the SPA through GET /api/v1/user/me where a string[] is expected. On the .NET read side
+/// JwtSecurityTokenHandler expands the array into repeated single-value "permissions" claims, which
+/// LegacyJwtRequestContextFactory.ParsePermissionClaim already accepts (see
+/// LegacyJwtRequestContextFactoryTests). A token from this factory MUST validate unchanged through
+/// LegacyJwtRequestContextFactory AND decode to a JSON array on the wire -- both are enforced by
+/// AccessTokenFactoryTests.
 /// </summary>
 public sealed class AccessTokenFactory(IOptions<LegacyJwtOptions> options)
 {
@@ -62,7 +67,7 @@ public sealed class AccessTokenFactory(IOptions<LegacyJwtOptions> options)
                 new Claim("email", claims.Email),
                 new Claim("role", claims.Role),
                 new Claim("schoolId", claims.SchoolId),
-                new Claim("permissions", permissionsJson),
+                new Claim("permissions", permissionsJson, JsonClaimValueTypes.JsonArray),
             ],
             notBefore: now,
             expires: now.AddSeconds(ExpiresInSeconds),
