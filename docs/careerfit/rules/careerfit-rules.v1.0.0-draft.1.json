@@ -1,0 +1,3452 @@
+{
+  "format_version": 1,
+  "rules_version": "1.0.0-draft.1",
+  "status": "DRAFT_PENDING_TIMS_RATIFICATION",
+  "model_version_basis": "1.0.0-expert-prior",
+  "derived_from": {
+    "workbook": {
+      "file": "FORMMAPS_Matriz_Maestra_Logica_Implementacion_V1.xlsx",
+      "sha256": "a2a1dc738be72ec34e24a1a52e7fa5386cb1ccc41f3279a8fa973b1e7d5ab9e5"
+    },
+    "model_config": {
+      "file": "formmaps_model_config_v1.json",
+      "sha256": "68206816a653cc5061f0badcc7e25e34dc2fac70665a8af50b6906892746b735"
+    },
+    "builder": "tools/careerfit/build_rules.py",
+    "reproduce": "python3 tools/careerfit/build_rules.py --check"
+  },
+  "weights": {
+    "career_fit": {
+      "MIL": 0.25,
+      "PCA": 0.3,
+      "PERSONALITY": 0.15,
+      "VOCATIONAL_360": 0.3
+    },
+    "pca_internal": {
+      "DISC": 0.5,
+      "COMPETENCIES": 0.5
+    },
+    "v360_sources": {
+      "SELF": 0.35,
+      "PARENT": 0.25,
+      "TEACHER": 0.25,
+      "PEER": 0.15
+    },
+    "relevance": {
+      "CENTRAL": 3,
+      "IMPORTANT": 2,
+      "NOT_USED": 0
+    },
+    "mil_role": {
+      "CRITICAL": 3,
+      "IMPORTANT": 2,
+      "COMPLEMENTARY": 1,
+      "NOT_USED": 0
+    },
+    "competency_role": {
+      "CRITICAL": 3,
+      "IMPORTANT": 2,
+      "COMPLEMENTARY": 0
+    }
+  },
+  "thresholds": {
+    "mil_bands": [
+      {
+        "name": "INSUFFICIENT",
+        "min": 1,
+        "max": 17
+      },
+      {
+        "name": "LOW",
+        "min": 18,
+        "max": 37
+      },
+      {
+        "name": "ADEQUATE",
+        "min": 38,
+        "max": 56
+      },
+      {
+        "name": "EXCEEDS",
+        "min": 57,
+        "max": 81
+      },
+      {
+        "name": "EXCEPTIONAL",
+        "min": 82,
+        "max": 99
+      }
+    ],
+    "convergence": {
+      "strong_min": 70,
+      "partial_min": 55,
+      "per_instrument": {
+        "PCA": {
+          "strong_min": 88,
+          "partial_min": 85,
+          "provenance": "SIMULATED"
+        },
+        "MIL": {
+          "strong_min": 57,
+          "partial_min": 38,
+          "provenance": "04_MIL_LOGICA section B bands"
+        },
+        "PERSONALITY": {
+          "strong_min": 65,
+          "partial_min": 60,
+          "provenance": "SIMULATED"
+        },
+        "360": {
+          "strong_min": 63,
+          "partial_min": 57,
+          "provenance": "SIMULATED"
+        }
+      }
+    },
+    "v360_consensus": {
+      "high_min": 70,
+      "medium_min": 40
+    },
+    "v360_confidence": {
+      "consensus_weight": 0.7,
+      "coverage_weight": 0.3,
+      "high_min": 75,
+      "medium_min": 55
+    },
+    "absolute_reference": {
+      "mean": 67.15,
+      "sd": 4.49,
+      "p1": 56.9,
+      "p5": 59.5,
+      "p25": 64.1,
+      "p50": 67.3,
+      "p75": 70.3,
+      "p95": 74.5,
+      "p99": 76.9,
+      "matched_mean": 74.14,
+      "unmatched_mean": 66.61,
+      "youden_cut": 70.9,
+      "provenance": "SIMULATED coherence 0.75, seed 20260902"
+    },
+    "derivation": "Spec pair (14_GATES_CONVERG B) retained for reference-engine parity; under it PCA reads STRONG for 100% of matched and 95% of unmatched families (competency attainment saturates at ~98/93), MIL reads STRONG for 12%/9% (no family signal), 360 for 35%/2%. per_instrument recut with tools/careerfit/recut_thresholds.py; SIMULATED values are calibrated to the regression generator and must be re-cut on a real cohort (FM-CF-014)."
+  },
+  "pca": {
+    "qualifier_mapping": {
+      "Activo": {
+        "direction": "ACTIVE",
+        "weight": 2
+      },
+      "Pasivo": {
+        "direction": "PASSIVE",
+        "weight": 2
+      },
+      "Pasivo fuerte": {
+        "direction": "PASSIVE",
+        "weight": 3
+      },
+      "Activo/medio": {
+        "direction": "ACTIVE",
+        "weight": 1
+      },
+      "Pasivo/medio": {
+        "direction": "PASSIVE",
+        "weight": 1
+      },
+      "Neutral / cercano a 50": {
+        "direction": "NEUTRAL",
+        "weight": 3
+      },
+      "Neutral/medio": {
+        "direction": "NEUTRAL",
+        "weight": 2
+      },
+      "Neutral/activo": {
+        "direction": "NEUTRAL",
+        "weight": 1
+      }
+    },
+    "match_formulas": {
+      "ACTIVE": "match = score",
+      "PASSIVE": "match = 100 - score",
+      "NEUTRAL": "match = max(0, 100 - 2*abs(score-50))",
+      "OPEN": "weight = 0; exclude from denominator"
+    },
+    "family_fit": "MAX(route_fits)",
+    "archetypes": {
+      "ASESOR": {
+        "factors": {
+          "D": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "I": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "S": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "C": {
+            "direction": "NEUTRAL",
+            "weight": 3,
+            "source_text": "Neutral / cercano a 50"
+          }
+        },
+        "vocational_use": "Relacional, apoyo, orientación",
+        "source": "Manual DISC p.14; patrón visual",
+        "referenced_by_families": [
+          4,
+          6,
+          7,
+          8,
+          9,
+          11,
+          12,
+          13
+        ]
+      },
+      "CALL_CENTER": {
+        "factors": {
+          "D": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "I": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "S": {
+            "direction": "PASSIVE",
+            "weight": 1,
+            "source_text": "Pasivo/medio"
+          },
+          "C": {
+            "direction": "ACTIVE",
+            "weight": 1,
+            "source_text": "Activo/medio"
+          }
+        },
+        "vocational_use": "Interacción rápida, servicio, respuesta",
+        "source": "Manual DISC p.14; patrón visual",
+        "referenced_by_families": []
+      },
+      "INVESTIGADOR": {
+        "factors": {
+          "D": {
+            "direction": "ACTIVE",
+            "weight": 1,
+            "source_text": "Activo/medio"
+          },
+          "I": {
+            "direction": "PASSIVE",
+            "weight": 3,
+            "source_text": "Pasivo fuerte"
+          },
+          "S": {
+            "direction": "PASSIVE",
+            "weight": 1,
+            "source_text": "Pasivo/medio"
+          },
+          "C": {
+            "direction": "NEUTRAL",
+            "weight": 1,
+            "source_text": "Neutral/activo"
+          }
+        },
+        "vocational_use": "Análisis, profundidad, autonomía",
+        "source": "Manual DISC p.14; patrón visual",
+        "referenced_by_families": [
+          1,
+          2,
+          3,
+          7,
+          8,
+          9,
+          12,
+          13
+        ]
+      },
+      "VENDEDOR_TECNICO": {
+        "factors": {
+          "D": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "I": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "S": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "C": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          }
+        },
+        "vocational_use": "Persuasión + conocimiento técnico",
+        "source": "Manual DISC p.14",
+        "referenced_by_families": []
+      },
+      "JEFE_TECNICO": {
+        "factors": {
+          "D": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "I": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "S": {
+            "direction": "PASSIVE",
+            "weight": 1,
+            "source_text": "Pasivo/medio"
+          },
+          "C": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          }
+        },
+        "vocational_use": "Dirección técnica / decisiones",
+        "source": "Manual DISC p.14",
+        "referenced_by_families": [
+          1,
+          10,
+          14
+        ]
+      },
+      "ADMINISTRATIVO": {
+        "factors": {
+          "D": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "I": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "S": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "C": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          }
+        },
+        "vocational_use": "Orden, continuidad, seguimiento",
+        "source": "Manual DISC p.14",
+        "referenced_by_families": [
+          3,
+          4,
+          14
+        ]
+      },
+      "TECNICO": {
+        "factors": {
+          "D": {
+            "direction": "NEUTRAL",
+            "weight": 2,
+            "source_text": "Neutral/medio"
+          },
+          "I": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "S": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "C": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          }
+        },
+        "vocational_use": "Precisión, estabilidad, calidad",
+        "source": "Manual DISC p.14",
+        "referenced_by_families": [
+          1,
+          2,
+          3,
+          8,
+          10,
+          14
+        ]
+      },
+      "DIRECTOR": {
+        "factors": {
+          "D": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "I": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "S": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "C": {
+            "direction": "NEUTRAL",
+            "weight": 2,
+            "source_text": "Neutral/medio"
+          }
+        },
+        "vocational_use": "Dirección, decisión, movilización",
+        "source": "Manual DISC p.14",
+        "referenced_by_families": [
+          1,
+          3,
+          4,
+          5,
+          9
+        ]
+      },
+      "COMERCIAL_TECNICO": {
+        "factors": {
+          "D": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "I": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "S": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "C": {
+            "direction": "NEUTRAL",
+            "weight": 1,
+            "source_text": "Neutral/activo"
+          }
+        },
+        "vocational_use": "Negocio + producto/solución técnica",
+        "source": "Manual DISC p.14",
+        "referenced_by_families": [
+          4,
+          5,
+          6,
+          9,
+          11
+        ]
+      },
+      "SERVICIO_CLIENTE": {
+        "factors": {
+          "D": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "I": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "S": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "C": {
+            "direction": "NEUTRAL",
+            "weight": 2,
+            "source_text": "Neutral/medio"
+          }
+        },
+        "vocational_use": "Servicio, apoyo, relación",
+        "source": "Manual DISC p.14",
+        "referenced_by_families": [
+          7,
+          8,
+          12
+        ]
+      },
+      "CREATIVO_LOGICO": {
+        "factors": {
+          "D": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "I": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "S": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "C": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          }
+        },
+        "vocational_use": "Innovación + lógica/estructura",
+        "source": "Manual DISC p.14",
+        "referenced_by_families": [
+          1,
+          2,
+          5,
+          6,
+          10,
+          11,
+          13
+        ]
+      },
+      "GERENCIAL": {
+        "factors": {
+          "D": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "I": {
+            "direction": "ACTIVE",
+            "weight": 2,
+            "source_text": "Activo"
+          },
+          "S": {
+            "direction": "PASSIVE",
+            "weight": 2,
+            "source_text": "Pasivo"
+          },
+          "C": {
+            "direction": "PASSIVE",
+            "weight": 1,
+            "source_text": "Pasivo/medio"
+          }
+        },
+        "vocational_use": "Resultados, personas, dirección",
+        "source": "Manual DISC p.14 + criterio experto TIMS",
+        "referenced_by_families": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13
+        ]
+      }
+    }
+  },
+  "competencies": [
+    {
+      "competency_id": 1,
+      "name": "Adaptabilidad al Cambio"
+    },
+    {
+      "competency_id": 2,
+      "name": "Asumir Riesgos"
+    },
+    {
+      "competency_id": 3,
+      "name": "Creatividad e Innovación"
+    },
+    {
+      "competency_id": 4,
+      "name": "Habilidad de Negociación"
+    },
+    {
+      "competency_id": 5,
+      "name": "Planeación Estratégica"
+    },
+    {
+      "competency_id": 6,
+      "name": "Toma de Decisiones"
+    },
+    {
+      "competency_id": 7,
+      "name": "Comunicación"
+    },
+    {
+      "competency_id": 8,
+      "name": "Empatía"
+    },
+    {
+      "competency_id": 9,
+      "name": "Impacto e Influencia"
+    },
+    {
+      "competency_id": 10,
+      "name": "Motivación"
+    },
+    {
+      "competency_id": 11,
+      "name": "Relaciones Interpersonales"
+    },
+    {
+      "competency_id": 12,
+      "name": "Sociabilidad"
+    },
+    {
+      "competency_id": 13,
+      "name": "Administración de Proyectos"
+    },
+    {
+      "competency_id": 14,
+      "name": "Búsqueda de Información"
+    },
+    {
+      "competency_id": 15,
+      "name": "Capacidad de Escucha"
+    },
+    {
+      "competency_id": 16,
+      "name": "Orientación al Cliente"
+    },
+    {
+      "competency_id": 17,
+      "name": "Trabajo en Equipo"
+    },
+    {
+      "competency_id": 18,
+      "name": "Perseverancia/Tenacidad"
+    },
+    {
+      "competency_id": 19,
+      "name": "Atención al Detalle"
+    },
+    {
+      "competency_id": 20,
+      "name": "Control de Calidad"
+    },
+    {
+      "competency_id": 21,
+      "name": "Manejo del Tiempo"
+    },
+    {
+      "competency_id": 22,
+      "name": "Pensamiento Analítico"
+    },
+    {
+      "competency_id": 23,
+      "name": "Orden, Calidad y Precisión"
+    },
+    {
+      "competency_id": 24,
+      "name": "Tacto/Diplomacia"
+    }
+  ],
+  "v360_variables": [
+    {
+      "code": "AN",
+      "base_weight": 0.024
+    },
+    {
+      "code": "AST",
+      "base_weight": 0.024
+    },
+    {
+      "code": "ASH",
+      "base_weight": 0.024
+    },
+    {
+      "code": "ABS",
+      "base_weight": 0.024
+    },
+    {
+      "code": "ACE",
+      "base_weight": 0.024
+    },
+    {
+      "code": "OH",
+      "base_weight": 0.0375
+    },
+    {
+      "code": "OL",
+      "base_weight": 0.0375
+    },
+    {
+      "code": "OA",
+      "base_weight": 0.0375
+    },
+    {
+      "code": "OC",
+      "base_weight": 0.0375
+    },
+    {
+      "code": "ME",
+      "base_weight": 0.03
+    },
+    {
+      "code": "MA",
+      "base_weight": 0.03
+    },
+    {
+      "code": "MI",
+      "base_weight": 0.03
+    },
+    {
+      "code": "MR",
+      "base_weight": 0.03
+    },
+    {
+      "code": "PB",
+      "base_weight": 0.0333333333
+    },
+    {
+      "code": "PM",
+      "base_weight": 0.0333333333
+    },
+    {
+      "code": "PE",
+      "base_weight": 0.0333333333
+    },
+    {
+      "code": "EXPL",
+      "base_weight": 0.08
+    },
+    {
+      "code": "CLAR",
+      "base_weight": 0.05
+    },
+    {
+      "code": "AE_ACAD",
+      "base_weight": 0.05
+    },
+    {
+      "code": "AE_EXEC",
+      "base_weight": 0.05
+    },
+    {
+      "code": "LD",
+      "base_weight": 0
+    },
+    {
+      "code": "LI",
+      "base_weight": 0
+    },
+    {
+      "code": "LS",
+      "base_weight": 0
+    },
+    {
+      "code": "LC",
+      "base_weight": 0
+    },
+    {
+      "code": "CE",
+      "base_weight": 0.04
+    },
+    {
+      "code": "CD",
+      "base_weight": 0.04
+    },
+    {
+      "code": "EA",
+      "base_weight": 0.0333333333
+    },
+    {
+      "code": "EI",
+      "base_weight": 0.0333333333
+    },
+    {
+      "code": "EC",
+      "base_weight": 0.0333333333
+    },
+    {
+      "code": "ENV_FAM",
+      "base_weight": 0
+    },
+    {
+      "code": "ENV_PEERS",
+      "base_weight": 0
+    },
+    {
+      "code": "FLEX",
+      "base_weight": 0
+    },
+    {
+      "code": "FORM_CONT",
+      "base_weight": 0
+    },
+    {
+      "code": "ALT_ROUTE",
+      "base_weight": 0
+    },
+    {
+      "code": "RANK",
+      "base_weight": 0
+    },
+    {
+      "code": "IND",
+      "base_weight": 0.1
+    },
+    {
+      "code": "ACT",
+      "base_weight": 0
+    },
+    {
+      "code": "BARR",
+      "base_weight": 0
+    },
+    {
+      "code": "OPEN_TALENT",
+      "base_weight": 0
+    },
+    {
+      "code": "OPEN_10Y",
+      "base_weight": 0
+    }
+  ],
+  "families": [
+    {
+      "family_id": 1,
+      "family_name": "Ingeniería",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "TECNICO",
+        "JEFE_TECNICO",
+        "INVESTIGADOR",
+        "CREATIVO_LOGICO",
+        "GERENCIAL",
+        "DIRECTOR"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 19,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 22,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 23,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 13,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 14,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 18,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 20,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 3,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 5,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 6,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "CRITICAL",
+          "source_marker": "VAR",
+          "resolution": "SUBFAMILY_MEDIAN",
+          "weight": 3,
+          "subfamily_roles": {
+            "Civil / Estructural": "IMPORTANT",
+            "Mecánica": "IMPORTANT",
+            "Mecatrónica / Electromecánica": "IMPORTANT",
+            "Eléctrica / Electrónica": "IMPORTANT",
+            "Industrial": "CRITICAL",
+            "Software / Sistemas": "CRITICAL",
+            "Data / IA / Analítica": "CRITICAL",
+            "Química": "CRITICAL",
+            "Biotecnología / Bioingeniería": "CRITICAL",
+            "Biomédica": "IMPORTANT",
+            "Ambiental": "CRITICAL",
+            "Producción / Procesos": "CRITICAL"
+          }
+        },
+        "RZ": {
+          "role": "CRITICAL",
+          "source_marker": "VAR",
+          "resolution": "SUBFAMILY_MEDIAN",
+          "weight": 3,
+          "subfamily_roles": {
+            "Civil / Estructural": "CRITICAL",
+            "Mecánica": "CRITICAL",
+            "Mecatrónica / Electromecánica": "CRITICAL",
+            "Eléctrica / Electrónica": "CRITICAL",
+            "Industrial": "CRITICAL",
+            "Software / Sistemas": "CRITICAL",
+            "Data / IA / Analítica": "CRITICAL",
+            "Química": "CRITICAL",
+            "Biotecnología / Bioingeniería": "CRITICAL",
+            "Biomédica": "CRITICAL",
+            "Ambiental": "CRITICAL",
+            "Producción / Procesos": "CRITICAL"
+          }
+        },
+        "VN": {
+          "role": "CRITICAL",
+          "source_marker": "I_MIN",
+          "resolution": "SUBFAMILY_MEDIAN+FLOOR_IMPORTANT",
+          "weight": 3,
+          "subfamily_roles": {
+            "Civil / Estructural": "CRITICAL",
+            "Mecánica": "CRITICAL",
+            "Mecatrónica / Electromecánica": "CRITICAL",
+            "Eléctrica / Electrónica": "CRITICAL",
+            "Industrial": "CRITICAL",
+            "Software / Sistemas": "IMPORTANT",
+            "Data / IA / Analítica": "CRITICAL",
+            "Química": "CRITICAL",
+            "Biotecnología / Bioingeniería": "IMPORTANT",
+            "Biomédica": "CRITICAL",
+            "Ambiental": "IMPORTANT",
+            "Producción / Procesos": "IMPORTANT"
+          }
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "VAR",
+          "resolution": "SUBFAMILY_MEDIAN",
+          "weight": 2,
+          "subfamily_roles": {
+            "Civil / Estructural": "IMPORTANT",
+            "Mecánica": "IMPORTANT",
+            "Mecatrónica / Electromecánica": "IMPORTANT",
+            "Eléctrica / Electrónica": "IMPORTANT",
+            "Industrial": "IMPORTANT",
+            "Software / Sistemas": "IMPORTANT",
+            "Data / IA / Analítica": "IMPORTANT",
+            "Química": "IMPORTANT",
+            "Biotecnología / Bioingeniería": "IMPORTANT",
+            "Biomédica": "IMPORTANT",
+            "Ambiental": "IMPORTANT",
+            "Producción / Procesos": "IMPORTANT"
+          }
+        },
+        "OR": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "VAR",
+          "resolution": "SUBFAMILY_MEDIAN",
+          "weight": 1,
+          "subfamily_roles": {
+            "Civil / Estructural": "CRITICAL",
+            "Mecánica": "CRITICAL",
+            "Mecatrónica / Electromecánica": "CRITICAL",
+            "Eléctrica / Electrónica": "IMPORTANT",
+            "Industrial": "COMPLEMENTARY",
+            "Software / Sistemas": "NOT_USED",
+            "Data / IA / Analítica": "NOT_USED",
+            "Química": "NOT_USED",
+            "Biotecnología / Bioingeniería": "NOT_USED",
+            "Biomédica": "IMPORTANT",
+            "Ambiental": "NOT_USED",
+            "Producción / Procesos": "NOT_USED"
+          }
+        }
+      },
+      "mil_note": "VN nunca < Importante. Subfamilia define críticas.",
+      "personality_routes": [
+        {
+          "route_id": "F01_P1",
+          "dimensions": {
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 3
+            },
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "S",
+              "weight": 2
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 2
+            }
+          }
+        },
+        {
+          "route_id": "F01_P2",
+          "dimensions": {
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 3
+            },
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 2
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "P",
+              "weight": 2
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "T suele sumar; S/N y J/P según especialidad; E/I abierto",
+      "v360_rules": {
+        "AN": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.024
+        },
+        "AST": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.024
+        },
+        "OA": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "MR": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "EA": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "OC/EC→innovación; OL/EI→gerencial; MA/CD/PE→emprendimiento/dirección",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente.",
+      "subfamilies": [
+        {
+          "name": "Civil / Estructural",
+          "mil_roles": {
+            "DC": "IMPORTANT",
+            "RZ": "CRITICAL",
+            "VN": "CRITICAL",
+            "MT": "IMPORTANT",
+            "OR": "CRITICAL"
+          },
+          "pca_routes_text": "Técnico; Gerencial/Proyectos; Director",
+          "personality_text": "S/T/J frecuente; N útil en diseño/estrategia"
+        },
+        {
+          "name": "Mecánica",
+          "mil_roles": {
+            "DC": "IMPORTANT",
+            "RZ": "CRITICAL",
+            "VN": "CRITICAL",
+            "MT": "IMPORTANT",
+            "OR": "CRITICAL"
+          },
+          "pca_routes_text": "Técnico; Jefe Técnico; Investigador",
+          "personality_text": "S/T; J/P según desarrollo e innovación"
+        },
+        {
+          "name": "Mecatrónica / Electromecánica",
+          "mil_roles": {
+            "DC": "IMPORTANT",
+            "RZ": "CRITICAL",
+            "VN": "CRITICAL",
+            "MT": "IMPORTANT",
+            "OR": "CRITICAL"
+          },
+          "pca_routes_text": "Técnico; Jefe Técnico; Creativo-Lógico",
+          "personality_text": "S/N + T; J/P según función"
+        },
+        {
+          "name": "Eléctrica / Electrónica",
+          "mil_roles": {
+            "DC": "IMPORTANT",
+            "RZ": "CRITICAL",
+            "VN": "CRITICAL",
+            "MT": "IMPORTANT",
+            "OR": "IMPORTANT"
+          },
+          "pca_routes_text": "Técnico; Investigador; Jefe Técnico",
+          "personality_text": "T; S/N según especialidad"
+        },
+        {
+          "name": "Industrial",
+          "mil_roles": {
+            "DC": "CRITICAL",
+            "RZ": "CRITICAL",
+            "VN": "CRITICAL",
+            "MT": "IMPORTANT",
+            "OR": "COMPLEMENTARY"
+          },
+          "pca_routes_text": "Gerencial; Administrativo; Director; Técnico",
+          "personality_text": "T/J; E puede diferenciar en gestión"
+        },
+        {
+          "name": "Software / Sistemas",
+          "mil_roles": {
+            "DC": "CRITICAL",
+            "RZ": "CRITICAL",
+            "VN": "IMPORTANT",
+            "MT": "IMPORTANT",
+            "OR": "NOT_USED"
+          },
+          "pca_routes_text": "Técnico; Investigador; Creativo-Lógico; Gerencial",
+          "personality_text": "N/T frecuente; I/E abierto; P/J variable"
+        },
+        {
+          "name": "Data / IA / Analítica",
+          "mil_roles": {
+            "DC": "CRITICAL",
+            "RZ": "CRITICAL",
+            "VN": "CRITICAL",
+            "MT": "IMPORTANT",
+            "OR": "NOT_USED"
+          },
+          "pca_routes_text": "Investigador; Técnico; Creativo-Lógico; Gerencial",
+          "personality_text": "N/T; I/E abierto"
+        },
+        {
+          "name": "Química",
+          "mil_roles": {
+            "DC": "CRITICAL",
+            "RZ": "CRITICAL",
+            "VN": "CRITICAL",
+            "MT": "IMPORTANT",
+            "OR": "NOT_USED"
+          },
+          "pca_routes_text": "Técnico; Investigador",
+          "personality_text": "S/T/J; N en investigación"
+        },
+        {
+          "name": "Biotecnología / Bioingeniería",
+          "mil_roles": {
+            "DC": "CRITICAL",
+            "RZ": "CRITICAL",
+            "VN": "IMPORTANT",
+            "MT": "IMPORTANT",
+            "OR": "NOT_USED"
+          },
+          "pca_routes_text": "Investigador; Técnico; Creativo-Lógico",
+          "personality_text": "N/S + T; J"
+        },
+        {
+          "name": "Biomédica",
+          "mil_roles": {
+            "DC": "IMPORTANT",
+            "RZ": "CRITICAL",
+            "VN": "CRITICAL",
+            "MT": "IMPORTANT",
+            "OR": "IMPORTANT"
+          },
+          "pca_routes_text": "Técnico; Investigador; Gerencial",
+          "personality_text": "N/S + T; J"
+        },
+        {
+          "name": "Ambiental",
+          "mil_roles": {
+            "DC": "CRITICAL",
+            "RZ": "CRITICAL",
+            "VN": "IMPORTANT",
+            "MT": "IMPORTANT",
+            "OR": "NOT_USED"
+          },
+          "pca_routes_text": "Investigador; Técnico; Gerencial",
+          "personality_text": "N/T; F puede complementar impacto"
+        },
+        {
+          "name": "Producción / Procesos",
+          "mil_roles": {
+            "DC": "CRITICAL",
+            "RZ": "CRITICAL",
+            "VN": "IMPORTANT",
+            "MT": "IMPORTANT",
+            "OR": "NOT_USED"
+          },
+          "pca_routes_text": "Técnico; Administrativo; Gerencial",
+          "personality_text": "S/T/J"
+        }
+      ]
+    },
+    {
+      "family_id": 2,
+      "family_name": "Tecnología / CS / Data",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "TECNICO",
+        "INVESTIGADOR",
+        "CREATIVO_LOGICO",
+        "GERENCIAL"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 3,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 14,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 22,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 1,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 18,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 19,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 5,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 6,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "RZ": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "VN": {
+          "role": "IMPORTANT",
+          "source_marker": "I/VAR",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "VAR",
+          "weight": 2
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "OR": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO",
+          "resolution": "LITERAL",
+          "weight": 1
+        }
+      },
+      "mil_note": "VN sube a C en Data/IA; OR solo ramas espaciales.",
+      "personality_routes": [
+        {
+          "route_id": "F02_P1",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 3
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 2
+            }
+          }
+        },
+        {
+          "route_id": "F02_P2",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 3
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "P",
+              "weight": 2
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "N/T frecuentes; J/P según construcción vs exploración; E/I abierto",
+      "v360_rules": {
+        "AN": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.024
+        },
+        "AST": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.024
+        },
+        "OA": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "OC": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0375
+        },
+        "MR": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "EA": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "EC→producto/UX/innovación; OL→management; CD/MA→startups",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 3,
+      "family_name": "Finanzas / Contabilidad / Economía",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "ADMINISTRATIVO",
+        "TECNICO",
+        "INVESTIGADOR",
+        "GERENCIAL",
+        "DIRECTOR"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 19,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 22,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 23,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 13,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 14,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 21,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 4,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 5,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 6,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "IMPORTANT",
+          "source_marker": "I/VAR",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "VAR",
+          "weight": 2
+        },
+        "RZ": {
+          "role": "CRITICAL",
+          "source_marker": "C/VAR",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "VAR",
+          "weight": 3
+        },
+        "VN": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "OR": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO",
+          "resolution": "LITERAL",
+          "weight": 1
+        }
+      },
+      "mil_note": "Contabilidad puede enfatizar DC; Economía/Finanzas RZ+VN.",
+      "personality_routes": [
+        {
+          "route_id": "F03_P1",
+          "dimensions": {
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 3
+            },
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "S",
+              "weight": 2
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 3
+            }
+          }
+        },
+        {
+          "route_id": "F03_P2",
+          "dimensions": {
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 3
+            },
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 2
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "T frecuente; S/J Contabilidad; N/T Economía/inversión; E/I abierto",
+      "v360_rules": {
+        "AN": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.024
+        },
+        "OA": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "ME": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "MR": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "CE": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.04
+        },
+        "EA": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "OL→dirección financiera; PE/MA→inversión/emprendimiento; PM→internacional",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 4,
+      "family_name": "Administración / Negocios",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "ADMINISTRATIVO",
+        "GERENCIAL",
+        "DIRECTOR",
+        "COMERCIAL_TECNICO",
+        "ASESOR"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 13,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 21,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 23,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 5,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 6,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 17,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 4,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 9,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "RZ": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "VN": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "OR": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO",
+          "resolution": "LITERAL",
+          "weight": 1
+        }
+      },
+      "mil_note": "Ajustar por operaciones, analítica o estrategia.",
+      "personality_routes": [
+        {
+          "route_id": "F04_P1",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "S",
+              "weight": 2
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 2
+            }
+          }
+        },
+        {
+          "route_id": "F04_P2",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 2
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "F",
+              "weight": 2
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "S operación; N estrategia; T/F por función; J ejecución",
+      "v360_rules": {
+        "OL": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "OA": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0375
+        },
+        "ME": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "MR": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.03
+        },
+        "EI": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "PE/MA/CD→emprendimiento; CE→operación; PM→negocios internacionales",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 5,
+      "family_name": "Emprendimiento",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "GERENCIAL",
+        "DIRECTOR",
+        "COMERCIAL_TECNICO",
+        "CREATIVO_LOGICO"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 1,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 2,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 3,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 6,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 4,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 5,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 7,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 9,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 13,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "RZ": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "VN": {
+          "role": "IMPORTANT",
+          "source_marker": "I/VAR",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "VAR",
+          "weight": 2
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "OR": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO",
+          "resolution": "LITERAL",
+          "weight": 1
+        }
+      },
+      "mil_note": "Depende del tipo de emprendimiento.",
+      "personality_routes": [
+        {
+          "route_id": "F05_P1",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 3
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "P",
+              "weight": 3
+            }
+          }
+        },
+        {
+          "route_id": "F05_P2",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 3
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 2
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "N/P frecuentes; J diferenciador de ejecución; E/I abierto",
+      "v360_rules": {
+        "OL": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "OA": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0375
+        },
+        "OC": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0375
+        },
+        "MA": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.03
+        },
+        "MR": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.03
+        },
+        "CD": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.04
+        },
+        "EC": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "PE define intensidad de ruta; EI→relacional; EA→tech/analítico; EC→creativo",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 6,
+      "family_name": "Marketing / Comunicación / Publicidad",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "COMERCIAL_TECNICO",
+        "ASESOR",
+        "CREATIVO_LOGICO",
+        "GERENCIAL"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 3,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 7,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 9,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 8,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 11,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 14,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 4,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 22,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "IMPORTANT",
+          "source_marker": "I/VAR",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "VAR",
+          "weight": 2
+        },
+        "RZ": {
+          "role": "IMPORTANT",
+          "source_marker": "I/VAR",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "VAR",
+          "weight": 2
+        },
+        "VN": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO/C",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "CRITICAL",
+          "weight": 1
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "OR": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO",
+          "resolution": "LITERAL",
+          "weight": 1
+        }
+      },
+      "mil_note": "VN C en Analytics/Performance; RZ/DC más importantes en estrategia.",
+      "personality_routes": [
+        {
+          "route_id": "F06_P1",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "F",
+              "weight": 3
+            },
+            "EI": {
+              "rule_type": "POLE",
+              "preferred_pole": "E",
+              "weight": 2
+            }
+          }
+        },
+        {
+          "route_id": "F06_P2",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 3
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "N frecuente; F marca/relación; T analytics; E/I según ruta",
+      "v360_rules": {
+        "ASH": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.024
+        },
+        "ACE": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.024
+        },
+        "OL": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0375
+        },
+        "OC": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "MR": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "EI": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0333333333
+        },
+        "EC": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "OA/EA/AN→analytics; OL/EI→PR/comercial; CD/MA→agencia/creación",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 7,
+      "family_name": "Psicología",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "ASESOR",
+        "SERVICIO_CLIENTE",
+        "INVESTIGADOR",
+        "GERENCIAL"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 7,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 8,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 15,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 24,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 14,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 17,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 22,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 6,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 9,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "IMPORTANT",
+          "source_marker": "I/C",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "CRITICAL",
+          "weight": 2
+        },
+        "RZ": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "VN": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO/I",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "IMPORTANT",
+          "weight": 1
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "OR": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO",
+          "resolution": "LITERAL",
+          "weight": 1
+        }
+      },
+      "mil_note": "VN sube en investigación/psicometría; DC sube en investigación.",
+      "personality_routes": [
+        {
+          "route_id": "F07_P1",
+          "dimensions": {
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "F",
+              "weight": 3
+            }
+          }
+        },
+        {
+          "route_id": "F07_P2",
+          "dimensions": {
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 3
+            },
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 2
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "F frecuente en ayuda; T investigación/diagnóstico; E/I abiertos",
+      "v360_rules": {
+        "ASH": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.024
+        },
+        "OH": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "OA": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0375
+        },
+        "MI": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.03
+        },
+        "EA": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0333333333
+        },
+        "EI": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "OA/EA→investigación; OL→organizacional; ABS→salud/neuro",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 8,
+      "family_name": "Medicina / Salud",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "TECNICO",
+        "SERVICIO_CLIENTE",
+        "ASESOR",
+        "INVESTIGADOR",
+        "GERENCIAL"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 19,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 22,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 23,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 15,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 17,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 18,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 1,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 6,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "RZ": {
+          "role": "IMPORTANT",
+          "source_marker": "I/C",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "CRITICAL",
+          "weight": 2
+        },
+        "VN": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "I/C",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "CRITICAL",
+          "weight": 2
+        },
+        "OR": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO/C",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "CRITICAL",
+          "weight": 1
+        }
+      },
+      "mil_note": "OR crítica solo en subespecialidades espaciales/imagen.",
+      "personality_routes": [
+        {
+          "route_id": "F08_P1",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "S",
+              "weight": 3
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "F",
+              "weight": 2
+            }
+          }
+        },
+        {
+          "route_id": "F08_P2",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "S",
+              "weight": 3
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 2
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "S/J frecuentes; F cuidado; T diagnóstico; E/I abiertos",
+      "v360_rules": {
+        "ABS": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.024
+        },
+        "OH": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "OA": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0375
+        },
+        "MI": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "MR": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "EA": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0333333333
+        },
+        "EI": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "OR/ACE→imagen/cirugía; OL→gestión; OA/EA→investigación",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 9,
+      "family_name": "Derecho",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "INVESTIGADOR",
+        "DIRECTOR",
+        "GERENCIAL",
+        "ASESOR",
+        "COMERCIAL_TECNICO"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 4,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 7,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 22,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 6,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 14,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 24,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 5,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 9,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "RZ": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "VN": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO/I",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "IMPORTANT",
+          "weight": 1
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "OR": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO",
+          "resolution": "LITERAL",
+          "weight": 1
+        }
+      },
+      "mil_note": "VN sube en tributario/económico.",
+      "personality_routes": [
+        {
+          "route_id": "F09_P1",
+          "dimensions": {
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 3
+            },
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 2
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 2
+            }
+          }
+        },
+        {
+          "route_id": "F09_P2",
+          "dimensions": {
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "F",
+              "weight": 3
+            },
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "S",
+              "weight": 2
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 2
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "T análisis; F mediación; N estrategia; S procedimiento; J estructura",
+      "v360_rules": {
+        "ASH": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.024
+        },
+        "OL": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0375
+        },
+        "OA": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "MR": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "EA": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "EI/MI→familia/social/DD.HH.; AN/EA→corporativo/tributario; OL→litigio/dirección",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 10,
+      "family_name": "Arquitectura",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "CREATIVO_LOGICO",
+        "TECNICO",
+        "JEFE_TECNICO",
+        "GERENCIAL"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 3,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 19,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 22,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 23,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 13,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 18,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 21,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 5,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 6,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "RZ": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "VN": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "OR": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        }
+      },
+      "mil_note": "OR + RZ críticas; VN importante.",
+      "personality_routes": [
+        {
+          "route_id": "F10_P1",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 2
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 2
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "P",
+              "weight": 3
+            }
+          }
+        },
+        {
+          "route_id": "F10_P2",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "S",
+              "weight": 2
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 2
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 3
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "N/S aportan de forma distinta; T; P creatividad / J ejecución",
+      "v360_rules": {
+        "AST": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.024
+        },
+        "ACE": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.024
+        },
+        "OA": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "OC": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "MR": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "EA": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0333333333
+        },
+        "EC": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "OL/EI→dirección de obra; PE/MA→estudio propio; CE/CD según fase",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 11,
+      "family_name": "Diseño / Industrias Creativas",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "CREATIVO_LOGICO",
+        "ASESOR",
+        "COMERCIAL_TECNICO"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 3,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 19,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 1,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 7,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 14,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 9,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 13,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "IMPORTANT",
+          "source_marker": "I/VAR",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "VAR",
+          "weight": 2
+        },
+        "RZ": {
+          "role": "IMPORTANT",
+          "source_marker": "I/VAR",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "VAR",
+          "weight": 2
+        },
+        "VN": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO",
+          "resolution": "LITERAL",
+          "weight": 1
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "OR": {
+          "role": "IMPORTANT",
+          "source_marker": "VAR/C",
+          "resolution": "FIRST_TOKEN(VAR_DEFAULT)",
+          "subfamily_candidate": "CRITICAL",
+          "weight": 2
+        }
+      },
+      "mil_note": "OR crítica en diseño espacial/producto; no universal.",
+      "personality_routes": [
+        {
+          "route_id": "F11_P1",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 3
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "P",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "F",
+              "weight": 2
+            }
+          }
+        },
+        {
+          "route_id": "F11_P2",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 3
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "P",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 2
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "N/P frecuentes; E/I abiertos; T/F por disciplina",
+      "v360_rules": {
+        "ACE": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.024
+        },
+        "OC": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "MA": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "CD": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.04
+        },
+        "EC": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "EI→comunicación/moda; EA→UX/producto; PE→freelance/estudio; PM→global",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 12,
+      "family_name": "Educación",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "ASESOR",
+        "SERVICIO_CLIENTE",
+        "GERENCIAL",
+        "INVESTIGADOR"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 7,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 8,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 10,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 15,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 13,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 17,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 18,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 1,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 9,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "RZ": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "VN": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO",
+          "resolution": "LITERAL",
+          "weight": 1
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "OR": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO",
+          "resolution": "LITERAL",
+          "weight": 1
+        }
+      },
+      "mil_note": "Sube la capacidad específica según materia enseñada.",
+      "personality_routes": [
+        {
+          "route_id": "F12_P1",
+          "dimensions": {
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "F",
+              "weight": 3
+            },
+            "EI": {
+              "rule_type": "POLE",
+              "preferred_pole": "E",
+              "weight": 2
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 2
+            }
+          }
+        },
+        {
+          "route_id": "F12_P2",
+          "dimensions": {
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "F",
+              "weight": 3
+            },
+            "EI": {
+              "rule_type": "POLE",
+              "preferred_pole": "I",
+              "weight": 2
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 2
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "F frecuente; E facilitación / I profundidad; S/N por materia; J aporta",
+      "v360_rules": {
+        "ASH": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.024
+        },
+        "OH": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "MI": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.03
+        },
+        "MR": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "EI": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "OL→gestión; OA/EA→investigación; EC→metodologías creativas; PM→internacional",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 13,
+      "family_name": "Ciencias Sociales",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "INVESTIGADOR",
+        "ASESOR",
+        "CREATIVO_LOGICO",
+        "GERENCIAL"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 7,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 14,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 22,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 8,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 15,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 19,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 3,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 9,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "RZ": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "VN": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO/I",
+          "resolution": "FIRST_TOKEN",
+          "subfamily_candidate": "IMPORTANT",
+          "weight": 1
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "OR": {
+          "role": "COMPLEMENTARY",
+          "source_marker": "CO",
+          "resolution": "LITERAL",
+          "weight": 1
+        }
+      },
+      "mil_note": "VN importante en investigación cuantitativa.",
+      "personality_routes": [
+        {
+          "route_id": "F13_P1",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "F",
+              "weight": 2
+            }
+          }
+        },
+        {
+          "route_id": "F13_P2",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "N",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 2
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "N frecuente; F social; T investigación; E/I abiertos",
+      "v360_rules": {
+        "ASH": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.024
+        },
+        "OH": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0375
+        },
+        "OA": {
+          "use_mode": "BASE",
+          "relevance": 3,
+          "base_weight": 0.0375
+        },
+        "MI": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "EA": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0333333333
+        },
+        "EI": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.0333333333
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "PM→RR.II.; OL→política/gestión; AN→demografía/economía social",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 14,
+      "family_name": "Formación Técnica Especializada",
+      "scorable": true,
+      "inherit_occupation": false,
+      "pca_routes": [
+        "TECNICO",
+        "JEFE_TECNICO",
+        "ADMINISTRATIVO"
+      ],
+      "competency_rules": [
+        {
+          "competency_id": 19,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 20,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 23,
+          "role": "CRITICAL",
+          "minimum_level": 2
+        },
+        {
+          "competency_id": 13,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 18,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 21,
+          "role": "IMPORTANT",
+          "minimum_level": 1
+        },
+        {
+          "competency_id": 1,
+          "role": "DIFFERENTIATOR"
+        },
+        {
+          "competency_id": 3,
+          "role": "DIFFERENTIATOR"
+        }
+      ],
+      "mil_rules": {
+        "DC": {
+          "role": "CRITICAL",
+          "source_marker": "C",
+          "resolution": "LITERAL",
+          "weight": 3
+        },
+        "RZ": {
+          "role": "IMPORTANT",
+          "source_marker": "I",
+          "resolution": "LITERAL",
+          "weight": 2
+        },
+        "VN": {
+          "role": "IMPORTANT",
+          "source_marker": "VAR",
+          "resolution": "VAR_DEFAULT",
+          "weight": 2
+        },
+        "MT": {
+          "role": "IMPORTANT",
+          "source_marker": "VAR",
+          "resolution": "VAR_DEFAULT",
+          "weight": 2
+        },
+        "OR": {
+          "role": "IMPORTANT",
+          "source_marker": "VAR",
+          "resolution": "VAR_DEFAULT",
+          "weight": 2
+        }
+      },
+      "mil_note": "Capacidad específica depende del oficio.",
+      "personality_routes": [
+        {
+          "route_id": "F14_P1",
+          "dimensions": {
+            "SN": {
+              "rule_type": "POLE",
+              "preferred_pole": "S",
+              "weight": 3
+            },
+            "TF": {
+              "rule_type": "POLE",
+              "preferred_pole": "T",
+              "weight": 3
+            },
+            "JP": {
+              "rule_type": "POLE",
+              "preferred_pole": "J",
+              "weight": 3
+            }
+          }
+        }
+      ],
+      "personality_rule_text": "S/T/J suelen sumar; E/I abierto",
+      "v360_rules": {
+        "AST": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.024
+        },
+        "MR": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.03
+        },
+        "CE": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.04
+        },
+        "IND": {
+          "use_mode": "BASE",
+          "relevance": 2,
+          "base_weight": 0.1
+        }
+      },
+      "v360_route_modulators_text": "MA/CD→independiente; PE→negocio propio; OL→supervisión",
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 15,
+      "family_name": "Ruta Alternativa / No universitaria",
+      "scorable": false,
+      "inherit_occupation": true,
+      "pca_routes": [],
+      "competency_rules": [],
+      "mil_rules": {},
+      "mil_note": "Hereda la ocupación/ruta elegida.",
+      "personality_routes": [],
+      "personality_rule_text": "Hereda la ocupación",
+      "v360_rules": {},
+      "v360_route_modulators_text": "PE/MA/CD y Proyecto de Vida definen modalidad; siempre hereda requerimientos de la ocupación",
+      "notes": "No calcular 'No estudiar' como carrera; heredar ocupación."
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "topic": "DISC archetype phrase -> (direction, weight)",
+      "decision": "One mapping, a pure function of the phrase (pca.qualifier_mapping). Selected by tools/careerfit/select_qualifier_mapping.py: the only candidate injective on the sheet's 8 phrases, so no two archetypes encode identically; mean 12-way recovery 40.8% vs 41.1% best (noise), best at coherence 1.0 (72.4%), zero dead archetypes.",
+      "consequence": "Under the previous draft (all Neutral phrases w2) DIRECTOR and COMERCIAL_TECNICO, and ASESOR and SERVICIO_CLIENTE, were identical rules; the second of each pair could never be a winning route. Bare Activo/Pasivo now weigh 2 and 'fuerte' 3, so route_factor_weight expresses the sheet's intensity qualifier -- the engine has no other knob for it.",
+      "requires_ratification": true,
+      "source": "02_PCA_LOGICA rows 15-26; rule 'La distancia a 50 determina intensidad'"
+    },
+    {
+      "id": "D2",
+      "topic": "MIL markers -> roles (sheet 04 section D)",
+      "decision": "Literal C/I/CO as written. 'X/Y' -> X at family level, Y recorded as subfamily_candidate (the note in the same row says Y applies in named branches). 'VAR' -> the MEDIAN role across the family's subfamilies when a subfamily sheet exists (only Ingeniería, sheet 12; absent = NOT_USED, ties round up), else IMPORTANT. 'I_MIN' -> the same, floored at IMPORTANT. 'INHERIT' -> family is not scorable (15).",
+      "consequence": "Ingeniería resolves DC=C RZ=C VN=C MT=I OR=CO from its 12 subfamilies (DC critical in 7/12, VN 8/12, RZ 12/12, MT important 12/12, OR critical 3 / important 2 / complementary 1 / absent 6). Every family now has a non-null MIL fit; before, 12 of 15 carried an unresolved marker and Ingeniería scored 0.0 on every profile.",
+      "requires_ratification": true,
+      "source": "04_MIL_LOGICA section D; 12_ING_SUBFAM"
+    },
+    {
+      "id": "D3",
+      "topic": "Personality routes",
+      "decision": "Two POLE routes per family (one for Formación Técnica) read off sheet 09 Personality_Rule prose; carried from the analysis session unchanged. Personality never gates (sheet 05).",
+      "consequence": "This is a reading, not a derivation; it is the block the ablation found least decisive (6.8% of #1 changes).",
+      "requires_ratification": true,
+      "source": "09_MATRIZ_MAESTRA Personality_Rule; 05_PERSONALITY"
+    },
+    {
+      "id": "D4",
+      "topic": "Numeric sheets win over prose",
+      "decision": "360 relevance from sheet 10 and competency roles from sheet 11 (both numeric); sheet 09 prose is cross-checked and every disagreement is listed in source_discrepancies.",
+      "requires_ratification": false,
+      "source": "10_360_RELEVANCIA header: 'La implementación debe usar ... las matrices numéricas'"
+    },
+    {
+      "id": "D5",
+      "topic": "Convergence thresholds",
+      "decision": "Per-instrument thresholds (thresholds.convergence.per_instrument) replace the spec's single 70/55 pair, which never binds for PCA and cannot bind for MIL; MIL uses the official MIL bands. The single pair is kept for reference-engine parity. See thresholds.derivation.",
+      "consequence": "Convergence counts become meaningful: under the recut PCA is STRONG for 85% matched / 29% unmatched, Personality 93%/36%, 360 90%/19%, MIL 85%/81% (capacity, not family). Values marked SIMULATED are calibrated to the generator, not to students.",
+      "requires_ratification": true,
+      "source": "14_GATES_CONVERG section B; tools/careerfit/recut_thresholds.py"
+    },
+    {
+      "id": "D6",
+      "topic": "Family 15 (Ruta Alternativa) and unreferenced archetypes",
+      "decision": "Family 15 is carried with scorable=false: every rule is INHERIT and sheet 09 says \"No calcular 'No estudiar' como carrera\". CALL_CENTER and VENDEDOR_TECNICO are in the archetype catalogue but referenced by no family's PCA_Routes; kept for occupation-level inheritance, unused by V1 family scoring.",
+      "requires_ratification": false,
+      "source": "09_MATRIZ_MAESTRA row 15; 02_PCA_LOGICA"
+    }
+  ],
+  "source_discrepancies": [
+    {
+      "family_id": 14,
+      "field": "v360_relevance",
+      "sheet_09": {
+        "central": [
+          "ACT específico; EA y/o EC según oficio"
+        ],
+        "important": [
+          "AST",
+          "CE",
+          "MR",
+          "IND"
+        ]
+      },
+      "sheet_10": {
+        "central": [],
+        "important": [
+          "AST",
+          "CE",
+          "IND",
+          "MR"
+        ]
+      }
+    }
+  ],
+  "open_questions": [
+    "Norming population of the MIL percentiles and DISC scales (adult HR vs adolescent) -- highest consequence; no mention of norma/baremo/muestra/población/edad across the 7 documents.",
+    "Ratify D1-D3 and D5 cell by cell.",
+    "Exact CmpNom strings for the 24 competencies, and the rule when fewer than 24 return (spec says 422).",
+    "Which DISC graph feeds the engine (AssessmentProfile.cs: graph 2; useTimsQueries.ts: graph 1).",
+    "Does P35 (student's own ranking) enter the score at 0.10?",
+    "Rounding and persistence precision for §25 byte-equivalent determinism.",
+    "Which confidence gates the 360 'strong' test -- global, or the relevance-weighted index.",
+    "Family 14's 360 central set (sheet 09 prose vs sheet 10 numeric, see source_discrepancies) and family 15's inheritance source.",
+    "Unequal MIL ceilings: a perfect raw score reaches P100 on DC/VN/OR but P99 on RZ and P95 on MT."
+  ]
+}

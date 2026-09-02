@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "project": "formmaps-careerfit",
+  "activeRepository": "TIMSInternational/formmaps",
+  "strategy": "greenfield-bounded-context-shadow-then-replace",
+  "sourceOfTruth": {
+    "specification": "docs/careerfit/sources (TIMS: workbook, model config, reference engine)",
+    "rules": "docs/careerfit/rules",
+    "engine": "services/api/src/FormMaps.Application/CareerFit",
+    "legacyBaseline": "formmaps-platform api GET /api/v1/careers/score (shadow target, not a behavioural spec)"
+  },
+  "decisions": [
+    "Self-only 360 in V1 (multi-rater is V1.1): measured identical to 4-source for ranking.",
+    "Bounded context inside services/api, same shape as LiaScoring / VocationalScoring; flag FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET.",
+    "FormMaps drafts the configuration, TIMS ratifies it; every drafted number carries its derivation.",
+    "Shadow against legacy /careers/score, then replace."
+  ],
+  "globalGuardrails": [
+    "No engine code before the Monte Carlo gate is green on the rule set it will load (tools/careerfit/mc_gate.py).",
+    "No VARIABLE / INHERIT / X/Y marker may reach a scoring function: the resolver fails closed.",
+    "CareerFitAbsolute is never presented as a percentage; the ranking and the gates are the product.",
+    "Every rule-set version is reproducible from docs/careerfit/sources by tools/careerfit/build_rules.py --check.",
+    "Inherit RLS and tenant context from services/api; no CareerFit table without a school scope."
+  ],
+  "acceptance": {
+    "mc_gate": {
+      "top1_min": 0.93,
+      "top3_min": 0.99,
+      "family_top3_min": 0.60,
+      "absolute_mean_tolerance": 1.5,
+      "absolute_sd_tolerance": 1.0,
+      "reference_fidelity_max": 1e-9,
+      "coherence": 0.75
+    }
+  },
+  "tasks": [
+    {
+      "id": "FM-CF-001-rule-set-draft",
+      "phase": "P0",
+      "status": "completed",
+      "goal": "Draft the complete rule set as versioned JSON with every marker resolved to a concrete rule; TIMS ratifies cell by cell.",
+      "ownedPaths": ["docs/careerfit/rules", "docs/careerfit/sources", "tools/careerfit"],
+      "validation": [
+        "python3 tools/careerfit/build_rules.py --check",
+        "python3 tools/careerfit/mc_gate.py",
+        "python3 tools/careerfit/mc_gate.py --self-test"
+      ],
+      "notes": "Rule set 1.0.0-draft.1: 12 archetypes under one injective phrase mapping (D1); all 15 MIL rows resolved (D2), Ingeniería from its 12 subfamilies; per-instrument convergence thresholds (D5). Gate at 94.0% top-1 / 99.9% top-3, Ingeniería 97.1% (was 0.0%)."
+    },
+    {
+      "id": "FM-CF-002-schema-tenant-scoped",
+      "phase": "P1",
+      "status": "pending",
+      "goal": "Schema, tenant-scoped and RLS-native: the reference DDL has no school column; every CareerFit table carries the scope the platform's RLS policies expect.",
+      "ownedPaths": ["services/api/src/FormMaps.Infrastructure", "sql"],
+      "validation": ["RLS harness (TestSupport/Rls) asserts access, not just isolation"]
+    },
+    {
+      "id": "FM-CF-003-config-cache",
+      "phase": "P1",
+      "status": "pending",
+      "goal": "ConfigCache: one immutable ACTIVE rule-set version, loaded once per version, never queried per factor inside the scoring loop (spec §26).",
+      "ownedPaths": ["services/api/src/FormMaps.Infrastructure/CareerFit"],
+      "validation": ["loads docs/careerfit/rules/*.json by rules_version; rejects a version that fails the resolver"]
+    },
+    {
+      "id": "FM-CF-004-formulas-f01-f23",
+      "phase": "P2",
+      "status": "pending",
+      "goal": "F01–F23 as pure static functions, I/O-free, every parameter passed in — the LiaScoring / VocationalScoring shape.",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit"],
+      "validation": ["bit-parity against docs/careerfit/sources/formmaps_engine_reference.py on the gate's profiles"]
+    },
+    {
+      "id": "FM-CF-005-input-adapters",
+      "phase": "P3",
+      "status": "pending",
+      "goal": "The seam between what the platform measures and what the engine consumes: DISC graph choice, competency name→id, LIA percentile tails, personality poles. Four silent defects live here.",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit/Adapters"],
+      "validation": ["its own test suite; each of the four defects has a red test first"]
+    },
+    {
+      "id": "FM-CF-006-seed-360-items",
+      "phase": "P4",
+      "status": "blocked",
+      "blockedOn": "TIMS item text for the 40 variables",
+      "goal": "Seed the 40 items into the existing vocational chassis (likert P1–P34, ranking P35).",
+      "ownedPaths": ["sql", "services/api/src/FormMaps.Infrastructure"],
+      "validation": ["40 items present; codes match rules.v360_variables exactly"]
+    },
+    {
+      "id": "FM-CF-007-360-variable-aggregation",
+      "phase": "P4",
+      "status": "pending",
+      "goal": "Variable-level aggregation with consensus, coverage and confidence (VocationalScoring aggregates at dimension level today).",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit"],
+      "validation": ["F04/F05 parity with the reference engine"]
+    },
+    {
+      "id": "FM-CF-008-careerfit360-relevance",
+      "phase": "P4",
+      "status": "pending",
+      "goal": "CareerFit360 per-family relevance weighting (F06) from rules.families[].v360_rules; IND excluded in V1.",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit"],
+      "validation": ["F06 parity; base_weight carried on the rule, not the schema gap"]
+    },
+    {
+      "id": "FM-CF-009-rules-resolver-fail-closed",
+      "phase": "P5",
+      "status": "pending",
+      "goal": "RulesResolver: deep-merge family → subfamily → career, then assert_no_unresolved_markers(). Highest leverage in the plan.",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit/Resolver"],
+      "validation": ["a deliberately poisoned rule set fails the build (the five cases in mc_gate.py --self-test, ported)"]
+    },
+    {
+      "id": "FM-CF-010-orchestrator-ranking-audit",
+      "phase": "P5",
+      "status": "pending",
+      "goal": "Orchestrator, ranking, audit trail — a record per formula step, shipped with the scores (§21).",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit"],
+      "validation": ["audit row count == formula steps per family per student"]
+    },
+    {
+      "id": "FM-CF-011-explainability-payload",
+      "phase": "P5",
+      "status": "pending",
+      "goal": "Explainability payload: structured evidence only (strengths, gaps, winning routes, gates, convergence, modulators). No percentage next to a family.",
+      "ownedPaths": ["services/api/src/FormMaps.Api/Contracts/CareerFit"],
+      "validation": ["contract test: no field named *percent*/*probability* on a family result"]
+    },
+    {
+      "id": "FM-CF-012-endpoints-flag-gated",
+      "phase": "P6",
+      "status": "pending",
+      "goal": "Seven endpoints behind FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET; rewrite block in next.config.ts.",
+      "ownedPaths": ["services/api/src/FormMaps.Api/Endpoints/CareerFitEndpoints.cs", "apps/web/next.config.ts"],
+      "validation": ["flag OFF: zero .NET traffic; flag ON: legacy route never called"]
+    },
+    {
+      "id": "FM-CF-013-shadow-compare-legacy",
+      "phase": "P6",
+      "status": "pending",
+      "goal": "Shadow-compare against legacy /careers/score for real students; report rank correlation and top-3 overlap. The only external reference that exists.",
+      "ownedPaths": ["services/api", "docs/careerfit"],
+      "validation": ["shadow table populated; comparison report committed under docs/careerfit"]
+    },
+    {
+      "id": "FM-CF-014-recut-thresholds-observed",
+      "phase": "P7",
+      "status": "pending",
+      "goal": "Recut the thresholds against the OBSERVED distribution from the shadow period (spec §29). Replaces every threshold marked SIMULATED in the rule set.",
+      "ownedPaths": ["docs/careerfit/rules", "tools/careerfit"],
+      "validation": ["new rules_version; gate green; provenance no longer SIMULATED"]
+    },
+    {
+      "id": "FM-CF-015-cutover-runbook",
+      "phase": "P7",
+      "status": "pending",
+      "goal": "Flag flip + rollback runbook, drill proven in both directions before the flip.",
+      "ownedPaths": ["docs/careerfit/careerfit-cutover-runbook.md"],
+      "validation": ["rollback drill recorded"]
+    },
+    {
+      "id": "FM-CF-016-concurrent-validity-panel",
+      "phase": "P7",
+      "status": "blocked",
+      "blockedOn": "TIMS: 60–100 real files, 3–4 counselors naming a top-3 blind to the engine",
+      "goal": "Concurrent-validity panel — converts 'unvalidated' into a defensible number.",
+      "ownedPaths": ["docs/careerfit"],
+      "validation": ["agreement statistics committed"]
+    }
+  ],
+  "openQuestionsForTIMS": "see docs/careerfit/rules/careerfit-rules.v1.0.0-draft.1.json open_questions"
+}
