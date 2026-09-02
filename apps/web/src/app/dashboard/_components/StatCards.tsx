@@ -106,11 +106,18 @@ export function StatCards({ activeCourses = 0 }: StatCardsProps) {
   const careers = timsData?.data?.careers ?? [];
   const topScore = careers.length > 0 ? Math.round(careers[0].totalScore) : 0;
 
+  // The fraction and the percentage beside it must come from the SAME pair, or the
+  // card contradicts itself: this used to filter/size the `assessments` array (which
+  // omitted Personality) for "1/3" while printing a percentage computed over four —
+  // "1/3 · 33%" for a student who owes PCA, LIA, 360 and Personality.
+  const totalCount = assessmentData?.totalAssessments ?? 4;
+  const overallPct = assessmentData?.overallCompletion ?? 0;
+  // A legacyUnlockGrandfathered student is 100% by the server's verdict while
+  // completedAssessments stays an honest 3-of-4 (Personality genuinely undone — see
+  // CareerExplorer.tsx, which gates on the percentage for exactly that reason). Show
+  // the fraction the percentage implies so the two numbers can never disagree.
   const completedCount =
-    assessmentData?.assessments?.filter(
-      (a: { status: string }) => a.status === "completed"
-    ).length ?? 0;
-  const totalCount = assessmentData?.assessments?.length ?? 3;
+    overallPct === 100 ? totalCount : (assessmentData?.completedAssessments ?? 0);
 
   return (
     <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -118,8 +125,8 @@ export function StatCards({ activeCourses = 0 }: StatCardsProps) {
         icon={<Brain className="w-4 h-4" />}
         label={t("dashboard.assessments", "Assessments")}
         value={`${completedCount}/${totalCount}`}
-        progress={assessmentData?.overallCompletion ?? 0}
-        sub={`${assessmentData?.overallCompletion ?? 0}%`}
+        progress={overallPct}
+        sub={`${overallPct}%`}
         cta={
           completedCount === totalCount
             ? t("dashboard.viewResults", "View Results")

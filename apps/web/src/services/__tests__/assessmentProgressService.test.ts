@@ -9,6 +9,7 @@
 // can drift from it again.
 import {
   getUserAssessmentProgress,
+  getDashboardAssessmentSummary,
   EVAL_REQUIRED_RULE,
   isEvalComplete,
 } from "@/services/assessmentProgressService";
@@ -49,6 +50,10 @@ function mockCompletionEndpoint(overrides: { allDone?: boolean; personalityCompl
       personalityCompleted: overrides.personalityCompleted ?? false,
     },
   });
+}
+
+function mockCompletionUnreachable() {
+  mockApiRequest.mockRejectedValue(new Error("network down"));
 }
 
 function group(
@@ -260,12 +265,83 @@ describe("getUserAssessmentProgress — personality: required 4th assessment (si
     expect(result.overallCompletion.percentageComplete).toBe(100);
   });
 
-  it("falls back to the 3-assessment estimate (does not throw) when the completion endpoint is unreachable", async () => {
+  // The outage fallback used to drop to the pre-2026-07-30 3-assessment denominator,
+  // which is how the dashboard card came to read "1/3 · 33%" for a student who owes
+  // four. personalityStatus is fetched independently and never throws, so an outage
+  // has no reason to change the denominator — only the grandfathering verdict is lost.
+  it("keeps the 4-assessment denominator (and does not throw) when the completion endpoint is unreachable", async () => {
     mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: true, existing_session_id: "sess-1" });
     mockApiRequest.mockRejectedValue(new Error("network down"));
 
     const result = await getUserAssessmentProgress("u1");
 
-    expect(result.overallCompletion.totalAssessments).toBe(3);
+    expect(result.overallCompletion.totalAssessments).toBe(4);
+  });
+
+  it("counts personality in the fallback tally when the completion endpoint is unreachable", async () => {
+    mockPca.mockResolvedValue({ status: "completed" });
+    mockApiRequest.mockRejectedValue(new Error("network down"));
+
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: false });
+    const without = await getUserAssessmentProgress("u1");
+
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: true, existing_session_id: "s" });
+    const withIt = await getUserAssessmentProgress("u1");
+
+    expect(without.overallCompletion.completedAssessments).toBe(1);
+    expect(without.overallCompletion.percentageComplete).toBe(25);
+    expect(withIt.overallCompletion.completedAssessments).toBe(2);
+    expect(withIt.overallCompletion.percentageComplete).toBe(50);
+  });
+});
+
+// -------------------------------------------------------------------------
+// The dashboard "Assessments" StatCard sizes itself off this payload. The
+// `assessments` array omitted Personality, so the card rendered a 3-denominator
+// fraction next to a percentage computed over 4 ("1/3 · 33%"). Both the array
+// and the (completed, total) pair must describe the same four assessments.
+// -------------------------------------------------------------------------
+describe("getDashboardAssessmentSummary — the four assessments the card counts", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockMil.mockResolvedValue(null);
+    mockGroups.mockResolvedValue([]);
+    mockSummary.mockReturnValue({
+      totalGroups: 0, completedEvaluations: 0, pendingEvaluations: 0, expiredInvitations: 0,
+      groupsByType: { Parent: 0, Teacher: 0, SiblingFriend: 0, Self: 0 },
+    });
+    mockPca.mockResolvedValue({ status: "completed" });
+    mockPersonalityAccess.mockResolvedValue({ has_access: false, has_completed: false });
+    mockCompletionEndpoint();
+  });
+
+  it("lists all four assessments, personality included", async () => {
+    const summary = await getDashboardAssessmentSummary("u1");
+    expect(summary.assessments.map((a) => a.type)).toEqual([
+      "mil",
+      "evaluation",
+      "pca",
+      "personality",
+    ]);
+  });
+
+  it("agrees with the (completed, total) pair the percentage is derived from", async () => {
+    const summary = await getDashboardAssessmentSummary("u1");
+    const completedInArray = summary.assessments.filter((a) => a.status === "completed").length;
+
+    expect(summary.totalAssessments).toBe(summary.assessments.length);
+    expect(completedInArray).toBe(summary.completedAssessments);
+    expect(summary.overallCompletion).toBe(
+      Math.round((summary.completedAssessments / summary.totalAssessments) * 100)
+    );
+  });
+
+  it("reports the personality assessment's real status", async () => {
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: true, existing_session_id: "s" });
+    mockCompletionEndpoint({ allDone: false, personalityCompleted: true });
+    const summary = await getDashboardAssessmentSummary("u1");
+    const personality = summary.assessments.find((a) => a.type === "personality");
+    expect(personality?.status).toBe("completed");
+    expect(personality?.completion).toBe(100);
   });
 });

@@ -258,12 +258,12 @@ export async function getUserAssessmentProgress(
     // the server's own verdict (GET /api/v1/assessment/completion → checkAssessmentCompletion)
     // rather than re-derived here, so this client-side tally can never drift from the
     // server's actual unlock decision — critically including legacyUnlockGrandfathered,
-    // which only the server can evaluate. Falls back to a client-derived 3-of-3 estimate
-    // (the pre-2026-07-30 shape, personality excluded) if the endpoint is unreachable, so
-    // an outage degrades progress display rather than breaking it.
+    // which only the server can evaluate. If the endpoint is unreachable it falls back to
+    // a client-derived estimate over the SAME four assessments, so an outage degrades the
+    // numbers but never the denominator.
     let completedCount = 0;
     let overallPercentage = 0;
-    let totalAssessments = 4;
+    const totalAssessments = 4;
     let personalityGates = true;
 
     try {
@@ -281,15 +281,18 @@ export async function getUserAssessmentProgress(
       // not actually being complete — the only way that combination can occur.
       personalityGates = !(serverCompletion.allDone && !serverCompletion.personalityCompleted);
     } catch {
-      totalAssessments = 3;
-      const assessmentStatuses = [milStatus, evaluationStatus, pcaStatus];
-      const nonPersonalityCompletedCount = assessmentStatuses.filter((s) => s === "completed").length;
+      // Client-derived estimate over the same four assessments the server counts. It
+      // used to fall back to the pre-2026-07-30 3-assessment shape, which is how the
+      // dashboard card came to read "1/3 · 33%" for a student who owes four. The one
+      // thing this branch cannot know is legacyUnlockGrandfathered, so a grandfathered
+      // student reads as incomplete here.
+      const assessmentStatuses = [milStatus, evaluationStatus, pcaStatus, personalityStatus];
+      completedCount = assessmentStatuses.filter((s) => s === "completed").length;
       const inProgressCount = assessmentStatuses.filter((s) => s === "in_progress").length;
-      completedCount = nonPersonalityCompletedCount;
-      if (nonPersonalityCompletedCount > 0) {
-        overallPercentage = (nonPersonalityCompletedCount / 3) * 100;
+      if (completedCount > 0) {
+        overallPercentage = (completedCount / totalAssessments) * 100;
       } else if (inProgressCount > 0) {
-        overallPercentage = (inProgressCount / 3) * 30; // 30% for in progress
+        overallPercentage = (inProgressCount / totalAssessments) * 30; // partial credit
       }
     }
 
@@ -395,6 +398,26 @@ export async function getDashboardAssessmentSummary(
                 ? 50
                 : 0,
           lastActivity: progress.pcaAssessment.lastActivity,
+          stats: {},
+        },
+        // Personality has been a required 4th assessment since 2026-07-30 (see
+        // AssessmentOverallProgress.personalityAssessment) but was never listed here,
+        // so `assessments.length` said 3 while `overallCompletion` counted 4. Any
+        // consumer sizing itself off this array was therefore off by one.
+        {
+          name:
+            language === "spanish"
+              ? "Evaluación de Personalidad"
+              : "Personality Assessment",
+          type: "personality",
+          status: progress.personalityAssessment.status,
+          completion:
+            progress.personalityAssessment.status === "completed"
+              ? 100
+              : progress.personalityAssessment.status === "in_progress"
+                ? 50
+                : 0,
+          lastActivity: undefined,
           stats: {},
         },
       ],
