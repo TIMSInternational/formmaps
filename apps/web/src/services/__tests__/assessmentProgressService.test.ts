@@ -31,6 +31,13 @@ jest.mock("@/services/evaluationService", () => ({
 jest.mock("@/services/pcaService", () => ({ checkPCAStatus: jest.fn() }));
 jest.mock("@/services/personalityService", () => ({ personalityApi: { getAccess: jest.fn() } }));
 jest.mock("@/lib/api/apiClient", () => ({ apiRequest: jest.fn() }));
+// The signed-in user, as assessmentCompletionService.isViewingSelf reads it. Left undefined
+// (the pre-hydration shape) for the existing suites, which all look up the caller's own
+// progress; the "viewing another user" suite sets it to a different id.
+let currentUserId: string | undefined;
+jest.mock("@/store/useGlobalStore", () => ({
+  useGlobalStore: { getState: () => ({ user: { id: currentUserId } }) },
+}));
 
 const mockMil = getMILResults as jest.Mock;
 const mockGroups = getUserEvaluationGroups as jest.Mock;
@@ -343,5 +350,133 @@ describe("getDashboardAssessmentSummary — the four assessments the card counts
     const personality = summary.assessments.find((a) => a.type === "personality");
     expect(personality?.status).toBe("completed");
     expect(personality?.completion).toBe(100);
+  });
+});
+
+// -------------------------------------------------------------------------
+// The server verdict (GET /api/v1/assessment/completion) is authoritative and may
+// only RAISE a status. checkPCAStatus is mocked here, so these prove the service
+// itself applies the verdict — the counterpart for checkPCAStatus's own use of it
+// lives in pcaService.checkPCAStatus.test.ts.
+// -------------------------------------------------------------------------
+describe("getUserAssessmentProgress — the server verdict raises client-derived statuses", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    currentUserId = undefined;
+    mockMil.mockResolvedValue(null);
+    mockGroups.mockResolvedValue([]);
+    mockSummary.mockReturnValue({
+      totalGroups: 0, completedEvaluations: 0, pendingEvaluations: 0, expiredInvitations: 0,
+      groupsByType: { Parent: 0, Teacher: 0, SiblingFriend: 0, Self: 0 },
+    });
+    mockPca.mockResolvedValue({ status: "in_progress", hasResults: false });
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: false });
+  });
+
+  it("hands the server's pcaCompleted into checkPCAStatus and reads PCA as completed", async () => {
+    mockApiRequest.mockResolvedValue({ success: true, data: { allDone: false, pcaCompleted: true, personalityCompleted: false } });
+    const result = await getUserAssessmentProgress("u1");
+    expect(mockPca).toHaveBeenCalledWith("u1", "english", true);
+    // The mocked checkPCAStatus ignored the hint and said in_progress; the verdict still wins.
+    expect(result.pcaAssessment.status).toBe("completed");
+  });
+
+  it("reads LIA and 360 as completed from the verdict alone when the client data is empty", async () => {
+    mockApiRequest.mockResolvedValue({
+      success: true,
+      data: { allDone: false, liaCompleted: 5, liaTotal: 5, evalCompleted: 3, evalTotal: 4, pcaCompleted: false, personalityCompleted: false },
+    });
+    const result = await getUserAssessmentProgress("u1");
+    expect(result.milAssessment.status).toBe("completed");
+    expect(result.evaluationAssessment.status).toBe("completed");
+    expect(result.pcaAssessment.status).toBe("in_progress");
+  });
+
+  it("never LOWERS a status: client says completed, verdict says not", async () => {
+    mockPca.mockResolvedValue({ status: "completed", hasResults: true });
+    mockApiRequest.mockResolvedValue({ success: true, data: { allDone: false, pcaCompleted: false, personalityCompleted: false } });
+    const result = await getUserAssessmentProgress("u1");
+    expect(result.pcaAssessment.status).toBe("completed");
+  });
+
+  it("fetches the verdict exactly once per lookup (it used to be fetched at the end as well)", async () => {
+    mockApiRequest.mockResolvedValue({ success: true, data: { allDone: false, personalityCompleted: false } });
+    await getUserAssessmentProgress("u1");
+    const completionCalls = mockApiRequest.mock.calls.filter(([path]) => path === "/api/v1/assessment/completion");
+    expect(completionCalls).toHaveLength(1);
+  });
+});
+
+// -------------------------------------------------------------------------
+// /counselor/students/[id] calls getUserAssessmentProgress(studentId). Two of the
+// endpoints it used are SELF-scoped (/assessment/completion, /personality/access), so
+// the counselor was shown their OWN Personality status and completion verdict for every
+// student. When the id is not the signed-in user, neither may be called.
+// -------------------------------------------------------------------------
+describe("getUserAssessmentProgress — viewing ANOTHER user (counselor student page)", () => {
+  const COUNSELOR = "counselor-9";
+  const STUDENT = "student-1";
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    currentUserId = COUNSELOR;
+    mockMil.mockResolvedValue({
+      completedExams: 5, totalExams: 5, overallScore: 80, lastCompletedAt: "2026-01-01",
+      examResults: [{ status: "completed", scorePercentage: 80 }],
+    });
+    mockGroups.mockResolvedValue([
+      group({ id: "1", groupType: "Self", relation: "Self", isEvaluationCompleted: true }),
+      group({ id: "2", groupType: "Parent", relation: "Mother", isEvaluationCompleted: true }),
+      group({ id: "3", groupType: "Teacher", relation: "Counselor", isEvaluationCompleted: true }),
+    ]);
+    mockSummary.mockReturnValue({
+      totalGroups: 3, completedEvaluations: 3, pendingEvaluations: 0, expiredInvitations: 0,
+      groupsByType: { Parent: 1, Teacher: 1, SiblingFriend: 0, Self: 1 },
+    });
+    mockPca.mockResolvedValue({ status: "completed", hasResults: true });
+    // The counselor's OWN personality: never started. Must not leak into the student's row.
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: false });
+  });
+
+  it("does not call either self-scoped endpoint", async () => {
+    mockApiRequest.mockImplementation(async (path: string) => {
+      if (path === `/api/v1/personality/user/${STUDENT}/results`) return { success: true, data: { profile: "INTJ" } };
+      throw Object.assign(new Error("Not found"), { status: 404 });
+    });
+    await getUserAssessmentProgress(STUDENT);
+    expect(mockPersonalityAccess).not.toHaveBeenCalled();
+    expect(mockApiRequest.mock.calls.map(([p]) => p)).not.toContain("/api/v1/assessment/completion");
+  });
+
+  it("reads the STUDENT's personality from the access-checked results route: 200 → completed", async () => {
+    mockApiRequest.mockImplementation(async (path: string) => {
+      if (path === `/api/v1/personality/user/${STUDENT}/results`) return { success: true, data: { profile: "INTJ" } };
+      throw Object.assign(new Error("Not found"), { status: 404 });
+    });
+    const result = await getUserAssessmentProgress(STUDENT);
+    expect(result.personalityAssessment.status).toBe("completed");
+    expect(result.personalityAssessment.hasAccess).toBe(false);
+    expect(result.overallCompletion.completedAssessments).toBe(4);
+    expect(result.overallCompletion.totalAssessments).toBe(4);
+    expect(result.overallCompletion.percentageComplete).toBe(100);
+  });
+
+  it("404 on the results route → not_started, and the tally is 3-of-4", async () => {
+    mockApiRequest.mockImplementation(async () => {
+      throw Object.assign(new Error("Not found"), { status: 404 });
+    });
+    const result = await getUserAssessmentProgress(STUDENT);
+    expect(result.personalityAssessment.status).toBe("not_started");
+    expect(result.overallCompletion.completedAssessments).toBe(3);
+    expect(result.overallCompletion.percentageComplete).toBe(75);
+  });
+
+  it("still treats the signed-in user's own lookup as self", async () => {
+    currentUserId = STUDENT;
+    mockApiRequest.mockResolvedValue({ success: true, data: { allDone: true, personalityCompleted: true } });
+    mockPersonalityAccess.mockResolvedValue({ has_access: true, has_completed: true, existing_session_id: "s" });
+    const result = await getUserAssessmentProgress(STUDENT);
+    expect(mockPersonalityAccess).toHaveBeenCalled();
+    expect(result.overallCompletion.percentageComplete).toBe(100);
   });
 });

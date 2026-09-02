@@ -15,6 +15,11 @@ import {
 } from "./evaluationService";
 import { checkPCAStatus } from "./pcaService";
 import { personalityApi } from "./personalityService";
+import {
+  getOwnAssessmentCompletion,
+  isViewingSelf,
+  ServerAssessmentCompletion,
+} from "./assessmentCompletionService";
 
 interface MILEnhancedData {
   completedExams: number;
@@ -99,6 +104,16 @@ export async function getUserAssessmentProgress(
   language: "english" | "spanish" = "english"
 ): Promise<AssessmentOverallProgress> {
   try {
+    // The server's verdict comes first and only for the signed-in user: two of the
+    // endpoints below (/assessment/completion, /personality/access) are self-scoped, and
+    // calling them for someone else's userId reports the VIEWER's assessments as theirs
+    // (see assessmentCompletionService.ts). When it is available it raises each status
+    // to "completed" independently of the client heuristics — it is what unlocks careers.
+    const viewingSelf = isViewingSelf(userId);
+    const serverCompletion: ServerAssessmentCompletion | null = viewingSelf
+      ? await getOwnAssessmentCompletion()
+      : null;
+
     // Fetch LIA Assessment Progress — use /api/v1/mil/results/{userId} as single source of truth
     let milProgress: UserProgressSummary;
     let milStatus: "not_started" | "in_progress" | "completed" = "not_started";
@@ -169,6 +184,13 @@ export async function getUserAssessmentProgress(
       };
     }
 
+    if (
+      serverCompletion?.liaTotal &&
+      (serverCompletion.liaCompleted ?? 0) >= serverCompletion.liaTotal
+    ) {
+      milStatus = "completed";
+    }
+
     // Fetch 360° Evaluation Progress
     let evaluationProgress: UserEvaluationProgress["summary"];
     let evaluationGroups: EvaluationGroupProgress[] = [];
@@ -214,7 +236,16 @@ export async function getUserAssessmentProgress(
       };
     }
 
-    // Get PCA assessment data
+    if (
+      serverCompletion?.evalTotal &&
+      isEvalComplete(serverCompletion.evalCompleted ?? 0, serverCompletion.evalTotal)
+    ) {
+      evaluationStatus = "completed";
+    }
+
+    // Get PCA assessment data. The server verdict is handed in so a completed PCA reads
+    // as completed from the database row, not from whether the live TIMS results call
+    // happens to succeed right now.
     let pcaStatus: "not_started" | "in_progress" | "completed" = "not_started";
     let pcaProgress = 0;
     let pcaLastActivity = undefined;
@@ -222,7 +253,7 @@ export async function getUserAssessmentProgress(
     let pcaCod = null;
 
     try {
-      const pcaData = await checkPCAStatus(userId, language);
+      const pcaData = await checkPCAStatus(userId, language, serverCompletion?.pcaCompleted);
       pcaStatus = pcaData.status;
       pcaProgress =
         pcaData.status === "completed"
@@ -236,22 +267,44 @@ export async function getUserAssessmentProgress(
     } catch (error) {
       // Keep default values
     }
+    if (serverCompletion?.pcaCompleted) {
+      pcaStatus = "completed";
+      pcaProgress = 100;
+      pcaHasResults = true;
+    }
 
-    // Fetch personality access. Never throws: any failure falls back to "not_started".
+    // Fetch personality status. Never throws: any failure falls back to "not_started".
     let personalityStatus: "not_started" | "in_progress" | "completed" = "not_started";
     let personalityHasAccess = false;
 
-    try {
-      const access = await personalityApi.getAccess();
-      personalityHasAccess = access.has_access;
-      personalityStatus = access.has_completed
-        ? "completed"
-        : access.existing_session_id
-          ? "in_progress"
-          : "not_started";
-    } catch {
-      // Keep defaults — a personality-service outage must never break the
-      // rest of progress tracking.
+    if (viewingSelf) {
+      try {
+        const access = await personalityApi.getAccess();
+        personalityHasAccess = access.has_access;
+        personalityStatus = access.has_completed
+          ? "completed"
+          : access.existing_session_id
+            ? "in_progress"
+            : "not_started";
+      } catch {
+        // Keep defaults — a personality-service outage must never break the
+        // rest of progress tracking.
+      }
+    } else {
+      // /personality/access is self-scoped, so for another user the only honest signal
+      // is whether their results exist: GET /api/v1/personality/user/{id}/results is
+      // access-checked server-side and answers 404 both for "no results yet" and "not
+      // yours to see". No in_progress here — the server does not expose another user's
+      // open session — and hasAccess stays false because it describes the viewer.
+      try {
+        await apiRequest(`/api/v1/personality/user/${encodeURIComponent(userId)}/results`);
+        personalityStatus = "completed";
+      } catch {
+        personalityStatus = "not_started";
+      }
+    }
+    if (serverCompletion?.personalityCompleted) {
+      personalityStatus = "completed";
     }
 
     // Overall completion (4 assessments: MIL, 360, PCA, Personality) is fetched from
@@ -266,13 +319,7 @@ export async function getUserAssessmentProgress(
     const totalAssessments = 4;
     let personalityGates = true;
 
-    try {
-      const completionJson = await apiRequest<{
-        data?: { allDone: boolean; readyForInsights: boolean; personalityCompleted: boolean };
-      }>("/api/v1/assessment/completion");
-      const serverCompletion = completionJson.data;
-      if (!serverCompletion) throw new Error("no completion data");
-
+    if (serverCompletion) {
       const nonPersonalityStatuses = [milStatus, evaluationStatus, pcaStatus];
       const nonPersonalityCompleted = nonPersonalityStatuses.filter((s) => s === "completed").length;
       completedCount = nonPersonalityCompleted + (personalityStatus === "completed" ? 1 : 0);
@@ -280,12 +327,14 @@ export async function getUserAssessmentProgress(
       // The student is grandfathered if the server says allDone despite Personality
       // not actually being complete — the only way that combination can occur.
       personalityGates = !(serverCompletion.allDone && !serverCompletion.personalityCompleted);
-    } catch {
-      // Client-derived estimate over the same four assessments the server counts. It
-      // used to fall back to the pre-2026-07-30 3-assessment shape, which is how the
-      // dashboard card came to read "1/3 · 33%" for a student who owes four. The one
-      // thing this branch cannot know is legacyUnlockGrandfathered, so a grandfathered
-      // student reads as incomplete here.
+    } else {
+      // Client-derived estimate over the same four assessments the server counts. Two
+      // ways to get here: the endpoint is unreachable, or this lookup is for ANOTHER user
+      // (the endpoint is self-scoped, so it was deliberately not called). It used to fall
+      // back to the pre-2026-07-30 3-assessment shape, which is how the dashboard card
+      // came to read "1/3 · 33%" for a student who owes four. The one thing this branch
+      // cannot know is legacyUnlockGrandfathered, so a grandfathered student reads as
+      // incomplete here.
       const assessmentStatuses = [milStatus, evaluationStatus, pcaStatus, personalityStatus];
       completedCount = assessmentStatuses.filter((s) => s === "completed").length;
       const inProgressCount = assessmentStatuses.filter((s) => s === "in_progress").length;
