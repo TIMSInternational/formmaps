@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { liaAssessmentApi, SUBTEST_ORDER, type LIAResults } from "@/services/liaService";
+import { getMILResults, type MILResultsData } from "@/services/milService";
 import { SUBTEST_DESCRIPTIONS } from "@/data/liaReportContent";
 import { buildLIAReportData } from "@/components/reports/buildLIAReportData";
 import { ResultsReport } from "../_tims/ResultsReport";
@@ -23,23 +24,43 @@ export default function LIAResultsPage() {
   const language: "es" | "en" = storeLanguage === "english" ? "en" : "es";
 
   const [results, setResults] = useState<LIAResults | null>(null);
+  // A student whose cognitive assessment predates the tims-parity LIA engine has no
+  // lia_assessment_session — /lia/user/{id}/results answers 404 — but /mil/results still
+  // carries their legacy exam scores (that endpoint falls back to them, which is why the
+  // assessments page calls them "completed" and links here). Without this fallback such a
+  // student was sent from "View Results" straight to "you have not completed the LIA".
+  const [legacy, setLegacy] = useState<MILResultsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!user.id) return;
+    const userId = user.id;
+    if (!userId) return;
     let cancelled = false;
-    liaAssessmentApi
-      .getUserResults(user.id)
-      .then((data) => {
+    (async () => {
+      try {
+        const data = await liaAssessmentApi.getUserResults(userId);
         if (!cancelled) setResults(data);
-      })
-      .catch(() => {
+        return;
+      } catch (err) {
+        if ((err as { status?: number })?.status !== 404) {
+          if (!cancelled) setError(true);
+          return;
+        }
+      }
+      try {
+        const mil = await getMILResults(userId);
+        const done = !!mil && mil.totalExams > 0 && mil.completedExams >= mil.totalExams;
+        if (!cancelled) {
+          if (done) setLegacy(mil);
+          else setError(true);
+        }
+      } catch {
         if (!cancelled) setError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+      }
+    })().finally(() => {
+      if (!cancelled) setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
@@ -51,6 +72,10 @@ export default function LIAResultsPage() {
         <div className="w-12 h-12 border-4 border-[#102B47] border-t-transparent rounded-full animate-spin" />
       </div>
     );
+  }
+
+  if (legacy && !results) {
+    return <LegacyMilResults data={legacy} language={language} onBack={() => router.push("/dashboard")} />;
   }
 
   if (error || !results) {
@@ -122,6 +147,75 @@ export default function LIAResultsPage() {
           </div>
         </div>
         <ResultsReport results={results} language={language} />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Legacy exam scores for a student with no parity LIA session. These are raw accuracy
+ * percentages from the previous engine, NOT norm-referenced percentiles, so they are
+ * shown as such — no performance band, no PDF export (that report is built from
+ * percentiles the legacy data does not have).
+ */
+function LegacyMilResults({
+  data,
+  language,
+  onBack,
+}: {
+  data: MILResultsData;
+  language: "es" | "en";
+  onBack: () => void;
+}) {
+  const es = language === "es";
+  const completed = data.examResults.filter((e) => e.status === "completed");
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8">
+          <ArrowLeft className="w-5 h-5" />
+          {es ? "Volver" : "Back"}
+        </button>
+        <div className="bg-white rounded-2xl shadow-sm p-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">
+            {es ? "Resultados de la Evaluación LIA" : "LIA Assessment Results"}
+          </h1>
+          <p className="text-sm text-gray-500 mb-6">
+            {es
+              ? "Puntajes de precisión de la versión anterior de la evaluación. No son percentiles normativos."
+              : "Accuracy scores from the previous version of the assessment. These are not norm-referenced percentiles."}
+          </p>
+          <div className="flex items-baseline gap-2 mb-8">
+            <span className="text-5xl font-bold text-[#102B47] tabular-nums">{Math.round(data.overallScore)}%</span>
+            <span className="text-gray-600">{es ? "promedio general" : "overall average"}</span>
+          </div>
+          <ul className="divide-y divide-gray-100">
+            {completed.map((exam) => {
+              const total = exam.totalQuestions ?? 0;
+              return (
+                <li key={exam.examId} className="flex items-center justify-between py-3">
+                  <div>
+                    <div className="font-medium text-gray-900">{exam.examName}</div>
+                    {total > 0 && (
+                      <div className="text-xs text-gray-500">
+                        {exam.correctAnswers ?? 0}/{total} {es ? "correctas" : "correct"}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-lg font-semibold text-gray-900 tabular-nums">
+                    {Math.round(exam.scorePercentage ?? 0)}%
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          {data.lastCompletedAt && (
+            <p className="text-xs text-gray-400 mt-6">
+              {es ? "Completada el " : "Completed on "}
+              {new Date(data.lastCompletedAt).toLocaleDateString(es ? "es" : "en")}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
