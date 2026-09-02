@@ -115,9 +115,14 @@ export async function getPCAResultByUserId(
 ): Promise<Record<string, unknown> | null> {
   const langParam = language === "spanish" ? "sp" : "en";
   try {
+    // A read shaped as a POST: it fills an optional widget, so it must neither toast
+    // "Server error" like a failed form submit nor retry like one — several dashboard
+    // components issue it at once, and the server already retries TIMS itself.
     return await apiRequest<Record<string, unknown>>(`/api/pcaapi/get-result?lang=${langParam}`, {
       method: "POST",
       data: { UserId: userId },
+      showErrorToast: false,
+      retries: 0,
     });
   } catch (err: unknown) {
     const apiErr = err as ApiError;
@@ -136,9 +141,12 @@ export async function getPCACompetencesByUserId(
 ): Promise<Record<string, unknown> | null> {
   const langParam = language === "spanish" ? "sp" : "en";
   try {
+    // Same read-shaped-POST rule as getPCAResultByUserId: no toast, no retry.
     return await apiRequest<Record<string, unknown>>(`/api/pcaapi/get-competences?lang=${langParam}`, {
       method: "POST",
       data: { UserId: userId, CmpTims: cmpTims },
+      showErrorToast: false,
+      retries: 0,
     });
   } catch (err: unknown) {
     const apiErr = err as ApiError;
