@@ -444,15 +444,47 @@ public class AuthEndpointsTests : IDisposable
         using var factory = CreateFactory(repo);
         using var client = factory.CreateClient();
 
+        // Wave 3 A3: no surrounding whitespace here -- legacy's zod .email() runs on the RAW body value,
+        // so a padded newEmail is a 400 (pinned below), never something that reaches normalization.
         var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-email")
         {
-            Content = JsonBody(new { userId = "caller-1", newEmail = "  NEW@EXAMPLE.TEST  " }),
+            Content = JsonBody(new { userId = "caller-1", newEmail = "NEW@EXAMPLE.TEST" }),
         };
         AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.Student);
         var response = await client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("new@example.test", repo.LastChangeEmailNewEmail);
+    }
+
+    // Wave 3 A3: legacy's changeEmailSchema is newEmail: z.string().email(), so a malformed newEmail is
+    // 400 with zod's default "Invalid email" (body.error.errors[0].message). The port's LooksLikeEmail
+    // only checked for an interior '@' and let all of these through to the repository.
+    [Theory]
+    [InlineData("a@b")]
+    [InlineData("john doe@x")]
+    [InlineData("a@b c")]
+    [InlineData("  NEW@EXAMPLE.TEST  ")]
+    public async Task ChangeEmail_malformed_new_email_is_400_with_legacy_message_and_never_reaches_the_repository(string newEmail)
+    {
+        var repo = new FakeAuthRepository
+        {
+            UserById = new AuthUserRow("caller-1", "Ada", "ada@example.test", null, "role_x", FormMapsRoles.Student, null, true),
+        };
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-email")
+        {
+            Content = JsonBody(new { userId = "caller-1", newEmail }),
+        };
+        AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.Student);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Invalid email", doc.RootElement.GetProperty("message").GetString());
+        Assert.Null(repo.LastChangeEmailNewEmail);
     }
 
     [Fact]
@@ -787,6 +819,26 @@ public class AuthEndpointsTests : IDisposable
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal("Invalid email", doc.RootElement.GetProperty("message").GetString());
+    }
+
+    // Wave 3 A3: the old LooksLikeEmail let these three through (an interior '@' was enough); legacy's
+    // forgotPasswordSchema is z.string().email() and answers 400 "Invalid email" for each.
+    [Theory]
+    [InlineData("a@b")]
+    [InlineData("john doe@x")]
+    [InlineData("a@b c")]
+    public async Task ForgotPassword_malformed_email_is_400_and_never_starts_the_background_work(string email)
+    {
+        var repo = new FakeAuthRepository();
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsync("/authapi/forgot-password", JsonBody(new { email }));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Invalid email", doc.RootElement.GetProperty("message").GetString());
+        Assert.False(repo.InvalidatePriorResetTokensWasCalled);
     }
 
     // ---- Reset password ----

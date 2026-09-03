@@ -263,6 +263,56 @@ public class AuthAdminEndpointsTests : IDisposable
         Assert.Null(repo.LastCreatedUser);
     }
 
+    // Wave 3 A3: legacy's signupSchema is z.string().email(), so a malformed email is 400 with zod's
+    // default "Invalid email" -- and it is the FIRST error zod reports, ahead of dateOfBirth and the
+    // password checks (email precedes both in the schema). The port used to accept any non-blank string.
+    [Theory]
+    [InlineData("not-an-email")]
+    [InlineData("a@b")]
+    [InlineData("john doe@x")]
+    [InlineData("a@b c")]
+    [InlineData("  padded@example.test  ")]   // zod validates the RAW body value; no trim first
+    public async Task Signup_malformed_email_is_rejected_with_exact_legacy_message(string email)
+    {
+        var repo = new FakeAuthAdminRepository();
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsync("/authapi/signup", JsonBody(new
+        {
+            name = "Bad Email",
+            email,
+            password = "Sup3r$ecret",
+            dateOfBirth = IsoYearsAgo(15),
+        }));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Invalid email", doc.RootElement.GetProperty("message").GetString());
+        Assert.Null(repo.LastCreatedUser);
+    }
+
+    [Fact]
+    public async Task Signup_malformed_email_is_reported_before_date_of_birth_and_password_errors()
+    {
+        var repo = new FakeAuthAdminRepository();
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsync("/authapi/signup", JsonBody(new
+        {
+            name = "Bad Email",
+            email = "a@b",
+            password = "weak",
+            dateOfBirth = "not-a-date",
+        }));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Invalid email", doc.RootElement.GetProperty("message").GetString());
+        Assert.Null(repo.LastCreatedUser);
+    }
+
     // ---- Unsubscribe ----
 
     [Fact]
