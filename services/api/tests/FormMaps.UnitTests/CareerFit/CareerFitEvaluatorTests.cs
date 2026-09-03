@@ -257,6 +257,50 @@ public class CareerFitEvaluatorTests(ITestOutputHelper output)
         Assert.Empty(writer.Writes);
     }
 
+    // A wholly unmeasured competency block used to score: the adapter defaults all 24 ids to level 0 and
+    // CalculateCompetencies reads them as measured zeros, so every family came back COMP_GATE=CRITICAL and
+    // the run was persisted and ranked. "Critical behavioural gap on all fourteen families" is then a
+    // finding about a student we hold no competency data for. Theory rather than Fact because the three
+    // shapes reach it by different paths: SQL/jsonb null, an empty array, and names that match nothing.
+    [Theory]
+    [InlineData("null")]
+    [InlineData("{\"PcaCmps\":[]}")]
+    [InlineData("{\"PcaCmps\":[{\"CmpNom\":\"NO SUCH COMPETENCY\",\"Level\":3}]}")]
+    public async Task EvaluateAsync_refuses_a_wholly_unmeasured_competency_block(string competencesJson)
+    {
+        var writer = new FakeWriter();
+        var raw = SampleRaw() with { Competences = SampleStudentRows.Parse(competencesJson) };
+        var evaluator = new CareerFitEvaluator(new FakeReader(raw), writer, new CareerFitRulesProvider(RulesVersion), NoDataV360Adapter.Instance);
+
+        var ex = await Assert.ThrowsAsync<CareerFitInputException>(() => evaluator.EvaluateAsync(Student("student-1", "school-a"), "student-1"));
+
+        Assert.Equal(InputInstruments.Competencies, ex.Instrument);
+        Assert.Equal(InputWarningCodes.CompetenciesMissing, ex.Code);
+        Assert.Empty(writer.Writes);
+    }
+
+    // The counterpart, and the reason the guard counts ids instead of testing for an empty block: a
+    // PARTIAL gap is normal and must still score — one unreadable competency is not an unmeasured student.
+    [Fact]
+    public async Task EvaluateAsync_still_scores_when_only_some_competencies_are_missing()
+    {
+        var writer = new FakeWriter();
+        var full = SampleStudentRows.Parse(SampleStudentRows.CompetencesJson(Rules));
+        var trimmed = full.GetProperty("PcaCmps").EnumerateArray().Skip(1)
+            .Select(e => e.GetRawText());
+        var raw = SampleRaw() with
+        {
+            Competences = SampleStudentRows.Parse($"{{\"PcaCmps\":[{string.Join(',', trimmed)}]}}"),
+        };
+        var evaluator = new CareerFitEvaluator(new FakeReader(raw), writer, new CareerFitRulesProvider(RulesVersion), NoDataV360Adapter.Instance);
+
+        var run = await evaluator.EvaluateAsync(Student("student-1", "school-a"), "student-1");
+
+        Assert.Single(writer.Writes);
+        Assert.Single(run.Quality.DefaultedCompetencyIds);
+        Assert.Equal(Rules.Families.Count(f => f.Scorable), run.Families.Count);
+    }
+
     // ---------------------------------------------------------------- fakes
 
     private static CareerFitRawInputs SampleRaw() => new(

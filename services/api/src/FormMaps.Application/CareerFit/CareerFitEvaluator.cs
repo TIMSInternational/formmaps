@@ -83,6 +83,8 @@ public sealed class CareerFitEvaluator(
             v360Adapter,
             graph);
 
+        RequireCompetenciesWereMeasured(inputs.Quality, ruleSet);
+
         var families = EvaluateCore(inputs.Assessment, ruleSet);
 
         return new CareerFitEvaluation(
@@ -94,6 +96,43 @@ public sealed class CareerFitEvaluator(
             Quality: inputs.Quality,
             Sources: raw.Sources,
             Families: families);
+    }
+
+    /// <summary>
+    /// Fail closed when NOTHING in the competency block could be read — <c>pca_results.competences</c> NULL,
+    /// an empty PcaCmps, or names that all matched nothing — so every rule-set id was defaulted.
+    ///
+    /// The adapter defaults an unmatched id to level 0 and records it, which is right for a PARTIAL gap: the
+    /// student really was not measured on that one competency and F02's attainment arithmetic handles it. A
+    /// WHOLLY defaulted block is a different thing. Twenty-four measured zeros are indistinguishable from
+    /// twenty-four absences once they reach CalculateCompetencies, and the engine does not throw on them: it
+    /// scores a complete, ranked, persisted run in which every family's COMP_GATE reads CRITICAL. That is
+    /// then presented as a finding about the student — "critical behavioural gap on all fourteen families" —
+    /// when the only fact available is that the platform holds no competency data for them.
+    ///
+    /// Same rule as a missing MIL subtest (<see cref="Adapters.MilAdapter"/>): repairable defects are
+    /// recorded and scored, unmeasured instruments refuse. The orchestrator maps this to "not scorable"
+    /// and nothing is written.
+    /// </summary>
+    private static void RequireCompetenciesWereMeasured(InputQuality quality, CareerFitActiveRuleSet ruleSet)
+    {
+        var expected = ruleSet.Rules.Competencies.Count;
+        if (expected == 0 || quality.DefaultedCompetencyIds.Count < expected)
+        {
+            return;
+        }
+
+        var unknown = quality.UnknownCompetencyNames.Count == 0
+            ? "none were present"
+            : $"{quality.UnknownCompetencyNames.Count} name(s) were present but matched no rule-set competency: "
+              + string.Join(", ", quality.UnknownCompetencyNames.Take(5))
+              + (quality.UnknownCompetencyNames.Count > 5 ? ", …" : string.Empty);
+
+        throw new Adapters.CareerFitInputException(
+            Adapters.InputInstruments.Competencies,
+            Adapters.InputWarningCodes.CompetenciesMissing,
+            $"No competency level could be read: all {expected} rule-set competencies were defaulted ({unknown}). "
+            + "Scoring would report a critical behavioural gap on every family from an absence of data.");
     }
 
     /// <summary>

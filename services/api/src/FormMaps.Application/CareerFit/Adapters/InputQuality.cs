@@ -27,6 +27,7 @@ public static class InputWarningCodes
     public const string DiscGraphChoiceInvalid = "DISC_GRAPH_CHOICE_INVALID";
     public const string DiscFactorClamped = "DISC_FACTOR_CLAMPED";
     public const string DiscFactorNotANumber = "DISC_FACTOR_NAN";
+    public const string DiscAxisMissing = "DISC_AXIS_MISSING";
 
     // Competencies
     public const string CompetencyNameUnknown = "COMPETENCY_NAME_UNKNOWN";
@@ -35,7 +36,9 @@ public static class InputWarningCodes
     public const string CompetencyLevelClamped = "COMPETENCY_LEVEL_CLAMPED";
     public const string CompetencyLevelRounded = "COMPETENCY_LEVEL_ROUNDED";
     public const string CompetencyLevelNotANumber = "COMPETENCY_LEVEL_NAN";
+    public const string CompetencyLevelMissing = "COMPETENCY_LEVEL_MISSING";
     public const string CompetencyDefinitionsCollide = "COMPETENCY_DEFINITIONS_COLLIDE";
+    public const string CompetenciesMissing = "COMPETENCIES_MISSING";
 
     // MIL
     public const string MilPercentileClamped = "MIL_PERCENTILE_CLAMPED";

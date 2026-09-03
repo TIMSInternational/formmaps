@@ -20,27 +20,42 @@ public sealed record CompetencyAdaptation(
 /// matches nothing; the spec's 422 on fewer than 24 would reject real students (TIMS open question 3).
 /// So: names are compared NORMALISED (Unicode NFD, non-spacing marks removed, case folded, punctuation
 /// such as "/" and "," and runs of whitespace collapsed to one space); a name that still matches nothing
-/// is recorded, not thrown; an id no entry reached is defaulted to level 0 with a warning; a level
+/// is recorded, not thrown; an id no entry reached is defaulted to level 0 with a warning; an entry whose
+/// Level is absent, null or not numeric is defaulted to level 0 with a warning (COMPETENCY_LEVEL_MISSING —
+/// the legacy normaliser would coerce it to a measured 0, so the raw jsonb is walked here instead); a level
 /// outside 0–4 is clamped with a warning; a non-integer level is rounded half away from zero with a
-/// warning; on a duplicate name the FIRST entry wins with a warning. Deliberately NOT here: any
-/// attainment arithmetic (F02 is CareerFitFormulas.CalculateCompetencies), and any guess at a name the
-/// rule set does not carry — the unknown list is the evidence TIMS needs to answer question 3.
+/// warning; on a duplicate name the FIRST entry wins with a warning. Every substitution is on the record.
+/// Deliberately NOT here: the scorability decision for a block that is WHOLLY absent (every id defaulted)
+/// — this adapter records it and the orchestrator (CareerFitEvaluator) refuses to score it, so a NULL
+/// competences column never becomes a measured zero profile; any attainment arithmetic (F02 is
+/// CareerFitFormulas.CalculateCompetencies); and any guess at a name the rule set does not carry — the
+/// unknown list is the evidence TIMS needs to answer question 3.
 /// </summary>
 public static class CompetencyAdapter
 {
     private const int MinLevel = 0;
     private const int MaxLevel = 4;
 
-    /// <summary>Adapt the raw pca_results.competences jsonb (via <see cref="PcaNormalization.NormalizeCompetences"/>).</summary>
+    /// <summary>
+    /// Adapt the raw pca_results.competences jsonb. The entries are selected exactly as
+    /// <see cref="PcaNormalization.NormalizeCompetences"/> selects them (an object with a PcaCmps / pcaCmps
+    /// array; object items with a non-empty string CmpNom / cmpNom, trimmed) but the Level is kept NULLABLE
+    /// so a missing one is a recorded default, not a measured 0.
+    /// </summary>
     public static CompetencyAdaptation Adapt(JsonElement competences, IReadOnlyList<CompetencyDefinition> definitions) =>
-        Adapt(PcaNormalization.NormalizeCompetences(competences), definitions);
+        Adapt(ReadRawEntries(competences), definitions);
 
     /// <summary>
     /// Adapt normalised {name, level} entries. <paramref name="competences"/> null (absent block) means
-    /// every definition is defaulted — recorded, not thrown, so the orchestrator can decide scorability.
+    /// every definition is defaulted — recorded, not thrown, so the orchestrator can decide scorability
+    /// (<see cref="CareerFitEvaluator"/> refuses a block where every id was defaulted).
     /// </summary>
     public static CompetencyAdaptation Adapt(
-        IReadOnlyList<CompetenceEntry>? competences, IReadOnlyList<CompetencyDefinition> definitions)
+        IReadOnlyList<CompetenceEntry>? competences, IReadOnlyList<CompetencyDefinition> definitions) =>
+        Adapt(competences?.Select(e => new RawCompetence(e.Name, e.Level)).ToList(), definitions);
+
+    private static CompetencyAdaptation Adapt(
+        IReadOnlyList<RawCompetence>? competences, IReadOnlyList<CompetencyDefinition> definitions)
     {
         var byNormalisedName = BuildLookup(definitions);
         var warnings = new List<InputWarning>();
@@ -157,8 +172,90 @@ public static class CompetencyAdapter
         return lookup;
     }
 
-    private static int ToLevel(CompetencyDefinition definition, double raw, List<InputWarning> warnings)
+    // One {CmpNom, Level} entry as stored, Level null when absent / JSON null / not a number.
+    private sealed record RawCompetence(string Name, double? Level);
+
+    // PcaNormalization.NormalizeCompetences' selection rules, with the Level left nullable instead of
+    // `?? 0`: a non-object document or a missing / non-array PcaCmps is "absent" (null); non-object items
+    // and empty-string names are dropped; names are trimmed. Kept in step with that method on purpose —
+    // it is the legacy reader's behaviour, and this adapter must see the same entries it would.
+    private static IReadOnlyList<RawCompetence>? ReadRawEntries(JsonElement competences)
     {
+        if (competences.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        var cmps = GetProp(competences, "PcaCmps", "pcaCmps");
+        if (cmps is not { ValueKind: JsonValueKind.Array } list)
+        {
+            return null;
+        }
+
+        var output = new List<RawCompetence>();
+        foreach (var item in list.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            var nameProp = GetProp(item, "CmpNom", "cmpNom");
+            if (nameProp is not { ValueKind: JsonValueKind.String } name || string.IsNullOrEmpty(name.GetString()))
+            {
+                continue;
+            }
+
+            output.Add(new RawCompetence(name.GetString()!.Trim(), Num(GetProp(item, "Level", "level"))));
+        }
+
+        return output.Count > 0 ? output : null;
+    }
+
+    // PcaNormalization.Num: a JSON number → its value; a non-empty numeric string → parsed; anything else → null.
+    private static double? Num(JsonElement? element)
+    {
+        if (element is not { } value)
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number => value.GetDouble(),
+            JsonValueKind.String when !string.IsNullOrWhiteSpace(value.GetString())
+                && double.TryParse(value.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) => parsed,
+            _ => null,
+        };
+    }
+
+    // PcaNormalization.GetProp: first present, non-null property of the PascalCase / camelCase pair.
+    private static JsonElement? GetProp(JsonElement obj, string first, string second)
+    {
+        if (obj.TryGetProperty(first, out var a) && a.ValueKind != JsonValueKind.Null)
+        {
+            return a;
+        }
+
+        if (obj.TryGetProperty(second, out var b) && b.ValueKind != JsonValueKind.Null)
+        {
+            return b;
+        }
+
+        return null;
+    }
+
+    private static int ToLevel(CompetencyDefinition definition, double? rawLevel, List<InputWarning> warnings)
+    {
+        if (rawLevel is not { } raw)
+        {
+            warnings.Add(new InputWarning(
+                InputInstruments.Competencies,
+                InputWarningCodes.CompetencyLevelMissing,
+                $"Competency {definition.CompetencyId} \"{definition.Name}\" has no Level in the PCA result; defaulted to {MinLevel}."));
+            return MinLevel;
+        }
+
         if (double.IsNaN(raw) || double.IsInfinity(raw))
         {
             warnings.Add(new InputWarning(
