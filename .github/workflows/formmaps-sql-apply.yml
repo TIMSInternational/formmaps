@@ -167,6 +167,7 @@ jobs:
           role_pos=0
           shadow_pos=0
           audit_pos=0
+          careerfit_pos=0
           pos=0
           IFS=',' read -ra parts <<< "$SQL_FILES_INPUT"
           for raw in "${parts[@]}"; do
@@ -191,6 +192,7 @@ jobs:
               dotnet-service-role.sql)   role_pos=$pos ;;
               billing-shadow-tables.sql) shadow_pos=$pos ;;
               audit-events-schema.sql)   audit_pos=$pos ;;
+              careerfit-schema.sql)      careerfit_pos=$pos ;;
             esac
             files="$files $f"
           done
@@ -208,6 +210,9 @@ jobs:
           fi
           if [ "$role_pos" -gt 0 ] && [ "$audit_pos" -gt "$role_pos" ]; then
             echo "::warning::audit-events-schema.sql is listed AFTER dotnet-service-role.sql. On a database without audit_events, the role file's GRANT will fail (42P01)."
+          fi
+          if [ "$role_pos" -gt 0 ] && [ "$careerfit_pos" -gt "$role_pos" ]; then
+            echo "::warning::careerfit-schema.sql is listed AFTER dotnet-service-role.sql. On a database without the careerfit_* tables, the role file's GRANT (section 4.7) will fail (42P01)."
           fi
           echo "applying, in order: $files"
           echo "files=$files" >> "$GITHUB_OUTPUT"
