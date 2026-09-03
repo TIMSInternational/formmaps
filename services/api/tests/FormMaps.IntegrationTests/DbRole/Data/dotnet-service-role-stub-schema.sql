@@ -32,6 +32,11 @@ CREATE TABLE "audit_events" (id text PRIMARY KEY);
 -- Every_table_in_the_schema_is_granted_at_least_select names it explicitly.
 CREATE TABLE "audit_logs" (id text PRIMARY KEY);
 CREATE TABLE "bookings" (id text PRIMARY KEY);
+-- FM-CF-002: CareerFit runs (infra/aws/sql/careerfit-schema.sql). Stubbed BARE like audit_events
+-- above -- no RLS, no FKs -- so a rejected UPDATE/DELETE in DbRoleGrantsTests is attributable to the
+-- GRANT and to nothing else. The real tables' RLS is the CareerFit fixture's subject, not this one's.
+CREATE TABLE "careerfit_family_results" (id text PRIMARY KEY);
+CREATE TABLE "careerfit_runs" (id text PRIMARY KEY);
 CREATE TABLE "category_requirements" (id text PRIMARY KEY);
 CREATE TABLE "coaches" (id text PRIMARY KEY);
 CREATE TABLE "college_essays" (id text PRIMARY KEY);

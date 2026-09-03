@@ -151,7 +151,20 @@ WITH checks(tbl, priv, expected, hard, why) AS (
     ('public.audit_logs', 'INSERT', true,  true, 'formmaps#120: SchoolUsersWriter role-change rows (sec 4.6)'),
     ('public.audit_logs', 'SELECT', false, true, 'withheld: no .NET read path; INSERT needs no SELECT'),
     ('public.audit_logs', 'UPDATE', false, true, 'formmaps#128: INSERT-only — UPDATE would make the trail rewritable'),
-    ('public.audit_logs', 'DELETE', false, true, 'formmaps#128: INSERT-only — DELETE would let the service erase it')
+    ('public.audit_logs', 'DELETE', false, true, 'formmaps#128: INSERT-only — DELETE would let the service erase it'),
+    -- FM-CF-002: CareerFit runs are append-only (dotnet-service-role.sql sec
+    -- 4.7). SELECT+INSERT and nothing else — a run is the evidence of what a
+    -- rules version produced from given inputs; a re-evaluation is a NEW run.
+    -- No immutability trigger on these tables, so this grant IS the lock.
+    -- ABSENT until careerfit-schema.sql has been applied.
+    ('public.careerfit_runs', 'SELECT', true,  true, 'FM-CF-002: run reader (own / school / bypass per RLS)'),
+    ('public.careerfit_runs', 'INSERT', true,  true, 'FM-CF-002: run writer'),
+    ('public.careerfit_runs', 'UPDATE', false, true, 'immutable run: must NEVER be granted'),
+    ('public.careerfit_runs', 'DELETE', false, true, 'immutable run: erasure is the admin path, not the service'),
+    ('public.careerfit_family_results', 'SELECT', true,  true, 'FM-CF-002: per-family scores read with the run'),
+    ('public.careerfit_family_results', 'INSERT', true,  true, 'FM-CF-002: written once with the run'),
+    ('public.careerfit_family_results', 'UPDATE', false, true, 'immutable run: must NEVER be granted'),
+    ('public.careerfit_family_results', 'DELETE', false, true, 'immutable run: cascades from the admin erasure path only')
 )
 SELECT tbl,
        priv,

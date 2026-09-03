@@ -11,8 +11,8 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
 {
     // One representative table per grant tier from the script (kept in sync by hand; a full round-trip over every
     // granted table adds verification depth without adding coverage of a genuinely different code path). Tables
-    // whose exact verb set IS the invariant -- the billing tier and audit_events -- are named individually below
-    // instead of being sampled.
+    // whose exact verb set IS the invariant -- the billing tier, audit_events and the careerfit_* pair -- are named
+    // individually below instead of being sampled.
     private const string ReadOnlyTable = "universities";
     private const string WriteNoDeleteTable = "users";
     private const string FullCrudTable = "holidays";
@@ -332,6 +332,83 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
         // raised; "the append survived every attempt to rewrite it" is the property the audit trail promises.
         await using var survived = new NpgsqlCommand(
             $"""SELECT count(*) FROM "{AuditTable}" WHERE id = @id""", connection);
+        survived.Parameters.AddWithValue("id", id);
+        Assert.Equal(1L, (long)(await survived.ExecuteScalarAsync())!);
+    }
+
+    /// <summary>
+    /// FM-CF-002. CareerFit runs are append-only: SELECT + INSERT, never UPDATE, never DELETE, never TRUNCATE
+    /// (role script section 4.7). Unlike audit_events there is NO immutability trigger on these tables, so this
+    /// grant is the only lock between the service account and a rewritable run -- which is why the verb set is
+    /// pinned per table, catalog-side, rather than sampled through one representative.
+    /// </summary>
+    [Theory]
+    [InlineData("careerfit_runs")]
+    [InlineData("careerfit_family_results")]
+    public async Task CareerFit_tables_are_granted_select_and_insert_but_never_update_or_delete(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'DELETE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'TRUNCATE')
+            """,
+            connection);
+        command.Parameters.AddWithValue("table", table);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.True(reader.GetBoolean(0), $"{table}: the run reader SELECTs under the caller's RLS session");
+        Assert.True(reader.GetBoolean(1), $"{table}: the run writer INSERTs; without this every evaluation 42501s");
+        Assert.False(reader.GetBoolean(2), $"{table}: a run is immutable -- UPDATE would let the service rewrite a score in place");
+        Assert.False(reader.GetBoolean(3), $"{table}: a run is immutable -- erasure is the admin path, not the service's");
+        Assert.False(reader.GetBoolean(4), $"{table}: TRUNCATE erases every run in one statement and is never needed by the service");
+    }
+
+    /// <summary>
+    /// The behavioural half of the assertion above, as the role itself. The stub tables are bare (no RLS, no
+    /// trigger), so a rejected UPDATE/DELETE is the GRANT and nothing else -- and the SqlState is asserted, not
+    /// merely that something threw, for the reason the audit_events test above records.
+    /// </summary>
+    [Theory]
+    [InlineData("careerfit_runs")]
+    [InlineData("careerfit_family_results")]
+    public async Task CareerFit_tables_accept_appends_from_the_role_but_reject_rewrites_and_erasures(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand($"""INSERT INTO "{table}" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        var update = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand($"""UPDATE "{table}" SET id = 'rewritten' WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", update.SqlState); // insufficient_privilege
+
+        var delete = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand($"""DELETE FROM "{table}" WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", delete.SqlState);
+
+        await using var survived = new NpgsqlCommand($"""SELECT count(*) FROM "{table}" WHERE id = @id""", connection);
         survived.Parameters.AddWithValue("id", id);
         Assert.Equal(1L, (long)(await survived.ExecuteScalarAsync())!);
     }
