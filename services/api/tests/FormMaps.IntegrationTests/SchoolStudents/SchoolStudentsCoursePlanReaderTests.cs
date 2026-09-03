@@ -166,7 +166,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
         // level wins; only rows written before the column existed (NULL) fall back to the student's current grade,
         // and only a student with no grade at all falls back to 11.
         await using var conn = await _adminDataSource.OpenConnectionAsync();
-        await SeedUser(conn, "s1", School, gradeLevel: 11);
+        await SeedUser(conn, "s1", School, gradeLevel: 10);  // NOT 11, so the NULL rung is distinguishable from the final default
         await SeedUser(conn, "s2", School, gradeLevel: null);
         await SeedUser(conn, "s0", School, gradeLevel: 0);
         await SeedAcademicYear(conn, "ay1", School, name: "2025-2026", isCurrent: true);
@@ -179,9 +179,9 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
 
         var s1 = await Reader().GetStudentCoursePlanAsync(Ctx(), "s1");
         Assert.Equal(new[] { "p-9", "p-12", "p-null" }, s1!.Enrollments.Select(e => e.Id).ToArray());
-        Assert.Equal(9, s1.Enrollments[0].GradeLevel);    // stored 9 wins over the student's current 11
+        Assert.Equal(9, s1.Enrollments[0].GradeLevel);    // stored 9 wins over the student's current 10
         Assert.Equal(12, s1.Enrollments[1].GradeLevel);   // stored 12 wins too — NOT collapsed onto one grade
-        Assert.Equal(11, s1.Enrollments[2].GradeLevel);   // NULL → user.gradeLevel (11)
+        Assert.Equal(10, s1.Enrollments[2].GradeLevel);   // NULL → user.gradeLevel (10), NOT the 11 default
         Assert.All(s1.Enrollments, e => Assert.False(e.IsGraded));
 
         // NULL stored level AND no user grade → the final 11 default.
