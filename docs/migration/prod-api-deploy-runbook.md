@@ -68,6 +68,7 @@ Secrets, on the **production** environment:
 | `FORMMAPS_PROD_DAILY_API_KEY_SECRET_ARN` | |
 | `FORMMAPS_PROD_STRIPE_SECRET_KEY_ARN` | **LIVE** key here, unlike staging. |
 | `FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN` | ⚠️ Signing secret of the **second** Stripe endpoint — the one pointing at .NET (formmaps#43). Stripe issues a distinct secret per endpoint; reusing the legacy Node endpoint's makes .NET reject every event as an invalid signature, and the #44 shadow soak stays silently empty. |
+| `FORMMAPS_PROD_FIELD_ENCRYPTION_KEY_ARN` | ⚠️ The AES-256-GCM key `AesGcmFieldCipher` uses to encrypt iSAMS vendor credentials (FM-DOTNET-087). MUST be the **same** key the legacy Node API uses (`lib/fieldEncrypt.ts`), or a credential written by .NET cannot be decrypted by the Node iSAMS `sync` path that still owns that vendor call. Unlike the Stripe pair this one does **not** block boot — the key is read lazily, so a missing one surfaces only as a 500 on the first `POST /integrations/isams`, which is why it was absent from both stacks until 2026-09-03. |
 
 Variables:
 

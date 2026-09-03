@@ -70,6 +70,18 @@ Parameters:
       signing secret per endpoint -- reusing Node's makes .NET reject every event
       as an invalid signature. Create the endpoint first (formmaps#43), then
       store THAT endpoint's signing secret here.
+  FieldEncryptionKeyArn:
+    Type: String
+    NoEcho: true
+    Description: >-
+      Full ARN of the Secrets Manager secret containing FIELD_ENCRYPTION_KEY --
+      the AES-256-GCM key AesGcmFieldCipher uses to encrypt iSAMS vendor
+      credentials on POST /integrations/isams (FM-DOTNET-087). The key is read
+      lazily, so its absence does NOT stop the service booting: it surfaces
+      much later as a 500 on the first encrypting write, which is exactly how
+      this gap went unnoticed. MUST be the SAME key the legacy Node API uses
+      (lib/fieldEncrypt.ts), or a credential written by .NET cannot be
+      decrypted by the Node iSAMS sync path that still owns that vendor call.
   ProdWebOrigin:
     Type: String
     Default: https://app.formmaps.com
@@ -204,6 +216,7 @@ Resources:
                   # fail to fetch it and the deployment fail -- keep the two in sync.
                   - !Ref StripeSecretKeyArn
                   - !Ref StripeWebhookSecretArn
+                  - !Ref FieldEncryptionKeyArn
       Tags:
         - Key: Project
           Value: formmaps
@@ -252,6 +265,8 @@ Resources:
                 Value: !Ref StripeSecretKeyArn
               - Name: STRIPE_WEBHOOK_SECRET
                 Value: !Ref StripeWebhookSecretArn
+              - Name: FIELD_ENCRYPTION_KEY
+                Value: !Ref FieldEncryptionKeyArn
       InstanceConfiguration:
         Cpu: !Ref Cpu
         Memory: !Ref Memory

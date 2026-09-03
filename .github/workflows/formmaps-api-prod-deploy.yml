@@ -115,6 +115,7 @@ jobs:
           DAILY_API_KEY_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_DAILY_API_KEY_SECRET_ARN }}
           STRIPE_SECRET_KEY_ARN: ${{ secrets.FORMMAPS_PROD_STRIPE_SECRET_KEY_ARN }}
           STRIPE_WEBHOOK_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN }}
+          FIELD_ENCRYPTION_KEY_ARN: ${{ secrets.FORMMAPS_PROD_FIELD_ENCRYPTION_KEY_ARN }}
           PROD_WEB_ORIGIN: ${{ vars.FORMMAPS_PROD_WEB_ORIGIN }}
           PROD_FRONTEND_BASE_URL: ${{ vars.FORMMAPS_PROD_FRONTEND_BASE_URL }}
         run: |
@@ -137,6 +138,13 @@ jobs:
           # reject every event as an invalid signature and the #44 shadow soak
           # silently stays empty. See formmaps#43.
           : "${STRIPE_WEBHOOK_SECRET_ARN:?Set FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN in the production environment (signing secret of the .NET Stripe endpoint, formmaps#43 — NOT the legacy Node endpoint).}"
+          # Unlike the Stripe pair this one does NOT block boot — AesGcmFieldCipher
+          # reads the key lazily — so a missing key stays invisible until the first
+          # iSAMS credential save 500s in prod (FM-DOTNET-087). Required here so the
+          # gap is caught at dispatch instead. Must be the SAME key the legacy Node
+          # API uses, or a .NET-written credential cannot be decrypted by the Node
+          # iSAMS sync path that still owns that vendor call.
+          : "${FIELD_ENCRYPTION_KEY_ARN:?Set FORMMAPS_PROD_FIELD_ENCRYPTION_KEY_ARN in the production environment (AES-256-GCM key encrypting iSAMS vendor credentials — MUST match the key the legacy Node API uses).}"
           # The CORS origin has no safe default. formmaps-api-prod-service.yml
           # ships ProdWebOrigin=https://app.formmaps.ai and
           # FrontendBaseUrl=https://app.formmaps.com — two different hosts, and
@@ -261,6 +269,7 @@ jobs:
           DAILY_API_KEY_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_DAILY_API_KEY_SECRET_ARN }}
           STRIPE_SECRET_KEY_ARN: ${{ secrets.FORMMAPS_PROD_STRIPE_SECRET_KEY_ARN }}
           STRIPE_WEBHOOK_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN }}
+          FIELD_ENCRYPTION_KEY_ARN: ${{ secrets.FORMMAPS_PROD_FIELD_ENCRYPTION_KEY_ARN }}
           PROD_WEB_ORIGIN: ${{ vars.FORMMAPS_PROD_WEB_ORIGIN }}
           PROD_FRONTEND_BASE_URL: ${{ vars.FORMMAPS_PROD_FRONTEND_BASE_URL }}
         run: |
@@ -282,6 +291,7 @@ jobs:
               DailyApiKeySecretArn="$DAILY_API_KEY_SECRET_ARN" \
               StripeSecretKeyArn="$STRIPE_SECRET_KEY_ARN" \
               StripeWebhookSecretArn="$STRIPE_WEBHOOK_SECRET_ARN" \
+              FieldEncryptionKeyArn="$FIELD_ENCRYPTION_KEY_ARN" \
               ProdWebOrigin="$PROD_WEB_ORIGIN" \
               FrontendBaseUrl="$FRONTEND_BASE_URL"
 

@@ -99,6 +99,10 @@ jobs:
           # that only appears AFTER the test suite and image push have already run.
           STRIPE_SECRET_KEY_ARN: ${{ secrets.FORMMAPS_STAGING_STRIPE_SECRET_KEY_ARN }}
           STRIPE_WEBHOOK_SECRET_ARN: ${{ secrets.FORMMAPS_STAGING_STRIPE_WEBHOOK_SECRET_ARN }}
+          # Added 2026-09-03. The template reads FIELD_ENCRYPTION_KEY (AesGcmFieldCipher,
+          # FM-DOTNET-087) but no stack ever supplied it, so POST /integrations/isams could
+          # not encrypt on staging or prod.
+          FIELD_ENCRYPTION_KEY_ARN: ${{ secrets.FORMMAPS_STAGING_FIELD_ENCRYPTION_KEY_ARN }}
         run: |
           set -euo pipefail
           : "${JWT_SECRET_ARN:?Set FORMMAPS_STAGING_JWT_SECRET_ARN in the staging environment.}"
@@ -111,6 +115,12 @@ jobs:
           # StartupEnvironmentValidator requires them, but staging must never hold the live keys.
           : "${STRIPE_SECRET_KEY_ARN:?Set FORMMAPS_STAGING_STRIPE_SECRET_KEY_ARN in the staging environment (ARN of a Stripe TEST-mode secret key in Secrets Manager, NOT the live nexa/api/STRIPE_SECRET_KEY).}"
           : "${STRIPE_WEBHOOK_SECRET_ARN:?Set FORMMAPS_STAGING_STRIPE_WEBHOOK_SECRET_ARN in the staging environment (ARN of the TEST-mode webhook signing secret).}"
+          # Unlike the Stripe pair this key does not block boot — AesGcmFieldCipher reads it
+          # lazily — so a missing one stays invisible until the first iSAMS credential save
+          # 500s. Guarded here so it fails in seconds with a name to act on. Match the key the
+          # legacy Node staging API uses, so a .NET-written credential round-trips through the
+          # Node iSAMS sync path; never point this at the prod key.
+          : "${FIELD_ENCRYPTION_KEY_ARN:?Set FORMMAPS_STAGING_FIELD_ENCRYPTION_KEY_ARN in the staging environment (AES-256-GCM key encrypting iSAMS vendor credentials — the staging key, NOT the prod one).}"
           aws cloudformation deploy \
             --stack-name "$SERVICE_STACK_NAME" \
             --template-file infra/aws/formmaps-api-staging-service.yml \
@@ -125,6 +135,7 @@ jobs:
               DailyApiKeySecretArn="$DAILY_API_KEY_SECRET_ARN" \
               StripeSecretKeyArn="$STRIPE_SECRET_KEY_ARN" \
               StripeWebhookSecretArn="$STRIPE_WEBHOOK_SECRET_ARN" \
+              FieldEncryptionKeyArn="$FIELD_ENCRYPTION_KEY_ARN" \
               StagingWebOrigin="$STAGING_WEB_ORIGIN"
 
       - name: Read App Runner URL
