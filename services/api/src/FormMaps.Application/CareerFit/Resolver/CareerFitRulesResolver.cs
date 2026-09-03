@@ -8,6 +8,14 @@ namespace FormMaps.Application.CareerFit.Resolver;
 // block whose weights sum to zero (the way as-shipped Ingeniería read 0.0% before FM-CF-001) are all
 // rejected here with the family and field named, never coerced to 0.0 downstream.
 //
+// ONE CHECK GOES BEYOND check_resolved(): the top-level competencies[] catalogue. Python validates the
+// per-family competency RULES (ids 1..24, roles) and never the list their ids index into, because in the
+// Python world that list is only a label table. Here it is load-bearing: it is CompetencyAdapter's ONLY
+// name -> id join table (FM-CF-005 defect 2), so an absent, gapped or duplicated catalogue is not a
+// cosmetic defect -- it makes a real student's measured competencies unmatchable, defaults them to level 0
+// and reports a behavioural gap that belongs to the rule set. Same fail-closed rule as the rest: rejected
+// at load, with the field named, never coerced downstream.
+//
 // What it deliberately does NOT do: the family -> subfamily -> career deep merge (the rule set carries
 // family-level rules only; subfamily_roles are provenance for TIMS, not a scoring layer in V1), and the
 // RECOVERY / DISTRIBUTION checks of the gate — a rule set can be fully resolved and still rank badly
@@ -84,7 +92,8 @@ public static class CareerFitRulesResolver
 
     /// <summary>
     /// check_resolved(), check for check and in the same order, returning the problems instead of raising
-    /// on the first twelve. Empty means the rule set is fully resolved.
+    /// on the first twelve, plus the competencies[] catalogue block Python has no equivalent for (see the
+    /// file header). Empty means the rule set is fully resolved.
     /// </summary>
     public static IReadOnlyList<CareerFitRulesProblem> Check(CareerFitRules rules)
     {
@@ -111,6 +120,55 @@ public static class CareerFitRulesResolver
                             : $"bad direction/weight ({rule.Direction}, {rule.Weight})"));
                 }
             }
+        }
+
+        // -- competency catalogue: present, ids EXACTLY 1..24 with no duplicate and no gap, every name usable.
+        // Not a check_resolved() check (see the file header): this list is the adapters' only name -> id table,
+        // so a hole in it is a scoring defect wearing a label-table costume.
+        var competencyIds = new HashSet<int>();
+        if (rules.Competencies.Count == 0)
+        {
+            problems.Add(new CareerFitRulesProblem(
+                FamilyId: null,
+                ArchetypeId: null,
+                Field: "competencies",
+                Message: $"no competency catalogue -- the {CompetencyIdMin}-{CompetencyIdMax} name->id table the adapters join on is empty"));
+        }
+
+        foreach (var competency in rules.Competencies)
+        {
+            var field = $"competencies[competency_id={competency.CompetencyId}]";
+            if (!competencyIds.Add(competency.CompetencyId))
+            {
+                problems.Add(new CareerFitRulesProblem(
+                    null, null, field, $"competency id {competency.CompetencyId} appears more than once"));
+            }
+            else if (competency.CompetencyId < CompetencyIdMin || competency.CompetencyId > CompetencyIdMax)
+            {
+                problems.Add(new CareerFitRulesProblem(
+                    null, null, field,
+                    $"competency id {competency.CompetencyId} is outside {CompetencyIdMin}-{CompetencyIdMax}, the engine's own domain"));
+            }
+
+            if (string.IsNullOrWhiteSpace(competency.Name))
+            {
+                problems.Add(new CareerFitRulesProblem(
+                    null, null, $"{field}.name", "competency name is empty -- no PCA result name can ever normalise to it"));
+            }
+        }
+
+        // A gap is only reportable against a catalogue that exists; an absent one is already one problem above,
+        // not twenty-four.
+        var undefinedCompetencyIds = rules.Competencies.Count == 0
+            ? []
+            : Enumerable.Range(CompetencyIdMin, CompetencyIdMax - CompetencyIdMin + 1)
+                .Where(id => !competencyIds.Contains(id))
+                .ToList();
+        if (undefinedCompetencyIds.Count > 0)
+        {
+            problems.Add(new CareerFitRulesProblem(
+                null, null, "competencies",
+                $"competency ids {string.Join(", ", undefinedCompetencyIds)} have no definition"));
         }
 
         foreach (var family in rules.Families)
@@ -147,6 +205,15 @@ public static class CareerFitRulesResolver
                     problems.Add(new CareerFitRulesProblem(
                         fid, null, $"competency_rules[competency_id={rule.CompetencyId}]",
                         $"bad competency rule (competency_id {rule.CompetencyId}, role {rule.Role})"));
+                }
+                else if (competencyIds.Count > 0 && !competencyIds.Contains(rule.CompetencyId))
+                {
+                    // A well-formed id the catalogue does not define: nothing can supply a level for it and
+                    // nothing can name it in the explanation. Silent when the catalogue is wholly absent --
+                    // that is one problem above, not 24 x 14 of them.
+                    problems.Add(new CareerFitRulesProblem(
+                        fid, null, $"competency_rules[competency_id={rule.CompetencyId}]",
+                        $"competency {rule.CompetencyId} is not defined in the rule set's competencies[]"));
                 }
 
                 if (rule.Role is "CRITICAL" or "IMPORTANT")

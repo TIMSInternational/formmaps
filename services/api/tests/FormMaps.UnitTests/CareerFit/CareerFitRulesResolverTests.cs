@@ -336,6 +336,89 @@ public class CareerFitRulesResolverTests
         Assert.Equal("v360_rules", Assert.Single(CareerFitRulesResolver.Check(zeroRelevance)).Field);
     }
 
+    // ------------------------------------------------------------------ the top-level competencies[] catalogue
+
+    [Fact]
+    public void Catalogue_poison_1_no_competencies_block_at_all()
+    {
+        // check_resolved() validates the per-family competency RULES and never the catalogue their ids index
+        // into, so an empty competencies[] used to start the process. It is not a harmless one: that list IS
+        // CompetencyAdapter's only name -> id table, so with it empty every student's competency name matches
+        // nothing, all 24 ids default to level 0, and CareerFitEvaluator's wholly-unmeasured guard rejects
+        // every STUDENT for a defect that belongs to the rule set.
+        var poisoned = Clean with { Competencies = [] };
+
+        var ex = Assert.Throws<CareerFitRulesInvalidException>(() => CareerFitRulesResolver.Resolve(poisoned));
+
+        var problem = Assert.Single(ex.Problems);
+        Assert.Null(problem.FamilyId);
+        Assert.Null(problem.ArchetypeId);
+        Assert.Equal("competencies", problem.Field);
+        Assert.Contains("no competency catalogue", problem.Message);
+        Assert.Contains("rule set: competencies", ex.Message);
+    }
+
+    [Fact]
+    public void Catalogue_poison_2_the_same_competency_id_twice()
+    {
+        // Two definitions for one id: which name the explanation uses becomes an ordering accident.
+        var first = Clean.Competencies[0];
+        var poisoned = Clean with
+        {
+            Competencies = Clean.Competencies.Append(new CompetencyDefinition(first.CompetencyId, "Otra Cosa")).ToList(),
+        };
+
+        var problem = Assert.Single(CareerFitRulesResolver.Check(poisoned));
+        Assert.Equal($"competencies[competency_id={first.CompetencyId}]", problem.Field);
+        Assert.Contains("more than once", problem.Message);
+    }
+
+    [Fact]
+    public void Catalogue_poison_3_a_gap_takes_every_family_rule_that_indexes_it_with_it()
+    {
+        const int Dropped = 7;
+        var poisoned = Clean with { Competencies = Clean.Competencies.Where(c => c.CompetencyId != Dropped).ToList() };
+
+        var problems = CareerFitRulesResolver.Check(poisoned);
+
+        var missing = problems.Single(p => p.Field == "competencies");
+        Assert.Null(missing.FamilyId);
+        Assert.Contains($"{Dropped}", missing.Message);
+
+        // And every family whose competency_rules index the dropped id is named: an id with no definition can
+        // supply no level and can name nothing in the explanation.
+        var expected = Clean.ScorableFamilies
+            .Where(f => f.CompetencyRules.Any(r => r.CompetencyId == Dropped))
+            .Select(f => f.FamilyId)
+            .ToArray();
+        Assert.NotEmpty(expected);
+        Assert.Equal(
+            expected,
+            problems.Where(p => p.Field == $"competency_rules[competency_id={Dropped}]").Select(p => p.FamilyId!.Value).ToArray());
+    }
+
+    [Fact]
+    public void Catalogue_poison_4_an_id_outside_the_expected_set_and_a_name_that_is_blank()
+    {
+        // 1..24 is the engine's own domain (validate_inputs demands all 24); a 25th definition indexes nothing.
+        var extra = Clean with
+        {
+            Competencies = Clean.Competencies.Append(new CompetencyDefinition(25, "Vigesimoquinta")).ToList(),
+        };
+        var p1 = Assert.Single(CareerFitRulesResolver.Check(extra));
+        Assert.Equal("competencies[competency_id=25]", p1.Field);
+        Assert.Contains("outside", p1.Message);
+
+        // A blank name is a name nothing can normalise to, so the join can never reach that id.
+        var blank = Clean with
+        {
+            Competencies = Clean.Competencies.Select(c => c.CompetencyId == 3 ? c with { Name = "   " } : c).ToList(),
+        };
+        var p2 = Assert.Single(CareerFitRulesResolver.Check(blank));
+        Assert.Equal("competencies[competency_id=3].name", p2.Field);
+        Assert.Contains("empty", p2.Message);
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private static CareerFitRules WithFamily(CareerFitRules rules, int index, Func<FamilyRules, FamilyRules> mutate) =>
