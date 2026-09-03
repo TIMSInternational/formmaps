@@ -2,6 +2,7 @@ using Amazon;
 using Amazon.SimpleEmailV2;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
+using FormMaps.Application.CareerFit;
 using FormMaps.Application.Calendar;
 using FormMaps.Application.CourseImport;
 using FormMaps.Application.CurriculumFrameworks;
@@ -41,6 +42,7 @@ using FormMaps.Application.Messaging;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
+using FormMaps.Infrastructure.CareerFit;
 using FormMaps.Infrastructure.CourseImport;
 using FormMaps.Infrastructure.CurriculumFrameworks;
 using FormMaps.Infrastructure.DataMappings;
@@ -342,6 +344,22 @@ public static class DependencyInjection
         // FM-DOTNET-090: resume CRUD list + create (routes/resume.ts, /api/resume). Self-scoped by userId (no RLS);
         // GET / lists the caller's active resumes, POST / creates one (full 22-col Prisma row passthrough).
         services.AddScoped<IResumeRepository, ResumeRepository>();
+
+        // FM-CF-003 / FM-CF-009: the CareerFit ConfigCache. One immutable rule-set version per process
+        // (CareerFit:RulesVersion, default the embedded 1.0.0-draft.1), loaded + resolved once behind a
+        // Lazy<T>. EnsureLoaded() runs HERE, at composition time, so a version that is not embedded or a
+        // rule set the resolver rejects (an unresolved VARIABLE/INHERIT marker, a PCA route outside the
+        // catalogue, a zero-weight MIL/360 row ...) throws CareerFitRulesInvalidException out of
+        // AddFormMapsInfrastructure -> AddFormMapsApplication -> Program.cs before builder.Build(): the
+        // same phase and the same unhandled-exception exit StartupEnvironmentValidator uses, chosen over a
+        // hosted-service check because (a) it fires in BOTH composition roots that share this method
+        // (FormMaps.Api and FormMaps.Workers) without a per-root AddHostedService, (b) it cannot be
+        // reordered behind another IHostedService that already accepted traffic, and (c) every
+        // WebApplicationFactory<Program> test exercises it for free. The cost — ~ms of JSON parsing at
+        // boot for a file that is always present — is the point: no scoring request can ever be the
+        // first to discover the rule set is bad.
+        services.AddSingleton<ICareerFitRulesProvider>(
+            CareerFitRulesProvider.FromConfiguration(configuration).EnsureLoaded());
 
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IQuestion360Reader, Question360Reader>();
