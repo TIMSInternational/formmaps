@@ -166,6 +166,17 @@ Resources:
                   - cloudformation:DescribeStackResourceDrifts
                 Resource:
                   - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ServiceStackName}/*
+              # BatchDescribeTypeConfigurations is documented as required for drift
+              # detection and, unlike the four above, is not addressable by stack ARN --
+              # it describes type configuration, not a stack, so it only accepts "*".
+              # Without it DetectStackDrift fails AccessDenied; the drift step is
+              # non-blocking, so it would fail quietly and the deploy would still report
+              # success with drift unchecked. Read-only and carries no stack authority.
+              - Sid: DescribeTypeConfigurationsForDriftDetection
+                Effect: Allow
+                Action:
+                  - cloudformation:BatchDescribeTypeConfigurations
+                Resource: "*"
               # No DeleteStack. Prod teardown is not a thing a dispatched
               # workflow should be able to do, and nothing in the deploy path
               # needs it.
