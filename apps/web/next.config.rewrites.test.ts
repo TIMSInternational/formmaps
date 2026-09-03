@@ -458,6 +458,52 @@ describe("next.config rewrites -- mapped-but-unreachable .NET groups (#109 / #11
     expectNode(afterFiles, CONTEXT_SMOKE);
   });
 
+  // ---------------------------------------------------------------- every other flag on
+
+  // The cases above pin one flag at a time, which cannot see a rule gated under some OTHER flag
+  // stealing these paths -- the H1/H2/H3 failure shape, where a :param or :path* rule at equal
+  // depth wins because it sits earlier in the array. So load the config with EVERY
+  // FORMMAPS_ROUTE_*_TO_DOTNET flag on and assert the exact-path rule still wins for each of the
+  // five paths. The flag list is scraped from next.config.ts itself so a flag added later is in
+  // the sweep without anyone remembering to list it here.
+  it("with every FORMMAPS_ROUTE_*_TO_DOTNET flag on, the exact-path rule still wins for all five paths", async () => {
+    const configSource = require("fs").readFileSync(require.resolve("./next.config"), "utf8");
+    const allFlags = Array.from(
+      new Set(Array.from(configSource.matchAll(/process\.env\.(FORMMAPS_ROUTE_[A-Z0-9_]+_TO_DOTNET)/g), (m: RegExpMatchArray) => m[1]))
+    );
+    // Sanity: the scrape found the three flags under test, or the case below proves nothing.
+    expect(allFlags).toEqual(
+      expect.arrayContaining([
+        "FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET",
+        "FORMMAPS_ROUTE_ASSESSMENT_TIMELINE_TO_DOTNET",
+        "FORMMAPS_ROUTE_REQUEST_CONTEXT_TO_DOTNET",
+      ])
+    );
+
+    const afterFiles = await loadAfterFiles(env(Object.fromEntries(allFlags.map((flag) => [flag, "1"]))));
+
+    const exact: Array<[string, string]> = [
+      [ROLE, ROLE_SOURCE],
+      [TIMELINE, TIMELINE],
+      [TIMELINE_STATS, TIMELINE_STATS],
+      [CONTEXT_CURRENT, CONTEXT_CURRENT],
+      [CONTEXT_SMOKE, CONTEXT_SMOKE],
+    ];
+    for (const [path, source] of exact) {
+      const winner = winningRule(afterFiles, path);
+      expect(winner).toBeDefined();
+      // The winner is the exact-path rule itself, not merely something pointing at .NET: a wider
+      // rule under another flag that happened to forward to the same origin would still be a bug
+      // waiting for the day that origin path diverges.
+      expect(winner!.source).toBe(source);
+      expect(winner!.destination).toBe(`${DOTNET}${source}`);
+    }
+    // And the Node-only neighbours are still Node-only with everything on.
+    for (const path of ASSESSMENTS_NODE_ONLY) {
+      expectNode(afterFiles, path);
+    }
+  });
+
   // ---------------------------------------------------------------- the catch-all survives
 
   it("keeps the /api/:path* catch-all catching an unrelated path in every flag state", async () => {
