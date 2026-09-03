@@ -52,9 +52,13 @@ Parameters:
       the AES-256-GCM key AesGcmFieldCipher uses to encrypt iSAMS vendor
       credentials on POST /integrations/isams (FM-DOTNET-087). Read lazily, so
       a missing key does not stop the service booting; it surfaces as a 500 on
-      the first encrypting write. Staging is where that round-trip is proved
-      against the Node iSAMS sync path, so the key here must match the one the
-      Node API staging stack uses -- never the prod key.
+      the first encrypting write. This MUST be the SAME secret ARN prod and
+      nexa-api use (one key across all three App Runner services -- see
+      docs/superpowers/specs/2026-07-27-wave3-infra-gates-design.md 3.3). There
+      is no separate "Node staging" API, and staging is not on a separate
+      database: it reads the SAME prod Aurora cluster through the read-only
+      formmaps_staging_ro role. A staging-only key would therefore write
+      ciphertext into the very rows prod Node reads, undecryptable there.
   StagingWebOrigin:
     Type: String
     Default: https://staging.formmaps.ai

@@ -79,8 +79,13 @@ Parameters:
       credentials on POST /integrations/isams (FM-DOTNET-087). The key is read
       lazily, so its absence does NOT stop the service booting: it surfaces
       much later as a 500 on the first encrypting write, which is exactly how
-      this gap went unnoticed. MUST be the SAME key the legacy Node API uses
-      (lib/fieldEncrypt.ts), or a credential written by .NET cannot be
+      this gap went unnoticed. No such key existed anywhere before 2026-09-03
+      -- not on nexa-api either (wave3 design 3.3, verified against all three
+      App Runner services and every secret name in the account), so nothing is
+      encrypted with it yet and one is generated fresh. The SAME secret ARN
+      must ALSO be set as FIELD_ENCRYPTION_KEY on the nexa-api service (that
+      wiring is out of band, nexa-api is not managed by this repo) before the
+      first .NET iSAMS write, or a credential written by .NET cannot be
       decrypted by the Node iSAMS sync path that still owns that vendor call.
   ProdWebOrigin:
     Type: String

@@ -117,10 +117,12 @@ jobs:
           : "${STRIPE_WEBHOOK_SECRET_ARN:?Set FORMMAPS_STAGING_STRIPE_WEBHOOK_SECRET_ARN in the staging environment (ARN of the TEST-mode webhook signing secret).}"
           # Unlike the Stripe pair this key does not block boot — AesGcmFieldCipher reads it
           # lazily — so a missing one stays invisible until the first iSAMS credential save
-          # 500s. Guarded here so it fails in seconds with a name to act on. Match the key the
-          # legacy Node staging API uses, so a .NET-written credential round-trips through the
-          # Node iSAMS sync path; never point this at the prod key.
-          : "${FIELD_ENCRYPTION_KEY_ARN:?Set FORMMAPS_STAGING_FIELD_ENCRYPTION_KEY_ARN in the staging environment (AES-256-GCM key encrypting iSAMS vendor credentials — the staging key, NOT the prod one).}"
+          # 500s. Guarded here so it fails in seconds with a name to act on. Unlike the Stripe
+          # ARNs above there is NO staging-specific key: one nexa/api/FIELD_ENCRYPTION_KEY
+          # secret is shared by nexa-api, formmaps-api-prod and this service (wave3 design 3.3).
+          # Staging reads the SAME prod Aurora on a read-only role, so a second key would only
+          # put ciphertext prod Node cannot decrypt into shared rows.
+          : "${FIELD_ENCRYPTION_KEY_ARN:?Set FORMMAPS_STAGING_FIELD_ENCRYPTION_KEY_ARN in the staging environment (AES-256-GCM key encrypting iSAMS vendor credentials — the SAME nexa/api/FIELD_ENCRYPTION_KEY ARN prod and nexa-api use).}"
           aws cloudformation deploy \
             --stack-name "$SERVICE_STACK_NAME" \
             --template-file infra/aws/formmaps-api-staging-service.yml \

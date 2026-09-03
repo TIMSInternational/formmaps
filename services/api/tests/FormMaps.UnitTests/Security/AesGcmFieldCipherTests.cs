@@ -84,6 +84,20 @@ public sealed class AesGcmFieldCipherTests
         Assert.Throws<InvalidOperationException>(() => cipher.Encrypt("secret"));
     }
 
+    [Theory]
+    // Node's getKey() takes .subarray(0, 32) and hands the result to createCipheriv("aes-256-gcm", ...), which
+    // throws "Invalid key length" for anything that is not 32 bytes. BouncyCastle's AesEngine happily accepts a
+    // 16- or 24-byte key, so without an explicit check a short key would silently downgrade prod iSAMS credential
+    // encryption to AES-128/192 — and produce ciphertext Node could never decrypt. Fail loudly instead.
+    [InlineData("AAECAwQFBgcICQoLDA0ODw==")]                     // 16 bytes → AES-128
+    [InlineData("AAECAwQFBgcICQoLDA0ODxAREhMUFRYX")]             // 24 bytes → AES-192
+    [InlineData("AAEC")]                                          // 2 bytes
+    public void Key_shorter_than_32_bytes_throws_like_node(string key)
+    {
+        var cipher = Cipher(key);                   // construction stays lazy — the throw is on first use
+        Assert.Throws<InvalidOperationException>(() => cipher.Encrypt("secret"));
+    }
+
     [Fact]
     public void Tampered_ciphertext_fails_the_tag_check()
     {
