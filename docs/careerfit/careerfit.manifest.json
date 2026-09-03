@@ -50,34 +50,45 @@
     {
       "id": "FM-CF-002-schema-tenant-scoped",
       "phase": "P1",
-      "status": "pending",
+      "status": "completed",
       "goal": "Schema, tenant-scoped and RLS-native: the reference DDL has no school column; every CareerFit table carries the scope the platform's RLS policies expect.",
-      "ownedPaths": ["services/api/src/FormMaps.Infrastructure", "sql"],
-      "validation": ["RLS harness (TestSupport/Rls) asserts access, not just isolation"]
+      "ownedPaths": ["infra/aws/sql/careerfit-schema.sql", "infra/aws/sql/dotnet-service-role.sql", "services/api/tests/FormMaps.IntegrationTests/CareerFit"],
+      "validation": [
+        "dotnet test services/api/tests/FormMaps.IntegrationTests --filter \"FullyQualifiedName~CareerFitRlsTests\"",
+        "dotnet test services/api/tests/FormMaps.IntegrationTests --filter \"FullyQualifiedName~DbRoleGrantsTests\""
+      ],
+      "notes": "careerfit_runs (userId TEXT, nullable schoolId = the row's own tenant snapshot, rulesVersion, discGraph 1..3, inputs/inputQuality jsonb) + careerfit_family_results (every evaluate_owner scalar under its reference name, CHECKed enum columns, audit jsonb, UNIQUE(runId, familyId)); RLS ENABLE+FORCE with the platform's self/school/bypass predicates and nested EXISTS for the child; formmaps_dotnet_svc gets SELECT+INSERT only (runs are immutable). Harness applies the real infra file verbatim and asserts access AND denial as a NOSUPERUSER NOBYPASSRLS login."
     },
     {
       "id": "FM-CF-003-config-cache",
       "phase": "P1",
-      "status": "pending",
+      "status": "completed",
       "goal": "ConfigCache: one immutable ACTIVE rule-set version, loaded once per version, never queried per factor inside the scoring loop (spec §26).",
-      "ownedPaths": ["services/api/src/FormMaps.Infrastructure/CareerFit"],
-      "validation": ["loads docs/careerfit/rules/*.json by rules_version; rejects a version that fails the resolver"]
+      "ownedPaths": ["services/api/src/FormMaps.Infrastructure/CareerFit", "services/api/src/FormMaps.Application/CareerFit/ICareerFitRulesProvider.cs"],
+      "validation": ["dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitRulesProviderTests\""],
+      "notes": "CareerFitRulesProvider: CareerFit:RulesVersion (env CareerFit__RulesVersion, default 1.0.0-draft.1) → embedded JSON → resolver, once per process behind Lazy<T>(ExecutionAndPublication); a failed load stays failed. EnsureLoaded() runs inside AddFormMapsInfrastructure so an unknown or invalid version stops both hosts (Api, Workers) before Build(). Refuses a document whose rules_version differs from the configured one."
     },
     {
       "id": "FM-CF-004-formulas-f01-f23",
       "phase": "P2",
-      "status": "pending",
+      "status": "completed",
       "goal": "F01–F23 as pure static functions, I/O-free, every parameter passed in — the LiaScoring / VocationalScoring shape.",
       "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit"],
-      "validation": ["bit-parity against docs/careerfit/sources/formmaps_engine_reference.py on the gate's profiles"]
+      "validation": [
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitParityTests\"",
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitFormulasBoundaryTests\"",
+        "python3 tools/careerfit/export_parity_fixture.py (regenerates services/api/tests/FormMaps.UnitTests/CareerFit/Data/parity-fixture.json; if C# and fixture disagree the C# is wrong)"
+      ],
+      "notes": "CareerFitFormulas: one static function per reference function, same order of floating-point operations, Python 3.12 Neumaier sum() reproduced; 60 archetypal profiles × 14 families held to formmaps_engine_reference.py at 1e-9 — measured bit-exact (0.0). Rule set loaded by CareerFitRulesJson in declared order; ResolvedFamilyRules.FromFamily is mc_lib.resolved_bundle()."
     },
     {
       "id": "FM-CF-005-input-adapters",
       "phase": "P3",
-      "status": "pending",
+      "status": "completed",
       "goal": "The seam between what the platform measures and what the engine consumes: DISC graph choice, competency name→id, LIA percentile tails, personality poles. Four silent defects live here.",
       "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit/Adapters"],
-      "validation": ["its own test suite; each of the four defects has a red test first"]
+      "validation": ["dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~FormMaps.UnitTests.CareerFit.Adapters\""],
+      "notes": "Red first (commit 1050d707: naive adapters, 29/42 tests fail on the defect symptom), then the fix. DiscGraphChoice explicit, default graph 1 (legacy /careers/score's) and recorded; competency names joined NORMALISED (NFD, marks stripped, case-folded, punctuation collapsed), unknown recorded, missing ids → level 0 with a warning; LIA 0/100 → 1/99 with a warning, a missing subtest fails closed; personality poles from the stored counts (winner = 100·count/answered), intensity fallback, 0/0 → 50/50. InputQuality is the audit record the orchestrator persists. 360 is NoDataV360Adapter until FM-CF-006/007."
     },
     {
       "id": "FM-CF-006-seed-360-items",
@@ -107,10 +118,11 @@
     {
       "id": "FM-CF-009-rules-resolver-fail-closed",
       "phase": "P5",
-      "status": "pending",
+      "status": "completed",
       "goal": "RulesResolver: deep-merge family → subfamily → career, then assert_no_unresolved_markers(). Highest leverage in the plan.",
       "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit/Resolver"],
-      "validation": ["a deliberately poisoned rule set fails the build (the five cases in mc_gate.py --self-test, ported)"]
+      "validation": ["dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitRulesResolverTests\""],
+      "notes": "CareerFitRulesResolver.Check/Resolve: mc_gate.py check_resolved() ported one for one (every problem listed, none truncated), the self-test poisons rejected with family and field named; the fourth poison (one family's 360 row everywhere) is RESOLVED by construction and is the Monte Carlo gate's to catch. The family → subfamily → career deep merge is deliberately absent: 1.0.0-draft.1 carries family-level rules only (subfamily_roles are D2 provenance); when a later version adds that layer, Resolve() is where it goes and Check() must run on the merged bundle."
     },
     {
       "id": "FM-CF-010-orchestrator-ranking-audit",
@@ -118,7 +130,12 @@
       "status": "pending",
       "goal": "Orchestrator, ranking, audit trail — a record per formula step, shipped with the scores (§21).",
       "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit"],
-      "validation": ["audit row count == formula steps per family per student"]
+      "validation": [
+        "audit row count == formula steps per family per student",
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitEvaluatorTests\"",
+        "dotnet test services/api/tests/FormMaps.IntegrationTests --filter \"FullyQualifiedName~CareerFitEvaluatorDatabaseTests\""
+      ],
+      "notes": "P1–P3 integration (branch careerfit/p1-p3) ships the orchestrator half: CareerFitEvaluator (read → adapt → rules → EvaluateOwner per scorable family → AssignRelativeFit → write), CareerFitInputReader (one RLS read session; fail-closed CareerFitInputException per missing instrument), CareerFitRunWriter (run + 14 family rows in one transaction, the student's tenant on the run), and the audit shipped with the scores as evaluate_owner's audit_inputs / convergence_detail / critical_gaps / mil_relative_strengths per family. EvaluateCore reproduces the reference at 0.0 deviation. 360 is NoData (careerfit360 0, NOT_DETERMINABLE, SOLID is the convergence ceiling). Still open for this slice: the per-formula-step ledger the acceptance names, and the endpoints (FM-CF-012)."
     },
     {
       "id": "FM-CF-011-explainability-payload",

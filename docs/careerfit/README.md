@@ -1,8 +1,9 @@
 # CareerFit — rule set, derivation and gate
 
-The CareerFit Rules Engine specified by TIMS (`sources/`) does not exist in code yet. This
-directory holds the thing the engine will load — the **versioned rule set** — and the tooling
-that derives, validates and gates it. Ledger: [`careerfit.manifest.json`](careerfit.manifest.json)
+This directory holds the thing the engine loads — the **versioned rule set** — and the tooling
+that derives, validates and gates it. The engine itself (P1–P3: schema, config cache, formulas,
+adapters, resolver, orchestrator) lives under `services/api` and is described in
+[Engine (P1–P3)](#engine-p1p3) below. Ledger: [`careerfit.manifest.json`](careerfit.manifest.json)
 (slices FM-CF-001…016). Build plan and analysis: the two published artifacts linked from the
 FormMaps memory chain.
 
@@ -109,3 +110,73 @@ Listed in the rule set's `open_questions`. The first — **what population the M
 and DISC scales are normed on** — is the highest-consequence unknown in the whole plan: if
 these are adult HR norms and students sit ~20 points lower, more than half a cohort lands below
 ADEQUATE and is told their cognitive profile is *Insuficiente / Bajo*.
+
+## Engine (P1–P3)
+
+The rule set above is consumed, unchanged, by the .NET bounded context under `services/api`
+(manifest slices FM-CF-002/003/004/005/009 completed, FM-CF-010's orchestrator half shipped on
+branch `careerfit/p1-p3`). Nothing is mapped as an HTTP endpoint yet — that is FM-CF-012, behind
+`FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET`.
+
+| namespace / path | what |
+|---|---|
+| `FormMaps.Application.CareerFit` | `CareerFitFormulas` (F01–F23, one static function per reference function), the input/result records, `CareerFitRules` + `CareerFitRulesJson` (the JSON above, embedded from `docs/careerfit/rules` by link), `ICareerFitRulesProvider`, `CareerFitEvaluator` / `ICareerFitEvaluator` (the orchestrator), `CareerFitRun`, `CareerFitRunJson` (the three jsonb shapes) |
+| `FormMaps.Application.CareerFit.Resolver` | `CareerFitRulesResolver` — `mc_gate.py check_resolved()` ported one for one; `CareerFitRulesInvalidException` lists every problem with family and field |
+| `FormMaps.Application.CareerFit.Adapters` | `DiscAdapter`, `CompetencyAdapter`, `MilAdapter`, `PersonalityAdapter`, `IV360Adapter` / `NoDataV360Adapter`, composed by `CareerFitInputAdapters`; `InputQuality` is the audit record |
+| `FormMaps.Infrastructure.CareerFit` | `CareerFitRulesProvider` (the ConfigCache: `CareerFit:RulesVersion`, loaded + resolved once per process, boot-gated in `AddFormMapsInfrastructure`), `CareerFitInputReader` (one read-only RLS session), `CareerFitRunWriter` (run + family rows in one transaction) |
+| `infra/aws/sql/careerfit-schema.sql` | `careerfit_runs` / `careerfit_family_results`, tenant-scoped, RLS ENABLE+FORCE; grants in `dotnet-service-role.sql` §4.7 (SELECT + INSERT only — a run is immutable, a re-evaluation is a new run) |
+
+The pipeline is `CareerFitEvaluator.EvaluateAsync(context, userId, graph?)`: read the student's
+`pca_results` / newest completed `lia_assessment_sessions` / newest completed
+`personality_assessment_sessions` rows under the caller's RLS session → adapt → `EvaluateOwner` per
+scorable family (14) → `AssignRelativeFit` → persist → return the run with families in rank order.
+`EvaluateCore(assessment, ruleSet)` is the pure centre (validate once, score, rank) and is held to
+`formmaps_engine_reference.py` at 1e-9 through the same parity fixture FM-CF-004 uses — measured
+bit-exact. A missing instrument is a typed `CareerFitInputException` naming it (PCA / MIL /
+PERSONALITY) and nothing is written; the caller reports "not ready".
+
+### Running the tests
+
+```
+dotnet test services/api/tests/FormMaps.UnitTests        --filter "FullyQualifiedName~CareerFit"   # formulas parity, resolver, provider, adapters, evaluator, run JSON
+dotnet test services/api/tests/FormMaps.IntegrationTests --filter "FullyQualifiedName~CareerFit"   # Testcontainers: RLS on the real DDL, the evaluator end to end as the restricted login, DI
+python3 tools/careerfit/build_rules.py --check && python3 tools/careerfit/mc_gate.py               # the rule set is still reproducible and still passes the gate
+```
+
+The integration suite needs Docker. It seeds a student exactly as the platform's writers persist
+rows (TIMS `PcaD1..PcaC3` + `PcaCmps`, `LiaCompletionScorer` percentiles, `PersonalityScoring`
+dimension scores), evaluates as the student, a same-school counselor and a super admin, and proves
+the negative controls on the same seed: an other-school counselor can neither read the run nor
+evaluate the student, and a missing LIA session writes nothing.
+
+### The three seam decisions (FM-CF-005)
+
+These are the places the platform's data and the engine's inputs disagree. Each is a deliberate
+choice, recorded on every run's `inputQuality`, and open to revision by TIMS:
+
+1. **Which DISC graph.** TIMS returns three graphs; the platform's canonical `DiscMatrix.Primary`
+   is graph 2 (Under Pressure) while legacy `/careers/score` — the FM-CF-013 shadow target — is fed
+   graph 1 (Work Adaptation). The engine takes an explicit `DiscGraphChoice`, **defaulting to
+   graph 1** so the shadow compares like with like; the choice is stored on the run (`discGraph`).
+   TIMS open question 4 decides the final value.
+2. **Missing competencies → level 0.** The PCA result names competencies as TIMS spells them
+   (upper-case, accented); the only name→id table is the rule set's 24 names. Names are joined
+   normalised (NFD, marks stripped, case-folded, punctuation collapsed); a name that still matches
+   nothing is recorded, an id no entry reached is **defaulted to level 0 with a warning** rather
+   than rejecting the student (the spec's 422 on fewer than 24 would reject real students — TIMS
+   open question 3). The defaulted ids are on the record.
+3. **LIA tails clamp.** `LiaPercentileMapper` emits 0 below its norm table and 100 above it; the
+   engine's domain is 1–99. **0 → 1 and 100 → 99, each with a warning.** A missing subtest is not
+   repaired — it fails closed, because a MIL mean over four subtests would silently misweight.
+
+### 360 is NoData until FM-CF-006/007
+
+No variable-level 360 aggregation exists before the 40 items are seeded (FM-CF-006, blocked on
+TIMS) and aggregated (FM-CF-007). The registered `IV360Adapter` is `NoDataV360Adapter`: every family
+scores `careerfit360 = 0.0` with confidence `NOT_DETERMINABLE`, which is exactly what the reference
+engine produces for a student with no 360 evidence. Consequences, all on the run's `inputQuality`
+(`v360_source: NO_DATA`, warning `V360_NO_DATA`, `evidence.360: false`): the 360 weight multiplies
+zero for every family, so every `CareerFitAbsolute` is uniformly lower and the **ranking is
+untouched**; the 360 instrument reads DIVERGENT in convergence, so convergence counts at most three
+STRONG instruments — **SOLID is the ceiling, VERY_HIGH is unreachable**. Turning 360 on is one DI
+registration (`IV360Adapter`) once FM-CF-007 lands.
